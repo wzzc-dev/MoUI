@@ -19,16 +19,16 @@ pub fn cell_text_system() -> @core.TextSystem {
 
 ///|
 priv struct WrapState {
-  mut total : Int
-  mut widest : Int
-  mut lines : Int
-  mut line_cols : Int
-  mut word : Int
+  mut total : Int32
+  mut widest : Int32
+  mut lines : Int32
+  mut line_cols : Int32
+  mut word : Int32
   mut started : Bool
 }
 
 ///|
-fn wrap_flush_word(st : WrapState, avail : Int) -> Unit {
+fn wrap_flush_word(st : WrapState, avail : Int32) -> Unit {
   if st.word > 0 {
     if !st.started {
       st.started = true
@@ -44,7 +44,7 @@ fn wrap_flush_word(st : WrapState, avail : Int) -> Unit {
 }
 
 ///|
-fn wrap_end_paragraph(st : WrapState, avail : Int) -> Unit {
+fn wrap_end_paragraph(st : WrapState, avail : Int32) -> Unit {
   while st.line_cols > avail {
     st.line_cols = st.line_cols - avail
     st.lines = st.lines + 1
@@ -62,7 +62,7 @@ fn wrap_end_paragraph(st : WrapState, avail : Int) -> Unit {
 ///|
 /// Greedy word wrap counted in whole characters, scanned manually so the spike
 /// does not depend on text-segmentation APIs.
-fn wrap_lines(text : String, avail : Int) -> (Int, Int) {
+fn wrap_lines(text : String, avail : Int32) -> (Int32, Int32) {
   let st : WrapState = {
     total: 0,
     widest: 0,

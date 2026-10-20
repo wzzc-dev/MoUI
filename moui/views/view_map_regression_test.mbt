@@ -3,7 +3,7 @@ fn[Msg] view_map_test_rect(
   width~ : Double,
   height~ : Double,
   color~ : @core.Color,
-  on_tap? : Msg? = None,
+  on_tap~ : Msg? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(ViewMapTestRect::{ width, height, color, }, event=(
     _node,

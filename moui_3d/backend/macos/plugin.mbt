@@ -3,7 +3,7 @@
 /// The renderer remains independent: this package only owns native view
 /// lifetime and forwards the resulting opaque layer handle to the addon host.
 pub fn plugin(
-  host? : @moui_3d.ThreeDViewportHost? = None,
+  host~ : @moui_3d.ThreeDViewportHost? = None,
 ) -> @host.PlatformViewPlugin {
   let bridge = match host {
     Some(value) => value

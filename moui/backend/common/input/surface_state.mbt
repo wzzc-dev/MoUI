@@ -9,8 +9,8 @@ pub(all) struct SurfaceState {
 ///|
 pub fn SurfaceState::new(
   metrics~ : @core.SurfaceMetrics,
-  owns_surface? : Bool = false,
-  can_reconfigure? : Bool = true,
+  owns_surface~ : Bool = false,
+  can_reconfigure~ : Bool = true,
 ) -> SurfaceState {
   { metrics, owns_surface, can_reconfigure, }
 }

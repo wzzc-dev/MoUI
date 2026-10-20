@@ -1,13 +1,13 @@
 ///|
 pub fn Paragraph::layout_utf8(
   text : Bytes,
-  family_name? : Bytes = b"",
-  size? : Float = 12.0,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
-  max_width? : Float = 1000000000.0,
-  left_to_right? : Bool = true,
+  family_name~ : Bytes = b"",
+  size~ : Float = 12.0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
+  max_width~ : Float = 1000000000.0,
+  left_to_right~ : Bool = true,
 ) -> Paragraph? {
   ignore(text)
   ignore(family_name)
@@ -39,7 +39,7 @@ pub fn Paragraph::height(self : Paragraph) -> Float {
 }
 
 ///|
-pub fn Paragraph::line_count(self : Paragraph) -> Int {
+pub fn Paragraph::line_count(self : Paragraph) -> Int32 {
   ignore(self)
   0
 }
@@ -53,8 +53,8 @@ pub fn Paragraph::line_metrics(self : Paragraph) -> Array[ParagraphLineMetric] {
 ///|
 pub fn Paragraph::text_boxes_utf8(
   self : Paragraph,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Array[@skia.Rect] {
   ignore(self)
   ignore(start)
@@ -65,9 +65,9 @@ pub fn Paragraph::text_boxes_utf8(
 ///|
 pub fn Paragraph::text_box_directions_utf8(
   self : Paragraph,
-  start : Int,
-  end : Int,
-) -> Array[Int] {
+  start : Int32,
+  end : Int32,
+) -> Array[Int32] {
   ignore(self)
   ignore(start)
   ignore(end)
@@ -90,7 +90,7 @@ pub fn Paragraph::hit_test_utf8(
 pub fn Canvas::draw_paragraph(
   self : Canvas,
   paragraph : Paragraph,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Bool {
   ignore(self)
   ignore(paragraph)

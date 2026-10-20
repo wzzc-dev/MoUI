@@ -1,20 +1,20 @@
 ///|
-type Host3DSurface = Int
+type Host3DSurface = Int32
 
 ///|
-type Host3DRenderer = Int
+type Host3DRenderer = Int32
 
 ///|
-type Host3DString = Int
+type Host3DString = Int32
 
 ///|
-fn host_begin_string() -> Int = "webgpu" "begin_create_string"
+fn host_begin_string() -> Int32 = "webgpu" "begin_create_string"
 
 ///|
-fn host_string_append(handle : Int, code_point : Int) -> Unit = "webgpu" "string_append_char"
+fn host_string_append(handle : Int32, code_point : Int32) -> Unit = "webgpu" "string_append_char"
 
 ///|
-fn host_finish_string(handle : Int) -> Host3DString = "webgpu" "finish_create_string"
+fn host_finish_string(handle : Int32) -> Host3DString = "webgpu" "finish_create_string"
 
 ///|
 fn host_string(value : String) -> Host3DString {
@@ -48,19 +48,19 @@ fn host_resize_3d_surface(
   width : Double,
   height : Double,
   scale : Double,
-) -> Int = "webgpu" "three_d_surface_resize"
+) -> Int32 = "webgpu" "three_d_surface_resize"
 
 ///|
 fn host_draw_3d_mesh_binary(
   renderer : Host3DRenderer,
   payload : Host3DString,
-) -> Int = "webgpu" "three_d_draw_mesh_binary"
+) -> Int32 = "webgpu" "three_d_draw_mesh_binary"
 
 ///|
 fn host_update_3d_resources(
   renderer : Host3DRenderer,
   payload : Host3DString,
-) -> Int = "webgpu" "three_d_update_resources"
+) -> Int32 = "webgpu" "three_d_update_resources"
 
 ///|
 fn host_dispose_3d_renderer(renderer : Host3DRenderer) -> Unit = "webgpu" "three_d_renderer_dispose"

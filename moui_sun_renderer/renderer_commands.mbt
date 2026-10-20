@@ -364,7 +364,7 @@ fn SunRasterRenderer::record_unsupported_command(
 }
 
 ///|
-fn sun_dim_to_int(value : Double) -> Int {
+fn sun_dim_to_int(value : Double) -> Int32 {
   value.ceil().max(1.0).to_int()
 }
 
@@ -638,7 +638,7 @@ fn sun_box_blur_pixmap(
 ///|
 fn sun_single_box_blur(
   src : @sun_graphics.Pixmap,
-  r : Int,
+  r : Int32,
 ) -> @sun_graphics.Pixmap {
   let w = src.get_width()
   let h = src.get_height()
@@ -750,7 +750,7 @@ fn sun_single_box_blur(
 }
 
 ///|
-fn sun_blur_channel(sum : Double, count : Int) -> Byte {
+fn sun_blur_channel(sum : Double, count : Int32) -> Byte {
   (sum / count.to_double() + 0.5).to_int().max(0).min(255).to_byte()
 }
 

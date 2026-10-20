@@ -3,9 +3,9 @@
 ///|
 pub fn SurfaceStyle::new(
   brush~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
+  border~ : @core.BorderStyle? = None,
   radius~ : Double,
-  shadow? : @core.ShadowStyle? = None,
+  shadow~ : @core.ShadowStyle? = None,
   padding~ : @core.Insets,
   level~ : @core.SurfaceLevel,
 ) -> SurfaceStyle {

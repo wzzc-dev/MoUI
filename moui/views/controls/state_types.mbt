@@ -52,7 +52,7 @@ pub fn[Msg] MenuItem::new(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> MenuItem[Msg] {
   { id, label, message, enabled, }
 }
@@ -62,7 +62,7 @@ pub fn[Msg] menu_item(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> MenuItem[Msg] {
   MenuItem::new(id~, label~, message~, enabled~)
 }
@@ -72,7 +72,7 @@ pub fn[Msg] ActionItem::new(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> ActionItem[Msg] {
   { id, label, message, enabled, }
 }
@@ -82,7 +82,7 @@ pub fn[Msg] action_item(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> ActionItem[Msg] {
   ActionItem::new(id~, label~, message~, enabled~)
 }
@@ -107,9 +107,9 @@ pub fn command_menu_section(
 pub fn[Msg] WizardStep::new(
   id~ : String,
   title~ : String,
-  subtitle? : String = "",
+  subtitle~ : String = "",
   content~ : @core.View[Msg],
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> WizardStep[Msg] {
   { id, title, subtitle, content, enabled, }
 }

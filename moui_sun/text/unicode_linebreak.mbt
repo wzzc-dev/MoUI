@@ -95,7 +95,7 @@ pub fn LineBreakClass::to_string(self : LineBreakClass) -> String {
 
 ///|
 /// Get line break class for a character
-pub fn get_line_break_class(ch : Int) -> LineBreakClass {
+pub fn get_line_break_class(ch : Int32) -> LineBreakClass {
   // Basic implementation - can be extended with full Unicode data
   match ch {
     _ if ch < 0 || ch > 0x10FFFF => Unknown
@@ -124,9 +124,9 @@ pub fn get_line_break_class(ch : Int) -> LineBreakClass {
     0x2009 => BA // Thin Space
     0x200A => BA // Hair Space
     0x200B => ZW // Zero Width Space
-    0x0300..=0x036F => CM // Combining Diacritical Marks
-    0x1F1E6..=0x1F1FF => RI // Regional Indicator Symbols
-    0x1F3FB..=0x1F3FF => EModifier // Emoji modifiers
+    0x0300..<=0x036F => CM // Combining Diacritical Marks
+    0x1F1E6..<=0x1F1FF => RI // Regional Indicator Symbols
+    0x1F3FB..<=0x1F3FF => EModifier // Emoji modifiers
     0x2060 => WJ // Word Joiner
     0xFEFF => WJ // Zero Width No-Break Space
 
@@ -193,15 +193,15 @@ pub fn get_line_break_class(ch : Int) -> LineBreakClass {
     0x002F => SY // Solidus
     0x002C => IS // Comma
     0x002E => IS // Full Stop
-    0x0030..=0x0039 => NU // ASCII digits
+    0x0030..<=0x0039 => NU // ASCII digits
     0x003A => IS // Colon
     0x003B => IS // Semicolon
-    0x0600..=0x0605 => NS // Arabic number signs
-    0x0E40..=0x0E44 => NS // Thai leading vowels
-    0x0EC0..=0x0EC4 => NS // Lao leading vowels
-    0x1100..=0x115F => JL // Hangul choseong
-    0x1160..=0x11A7 => JV // Hangul jungseong
-    0x11A8..=0x11FF => JT // Hangul jongseong
+    0x0600..<=0x0605 => NS // Arabic number signs
+    0x0E40..<=0x0E44 => NS // Thai leading vowels
+    0x0EC0..<=0x0EC4 => NS // Lao leading vowels
+    0x1100..<=0x115F => JL // Hangul choseong
+    0x1160..<=0x11A7 => JV // Hangul jungseong
+    0x11A8..<=0x11FF => JT // Hangul jongseong
     0x200D => ZWJ // Zero Width Joiner
     0x21D4 => B2 // Left Right Double Arrow
     0x2329 => OP // Left-Pointing Angle Bracket
@@ -218,7 +218,7 @@ pub fn get_line_break_class(ch : Int) -> LineBreakClass {
     0xFE17 => B2 // Presentation Form for Vertical Left White Lenticular Bracket
     0xFE31 => B2 // Presentation Form for Vertical Em Dash
     0xFE32 => B2 // Presentation Form for Vertical En Dash
-    0xFF10..=0xFF19 => NU // Fullwidth digits
+    0xFF10..<=0xFF19 => NU // Fullwidth digits
 
     // Ideographic (CJK)
     _ if ch >= 0x3000 && ch <= 0x303F => ID // CJK Symbols
@@ -250,7 +250,7 @@ pub fn get_line_break_class(ch : Int) -> LineBreakClass {
 }
 
 ///|
-fn hangul_syllable_class(ch : Int) -> LineBreakClass {
+fn hangul_syllable_class(ch : Int32) -> LineBreakClass {
   let syllable = ch - 0xAC00
   if syllable % 28 == 0 {
     H2

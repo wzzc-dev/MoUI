@@ -129,7 +129,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 ///|
 fn ascii_lower_char(char : Char) -> Char {
   if char >= 'A' && char <= 'Z' {
-    Int::unsafe_to_char(char.to_int() + 32)
+    Int32::unsafe_to_char(char.to_int() + 32)
   } else {
     char
   }
@@ -248,7 +248,7 @@ fn field_is_present_non_null(
 }
 
 ///|
-fn schema_version(status : Map[String, Json]) -> Result[Int, String] {
+fn schema_version(status : Map[String, Json]) -> Result[Int32, String] {
   match status.get("schema_version") {
     Some(Json::Number(number, repr=_)) if number == 1.0 => Ok(1)
     Some(Json::Number(number, repr=_)) if number == 2.0 => Ok(2)
@@ -771,7 +771,7 @@ fn verify_ci_gate_contract(
 ///|
 fn verify_native_smoke_contract(
   status : Map[String, Json],
-  schema : Int,
+  schema : Int32,
 ) -> Result[Unit, String] {
   if schema < 3 {
     return Ok(())
@@ -1071,7 +1071,7 @@ fn verify_native_smoke_contract(
 fn verify_platform_entry(
   platform : String,
   entry : Map[String, Json],
-  schema : Int,
+  schema : Int32,
   revision : String,
 ) -> Result[PlatformSummary, String] {
   let accepted = match
@@ -1631,7 +1631,7 @@ fn verify_platform_status(options : CliOptions) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

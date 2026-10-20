@@ -41,11 +41,11 @@ pub struct ViewSemanticsActionHandler[Msg] {
 
 ///|
 pub fn[Msg] ViewSemanticsActionResult::accepted(
-  state? : ViewStateContext? = None,
-  text_control? : TextControlStateContext? = None,
-  dirty? : ViewDirtyHint = ViewPaintDirty,
-  messages? : Array[Msg] = [],
-  commit? : (() -> Unit)? = None,
+  state~ : ViewStateContext? = None,
+  text_control~ : TextControlStateContext? = None,
+  dirty~ : ViewDirtyHint = ViewPaintDirty,
+  messages~ : Array[Msg] = [],
+  commit~ : (() -> Unit)? = None,
 ) -> ViewSemanticsActionResult[Msg] {
   {
     accepted: true,

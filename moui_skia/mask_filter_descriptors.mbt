@@ -51,7 +51,7 @@ pub fn MaskFilterDescriptor::resource_key(
 ///|
 pub fn MaskFilterDescriptor::resource_descriptor(
   self : MaskFilterDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

@@ -334,7 +334,7 @@ pub fn webview_encode_ffi_string(text : String) -> Bytes {
 
 ///|
 /// Bridge limits are byte limits because native message transports carry UTF-8.
-pub fn webview_utf8_size(text : String) -> Int {
+pub fn webview_utf8_size(text : String) -> Int32 {
   @utf8.encode(text[:], bom=false).length()
 }
 
@@ -346,7 +346,7 @@ pub fn webview_decode_ffi_string(bytes : Bytes) -> String {
 ///|
 pub fn webview_encode_native_command(
   queued : HostWebViewQueuedCommand,
-) -> (Int, UInt64, UInt64, String) {
+) -> (Int32, UInt64, UInt64, String) {
   let navigation_id = match queued.navigation_id {
     Some(value) => value.value()
     None => 0UL
@@ -367,11 +367,11 @@ pub fn webview_encode_native_command(
 pub fn WebViewHost::accept_native_event(
   self : WebViewHost,
   controller_id~ : String,
-  kind~ : Int,
+  kind~ : Int32,
   navigation_raw~ : UInt64,
   url~ : String,
   detail~ : String,
-  flag~ : Int,
+  flag~ : Int32,
 ) -> WebViewEvent? {
   guard self.find_state(controller_id) is Some(state) else { return None }
   let native_navigation : WebViewNavigationId? = if navigation_raw == 0UL {
@@ -831,7 +831,7 @@ fn webview_json_bool(value : Json?) -> Bool? {
 }
 
 ///|
-fn webview_json_int(value : Json?) -> Int? {
+fn webview_json_int(value : Json?) -> Int32? {
   match value {
     Some(Number(number, repr=_)) => {
       let result = number.to_int()

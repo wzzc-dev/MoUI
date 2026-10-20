@@ -1,7 +1,7 @@
 ///|
 fn PdfWorkbenchModel::select_page_delta(
   self : PdfWorkbenchModel,
-  delta : Int,
+  delta : Int32,
 ) -> PdfWorkbenchModel {
   match self.document {
     Some(document) => {
@@ -28,7 +28,7 @@ fn PdfWorkbenchModel::select_page_delta(
 ///|
 fn PdfWorkbenchModel::select_page(
   self : PdfWorkbenchModel,
-  page : Int,
+  page : Int32,
 ) -> PdfWorkbenchModel {
   match self.document {
     Some(document) => {

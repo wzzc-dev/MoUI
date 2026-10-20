@@ -177,38 +177,38 @@ extern "wasm" fn canvas2d_stroke_rounded_rect(
 
 ///|
 extern "wasm" fn canvas2d_draw_text(
-  c0 : Int,
-  c1 : Int,
-  c2 : Int,
-  c3 : Int,
-  c4 : Int,
-  c5 : Int,
-  c6 : Int,
-  c7 : Int,
-  c8 : Int,
-  c9 : Int,
-  c10 : Int,
-  c11 : Int,
-  c12 : Int,
-  c13 : Int,
-  c14 : Int,
-  c15 : Int,
-  c16 : Int,
-  c17 : Int,
-  c18 : Int,
-  c19 : Int,
-  len : Int,
+  c0 : Int32,
+  c1 : Int32,
+  c2 : Int32,
+  c3 : Int32,
+  c4 : Int32,
+  c5 : Int32,
+  c6 : Int32,
+  c7 : Int32,
+  c8 : Int32,
+  c9 : Int32,
+  c10 : Int32,
+  c11 : Int32,
+  c12 : Int32,
+  c13 : Int32,
+  c14 : Int32,
+  c15 : Int32,
+  c16 : Int32,
+  c17 : Int32,
+  c18 : Int32,
+  c19 : Int32,
+  len : Int32,
   x : Double,
   y : Double,
   w : Double,
   h : Double,
   font_size : Double,
-  font_weight : Int,
+  font_weight : Int32,
   r : Double,
   g : Double,
   b : Double,
   a : Double,
-  align : Int,
+  align : Int32,
 ) = "canvas2d" "draw_text"
 
 ///|
@@ -268,12 +268,12 @@ extern "wasm" fn canvas2d_draw_shadow(
   b : Double,
   a : Double,
   blur : Double,
-  clip : Int,
+  clip : Int32,
 ) = "canvas2d" "draw_shadow"
 
 ///|
 extern "wasm" fn canvas2d_draw_path(
-  op : Int,
+  op : Int32,
   x : Double,
   y : Double,
   w : Double,
@@ -286,29 +286,29 @@ extern "wasm" fn canvas2d_draw_path(
 
 ///|
 extern "wasm" fn canvas2d_measure_text_width(
-  c0 : Int,
-  c1 : Int,
-  c2 : Int,
-  c3 : Int,
-  c4 : Int,
-  c5 : Int,
-  c6 : Int,
-  c7 : Int,
-  c8 : Int,
-  c9 : Int,
-  c10 : Int,
-  c11 : Int,
-  c12 : Int,
-  c13 : Int,
-  c14 : Int,
-  c15 : Int,
-  c16 : Int,
-  c17 : Int,
-  c18 : Int,
-  c19 : Int,
-  len : Int,
+  c0 : Int32,
+  c1 : Int32,
+  c2 : Int32,
+  c3 : Int32,
+  c4 : Int32,
+  c5 : Int32,
+  c6 : Int32,
+  c7 : Int32,
+  c8 : Int32,
+  c9 : Int32,
+  c10 : Int32,
+  c11 : Int32,
+  c12 : Int32,
+  c13 : Int32,
+  c14 : Int32,
+  c15 : Int32,
+  c16 : Int32,
+  c17 : Int32,
+  c18 : Int32,
+  c19 : Int32,
+  len : Int32,
   font_size : Double,
-  font_weight : Int,
+  font_weight : Int32,
 ) -> Double = "canvas2d" "measure_text_width"
 
 ///|
@@ -375,7 +375,7 @@ fn canvas2d_render_commands(
       DrawText(text_run) => {
         let text = text_run.text
         let text_len = text.length()
-        let chars : FixedArray[Int] = FixedArray::make(20, 0)
+        let chars : FixedArray[Int32] = FixedArray::make(20, 0)
         for i = 0; i < text_len && i < 20; i = i + 1 {
           chars[i] = text[i].to_int()
         }
@@ -553,7 +553,7 @@ fn canvas2d_measure_text_impl(
 ) -> @core.TextLayoutResult {
   let text = input.text
   let text_len = text.length()
-  let chars : FixedArray[Int] = FixedArray::make(20, 0)
+  let chars : FixedArray[Int32] = FixedArray::make(20, 0)
   for i = 0; i < text_len && i < 20; i = i + 1 {
     chars[i] = text[i].to_int()
   }
@@ -640,7 +640,7 @@ pub fn canvas2d_image_load_completion(
 pub fn canvas2d_image_load_completion_from_bytes(
   source : String,
   _bytes : Bytes,
-  background_io? : Bool = false,
+  background_io~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   @render.ImageResourceLoadCompletion::failed(
     source,

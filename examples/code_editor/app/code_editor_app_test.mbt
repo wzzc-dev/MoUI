@@ -504,8 +504,8 @@ fn has_shortcut(
   commands : Array[@views.ActionCommand],
   label : String,
   key : String,
-  meta? : Bool = false,
-  control? : Bool = false,
+  meta~ : Bool = false,
+  control~ : Bool = false,
 ) -> Bool {
   commands.any(command => {
     command.label == label &&

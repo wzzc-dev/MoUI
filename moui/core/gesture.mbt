@@ -308,8 +308,8 @@ fn recognize_press_tap(
 
 ///|
 fn LongPressGestureState::new(
-  duration_ms? : Double = 500.0,
-  max_movement? : Double = 8.0,
+  duration_ms~ : Double = 500.0,
+  max_movement~ : Double = 8.0,
 ) -> LongPressGestureState {
   {
     phase: Idle,
@@ -324,7 +324,7 @@ fn LongPressGestureState::new(
 fn LongPressGestureState::update(
   self : LongPressGestureState,
   event : PointerEvent,
-  inside? : Bool = true,
+  inside~ : Bool = true,
 ) -> LongPressGestureResult {
   match event.phase {
     Down => {
@@ -384,8 +384,8 @@ fn LongPressGestureState::update(
 
 ///|
 fn DoubleTapGestureState::new(
-  timeout_ms? : Double = 300.0,
-  max_distance? : Double = 18.0,
+  timeout_ms~ : Double = 300.0,
+  max_distance~ : Double = 18.0,
 ) -> DoubleTapGestureState {
   {
     first_position: None,
@@ -440,7 +440,7 @@ fn DoubleTapGestureState::tap(
 fn DoubleTapGestureState::update(
   self : DoubleTapGestureState,
   event : PointerEvent,
-  inside? : Bool = true,
+  inside~ : Bool = true,
 ) -> DoubleTapGestureResult {
   if inside && event.phase == Up {
     self.tap(event.position, event.time_ms)
@@ -473,7 +473,7 @@ pub fn DragGesturePhase::label(self : DragGesturePhase) -> String {
 }
 
 ///|
-fn DragGestureState::new(min_distance? : Double = 3.0) -> DragGestureState {
+fn DragGestureState::new(min_distance~ : Double = 3.0) -> DragGestureState {
   {
     phase: Idle,
     origin: None,
@@ -486,7 +486,7 @@ fn DragGestureState::new(min_distance? : Double = 3.0) -> DragGestureState {
 fn DragGestureState::update(
   self : DragGestureState,
   event : PointerEvent,
-  inside? : Bool = true,
+  inside~ : Bool = true,
 ) -> DragGestureResult {
   match event.phase {
     Down => {
@@ -607,12 +607,12 @@ fn point_distance(a : Point, b : Point) -> Double {
 ///|
 pub fn ActionCommand::new(
   intent~ : CommandIntent,
-  label? : String = "",
-  shortcut? : KeyboardShortcut? = None,
-  enabled? : Bool = true,
-  group? : String = "",
-  description? : String = "",
-  context_menu? : Bool = false,
+  label~ : String = "",
+  shortcut~ : KeyboardShortcut? = None,
+  enabled~ : Bool = true,
+  group~ : String = "",
+  description~ : String = "",
+  context_menu~ : Bool = false,
 ) -> ActionCommand {
   { intent, shortcut, label, enabled, group, description, context_menu, }
 }
@@ -707,7 +707,7 @@ pub fn CommandBinding::new(
 
 ///|
 pub fn ActionCommandMap::new(
-  bindings? : Array[CommandBinding] = [],
+  bindings~ : Array[CommandBinding] = [],
 ) -> ActionCommandMap {
   { bindings, }
 }

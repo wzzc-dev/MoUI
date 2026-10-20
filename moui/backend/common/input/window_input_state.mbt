@@ -8,7 +8,7 @@ pub struct WindowInputState {
 
 ///|
 pub fn WindowInputState::new(
-  event_sources? : @runtime.HostPlatformEventSources? = None,
+  event_sources~ : @runtime.HostPlatformEventSources? = None,
 ) -> WindowInputState {
   { session: TextInputSession::new(), event_sources, }
 }

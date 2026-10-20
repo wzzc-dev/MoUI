@@ -33,7 +33,7 @@ pub extend DesignComponentStyleResolverRecord with ToJson::{to_json}
 ///|
 pub fn component_style_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> Array[DesignComponentStyleResolverRecord] {
   [
     component_style_resolver_record(preset, "Button", scheme),
@@ -54,7 +54,7 @@ pub fn component_style_resolver_report(
 pub fn component_style_resolver_for(
   preset : @common.DesignPreset,
   component : String,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> DesignComponentStyleResolverRecord? {
   for item in component_style_resolver_report(preset, scheme~) {
     if item.component == component {
@@ -65,12 +65,14 @@ pub fn component_style_resolver_for(
 }
 
 ///|
-pub fn component_style_resolver_count(preset : @common.DesignPreset) -> Int {
+pub fn component_style_resolver_count(preset : @common.DesignPreset) -> Int32 {
   component_style_resolver_report(preset).length()
 }
 
 ///|
-pub fn component_style_resolver_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn component_style_resolver_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in component_style_resolver_report(preset) {
     if !item.resolves_tokens ||
@@ -87,7 +89,7 @@ pub fn component_style_resolver_gap_count(preset : @common.DesignPreset) -> Int 
 ///|
 pub fn component_style_resolver_source_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_style_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -100,7 +102,7 @@ pub fn component_style_resolver_source_gap_count(
 ///|
 pub fn component_style_resolver_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_style_resolver_report(preset) {
     if item.remaining_gap != "none" {

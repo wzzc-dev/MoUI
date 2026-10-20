@@ -65,7 +65,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn run(options : CliOptions) -> Int {
+fn run(options : CliOptions) -> Int32 {
   let path = @tools.resolve_path(options.repo_root, options.manifest)
   let text = match @tools.read_required_text(path, options.manifest) {
     Ok(text) => text

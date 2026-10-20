@@ -2,13 +2,13 @@
 struct PlatformRoute {
   id : String
   label : String
-  tier : Int
+  tier : Int32
   platform : String
   renderer : String
   target : String
   entrypoint_kind : String
   showcase_package : String
-  line_budget : Int
+  line_budget : Int32
   release_gate : String
   release_blocking : Bool
   evidence_required : String
@@ -28,7 +28,7 @@ struct ArchitectureVariant {
   architecture : String
   abi : String
   renderer_modes : Array[String]
-  tier : Int
+  tier : Int32
   release_gate : String
   release_blocking : Bool
   evidence_required : String
@@ -75,7 +75,7 @@ fn required_int(
   key : String,
   label : String,
   failures : Array[String],
-) -> Int {
+) -> Int32 {
   match fields.get(key) {
     Some(Number(value, repr=_)) => value.to_int()
     _ => {
@@ -132,7 +132,7 @@ fn required_string_array(
 ///|
 fn parse_route(
   value : Json,
-  index : Int,
+  index : Int32,
   failures : Array[String],
 ) -> PlatformRoute? {
   let label = "routes[" + index.to_string() + "]"
@@ -170,7 +170,7 @@ fn parse_route(
 ///|
 fn parse_architecture_variant(
   value : Json,
-  index : Int,
+  index : Int32,
   failures : Array[String],
 ) -> ArchitectureVariant? {
   let label = "architectureVariants[" + index.to_string() + "]"
@@ -261,7 +261,7 @@ fn parse_platform_matrix(
 }
 
 ///|
-fn count_tier(routes : Array[PlatformRoute], tier : Int) -> Int {
+fn count_tier(routes : Array[PlatformRoute], tier : Int32) -> Int32 {
   let mut count = 0
   for route in routes {
     if route.tier == tier {

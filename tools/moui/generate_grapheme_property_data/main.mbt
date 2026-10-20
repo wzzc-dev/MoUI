@@ -178,7 +178,7 @@ fn generate_from_sources(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err(message) => {
       println(message)

@@ -3,15 +3,15 @@ pub fn[T, Msg] sectioned_list(
   sections : Array[@layout.SectionListSection[T]],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  header? : (@layout.SectionListSection[T]) -> @core.View[Msg] = section => {
+  header~ : (@layout.SectionListSection[T]) -> @core.View[Msg] = section => {
     @text.text(section.title)
   },
-  item_height? : Double = 44.0,
-  header_height? : Double = 30.0,
-  viewport_height? : Double = 240.0,
-  spacing? : Double = 0.0,
-  overscan? : Int = 1,
-  empty? : @core.View[Msg]? = None,
+  item_height~ : Double = 44.0,
+  header_height~ : Double = 30.0,
+  viewport_height~ : Double = 240.0,
+  spacing~ : Double = 0.0,
+  overscan~ : Int32 = 1,
+  empty~ : @core.View[Msg]? = None,
   request? : @core.ScrollRequest,
 ) -> @core.View[Msg] {
   ignore(item_height)

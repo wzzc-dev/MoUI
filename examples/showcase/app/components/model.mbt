@@ -107,10 +107,10 @@ pub(all) struct ComponentGalleryModel {
   selected_density : String
   feature_enabled : Bool
   slider_value : Double
-  counter : Int
+  counter : Int32
   probe_text : String
-  probe_action_count : Int
-  probe_submit_count : Int
+  probe_action_count : Int32
+  probe_submit_count : Int32
   probe_dialog_open : Bool
   checkbox_group_selection : Array[String]
 }
@@ -159,7 +159,7 @@ pub fn SessionRuntimeInfo::new(
   requested~ : String,
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
-  note? : String = "",
+  note~ : String = "",
 ) -> SessionRuntimeInfo {
   {
     host,
@@ -262,7 +262,7 @@ pub fn SessionRuntimeInfo::for_platform(
 pub fn ComponentGalleryModel::new(
   active_platform~ : PlatformId,
   session_runtime? : SessionRuntimeInfo,
-  active_item? : ComponentGalleryItemId = Welcome,
+  active_item~ : ComponentGalleryItemId = Welcome,
 ) -> ComponentGalleryModel {
   {
     active_platform,

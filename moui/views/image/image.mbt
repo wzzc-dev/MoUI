@@ -3,10 +3,10 @@ pub fn[Msg] image(
   source : String,
   width? : Double,
   height? : Double,
-  opacity? : Double = 1.0,
-  corner_radius? : Double = 0.0,
-  fit? : @core.ImageFit = Contain,
-  accessibility_label? : String = "",
+  opacity~ : Double = 1.0,
+  corner_radius~ : Double = 0.0,
+  fit~ : @core.ImageFit = Contain,
+  accessibility_label~ : String = "",
 ) -> @core.View[Msg] {
   let size = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))

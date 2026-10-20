@@ -1,20 +1,20 @@
 ///|
 priv struct MountResult {
   node : ElementNode
-  next_id : Int
+  next_id : Int32
 }
 
 ///|
 priv struct ReconcileResult {
   node : ElementNode
-  next_id : Int
+  next_id : Int32
   dirty_kind : ReconcileDirtyKind
 }
 
 ///|
 priv struct ChildrenReconcileResult {
   children : Array[ElementNode]
-  next_id : Int
+  next_id : Int32
   dirty_kind : ReconcileDirtyKind
   structure_changed : Bool
 }
@@ -64,7 +64,7 @@ fn mount_runtime_view_node(spec : &RuntimeViewNode) -> ElementNode {
 ///|
 fn mount_runtime_view_node_with_next(
   spec : &RuntimeViewNode,
-  next_id : Int,
+  next_id : Int32,
 ) -> MountResult {
   mount_runtime_view_node_for_runtime(spec, None, next_id)
 }
@@ -73,7 +73,7 @@ fn mount_runtime_view_node_with_next(
 fn mount_runtime_view_node_for_runtime(
   spec : &RuntimeViewNode,
   runtime : RuntimeState?,
-  next_id : Int,
+  next_id : Int32,
 ) -> MountResult {
   let id = ElementId::new(next_id)
   let mut next = next_id + 1
@@ -108,7 +108,7 @@ fn reconcile_element_for_runtime(
   old : ElementNode,
   next_view_node : &RuntimeViewNode,
   runtime : RuntimeState?,
-  next_id : Int,
+  next_id : Int32,
 ) -> ReconcileResult {
   if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) {
     let mounted = mount_runtime_view_node_for_runtime(
@@ -151,7 +151,7 @@ fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
   next_view_node : &RuntimeViewNode,
   runtime : RuntimeState?,
-  next_id : Int,
+  next_id : Int32,
 ) -> ChildrenReconcileResult {
   let next_view_nodes = next_view_node.children()
   let children : Array[ElementNode] = []
@@ -258,7 +258,7 @@ fn ElementNode::apply_descendant_reconcile_dirty(
 ///|
 /// Threshold for switching from linear scan to indexed lookup.
 /// Below this, the overhead of building the index outweighs the savings.
-fn keyed_index_threshold() -> Int {
+fn keyed_index_threshold() -> Int32 {
   32
 }
 
@@ -270,8 +270,8 @@ fn keyed_index_threshold() -> Int {
 /// is preserved. Duplicate keys are rare, so arrays are usually length 1.
 fn build_keyed_child_index(
   old_children : Array[ElementNode],
-) -> Map[KeyedChildComposite, Array[Int]] {
-  let index : Map[KeyedChildComposite, Array[Int]] = Map([])
+) -> Map[KeyedChildComposite, Array[Int32]] {
+  let index : Map[KeyedChildComposite, Array[Int32]] = Map([])
   for old_index, old_child in old_children {
     match old_child.key {
       Some(key) => {
@@ -294,10 +294,10 @@ fn build_keyed_child_index(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  key_index : Map[KeyedChildComposite, Array[Int]]?,
+  key_index : Map[KeyedChildComposite, Array[Int32]]?,
   child_view_node : &RuntimeViewNode,
-  index : Int,
-) -> Int? {
+  index : Int32,
+) -> Int32? {
   match runtime_view_node_identity_key(child_view_node) {
     Some(key) =>
       match key_index {

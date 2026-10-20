@@ -9,7 +9,7 @@ pub fn physical_size_to_core(size : @dpi.PhysicalSize) -> @core.Size {
 ///|
 pub fn physical_position_to_core(
   position : @dpi.PhysicalPositionF64,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @core.Point {
   let scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
   @core.Point::new(x=position.x() / scale, y=position.y() / scale)
@@ -18,7 +18,7 @@ pub fn physical_position_to_core(
 ///|
 pub fn surface_metrics_from_physical(
   size : @dpi.PhysicalSize,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @core.SurfaceMetrics {
   let scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
   let physical = physical_size_to_core(size)
@@ -124,7 +124,7 @@ pub fn named_key_name(key : @window_core.NamedKey) -> String {
 }
 
 ///|
-pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int? {
+pub fn mouse_button_to_core(button : @window_core.MouseButton) -> Int32? {
   match button {
     Left => Some(0)
     Right => Some(1)
@@ -180,7 +180,7 @@ pub fn touch_phase_to_host(
 ///|
 pub fn mouse_scroll_delta_to_host(
   delta : @window_core.MouseScrollDelta,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @backend_host.HostScrollDelta {
   match delta {
     LineDelta(x, y) => Lines(@core.Point::new(x~, y~))
@@ -205,8 +205,8 @@ pub fn window_event_to_host_with_modifiers(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
   modifiers : @core.KeyModifiers,
-  scale_factor? : Double = 1.0,
-  blur_to_cancel? : Bool = false,
+  scale_factor~ : Double = 1.0,
+  blur_to_cancel~ : Bool = false,
 ) -> @backend_host.Event? {
   match event {
     SurfaceResized(size) =>

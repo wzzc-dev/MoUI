@@ -1,8 +1,8 @@
 ///|
 priv enum NativeDrawItem {
-  NativeVisual(Int, Int, NativeScissor?)
-  NativeText(Int, Int, NativeScissor?)
-  NativeImage(Int, Int, NativeScissor?, NativeImageRun)
+  NativeVisual(Int32, Int32, NativeScissor?)
+  NativeText(Int32, Int32, NativeScissor?)
+  NativeImage(Int32, Int32, NativeScissor?, NativeImageRun)
   NativeLayer(NativeLayerRun)
   NativeShaderEffect(NativeShaderEffectRun)
 }
@@ -18,10 +18,10 @@ priv struct NativeDrawPlan {
 
 ///|
 priv struct NativeScissor {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 }
 
 ///|

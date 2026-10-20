@@ -42,7 +42,7 @@ pub fn[Msg] SidebarItem::new(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> SidebarItem[Msg] {
   { id, label, message, enabled, }
 }
@@ -52,7 +52,7 @@ pub fn[Msg] sidebar_item(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> SidebarItem[Msg] {
   SidebarItem::new(id~, label~, message~, enabled~)
 }
@@ -62,8 +62,8 @@ pub fn[Msg] SectionNavItem::new(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  summary? : String = "",
-  enabled? : Bool = true,
+  summary~ : String = "",
+  enabled~ : Bool = true,
 ) -> SectionNavItem[Msg] {
   { id, label, summary, message, enabled, }
 }
@@ -73,8 +73,8 @@ pub fn[Msg] section_nav_item(
   id~ : String,
   label~ : String,
   message~ : Msg,
-  summary? : String = "",
-  enabled? : Bool = true,
+  summary~ : String = "",
+  enabled~ : Bool = true,
 ) -> SectionNavItem[Msg] {
   SectionNavItem::new(id~, label~, message~, summary~, enabled~)
 }
@@ -83,7 +83,7 @@ pub fn[Msg] section_nav_item(
 pub fn[Msg] BreadcrumbItem::new(
   id~ : String,
   label~ : String,
-  message? : Msg? = None,
+  message~ : Msg? = None,
 ) -> BreadcrumbItem[Msg] {
   { id, label, message, }
 }
@@ -92,7 +92,7 @@ pub fn[Msg] BreadcrumbItem::new(
 pub fn[Msg] breadcrumb_item(
   id~ : String,
   label~ : String,
-  message? : Msg? = None,
+  message~ : Msg? = None,
 ) -> BreadcrumbItem[Msg] {
   BreadcrumbItem::new(id~, label~, message~)
 }

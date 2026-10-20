@@ -38,7 +38,7 @@ struct StrokePathData {
   edges : Array[CanvasEdge]
   endpoints : Array[StrokeEndpoint]
   joins : Array[StrokeJoinPoint]
-  subpath_starts : Array[Int]
+  subpath_starts : Array[Int32]
 } derive(Debug)
 
 ///|
@@ -47,7 +47,7 @@ pub extend StrokePathData with Debug::{to_repr}
 ///|
 struct DashCursor {
   pattern : Array[Double]
-  mut index : Int
+  mut index : Int32
   mut remaining : Double
   mut is_drawing : Bool
 } derive(Debug)
@@ -225,7 +225,7 @@ fn path_to_stroke_path(path : Path, transform : Transform) -> StrokePathData {
 }
 
 ///|
-fn push_subpath_start(starts : Array[Int], start : Int) -> Unit {
+fn push_subpath_start(starts : Array[Int32], start : Int32) -> Unit {
   if starts.length() == 0 || starts[starts.length() - 1] != start {
     starts.push(start)
   }
@@ -234,7 +234,7 @@ fn push_subpath_start(starts : Array[Int], start : Int) -> Unit {
 ///|
 fn StrokePathData::is_subpath_start(
   self : StrokePathData,
-  edge_index : Int,
+  edge_index : Int32,
 ) -> Bool {
   for start in self.subpath_starts {
     if start == edge_index {
@@ -302,8 +302,8 @@ fn append_dashed_edge(
   joins : Array[StrokeJoinPoint],
   edge : CanvasEdge,
   cursor : DashCursor,
-  dash_run_start : Int,
-) -> Int {
+  dash_run_start : Int32,
+) -> Int32 {
   let dx = edge.x1 - edge.x0
   let dy = edge.y1 - edge.y0
   let length = (dx * dx + dy * dy).sqrt()
@@ -341,7 +341,7 @@ fn finish_dash_run(
   edges : Array[CanvasEdge],
   endpoints : Array[StrokeEndpoint],
   joins : Array[StrokeJoinPoint],
-  start_index : Int,
+  start_index : Int32,
 ) -> Unit {
   guard start_index >= 0 && start_index < edges.length() else { return }
   push_open_subpath_endpoints(edges, endpoints, start_index)
@@ -399,11 +399,11 @@ fn normalize_dash_offset(offset : Double, total : Double) -> Double {
 ///|
 fn clipped_int_bounds(
   canvas : Canvas,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
-) -> (Int, Int, Int, Int) {
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
+) -> (Int32, Int32, Int32, Int32) {
   let mut left = x_start.max(0)
   let mut top = y_start.max(0)
   let mut right = x_end.min(canvas.pixmap.get_width())
@@ -421,7 +421,7 @@ fn clipped_int_bounds(
 }
 
 ///|
-fn is_pixel_in_clip(canvas : Canvas, x : Int, y : Int) -> Bool {
+fn is_pixel_in_clip(canvas : Canvas, x : Int32, y : Int32) -> Bool {
   guard x >= 0 &&
     x < canvas.pixmap.get_width() &&
     y >= 0 &&
@@ -437,10 +437,10 @@ fn is_pixel_in_clip(canvas : Canvas, x : Int, y : Int) -> Bool {
 ///|
 fn Canvas::mark_dirty_bounds(
   self : Canvas,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Unit {
   self.dirty_region.add_rect(
     PixelRect::new(
@@ -455,10 +455,10 @@ fn Canvas::mark_dirty_bounds(
 ///|
 fn blend_clipped_rect(
   canvas : Canvas,
-  x : Int,
-  y : Int,
-  w : Int,
-  h : Int,
+  x : Int32,
+  y : Int32,
+  w : Int32,
+  h : Int32,
   color : Color,
 ) -> Unit {
   let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
@@ -484,7 +484,7 @@ fn blend_clipped_rect(
 fn push_open_subpath_endpoints(
   edges : Array[CanvasEdge],
   endpoints : Array[StrokeEndpoint],
-  start_index : Int,
+  start_index : Int32,
 ) -> Unit {
   guard start_index < edges.length() else { return }
   let first = edges[start_index]
@@ -509,7 +509,7 @@ fn push_open_subpath_endpoints(
 fn push_open_subpath_joins(
   edges : Array[CanvasEdge],
   joins : Array[StrokeJoinPoint],
-  start_index : Int,
+  start_index : Int32,
 ) -> Unit {
   guard start_index + 1 < edges.length() else { return }
   for i in (start_index + 1)..<edges.length() {
@@ -521,7 +521,7 @@ fn push_open_subpath_joins(
 fn push_closed_subpath_joins(
   edges : Array[CanvasEdge],
   joins : Array[StrokeJoinPoint],
-  start_index : Int,
+  start_index : Int32,
 ) -> Unit {
   guard start_index < edges.length() else { return }
   push_open_subpath_joins(edges, joins, start_index)
@@ -941,11 +941,11 @@ let half_infinite = 1.0e100
 ///|
 fn blend_coverage_pixel(
   pixmap : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
-  covered : Int,
-  sample_count : Int,
+  covered : Int32,
+  sample_count : Int32,
   blend_mode : BlendMode,
 ) -> Bool {
   let coverage = coverage_to_byte(covered, sample_count).to_int()
@@ -960,7 +960,7 @@ fn blend_coverage_pixel(
 }
 
 ///|
-fn coverage_to_byte(covered : Int, sample_count : Int) -> Byte {
+fn coverage_to_byte(covered : Int32, sample_count : Int32) -> Byte {
   guard sample_count > 0 else { return 0 }
   clamp_byte((covered * 255 + sample_count / 2) / sample_count)
 }

@@ -13,7 +13,7 @@ fn drag_region_test_band() -> @core.Rect {
 }
 
 ///|
-fn drag_region_test_window(value : Int) -> @host.WindowId {
+fn drag_region_test_window(value : Int32) -> @host.WindowId {
   @host.WindowId::new(value)
 }
 
@@ -28,7 +28,7 @@ test "app-declared drag region reaches the native surface setter" {
   )
   let (calls, set_region) = drag_region_surface_spy()
   let window = drag_region_test_window(1)
-  let mut applied : Int? = None
+  let mut applied : Int32? = None
   let mut applied_window : @host.WindowId? = None
   // First tick: the app has declared nothing, so the host stays quiet.
   let (a0, w0) = push_window_drag_region_to_surface(
@@ -63,7 +63,7 @@ test "per-layout republishing reaches the native setter only on change" {
   let source = @services.WindowDragRegionSource::new()
   let (calls, set_region) = drag_region_surface_spy()
   let window = drag_region_test_window(1)
-  let mut applied : Int? = None
+  let mut applied : Int32? = None
   let mut applied_window : @host.WindowId? = None
   for _ in 0..<30 {
     source.set_region(Some(drag_region_test_band()))
@@ -174,7 +174,7 @@ test "a host without a declared drag region never calls the surface setter" {
   let source = @services.WindowDragRegionSource::new()
   let (calls, set_region) = drag_region_surface_spy()
   let window = drag_region_test_window(1)
-  let mut applied : Int? = None
+  let mut applied : Int32? = None
   let mut applied_window : @host.WindowId? = None
   for _ in 0..<10 {
     let (a, w) = push_window_drag_region_to_surface(

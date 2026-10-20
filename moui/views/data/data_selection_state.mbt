@@ -14,7 +14,7 @@ pub struct SelectableListItem[Msg] {
 }
 
 ///|
-pub fn SelectionState::new(selected? : Array[String] = []) -> SelectionState {
+pub fn SelectionState::new(selected~ : Array[String] = []) -> SelectionState {
   { selected: selected.copy(), }
 }
 
@@ -32,7 +32,7 @@ pub fn SelectionState::toggle(
 }
 
 ///|
-pub fn SelectionState::count(self : SelectionState) -> Int {
+pub fn SelectionState::count(self : SelectionState) -> Int32 {
   self.selected.length()
 }
 
@@ -41,9 +41,9 @@ pub fn[Msg] SelectableListItem::new(
   id~ : String,
   title~ : String,
   message~ : Msg,
-  subtitle? : String = "",
-  detail? : String = "",
-  enabled? : Bool = true,
+  subtitle~ : String = "",
+  detail~ : String = "",
+  enabled~ : Bool = true,
 ) -> SelectableListItem[Msg] {
   { id, title, subtitle, detail, message, enabled, }
 }
@@ -53,9 +53,9 @@ pub fn[Msg] selectable_list_item(
   id~ : String,
   title~ : String,
   message~ : Msg,
-  subtitle? : String = "",
-  detail? : String = "",
-  enabled? : Bool = true,
+  subtitle~ : String = "",
+  detail~ : String = "",
+  enabled~ : Bool = true,
 ) -> SelectableListItem[Msg] {
   SelectableListItem::new(id~, title~, message~, subtitle~, detail~, enabled~)
 }

@@ -3,15 +3,15 @@
 /// instantiate so that [first_row, last_row] covers the visible viewport
 /// plus `overscan` extra rows on each side.
 pub struct WindowedRowRange {
-  first_row : Int
-  last_row : Int
+  first_row : Int32
+  last_row : Int32
 }
 
 ///|
 /// Number of rows needed to lay out `item_count` items in `columns` columns.
 /// Mirrors the historical `lazy_grid_row_count`; kept here so list and grid
 /// windowing share one row model.
-pub fn windowed_row_count(item_count~ : Int, columns~ : Int) -> Int {
+pub fn windowed_row_count(item_count~ : Int32, columns~ : Int32) -> Int32 {
   if item_count == 0 {
     0
   } else {
@@ -37,12 +37,12 @@ pub fn windowed_row_count(item_count~ : Int, columns~ : Int) -> Int {
 /// Returns `None` when there is nothing to render (empty list or a degenerate
 /// non-positive stride).
 pub fn visible_row_window(
-  row_count~ : Int,
+  row_count~ : Int32,
   scroll_y~ : Double,
   viewport_extent~ : Double,
   row_extent~ : Double,
   row_spacing~ : Double,
-  overscan~ : Int,
+  overscan~ : Int32,
 ) -> WindowedRowRange? {
   if row_count <= 0 {
     return None

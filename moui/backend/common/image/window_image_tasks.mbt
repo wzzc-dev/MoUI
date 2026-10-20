@@ -122,13 +122,13 @@ pub struct WindowImageTasks {
   priv starter : WindowImageTaskStarter
   priv request_redraw : () -> Unit
   priv mut tasks : Array[WindowImageTask]
-  priv mut scheduled_since_observation : Int
+  priv mut scheduled_since_observation : Int32
   priv mut disposed : Bool
 }
 
 ///|
 pub fn WindowImageTasks::new(
-  starter? : WindowImageTaskStarter = WindowImageTaskStarter::immediate(),
+  starter~ : WindowImageTaskStarter = WindowImageTaskStarter::immediate(),
   request_redraw~ : () -> Unit,
 ) -> WindowImageTasks {
   {
@@ -164,14 +164,14 @@ pub fn WindowImageTasks::schedule(
 }
 
 ///|
-pub fn WindowImageTasks::take_scheduled_count(self : WindowImageTasks) -> Int {
+pub fn WindowImageTasks::take_scheduled_count(self : WindowImageTasks) -> Int32 {
   let count = self.scheduled_since_observation
   self.scheduled_since_observation = 0
   count
 }
 
 ///|
-pub fn WindowImageTasks::pending_count(self : WindowImageTasks) -> Int {
+pub fn WindowImageTasks::pending_count(self : WindowImageTasks) -> Int32 {
   if self.disposed {
     0
   } else {
@@ -180,7 +180,7 @@ pub fn WindowImageTasks::pending_count(self : WindowImageTasks) -> Int {
 }
 
 ///|
-pub fn WindowImageTasks::cancel(self : WindowImageTasks) -> Int {
+pub fn WindowImageTasks::cancel(self : WindowImageTasks) -> Int32 {
   if self.disposed {
     return 0
   }

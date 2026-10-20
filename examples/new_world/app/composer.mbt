@@ -261,12 +261,7 @@ pub fn update_composer(
       if text == "" {
         (model, @moui.Effect::none())
       } else {
-        let cleared = {
-          ..model,
-          say_draft: "",
-          do_draft: "",
-          story_draft: "",
-        }
+        let cleared = { ..model, say_draft: "", do_draft: "", story_draft: "", }
         match cleared.scene_location {
           Some(location) =>
             send_scene_turn(cleared, location, text, runner, host)

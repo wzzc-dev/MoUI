@@ -1,12 +1,12 @@
 ///|
 pub fn[Msg] form_validation_summary(
   summary~ : FormValidationSummary,
-  title? : String = "Review required",
-  valid_message? : String = "",
-  action? : @controls.StateViewAction[Msg]? = None,
+  title~ : String = "Review required",
+  valid_message~ : String = "",
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FormValidationStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   if summary.valid {

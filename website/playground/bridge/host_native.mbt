@@ -1,5 +1,5 @@
 ///|
-pub fn request_compile(_revision : Int, _request : String) -> Unit {
+pub fn request_compile(_revision : Int32, _request : String) -> Unit {
   ()
 }
 

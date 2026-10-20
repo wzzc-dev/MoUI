@@ -1,6 +1,6 @@
 ///|
 struct DownstreamSlotValue {
-  count : Int
+  count : Int32
   progress : Double
 } derive(Eq, Debug)
 

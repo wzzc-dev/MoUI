@@ -2,25 +2,25 @@
 /// 终端文本选择:锚点与活动端点(单元格坐标,行为全局行索引,
 /// 含回看区)。选择范围两端可任意顺序。
 pub(all) struct Selection {
-  anchor_row : Int
-  anchor_col : Int
-  active_row : Int
-  active_col : Int
+  anchor_row : Int32
+  anchor_col : Int32
+  active_row : Int32
+  active_col : Int32
 }
 
 ///|
 pub fn Selection::new(
-  anchor_row : Int,
-  anchor_col : Int,
-  active_row : Int,
-  active_col : Int,
+  anchor_row : Int32,
+  anchor_col : Int32,
+  active_row : Int32,
+  active_col : Int32,
 ) -> Selection {
   { anchor_row, anchor_col, active_row, active_col, }
 }
 
 ///|
 /// 归一化为 (top_row, left_col, bottom_row, right_col)。
-pub fn Selection::normalized(self : Selection) -> (Int, Int, Int, Int) {
+pub fn Selection::normalized(self : Selection) -> (Int32, Int32, Int32, Int32) {
   let (top, bottom) = if self.anchor_row <= self.active_row {
     (self.anchor_row, self.active_row)
   } else {
@@ -45,14 +45,17 @@ pub fn Selection::normalized(self : Selection) -> (Int, Int, Int, Int) {
 
 ///|
 /// 行是否在选中范围内。
-pub fn Selection::contains_row(self : Selection, row : Int) -> Bool {
+pub fn Selection::contains_row(self : Selection, row : Int32) -> Bool {
   let (top, _, bottom, _) = self.normalized()
   row >= top && row <= bottom
 }
 
 ///|
 /// 该行的选中列区间 [start, end);行不在范围内返回 None。
-pub fn Selection::col_range_at(self : Selection, row : Int) -> (Int, Int)? {
+pub fn Selection::col_range_at(
+  self : Selection,
+  row : Int32,
+) -> (Int32, Int32)? {
   let (top, left, bottom, right) = self.normalized()
   if row < top || row > bottom {
     return None
@@ -97,7 +100,7 @@ pub fn selection_text(
 fn selection_line_text(
   row : @tui.TermRow,
   sel : Selection,
-  row_idx : Int,
+  row_idx : Int32,
 ) -> String {
   let (start, end) = match sel.col_range_at(row_idx) {
     Some(range) => range

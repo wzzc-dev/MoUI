@@ -24,8 +24,8 @@ pub struct DropdownState {
 
 ///|
 pub fn DropdownState::new(
-  expanded? : Bool = false,
-  selected? : String = "",
+  expanded~ : Bool = false,
+  selected~ : String = "",
 ) -> DropdownState {
   { expanded, selected, }
 }

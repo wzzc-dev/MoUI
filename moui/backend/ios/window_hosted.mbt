@@ -25,10 +25,10 @@ pub extend IosEmbeddedRuntimeBackend with @wzzc-dev/window/ios.ApplicationHandle
 
 ///|
 pub fn IosEmbeddedRuntimeBackend::new(
-  title? : String = "MoUI",
+  title~ : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
-  auto_exit_after_frames? : Int? = None,
+  auto_exit_after_frames~ : Int32? = None,
 ) -> IosEmbeddedRuntimeBackend {
   new_ios_embedded_runtime(
     title~,
@@ -40,7 +40,7 @@ pub fn IosEmbeddedRuntimeBackend::new(
 
 ///|
 /// Application-builder entry for the iOS window-hosted event loop.
-pub fn entry(auto_exit_after_frames? : Int? = None) -> @runtime.PlatformEntry {
+pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="ios", launch=request => {
     let runtime = request.runtime()
     let app = IosEmbeddedRuntimeBackend::new(
@@ -59,7 +59,7 @@ fn new_ios_embedded_runtime(
   title~ : String,
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> IosSurfaceBinding,
-  auto_exit_after_frames~ : Int?,
+  auto_exit_after_frames~ : Int32?,
 ) -> IosEmbeddedRuntimeBackend {
   let ime_sink = IosImeSink::new()
   {
@@ -83,14 +83,14 @@ fn new_ios_embedded_runtime(
 ///|
 pub fn IosEmbeddedRuntimeBackend::frames_presented(
   self : IosEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.frames_presented()
 }
 
 ///|
 pub fn IosEmbeddedRuntimeBackend::surface_generation(
   self : IosEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.surface_generation()
 }
 
@@ -188,10 +188,10 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn ab
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn ios_window_hosted_pump_host_sim(
   app : IosEmbeddedRuntimeBackend,
-  surface_handle? : UInt64 = 0xABCUL,
-  width? : Int = 320,
-  height? : Int = 640,
-  scale? : Double = 2.0,
+  surface_handle~ : UInt64 = 0xABCUL,
+  width~ : Int32 = 320,
+  height~ : Int32 = 640,
+  scale~ : Double = 2.0,
 ) -> Unit {
   @window_ios.host_reset_for_test()
   let event_loop = @window_ios.EventLoop::new()

@@ -5,7 +5,7 @@ let generated_begin = "<!-- BEGIN GENERATED PLATFORM TIER MATRIX -->"
 let generated_end = "<!-- END GENERATED PLATFORM TIER MATRIX -->"
 
 ///|
-fn tier_labels(routes : Array[PlatformRoute], tier : Int) -> String {
+fn tier_labels(routes : Array[PlatformRoute], tier : Int32) -> String {
   let labels : Array[String] = []
   for route in routes {
     if route.tier == tier {

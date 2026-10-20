@@ -1,8 +1,8 @@
 ///|
 /// Identifies one frame submission for one native-surface generation.
 pub struct FrameToken {
-  priv surface_generation : Int
-  priv sequence : Int
+  priv surface_generation : Int32
+  priv sequence : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -16,19 +16,19 @@ pub extend FrameToken with ToJson::{to_json}
 
 ///|
 pub fn FrameToken::new(
-  surface_generation~ : Int,
-  sequence~ : Int,
+  surface_generation~ : Int32,
+  sequence~ : Int32,
 ) -> FrameToken {
   { surface_generation, sequence, }
 }
 
 ///|
-pub fn FrameToken::surface_generation(self : FrameToken) -> Int {
+pub fn FrameToken::surface_generation(self : FrameToken) -> Int32 {
   self.surface_generation
 }
 
 ///|
-pub fn FrameToken::sequence(self : FrameToken) -> Int {
+pub fn FrameToken::sequence(self : FrameToken) -> Int32 {
   self.sequence
 }
 
@@ -190,13 +190,13 @@ pub extend RendererImageCompletionResult with ToJson::{to_json}
 ///|
 pub struct RendererImageDiagnostics {
   priv records : Array[ImageResourceRecord]
-  priv pending_request_count : Int
+  priv pending_request_count : Int32
 }
 
 ///|
 fn RendererImageDiagnostics::new(
   records~ : Array[ImageResourceRecord],
-  pending_request_count~ : Int,
+  pending_request_count~ : Int32,
 ) -> RendererImageDiagnostics {
   { records, pending_request_count, }
 }
@@ -211,7 +211,7 @@ pub fn RendererImageDiagnostics::records(
 ///|
 pub fn RendererImageDiagnostics::pending_request_count(
   self : RendererImageDiagnostics,
-) -> Int {
+) -> Int32 {
   self.pending_request_count
 }
 

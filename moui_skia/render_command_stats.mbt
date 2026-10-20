@@ -1,5 +1,5 @@
 ///|
-fn RenderCommand::save_depth_delta(self : RenderCommand) -> Int {
+fn RenderCommand::save_depth_delta(self : RenderCommand) -> Int32 {
   match self {
     SaveCanvas | SaveCanvasLayer(_, _, _, _, _) => 1
     RestoreCanvas => -1
@@ -9,23 +9,23 @@ fn RenderCommand::save_depth_delta(self : RenderCommand) -> Int {
 
 ///|
 pub(all) struct RenderCommandStats {
-  command_count : Int
-  draw_count : Int
-  state_count : Int
-  transform_count : Int
-  clip_count : Int
-  clear_count : Int
-  present_count : Int
-  text_count : Int
-  resource_declaration_count : Int
-  image_resource_count : Int
-  shader_resource_count : Int
-  filter_resource_count : Int
-  path_resource_count : Int
-  text_resource_count : Int
-  max_save_depth : Int
-  final_save_depth : Int
-  unbalanced_restore_count : Int
+  command_count : Int32
+  draw_count : Int32
+  state_count : Int32
+  transform_count : Int32
+  clip_count : Int32
+  clear_count : Int32
+  present_count : Int32
+  text_count : Int32
+  resource_declaration_count : Int32
+  image_resource_count : Int32
+  shader_resource_count : Int32
+  filter_resource_count : Int32
+  path_resource_count : Int32
+  text_resource_count : Int32
+  max_save_depth : Int32
+  final_save_depth : Int32
+  unbalanced_restore_count : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -66,8 +66,8 @@ pub fn RenderCommandStats::is_state_balanced(self : RenderCommandStats) -> Bool 
 fn RenderCommandStats::record_command(
   self : RenderCommandStats,
   command : RenderCommand,
-  current_save_depth : Int,
-) -> (RenderCommandStats, Int) {
+  current_save_depth : Int32,
+) -> (RenderCommandStats, Int32) {
   let mut depth = current_save_depth + command.save_depth_delta()
   let mut unbalanced_restore_count = self.unbalanced_restore_count
   if depth < 0 {
@@ -109,7 +109,7 @@ fn RenderCommandStats::record_command(
       resource_counts.path_resource_count,
       text_resource_count: self.text_resource_count +
       resource_counts.text_resource_count,
-      max_save_depth: Int::max(self.max_save_depth, depth),
+      max_save_depth: Int32::max(self.max_save_depth, depth),
       final_save_depth: depth,
       unbalanced_restore_count,
     },

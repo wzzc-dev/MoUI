@@ -21,17 +21,17 @@ priv struct CurvePoint {
 /// Rasterizer for rendering glyph outlines to pixels
 /// Implements scanline fill with anti-aliasing
 struct Rasterizer {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
-  coverage : FixedArray[Int] // Coverage buffer for anti-aliasing
+  coverage : FixedArray[Int32] // Coverage buffer for anti-aliasing
 }
 
 ///|
 /// Grayscale coverage mask produced by text rasterization
 struct CoverageMask {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
 } derive(Debug)
 
@@ -41,8 +41,8 @@ pub extend CoverageMask with Debug::{to_repr}
 ///|
 /// Create a coverage mask from grayscale pixels
 pub fn CoverageMask::new(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   pixels : FixedArray[Byte],
 ) -> CoverageMask {
   { width, height, pixels, }
@@ -50,13 +50,13 @@ pub fn CoverageMask::new(
 
 ///|
 /// Get the width of the mask
-pub fn CoverageMask::get_width(self : CoverageMask) -> Int {
+pub fn CoverageMask::get_width(self : CoverageMask) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the height of the mask
-pub fn CoverageMask::get_height(self : CoverageMask) -> Int {
+pub fn CoverageMask::get_height(self : CoverageMask) -> Int32 {
   self.height
 }
 
@@ -76,10 +76,10 @@ pub fn CoverageMask::copy(self : CoverageMask) -> CoverageMask {
 /// Placement of one glyph mask inside a glyph mask atlas.
 struct GlyphAtlasEntry {
   key : String
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 } derive(Debug)
 
 ///|
@@ -98,19 +98,19 @@ pub extend GlyphMaskAtlasInsertResult with Debug::{to_repr}
 
 ///|
 priv struct GlyphAtlasPlacement {
-  x : Int
-  y : Int
-  row_height : Int
+  x : Int32
+  y : Int32
+  row_height : Int32
 }
 
 ///|
 /// Create a glyph atlas entry.
 pub fn GlyphAtlasEntry::new(
   key~ : String,
-  x~ : Int,
-  y~ : Int,
-  width~ : Int,
-  height~ : Int,
+  x~ : Int32,
+  y~ : Int32,
+  width~ : Int32,
+  height~ : Int32,
 ) -> GlyphAtlasEntry {
   { key, x, y, width, height, }
 }
@@ -123,25 +123,25 @@ pub fn GlyphAtlasEntry::get_key(self : GlyphAtlasEntry) -> String {
 
 ///|
 /// Get the atlas x coordinate.
-pub fn GlyphAtlasEntry::get_x(self : GlyphAtlasEntry) -> Int {
+pub fn GlyphAtlasEntry::get_x(self : GlyphAtlasEntry) -> Int32 {
   self.x
 }
 
 ///|
 /// Get the atlas y coordinate.
-pub fn GlyphAtlasEntry::get_y(self : GlyphAtlasEntry) -> Int {
+pub fn GlyphAtlasEntry::get_y(self : GlyphAtlasEntry) -> Int32 {
   self.y
 }
 
 ///|
 /// Get the entry width.
-pub fn GlyphAtlasEntry::get_width(self : GlyphAtlasEntry) -> Int {
+pub fn GlyphAtlasEntry::get_width(self : GlyphAtlasEntry) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the entry height.
-pub fn GlyphAtlasEntry::get_height(self : GlyphAtlasEntry) -> Int {
+pub fn GlyphAtlasEntry::get_height(self : GlyphAtlasEntry) -> Int32 {
   self.height
 }
 
@@ -172,14 +172,14 @@ pub fn GlyphMaskAtlasInsertResult::did_reuse(
 ///|
 /// Small row-packed atlas for rendered glyph coverage masks.
 struct GlyphMaskAtlas {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
   mut entries : Map[String, GlyphAtlasEntry]
-  mut cursor_x : Int
-  mut cursor_y : Int
-  mut row_height : Int
-  mut used_pixel_count : Int
+  mut cursor_x : Int32
+  mut cursor_y : Int32
+  mut row_height : Int32
+  mut used_pixel_count : Int32
 } derive(Debug)
 
 ///|
@@ -187,7 +187,7 @@ pub extend GlyphMaskAtlas with Debug::{to_repr}
 
 ///|
 /// Create an empty glyph mask atlas.
-pub fn GlyphMaskAtlas::new(width : Int, height : Int) -> GlyphMaskAtlas {
+pub fn GlyphMaskAtlas::new(width : Int32, height : Int32) -> GlyphMaskAtlas {
   {
     width,
     height,
@@ -202,31 +202,31 @@ pub fn GlyphMaskAtlas::new(width : Int, height : Int) -> GlyphMaskAtlas {
 
 ///|
 /// Get the atlas width.
-pub fn GlyphMaskAtlas::get_width(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::get_width(self : GlyphMaskAtlas) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the atlas height.
-pub fn GlyphMaskAtlas::get_height(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::get_height(self : GlyphMaskAtlas) -> Int32 {
   self.height
 }
 
 ///|
 /// Return the total pixel capacity of the atlas.
-pub fn GlyphMaskAtlas::get_capacity(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::get_capacity(self : GlyphMaskAtlas) -> Int32 {
   self.width * self.height
 }
 
 ///|
 /// Return the number of atlas pixels occupied by placed glyph masks.
-pub fn GlyphMaskAtlas::get_used_pixel_count(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::get_used_pixel_count(self : GlyphMaskAtlas) -> Int32 {
   self.used_pixel_count
 }
 
 ///|
 /// Return atlas capacity minus placed mask pixels.
-pub fn GlyphMaskAtlas::get_free_pixel_count(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::get_free_pixel_count(self : GlyphMaskAtlas) -> Int32 {
   self.get_capacity() - self.used_pixel_count
 }
 
@@ -243,7 +243,7 @@ pub fn GlyphMaskAtlas::get_occupancy_ratio(self : GlyphMaskAtlas) -> Double {
 
 ///|
 /// Return the number of placed glyph masks.
-pub fn GlyphMaskAtlas::len(self : GlyphMaskAtlas) -> Int {
+pub fn GlyphMaskAtlas::len(self : GlyphMaskAtlas) -> Int32 {
   self.entries.length()
 }
 
@@ -414,7 +414,7 @@ fn copy_mask_into_atlas(
 struct GlyphMaskCache {
   mut masks : Map[String, CoverageMask]
   mut access_order : Array[String]
-  capacity : Int
+  capacity : Int32
   is_bounded : Bool
 } derive(Debug)
 
@@ -434,12 +434,12 @@ pub extend GlyphMaskCacheRasterizeResult with Debug::{to_repr}
 ///|
 /// Placement data for a glyph mask rendered from a font face.
 struct FaceGlyphMaskPlacement {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   origin_x : Double
   origin_y : Double
-  draw_offset_x : Int
-  draw_offset_y : Int
+  draw_offset_x : Int32
+  draw_offset_y : Int32
 } derive(Debug)
 
 ///|
@@ -464,7 +464,7 @@ pub fn GlyphMaskCache::new() -> GlyphMaskCache {
 
 ///|
 /// Create an empty glyph mask cache with least-recently-used eviction.
-pub fn GlyphMaskCache::with_capacity(capacity : Int) -> GlyphMaskCache {
+pub fn GlyphMaskCache::with_capacity(capacity : Int32) -> GlyphMaskCache {
   {
     masks: Map([]),
     access_order: [],
@@ -515,13 +515,17 @@ pub fn FaceGlyphMaskCacheResult::did_rasterize(
 
 ///|
 /// Get the mask width for this placement.
-pub fn FaceGlyphMaskPlacement::get_width(self : FaceGlyphMaskPlacement) -> Int {
+pub fn FaceGlyphMaskPlacement::get_width(
+  self : FaceGlyphMaskPlacement,
+) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the mask height for this placement.
-pub fn FaceGlyphMaskPlacement::get_height(self : FaceGlyphMaskPlacement) -> Int {
+pub fn FaceGlyphMaskPlacement::get_height(
+  self : FaceGlyphMaskPlacement,
+) -> Int32 {
   self.height
 }
 
@@ -545,7 +549,7 @@ pub fn FaceGlyphMaskPlacement::get_origin_y(
 /// Get the draw offset X coordinate for this placement.
 pub fn FaceGlyphMaskPlacement::get_draw_offset_x(
   self : FaceGlyphMaskPlacement,
-) -> Int {
+) -> Int32 {
   self.draw_offset_x
 }
 
@@ -553,13 +557,13 @@ pub fn FaceGlyphMaskPlacement::get_draw_offset_x(
 /// Get the draw offset Y coordinate for this placement.
 pub fn FaceGlyphMaskPlacement::get_draw_offset_y(
   self : FaceGlyphMaskPlacement,
-) -> Int {
+) -> Int32 {
   self.draw_offset_y
 }
 
 ///|
 /// Return the number of cached glyph masks.
-pub fn GlyphMaskCache::len(self : GlyphMaskCache) -> Int {
+pub fn GlyphMaskCache::len(self : GlyphMaskCache) -> Int32 {
   self.masks.length()
 }
 
@@ -571,7 +575,7 @@ pub fn GlyphMaskCache::is_empty(self : GlyphMaskCache) -> Bool {
 
 ///|
 /// Return the maximum number of cached glyph masks, or 0 for an unbounded cache.
-pub fn GlyphMaskCache::capacity(self : GlyphMaskCache) -> Int {
+pub fn GlyphMaskCache::capacity(self : GlyphMaskCache) -> Int32 {
   self.capacity
 }
 
@@ -622,8 +626,8 @@ fn GlyphMaskCache::get_or_rasterize_glyph_result(
   self : GlyphMaskCache,
   key : String,
   glyph : SimpleGlyph,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   scale : Double,
@@ -646,7 +650,7 @@ pub fn GlyphMaskCache::get_or_rasterize_face_glyph_result(
   self : GlyphMaskCache,
   key : String,
   face : FontFace,
-  glyph_id : Int,
+  glyph_id : Int32,
   scale : Double,
 ) -> FaceGlyphMaskCacheResult? {
   match face.get_glyph(glyph_id) {
@@ -744,7 +748,7 @@ fn GlyphMaskCache::evict_over_capacity(self : GlyphMaskCache) -> Unit {
 struct TextMaskCache {
   mut masks : Map[String, CoverageMask]
   mut access_order : Array[String]
-  capacity : Int
+  capacity : Int32
   is_bounded : Bool
 } derive(Debug)
 
@@ -769,7 +773,7 @@ pub fn TextMaskCache::new() -> TextMaskCache {
 
 ///|
 /// Create an empty text mask cache with least-recently-used eviction.
-pub fn TextMaskCache::with_capacity(capacity : Int) -> TextMaskCache {
+pub fn TextMaskCache::with_capacity(capacity : Int32) -> TextMaskCache {
   {
     masks: Map([]),
     access_order: [],
@@ -796,7 +800,7 @@ pub fn TextMaskCacheRenderResult::did_render(
 
 ///|
 /// Return the number of cached masks.
-pub fn TextMaskCache::len(self : TextMaskCache) -> Int {
+pub fn TextMaskCache::len(self : TextMaskCache) -> Int32 {
   self.masks.length()
 }
 
@@ -808,7 +812,7 @@ pub fn TextMaskCache::is_empty(self : TextMaskCache) -> Bool {
 
 ///|
 /// Return the maximum number of cached text masks, or 0 for an unbounded cache.
-pub fn TextMaskCache::capacity(self : TextMaskCache) -> Int {
+pub fn TextMaskCache::capacity(self : TextMaskCache) -> Int32 {
   self.capacity
 }
 
@@ -857,8 +861,8 @@ pub fn TextMaskCache::get_or_render_face(
   key : String,
   face : FontFace,
   text : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   config : LayoutConfig,
@@ -875,8 +879,8 @@ pub fn TextMaskCache::get_or_render_face_result(
   key : String,
   face : FontFace,
   text : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   config : LayoutConfig,
@@ -936,7 +940,7 @@ fn TextMaskCache::evict_over_capacity(self : TextMaskCache) -> Unit {
 
 ///|
 /// Create a new rasterizer
-pub fn Rasterizer::new(width : Int, height : Int) -> Rasterizer {
+pub fn Rasterizer::new(width : Int32, height : Int32) -> Rasterizer {
   let size = width * height
   {
     width,
@@ -954,13 +958,13 @@ pub fn Rasterizer::get_pixels(self : Rasterizer) -> FixedArray[Byte] {
 
 ///|
 /// Get the rasterizer width
-pub fn Rasterizer::get_width(self : Rasterizer) -> Int {
+pub fn Rasterizer::get_width(self : Rasterizer) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the rasterizer height
-pub fn Rasterizer::get_height(self : Rasterizer) -> Int {
+pub fn Rasterizer::get_height(self : Rasterizer) -> Int32 {
   self.height
 }
 
@@ -1038,8 +1042,8 @@ pub fn Rasterizer::rasterize_text_face(
 /// Render one glyph into a grayscale coverage mask.
 fn render_glyph_mask(
   glyph : SimpleGlyph,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   scale : Double,
@@ -1054,8 +1058,8 @@ fn render_glyph_mask(
 pub fn render_text_mask_face(
   face : FontFace,
   text : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   config : LayoutConfig,
@@ -1197,7 +1201,7 @@ fn calculate_bezier_steps(
   y1 : Double,
   x2 : Double,
   y2 : Double,
-) -> Int {
+) -> Int32 {
   // Calculate deviation from straight line
   let dx = x2 - x0
   let dy = y2 - y0
@@ -1312,7 +1316,7 @@ fn copy_bytes(src : FixedArray[Byte]) -> FixedArray[Byte] {
 }
 
 ///|
-fn floor_to_int(value : Double) -> Int {
+fn floor_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() > value {
     truncated - 1
@@ -1322,7 +1326,7 @@ fn floor_to_int(value : Double) -> Int {
 }
 
 ///|
-fn ceil_to_int(value : Double) -> Int {
+fn ceil_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() < value {
     truncated + 1
@@ -1443,8 +1447,8 @@ pub fn Rasterizer::draw_line(
 /// Set a pixel with bounds checking
 fn Rasterizer::set_pixel(
   self : Rasterizer,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   value : Byte,
 ) -> Unit {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else { return }

@@ -6,50 +6,50 @@ pub enum RenderCommand {
   StrokeRect(Double, Double, Double, Double, @graphics.Paint)
   FillPath(@graphics.Path, @graphics.Paint)
   StrokePath(@graphics.Path, @graphics.Paint)
-  DrawPixmap(@graphics.Pixmap, Int, Int, @graphics.Paint)
-  DrawPixmapKeyed(String, @graphics.Pixmap, Int, Int, @graphics.Paint)
-  DrawBmpBytesKeyed(String, Bytes, Int, Int, @graphics.Paint)
-  DrawPngBytesKeyed(String, Bytes, Int, Int, @graphics.Paint)
-  DrawRgbaBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint)
+  DrawPixmap(@graphics.Pixmap, Int32, Int32, @graphics.Paint)
+  DrawPixmapKeyed(String, @graphics.Pixmap, Int32, Int32, @graphics.Paint)
+  DrawBmpBytesKeyed(String, Bytes, Int32, Int32, @graphics.Paint)
+  DrawPngBytesKeyed(String, Bytes, Int32, Int32, @graphics.Paint)
+  DrawRgbaBytesKeyed(String, Bytes, Int32, Int32, Int32, Int32, @graphics.Paint)
   DrawSampledBmpBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
   DrawSampledPngBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
   DrawSampledRgbaBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
   DrawQualityBmpBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
@@ -57,20 +57,20 @@ pub enum RenderCommand {
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
   DrawQualityPngBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
@@ -78,35 +78,35 @@ pub enum RenderCommand {
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
   DrawQualityRgbaBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
   DrawQualityRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageQuality
   )
@@ -197,8 +197,8 @@ pub enum RenderCommand {
   DrawTransformedSampledRgbaBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     Double,
     Double,
     Double,
@@ -209,8 +209,8 @@ pub enum RenderCommand {
   DrawTransformedSampledRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
     Double,
     Double,
@@ -222,8 +222,8 @@ pub enum RenderCommand {
   DrawTransformedQualityRgbaBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     Double,
     Double,
     Double,
@@ -234,8 +234,8 @@ pub enum RenderCommand {
   DrawTransformedQualityRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
     Double,
     Double,
@@ -248,10 +248,10 @@ pub enum RenderCommand {
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
@@ -259,23 +259,23 @@ pub enum RenderCommand {
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
   DrawSampledRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint,
     @graphics.ImageSampling
   )
@@ -283,67 +283,67 @@ pub enum RenderCommand {
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawPngBytesRectKeyed(
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawTiledBmpBytesRectKeyed(
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawTiledPngBytesRectKeyed(
     String,
     Bytes,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawTiledRgbaBytesRectKeyed(
     String,
     Bytes,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.PixelRect,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawNinePatchBmpBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
     @graphics.ImageSampling
@@ -351,10 +351,10 @@ pub enum RenderCommand {
   DrawNinePatchPngBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
     @graphics.ImageSampling
@@ -362,12 +362,12 @@ pub enum RenderCommand {
   DrawNinePatchRgbaBytesKeyed(
     String,
     Bytes,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
     @graphics.ImageSampling
@@ -375,16 +375,16 @@ pub enum RenderCommand {
   DrawPixmapRect(
     @graphics.Pixmap,
     @graphics.PixelRect,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawPixmapRectKeyed(
     String,
     @graphics.Pixmap,
     @graphics.PixelRect,
-    Int,
-    Int,
+    Int32,
+    Int32,
     @graphics.Paint
   )
   DrawTextFace(
@@ -495,12 +495,12 @@ pub extend RenderPipeline with Debug::{to_repr}
 ///|
 /// Telemetry returned after replaying a render pipeline.
 pub struct RenderPipelineReplayResult {
-  command_count : Int
-  clear_count : Int
-  fill_count : Int
-  stroke_count : Int
-  image_count : Int
-  text_count : Int
+  command_count : Int32
+  clear_count : Int32
+  fill_count : Int32
+  stroke_count : Int32
+  image_count : Int32
+  text_count : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -527,21 +527,21 @@ pub extend RenderPipelineReplayError with Eq::{not_equal, equal}
 /// Telemetry returned after replaying a pipeline through RendererResources.
 pub struct RenderPipelineResourceReplayResult {
   replay_result : RenderPipelineReplayResult
-  keyed_font_count : Int
-  font_cache_hit_count : Int
-  font_parse_count : Int
-  keyed_image_count : Int
-  image_cache_hit_count : Int
-  image_cache_insert_count : Int
-  keyed_text_count : Int
-  text_cache_hit_count : Int
-  text_mask_render_count : Int
-  keyed_atlas_text_count : Int
-  glyph_cache_hit_count : Int
-  glyph_mask_render_count : Int
-  atlas_cache_hit_count : Int
-  atlas_insert_count : Int
-  atlas_clear_count : Int
+  keyed_font_count : Int32
+  font_cache_hit_count : Int32
+  font_parse_count : Int32
+  keyed_image_count : Int32
+  image_cache_hit_count : Int32
+  image_cache_insert_count : Int32
+  keyed_text_count : Int32
+  text_cache_hit_count : Int32
+  text_mask_render_count : Int32
+  keyed_atlas_text_count : Int32
+  glyph_cache_hit_count : Int32
+  glyph_mask_render_count : Int32
+  atlas_cache_hit_count : Int32
+  atlas_insert_count : Int32
+  atlas_clear_count : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -569,12 +569,12 @@ pub extend RenderPipelineResourceReplayError with Eq::{not_equal, equal}
 ///|
 /// Conservative CPU-side analysis of a render pipeline before replay.
 pub struct RenderPipelineAnalysis {
-  command_count : Int
-  clear_count : Int
-  fill_count : Int
-  stroke_count : Int
-  image_count : Int
-  text_count : Int
+  command_count : Int32
+  clear_count : Int32
+  fill_count : Int32
+  stroke_count : Int32
+  image_count : Int32
+  text_count : Int32
   dirty_region : @graphics.DirtyRegion
 } derive(Debug)
 
@@ -584,12 +584,12 @@ pub extend RenderPipelineAnalysis with Debug::{to_repr}
 ///|
 /// Conservative diff between two retained render pipelines.
 pub struct RenderPipelineDiffResult {
-  previous_command_count : Int
-  next_command_count : Int
-  retained_command_count : Int
-  changed_command_count : Int
-  inserted_command_count : Int
-  removed_command_count : Int
+  previous_command_count : Int32
+  next_command_count : Int32
+  retained_command_count : Int32
+  changed_command_count : Int32
+  inserted_command_count : Int32
+  removed_command_count : Int32
   dirty_region : @graphics.DirtyRegion
 } derive(Debug)
 
@@ -616,8 +616,8 @@ pub extend RenderPipelineBatchKind with Eq::{not_equal, equal}
 /// One contiguous run of commands with the same scheduling category.
 pub struct RenderPipelineBatch {
   kind : RenderPipelineBatchKind
-  start_index : Int
-  command_count : Int
+  start_index : Int32
+  command_count : Int32
   dirty_region : @graphics.DirtyRegion
 } derive(Debug)
 
@@ -627,7 +627,7 @@ pub extend RenderPipelineBatch with Debug::{to_repr}
 ///|
 /// Scheduler-facing grouping of a render pipeline into contiguous CPU batches.
 pub struct RenderPipelineBatchPlan {
-  command_count : Int
+  command_count : Int32
   batches : Array[RenderPipelineBatch]
   dirty_region : @graphics.DirtyRegion
 } derive(Debug)
@@ -638,11 +638,11 @@ pub extend RenderPipelineBatchPlan with Debug::{to_repr}
 ///|
 /// One image resource use discovered before replaying a render pipeline.
 pub struct RenderPipelineImageDependency {
-  command_index : Int
+  command_index : Int32
   resource_key : String?
-  source_width : Int
-  source_height : Int
-  source_pixel_count : Int
+  source_width : Int32
+  source_height : Int32
+  source_pixel_count : Int32
 } derive(Debug)
 
 ///|
@@ -651,11 +651,11 @@ pub extend RenderPipelineImageDependency with Debug::{to_repr}
 ///|
 /// One parsed-font text resource use discovered before replaying a pipeline.
 pub struct RenderPipelineTextDependency {
-  command_index : Int
+  command_index : Int32
   resource_key : String?
-  text_byte_count : Int
-  run_count : Int
-  glyph_count : Int
+  text_byte_count : Int32
+  run_count : Int32
+  glyph_count : Int32
   layout_width : Double
   layout_height : Double
 } derive(Debug)
@@ -666,9 +666,9 @@ pub extend RenderPipelineTextDependency with Debug::{to_repr}
 ///|
 /// One keyed font resource use discovered before replaying a pipeline.
 pub struct RenderPipelineFontDependency {
-  command_index : Int
+  command_index : Int32
   font_key : String
-  font_byte_count : Int
+  font_byte_count : Int32
 } derive(Debug)
 
 ///|
@@ -677,7 +677,7 @@ pub extend RenderPipelineFontDependency with Debug::{to_repr}
 ///|
 /// Resource dependencies that can be pre-resolved from existing commands.
 pub struct RenderPipelineResourcePlan {
-  command_count : Int
+  command_count : Int32
   font_dependencies : Array[RenderPipelineFontDependency]
   image_dependencies : Array[RenderPipelineImageDependency]
   text_dependencies : Array[RenderPipelineTextDependency]

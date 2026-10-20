@@ -66,10 +66,10 @@ struct FormController {
 ///|
 pub fn FormFieldState::new(
   name~ : String,
-  initial? : String = "",
-  label? : String = "",
-  validator? : (String) -> String? = _value => None,
-  rules? : Array[FormValidationRule] = [],
+  initial~ : String = "",
+  label~ : String = "",
+  validator~ : (String) -> String? = _value => None,
+  rules~ : Array[FormValidationRule] = [],
 ) -> FormFieldState {
   let collected = rules.copy()
   collected.push(FormValidationRule::from_validator(validator))
@@ -117,7 +117,7 @@ pub fn FormValidationRule::new(
 
 ///|
 pub fn FormValidationRule::required(
-  message? : String = "Required",
+  message~ : String = "Required",
 ) -> FormValidationRule {
   FormValidationRule::new(message~, validate=value => value != "")
 }
@@ -183,7 +183,7 @@ pub fn FormController::field_error(
 }
 
 ///|
-pub fn required_field(message? : String = "Required") -> (String) -> String? {
+pub fn required_field(message~ : String = "Required") -> (String) -> String? {
   value => if value == "" { Some(message) } else { None }
 }
 
@@ -234,7 +234,7 @@ pub fn FormFieldError::message(self : FormFieldError) -> String {
 pub fn FormValidationSummary::new(
   valid~ : Bool,
   errors~ : Array[FormFieldError],
-  first_invalid_id? : String? = None,
+  first_invalid_id~ : String? = None,
 ) -> FormValidationSummary {
   { valid, errors, first_invalid_id, }
 }

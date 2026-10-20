@@ -3,9 +3,9 @@ fn ElementNode::dispatch_keyboard(
   self : ElementNode,
   target : ElementId,
   event : KeyboardEvent,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
     self.dispatch_view_event(
@@ -54,9 +54,9 @@ fn ElementNode::dispatch_keyboard(
 fn ElementNode::dispatch_keyboard_shortcut(
   self : ElementNode,
   event : KeyboardEvent,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   // Keyboard policy is typed (ADR 0033): overlay hosts own top-most-first
   // dismissal, keyboard-shortcut modifier scopes handle their own shortcuts.
@@ -136,9 +136,9 @@ fn ElementNode::dispatch_keyboard_shortcut(
 fn ElementNode::dispatch_keyboard_shortcut_to_children(
   self : ElementNode,
   event : KeyboardEvent,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -176,9 +176,9 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
 ///|
 fn ElementNode::activate_primary(
   self : ElementNode,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let child_result = self.activate_first_child(
     environment~,
@@ -202,9 +202,9 @@ fn ElementNode::activate_primary(
 ///|
 fn ElementNode::activate_first_child(
   self : ElementNode,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let child_environment = self.view_node.child_environment(environment)
   let child_style = self.view_node.child_style(style)

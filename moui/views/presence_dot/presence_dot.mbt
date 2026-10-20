@@ -113,7 +113,7 @@ impl @core.ViewNode for PresenceDot with fn semantics(_self) {
 ///|
 pub fn[Msg] presence_dot(
   status : PresenceStatus,
-  size? : Double = 10.0,
+  size~ : Double = 10.0,
   theme? : @core.Theme,
   on_surface? : @core.Color,
 ) -> @core.View[Msg] {

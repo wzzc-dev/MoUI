@@ -3,7 +3,7 @@ pub(all) struct AriaNode {
   node_id : @core.SemanticsNodeId
   semantic_id : String?
   role : String
-  level : Int?
+  level : Int32?
   url : String
   label : String
   value : String
@@ -137,7 +137,7 @@ pub fn aria_update_from_semantics_read(
 
 ///|
 priv struct WebSemanticsRuntimeBinding {
-  raw_id : Int
+  raw_id : Int32
   canvas_id : String
   driver : @runtime.HostRuntimeDriver
   mut cursor : @core.SemanticsGeneration?
@@ -148,7 +148,7 @@ let web_semantics_runtime_bindings : Array[WebSemanticsRuntimeBinding] = []
 
 ///|
 fn register_web_semantics_runtime(
-  raw_id : Int,
+  raw_id : Int32,
   canvas_id : String,
   driver : @runtime.HostRuntimeDriver,
 ) -> Unit {
@@ -162,7 +162,7 @@ fn register_web_semantics_runtime(
 }
 
 ///|
-fn unregister_web_semantics_runtime(raw_id : Int) -> Unit {
+fn unregister_web_semantics_runtime(raw_id : Int32) -> Unit {
   let retained : Array[WebSemanticsRuntimeBinding] = []
   for binding in web_semantics_runtime_bindings {
     if binding.raw_id != raw_id {
@@ -206,7 +206,7 @@ fn sync_all_web_semantics() -> Unit {
 
 ///|
 priv struct WebSemanticsActionEvidence {
-  raw_id : Int
+  raw_id : Int32
   node_id : String
   request_generation : String
   action : String
@@ -229,12 +229,12 @@ fn record_web_semantics_action_evidence(
 
 ///|
 pub fn web_dispatch_semantics_action(
-  raw_id : Int,
-  node_id_text_id : Int,
-  generation_text_id : Int,
-  action_code : Int,
-  value_id : Int,
-  direction_code : Int,
+  raw_id : Int32,
+  node_id_text_id : Int32,
+  generation_text_id : Int32,
+  action_code : Int32,
+  value_id : Int32,
+  direction_code : Int32,
 ) -> Unit {
   if node_id_text_id <= 0 || generation_text_id <= 0 {
     return ()
@@ -303,7 +303,7 @@ fn parse_decimal_u64(value : String) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }
@@ -314,9 +314,9 @@ fn parse_decimal_u64(value : String) -> UInt64? {
 
 ///|
 fn web_semantics_action(
-  code : Int,
+  code : Int32,
   value : String,
-  direction_code : Int,
+  direction_code : Int32,
 ) -> @core.SemanticsAction? {
   match code {
     0 => Some(Activate)
@@ -360,7 +360,7 @@ fn web_semantics_action(
 
 ///|
 fn web_semantics_scroll_direction(
-  code : Int,
+  code : Int32,
 ) -> @core.SemanticsScrollDirection? {
   match code {
     0 => Some(Forward)
@@ -375,16 +375,19 @@ fn web_semantics_scroll_direction(
 
 ///|
 fn web_sync_semantics_host(
-  raw_id : Int,
+  raw_id : Int32,
   canvas_id : WebHostString,
   json : WebHostString,
 ) -> Unit = "window_web" "sync_semantics"
 
 ///|
-fn web_remove_semantics_host(raw_id : Int) -> Unit = "window_web" "remove_semantics"
+fn web_remove_semantics_host(raw_id : Int32) -> Unit = "window_web" "remove_semantics"
 
 ///|
-fn web_record_semantics_action_host(raw_id : Int, json : WebHostString) -> Unit = "window_web" "record_semantics_action"
+fn web_record_semantics_action_host(
+  raw_id : Int32,
+  json : WebHostString,
+) -> Unit = "window_web" "record_semantics_action"
 
 ///|
 fn aria_role(role : @core.SemanticsRole) -> String {

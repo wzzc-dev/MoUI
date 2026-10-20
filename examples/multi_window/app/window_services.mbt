@@ -2,7 +2,7 @@
 /// Application-owned window identity. Platform host identifiers are converted
 /// at the composition boundary.
 pub(all) struct WindowId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -15,7 +15,7 @@ pub extend WindowId with Eq::{not_equal, equal}
 pub extend WindowId with ToJson::{to_json}
 
 ///|
-pub fn WindowId::new(value : Int) -> WindowId {
+pub fn WindowId::new(value : Int32) -> WindowId {
   { value, }
 }
 
@@ -38,7 +38,7 @@ pub extend WindowScene with ToJson::{to_json}
 ///|
 pub fn WindowScene::new(
   scene_id~ : String,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> WindowScene {
   { scene_id, payload, }
 }
@@ -113,7 +113,7 @@ pub struct WindowActions {
 ///|
 pub fn WindowActions::new(
   dispatch~ : (WindowRequest) -> Unit,
-  subscribe? : ((WindowEvent) -> Unit) -> () -> Unit = _handle => () => (),
+  subscribe~ : ((WindowEvent) -> Unit) -> () -> Unit = _handle => () => (),
 ) -> WindowActions {
   { dispatch, subscribe, }
 }

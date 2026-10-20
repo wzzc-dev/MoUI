@@ -552,7 +552,7 @@ pub fn sun_image_load_completion(
 pub fn sun_image_load_completion_from_bytes(
   source : String,
   data : Bytes,
-  background_io? : Bool = false,
+  background_io~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   let cache = @sun_graphics.PixmapCache::with_capacity(1)
   match sun_decode_image_bytes_with_cache(cache, source, data) {
@@ -771,8 +771,8 @@ fn sun_image_placement(
 ///|
 fn sun_image_record_needs_ready_update(
   record : @render.ImageResourceRecord?,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   match record {
     Some(existing) =>

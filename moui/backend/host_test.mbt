@@ -11,9 +11,9 @@ fn host_test_runtime_with_commands(
   root~ : @core.View[Unit],
   size~ : @core.Size,
   commands~ : Array[@core.ActionCommand],
-  on_message? : (Int) -> Unit = _ => (),
+  on_message~ : (Int32) -> Unit = _ => (),
 ) -> @runtime.AppRuntime {
-  let program_commands : Array[@core.ProgramCommand[Int]] = []
+  let program_commands : Array[@core.ProgramCommand[Int32]] = []
   for index, command in commands {
     program_commands.push(@core.ProgramCommand::new(command~, message=index))
   }

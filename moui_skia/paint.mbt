@@ -26,15 +26,15 @@ pub extend Paint with Eq::{not_equal, equal}
 
 ///|
 pub fn Paint::new(
-  color? : Color = Color::black(),
-  anti_alias? : Bool = false,
-  dither? : Bool = false,
-  style? : PaintStyle = Fill,
-  stroke_width? : Scalar = 0,
-  stroke_miter? : Scalar = 4,
-  stroke_cap? : StrokeCap = Butt,
-  stroke_join? : StrokeJoin = Miter,
-  blend_mode? : BlendMode = SrcOver,
+  color~ : Color = Color::black(),
+  anti_alias~ : Bool = false,
+  dither~ : Bool = false,
+  style~ : PaintStyle = Fill,
+  stroke_width~ : Scalar = 0,
+  stroke_miter~ : Scalar = 4,
+  stroke_cap~ : StrokeCap = Butt,
+  stroke_join~ : StrokeJoin = Miter,
+  blend_mode~ : BlendMode = SrcOver,
 ) -> Paint {
   {
     color,
@@ -136,26 +136,26 @@ pub fn Paint::set_blend_mode(self : Paint, blend_mode : BlendMode) -> Paint {
 }
 
 ///|
-pub fn Paint::color_argb(self : Paint) -> UInt {
+pub fn Paint::color_argb(self : Paint) -> UInt32 {
   self.color.argb()
 }
 
 ///|
-pub fn Paint::style_ordinal(self : Paint) -> Int {
+pub fn Paint::style_ordinal(self : Paint) -> Int32 {
   self.style.to_skia_ordinal()
 }
 
 ///|
-pub fn Paint::stroke_cap_ordinal(self : Paint) -> Int {
+pub fn Paint::stroke_cap_ordinal(self : Paint) -> Int32 {
   self.stroke_cap.to_skia_ordinal()
 }
 
 ///|
-pub fn Paint::stroke_join_ordinal(self : Paint) -> Int {
+pub fn Paint::stroke_join_ordinal(self : Paint) -> Int32 {
   self.stroke_join.to_skia_ordinal()
 }
 
 ///|
-pub fn Paint::blend_mode_ordinal(self : Paint) -> Int {
+pub fn Paint::blend_mode_ordinal(self : Paint) -> Int32 {
   self.blend_mode.to_skia_ordinal()
 }

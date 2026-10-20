@@ -149,7 +149,7 @@ fn locate_vcvarsall() -> Result[String, String] {
 /// Capture the full environment produced by importing `vcvarsall.bat`.
 fn msvc_capture_environment(
   vcvars : String,
-  arch? : String = "x64",
+  arch~ : String = "x64",
 ) -> Result[Array[(String, String)], String] {
   let command = "\"" + vcvars + "\" " + arch + " >nul && set"
   let result = process_exec_argv(["cmd.exe", "/d", "/c", command], capture=true)
@@ -201,7 +201,7 @@ fn msvc_zlib_runtime_dll(triplet_root : String) -> String? {
 fn msvc_build_overrides(
   zlib_triplet : String?,
   zlib_lib : String?,
-  wgpu_native_root? : String? = None,
+  wgpu_native_root~ : String? = None,
 ) -> Result[Array[EnvOverride], String] {
   let overrides : Array[EnvOverride] = []
   overrides.push(SetEnv("CC", "cl.exe"))
@@ -266,7 +266,7 @@ fn msvc_resolve_zlib(project_root : String) -> Result[(String, String), String] 
 fn windows_moon_env(
   project_root : String,
   host : @plan.HostPlatform,
-  wgpu_native_root? : String? = None,
+  wgpu_native_root~ : String? = None,
 ) -> Result[Array[(String, String)], String] {
   if host != Windows {
     return Ok([])

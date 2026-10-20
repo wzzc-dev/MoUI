@@ -11,9 +11,9 @@ pub fn ShowcaseApp::program(
 ///|
 pub fn ShowcaseApp::program_with_environment(
   self : ShowcaseApp,
-  diagnostics_input? : @diagnostics.ShowcaseDiagnosticsInput = @diagnostics.ShowcaseDiagnosticsInput::fallback(),
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  route? : String = ShowcaseRoute::default().format(),
+  diagnostics_input~ : @diagnostics.ShowcaseDiagnosticsInput = @diagnostics.ShowcaseDiagnosticsInput::fallback(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  route~ : String = ShowcaseRoute::default().format(),
 ) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
   ShowcaseModel::new(diagnostics_input~, route~).program_with_environment(
@@ -49,7 +49,7 @@ pub fn ShowcaseModel::program_with_environment(
 pub fn ShowcaseModel::program_with_route_host(
   self : ShowcaseModel,
   route_host : ShowcaseRouteHost,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   self.program_with_optional_route_host(Some(route_host), environment)
 }
@@ -80,7 +80,7 @@ fn ShowcaseModel::program_with_optional_route_host(
 pub fn ShowcaseModel::update_with_effect(
   self : ShowcaseModel,
   message : ShowcaseMsg,
-  route_host? : ShowcaseRouteHost? = None,
+  route_host~ : ShowcaseRouteHost? = None,
 ) -> (ShowcaseModel, @moui.Effect[ShowcaseMsg]) {
   self.update_with_environment(
     message,
@@ -92,8 +92,8 @@ pub fn ShowcaseModel::update_with_effect(
 ///|
 pub fn ShowcaseModel::subscriptions(
   self : ShowcaseModel,
-  route_host? : ShowcaseRouteHost? = None,
-  timer_source? : @services.TimerSource? = None,
+  route_host~ : ShowcaseRouteHost? = None,
+  timer_source~ : @services.TimerSource? = None,
 ) -> @moui.Subscription[ShowcaseMsg] {
   showcase_subscriptions(self, route_host, timer_source)
 }

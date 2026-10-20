@@ -15,17 +15,17 @@ pub(all) struct PdfWorkbenchPdfliteNativeTransportEnvConfig {
 ///|
 pub fn PdfWorkbenchPdfliteNativeTransportConfig::new(
   command~ : String,
-  args? : Array[String] = [],
-  cwd? : String = "",
+  args~ : Array[String] = [],
+  cwd~ : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportConfig {
   { command, args, cwd, }
 }
 
 ///|
 pub fn PdfWorkbenchPdfliteNativeTransportEnvConfig::new(
-  helper_path? : String = "",
-  helper_args? : String = "",
-  helper_cwd? : String = "",
+  helper_path~ : String = "",
+  helper_args~ : String = "",
+  helper_cwd~ : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportEnvConfig {
   { helper_path, helper_args, helper_cwd, }
 }
@@ -76,8 +76,8 @@ fn pdf_workbench_pdflite_helper_path(value : String) -> String {
 ///|
 pub fn PdfWorkbenchPdfliteNativeTransportConfig::executable(
   path~ : String,
-  args? : Array[String] = [],
-  cwd? : String = "",
+  args~ : Array[String] = [],
+  cwd~ : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportConfig {
   PdfWorkbenchPdfliteNativeTransportConfig::new(command=path, args~, cwd~)
 }
@@ -85,7 +85,7 @@ pub fn PdfWorkbenchPdfliteNativeTransportConfig::executable(
 ///|
 pub fn PdfWorkbenchPdfliteNativeTransportConfig::shell(
   script~ : String,
-  cwd? : String = "",
+  cwd~ : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportConfig {
   PdfWorkbenchPdfliteNativeTransportConfig::new(
     command="sh",
@@ -97,8 +97,8 @@ pub fn PdfWorkbenchPdfliteNativeTransportConfig::shell(
 ///|
 pub fn PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(
   helper_path : String?,
-  args_value? : String = "",
-  cwd? : String = "",
+  args_value~ : String = "",
+  cwd~ : String = "",
 ) -> PdfWorkbenchPdfliteNativeTransportConfig? {
   match helper_path {
     Some(path) => {
@@ -293,7 +293,7 @@ async fn pdf_workbench_pdflite_read_lines(
 ///|
 fn pdf_workbench_pdflite_decode_run_response(
   config : PdfWorkbenchPdfliteNativeTransportConfig,
-  exit_code : Int,
+  exit_code : Int32,
   response_lines : Array[String],
   stderr_lines : Array[String],
   original_bytes~ : Bytes,
@@ -319,7 +319,7 @@ fn pdf_workbench_pdflite_decode_run_response(
 ///|
 fn pdf_workbench_pdflite_exit_failure(
   config : PdfWorkbenchPdfliteNativeTransportConfig,
-  exit_code : Int,
+  exit_code : Int32,
   stderr_lines : Array[String],
 ) -> String {
   let prefix = config.command_label() +

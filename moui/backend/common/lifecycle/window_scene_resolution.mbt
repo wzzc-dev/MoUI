@@ -45,7 +45,7 @@ pub fn WindowSceneResolver::new(
 
 ///|
 pub fn WindowSceneResolver::unavailable(
-  reason? : String = "window scene resolver is unavailable",
+  reason~ : String = "window scene resolver is unavailable",
 ) -> WindowSceneResolver {
   WindowSceneResolver::new(resolve=_request => SceneRejected(reason))
 }

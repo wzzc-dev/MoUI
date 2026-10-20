@@ -3,7 +3,7 @@
 pub(all) struct Model {
   screen : @tui.TermScreen
   parser : VtParser
-  mut scroll_offset : Int
+  mut scroll_offset : Int32
   mut theme_pref : ThemePreference
   mut selection : Selection?
   mut selection_dragging : Bool
@@ -12,18 +12,18 @@ pub(all) struct Model {
 ///|
 pub(all) enum Msg {
   Feed(Bytes)
-  Resize(Int, Int)
+  Resize(Int32, Int32)
   WriteInput(String)
-  ScrollBy(Int)
+  ScrollBy(Int32)
   SetTheme(ThemePreference)
-  SelectionBegin(Int, Int)
-  SelectionMove(Int, Int)
+  SelectionBegin(Int32, Int32)
+  SelectionMove(Int32, Int32)
   SelectionEnd
   Copy
 }
 
 ///|
-pub fn Model::new(cols : Int, rows : Int) -> Model {
+pub fn Model::new(cols : Int32, rows : Int32) -> Model {
   let screen = @tui.TermScreen::new(cols, rows)
   let parser = VtParser::new(screen)
   {
@@ -42,7 +42,7 @@ pub fn Model::screen(self : Model) -> @tui.TermScreen {
 }
 
 ///|
-pub fn Model::scroll_offset(self : Model) -> Int {
+pub fn Model::scroll_offset(self : Model) -> Int32 {
   self.scroll_offset
 }
 

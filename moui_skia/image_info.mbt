@@ -19,8 +19,8 @@ pub extend ColorInfo with Eq::{not_equal, equal}
 
 ///|
 pub fn ColorInfo::new(
-  color_type? : ColorType = Unknown,
-  alpha_type? : AlphaType = Unknown,
+  color_type~ : ColorType = Unknown,
+  alpha_type~ : AlphaType = Unknown,
 ) -> ColorInfo {
   { color_type, alpha_type, }
 }
@@ -36,7 +36,7 @@ pub fn AlphaType::is_opaque(self : AlphaType) -> Bool {
 }
 
 ///|
-pub fn ColorType::bytes_per_pixel(self : ColorType) -> Int {
+pub fn ColorType::bytes_per_pixel(self : ColorType) -> Int32 {
   match self {
     Unknown => 0
     Alpha8 | Gray8 => 1
@@ -48,7 +48,7 @@ pub fn ColorType::bytes_per_pixel(self : ColorType) -> Int {
 }
 
 ///|
-pub fn ColorType::shift_per_pixel(self : ColorType) -> Int {
+pub fn ColorType::shift_per_pixel(self : ColorType) -> Int32 {
   match self.bytes_per_pixel() {
     1 => 0
     2 => 1
@@ -70,12 +70,12 @@ pub fn ColorInfo::is_opaque(self : ColorInfo) -> Bool {
 }
 
 ///|
-pub fn ColorInfo::bytes_per_pixel(self : ColorInfo) -> Int {
+pub fn ColorInfo::bytes_per_pixel(self : ColorInfo) -> Int32 {
   self.color_type.bytes_per_pixel()
 }
 
 ///|
-pub fn ColorInfo::shift_per_pixel(self : ColorInfo) -> Int {
+pub fn ColorInfo::shift_per_pixel(self : ColorInfo) -> Int32 {
   self.color_type.shift_per_pixel()
 }
 
@@ -114,8 +114,8 @@ pub extend ImageInfo with Eq::{not_equal, equal}
 ///|
 pub fn ImageInfo::new(
   dimensions : ISize,
-  color_type? : ColorType = Unknown,
-  alpha_type? : AlphaType = Unknown,
+  color_type~ : ColorType = Unknown,
+  alpha_type~ : AlphaType = Unknown,
 ) -> ImageInfo {
   { dimensions, color_info: ColorInfo::new(color_type~, alpha_type~), }
 }
@@ -129,7 +129,7 @@ pub fn ImageInfo::from_color_info(
 }
 
 ///|
-pub fn ImageInfo::unknown(dimensions? : ISize = ISize::empty()) -> ImageInfo {
+pub fn ImageInfo::unknown(dimensions~ : ISize = ISize::empty()) -> ImageInfo {
   ImageInfo::new(dimensions)
 }
 
@@ -149,12 +149,12 @@ pub impl Default for ImageInfo with fn default() {
 }
 
 ///|
-pub fn ImageInfo::width(self : ImageInfo) -> Int {
+pub fn ImageInfo::width(self : ImageInfo) -> Int32 {
   self.dimensions.width
 }
 
 ///|
-pub fn ImageInfo::height(self : ImageInfo) -> Int {
+pub fn ImageInfo::height(self : ImageInfo) -> Int32 {
   self.dimensions.height
 }
 
@@ -184,32 +184,32 @@ pub fn ImageInfo::is_opaque(self : ImageInfo) -> Bool {
 }
 
 ///|
-pub fn ImageInfo::bytes_per_pixel(self : ImageInfo) -> Int {
+pub fn ImageInfo::bytes_per_pixel(self : ImageInfo) -> Int32 {
   self.color_info.bytes_per_pixel()
 }
 
 ///|
-pub fn ImageInfo::shift_per_pixel(self : ImageInfo) -> Int {
+pub fn ImageInfo::shift_per_pixel(self : ImageInfo) -> Int32 {
   self.color_info.shift_per_pixel()
 }
 
 ///|
-pub fn ImageInfo::min_row_bytes(self : ImageInfo) -> Int {
-  Int::max(0, self.width()) * self.bytes_per_pixel()
+pub fn ImageInfo::min_row_bytes(self : ImageInfo) -> Int32 {
+  Int32::max(0, self.width()) * self.bytes_per_pixel()
 }
 
 ///|
 pub fn ImageInfo::min_row_bytes64(self : ImageInfo) -> Int64 {
-  Int::max(0, self.width()).to_int64() * self.bytes_per_pixel().to_int64()
+  Int32::max(0, self.width()).to_int64() * self.bytes_per_pixel().to_int64()
 }
 
 ///|
-pub fn ImageInfo::valid_row_bytes(self : ImageInfo, row_bytes : Int) -> Bool {
+pub fn ImageInfo::valid_row_bytes(self : ImageInfo, row_bytes : Int32) -> Bool {
   row_bytes >= self.min_row_bytes()
 }
 
 ///|
-pub fn ImageInfo::valid_pixels(self : ImageInfo, row_bytes : Int) -> Bool {
+pub fn ImageInfo::valid_pixels(self : ImageInfo, row_bytes : Int32) -> Bool {
   !self.is_empty() &&
   self.color_type() != Unknown &&
   self.alpha_type() != Unknown &&
@@ -220,13 +220,13 @@ pub fn ImageInfo::valid_pixels(self : ImageInfo, row_bytes : Int) -> Bool {
 pub fn ImageInfo::compute_offset(
   self : ImageInfo,
   point : IPoint,
-  row_bytes : Int,
-) -> Int {
+  row_bytes : Int32,
+) -> Int32 {
   point.y * row_bytes + point.x * self.bytes_per_pixel()
 }
 
 ///|
-pub fn ImageInfo::compute_min_byte_size(self : ImageInfo) -> Int {
+pub fn ImageInfo::compute_min_byte_size(self : ImageInfo) -> Int32 {
   if self.height() <= 0 {
     0
   } else {
@@ -244,7 +244,10 @@ pub fn ImageInfo::compute_min_byte_size64(self : ImageInfo) -> Int64 {
 }
 
 ///|
-pub fn ImageInfo::compute_byte_size(self : ImageInfo, row_bytes : Int) -> Int {
+pub fn ImageInfo::compute_byte_size(
+  self : ImageInfo,
+  row_bytes : Int32,
+) -> Int32 {
   if self.height() <= 0 || !self.valid_row_bytes(row_bytes) {
     0
   } else {
@@ -255,7 +258,7 @@ pub fn ImageInfo::compute_byte_size(self : ImageInfo, row_bytes : Int) -> Int {
 ///|
 pub fn ImageInfo::compute_byte_size64(
   self : ImageInfo,
-  row_bytes : Int,
+  row_bytes : Int32,
 ) -> Int64 {
   if self.height() <= 0 || !self.valid_row_bytes(row_bytes) {
     0L

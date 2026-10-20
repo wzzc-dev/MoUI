@@ -17,12 +17,12 @@ extern "C" fn native_path_rewind(path : PathHandle) -> Unit = "moonbit_skia_path
 #borrow(path)
 extern "C" fn native_path_set_fill_type(
   path : PathHandle,
-  fill_type : Int,
+  fill_type : Int32,
 ) -> Unit = "moonbit_skia_path_set_fill_type"
 
 ///|
 #borrow(path)
-extern "C" fn native_path_fill_type(path : PathHandle) -> Int = "moonbit_skia_path_fill_type"
+extern "C" fn native_path_fill_type(path : PathHandle) -> Int32 = "moonbit_skia_path_fill_type"
 
 ///|
 #borrow(path)
@@ -89,7 +89,7 @@ extern "C" fn native_path_add_rect(
   top : Float,
   right : Float,
   bottom : Float,
-  direction : Int,
+  direction : Int32,
 ) -> Unit = "moonbit_skia_path_add_rect"
 
 ///|
@@ -100,7 +100,7 @@ extern "C" fn native_path_add_oval(
   top : Float,
   right : Float,
   bottom : Float,
-  direction : Int,
+  direction : Int32,
 ) -> Unit = "moonbit_skia_path_add_oval"
 
 ///|
@@ -110,7 +110,7 @@ extern "C" fn native_path_add_circle(
   x : Float,
   y : Float,
   radius : Float,
-  direction : Int,
+  direction : Int32,
 ) -> Unit = "moonbit_skia_path_add_circle"
 
 ///|
@@ -123,7 +123,7 @@ extern "C" fn native_path_add_round_rect(
   bottom : Float,
   rx : Float,
   ry : Float,
-  direction : Int,
+  direction : Int32,
 ) -> Unit = "moonbit_skia_path_add_round_rect"
 
 ///|
@@ -142,7 +142,7 @@ extern "C" fn native_path_add_rrect(
   lower_right_height : Float,
   lower_left_width : Float,
   lower_left_height : Float,
-  direction : Int,
+  direction : Int32,
 ) -> Unit = "moonbit_skia_path_add_rrect"
 
 ///|
@@ -186,15 +186,15 @@ extern "C" fn native_path_is_finite(path : PathHandle) -> Bool = "moonbit_skia_p
 
 ///|
 #borrow(path)
-extern "C" fn native_path_count_points(path : PathHandle) -> Int = "moonbit_skia_path_count_points"
+extern "C" fn native_path_count_points(path : PathHandle) -> Int32 = "moonbit_skia_path_count_points"
 
 ///|
 #borrow(path)
-extern "C" fn native_path_count_verbs(path : PathHandle) -> Int = "moonbit_skia_path_count_verbs"
+extern "C" fn native_path_count_verbs(path : PathHandle) -> Int32 = "moonbit_skia_path_count_verbs"
 
 ///|
 #borrow(path)
-extern "C" fn native_path_segment_masks(path : PathHandle) -> Int = "moonbit_skia_path_segment_masks"
+extern "C" fn native_path_segment_masks(path : PathHandle) -> Int32 = "moonbit_skia_path_segment_masks"
 
 ///|
 #borrow(path)
@@ -258,7 +258,7 @@ extern "C" fn native_path_rect_is_closed(path : PathHandle) -> Bool = "moonbit_s
 
 ///|
 #borrow(path)
-extern "C" fn native_path_rect_direction(path : PathHandle) -> Int = "moonbit_skia_path_rect_direction"
+extern "C" fn native_path_rect_direction(path : PathHandle) -> Int32 = "moonbit_skia_path_rect_direction"
 
 ///|
 #borrow(path)
@@ -462,8 +462,8 @@ fn native_path_rrect_is_finite(rrect : @skia.RRect) -> Bool {
 pub fn Path::add_path_value(
   self : Path,
   path : @skia.Path,
-  matrix? : @skia.Matrix = @skia.Matrix::identity(),
-  mode? : @skia.AddPathMode = Append,
+  matrix~ : @skia.Matrix = @skia.Matrix::identity(),
+  mode~ : @skia.AddPathMode = Append,
 ) -> Unit {
   if path.is_finite() && matrix.is_finite() {
     let path = path.transform(matrix)
@@ -500,7 +500,7 @@ pub fn Path::add_path_value_matrix(
   self : Path,
   path : @skia.Path,
   matrix : @skia.Matrix,
-  mode? : @skia.AddPathMode = Append,
+  mode~ : @skia.AddPathMode = Append,
 ) -> Unit {
   self.add_path_value(path, matrix~, mode~)
 }
@@ -510,7 +510,7 @@ pub fn Path::add_path_value_offset(
   self : Path,
   path : @skia.Path,
   offset : @skia.Point,
-  mode? : @skia.AddPathMode = Append,
+  mode~ : @skia.AddPathMode = Append,
 ) -> Unit {
   self.add_path_value(
     path,
@@ -523,7 +523,7 @@ pub fn Path::add_path_value_offset(
 pub fn Path::add_poly(
   self : Path,
   points : Array[@skia.Point],
-  close? : Bool = false,
+  close~ : Bool = false,
 ) -> Unit {
   let mut finite = true
   for i = 0; i < points.length(); i = i + 1 {
@@ -546,7 +546,7 @@ pub fn Path::add_poly(
 pub fn Path::add_rect(
   self : Path,
   rect : @skia.Rect,
-  direction? : @skia.PathDirection = CW,
+  direction~ : @skia.PathDirection = CW,
 ) -> Unit {
   if rect.is_finite() {
     native_path_add_rect(
@@ -564,7 +564,7 @@ pub fn Path::add_rect(
 pub fn Path::add_oval(
   self : Path,
   oval : @skia.Rect,
-  direction? : @skia.PathDirection = CW,
+  direction~ : @skia.PathDirection = CW,
 ) -> Unit {
   if oval.is_finite() {
     native_path_add_oval(
@@ -583,7 +583,7 @@ pub fn Path::add_circle(
   self : Path,
   center : @skia.Point,
   radius : Float,
-  direction? : @skia.PathDirection = CW,
+  direction~ : @skia.PathDirection = CW,
 ) -> Unit {
   if center.is_finite() && native_path_scalar_is_finite(radius) && radius > 0.0 {
     native_path_add_circle(
@@ -602,7 +602,7 @@ pub fn Path::add_round_rect(
   rect : @skia.Rect,
   rx : Float,
   ry : Float,
-  direction? : @skia.PathDirection = CW,
+  direction~ : @skia.PathDirection = CW,
 ) -> Unit {
   if rect.is_finite() &&
     native_path_scalar_is_finite(rx) &&
@@ -624,7 +624,7 @@ pub fn Path::add_round_rect(
 pub fn Path::add_rrect(
   self : Path,
   rrect : @skia.RRect,
-  direction? : @skia.PathDirection = CW,
+  direction~ : @skia.PathDirection = CW,
 ) -> Unit {
   if native_path_rrect_is_finite(rrect) {
     native_path_add_rrect(
@@ -687,12 +687,12 @@ pub fn Path::is_finite(self : Path) -> Bool {
 }
 
 ///|
-pub fn Path::count_points(self : Path) -> Int {
+pub fn Path::count_points(self : Path) -> Int32 {
   native_path_count_points(self.handle)
 }
 
 ///|
-pub fn Path::count_verbs(self : Path) -> Int {
+pub fn Path::count_verbs(self : Path) -> Int32 {
   native_path_count_verbs(self.handle)
 }
 

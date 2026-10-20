@@ -44,7 +44,7 @@ fn markdown_editor_toggle_inline_range(
 ///|
 fn markdown_editor_toggle_inline_at_caret(
   source : String,
-  caret : Int,
+  caret : Int32,
   command : MarkdownEditorCommand,
 ) -> MarkdownEditorEditResult {
   let marker = markdown_editor_inline_marker(command)
@@ -57,7 +57,7 @@ fn markdown_editor_toggle_inline_at_caret(
 ///|
 pub fn markdown_editor_inline_marker_pair_at_caret(
   source : String,
-  caret : Int,
+  caret : Int32,
   marker : String,
 ) -> @core.TextRange? {
   let marker_length = markdown_editor_text_length(marker)
@@ -189,7 +189,7 @@ fn markdown_editor_command_snippet(command : MarkdownEditorCommand) -> String {
 }
 
 ///|
-fn markdown_editor_heading_marker(level : Int) -> String {
+fn markdown_editor_heading_marker(level : Int32) -> String {
   let count = markdown_editor_clamp_int(level, 1, 6)
   let chars : Array[Char] = []
   for _ in 0..<count {
@@ -199,7 +199,7 @@ fn markdown_editor_heading_marker(level : Int) -> String {
 }
 
 ///|
-fn markdown_editor_heading_snippet_text(level : Int) -> String {
+fn markdown_editor_heading_snippet_text(level : Int32) -> String {
   if level <= 1 {
     "Heading"
   } else if level == 2 {
@@ -229,7 +229,7 @@ pub fn markdown_editor_preview_text(source : String) -> String {
 ///|
 pub fn markdown_editor_toggle_task_at(
   source : String,
-  content_offset : Int,
+  content_offset : Int32,
 ) -> MarkdownEditorEditResult? {
   for block in parse_markdown_editor_blocks(source) {
     match block.block.kind {

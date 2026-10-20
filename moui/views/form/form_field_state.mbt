@@ -2,14 +2,14 @@
 pub fn[Msg] form_field_state(
   field~ : FormFieldState,
   child~ : @core.View[Msg],
-  helper? : String = "",
-  validation_display? : FormValidationDisplay = OnInvalid,
-  required? : Bool = false,
-  disabled? : Bool = false,
-  read_only? : Bool = false,
+  helper~ : String = "",
+  validation_display~ : FormValidationDisplay = OnInvalid,
+  required~ : Bool = false,
+  disabled~ : Bool = false,
+  read_only~ : Bool = false,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  label_width? : Double = 120.0,
+  width~ : Double = 320.0,
+  label_width~ : Double = 120.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let label = if field.label == "" { field.name } else { field.label }

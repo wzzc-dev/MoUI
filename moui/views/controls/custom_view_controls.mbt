@@ -12,10 +12,10 @@ pub fn[Msg] custom_children_layout_control(
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = Group,
-  semantics_label? : String = "",
-  kind? : String = "CustomLayout",
-  key? : String? = None,
+  semantics_role~ : @core.SemanticsRole = Group,
+  semantics_label~ : String = "",
+  kind~ : String = "CustomLayout",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     CustomChildrenLayout::{

@@ -9,7 +9,7 @@ pub struct TreeItem {
 pub fn tree_item(
   id~ : String,
   label~ : String,
-  children? : Array[TreeItem] = [],
+  children~ : Array[TreeItem] = [],
 ) -> TreeItem {
   { id, label, children, }
 }

@@ -6,7 +6,7 @@ test "ascii fast path matches the fallback boundary walk" {
   ]
   for text in samples {
     let chars = text.to_array()
-    let expected : Array[Int] = [0]
+    let expected : Array[Int32] = [0]
     if chars.length() > 0 {
       let mut index = 1
       let mut last_boundary = 0

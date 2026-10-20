@@ -44,9 +44,9 @@ pub extend DesignSystemReport with ToJson::{to_json}
 ///|
 pub fn design_system_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
-  system_scheme? : @core.ColorScheme = Dark,
-  density? : @common.DesignDensity = Standard,
+  scheme~ : @core.ColorScheme = Light,
+  system_scheme~ : @core.ColorScheme = Dark,
+  density~ : @common.DesignDensity = Standard,
 ) -> DesignSystemReport {
   let manifest = manifest(preset)
   let complete = is_design_system_complete(preset)
@@ -91,7 +91,7 @@ pub fn design_system_report(
 ///|
 pub fn DesignSystemReport::evidence_row_count(
   preset : DesignSystemReport,
-) -> Int {
+) -> Int32 {
   preset.requirement_audit.length() +
   preset.token_taxonomy.length() +
   preset.semantic_palette_roles.length() +
@@ -117,7 +117,7 @@ pub fn DesignSystemReport::evidence_row_count(
 }
 
 ///|
-pub fn DesignSystemReport::gap_count(preset : DesignSystemReport) -> Int {
+pub fn DesignSystemReport::gap_count(preset : DesignSystemReport) -> Int32 {
   let mut count = 0
   for item in preset.requirement_audit {
     if item.status != OfficialComplete {
@@ -130,7 +130,7 @@ pub fn DesignSystemReport::gap_count(preset : DesignSystemReport) -> Int {
 ///|
 pub fn DesignSystemReport::typography_gap_count(
   preset : DesignSystemReport,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in preset.typography_roles {
     if item.required &&
@@ -148,7 +148,7 @@ pub fn DesignSystemReport::typography_gap_count(
 ///|
 pub fn DesignSystemReport::semantic_palette_gap_count(
   preset : DesignSystemReport,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in preset.semantic_palette_roles {
     if item.required &&
@@ -166,7 +166,7 @@ pub fn DesignSystemReport::semantic_palette_gap_count(
 ///|
 pub fn DesignSystemReport::taxonomy_gap_count(
   preset : DesignSystemReport,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in preset.token_taxonomy {
     if item.required &&

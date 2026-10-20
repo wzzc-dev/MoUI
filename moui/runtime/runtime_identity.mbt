@@ -1,6 +1,6 @@
 ///|
 pub(all) struct ElementId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -10,12 +10,12 @@ pub extend ElementId with Debug::{to_repr}
 pub extend ElementId with Eq::{not_equal, equal}
 
 ///|
-fn ElementId::new(value : Int) -> ElementId {
+fn ElementId::new(value : Int32) -> ElementId {
   { value, }
 }
 
 ///|
-fn ElementId::value(self : ElementId) -> Int {
+fn ElementId::value(self : ElementId) -> Int32 {
   self.value
 }
 

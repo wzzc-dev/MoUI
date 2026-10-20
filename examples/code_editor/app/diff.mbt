@@ -17,8 +17,8 @@ pub fn CodeDiffLineKind::label(self : CodeDiffLineKind) -> String {
 ///|
 pub(all) struct CodeDiffLine {
   kind : CodeDiffLineKind
-  old_line : Int?
-  new_line : Int?
+  old_line : Int32?
+  new_line : Int32?
   text : String
 }
 
@@ -78,7 +78,7 @@ pub fn code_diff(original : String, modified : String) -> CodeDiff {
 fn diff_lcs_table(
   old_lines : Array[String],
   new_lines : Array[String],
-) -> Array[Int] {
+) -> Array[Int32] {
   let columns = new_lines.length() + 1
   let table = Array::make((old_lines.length() + 1) * columns, 0)
   for i in 1..<=old_lines.length() {
@@ -97,7 +97,7 @@ fn diff_lcs_table(
 }
 
 ///|
-fn diff_table_index(row : Int, column : Int, columns : Int) -> Int {
+fn diff_table_index(row : Int32, column : Int32, columns : Int32) -> Int32 {
   row * columns + column
 }
 

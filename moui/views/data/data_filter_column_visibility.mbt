@@ -3,11 +3,11 @@ pub fn[Msg] column_visibility_panel(
   columns : Array[TableColumn],
   visible~ : Array[String],
   on_toggle~ : (String, Bool) -> Msg,
-  locked? : Array[String] = [],
-  title? : String = "Column visibility",
-  summary? : String = "",
+  locked~ : Array[String] = [],
+  title~ : String = "Column visibility",
+  summary~ : String = "",
   theme? : @core.Theme,
-  width? : Double = 360.0,
+  width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let inner_width = @common.view_max_double(
@@ -121,7 +121,7 @@ fn[Msg] column_visibility_row(
 fn column_visibility_count(
   columns : Array[TableColumn],
   visible : Array[String],
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for column in columns {
     if @controls.string_array_contains(visible, column.id) {
@@ -132,7 +132,10 @@ fn column_visibility_count(
 }
 
 ///|
-fn column_visibility_summary(visible_count : Int, column_count : Int) -> String {
+fn column_visibility_summary(
+  visible_count : Int32,
+  column_count : Int32,
+) -> String {
   if column_count == 1 {
     "\{visible_count} of 1 column visible"
   } else {
@@ -141,6 +144,6 @@ fn column_visibility_summary(visible_count : Int, column_count : Int) -> String 
 }
 
 ///|
-fn column_visibility_panel_height(column_count : Int) -> Double {
+fn column_visibility_panel_height(column_count : Int32) -> Double {
   74.0 + @common.view_max_int(1, column_count).to_double() * 38.0
 }

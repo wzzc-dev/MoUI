@@ -67,7 +67,7 @@ pub fn RenderCommand::clear(color : Color) -> RenderCommand {
 ///|
 pub fn RenderCommand::draw_color(
   color : Color,
-  blend_mode? : BlendMode = SrcOver,
+  blend_mode~ : BlendMode = SrcOver,
 ) -> RenderCommand {
   DrawCanvasColor(color, blend_mode)
 }
@@ -80,7 +80,7 @@ pub fn RenderCommand::draw_paint(paint : Paint) -> RenderCommand {
 ///|
 pub fn RenderCommand::draw_paint_shader(
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasPaintShader(shader, paint)
 }
@@ -88,7 +88,7 @@ pub fn RenderCommand::draw_paint_shader(
 ///|
 pub fn RenderCommand::clip_rect(
   rect : Rect,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommand {
   ClipCanvasRect(rect.sorted(), op)
 }
@@ -96,7 +96,7 @@ pub fn RenderCommand::clip_rect(
 ///|
 pub fn RenderCommand::clip_rrect(
   rrect : RRect,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommand {
   ClipCanvasRRect(rrect, op)
 }
@@ -104,18 +104,18 @@ pub fn RenderCommand::clip_rrect(
 ///|
 pub fn RenderCommand::clip_path(
   path : Path,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommand {
   ClipCanvasPath(path, op)
 }
 
 ///|
 pub fn RenderCommand::save_layer(
-  bounds? : Rect? = None,
-  paint? : Paint = Paint::new(),
-  color_filter? : ColorFilterDescriptor? = None,
-  image_filter? : ImageFilterDescriptor? = None,
-  mask_filter? : MaskFilterDescriptor? = None,
+  bounds~ : Rect? = None,
+  paint~ : Paint = Paint::new(),
+  color_filter~ : ColorFilterDescriptor? = None,
+  image_filter~ : ImageFilterDescriptor? = None,
+  mask_filter~ : MaskFilterDescriptor? = None,
 ) -> RenderCommand {
   let layer_bounds : Rect? = match bounds {
     None => None
@@ -157,7 +157,7 @@ pub fn RenderCommand::reset_matrix() -> RenderCommand {
 ///|
 pub fn RenderCommand::draw_point(
   point : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasPoint(point, paint)
 }
@@ -166,7 +166,7 @@ pub fn RenderCommand::draw_point(
 pub fn RenderCommand::draw_line(
   start : Point,
   end : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasLine(start, end, paint)
 }
@@ -174,8 +174,8 @@ pub fn RenderCommand::draw_line(
 ///|
 pub fn RenderCommand::draw_points(
   points : Array[Point],
-  paint? : Paint = Paint::new(),
-  mode? : PointMode = Points,
+  paint~ : Paint = Paint::new(),
+  mode~ : PointMode = Points,
 ) -> RenderCommand {
   DrawCanvasPoints(points.copy(), mode, paint)
 }
@@ -183,7 +183,7 @@ pub fn RenderCommand::draw_points(
 ///|
 pub fn RenderCommand::draw_rect(
   rect : Rect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasRect(rect.sorted(), paint)
 }
@@ -191,7 +191,7 @@ pub fn RenderCommand::draw_rect(
 ///|
 pub fn RenderCommand::draw_oval(
   oval : Rect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasOval(oval.sorted(), paint)
 }
@@ -200,7 +200,7 @@ pub fn RenderCommand::draw_oval(
 pub fn RenderCommand::draw_circle(
   center : Point,
   radius : Float,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasCircle(center, radius, paint)
 }
@@ -211,7 +211,7 @@ pub fn RenderCommand::draw_arc(
   start_angle : Float,
   sweep_angle : Float,
   use_center : Bool,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasArc(oval.sorted(), start_angle, sweep_angle, use_center, paint)
 }
@@ -221,7 +221,7 @@ pub fn RenderCommand::draw_round_rect(
   rect : Rect,
   rx : Float,
   ry : Float,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasRoundRect(rect.sorted(), rx, ry, paint)
 }
@@ -229,7 +229,7 @@ pub fn RenderCommand::draw_round_rect(
 ///|
 pub fn RenderCommand::draw_rrect(
   rrect : RRect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasRRect(rrect, paint)
 }
@@ -238,7 +238,7 @@ pub fn RenderCommand::draw_rrect(
 pub fn RenderCommand::draw_drrect(
   outer : RRect,
   inner : RRect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasDRRect(outer, inner, paint)
 }
@@ -247,7 +247,7 @@ pub fn RenderCommand::draw_drrect(
 pub fn RenderCommand::draw_rect_shader(
   rect : Rect,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasRectShader(rect.sorted(), shader, paint)
 }
@@ -258,7 +258,7 @@ pub fn RenderCommand::draw_round_rect_shader(
   rx : Float,
   ry : Float,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasRoundRectShader(rect.sorted(), rx, ry, shader, paint)
 }
@@ -266,7 +266,7 @@ pub fn RenderCommand::draw_round_rect_shader(
 ///|
 pub fn RenderCommand::draw_path(
   path : Path,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasPath(path, paint)
 }
@@ -275,7 +275,7 @@ pub fn RenderCommand::draw_path(
 pub fn RenderCommand::draw_path_shader(
   path : Path,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasPathShader(path, shader, paint)
 }
@@ -293,8 +293,8 @@ pub fn RenderCommand::draw_image_rect(
   image : ImageDescriptor,
   src : Rect,
   dst : Rect,
-  paint? : Paint = Paint::new(),
-  sampling? : SamplingOptions = SamplingOptions::new(),
+  paint~ : Paint = Paint::new(),
+  sampling~ : SamplingOptions = SamplingOptions::new(),
 ) -> RenderCommand {
   DrawCanvasImageRect(image, src.sorted(), dst.sorted(), paint, sampling)
 }
@@ -303,7 +303,7 @@ pub fn RenderCommand::draw_image_rect(
 pub fn RenderCommand::draw_text_utf8(
   text : Bytes,
   origin : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasTextUtf8(text, origin, paint)
 }
@@ -317,9 +317,9 @@ fn default_render_text_run_descriptor(text : Bytes) -> TextRunDescriptor {
 pub fn RenderCommand::draw_text_run_utf8(
   text : Bytes,
   origin : Point,
-  descriptor? : TextRunDescriptor? = None,
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  paint? : Paint = Paint::new(),
+  descriptor~ : TextRunDescriptor? = None,
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   let descriptor = match descriptor {
     None => default_render_text_run_descriptor(text)
@@ -333,7 +333,7 @@ pub fn RenderCommand::draw_shaped_glyph_run_utf8(
   text : Bytes,
   glyph_run : ShapedGlyphRunDescriptor,
   origin : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommand {
   DrawCanvasShapedGlyphRunUtf8(text, glyph_run, origin, paint)
 }

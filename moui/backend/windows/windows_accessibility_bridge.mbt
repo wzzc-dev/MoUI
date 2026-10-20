@@ -39,17 +39,17 @@ fn WindowsAccessibilityState::remove(
 }
 
 ///|
-extern "C" fn windows_accessibility_attach_native(hwnd : UInt64) -> Int = "moui_windows_accessibility_attach"
+extern "C" fn windows_accessibility_attach_native(hwnd : UInt64) -> Int32 = "moui_windows_accessibility_attach"
 
 ///|
 extern "C" fn windows_accessibility_begin_native(
   hwnd : UInt64,
-  full : Int,
+  full : Int32,
   generation : UInt64,
   root : UInt64,
   focused : UInt64,
   semantic_focused : UInt64,
-) -> Int = "moui_windows_accessibility_begin"
+) -> Int32 = "moui_windows_accessibility_begin"
 
 ///|
 extern "C" fn windows_accessibility_remove_native(
@@ -69,27 +69,27 @@ extern "C" fn windows_accessibility_upsert_native(
   value : Bytes,
   description : Bytes,
   state_flags : UInt64,
-  checked : Int,
-  numeric_flags : Int,
+  checked : Int32,
+  numeric_flags : Int32,
   numeric_current : Double,
   numeric_min : Double,
   numeric_max : Double,
   numeric_step : Double,
-  text_flags : Int,
-  selection_start : Int,
-  selection_end : Int,
-  caret : Int,
-  row_index : Int,
-  row_count : Int,
-  row_span : Int,
-  column_index : Int,
-  column_count : Int,
-  column_span : Int,
-  set_size : Int,
-  set_position : Int,
+  text_flags : Int32,
+  selection_start : Int32,
+  selection_end : Int32,
+  caret : Int32,
+  row_index : Int32,
+  row_count : Int32,
+  row_span : Int32,
+  column_index : Int32,
+  column_count : Int32,
+  column_span : Int32,
+  set_size : Int32,
+  set_position : Int32,
   action_flags : UInt64,
-  live : Int,
-  live_atomic : Int,
+  live : Int32,
+  live_atomic : Int32,
   frame_x : Double,
   frame_y : Double,
   frame_width : Double,
@@ -110,8 +110,8 @@ extern "C" fn windows_accessibility_end_native(hwnd : UInt64) -> Unit = "moui_wi
 extern "C" fn windows_accessibility_announce_native(
   hwnd : UInt64,
   node_id : UInt64,
-  live : Int,
-  is_atomic : Int,
+  live : Int32,
+  is_atomic : Int32,
   text : Bytes,
 ) -> Unit = "moui_windows_accessibility_announce"
 
@@ -207,7 +207,7 @@ fn windows_state_flags(state : @core.SemanticsState) -> UInt64 {
 }
 
 ///|
-fn windows_checked_code(value : @core.SemanticsCheckedState?) -> Int {
+fn windows_checked_code(value : @core.SemanticsCheckedState?) -> Int32 {
   match value {
     Some(Unchecked) => 0
     Some(Checked) => 1
@@ -242,7 +242,7 @@ fn windows_action_flags(actions : Array[@core.SemanticsActionKind]) -> UInt64 {
 }
 
 ///|
-fn windows_live_code(value : @core.SemanticsLive) -> Int {
+fn windows_live_code(value : @core.SemanticsLive) -> Int32 {
   match value {
     Off => 0
     Polite => 1
@@ -256,7 +256,7 @@ fn windows_node_ids_bytes(ids : Array[@core.SemanticsNodeId]) -> Bytes {
 }
 
 ///|
-fn windows_optional_int(value : Int?) -> Int {
+fn windows_optional_int(value : Int32?) -> Int32 {
   value.unwrap_or(-1)
 }
 
@@ -410,7 +410,7 @@ fn windows_parse_decimal_u64(value : String) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }

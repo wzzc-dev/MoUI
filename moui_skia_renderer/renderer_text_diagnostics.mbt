@@ -2,10 +2,10 @@
 pub struct SkiaTextVisualOrderDiagnostic {
   priv logical_text : String
   priv visual_text : String
-  priv logical_cluster_count : Int
-  priv visual_cluster_count : Int
-  priv segment_count : Int
-  priv glyph_count : Int
+  priv logical_cluster_count : Int32
+  priv visual_cluster_count : Int32
+  priv segment_count : Int32
+  priv glyph_count : Int32
   priv width : Double
   priv visual_order_differs : Bool
 } derive(Eq, Debug, ToJson)
@@ -23,14 +23,14 @@ pub extend SkiaTextVisualOrderDiagnostic with ToJson::{to_json}
 pub struct SkiaTextSelectionGeometryDiagnostic {
   priv text : String
   priv selection_range : @core.TextRange
-  priv selection_rect_count : Int
-  priv selected_line_count : Int
-  priv line_count : Int
-  priv hit_test_offset : Int
-  priv hit_test_line_index : Int
+  priv selection_rect_count : Int32
+  priv selected_line_count : Int32
+  priv line_count : Int32
+  priv hit_test_offset : Int32
+  priv hit_test_line_index : Int32
   priv hit_test_inside : Bool
   priv visual_order_differs : Bool
-  priv visual_segment_count : Int
+  priv visual_segment_count : Int32
   priv bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -52,17 +52,17 @@ pub struct SkiaEmojiFontFallbackDiagnostic {
   priv resolved_font_name : String
   priv fallback_language_tags : Array[String]
   priv fallback_script_tag : String
-  priv fallback_language_tag_count : Int
-  priv fallback_request_language_count : Int
+  priv fallback_language_tag_count : Int32
+  priv fallback_request_language_count : Int32
   priv shaper : String
   priv glyph_format : String
   priv glyph_key : String
-  priv glyph_count : Int
-  priv cluster_count : Int
-  priv glyph_width : Int
-  priv glyph_height : Int
-  priv resolved_missing_glyph_count : Int
-  priv fallback_character : Int
+  priv glyph_count : Int32
+  priv cluster_count : Int32
+  priv glyph_width : Int32
+  priv glyph_height : Int32
+  priv resolved_missing_glyph_count : Int32
+  priv fallback_character : Int32
   priv emoji_hint : Bool
   priv emoji_fallback_attempted : Bool
   priv fallback_request_ready : Bool
@@ -96,28 +96,28 @@ pub fn SkiaTextVisualOrderDiagnostic::visual_text(
 ///|
 pub fn SkiaTextVisualOrderDiagnostic::logical_cluster_count(
   self : SkiaTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.logical_cluster_count
 }
 
 ///|
 pub fn SkiaTextVisualOrderDiagnostic::visual_cluster_count(
   self : SkiaTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.visual_cluster_count
 }
 
 ///|
 pub fn SkiaTextVisualOrderDiagnostic::segment_count(
   self : SkiaTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.segment_count
 }
 
 ///|
 pub fn SkiaTextVisualOrderDiagnostic::glyph_count(
   self : SkiaTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_count
 }
 
@@ -152,35 +152,35 @@ pub fn SkiaTextSelectionGeometryDiagnostic::selection_range(
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::selection_rect_count(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.selection_rect_count
 }
 
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::selected_line_count(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.selected_line_count
 }
 
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::line_count(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.line_count
 }
 
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_offset(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.hit_test_offset
 }
 
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_line_index(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.hit_test_line_index
 }
 
@@ -201,7 +201,7 @@ pub fn SkiaTextSelectionGeometryDiagnostic::visual_order_differs(
 ///|
 pub fn SkiaTextSelectionGeometryDiagnostic::visual_segment_count(
   self : SkiaTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.visual_segment_count
 }
 
@@ -264,14 +264,14 @@ pub fn SkiaEmojiFontFallbackDiagnostic::fallback_script_tag(
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::fallback_language_tag_count(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_language_tag_count
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::fallback_request_language_count(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_request_language_count
 }
 
@@ -299,42 +299,42 @@ pub fn SkiaEmojiFontFallbackDiagnostic::glyph_key(
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::glyph_count(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_count
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::cluster_count(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.cluster_count
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::glyph_width(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_width
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::glyph_height(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_height
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.resolved_missing_glyph_count
 }
 
 ///|
 pub fn SkiaEmojiFontFallbackDiagnostic::fallback_character(
   self : SkiaEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_character
 }
 
@@ -376,8 +376,8 @@ pub fn SkiaEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(
 ///|
 pub fn skia_text_visual_order_diagnostic(
   text : String,
-  font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
+  font~ : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaTextVisualOrderDiagnostic? {
   if text == "" {
     return None
@@ -410,10 +410,10 @@ pub fn skia_text_visual_order_diagnostic(
 ///|
 pub fn skia_text_selection_geometry_diagnostic(
   text : String,
-  selection? : @core.TextRange? = None,
-  font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
-  max_width? : Double = 96.0,
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
+  selection~ : @core.TextRange? = None,
+  font~ : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
+  max_width~ : Double = 96.0,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaTextSelectionGeometryDiagnostic? {
   if text == "" {
     return None
@@ -476,13 +476,13 @@ pub fn skia_text_selection_geometry_diagnostic(
 
 ///|
 pub fn skia_emoji_font_fallback_diagnostic(
-  text? : String = "\u{1F469}\u{200D}\u{1F4BB}",
-  font? : @core.FontSpec = @core.FontSpec::new(
+  text~ : String = "\u{1F469}\u{200D}\u{1F4BB}",
+  font~ : @core.FontSpec = @core.FontSpec::new(
     families=@core.FontFamilyStack::new([Emoji]),
     size=32.0,
     weight=400,
   ),
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> SkiaEmojiFontFallbackDiagnostic? {
   if text == "" {
     return None
@@ -612,8 +612,8 @@ fn skia_emoji_glyph_key(
   shaper : String,
   fallback_script_tag : String,
   fallback_language_tags : Array[String],
-  fallback_request_language_count : Int,
-  fallback_character : Int,
+  fallback_request_language_count : Int32,
+  fallback_character : Int32,
   glyph_format : String,
 ) -> String {
   let script_key = if fallback_script_tag == "" {
@@ -632,7 +632,7 @@ fn skia_emoji_glyph_key(
 ///|
 fn skia_resolved_text_layout_glyph_count(
   layout : SkiaResolvedTextLayout,
-) -> Int {
+) -> Int32 {
   let mut glyph_count = 0
   for segment in layout.segments {
     glyph_count += segment.glyph_run.glyphs.length()
@@ -643,7 +643,7 @@ fn skia_resolved_text_layout_glyph_count(
 ///|
 fn skia_resolved_text_layout_missing_glyph_count(
   layout : SkiaResolvedTextLayout,
-) -> Int {
+) -> Int32 {
   let mut missing_glyph_count = 0
   for segment in layout.segments {
     missing_glyph_count += skia_glyph_run_missing_glyph_count(segment.glyph_run)
@@ -652,7 +652,7 @@ fn skia_resolved_text_layout_missing_glyph_count(
 }
 
 ///|
-fn skia_positive_pixel_extent(value : Double) -> Int {
+fn skia_positive_pixel_extent(value : Double) -> Int32 {
   value.ceil().to_int().max(1)
 }
 
@@ -674,7 +674,7 @@ fn skia_default_selection_geometry_range(
 fn skia_selected_line_count(
   layout : @core.TextParagraphLayoutResult,
   range : @core.TextRange,
-) -> Int {
+) -> Int32 {
   let range = range.normalized()
   if range.is_collapsed() {
     return 1

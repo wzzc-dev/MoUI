@@ -5,7 +5,7 @@ pub enum Msg {
 
 ///|
 pub struct Model {
-  count : Int
+  count : Int32
 }
 
 ///|

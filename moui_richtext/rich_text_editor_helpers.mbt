@@ -1,9 +1,9 @@
 ///|
 priv struct TextEditResult {
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
-  start : Int
+  start : Int32
   before : String
   after : String
 }
@@ -14,7 +14,7 @@ priv struct TextEditResult {
 /// session) can build their transaction from the edit itself instead of
 /// re-deriving it by diffing the two whole-source strings.
 priv struct RichTextInputEdit {
-  start : Int
+  start : Int32
   deleted : String
   replacement : String
 }
@@ -273,12 +273,12 @@ fn apply_text_input(
 /// is O(edit). The range/rescan-based `rich_text_history_single_edit`
 /// stays as the fallback for callers without an edit record.
 fn rich_text_history_edit_shape_at(
-  start : Int,
+  start : Int32,
   before : String,
   after : String,
-  caret : Int,
+  caret : Int32,
   selection_active~ : Bool,
-) -> (Int, Int, Char)? {
+) -> (Int32, Int32, Char)? {
   if selection_active {
     return None
   }
@@ -391,7 +391,7 @@ fn apply_text_edit(
 ///|
 fn replace_current_selection(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   replacement : String,
 ) -> TextEditResult {
@@ -516,10 +516,10 @@ fn[Msg] text_input_messages(
 
 ///|
 fn[Msg] text_input_edit_messages(
-  on_input_edit : ((String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
+  on_input_edit : ((String, Int32, @core.TextRange?, RichTextInputEdit?) -> Msg)?,
   text : String,
   control : @core.TextControlStateContext,
-  record? : RichTextInputEdit? = None,
+  record~ : RichTextInputEdit? = None,
 ) -> Array[Msg] {
   match on_input_edit {
     Some(handler) => [handler(text, control.caret, control.selection, record)]
@@ -536,10 +536,10 @@ fn rich_text_exact_channel(
 
 ///|
 fn rich_text_declaration(
-  layout? : @core.DeclarationChannel = Constant,
-  paint? : @core.DeclarationChannel = Constant,
-  semantics? : @core.DeclarationChannel = Constant,
-  platform? : @core.DeclarationChannel = Constant,
+  layout~ : @core.DeclarationChannel = Constant,
+  paint~ : @core.DeclarationChannel = Constant,
+  semantics~ : @core.DeclarationChannel = Constant,
+  platform~ : @core.DeclarationChannel = Constant,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
 }
@@ -679,14 +679,14 @@ fn declaration_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
 
 ///|
 fn[Msg] view_event_result(
-  changed? : Bool = false,
-  activated? : Bool = false,
-  focused? : Bool = false,
-  captured? : Bool = false,
-  state? : @core.ViewStateContext? = None,
-  text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.ViewDirtyHint = ViewClean,
-  messages? : Array[Msg] = [],
+  changed~ : Bool = false,
+  activated~ : Bool = false,
+  focused~ : Bool = false,
+  captured~ : Bool = false,
+  state~ : @core.ViewStateContext? = None,
+  text_control~ : @core.TextControlStateContext? = None,
+  dirty~ : @core.ViewDirtyHint = ViewClean,
+  messages~ : Array[Msg] = [],
 ) -> @core.ViewEventResult[Msg] {
   {
     changed,
@@ -701,7 +701,7 @@ fn[Msg] view_event_result(
 }
 
 ///|
-fn text_length(text : String) -> Int {
+fn text_length(text : String) -> Int32 {
   // Route through the memoized length so per-frame caret/overlay math on
   // a whole-document text does not re-decode megabytes every frame.
   markdown_editor_text_length(text)
@@ -742,7 +742,7 @@ pub fn rich_text_editor_content_rect(frame : @core.Rect) -> @core.Rect {
 }
 
 ///|
-fn string_prefix(text : String, end : Int) -> String {
+fn string_prefix(text : String, end : Int32) -> String {
   let chars = text.to_array()
   String::from_array(chars[:@core.clamp_int(end, 0, chars.length())])
 }
@@ -751,8 +751,8 @@ fn string_prefix(text : String, end : Int) -> String {
 pub fn rich_text_document_height(
   document : RichTextDocument,
   base_font : @core.FontSpec,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
-  block_width? : Double = 0.0,
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
+  block_width~ : Double = 0.0,
 ) -> Double {
   let mut height = 0.0
   for block in document.blocks {
@@ -769,7 +769,7 @@ fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-  block_width? : Double = 0.0,
+  block_width~ : Double = 0.0,
 ) -> Double {
   let available_width = if block_width > 0.0 {
     max_double(0.0, block_width - block.inset.left - block.inset.right)
@@ -886,7 +886,7 @@ fn rich_text_block_line_step(
 }
 
 ///|
-fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
+fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int32 {
   let mut line_count = 1
   line_count = line_count + rich_text_text_newline_count(block.prefix)
   for run in block.runs {
@@ -897,7 +897,7 @@ fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
 }
 
 ///|
-fn rich_text_text_newline_count(text : String) -> Int {
+fn rich_text_text_newline_count(text : String) -> Int32 {
   let mut count = 0
   for ch in text {
     if ch == '\n' {
@@ -945,7 +945,7 @@ fn rich_text_run_segment_width(
   text : String,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
-  available_width? : Double = 0.0,
+  available_width~ : Double = 0.0,
 ) -> Double {
   match rich_text_run_resolved_image_width(run, available_width) {
     Some(width) => width
@@ -957,7 +957,7 @@ fn rich_text_run_segment_width(
 fn rich_text_run_segment_height(
   run : RichTextRun,
   line_height : Double,
-  available_width? : Double = 0.0,
+  available_width~ : Double = 0.0,
 ) -> Double {
   match run.image_size {
     Some(size) =>
@@ -1137,8 +1137,8 @@ fn selected_rich_text_block_text(
 ///|
 fn selected_rich_text_runs_text(
   block : RichTextBlock,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String {
   let parts : Array[String] = []
   for run in block.runs {
@@ -1168,8 +1168,8 @@ fn selected_rich_text_runs_text(
 /// copy text is alt text, a different string rather than text plus breaks.
 fn rich_text_run_copy_range(
   run : RichTextRun,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String {
   let copy_text = rich_text_run_copy_text(run)
   if run.image_source is Some(_) || copy_text == run.text {
@@ -1224,10 +1224,10 @@ fn rich_text_run_copy_text(run : RichTextRun) -> String {
 
 ///|
 fn rich_text_run_copy_offset(
-  source_offset : Int,
+  source_offset : Int32,
   source_text~ : String,
   copy_text~ : String,
-) -> Int {
+) -> Int32 {
   let source_length = text_length(source_text)
   let copy_length = text_length(copy_text)
   if source_length <= 0 || copy_length <= 0 {
@@ -1264,7 +1264,7 @@ fn rich_text_image_alt_text(text : String) -> String? {
 }
 
 ///|
-fn rich_text_run_slice(text : String, start : Int, end : Int) -> String {
+fn rich_text_run_slice(text : String, start : Int32, end : Int32) -> String {
   let chars = text.to_array()
   let range = @core.normalize_grapheme_range(
     @core.TextGraphemeBoundaries::new(text~),
@@ -1307,7 +1307,7 @@ fn rich_text_block_table_has_source_ranges(block : RichTextBlock) -> Bool {
 }
 
 ///|
-fn rich_text_table_column_count(table : RichTextTable) -> Int {
+fn rich_text_table_column_count(table : RichTextTable) -> Int32 {
   let mut count = 0
   for row in table.rows {
     count = @core.max_int(count, row.length())
@@ -1317,7 +1317,7 @@ fn rich_text_table_column_count(table : RichTextTable) -> Int {
 
 ///|
 fn rich_text_block_cache_key(
-  index : Int,
+  index : Int32,
   block : RichTextBlock,
   frame : @core.Rect,
 ) -> String {
@@ -1336,11 +1336,11 @@ fn rich_text_block_cache_key(
 ///|
 fn rich_text_block_content_revision(
   block : RichTextBlock,
-  index : Int,
+  index : Int32,
   frame : @core.Rect,
   base_font : @core.FontSpec,
   foreground : @core.Color,
-) -> Int {
+) -> Int32 {
   let mut hash = rich_text_hash_mix_int(5381, index)
   hash = rich_text_hash_mix_string(
     hash,
@@ -1580,7 +1580,7 @@ fn rich_text_align_optional_key(value : @core.TextAlign?) -> String {
 }
 
 ///|
-fn rich_text_string_hash(value : String) -> Int {
+fn rich_text_string_hash(value : String) -> Int32 {
   let mut hash = 5381
   for ch in value.to_array() {
     hash = hash * 33 + ch.to_int()
@@ -1589,12 +1589,12 @@ fn rich_text_string_hash(value : String) -> Int {
 }
 
 ///|
-fn rich_text_hash_mix_int(hash : Int, value : Int) -> Int {
+fn rich_text_hash_mix_int(hash : Int32, value : Int32) -> Int32 {
   hash * 33 + value
 }
 
 ///|
-fn rich_text_hash_mix_string(hash : Int, value : String) -> Int {
+fn rich_text_hash_mix_string(hash : Int32, value : String) -> Int32 {
   hash * 33 + rich_text_string_hash(value)
 }
 
@@ -1607,10 +1607,10 @@ fn rich_text_hash_mix_string(hash : Int, value : String) -> Int {
 /// source does not have at the same position is exact — no proportional
 /// guesswork. Runs without a wrap layer take the equality fast path.
 fn rich_text_run_visual_offset_from_source_offset(
-  source_offset : Int,
+  source_offset : Int32,
   source_text : String,
   visual_text : String,
-) -> Int {
+) -> Int32 {
   if source_text == visual_text {
     let clamped = @core.clamp_int(source_offset, 0, text_length(visual_text))
     return clamped
@@ -1636,10 +1636,10 @@ fn rich_text_run_visual_offset_from_source_offset(
 
 ///|
 fn rich_text_run_source_offset_from_visual_offset(
-  visual_offset : Int,
+  visual_offset : Int32,
   visual_text : String,
   source_text : String,
-) -> Int {
+) -> Int32 {
   if source_text == visual_text {
     let clamped = @core.clamp_int(visual_offset, 0, text_length(source_text))
     return clamped
@@ -1667,8 +1667,8 @@ fn rich_text_run_source_offset_from_visual_offset(
 
 ///|
 fn[Msg] selection_messages(
-  on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
-  caret : Int,
+  on_selection_change : ((Int32, @core.TextRange?) -> Msg)?,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> Array[Msg] {
   match on_selection_change {
@@ -1681,7 +1681,7 @@ fn[Msg] selection_messages(
 /// Whether a source offset falls inside a text range. A right press inside the
 /// current selection keeps it instead of collapsing it, so the context menu's
 /// inline formatting still applies to the selected run.
-fn rich_text_selection_covers(range : @core.TextRange?, offset : Int) -> Bool {
+fn rich_text_selection_covers(range : @core.TextRange?, offset : Int32) -> Bool {
   match range {
     Some(range) =>
       !range.is_collapsed() && offset >= range.start && offset <= range.end

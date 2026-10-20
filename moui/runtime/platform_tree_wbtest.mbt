@@ -2,8 +2,8 @@
 fn runtime_platform_leaf(
   id : String,
   source : String,
-  platform_calls : Ref[Int],
-  paint_calls : Ref[Int],
+  platform_calls : Ref[Int32],
+  paint_calls : Ref[Int32],
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="PlatformLeaf", key=Some(id)),

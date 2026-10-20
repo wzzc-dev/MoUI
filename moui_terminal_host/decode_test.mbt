@@ -56,7 +56,7 @@ fn wheel_of(
 ///|
 fn pressed(
   key : String,
-  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+  modifiers~ : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> @moui_terminal_host.TerminalEvent {
   @moui_terminal_host.Key(
     @core.KeyboardEvent::new(key~, pressed=true, modifiers~),

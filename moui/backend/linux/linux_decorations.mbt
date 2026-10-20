@@ -7,7 +7,7 @@ pub fn scaffold_service_bridge() -> @host.HostServiceBridge {
 pub fn scaffold_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @window_input.SurfaceState {
   @window_input.SurfaceState::new(
     metrics=@core.SurfaceMetrics::from_logical(
@@ -256,7 +256,7 @@ fn linux_titlebar_minimize_color() -> @core.Color {
 fn append_linux_titlebar_button(
   commands : Array[@core.DrawCommand],
   width~ : Double,
-  index_from_right~ : Int,
+  index_from_right~ : Int32,
   color~ : @core.Color,
 ) -> Unit {
   let slot = 28.0

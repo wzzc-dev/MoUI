@@ -95,8 +95,8 @@ pub fn markdown_scroll_peek_geometry_compensation() -> Double {
 pub fn MarkdownScrollGlide::display_offset(
   self : MarkdownScrollGlide,
   now_ms : Double,
-  compensation? : Double = 0.0,
-  scale? : Double = 1.0,
+  compensation~ : Double = 0.0,
+  scale~ : Double = 1.0,
 ) -> Double {
   markdown_scroll_glide_snap(self.exact_offset_at(now_ms) + compensation, scale)
 }
@@ -106,7 +106,7 @@ pub fn MarkdownScrollGlide::new(
   from_y~ : Double,
   to_y~ : Double,
   start_ms~ : Double,
-  tau_ms? : Double = markdown_scroll_glide_time_constant_ms(),
+  tau_ms~ : Double = markdown_scroll_glide_time_constant_ms(),
 ) -> MarkdownScrollGlide {
   { from_y, to_y, start_ms, tau_ms, }
 }
@@ -130,7 +130,7 @@ pub fn MarkdownScrollGlide::with_anchor_compensation(
   self : MarkdownScrollGlide,
   compensation : Double,
   max_offset : Double,
-  now_ms? : Double = 0.0,
+  now_ms~ : Double = 0.0,
 ) -> MarkdownScrollGlide {
   let max_offset = max_offset.max(0.0)
   let exact_shown = self.exact_offset_at(now_ms)
@@ -241,7 +241,7 @@ fn markdown_scroll_glide_travelled(
 pub fn MarkdownScrollGlide::offset_at(
   self : MarkdownScrollGlide,
   now_ms : Double,
-  scale? : Double = 1.0,
+  scale~ : Double = 1.0,
 ) -> Double {
   markdown_scroll_glide_snap(self.exact_offset_at(now_ms), scale)
 }
@@ -255,7 +255,7 @@ pub fn MarkdownScrollGlide::offset_at_with_compensation(
   self : MarkdownScrollGlide,
   now_ms : Double,
   compensation : Double,
-  scale? : Double = 1.0,
+  scale~ : Double = 1.0,
 ) -> Double {
   markdown_scroll_glide_snap(self.exact_offset_at(now_ms) + compensation, scale)
 }

@@ -7,7 +7,7 @@ fn[Msg] table_header(
   sortable_columns~ : Array[String],
   theme~ : @core.Theme,
   row_height~ : Double,
-  row_count~ : Int,
+  row_count~ : Int32,
 ) -> @core.View[Msg] {
   let cells : Array[@core.View[Msg]] = []
   for column_index, column in columns {
@@ -75,15 +75,15 @@ fn[Msg] table_header(
 
 ///|
 fn[Msg] table_row(
-  row_index : Int,
+  row_index : Int32,
   row_values : Array[String],
   columns : Array[TableColumn],
   selected~ : Bool,
-  on_row_select~ : ((Int) -> Msg)?,
-  cell~ : ((Int, TableColumn, String) -> @core.View[Msg])?,
+  on_row_select~ : ((Int32) -> Msg)?,
+  cell~ : ((Int32, TableColumn, String) -> @core.View[Msg])?,
   theme~ : @core.Theme,
   row_height~ : Double,
-  row_count~ : Int,
+  row_count~ : Int32,
 ) -> @core.View[Msg] {
   let cells : Array[@core.View[Msg]] = []
   for column_index, column in columns {

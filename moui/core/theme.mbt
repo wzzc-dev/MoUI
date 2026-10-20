@@ -508,7 +508,7 @@ pub fn TypographyScale::default() -> TypographyScale {
 }
 
 ///|
-pub fn ShadowScale::default(scheme? : ColorScheme = Light) -> ShadowScale {
+pub fn ShadowScale::default(scheme~ : ColorScheme = Light) -> ShadowScale {
   // shadcn/minimal: near-zero shadows by default. Cards and buttons rely on
   // borders, not elevation. `sm` stays flat so controls read as crisp
   // rectangles. `md` carries a hair of depth so floating mid layers (picker

@@ -1,9 +1,9 @@
 ///|
 pub fn[Msg] avatar(
   label : String,
-  image? : String? = None,
+  image~ : String? = None,
   theme? : @core.Theme,
-  size? : Double = 40.0,
+  size~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   match image {
@@ -34,8 +34,8 @@ pub fn[Msg] avatar(
 pub fn[Msg] avatar_group(
   labels : Array[String],
   theme? : @core.Theme,
-  size? : Double = 36.0,
-  max_visible? : Int = 4,
+  size~ : Double = 36.0,
+  max_visible~ : Int32 = 4,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let visible = @layout.min_int(

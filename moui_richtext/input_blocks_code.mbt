@@ -3,7 +3,7 @@ fn markdown_editor_complete_code_fence_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret != range.end {
     return None
@@ -31,7 +31,7 @@ fn markdown_editor_complete_quoted_code_fence_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret != range.end {
     return None
@@ -65,7 +65,7 @@ fn markdown_editor_complete_quoted_code_fence_on_enter(
 fn markdown_editor_exit_empty_code_block_on_enter(
   source : String,
   block : MarkdownEditorBlock,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -152,7 +152,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
 /// unique and a binary search replaces the per-keystroke full scan.
 fn markdown_editor_block_at_offset_of_kind(
   blocks : Array[MarkdownEditorBlock],
-  offset : Int,
+  offset : Int32,
   kind : MarkdownBlockKind,
 ) -> MarkdownEditorBlock? {
   match markdown_editor_block_index_at_offset(blocks, offset) {
@@ -171,9 +171,9 @@ fn markdown_editor_block_at_offset_of_kind(
 ///|
 fn markdown_editor_quoted_code_block_at_content_offset(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditorQuotedCodeBlock? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
@@ -234,9 +234,9 @@ fn markdown_editor_quoted_code_block_at_content_offset(
 ///|
 fn markdown_editor_any_code_block_at_content_offset(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
 ) -> Bool {
   markdown_editor_code_block_at_content_offset(
     source,
@@ -258,7 +258,7 @@ fn markdown_editor_any_code_block_at_content_offset(
 fn markdown_editor_exit_empty_quoted_code_block_on_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -341,7 +341,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
 fn markdown_editor_quoted_code_block_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -447,7 +447,7 @@ fn markdown_editor_opening_code_fence_marker(
 ///|
 fn markdown_editor_code_fence_indent_allowed(
   chars : Array[Char],
-  indent : Int,
+  indent : Int32,
 ) -> Bool {
   if indent > 3 {
     return false

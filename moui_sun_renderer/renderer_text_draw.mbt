@@ -117,7 +117,7 @@ fn sun_text_placeholder_lines(text : String) -> Array[Array[Char]] {
 }
 
 ///|
-fn sun_debug_glyph_rows(ch : Char) -> Array[Int] {
+fn sun_debug_glyph_rows(ch : Char) -> Array[Int32] {
   let code = ch.to_int()
   let normalized = if code >= 97 && code <= 122 { code - 32 } else { code }
   match normalized {
@@ -639,7 +639,7 @@ fn sun_text_baseline_for_faces(
 ///|
 fn sun_text_cache_key(
   run : @core.TextRun,
-  line_index : Int,
+  line_index : Int32,
   text : String,
 ) -> String {
   "sun:text:" +

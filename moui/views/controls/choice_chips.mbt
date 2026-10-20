@@ -1,12 +1,12 @@
 ///|
 pub fn[Msg] chip(
   label : String,
-  selected? : Bool = false,
-  on_click? : Msg? = None,
-  variant? : @style.ChipVariant = Soft,
+  selected~ : Bool = false,
+  on_click~ : Msg? = None,
+  variant~ : @style.ChipVariant = Soft,
   theme? : @core.Theme,
-  width? : Double = 112.0,
-  height? : Double = 32.0,
+  width~ : Double = 112.0,
+  height~ : Double = 32.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let child = @text.text(
@@ -39,8 +39,8 @@ pub fn[Msg] chip(
 pub fn[Msg] tag(
   label : String,
   theme? : @core.Theme,
-  width? : Double = 96.0,
-  height? : Double = 28.0,
+  width~ : Double = 96.0,
+  height~ : Double = 28.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   chip(
@@ -59,8 +59,8 @@ pub fn[Msg] filter_chip(
   selected~ : Bool,
   on_change~ : (Bool) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 120.0,
-  height? : Double = 32.0,
+  width~ : Double = 120.0,
+  height~ : Double = 32.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   chip(
@@ -80,8 +80,8 @@ pub fn[Msg] choice_chip(
   selected~ : Bool,
   on_select~ : Msg,
   theme? : @core.Theme,
-  width? : Double = 120.0,
-  height? : Double = 32.0,
+  width~ : Double = 120.0,
+  height~ : Double = 32.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   chip(

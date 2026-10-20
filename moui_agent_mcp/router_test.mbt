@@ -53,8 +53,8 @@ pub impl @agent.AgentHost for SemanticsWireHost with fn perform_action(
 
 ///|
 fn RecordingHost::new(
-  reject_action? : Bool = false,
-  closed? : Bool = false,
+  reject_action~ : Bool = false,
+  closed~ : Bool = false,
 ) -> RecordingHost {
   {
     last_since: None,
@@ -166,7 +166,7 @@ fn tool_call(name : String, arguments : Json) -> Json {
 }
 
 ///|
-fn listed_tool_count(response : Json) -> Int {
+fn listed_tool_count(response : Json) -> Int32 {
   guard response is Object(root) &&
     root.get("result") is Some(Object(result)) &&
     result.get("tools") is Some(Array(tools)) else {

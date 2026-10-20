@@ -155,9 +155,9 @@ fn tool_button(
   label : String,
   msg : ExcelMsg,
   theme : Theme,
-  icon? : @views.IconName? = None,
-  variant? : @views.ButtonVariant = Ghost,
-  width? : Double = 64.0,
+  icon~ : @views.IconName? = None,
+  variant~ : @views.ButtonVariant = Ghost,
+  width~ : Double = 64.0,
 ) -> @moui.View[ExcelMsg] {
   @views.tooltip(
     @views.button(
@@ -179,7 +179,7 @@ fn format_button(
   msg : ExcelMsg,
   active : Bool,
   theme : Theme,
-  icon? : @views.IconName? = None,
+  icon~ : @views.IconName? = None,
 ) -> @moui.View[ExcelMsg] {
   @views.tooltip(
     @views.button(

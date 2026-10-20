@@ -87,7 +87,7 @@ fn markdown_editor_insert_table_column_after_cell(
 ///|
 fn markdown_editor_insert_table_column_in_line(
   line : String,
-  column : Int,
+  column : Int32,
   inserted : String,
 ) -> String {
   let cells = markdown_editor_split_table_cells(line)
@@ -107,8 +107,8 @@ fn markdown_editor_insert_table_column_in_line(
 ///|
 fn markdown_editor_table_column_content_start(
   line : String,
-  column : Int,
-) -> Int {
+  column : Int32,
+) -> Int32 {
   let cells = markdown_editor_table_cells_for_line(
     { text: line, start: 0, end: markdown_editor_text_length(line), },
     0,
@@ -235,7 +235,7 @@ fn markdown_editor_rewrite_table_alignment(
 ///|
 fn markdown_editor_rewrite_table_alignment_line(
   line : String,
-  column : Int,
+  column : Int32,
   align : @core.TextAlign?,
 ) -> String {
   let cells = markdown_editor_split_table_cells(line)
@@ -303,7 +303,7 @@ fn markdown_editor_clear_table_column(
 fn markdown_editor_rewrite_table_column(
   source : String,
   block : MarkdownEditorBlock,
-  column : Int,
+  column : Int32,
   delete~ : Bool,
   clear~ : Bool,
 ) -> MarkdownEditorEditResult {
@@ -368,7 +368,7 @@ fn markdown_editor_rewrite_table_column(
 ///|
 fn markdown_editor_rewrite_table_column_in_line(
   line : String,
-  column : Int,
+  column : Int32,
   delete~ : Bool,
   clear~ : Bool,
   clear_text : String,

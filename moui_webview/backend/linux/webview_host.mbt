@@ -4,29 +4,29 @@
 extern "C" fn linux_webview_install_event_callback(
   call_closure : FuncRef[
     (
-      (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+      (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
       UInt64,
-      Int,
+      Int32,
       Bytes,
       Bytes,
       Bytes,
-      Int,
+      Int32,
     ) -> Unit,
   ],
-  callback : (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+  callback : (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
 ) -> Unit = "moui_linux_webview_install_event_callback"
 
 ///|
-extern "C" fn linux_webview_native_available() -> Int = "moui_linux_webview_available"
+extern "C" fn linux_webview_native_available() -> Int32 = "moui_linux_webview_available"
 
 ///|
-extern "C" fn linux_webview_pump(max_iterations : Int) -> Int = "moui_linux_webview_pump"
+extern "C" fn linux_webview_pump(max_iterations : Int32) -> Int32 = "moui_linux_webview_pump"
 
 ///|
-extern "C" fn linux_webview_has_active_work() -> Int = "moui_linux_webview_has_active_work"
+extern "C" fn linux_webview_has_active_work() -> Int32 = "moui_linux_webview_has_active_work"
 
 ///|
-extern "C" fn linux_webview_next_tick_ms(delay_ms : Int) -> Int64 = "moui_linux_webview_next_tick_ms"
+extern "C" fn linux_webview_next_tick_ms(delay_ms : Int32) -> Int64 = "moui_linux_webview_next_tick_ms"
 
 ///|
 extern "C" fn linux_webview_platform_views_begin(wl_surface : UInt64) -> Unit = "moui_linux_webview_platform_views_begin"
@@ -41,8 +41,8 @@ extern "C" fn linux_webview_sync(
   title : Bytes,
   background : Bytes,
   scheme : Bytes,
-  policy : Int,
-  visible : Int,
+  policy : Int32,
+  visible : Int32,
   x : Double,
   y : Double,
   width : Double,
@@ -71,7 +71,7 @@ extern "C" fn linux_webview_platform_views_dispose(wl_surface : UInt64) -> Unit 
 extern "C" fn linux_webview_command(
   wl_surface : UInt64,
   id : Bytes,
-  command : Int,
+  command : Int32,
   text : Bytes,
   detail : Bytes,
 ) -> Unit = "moui_linux_webview_command"
@@ -80,9 +80,9 @@ extern "C" fn linux_webview_command(
 /// Surface data returned from C
 pub struct WebViewSurfaceData {
   surface_ptr : UInt64
-  width : Int
-  height : Int
-  stride : Int // row_bytes
+  width : Int32
+  height : Int32
+  stride : Int32 // row_bytes
 }
 
 ///|
@@ -99,7 +99,7 @@ extern "C" fn linux_webview_get_surface_ptr(
 extern "C" fn linux_webview_get_surface_width(
   wl_surface : UInt64,
   id : Bytes,
-) -> Int = "moui_linux_webview_get_surface_width"
+) -> Int32 = "moui_linux_webview_get_surface_width"
 
 ///|
 /// Get surface height for a webview
@@ -107,7 +107,7 @@ extern "C" fn linux_webview_get_surface_width(
 extern "C" fn linux_webview_get_surface_height(
   wl_surface : UInt64,
   id : Bytes,
-) -> Int = "moui_linux_webview_get_surface_height"
+) -> Int32 = "moui_linux_webview_get_surface_height"
 
 ///|
 /// Get surface stride for a webview
@@ -115,7 +115,7 @@ extern "C" fn linux_webview_get_surface_height(
 extern "C" fn linux_webview_get_surface_stride(
   wl_surface : UInt64,
   id : Bytes,
-) -> Int = "moui_linux_webview_get_surface_stride"
+) -> Int32 = "moui_linux_webview_get_surface_stride"
 
 ///|
 /// Get surface data for a webview by calling individual getters
@@ -148,13 +148,13 @@ pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities {
 }
 
 ///|
-pub fn pump_linux_webview_runtime(max_iterations? : Int = 64) -> Bool {
+pub fn pump_linux_webview_runtime(max_iterations~ : Int32 = 64) -> Bool {
   let pumped = linux_webview_pump(max_iterations)
   pumped > 0 || linux_webview_has_active_work() != 0
 }
 
 ///|
-pub fn linux_webview_runtime_next_tick_ms(delay_ms? : Int = 16) -> Int64 {
+pub fn linux_webview_runtime_next_tick_ms(delay_ms~ : Int32 = 16) -> Int64 {
   linux_webview_next_tick_ms(delay_ms)
 }
 
@@ -189,7 +189,7 @@ pub fn install_linux_webview_event_dispatcher(
 pub fn sync_linux_platform_views(
   window : @window_linux.Window,
   frame : @core.DrawFrame,
-  content_offset_y? : Double = 0.0,
+  content_offset_y~ : Double = 0.0,
 ) -> Unit {
   let wl_display = window.wl_display()
   let wl_surface = window.wl_surface()
@@ -246,7 +246,7 @@ pub fn draw_linux_webview_to_renderer(
   window : @window_linux.Window,
   renderer : @render.RendererSession,
   frame : @core.DrawFrame,
-  content_offset_y? : Double = 0.0,
+  content_offset_y~ : Double = 0.0,
 ) -> Unit {
   let wl_surface = window.wl_surface()
 
@@ -291,7 +291,7 @@ pub fn dispose_linux_platform_views(window : @window_linux.Window) -> Unit {
 pub fn drain_linux_webview_commands(
   window : @window_linux.Window,
   host : @host.WebViewHost,
-) -> Int {
+) -> Int32 {
   let wl_surface = window.wl_surface()
   host.drain_commands(command => {
     match host.native_config(command.controller_id) {

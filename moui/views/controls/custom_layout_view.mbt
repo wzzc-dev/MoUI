@@ -55,8 +55,8 @@ impl @core.ViewNode for CustomLayout with fn semantics(self) {
 pub fn[Msg] custom_layout(
   measure~ : (@core.Constraints) -> @core.Size,
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = Group,
-  semantics_label? : String = "",
+  semantics_role~ : @core.SemanticsRole = Group,
+  semantics_label~ : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(CustomLayout::{
     measure,

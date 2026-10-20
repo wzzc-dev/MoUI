@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] command_palette(
   commands : Array[@core.ActionCommand],
-  query? : String = "",
+  query~ : String = "",
   on_select~ : (@core.CommandIntent) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 420.0,
-  max_height? : Double = 260.0,
+  width~ : Double = 420.0,
+  max_height~ : Double = 260.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []

@@ -11,8 +11,8 @@
 /// `width.unwrap_or(max)` / `height.unwrap_or(max)` path. Pass `None` on the
 /// axis you want greedy; pass `Some(v)` to pin it.
 fn[Msg] greedy_box(
-  width? : Double? = None,
-  height? : Double? = None,
+  width~ : Double? = None,
+  height~ : Double? = None,
 ) -> @core.View[Msg] {
   let requested_width = width
   let requested_height = height
@@ -61,7 +61,7 @@ fn[Msg] greedy_box(
 /// `frame(row([...]))`, so the row's flex children live one level below.
 fn flex_tight_child(
   layout : @core.LayoutResult,
-  index : Int,
+  index : Int32,
 ) -> @core.LayoutResult? {
   match layout.children.get(0) {
     Some(row) => row.children.get(index)

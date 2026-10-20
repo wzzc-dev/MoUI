@@ -1,17 +1,17 @@
 ///|
-pub fn Font::default(size? : Float = 12.0) -> Font? {
+pub fn Font::default(size~ : Float = 12.0) -> Font? {
   ignore(size)
   None
 }
 
 ///|
-pub fn Font::empty(size? : Float = 12.0) -> Font? {
+pub fn Font::empty(size~ : Float = 12.0) -> Font? {
   ignore(size)
   None
 }
 
 ///|
-pub fn Font::from_typeface(typeface : Typeface, size? : Float = 12.0) -> Font? {
+pub fn Font::from_typeface(typeface : Typeface, size~ : Float = 12.0) -> Font? {
   ignore(typeface)
   ignore(size)
   None
@@ -43,7 +43,7 @@ pub fn Font::measure_text_utf8(self : Font, text : Bytes) -> Float {
 }
 
 ///|
-pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int {
+pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int32 {
   ignore(self)
   ignore(text)
   0
@@ -74,7 +74,7 @@ pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] 
 pub fn Font::glyph_x_positions(
   self : Font,
   glyphs : Array[GlyphId],
-  origin? : Float = 0.0,
+  origin~ : Float = 0.0,
 ) -> Array[Float] {
   ignore(self)
   ignore(glyphs)
@@ -86,7 +86,7 @@ pub fn Font::glyph_x_positions(
 pub fn Font::glyph_positions(
   self : Font,
   glyphs : Array[GlyphId],
-  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+  origin~ : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
   ignore(self)
   ignore(glyphs)
@@ -98,7 +98,7 @@ pub fn Font::glyph_positions(
 pub fn Font::text_glyph_x_positions_utf8(
   self : Font,
   text : Bytes,
-  origin? : Float = 0.0,
+  origin~ : Float = 0.0,
 ) -> Array[Float] {
   ignore(self)
   ignore(text)
@@ -110,7 +110,7 @@ pub fn Font::text_glyph_x_positions_utf8(
 pub fn Font::text_glyph_positions_utf8(
   self : Font,
   text : Bytes,
-  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+  origin~ : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
   ignore(self)
   ignore(text)
@@ -169,8 +169,8 @@ pub fn Font::metrics(self : Font) -> FontMetrics {
 pub fn Font::shape_text_utf8(
   self : Font,
   text : Bytes,
-  width? : Float = 1000000000.0,
-  left_to_right? : Bool = true,
+  width~ : Float = 1000000000.0,
+  left_to_right~ : Bool = true,
 ) -> ShapedTextRun? {
   ignore(self)
   ignore(text)
@@ -198,7 +198,7 @@ pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
 }
 
 ///|
-pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int {
+pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int32 {
   ignore(self)
   0
 }
@@ -222,7 +222,7 @@ pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
 }
 
 ///|
-pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
+pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int32] {
   ignore(self)
   []
 }
@@ -241,9 +241,9 @@ pub fn Typeface::default() -> Typeface? {
 ///|
 pub fn Typeface::from_name(
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   ignore(family_name)
   ignore(weight)
@@ -263,14 +263,14 @@ pub fn Typeface::from_name_style(
 }
 
 ///|
-pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
+pub fn Typeface::from_file(path : Bytes, index~ : Int32 = 0) -> Typeface? {
   ignore(path)
   ignore(index)
   None
 }
 
 ///|
-pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
+pub fn Typeface::from_data(data : Bytes, index~ : Int32 = 0) -> Typeface? {
   ignore(data)
   ignore(index)
   None
@@ -280,7 +280,7 @@ pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
 pub fn Typeface::register_data(
   family_alias : Bytes,
   data : Bytes,
-  index? : Int = 0,
+  index~ : Int32 = 0,
 ) -> Typeface? {
   ignore(family_alias)
   ignore(data)
@@ -313,13 +313,13 @@ pub fn FontMgr::is_available(self : FontMgr) -> Bool {
 }
 
 ///|
-pub fn FontMgr::count_families(self : FontMgr) -> Int {
+pub fn FontMgr::count_families(self : FontMgr) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
+pub fn FontMgr::family_name(self : FontMgr, index : Int32) -> Bytes? {
   ignore(self)
   ignore(index)
   None
@@ -329,9 +329,9 @@ pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
 pub fn FontMgr::match_family_style(
   self : FontMgr,
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   ignore(self)
   ignore(family_name)
@@ -358,8 +358,8 @@ pub fn FontMgr::match_family_style_character(
   self : FontMgr,
   family_name : Bytes,
   bcp47 : Array[Bytes],
-  character : Int,
-  style? : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
+  character : Int32,
+  style~ : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
 ) -> Typeface? {
   ignore(self)
   ignore(family_name)
@@ -393,9 +393,9 @@ pub fn FontMgr::resolve_fallback_request(
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   ignore(font_mgr)
   ignore(family_name)

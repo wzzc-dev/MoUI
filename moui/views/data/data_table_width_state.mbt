@@ -7,9 +7,9 @@ pub struct ColumnWidthState {
 
 ///|
 pub fn ColumnWidthState::new(
-  widths? : Array[TableColumn] = [],
-  min_width? : Double = 72.0,
-  max_width? : Double = 360.0,
+  widths~ : Array[TableColumn] = [],
+  min_width~ : Double = 72.0,
+  max_width~ : Double = 360.0,
 ) -> ColumnWidthState {
   {
     widths: widths.copy(),

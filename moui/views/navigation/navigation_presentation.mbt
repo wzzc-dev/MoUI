@@ -9,8 +9,8 @@ pub fn[Msg] wizard(
   current~ : String,
   on_select~ : (String) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 520.0,
-  height? : Double = 260.0,
+  width~ : Double = 520.0,
+  height~ : Double = 260.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let header_width = @common.view_max_double(
@@ -69,7 +69,7 @@ pub fn[Msg] wizard(
 }
 
 ///|
-fn wizard_visible_step_count(count : Int) -> Int {
+fn wizard_visible_step_count(count : Int32) -> Int32 {
   if count > 1 {
     count
   } else {

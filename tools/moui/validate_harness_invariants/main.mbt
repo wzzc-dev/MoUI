@@ -11,14 +11,14 @@ struct Entrypoint {
   example : String
   path : String
   mobile : Bool
-  line_budget : Int
+  line_budget : Int32
 }
 
 ///|
 struct MatrixEntrypointRoute {
   suffix : String
   mobile : Bool
-  line_budget : Int
+  line_budget : Int32
 }
 
 ///|
@@ -37,7 +37,7 @@ fn usage() -> String {
 }
 
 ///|
-fn max_non_test_mbt() -> Int {
+fn max_non_test_mbt() -> Int32 {
   2
 }
 
@@ -86,7 +86,7 @@ fn product_logic_label(line : String) -> String? {
 }
 
 ///|
-fn line_count(text : String) -> Int {
+fn line_count(text : String) -> Int32 {
   if text == "" {
     return 0
   }
@@ -100,7 +100,7 @@ fn line_count(text : String) -> Int {
 }
 
 ///|
-fn token_count(text : String, token : String) -> Int {
+fn token_count(text : String, token : String) -> Int32 {
   let mut parts = 0
   for _ in text.split(token) {
     parts += 1
@@ -824,7 +824,7 @@ fn check_r3_mobile_build_pipeline(
 }
 
 ///|
-fn count_p_rows(text : String) -> Int {
+fn count_p_rows(text : String) -> Int32 {
   let mut count = 0
   for line in text.split("\n") {
     let trimmed = line.trim().to_owned()
@@ -1090,7 +1090,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err(message) => {
       println(message)

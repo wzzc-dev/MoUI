@@ -18,10 +18,10 @@ fn option_parts(argument : String) -> (String, String?) {
 ///|
 fn option_value(
   args : Array[String],
-  index : Int,
+  index : Int32,
   inline : String?,
   name : String,
-) -> Result[(String, Int), String] {
+) -> Result[(String, Int32), String] {
   match inline {
     Some("") => Err("missing value for " + name)
     Some(value) => Ok((value, index + 1))

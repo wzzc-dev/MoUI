@@ -8,17 +8,17 @@
 ///|
 priv struct SkiaTextShapingEntry {
   layout : SkiaResolvedTextLayout
-  mut last_used : Int
+  mut last_used : Int32
 }
 
 ///|
 priv struct SkiaTextShapingCache {
   entries : Map[String, SkiaTextShapingEntry]
-  mut tick : Int
-  mut total_hits : Int
-  mut total_misses : Int
-  mut frame_mark_hits : Int
-  mut frame_mark_misses : Int
+  mut tick : Int32
+  mut total_hits : Int32
+  mut total_misses : Int32
+  mut frame_mark_hits : Int32
+  mut frame_mark_misses : Int32
 }
 
 ///|
@@ -56,7 +56,9 @@ fn SkiaTextShapingCache::begin_frame(self : SkiaTextShapingCache) -> Unit {
 }
 
 ///|
-fn SkiaTextShapingCache::frame_delta(self : SkiaTextShapingCache) -> (Int, Int) {
+fn SkiaTextShapingCache::frame_delta(
+  self : SkiaTextShapingCache,
+) -> (Int32, Int32) {
   (
     self.total_hits - self.frame_mark_hits,
     self.total_misses - self.frame_mark_misses,

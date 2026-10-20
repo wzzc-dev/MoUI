@@ -33,7 +33,7 @@ pub fn[Msg] popup_spec(
   theme~ : @core.Theme,
   width~ : Double,
   height? : Double,
-  candidates? : Array[@presentation.PresentationPlacementCandidate] = [
+  candidates~ : Array[@presentation.PresentationPlacementCandidate] = [
     BelowStart,
     AboveStart,
     BelowEnd,

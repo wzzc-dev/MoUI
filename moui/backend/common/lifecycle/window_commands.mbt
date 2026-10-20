@@ -5,7 +5,7 @@ pub struct WindowCommands {
 
 ///|
 pub fn WindowCommands::new(
-  queue? : WindowRequestQueue = WindowRequestQueue::new(),
+  queue~ : WindowRequestQueue = WindowRequestQueue::new(),
 ) -> WindowCommands {
   { queue, }
 }
@@ -16,12 +16,12 @@ pub fn WindowCommands::queue(self : WindowCommands) -> WindowRequestQueue {
 }
 
 ///|
-pub fn WindowCommands::pending_count(self : WindowCommands) -> Int {
+pub fn WindowCommands::pending_count(self : WindowCommands) -> Int32 {
   self.queue.pending_count()
 }
 
 ///|
-pub fn WindowCommands::completed_count(self : WindowCommands) -> Int {
+pub fn WindowCommands::completed_count(self : WindowCommands) -> Int32 {
   self.queue.completed_count()
 }
 
@@ -42,9 +42,9 @@ pub fn WindowCommands::open_window(
 pub fn WindowCommands::open(
   self : WindowCommands,
   title~ : String,
-  scene? : @backend_host.WindowScene = @backend_host.WindowScene::main(),
+  scene~ : @backend_host.WindowScene = @backend_host.WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  primary? : Bool = false,
+  primary~ : Bool = false,
 ) -> Unit {
   self.open_window(
     @backend_host.WindowOpenRequest::new(title~, scene~, metrics~, primary~),

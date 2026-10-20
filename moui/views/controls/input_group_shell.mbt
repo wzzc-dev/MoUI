@@ -1,12 +1,12 @@
 ///|
 pub fn[Msg] input_group(
   child~ : @core.View[Msg],
-  prefix? : @core.View[Msg]? = None,
-  suffix? : @core.View[Msg]? = None,
+  prefix~ : @core.View[Msg]? = None,
+  suffix~ : @core.View[Msg]? = None,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  height? : Double = 44.0,
-  padding? : Double = @style.default_theme().spacing_scale.sm,
+  width~ : Double = 320.0,
+  height~ : Double = 44.0,
+  padding~ : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []

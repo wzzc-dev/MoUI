@@ -11,7 +11,7 @@ priv struct SkiaTextMeasureCacheEntry {
 }
 
 ///|
-fn skia_text_measure_cache_capacity() -> Int {
+fn skia_text_measure_cache_capacity() -> Int32 {
   512
 }
 
@@ -44,7 +44,7 @@ pub fn SkiaRasterRenderer::text_system(
 
 ///|
 pub fn skia_text_system(
-  resolution? : SkiaFontResolution = SystemFontMgr,
+  resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> @core.TextSystem {
   let measure_cache : Ref[Array[SkiaTextMeasureCacheEntry]] = Ref([])
   match resolution {
@@ -229,7 +229,7 @@ fn skia_paragraph_line_metrics(
   // SkParagraph line metric indices are UTF-16 code units, not the UTF-8
   // byte offsets the rect/hit APIs use; callers must pass
   // `skia_utf16_char_offsets(text)`.
-  line_offsets : Array[Int],
+  line_offsets : Array[Int32],
 ) -> Array[@core.TextParagraphLineMetrics] {
   let chars = text.to_array()
   let lines : Array[@core.TextParagraphLineMetrics] = []
@@ -282,7 +282,7 @@ fn skia_paragraph_caret_rects(
   text : String,
   paragraph : @skia_native.Paragraph,
   lines : Array[@core.TextParagraphLineMetrics],
-  offsets : Array[Int],
+  offsets : Array[Int32],
 ) -> Array[@core.Rect] {
   let chars = text.to_array()
   let carets : Array[@core.Rect] = []
@@ -296,8 +296,8 @@ fn skia_paragraph_caret_rects(
 fn skia_paragraph_caret_rect_at(
   paragraph : @skia_native.Paragraph,
   lines : Array[@core.TextParagraphLineMetrics],
-  offsets : Array[Int],
-  index : Int,
+  offsets : Array[Int32],
+  index : Int32,
 ) -> @core.Rect {
   let line = skia_paragraph_line_for_char_index(lines, index)
   let start_byte = offsets[index.clamp(min=0, max=offsets.length() - 1)]
@@ -331,7 +331,7 @@ fn skia_paragraph_caret_rect_at(
 ///|
 fn skia_paragraph_line_for_char_index(
   lines : Array[@core.TextParagraphLineMetrics],
-  index : Int,
+  index : Int32,
 ) -> @core.TextParagraphLineMetrics {
   if lines.is_empty() {
     return {
@@ -354,7 +354,7 @@ fn skia_paragraph_line_for_char_index(
 fn skia_paragraph_visual_order_metadata(
   text : String,
   paragraph : @skia_native.Paragraph,
-  offsets : Array[Int],
+  offsets : Array[Int32],
   bidi_ready~ : Bool,
 ) -> @core.TextParagraphVisualOrderMetadata {
   let logical_clusters = @render_common.text_grapheme_clusters(text)
@@ -386,7 +386,7 @@ fn skia_paragraph_visual_order_metadata(
 fn skia_paragraph_cluster_boxes(
   clusters : Array[String],
   paragraph : @skia_native.Paragraph,
-  offsets : Array[Int],
+  offsets : Array[Int32],
 ) -> Array[SkiaParagraphClusterBox] {
   let boxes : Array[SkiaParagraphClusterBox] = []
   let mut char_index = 0

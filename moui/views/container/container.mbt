@@ -16,9 +16,9 @@ pub fn[Msg] container(
   width? : Double,
   height? : Double,
   background? : @core.Color,
-  corner_radius? : Double = 0.0,
-  border? : @core.BorderStyle? = None,
-  variant? : @style.ContainerVariant = Base,
+  corner_radius~ : Double = 0.0,
+  border~ : @core.BorderStyle? = None,
+  variant~ : @style.ContainerVariant = Base,
   theme? : @core.Theme,
   padding? : Double,
 ) -> @core.View[Msg] {
@@ -75,7 +75,7 @@ pub fn[Msg] card(
   child : @core.View[Msg],
   width? : Double,
   height? : Double,
-  padding? : Double = 24.0,
+  padding~ : Double = 24.0,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   // `theme` 保持 Option 原样转发:不显式指定时表面 chrome 在 paint 期取
@@ -205,8 +205,8 @@ impl @core.ViewNode for EmptyControl with fn layout(_self, ctx) {
 
 ///|
 pub fn[Msg] spacer(
-  min_length? : Double = 0.0,
-  weight? : Double = 1.0,
+  min_length~ : Double = 0.0,
+  weight~ : Double = 1.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(SpacerViewNode::{ min_length, weight, })
 }

@@ -149,7 +149,7 @@ fn json_null() -> Json {
 }
 
 ///|
-pub fn rpc_error(id : Json, code : Int, message : String) -> Json {
+pub fn rpc_error(id : Json, code : Int32, message : String) -> Json {
   (
     {
       "jsonrpc": "2.0",
@@ -159,7 +159,7 @@ pub fn rpc_error(id : Json, code : Int, message : String) -> Json {
 }
 
 ///|
-pub fn rpc_error_no_id(code : Int, message : String) -> Json {
+pub fn rpc_error_no_id(code : Int32, message : String) -> Json {
   rpc_error(json_null(), code, message)
 }
 
@@ -226,7 +226,7 @@ fn tool_failure(
   id : Json,
   code : String,
   message : String,
-  details? : Json = Json::empty_object(),
+  details~ : Json = Json::empty_object(),
 ) -> Json {
   tool_response(id, tool_envelope_error(code, message, details), true)
 }
@@ -936,7 +936,7 @@ fn optional_semantic_id_json(value : @core.SemanticId?) -> Json {
 }
 
 ///|
-fn optional_int_json(value : Int?) -> Json {
+fn optional_int_json(value : Int32?) -> Json {
   match value {
     Some(number) => number.to_json()
     None => json_null()

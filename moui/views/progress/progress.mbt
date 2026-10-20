@@ -1,10 +1,10 @@
 ///|
 pub fn[Msg] progress(
   value : Double,
-  label? : String = "",
+  label~ : String = "",
   value_text? : String,
-  width? : Double = 180.0,
-  height? : Double = 8.0,
+  width~ : Double = 180.0,
+  height~ : Double = 8.0,
   theme? : @core.Theme,
   style? : @style.ProgressStyle,
   foreground? : @core.Color,

@@ -35,7 +35,7 @@ pub fn[Model, Msg] Feature::new(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Feature[Model, Msg] {
   {
     init,
@@ -51,7 +51,7 @@ pub fn[Model, Msg] Feature::new_with_environment(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model, ViewEnvironment) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Feature[Model, Msg] {
   { init, update, view, subscriptions, commands: _model => [], }
 }

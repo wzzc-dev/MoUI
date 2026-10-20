@@ -3,74 +3,74 @@ extern "c" fn app_bench_now_ms() -> Double = "moui_app_cached_layer_benchmark_no
 
 ///|
 struct AppBenchPipelineCounters {
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
+  rebuild_pass_count : Int32
+  layout_pass_count : Int32
+  paint_pass_count : Int32
+  draw_command_build_count : Int32
 }
 
 ///|
 struct CachedFrameSample {
-  submitted_frames : Int
+  submitted_frames : Int32
   elapsed_draw_ms : Double
   elapsed_render_ms : Double
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
-  cache_evict_count : Int
-  present_count : Int
-  followup_count : Int
-  command_count_sum : Int
-  command_count_max : Int
-  damage_rect_count_sum : Int
-  damage_rect_count_max : Int
-  damage_full_count : Int
-  damage_rect_frame_count : Int
-  damage_empty_count : Int
-  begin_cached_layer_count : Int
-  end_retained_layer_count : Int
-  overlay_only_frame_count : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
+  cache_evict_count : Int32
+  present_count : Int32
+  followup_count : Int32
+  command_count_sum : Int32
+  command_count_max : Int32
+  damage_rect_count_sum : Int32
+  damage_rect_count_max : Int32
+  damage_full_count : Int32
+  damage_rect_frame_count : Int32
+  damage_empty_count : Int32
+  begin_cached_layer_count : Int32
+  end_retained_layer_count : Int32
+  overlay_only_frame_count : Int32
+  rebuild_pass_count : Int32
+  layout_pass_count : Int32
+  paint_pass_count : Int32
+  draw_command_build_count : Int32
   first_damage_full_reason : String
 }
 
 ///|
 struct CachedRunResult {
   label : String
-  frames : Int
-  submitted_frames : Int
+  frames : Int32
+  submitted_frames : Int32
   elapsed_draw_ms : Double
   elapsed_render_ms : Double
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
-  cache_evict_count : Int
-  present_count : Int
-  followup_count : Int
-  command_count_sum : Int
-  command_count_max : Int
-  damage_rect_count_sum : Int
-  damage_rect_count_max : Int
-  damage_full_count : Int
-  damage_rect_frame_count : Int
-  damage_empty_count : Int
-  begin_cached_layer_count : Int
-  end_retained_layer_count : Int
-  overlay_only_frame_count : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
-  initial_begin_cached_layer_count : Int
-  initial_end_retained_layer_count : Int
-  initial_cache_update_count : Int
-  warmup_begin_cached_layer_count : Int
-  warmup_end_retained_layer_count : Int
-  warmup_cache_hit_count : Int
-  warmup_cache_update_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
+  cache_evict_count : Int32
+  present_count : Int32
+  followup_count : Int32
+  command_count_sum : Int32
+  command_count_max : Int32
+  damage_rect_count_sum : Int32
+  damage_rect_count_max : Int32
+  damage_full_count : Int32
+  damage_rect_frame_count : Int32
+  damage_empty_count : Int32
+  begin_cached_layer_count : Int32
+  end_retained_layer_count : Int32
+  overlay_only_frame_count : Int32
+  rebuild_pass_count : Int32
+  layout_pass_count : Int32
+  paint_pass_count : Int32
+  draw_command_build_count : Int32
+  initial_begin_cached_layer_count : Int32
+  initial_end_retained_layer_count : Int32
+  initial_cache_update_count : Int32
+  warmup_begin_cached_layer_count : Int32
+  warmup_end_retained_layer_count : Int32
+  warmup_cache_hit_count : Int32
+  warmup_cache_update_count : Int32
   first_damage_full_reason : String
 }
 
@@ -78,26 +78,26 @@ struct CachedRunResult {
 struct FullFrameSample {
   elapsed_draw_ms : Double
   elapsed_render_ms : Double
-  command_count : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
+  command_count : Int32
+  rebuild_pass_count : Int32
+  layout_pass_count : Int32
+  paint_pass_count : Int32
+  draw_command_build_count : Int32
 }
 
 ///|
 struct FullRunResult {
   label : String
-  frames : Int
+  frames : Int32
   elapsed_draw_ms : Double
   elapsed_render_ms : Double
-  present_count : Int
-  command_count_sum : Int
-  command_count_max : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
+  present_count : Int32
+  command_count_sum : Int32
+  command_count_max : Int32
+  rebuild_pass_count : Int32
+  layout_pass_count : Int32
+  paint_pass_count : Int32
+  draw_command_build_count : Int32
 }
 
 ///|
@@ -107,7 +107,7 @@ fn[T] fail_bench(message : String) -> T {
 }
 
 ///|
-fn app_bench_parse_positive_int(value : String, fallback : Int) -> Int {
+fn app_bench_parse_positive_int(value : String, fallback : Int32) -> Int32 {
   let chars = value.trim().to_array()
   if chars.length() == 0 {
     return fallback
@@ -123,7 +123,7 @@ fn app_bench_parse_positive_int(value : String, fallback : Int) -> Int {
 }
 
 ///|
-fn app_bench_env_int(name : String, fallback : Int) -> Int {
+fn app_bench_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => app_bench_parse_positive_int(value, fallback)
     None => fallback
@@ -197,7 +197,7 @@ fn app_bench_pipeline_delta(
 }
 
 ///|
-fn app_bench_damage_full_count(damage : @core.DamageRegion) -> Int {
+fn app_bench_damage_full_count(damage : @core.DamageRegion) -> Int32 {
   if damage.kind() == "full" {
     1
   } else {
@@ -206,7 +206,7 @@ fn app_bench_damage_full_count(damage : @core.DamageRegion) -> Int {
 }
 
 ///|
-fn app_bench_damage_rect_frame_count(damage : @core.DamageRegion) -> Int {
+fn app_bench_damage_rect_frame_count(damage : @core.DamageRegion) -> Int32 {
   if damage.kind() == "rects" {
     1
   } else {
@@ -215,7 +215,7 @@ fn app_bench_damage_rect_frame_count(damage : @core.DamageRegion) -> Int {
 }
 
 ///|
-fn app_bench_damage_empty_count(damage : @core.DamageRegion) -> Int {
+fn app_bench_damage_empty_count(damage : @core.DamageRegion) -> Int32 {
   if damage.kind() == "empty" {
     1
   } else {
@@ -238,7 +238,7 @@ fn app_bench_first_full_reason(
 ///|
 fn app_bench_begin_cached_layer_count(
   commands : Array[@core.DrawCommand],
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for command in commands {
     if command is @core.DrawCommand::BeginRetainedLayer(_) {
@@ -251,7 +251,7 @@ fn app_bench_begin_cached_layer_count(
 ///|
 fn app_bench_end_retained_layer_count(
   commands : Array[@core.DrawCommand],
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for command in commands {
     if command is @core.DrawCommand::EndRetainedLayer(_) {
@@ -386,7 +386,7 @@ fn app_bench_no_prepare(_runtime : @runtime.AppRuntime) -> Unit {
 ///|
 fn app_bench_dispatch_showcase_scroll(
   runtime : @runtime.AppRuntime,
-  index : Int,
+  index : Int32,
 ) -> Unit {
   let direction = if index / 18 % 2 == 0 { -44.0 } else { 44.0 }
   runtime.dispatch_event(
@@ -403,7 +403,7 @@ fn app_bench_dispatch_showcase_scroll(
 ///|
 fn app_bench_dispatch_showcase_sidebar_hover(
   runtime : @runtime.AppRuntime,
-  index : Int,
+  index : Int32,
 ) -> Unit {
   let y = if index % 2 == 0 { 208.0 } else { 250.0 }
   runtime.dispatch_event(
@@ -423,9 +423,9 @@ fn app_bench_run_cached(
   height : Double,
   make_runtime : (Double, Double) -> @runtime.AppRuntime,
   prepare : (@runtime.AppRuntime) -> Unit,
-  drive : (@runtime.AppRuntime, Int) -> Unit,
-  frames : Int,
-  warmup : Int,
+  drive : (@runtime.AppRuntime, Int32) -> Unit,
+  frames : Int32,
+  warmup : Int32,
 ) -> CachedRunResult {
   let runtime = make_runtime(width, height)
   prepare(runtime)
@@ -566,9 +566,9 @@ fn app_bench_run_full(
   height : Double,
   make_runtime : (Double, Double) -> @runtime.AppRuntime,
   prepare : (@runtime.AppRuntime) -> Unit,
-  drive : (@runtime.AppRuntime, Int) -> Unit,
-  frames : Int,
-  warmup : Int,
+  drive : (@runtime.AppRuntime, Int32) -> Unit,
+  frames : Int32,
+  warmup : Int32,
 ) -> FullRunResult {
   let runtime = make_runtime(width, height)
   prepare(runtime)
@@ -617,7 +617,7 @@ fn app_bench_run_full(
 }
 
 ///|
-fn app_bench_avg(total : Double, frames : Int) -> Double {
+fn app_bench_avg(total : Double, frames : Int32) -> Double {
   if frames == 0 {
     0.0
   } else {
@@ -626,7 +626,7 @@ fn app_bench_avg(total : Double, frames : Int) -> Double {
 }
 
 ///|
-fn app_bench_avg_int(total : Int, frames : Int) -> Double {
+fn app_bench_avg_int(total : Int32, frames : Int32) -> Double {
   if frames == 0 {
     0.0
   } else {
@@ -685,9 +685,9 @@ fn app_bench_run_scenario(
   height : Double,
   make_runtime : (Double, Double) -> @runtime.AppRuntime,
   prepare : (@runtime.AppRuntime) -> Unit,
-  drive : (@runtime.AppRuntime, Int) -> Unit,
-  frames : Int,
-  warmup : Int,
+  drive : (@runtime.AppRuntime, Int32) -> Unit,
+  frames : Int32,
+  warmup : Int32,
 ) -> Unit {
   let cached = app_bench_run_cached(
     label, width, height, make_runtime, prepare, drive, frames, warmup,

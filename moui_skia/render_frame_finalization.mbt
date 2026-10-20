@@ -22,7 +22,7 @@ fn render_frame_finalization_resource_plan(
 /// flush/submit is performed on its target surface.
 pub(all) struct RenderFrameFinalizationDescriptor {
   frame : RenderFrameDescriptor
-  frame_index : Int
+  frame_index : Int32
   validation_status : RenderFrameValidationStatus
   finalization : SurfaceFinalizationDescriptor?
   resource_plan : RendererResourcePlan
@@ -37,9 +37,9 @@ pub extend RenderFrameFinalizationDescriptor with Eq::{not_equal, equal}
 ///|
 pub fn RenderFrameFinalizationDescriptor::new(
   frame : RenderFrameDescriptor,
-  frame_index? : Int = 0,
+  frame_index~ : Int32 = 0,
 ) -> RenderFrameFinalizationDescriptor {
-  let frame_index = Int::max(0, frame_index)
+  let frame_index = Int32::max(0, frame_index)
   let surface_finalization = frame.target.finalization_descriptor(frame_index~)
   let finalization = if frame.is_ready() &&
     surface_finalization.is_finalizable() {
@@ -59,7 +59,7 @@ pub fn RenderFrameFinalizationDescriptor::new(
 ///|
 pub fn RenderFrameDescriptor::finalization_descriptor(
   self : RenderFrameDescriptor,
-  frame_index? : Int = 0,
+  frame_index~ : Int32 = 0,
 ) -> RenderFrameFinalizationDescriptor {
   RenderFrameFinalizationDescriptor::new(self, frame_index~)
 }
@@ -67,7 +67,7 @@ pub fn RenderFrameDescriptor::finalization_descriptor(
 ///|
 pub fn RenderFrameDescriptor::finalization_resource_plan(
   self : RenderFrameDescriptor,
-  frame_index? : Int = 0,
+  frame_index~ : Int32 = 0,
 ) -> RendererResourcePlan {
   self.finalization_descriptor(frame_index~).resource_plan
 }
@@ -134,7 +134,7 @@ pub fn RenderFrameFinalizationDescriptor::missing_cacheable_resource_plan(
 pub fn RenderFrameFinalizationDescriptor::cache_resources(
   self : RenderFrameFinalizationDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
-) -> Int {
+) -> Int32 {
   if self.is_ready() {
     cache.insert_resource_plan(self.resource_plan)
   } else {

@@ -28,7 +28,7 @@ priv enum Token {
 ///|
 priv struct ParseState {
   tokens : Array[Token]
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
@@ -685,7 +685,7 @@ fn pow(base : Double, exp : Double) -> Double {
 }
 
 ///|
-fn pow10(n : Int) -> Double {
+fn pow10(n : Int32) -> Double {
   let mut value = 1.0
   if n >= 0 {
     for _ in 0..<n {

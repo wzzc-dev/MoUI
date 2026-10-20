@@ -130,7 +130,7 @@ priv struct SvgScannedText {
 /// Document-order cursor shared across the recursive tree walk so each
 /// `<text>` element consumes its scanned facts in turn.
 priv struct SvgTextAnchorCursor {
-  mut value : Int
+  mut value : Int32
 }
 
 ///|
@@ -158,7 +158,7 @@ fn svg_scan_text_anchors(svg_text : String) -> Array[SvgScannedText] {
 
   fn chars_equal_at(
     tag : Array[Char],
-    offset : Int,
+    offset : Int32,
     name : Array[Char],
   ) -> Bool {
     let name_len = name.length()
@@ -326,7 +326,7 @@ fn svg_apply_text_paths(
   resolver : SvgTextPathResolver,
   anchors : Array[SvgScannedText],
   cursor : SvgTextAnchorCursor,
-) -> Int {
+) -> Int32 {
   let replaced = match node.shape {
     Text(x~, y~, text~, font_size~) => {
       let anchor = if cursor.value < anchors.length() {

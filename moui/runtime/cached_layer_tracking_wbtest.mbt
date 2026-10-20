@@ -1,5 +1,7 @@
 ///|
-fn runtime_test_cached_layer_source(layer_index : Ref[Int]) -> @core.View[Unit] {
+fn runtime_test_cached_layer_source(
+  layer_index : Ref[Int32],
+) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="RuntimeCachedLayerSource"),
     declaration=() => @core.ViewDeclaration::uncacheable(),
@@ -46,7 +48,7 @@ fn runtime_test_cached_layer_source(layer_index : Ref[Int]) -> @core.View[Unit] 
 
 ///|
 fn runtime_test_stable_cached_layer_source(
-  revision : Ref[Int],
+  revision : Ref[Int32],
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => {
@@ -96,14 +98,14 @@ fn runtime_test_stable_cached_layer_source(
 ///|
 fn runtime_test_begin_cached_layer_count(
   commands : Array[@core.DrawCommand],
-) -> Int {
+) -> Int32 {
   commands.filter(command => command is BeginRetainedLayer(_)).length()
 }
 
 ///|
 fn runtime_test_retained_payload_count(
   commands : Array[@core.DrawCommand],
-) -> Int {
+) -> Int32 {
   commands.filter(command => command is FillRect(_, _)).length()
 }
 

@@ -79,8 +79,8 @@ fn assert_diagnostic_native_skia_maturity_ready(signal : String) -> Unit raise {
 fn assert_diagnostic_native_cluster_carets(
   system : @core.TextSystem,
   text : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Unit raise {
   let layout = system.measure_text(
     @core.TextLayoutInput::new(text~, font=diagnostic_native_text_font()),

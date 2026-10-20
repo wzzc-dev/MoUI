@@ -129,7 +129,7 @@ fn parse_log_lines(output : String) -> Array[Observation] {
 /// buffers may rotate and replay fragments; dedupe keeps the final verdict.
 fn dedupe_observations(observations : Array[Observation]) -> Array[Observation] {
   let result : Array[Observation] = []
-  let seen : Map[String, Int] = Map([])
+  let seen : Map[String, Int32] = Map([])
   for obs in observations {
     let key = obs.kind + ":" + obs.name
     match seen.get(key) {
@@ -189,7 +189,7 @@ fn probe_android(
   app_id : String,
   bundle_id : String,
   host : @plan.HostPlatform,
-  timeout_seconds : Int,
+  timeout_seconds : Int32,
 ) -> ProbeResult {
   let _ = host
   let _ = timeout_seconds
@@ -267,7 +267,7 @@ fn probe_ios(
   device : Device,
   bundle_id : String,
   host : @plan.HostPlatform,
-  timeout_seconds : Int,
+  timeout_seconds : Int32,
 ) -> ProbeResult {
   match host {
     Macos => ()
@@ -346,7 +346,7 @@ fn probe_harmonyos(
   bundle_name : String,
   module_name : String,
   host : @plan.HostPlatform,
-  timeout_seconds : Int,
+  timeout_seconds : Int32,
 ) -> ProbeResult {
   let _ = host
   let _ = timeout_seconds

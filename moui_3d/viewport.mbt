@@ -116,8 +116,8 @@ pub fn ThreeDViewportBinding::status(
 /// renderer resources never cross into the MoUI frame contract.
 pub struct ThreeDViewportHost {
   binding : ThreeDViewportBinding
-  surface_handler : @ref.Ref[(UInt64, Int, Int, Double) -> Unit]
-  frame_handler : @ref.Ref[(ViewportSnapshot, Int, Int, Double) -> Unit]
+  surface_handler : @ref.Ref[(UInt64, Int32, Int32, Double) -> Unit]
+  frame_handler : @ref.Ref[(ViewportSnapshot, Int32, Int32, Double) -> Unit]
   dispose_handler : @ref.Ref[(UInt64) -> Unit]
   invalidate_handler : @ref.Ref[() -> Unit]
 }
@@ -147,7 +147,7 @@ pub fn ThreeDViewportHost::binding(
 /// interpret the platform surface handle.
 pub fn ThreeDViewportHost::set_surface_handler(
   self : ThreeDViewportHost,
-  handler : (UInt64, Int, Int, Double) -> Unit,
+  handler : (UInt64, Int32, Int32, Double) -> Unit,
 ) -> Unit {
   self.surface_handler.val = handler
 }
@@ -155,7 +155,7 @@ pub fn ThreeDViewportHost::set_surface_handler(
 ///|
 pub fn ThreeDViewportHost::set_frame_handler(
   self : ThreeDViewportHost,
-  handler : (ViewportSnapshot, Int, Int, Double) -> Unit,
+  handler : (ViewportSnapshot, Int32, Int32, Double) -> Unit,
 ) -> Unit {
   self.frame_handler.val = handler
 }
@@ -212,7 +212,7 @@ pub fn ThreeDViewportHost::sync_platform_view(
   surface_handle : UInt64,
   frame : @core.DrawFrame,
   content_offset_y : Double,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> Unit {
   if placement.kind != "moui_3d_viewport" {
     return ()
@@ -242,8 +242,8 @@ pub fn ThreeDViewportHost::dispose_platform_views(
 pub fn[Msg] three_d_viewport(
   binding~ : ThreeDViewportBinding,
   snapshot~ : ViewportSnapshot,
-  semantics_label? : String = "3D viewport",
-  on_event? : ((ViewportEvent) -> Msg)? = None,
+  semantics_label~ : String = "3D viewport",
+  on_event~ : ((ViewportEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   ignore(binding.publish(snapshot))
   @core.View::from_node(ThreeDViewportNode::{ binding, semantics_label, }, event=(

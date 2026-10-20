@@ -15,7 +15,7 @@ pub struct EmbeddedHostServices {
 
 ///|
 pub fn EmbeddedHostServices::new(
-  capabilities? : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
+  capabilities~ : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
     clipboard=true,
   ),
 ) -> EmbeddedHostServices {
@@ -80,7 +80,7 @@ pub fn EmbeddedHostServices::drain_completed(
 ///|
 pub fn EmbeddedHostServices::outstanding_count(
   self : EmbeddedHostServices,
-) -> Int {
+) -> Int32 {
   self.queue.outstanding_count()
 }
 
@@ -105,7 +105,7 @@ fn ServiceAsyncQueue::cancel_outstanding_with_completions(
 ///|
 pub fn EmbeddedHostServices::dispose(
   self : EmbeddedHostServices,
-  reason? : String = "embedded runtime host services disposed",
+  reason~ : String = "embedded runtime host services disposed",
 ) -> Array[@host.HostCompletedServiceResponse] {
   if self.disposed {
     []

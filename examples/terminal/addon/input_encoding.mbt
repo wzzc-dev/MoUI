@@ -3,7 +3,7 @@
 /// 返回 None 表示该按键不应透传给终端(如修饰键单独按下)。
 
 ///|
-fn ctrl_char(c : Int) -> Int {
+fn ctrl_char(c : Int32) -> Int32 {
   // Ctrl+A..Z / a..z → 1..26
   if c >= 0x61 && c <= 0x7A {
     c - 0x60
@@ -15,8 +15,8 @@ fn ctrl_char(c : Int) -> Int {
 }
 
 ///|
-fn char_string(cp : Int) -> String {
-  String::make(1, Int::unsafe_to_char(cp))
+fn char_string(cp : Int32) -> String {
+  String::make(1, Int32::unsafe_to_char(cp))
 }
 
 ///|

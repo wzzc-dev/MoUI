@@ -1,14 +1,17 @@
 ///|
 /// Scanline rasterizer for vector path filling
 pub struct ScanlineRasterizer {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
 }
 
 ///|
 /// Create a new scanline rasterizer
-pub fn ScanlineRasterizer::new(width : Int, height : Int) -> ScanlineRasterizer {
+pub fn ScanlineRasterizer::new(
+  width : Int32,
+  height : Int32,
+) -> ScanlineRasterizer {
   let size = width * height * 4 // RGBA
   { width, height, pixels: FixedArray::make(size, 0), }
 }
@@ -40,8 +43,8 @@ pub fn ScanlineRasterizer::clear(
 /// Set a pixel
 fn ScanlineRasterizer::set_pixel(
   self : ScanlineRasterizer,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
 ) -> Unit {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else { return }
@@ -143,10 +146,10 @@ pub fn ScanlineRasterizer::fill_triangle(
 /// Draw a line using Bresenham's algorithm
 pub fn ScanlineRasterizer::draw_line(
   self : ScanlineRasterizer,
-  x0 : Int,
-  y0 : Int,
-  x1 : Int,
-  y1 : Int,
+  x0 : Int32,
+  y0 : Int32,
+  x1 : Int32,
+  y1 : Int32,
   color : Color,
 ) -> Unit {
   let dx = (x1 - x0).abs()

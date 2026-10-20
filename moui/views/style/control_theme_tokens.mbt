@@ -78,8 +78,8 @@ pub fn ControlStateTokens::new(
   border~ : @core.Color,
   border_width~ : Double,
   radius~ : Double,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> ControlStateTokens {
   {
     foreground,

@@ -107,7 +107,7 @@ fn compact_whitespace(text : String) -> String {
 }
 
 ///|
-fn count_occurrences(text : String, needle : String) -> Int {
+fn count_occurrences(text : String, needle : String) -> Int32 {
   if needle == "" {
     return 0
   }
@@ -175,7 +175,7 @@ fn word_char(char : Char) -> Bool {
 }
 
 ///|
-fn token_boundary(chars : Array[Char], index : Int) -> Bool {
+fn token_boundary(chars : Array[Char], index : Int32) -> Bool {
   index < 0 || index >= chars.length() || !word_char(chars[index])
 }
 
@@ -403,7 +403,7 @@ fn verify_example_link_config(options : CliOptions) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

@@ -12,13 +12,13 @@ pub(all) struct MarkdownEditorInputContext {
 ///|
 pub fn markdown_editor_transform_input(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
   // The formatted surface splits plain paragraphs with a blank writing
   // line on Enter; the raw source-mode editor keeps the plain newline.
-  split_paragraph_on_enter? : Bool = true,
+  split_paragraph_on_enter~ : Bool = true,
 ) -> RichTextInputTransform? {
   match
     markdown_editor_paste_footnote_definition(source, caret, selection, input) {

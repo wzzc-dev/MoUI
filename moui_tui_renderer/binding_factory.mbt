@@ -8,9 +8,9 @@
 /// surface is still rejected the same way for every renderer.
 pub fn ansi(
   sink~ : TuiSink,
-  cell? : CellBox = CellBox::default(),
-  diagnostics? : DegradeLog = DegradeLog::new(),
-  palette? : TuiPalette = TuiPalette::default(),
+  cell~ : CellBox = CellBox::default(),
+  diagnostics~ : DegradeLog = DegradeLog::new(),
+  palette~ : TuiPalette = TuiPalette::default(),
 ) -> @render.RendererProvider {
   let caps = tui_feature_capabilities()
   @render.RendererProvider::new(

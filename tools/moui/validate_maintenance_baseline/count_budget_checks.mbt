@@ -2,14 +2,14 @@
 struct CountBudgetOverflow {
   kind : String
   label : String
-  count : Int
-  max_count : Int
+  count : Int32
+  max_count : Int32
 }
 
 ///|
 fn record_count_budget_overflow(
   budget : CountBudget,
-  count : Int,
+  count : Int32,
   overflows : Array[CountBudgetOverflow],
 ) -> Unit {
   if count > budget.max_count {
@@ -27,7 +27,7 @@ fn count_pub_all_in_tree(
   repo_root : String,
   root : String,
   failures : Array[String],
-) -> Int {
+) -> Int32 {
   let files : Array[String] = []
   collect_mbt_files(repo_root, root, files, failures)
   let mut count = 0

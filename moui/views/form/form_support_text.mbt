@@ -3,7 +3,7 @@ pub fn[Msg] form_error(
   message : String,
   theme? : @core.Theme,
   style? : @style.FormValidationStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @text.text(message, role=Caption, theme=resolved_theme, width~, height=24.0)
@@ -16,7 +16,7 @@ pub fn[Msg] form_error(
 pub fn[Msg] form_helper_text(
   message : String,
   theme? : @core.Theme,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @text.text(message, role=Caption, theme=resolved_theme, width~, height=24.0)

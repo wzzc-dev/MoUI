@@ -47,7 +47,7 @@ pub fn ServiceError::unavailable(message : String) -> ServiceError {
 pub fn[T] ServiceTask::new(
   key~ : String,
   start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> ServiceTask[T] {
   { key, label, start_fn: start, }
 }
@@ -56,7 +56,7 @@ pub fn[T] ServiceTask::new(
 pub fn[T] ServiceTask::succeed(
   key~ : String,
   value~ : T,
-  label? : String = "",
+  label~ : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
     complete(Success(value))
@@ -68,7 +68,7 @@ pub fn[T] ServiceTask::succeed(
 pub fn[T] ServiceTask::fail(
   key~ : String,
   error~ : ServiceError,
-  label? : String = "",
+  label~ : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
     complete(Failure(error))
@@ -79,7 +79,7 @@ pub fn[T] ServiceTask::fail(
 ///|
 pub fn[T] ServiceTask::cancelled(
   key~ : String,
-  label? : String = "",
+  label~ : String = "",
 ) -> ServiceTask[T] {
   ServiceTask::new(key~, label~, start=complete => {
     complete(Cancelled)

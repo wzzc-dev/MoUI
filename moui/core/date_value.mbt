@@ -1,11 +1,11 @@
 ///|
 pub(all) struct DateValue {
-  year : Int
-  month : Int
-  day : Int
-  hour : Int
-  minute : Int
-  second : Int
+  year : Int32
+  month : Int32
+  day : Int32
+  hour : Int32
+  minute : Int32
+  second : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -19,12 +19,12 @@ pub extend DateValue with ToJson::{to_json}
 
 ///|
 pub fn DateValue::new(
-  year~ : Int,
-  month~ : Int,
-  day~ : Int,
-  hour? : Int = 0,
-  minute? : Int = 0,
-  second? : Int = 0,
+  year~ : Int32,
+  month~ : Int32,
+  day~ : Int32,
+  hour~ : Int32 = 0,
+  minute~ : Int32 = 0,
+  second~ : Int32 = 0,
 ) -> DateValue {
   { year, month, day, hour, minute, second, }
 }

@@ -146,41 +146,41 @@ test "fontconfig native stub parses font registration payload" {
 #borrow(font_spec)
 extern "C" fn linux_fontconfig_debug_font_spec_family_count(
   font_spec : Bytes,
-) -> Int = "moui_linux_fontconfig_debug_font_spec_family_count"
+) -> Int32 = "moui_linux_fontconfig_debug_font_spec_family_count"
 
 ///|
-extern "C" fn linux_fontconfig_debug_font_spec_protocol_version() -> Int = "moui_linux_fontconfig_debug_font_spec_protocol_version"
+extern "C" fn linux_fontconfig_debug_font_spec_protocol_version() -> Int32 = "moui_linux_fontconfig_debug_font_spec_protocol_version"
 
 ///|
-extern "C" fn linux_fontconfig_debug_font_registration_protocol_version() -> Int = "moui_linux_fontconfig_debug_font_registration_protocol_version"
+extern "C" fn linux_fontconfig_debug_font_registration_protocol_version() -> Int32 = "moui_linux_fontconfig_debug_font_registration_protocol_version"
 
 ///|
 #borrow(payload)
 extern "C" fn linux_fontconfig_debug_font_registration_data_len(
   payload : Bytes,
-) -> Int = "moui_linux_fontconfig_debug_font_registration_data_len"
+) -> Int32 = "moui_linux_fontconfig_debug_font_registration_data_len"
 
 ///|
 #cfg(platform="linux")
-extern "C" fn linux_fontconfig_debug_color_emoji_raster_pixels() -> Int = "moui_linux_fontconfig_debug_color_emoji_raster_pixels"
+extern "C" fn linux_fontconfig_debug_color_emoji_raster_pixels() -> Int32 = "moui_linux_fontconfig_debug_color_emoji_raster_pixels"
 
 ///|
 #cfg(platform="linux")
 #borrow(family_name)
 extern "C" fn linux_fontconfig_debug_registered_font_data_len(
   family_name : Bytes,
-) -> Int = "moui_linux_fontconfig_debug_registered_font_data_len"
+) -> Int32 = "moui_linux_fontconfig_debug_registered_font_data_len"
 
 ///|
 #cfg(platform="linux")
-extern "C" fn linux_fontconfig_debug_latin_raster_pixels() -> Int = "moui_linux_fontconfig_debug_latin_raster_pixels"
+extern "C" fn linux_fontconfig_debug_latin_raster_pixels() -> Int32 = "moui_linux_fontconfig_debug_latin_raster_pixels"
 
 ///|
 #cfg(platform="linux")
 #borrow(family_name)
 extern "C" fn linux_fontconfig_debug_register_system_font_data(
   family_name : Bytes,
-) -> Int = "moui_linux_fontconfig_debug_register_system_font_data"
+) -> Int32 = "moui_linux_fontconfig_debug_register_system_font_data"
 
 ///|
 #cfg(platform="linux")

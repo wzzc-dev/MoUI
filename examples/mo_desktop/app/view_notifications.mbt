@@ -429,7 +429,7 @@ fn notification_widget_calendar(
 ///|
 /// Build a single 7-cell row starting from today-2 so today lands in the
 /// middle of the row, giving a glanceable week view.
-fn notification_cal_window(day : Int) -> Array[String] {
+fn notification_cal_window(day : Int32) -> Array[String] {
   let labels : Array[String] = []
   for index in 0..<7 {
     labels.push((day - 2 + index).max(1).to_string())

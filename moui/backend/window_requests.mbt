@@ -3,8 +3,8 @@
 /// Queue storage and completion fanout live in `backend/common`.
 pub struct WindowRequests {
   push_fn : (WindowRequest) -> Unit
-  pending_count_fn : () -> Int
-  completed_count_fn : () -> Int
+  pending_count_fn : () -> Int32
+  completed_count_fn : () -> Int32
   drain_fn : () -> Array[WindowRequest]
   record_result_fn : (WindowRequest, WindowRequestResult) -> Unit
   subscribe_completed_fn : ((WindowRequestCompletion) -> Unit) -> () -> Unit
@@ -12,17 +12,17 @@ pub struct WindowRequests {
 
 ///|
 pub fn WindowRequests::new(
-  push? : (WindowRequest) -> Unit = _request => (),
-  pending_count? : () -> Int = () => 0,
-  completed_count? : () -> Int = () => 0,
-  drain? : () -> Array[WindowRequest] = () => [],
-  record_result? : (WindowRequest, WindowRequestResult) -> Unit = fn(
+  push~ : (WindowRequest) -> Unit = _request => (),
+  pending_count~ : () -> Int32 = () => 0,
+  completed_count~ : () -> Int32 = () => 0,
+  drain~ : () -> Array[WindowRequest] = () => [],
+  record_result~ : (WindowRequest, WindowRequestResult) -> Unit = fn(
     _request,
     _result,
   ) {
 
   },
-  subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit = _handle => {
+  subscribe_completed~ : ((WindowRequestCompletion) -> Unit) -> () -> Unit = _handle => {
     () => ()
   },
 ) -> WindowRequests {
@@ -42,12 +42,12 @@ pub fn WindowRequests::unavailable() -> WindowRequests {
 }
 
 ///|
-pub fn WindowRequests::pending_count(self : WindowRequests) -> Int {
+pub fn WindowRequests::pending_count(self : WindowRequests) -> Int32 {
   (self.pending_count_fn)()
 }
 
 ///|
-pub fn WindowRequests::completed_count(self : WindowRequests) -> Int {
+pub fn WindowRequests::completed_count(self : WindowRequests) -> Int32 {
   (self.completed_count_fn)()
 }
 

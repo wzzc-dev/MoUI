@@ -19,9 +19,9 @@ pub fn create_hybrid_renderer(
   target : SkiaPresentTarget,
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
-  gpu_target? : HostGpuPresentTarget? = None,
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
-  async_image_loading? : Bool = false,
+  gpu_target~ : HostGpuPresentTarget? = None,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
+  async_image_loading~ : Bool = false,
 ) -> SkiaHybridRenderer raise SkiaRendererError {
   let surface_route = resolve_surface_route(
     platform,

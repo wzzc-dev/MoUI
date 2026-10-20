@@ -224,7 +224,7 @@ fn valid_message_key(key : String) -> Bool {
 ///|
 struct JsonKeyScanner {
   chars : Array[Char]
-  mut cursor : Int
+  mut cursor : Int32
 }
 
 ///|
@@ -238,11 +238,11 @@ fn json_scan_whitespace(scanner : JsonKeyScanner) -> Unit {
 }
 
 ///|
-fn hex_value(char : Char) -> Int {
+fn hex_value(char : Char) -> Int32 {
   match char {
-    '0'..='9' => char.to_int() - '0'.to_int()
-    'a'..='f' => char.to_int() - 'a'.to_int() + 10
-    'A'..='F' => char.to_int() - 'A'.to_int() + 10
+    '0'..<='9' => char.to_int() - '0'.to_int()
+    'a'..<='f' => char.to_int() - 'a'.to_int() + 10
+    'A'..<='F' => char.to_int() - 'A'.to_int() + 10
     _ => 0
   }
 }
@@ -772,7 +772,7 @@ fn moon_string(text : String) -> String {
 }
 
 ///|
-fn to_hex_upper(value : Int) -> String {
+fn to_hex_upper(value : Int32) -> String {
   if value == 0 {
     return "0"
   }
@@ -960,7 +960,7 @@ fn generate_from_files(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   let options = match parse_cli(args) {
     Ok(value) => value
     Err(message) => {

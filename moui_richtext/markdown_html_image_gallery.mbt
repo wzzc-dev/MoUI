@@ -27,7 +27,7 @@ priv struct MarkdownHtmlImageGalleryTag {
 ///|
 priv struct MarkdownHtmlImageGalleryTagParseResult {
   tag : MarkdownHtmlImageGalleryTag
-  end : Int
+  end : Int32
 }
 
 ///|
@@ -40,7 +40,7 @@ priv enum MarkdownHtmlImageGalleryDimension {
 /// Mutable walker state shared while projecting one container block.
 priv struct MarkdownHtmlImageGalleryWalk {
   chars : Array[Char]
-  index : Ref[Int]
+  index : Ref[Int32]
   base : @core.FontSpec
   base_dir : String?
   runs : Array[RichTextRun]
@@ -369,7 +369,7 @@ fn markdown_html_image_gallery_read_text(
 ///|
 fn markdown_html_image_gallery_block_text(
   walk : MarkdownHtmlImageGalleryWalk,
-  element_start : Int,
+  element_start : Int32,
   name : String,
   font : @core.FontSpec,
   dim : Bool,
@@ -412,7 +412,7 @@ fn markdown_html_image_gallery_block_text(
 ///|
 fn markdown_html_image_gallery_span_text(
   walk : MarkdownHtmlImageGalleryWalk,
-  element_start : Int,
+  element_start : Int32,
 ) -> Unit {
   let color = Some(@core.Color::black().multiply_alpha(0.78))
   match markdown_html_image_gallery_inline_content(walk, "span") {
@@ -545,7 +545,7 @@ fn markdown_html_image_gallery_walk_inline_until(
 /// container keeps its raw source presentation.
 fn markdown_html_image_gallery_walk_inline_anchor(
   walk : MarkdownHtmlImageGalleryWalk,
-  element_start : Int,
+  element_start : Int32,
   font : @core.FontSpec,
   color : @core.Color?,
 ) -> Bool {
@@ -643,8 +643,8 @@ fn markdown_html_image_gallery_walk_inline_anchor(
 /// line start).
 fn markdown_html_image_gallery_decode_text_inline(
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String? {
   let output = StringBuilder()
   let mut index = start
@@ -786,8 +786,8 @@ fn markdown_html_image_gallery_push_inline(
 /// Returns `None` when the segment carries no visible content.
 fn markdown_html_image_gallery_decode_text(
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String? {
   let output = StringBuilder()
   let mut index = start
@@ -827,8 +827,8 @@ fn markdown_html_image_gallery_decode_text(
 ///|
 fn markdown_html_image_gallery_space_entity_only(
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Bool {
   let mut index = start
   while index < end {
@@ -850,9 +850,9 @@ fn markdown_html_image_gallery_space_entity_only(
 ///|
 fn markdown_html_image_gallery_entity_at(
   chars : Array[Char],
-  index : Int,
-  end : Int,
-) -> (String, Int)? {
+  index : Int32,
+  end : Int32,
+) -> (String, Int32)? {
   // chars[index] == '&'
   let name_start = index + 1
   let mut cursor = name_start
@@ -887,8 +887,8 @@ fn markdown_html_image_gallery_entity_char(ch : Char) -> Bool {
 /// starts there. An unterminated comment consumes the remaining text.
 fn markdown_html_image_gallery_comment_end(
   chars : Array[Char],
-  index : Int,
-) -> Int? {
+  index : Int32,
+) -> Int32? {
   if index + 4 > chars.length() ||
     chars[index] != '<' ||
     chars[index + 1] != '!' ||
@@ -911,7 +911,7 @@ fn markdown_html_image_gallery_comment_end(
 ///|
 fn markdown_html_image_gallery_ci_at(
   chars : Array[Char],
-  index : Int,
+  index : Int32,
   needle : String,
 ) -> Bool {
   let needle_chars = needle.to_array()
@@ -1080,7 +1080,7 @@ fn markdown_html_image_gallery_dimension(
 ///|
 fn markdown_html_image_gallery_decimal(
   chars : Array[Char],
-  end : Int,
+  end : Int32,
 ) -> Double? {
   if end <= 0 {
     return None
@@ -1116,7 +1116,7 @@ fn markdown_html_image_gallery_decimal(
 }
 
 ///|
-fn markdown_html_image_gallery_digit(ch : Char) -> Int? {
+fn markdown_html_image_gallery_digit(ch : Char) -> Int32? {
   match ch {
     '0' => Some(0)
     '1' => Some(1)
@@ -1148,7 +1148,7 @@ fn markdown_html_image_gallery_attribute(
 ///|
 fn markdown_html_image_gallery_tag_at(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
 ) -> MarkdownHtmlImageGalleryTagParseResult? {
   if start < 0 || start >= chars.length() || chars[start] != '<' {
     return None
@@ -1259,8 +1259,8 @@ fn markdown_html_image_gallery_tag_at(
 ///|
 fn markdown_html_image_gallery_skip_space(
   chars : Array[Char],
-  start : Int,
-) -> Int {
+  start : Int32,
+) -> Int32 {
   let mut index = start
   while index < chars.length() &&
         markdown_html_image_gallery_space(chars[index]) {

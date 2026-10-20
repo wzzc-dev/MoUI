@@ -1,6 +1,6 @@
 ///|
 priv struct ProcessResult {
-  exit_code : Int
+  exit_code : Int32
   stdout : String
   stderr : String
 }
@@ -9,18 +9,18 @@ priv struct ProcessResult {
 #borrow(argv, env, cwd, stdout_path, stderr_path, exit_code_buf)
 extern "C" fn process_exec_native(
   argv : FixedArray[Bytes],
-  argc : Int,
+  argc : Int32,
   env : FixedArray[Bytes],
-  envc : Int,
+  envc : Int32,
   cwd : Bytes,
   stdout_path : Bytes,
   stderr_path : Bytes,
-  timeout_ms : Int,
+  timeout_ms : Int32,
   exit_code_buf : Bytes,
-) -> Int = "moui_cli_process_exec"
+) -> Int32 = "moui_cli_process_exec"
 
 ///|
-fn read_int32_le_from_bytes(buf : Bytes, offset : Int) -> Int {
+fn read_int32_le_from_bytes(buf : Bytes, offset : Int32) -> Int32 {
   let b0 = buf[offset].to_int()
   let b1 = buf[offset + 1].to_int()
   let b2 = buf[offset + 2].to_int()
@@ -72,10 +72,10 @@ fn process_env_to_bytes(env : Array[(String, String)]) -> FixedArray[Bytes] {
 ///|
 fn process_exec_argv(
   argv : Array[String],
-  cwd? : String = "",
-  env? : Array[(String, String)] = [],
-  timeout_ms? : Int = 0,
-  capture? : Bool = true,
+  cwd~ : String = "",
+  env~ : Array[(String, String)] = [],
+  timeout_ms~ : Int32 = 0,
+  capture~ : Bool = true,
 ) -> Result[ProcessResult, String] {
   if argv.is_empty() {
     return Err("process_exec_argv: argv must not be empty")

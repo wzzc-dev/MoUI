@@ -1,6 +1,6 @@
 ///|
 fn hosted_backend_test_renderer(
-  dispose_count : Ref[Int],
+  dispose_count : Ref[Int32],
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),
@@ -12,8 +12,8 @@ fn hosted_backend_test_renderer(
 
 ///|
 fn hosted_backend_test_window(
-  redraw_count : Ref[Int],
-  drop_count : Ref[Int],
+  redraw_count : Ref[Int32],
+  drop_count : Ref[Int32],
 ) -> HostedWindow {
   HostedWindow::new(
     scale_factor=() => 2.0,

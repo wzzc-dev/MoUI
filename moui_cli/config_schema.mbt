@@ -16,15 +16,15 @@ priv struct AndroidConfig {
   sdk_home : String?
   ndk_home : String?
   abi : Array[String]
-  compile_sdk : Int?
-  target_sdk : Int?
+  compile_sdk : Int32?
+  target_sdk : Int32?
 }
 
 ///|
 priv struct IosConfig {
   sdk : String?
   arch : String?
-  deployment_target : Int?
+  deployment_target : Int32?
 }
 
 ///|
@@ -36,7 +36,7 @@ priv struct PathsConfig {
 
 ///|
 priv struct CliConfig {
-  schema_version : Int
+  schema_version : Int32
   harmonyos : HarmonyosConfig
   android : AndroidConfig
   ios : IosConfig
@@ -81,7 +81,7 @@ fn default_cli_config() -> CliConfig {
 }
 
 ///|
-let cli_config_schema_version : Int = 1
+let cli_config_schema_version : Int32 = 1
 
 ///|
 fn validate_cli_config(config : CliConfig) -> Result[Unit, String] {
@@ -209,7 +209,7 @@ fn optional_string(
 fn optional_int(
   fields : Map[String, Json],
   key : String,
-) -> Result[Int?, String] {
+) -> Result[Int32?, String] {
   match fields.get(key) {
     None => Ok(None)
     Some(Null) => Ok(None)

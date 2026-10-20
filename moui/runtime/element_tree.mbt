@@ -26,9 +26,9 @@ priv struct LayoutTree {
 ///|
 priv struct ElementControlState {
   mut view_state : @core.ViewStateContext
-  mut caret : Int
+  mut caret : Int32
   mut selection : TextRange?
-  mut text_selection_anchor : Int?
+  mut text_selection_anchor : Int32?
   mut text_selection_origin : Point?
   mut composition : String?
   mut composition_cursor : TextRange?
@@ -64,8 +64,8 @@ priv struct ElementLayoutCache {
   mut cached_place_environment : Environment?
   mut cached_place_style : ViewStyle?
   mut cached_placed : PlacedNode?
-  mut hit_count : Int
-  mut miss_count : Int
+  mut hit_count : Int32
+  mut miss_count : Int32
 }
 
 ///|
@@ -74,9 +74,9 @@ priv struct ElementRenderCache {
   mut cached_render_focused : ElementId?
   mut cached_plan : ViewPaintPlan?
   mut cached_render : RenderNode?
-  mut content_revision : Int
-  mut hit_count : Int
-  mut miss_count : Int
+  mut content_revision : Int32
+  mut hit_count : Int32
+  mut miss_count : Int32
 }
 
 ///|
@@ -146,7 +146,7 @@ priv struct RenderNode {
   /// Enter-fade opacity for hoisted overlay subtrees. `None` or 1.0 renders
   /// normally; values below 1.0 wrap the subtree in a fading opacity layer.
   render_opacity : Double?
-  content_revision : Int
+  content_revision : Int32
   is_repaint_boundary : Bool
   layer_cache_key : String?
   paint_commands : Array[DrawCommand]

@@ -248,7 +248,7 @@ fn expected_screenshot(name : String) -> ExpectedScreenshot? {
 ///|
 fn validate_benchmark_target(
   target_json : Json,
-  index : Int,
+  index : Int32,
   seen : Map[String, Bool],
 ) -> Array[String] {
   let failures : Array[String] = []
@@ -314,7 +314,7 @@ fn validate_benchmark_target(
 ///|
 fn validate_screenshot_artifact(
   artifact_json : Json,
-  index : Int,
+  index : Int32,
   seen : Map[String, Bool],
 ) -> Array[String] {
   let failures : Array[String] = []
@@ -528,7 +528,7 @@ fn print_prefixed_failures(path : String, failures : Array[String]) -> Unit {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

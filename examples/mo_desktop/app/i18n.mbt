@@ -244,7 +244,7 @@ pub fn AppLanguage::text(self : AppLanguage, key : String) -> String {
 pub fn AppLanguage::translate(
   self : AppLanguage,
   key : String,
-  values? : ArrayView[(String, String)] = [],
+  values~ : ArrayView[(String, String)] = [],
 ) -> String {
   desktop_translator(self).translate(key, values~)
 }

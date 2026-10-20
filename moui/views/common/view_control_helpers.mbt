@@ -210,7 +210,7 @@ pub fn view_min_double(left : Double, right : Double) -> Double {
 }
 
 ///|
-pub fn view_max_int(left : Int, right : Int) -> Int {
+pub fn view_max_int(left : Int32, right : Int32) -> Int32 {
   if left >= right {
     left
   } else {
@@ -369,14 +369,14 @@ pub fn pressable_state_brush(
 
 ///|
 pub fn[Msg] view_event_result(
-  changed? : Bool = false,
-  activated? : Bool = false,
-  focused? : Bool = false,
-  captured? : Bool = false,
-  state? : @core.ViewStateContext? = None,
-  text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.ViewDirtyHint = ViewClean,
-  messages? : Array[Msg] = [],
+  changed~ : Bool = false,
+  activated~ : Bool = false,
+  focused~ : Bool = false,
+  captured~ : Bool = false,
+  state~ : @core.ViewStateContext? = None,
+  text_control~ : @core.TextControlStateContext? = None,
+  dirty~ : @core.ViewDirtyHint = ViewClean,
+  messages~ : Array[Msg] = [],
 ) -> @core.ViewEventResult[Msg] {
   {
     changed,

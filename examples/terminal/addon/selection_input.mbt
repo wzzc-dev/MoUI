@@ -5,20 +5,20 @@
 pub struct TerminalSelectionNode {
   cell_width : Double
   cell_height : Double
-  scroll_offset : Int
-  total_lines : Int
-  rows : Int
-  cols : Int
+  scroll_offset : Int32
+  total_lines : Int32
+  rows : Int32
+  cols : Int32
 }
 
 ///|
 pub fn TerminalSelectionNode::new(
   cell_width~ : Double,
   cell_height~ : Double,
-  scroll_offset~ : Int,
-  total_lines~ : Int,
-  rows~ : Int,
-  cols~ : Int,
+  scroll_offset~ : Int32,
+  total_lines~ : Int32,
+  rows~ : Int32,
+  cols~ : Int32,
 ) -> TerminalSelectionNode {
   { cell_width, cell_height, scroll_offset, total_lines, rows, cols, }
 }
@@ -56,7 +56,7 @@ pub fn TerminalSelectionNode::cell_at(
   self : TerminalSelectionNode,
   position : @core.Point,
   frame : @core.Rect,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let dx = position.x - frame.origin.x
   let dy = position.y - frame.origin.y
   let col = if self.cell_width > 0.0 {
@@ -81,15 +81,15 @@ pub fn TerminalSelectionNode::cell_at(
 /// 拖选包装:子节点照常渲染,本节点把指针拖选转为消息。
 pub fn[Msg] terminal_selection_input(
   content : @moui.View[Msg],
-  on_begin : (Int, Int) -> Msg?,
-  on_move : (Int, Int) -> Msg?,
+  on_begin : (Int32, Int32) -> Msg?,
+  on_move : (Int32, Int32) -> Msg?,
   on_end : () -> Msg?,
   cell_width~ : Double,
   cell_height~ : Double,
-  scroll_offset~ : Int,
-  total_lines~ : Int,
-  rows~ : Int,
-  cols~ : Int,
+  scroll_offset~ : Int32,
+  total_lines~ : Int32,
+  rows~ : Int32,
+  cols~ : Int32,
 ) -> @moui.View[Msg] {
   let node = TerminalSelectionNode::new(
     cell_width~,

@@ -22,7 +22,7 @@ pub extend CanvasState with Debug::{to_repr}
 
 ///|
 /// Create a new canvas with the given dimensions
-pub fn Canvas::new(width : Int, height : Int) -> Canvas {
+pub fn Canvas::new(width : Int32, height : Int32) -> Canvas {
   {
     pixmap: Pixmap::new(width, height),
     transform: Transform::identity(),
@@ -120,7 +120,7 @@ pub fn Canvas::restore(self : Canvas) -> Bool {
 
 ///|
 /// Get the number of saved canvas states.
-pub fn Canvas::get_save_count(self : Canvas) -> Int {
+pub fn Canvas::get_save_count(self : Canvas) -> Int32 {
   self.state_stack.length()
 }
 
@@ -168,8 +168,8 @@ pub fn Canvas::get_clip_rect(self : Canvas) -> Rect? {
 /// Draw a single pixel (for testing)
 pub fn Canvas::draw_pixel(
   self : Canvas,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
 ) -> Unit {
   guard is_pixel_in_clip(self, x, y) else { return }

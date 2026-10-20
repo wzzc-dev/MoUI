@@ -286,10 +286,10 @@ pub fn new_control_state_style(
   foreground~ : @core.Color,
   background~ : @core.Brush,
   border? : @core.BorderStyle,
-  radius? : Double = 0.0,
+  radius~ : Double = 0.0,
   shadow? : @core.ShadowStyle,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> ControlStateStyle {
   {
     foreground,
@@ -307,10 +307,10 @@ fn control_state(
   foreground~ : @core.Color,
   background~ : @core.Brush,
   border? : @core.BorderStyle,
-  radius? : Double = 0.0,
+  radius~ : Double = 0.0,
   shadow? : @core.ShadowStyle,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> ControlStateStyle {
   {
     foreground,

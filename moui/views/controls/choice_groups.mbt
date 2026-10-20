@@ -9,7 +9,7 @@ pub fn[Msg] radio_group(
   selected~ : String,
   on_select~ : (String) -> Msg,
   theme? : @core.Theme,
-  spacing? : Double = @style.default_theme().spacing_scale.sm,
+  spacing~ : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   // `theme` 保持 Option 原样转发:radio 在 paint 期取环境主题。
   let rows : Array[@core.View[Msg]] = []
@@ -32,7 +32,7 @@ pub fn[Msg] checkbox_group(
   selected~ : Array[String],
   on_change~ : (String, Bool) -> Msg,
   theme? : @core.Theme,
-  spacing? : Double = @style.default_theme().spacing_scale.sm,
+  spacing~ : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {

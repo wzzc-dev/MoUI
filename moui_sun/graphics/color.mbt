@@ -31,7 +31,7 @@ pub impl Show for Color with fn output(self, logger) {
 
 ///|
 /// Create a color from RGBA values
-pub fn Color::new(r~ : Byte, g~ : Byte, b~ : Byte, a? : Byte = 255) -> Color {
+pub fn Color::new(r~ : Byte, g~ : Byte, b~ : Byte, a~ : Byte = 255) -> Color {
   { r, g, b, a, }
 }
 
@@ -203,9 +203,9 @@ fn blend_mode_blends_transparent_source(blend_mode : BlendMode) -> Bool {
 fn blend_porter_duff(
   src : Color,
   dst : Color,
-  src_factor~ : Int,
-  dst_factor~ : Int,
-  out_alpha~ : Int,
+  src_factor~ : Int32,
+  dst_factor~ : Int32,
+  out_alpha~ : Int32,
 ) -> Color {
   guard out_alpha > 0 else { return Color::transparent() }
   let src_a = src.a.to_int()
@@ -245,12 +245,12 @@ fn blend_porter_duff(
 ///|
 fn blend_porter_duff_channel(
   src_channel : Byte,
-  src_a : Int,
-  src_factor : Int,
+  src_a : Int32,
+  src_factor : Int32,
   dst_channel : Byte,
-  dst_a : Int,
-  dst_factor : Int,
-  out_alpha : Int,
+  dst_a : Int32,
+  dst_factor : Int32,
+  out_alpha : Int32,
 ) -> Byte {
   let premul = div_round(
       src_channel.to_int() * src_a * src_factor.max(0).min(255),
@@ -312,14 +312,14 @@ fn blend_non_source_over(
 
 ///|
 fn blend_non_source_over_channel(
-  src_c : Int,
-  src_a : Int,
-  dst_c : Int,
-  dst_a : Int,
-  inv_src_a : Int,
-  inv_dst_a : Int,
-  out_a : Int,
-  blended : Int,
+  src_c : Int32,
+  src_a : Int32,
+  dst_c : Int32,
+  dst_a : Int32,
+  inv_src_a : Int32,
+  inv_dst_a : Int32,
+  out_a : Int32,
+  blended : Int32,
 ) -> Byte {
   let premul = blended * src_a * dst_a +
     src_c * src_a * inv_dst_a +
@@ -332,7 +332,7 @@ fn blend_unpremul_rgb(
   src : Color,
   dst : Color,
   blend_mode : BlendMode,
-) -> (Int, Int, Int) {
+) -> (Int32, Int32, Int32) {
   match blend_mode {
     Hue =>
       rounded_blend_rgb(
@@ -369,7 +369,11 @@ fn blend_unpremul_rgb(
 }
 
 ///|
-fn blend_unpremul_channel(src : Int, dst : Int, blend_mode : BlendMode) -> Int {
+fn blend_unpremul_channel(
+  src : Int32,
+  dst : Int32,
+  blend_mode : BlendMode,
+) -> Int32 {
   match blend_mode {
     Clear => 0
     Source => src
@@ -547,25 +551,25 @@ fn max_rgb(color : (Double, Double, Double)) -> Double {
 }
 
 ///|
-fn rounded_blend_rgb(color : (Double, Double, Double)) -> (Int, Int, Int) {
+fn rounded_blend_rgb(color : (Double, Double, Double)) -> (Int32, Int32, Int32) {
   let (r, g, b) = color
   (rounded_blend_byte(r), rounded_blend_byte(g), rounded_blend_byte(b))
 }
 
 ///|
-fn rounded_blend_byte(value : Double) -> Int {
+fn rounded_blend_byte(value : Double) -> Int32 {
   clamp_byte((value + 0.5).to_int()).to_int()
 }
 
 ///|
-fn Color::blend_alpha_mask(self : Color, alpha_factor : Int) -> Color {
+fn Color::blend_alpha_mask(self : Color, alpha_factor : Int32) -> Color {
   let out_a = div_round(self.a.to_int() * alpha_factor.max(0).min(255), 255)
   guard out_a > 0 else { return Color::transparent() }
   self.with_alpha(clamp_byte(out_a))
 }
 
 ///|
-fn blend_color_dodge_channel(src : Int, dst : Int) -> Int {
+fn blend_color_dodge_channel(src : Int32, dst : Int32) -> Int32 {
   if dst <= 0 {
     0
   } else if src >= 255 {
@@ -576,7 +580,7 @@ fn blend_color_dodge_channel(src : Int, dst : Int) -> Int {
 }
 
 ///|
-fn blend_color_burn_channel(src : Int, dst : Int) -> Int {
+fn blend_color_burn_channel(src : Int32, dst : Int32) -> Int32 {
   if dst >= 255 {
     255
   } else if src <= 0 {
@@ -587,7 +591,7 @@ fn blend_color_burn_channel(src : Int, dst : Int) -> Int {
 }
 
 ///|
-fn blend_soft_light_channel(src : Int, dst : Int) -> Int {
+fn blend_soft_light_channel(src : Int32, dst : Int32) -> Int32 {
   let cs = src.to_double() / 255.0
   let cb = dst.to_double() / 255.0
   let blended = if cs <= 0.5 {
@@ -604,12 +608,12 @@ fn blend_soft_light_channel(src : Int, dst : Int) -> Int {
 }
 
 ///|
-fn div_round(numerator : Int, denominator : Int) -> Int {
+fn div_round(numerator : Int32, denominator : Int32) -> Int32 {
   guard denominator > 0 else { return 0 }
   (numerator + denominator / 2) / denominator
 }
 
 ///|
-fn clamp_byte(value : Int) -> Byte {
+fn clamp_byte(value : Int32) -> Byte {
   value.max(0).min(255).to_byte()
 }

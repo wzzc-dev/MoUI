@@ -122,7 +122,11 @@ fn code_highlight_supports_language(language : String) -> Bool {
 ///|
 /// Check if a multi-character or single-char operator starts at index `pos`.
 /// Returns Some(length) if found, None otherwise.
-fn code_highlight_try_operator(chars : Array[Char], n : Int, pos : Int) -> Int? {
+fn code_highlight_try_operator(
+  chars : Array[Char],
+  n : Int32,
+  pos : Int32,
+) -> Int32? {
   if pos + 1 < n {
     let two = String::from_array(chars[pos:pos + 2])
     if two == "==" ||

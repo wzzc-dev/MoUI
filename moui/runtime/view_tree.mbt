@@ -37,7 +37,7 @@ priv trait RuntimeViewNode {
   fn child_style(Self, ViewStyle) -> ViewStyle
   fn layout(Self, @core.ViewLayoutContext) -> @core.ViewLayoutResult
   fn place_overlays(Self, @core.OverlayPlacementContext) -> Array[
-    (Int, @core.Rect),
+    (Int32, @core.Rect),
   ]?
   fn paint(Self, @core.ViewPaintContext) -> @core.ViewPaintPlan
   fn platform_views(Self, @core.ViewPlatformContext) -> Array[

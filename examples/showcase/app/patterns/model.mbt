@@ -1,6 +1,6 @@
 ///|
 pub(all) struct TodoItem {
-  id : Int
+  id : Int32
   label : String
   completed : Bool
 } derive(Eq, Debug)
@@ -14,13 +14,13 @@ pub extend TodoItem with Eq::{not_equal, equal}
 ///|
 pub struct Model {
   route : String
-  counter : Int
+  counter : Int32
   todo_items : Array[TodoItem]
   todo_draft : String
-  next_todo_id : Int
+  next_todo_id : Int32
   profile_name : String
   data_filter : String
-  workflow_step : Int
+  workflow_step : Int32
   notice : String
   scroll : @geometry.Point
 }
@@ -32,8 +32,8 @@ pub(all) enum Msg {
   Decrement
   TodoDraftChanged(String)
   TodoSubmit
-  TodoToggled(Int, Bool)
-  TodoRemoved(Int)
+  TodoToggled(Int32, Bool)
+  TodoRemoved(Int32)
   ProfileNameChanged(String)
   SaveProfile
   DataFilterChanged(String)
@@ -44,7 +44,7 @@ pub(all) enum Msg {
 }
 
 ///|
-pub fn Model::new(route? : String = "welcome") -> Model {
+pub fn Model::new(route~ : String = "welcome") -> Model {
   {
     route: normalize_pattern_route(route),
     counter: 0,
@@ -164,7 +164,7 @@ pub fn subscriptions(_model : Model) -> @moui.Subscription[Msg] {
 }
 
 ///|
-pub fn program(route? : String = "welcome") -> @moui.Program[Model, Msg] {
+pub fn program(route~ : String = "welcome") -> @moui.Program[Model, Msg] {
   @moui.Program::simple_with_environment(
     init=Model::new(route~),
     update~,

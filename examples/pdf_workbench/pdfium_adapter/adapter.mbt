@@ -3,15 +3,15 @@
 extern "C" fn pdfium_render_page_raw(
   path : Bytes,
   pdf_bytes : Bytes,
-  page_number : Int,
+  page_number : Int32,
   zoom : Double,
-  dpi : Int,
-  max_pixel_edge : Int,
+  dpi : Int32,
+  max_pixel_edge : Int32,
   cache_key : Bytes,
 ) -> Bytes = "moui_pdf_workbench_pdfium_render_page"
 
 ///|
-extern "C" fn pdfium_available_raw() -> Int = "moui_pdf_workbench_pdfium_available"
+extern "C" fn pdfium_available_raw() -> Int32 = "moui_pdf_workbench_pdfium_available"
 
 ///|
 pub fn pdfium_available() -> Bool {
@@ -113,7 +113,7 @@ fn pdfium_response_reason(lines : Array[String], fallback~ : String) -> String {
 }
 
 ///|
-fn pdfium_parse_positive_int(value : String) -> Int? {
+fn pdfium_parse_positive_int(value : String) -> Int32? {
   let chars = value.to_array()
   if chars.is_empty() {
     return None

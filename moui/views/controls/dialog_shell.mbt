@@ -2,13 +2,13 @@
 pub fn[Msg] dialog(
   title : String,
   content~ : @core.View[Msg],
-  subtitle? : String = "",
-  primary_action? : StateViewAction[Msg]? = None,
-  secondary_action? : StateViewAction[Msg]? = None,
-  dismiss_action? : StateViewAction[Msg]? = None,
+  subtitle~ : String = "",
+  primary_action~ : StateViewAction[Msg]? = None,
+  secondary_action~ : StateViewAction[Msg]? = None,
+  dismiss_action~ : StateViewAction[Msg]? = None,
   theme? : @core.Theme,
-  width? : Double = 432.0,
-  height? : Double = 280.0,
+  width~ : Double = 432.0,
+  height~ : Double = 280.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let panel_padding = resolved_theme.spacing_scale.lg
@@ -105,7 +105,7 @@ pub fn[Msg] dialog(
 ///|
 fn dialog_border(
   theme : @core.Theme,
-  accent? : @core.Color? = None,
+  accent~ : @core.Color? = None,
 ) -> @core.BorderStyle {
   let color = match accent {
     Some(color) => color.multiply_alpha(0.72)

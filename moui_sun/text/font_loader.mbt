@@ -22,7 +22,7 @@ pub(open) trait FontLoader {
 /// One file-backed font source registered in a loader.
 struct FontFileSource {
   path : String
-  font_index : Int
+  font_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -59,7 +59,7 @@ pub extend FileFontLoader with FontLoader::{load_font_data}
 /// Create a file-backed font source.
 pub fn FontFileSource::new(
   path : String,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> FontFileSource {
   { path, font_index, }
 }
@@ -72,7 +72,7 @@ pub fn FontFileSource::get_path(self : FontFileSource) -> String {
 
 ///|
 /// Return the face index inside the font file.
-pub fn FontFileSource::get_font_index(self : FontFileSource) -> Int {
+pub fn FontFileSource::get_font_index(self : FontFileSource) -> Int32 {
   self.font_index
 }
 
@@ -84,7 +84,7 @@ pub fn MemoryFontLoader::new() -> MemoryFontLoader {
 
 ///|
 /// Return the number of registered in-memory font entries.
-pub fn MemoryFontLoader::len(self : MemoryFontLoader) -> Int {
+pub fn MemoryFontLoader::len(self : MemoryFontLoader) -> Int32 {
   self.fonts.length()
 }
 
@@ -142,7 +142,7 @@ pub fn FileFontLoader::new() -> FileFontLoader {
 
 ///|
 /// Return the number of registered file-backed font entries.
-pub fn FileFontLoader::len(self : FileFontLoader) -> Int {
+pub fn FileFontLoader::len(self : FileFontLoader) -> Int32 {
   self.sources.length()
 }
 

@@ -1,8 +1,8 @@
 ///|
 /// Font header (head table)
 struct FontHead {
-  units_per_em : Int
-  index_to_loc_format : Int // 0 = short, 1 = long
+  units_per_em : Int32
+  index_to_loc_format : Int32 // 0 = short, 1 = long
 } derive(Eq, Debug)
 
 ///|
@@ -14,10 +14,10 @@ pub extend FontHead with Eq::{not_equal, equal}
 ///|
 /// Horizontal header (hhea table)
 struct FontHhea {
-  ascent : Int
-  descent : Int
-  line_gap : Int
-  num_h_metrics : Int
+  ascent : Int32
+  descent : Int32
+  line_gap : Int32
+  num_h_metrics : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -29,8 +29,8 @@ pub extend FontHhea with Eq::{not_equal, equal}
 ///|
 /// Horizontal metrics
 struct LongHorMetric {
-  advance_width : Int
-  lsb : Int // left side bearing
+  advance_width : Int32
+  lsb : Int32 // left side bearing
 } derive(Eq, Debug)
 
 ///|
@@ -42,8 +42,8 @@ pub extend LongHorMetric with Eq::{not_equal, equal}
 ///|
 /// Simple glyph point
 struct GlyphPoint {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   on_curve : Bool
 } derive(Eq, Debug)
 
@@ -66,10 +66,10 @@ pub extend GlyphContour with Debug::{to_repr}
 /// Simple glyph data
 struct SimpleGlyph {
   contours : Array[GlyphContour]
-  xmin : Int
-  ymin : Int
-  xmax : Int
-  ymax : Int
+  xmin : Int32
+  ymin : Int32
+  xmax : Int32
+  ymax : Int32
 } derive(Debug)
 
 ///|
@@ -78,9 +78,9 @@ pub extend SimpleGlyph with Debug::{to_repr}
 ///|
 /// A component of a composite glyph
 struct GlyphComponent {
-  glyph_index : Int
-  x_offset : Int
-  y_offset : Int
+  glyph_index : Int32
+  x_offset : Int32
+  y_offset : Int32
   scale_x : Double
   scale_y : Double
   scale_xy : Double
@@ -105,9 +105,9 @@ pub extend GlyphData with Debug::{to_repr}
 /// Table record in font file
 struct TableRecord {
   tag : String
-  checksum : UInt
-  offset : UInt
-  length : UInt
+  checksum : UInt32
+  offset : UInt32
+  length : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -119,9 +119,9 @@ pub extend TableRecord with Eq::{not_equal, equal}
 ///|
 /// Kerning pair
 struct KernPair {
-  left : Int
-  right : Int
-  value : Int
+  left : Int32
+  right : Int32
+  value : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -136,9 +136,9 @@ struct Font {
   head : FontHead
   hhea : FontHhea
   hmtx : Array[LongHorMetric]
-  cmap : Map[Int, Int] // char code -> glyph index
+  cmap : Map[Int32, Int32] // char code -> glyph index
   glyphs : Array[GlyphData]
-  glyph_count : Int
+  glyph_count : Int32
   kern : Array[KernPair] // kerning pairs
 } derive(Debug)
 
@@ -147,19 +147,19 @@ pub extend Font with Debug::{to_repr}
 
 ///|
 /// Get font metrics
-fn Font::get_metrics(self : Font) -> (Int, Int, Int) {
+fn Font::get_metrics(self : Font) -> (Int32, Int32, Int32) {
   (self.hhea.ascent, self.hhea.descent, self.hhea.line_gap)
 }
 
 ///|
 /// Get units per em
-fn Font::get_units_per_em(self : Font) -> Int {
+fn Font::get_units_per_em(self : Font) -> Int32 {
   self.head.units_per_em
 }
 
 ///|
 /// Map character to glyph index
-fn Font::char_to_glyph(self : Font, char_code : Int) -> Int {
+fn Font::char_to_glyph(self : Font, char_code : Int32) -> Int32 {
   match self.cmap.get(char_code) {
     Some(idx) => idx
     None => 0 // .notdef glyph
@@ -168,13 +168,13 @@ fn Font::char_to_glyph(self : Font, char_code : Int) -> Int {
 
 ///|
 /// Return whether this font maps a Unicode codepoint to a drawable glyph.
-fn Font::has_glyph_for_char(self : Font, char_code : Int) -> Bool {
+fn Font::has_glyph_for_char(self : Font, char_code : Int32) -> Bool {
   self.char_to_glyph(char_code) > 0
 }
 
 ///|
 /// Get glyph data, resolving composite glyphs
-fn Font::get_glyph(self : Font, glyph_id : Int) -> GlyphData {
+fn Font::get_glyph(self : Font, glyph_id : Int32) -> GlyphData {
   guard glyph_id >= 0 && glyph_id < self.glyph_count else { return Empty }
   let data = self.glyphs[glyph_id]
   match data {
@@ -246,7 +246,7 @@ fn resolve_composite_glyph(
 
 ///|
 /// Get horizontal metrics for a glyph
-fn Font::get_h_metrics(self : Font, glyph_id : Int) -> (Int, Int) {
+fn Font::get_h_metrics(self : Font, glyph_id : Int32) -> (Int32, Int32) {
   let idx = if glyph_id < self.hmtx.length() {
     glyph_id
   } else {
@@ -258,7 +258,11 @@ fn Font::get_h_metrics(self : Font, glyph_id : Int) -> (Int, Int) {
 
 ///|
 /// Get kerning value between two glyphs
-fn Font::get_kerning(self : Font, left_glyph : Int, right_glyph : Int) -> Int {
+fn Font::get_kerning(
+  self : Font,
+  left_glyph : Int32,
+  right_glyph : Int32,
+) -> Int32 {
   for pair in self.kern {
     if pair.left == left_glyph && pair.right == right_glyph {
       return pair.value

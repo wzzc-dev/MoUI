@@ -19,7 +19,7 @@ struct HandoffTarget {
 ///|
 struct TargetManifest {
   target : HandoffTarget
-  wasm_bytes : Int
+  wasm_bytes : Int32
   compiled_wasm_exports : Array[String]
 }
 
@@ -29,7 +29,7 @@ struct HandoffCheck {
   label : String
   path : String
   url : String
-  bytes : Int
+  bytes : Int32
 }
 
 ///|
@@ -57,7 +57,7 @@ fn usage() -> String {
 }
 
 ///|
-fn parse_positive_int(text : String) -> Int? {
+fn parse_positive_int(text : String) -> Int32? {
   let trimmed = text.trim().to_owned()
   if trimmed == "" {
     return None
@@ -198,7 +198,7 @@ fn push_includes_check(
 }
 
 ///|
-fn read_u8(bytes : Bytes, offset : Ref[Int]) -> Result[Int, String] {
+fn read_u8(bytes : Bytes, offset : Ref[Int32]) -> Result[Int32, String] {
   if offset.val >= bytes.length() {
     Err("unexpected end of wasm module")
   } else {
@@ -209,7 +209,7 @@ fn read_u8(bytes : Bytes, offset : Ref[Int]) -> Result[Int, String] {
 }
 
 ///|
-fn read_uleb_u32(bytes : Bytes, offset : Ref[Int]) -> Result[Int, String] {
+fn read_uleb_u32(bytes : Bytes, offset : Ref[Int32]) -> Result[Int32, String] {
   let mut result = 0
   let mut shift = 0
   while true {
@@ -232,8 +232,8 @@ fn read_uleb_u32(bytes : Bytes, offset : Ref[Int]) -> Result[Int, String] {
 ///|
 fn parse_export_section_names(
   bytes : Bytes,
-  section_start : Int,
-  section_end : Int,
+  section_start : Int32,
+  section_end : Int32,
 ) -> Result[Array[String], String] {
   let offset = Ref(section_start)
   let count = match read_uleb_u32(bytes, offset) {
@@ -680,7 +680,7 @@ fn validate_web_runtime_handoff(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

@@ -342,8 +342,8 @@ test "Pixmap::from_bmp_bytes reports structural errors" {
 
 ///|
 fn make_pixmap_test_rgba_png_from_scanlines(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   scanlines : Array[Byte],
 ) -> Bytes {
   make_pixmap_test_rgba_png_from_zlib_stream(
@@ -355,8 +355,8 @@ fn make_pixmap_test_rgba_png_from_scanlines(
 
 ///|
 fn make_pixmap_test_rgba_png_from_zlib_stream(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   zlib_stream : Array[Byte],
 ) -> Bytes {
   let out : Array[Byte] = []
@@ -398,13 +398,13 @@ fn append_pixmap_test_png_bytes(out : Array[Byte], bytes : Array[Byte]) -> Unit 
 }
 
 ///|
-fn append_pixmap_test_png_u16_le(out : Array[Byte], value : Int) -> Unit {
+fn append_pixmap_test_png_u16_le(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
   out.push((value >> 8).land(0xFF).to_byte())
 }
 
 ///|
-fn append_pixmap_test_png_u32_be(out : Array[Byte], value : UInt) -> Unit {
+fn append_pixmap_test_png_u32_be(out : Array[Byte], value : UInt32) -> Unit {
   out.push((value >> 24).to_byte())
   out.push((value >> 16).to_byte())
   out.push((value >> 8).to_byte())
@@ -425,7 +425,7 @@ fn pixmap_test_png_zlib_stored_stream(data : Array[Byte]) -> Array[Byte] {
 }
 
 ///|
-fn pixmap_test_png_adler32(data : Array[Byte]) -> UInt {
+fn pixmap_test_png_adler32(data : Array[Byte]) -> UInt32 {
   let mod_adler = 65521
   let mut s1 = 1
   let mut s2 = 0
@@ -440,8 +440,8 @@ fn pixmap_test_png_adler32(data : Array[Byte]) -> UInt {
 fn pixmap_test_png_crc32_chunk(
   chunk_type : Array[Byte],
   data : Array[Byte],
-) -> UInt {
-  let mut crc : UInt = 0xFFFFFFFF
+) -> UInt32 {
+  let mut crc : UInt32 = 0xFFFFFFFF
   for byte in chunk_type {
     crc = pixmap_test_png_crc32_update(crc, byte)
   }
@@ -452,7 +452,7 @@ fn pixmap_test_png_crc32_chunk(
 }
 
 ///|
-fn pixmap_test_png_crc32_update(crc : UInt, byte : Byte) -> UInt {
+fn pixmap_test_png_crc32_update(crc : UInt32, byte : Byte) -> UInt32 {
   let mut c = crc ^ byte.to_uint()
   for _ in 0..<8 {
     c = if (c & 1) != 0 { (c >> 1) ^ 0xEDB88320 } else { c >> 1 }

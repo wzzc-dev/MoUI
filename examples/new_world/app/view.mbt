@@ -115,7 +115,7 @@ fn avatar(
   model : WorldModel,
   card : CharacterCard,
   size~ : Double,
-  radius? : Double = 0.0,
+  radius~ : Double = 0.0,
 ) -> @moui.View[Msg] {
   let uri = model.portrait_for(card)
   if uri != "" {
@@ -252,7 +252,7 @@ fn roster_section(model : WorldModel, width : Double) -> @moui.View[Msg] {
     // Branches of this character, indented under it. Without this list a
     // branch is a dead end: the conversation exists on disk but the player has
     // no way back to it after selecting something else.
-    let branches : Array[(Int, Int)] = []
+    let branches : Array[(Int32, Int32)] = []
     for conversation in model.conversations.entries {
       match split_branch(conversation.character_id()) {
         Some((base, number)) =>

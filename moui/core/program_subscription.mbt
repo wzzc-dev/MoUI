@@ -70,8 +70,8 @@ pub fn[Msg] Subscription::batch(
 pub fn[Msg] Subscription::run(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  kind? : String = "custom",
-  label? : String = "",
+  kind~ : String = "custom",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind~, label~)
 }
@@ -80,8 +80,8 @@ pub fn[Msg] Subscription::run(
 pub fn[Msg] Subscription::listen(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  kind? : String = "custom",
-  label? : String = "",
+  kind~ : String = "custom",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   { node: SubscriptionSource({ key, kind, label, start, }), }
 }
@@ -90,7 +90,7 @@ pub fn[Msg] Subscription::listen(
 pub fn[Msg] Subscription::timer(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind="timer", label~)
 }
@@ -99,7 +99,7 @@ pub fn[Msg] Subscription::timer(
 pub fn[Msg] Subscription::animation_tick(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind="animation", label~)
 }
@@ -108,7 +108,7 @@ pub fn[Msg] Subscription::animation_tick(
 pub fn[Msg] Subscription::window_event(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind="window-event", label~)
 }
@@ -117,7 +117,7 @@ pub fn[Msg] Subscription::window_event(
 pub fn[Msg] Subscription::host_event(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind="host-event", label~)
 }
@@ -126,7 +126,7 @@ pub fn[Msg] Subscription::host_event(
 pub fn[Msg] Subscription::route_event(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Subscription[Msg] {
   Subscription::listen(key~, start~, kind="route-event", label~)
 }
@@ -205,9 +205,9 @@ pub fn[Msg] SubscriptionRuntimeSource::start(
 ///|
 pub fn[Msg] Subscription::runtime_visit(
   self : Subscription[Msg],
-  none : (Int) -> Unit,
-  batch : (Int, Int) -> Unit,
-  source : (Int, SubscriptionDescriptor) -> Unit,
+  none : (Int32) -> Unit,
+  batch : (Int32, Int32) -> Unit,
+  source : (Int32, SubscriptionDescriptor) -> Unit,
 ) -> Unit {
   self.runtime_visit_depth(0, none, batch, source)
 }
@@ -215,10 +215,10 @@ pub fn[Msg] Subscription::runtime_visit(
 ///|
 fn[Msg] Subscription::runtime_visit_depth(
   self : Subscription[Msg],
-  depth : Int,
-  none : (Int) -> Unit,
-  batch : (Int, Int) -> Unit,
-  source : (Int, SubscriptionDescriptor) -> Unit,
+  depth : Int32,
+  none : (Int32) -> Unit,
+  batch : (Int32, Int32) -> Unit,
+  source : (Int32, SubscriptionDescriptor) -> Unit,
 ) -> Unit {
   match self.node {
     SubscriptionNone => none(depth)

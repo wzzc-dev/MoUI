@@ -150,7 +150,7 @@ pub fn build_scene_prompt(
 pub fn responder_for(
   cast : Array[CharacterCard],
   player_text : String,
-  turn_index : Int,
+  turn_index : Int32,
 ) -> CharacterCard? {
   if cast.is_empty() {
     return None

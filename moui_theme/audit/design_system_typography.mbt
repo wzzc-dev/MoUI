@@ -22,10 +22,10 @@ pub(all) struct DesignTypographyRoleRecord {
   token_surface : String
   core_surface : String
   official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
-  runtime_destination_gap_count : Int
+  official_token_count : Int32
+  source_imported_count : Int32
+  runtime_aligned_count : Int32
+  runtime_destination_gap_count : Int32
   source_declared : Bool
   source_label : String
   source_kind : String
@@ -36,8 +36,8 @@ pub(all) struct DesignTypographyRoleRecord {
   expected_runtime_value : String
   token_size : Double
   core_size : Double
-  token_weight : Int
-  core_weight : Int
+  token_weight : Int32
+  core_weight : Int32
   token_family : String
   core_family : String
   resolves_core_surface : Bool
@@ -59,10 +59,10 @@ pub extend DesignTypographyRoleRecord with ToJson::{to_json}
 ///|
 priv struct TypographySourceEvidence {
   official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
-  runtime_destination_gap_count : Int
+  official_token_count : Int32
+  source_imported_count : Int32
+  runtime_aligned_count : Int32
+  runtime_destination_gap_count : Int32
   source_declared : Bool
   source_label : String
   source_kind : String
@@ -86,7 +86,7 @@ pub fn DesignTypographyRole::label(preset : DesignTypographyRole) -> String {
 ///|
 pub fn typography_role_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> Array[DesignTypographyRoleRecord] {
   [
     typography_role_record(preset, TypographyBody, scheme),
@@ -100,7 +100,7 @@ pub fn typography_role_report(
 pub fn typography_role_for(
   preset : @common.DesignPreset,
   role : DesignTypographyRole,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> DesignTypographyRoleRecord? {
   for item in typography_role_report(preset, scheme~) {
     if item.role == role {
@@ -111,12 +111,12 @@ pub fn typography_role_for(
 }
 
 ///|
-pub fn typography_role_count(preset : @common.DesignPreset) -> Int {
+pub fn typography_role_count(preset : @common.DesignPreset) -> Int32 {
   typography_role_report(preset).length()
 }
 
 ///|
-pub fn typography_role_mapped_count(preset : @common.DesignPreset) -> Int {
+pub fn typography_role_mapped_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     if item.resolves_core_surface && item.official_token_count > 0 {
@@ -127,7 +127,7 @@ pub fn typography_role_mapped_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn typography_role_aligned_count(preset : @common.DesignPreset) -> Int {
+pub fn typography_role_aligned_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     if item.runtime_aligned_count > 0 {
@@ -138,7 +138,7 @@ pub fn typography_role_aligned_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn typography_role_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn typography_role_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     if item.required &&
@@ -157,7 +157,7 @@ pub fn typography_role_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn typography_role_source_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn typography_role_source_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     if item.required &&
@@ -176,7 +176,7 @@ pub fn typography_role_source_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn typography_role_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     if item.required && item.remaining_gap != "none" {
@@ -189,7 +189,7 @@ pub fn typography_role_official_parity_gap_count(
 ///|
 pub fn typography_role_destination_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in typography_role_report(preset) {
     count = count + item.runtime_destination_gap_count

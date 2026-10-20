@@ -1,13 +1,13 @@
 ///|
 pub fn[Msg] pagination(
-  page~ : Int,
-  page_count~ : Int,
+  page~ : Int32,
+  page_count~ : Int32,
   on_previous~ : Msg,
   on_next~ : Msg,
   theme? : @core.Theme,
-  width? : Double = 360.0,
-  previous_label? : String = "Previous",
-  next_label? : String = "Next",
+  width~ : Double = 360.0,
+  previous_label~ : String = "Previous",
+  next_label~ : String = "Next",
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let total_pages = @common.view_max_int(1, page_count)

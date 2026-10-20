@@ -80,7 +80,7 @@ pub fn macos_modal_presenter() -> MacosModalPresenter {
 ///|
 /// Test/alternative-host constructor with explicit native hooks.
 pub fn MacosModalPresenter::with_hooks(
-  capabilities? : @host.HostModalCapabilities = macos_host_modal_capabilities(),
+  capabilities~ : @host.HostModalCapabilities = macos_host_modal_capabilities(),
   hooks~ : MacosModalNativeHooks,
 ) -> MacosModalPresenter {
   { capabilities, hooks, }

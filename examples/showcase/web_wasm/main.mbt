@@ -1,5 +1,5 @@
 ///|
-fn showcase_initial_section_code() -> Int = "showcase" "initial_section"
+fn showcase_initial_section_code() -> Int32 = "showcase" "initial_section"
 
 ///|
 fn main {

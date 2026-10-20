@@ -58,7 +58,7 @@ pub extend AppLifecycleEvent with ToJson::{to_json}
 
 ///|
 priv struct AppLifecycleHandler {
-  token : Int
+  token : Int32
   handle : (AppLifecycleEvent) -> Unit
 }
 
@@ -66,7 +66,7 @@ priv struct AppLifecycleHandler {
 /// Push source populated by a platform composition root. An absent source on
 /// `PlatformServices` means the host does not expose app lifecycle events.
 pub struct AppLifecycleSource {
-  priv mut next_token : Int
+  priv mut next_token : Int32
   priv mut handlers : Array[AppLifecycleHandler]
 }
 
@@ -79,7 +79,7 @@ pub fn AppLifecycleSource::new() -> AppLifecycleSource {
 pub fn AppLifecycleSource::publish(
   self : AppLifecycleSource,
   event : AppLifecycleEvent,
-) -> Int {
+) -> Int32 {
   let handlers = self.handlers.copy()
   for handler in handlers {
     (handler.handle)(event)
@@ -90,7 +90,7 @@ pub fn AppLifecycleSource::publish(
 ///|
 pub fn AppLifecycleSource::active_handler_count(
   self : AppLifecycleSource,
-) -> Int {
+) -> Int32 {
   self.handlers.length()
 }
 
@@ -98,8 +98,8 @@ pub fn AppLifecycleSource::active_handler_count(
 pub fn[Msg] AppLifecycleSource::subscription(
   self : AppLifecycleSource,
   map~ : (AppLifecycleEvent) -> Msg,
-  key? : String = "app:lifecycle",
-  label? : String = "App lifecycle",
+  key~ : String = "app:lifecycle",
+  label~ : String = "App lifecycle",
 ) -> @core.Subscription[Msg] {
   @core.Subscription::listen(key~, label~, kind="app-lifecycle", start=dispatch => {
     let token = self.next_token
@@ -124,7 +124,7 @@ pub fn NotificationRequest::new(
 pub fn TrayItem::new(
   id~ : String,
   label~ : String,
-  tooltip? : String = "",
+  tooltip~ : String = "",
 ) -> TrayItem {
   { id, label, tooltip, }
 }
@@ -133,7 +133,7 @@ pub fn TrayItem::new(
 pub fn ShareRequest::new(
   title~ : String,
   text~ : String,
-  url? : String? = None,
+  url~ : String? = None,
 ) -> ShareRequest {
   { title, text, url, }
 }
@@ -142,7 +142,7 @@ pub fn ShareRequest::new(
 pub fn PrintRequest::new(
   title~ : String,
   text~ : String,
-  mime_type? : String = "text/plain",
+  mime_type~ : String = "text/plain",
 ) -> PrintRequest {
   { title, text, mime_type, }
 }
@@ -267,10 +267,10 @@ pub struct NotificationServices {
 
 ///|
 pub fn NotificationServices::new(
-  notify? : (NotificationRequest) -> ServiceTask[Unit] = _request => {
+  notify~ : (NotificationRequest) -> ServiceTask[Unit] = _request => {
     unavailable_task("notification:send", "notifications")
   },
-  cancel? : (String) -> ServiceTask[Unit] = _id => {
+  cancel~ : (String) -> ServiceTask[Unit] = _id => {
     unavailable_task("notification:cancel", "notifications")
   },
 ) -> NotificationServices {
@@ -301,10 +301,10 @@ pub struct TrayServices {
 
 ///|
 pub fn TrayServices::new(
-  set? : (TrayItem) -> ServiceTask[Unit] = _item => {
+  set~ : (TrayItem) -> ServiceTask[Unit] = _item => {
     unavailable_task("tray:set", "system tray")
   },
-  remove? : (String) -> ServiceTask[Unit] = _id => {
+  remove~ : (String) -> ServiceTask[Unit] = _id => {
     unavailable_task("tray:remove", "system tray")
   },
 ) -> TrayServices {
@@ -334,7 +334,7 @@ pub struct PermissionServices {
 
 ///|
 pub fn PermissionServices::new(
-  request? : (PermissionKind) -> ServiceTask[PermissionStatus] = _kind => {
+  request~ : (PermissionKind) -> ServiceTask[PermissionStatus] = _kind => {
     unavailable_task("permission:request", "permission prompts")
   },
 ) -> PermissionServices {
@@ -356,7 +356,7 @@ pub struct ShareServices {
 
 ///|
 pub fn ShareServices::new(
-  share? : (ShareRequest) -> ServiceTask[Unit] = _request => {
+  share~ : (ShareRequest) -> ServiceTask[Unit] = _request => {
     unavailable_task("share:open", "share sheet")
   },
 ) -> ShareServices {
@@ -378,7 +378,7 @@ pub struct PrintServices {
 
 ///|
 pub fn PrintServices::new(
-  print? : (PrintRequest) -> ServiceTask[Unit] = _request => {
+  print~ : (PrintRequest) -> ServiceTask[Unit] = _request => {
     unavailable_task("print:document", "printing")
   },
 ) -> PrintServices {
@@ -402,13 +402,13 @@ pub struct AssociationServices {
 
 ///|
 pub fn AssociationServices::new(
-  register_protocol? : (ProtocolRegistration) -> ServiceTask[Unit] = _registration => {
+  register_protocol~ : (ProtocolRegistration) -> ServiceTask[Unit] = _registration => {
     unavailable_task("association:protocol", "protocol associations")
   },
-  register_file? : (FileAssociation) -> ServiceTask[Unit] = _association => {
+  register_file~ : (FileAssociation) -> ServiceTask[Unit] = _association => {
     unavailable_task("association:file", "file associations")
   },
-  unregister? : (String) -> ServiceTask[Unit] = _value => {
+  unregister~ : (String) -> ServiceTask[Unit] = _value => {
     unavailable_task("association:remove", "file/protocol associations")
   },
 ) -> AssociationServices {
@@ -452,13 +452,13 @@ pub struct WindowStateServices {
 
 ///|
 pub fn WindowStateServices::new(
-  read? : (String) -> ServiceTask[String?] = _window_id => {
+  read~ : (String) -> ServiceTask[String?] = _window_id => {
     unavailable_task("window-state:read", "window state persistence")
   },
-  write? : (String, String) -> ServiceTask[Unit] = (_window_id, _snapshot) => {
+  write~ : (String, String) -> ServiceTask[Unit] = (_window_id, _snapshot) => {
     unavailable_task("window-state:write", "window state persistence")
   },
-  remove? : (String) -> ServiceTask[Unit] = _window_id => {
+  remove~ : (String) -> ServiceTask[Unit] = _window_id => {
     unavailable_task("window-state:remove", "window state persistence")
   },
 ) -> WindowStateServices {
@@ -508,15 +508,15 @@ pub struct PlatformServices {
 
 ///|
 pub fn PlatformServices::new(
-  notifications? : NotificationServices = NotificationServices::new(),
-  tray? : TrayServices = TrayServices::new(),
-  permissions? : PermissionServices = PermissionServices::new(),
-  sharing? : ShareServices = ShareServices::new(),
-  printing? : PrintServices = PrintServices::new(),
-  associations? : AssociationServices = AssociationServices::new(),
-  window_state? : WindowStateServices = WindowStateServices::new(),
-  lifecycle? : AppLifecycleSource? = None,
-  window_drag? : WindowDragRegionSource = WindowDragRegionSource::new(),
+  notifications~ : NotificationServices = NotificationServices::new(),
+  tray~ : TrayServices = TrayServices::new(),
+  permissions~ : PermissionServices = PermissionServices::new(),
+  sharing~ : ShareServices = ShareServices::new(),
+  printing~ : PrintServices = PrintServices::new(),
+  associations~ : AssociationServices = AssociationServices::new(),
+  window_state~ : WindowStateServices = WindowStateServices::new(),
+  lifecycle~ : AppLifecycleSource? = None,
+  window_drag~ : WindowDragRegionSource = WindowDragRegionSource::new(),
 ) -> PlatformServices {
   {
     notifications_value: notifications,

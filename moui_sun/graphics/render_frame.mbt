@@ -4,7 +4,7 @@
 pub struct RenderFrame {
   mut canvas : Canvas
   layer_tree : LayerTree
-  mut dirty_rect_limit : Int
+  mut dirty_rect_limit : Int32
 } derive(Debug)
 
 ///|
@@ -16,9 +16,9 @@ pub struct RenderFrameSubmitPlan {
   dirty_submit_plan : DirtySubmitPlan
   strategy : DirtyPresentStrategy
   present_bounds : PixelRect?
-  present_rect_count : Int
-  present_pixel_count : Int
-  present_byte_count : Int
+  present_rect_count : Int32
+  present_pixel_count : Int32
+  present_byte_count : Int32
 } derive(Debug)
 
 ///|
@@ -28,7 +28,7 @@ pub extend RenderFrameSubmitPlan with Debug::{to_repr}
 /// Result of submitting a RenderFrame through the strategy-aware scheduler.
 pub struct RenderFrameSubmitResult {
   submit_plan : RenderFrameSubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(Debug)
 
 ///|
@@ -88,7 +88,7 @@ pub extend RenderFrameSubmitRequest with Debug::{to_repr}
 ///|
 /// Request to resize one frame-owned layer cache and clear it to a color.
 pub struct RenderFrameLayerClearRequest {
-  layer_index : Int
+  layer_index : Int32
   color : Color
 } derive(Eq, Debug)
 
@@ -101,7 +101,7 @@ pub extend RenderFrameLayerClearRequest with Eq::{not_equal, equal}
 ///|
 /// Request to replace one frame-owned layer cache.
 pub struct RenderFrameLayerReplacementRequest {
-  layer_index : Int
+  layer_index : Int32
   layer : Layer
 } derive(Debug)
 
@@ -111,7 +111,7 @@ pub extend RenderFrameLayerReplacementRequest with Debug::{to_repr}
 ///|
 /// Create a layer clear request for a RenderFrame resize lifecycle operation.
 pub fn RenderFrameLayerClearRequest::new(
-  layer_index : Int,
+  layer_index : Int32,
   color : Color,
 ) -> RenderFrameLayerClearRequest {
   { layer_index, color, }
@@ -121,7 +121,7 @@ pub fn RenderFrameLayerClearRequest::new(
 /// Return the target layer index.
 pub fn RenderFrameLayerClearRequest::get_layer_index(
   self : RenderFrameLayerClearRequest,
-) -> Int {
+) -> Int32 {
   self.layer_index
 }
 
@@ -136,7 +136,7 @@ pub fn RenderFrameLayerClearRequest::get_color(
 ///|
 /// Create a layer replacement request for a RenderFrame lifecycle operation.
 pub fn RenderFrameLayerReplacementRequest::new(
-  layer_index : Int,
+  layer_index : Int32,
   layer : Layer,
 ) -> RenderFrameLayerReplacementRequest {
   { layer_index, layer, }
@@ -146,7 +146,7 @@ pub fn RenderFrameLayerReplacementRequest::new(
 /// Return the target layer index.
 pub fn RenderFrameLayerReplacementRequest::get_layer_index(
   self : RenderFrameLayerReplacementRequest,
-) -> Int {
+) -> Int32 {
   self.layer_index
 }
 
@@ -222,21 +222,21 @@ pub fn RenderFrameSubmitPlan::get_present_bounds(
 ///|
 pub fn RenderFrameSubmitPlan::get_present_rect_count(
   self : RenderFrameSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.present_rect_count
 }
 
 ///|
 pub fn RenderFrameSubmitPlan::get_present_pixel_count(
   self : RenderFrameSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.present_pixel_count
 }
 
 ///|
 pub fn RenderFrameSubmitPlan::get_present_byte_count(
   self : RenderFrameSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.present_byte_count
 }
 
@@ -264,14 +264,14 @@ pub fn RenderFrameSubmitResult::get_present_strategy(
 ///|
 pub fn RenderFrameSubmitResult::get_present_rect_count(
   self : RenderFrameSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_rect_count()
 }
 
 ///|
 pub fn RenderFrameSubmitResult::get_presented_rect_count(
   self : RenderFrameSubmitResult,
-) -> Int {
+) -> Int32 {
   self.presented_rect_count
 }
 
@@ -334,14 +334,14 @@ pub fn RenderFrameSubmitResult::did_present(
 ///|
 pub fn RenderFrameSubmitResult::get_present_pixel_count(
   self : RenderFrameSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_pixel_count()
 }
 
 ///|
 pub fn RenderFrameSubmitResult::get_present_byte_count(
   self : RenderFrameSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_byte_count()
 }
 
@@ -426,21 +426,21 @@ pub fn RenderFrameSchedule::get_present_bounds(
 ///|
 pub fn RenderFrameSchedule::get_present_rect_count(
   self : RenderFrameSchedule,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_rect_count()
 }
 
 ///|
 pub fn RenderFrameSchedule::get_present_pixel_count(
   self : RenderFrameSchedule,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_pixel_count()
 }
 
 ///|
 pub fn RenderFrameSchedule::get_present_byte_count(
   self : RenderFrameSchedule,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_byte_count()
 }
 
@@ -553,21 +553,21 @@ pub fn RenderFrameSubmitRequest::get_present_bounds(
 ///|
 pub fn RenderFrameSubmitRequest::get_present_rect_count(
   self : RenderFrameSubmitRequest,
-) -> Int {
+) -> Int32 {
   self.schedule.get_present_rect_count()
 }
 
 ///|
 pub fn RenderFrameSubmitRequest::get_present_pixel_count(
   self : RenderFrameSubmitRequest,
-) -> Int {
+) -> Int32 {
   self.schedule.get_present_pixel_count()
 }
 
 ///|
 pub fn RenderFrameSubmitRequest::get_present_byte_count(
   self : RenderFrameSubmitRequest,
-) -> Int {
+) -> Int32 {
   self.schedule.get_present_byte_count()
 }
 
@@ -583,9 +583,9 @@ fn render_frame_submit_plan(
   dirty_submit_plan : DirtySubmitPlan,
   strategy : DirtyPresentStrategy,
   present_bounds : PixelRect?,
-  present_rect_count : Int,
-  present_pixel_count : Int,
-  present_byte_count : Int,
+  present_rect_count : Int32,
+  present_pixel_count : Int32,
+  present_byte_count : Int32,
 ) -> RenderFrameSubmitPlan {
   {
     dirty_submit_plan,
@@ -600,7 +600,7 @@ fn render_frame_submit_plan(
 ///|
 fn render_frame_submit_result(
   submit_plan : RenderFrameSubmitPlan,
-  presented_rect_count : Int,
+  presented_rect_count : Int32,
 ) -> RenderFrameSubmitResult {
   { submit_plan, presented_rect_count, }
 }
@@ -636,10 +636,10 @@ fn render_frame_submit_request(
 ///|
 fn render_frame_full_present_plan(
   dirty_submit_plan : DirtySubmitPlan,
-  frame_width : Int,
-  frame_height : Int,
-  surface_width : Int,
-  surface_height : Int,
+  frame_width : Int32,
+  frame_height : Int32,
+  surface_width : Int32,
+  surface_height : Int32,
 ) -> RenderFrameSubmitPlan {
   let present_bounds = render_frame_full_present_bounds(
     frame_width, frame_height, surface_width, surface_height,
@@ -661,10 +661,10 @@ fn render_frame_full_present_plan(
 
 ///|
 fn render_frame_full_present_bounds(
-  frame_width : Int,
-  frame_height : Int,
-  surface_width : Int,
-  surface_height : Int,
+  frame_width : Int32,
+  frame_height : Int32,
+  surface_width : Int32,
+  surface_height : Int32,
 ) -> PixelRect? {
   let frame_bounds = PixelRect::new(
     x=0,
@@ -684,10 +684,10 @@ fn render_frame_full_present_bounds(
 ///|
 fn render_frame_full_present_schedule(
   dirty_submit_plan : DirtySubmitPlan,
-  frame_width : Int,
-  frame_height : Int,
-  surface_width : Int,
-  surface_height : Int,
+  frame_width : Int32,
+  frame_height : Int32,
+  surface_width : Int32,
+  surface_height : Int32,
 ) -> RenderFrameSchedule {
   let submit_plan = render_frame_full_present_plan(
     dirty_submit_plan, frame_width, frame_height, surface_width, surface_height,
@@ -700,7 +700,7 @@ fn render_frame_full_present_schedule(
 }
 
 ///|
-pub fn RenderFrame::new(width : Int, height : Int) -> RenderFrame {
+pub fn RenderFrame::new(width : Int32, height : Int32) -> RenderFrame {
   {
     canvas: Canvas::new(width, height),
     layer_tree: LayerTree::new(),
@@ -719,20 +719,20 @@ pub fn RenderFrame::get_layer_tree(self : RenderFrame) -> LayerTree {
 }
 
 ///|
-pub fn RenderFrame::get_width(self : RenderFrame) -> Int {
+pub fn RenderFrame::get_width(self : RenderFrame) -> Int32 {
   self.canvas.get_pixmap().get_width()
 }
 
 ///|
-pub fn RenderFrame::get_height(self : RenderFrame) -> Int {
+pub fn RenderFrame::get_height(self : RenderFrame) -> Int32 {
   self.canvas.get_pixmap().get_height()
 }
 
 ///|
 pub fn RenderFrame::resize(
   self : RenderFrame,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> RenderFrame {
   let safe_width = width.max(0)
   let safe_height = height.max(0)
@@ -763,9 +763,9 @@ pub fn RenderFrame::resize(
 /// a stable index while other layers are replaced or redrawn separately.
 pub fn RenderFrame::resize_and_clear_layer(
   self : RenderFrame,
-  layer_index : Int,
-  width : Int,
-  height : Int,
+  layer_index : Int32,
+  width : Int32,
+  height : Int32,
   color : Color,
 ) -> Bool {
   self.resize_and_clear_layers(width, height, [
@@ -778,8 +778,8 @@ pub fn RenderFrame::resize_and_clear_layer(
 /// This validates all requested layers before mutating frame or layer state.
 pub fn RenderFrame::resize_and_clear_layers(
   self : RenderFrame,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   requests : Array[RenderFrameLayerClearRequest],
 ) -> Bool {
   guard width > 0 && height > 0 else { return false }
@@ -794,8 +794,8 @@ pub fn RenderFrame::resize_and_clear_layers(
 /// This validates every requested layer before mutating frame or layer state.
 pub fn RenderFrame::resize_clear_and_replace_layers(
   self : RenderFrame,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   clear_requests : Array[RenderFrameLayerClearRequest],
   replacement_requests : Array[RenderFrameLayerReplacementRequest],
 ) -> Bool {
@@ -828,8 +828,8 @@ fn RenderFrame::can_clear_layers(
 ///|
 fn RenderFrame::clear_resized_layers(
   self : RenderFrame,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   requests : Array[RenderFrameLayerClearRequest],
 ) -> Bool {
   for request in requests {
@@ -847,7 +847,7 @@ fn RenderFrame::clear_resized_layers(
 /// Replace one frame-owned layer and invalidate the old and new layer bounds.
 pub fn RenderFrame::replace_layer(
   self : RenderFrame,
-  layer_index : Int,
+  layer_index : Int32,
   layer : Layer,
 ) -> Layer? {
   self.layer_tree.replace_layer(layer_index, layer)
@@ -894,14 +894,14 @@ fn RenderFrame::apply_layer_replacements(
 }
 
 ///|
-pub fn RenderFrame::get_dirty_rect_limit(self : RenderFrame) -> Int {
+pub fn RenderFrame::get_dirty_rect_limit(self : RenderFrame) -> Int32 {
   self.dirty_rect_limit
 }
 
 ///|
 pub fn RenderFrame::set_dirty_rect_limit(
   self : RenderFrame,
-  limit : Int,
+  limit : Int32,
 ) -> RenderFrame {
   self.dirty_rect_limit = limit
   self
@@ -1093,7 +1093,7 @@ pub fn[S : Surface] RenderFrame::submit_request_to(
 pub fn[S : Surface] RenderFrame::present_dirty_to(
   self : RenderFrame,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   self.layer_tree.present_dirty_to_with_limit(
     self.canvas,
     surface,
@@ -1125,7 +1125,7 @@ pub fn[S : Surface] RenderFrame::submit_by_strategy_to(
 pub fn[S : Surface] RenderFrame::present_all_to(
   self : RenderFrame,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   self.layer_tree.present_all_to_with_limit(
     self.canvas,
     surface,

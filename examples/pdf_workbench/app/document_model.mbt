@@ -49,18 +49,18 @@ fn pdf_workbench_append_unsupported_entry(
 pub fn PdfWorkbenchDocument::from_engine_summary(
   path~ : String,
   original_bytes~ : Bytes,
-  page_count~ : Int,
-  selected_page~ : Int,
+  page_count~ : Int32,
+  selected_page~ : Int32,
   extracted_text~ : String,
   dirty~ : Bool,
-  writeback_available? : Bool = false,
-  edits? : Array[PdfWorkbenchEdit] = [],
-  unsupported_entries? : Array[String] = [],
-  page_summaries? : Array[PdfWorkbenchPageSummary] = [],
-  metadata_summary? : String = "",
-  metadata_title? : String = "",
-  outline_summary? : String = "",
-  annotation_summary? : String = "",
+  writeback_available~ : Bool = false,
+  edits~ : Array[PdfWorkbenchEdit] = [],
+  unsupported_entries~ : Array[String] = [],
+  page_summaries~ : Array[PdfWorkbenchPageSummary] = [],
+  metadata_summary~ : String = "",
+  metadata_title~ : String = "",
+  outline_summary~ : String = "",
+  annotation_summary~ : String = "",
 ) -> PdfWorkbenchLoadResult {
   let safe_page_count = if page_count < 1 { 1 } else { page_count }
   let selected = pdf_workbench_clamp_int(selected_page, 1, safe_page_count)
@@ -180,7 +180,7 @@ pub fn PdfWorkbenchDocument::discard_edits(
 ///|
 fn pdf_workbench_annotation_summary_with_queued_note(
   summary : String,
-  page : Int,
+  page : Int32,
   text : String,
 ) -> String {
   let prefix = "Queued text annotation page \{page}: " + text
@@ -192,7 +192,7 @@ fn pdf_workbench_annotation_summary_with_queued_note(
 }
 
 ///|
-fn pdf_workbench_edit_page(edit : PdfWorkbenchEdit, fallback : Int) -> Int {
+fn pdf_workbench_edit_page(edit : PdfWorkbenchEdit, fallback : Int32) -> Int32 {
   match edit {
     RotatePage(page, _) => page
     CropPage(page, _) => page
@@ -206,7 +206,7 @@ fn pdf_workbench_edit_page(edit : PdfWorkbenchEdit, fallback : Int) -> Int {
 ///|
 pub fn PdfWorkbenchDocument::with_page_count_from_raster(
   self : PdfWorkbenchDocument,
-  page_count : Int,
+  page_count : Int32,
 ) -> PdfWorkbenchDocument {
   let safe_page_count = if page_count < 1 { 1 } else { page_count }
   if safe_page_count <= self.page_count &&
@@ -239,7 +239,7 @@ pub fn PdfWorkbenchDocument::with_page_count_from_raster(
 ///|
 fn pdf_workbench_extend_raster_page_summaries(
   summaries : Array[PdfWorkbenchPageSummary],
-  page_count : Int,
+  page_count : Int32,
 ) -> Array[PdfWorkbenchPageSummary] {
   let next = summaries.copy()
   let mut page = next.length() + 1
@@ -278,7 +278,7 @@ pub fn PdfWorkbenchDocument::selected_summary(
 pub fn PdfWorkbenchDocument::search_count(
   self : PdfWorkbenchDocument,
   query : String,
-) -> Int {
+) -> Int32 {
   let pages = self.search_match_pages(query)
   pages.length()
 }
@@ -287,9 +287,9 @@ pub fn PdfWorkbenchDocument::search_count(
 pub fn PdfWorkbenchDocument::search_match_pages(
   self : PdfWorkbenchDocument,
   query : String,
-) -> Array[Int] {
+) -> Array[Int32] {
   let needle = pdf_workbench_normalized_query(query)
-  let matches : Array[Int] = []
+  let matches : Array[Int32] = []
   if needle == "" {
     return matches
   }
@@ -308,7 +308,7 @@ pub fn PdfWorkbenchDocument::search_match_pages(
 pub fn PdfWorkbenchDocument::next_search_page(
   self : PdfWorkbenchDocument,
   query : String,
-) -> Int? {
+) -> Int32? {
   let matches = self.search_match_pages(query)
   if matches.is_empty() {
     return None
@@ -325,7 +325,7 @@ pub fn PdfWorkbenchDocument::next_search_page(
 pub fn PdfWorkbenchDocument::previous_search_page(
   self : PdfWorkbenchDocument,
   query : String,
-) -> Int? {
+) -> Int32? {
   let matches = self.search_match_pages(query)
   if matches.is_empty() {
     return None
@@ -343,8 +343,8 @@ pub fn PdfWorkbenchDocument::previous_search_page(
 pub fn PdfWorkbenchDocument::search_match_position(
   self : PdfWorkbenchDocument,
   query : String,
-  page_number : Int,
-) -> Int? {
+  page_number : Int32,
+) -> Int32? {
   let matches = self.search_match_pages(query)
   for index in 0..<matches.length() {
     if matches[index] == page_number {
@@ -358,7 +358,7 @@ pub fn PdfWorkbenchDocument::search_match_position(
 fn pdf_workbench_search_position_suffix(
   document : PdfWorkbenchDocument,
   query : String,
-  page_number : Int,
+  page_number : Int32,
 ) -> String {
   let matches = document.search_match_pages(query)
   match document.search_match_position(query, page_number) {
@@ -419,7 +419,7 @@ fn pdf_workbench_pdf_version(sample : String) -> String {
 }
 
 ///|
-fn pdf_workbench_estimated_page_count(sample : String) -> Int {
+fn pdf_workbench_estimated_page_count(sample : String) -> Int32 {
   let page_markers = pdf_workbench_count_occurrences(sample, "/Type /Page")
   let pages_markers = pdf_workbench_count_occurrences(sample, "/Type /Pages")
   let count = page_markers - pages_markers
@@ -433,7 +433,7 @@ fn pdf_workbench_estimated_page_count(sample : String) -> Int {
 ///|
 fn pdf_workbench_page_summaries_from_sample(
   sample : String,
-  page_count : Int,
+  page_count : Int32,
 ) -> Array[PdfWorkbenchPageSummary] {
   let summaries : Array[PdfWorkbenchPageSummary] = []
   let version = pdf_workbench_pdf_version(sample)
@@ -449,7 +449,7 @@ fn pdf_workbench_page_summaries_from_sample(
 
 ///|
 fn pdf_workbench_empty_page_summaries(
-  page_count : Int,
+  page_count : Int32,
 ) -> Array[PdfWorkbenchPageSummary] {
   let summaries : Array[PdfWorkbenchPageSummary] = []
   for page in 1..<=page_count {
@@ -463,7 +463,7 @@ fn pdf_workbench_empty_page_summaries(
 }
 
 ///|
-fn pdf_workbench_count_occurrences(haystack : String, needle : String) -> Int {
+fn pdf_workbench_count_occurrences(haystack : String, needle : String) -> Int32 {
   let source = haystack.to_array()
   let pattern = needle.to_array()
   if pattern.is_empty() || source.length() < pattern.length() {
@@ -505,7 +505,7 @@ fn pdf_workbench_default_stamp_text() -> String {
 }
 
 ///|
-fn pdf_workbench_clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn pdf_workbench_clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {
@@ -516,7 +516,7 @@ fn pdf_workbench_clamp_int(value : Int, min : Int, max : Int) -> Int {
 }
 
 ///|
-fn pdf_workbench_parse_positive_int(value : String) -> Int? {
+fn pdf_workbench_parse_positive_int(value : String) -> Int32? {
   let chars = value.trim().to_owned().to_array()
   if chars.length() == 0 {
     return None

@@ -1,17 +1,17 @@
 ///|
 priv struct SkiaTextDescriptorPreflight {
-  family_count : Int
-  fallback_character : Int
+  family_count : Int32
+  fallback_character : Int32
   fallback_ready : Bool
-  fallback_resource_count : Int
+  fallback_resource_count : Int32
   measurement_ready : Bool
-  measurement_resource_count : Int
+  measurement_resource_count : Int32
   shaping_ready : Bool
-  shaping_resource_count : Int
+  shaping_resource_count : Int32
   shaped_run_ready : Bool
-  shaped_run_resource_count : Int
+  shaped_run_resource_count : Int32
   glyph_run_ready : Bool
-  glyph_run_resource_count : Int
+  glyph_run_resource_count : Int32
 }
 
 ///|
@@ -57,8 +57,8 @@ priv struct SkiaTextMaturityPreflight {
   mixed_run_font_fallback_ready : Bool
   deterministic_color_emoji_ready : Bool
   unicode_17_grapheme_boundary_ready : Bool
-  ready_count : Int
-  gap_count : Int
+  ready_count : Int32
+  gap_count : Int32
 }
 
 ///|
@@ -272,7 +272,7 @@ fn skia_unicode_17_grapheme_boundary_contract_available() -> Bool {
 ///|
 fn skia_grapheme_cluster_boundaries_match(
   text : String,
-  expected : Array[Int],
+  expected : Array[Int32],
 ) -> Bool {
   let actual = [0]
   let mut cursor = 0
@@ -292,7 +292,7 @@ fn skia_grapheme_cluster_boundaries_match(
 }
 
 ///|
-fn skia_ready_count(values : Array[Bool]) -> Int {
+fn skia_ready_count(values : Array[Bool]) -> Int32 {
   let mut count = 0
   for value in values {
     if value {
@@ -303,7 +303,7 @@ fn skia_ready_count(values : Array[Bool]) -> Int {
 }
 
 ///|
-fn skia_gap_count(values : Array[Bool]) -> Int {
+fn skia_gap_count(values : Array[Bool]) -> Int32 {
   let mut count = 0
   for value in values {
     if !value {
@@ -522,22 +522,22 @@ fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
 }
 
 ///|
-fn skia_representative_fallback_codepoint(text : String) -> Int {
+fn skia_representative_fallback_codepoint(text : String) -> Int32 {
   @render_common.representative_fallback_codepoint(text)
 }
 
 ///|
-fn skia_preflight_glyph_count(text : String) -> Int {
+fn skia_preflight_glyph_count(text : String) -> Int32 {
   let mut count = 0
   for _ in text {
     count = count + 1
   }
-  Int::max(1, count)
+  Int32::max(1, count)
 }
 
 ///|
-fn skia_preflight_glyph_ids(count : Int) -> Array[Int] {
-  let ids : Array[Int] = []
+fn skia_preflight_glyph_ids(count : Int32) -> Array[Int32] {
+  let ids : Array[Int32] = []
   for index in 0..<count {
     ids.push(index + 1)
   }
@@ -545,7 +545,7 @@ fn skia_preflight_glyph_ids(count : Int) -> Array[Int] {
 }
 
 ///|
-fn skia_preflight_glyph_positions(count : Int) -> Array[@moui_skia.Point] {
+fn skia_preflight_glyph_positions(count : Int32) -> Array[@moui_skia.Point] {
   let positions : Array[@moui_skia.Point] = []
   for index in 0..<count {
     positions.push(@moui_skia.Point::new(Float::from_int(index), 0.0))
@@ -554,8 +554,8 @@ fn skia_preflight_glyph_positions(count : Int) -> Array[@moui_skia.Point] {
 }
 
 ///|
-fn skia_preflight_glyph_clusters(count : Int) -> Array[Int] {
-  let clusters : Array[Int] = []
+fn skia_preflight_glyph_clusters(count : Int32) -> Array[Int32] {
+  let clusters : Array[Int32] = []
   for index in 0..<count {
     clusters.push(index)
   }

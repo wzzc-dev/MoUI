@@ -96,9 +96,9 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
 ///|
 fn webgpu_find_retained_layer_end(
   commands : Array[@core.DrawCommand],
-  start~ : Int,
+  start~ : Int32,
   key : String,
-) -> Int? {
+) -> Int32? {
   let mut depth = 0
   for index in start..<commands.length() {
     match commands[index] {

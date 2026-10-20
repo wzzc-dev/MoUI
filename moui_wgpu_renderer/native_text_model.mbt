@@ -1,11 +1,11 @@
 ///|
-let atlas_width : Int = 1024
+let atlas_width : Int32 = 1024
 
 ///|
-let atlas_height : Int = 1024
+let atlas_height : Int32 = 1024
 
 ///|
-let atlas_padding : Int = 1
+let atlas_padding : Int32 = 1
 
 ///|
 priv struct NativeFontCache {
@@ -51,12 +51,12 @@ pub struct NativePlatformTextProvider {
 
 ///|
 priv struct GlyphAtlasEntry {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
-  bearing_x : Int
-  bearing_y : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
+  bearing_x : Int32
+  bearing_y : Int32
   format : NativeRasterGlyphFormat
 }
 
@@ -109,10 +109,10 @@ pub struct NativeTextLayout {
 // the text run color; color glyphs carry RGBA pixel payloads and preserve
 // native emoji/color-font raster output while still applying run opacity.
 pub struct NativeRasterGlyph {
-  priv width : Int
-  priv height : Int
-  priv bearing_x : Int
-  priv bearing_y : Int
+  priv width : Int32
+  priv height : Int32
+  priv bearing_x : Int32
+  priv bearing_y : Int32
   priv format : NativeRasterGlyphFormat
   priv pixels : Bytes
 }
@@ -126,12 +126,12 @@ priv enum GlyphLookup {
 
 ///|
 priv struct GlyphAtlas {
-  width : Int
-  height : Int
-  padding : Int
-  mut next_x : Int
-  mut next_y : Int
-  mut shelf_height : Int
+  width : Int32
+  height : Int32
+  padding : Int32
+  mut next_x : Int32
+  mut next_y : Int32
+  mut shelf_height : Int32
   mut entries : Map[String, GlyphAtlasEntry]
   mut pixels : Array[Byte]
   mut dirty : Bool
@@ -203,7 +203,7 @@ pub fn NativePlatformTextProvider::new(
   measure~ : (@core.TextLayoutInput) -> NativeTextLayout?,
   layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?,
   raster_glyph~ : (String, Bytes) -> NativeRasterGlyph?,
-  register_font_data? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => {
+  register_font_data~ : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => {
     ()
   },
 ) -> NativePlatformTextProvider {
@@ -252,7 +252,7 @@ pub fn native_platform_glyph_key(
 pub fn NativeGlyphPlacement::new(
   key~ : NativeGlyphKey,
   x~ : Double,
-  y? : Double = 0.0,
+  y~ : Double = 0.0,
 ) -> NativeGlyphPlacement {
   { key, x, y, }
 }
@@ -278,8 +278,8 @@ pub fn NativeGlyphPlacement::y(self : NativeGlyphPlacement) -> Double {
 pub fn NativeTextLayout::new(
   size~ : @core.Size,
   baseline~ : Double,
-  caret_positions? : Array[Double] = [],
-  glyphs? : Array[NativeGlyphPlacement] = [],
+  caret_positions~ : Array[Double] = [],
+  glyphs~ : Array[NativeGlyphPlacement] = [],
 ) -> NativeTextLayout {
   { size, baseline, caret_positions, glyphs, }
 }
@@ -312,33 +312,33 @@ pub fn NativeTextLayout::glyphs(
 // Create a provider raster glyph. The renderer validates dimensions against the
 // pixel buffer before uploading it to the atlas.
 pub fn NativeRasterGlyph::new(
-  width~ : Int,
-  height~ : Int,
-  bearing_x~ : Int,
-  bearing_y~ : Int,
-  format? : NativeRasterGlyphFormat = AlphaMask,
+  width~ : Int32,
+  height~ : Int32,
+  bearing_x~ : Int32,
+  bearing_y~ : Int32,
+  format~ : NativeRasterGlyphFormat = AlphaMask,
   pixels~ : Bytes,
 ) -> NativeRasterGlyph {
   { width, height, bearing_x, bearing_y, format, pixels, }
 }
 
 ///|
-pub fn NativeRasterGlyph::width(self : NativeRasterGlyph) -> Int {
+pub fn NativeRasterGlyph::width(self : NativeRasterGlyph) -> Int32 {
   self.width
 }
 
 ///|
-pub fn NativeRasterGlyph::height(self : NativeRasterGlyph) -> Int {
+pub fn NativeRasterGlyph::height(self : NativeRasterGlyph) -> Int32 {
   self.height
 }
 
 ///|
-pub fn NativeRasterGlyph::bearing_x(self : NativeRasterGlyph) -> Int {
+pub fn NativeRasterGlyph::bearing_x(self : NativeRasterGlyph) -> Int32 {
   self.bearing_x
 }
 
 ///|
-pub fn NativeRasterGlyph::bearing_y(self : NativeRasterGlyph) -> Int {
+pub fn NativeRasterGlyph::bearing_y(self : NativeRasterGlyph) -> Int32 {
   self.bearing_y
 }
 

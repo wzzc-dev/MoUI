@@ -347,7 +347,7 @@ fn private_panel(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 /// destructive one in the danger colour and the swipe pair reduced to its
 /// glyphs around the counter.
 fn line_actions(
-  index : Int,
+  index : Int32,
   line : ChatLine,
   width : Double,
 ) -> @moui.View[Msg] {
@@ -385,8 +385,8 @@ fn line_actions(
 fn composer(
   model : WorldModel,
   screen : Screen,
-  enabled? : Bool = true,
-  waiting? : Bool = false,
+  enabled~ : Bool = true,
+  waiting~ : Bool = false,
 ) -> @moui.View[Msg] {
   let width = screen.stage
   let can_send = enabled && !waiting && model.composer_ready()
@@ -440,9 +440,9 @@ fn intent_field(
   label : String,
   value : String,
   on_input : (String) -> Msg,
-  placeholder? : String = "",
+  placeholder~ : String = "",
   width~ : Double,
-  can_send? : Bool = false,
+  can_send~ : Bool = false,
 ) -> @moui.View[Msg] {
   let label_width = label.length().to_double() * 16.0 + 6.0
   let bracket_width = 20.0

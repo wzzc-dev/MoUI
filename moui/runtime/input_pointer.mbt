@@ -3,11 +3,11 @@ fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
-  capture_lookup? : Bool = true,
-  now_ms? : Double = 0.0,
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
+  capture_lookup~ : Bool = true,
+  now_ms~ : Double = 0.0,
 ) -> ElementEventResult {
   let child_result = self.dispatch_pointer_to_children(
     event,
@@ -56,10 +56,10 @@ fn ElementNode::dispatch_view_event(
   event : AppEvent,
   render : RenderNode,
   text_system : TextSystem,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  now_ms? : Double = 0.0,
-  focused? : Bool = false,
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  now_ms~ : Double = 0.0,
+  focused~ : Bool = false,
 ) -> ElementEventResult {
   let result = data.event({
     frame: render.frame,
@@ -185,7 +185,7 @@ fn ElementNode::dispatch_pointer_to_children(
   // child subtree wins over in-flow siblings painted underneath it. Their
   // placed frames bound the hit region, so a click outside the popup falls
   // through to in-flow content below.
-  let dispatch_order : Array[Int] = []
+  let dispatch_order : Array[Int32] = []
   let is_overlay_owner : Array[Bool] = []
   for _ in self.children {
     is_overlay_owner.push(false)
@@ -387,10 +387,10 @@ fn ElementNode::dispatch_pointer_to_target(
   target : ElementId,
   event : PointerEvent,
   render : RenderNode,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  now_ms? : Double = 0.0,
+  now_ms~ : Double = 0.0,
 ) -> ElementEventResult? {
   let (result, _) = self.dispatch_pointer_to_target_with_scroll_ancestor(
     target,
@@ -414,11 +414,11 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
   target : ElementId,
   event : PointerEvent,
   render : RenderNode,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  now_ms? : Double = 0.0,
-  bubble_scroll? : Bool = true,
+  now_ms~ : Double = 0.0,
+  bubble_scroll~ : Bool = true,
 ) -> (ElementEventResult?, Bool) {
   if self.id == target {
     (

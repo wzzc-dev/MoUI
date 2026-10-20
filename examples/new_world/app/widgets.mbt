@@ -55,7 +55,7 @@ fn compact_action_theme() -> @moui.Theme {
   let base = @views.default_theme()
   let label = @text.FontSpec::new(size=10.5, weight=600)
   base
-  .with_spacing_scale({ xs: 1.0, sm: 1.0, md: 8.0, lg: 10.0, xl: 16.0 })
+  .with_spacing_scale({ xs: 1.0, sm: 1.0, md: 8.0, lg: 10.0, xl: 16.0, })
   .with_typography({ ..base.typography, label, control: label, })
 }
 
@@ -70,7 +70,7 @@ fn action_button(
   label : String,
   on_click : Msg,
   width~ : Double,
-  height? : Double = row_action_height(),
+  height~ : Double = row_action_height(),
 ) -> @moui.View[Msg] {
   button(
     label,
@@ -89,7 +89,7 @@ fn destructive_button(
   label : String,
   on_click : Msg,
   width~ : Double,
-  height? : Double = row_action_height(),
+  height~ : Double = row_action_height(),
 ) -> @moui.View[Msg] {
   button(
     label,

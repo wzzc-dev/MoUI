@@ -1,7 +1,7 @@
 ///|
 fn markdown_editor_complete_rule_on_space(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -18,7 +18,7 @@ fn markdown_editor_complete_rule_on_space(
 ///|
 fn markdown_editor_complete_setext_heading_on_space(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -41,13 +41,13 @@ priv struct MarkdownEditorPastedFootnoteDefinition {
 ///|
 priv struct MarkdownEditorFootnoteDefinitionEdit {
   source : String
-  anchor_delta : Int
+  anchor_delta : Int32
 }
 
 ///|
 pub fn markdown_editor_insert_hard_break(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   let chars = source.to_array()
@@ -86,7 +86,7 @@ fn markdown_editor_complete_rule_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret != range.end || !markdown_editor_is_typed_rule_line(line) {
     return None
@@ -108,7 +108,7 @@ fn markdown_editor_complete_setext_heading_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret != range.end || !markdown_editor_is_typed_setext_underline_line(line) {
     return None
@@ -169,9 +169,9 @@ fn markdown_editor_is_typed_rule_line(line : String) -> Bool {
 ///|
 fn markdown_editor_transform_result(
   text~ : String,
-  caret~ : Int,
-  selection? : @core.TextRange? = None,
-  edit_range? : MarkdownSourceRange? = None,
+  caret~ : Int32,
+  selection~ : @core.TextRange? = None,
+  edit_range~ : MarkdownSourceRange? = None,
 ) -> RichTextInputTransform {
   markdown_editor_normalize_ordered_transform(
     RichTextInputTransform::new(text~, caret~, selection~, edit_range~),
@@ -181,7 +181,7 @@ fn markdown_editor_transform_result(
 ///|
 fn markdown_editor_autocomplete_block_marker(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -253,7 +253,7 @@ fn markdown_editor_typed_quoted_block_marker(token : String) -> String? {
 }
 
 ///|
-fn markdown_editor_typed_quote_marker(token : String) -> Int? {
+fn markdown_editor_typed_quote_marker(token : String) -> Int32? {
   let chars = token.to_array()
   if chars.length() < 1 {
     return None
@@ -267,7 +267,7 @@ fn markdown_editor_typed_quote_marker(token : String) -> Int? {
 }
 
 ///|
-fn markdown_editor_quote_marker(depth : Int) -> String {
+fn markdown_editor_quote_marker(depth : Int32) -> String {
   let parts : Array[String] = []
   for _ in 0..<depth {
     parts.push(">")
@@ -290,7 +290,7 @@ fn markdown_editor_typed_task_marker(token : String, checked~ : Bool) -> Bool {
 }
 
 ///|
-fn markdown_editor_typed_heading_marker(token : String) -> Int? {
+fn markdown_editor_typed_heading_marker(token : String) -> Int32? {
   let chars = token.to_array()
   if chars.length() < 1 || chars.length() > 6 {
     return None
@@ -304,7 +304,7 @@ fn markdown_editor_typed_heading_marker(token : String) -> Int? {
 }
 
 ///|
-fn markdown_editor_typed_ordered_marker(token : String) -> Int? {
+fn markdown_editor_typed_ordered_marker(token : String) -> Int32? {
   let chars = token.to_array()
   if chars.length() < 2 ||
     (chars[chars.length() - 1] != '.' && chars[chars.length() - 1] != ')') {
@@ -321,7 +321,7 @@ fn markdown_editor_typed_ordered_marker(token : String) -> Int? {
 ///|
 pub fn markdown_editor_indent_lines(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform {
   markdown_editor_shift_lines(source, caret, selection, indent=true).unwrap()
@@ -330,7 +330,7 @@ pub fn markdown_editor_indent_lines(
 ///|
 pub fn markdown_editor_outdent_lines(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   markdown_editor_shift_lines(source, caret, selection, indent=false)
@@ -339,7 +339,7 @@ pub fn markdown_editor_outdent_lines(
 ///|
 fn markdown_editor_shift_lines(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   indent~ : Bool,
 ) -> RichTextInputTransform? {
@@ -471,7 +471,7 @@ fn markdown_editor_exit_empty_continuation(
 ///|
 fn markdown_editor_backspace_empty_continuation(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -493,7 +493,7 @@ fn markdown_editor_backspace_empty_continuation(
 ///|
 fn markdown_editor_delete_empty_continuation(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -517,7 +517,7 @@ fn markdown_editor_exit_empty_heading(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret != range.end {
     return None
@@ -634,7 +634,7 @@ fn markdown_editor_continuation_marker(line : String) -> String {
 ///|
 fn markdown_editor_ordered_continuation_marker(
   chars : Array[Char],
-  indent : Int,
+  indent : Int32,
 ) -> String {
   let mut index = indent
   while index < chars.length() && chars[index].is_ascii_digit() {

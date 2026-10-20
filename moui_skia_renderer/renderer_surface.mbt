@@ -1,8 +1,8 @@
 ///|
 pub struct SkiaPixelFrame {
-  priv width : Int
-  priv height : Int
-  priv row_bytes : Int
+  priv width : Int32
+  priv height : Int32
+  priv row_bytes : Int32
   priv scale_factor : Double
   priv pixels : Bytes
 } derive(Eq, Debug)
@@ -96,7 +96,7 @@ pub(all) struct HostGpuPresentOutcome {
 ///|
 pub fn HostGpuPresentOutcome::new(
   succeeded~ : Bool,
-  next_surface? : @skia_native.Surface? = None,
+  next_surface~ : @skia_native.Surface? = None,
 ) -> HostGpuPresentOutcome {
   { succeeded, next_surface, }
 }
@@ -133,17 +133,17 @@ pub fn HostGpuPresentTarget::description(self : HostGpuPresentTarget) -> String 
 
 ///|
 priv struct SkiaRasterSurfacePreflight {
-  physical_width : Int
-  physical_height : Int
+  physical_width : Int32
+  physical_height : Int32
   target_ready : Bool
   frame_ready : Bool
   finalization_ready : Bool
   submission_ready : Bool
-  resource_count : Int
-  cacheable_resource_count : Int
-  uncacheable_resource_count : Int
-  gpu_backed_resource_count : Int
-  surface_resource_count : Int
+  resource_count : Int32
+  cacheable_resource_count : Int32
+  uncacheable_resource_count : Int32
+  gpu_backed_resource_count : Int32
+  surface_resource_count : Int32
   byte_size : Int64
 }
 
@@ -231,17 +231,17 @@ pub fn SkiaPresentTarget::new(
 }
 
 ///|
-pub fn SkiaPixelFrame::width(self : SkiaPixelFrame) -> Int {
+pub fn SkiaPixelFrame::width(self : SkiaPixelFrame) -> Int32 {
   self.width
 }
 
 ///|
-pub fn SkiaPixelFrame::height(self : SkiaPixelFrame) -> Int {
+pub fn SkiaPixelFrame::height(self : SkiaPixelFrame) -> Int32 {
   self.height
 }
 
 ///|
-pub fn SkiaPixelFrame::row_bytes(self : SkiaPixelFrame) -> Int {
+pub fn SkiaPixelFrame::row_bytes(self : SkiaPixelFrame) -> Int32 {
   self.row_bytes
 }
 
@@ -259,9 +259,9 @@ pub fn SkiaPixelFrame::pixels(self : SkiaPixelFrame) -> Bytes {
 /// Adapt a live Skia renderer to the renderer-neutral host lifecycle.
 pub fn SkiaRasterRenderer::to_renderer_session(
   self : SkiaRasterRenderer,
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
-  native_surface? : @render.NativeSurface? = None,
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
+  native_surface~ : @render.NativeSurface? = None,
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=metrics => {

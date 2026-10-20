@@ -21,8 +21,8 @@ pub fn TextCommandResult::ignored() -> TextCommandResult {
 
 ///|
 pub fn TextCommandResult::handled(
-  changed? : Bool = false,
-  clipboard_text? : String? = None,
+  changed~ : Bool = false,
+  clipboard_text~ : String? = None,
 ) -> TextCommandResult {
   { handled: true, changed, clipboard_text, }
 }
@@ -37,7 +37,7 @@ pub(all) enum TextCaretDirection {
 
 ///|
 pub(all) struct TextCaretMoveResult {
-  caret : Int
+  caret : Int32
   selection : TextRange?
 }
 
@@ -57,7 +57,7 @@ pub fn active_text_selection(selection : TextRange?) -> TextRange? {
 }
 
 ///|
-fn text_selection_anchor(caret : Int, selection : TextRange?) -> Int {
+fn text_selection_anchor(caret : Int32, selection : TextRange?) -> Int32 {
   match selection {
     Some(selection) =>
       if caret == selection.start {
@@ -97,10 +97,10 @@ fn grapheme_trivial_boundary(before : Char?, at : Char?) -> Bool {
 /// on trivial grapheme boundaries without materializing the boundary
 /// table).
 priv struct TextRangeScan {
-  start : Int
-  end : Int
-  start_offset : Int
-  end_offset : Int
+  start : Int32
+  end : Int32
+  start_offset : Int32
+  end_offset : Int32
   before_start : Char?
   at_start : Char?
   before_end : Char?
@@ -110,8 +110,8 @@ priv struct TextRangeScan {
 ///|
 fn scan_text_for_range(
   text : String,
-  start~ : Int,
-  end~ : Int,
+  start~ : Int32,
+  end~ : Int32,
 ) -> TextRangeScan {
   let want_start = max_int(0, start)
   let want_end = max_int(0, end)
@@ -197,7 +197,7 @@ fn normalize_grapheme_range_fast(text : String, range : TextRange) -> TextRange 
 ///|
 /// The grapheme boundary nearest `index`, skipping the full boundary
 /// table when the clamped position sits on a trivial boundary.
-fn nearest_boundary_fast(text : String, index : Int) -> Int {
+fn nearest_boundary_fast(text : String, index : Int32) -> Int32 {
   let scan = scan_text_for_range(text, start=index, end=index)
   if grapheme_trivial_boundary(scan.before_start, scan.at_start) {
     scan.start
@@ -209,7 +209,7 @@ fn nearest_boundary_fast(text : String, index : Int) -> Int {
 ///|
 pub fn move_text_caret(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : TextRange?,
   direction : TextCaretDirection,
   extend_selection~ : Bool,
@@ -259,7 +259,7 @@ pub fn move_text_caret(
 /// window themselves.
 fn ascii_window_around_caret(
   text : String,
-  caret~ : Int,
+  caret~ : Int32,
 ) -> (Char?, Char?, Char?, Char?)? {
   let mut index = 0
   let mut minus_two : Char? = None
@@ -288,10 +288,10 @@ fn ascii_window_around_caret(
 ///|
 fn local_ascii_caret_move(
   text : String,
-  caret : Int,
+  caret : Int32,
   direction : TextCaretDirection,
-  length~ : Int,
-) -> Int? {
+  length~ : Int32,
+) -> Int32? {
   match ascii_window_around_caret(text, caret~) {
     None => None
     Some((minus_two, minus_one, at, plus_one)) =>
@@ -325,9 +325,9 @@ fn local_ascii_caret_move(
 ///|
 fn move_text_caret_index(
   text : String,
-  caret : Int,
+  caret : Int32,
   direction : TextCaretDirection,
-) -> Int {
+) -> Int32 {
   let length = text_length(text)
   let caret = clamp_int(caret, 0, length)
   match local_ascii_caret_move(text, caret, direction, length~) {
@@ -346,7 +346,7 @@ fn move_text_caret_index(
 }
 
 ///|
-fn text_length(text : String) -> Int {
+fn text_length(text : String) -> Int32 {
   text.char_length()
 }
 
@@ -388,7 +388,7 @@ pub fn replace_text_range_edit(
   text~ : String,
   range : TextRange,
   replacement : String,
-) -> (String, String, Int) {
+) -> (String, String, Int32) {
   let normalized = range.normalized()
   let scan = scan_text_for_range(
     text,
@@ -439,9 +439,9 @@ pub fn replace_text_range(
 ///|
 fn text_substring_by_char_range(
   text : String,
-  start : Int,
-  end : Int,
-  length~ : Int,
+  start : Int32,
+  end : Int32,
+  length~ : Int32,
 ) -> String {
   let start = clamp_int(start, 0, length)
   let end = clamp_int(end, start, length)
@@ -479,9 +479,9 @@ test "text editing range helpers preserve unicode scalar offsets" {
 ///|
 pub fn surrounding_delete_range(
   text : String,
-  caret : Int,
-  before : Int,
-  after : Int,
+  caret : Int32,
+  before : Int32,
+  after : Int32,
 ) -> TextRange {
   let length = text_length(text)
   let before = max_int(0, before)
@@ -520,9 +520,9 @@ pub fn text_input_grapheme_selection(
 ///|
 pub fn composition_start_index(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : TextRange?,
-) -> Int {
+) -> Int32 {
   match active_text_selection(selection) {
     Some(selection) => normalize_grapheme_range_fast(text, selection).start
     None => nearest_boundary_fast(text, caret)
@@ -533,7 +533,7 @@ pub fn composition_start_index(
 pub fn composition_cursor_offset(
   control : TextControlStateContext,
   composition : String,
-) -> Int {
+) -> Int32 {
   let length = text_length(composition)
   match control.composition_cursor {
     Some(cursor) => {
@@ -593,9 +593,9 @@ fn full_boundary_replace(
 ///|
 fn full_boundary_move(
   text : String,
-  caret : Int,
+  caret : Int32,
   direction : TextCaretDirection,
-) -> Int {
+) -> Int32 {
   let boundaries = TextGraphemeBoundaries::new(text~)
   let length = boundaries.length()
   let caret = boundaries.clamp_index(caret)

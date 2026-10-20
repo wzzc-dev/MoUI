@@ -1,22 +1,22 @@
 ///|
 #borrow(url)
-extern "C" fn linux_open_url_bytes(url : Bytes, url_len : Int) -> Int = "moui_linux_open_url"
+extern "C" fn linux_open_url_bytes(url : Bytes, url_len : Int32) -> Int32 = "moui_linux_open_url"
 
 ///|
 #borrow(title, filters, default_name)
 extern "C" fn linux_file_dialog_bytes(
-  kind : Int,
+  kind : Int32,
   title : Bytes,
-  title_len : Int,
+  title_len : Int32,
   filters : Bytes,
-  filters_len : Int,
+  filters_len : Int32,
   default_name : Bytes,
-  default_name_len : Int,
+  default_name_len : Int32,
 ) -> Bytes = "moui_linux_file_dialog"
 
 ///|
 #borrow(commands)
-extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int = "moui_linux_show_menu"
+extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int32 = "moui_linux_show_menu"
 
 ///|
 /// Clipboard image support (ReadImage / WriteImage).
@@ -26,14 +26,14 @@ extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int = "moui_linux_show_
 extern "C" fn linux_clipboard_write_image_bytes(
   mime : Bytes,
   data : Bytes,
-) -> Int = "moui_linux_clipboard_write_image"
+) -> Int32 = "moui_linux_clipboard_write_image"
 
 ///|
 extern "C" fn linux_clipboard_read_image_bytes() -> Bytes = "moui_linux_clipboard_read_image"
 
 ///|
 #borrow(key)
-extern "C" fn linux_settings_has_value(key : Bytes) -> Int = "moui_linux_settings_has_value"
+extern "C" fn linux_settings_has_value(key : Bytes) -> Int32 = "moui_linux_settings_has_value"
 
 ///|
 #borrow(key)
@@ -41,17 +41,17 @@ extern "C" fn linux_settings_read_bytes(key : Bytes) -> Bytes = "moui_linux_sett
 
 ///|
 #borrow(key, value)
-extern "C" fn linux_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_linux_settings_write"
+extern "C" fn linux_settings_write_bytes(key : Bytes, value : Bytes) -> Int32 = "moui_linux_settings_write"
 
 ///|
 #borrow(key)
-extern "C" fn linux_settings_remove_bytes(key : Bytes) -> Int = "moui_linux_settings_remove"
+extern "C" fn linux_settings_remove_bytes(key : Bytes) -> Int32 = "moui_linux_settings_remove"
 
 ///|
-extern "C" fn linux_accessibility_high_contrast() -> Int = "moui_linux_accessibility_high_contrast"
+extern "C" fn linux_accessibility_high_contrast() -> Int32 = "moui_linux_accessibility_high_contrast"
 
 ///|
-extern "C" fn linux_accessibility_reduce_motion() -> Int = "moui_linux_accessibility_reduce_motion"
+extern "C" fn linux_accessibility_reduce_motion() -> Int32 = "moui_linux_accessibility_reduce_motion"
 
 ///|
 extern "C" fn linux_accessibility_text_scale() -> Double = "moui_linux_accessibility_text_scale"
@@ -102,9 +102,9 @@ pub fn linux_input_capabilities() -> @host.HostInputCapabilities {
 
 ///|
 pub fn linux_capability_summary(
-  services? : @host.HostServiceCapabilities = service_capabilities(),
-  web_view_available? : Bool = false,
-  web_view_description? : String = "Native WebView is unavailable on this host.",
+  services~ : @host.HostServiceCapabilities = service_capabilities(),
+  web_view_available~ : Bool = false,
+  web_view_description~ : String = "Native WebView is unavailable on this host.",
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,
@@ -209,21 +209,21 @@ pub fn linux_accessibility_bridge(
 }
 
 ///|
-fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
+fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int32 {
   linux_show_menu_bytes(@host_services_desktop.encode_menu_commands(commands))
 }
 
 ///|
 pub fn linux_service_bridge(
-  system_theme? : @core.ColorScheme = Light,
-  clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_linux_clipboard,
-  open_url? : (String) -> Bool = dispatch_linux_open_url,
-  file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
-  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_linux_settings,
-  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_linux_menu,
-  list_directory? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
+  system_theme~ : @core.ColorScheme = Light,
+  clipboard~ : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_linux_clipboard,
+  open_url~ : (String) -> Bool = dispatch_linux_open_url,
+  file_dialog~ : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
+  text_file~ : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file~ : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
+  settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_linux_settings,
+  menu~ : (Array[@core.ActionCommand]) -> Int32 = dispatch_linux_menu,
+  list_directory~ : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
 ) -> @host.HostServiceBridge {
   @host_services_desktop.DesktopHostServices::new(
     capabilities=service_capabilities(),

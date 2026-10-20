@@ -1,7 +1,7 @@
 ///|
 priv struct MeshCacheDecision {
   mut revision : Int64
-  mut uploads : Int
+  mut uploads : Int32
 }
 
 ///|

@@ -1,10 +1,10 @@
 ///|
 
 ///|
-let embedded_runtime_generation_counter : Ref[Int] = Ref(1)
+let embedded_runtime_generation_counter : Ref[Int32] = Ref(1)
 
 ///|
-fn next_embedded_runtime_generation() -> Int {
+fn next_embedded_runtime_generation() -> Int32 {
   let generation = embedded_runtime_generation_counter.val
   embedded_runtime_generation_counter.val = generation + 1
   generation
@@ -29,7 +29,7 @@ pub fn EmbeddedRuntimeBackendCore::new(
   runtime~ : @runtime.AppRuntime,
   renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
-  surface_generation~ : Int,
+  surface_generation~ : Int32,
 ) -> EmbeddedRuntimeBackendCore {
   let transport = @host_services_embedded.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_generation(),
@@ -83,7 +83,7 @@ pub fn EmbeddedRuntimeBackendCore::surface_attached(
 ///|
 pub fn EmbeddedRuntimeBackendCore::session_generation(
   self : EmbeddedRuntimeBackendCore,
-) -> Int {
+) -> Int32 {
   if self.surface_attached() {
     self.transport.session_generation()
   } else {
@@ -94,7 +94,7 @@ pub fn EmbeddedRuntimeBackendCore::session_generation(
 ///|
 pub fn EmbeddedRuntimeBackendCore::surface_epoch(
   self : EmbeddedRuntimeBackendCore,
-) -> Int {
+) -> Int32 {
   self.transport.surface_epoch()
 }
 
@@ -103,7 +103,7 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
   self : EmbeddedRuntimeBackendCore,
   renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
-  surface_generation~ : Int,
+  surface_generation~ : Int32,
 ) -> Bool {
   if self.disposed {
     renderer.dispose()
@@ -430,7 +430,7 @@ pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(
 ///|
 pub fn EmbeddedRuntimeBackendCore::present_count(
   self : EmbeddedRuntimeBackendCore,
-) -> Int {
+) -> Int32 {
   match self.frame {
     Some(frame) if !self.disposed => frame.renderer().present_count()
     _ => 0

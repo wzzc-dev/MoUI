@@ -1,9 +1,9 @@
 ///|
 #borrow(text)
-extern "C" fn write_output_native(stream : Int, text : Bytes) -> Unit = "moui_cli_write_output"
+extern "C" fn write_output_native(stream : Int32, text : Bytes) -> Unit = "moui_cli_write_output"
 
 ///|
-fn write_output(stream : Int, text : String) -> Unit {
+fn write_output(stream : Int32, text : String) -> Unit {
   let text = if text.has_suffix("\n") { text } else { text + "\n" }
   write_output_native(stream, @utf8.encode(text[:], bom=false) + b"\x00")
 }

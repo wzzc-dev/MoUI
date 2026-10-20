@@ -10,7 +10,7 @@ priv struct WebWindowPlatformSlots {
 }
 
 ///|
-fn window_web_default_canvas_id(raw_id : Int) -> String {
+fn window_web_default_canvas_id(raw_id : Int32) -> String {
   "moonbit-window-web-\{raw_id}"
 }
 

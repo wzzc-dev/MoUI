@@ -231,7 +231,7 @@ pub fn llm_clean_reply(text : String, character_name : String) -> String {
 ///|
 /// End index of a leading `Name:` prefix, or `None` when the colon belongs to
 /// the dialogue itself.
-fn leading_name_prefix(text : String, character_name : String) -> Int? {
+fn leading_name_prefix(text : String, character_name : String) -> Int32? {
   if character_name == "" {
     return None
   }
@@ -258,7 +258,7 @@ fn drop_corner_brackets(text : String) -> String {
 ///|
 /// Index of the first colon, full-width or ASCII. Returns the index of the
 /// colon itself so the caller can slice past it.
-fn find_colon(text : String) -> Int? {
+fn find_colon(text : String) -> Int32? {
   let chars : Array[Char] = []
   for ch in text {
     chars.push(ch)

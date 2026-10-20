@@ -27,8 +27,8 @@ fn[Msg] picker_control(
   theme? : @core.Theme,
   style? : @style.PickerStyle,
   max_height~ : Double,
-  kind? : String = "Picker",
-  key? : String? = None,
+  kind~ : String = "Picker",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let items_snapshot = items.copy()
   let selected_snapshot = selected.value()

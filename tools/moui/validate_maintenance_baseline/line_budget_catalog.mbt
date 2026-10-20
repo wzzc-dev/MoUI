@@ -1,7 +1,7 @@
 ///|
 struct FileBudget {
   path : String
-  max_lines : Int
+  max_lines : Int32
 }
 
 ///|
@@ -179,7 +179,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_preview.mbt", max_lines: 315, },
     { path: "examples/pdf_workbench/app/view_sidebar.mbt", max_lines: 285, },
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470, },
-    { path: "examples/excel/sheet/sheet.mbt", max_lines: 1847, },
+    { path: "examples/excel/sheet/sheet.mbt", max_lines: 1871, },
     // M5-5d enum+match capability slice: CaseOf dispatch instr (single-eval
     // subject) compile+exec, VEnum value, EnumTag eval — one coherent runtime.
     // G7.1 capability slice (2026-10-07): OnStart + ForEach + 11 builtins
@@ -400,7 +400,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data/data_table.mbt", max_lines: 70, },
     { path: "moui/views/data/data_table_header.mbt", max_lines: 40, },
     { path: "moui/views/data/data_table_rendering.mbt", max_lines: 154, },
-    { path: "moui/views/data/data_grid_state.mbt", max_lines: 228, },
+    { path: "moui/views/data/data_grid_state.mbt", max_lines: 230, },
     { path: "moui/views/data/data_grid_viewport_state.mbt", max_lines: 134, },
     { path: "moui/views/data/data_grid_edit_state.mbt", max_lines: 100, },
     { path: "moui/views/data/data_incremental_state.mbt", max_lines: 71, },
@@ -422,7 +422,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 305, },
     {
       path: "moui/runtime/diagnostics_inspector_accessors.mbt",
-      max_lines: 1111,
+      max_lines: 1113,
     },
     { path: "moui/runtime/program_runtime_diagnostics.mbt", max_lines: 292, },
     { path: "moui/runtime/program_runtime_effect_tasks.mbt", max_lines: 130, },

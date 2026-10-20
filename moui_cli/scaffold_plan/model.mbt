@@ -61,7 +61,7 @@ pub(all) struct ProjectOptions {
 
 ///|
 pub(all) struct ProjectManifest {
-  schema_version : Int
+  schema_version : Int32
   id : String
   title : String
   module_name : String

@@ -125,7 +125,7 @@ pub fn Easing::sample(self : Easing, progress : Double) -> Double {
 }
 
 ///|
-fn Tween::new(from~ : Double, to~ : Double, easing? : Easing = Linear) -> Tween {
+fn Tween::new(from~ : Double, to~ : Double, easing~ : Easing = Linear) -> Tween {
   { from, to, easing, }
 }
 
@@ -139,8 +139,8 @@ pub fn animated_value(
   from~ : Double,
   to~ : Double,
   progress~ : Double,
-  easing? : Easing = EaseInOut,
-  reduced_motion? : Bool = false,
+  easing~ : Easing = EaseInOut,
+  reduced_motion~ : Bool = false,
 ) -> Double {
   Tween::new(from~, to~, easing~).value(
     if reduced_motion {
@@ -156,8 +156,8 @@ pub fn animated_point(
   from~ : Point,
   to~ : Point,
   progress~ : Double,
-  easing? : Easing = EaseInOut,
-  reduced_motion? : Bool = false,
+  easing~ : Easing = EaseInOut,
+  reduced_motion~ : Bool = false,
 ) -> Point {
   let sampled = easing.sample(if reduced_motion { 1.0 } else { progress })
   Point::new(
@@ -171,8 +171,8 @@ pub fn animated_color(
   from~ : Color,
   to~ : Color,
   progress~ : Double,
-  easing? : Easing = EaseInOut,
-  reduced_motion? : Bool = false,
+  easing~ : Easing = EaseInOut,
+  reduced_motion~ : Bool = false,
 ) -> Color {
   let sampled = easing.sample(if reduced_motion { 1.0 } else { progress })
   // Interpolate in premultiplied-alpha space. Straight RGBA lerp between a
@@ -216,10 +216,10 @@ pub fn TransitionStyle::identity() -> TransitionStyle {
 
 ///|
 pub fn TransitionStyle::new(
-  opacity? : Double = 1.0,
-  offset? : Point = Point::new(x=0.0, y=0.0),
-  scale? : Point = Point::new(x=1.0, y=1.0),
-  foreground? : Color? = None,
+  opacity~ : Double = 1.0,
+  offset~ : Point = Point::new(x=0.0, y=0.0),
+  scale~ : Point = Point::new(x=1.0, y=1.0),
+  foreground~ : Color? = None,
 ) -> TransitionStyle {
   { opacity, offset, scale, foreground, }
 }
@@ -235,8 +235,8 @@ pub fn TransitionStyle::with_opacity(
 ///|
 pub fn TransitionStyle::with_offset(
   self : TransitionStyle,
-  dx? : Double = self.offset.x,
-  dy? : Double = self.offset.y,
+  dx~ : Double = self.offset.x,
+  dy~ : Double = self.offset.y,
 ) -> TransitionStyle {
   { ..self, offset: Point::new(x=dx, y=dy), }
 }
@@ -244,8 +244,8 @@ pub fn TransitionStyle::with_offset(
 ///|
 pub fn TransitionStyle::with_scale(
   self : TransitionStyle,
-  sx? : Double = self.scale.x,
-  sy? : Double = self.scale.y,
+  sx~ : Double = self.scale.x,
+  sy~ : Double = self.scale.y,
 ) -> TransitionStyle {
   { ..self, scale: Point::new(x=sx, y=sy), }
 }
@@ -263,8 +263,8 @@ pub fn TransitionStyle::interpolate(
   self : TransitionStyle,
   to : TransitionStyle,
   progress~ : Double,
-  easing? : Easing = EaseInOut,
-  reduced_motion? : Bool = false,
+  easing~ : Easing = EaseInOut,
+  reduced_motion~ : Bool = false,
 ) -> TransitionStyle {
   {
     opacity: animated_value(
@@ -300,20 +300,20 @@ pub fn TransitionStyle::interpolate(
 
 ///|
 pub fn TransitionSpec::new(
-  from? : TransitionStyle = TransitionStyle::identity(),
-  to? : TransitionStyle = TransitionStyle::identity(),
-  duration_ms? : Double = 180.0,
-  easing? : Easing = EaseInOut,
+  from~ : TransitionStyle = TransitionStyle::identity(),
+  to~ : TransitionStyle = TransitionStyle::identity(),
+  duration_ms~ : Double = 180.0,
+  easing~ : Easing = EaseInOut,
 ) -> TransitionSpec {
   { from, to, duration_ms: max_double(0.0, duration_ms), easing, }
 }
 
 ///|
 pub fn TransitionSpec::fade(
-  from_opacity? : Double = 0.0,
-  to_opacity? : Double = 1.0,
-  duration_ms? : Double = 180.0,
-  easing? : Easing = EaseInOut,
+  from_opacity~ : Double = 0.0,
+  to_opacity~ : Double = 1.0,
+  duration_ms~ : Double = 180.0,
+  easing~ : Easing = EaseInOut,
 ) -> TransitionSpec {
   TransitionSpec::new(
     from=TransitionStyle::identity().with_opacity(from_opacity),
@@ -326,9 +326,9 @@ pub fn TransitionSpec::fade(
 ///|
 pub fn TransitionSpec::slide(
   from_offset~ : Point,
-  to_offset? : Point = Point::new(x=0.0, y=0.0),
-  duration_ms? : Double = 180.0,
-  easing? : Easing = EaseInOut,
+  to_offset~ : Point = Point::new(x=0.0, y=0.0),
+  duration_ms~ : Double = 180.0,
+  easing~ : Easing = EaseInOut,
 ) -> TransitionSpec {
   TransitionSpec::new(
     from=TransitionStyle::identity().with_offset(
@@ -343,10 +343,10 @@ pub fn TransitionSpec::slide(
 
 ///|
 pub fn TransitionSpec::scale(
-  from_scale? : Double = 0.96,
-  to_scale? : Double = 1.0,
-  duration_ms? : Double = 180.0,
-  easing? : Easing = EaseInOut,
+  from_scale~ : Double = 0.96,
+  to_scale~ : Double = 1.0,
+  duration_ms~ : Double = 180.0,
+  easing~ : Easing = EaseInOut,
 ) -> TransitionSpec {
   TransitionSpec::new(
     from=TransitionStyle::identity().with_scale(sx=from_scale, sy=from_scale),
@@ -360,7 +360,7 @@ pub fn TransitionSpec::scale(
 pub fn TransitionSpec::sample(
   self : TransitionSpec,
   progress : Double,
-  reduced_motion? : Bool = false,
+  reduced_motion~ : Bool = false,
 ) -> TransitionSample {
   let resolved = transition_resolved_progress(progress, reduced_motion~)
   {
@@ -379,7 +379,7 @@ pub fn TransitionSpec::sample(
 pub fn TransitionSpec::sample_elapsed(
   self : TransitionSpec,
   elapsed_ms : Double,
-  reduced_motion? : Bool = false,
+  reduced_motion~ : Bool = false,
 ) -> TransitionSample {
   self.sample(animation_progress(elapsed_ms, self.duration_ms), reduced_motion~)
 }
@@ -389,7 +389,7 @@ pub fn TransitionSpec::presence(
   self : TransitionSpec,
   present~ : Bool,
   progress~ : Double,
-  reduced_motion? : Bool = false,
+  reduced_motion~ : Bool = false,
 ) -> TransitionSample {
   let resolved = transition_resolved_progress(progress, reduced_motion~)
   let style = if present {

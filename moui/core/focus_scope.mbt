@@ -38,8 +38,8 @@ pub extend FocusScope with Eq::{not_equal, equal}
 ///|
 pub fn FocusScopeItem::new(
   id~ : String,
-  enabled? : Bool = true,
-  focusable? : Bool = true,
+  enabled~ : Bool = true,
+  focusable~ : Bool = true,
 ) -> FocusScopeItem {
   { id, enabled, focusable, }
 }
@@ -47,10 +47,10 @@ pub fn FocusScopeItem::new(
 ///|
 pub fn FocusScope::new(
   items~ : Array[FocusScopeItem],
-  current? : String? = None,
-  wrap? : Bool = true,
-  default_action? : String = "",
-  dismiss_action? : String = "",
+  current~ : String? = None,
+  wrap~ : Bool = true,
+  default_action~ : String = "",
+  dismiss_action~ : String = "",
 ) -> FocusScope {
   { items, current, wrap, default_action, dismiss_action, }
 }

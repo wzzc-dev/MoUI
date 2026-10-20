@@ -4,12 +4,12 @@
 ///|
 pub fn[Msg] sheet(
   content~ : @core.View[Msg],
-  presentation_mode? : @style.SheetPresentationMode = Modal,
+  presentation_mode~ : @style.SheetPresentationMode = Modal,
   theme? : @core.Theme,
   background? : @core.Color,
   corner_radius? : Double,
-  shadow? : @core.ShadowStyle? = None,
-  on_dismiss? : Msg? = None,
+  shadow~ : @core.ShadowStyle? = None,
+  on_dismiss~ : Msg? = None,
 ) -> @core.View[Msg] {
   // The surface brush is resolved ambient-ly inside sheet_shell (an explicit
   // theme? overrides ctx.environment.theme) so the sheet tracks dark-mode /

@@ -6,15 +6,15 @@ pub struct DataSortState {
 
 ///|
 pub struct PaginationState {
-  page : Int
-  page_size : Int
-  total_count : Int
+  page : Int32
+  page_size : Int32
+  total_count : Int32
 }
 
 ///|
 pub fn DataSortState::new(
-  column? : String = "",
-  ascending? : Bool = true,
+  column~ : String = "",
+  ascending~ : Bool = true,
 ) -> DataSortState {
   { column, ascending, }
 }
@@ -43,9 +43,9 @@ pub fn DataSortState::toggle(
 
 ///|
 pub fn PaginationState::new(
-  page? : Int = 0,
-  page_size? : Int = 25,
-  total_count? : Int = 0,
+  page~ : Int32 = 0,
+  page_size~ : Int32 = 25,
+  total_count~ : Int32 = 0,
 ) -> PaginationState {
   {
     page: @common.view_max_int(0, page),
@@ -55,17 +55,17 @@ pub fn PaginationState::new(
 }
 
 ///|
-pub fn PaginationState::page(self : PaginationState) -> Int {
+pub fn PaginationState::page(self : PaginationState) -> Int32 {
   self.page
 }
 
 ///|
-pub fn PaginationState::page_size(self : PaginationState) -> Int {
+pub fn PaginationState::page_size(self : PaginationState) -> Int32 {
   self.page_size
 }
 
 ///|
-pub fn PaginationState::page_count(self : PaginationState) -> Int {
+pub fn PaginationState::page_count(self : PaginationState) -> Int32 {
   if self.total_count == 0 {
     1
   } else {
@@ -93,11 +93,11 @@ pub fn PaginationState::previous(self : PaginationState) -> PaginationState {
 }
 
 ///|
-pub fn PaginationState::start_index(self : PaginationState) -> Int {
+pub fn PaginationState::start_index(self : PaginationState) -> Int32 {
   self.clamped().page * self.page_size
 }
 
 ///|
-pub fn PaginationState::end_index(self : PaginationState) -> Int {
+pub fn PaginationState::end_index(self : PaginationState) -> Int32 {
   @layout.min_int(self.total_count, self.start_index() + self.page_size)
 }

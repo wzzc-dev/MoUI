@@ -33,7 +33,7 @@ pub extend DesignTokenGroupResolverRecord with ToJson::{to_json}
 ///|
 pub fn token_group_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> Array[DesignTokenGroupResolverRecord] {
   [
     token_group_resolver_record(preset, SemanticPalette, Color, scheme),
@@ -50,7 +50,7 @@ pub fn token_group_resolver_report(
 pub fn token_group_resolver_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> DesignTokenGroupResolverRecord? {
   for item in token_group_resolver_report(preset, scheme~) {
     if item.requirement == requirement {
@@ -61,12 +61,12 @@ pub fn token_group_resolver_for(
 }
 
 ///|
-pub fn token_group_resolver_count(preset : @common.DesignPreset) -> Int {
+pub fn token_group_resolver_count(preset : @common.DesignPreset) -> Int32 {
   token_group_resolver_report(preset).length()
 }
 
 ///|
-pub fn token_group_resolver_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn token_group_resolver_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if !item.resolves_tokens ||
@@ -83,7 +83,7 @@ pub fn token_group_resolver_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn token_group_resolver_source_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -96,7 +96,7 @@ pub fn token_group_resolver_source_gap_count(
 ///|
 pub fn token_group_resolver_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if item.remaining_gap != "none" {
@@ -126,7 +126,7 @@ fn token_group_requirement_supported(
 fn token_group_resolver_count_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if item.requirement == requirement {
@@ -140,7 +140,7 @@ fn token_group_resolver_count_for(
 fn token_group_resolver_gap_count_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if item.requirement == requirement &&
@@ -161,7 +161,7 @@ fn token_group_resolver_gap_count_for(
 fn token_group_resolver_source_gap_count_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if item.requirement == requirement &&
@@ -176,7 +176,7 @@ fn token_group_resolver_source_gap_count_for(
 fn token_group_resolver_parity_gap_count_for(
   preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_group_resolver_report(preset) {
     if item.requirement == requirement && item.remaining_gap != "none" {

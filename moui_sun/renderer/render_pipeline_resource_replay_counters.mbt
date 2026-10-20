@@ -1,8 +1,8 @@
 ///|
 priv struct RenderPipelineImageCacheReplayCounters {
-  mut keyed_image_count : Int
-  mut image_cache_hit_count : Int
-  mut image_cache_insert_count : Int
+  mut keyed_image_count : Int32
+  mut image_cache_hit_count : Int32
+  mut image_cache_insert_count : Int32
 }
 
 ///|
@@ -32,7 +32,7 @@ fn record_bmp_resource_image_replay_result(
   replay_state : RenderPipelineResourceReplayState,
   resource_key : String,
   result : Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError],
-) -> Result[Int, RenderPipelineResourceReplayError] {
+) -> Result[Int32, RenderPipelineResourceReplayError] {
   match result {
     Ok(result) => {
       replay_state.image_cache_counters.record_cached_image(
@@ -49,7 +49,7 @@ fn record_png_resource_image_replay_result(
   replay_state : RenderPipelineResourceReplayState,
   resource_key : String,
   result : Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError],
-) -> Result[Int, RenderPipelineResourceReplayError] {
+) -> Result[Int32, RenderPipelineResourceReplayError] {
   match result {
     Ok(result) => {
       replay_state.image_cache_counters.record_cached_image(
@@ -66,7 +66,7 @@ fn record_rgba_resource_image_replay_result(
   replay_state : RenderPipelineResourceReplayState,
   resource_key : String,
   result : Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError],
-) -> Result[Int, RenderPipelineResourceReplayError] {
+) -> Result[Int32, RenderPipelineResourceReplayError] {
   match result {
     Ok(result) => {
       replay_state.image_cache_counters.record_cached_image(
@@ -80,9 +80,9 @@ fn record_rgba_resource_image_replay_result(
 
 ///|
 priv struct RenderPipelineTextCacheReplayCounters {
-  mut keyed_text_count : Int
-  mut text_cache_hit_count : Int
-  mut text_mask_render_count : Int
+  mut keyed_text_count : Int32
+  mut text_cache_hit_count : Int32
+  mut text_mask_render_count : Int32
 }
 
 ///|
@@ -106,9 +106,9 @@ fn RenderPipelineTextCacheReplayCounters::record_cached_text_mask(
 ///|
 fn RenderPipelineTextCacheReplayCounters::record_cached_text_spans(
   self : RenderPipelineTextCacheReplayCounters,
-  cache_hit_count : Int,
-  render_count : Int,
-  drawn_span_count : Int,
+  cache_hit_count : Int32,
+  render_count : Int32,
+  drawn_span_count : Int32,
 ) -> Unit {
   self.text_cache_hit_count += cache_hit_count
   self.text_mask_render_count += render_count
@@ -117,9 +117,9 @@ fn RenderPipelineTextCacheReplayCounters::record_cached_text_spans(
 
 ///|
 priv struct RenderPipelineFontCacheReplayCounters {
-  mut keyed_font_count : Int
-  mut font_cache_hit_count : Int
-  mut font_parse_count : Int
+  mut keyed_font_count : Int32
+  mut font_cache_hit_count : Int32
+  mut font_parse_count : Int32
 }
 
 ///|
@@ -143,9 +143,9 @@ fn RenderPipelineFontCacheReplayCounters::record_font_lookup(
 ///|
 fn RenderPipelineFontCacheReplayCounters::record_font_lookups(
   self : RenderPipelineFontCacheReplayCounters,
-  keyed_count : Int,
-  cache_hit_count : Int,
-  parse_count : Int,
+  keyed_count : Int32,
+  cache_hit_count : Int32,
+  parse_count : Int32,
 ) -> Unit {
   self.keyed_font_count += keyed_count
   self.font_cache_hit_count += cache_hit_count
@@ -154,12 +154,12 @@ fn RenderPipelineFontCacheReplayCounters::record_font_lookups(
 
 ///|
 priv struct RenderPipelineAtlasCacheReplayCounters {
-  mut keyed_atlas_text_count : Int
-  mut glyph_cache_hit_count : Int
-  mut glyph_mask_render_count : Int
-  mut atlas_cache_hit_count : Int
-  mut atlas_insert_count : Int
-  mut atlas_clear_count : Int
+  mut keyed_atlas_text_count : Int32
+  mut glyph_cache_hit_count : Int32
+  mut glyph_mask_render_count : Int32
+  mut atlas_cache_hit_count : Int32
+  mut atlas_insert_count : Int32
+  mut atlas_clear_count : Int32
 }
 
 ///|
@@ -177,12 +177,12 @@ fn RenderPipelineAtlasCacheReplayCounters::new() -> RenderPipelineAtlasCacheRepl
 ///|
 fn RenderPipelineAtlasCacheReplayCounters::record_atlas_text(
   self : RenderPipelineAtlasCacheReplayCounters,
-  glyph_cache_hit_count : Int,
-  glyph_mask_render_count : Int,
-  atlas_cache_hit_count : Int,
-  atlas_insert_count : Int,
+  glyph_cache_hit_count : Int32,
+  glyph_mask_render_count : Int32,
+  atlas_cache_hit_count : Int32,
+  atlas_insert_count : Int32,
   did_clear_atlas : Bool,
-  drawn_span_count : Int,
+  drawn_span_count : Int32,
 ) -> Unit {
   self.glyph_cache_hit_count += glyph_cache_hit_count
   self.glyph_mask_render_count += glyph_mask_render_count
@@ -196,11 +196,11 @@ fn RenderPipelineAtlasCacheReplayCounters::record_atlas_text(
 
 ///|
 priv struct RenderPipelineResourceReplayState {
-  mut clear_count : Int
-  mut fill_count : Int
-  mut stroke_count : Int
-  mut image_count : Int
-  mut text_count : Int
+  mut clear_count : Int32
+  mut fill_count : Int32
+  mut stroke_count : Int32
+  mut image_count : Int32
+  mut text_count : Int32
   image_cache_counters : RenderPipelineImageCacheReplayCounters
   text_cache_counters : RenderPipelineTextCacheReplayCounters
   font_cache_counters : RenderPipelineFontCacheReplayCounters
@@ -225,7 +225,7 @@ fn RenderPipelineResourceReplayState::new() -> RenderPipelineResourceReplayState
 ///|
 fn RenderPipelineResourceReplayState::to_result(
   self : RenderPipelineResourceReplayState,
-  command_count : Int,
+  command_count : Int32,
 ) -> RenderPipelineResourceReplayResult {
   {
     replay_result: {

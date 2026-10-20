@@ -12,7 +12,7 @@ fn bytes_array_contains(values : Array[Bytes], value : Bytes) -> Bool {
 ///|
 fn copy_non_empty_unique_bytes(
   values : Array[Bytes],
-  skip? : Bytes = b"",
+  skip~ : Bytes = b"",
 ) -> Array[Bytes] {
   let result : Array[Bytes] = Array(capacity=values.length())
   for value in values {
@@ -40,8 +40,8 @@ pub extend FontFallbackChain with Eq::{not_equal, equal}
 
 ///|
 pub fn FontFallbackChain::new(
-  primary_family? : Bytes = b"",
-  fallback_families? : Array[Bytes] = [],
+  primary_family~ : Bytes = b"",
+  fallback_families~ : Array[Bytes] = [],
 ) -> FontFallbackChain {
   {
     primary_family,
@@ -53,7 +53,7 @@ pub fn FontFallbackChain::new(
 }
 
 ///|
-pub fn FontFallbackChain::length(self : FontFallbackChain) -> Int {
+pub fn FontFallbackChain::length(self : FontFallbackChain) -> Int32 {
   let primary_count = if self.primary_family.is_empty() { 0 } else { 1 }
   primary_count + self.fallback_families.length()
 }
@@ -66,7 +66,7 @@ pub fn FontFallbackChain::is_empty(self : FontFallbackChain) -> Bool {
 ///|
 pub fn FontFallbackChain::family_at(
   self : FontFallbackChain,
-  index : Int,
+  index : Int32,
 ) -> Bytes? {
   if index < 0 {
     None
@@ -95,7 +95,7 @@ pub fn FontFallbackChain::contains_family(
 fn FontFallbackChain::index_of_family(
   self : FontFallbackChain,
   family : Bytes,
-) -> Int {
+) -> Int32 {
   if family.is_empty() {
     -1
   } else if self.primary_family == family {
@@ -139,7 +139,7 @@ pub fn FontFallbackChain::with_family(
 pub(all) struct FontFallbackRequest {
   families : FontFallbackChain
   bcp47 : Array[Bytes]
-  character : Int
+  character : Int32
   style : FontStyleRequest
 } derive(Debug, Eq)
 
@@ -151,28 +151,28 @@ pub extend FontFallbackRequest with Eq::{not_equal, equal}
 
 ///|
 pub fn FontFallbackRequest::new(
-  families? : FontFallbackChain = FontFallbackChain::new(),
-  bcp47? : Array[Bytes] = [],
-  character? : Int = 0,
-  style? : FontStyleRequest = FontStyleRequest::new(),
+  families~ : FontFallbackChain = FontFallbackChain::new(),
+  bcp47~ : Array[Bytes] = [],
+  character~ : Int32 = 0,
+  style~ : FontStyleRequest = FontStyleRequest::new(),
 ) -> FontFallbackRequest {
   {
     families,
     bcp47: copy_non_empty_unique_bytes(bcp47),
-    character: Int::max(0, character),
+    character: Int32::max(0, character),
     style,
   }
 }
 
 ///|
-pub fn FontFallbackRequest::language_count(self : FontFallbackRequest) -> Int {
+pub fn FontFallbackRequest::language_count(self : FontFallbackRequest) -> Int32 {
   self.bcp47.length()
 }
 
 ///|
 pub fn FontFallbackRequest::language_at(
   self : FontFallbackRequest,
-  index : Int,
+  index : Int32,
 ) -> Bytes? {
   if index < 0 {
     None
@@ -194,9 +194,9 @@ pub fn FontFallbackRequest::is_empty(self : FontFallbackRequest) -> Bool {
 ///|
 pub fn FontFallbackRequest::with_character(
   self : FontFallbackRequest,
-  character : Int,
+  character : Int32,
 ) -> FontFallbackRequest {
-  { ..self, character: Int::max(0, character), }
+  { ..self, character: Int32::max(0, character), }
 }
 
 ///|
@@ -212,7 +212,7 @@ pub fn FontFallbackRequest::with_style(
 pub(all) struct FontFallbackMatchDescriptor {
   request : FontFallbackRequest
   matched_family : Bytes
-  fallback_index : Int
+  fallback_index : Int32
   synthetic : Bool
 } derive(Debug, Eq)
 
@@ -226,8 +226,8 @@ pub extend FontFallbackMatchDescriptor with Eq::{not_equal, equal}
 fn normalized_font_fallback_index(
   request : FontFallbackRequest,
   matched_family : Bytes,
-  fallback_index : Int,
-) -> Int {
+  fallback_index : Int32,
+) -> Int32 {
   if fallback_index >= 0 && fallback_index < request.families.length() {
     fallback_index
   } else {
@@ -237,10 +237,10 @@ fn normalized_font_fallback_index(
 
 ///|
 pub fn FontFallbackMatchDescriptor::new(
-  request? : FontFallbackRequest = FontFallbackRequest::new(),
-  matched_family? : Bytes = b"",
-  fallback_index? : Int = -1,
-  synthetic? : Bool = false,
+  request~ : FontFallbackRequest = FontFallbackRequest::new(),
+  matched_family~ : Bytes = b"",
+  fallback_index~ : Int32 = -1,
+  synthetic~ : Bool = false,
 ) -> FontFallbackMatchDescriptor {
   {
     request,
@@ -256,8 +256,8 @@ pub fn FontFallbackMatchDescriptor::new(
 pub fn FontFallbackRequest::match_descriptor(
   self : FontFallbackRequest,
   matched_family : Bytes,
-  fallback_index? : Int = -1,
-  synthetic? : Bool = false,
+  fallback_index~ : Int32 = -1,
+  synthetic~ : Bool = false,
 ) -> FontFallbackMatchDescriptor {
   FontFallbackMatchDescriptor::new(
     request=self,
@@ -355,7 +355,7 @@ pub fn FontFallbackRequest::resource_key(
 /// Cache descriptor for a native font fallback/typeface match result.
 pub fn FontFallbackRequest::resource_descriptor(
   self : FontFallbackRequest,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {
@@ -370,9 +370,9 @@ pub fn FontFallbackRequest::resource_descriptor(
 /// Font descriptor derived from a native fallback/typeface match result.
 pub fn FontFallbackRequest::font_descriptor(
   self : FontFallbackRequest,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
 ) -> FontDescriptor {
   FontDescriptor::new(
     typeface_key=self.resource_key(),
@@ -386,11 +386,11 @@ pub fn FontFallbackRequest::font_descriptor(
 /// Combined resource plan for matching a fallback typeface and creating a font.
 pub fn FontFallbackRequest::resource_plan(
   self : FontFallbackRequest,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
-  fallback_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = -1L,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
+  fallback_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   if self.is_empty() {
     RendererResourcePlan::new([
@@ -418,7 +418,7 @@ pub fn FontFallbackMatchDescriptor::resource_key(
 /// Cache descriptor for resolved fallback/typeface match metadata.
 pub fn FontFallbackMatchDescriptor::resource_descriptor(
   self : FontFallbackMatchDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {
@@ -433,9 +433,9 @@ pub fn FontFallbackMatchDescriptor::resource_descriptor(
 /// Font descriptor derived from a resolved fallback/typeface match.
 pub fn FontFallbackMatchDescriptor::font_descriptor(
   self : FontFallbackMatchDescriptor,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
 ) -> FontDescriptor {
   FontDescriptor::new(
     typeface_key=self.resource_key(),
@@ -449,11 +449,11 @@ pub fn FontFallbackMatchDescriptor::font_descriptor(
 /// Combined resource plan for retaining a fallback match and derived font.
 pub fn FontFallbackMatchDescriptor::resource_plan(
   self : FontFallbackMatchDescriptor,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
-  match_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = -1L,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
+  match_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   if self.is_valid() {
     RendererResourcePlan::new([
@@ -500,8 +500,8 @@ fn font_fallback_resolution_normalized_match(
 
 ///|
 pub fn FontFallbackResolutionDescriptor::new(
-  request? : FontFallbackRequest = FontFallbackRequest::new(),
-  resolved_match? : FontFallbackMatchDescriptor = FontFallbackMatchDescriptor::new(),
+  request~ : FontFallbackRequest = FontFallbackRequest::new(),
+  resolved_match~ : FontFallbackMatchDescriptor = FontFallbackMatchDescriptor::new(),
 ) -> FontFallbackResolutionDescriptor {
   {
     request,
@@ -515,8 +515,8 @@ pub fn FontFallbackResolutionDescriptor::new(
 pub fn FontFallbackRequest::resolution_descriptor(
   self : FontFallbackRequest,
   matched_family : Bytes,
-  fallback_index? : Int = -1,
-  synthetic? : Bool = false,
+  fallback_index~ : Int32 = -1,
+  synthetic~ : Bool = false,
 ) -> FontFallbackResolutionDescriptor {
   FontFallbackResolutionDescriptor::new(
     request=self,
@@ -572,7 +572,7 @@ pub fn FontFallbackResolutionDescriptor::resource_key(
 ///|
 pub fn FontFallbackResolutionDescriptor::resource_descriptor(
   self : FontFallbackResolutionDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {
@@ -586,9 +586,9 @@ pub fn FontFallbackResolutionDescriptor::resource_descriptor(
 ///|
 pub fn FontFallbackResolutionDescriptor::font_descriptor(
   self : FontFallbackResolutionDescriptor,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
 ) -> FontDescriptor {
   FontDescriptor::new(
     typeface_key=self.resource_key(),
@@ -601,13 +601,13 @@ pub fn FontFallbackResolutionDescriptor::font_descriptor(
 ///|
 pub fn FontFallbackResolutionDescriptor::resource_plan(
   self : FontFallbackResolutionDescriptor,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
-  request_byte_size? : Int64 = -1L,
-  resolution_byte_size? : Int64 = -1L,
-  match_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = -1L,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
+  request_byte_size~ : Int64 = -1L,
+  resolution_byte_size~ : Int64 = -1L,
+  match_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   if self.is_valid() {
     RendererResourcePlan::new([

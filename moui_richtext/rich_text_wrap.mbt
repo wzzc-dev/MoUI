@@ -62,7 +62,7 @@ fn rich_text_block_soft_wrap(
 /// The absolute source offset a block's own ranges start at. Every run and
 /// cell offset inside the block is relative to it, so it is the anchor the
 /// content-identity caches re-base on.
-fn rich_text_block_source_start(block : RichTextBlock) -> Int {
+fn rich_text_block_source_start(block : RichTextBlock) -> Int32 {
   match block.source_range {
     Some(range) => range.start
     None =>
@@ -151,7 +151,7 @@ fn rich_text_block_soft_wrap_key(
 
 ///|
 priv struct RichTextWrapCluster {
-  offset : Int
+  offset : Int32
   text : String
   advance : Double
 }
@@ -229,15 +229,15 @@ fn rich_text_measure_based_soft_breaks(
   available_width~ : Double,
   base_font~ : @core.FontSpec,
   text_system~ : @core.TextSystem,
-) -> Array[Int] {
-  let breaks : Array[Int] = []
+) -> Array[Int32] {
+  let breaks : Array[Int32] = []
   if available_width <= 1.0 {
     return breaks
   }
   let block_font = rich_text_block_font(block, base_font)
   // The joined visual text is the prefix followed by each run's visual text;
   // measure every segment once with the font that will draw it.
-  let segments : Array[(String, @core.FontSpec, Int)] = []
+  let segments : Array[(String, @core.FontSpec, Int32)] = []
   segments.push((block.prefix, block_font, 0))
   let mut run_offset = text_length(block.prefix)
   for run in block.runs {
@@ -251,7 +251,7 @@ fn rich_text_measure_based_soft_breaks(
   // the document: a soft-wrapped paragraph carries one source line per visual
   // line, so a novel-sized block meant millions of cluster objects and
   // hundreds of megabytes to produce a result that needs one line of state.
-  let breaks : Array[Int] = []
+  let breaks : Array[Int32] = []
   let line_clusters : Array[RichTextWrapCluster] = []
   for segment in segments {
     let (text, font, base_offset) = segment
@@ -307,7 +307,7 @@ fn rich_text_wrap_cluster_is_hard_break(cluster_text : String) -> Bool {
 /// are appended to `breaks` in ascending order.
 fn rich_text_wrap_line_breaks(
   clusters : Array[RichTextWrapCluster],
-  breaks : Array[Int],
+  breaks : Array[Int32],
   available_width : Double,
 ) -> Unit {
   let cluster_count = clusters.length()
@@ -407,8 +407,8 @@ fn rich_text_wrap_line_breaks(
 /// couple of times per visual line.
 fn rich_text_cluster_starting_at(
   clusters : Array[RichTextWrapCluster],
-  offset : Int,
-) -> Int? {
+  offset : Int32,
+) -> Int32? {
   let mut low = 0
   let mut high = clusters.length() - 1
   while low <= high {
@@ -430,8 +430,8 @@ fn rich_text_cluster_starting_at(
 /// `rich_text_cluster_starting_at` for why this is a binary search.
 fn rich_text_cluster_ending_at(
   clusters : Array[RichTextWrapCluster],
-  offset : Int,
-) -> Int? {
+  offset : Int32,
+) -> Int32? {
   let mut low = 0
   let mut high = clusters.length() - 1
   while low <= high {

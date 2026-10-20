@@ -1,8 +1,8 @@
 ///|
 fn test_project_options(
   platforms : Array[String],
-  bundle_id? : String? = None,
-  template? : String = "counter",
+  bundle_id~ : String? = None,
+  template~ : String = "counter",
 ) -> @plan.ProjectOptions {
   {
     target: "unused",

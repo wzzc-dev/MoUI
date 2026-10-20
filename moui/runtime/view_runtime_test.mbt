@@ -3,7 +3,7 @@ fn[Msg] runtime_test_rect(
   width~ : Double,
   height~ : Double,
   color~ : @core.Color,
-  on_tap? : Msg? = None,
+  on_tap~ : Msg? = None,
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
@@ -41,7 +41,7 @@ fn[Msg] runtime_test_rect(
 fn[Msg] runtime_test_padding(
   child~ : @core.View[Msg],
   insets~ : @core.Insets,
-  key? : String? = None,
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Padding", key~),
@@ -82,7 +82,7 @@ fn runtime_test_first_child_size(sizes : Array[@core.Size]) -> @core.Size {
 
 ///|
 test "runtime dispatches messages from virtual node" {
-  let received : Array[Int] = []
+  let received : Array[Int32] = []
   let runtime = @runtime.AppRuntime::new_view(
     root=runtime_test_rect(
       width=20.0,
@@ -546,7 +546,7 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
 
 ///|
 test "virtual node sheet handles outside dismiss and preserves child event" {
-  let received : Array[Int] = []
+  let received : Array[Int32] = []
   let runtime = @runtime.AppRuntime::new_view(
     root=@views.sheet(
       content=runtime_test_rect(
@@ -629,7 +629,7 @@ test "runtime semantics preserves heading level and link url" {
 
 ///|
 test "runtime dispatches semantic activation through typed action route" {
-  let received : Array[Int] = []
+  let received : Array[Int32] = []
   let root = @views.text("Open", width=80.0, height=24.0)
     .on_tap(7)
     .semantics_role(Link)
@@ -1153,7 +1153,7 @@ test "runtime Exit does not propagate to descendant being entered" {
 /// Count `FillRoundedRectBrush` commands whose solid color has nonzero alpha —
 /// the hover background a ghost/outline button paints. Used to assert hover
 /// clears after the pointer leaves.
-fn runtime_test_hover_fill_count(commands : Array[@core.DrawCommand]) -> Int {
+fn runtime_test_hover_fill_count(commands : Array[@core.DrawCommand]) -> Int32 {
   let mut n = 0
   for cmd in commands {
     match cmd {

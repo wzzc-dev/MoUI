@@ -18,10 +18,10 @@ pub extend PerspectiveCamera with ToJson::{to_json}
 
 ///|
 pub fn PerspectiveCamera::new(
-  fov_y_radians? : Double = 0.7853981633974483,
-  aspect? : Double = 1.0,
-  near? : Double = 0.01,
-  far? : Double = 1000.0,
+  fov_y_radians~ : Double = 0.7853981633974483,
+  aspect~ : Double = 1.0,
+  near~ : Double = 0.01,
+  far~ : Double = 1000.0,
 ) -> PerspectiveCamera {
   {
     fov_y_radians: clamp(fov_y_radians, 0.05, 3.0),
@@ -98,11 +98,11 @@ pub extend OrbitCamera with ToJson::{to_json}
 
 ///|
 pub fn OrbitCamera::new(
-  target? : Vec3 = Vec3::zero(),
-  radius? : Double = 3.0,
-  azimuth? : Double = 0.0,
-  polar? : Double = 1.1,
-  perspective? : PerspectiveCamera = PerspectiveCamera::new(),
+  target~ : Vec3 = Vec3::zero(),
+  radius~ : Double = 3.0,
+  azimuth~ : Double = 0.0,
+  polar~ : Double = 1.1,
+  perspective~ : PerspectiveCamera = PerspectiveCamera::new(),
 ) -> OrbitCamera {
   {
     target,
@@ -206,7 +206,7 @@ pub fn OrbitCamera::with_aspect(
 pub fn OrbitCamera::fit(
   self : OrbitCamera,
   bounds : Aabb,
-  padding? : Double = 1.2,
+  padding~ : Double = 1.2,
 ) -> OrbitCamera {
   if !bounds.is_valid() {
     self

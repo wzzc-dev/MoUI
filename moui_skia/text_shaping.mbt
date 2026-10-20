@@ -15,9 +15,9 @@ pub extend TextShapingDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn TextShapingDescriptor::new(
-  run? : TextRunDescriptor = TextRunDescriptor::new(),
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  width? : Float = 1000000000.0,
+  run~ : TextRunDescriptor = TextRunDescriptor::new(),
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  width~ : Float = 1000000000.0,
 ) -> TextShapingDescriptor {
   { run, font_key, width: normalized_text_measurement_width(width), }
 }
@@ -75,7 +75,7 @@ pub fn TextShapingDescriptor::resource_key(
 pub fn TextShapingDescriptor::resource_descriptor(
   self : TextShapingDescriptor,
   text : Bytes,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_key(text).id
   let measured_byte_size = if byte_size < 0L {
@@ -90,10 +90,10 @@ pub fn TextShapingDescriptor::resource_descriptor(
 pub fn TextShapingDescriptor::resource_plan(
   self : TextShapingDescriptor,
   text : Bytes,
-  shaping_byte_size? : Int64 = -1L,
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  shaping_byte_size~ : Int64 = -1L,
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=shaping_byte_size))
@@ -123,8 +123,8 @@ fn normalized_shaped_text_advance(advance : Point) -> Point {
 /// Value-layer metadata for a native shaped text run result.
 pub(all) struct ShapedTextRunDescriptor {
   shaping : TextShapingDescriptor
-  glyph_count : Int
-  cluster_count : Int
+  glyph_count : Int32
+  cluster_count : Int32
   advance : Point
 } derive(Debug, Eq)
 
@@ -136,15 +136,15 @@ pub extend ShapedTextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn ShapedTextRunDescriptor::new(
-  shaping? : TextShapingDescriptor = TextShapingDescriptor::new(),
-  glyph_count? : Int = 0,
-  cluster_count? : Int = 0,
-  advance? : Point = Point::zero(),
+  shaping~ : TextShapingDescriptor = TextShapingDescriptor::new(),
+  glyph_count~ : Int32 = 0,
+  cluster_count~ : Int32 = 0,
+  advance~ : Point = Point::zero(),
 ) -> ShapedTextRunDescriptor {
   {
     shaping,
-    glyph_count: Int::max(0, glyph_count),
-    cluster_count: Int::max(0, cluster_count),
+    glyph_count: Int32::max(0, glyph_count),
+    cluster_count: Int32::max(0, cluster_count),
     advance: normalized_shaped_text_advance(advance),
   }
 }
@@ -152,9 +152,9 @@ pub fn ShapedTextRunDescriptor::new(
 ///|
 pub fn TextShapingDescriptor::shaped_run_descriptor(
   self : TextShapingDescriptor,
-  glyph_count? : Int = 0,
-  cluster_count? : Int = 0,
-  advance? : Point = Point::zero(),
+  glyph_count~ : Int32 = 0,
+  cluster_count~ : Int32 = 0,
+  advance~ : Point = Point::zero(),
 ) -> ShapedTextRunDescriptor {
   ShapedTextRunDescriptor::new(
     shaping=self,
@@ -200,7 +200,7 @@ pub fn ShapedTextRunDescriptor::resource_key(
 pub fn ShapedTextRunDescriptor::resource_descriptor(
   self : ShapedTextRunDescriptor,
   text : Bytes,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id(text)
   let measured_byte_size = if byte_size < 0L {
@@ -215,11 +215,11 @@ pub fn ShapedTextRunDescriptor::resource_descriptor(
 pub fn ShapedTextRunDescriptor::resource_plan(
   self : ShapedTextRunDescriptor,
   text : Bytes,
-  shaped_byte_size? : Int64 = -1L,
-  shaping_byte_size? : Int64 = -1L,
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  shaped_byte_size~ : Int64 = -1L,
+  shaping_byte_size~ : Int64 = -1L,
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=shaped_byte_size))
@@ -240,10 +240,10 @@ pub fn ShapedTextRunDescriptor::resource_plan(
 
 ///|
 fn normalized_shaped_glyph_run_count(
-  glyph_ids : Array[Int],
+  glyph_ids : Array[Int32],
   positions : Array[Point],
-  clusters : Array[Int],
-) -> Int {
+  clusters : Array[Int32],
+) -> Int32 {
   let mut max_count = glyph_ids.length()
   if positions.length() < max_count {
     max_count = positions.length()
@@ -263,13 +263,13 @@ fn normalized_shaped_glyph_run_count(
 
 ///|
 fn normalized_shaped_glyph_ids(
-  glyph_ids : Array[Int],
-  count : Int,
-) -> Array[Int] {
-  let result : Array[Int] = Array(capacity=count)
+  glyph_ids : Array[Int32],
+  count : Int32,
+) -> Array[Int32] {
+  let result : Array[Int32] = Array(capacity=count)
   for index in 0..<count {
     match glyph_ids.get(index) {
-      Some(glyph_id) => result.push(Int::max(0, glyph_id))
+      Some(glyph_id) => result.push(Int32::max(0, glyph_id))
       None => return result
     }
   }
@@ -279,7 +279,7 @@ fn normalized_shaped_glyph_ids(
 ///|
 fn normalized_shaped_glyph_positions(
   positions : Array[Point],
-  count : Int,
+  count : Int32,
 ) -> Array[Point] {
   let result : Array[Point] = Array(capacity=count)
   for index in 0..<count {
@@ -294,13 +294,13 @@ fn normalized_shaped_glyph_positions(
 
 ///|
 fn normalized_shaped_glyph_clusters(
-  clusters : Array[Int],
-  count : Int,
-) -> Array[Int] {
-  let result : Array[Int] = Array(capacity=count)
+  clusters : Array[Int32],
+  count : Int32,
+) -> Array[Int32] {
+  let result : Array[Int32] = Array(capacity=count)
   for index in 0..<count {
     match clusters.get(index) {
-      Some(cluster) => result.push(Int::max(0, cluster))
+      Some(cluster) => result.push(Int32::max(0, cluster))
       None => return result
     }
   }
@@ -310,8 +310,8 @@ fn normalized_shaped_glyph_clusters(
 ///|
 fn normalized_shaped_glyph_text_run(
   shaped_run : ShapedTextRunDescriptor,
-  glyph_count : Int,
-  cluster_count : Int,
+  glyph_count : Int32,
+  cluster_count : Int32,
 ) -> ShapedTextRunDescriptor {
   ShapedTextRunDescriptor::new(
     shaping=shaped_run.shaping,
@@ -325,9 +325,9 @@ fn normalized_shaped_glyph_text_run(
 /// Detailed glyph IDs, positions, and clusters for a shaped text run.
 pub(all) struct ShapedGlyphRunDescriptor {
   shaped_run : ShapedTextRunDescriptor
-  glyph_ids : Array[Int]
+  glyph_ids : Array[Int32]
   positions : Array[Point]
-  clusters : Array[Int]
+  clusters : Array[Int32]
 } derive(Debug, Eq)
 
 ///|
@@ -338,10 +338,10 @@ pub extend ShapedGlyphRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn ShapedGlyphRunDescriptor::new(
-  shaped_run? : ShapedTextRunDescriptor = ShapedTextRunDescriptor::new(),
-  glyph_ids? : Array[Int] = [],
-  positions? : Array[Point] = [],
-  clusters? : Array[Int] = [],
+  shaped_run~ : ShapedTextRunDescriptor = ShapedTextRunDescriptor::new(),
+  glyph_ids~ : Array[Int32] = [],
+  positions~ : Array[Point] = [],
+  clusters~ : Array[Int32] = [],
 ) -> ShapedGlyphRunDescriptor {
   let count = normalized_shaped_glyph_run_count(glyph_ids, positions, clusters)
   let glyph_ids = normalized_shaped_glyph_ids(glyph_ids, count)
@@ -362,9 +362,9 @@ pub fn ShapedGlyphRunDescriptor::new(
 ///|
 pub fn ShapedTextRunDescriptor::glyph_run_descriptor(
   self : ShapedTextRunDescriptor,
-  glyph_ids? : Array[Int] = [],
-  positions? : Array[Point] = [],
-  clusters? : Array[Int] = [],
+  glyph_ids~ : Array[Int32] = [],
+  positions~ : Array[Point] = [],
+  clusters~ : Array[Int32] = [],
 ) -> ShapedGlyphRunDescriptor {
   ShapedGlyphRunDescriptor::new(
     shaped_run=self,
@@ -377,14 +377,14 @@ pub fn ShapedTextRunDescriptor::glyph_run_descriptor(
 ///|
 pub fn ShapedGlyphRunDescriptor::glyph_count(
   self : ShapedGlyphRunDescriptor,
-) -> Int {
+) -> Int32 {
   self.glyph_ids.length()
 }
 
 ///|
 pub fn ShapedGlyphRunDescriptor::cluster_count(
   self : ShapedGlyphRunDescriptor,
-) -> Int {
+) -> Int32 {
   self.clusters.length()
 }
 
@@ -460,7 +460,7 @@ pub fn ShapedGlyphRunDescriptor::resource_key(
 pub fn ShapedGlyphRunDescriptor::resource_descriptor(
   self : ShapedGlyphRunDescriptor,
   text : Bytes,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id(text)
   let measured_byte_size = if byte_size < 0L {
@@ -475,12 +475,12 @@ pub fn ShapedGlyphRunDescriptor::resource_descriptor(
 pub fn ShapedGlyphRunDescriptor::resource_plan(
   self : ShapedGlyphRunDescriptor,
   text : Bytes,
-  glyph_run_byte_size? : Int64 = -1L,
-  shaped_byte_size? : Int64 = -1L,
-  shaping_byte_size? : Int64 = -1L,
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  glyph_run_byte_size~ : Int64 = -1L,
+  shaped_byte_size~ : Int64 = -1L,
+  shaping_byte_size~ : Int64 = -1L,
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(

@@ -2,13 +2,13 @@
 pub fn[Msg] number_field(
   value : String,
   on_input~ : (String) -> Msg,
-  on_step? : ((Double) -> Msg)? = None,
-  step? : Double = 1.0,
-  placeholder? : String = "0",
-  variant? : @style.TextFieldVariant = Filled,
+  on_step~ : ((Double) -> Msg)? = None,
+  step~ : Double = 1.0,
+  placeholder~ : String = "0",
+  variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
-  width? : Double = 220.0,
-  height? : Double = 40.0,
+  width~ : Double = 220.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let control_width = match on_step {
@@ -48,10 +48,10 @@ pub fn[Msg] number_field(
 pub fn[Msg] stepper(
   on_decrement~ : Msg,
   on_increment~ : Msg,
-  label? : String = "",
+  label~ : String = "",
   theme? : @core.Theme,
-  width? : Double = 140.0,
-  height? : Double = 40.0,
+  width~ : Double = 140.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = [

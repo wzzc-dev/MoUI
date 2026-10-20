@@ -1,7 +1,7 @@
 ///|
 fn markdown_editor_wrap_selection_input(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -38,7 +38,7 @@ fn markdown_editor_wrap_selection_input(
 fn markdown_editor_pair_inline_marker_input(
   source : String,
   marker : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if marker == "" || marker == "*" || marker == "_" {
     return None
@@ -60,7 +60,7 @@ fn markdown_editor_pair_inline_marker_input(
 ///|
 fn markdown_editor_pair_delimiter_input(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -126,7 +126,7 @@ fn markdown_editor_pair_delimiter_input(
 ///|
 fn markdown_editor_skip_closing_delimiter(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -191,7 +191,7 @@ fn markdown_editor_skip_closing_delimiter(
 ///|
 fn markdown_editor_apostrophe_in_word(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> Bool {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -225,8 +225,8 @@ pub fn markdown_editor_ascii_word_char(ch : Char) -> Bool {
 ///|
 fn markdown_editor_source_char_at(
   source : String,
-  source_length : Int,
-  index : Int,
+  source_length : Int32,
+  index : Int32,
 ) -> Char? {
   if index < 0 || index >= source_length {
     return None
@@ -240,8 +240,8 @@ fn markdown_editor_source_char_at(
 ///|
 fn markdown_editor_source_has_marker_text(
   source : String,
-  source_length : Int,
-  start : Int,
+  source_length : Int32,
+  start : Int32,
   marker : String,
 ) -> Bool {
   let marker_length = markdown_editor_text_length(marker)
@@ -253,7 +253,7 @@ fn markdown_editor_source_has_marker_text(
 ///|
 fn markdown_editor_backspace_empty_delimiter_pair(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -282,8 +282,8 @@ fn markdown_editor_backspace_empty_delimiter_pair(
 ///|
 fn markdown_editor_empty_delimiter_pair_at_source(
   source : String,
-  source_length : Int,
-  caret : Int,
+  source_length : Int32,
+  caret : Int32,
 ) -> Bool {
   if caret <= 0 || caret >= source_length {
     return false
@@ -306,7 +306,7 @@ fn markdown_editor_empty_delimiter_pair_at_source(
 ///|
 fn markdown_editor_delete_empty_delimiter_pair(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -337,7 +337,7 @@ fn markdown_editor_delete_empty_delimiter_pair(
 ///|
 fn markdown_editor_backspace_empty_inline_marker_pair(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -386,7 +386,7 @@ fn markdown_editor_backspace_empty_inline_marker_pair(
 ///|
 fn markdown_editor_delete_empty_inline_marker_pair(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -428,8 +428,8 @@ fn markdown_editor_delete_empty_inline_marker_pair(
 ///|
 fn markdown_editor_empty_inline_marker_pair_at_source(
   source : String,
-  source_length : Int,
-  open_start : Int,
+  source_length : Int32,
+  open_start : Int32,
   marker : String,
 ) -> Bool {
   let marker_length = markdown_editor_text_length(marker)
@@ -449,9 +449,9 @@ fn markdown_editor_empty_inline_marker_pair_at_source(
 ///|
 fn markdown_editor_remove_empty_inline_marker_pair(
   source : String,
-  source_length : Int,
-  open_start : Int,
-  marker_length : Int,
+  source_length : Int32,
+  open_start : Int32,
+  marker_length : Int32,
 ) -> RichTextInputTransform {
   markdown_editor_transform_result(
     text=markdown_editor_substring(source, 0, open_start) +
@@ -468,7 +468,7 @@ fn markdown_editor_remove_empty_inline_marker_pair(
 ///|
 fn markdown_editor_backspace_inline_marker(
   source : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   let chars = source.to_array()
   let source_length = markdown_editor_text_length(source)
@@ -545,7 +545,7 @@ fn markdown_editor_backspace_inline_marker(
 fn markdown_editor_delete_inline_marker(
   source : String,
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   let source_length = markdown_editor_text_length(source)
   match markdown_editor_delete_footnote_marker(chars, caret) {
@@ -602,7 +602,7 @@ fn markdown_editor_delete_inline_marker(
 ///|
 fn markdown_editor_source_has_marker(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   marker : String,
 ) -> Bool {
   let marker_chars = marker.to_array()
@@ -620,9 +620,9 @@ fn markdown_editor_source_has_marker(
 ///|
 fn markdown_editor_find_inline_closing_marker(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   marker : String,
-) -> Int? {
+) -> Int32? {
   let marker_length = markdown_editor_text_length(marker)
   let mut index = start
   while index + marker_length <= chars.length() && chars[index] != '\n' {
@@ -637,9 +637,9 @@ fn markdown_editor_find_inline_closing_marker(
 ///|
 fn markdown_editor_find_inline_opening_marker(
   chars : Array[Char],
-  close_start : Int,
+  close_start : Int32,
   marker : String,
-) -> Int? {
+) -> Int32? {
   let marker_length = markdown_editor_text_length(marker)
   let mut index = close_start - marker_length
   while index >= 0 {
@@ -657,10 +657,10 @@ fn markdown_editor_find_inline_opening_marker(
 ///|
 fn markdown_editor_remove_inline_marker_pair(
   source : String,
-  source_length : Int,
-  open_start : Int,
-  marker_length : Int,
-  close_start : Int,
+  source_length : Int32,
+  open_start : Int32,
+  marker_length : Int32,
+  close_start : Int32,
 ) -> RichTextInputTransform {
   let text = markdown_editor_substring(source, 0, open_start) +
     markdown_editor_substring(source, open_start + marker_length, close_start) +
@@ -679,9 +679,9 @@ fn markdown_editor_remove_inline_marker_pair(
 ///|
 fn markdown_editor_inline_marker_pair_supported(
   chars : Array[Char],
-  open_start : Int,
-  marker_length : Int,
-  close_start : Int,
+  open_start : Int32,
+  marker_length : Int32,
+  close_start : Int32,
   marker : String,
 ) -> Bool {
   if marker != "_" {

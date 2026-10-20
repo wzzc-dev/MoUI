@@ -20,16 +20,16 @@ pub extend EffectPlanKind with ToJson::{to_json}
 ///|
 pub struct EffectPlanSummary {
   priv root_kind : EffectPlanKind
-  priv none_count : Int
-  priv batch_count : Int
-  priv send_count : Int
-  priv dispatch_count : Int
-  priv run_count : Int
-  priv task_count : Int
-  priv scheduled_count : Int
-  priv max_depth : Int
+  priv none_count : Int32
+  priv batch_count : Int32
+  priv send_count : Int32
+  priv dispatch_count : Int32
+  priv run_count : Int32
+  priv task_count : Int32
+  priv scheduled_count : Int32
+  priv max_depth : Int32
   priv descriptors : Array[@core.EffectDescriptor]
-  priv duplicate_descriptor_key_count : Int
+  priv duplicate_descriptor_key_count : Int32
   priv duplicate_descriptor_keys : Array[String]
 } derive(Eq, Debug, ToJson)
 
@@ -61,12 +61,12 @@ pub extend SubscriptionPlanKind with ToJson::{to_json}
 ///|
 pub struct SubscriptionPlanSummary {
   priv root_kind : SubscriptionPlanKind
-  priv none_count : Int
-  priv batch_count : Int
-  priv source_count : Int
-  priv duplicate_key_count : Int
+  priv none_count : Int32
+  priv batch_count : Int32
+  priv source_count : Int32
+  priv duplicate_key_count : Int32
   priv duplicate_keys : Array[String]
-  priv max_depth : Int
+  priv max_depth : Int32
   priv descriptors : Array[@core.SubscriptionDescriptor]
 } derive(Eq, Debug, ToJson)
 
@@ -85,42 +85,42 @@ pub fn EffectPlanSummary::root_kind(self : EffectPlanSummary) -> EffectPlanKind 
 }
 
 ///|
-pub fn EffectPlanSummary::none_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::none_count(self : EffectPlanSummary) -> Int32 {
   self.none_count
 }
 
 ///|
-pub fn EffectPlanSummary::batch_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::batch_count(self : EffectPlanSummary) -> Int32 {
   self.batch_count
 }
 
 ///|
-pub fn EffectPlanSummary::send_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::send_count(self : EffectPlanSummary) -> Int32 {
   self.send_count
 }
 
 ///|
-pub fn EffectPlanSummary::dispatch_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::dispatch_count(self : EffectPlanSummary) -> Int32 {
   self.dispatch_count
 }
 
 ///|
-pub fn EffectPlanSummary::run_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::run_count(self : EffectPlanSummary) -> Int32 {
   self.run_count
 }
 
 ///|
-pub fn EffectPlanSummary::task_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::task_count(self : EffectPlanSummary) -> Int32 {
   self.task_count
 }
 
 ///|
-pub fn EffectPlanSummary::scheduled_count(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::scheduled_count(self : EffectPlanSummary) -> Int32 {
   self.scheduled_count
 }
 
 ///|
-pub fn EffectPlanSummary::max_depth(self : EffectPlanSummary) -> Int {
+pub fn EffectPlanSummary::max_depth(self : EffectPlanSummary) -> Int32 {
   self.max_depth
 }
 
@@ -134,7 +134,7 @@ pub fn EffectPlanSummary::descriptors(
 ///|
 pub fn EffectPlanSummary::duplicate_descriptor_key_count(
   self : EffectPlanSummary,
-) -> Int {
+) -> Int32 {
   self.duplicate_descriptor_key_count
 }
 
@@ -155,28 +155,28 @@ pub fn SubscriptionPlanSummary::root_kind(
 ///|
 pub fn SubscriptionPlanSummary::none_count(
   self : SubscriptionPlanSummary,
-) -> Int {
+) -> Int32 {
   self.none_count
 }
 
 ///|
 pub fn SubscriptionPlanSummary::batch_count(
   self : SubscriptionPlanSummary,
-) -> Int {
+) -> Int32 {
   self.batch_count
 }
 
 ///|
 pub fn SubscriptionPlanSummary::source_count(
   self : SubscriptionPlanSummary,
-) -> Int {
+) -> Int32 {
   self.source_count
 }
 
 ///|
 pub fn SubscriptionPlanSummary::duplicate_key_count(
   self : SubscriptionPlanSummary,
-) -> Int {
+) -> Int32 {
   self.duplicate_key_count
 }
 
@@ -190,7 +190,7 @@ pub fn SubscriptionPlanSummary::duplicate_keys(
 ///|
 pub fn SubscriptionPlanSummary::max_depth(
   self : SubscriptionPlanSummary,
-) -> Int {
+) -> Int32 {
   self.max_depth
 }
 
@@ -243,7 +243,7 @@ pub fn[Msg] effect_plan_summary(
 ///|
 fn[Msg] summarize_effect(
   effect : @core.Effect[Msg],
-  depth~ : Int,
+  depth~ : Int32,
 ) -> EffectPlanSummary {
   match effect {
     NoEffect =>
@@ -436,7 +436,7 @@ fn duplicate_effect_descriptor_keys(
 ///|
 fn duplicate_effect_descriptor_key_count(
   descriptors : Array[@core.EffectDescriptor],
-) -> Int {
+) -> Int32 {
   let seen_keys : Array[String] = []
   let mut duplicate_count = 0
   for descriptor in descriptors {
@@ -470,7 +470,7 @@ fn duplicate_subscription_keys(
 ///|
 fn duplicate_subscription_key_count(
   descriptors : Array[@core.SubscriptionDescriptor],
-) -> Int {
+) -> Int32 {
   let seen_keys : Array[String] = []
   let mut duplicate_count = 0
   for descriptor in descriptors {
@@ -484,7 +484,7 @@ fn duplicate_subscription_key_count(
 }
 
 ///|
-fn runtime_plan_max_int(a : Int, b : Int) -> Int {
+fn runtime_plan_max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

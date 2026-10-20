@@ -1,6 +1,6 @@
 ///|
 pub struct WindowRegistry {
-  mut next_value : Int
+  mut next_value : Int32
   mut records : Array[@backend_host.WindowRecord]
 }
 
@@ -13,9 +13,9 @@ pub fn WindowRegistry::new() -> WindowRegistry {
 pub fn WindowRegistry::open(
   self : WindowRegistry,
   title~ : String,
-  scene? : @backend_host.WindowScene = @backend_host.WindowScene::main(),
+  scene~ : @backend_host.WindowScene = @backend_host.WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  primary? : Bool = false,
+  primary~ : Bool = false,
 ) -> @backend_host.WindowId {
   let id = @backend_host.WindowId::new(self.next_value)
   self.next_value = self.next_value + 1
@@ -57,7 +57,7 @@ pub fn WindowRegistry::open_windows(
 }
 
 ///|
-pub fn WindowRegistry::open_window_count(self : WindowRegistry) -> Int {
+pub fn WindowRegistry::open_window_count(self : WindowRegistry) -> Int32 {
   self.open_windows().length()
 }
 
@@ -158,7 +158,7 @@ pub fn WindowRegistry::close(
 }
 
 ///|
-pub fn WindowRegistry::remove_closed(self : WindowRegistry) -> Int {
+pub fn WindowRegistry::remove_closed(self : WindowRegistry) -> Int32 {
   let before = self.records.length()
   self.records = self.records.filter(record => record.phase != WindowClosed)
   before - self.records.length()

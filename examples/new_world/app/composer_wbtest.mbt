@@ -19,7 +19,9 @@ test "a plain send stores exactly what the player typed" {
 
 ///|
 test "the three fields keep their intents and are stored with markers" {
-  let parts = composer_field_parts("掌柜的，还有酒吗？", "推开门", "雨声更大了。")
+  let parts = composer_field_parts(
+    "掌柜的，还有酒吗？", "推开门", "雨声更大了。",
+  )
   assert_eq(parts.length(), 3)
   assert_eq(parts[0].intent(), Say)
   assert_eq(parts[1].intent(), Do)

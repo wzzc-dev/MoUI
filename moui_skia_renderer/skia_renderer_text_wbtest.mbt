@@ -182,7 +182,7 @@ fn skia_test_core_grapheme_cluster_texts(text : String) -> Array[String] {
 ///|
 fn assert_skia_grapheme_clusters_match_core(
   text : String,
-  expected_boundaries : Array[Int],
+  expected_boundaries : Array[Int32],
 ) -> Unit raise {
   let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
   if boundaries.length() != expected_boundaries.length() {
@@ -208,8 +208,8 @@ fn assert_skia_grapheme_clusters_match_core(
 ///|
 fn assert_skia_grapheme_utf8_offsets(
   text : String,
-  indexes : Array[Int],
-  expected : Array[Int],
+  indexes : Array[Int32],
+  expected : Array[Int32],
 ) -> Unit raise {
   if indexes.length() != expected.length() {
     fail("expected matching index and utf8-offset fixture lengths")
@@ -226,8 +226,8 @@ fn assert_skia_grapheme_utf8_offsets(
 ///|
 fn assert_skia_grapheme_nearest_utf8_offsets(
   text : String,
-  indexes : Array[Int],
-  expected : Array[Int],
+  indexes : Array[Int32],
+  expected : Array[Int32],
 ) -> Unit raise {
   if indexes.length() != expected.length() {
     fail("expected matching index and normalized utf8-offset fixture lengths")

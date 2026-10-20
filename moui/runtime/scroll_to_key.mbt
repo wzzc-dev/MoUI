@@ -54,7 +54,7 @@ fn ElementNode::dispatch_event_to_target(
   event : AppEvent,
   layout : PlacedNode,
   environment~ : Environment,
-  style? : ViewStyle = ViewStyle::empty(),
+  style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
 ) -> ElementEventResult? {
   if self.id == target {
@@ -221,7 +221,7 @@ fn RuntimeState::scroll_to_key(
 pub fn AppRuntime::scroll_to_key(
   self : AppRuntime,
   key : String,
-  alignment? : @core.ScrollAlignment = Nearest,
+  alignment~ : @core.ScrollAlignment = Nearest,
 ) -> Bool {
   self.state.scroll_to_key(key, alignment)
 }

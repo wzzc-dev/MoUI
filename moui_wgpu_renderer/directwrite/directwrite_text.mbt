@@ -90,4 +90,4 @@ extern "C" fn windows_directwrite_raster_glyph(payload : Bytes) -> Bytes = "moui
 
 ///|
 #borrow(payload)
-extern "C" fn windows_directwrite_register_font_data(payload : Bytes) -> Int = "moui_windows_directwrite_register_font_data"
+extern "C" fn windows_directwrite_register_font_data(payload : Bytes) -> Int32 = "moui_windows_directwrite_register_font_data"

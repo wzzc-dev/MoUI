@@ -45,7 +45,7 @@ pub extend DrawFrame with Eq::{not_equal, equal}
 pub extend DrawFrame with ToJson::{to_json}
 
 ///|
-fn damage_region_max_rects() -> Int {
+fn damage_region_max_rects() -> Int32 {
   8
 }
 
@@ -169,7 +169,7 @@ fn Rect::touches_or_overlaps(self : Rect, other : Rect) -> Bool {
 }
 
 ///|
-pub fn DamageRegion::rect_count(self : DamageRegion) -> Int {
+pub fn DamageRegion::rect_count(self : DamageRegion) -> Int32 {
   match self {
     Empty => 0
     FullSurface(_) => 0
@@ -197,11 +197,11 @@ pub fn DamageRegion::full_reason(self : DamageRegion) -> String {
 ///|
 pub fn DrawFrame::new(
   commands~ : Array[DrawCommand],
-  platform_views? : Array[PlatformViewPlacement] = [],
-  overlay_bounds? : Rect? = None,
+  platform_views~ : Array[PlatformViewPlacement] = [],
+  overlay_bounds~ : Rect? = None,
   damage~ : DamageRegion,
-  clear_color? : Color = Color::white(),
-  semantics? : SemanticsFramePayload? = None,
+  clear_color~ : Color = Color::white(),
+  semantics~ : SemanticsFramePayload? = None,
 ) -> DrawFrame {
   { commands, platform_views, overlay_bounds, damage, clear_color, semantics, }
 }

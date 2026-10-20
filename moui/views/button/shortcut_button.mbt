@@ -3,11 +3,11 @@ pub fn[Msg] shortcut_button(
   label : String,
   on_click~ : Msg,
   shortcut~ : @core.KeyboardShortcut,
-  variant? : @style.ButtonVariant = Primary,
+  variant~ : @style.ButtonVariant = Primary,
   theme? : @core.Theme,
-  width? : Double = 200.0,
-  height? : Double = 44.0,
-  shortcut_width? : Double = 76.0,
+  width~ : Double = 200.0,
+  height~ : Double = 44.0,
+  shortcut_width~ : Double = 76.0,
 ) -> @core.View[Msg] {
   let resolved_theme = theme.unwrap_or(@core.Theme::neutral())
   let spacing = resolved_theme.spacing_scale.xs

@@ -3,8 +3,8 @@ pub(all) struct MarkdownSourceRange {
   // Mutable so hot-path suffix shifts (the incremental apply moving the
   // ranges of up to every block after an edit) can update the two ints in
   // place instead of allocating a fresh record per block per keystroke.
-  mut start : Int
-  mut end : Int
+  mut start : Int32
+  mut end : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -41,9 +41,9 @@ pub(all) struct MarkdownEditorSnapshot {
   source : String
   blocks : Array[MarkdownEditorBlock]
   rich_text : RichTextDocument
-  line_count : Int
-  word_count : Int
-  reading_minutes : Int
+  line_count : Int32
+  word_count : Int32
+  reading_minutes : Int32
   active_heading : String
   metadata_title : String
   metadata_tags : Array[String]
@@ -61,11 +61,11 @@ pub extend MarkdownEditorSnapshot with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownEditorOutlineItem {
-  level : Int
+  level : Int32
   title : String
   // Absolute source offset, shifted in place by the incremental apply's
   // fast path (same shared-mutable contract as the block ranges).
-  mut source_start : Int
+  mut source_start : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -79,7 +79,7 @@ pub extend MarkdownEditorOutlineItem with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownEditorSelection {
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
 } derive(Eq, Debug, ToJson)
 
@@ -95,7 +95,7 @@ pub extend MarkdownEditorSelection with ToJson::{to_json}
 ///|
 pub(all) struct MarkdownEditorEditResult {
   source : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   // Char range in the previous source replaced by this edit. None means the
   // range is unknown (callers then fall back to the O(doc) common-prefix
@@ -127,7 +127,7 @@ pub(all) enum MarkdownEditorCommand {
   SetFootnoteText(String)
   SetHtmlBlockText(String)
   Paragraph
-  Heading(Int)
+  Heading(Int32)
   BulletList
   TaskList
   OrderedList
@@ -162,8 +162,8 @@ priv struct MarkdownLine {
   // line of a document and only a fraction of line texts ever become
   // block text; copying all of them was the single largest open cost.
   text : StringView
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 }
 
 ///|
@@ -175,7 +175,7 @@ priv struct MarkdownLine {
 /// them. The runtime is single-threaded; same memo pattern as
 /// `markdown_editor_text_length_cache`.
 let markdown_editor_line_scan_cache : Ref[
-  (String, Int, Int, UInt64, Array[MarkdownLine], Array[Int]),
+  (String, Int32, Int32, UInt64, Array[MarkdownLine], Array[Int32]),
 ] = Ref(("", -1, -1, 0UL, [], []))
 
 ///|
@@ -217,7 +217,7 @@ fn markdown_editor_line_scan_cached_lines(
 /// without rescanning; `None` when the cache holds a different document.
 fn markdown_editor_line_scan_cached_line_units(
   source : String,
-) -> (Array[MarkdownLine], Array[Int])? {
+) -> (Array[MarkdownLine], Array[Int32])? {
   let cached = markdown_editor_line_scan_cache.val
   if physical_equal(cached.0, source) {
     Some((cached.4, cached.5))
@@ -227,7 +227,7 @@ fn markdown_editor_line_scan_cached_line_units(
 }
 
 ///|
-fn markdown_editor_line_count(source : String) -> Int {
+fn markdown_editor_line_count(source : String) -> Int32 {
   let cached = markdown_editor_line_scan_cache.val
   if cached.1 >= 0 && physical_equal(cached.0, source) {
     cached.2
@@ -245,7 +245,7 @@ fn markdown_editor_line_count(source : String) -> Int {
 }
 
 ///|
-fn markdown_editor_word_count(source : String) -> Int {
+fn markdown_editor_word_count(source : String) -> Int32 {
   let cached = markdown_editor_line_scan_cache.val
   if cached.1 >= 0 && physical_equal(cached.0, source) {
     cached.1
@@ -284,7 +284,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
   // The utf16 offset of each line's start, alongside the line views, so
   // the segmented text store can slice the source at block boundaries
   // (line starts) without its own full-source char pass.
-  let unit_starts : Array[Int] = []
+  let unit_starts : Array[Int32] = []
   let mut char_start = 0
   let mut char_index = 0
   let mut unit_start = 0
@@ -358,16 +358,16 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 /// markers, prefixes, and block slices would otherwise evict the cached
 /// whole-document sources several times per keystroke and force a fresh
 /// multi-megabyte decode for each.
-const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS : Int = 256
+const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS : Int32 = 256
 
 ///|
-const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS : Int = 4
+const MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS : Int32 = 4
 
 ///|
-let markdown_editor_text_length_cache : Ref[Array[(String, Int)]] = Ref([])
+let markdown_editor_text_length_cache : Ref[Array[(String, Int32)]] = Ref([])
 
 ///|
-pub fn markdown_editor_text_length(source : String) -> Int {
+pub fn markdown_editor_text_length(source : String) -> Int32 {
   if source.length() < MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_MIN_UNITS {
     return source.char_length()
   }
@@ -381,7 +381,7 @@ pub fn markdown_editor_text_length(source : String) -> Int {
   // Most-recent first, capped: per keystroke the working set is the
   // control's new source and the session's previous source, plus at most
   // a transient whole-source string from the session bookkeeping.
-  let next : Array[(String, Int)] = [(source, length)]
+  let next : Array[(String, Int32)] = [(source, length)]
   for entry in cache {
     if next.length() < MARKDOWN_EDITOR_TEXT_LENGTH_CACHE_SLOTS {
       next.push(entry)
@@ -394,8 +394,8 @@ pub fn markdown_editor_text_length(source : String) -> Int {
 ///|
 pub fn markdown_editor_substring(
   source : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String {
   let char_length = markdown_editor_text_length(source)
   let start = markdown_editor_clamp_int(start, 0, char_length)
@@ -417,7 +417,7 @@ pub fn markdown_editor_substring(
 }
 
 ///|
-fn markdown_editor_digit_count(number : Int) -> Int {
+fn markdown_editor_digit_count(number : Int32) -> Int32 {
   let mut value = number
   let mut count = 1
   while value >= 10 {
@@ -428,7 +428,7 @@ fn markdown_editor_digit_count(number : Int) -> Int {
 }
 
 ///|
-fn markdown_editor_min_int(a : Int, b : Int) -> Int {
+fn markdown_editor_min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -437,7 +437,7 @@ fn markdown_editor_min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_max_int(a : Int, b : Int) -> Int {
+pub fn markdown_editor_max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -446,7 +446,11 @@ pub fn markdown_editor_max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_clamp_int(value : Int, min : Int, max : Int) -> Int {
+pub fn markdown_editor_clamp_int(
+  value : Int32,
+  min : Int32,
+  max : Int32,
+) -> Int32 {
   if value < min {
     min
   } else if value > max {
@@ -467,7 +471,10 @@ pub fn markdown_editor_clamp_int(value : Int, min : Int, max : Int) -> Int {
 /// block-level geometry — at the block's start. With the line index the caret's
 /// y follows from the block's top plus `index * line_step`, and the line start
 /// gives its x, both in O(log n) over a scan the open path already made.
-fn markdown_editor_line_at_offset(source : String, offset : Int) -> (Int, Int)? {
+fn markdown_editor_line_at_offset(
+  source : String,
+  offset : Int32,
+) -> (Int32, Int32)? {
   match markdown_editor_line_scan_cached_line_units(source) {
     Some((lines, _)) => {
       if lines.length() == 0 {

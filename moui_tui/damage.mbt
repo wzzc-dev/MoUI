@@ -3,7 +3,7 @@
 /// `rows` 升序去重;由 `TermScreen::take_damage` 产出并随即清零。
 pub(all) struct Damage {
   full : Bool
-  rows : Array[Int]
+  rows : Array[Int32]
 } derive(Eq, Debug)
 
 ///|

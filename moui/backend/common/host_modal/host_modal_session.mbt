@@ -21,7 +21,7 @@ pub extend HostModalSessionState with ToJson::{to_json}
 /// chooses its native surface id; the session only validates attach/detach.
 pub(all) struct HostModalSurface {
   token : String
-  generation : Int
+  generation : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -102,8 +102,8 @@ pub fn HostModalSession::begin(
 ///|
 pub fn HostModalSession::apply_result(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
   result : @backend_host.HostModalResult,
 ) -> @backend_host.HostModalEvent? {
   match result {
@@ -116,8 +116,8 @@ pub fn HostModalSession::apply_result(
 ///|
 pub fn HostModalSession::is_current(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
 ) -> Bool {
   self.request.request_id == request_id && self.request.generation == generation
 }
@@ -125,8 +125,8 @@ pub fn HostModalSession::is_current(
 ///|
 pub fn HostModalSession::accept(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
 ) -> @backend_host.HostModalEvent? {
   if self.is_current(request_id, generation) && self.state is Pending {
     self.state = Accepted
@@ -139,8 +139,8 @@ pub fn HostModalSession::accept(
 ///|
 pub fn HostModalSession::reject(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
   reason : String,
 ) -> @backend_host.HostModalEvent? {
   if self.is_current(request_id, generation) && self.state is Pending {
@@ -155,8 +155,8 @@ pub fn HostModalSession::reject(
 /// Close is idempotent. Duplicate and stale close notifications are dropped.
 pub fn HostModalSession::close(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
 ) -> @backend_host.HostModalEvent? {
   let can_close = match self.state {
     Pending | Accepted => true
@@ -176,7 +176,7 @@ pub fn HostModalSession::close(
 pub fn HostModalSession::attach_surface(
   self : HostModalSession,
   token : String,
-  generation : Int,
+  generation : Int32,
 ) -> Bool {
   if generation == self.request.generation && self.state is Accepted {
     self.surface = Some({ token, generation, })
@@ -190,7 +190,7 @@ pub fn HostModalSession::attach_surface(
 pub fn HostModalSession::attach_surface_event(
   self : HostModalSession,
   token : String,
-  generation : Int,
+  generation : Int32,
 ) -> @backend_host.HostModalEvent? {
   if self.attach_surface(token, generation) {
     Some(
@@ -210,7 +210,7 @@ pub fn HostModalSession::attach_surface_event(
 pub fn HostModalSession::detach_surface(
   self : HostModalSession,
   token : String,
-  generation : Int,
+  generation : Int32,
 ) -> Bool {
   match self.surface {
     Some(surface) =>
@@ -228,7 +228,7 @@ pub fn HostModalSession::detach_surface(
 pub fn HostModalSession::detach_surface_event(
   self : HostModalSession,
   token : String,
-  generation : Int,
+  generation : Int32,
 ) -> @backend_host.HostModalEvent? {
   if self.detach_surface(token, generation) {
     Some(
@@ -285,8 +285,8 @@ pub fn HostModalSession::transform_input(
 /// by the MoUI surface. Events are ignored while pending, rejected, or stale.
 pub fn HostModalSession::route_input(
   self : HostModalSession,
-  request_id : Int,
-  generation : Int,
+  request_id : Int32,
+  generation : Int32,
   event : @core.PointerEvent,
 ) -> @backend_host.HostModalEvent? {
   if self.is_current(request_id, generation) &&

@@ -9,7 +9,7 @@ pub struct TableColumn {
 pub fn table_column(
   id~ : String,
   label~ : String,
-  width? : Double = 120.0,
+  width~ : Double = 120.0,
 ) -> TableColumn {
   { id, label, width, }
 }

@@ -27,7 +27,7 @@ pub extend AppKind with ToJson::{to_json}
 /// within a session.
 pub(all) struct WindowId {
   app : AppKind
-  serial : Int
+  serial : Int32
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
@@ -98,7 +98,7 @@ pub(all) struct WindowRecord {
   id : WindowId
   state : WindowState
   bounds : WindowBounds
-  z_order : Int
+  z_order : Int32
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|

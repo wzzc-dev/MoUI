@@ -5,10 +5,10 @@ let xcode_minimum_version : String = "15.4"
 let swift_minimum_version : String = "5.0"
 
 ///|
-let harmonyos_compatible_api : Int = 20
+let harmonyos_compatible_api : Int32 = 20
 
 ///|
-let harmonyos_target_api : Int = 21
+let harmonyos_target_api : Int32 = 21
 
 ///|
 let harmonyos_model_version : String = "6.0.1"

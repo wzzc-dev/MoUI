@@ -7,9 +7,9 @@
 /// - 鼠标:SGR 按钮号对照 + cell→逻辑像素换算,矛盾事实才丢弃;
 /// - 尺寸:resize 产出的是完整视口事实,不是内部重画。
 fn make_input(
-  cols~ : Int,
-  rows~ : Int,
-  cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
+  cols~ : Int32,
+  rows~ : Int32,
+  cell~ : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
 ) -> @moui_terminal_host.TerminalInput {
   @moui_terminal_host.TerminalInput::new(cols~, rows~, cell~)
 }
@@ -51,10 +51,10 @@ fn pointer_of(
 ///|
 fn key_event(
   key~ : String,
-  text? : String? = None,
-  pressed? : Bool = true,
-  repeat? : Bool = false,
-  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+  text~ : String? = None,
+  pressed~ : Bool = true,
+  repeat~ : Bool = false,
+  modifiers~ : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> @moui_terminal_host.TerminalEvent {
   @moui_terminal_host.Key(
     @core.KeyboardEvent::new(key~, text~, pressed~, repeat~, modifiers~),
@@ -63,11 +63,11 @@ fn key_event(
 
 ///|
 fn mouse_event(
-  col~ : Int,
-  row~ : Int,
-  button~ : Int,
+  col~ : Int32,
+  row~ : Int32,
+  button~ : Int32,
   phase~ : @moui_terminal_host.MousePhase,
-  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+  modifiers~ : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> @moui_terminal_host.TerminalEvent {
   @moui_terminal_host.Mouse({
     position: { col, row, },
@@ -79,10 +79,10 @@ fn mouse_event(
 
 ///|
 fn wheel_event(
-  col~ : Int,
-  row~ : Int,
+  col~ : Int32,
+  row~ : Int32,
   up~ : Bool,
-  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
+  modifiers~ : @core.KeyModifiers = @core.KeyModifiers::none(),
 ) -> @moui_terminal_host.TerminalEvent {
   @moui_terminal_host.Wheel({ position: { col, row, }, up, modifiers, })
 }

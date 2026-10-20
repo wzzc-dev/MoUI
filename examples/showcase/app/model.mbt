@@ -79,8 +79,8 @@ pub fn ShowcaseRouteHost::new(
 
 ///|
 pub fn ShowcaseModel::new(
-  diagnostics_input? : @diagnostics.ShowcaseDiagnosticsInput = @diagnostics.ShowcaseDiagnosticsInput::fallback(),
-  route? : String = ShowcaseRoute::default().format(),
+  diagnostics_input~ : @diagnostics.ShowcaseDiagnosticsInput = @diagnostics.ShowcaseDiagnosticsInput::fallback(),
+  route~ : String = ShowcaseRoute::default().format(),
 ) -> ShowcaseModel {
   let parsed = ShowcaseRoute::parse(route)
   let components = @components.ComponentGalleryModel::new(

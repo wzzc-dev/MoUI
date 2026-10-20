@@ -17,7 +17,7 @@ fn skipped_directory_name(name : String) -> Bool {
 }
 
 ///|
-fn line_count(text : String) -> Int {
+fn line_count(text : String) -> Int32 {
   let mut count = 0
   for index in 0..<text.length() {
     if text[index] == '\n' {
@@ -31,7 +31,7 @@ fn line_count(text : String) -> Int {
 }
 
 ///|
-fn count_lines_containing_token(text : String, token : String) -> Int {
+fn count_lines_containing_token(text : String, token : String) -> Int32 {
   let mut count = 0
   for line_view in text.split("\n") {
     let line = line_view.to_owned()
@@ -43,7 +43,7 @@ fn count_lines_containing_token(text : String, token : String) -> Int {
 }
 
 ///|
-fn count_root_facade_forwards(text : String) -> Int {
+fn count_root_facade_forwards(text : String) -> Int32 {
   let mut count = 0
   for line_view in text.split("\n") {
     let line = line_view.to_owned().trim().to_owned()

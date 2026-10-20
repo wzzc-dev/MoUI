@@ -1,6 +1,6 @@
 ///|
 pub fn EmbeddedRuntimeHostBridge::new(
-  session_generation? : Int = 1,
+  session_generation~ : Int32 = 1,
 ) -> EmbeddedRuntimeHostBridge {
   {
     services: @host_services_embedded.EmbeddedHostServices::new(),
@@ -18,13 +18,13 @@ pub fn EmbeddedRuntimeHostBridge::new(
 ///|
 pub fn EmbeddedRuntimeHostBridge::session_generation(
   self : EmbeddedRuntimeHostBridge,
-) -> Int {
+) -> Int32 {
   self.session_generation
 }
 
 ///|
 pub fn EmbeddedHostResponseEnvelope::new(
-  session_generation~ : Int,
+  session_generation~ : Int32,
   response~ : EmbeddedHostResponse,
 ) -> EmbeddedHostResponseEnvelope {
   { schema_version: 1, session_generation, response, }
@@ -48,7 +48,7 @@ pub fn EmbeddedRuntimeHostBridge::service_bridge(
 pub fn EmbeddedRuntimeHostBridge::sync(
   self : EmbeddedRuntimeHostBridge,
   runtime : @runtime.AppRuntime,
-) -> Int {
+) -> Int32 {
   if self.disposed {
     return 0
   }

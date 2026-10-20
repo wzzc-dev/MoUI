@@ -4,9 +4,9 @@ extern "C" fn native_paragraph_layout_utf8(
   text : Bytes,
   family_name : Bytes,
   size : Float,
-  weight : Int,
-  width : Int,
-  slant : Int,
+  weight : Int32,
+  width : Int32,
+  slant : Int32,
   max_width : Float,
   left_to_right : Bool,
 ) -> ParagraphHandle = "moonbit_skia_paragraph_layout_utf8"
@@ -25,152 +25,152 @@ extern "C" fn native_paragraph_height(paragraph : ParagraphHandle) -> Float = "m
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_line_count(paragraph : ParagraphHandle) -> Int = "moonbit_skia_paragraph_line_count"
+extern "C" fn native_paragraph_line_count(paragraph : ParagraphHandle) -> Int32 = "moonbit_skia_paragraph_line_count"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_start(
   paragraph : ParagraphHandle,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_line_start"
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_line_start"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_end(
   paragraph : ParagraphHandle,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_line_end"
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_line_end"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_end_excluding_whitespace(
   paragraph : ParagraphHandle,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_line_end_excluding_whitespace"
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_line_end_excluding_whitespace"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_end_including_newline(
   paragraph : ParagraphHandle,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_line_end_including_newline"
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_line_end_including_newline"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_number(
   paragraph : ParagraphHandle,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_line_number"
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_line_number"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_hard_break(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Bool = "moonbit_skia_paragraph_line_hard_break"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_left(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_left"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_width(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_width"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_baseline(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_baseline"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_ascent(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_ascent"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_descent(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_descent"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_line_height(
   paragraph : ParagraphHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_line_height"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_boxes_utf8_count(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-) -> Int = "moonbit_skia_paragraph_text_boxes_utf8_count"
+  start : Int32,
+  end : Int32,
+) -> Int32 = "moonbit_skia_paragraph_text_boxes_utf8_count"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_boxes_utf8_at_left(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-  index : Int,
+  start : Int32,
+  end : Int32,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_left"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_boxes_utf8_at_top(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-  index : Int,
+  start : Int32,
+  end : Int32,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_top"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_boxes_utf8_at_right(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-  index : Int,
+  start : Int32,
+  end : Int32,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_right"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_boxes_utf8_at_bottom(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-  index : Int,
+  start : Int32,
+  end : Int32,
+  index : Int32,
 ) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_bottom"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_box_directions_utf8_count(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-) -> Int = "moonbit_skia_paragraph_text_box_directions_utf8_count"
+  start : Int32,
+  end : Int32,
+) -> Int32 = "moonbit_skia_paragraph_text_box_directions_utf8_count"
 
 ///|
 #borrow(paragraph)
 extern "C" fn native_paragraph_text_box_directions_utf8_at(
   paragraph : ParagraphHandle,
-  start : Int,
-  end : Int,
-  index : Int,
-) -> Int = "moonbit_skia_paragraph_text_box_directions_utf8_at"
+  start : Int32,
+  end : Int32,
+  index : Int32,
+) -> Int32 = "moonbit_skia_paragraph_text_box_directions_utf8_at"
 
 ///|
 #borrow(paragraph)
@@ -178,7 +178,7 @@ extern "C" fn native_paragraph_hit_test_utf8_offset(
   paragraph : ParagraphHandle,
   x : Float,
   y : Float,
-) -> Int = "moonbit_skia_paragraph_hit_test_utf8_offset"
+) -> Int32 = "moonbit_skia_paragraph_hit_test_utf8_offset"
 
 ///|
 #borrow(paragraph)
@@ -200,13 +200,13 @@ extern "C" fn native_canvas_draw_paragraph(
 ///|
 pub fn Paragraph::layout_utf8(
   text : Bytes,
-  family_name? : Bytes = b"",
-  size? : Float = 12.0,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
-  max_width? : Float = 1000000000.0,
-  left_to_right? : Bool = true,
+  family_name~ : Bytes = b"",
+  size~ : Float = 12.0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
+  max_width~ : Float = 1000000000.0,
+  left_to_right~ : Bool = true,
 ) -> Paragraph? {
   if text.is_empty() ||
     !native_paragraph_scalar_is_positive(size) ||
@@ -246,7 +246,7 @@ pub fn Paragraph::height(self : Paragraph) -> Float {
 }
 
 ///|
-pub fn Paragraph::line_count(self : Paragraph) -> Int {
+pub fn Paragraph::line_count(self : Paragraph) -> Int32 {
   native_paragraph_line_count(self.handle).max(0)
 }
 
@@ -285,8 +285,8 @@ pub fn Paragraph::line_metrics(self : Paragraph) -> Array[ParagraphLineMetric] {
 ///|
 pub fn Paragraph::text_boxes_utf8(
   self : Paragraph,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Array[@skia.Rect] {
   // Build the result in MoonBit rather than returning the C batch array.
   // The C MoonbitSkiaRectArray* memory layout is incompatible with
@@ -315,9 +315,9 @@ pub fn Paragraph::text_boxes_utf8(
 ///|
 pub fn Paragraph::text_box_directions_utf8(
   self : Paragraph,
-  start : Int,
-  end : Int,
-) -> Array[Int] {
+  start : Int32,
+  end : Int32,
+) -> Array[Int32] {
   // Build the result in MoonBit; the C MoonbitSkiaInt32Array* layout is
   // incompatible with MoonBit's Array[Int].
   if end <= start {
@@ -330,7 +330,7 @@ pub fn Paragraph::text_box_directions_utf8(
       s,
       e,
     )
-    let directions : Array[Int] = Array(capacity=count)
+    let directions : Array[Int32] = Array(capacity=count)
     for index in 0..<count {
       directions.push(
         native_paragraph_text_box_directions_utf8_at(self.handle, s, e, index),
@@ -361,7 +361,7 @@ pub fn Paragraph::hit_test_utf8(
 pub fn Canvas::draw_paragraph(
   self : Canvas,
   paragraph : Paragraph,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Bool {
   if !origin.is_finite() || !paragraph.is_available() {
     false

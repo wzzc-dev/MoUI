@@ -753,9 +753,9 @@ fn observation_required_for_passed_target(key : String, name : String) -> Bool {
 ///|
 fn validate_target(
   target_json : Json,
-  index : Int,
+  index : Int32,
   seen : Map[String, Bool],
-  passed_count : Ref[Int],
+  passed_count : Ref[Int32],
 ) -> Array[String] {
   let failures : Array[String] = []
   let target = match json_object_value(target_json) {
@@ -1188,7 +1188,7 @@ fn validate_header(
 fn validate_platform_observations(
   manifest : Map[String, Json],
   overall_status : String,
-  passed_count : Int,
+  passed_count : Int32,
   failures : Array[String],
 ) -> Unit {
   let platform_observations = require_object(
@@ -1325,7 +1325,7 @@ fn print_prefixed_failures(path : String, failures : Array[String]) -> Unit {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

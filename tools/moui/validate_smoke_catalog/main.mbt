@@ -250,7 +250,7 @@ fn string_array_from_json(values : Array[Json]) -> Array[String] {
 }
 
 ///|
-fn command_label(suite : Map[String, Json], command_index : Int) -> String {
+fn command_label(suite : Map[String, Json], command_index : Int32) -> String {
   let id = json_string(suite.get("id")).unwrap_or("")
   id + ".commands[\{command_index}]"
 }
@@ -260,7 +260,7 @@ fn validate_command(
   repo_root : String,
   suite : Map[String, Json],
   command : Json,
-  command_index : Int,
+  command_index : Int32,
   failures : Array[String],
 ) -> Unit {
   let label = command_label(suite, command_index)
@@ -483,7 +483,7 @@ fn validate_catalog_fields(
     push(failures, "suites must be non-empty")
   }
   let ids : Map[String, Bool] = Map([])
-  let tier_counts : Map[String, Int] = Map([])
+  let tier_counts : Map[String, Int32] = Map([])
   let default_daily_check_count = Ref(0)
   for suite_json in suites {
     let suite = match json_object(suite_json) {
@@ -1012,7 +1012,7 @@ fn print_failures(failures : Array[String]) -> Unit {
 }
 
 ///|
-fn run_check_mode(options : CliOptions, catalog : Map[String, Json]) -> Int {
+fn run_check_mode(options : CliOptions, catalog : Map[String, Json]) -> Int32 {
   if options.tier is Some(tier) && !array_contains(catalog_tiers(catalog), tier) {
     print_failures(["unknown tier: " + tier])
     return 1
@@ -1041,7 +1041,7 @@ fn run_check_mode(options : CliOptions, catalog : Map[String, Json]) -> Int {
 }
 
 ///|
-fn run_gate_mode(options : CliOptions, catalog : Map[String, Json]) -> Int {
+fn run_gate_mode(options : CliOptions, catalog : Map[String, Json]) -> Int32 {
   match gate_plan_json(catalog, options) {
     Ok(plan) => {
       if options.mode == "json" {
@@ -1061,7 +1061,7 @@ fn run_gate_mode(options : CliOptions, catalog : Map[String, Json]) -> Int {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

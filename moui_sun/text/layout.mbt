@@ -54,12 +54,12 @@ pub extend LayoutConfig with Debug::{to_repr}
 ///|
 /// Create a layout config with default values
 pub fn LayoutConfig::new(
-  max_width? : Double = 800.0,
-  font_size? : Double = 16.0,
-  line_height? : Double = 24.0,
-  alignment? : TextAlign = Left,
-  letter_spacing? : Double = 0.0,
-  word_spacing? : Double = 0.0,
+  max_width~ : Double = 800.0,
+  font_size~ : Double = 16.0,
+  line_height~ : Double = 24.0,
+  alignment~ : TextAlign = Left,
+  letter_spacing~ : Double = 0.0,
+  word_spacing~ : Double = 0.0,
 ) -> LayoutConfig {
   {
     max_width,
@@ -74,7 +74,7 @@ pub fn LayoutConfig::new(
 ///|
 /// A positioned glyph for rendering
 struct PositionedGlyph {
-  glyph_id : Int
+  glyph_id : Int32
   origin_x : Double
   x : Double
   y : Double
@@ -86,7 +86,7 @@ pub extend PositionedGlyph with Debug::{to_repr}
 
 ///|
 /// Get this positioned glyph's glyph id.
-pub fn PositionedGlyph::get_glyph_id(self : PositionedGlyph) -> Int {
+pub fn PositionedGlyph::get_glyph_id(self : PositionedGlyph) -> Int32 {
   self.glyph_id
 }
 
@@ -367,8 +367,8 @@ fn justify_layout_line(
 ///|
 fn is_justifiable_space(
   glyphs : Array[PositionedGlyph],
-  index : Int,
-  space_glyph_id : Int,
+  index : Int32,
+  space_glyph_id : Int32,
 ) -> Bool {
   guard glyphs[index].glyph_id == space_glyph_id else { return false }
   has_non_space_before(glyphs, index, space_glyph_id) &&
@@ -378,8 +378,8 @@ fn is_justifiable_space(
 ///|
 fn has_non_space_before(
   glyphs : Array[PositionedGlyph],
-  index : Int,
-  space_glyph_id : Int,
+  index : Int32,
+  space_glyph_id : Int32,
 ) -> Bool {
   let mut i = index - 1
   while i >= 0 {
@@ -394,8 +394,8 @@ fn has_non_space_before(
 ///|
 fn has_non_space_after(
   glyphs : Array[PositionedGlyph],
-  index : Int,
-  space_glyph_id : Int,
+  index : Int32,
+  space_glyph_id : Int32,
 ) -> Bool {
   let mut i = index + 1
   while i < glyphs.length() {
@@ -604,7 +604,7 @@ fn is_space_token(word : String) -> Bool {
 }
 
 ///|
-fn count_glyphs(word : String) -> Int {
+fn count_glyphs(word : String) -> Int32 {
   let mut count = 0
   for _ in word {
     count = count + 1

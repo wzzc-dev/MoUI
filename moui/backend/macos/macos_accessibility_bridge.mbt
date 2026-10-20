@@ -42,7 +42,7 @@ fn MacosAccessibilityState::remove(
 extern "C" fn macos_accessibility_sync_native(
   raw_view : UInt64,
   payload : Bytes,
-) -> Int = "moui_macos_accessibility_sync"
+) -> Int32 = "moui_macos_accessibility_sync"
 
 ///|
 extern "C" fn macos_accessibility_dispose_native(raw_view : UInt64) -> Unit = "moui_macos_accessibility_dispose"
@@ -257,7 +257,7 @@ fn macos_parse_decimal_u64(value : String) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }

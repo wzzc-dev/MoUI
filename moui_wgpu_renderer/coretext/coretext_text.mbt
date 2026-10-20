@@ -1,18 +1,18 @@
 ///|
-let coretext_run_protocol_version : Int = 1
+let coretext_run_protocol_version : Int32 = 1
 
 ///|
-let coretext_glyph_payload_protocol_version : Int = 2
+let coretext_glyph_payload_protocol_version : Int32 = 2
 
 ///|
 priv struct CoreTextGlyphKey {
-  glyph_id : Int
-  codepoint : Int
+  glyph_id : Int32
+  codepoint : Int32
   font_name : Bytes
-  size_key : Int
-  weight : Int
+  size_key : Int32
+  weight : Int32
   style : @core.FontStyle
-  scale_key : Int
+  scale_key : Int32
 }
 
 ///|
@@ -56,12 +56,12 @@ fn coretext_register_font_data(family : @core.FontFamily, data : Bytes) -> Unit 
 }
 
 ///|
-fn coretext_style_code(style : @core.FontStyle) -> Int {
+fn coretext_style_code(style : @core.FontStyle) -> Int32 {
   @text_protocol.native_font_style_code(style)
 }
 
 ///|
-fn coretext_style_from_code(code : Int) -> @core.FontStyle? {
+fn coretext_style_from_code(code : Int32) -> @core.FontStyle? {
   match code {
     0 => Some(Normal)
     1 => Some(Italic)
@@ -70,12 +70,12 @@ fn coretext_style_from_code(code : Int) -> @core.FontStyle? {
 }
 
 ///|
-fn coretext_size_key(size : Double) -> Int {
+fn coretext_size_key(size : Double) -> Int32 {
   (size * 64.0).to_int()
 }
 
 ///|
-fn coretext_scale_key(scale : Double) -> Int {
+fn coretext_scale_key(scale : Double) -> Int32 {
   (scale * 64.0).to_int()
 }
 
@@ -386,10 +386,10 @@ fn coretext_raster_glyph(
 
 ///|
 fn coretext_payload_covers_records(
-  total_len~ : Int,
-  header~ : Int,
-  count~ : Int,
-  record_size~ : Int,
+  total_len~ : Int32,
+  header~ : Int32,
+  count~ : Int32,
+  record_size~ : Int32,
 ) -> Bool {
   if total_len < header || header < 0 || count < 0 || record_size <= 0 {
     return false
@@ -398,7 +398,7 @@ fn coretext_payload_covers_records(
 }
 
 ///|
-fn i32_le(bytes : Bytes, offset : Int) -> Int {
+fn i32_le(bytes : Bytes, offset : Int32) -> Int32 {
   if offset + 3 >= bytes.length() {
     return 0
   }
@@ -415,7 +415,7 @@ fn i32_le(bytes : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn push_i32_le(out : Array[Byte], value : Int) -> Unit {
+fn push_i32_le(out : Array[Byte], value : Int32) -> Unit {
   out.push((value & 0xFF).to_byte())
   out.push(((value >> 8) & 0xFF).to_byte())
   out.push(((value >> 16) & 0xFF).to_byte())
@@ -423,7 +423,7 @@ fn push_i32_le(out : Array[Byte], value : Int) -> Unit {
 }
 
 ///|
-fn double_le(bytes : Bytes, offset : Int) -> Double {
+fn double_le(bytes : Bytes, offset : Int32) -> Double {
   if offset + 7 >= bytes.length() {
     return 0.0
   }
@@ -451,15 +451,15 @@ extern "C" fn macos_coretext_layout_glyphs_utf32(
 ///|
 #borrow(font_name)
 extern "C" fn macos_coretext_raster_glyph(
-  glyph_id : Int,
-  codepoint : Int,
+  glyph_id : Int32,
+  codepoint : Int32,
   font_name : Bytes,
   size : Double,
-  weight : Int,
-  style : Int,
+  weight : Int32,
+  style : Int32,
   scale_factor : Double,
 ) -> Bytes = "moui_macos_coretext_raster_glyph"
 
 ///|
 #borrow(payload)
-extern "C" fn macos_coretext_register_font_data(payload : Bytes) -> Int = "moui_macos_coretext_register_font_data"
+extern "C" fn macos_coretext_register_font_data(payload : Bytes) -> Int32 = "moui_macos_coretext_register_font_data"

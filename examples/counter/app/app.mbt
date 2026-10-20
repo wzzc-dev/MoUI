@@ -3,7 +3,7 @@ using @views {button, card, center, column, row, text}
 
 ///|
 pub struct Model {
-  count : Int
+  count : Int32
 }
 
 ///|

@@ -119,8 +119,8 @@ pub extend EventResult with ToJson::{to_json}
 
 ///|
 pub fn HostInputContract::new(
-  capabilities? : HostInputCapabilities = HostInputCapabilities::new(),
-  coordinates? : HostCoordinatePolicy = HostCoordinatePolicy::logical(),
+  capabilities~ : HostInputCapabilities = HostInputCapabilities::new(),
+  coordinates~ : HostCoordinatePolicy = HostCoordinatePolicy::logical(),
 ) -> HostInputContract {
   { capabilities, coordinates, }
 }
@@ -129,7 +129,7 @@ pub fn HostInputContract::new(
 pub fn HostScrollEvent::new(
   position~ : @core.Point,
   delta~ : HostScrollDelta,
-  phase? : HostScrollPhase = Moved,
+  phase~ : HostScrollPhase = Moved,
 ) -> HostScrollEvent {
   { position, delta, phase, }
 }
@@ -137,7 +137,7 @@ pub fn HostScrollEvent::new(
 ///|
 pub fn HostScrollDelta::to_logical_pixels(
   self : HostScrollDelta,
-  line_extent? : Double = 40.0,
+  line_extent~ : Double = 40.0,
 ) -> @core.Point {
   match self {
     Pixels(delta) => delta
@@ -160,7 +160,7 @@ pub fn HostScrollEvent::to_pointer_event(
 ///|
 pub fn HostFocusEvent::new(
   focused~ : Bool,
-  pointer_cancel_position? : @core.Point? = None,
+  pointer_cancel_position~ : @core.Point? = None,
 ) -> HostFocusEvent {
   { focused, pointer_cancel_position, }
 }

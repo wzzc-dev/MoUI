@@ -3,9 +3,9 @@ fn ElementNode::dispatch_text_command(
   self : ElementNode,
   target : ElementId,
   intent : CommandIntent,
-  paste_text? : String? = None,
-  environment? : Environment = Environment::neutral(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  paste_text~ : String? = None,
+  environment~ : Environment = Environment::neutral(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> RuntimeTextCommandOutcome {
   if self.id == target {
     self.dispatch_view_text_command(
@@ -46,9 +46,9 @@ fn ElementNode::dispatch_view_text_command(
   data : &RuntimeViewNode,
   intent : CommandIntent,
   paste_text~ : String?,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> RuntimeTextCommandOutcome {
   let result = data.text_command(
     {

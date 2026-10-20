@@ -1,14 +1,14 @@
 ///|
 pub fn[Msg] web_view(
   controller~ : @host.WebViewController,
-  width? : Double? = None,
-  height? : Double? = None,
-  title? : String = "",
-  visible? : Bool = true,
-  background_color? : @core.Color? = None,
-  color_scheme? : @core.ColorScheme? = None,
-  no_drag_regions? : Array[@host.WebViewNoDragRegion] = [],
-  on_event? : ((@host.WebViewEvent) -> Msg)? = None,
+  width~ : Double? = None,
+  height~ : Double? = None,
+  title~ : String = "",
+  visible~ : Bool = true,
+  background_color~ : @core.Color? = None,
+  color_scheme~ : @core.ColorScheme? = None,
+  no_drag_regions~ : Array[@host.WebViewNoDragRegion] = [],
+  on_event~ : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let id = controller.id()
   @core.View::from_node(

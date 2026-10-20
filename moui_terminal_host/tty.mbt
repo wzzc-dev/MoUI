@@ -5,25 +5,25 @@
 /// 分成两层是为了让 `moon test` 能对着字节流测解码,也为了让宿主在退出时
 /// 只依赖一处还原逻辑。
 #borrow(bytes)
-extern "C" fn c_write(fd : Int, bytes : Bytes, len : Int) -> Int64 = "mootty_write"
+extern "C" fn c_write(fd : Int32, bytes : Bytes, len : Int32) -> Int64 = "mootty_write"
 
 ///|
-extern "C" fn c_isatty(fd : Int) -> Int64 = "mootty_isatty"
+extern "C" fn c_isatty(fd : Int32) -> Int64 = "mootty_isatty"
 
 ///|
-extern "C" fn c_enter_raw(fd : Int) -> Int64 = "mootty_enter_raw"
+extern "C" fn c_enter_raw(fd : Int32) -> Int64 = "mootty_enter_raw"
 
 ///|
-extern "C" fn c_leave_raw(fd : Int) -> Int64 = "mootty_leave_raw"
+extern "C" fn c_leave_raw(fd : Int32) -> Int64 = "mootty_leave_raw"
 
 ///|
-extern "C" fn c_winsize(fd : Int) -> Int64 = "mootty_winsize"
+extern "C" fn c_winsize(fd : Int32) -> Int64 = "mootty_winsize"
 
 ///|
-extern "C" fn c_poll(fd : Int, timeout_ms : Int) -> Int64 = "mootty_poll"
+extern "C" fn c_poll(fd : Int32, timeout_ms : Int32) -> Int64 = "mootty_poll"
 
 ///|
-extern "C" fn c_read(fd : Int) -> Bytes = "mootty_read"
+extern "C" fn c_read(fd : Int32) -> Bytes = "mootty_read"
 
 ///|
 extern "C" fn c_install_signals() -> Int64 = "mootty_install_signals"
@@ -35,7 +35,7 @@ extern "C" fn c_take_winch() -> Int64 = "mootty_take_winch"
 extern "C" fn c_terminate_pending() -> Int64 = "mootty_terminate_pending"
 
 ///|
-fn fd_is_a_terminal(fd : Int) -> Bool {
+fn fd_is_a_terminal(fd : Int32) -> Bool {
   c_isatty(fd) == 1L
 }
 
@@ -60,8 +60,8 @@ pub extend PollState with Debug::{to_repr}
 /// 两个 fd 分开存,是因为「stdin 是管道」(测试里常见)和「stdout 被重定向到
 /// 文件」是两种不同的失败,合在一起报会让用户不知道该改哪一边。
 pub struct Tty {
-  in_fd : Int
-  out_fd : Int
+  in_fd : Int32
+  out_fd : Int32
 }
 
 ///|
@@ -105,7 +105,7 @@ pub fn Tty::restore(self : Tty) -> Unit {
 
 ///|
 /// 终端网格尺寸(列, 行)。非 tty、或尺寸报 0 时返回 None。
-pub fn Tty::grid(self : Tty) -> (Int, Int)? {
+pub fn Tty::grid(self : Tty) -> (Int32, Int32)? {
   let packed = c_winsize(self.in_fd)
   if packed < 0L {
     None
@@ -119,7 +119,7 @@ pub fn Tty::grid(self : Tty) -> (Int, Int)? {
 ///|
 /// 等待输入,最多 `timeout_ms` 毫秒。SIGWINCH 会打断等待并返回 `Timeout`,
 /// 让宿主立刻去查新尺寸,而不是等下一个超时。
-pub fn Tty::wait(self : Tty, timeout_ms~ : Int) -> PollState {
+pub fn Tty::wait(self : Tty, timeout_ms~ : Int32) -> PollState {
   let rc = c_poll(self.in_fd, timeout_ms)
   if rc > 0L {
     Ready

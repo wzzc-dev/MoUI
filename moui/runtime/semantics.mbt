@@ -3,7 +3,7 @@ priv struct SemanticsBuildContext {
   nodes : Map[SemanticsNodeId, SemanticsNode]
   routes : Map[SemanticsNodeId, SemanticsNodeRoute]
   relation_declarations : Map[SemanticsNodeId, SemanticsRelationsDeclaration]
-  mut next_focus_order : Int
+  mut next_focus_order : Int32
 }
 
 ///|
@@ -678,8 +678,8 @@ fn SemanticsBuildContext::collect_dfs(
 fn deepest_modal_semantics_node_at(
   nodes : Map[SemanticsNodeId, SemanticsNode],
   id : SemanticsNodeId,
-  depth : Int,
-) -> (SemanticsNodeId, Int)? {
+  depth : Int32,
+) -> (SemanticsNodeId, Int32)? {
   guard nodes.get(id) is Some(node) else { return None }
   let mut best = if node.state.modal { Some((id, depth)) } else { None }
   for child in node.children {

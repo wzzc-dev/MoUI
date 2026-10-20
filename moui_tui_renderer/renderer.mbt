@@ -51,18 +51,18 @@ pub struct TuiRenderer {
   sink : TuiSink
   diagnostics : DegradeLog
   mut palette : TuiPalette
-  mut frame_count : Int
-  mut present_count : Int
-  mut offscreen_nodes : Int
+  mut frame_count : Int32
+  mut present_count : Int32
+  mut offscreen_nodes : Int32
 }
 
 ///|
 pub fn TuiRenderer::new(
   metrics~ : @core.SurfaceMetrics,
   sink~ : TuiSink,
-  cell? : CellBox = CellBox::default(),
-  diagnostics? : DegradeLog = DegradeLog::new(),
-  palette? : TuiPalette = TuiPalette::default(),
+  cell~ : CellBox = CellBox::default(),
+  diagnostics~ : DegradeLog = DegradeLog::new(),
+  palette~ : TuiPalette = TuiPalette::default(),
 ) -> TuiRenderer {
   let canvas = Canvas::new(cell.cols_of(metrics), cell.rows_of(metrics))
   {
@@ -103,18 +103,18 @@ pub fn TuiRenderer::resize(
 }
 
 ///|
-pub fn TuiRenderer::cols(self : TuiRenderer) -> Int {
+pub fn TuiRenderer::cols(self : TuiRenderer) -> Int32 {
   self.canvas.cols
 }
 
 ///|
-pub fn TuiRenderer::rows(self : TuiRenderer) -> Int {
+pub fn TuiRenderer::rows(self : TuiRenderer) -> Int32 {
   self.canvas.rows
 }
 
 ///|
 /// 投影后的第 `row` 行可见文本,用于结构断言而不是字节比对。
-pub fn TuiRenderer::line_text(self : TuiRenderer, row : Int) -> String {
+pub fn TuiRenderer::line_text(self : TuiRenderer, row : Int32) -> String {
   self.canvas.screen.line_at(row).text()
 }
 
@@ -125,17 +125,17 @@ pub fn TuiRenderer::diagnostics(self : TuiRenderer) -> DegradeLog {
 
 ///|
 /// 最后一帧被丢掉的离屏语义节点数。
-pub fn TuiRenderer::offscreen_node_count(self : TuiRenderer) -> Int {
+pub fn TuiRenderer::offscreen_node_count(self : TuiRenderer) -> Int32 {
   self.offscreen_nodes
 }
 
 ///|
-pub fn TuiRenderer::frame_count(self : TuiRenderer) -> Int {
+pub fn TuiRenderer::frame_count(self : TuiRenderer) -> Int32 {
   self.frame_count
 }
 
 ///|
-pub fn TuiRenderer::present_count(self : TuiRenderer) -> Int {
+pub fn TuiRenderer::present_count(self : TuiRenderer) -> Int32 {
   self.present_count
 }
 

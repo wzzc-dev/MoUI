@@ -7,7 +7,7 @@ fn wire_object(value : Json?) -> Map[String, Json]? {
 }
 
 ///|
-fn wire_string(value : Json?, allow_empty? : Bool = false) -> String? {
+fn wire_string(value : Json?, allow_empty~ : Bool = false) -> String? {
   match value {
     Some(String(text)) if allow_empty || text != "" => Some(text)
     _ => None
@@ -15,7 +15,7 @@ fn wire_string(value : Json?, allow_empty? : Bool = false) -> String? {
 }
 
 ///|
-fn wire_int(value : Json?) -> Int? {
+fn wire_int(value : Json?) -> Int32? {
   match value {
     Some(Number(number, repr=_)) => {
       let integer = number.to_int()
@@ -60,7 +60,7 @@ fn wire_decimal_u64(value : Json?) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }
@@ -317,7 +317,7 @@ fn embedded_host_update_json(update : EmbeddedHostUpdate) -> Json {
 pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(
   self : EmbeddedRuntimeHostBridge,
   transport : @host_services_embedded.HostSessionTransport,
-) -> Int {
+) -> Int32 {
   let updates = self.drain_updates()
   for update in updates {
     let payload = embedded_host_update_json(update)
@@ -367,7 +367,7 @@ pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(
 ///|
 pub fn embedded_host_response_request_id(
   response : EmbeddedHostResponse,
-) -> Int? {
+) -> Int32? {
   match response {
     Clipboard(id, _) | PlatformChannel(id, _) => Some(id.value)
     _ => None

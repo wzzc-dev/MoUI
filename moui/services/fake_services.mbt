@@ -272,7 +272,7 @@ pub fn FakeAppServices::set_permission_status(
 pub fn FakeAppServices::publish_lifecycle(
   self : FakeAppServices,
   event : AppLifecycleEvent,
-) -> Int {
+) -> Int32 {
   self.calls_value.push("lifecycle:publish")
   self.lifecycle_source.publish(event)
 }

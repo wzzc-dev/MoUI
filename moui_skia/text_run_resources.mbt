@@ -29,7 +29,7 @@ fn TextRange::bytes_from_text(self : TextRange, text : Bytes) -> Bytes {
 pub fn TextRunDescriptor::resource_key(
   self : TextRunDescriptor,
   text : Bytes,
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
 ) -> RendererResourceKey {
   let range = self.range.clamp_to_text(text)
   let run_text = range.bytes_from_text(text)
@@ -48,8 +48,8 @@ pub fn TextRunDescriptor::resource_key(
 pub fn TextRunDescriptor::resource_descriptor(
   self : TextRunDescriptor,
   text : Bytes,
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  byte_size? : Int64 = -1L,
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let run_text = self.range.bytes_from_text(text)
   let measured_byte_size = if byte_size < 0L {
@@ -67,10 +67,10 @@ pub fn TextRunDescriptor::resource_descriptor(
 pub fn TextRunDescriptor::resource_plan(
   self : TextRunDescriptor,
   text : Bytes,
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(

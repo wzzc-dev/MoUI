@@ -52,7 +52,7 @@ fn sun_transformed_rect_bounds(
 }
 
 ///|
-fn sun_floor_to_int(value : Double) -> Int {
+fn sun_floor_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() > value {
     truncated - 1
@@ -62,7 +62,7 @@ fn sun_floor_to_int(value : Double) -> Int {
 }
 
 ///|
-fn sun_ceil_to_int(value : Double) -> Int {
+fn sun_ceil_to_int(value : Double) -> Int32 {
   -sun_floor_to_int(0.0 - value)
 }
 

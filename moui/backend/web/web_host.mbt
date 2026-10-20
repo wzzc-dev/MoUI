@@ -35,7 +35,7 @@ pub fn canvas_host_constraints() -> CanvasHostConstraints {
 pub fn canvas_metrics(
   logical_width~ : Double,
   logical_height~ : Double,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @core.SurfaceMetrics {
   @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=logical_width, height=logical_height),
@@ -55,7 +55,7 @@ pub fn web_host_info() -> @host.HostAppInfo {
 pub fn canvas_surface_host(
   logical_width~ : Double,
   logical_height~ : Double,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @window_input.SurfaceState {
   @window_input.SurfaceState::new(
     metrics=canvas_metrics(logical_width~, logical_height~, scale_factor~),
@@ -88,7 +88,7 @@ pub fn canvas_input_host() -> @window_input.InputState {
 
 ///|
 pub fn web_capability_summary(
-  services? : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
+  services~ : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
     clipboard=true,
     file_dialogs=true,
     file_access=true,
@@ -96,7 +96,7 @@ pub fn web_capability_summary(
     system_theme=true,
     settings=true,
   ),
-  async_services? : Bool = true,
+  async_services~ : Bool = true,
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=web_host_info(),
@@ -128,20 +128,20 @@ fn async_dispatch(
 
 ///|
 pub fn web_service_bridge(
-  system_theme? : @core.ColorScheme = Light,
-  open_url? : (String) -> Bool = _url => false,
-  clipboard? : Bool = false,
-  clipboard_read? : Bool = false,
-  clipboard_write? : (String) -> Bool = _text => false,
-  file_dialog? : Bool = false,
-  file_access? : Bool = false,
-  settings_available? : Bool = false,
-  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = request => {
+  system_theme~ : @core.ColorScheme = Light,
+  open_url~ : (String) -> Bool = _url => false,
+  clipboard~ : Bool = false,
+  clipboard_read~ : Bool = false,
+  clipboard_write~ : (String) -> Bool = _text => false,
+  file_dialog~ : Bool = false,
+  file_access~ : Bool = false,
+  settings_available~ : Bool = false,
+  settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse = request => {
     Unavailable(
       @host.HostServiceRequest::Settings(request).unavailable_message(),
     )
   },
-  async_queue? : @window_services.ServiceAsyncQueue? = None,
+  async_queue~ : @window_services.ServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -237,7 +237,7 @@ pub fn web_service_bridge(
 
 ///|
 pub fn web_app_services(
-  system_theme? : @core.ColorScheme = Light,
+  system_theme~ : @core.ColorScheme = Light,
 ) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
   @window_services.app_services(
@@ -261,7 +261,7 @@ pub fn web_app_services(
 /// Construct the app-facing Web environment. The returned route source must be
 /// passed to `WebAppOptions` so browser history events reach the same Program.
 pub fn app_environment(
-  routes? : @services.RouteSource = @services.RouteSource::new(),
+  routes~ : @services.RouteSource = @services.RouteSource::new(),
 ) -> @services.AppEnvironment {
   @services.AppEnvironment::new(
     services=web_app_services(),
@@ -336,7 +336,7 @@ fn web_host_string(value : String) -> WebHostString {
 }
 
 ///|
-fn web_host_string_from_id(id : Int) -> String {
+fn web_host_string_from_id(id : Int32) -> String {
   web_host_string_to_string(web_begin_read_string(id))
 }
 
@@ -355,19 +355,19 @@ fn web_host_string_to_string(handle : WebHostString) -> String {
 }
 
 ///|
-fn web_begin_create_string() -> Int = "window_web" "begin_create_string"
+fn web_begin_create_string() -> Int32 = "window_web" "begin_create_string"
 
 ///|
-fn web_string_append_char(handle : Int, code_point : Int) -> Unit = "window_web" "string_append_char"
+fn web_string_append_char(handle : Int32, code_point : Int32) -> Unit = "window_web" "string_append_char"
 
 ///|
-fn web_finish_create_string(handle : Int) -> WebHostString = "window_web" "finish_create_string"
+fn web_finish_create_string(handle : Int32) -> WebHostString = "window_web" "finish_create_string"
 
 ///|
-fn web_begin_read_string(id : Int) -> WebHostString = "window_web" "begin_read_string"
+fn web_begin_read_string(id : Int32) -> WebHostString = "window_web" "begin_read_string"
 
 ///|
-fn web_string_read_char(handle : WebHostString) -> Int = "window_web" "string_read_char"
+fn web_string_read_char(handle : WebHostString) -> Int32 = "window_web" "string_read_char"
 
 ///|
 fn web_finish_read_string(handle : WebHostString) -> Unit = "window_web" "finish_read_string"
@@ -391,42 +391,42 @@ fn web_settings_write(key : WebHostString, value : WebHostString) -> Bool = "win
 fn web_settings_remove(key : WebHostString) -> Bool = "window_web" "settings_remove"
 
 ///|
-fn web_accessibility_contrast() -> Int = "window_web" "accessibility_contrast"
+fn web_accessibility_contrast() -> Int32 = "window_web" "accessibility_contrast"
 
 ///|
-fn web_reduced_motion() -> Int = "window_web" "reduced_motion"
+fn web_reduced_motion() -> Int32 = "window_web" "reduced_motion"
 
 ///|
 fn web_text_scale() -> Double = "window_web" "text_scale"
 
 ///|
-extern "wasm" fn web_wall_clock_year() -> Int = "window_web" "wall_clock_year"
+extern "wasm" fn web_wall_clock_year() -> Int32 = "window_web" "wall_clock_year"
 
 ///|
-extern "wasm" fn web_wall_clock_month() -> Int = "window_web" "wall_clock_month"
+extern "wasm" fn web_wall_clock_month() -> Int32 = "window_web" "wall_clock_month"
 
 ///|
-extern "wasm" fn web_wall_clock_day() -> Int = "window_web" "wall_clock_day"
+extern "wasm" fn web_wall_clock_day() -> Int32 = "window_web" "wall_clock_day"
 
 ///|
-extern "wasm" fn web_wall_clock_weekday() -> Int = "window_web" "wall_clock_weekday"
+extern "wasm" fn web_wall_clock_weekday() -> Int32 = "window_web" "wall_clock_weekday"
 
 ///|
-extern "wasm" fn web_wall_clock_hour() -> Int = "window_web" "wall_clock_hour"
+extern "wasm" fn web_wall_clock_hour() -> Int32 = "window_web" "wall_clock_hour"
 
 ///|
-extern "wasm" fn web_wall_clock_minute() -> Int = "window_web" "wall_clock_minute"
+extern "wasm" fn web_wall_clock_minute() -> Int32 = "window_web" "wall_clock_minute"
 
 ///|
-extern "wasm" fn web_wall_clock_second() -> Int = "window_web" "wall_clock_second"
+extern "wasm" fn web_wall_clock_second() -> Int32 = "window_web" "wall_clock_second"
 
 ///|
-fn web_async_clipboard_read_text(request_id : Int) -> Unit = "window_web" "clipboard_read_text_async"
+fn web_async_clipboard_read_text(request_id : Int32) -> Unit = "window_web" "clipboard_read_text_async"
 
 //|
 
 ///|
-fn web_async_clipboard_read_image(request_id : Int) -> Unit = "window_web" "clipboard_read_image_async"
+fn web_async_clipboard_read_image(request_id : Int32) -> Unit = "window_web" "clipboard_read_image_async"
 
 //|
 
@@ -435,12 +435,12 @@ fn web_async_clipboard_read_image(request_id : Int) -> Unit = "window_web" "clip
 fn web_clipboard_write_image(data : WebHostString) -> Bool = "window_web" "clipboard_write_image"
 
 ///|
-fn web_async_text_file_read(request_id : Int, path : WebHostString) -> Unit = "window_web" "text_file_read_async"
+fn web_async_text_file_read(request_id : Int32, path : WebHostString) -> Unit = "window_web" "text_file_read_async"
 
 ///|
 fn web_async_file_dialog_open(
-  request_id : Int,
-  kind : Int,
+  request_id : Int32,
+  kind : Int32,
   title : WebHostString,
   filters : WebHostString,
   default_name : WebHostString,
@@ -448,7 +448,7 @@ fn web_async_file_dialog_open(
 
 ///|
 fn web_async_text_file_write(
-  request_id : Int,
+  request_id : Int32,
   path : WebHostString,
   text : WebHostString,
 ) -> Unit = "window_web" "text_file_write_async"

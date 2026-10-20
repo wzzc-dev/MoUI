@@ -2,7 +2,7 @@
 pub(all) struct TextInputState {
   focused : Bool
   text : String
-  caret : Int
+  caret : Int32
   selection : TextRange?
   composition : String?
   composition_cursor : TextRange?

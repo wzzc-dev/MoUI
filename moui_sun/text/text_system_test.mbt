@@ -1717,7 +1717,7 @@ test "TextSystem Unicode caret respects supplementary character boundaries" {
     Ok(_) => ()
     Err(_) => abort("expected emoji font")
   }
-  let text = parser_test_string_from_codepoints([(0x1F600 : Int)])
+  let text = parser_test_string_from_codepoints([(0x1F600 : Int32)])
   assert_eq(text.length(), 2)
   assert_eq(text.char_length(), 1)
   let config = @text.LayoutConfig::new(

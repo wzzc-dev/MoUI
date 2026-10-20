@@ -100,7 +100,7 @@ fn config_get(config : CliConfig, key_path : String) -> Result[String, String] {
 }
 
 ///|
-fn try_parse_int(value : String) -> Int? {
+fn try_parse_int(value : String) -> Int32? {
   if value == "" {
     return None
   }

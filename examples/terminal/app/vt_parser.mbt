@@ -20,12 +20,12 @@ pub extend ParseState with Eq::{not_equal, equal}
 pub(all) struct VtParser {
   mut screen : @tui.TermScreen
   mut state : ParseState
-  mut params : Array[Int]
+  mut params : Array[Int32]
   mut param_buf : String
   mut private_marker : Bool
   mut osc_buf : String
   mut utf8_buf : Array[Byte]
-  mut utf8_need : Int
+  mut utf8_need : Int32
   mut ignore_next : Bool
 }
 
@@ -125,7 +125,7 @@ fn VtParser::discard_utf8(self : VtParser) -> Unit {
 
 ///|
 /// UTF-8 首字节推断序列长度;非法首字节返回 1(调用方忽略)。
-fn utf8_seq_len(b : Byte) -> Int {
+fn utf8_seq_len(b : Byte) -> Int32 {
   let v = b.to_int()
   if v >= 0xC2 && v <= 0xDF {
     2
@@ -208,7 +208,7 @@ fn VtParser::push_param(self : VtParser) -> Unit {
 }
 
 ///|
-fn VtParser::param0(self : VtParser, default : Int) -> Int {
+fn VtParser::param0(self : VtParser, default : Int32) -> Int32 {
   if self.params.length() > 0 {
     let v = self.params[0]
     if v == 0 {
@@ -247,7 +247,7 @@ fn VtParser::csi(self : VtParser, b : Byte) -> Unit {
 }
 
 ///|
-fn VtParser::dispatch(self : VtParser, final_byte : Int) -> Unit {
+fn VtParser::dispatch(self : VtParser, final_byte : Int32) -> Unit {
   let s = self.screen
   match final_byte {
     0x41 => s.cursor_up(self.param0(1)) // A
@@ -334,7 +334,7 @@ fn VtParser::sgr(self : VtParser) -> Unit {
       23 => attrs = @tui.attrs_with(attrs, italic=Some(false))
       24 => attrs = @tui.attrs_with(attrs, underline=Some(false))
       27 => attrs = @tui.attrs_with(attrs, reverse=Some(false))
-      30..=37 => attrs = @tui.attrs_with(attrs, fg=Some(@tui.Indexed(p - 30)))
+      30..<=37 => attrs = @tui.attrs_with(attrs, fg=Some(@tui.Indexed(p - 30)))
       38 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
@@ -360,7 +360,7 @@ fn VtParser::sgr(self : VtParser) -> Unit {
           i = i + 4
         }
       39 => attrs = @tui.attrs_with(attrs, fg=Some(@tui.Default))
-      40..=47 => attrs = @tui.attrs_with(attrs, bg=Some(@tui.Indexed(p - 40)))
+      40..<=47 => attrs = @tui.attrs_with(attrs, bg=Some(@tui.Indexed(p - 40)))
       48 =>
         if i + 1 < self.params.length() &&
           self.params[i + 1] == 5 &&
@@ -386,9 +386,9 @@ fn VtParser::sgr(self : VtParser) -> Unit {
           i = i + 4
         }
       49 => attrs = @tui.attrs_with(attrs, bg=Some(@tui.Default))
-      90..=97 =>
+      90..<=97 =>
         attrs = @tui.attrs_with(attrs, fg=Some(@tui.Indexed(p - 90 + 8)))
-      100..=107 =>
+      100..<=107 =>
         attrs = @tui.attrs_with(attrs, bg=Some(@tui.Indexed(p - 100 + 8)))
       _ => ()
     }
@@ -434,7 +434,7 @@ fn decode_utf8(bytes : Bytes) -> String {
 
 ///|
 /// 解析十进制字符串为 Int(非法字符处截断;饱和防溢出与超长参数)。
-fn parse_decimal(s : String) -> Int {
+fn parse_decimal(s : String) -> Int32 {
   let mut n = 0
   for i in 0..<s.length() {
     let d = s[i].to_int() - '0'.to_int()

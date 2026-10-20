@@ -2,12 +2,12 @@
 /// Neutral request to present an existing MoUI surface in a host-owned modal
 /// layer. The host never receives application state or a second content model.
 pub(all) struct HostModalRequest {
-  request_id : Int
+  request_id : Int32
   presentation_id : String
-  generation : Int
+  generation : Int32
   bounds : @core.Rect
   modality : HostModalModality
-  semantics_generation : Int
+  semantics_generation : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -55,13 +55,13 @@ pub extend HostModalResult with ToJson::{to_json}
 ///|
 /// Typed host lifecycle facts returned to the runtime/TEA boundary.
 pub(all) enum HostModalEvent {
-  Pending(Int, String, Int)
-  Accepted(Int, String, Int)
-  Rejected(Int, String, Int, String)
-  Closed(Int, String, Int)
-  SurfaceAttached(Int, String, Int, String)
-  SurfaceDetached(Int, String, Int, String)
-  Input(Int, String, Int, @core.PointerEvent)
+  Pending(Int32, String, Int32)
+  Accepted(Int32, String, Int32)
+  Rejected(Int32, String, Int32, String)
+  Closed(Int32, String, Int32)
+  SurfaceAttached(Int32, String, Int32, String)
+  SurfaceDetached(Int32, String, Int32, String)
+  Input(Int32, String, Int32, @core.PointerEvent)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -142,12 +142,12 @@ pub fn HostModalCapabilities::supports_semantics_bridge(
 
 ///|
 pub fn HostModalRequest::new(
-  request_id~ : Int,
+  request_id~ : Int32,
   presentation_id~ : String,
-  generation~ : Int,
+  generation~ : Int32,
   bounds~ : @core.Rect,
-  modality? : HostModalModality = NonModal,
-  semantics_generation? : Int = 0,
+  modality~ : HostModalModality = NonModal,
+  semantics_generation~ : Int32 = 0,
 ) -> HostModalRequest {
   {
     request_id,
@@ -160,7 +160,7 @@ pub fn HostModalRequest::new(
 }
 
 ///|
-pub fn HostModalRequest::request_id(self : HostModalRequest) -> Int {
+pub fn HostModalRequest::request_id(self : HostModalRequest) -> Int32 {
   self.request_id
 }
 
@@ -170,7 +170,7 @@ pub fn HostModalRequest::presentation_id(self : HostModalRequest) -> String {
 }
 
 ///|
-pub fn HostModalRequest::generation(self : HostModalRequest) -> Int {
+pub fn HostModalRequest::generation(self : HostModalRequest) -> Int32 {
   self.generation
 }
 
@@ -185,6 +185,6 @@ pub fn HostModalRequest::modality(self : HostModalRequest) -> HostModalModality 
 }
 
 ///|
-pub fn HostModalRequest::semantics_generation(self : HostModalRequest) -> Int {
+pub fn HostModalRequest::semantics_generation(self : HostModalRequest) -> Int32 {
   self.semantics_generation
 }

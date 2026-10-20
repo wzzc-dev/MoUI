@@ -21,7 +21,7 @@ fn check(session : Session, label : String, ok : Bool) -> Unit {
 ///|
 /// 某个标记所在行,拿不到就把整屏打出来再红:后续断言要用 1 基坐标,
 /// 行号错了整条鼠标用例都会失去意义。
-fn row_or_check(session : Session, needle : String) -> Int {
+fn row_or_check(session : Session, needle : String) -> Int32 {
   match session.screen().find_row(needle) {
     Some(row) => row
     None => {
@@ -38,9 +38,9 @@ fn row_or_check(session : Session, needle : String) -> Int {
 fn col_or_check(
   session : Session,
   screen : Screen,
-  row : Int,
+  row : Int32,
   ch : Char,
-) -> Int {
+) -> Int32 {
   let mut col = 0
   while col < screen.cols {
     if screen.at(row, col).ch == ch {
@@ -61,7 +61,7 @@ fn col_or_check(
 
 ///|
 /// 点一格:按下 + 抬起。调用方给栅格的 0 基列行,SGR(1006) 要的是 1 基。
-async fn tap_cell(session : Session, col~ : Int, row~ : Int) -> Unit {
+async fn tap_cell(session : Session, col~ : Int32, row~ : Int32) -> Unit {
   session.send(
     "\u{1b}[<0;\{(col + 1)};\{(row + 1)}M\u{1b}[<0;\{(col + 1)};\{(row + 1)}m",
   )
@@ -73,10 +73,10 @@ async fn tap_cell(session : Session, col~ : Int, row~ : Int) -> Unit {
 /// 「不该变」的点击传当前读数即可 —— needle 已成立,等待只剩确认窗。
 async fn click_cell(
   session : Session,
-  col~ : Int,
-  row~ : Int,
+  col~ : Int32,
+  row~ : Int32,
   expect~ : String,
-) -> Int {
+) -> Int32 {
   tap_cell(session, col~, row~)
   session.await_frame(s => s.has(expect))
   session.screen().int_or_fail("Count:")
@@ -84,7 +84,7 @@ async fn click_cell(
 
 ///|
 /// 某行里被下划线覆盖的最左/最右格(没找到就是 -1/-1)。
-fn underlined_span(screen : Screen, row : Int) -> (Int, Int) {
+fn underlined_span(screen : Screen, row : Int32) -> (Int32, Int32) {
   let mut lo = -1
   let mut hi = -1
   let mut col = 0
@@ -104,7 +104,7 @@ fn underlined_span(screen : Screen, row : Int) -> (Int, Int) {
 /// 整行没有字形却带下划线的行数。下划线是跟着字形走的装饰,压在从没被
 /// 认领的空格上就成了一条悬空横线 —— 用户报的「点完按钮出现两根黄线」,
 /// 实测是焦点量化盒下面两整空格行各被画了一条。
-fn floating_rules(screen : Screen) -> Int {
+fn floating_rules(screen : Screen) -> Int32 {
   let mut count = 0
   for row in 0..<screen.rows {
     let mut glyph = false
@@ -409,8 +409,8 @@ async test "S7 mouse, per-keystroke filter, wheel and resize drive the layers de
 ///|
 /// 一栏框的左右角列:顶行每一对 `╭`…`╮` 算一栏。极矮窗口里两栏并排,
 /// 只取第一个角就会把另一栏的格子当成框外,断言于是空过。
-fn ring_spans(screen : Screen, row : Int) -> Array[(Int, Int)] {
-  let out : Array[(Int, Int)] = []
+fn ring_spans(screen : Screen, row : Int32) -> Array[(Int32, Int32)] {
+  let out : Array[(Int32, Int32)] = []
   let mut left = -1
   for col in 0..<screen.cols {
     let ch = screen.at(row, col).ch
@@ -427,7 +427,12 @@ fn ring_spans(screen : Screen, row : Int) -> Array[(Int, Int)] {
 ///|
 /// 框线行上混进来的字形数。那一行只该有笔画和空格:列表行压上顶边框或
 /// 底边框,就是用户报的「列表有时候会滚到列表框外面」。
-fn ring_glyph_count(screen : Screen, row : Int, left : Int, right : Int) -> Int {
+fn ring_glyph_count(
+  screen : Screen,
+  row : Int32,
+  left : Int32,
+  right : Int32,
+) -> Int32 {
   let mut count = 0
   for col in left..<=right {
     let ch = screen.at(row, col).ch.to_int()
@@ -444,11 +449,11 @@ fn ring_glyph_count(screen : Screen, row : Int, left : Int, right : Int) -> Int 
 /// 用户看到的就不是「哪一行选中」而是一个吞掉整框的色块。
 fn ring_reversed_count(
   screen : Screen,
-  top : Int,
-  bottom : Int,
-  left : Int,
-  right : Int,
-) -> Int {
+  top : Int32,
+  bottom : Int32,
+  left : Int32,
+  right : Int32,
+) -> Int32 {
   let mut count = 0
   for col in left..<=right {
     if screen.at(top, col).style.reverse {
@@ -571,7 +576,7 @@ async test "S7 a short pane keeps its ring free of rows and bands" {
 ///|
 /// 某一行上带反白的格子数。反白带是选中的唯一表示,也是残留最显眼的形态:
 /// 带一移走,它留在空格子上的反白必须跟着走。
-fn reversed_in_row(screen : Screen, row : Int) -> Int {
+fn reversed_in_row(screen : Screen, row : Int32) -> Int32 {
   reversed_in_cols(screen, row, col_from=0, col_to=screen.cols - 1)
 }
 
@@ -581,10 +586,10 @@ fn reversed_in_row(screen : Screen, row : Int) -> Int {
 /// 会永远误红(列表行和树行永远共线)。
 fn reversed_in_cols(
   screen : Screen,
-  row : Int,
-  col_from~ : Int,
-  col_to~ : Int,
-) -> Int {
+  row : Int32,
+  col_from~ : Int32,
+  col_to~ : Int32,
+) -> Int32 {
   let mut count = 0
   let mut col = col_from
   while col <= col_to {
@@ -862,7 +867,7 @@ async test "H5 Tab and Shift-Tab cycle the panes with a visible title state" {
 
 ///|
 /// 第 want 个非空白格的列(跳过边框与空白):点行名用,别点在边框上。
-fn nth_glyph_col_mid(screen : Screen, row : Int) -> Int {
+fn nth_glyph_col_mid(screen : Screen, row : Int32) -> Int32 {
   let mut seen = 0
   let mut col = 0
   while col < screen.cols {
@@ -880,7 +885,7 @@ fn nth_glyph_col_mid(screen : Screen, row : Int) -> Int {
 ///|
 /// 某行最后一个 '[' 的列:树行的标签按钮在折叠钮之后,最后一个 '['
 /// 就是标签首格;点它落在标签按钮的盒子里,而不是折叠钮上。
-fn last_open_bracket(screen : Screen, row : Int) -> Int {
+fn last_open_bracket(screen : Screen, row : Int32) -> Int32 {
   let mut col = screen.cols - 1
   while col >= 0 {
     if screen.at(row, col).ch == '[' {
@@ -893,7 +898,7 @@ fn last_open_bracket(screen : Screen, row : Int) -> Int {
 
 ///|
 /// 该行最左的反白格(没有就是 -1):树的高亮带必须从行首算起。
-fn first_reversed_col(screen : Screen, row : Int) -> Int {
+fn first_reversed_col(screen : Screen, row : Int32) -> Int32 {
   let mut col = 0
   while col < screen.cols {
     if screen.at(row, col).style.reverse {

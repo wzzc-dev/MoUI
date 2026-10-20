@@ -22,7 +22,7 @@ pub fn web_history_forward() -> Unit {
 }
 
 ///|
-pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
+pub fn web_dispatch_route(source_code : Int32, text_id : Int32) -> Unit {
   ignore(web_dispatch_route_text(source_code, web_host_string_from_id(text_id)))
 }
 
@@ -32,7 +32,7 @@ fn set_web_route_source(source : @services.RouteSource?) -> Unit {
 }
 
 ///|
-fn web_dispatch_route_text(source_code : Int, route : String) -> Int {
+fn web_dispatch_route_text(source_code : Int32, route : String) -> Int32 {
   match web_active_route_source.val {
     Some(source) =>
       source.publish(
@@ -46,7 +46,7 @@ fn web_dispatch_route_text(source_code : Int, route : String) -> Int {
 }
 
 ///|
-fn web_route_source_label(source_code : Int) -> String {
+fn web_route_source_label(source_code : Int32) -> String {
   match source_code {
     0 => "web-initial"
     1 => "web-popstate"

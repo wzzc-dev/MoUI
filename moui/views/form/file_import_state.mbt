@@ -40,7 +40,7 @@ fn FileSelection::is_empty(self : FileSelection) -> Bool {
 ///|
 fn FileSelection::summary(
   self : FileSelection,
-  empty? : String = "No files selected",
+  empty~ : String = "No files selected",
 ) -> String {
   if self.paths.is_empty() {
     empty

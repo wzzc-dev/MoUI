@@ -1,8 +1,8 @@
 ///|
 fn outline_test_item(
-  level : Int,
+  level : Int32,
   title : String,
-  source_start : Int,
+  source_start : Int32,
 ) -> @richtext.MarkdownEditorOutlineItem {
   { level, title, source_start, }
 }

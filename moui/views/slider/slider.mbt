@@ -1,18 +1,18 @@
 ///|
 pub fn[Msg] slider(
   value : Double,
-  min? : Double = 0.0,
-  max? : Double = 1.0,
+  min~ : Double = 0.0,
+  max~ : Double = 1.0,
   step? : Double,
-  label? : String = "",
+  label~ : String = "",
   value_text? : String,
-  width? : Double = 180.0,
-  height? : Double = 28.0,
+  width~ : Double = 180.0,
+  height~ : Double = 28.0,
   theme? : @core.Theme,
   style? : @style.SliderStyle,
   foreground? : @core.Color,
   background? : @core.Color,
-  on_change? : ((Double) -> Msg)? = None,
+  on_change~ : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let resolved_max = if max <= min { min + 1.0 } else { max }
   let resolved_range = resolved_max - min

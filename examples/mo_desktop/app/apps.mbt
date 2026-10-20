@@ -17,7 +17,7 @@ pub(all) struct AppDescriptor {
   default_width : Double
   default_height : Double
   /// Ordering hint: lower values appear earlier in the Dock and launcher.
-  dock_priority : Int
+  dock_priority : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -33,9 +33,9 @@ fn app_descriptor(
   detail : String,
   icon : @views.IconName,
   color : @graphics.Color,
-  default_width? : Double = 0.0,
-  default_height? : Double = 0.0,
-  dock_priority? : Int = 0,
+  default_width~ : Double = 0.0,
+  default_height~ : Double = 0.0,
+  dock_priority~ : Int32 = 0,
 ) -> AppDescriptor {
   {
     id,

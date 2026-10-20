@@ -1,13 +1,13 @@
 ///|
-pub let default_row_count : Int = 30
+pub let default_row_count : Int32 = 30
 
 ///|
-pub let default_col_count : Int = 12
+pub let default_col_count : Int32 = 12
 
 ///|
 pub(all) struct Selection {
-  row : Int
-  col : Int
+  row : Int32
+  col : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -30,7 +30,7 @@ pub extend Clipboard with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct IndexedCell {
-  index : Int
+  index : Int32
   cell : @cell.Cell
 } derive(Eq, Debug)
 
@@ -42,8 +42,8 @@ pub extend IndexedCell with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct CellChange {
-  row : Int
-  col : Int
+  row : Int32
+  col : Int32
   old_cell : @cell.Cell
   new_cell : @cell.Cell
 } derive(Eq, Debug)
@@ -56,7 +56,7 @@ pub extend CellChange with Eq::{not_equal, equal}
 
 ///|
 priv struct SortRow {
-  source_row : Int
+  source_row : Int32
   cells : Array[@cell.Cell]
 }
 
@@ -69,13 +69,13 @@ priv struct FormulaRefToken {
 
 ///|
 pub(all) enum UndoOp {
-  CellEdit(Int, Int, @cell.Cell, @cell.Cell)
+  CellEdit(Int32, Int32, @cell.Cell, @cell.Cell)
   CellBatchEdit(Array[CellChange])
-  CellFormat(Int, Int, @cell.CellFormat, @cell.CellFormat)
-  RowInsert(Int)
-  ColumnInsert(Int)
-  RowDelete(Int, Array[IndexedCell])
-  ColumnDelete(Int, Array[IndexedCell])
+  CellFormat(Int32, Int32, @cell.CellFormat, @cell.CellFormat)
+  RowInsert(Int32)
+  ColumnInsert(Int32)
+  RowDelete(Int32, Array[IndexedCell])
+  ColumnDelete(Int32, Array[IndexedCell])
 } derive(Eq, Debug)
 
 ///|
@@ -87,8 +87,8 @@ pub extend UndoOp with Eq::{not_equal, equal}
 ///|
 pub(all) struct Sheet {
   name : String
-  row_count : Int
-  col_count : Int
+  row_count : Int32
+  col_count : Int32
   cells : Map[String, @cell.Cell]
 } derive(Debug)
 
@@ -98,7 +98,7 @@ pub extend Sheet with Debug::{to_repr}
 ///|
 pub(all) struct Workbook {
   sheets : Array[Sheet]
-  active_sheet : Int
+  active_sheet : Int32
   selection : Selection?
   selection_range : @cell.CellRange?
   clipboard : Clipboard
@@ -110,7 +110,7 @@ pub(all) struct Workbook {
 pub extend Workbook with Debug::{to_repr}
 
 ///|
-pub fn Selection::new(row~ : Int, col~ : Int) -> Selection {
+pub fn Selection::new(row~ : Int32, col~ : Int32) -> Selection {
   { row, col, }
 }
 
@@ -127,8 +127,8 @@ pub fn Clipboard::empty() -> Clipboard {
 ///|
 pub fn Sheet::new(
   name : String,
-  row_count? : Int = default_row_count,
-  col_count? : Int = default_col_count,
+  row_count~ : Int32 = default_row_count,
+  col_count~ : Int32 = default_col_count,
 ) -> Sheet {
   { name, row_count, col_count, cells: Map([]), }
 }
@@ -157,7 +157,7 @@ pub fn Sheet::from_table(
 }
 
 ///|
-pub fn Sheet::get_cell(self : Sheet, row : Int, col : Int) -> @cell.Cell {
+pub fn Sheet::get_cell(self : Sheet, row : Int32, col : Int32) -> @cell.Cell {
   match self.cells.get(@cell.make_key(row, col)) {
     Some(cell) => cell
     None => @cell.Cell::empty()
@@ -165,20 +165,20 @@ pub fn Sheet::get_cell(self : Sheet, row : Int, col : Int) -> @cell.Cell {
 }
 
 ///|
-pub fn Sheet::display_cell(self : Sheet, row : Int, col : Int) -> String {
+pub fn Sheet::display_cell(self : Sheet, row : Int32, col : Int32) -> String {
   self.get_cell(row, col).display()
 }
 
 ///|
-pub fn Sheet::safe_raw(self : Sheet, row : Int, col : Int) -> String {
+pub fn Sheet::safe_raw(self : Sheet, row : Int32, col : Int32) -> String {
   self.get_cell(row, col).raw
 }
 
 ///|
 pub fn Sheet::set_raw_no_undo(
   self : Sheet,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   raw : String,
 ) -> Sheet {
   let cells = self.cells.copy()
@@ -201,8 +201,8 @@ pub fn Sheet::set_raw_no_undo(
 ///|
 pub fn Sheet::set_cell_no_undo(
   self : Sheet,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   next_cell : @cell.Cell,
 ) -> Sheet {
   let cells = self.cells.copy()
@@ -223,8 +223,8 @@ pub fn Sheet::set_cell_no_undo(
 ///|
 pub fn Sheet::set_format_no_undo(
   self : Sheet,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   format : @cell.CellFormat,
 ) -> Sheet {
   let old = self.get_cell(row, col)
@@ -252,7 +252,7 @@ pub fn Sheet::recalc(self : Sheet) -> Sheet {
 }
 
 ///|
-pub fn Sheet::used_cell_count(self : Sheet) -> Int {
+pub fn Sheet::used_cell_count(self : Sheet) -> Int32 {
   let mut count = 0
   for _, cell in self.cells {
     if !cell.raw.is_empty() {
@@ -270,7 +270,7 @@ pub fn Workbook::new() -> Workbook {
 ///|
 pub fn Workbook::from_sheets(
   sheets : Array[Sheet],
-  active_sheet? : Int = 0,
+  active_sheet~ : Int32 = 0,
 ) -> Workbook {
   let source = if sheets.is_empty() { [Sheet::new("Sheet1")] } else { sheets }
   let active = clamp_int(active_sheet, 0, source.length() - 1)
@@ -385,7 +385,11 @@ pub fn Workbook::selected_ref(self : Workbook) -> String {
 }
 
 ///|
-pub fn Workbook::select_cell(self : Workbook, row : Int, col : Int) -> Workbook {
+pub fn Workbook::select_cell(
+  self : Workbook,
+  row : Int32,
+  col : Int32,
+) -> Workbook {
   let sheet = self.active()
   let next = Selection::new(
     row=clamp_int(row, 0, sheet.row_count - 1),
@@ -397,10 +401,10 @@ pub fn Workbook::select_cell(self : Workbook, row : Int, col : Int) -> Workbook 
 ///|
 pub fn Workbook::select_range(
   self : Workbook,
-  start_row : Int,
-  start_col : Int,
-  end_row : Int,
-  end_col : Int,
+  start_row : Int32,
+  start_col : Int32,
+  end_row : Int32,
+  end_col : Int32,
 ) -> Workbook {
   let sheet = self.active()
   let anchor_row = clamp_int(start_row, 0, sheet.row_count - 1)
@@ -429,8 +433,8 @@ pub fn Workbook::selected_range(self : Workbook) -> @cell.CellRange? {
 ///|
 pub fn Workbook::cell_is_selected(
   self : Workbook,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
 ) -> Bool {
   match self.selection_range {
     Some(range) =>
@@ -458,7 +462,7 @@ fn range_ref(range : @cell.CellRange) -> String {
 }
 
 ///|
-pub fn Workbook::switch_sheet(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::switch_sheet(self : Workbook, index : Int32) -> Workbook {
   if index < 0 || index >= self.sheets.length() {
     self
   } else {
@@ -474,7 +478,11 @@ pub fn Workbook::switch_sheet(self : Workbook, index : Int) -> Workbook {
 }
 
 ///|
-pub fn Workbook::navigate(self : Workbook, drow : Int, dcol : Int) -> Workbook {
+pub fn Workbook::navigate(
+  self : Workbook,
+  drow : Int32,
+  dcol : Int32,
+) -> Workbook {
   match self.selection {
     None => self.select_cell(0, 0)
     Some(sel) => self.select_cell(sel.row + drow, sel.col + dcol)
@@ -484,8 +492,8 @@ pub fn Workbook::navigate(self : Workbook, drow : Int, dcol : Int) -> Workbook {
 ///|
 pub fn Workbook::navigate_to_data_edge(
   self : Workbook,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> Workbook {
   match self.selection {
     None => self.select_cell(0, 0)
@@ -499,8 +507,8 @@ pub fn Workbook::navigate_to_data_edge(
 ///|
 pub fn Workbook::extend_selection(
   self : Workbook,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> Workbook {
   match self.selection {
     None => self.select_cell(0, 0)
@@ -532,8 +540,8 @@ pub fn Workbook::extend_selection(
 ///|
 pub fn Workbook::extend_selection_to(
   self : Workbook,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
 ) -> Workbook {
   match self.selection {
     None => self.select_cell(row, col)
@@ -544,8 +552,8 @@ pub fn Workbook::extend_selection_to(
 ///|
 pub fn Workbook::extend_selection_to_data_edge(
   self : Workbook,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> Workbook {
   match self.selection {
     None => self.select_cell(0, 0)
@@ -569,8 +577,8 @@ pub fn Workbook::set_selected_raw(self : Workbook, raw : String) -> Workbook {
 ///|
 pub fn Workbook::set_raw(
   self : Workbook,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   raw : String,
 ) -> Workbook {
   let sheet = self.active()
@@ -610,10 +618,10 @@ pub fn Workbook::set_selected_format(
 ///|
 pub fn Workbook::set_format_range(
   self : Workbook,
-  start_row : Int,
-  start_col : Int,
-  end_row : Int,
-  end_col : Int,
+  start_row : Int32,
+  start_col : Int32,
+  end_row : Int32,
+  end_col : Int32,
   updater : (@cell.CellFormat) -> @cell.CellFormat,
 ) -> Workbook {
   let sheet = self.active()
@@ -650,8 +658,8 @@ pub fn Workbook::set_format_range(
 ///|
 pub fn Workbook::set_format(
   self : Workbook,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   updater : (@cell.CellFormat) -> @cell.CellFormat,
 ) -> Workbook {
   let sheet = self.active()
@@ -689,10 +697,10 @@ pub fn Workbook::clear_selected(self : Workbook) -> Workbook {
 ///|
 pub fn Workbook::clear_range(
   self : Workbook,
-  start_row : Int,
-  start_col : Int,
-  end_row : Int,
-  end_col : Int,
+  start_row : Int32,
+  start_col : Int32,
+  end_row : Int32,
+  end_col : Int32,
 ) -> Workbook {
   let sheet = self.active()
   let row_start = clamp_int(min_int(start_row, end_row), 0, sheet.row_count - 1)
@@ -748,10 +756,10 @@ pub fn Workbook::copy_selected(self : Workbook) -> Workbook {
 ///|
 pub fn Workbook::copy_range(
   self : Workbook,
-  start_row : Int,
-  start_col : Int,
-  end_row : Int,
-  end_col : Int,
+  start_row : Int32,
+  start_col : Int32,
+  end_row : Int32,
+  end_col : Int32,
 ) -> Workbook {
   let sheet = self.active()
   let row_start = clamp_int(min_int(start_row, end_row), 0, sheet.row_count - 1)
@@ -896,8 +904,8 @@ pub fn Workbook::paste_tsv(self : Workbook, text : String) -> Workbook {
 fn Workbook::select_pasted_area(
   self : Workbook,
   anchor : Selection,
-  row_count : Int,
-  col_count : Int,
+  row_count : Int32,
+  col_count : Int32,
 ) -> Workbook {
   if row_count <= 0 || col_count <= 0 {
     self
@@ -1061,7 +1069,11 @@ pub fn Workbook::sort_selected_by_first_column(
 }
 
 ///|
-fn compare_sort_rows(left : SortRow, right : SortRow, ascending~ : Bool) -> Int {
+fn compare_sort_rows(
+  left : SortRow,
+  right : SortRow,
+  ascending~ : Bool,
+) -> Int32 {
   let left_key = left.cells[0]
   let right_key = right.cells[0]
   let left_blank = sort_cell_is_blank(left_key)
@@ -1089,7 +1101,7 @@ fn sort_cell_is_blank(cell : @cell.Cell) -> Bool {
 }
 
 ///|
-fn compare_sort_cells(left : @cell.Cell, right : @cell.Cell) -> Int {
+fn compare_sort_cells(left : @cell.Cell, right : @cell.Cell) -> Int32 {
   match (left.value, right.value) {
     (Number(a), Number(b)) => compare_double(a, b)
     (Text(a), Text(b)) => compare_text(a, b)
@@ -1108,7 +1120,7 @@ fn compare_sort_cells(left : @cell.Cell, right : @cell.Cell) -> Int {
 }
 
 ///|
-fn sort_value_rank(value : @cell.CellValue) -> Int {
+fn sort_value_rank(value : @cell.CellValue) -> Int32 {
   match value {
     Number(_) => 0
     Text(_) => 1
@@ -1118,7 +1130,7 @@ fn sort_value_rank(value : @cell.CellValue) -> Int {
 }
 
 ///|
-fn compare_double(left : Double, right : Double) -> Int {
+fn compare_double(left : Double, right : Double) -> Int32 {
   if left < right {
     -1
   } else if left > right {
@@ -1129,7 +1141,7 @@ fn compare_double(left : Double, right : Double) -> Int {
 }
 
 ///|
-fn compare_text(left : String, right : String) -> Int {
+fn compare_text(left : String, right : String) -> Int32 {
   let primary = left.compare_ignore_ascii_case(right)
   if primary == 0 {
     left.compare(right)
@@ -1221,7 +1233,7 @@ pub fn Workbook::fill_right_selected(self : Workbook) -> Workbook {
 }
 
 ///|
-pub fn Workbook::insert_row(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::insert_row(self : Workbook, index : Int32) -> Workbook {
   let sheet = self.active()
   let idx = clamp_int(index, 0, sheet.row_count)
   self
@@ -1230,7 +1242,7 @@ pub fn Workbook::insert_row(self : Workbook, index : Int) -> Workbook {
 }
 
 ///|
-pub fn Workbook::delete_row(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::delete_row(self : Workbook, index : Int32) -> Workbook {
   let sheet = self.active()
   if index < 0 || index >= sheet.row_count {
     self
@@ -1243,7 +1255,7 @@ pub fn Workbook::delete_row(self : Workbook, index : Int) -> Workbook {
 }
 
 ///|
-pub fn Workbook::insert_column(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::insert_column(self : Workbook, index : Int32) -> Workbook {
   let sheet = self.active()
   let idx = clamp_int(index, 0, sheet.col_count)
   self
@@ -1252,7 +1264,7 @@ pub fn Workbook::insert_column(self : Workbook, index : Int) -> Workbook {
 }
 
 ///|
-pub fn Workbook::delete_column(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::delete_column(self : Workbook, index : Int32) -> Workbook {
   let sheet = self.active()
   if index < 0 || index >= sheet.col_count {
     self
@@ -1294,7 +1306,7 @@ fn next_sheet_name(sheets : Array[Sheet]) -> String {
 }
 
 ///|
-pub fn Workbook::delete_sheet(self : Workbook, index : Int) -> Workbook {
+pub fn Workbook::delete_sheet(self : Workbook, index : Int32) -> Workbook {
   if self.sheets.length() <= 1 || index < 0 || index >= self.sheets.length() {
     self
   } else {
@@ -1319,10 +1331,10 @@ pub fn Workbook::delete_sheet(self : Workbook, index : Int) -> Workbook {
 
 ///|
 fn active_sheet_after_delete(
-  active : Int,
-  deleted : Int,
-  next_len : Int,
-) -> Int {
+  active : Int32,
+  deleted : Int32,
+  next_len : Int32,
+) -> Int32 {
   if deleted < active {
     active - 1
   } else if deleted == active && active >= next_len {
@@ -1442,7 +1454,7 @@ pub fn Workbook::push_undo(self : Workbook, op : UndoOp) -> Workbook {
 }
 
 ///|
-fn shift_sheet_rows(sheet : Sheet, index : Int, delta : Int) -> Sheet {
+fn shift_sheet_rows(sheet : Sheet, index : Int32, delta : Int32) -> Sheet {
   let cells : Map[String, @cell.Cell] = Map([])
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
@@ -1472,7 +1484,7 @@ fn shift_sheet_rows(sheet : Sheet, index : Int, delta : Int) -> Sheet {
 }
 
 ///|
-fn collect_row_cells(sheet : Sheet, row : Int) -> Array[IndexedCell] {
+fn collect_row_cells(sheet : Sheet, row : Int32) -> Array[IndexedCell] {
   let cells : Array[IndexedCell] = []
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
@@ -1489,7 +1501,7 @@ fn collect_row_cells(sheet : Sheet, row : Int) -> Array[IndexedCell] {
 ///|
 fn restore_row_cells(
   sheet : Sheet,
-  row : Int,
+  row : Int32,
   cells : Array[IndexedCell],
 ) -> Sheet {
   let mut result = shift_sheet_rows(sheet, row, 1)
@@ -1500,7 +1512,7 @@ fn restore_row_cells(
 }
 
 ///|
-fn shift_sheet_cols(sheet : Sheet, index : Int, delta : Int) -> Sheet {
+fn shift_sheet_cols(sheet : Sheet, index : Int32, delta : Int32) -> Sheet {
   let cells : Map[String, @cell.Cell] = Map([])
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
@@ -1530,7 +1542,7 @@ fn shift_sheet_cols(sheet : Sheet, index : Int, delta : Int) -> Sheet {
 }
 
 ///|
-fn collect_column_cells(sheet : Sheet, col : Int) -> Array[IndexedCell] {
+fn collect_column_cells(sheet : Sheet, col : Int32) -> Array[IndexedCell] {
   let cells : Array[IndexedCell] = []
   for key, cell in sheet.cells {
     match @cell.parse_ref(key) {
@@ -1547,7 +1559,7 @@ fn collect_column_cells(sheet : Sheet, col : Int) -> Array[IndexedCell] {
 ///|
 fn restore_column_cells(
   sheet : Sheet,
-  col : Int,
+  col : Int32,
   cells : Array[IndexedCell],
 ) -> Sheet {
   let mut result = shift_sheet_cols(sheet, col, 1)
@@ -1560,14 +1572,14 @@ fn restore_column_cells(
 ///|
 fn adjust_pasted_cell(
   cell : @cell.Cell,
-  drow~ : Int,
-  dcol~ : Int,
+  drow~ : Int32,
+  dcol~ : Int32,
 ) -> @cell.Cell {
   { ..cell, raw: translate_formula_refs(cell.raw, drow~, dcol~), }
 }
 
 ///|
-fn translate_formula_refs(raw : String, drow~ : Int, dcol~ : Int) -> String {
+fn translate_formula_refs(raw : String, drow~ : Int32, dcol~ : Int32) -> String {
   rewrite_formula_refs(raw, ref_token => {
     let row = if ref_token.row_abs {
       ref_token.addr.row
@@ -1590,8 +1602,8 @@ fn translate_formula_refs(raw : String, drow~ : Int, dcol~ : Int) -> String {
 ///|
 fn adjust_cell_row_refs(
   cell : @cell.Cell,
-  index : Int,
-  delta : Int,
+  index : Int32,
+  delta : Int32,
 ) -> @cell.Cell {
   {
     ..cell,
@@ -1604,8 +1616,8 @@ fn adjust_cell_row_refs(
 ///|
 fn adjust_cell_col_refs(
   cell : @cell.Cell,
-  index : Int,
-  delta : Int,
+  index : Int32,
+  delta : Int32,
 ) -> @cell.Cell {
   {
     ..cell,
@@ -1616,7 +1628,11 @@ fn adjust_cell_col_refs(
 }
 
 ///|
-fn shift_row_ref(token : FormulaRefToken, index : Int, delta : Int) -> String {
+fn shift_row_ref(
+  token : FormulaRefToken,
+  index : Int32,
+  delta : Int32,
+) -> String {
   let addr = token.addr
   if delta > 0 {
     let row = if addr.row >= index { addr.row + delta } else { addr.row }
@@ -1630,7 +1646,11 @@ fn shift_row_ref(token : FormulaRefToken, index : Int, delta : Int) -> String {
 }
 
 ///|
-fn shift_col_ref(token : FormulaRefToken, index : Int, delta : Int) -> String {
+fn shift_col_ref(
+  token : FormulaRefToken,
+  index : Int32,
+  delta : Int32,
+) -> String {
   let addr = token.addr
   if delta > 0 {
     let col = if addr.col >= index { addr.col + delta } else { addr.col }
@@ -1695,7 +1715,11 @@ fn rewrite_formula_refs(
 }
 
 ///|
-fn format_ref_token(token : FormulaRefToken, row : Int, col : Int) -> String {
+fn format_ref_token(
+  token : FormulaRefToken,
+  row : Int32,
+  col : Int32,
+) -> String {
   let col_prefix = if token.col_abs { "$" } else { "" }
   let row_prefix = if token.row_abs { "$" } else { "" }
   col_prefix + @cell.column_label(col) + row_prefix + (row + 1).to_string()
@@ -1721,7 +1745,7 @@ fn is_ascii_digit(c : Char) -> Bool {
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {
@@ -1734,10 +1758,10 @@ fn clamp_int(value : Int, min : Int, max : Int) -> Int {
 ///|
 fn Sheet::data_edge_position(
   self : Sheet,
-  row : Int,
-  col : Int,
-  drow : Int,
-  dcol : Int,
+  row : Int32,
+  col : Int32,
+  drow : Int32,
+  dcol : Int32,
 ) -> Selection {
   let row_dir = sign_int(drow)
   let col_dir = sign_int(dcol)
@@ -1767,10 +1791,10 @@ fn Sheet::data_edge_position(
 ///|
 fn Sheet::first_non_empty_or_boundary(
   self : Sheet,
-  row : Int,
-  col : Int,
-  row_dir : Int,
-  col_dir : Int,
+  row : Int32,
+  col : Int32,
+  row_dir : Int32,
+  col_dir : Int32,
 ) -> Selection {
   let mut edge_row = row
   let mut edge_col = col
@@ -1793,10 +1817,10 @@ fn Sheet::first_non_empty_or_boundary(
 ///|
 fn Sheet::last_contiguous_non_empty(
   self : Sheet,
-  row : Int,
-  col : Int,
-  row_dir : Int,
-  col_dir : Int,
+  row : Int32,
+  col : Int32,
+  row_dir : Int32,
+  col_dir : Int32,
 ) -> Selection {
   let mut edge_row = row
   let mut edge_col = col
@@ -1813,12 +1837,12 @@ fn Sheet::last_contiguous_non_empty(
 }
 
 ///|
-fn Sheet::in_bounds(self : Sheet, row : Int, col : Int) -> Bool {
+fn Sheet::in_bounds(self : Sheet, row : Int32, col : Int32) -> Bool {
   row >= 0 && row < self.row_count && col >= 0 && col < self.col_count
 }
 
 ///|
-fn sign_int(value : Int) -> Int {
+fn sign_int(value : Int32) -> Int32 {
   if value < 0 {
     -1
   } else if value > 0 {
@@ -1829,7 +1853,7 @@ fn sign_int(value : Int) -> Int {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -1838,7 +1862,7 @@ fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn min_int(a : Int, b : Int) -> Int {
+fn min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {

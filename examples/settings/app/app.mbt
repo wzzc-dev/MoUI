@@ -286,7 +286,7 @@ fn preferences_feature(
 /// the default theme argument is irrelevant there; the `view` path passes
 /// the model-resolved theme (`theme~`).
 fn profile_scope(
-  theme? : @moui.Theme = @views.light_theme(),
+  theme~ : @moui.Theme = @views.light_theme(),
 ) -> @moui.ScopedFeature[SettingsModel, ProfileSection, ProfileMsg, SettingsMsg] {
   profile_feature(theme).scope(read=profile_read, write=profile_write, wrap=message => {
     Profile(message)
@@ -295,7 +295,7 @@ fn profile_scope(
 
 ///|
 fn workspace_scope(
-  theme? : @moui.Theme = @views.light_theme(),
+  theme~ : @moui.Theme = @views.light_theme(),
 ) -> @moui.ScopedFeature[
   SettingsModel,
   WorkspaceSection,
@@ -309,7 +309,7 @@ fn workspace_scope(
 
 ///|
 fn preferences_scope(
-  theme? : @moui.Theme = @views.light_theme(),
+  theme~ : @moui.Theme = @views.light_theme(),
 ) -> @moui.ScopedFeature[
   SettingsModel,
   PreferencesSection,

@@ -20,11 +20,11 @@ pub extend WebDocumentMetadata with ToJson::{to_json}
 ///|
 pub fn WebDocumentMetadata::new(
   title~ : String,
-  description? : String = "",
-  canonical? : String = "",
-  image? : String = "",
-  locale? : String = "",
-  direction? : String = "",
+  description~ : String = "",
+  canonical~ : String = "",
+  image~ : String = "",
+  locale~ : String = "",
+  direction~ : String = "",
 ) -> WebDocumentMetadata {
   { title, description, canonical, image, locale, direction, }
 }

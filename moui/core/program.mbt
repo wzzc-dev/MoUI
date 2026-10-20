@@ -109,8 +109,8 @@ pub fn[Msg] Effect::dispatch(run : ((Msg) -> Unit) -> Unit) -> Effect[Msg] {
 pub fn[Msg] Effect::run(
   key~ : String,
   run~ : ((Msg) -> Unit) -> Unit,
-  kind? : String = "custom",
-  label? : String = "",
+  kind~ : String = "custom",
+  label~ : String = "",
 ) -> Effect[Msg] {
   Run({ key, kind, label, }, run)
 }
@@ -119,8 +119,8 @@ pub fn[Msg] Effect::run(
 pub fn[Msg] Effect::task(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  kind? : String = "task",
-  label? : String = "",
+  kind~ : String = "task",
+  label~ : String = "",
 ) -> Effect[Msg] {
   Task({ key, kind, label, }, start)
 }
@@ -129,7 +129,7 @@ pub fn[Msg] Effect::task(
 pub fn[Msg] Effect::service_task(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> Effect[Msg] {
   Effect::task(key~, start~, kind="service", label~)
 }
@@ -178,7 +178,7 @@ pub fn[Model, Msg] Program::new(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
   {
     init,
@@ -194,7 +194,7 @@ pub fn[Model, Msg] Program::new_with_environment(
   init~ : () -> (Model, Effect[Msg]),
   update~ : (Model, Msg) -> (Model, Effect[Msg]),
   view~ : (Model, ViewEnvironment) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
   { init, update, view, subscriptions, commands: _model => [], }
 }
@@ -212,7 +212,7 @@ pub fn[Model, Msg] Program::simple(
   init~ : Model,
   update~ : (Model, Msg) -> Model,
   view~ : (Model) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
   Program::new(
     init=() => (init, Effect::none()),
@@ -227,7 +227,7 @@ pub fn[Model, Msg] Program::simple_with_environment(
   init~ : Model,
   update~ : (Model, Msg) -> Model,
   view~ : (Model, ViewEnvironment) -> View[Msg],
-  subscriptions? : (Model) -> Subscription[Msg] = _model => Subscription::none(),
+  subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
   Program::new_with_environment(
     init=() => (init, Effect::none()),

@@ -78,7 +78,7 @@ fn load_sheet(
 }
 
 ///|
-fn max_row_width(rows : Array[Array[String]]) -> Int {
+fn max_row_width(rows : Array[Array[String]]) -> Int32 {
   let mut width = @sheet.default_col_count
   for row in rows {
     if row.length() > width {

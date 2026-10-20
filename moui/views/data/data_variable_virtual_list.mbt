@@ -39,9 +39,9 @@ pub fn[T, Msg] variable_virtual_list(
   metrics~ : VariableListMetrics,
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  viewport_height? : Double = 240.0,
-  overscan? : Int = 1,
-  empty? : @core.View[Msg]? = None,
+  viewport_height~ : Double = 240.0,
+  overscan~ : Int32 = 1,
+  empty~ : @core.View[Msg]? = None,
   offset~ : @core.Point,
   on_scroll~ : (@core.Point) -> Msg,
   request? : @core.ScrollRequest,
@@ -73,10 +73,10 @@ pub fn[T, Msg] variable_virtual_list(
 
 ///|
 pub fn scroll_to_key(
-  request_id~ : Int,
+  request_id~ : Int32,
   metrics~ : VariableListMetrics,
   key~ : String,
-  inset? : Double = 0.0,
+  inset~ : Double = 0.0,
 ) -> @core.ScrollRequest? {
   match metrics.offset_for_key(key) {
     Some(offset) =>

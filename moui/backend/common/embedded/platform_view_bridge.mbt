@@ -21,7 +21,7 @@ pub fn EmbeddedRuntimeHostBridge::sync_platform_views(
 ///|
 fn EmbeddedRuntimeHostBridge::dispatch_platform_view_response(
   self : EmbeddedRuntimeHostBridge,
-  revision : Int,
+  revision : Int32,
   kind : String,
   id : String,
   event : @core.PlatformViewEvent,

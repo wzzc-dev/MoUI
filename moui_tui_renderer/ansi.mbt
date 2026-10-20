@@ -43,7 +43,7 @@ pub fn sgr(attrs : @tui.CellAttrs) -> String {
 
 ///|
 /// 一行 = 若干同属性文本段。宽字符右半格已经在 `runs()` 里跳过。
-pub fn ansi_runs(runs : Array[(String, Int, @tui.CellAttrs)]) -> String {
+pub fn ansi_runs(runs : Array[(String, Int32, @tui.CellAttrs)]) -> String {
   let mut out = ""
   for run in runs {
     out = out + sgr(run.2) + run.0
@@ -54,7 +54,7 @@ pub fn ansi_runs(runs : Array[(String, Int, @tui.CellAttrs)]) -> String {
 ///|
 /// 脏行 → 逐行重绘指令。整屏脏时先清屏,避免缩小窗口后的残影。
 pub fn frame_update(screen : @tui.TermScreen, damage : @tui.Damage) -> String {
-  let targets : Array[Int] = []
+  let targets : Array[Int32] = []
   let rows = screen.rows()
   if damage.full {
     for y in 0..<rows {

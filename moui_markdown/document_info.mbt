@@ -5,19 +5,19 @@
 ///|
 /// Block and inline statistics for a Markdown document.
 pub(all) struct MarkdownDocumentInfo {
-  character_count : Int
-  heading_count : Int
-  paragraph_count : Int
-  list_item_count : Int
-  task_count : Int
-  checked_task_count : Int
-  quote_count : Int
-  code_block_count : Int
-  table_count : Int
-  link_count : Int
-  image_count : Int
-  footnote_reference_count : Int
-  footnote_definition_count : Int
+  character_count : Int32
+  heading_count : Int32
+  paragraph_count : Int32
+  list_item_count : Int32
+  task_count : Int32
+  checked_task_count : Int32
+  quote_count : Int32
+  code_block_count : Int32
+  table_count : Int32
+  link_count : Int32
+  image_count : Int32
+  footnote_reference_count : Int32
+  footnote_definition_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|

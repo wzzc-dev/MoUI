@@ -1,8 +1,8 @@
 ///|
 /// Pixel buffer for 2D rendering (RGBA format)
 pub struct Pixmap {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
 } derive(Debug)
 
@@ -51,10 +51,10 @@ pub fn ImageQuality::to_sampling(self : ImageQuality) -> ImageSampling {
 ///|
 /// Insets used for nine-patch image scaling.
 pub struct NinePatchInsets {
-  left : Int
-  top : Int
-  right : Int
-  bottom : Int
+  left : Int32
+  top : Int32
+  right : Int32
+  bottom : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -65,24 +65,24 @@ pub extend NinePatchInsets with Eq::{not_equal, equal}
 
 ///|
 pub fn NinePatchInsets::new(
-  left~ : Int,
-  top~ : Int,
-  right~ : Int,
-  bottom~ : Int,
+  left~ : Int32,
+  top~ : Int32,
+  right~ : Int32,
+  bottom~ : Int32,
 ) -> NinePatchInsets {
   { left, top, right, bottom, }
 }
 
 ///|
 struct NinePatchSlices {
-  src_left : Int
-  src_right : Int
-  src_top : Int
-  src_bottom : Int
-  dst_left : Int
-  dst_right : Int
-  dst_top : Int
-  dst_bottom : Int
+  src_left : Int32
+  src_right : Int32
+  src_top : Int32
+  src_bottom : Int32
+  dst_left : Int32
+  dst_right : Int32
+  dst_top : Int32
+  dst_bottom : Int32
 } derive(Debug)
 
 ///|
@@ -90,20 +90,20 @@ pub extend NinePatchSlices with Debug::{to_repr}
 
 ///|
 /// Create a new pixmap filled with transparent pixels
-pub fn Pixmap::new(width : Int, height : Int) -> Pixmap {
+pub fn Pixmap::new(width : Int32, height : Int32) -> Pixmap {
   let size = width * height * 4
   { width, height, pixels: FixedArray::make(size, 0), }
 }
 
 ///|
 /// Get the width of the pixmap
-pub fn Pixmap::get_width(self : Pixmap) -> Int {
+pub fn Pixmap::get_width(self : Pixmap) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the height of the pixmap
-pub fn Pixmap::get_height(self : Pixmap) -> Int {
+pub fn Pixmap::get_height(self : Pixmap) -> Int32 {
   self.height
 }
 
@@ -123,7 +123,7 @@ pub fn Pixmap::copy(self : Pixmap) -> Pixmap {
 /// Return a deterministic lightweight checksum of the raw RGBA pixel bytes.
 /// This is intended for compact regression assertions and smoke telemetry, not
 /// for cryptographic or collision-resistant validation.
-pub fn Pixmap::checksum(self : Pixmap) -> Int {
+pub fn Pixmap::checksum(self : Pixmap) -> Int32 {
   checksum_rgba_bytes(self.pixels)
 }
 
@@ -131,8 +131,8 @@ pub fn Pixmap::checksum(self : Pixmap) -> Int {
 /// Set a pixel at the given coordinates
 pub fn Pixmap::set_pixel(
   self : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
 ) -> Unit {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else { return }
@@ -154,7 +154,7 @@ fn copy_pixmap_pixels(pixmap : Pixmap) -> FixedArray[Byte] {
 }
 
 ///|
-fn checksum_rgba_bytes(pixels : FixedArray[Byte]) -> Int {
+fn checksum_rgba_bytes(pixels : FixedArray[Byte]) -> Int32 {
   let mut checksum = 0
   for i in 0..<pixels.length() {
     checksum = (checksum + pixels[i].to_int() * (i % 251 + 1)) % 1000003
@@ -166,8 +166,8 @@ fn checksum_rgba_bytes(pixels : FixedArray[Byte]) -> Int {
 /// Composite a pixel over the existing pixel at the given coordinates
 pub fn Pixmap::blend_pixel(
   self : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
 ) -> Unit {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else { return }
@@ -177,8 +177,8 @@ pub fn Pixmap::blend_pixel(
 ///|
 fn Pixmap::blend_pixel_with_mode(
   self : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
   blend_mode : BlendMode,
 ) -> Unit {
@@ -188,7 +188,7 @@ fn Pixmap::blend_pixel_with_mode(
 
 ///|
 /// Get the color at the given coordinates
-pub fn Pixmap::get_pixel(self : Pixmap, x : Int, y : Int) -> Color {
+pub fn Pixmap::get_pixel(self : Pixmap, x : Int32, y : Int32) -> Color {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else {
     return Color::transparent()
   }
@@ -215,10 +215,10 @@ pub fn Pixmap::clear(self : Pixmap, color : Color) -> Unit {
 /// Fill a rectangle with a color
 pub fn Pixmap::fill_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  w : Int,
-  h : Int,
+  x : Int32,
+  y : Int32,
+  w : Int32,
+  h : Int32,
   color : Color,
 ) -> Unit {
   for dy in 0..<h {
@@ -232,10 +232,10 @@ pub fn Pixmap::fill_rect(
 /// Composite a rectangle over the existing pixels
 pub fn Pixmap::blend_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  w : Int,
-  h : Int,
+  x : Int32,
+  y : Int32,
+  w : Int32,
+  h : Int32,
   color : Color,
 ) -> Unit {
   for dy in 0..<h {
@@ -248,10 +248,10 @@ pub fn Pixmap::blend_rect(
 ///|
 fn Pixmap::blend_rect_with_mode(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  w : Int,
-  h : Int,
+  x : Int32,
+  y : Int32,
+  w : Int32,
+  h : Int32,
   color : Color,
   blend_mode : BlendMode,
 ) -> Unit {
@@ -266,10 +266,10 @@ fn Pixmap::blend_rect_with_mode(
 /// Composite a grayscale coverage mask over the existing pixels
 pub fn Pixmap::blend_mask(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   mask : FixedArray[Byte],
   color : Color,
 ) -> Unit {
@@ -291,10 +291,10 @@ pub fn Pixmap::blend_mask(
 /// Composite a source rectangle from a grayscale coverage mask over this pixmap.
 pub fn Pixmap::blend_mask_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  mask_width : Int,
-  mask_height : Int,
+  x : Int32,
+  y : Int32,
+  mask_width : Int32,
+  mask_height : Int32,
   mask : FixedArray[Byte],
   src_rect : PixelRect,
   color : Color,
@@ -339,8 +339,8 @@ pub fn Pixmap::blend_mask_rect(
 /// Composite another pixmap over this pixmap at the given destination position.
 pub fn Pixmap::blend_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   src : Pixmap,
   opacity : Double,
 ) -> Unit {
@@ -365,8 +365,8 @@ pub fn Pixmap::blend_pixmap(
 /// position corresponding to the requested source rectangle's top-left corner.
 pub fn Pixmap::blend_pixmap_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -406,10 +406,10 @@ pub fn Pixmap::blend_pixmap_rect(
 /// Composite another pixmap scaled to the given destination size.
 pub fn Pixmap::blend_scaled_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
 ) -> Unit {
@@ -443,10 +443,10 @@ pub fn Pixmap::blend_scaled_pixmap(
 /// Composite another pixmap scaled with bilinear sampling.
 pub fn Pixmap::blend_scaled_pixmap_bilinear(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
 ) -> Unit {
@@ -480,10 +480,10 @@ pub fn Pixmap::blend_scaled_pixmap_bilinear(
 /// Composite another pixmap scaled with bicubic sampling.
 pub fn Pixmap::blend_scaled_pixmap_bicubic(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
 ) -> Unit {
@@ -517,10 +517,10 @@ pub fn Pixmap::blend_scaled_pixmap_bicubic(
 /// Composite another pixmap scaled with an explicit sampling mode.
 pub fn Pixmap::blend_sampled_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
   sampling : ImageSampling,
@@ -538,10 +538,10 @@ pub fn Pixmap::blend_sampled_pixmap(
 /// Composite another pixmap scaled with a quality strategy.
 pub fn Pixmap::blend_quality_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
   quality : ImageQuality,
@@ -561,10 +561,10 @@ pub fn Pixmap::blend_quality_pixmap(
 /// Composite a source pixmap rectangle scaled to the given destination size.
 pub fn Pixmap::blend_scaled_pixmap_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -585,10 +585,10 @@ pub fn Pixmap::blend_scaled_pixmap_rect(
 /// Composite a source pixmap rectangle scaled with bilinear sampling.
 pub fn Pixmap::blend_scaled_pixmap_rect_bilinear(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -609,10 +609,10 @@ pub fn Pixmap::blend_scaled_pixmap_rect_bilinear(
 /// Composite a source pixmap rectangle scaled with bicubic sampling.
 pub fn Pixmap::blend_scaled_pixmap_rect_bicubic(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -633,10 +633,10 @@ pub fn Pixmap::blend_scaled_pixmap_rect_bicubic(
 /// Composite a source pixmap rectangle scaled with an explicit sampling mode.
 pub fn Pixmap::blend_sampled_pixmap_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -685,10 +685,10 @@ pub fn Pixmap::blend_sampled_pixmap_rect(
 /// Composite a source pixmap rectangle scaled with a quality strategy.
 pub fn Pixmap::blend_quality_pixmap_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -710,10 +710,10 @@ pub fn Pixmap::blend_quality_pixmap_rect(
 /// Composite a source pixmap rectangle repeatedly into the destination area.
 pub fn Pixmap::blend_tiled_pixmap_rect(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
@@ -760,10 +760,10 @@ pub fn Pixmap::blend_tiled_pixmap_rect(
 /// Composite a source pixmap using nine-patch scaling.
 pub fn Pixmap::blend_nine_patch_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   insets : NinePatchInsets,
   opacity : Double,
@@ -801,10 +801,10 @@ pub fn Pixmap::blend_nine_patch_pixmap(
 /// Composite a source pixmap using nine-patch scaling and a quality strategy.
 pub fn Pixmap::blend_quality_nine_patch_pixmap(
   self : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   insets : NinePatchInsets,
   opacity : Double,
@@ -825,20 +825,20 @@ pub fn Pixmap::blend_quality_nine_patch_pixmap(
 ///|
 fn blend_nine_patch_pixmap_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   insets : NinePatchInsets,
   opacity : Double,
   filter : PaintFilter?,
   sampling : ImageSampling,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   let slices = make_nine_patch_slices(
     src.get_width(),
@@ -1082,10 +1082,10 @@ fn blend_nine_patch_pixmap_region(
 
 ///|
 fn make_nine_patch_slices(
-  src_width : Int,
-  src_height : Int,
-  dst_width : Int,
-  dst_height : Int,
+  src_width : Int32,
+  src_height : Int32,
+  dst_width : Int32,
+  dst_height : Int32,
   insets : NinePatchInsets,
 ) -> NinePatchSlices {
   let (src_left, src_right) = clamp_edge_pair(
@@ -1113,7 +1113,7 @@ fn make_nine_patch_slices(
 }
 
 ///|
-fn clamp_edge_pair(total : Int, start : Int, end : Int) -> (Int, Int) {
+fn clamp_edge_pair(total : Int32, start : Int32, end : Int32) -> (Int32, Int32) {
   guard total > 0 else { return (0, 0) }
   let clamped_start = start.max(0).min(total)
   let clamped_end = end.max(0).min(total - clamped_start)
@@ -1123,22 +1123,22 @@ fn clamp_edge_pair(total : Int, start : Int, end : Int) -> (Int, Int) {
 ///|
 fn blend_nine_patch_segment(
   dst : Pixmap,
-  patch_x : Int,
-  patch_y : Int,
-  dst_offset_x : Int,
-  dst_offset_y : Int,
-  dst_width : Int,
-  dst_height : Int,
+  patch_x : Int32,
+  patch_y : Int32,
+  dst_offset_x : Int32,
+  dst_offset_y : Int32,
+  dst_width : Int32,
+  dst_height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   sampling : ImageSampling,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   guard dst_width > 0 && dst_height > 0 else { return false }
   guard src_rect.width > 0 && src_rect.height > 0 else { return false }
@@ -1160,20 +1160,20 @@ fn blend_nine_patch_segment(
 ///|
 fn blend_sampled_pixmap_rect_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   sampling : ImageSampling,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   match sampling {
     Nearest =>
@@ -1197,19 +1197,19 @@ fn blend_sampled_pixmap_rect_region(
 ///|
 fn blend_tiled_pixmap_rect_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   guard width > 0 && height > 0 else { return false }
   guard src_rect.width > 0 && src_rect.height > 0 else { return false }
@@ -1234,19 +1234,19 @@ fn blend_tiled_pixmap_rect_region(
 ///|
 fn blend_scaled_pixmap_rect_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   guard width > 0 && height > 0 else { return false }
   guard src_rect.width > 0 && src_rect.height > 0 else { return false }
@@ -1273,19 +1273,19 @@ fn blend_scaled_pixmap_rect_region(
 ///|
 fn blend_scaled_pixmap_rect_bilinear_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   guard width > 0 && height > 0 else { return false }
   guard src_rect.width > 0 && src_rect.height > 0 else { return false }
@@ -1312,19 +1312,19 @@ fn blend_scaled_pixmap_rect_bilinear_region(
 ///|
 fn blend_scaled_pixmap_rect_bicubic_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   src_rect : PixelRect,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   guard width > 0 && height > 0 else { return false }
   guard src_rect.width > 0 && src_rect.height > 0 else { return false }
@@ -1351,18 +1351,18 @@ fn blend_scaled_pixmap_rect_bicubic_region(
 ///|
 fn blend_scaled_pixmap_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   let mut did_blend = false
   for py in y_start..<y_end {
@@ -1383,7 +1383,11 @@ fn blend_scaled_pixmap_region(
 }
 
 ///|
-fn scaled_source_index(dst_offset : Int, dst_size : Int, src_size : Int) -> Int {
+fn scaled_source_index(
+  dst_offset : Int32,
+  dst_size : Int32,
+  src_size : Int32,
+) -> Int32 {
   guard dst_size > 0 && src_size > 0 else { return 0 }
   let numerator = (dst_offset * 2 + 1) * src_size
   let denominator = dst_size * 2
@@ -1393,18 +1397,18 @@ fn scaled_source_index(dst_offset : Int, dst_size : Int, src_size : Int) -> Int 
 ///|
 fn blend_scaled_pixmap_bilinear_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   let mut did_blend = false
   for py in y_start..<y_end {
@@ -1427,18 +1431,18 @@ fn blend_scaled_pixmap_bilinear_region(
 ///|
 fn blend_scaled_pixmap_bicubic_region(
   dst : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   src : Pixmap,
   opacity : Double,
   filter : PaintFilter?,
   blend_mode : BlendMode,
-  x_start : Int,
-  y_start : Int,
-  x_end : Int,
-  y_end : Int,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
 ) -> Bool {
   let mut did_blend = false
   for py in y_start..<y_end {
@@ -1461,8 +1465,8 @@ fn blend_scaled_pixmap_bicubic_region(
 ///|
 fn blend_sampled_source_pixel(
   dst : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   color : Color,
   blend_mode : BlendMode,
 ) -> Bool {
@@ -1473,9 +1477,9 @@ fn blend_sampled_source_pixel(
 
 ///|
 fn scaled_source_position(
-  dst_offset : Int,
-  dst_size : Int,
-  src_size : Int,
+  dst_offset : Int32,
+  dst_size : Int32,
+  src_size : Int32,
 ) -> Double {
   guard dst_size > 0 && src_size > 0 else { return 0.0 }
   (dst_offset.to_double() + 0.5) * src_size.to_double() / dst_size.to_double() -
@@ -1657,14 +1661,14 @@ fn sample_bicubic_rect(
 ///|
 fn sample_bicubic_clamped(
   src : Pixmap,
-  x_floor : Int,
-  y_floor : Int,
+  x_floor : Int32,
+  y_floor : Int32,
   tx : Double,
   ty : Double,
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
 ) -> Color {
   let x0 = (x_floor - 1).max(left).min(right - 1)
   let x1 = x_floor.max(left).min(right - 1)
@@ -1796,7 +1800,7 @@ fn sample_bicubic_clamped(
 }
 
 ///|
-fn floor_to_int(value : Double) -> Int {
+fn floor_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() > value {
     truncated - 1
@@ -1806,7 +1810,7 @@ fn floor_to_int(value : Double) -> Int {
 }
 
 ///|
-fn positive_mod(value : Int, modulus : Int) -> Int {
+fn positive_mod(value : Int32, modulus : Int32) -> Int32 {
   guard modulus > 0 else { return 0 }
   let mut result = value % modulus
   if result < 0 {

@@ -20,13 +20,13 @@
 /// "a world is a folder of readable files", and a nested JSON tree would break
 /// that. Each branch is a normal conversation file with a numbered key, so any
 /// editor shows it and the player can delete one without touching the others.
-pub fn branched_key(base : String, branch : Int) -> String {
+pub fn branched_key(base : String, branch : Int32) -> String {
   base + "~" + branch.to_string()
 }
 
 ///|
 /// Split a branched key back into `(base, branch)`, or `None` for a plain key.
-pub fn split_branch(key : String) -> (String, Int)? {
+pub fn split_branch(key : String) -> (String, Int32)? {
   let chars : Array[Char] = []
   for ch in key {
     chars.push(ch)
@@ -359,7 +359,7 @@ pub fn parse_events_json(text : String) -> EventsFile {
 fn restore_line(
   line : ChatLine,
   alternatives : Array[String],
-  selected : Int,
+  selected : Int32,
 ) -> ChatLine {
   if alternatives.is_empty() {
     line

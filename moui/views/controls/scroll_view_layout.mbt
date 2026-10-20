@@ -2,12 +2,12 @@
 pub fn[Msg] scroll_container(
   child~ : @core.View[Msg],
   offset? : @core.Point,
-  viewport? : @core.Size? = None,
-  on_scroll? : ((@core.Point) -> Msg)? = None,
+  viewport~ : @core.Size? = None,
+  on_scroll~ : ((@core.Point) -> Msg)? = None,
   request? : @core.ScrollRequest,
-  shows_indicator? : Bool = false,
-  kind? : String = "Scroll",
-  key? : String? = None,
+  shows_indicator~ : Bool = false,
+  kind~ : String = "Scroll",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let scrollable = offset is None || on_scroll is Some(_)
   @core.View::from_node(
@@ -51,7 +51,7 @@ priv struct ScrollContainer {
 /// Element-owned scroll position and exactly-once request cursor.
 priv struct ScrollRuntimeState {
   offset : @core.Point
-  applied_request_id : Int
+  applied_request_id : Int32
 }
 
 ///|

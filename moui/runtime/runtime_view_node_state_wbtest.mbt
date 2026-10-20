@@ -35,7 +35,7 @@ fn runtime_state_probe_view(
 }
 
 ///|
-fn runtime_probe_state_slot() -> @core.ViewStateSlot[Int] {
+fn runtime_probe_state_slot() -> @core.ViewStateSlot[Int32] {
   @core.ViewStateSlot::new(
     key=@core.DeclarationKey::string("moui.runtime.test.probe"),
     initial=0,

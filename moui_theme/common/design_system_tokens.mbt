@@ -1262,8 +1262,8 @@ pub fn DesignSystemTokens::with_state_layer(
 ///|
 pub fn DesignPreset::tokens(
   self : DesignPreset,
-  scheme? : @core.ColorScheme = Light,
-  density? : DesignDensity = Standard,
+  scheme~ : @core.ColorScheme = Light,
+  density~ : DesignDensity = Standard,
 ) -> DesignSystemTokens {
   match self {
     Material =>
@@ -1280,9 +1280,9 @@ pub fn DesignPreset::tokens(
 ///|
 pub fn DesignPreset::tokens_for_variant(
   self : DesignPreset,
-  variant? : DesignSchemeVariant = SchemeLight,
-  system_scheme? : @core.ColorScheme = Light,
-  density? : DesignDensity = Standard,
+  variant~ : DesignSchemeVariant = SchemeLight,
+  system_scheme~ : @core.ColorScheme = Light,
+  density~ : DesignDensity = Standard,
 ) -> DesignSystemTokens {
   let scheme = variant_core_scheme(variant, system_scheme)
   if variant == SchemeHighContrast {
@@ -1922,18 +1922,18 @@ fn semantic_palette(
   warning~ : @core.Color,
   danger~ : @core.Color,
   info~ : @core.Color,
-  focus? : @core.Color? = None,
-  scrim? : @core.Color? = None,
+  focus~ : @core.Color? = None,
+  scrim~ : @core.Color? = None,
   // Neutral ramp overrides. Default to the legacy surface/foreground/outline
   // aliases so presets without a ramp keep their old appearance.
-  background_2? : @core.Color? = None,
-  background_3? : @core.Color? = None,
-  background_4? : @core.Color? = None,
-  foreground_2? : @core.Color? = None,
-  stroke_1? : @core.Color? = None,
-  stroke_2? : @core.Color? = None,
-  stroke_accessible? : @core.Color? = None,
-  brand_stroke? : @core.Color? = None,
+  background_2~ : @core.Color? = None,
+  background_3~ : @core.Color? = None,
+  background_4~ : @core.Color? = None,
+  foreground_2~ : @core.Color? = None,
+  stroke_1~ : @core.Color? = None,
+  stroke_2~ : @core.Color? = None,
+  stroke_accessible~ : @core.Color? = None,
+  brand_stroke~ : @core.Color? = None,
 ) -> DesignSemanticPalette {
   {
     foreground,
@@ -1967,11 +1967,11 @@ fn typography_tokens(
   body~ : Double,
   caption~ : Double,
   control~ : Double,
-  subtitle? : @core.FontSpec? = None,
-  title_large? : @core.FontSpec? = None,
-  title_medium? : @core.FontSpec? = None,
-  body_strong? : @core.FontSpec? = None,
-  caption_strong? : @core.FontSpec? = None,
+  subtitle~ : @core.FontSpec? = None,
+  title_large~ : @core.FontSpec? = None,
+  title_medium~ : @core.FontSpec? = None,
+  body_strong~ : @core.FontSpec? = None,
+  caption_strong~ : @core.FontSpec? = None,
 ) -> DesignTypographyTokens {
   {
     body: @core.FontSpec::new(size=body, weight=400),
@@ -2336,8 +2336,8 @@ fn control_state_tokens(
   border_width~ : Double,
   radius~ : Double,
   state_layer_alpha~ : Double,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> DesignControlStateTokens {
   {
     foreground,

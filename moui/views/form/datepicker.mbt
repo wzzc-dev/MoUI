@@ -4,12 +4,12 @@
 pub fn[Msg] datepicker(
   selected~ : @core.DateValue,
   on_select~ : (@core.DateValue) -> Msg,
-  mode? : @style.DatePickerMode = Date,
-  placeholder? : String = "Select date",
+  mode~ : @style.DatePickerMode = Date,
+  placeholder~ : String = "Select date",
   theme? : @core.Theme,
   style? : @style.PickerStyle,
-  min_date? : @core.DateValue? = None,
-  max_date? : @core.DateValue? = None,
+  min_date~ : @core.DateValue? = None,
+  max_date~ : @core.DateValue? = None,
 ) -> @core.View[Msg] {
   // Style is resolved ambient-ly inside date_picker_control so the picker
   // tracks dark-mode / palette changes without the caller rebuilding the tree.

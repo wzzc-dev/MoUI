@@ -13,20 +13,20 @@ extern "c" fn bench_now_ms() -> Double = "moui_reconciliation_benchmark_now_ms"
 ///|
 struct BenchItem {
   key : String?
-  kind : Int
+  kind : Int32
 }
 
 ///|
 struct BenchRunResult {
   label : String
-  child_count : Int
-  iterations : Int
+  child_count : Int32
+  iterations : Int32
   elapsed_ms : Double
   comparisons : Int64
 }
 
 ///|
-fn bench_env_int(name : String, fallback : Int) -> Int {
+fn bench_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => {
       let trimmed = value.trim()
@@ -47,7 +47,7 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
 }
 
 ///|
-fn bench_build_items(count : Int, keyed : Bool) -> Array[BenchItem] {
+fn bench_build_items(count : Int32, keyed : Bool) -> Array[BenchItem] {
   let items : Array[BenchItem] = []
   for index in 0..<count {
     let key = if keyed { Some("item-\{index}") } else { None }
@@ -57,11 +57,11 @@ fn bench_build_items(count : Int, keyed : Bool) -> Array[BenchItem] {
 }
 
 ///|
-fn bench_shuffle_order(count : Int, seed : Int) -> Array[Int] {
+fn bench_shuffle_order(count : Int32, seed : Int32) -> Array[Int32] {
   // Deterministic pseudo-random shuffle so runs are reproducible.
   // We don't need cryptographic quality; a simple LCG over indices is enough
   // to defeat the "same position" fast path of find_reusable_child.
-  let order : Array[Int] = []
+  let order : Array[Int32] = []
   for index in 0..<count {
     order.push(index)
   }
@@ -82,7 +82,7 @@ fn bench_shuffle_order(count : Int, seed : Int) -> Array[Int] {
 ///|
 fn bench_build_next(
   old_items : Array[BenchItem],
-  order : Array[Int],
+  order : Array[Int32],
 ) -> Array[BenchItem] {
   let next : Array[BenchItem] = []
   for next_index in 0..<old_items.length() {
@@ -97,8 +97,8 @@ fn bench_find_linear(
   old_items : Array[BenchItem],
   used : Array[Bool],
   next_item : BenchItem,
-  index : Int,
-) -> (Int?, Int) {
+  index : Int32,
+) -> (Int32?, Int32) {
   let mut comparisons = 0
   match next_item.key {
     Some(key) => {
@@ -127,8 +127,8 @@ fn bench_find_linear(
 }
 
 ///|
-fn bench_build_index(old_items : Array[BenchItem]) -> Map[String, Array[Int]] {
-  let index : Map[String, Array[Int]] = Map([])
+fn bench_build_index(old_items : Array[BenchItem]) -> Map[String, Array[Int32]] {
+  let index : Map[String, Array[Int32]] = Map([])
   for old_index, old_item in old_items {
     match old_item.key {
       Some(key) => {
@@ -148,10 +148,10 @@ fn bench_build_index(old_items : Array[BenchItem]) -> Map[String, Array[Int]] {
 fn bench_find_indexed(
   old_items : Array[BenchItem],
   used : Array[Bool],
-  key_index : Map[String, Array[Int]],
+  key_index : Map[String, Array[Int32]],
   next_item : BenchItem,
-  index : Int,
-) -> (Int?, Int) {
+  index : Int32,
+) -> (Int32?, Int32) {
   let mut comparisons = 0
   match next_item.key {
     Some(key) => {
@@ -188,7 +188,7 @@ fn bench_find_indexed(
 fn bench_run_linear(
   old_items : Array[BenchItem],
   next_items : Array[BenchItem],
-  iterations : Int,
+  iterations : Int32,
 ) -> BenchRunResult {
   let mut total_comparisons : Int64 = 0L
   let start = bench_now_ms()
@@ -222,7 +222,7 @@ fn bench_run_linear(
 fn bench_run_indexed(
   old_items : Array[BenchItem],
   next_items : Array[BenchItem],
-  iterations : Int,
+  iterations : Int32,
 ) -> BenchRunResult {
   let mut total_comparisons : Int64 = 0L
   let start = bench_now_ms()
@@ -289,14 +289,14 @@ fn bench_comparison_reduction(
 ///|
 struct BenchCompositeKey {
   key : String
-  kind : Int
+  kind : Int32
 } derive(Eq, Hash)
 
 ///|
 fn bench_build_index_struct(
   old_items : Array[BenchItem],
-) -> Map[BenchCompositeKey, Array[Int]] {
-  let index : Map[BenchCompositeKey, Array[Int]] = Map([])
+) -> Map[BenchCompositeKey, Array[Int32]] {
+  let index : Map[BenchCompositeKey, Array[Int32]] = Map([])
   for old_index, old_item in old_items {
     match old_item.key {
       Some(key) => {
@@ -316,10 +316,10 @@ fn bench_build_index_struct(
 fn bench_find_indexed_struct(
   old_items : Array[BenchItem],
   used : Array[Bool],
-  key_index : Map[BenchCompositeKey, Array[Int]],
+  key_index : Map[BenchCompositeKey, Array[Int32]],
   next_item : BenchItem,
-  index : Int,
-) -> (Int?, Int) {
+  index : Int32,
+) -> (Int32?, Int32) {
   let mut comparisons = 0
   match next_item.key {
     Some(key) => {
@@ -356,7 +356,7 @@ fn bench_find_indexed_struct(
 fn bench_run_indexed_struct(
   old_items : Array[BenchItem],
   next_items : Array[BenchItem],
-  iterations : Int,
+  iterations : Int32,
 ) -> BenchRunResult {
   let mut total_comparisons : Int64 = 0L
   let start = bench_now_ms()
@@ -397,9 +397,9 @@ fn bench_print_result(result : BenchRunResult) -> Unit {
 ///|
 fn bench_run_scenario(
   label : String,
-  child_count : Int,
-  iterations : Int,
-  shuffle_seed : Int,
+  child_count : Int32,
+  iterations : Int32,
+  shuffle_seed : Int32,
 ) -> Unit {
   let old_items = bench_build_items(child_count, true)
   let order = bench_shuffle_order(child_count, shuffle_seed)

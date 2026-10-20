@@ -66,8 +66,8 @@ fn wrap_paint_context(frame : @core.Rect) -> @core.ViewPaintContext {
 fn wrapped_text_size(
   label~ : String,
   width~ : Double,
-  height? : Double = 32.0,
-  max_width? : Double = 1000.0,
+  height~ : Double = 32.0,
+  max_width~ : Double = 1000.0,
 ) -> @core.Size {
   let view : @core.View[Unit] = text(label, width~, height~, wrap=true)
   view.layout(

@@ -115,7 +115,7 @@ pub fn text_grapheme_clusters(text : String) -> Array[String] {
 ///|
 /// Classify a text segment for fallback planning: 1 emoji, 2 CJK, 3 Hangul,
 /// 4 RTL script, 5 combining marks, 0 other.
-pub fn text_segment_class(text : String) -> Int {
+pub fn text_segment_class(text : String) -> Int32 {
   let representative = representative_fallback_codepoint(
     text,
     skip_joiners=false,
@@ -136,12 +136,12 @@ pub fn text_segment_class(text : String) -> Int {
 }
 
 ///|
-pub fn codepoint_is_cjk(codepoint : Int) -> Bool {
+pub fn codepoint_is_cjk(codepoint : Int32) -> Bool {
   codepoint_is_cjk_ideograph(codepoint) || codepoint_is_kana(codepoint)
 }
 
 ///|
-pub fn codepoint_is_cjk_ideograph(codepoint : Int) -> Bool {
+pub fn codepoint_is_cjk_ideograph(codepoint : Int32) -> Bool {
   (codepoint >= 0x3400 && codepoint <= 0x4DBF) ||
   (codepoint >= 0x4E00 && codepoint <= 0x9FFF) ||
   (codepoint >= 0xF900 && codepoint <= 0xFAFF) ||
@@ -149,19 +149,19 @@ pub fn codepoint_is_cjk_ideograph(codepoint : Int) -> Bool {
 }
 
 ///|
-pub fn codepoint_is_kana(codepoint : Int) -> Bool {
+pub fn codepoint_is_kana(codepoint : Int32) -> Bool {
   codepoint >= 0x3040 && codepoint <= 0x30FF
 }
 
 ///|
-pub fn codepoint_is_rtl_script(codepoint : Int) -> Bool {
+pub fn codepoint_is_rtl_script(codepoint : Int32) -> Bool {
   (codepoint >= 0x0590 && codepoint <= 0x08FF) ||
   (codepoint >= 0xFB1D && codepoint <= 0xFDFF) ||
   (codepoint >= 0xFE70 && codepoint <= 0xFEFF)
 }
 
 ///|
-pub fn codepoint_is_emoji_hint(codepoint : Int) -> Bool {
+pub fn codepoint_is_emoji_hint(codepoint : Int32) -> Bool {
   codepoint == 0x200D ||
   codepoint == 0xFE0F ||
   (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
@@ -169,7 +169,7 @@ pub fn codepoint_is_emoji_hint(codepoint : Int) -> Bool {
 }
 
 ///|
-pub fn codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_cluster_codepoint(codepoint : Int32) -> Bool {
   codepoint_is_hangul_l(codepoint) ||
   codepoint_is_hangul_v(codepoint) ||
   codepoint_is_hangul_t(codepoint) ||
@@ -178,40 +178,40 @@ pub fn codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
 }
 
 ///|
-pub fn codepoint_is_hangul_l(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_l(codepoint : Int32) -> Bool {
   (codepoint >= 0x1100 && codepoint <= 0x115F) ||
   (codepoint >= 0xA960 && codepoint <= 0xA97C)
 }
 
 ///|
-pub fn codepoint_is_hangul_v(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_v(codepoint : Int32) -> Bool {
   (codepoint >= 0x1160 && codepoint <= 0x11A7) ||
   (codepoint >= 0xD7B0 && codepoint <= 0xD7C6)
 }
 
 ///|
-pub fn codepoint_is_hangul_t(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_t(codepoint : Int32) -> Bool {
   (codepoint >= 0x11A8 && codepoint <= 0x11FF) ||
   (codepoint >= 0xD7CB && codepoint <= 0xD7FB)
 }
 
 ///|
-pub fn codepoint_is_hangul_lv(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_lv(codepoint : Int32) -> Bool {
   codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 == 0
 }
 
 ///|
-pub fn codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_lvt(codepoint : Int32) -> Bool {
   codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 != 0
 }
 
 ///|
-pub fn codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_syllable(codepoint : Int32) -> Bool {
   codepoint >= 0xAC00 && codepoint <= 0xD7A3
 }
 
 ///|
-pub fn codepoint_is_hangul_compatibility_jamo(codepoint : Int) -> Bool {
+pub fn codepoint_is_hangul_compatibility_jamo(codepoint : Int32) -> Bool {
   codepoint >= 0x3130 && codepoint <= 0x318F
 }
 
@@ -221,8 +221,8 @@ pub fn codepoint_is_hangul_compatibility_jamo(codepoint : Int) -> Bool {
 /// non-ASCII codepoint, else the first codepoint.
 pub fn representative_fallback_codepoint(
   text : String,
-  skip_joiners? : Bool = false,
-) -> Int {
+  skip_joiners~ : Bool = false,
+) -> Int32 {
   let mut first = 0
   let mut first_non_ascii = 0
   for ch in text {

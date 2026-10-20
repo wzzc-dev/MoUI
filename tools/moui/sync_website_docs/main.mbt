@@ -67,7 +67,7 @@ fn resolve_out_dir(repo_root : String, out_arg : String?) -> String {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err(message) => {
       println(message)

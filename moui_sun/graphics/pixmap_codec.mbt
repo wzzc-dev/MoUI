@@ -1,39 +1,39 @@
 ///|
 /// Error returned when decoding pixmap bytes.
 pub(all) enum PixmapDecodeError {
-  UnexpectedEndOfData(Int, Int, Int)
-  InvalidRgbaDimensions(Int, Int)
-  RgbaByteLengthMismatch(Int, Int)
+  UnexpectedEndOfData(Int32, Int32, Int32)
+  InvalidRgbaDimensions(Int32, Int32)
+  RgbaByteLengthMismatch(Int32, Int32)
   InvalidBmpSignature(Byte, Byte)
-  UnsupportedBmpHeaderSize(Int)
-  UnsupportedBmpColorPlanes(Int)
-  UnsupportedBmpBitsPerPixel(Int)
-  UnsupportedBmpCompression(Int)
-  InvalidBmpDimensions(Int, Int)
-  BmpPixelDataOutOfBounds(Int, Int, Int)
+  UnsupportedBmpHeaderSize(Int32)
+  UnsupportedBmpColorPlanes(Int32)
+  UnsupportedBmpBitsPerPixel(Int32)
+  UnsupportedBmpCompression(Int32)
+  InvalidBmpDimensions(Int32, Int32)
+  BmpPixelDataOutOfBounds(Int32, Int32, Int32)
   InvalidPngSignature
   MissingPngImageHeader
   MissingPngImageData
   MissingPngImageEnd
-  UnsupportedPngHeaderSize(Int)
-  UnsupportedPngBitDepth(Int)
-  UnsupportedPngColorType(Int)
-  UnsupportedPngCompression(Int)
-  UnsupportedPngFilter(Int)
-  UnsupportedPngInterlace(Int)
-  UnsupportedPngChunk(Int, Int, Int, Int)
-  UnsupportedPngDeflateCompression(Int)
+  UnsupportedPngHeaderSize(Int32)
+  UnsupportedPngBitDepth(Int32)
+  UnsupportedPngColorType(Int32)
+  UnsupportedPngCompression(Int32)
+  UnsupportedPngFilter(Int32)
+  UnsupportedPngInterlace(Int32)
+  UnsupportedPngChunk(Int32, Int32, Int32, Int32)
+  UnsupportedPngDeflateCompression(Int32)
   UnsupportedPngDeflatePresetDictionary
-  UnsupportedPngDeflateBlockType(Int)
+  UnsupportedPngDeflateBlockType(Int32)
   InvalidPngDeflateCode
-  UnsupportedPngFilterType(Int)
-  InvalidPngDimensions(Int, Int)
-  InvalidPngZlibHeader(Int, Int)
-  PngCrcMismatch(UInt, UInt)
-  PngAdlerMismatch(UInt, UInt)
-  PngStoredBlockLengthMismatch(Int, Int)
-  PngInflateLengthMismatch(Int, Int)
-  PngScanlineLengthMismatch(Int, Int)
+  UnsupportedPngFilterType(Int32)
+  InvalidPngDimensions(Int32, Int32)
+  InvalidPngZlibHeader(Int32, Int32)
+  PngCrcMismatch(UInt32, UInt32)
+  PngAdlerMismatch(UInt32, UInt32)
+  PngStoredBlockLengthMismatch(Int32, Int32)
+  PngInflateLengthMismatch(Int32, Int32)
+  PngScanlineLengthMismatch(Int32, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -45,7 +45,7 @@ pub extend PixmapDecodeError with Eq::{not_equal, equal}
 ///|
 /// Error returned when encoding pixmap bytes.
 pub(all) enum PixmapEncodeError {
-  InvalidPngDimensions(Int, Int)
+  InvalidPngDimensions(Int32, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -106,8 +106,8 @@ pub fn Pixmap::to_bmp_bytes(self : Pixmap) -> Bytes {
 /// RGBA order. Decoded pixels are copied so later mutations to the returned
 /// pixmap cannot alias caller-owned byte storage.
 pub fn Pixmap::from_rgba_bytes(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   data : Bytes,
 ) -> Result[Pixmap, PixmapDecodeError] {
   guard width >= 0 && height >= 0 else {
@@ -149,7 +149,7 @@ fn rgba_bytes_from_pixels(pixels : FixedArray[Byte]) -> Bytes {
 }
 
 ///|
-fn append_ppm_header(out : Array[Byte], width : Int, height : Int) -> Unit {
+fn append_ppm_header(out : Array[Byte], width : Int32, height : Int32) -> Unit {
   append_ppm_byte(out, 80) // P
   append_ppm_byte(out, 54) // 6
   append_ppm_byte(out, 10)
@@ -164,7 +164,7 @@ fn append_ppm_header(out : Array[Byte], width : Int, height : Int) -> Unit {
 }
 
 ///|
-fn append_ppm_decimal(out : Array[Byte], value : Int) -> Unit {
+fn append_ppm_decimal(out : Array[Byte], value : Int32) -> Unit {
   let mut n = value
   if n == 0 {
     append_ppm_byte(out, 48)
@@ -185,12 +185,12 @@ fn append_ppm_decimal(out : Array[Byte], value : Int) -> Unit {
 }
 
 ///|
-fn append_ppm_byte(out : Array[Byte], value : Int) -> Unit {
+fn append_ppm_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
 }
 
 ///|
-fn append_bmp_header(out : Array[Byte], width : Int, height : Int) -> Unit {
+fn append_bmp_header(out : Array[Byte], width : Int32, height : Int32) -> Unit {
   let pixel_byte_count = width * height * 4
   append_bmp_u16_le(out, 0x4D42) // BM
   append_bmp_u32_le(out, 54 + pixel_byte_count)
@@ -212,13 +212,13 @@ fn append_bmp_header(out : Array[Byte], width : Int, height : Int) -> Unit {
 }
 
 ///|
-fn append_bmp_u16_le(out : Array[Byte], value : Int) -> Unit {
+fn append_bmp_u16_le(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
   out.push((value / 256).land(0xFF).to_byte())
 }
 
 ///|
-fn append_bmp_u32_le(out : Array[Byte], value : Int) -> Unit {
+fn append_bmp_u32_le(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
   out.push((value / 256).land(0xFF).to_byte())
   out.push((value / 65536).land(0xFF).to_byte())
@@ -227,12 +227,12 @@ fn append_bmp_u32_le(out : Array[Byte], value : Int) -> Unit {
 
 ///|
 struct BmpInfo {
-  pixel_offset : Int
-  width : Int
-  height : Int
+  pixel_offset : Int32
+  width : Int32
+  height : Int32
   is_top_down : Bool
-  bytes_per_pixel : Int
-  source_row_bytes : Int
+  bytes_per_pixel : Int32
+  source_row_bytes : Int32
 } derive(Debug)
 
 ///|
@@ -313,12 +313,12 @@ fn decode_bmp_pixmap(data : Bytes, info : BmpInfo) -> Pixmap {
 }
 
 ///|
-fn read_u16_le_at(data : Bytes, offset : Int) -> Int {
+fn read_u16_le_at(data : Bytes, offset : Int32) -> Int32 {
   data[offset].to_int() + data[offset + 1].to_int() * 256
 }
 
 ///|
-fn read_u32_le_at(data : Bytes, offset : Int) -> Int {
+fn read_u32_le_at(data : Bytes, offset : Int32) -> Int32 {
   data[offset].to_int() +
   data[offset + 1].to_int() * 256 +
   data[offset + 2].to_int() * 65536 +
@@ -326,7 +326,7 @@ fn read_u32_le_at(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn read_i32_le_at(data : Bytes, offset : Int) -> Int {
+fn read_i32_le_at(data : Bytes, offset : Int32) -> Int32 {
   let b0 = data[offset].to_int()
   let b1 = data[offset + 1].to_int()
   let b2 = data[offset + 2].to_int()

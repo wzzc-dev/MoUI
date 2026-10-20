@@ -14,10 +14,10 @@
 ///|
 #borrow(text)
 extern "C" fn mbw_ios_ime_set_state(
-  enabled : Int,
+  enabled : Int32,
   text : Bytes,
-  sel_location : Int,
-  sel_length : Int,
+  sel_location : Int32,
+  sel_length : Int32,
   caret_x : Double,
   caret_y : Double,
   caret_w : Double,

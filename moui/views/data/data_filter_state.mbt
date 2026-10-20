@@ -13,7 +13,7 @@ pub fn[Msg] data_filter(
   label~ : String,
   selected~ : Bool,
   message~ : Msg,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> DataFilter[Msg] {
   { id, label, selected, message, enabled, }
 }

@@ -2,17 +2,17 @@
 pub fn[Msg] form_field(
   label~ : String,
   child~ : @core.View[Msg],
-  helper? : String = "",
-  error? : String = "",
-  status? : FormFieldStatus = Normal,
-  layout? : FormFieldLayout = Vertical,
-  validation_display? : FormValidationDisplay = OnInvalid,
-  required? : Bool = false,
-  disabled? : Bool = false,
-  read_only? : Bool = false,
+  helper~ : String = "",
+  error~ : String = "",
+  status~ : FormFieldStatus = Normal,
+  layout~ : FormFieldLayout = Vertical,
+  validation_display~ : FormValidationDisplay = OnInvalid,
+  required~ : Bool = false,
+  disabled~ : Bool = false,
+  read_only~ : Bool = false,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  label_width? : Double = 120.0,
+  width~ : Double = 320.0,
+  label_width~ : Double = 120.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let resolved_status = form_field_resolved_status(

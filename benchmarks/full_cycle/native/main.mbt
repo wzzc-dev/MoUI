@@ -4,15 +4,15 @@ extern "c" fn bench_now_ms() -> Double = "moui_reconciliation_benchmark_now_ms"
 ///|
 struct FCResult {
   label : String
-  total_nodes : Int
-  frames : Int
+  total_nodes : Int32
+  frames : Int32
   total_ms : Double
   p50_ms : Double
   p95_ms : Double
-  rebuild_count : Int
-  layout_count : Int
-  paint_count : Int
-  command_build_count : Int
+  rebuild_count : Int32
+  layout_count : Int32
+  paint_count : Int32
+  command_build_count : Int32
 }
 
 ///|
@@ -29,7 +29,7 @@ fn bench_percentile(samples : Array[Double], percent : Double) -> Double {
 }
 
 ///|
-fn bench_env_int(name : String, fallback : Int) -> Int {
+fn bench_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => {
       let trimmed = value.trim()
@@ -50,11 +50,15 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
 }
 
 ///|
-fn bench_tree(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
+fn bench_tree(
+  depth : Int32,
+  width : Int32,
+  msg_base : Int32,
+) -> @core.View[Int32] {
   if depth <= 0 {
     @views.button("x", on_click=msg_base)
   } else {
-    let children : Array[@core.View[Int]] = []
+    let children : Array[@core.View[Int32]] = []
     for col in 0..<width {
       children.push(bench_tree(depth - 1, width, msg_base + col * 100))
     }
@@ -63,7 +67,7 @@ fn bench_tree(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
 }
 
 ///|
-fn bench_node_count(depth : Int, width : Int) -> Int {
+fn bench_node_count(depth : Int32, width : Int32) -> Int32 {
   if depth <= 0 {
     1
   } else {
@@ -74,11 +78,11 @@ fn bench_node_count(depth : Int, width : Int) -> Int {
 ///|
 fn bench_run(
   label : String,
-  depth : Int,
-  width : Int,
-  frames : Int,
+  depth : Int32,
+  width : Int32,
+  frames : Int32,
   trigger_rebuild : Bool,
-  maps? : Int = 0,
+  maps~ : Int32 = 0,
 ) -> FCResult {
   let total = bench_node_count(depth, width)
   let program = @core.Program::simple(init=0, update=fn(_model, msg) { msg }, view=fn(

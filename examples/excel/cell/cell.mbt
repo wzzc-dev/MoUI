@@ -1,7 +1,7 @@
 ///|
 pub(all) struct CellAddress {
-  row : Int
-  col : Int
+  row : Int32
+  col : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -95,7 +95,7 @@ pub extend Cell with Debug::{to_repr}
 pub extend Cell with Eq::{not_equal, equal}
 
 ///|
-pub fn CellAddress::new(row~ : Int, col~ : Int) -> CellAddress {
+pub fn CellAddress::new(row~ : Int32, col~ : Int32) -> CellAddress {
   { row, col, }
 }
 
@@ -129,9 +129,9 @@ pub fn Cell::empty() -> Cell {
 
 ///|
 pub fn Cell::new(
-  raw? : String = "",
-  value? : CellValue = Empty,
-  format? : CellFormat = CellFormat::default(),
+  raw~ : String = "",
+  value~ : CellValue = Empty,
+  format~ : CellFormat = CellFormat::default(),
 ) -> Cell {
   { raw, value, format, }
 }
@@ -225,12 +225,12 @@ pub fn format_decimal_2(value : Double) -> String {
 }
 
 ///|
-pub fn make_key(row : Int, col : Int) -> String {
+pub fn make_key(row : Int32, col : Int32) -> String {
   column_label(col) + (row + 1).to_string()
 }
 
 ///|
-pub fn column_label(col : Int) -> String {
+pub fn column_label(col : Int32) -> String {
   if col < 0 {
     return "?"
   }
@@ -289,7 +289,7 @@ pub fn parse_range(ref_str : String) -> CellRange? {
 }
 
 ///|
-pub fn col_letters_to_num(chars : Array[Char]) -> Int? {
+pub fn col_letters_to_num(chars : Array[Char]) -> Int32? {
   let mut result = 0
   for c in chars {
     let upper = to_upper_ascii(c)
@@ -303,7 +303,7 @@ pub fn col_letters_to_num(chars : Array[Char]) -> Int? {
 }
 
 ///|
-pub fn parse_digits_to_int(chars : Array[Char]) -> Int? {
+pub fn parse_digits_to_int(chars : Array[Char]) -> Int32? {
   let mut result = 0
   for c in chars {
     if is_ascii_digit(c) {

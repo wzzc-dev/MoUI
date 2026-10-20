@@ -467,9 +467,9 @@ fn playground_document(
 ///|
 fn playground_line_block(
   line : String,
-  line_start~ : Int,
-  content_end~ : Int,
-  source_end~ : Int,
+  line_start~ : Int32,
+  content_end~ : Int32,
+  source_end~ : Int32,
   font~ : @text.FontSpec,
 ) -> @moui_richtext.RichTextBlock {
   let runs : Array[@moui_richtext.RichTextRun] = []

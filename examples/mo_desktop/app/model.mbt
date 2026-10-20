@@ -170,13 +170,13 @@ pub extend DesktopService with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct DesktopClock {
-  year : Int
-  month : Int
-  day : Int
-  weekday : Int
-  hour : Int
-  minute : Int
-  second : Int
+  year : Int32
+  month : Int32
+  day : Int32
+  weekday : Int32
+  hour : Int32
+  minute : Int32
+  second : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -187,13 +187,13 @@ pub extend DesktopClock with Eq::{not_equal, equal}
 
 ///|
 pub fn DesktopClock::new(
-  year : Int,
-  month : Int,
-  day : Int,
-  weekday : Int,
-  hour : Int,
-  minute : Int,
-  second? : Int = 0,
+  year : Int32,
+  month : Int32,
+  day : Int32,
+  weekday : Int32,
+  hour : Int32,
+  minute : Int32,
+  second~ : Int32 = 0,
 ) -> DesktopClock {
   { year, month, day, weekday, hour, minute, second, }
 }
@@ -208,15 +208,15 @@ pub(all) struct DesktopModel {
   wallpaper_source : String
   phase : SessionPhase
   windows : Array[WindowRecord]
-  next_window_serial : Int
-  next_z_order : Int
+  next_window_serial : Int32
+  next_z_order : Int32
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
   clock : DesktopClock
   finder_location : FinderLocation
   finder_history : Array[FinderLocation]
-  finder_history_index : Int
+  finder_history_index : Int32
   finder_view_mode : FinderViewMode
   finder_query : String
   selected_file : String
@@ -226,7 +226,7 @@ pub(all) struct DesktopModel {
   browser_query : String
   browser_page : BrowserPage
   browser_tab_titles : Array[String]
-  browser_active_tab : Int
+  browser_active_tab : Int32
   wifi_enabled : Bool
   bluetooth_enabled : Bool
   low_power_mode : Bool
@@ -239,10 +239,10 @@ pub(all) struct DesktopModel {
   imported_files : Array[String]
   icon_placements : Array[DesktopIconPlacement]
   notes : Array[String]
-  active_note : Int
+  active_note : Int32
   terminal_lines : Array[String]
   terminal_input : String
-  boot_ticks : Int
+  boot_ticks : Int32
   login_password : String
   language : AppLanguage
   pending_service : DesktopService?
@@ -277,8 +277,8 @@ pub(all) enum Msg {
   DesktopSettingsResetCompleted(@services.ServiceTaskResult[Unit])
   LaunchApp(AppKind)
   AddNote
-  SelectNote(Int)
-  DeleteNote(Int)
+  SelectNote(Int32)
+  DeleteNote(Int32)
   NoteBodyChanged(String)
   TerminalInputChanged(String)
   RunTerminalCommand
@@ -303,8 +303,8 @@ pub(all) enum Msg {
   SubmitBrowserQuery
   ShowBrowserStartPage
   NewBrowserTab
-  SelectBrowserTab(Int)
-  CloseBrowserTab(Int)
+  SelectBrowserTab(Int32)
+  CloseBrowserTab(Int32)
   OpenFavorite(String)
   ToggleDarkMode
   UseSystemAppearance
@@ -324,8 +324,8 @@ pub(all) enum Msg {
 
 ///|
 pub fn DesktopModel::new(
-  wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
-  clock? : DesktopClock = default_desktop_clock(),
+  wallpaper_source~ : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
+  clock~ : DesktopClock = default_desktop_clock(),
 ) -> DesktopModel {
   {
     wallpaper_source,
@@ -787,7 +787,10 @@ fn DesktopModel::add_note(self : DesktopModel) -> DesktopModel {
 }
 
 ///|
-fn DesktopModel::select_note(self : DesktopModel, index : Int) -> DesktopModel {
+fn DesktopModel::select_note(
+  self : DesktopModel,
+  index : Int32,
+) -> DesktopModel {
   if index >= 0 && index < self.notes.length() {
     { ..self, active_note: index, }
   } else {
@@ -796,7 +799,10 @@ fn DesktopModel::select_note(self : DesktopModel, index : Int) -> DesktopModel {
 }
 
 ///|
-fn DesktopModel::delete_note(self : DesktopModel, index : Int) -> DesktopModel {
+fn DesktopModel::delete_note(
+  self : DesktopModel,
+  index : Int32,
+) -> DesktopModel {
   if index < 0 || index >= self.notes.length() {
     return self
   }
@@ -836,7 +842,7 @@ fn DesktopModel::update_active_note_body(
 }
 
 ///|
-pub fn DesktopModel::note_title(self : DesktopModel, index : Int) -> String {
+pub fn DesktopModel::note_title(self : DesktopModel, index : Int32) -> String {
   match self.notes.get(index) {
     Some(body) => note_first_line(body)
     None => "New note"
@@ -938,7 +944,7 @@ fn DesktopModel::launch_from_terminal(
 }
 
 ///|
-pub fn DesktopModel::remaining_tasks(self : DesktopModel) -> Int {
+pub fn DesktopModel::remaining_tasks(self : DesktopModel) -> Int32 {
   let first = if self.first_task_done { 0 } else { 1 }
   let second = if self.second_task_done { 0 } else { 1 }
   let third = if self.third_task_done { 0 } else { 1 }
@@ -1081,7 +1087,7 @@ fn DesktopModel::visit_finder_location(
 ///|
 fn DesktopModel::restore_finder_history(
   self : DesktopModel,
-  index : Int,
+  index : Int32,
 ) -> DesktopModel {
   match self.finder_history.get(index) {
     Some(location) =>

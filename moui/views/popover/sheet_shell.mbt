@@ -1,14 +1,14 @@
 ///|
 fn[Msg] sheet_shell(
   content~ : @core.View[Msg],
-  presentation_mode? : @style.SheetPresentationMode = Modal,
+  presentation_mode~ : @style.SheetPresentationMode = Modal,
   theme? : @core.Theme,
   background? : @core.Brush,
   corner_radius? : Double,
-  shadow? : @core.ShadowStyle? = None,
-  on_dismiss? : Msg? = None,
-  kind? : String = "Sheet",
-  key? : String? = None,
+  shadow~ : @core.ShadowStyle? = None,
+  on_dismiss~ : Msg? = None,
+  kind~ : String = "Sheet",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     SheetShell::{

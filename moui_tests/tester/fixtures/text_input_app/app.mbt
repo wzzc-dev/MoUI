@@ -30,7 +30,7 @@ pub extend TextInputSmokeMsg with Eq::{not_equal, equal}
 pub extend TextInputSmokeMsg with ToJson::{to_json}
 
 ///|
-pub fn TextInputSmokeModel::new(value? : String = "") -> TextInputSmokeModel {
+pub fn TextInputSmokeModel::new(value~ : String = "") -> TextInputSmokeModel {
   { value, }
 }
 
@@ -72,8 +72,8 @@ pub fn view(model : TextInputSmokeModel) -> @core.View[TextInputSmokeMsg] {
 
 ///|
 pub fn runtime(
-  width? : Double = 520.0,
-  height? : Double = 180.0,
+  width~ : Double = 520.0,
+  height~ : Double = 180.0,
 ) -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
     program=@core.Program::simple(

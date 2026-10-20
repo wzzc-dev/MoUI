@@ -1,10 +1,10 @@
 ///|
 /// Test fixture: a RenderNode with only the fields DamageIndex reads.
 fn damage_index_node(
-  id : Int,
+  id : Int32,
   paint_bounds : Rect,
-  is_repaint_boundary? : Bool = false,
-  children? : Array[RenderNode] = [],
+  is_repaint_boundary~ : Bool = false,
+  children~ : Array[RenderNode] = [],
 ) -> RenderNode {
   let base = RenderNode::empty()
   {

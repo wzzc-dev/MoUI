@@ -2,7 +2,7 @@
 fn markdown_editor_delete_reference_marker(
   source : String,
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret >= chars.length() {
     return None
@@ -55,7 +55,7 @@ fn markdown_editor_delete_reference_marker(
 fn markdown_editor_reference_open_before(
   source : String,
   chars : Array[Char],
-  close_start : Int,
+  close_start : Int32,
 ) -> MarkdownLinkBounds? {
   if close_start >= chars.length() || chars[close_start] != ']' {
     return None
@@ -98,7 +98,7 @@ fn markdown_editor_reference_open_before(
 fn markdown_editor_backspace_reference_marker(
   source : String,
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret > 0 {
     match
@@ -158,7 +158,7 @@ fn markdown_editor_backspace_reference_marker(
 fn markdown_editor_reference_bounds_full_end_before(
   source : String,
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> MarkdownLinkBounds? {
   if caret <= 0 {
     return None
@@ -208,7 +208,7 @@ fn markdown_editor_reference_bounds_full_end_before(
 fn markdown_editor_reference_close_after(
   source : String,
   chars : Array[Char],
-  content_start : Int,
+  content_start : Int32,
 ) -> MarkdownLinkBounds? {
   let mut close_start = content_start
   while close_start < chars.length() &&
@@ -246,8 +246,8 @@ fn markdown_editor_reference_close_after(
 
 ///|
 priv struct MarkdownEditorReferenceMarkerTarget {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
   label : String
 }
 
@@ -255,8 +255,8 @@ priv struct MarkdownEditorReferenceMarkerTarget {
 fn markdown_editor_reference_marker_target_after(
   source : String,
   chars : Array[Char],
-  close_start : Int,
-  content_start : Int,
+  close_start : Int32,
+  content_start : Int32,
 ) -> MarkdownEditorReferenceMarkerTarget? {
   if close_start + 1 < chars.length() && chars[close_start + 1] == '(' {
     let mut target_end = close_start + 2
@@ -300,10 +300,10 @@ fn markdown_editor_reference_marker_target_after(
 ///|
 fn markdown_editor_remove_reference_marker(
   chars : Array[Char],
-  open_start : Int,
-  content_start : Int,
-  close_start : Int,
-  target_end : Int,
+  open_start : Int32,
+  content_start : Int32,
+  close_start : Int32,
+  target_end : Int32,
 ) -> RichTextInputTransform {
   let text = String::from_array(chars[:open_start]) +
     String::from_array(chars[content_start:close_start]) +

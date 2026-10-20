@@ -9,21 +9,21 @@
 
 ///|
 pub struct CellGrid {
-  cols : Int
-  rows : Int
+  cols : Int32
+  rows : Int32
   chars : Array[Array[Char]]
-  attrs : Array[Array[Int]]
+  attrs : Array[Array[Int32]]
   /// Paint sequence that last wrote each cell (0 = never).
-  owners : Array[Array[Int]]
+  owners : Array[Array[Int32]]
   /// Priority of each paint sequence: 1 = container chrome, 2 = leaf content.
-  prio : Array[Int]
+  prio : Array[Int32]
 }
 
 ///|
 pub struct FrameAudit {
-  nodes : Int
-  off_grid_point : Int
-  off_grid_size : Int
+  nodes : Int32
+  off_grid_point : Int32
+  off_grid_size : Int32
   worst_off_grid_px : Double
 } derive(Eq, Debug)
 
@@ -38,26 +38,26 @@ pub struct ProjectionReport {
   lines : Array[String]
   plain : String
   ansi : String
-  cols : Int
-  rows : Int
-  semantics_nodes : Int
-  layout_nodes : Int
-  draw_commands : Int
+  cols : Int32
+  rows : Int32
+  semantics_nodes : Int32
+  layout_nodes : Int32
+  draw_commands : Int32
   audit_semantics : FrameAudit
   audit_layout : FrameAudit
-  roles : Array[(String, Int)]
+  roles : Array[(String, Int32)]
   frames : Array[String]
-  offscreen : Int
+  offscreen : Int32
 }
 
 ///|
-pub fn new_grid(cols : Int, rows : Int) -> CellGrid {
+pub fn new_grid(cols : Int32, rows : Int32) -> CellGrid {
   // Each row needs its own backing array; a nested `Array::make` would alias
   // one row across the whole grid.
   let chars : Array[Array[Char]] = []
-  let attrs : Array[Array[Int]] = []
-  let owners : Array[Array[Int]] = []
-  let prio : Array[Int] = []
+  let attrs : Array[Array[Int32]] = []
+  let owners : Array[Array[Int32]] = []
+  let prio : Array[Int32] = []
   let mut r = 0
   while r < rows {
     chars.push(Array::make(cols, ' '))
@@ -76,7 +76,7 @@ pub fn new_grid(cols : Int, rows : Int) -> CellGrid {
 /// Higher priority always wins. At equal priority the first paint keeps the
 /// cell, so two sibling boxes whose quantized cells overlap cannot interleave
 /// their letters.
-fn claim(grid : CellGrid, row : Int, col : Int, seq : Int) -> Bool {
+fn claim(grid : CellGrid, row : Int32, col : Int32, seq : Int32) -> Bool {
   let other = grid.owners[row][col]
   if other == 0 || other == seq {
     true
@@ -86,7 +86,7 @@ fn claim(grid : CellGrid, row : Int, col : Int, seq : Int) -> Bool {
 }
 
 ///|
-pub fn new_seq(grid : CellGrid, prio : Int) -> Int {
+pub fn new_seq(grid : CellGrid, prio : Int32) -> Int32 {
   let seq = grid.prio.length() + 1
   grid.prio.push(prio)
   seq
@@ -95,11 +95,11 @@ pub fn new_seq(grid : CellGrid, prio : Int) -> Int {
 ///|
 fn put(
   grid : CellGrid,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   ch : Char,
-  attr : Int,
-  seq : Int,
+  attr : Int32,
+  seq : Int32,
 ) -> Unit {
   if row >= 0 && row < grid.rows && col >= 0 && col < grid.cols {
     if claim(grid, row, col, seq) {
@@ -113,11 +113,11 @@ fn put(
 ///|
 fn write_text(
   grid : CellGrid,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   text : String,
-  attr : Int,
-  seq : Int,
+  attr : Int32,
+  seq : Int32,
 ) -> Unit {
   let mut c = col
   for ch in text {
@@ -134,13 +134,13 @@ fn write_text(
 /// that box's rows. Pixel renderers get this for free from `clip_rect`; a cell
 /// projection has to do it explicitly or sibling nodes interleave into noise.
 priv struct Cursor {
-  mut row : Int
-  mut col : Int
-  c0 : Int
-  r1 : Int
-  c1 : Int
-  attr : Int
-  seq : Int
+  mut row : Int32
+  mut col : Int32
+  c0 : Int32
+  r1 : Int32
+  c1 : Int32
+  attr : Int32
+  seq : Int32
 }
 
 ///|
@@ -170,13 +170,13 @@ fn put_word(grid : CellGrid, cur : Cursor, word : String) -> Bool {
 ///|
 pub fn write_boxed(
   grid : CellGrid,
-  r0 : Int,
-  c0 : Int,
-  r1 : Int,
-  c1 : Int,
+  r0 : Int32,
+  c0 : Int32,
+  r1 : Int32,
+  c1 : Int32,
   text : String,
-  attr : Int,
-  seq : Int,
+  attr : Int32,
+  seq : Int32,
 ) -> Unit {
   let cur : Cursor = { row: r0, col: c0, c0, r1, c1, attr, seq, }
   let mut word = ""
@@ -206,14 +206,14 @@ pub fn write_boxed(
 ///|
 pub fn draw_box(
   grid : CellGrid,
-  r0 : Int,
-  c0 : Int,
-  r1 : Int,
-  c1 : Int,
+  r0 : Int32,
+  c0 : Int32,
+  r1 : Int32,
+  c1 : Int32,
   title : String,
-  attr : Int,
-  chrome : Int,
-  label : Int,
+  attr : Int32,
+  chrome : Int32,
+  label : Int32,
 ) -> Unit {
   if r1 - r0 < 2 || c1 - c0 < 2 {
     // Too small to frame: still mark presence so the node is not lost.
@@ -317,7 +317,7 @@ fn node_text(node : @core.SemanticsNode) -> String {
 }
 
 ///|
-fn sgr(attr : Int) -> String {
+fn sgr(attr : Int32) -> String {
   if attr == 1 {
     "\u{1b}[36m"
   } else if attr == 2 {
@@ -336,7 +336,7 @@ fn sgr(attr : Int) -> String {
 }
 
 ///|
-fn attr_for(node : @core.SemanticsNode, role : String) -> Int {
+fn attr_for(node : @core.SemanticsNode, role : String) -> Int32 {
   if node.state.focused {
     4
   } else if role == "Button" {
@@ -358,7 +358,7 @@ fn attr_for(node : @core.SemanticsNode, role : String) -> Int {
 }
 
 ///|
-fn clamp_int(value : Int, limit : Int) -> Int {
+fn clamp_int(value : Int32, limit : Int32) -> Int32 {
   if value < 0 {
     0
   } else if value >= limit {
@@ -373,9 +373,9 @@ fn quantize(
   frame : @core.Rect,
   cell_w : Double,
   cell_h : Double,
-  cols : Int,
-  rows : Int,
-) -> (Int, Int, Int, Int) {
+  cols : Int32,
+  rows : Int32,
+) -> (Int32, Int32, Int32, Int32) {
   let c0 = clamp_int((frame.origin.x / cell_w).floor().to_int(), cols)
   let r0 = clamp_int((frame.origin.y / cell_h).floor().to_int(), rows)
   let c1 = clamp_int(
@@ -443,7 +443,7 @@ fn collect_layout_frames(
 }
 
 ///|
-fn layout_count(node : @core.LayoutResult) -> Int {
+fn layout_count(node : @core.LayoutResult) -> Int32 {
   let mut total = 1
   for child in node.children {
     total = total + layout_count(child)
@@ -455,7 +455,7 @@ fn layout_count(node : @core.LayoutResult) -> Int {
 fn index_of(
   nodes : Array[@core.SemanticsNode],
   id : @core.SemanticsNodeId,
-) -> Int? {
+) -> Int32? {
   let mut i = 0
   while i < nodes.length() {
     if nodes[i].node_id == id {
@@ -473,10 +473,10 @@ fn index_of(
 fn paint_order(
   nodes : Array[@core.SemanticsNode],
   root : @core.SemanticsNodeId?,
-) -> Array[Int] {
-  let order : Array[Int] = []
+) -> Array[Int32] {
+  let order : Array[Int32] = []
   let visited = Array::make(nodes.length(), false)
-  let queue : Array[Int] = []
+  let queue : Array[Int32] = []
   match root {
     Some(id) =>
       match index_of(nodes, id) {
@@ -570,9 +570,9 @@ fn paint_node(
 }
 
 ///|
-fn role_histogram(nodes : Array[@core.SemanticsNode]) -> Array[(String, Int)] {
+fn role_histogram(nodes : Array[@core.SemanticsNode]) -> Array[(String, Int32)] {
   let names : Array[String] = []
-  let counts : Array[Int] = []
+  let counts : Array[Int32] = []
   for node in nodes {
     let name = role_tag(node)
     let mut i = 0
@@ -591,7 +591,7 @@ fn role_histogram(nodes : Array[@core.SemanticsNode]) -> Array[(String, Int)] {
       counts[found] = counts[found] + 1
     }
   }
-  let out : Array[(String, Int)] = []
+  let out : Array[(String, Int32)] = []
   let mut i = 0
   while i < names.length() {
     out.push((names[i], counts[i]))
@@ -678,7 +678,7 @@ fn snapshot_root(
 }
 
 ///|
-pub fn line_containing(lines : Array[String], needle : String) -> Int? {
+pub fn line_containing(lines : Array[String], needle : String) -> Int32? {
   let mut i = 0
   while i < lines.length() {
     if lines[i].contains(needle) {

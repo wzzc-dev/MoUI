@@ -1,6 +1,6 @@
 ///|
-fn surface_resource_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn surface_resource_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|
@@ -103,7 +103,7 @@ fn SurfaceDescriptor::resource_byte_size(self : SurfaceDescriptor) -> Int64 {
 ///|
 pub fn SurfaceDescriptor::resource_descriptor(
   self : SurfaceDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let measured_byte_size = if byte_size < 0L {
     self.resource_byte_size()
@@ -223,7 +223,7 @@ pub fn SurfaceFinalizationDescriptor::resource_key(
 ///|
 pub fn SurfacePresentDescriptor::resource_descriptor(
   self : SurfacePresentDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {
@@ -241,7 +241,7 @@ pub fn SurfacePresentDescriptor::resource_descriptor(
 ///|
 pub fn SurfaceFinalizationDescriptor::resource_descriptor(
   self : SurfaceFinalizationDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {
@@ -269,7 +269,7 @@ pub fn SurfaceTargetDescriptor::gpu_context_resource_descriptor(
 ///|
 pub fn SurfaceTargetDescriptor::resource_descriptors(
   self : SurfaceTargetDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> Array[RendererResourceDescriptor] {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   let surface_descriptor = self.resource_descriptor(byte_size~)
@@ -289,7 +289,7 @@ pub fn SurfaceTargetDescriptor::resource_descriptors(
 ///|
 pub fn SurfacePresentDescriptor::resource_descriptors(
   self : SurfacePresentDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> Array[RendererResourceDescriptor] {
   if !self.is_presentable() {
     []
@@ -306,7 +306,7 @@ pub fn SurfacePresentDescriptor::resource_descriptors(
 ///|
 pub fn SurfaceFinalizationDescriptor::resource_descriptors(
   self : SurfaceFinalizationDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> Array[RendererResourceDescriptor] {
   if !self.is_finalizable() {
     []
@@ -323,7 +323,7 @@ pub fn SurfaceFinalizationDescriptor::resource_descriptors(
 ///|
 pub fn SurfacePresentDescriptor::resource_plan(
   self : SurfacePresentDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   RendererResourcePlan::new(self.resource_descriptors(byte_size~))
 }
@@ -331,7 +331,7 @@ pub fn SurfacePresentDescriptor::resource_plan(
 ///|
 pub fn SurfaceFinalizationDescriptor::resource_plan(
   self : SurfaceFinalizationDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   RendererResourcePlan::new(self.resource_descriptors(byte_size~))
 }
@@ -339,7 +339,7 @@ pub fn SurfaceFinalizationDescriptor::resource_plan(
 ///|
 pub fn SurfaceTargetDescriptor::resource_plan(
   self : SurfaceTargetDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   RendererResourcePlan::new(self.resource_descriptors(byte_size~))
 }
@@ -347,7 +347,7 @@ pub fn SurfaceTargetDescriptor::resource_plan(
 ///|
 pub fn SurfaceTargetDescriptor::resource_descriptor(
   self : SurfaceTargetDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let measured_byte_size = if byte_size < 0L {
     self.surface.resource_byte_size()

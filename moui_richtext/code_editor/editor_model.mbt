@@ -1,30 +1,30 @@
 ///|
 pub(all) struct CodeCursor {
-  position : Int
+  position : Int32
   selection : @text.TextRange?
 }
 
 ///|
 pub fn CodeCursor::new(
-  position~ : Int,
-  selection? : @text.TextRange? = None,
+  position~ : Int32,
+  selection~ : @text.TextRange? = None,
 ) -> CodeCursor {
   { position, selection, }
 }
 
 ///|
 pub(all) struct CodeEditorSourceLine {
-  number : Int
-  start : Int
-  end : Int
+  number : Int32
+  start : Int32
+  end : Int32
   text : String
 }
 
 ///|
 pub(all) struct CodeEditorCaretPosition {
-  line : Int
-  column : Int
-  offset : Int
+  line : Int32
+  column : Int32
+  offset : Int32
 }
 
 ///|
@@ -79,7 +79,7 @@ pub(all) struct CodeLanguageRegistry {
 
 ///|
 pub fn CodeLanguageRegistry::new(
-  language_id? : String = "moonbit",
+  language_id~ : String = "moonbit",
 ) -> CodeLanguageRegistry {
   { language_id, }
 }
@@ -99,7 +99,7 @@ pub fn CodeLanguageRegistry::tokenize(
 pub fn CodeLanguageRegistry::completions(
   _self : CodeLanguageRegistry,
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> Array[CodeCompletionItem] {
   let prefix = code_word_prefix(source, offset)
   let candidates : Array[String] = [
@@ -117,7 +117,7 @@ pub fn CodeLanguageRegistry::completions(
 pub fn CodeCompletionItem::new(
   label~ : String,
   insert_text~ : String,
-  detail? : String = "",
+  detail~ : String = "",
 ) -> CodeCompletionItem {
   { label, insert_text, detail, }
 }
@@ -127,7 +127,7 @@ pub(all) struct CodeFindState {
   query : String
   replacement : String
   matches : Array[@text.TextRange]
-  active_index : Int
+  active_index : Int32
 }
 
 ///|
@@ -147,7 +147,7 @@ pub(all) struct EditorDocument {
 pub fn EditorDocument::new(
   path~ : String,
   text~ : String,
-  language? : String = "moonbit",
+  language~ : String = "moonbit",
 ) -> EditorDocument {
   { path, text, language, dirty: false, }
 }
@@ -206,7 +206,7 @@ pub fn EditorState::with_source(
 ///|
 pub fn EditorState::with_selection(
   self : EditorState,
-  caret : Int,
+  caret : Int32,
   selection : @text.TextRange?,
 ) -> EditorState {
   { ..self, cursors: [CodeCursor::new(position=caret, selection~)], selection, }
@@ -272,7 +272,7 @@ pub fn code_editor_source_lines(source : String) -> Array[CodeEditorSourceLine] 
 ///|
 pub fn code_editor_caret_position(
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> CodeEditorCaretPosition {
   let chars = source.to_array()
   let clamped = clamp_editor_int(offset, 0, chars.length())
@@ -296,8 +296,8 @@ pub fn code_editor_caret_position(
 pub fn code_editor_diagnostic_lines(
   source : String,
   diagnostics : Array[CodeDiagnostic],
-) -> Array[Int] {
-  let lines : Array[Int] = []
+) -> Array[Int32] {
+  let lines : Array[Int32] = []
   for diagnostic in diagnostics {
     let position = code_editor_caret_position(source, diagnostic.range.start)
     if !lines.contains(position.line) {
@@ -402,7 +402,7 @@ pub fn code_insert_text(
 }
 
 ///|
-pub fn auto_indent_for_position(source : String, position : Int) -> String {
+pub fn auto_indent_for_position(source : String, position : Int32) -> String {
   let chars = source.to_array()
   let pos = clamp_editor_int(position, 0, chars.length())
   let mut line_start = pos
@@ -424,12 +424,12 @@ pub fn auto_indent_for_position(source : String, position : Int) -> String {
 
 ///|
 pub(all) struct BracketMatch {
-  open : Int
-  close : Int
+  open : Int32
+  close : Int32
 }
 
 ///|
-pub fn code_bracket_match(source : String, offset : Int) -> BracketMatch? {
+pub fn code_bracket_match(source : String, offset : Int32) -> BracketMatch? {
   let chars = source.to_array()
   if chars.is_empty() {
     return None
@@ -450,7 +450,7 @@ pub fn code_bracket_match(source : String, offset : Int) -> BracketMatch? {
 ///|
 fn editor_chars_match(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   query : Array[Char],
 ) -> Bool {
   for index in 0..<query.length() {
@@ -463,14 +463,14 @@ fn editor_chars_match(
 
 ///|
 priv struct EditorCursorEdit {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 }
 
 ///|
 fn editor_cursor_edit(
   cursor : CodeCursor,
-  source_length : Int,
+  source_length : Int32,
 ) -> EditorCursorEdit {
   match cursor.selection {
     Some(range) => {
@@ -502,7 +502,7 @@ fn editor_sort_edits(edits : Array[EditorCursorEdit]) -> Unit {
 }
 
 ///|
-fn editor_bracket_at(chars : Array[Char], index : Int) -> BracketMatch? {
+fn editor_bracket_at(chars : Array[Char], index : Int32) -> BracketMatch? {
   let character = chars[index]
   if character == '(' || character == '[' || character == '{' {
     return editor_find_forward(
@@ -526,7 +526,7 @@ fn editor_bracket_at(chars : Array[Char], index : Int) -> BracketMatch? {
 ///|
 fn editor_find_forward(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   open : Char,
   close : Char,
 ) -> BracketMatch? {
@@ -547,7 +547,7 @@ fn editor_find_forward(
 ///|
 fn editor_find_backward(
   chars : Array[Char],
-  end : Int,
+  end : Int32,
   open : Char,
   close : Char,
 ) -> BracketMatch? {
@@ -588,7 +588,7 @@ fn editor_matching_open(character : Char) -> Char {
 }
 
 ///|
-fn clamp_editor_int(value : Int, minimum : Int, maximum : Int) -> Int {
+fn clamp_editor_int(value : Int32, minimum : Int32, maximum : Int32) -> Int32 {
   if value < minimum {
     minimum
   } else if value > maximum {
@@ -631,7 +631,7 @@ fn code_highlight_kind(kind : @richtext.CodeHighlightToken) -> String {
 }
 
 ///|
-fn code_word_prefix(source : String, offset : Int) -> String {
+fn code_word_prefix(source : String, offset : Int32) -> String {
   let chars = source.to_array()
   let end = clamp_editor_int(offset, 0, chars.length())
   let mut start = end

@@ -190,7 +190,7 @@ pub fn program() -> @moui.Program[Model, Msg] {
 ///|
 pub fn program_with_binding(
   binding : @moui_3d.ThreeDViewportBinding,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::simple(init=Model::new_with_binding(binding), update~, view~, subscriptions=model => {
     if !model.playing {
@@ -405,7 +405,7 @@ fn add_sphere(
       )
     }
   }
-  let indices : Array[Int] = []
+  let indices : Array[Int32] = []
   for ring in 0..<rings {
     for segment in 0..<segments {
       let first = ring * (segments + 1) + segment
@@ -477,7 +477,7 @@ fn add_box(
 
 ///|
 fn box_face(
-  face : Int,
+  face : Int32,
   half_extents : @moui_3d.Vec3,
 ) -> (Array[@moui_3d.Vec3], @moui_3d.Vec3) {
   let x = half_extents.x()

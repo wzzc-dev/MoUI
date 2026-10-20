@@ -1,9 +1,9 @@
 ///|
 priv struct TextEditResult {
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
-  start : Int
+  start : Int32
   before : String
   after : String
 }
@@ -18,7 +18,7 @@ priv enum TextCaretDirection {
 
 ///|
 priv struct TextCaretMoveResult {
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
 }
 
@@ -86,7 +86,7 @@ fn single_line_text_caret_at_position(
   text_system : @core.TextSystem,
   search_bar : Bool,
   position : @core.Point,
-) -> Int {
+) -> Int32 {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let text_frame = single_line_text_frame(frame, search_bar, text != "")
   let layout = text_system.measure_text(
@@ -160,7 +160,7 @@ fn text_field_visual_caret(
   text : String,
   control : @core.TextControlStateContext,
   focused~ : Bool,
-) -> Int {
+) -> Int32 {
   let caret = clamp_int(control.caret, 0, text_length(text))
   if !focused {
     caret
@@ -177,9 +177,9 @@ fn text_field_visual_caret(
 ///|
 fn composition_start_index(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
-) -> Int {
+) -> Int32 {
   match active_text_selection(selection) {
     Some(selection) =>
       @core.normalize_grapheme_range(
@@ -194,7 +194,7 @@ fn composition_start_index(
 fn composition_cursor_offset(
   control : @core.TextControlStateContext,
   composition : String,
-) -> Int {
+) -> Int32 {
   let length = text_length(composition)
   match control.composition_cursor {
     Some(cursor) => {
@@ -253,7 +253,7 @@ fn normalize_text_range_to_grapheme(
 ///|
 fn replace_current_selection(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   replacement : String,
 ) -> TextEditResult {
@@ -290,9 +290,9 @@ fn replace_text_range(
 ///|
 fn surrounding_delete_range(
   text : String,
-  caret : Int,
-  before : Int,
-  after : Int,
+  caret : Int32,
+  before : Int32,
+  after : Int32,
 ) -> @core.TextRange {
   let length = text_length(text)
   let before = max_int(0, before)
@@ -312,7 +312,7 @@ fn surrounding_delete_range(
 ///|
 fn move_text_caret(
   text : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   direction : TextCaretDirection,
   extend_selection~ : Bool,
@@ -354,7 +354,7 @@ fn move_text_caret(
 }
 
 ///|
-fn text_selection_anchor(caret : Int, selection : @core.TextRange?) -> Int {
+fn text_selection_anchor(caret : Int32, selection : @core.TextRange?) -> Int32 {
   match selection {
     Some(selection) =>
       if caret == selection.start {
@@ -369,9 +369,9 @@ fn text_selection_anchor(caret : Int, selection : @core.TextRange?) -> Int {
 ///|
 fn move_text_caret_index(
   text : String,
-  caret : Int,
+  caret : Int32,
   direction : TextCaretDirection,
-) -> Int {
+) -> Int32 {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let length = boundaries.length()
   let caret = boundaries.clamp_index(caret)
@@ -460,7 +460,7 @@ fn searchbar_clear_frame(frame : @core.Rect) -> @core.Rect {
 }
 
 ///|
-fn text_length(text : String) -> Int {
+fn text_length(text : String) -> Int32 {
   text.to_array().length()
 }
 
@@ -474,7 +474,7 @@ fn max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+fn max_int(a : Int32, b : Int32) -> Int32 {
   if a >= b {
     a
   } else {
@@ -483,7 +483,7 @@ fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {

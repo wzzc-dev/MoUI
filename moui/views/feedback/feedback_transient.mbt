@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] toast(
   message : String,
-  tone? : @style.FeedbackTone = Neutral,
-  action? : @controls.StateViewAction[Msg]? = None,
+  tone~ : @style.FeedbackTone = Neutral,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)
@@ -26,8 +26,8 @@ pub fn[Msg] toast_stack(
   items : Array[ToastStackItem[Msg]],
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 360.0,
-  spacing? : Double = @style.default_theme().spacing_scale.sm,
+  width~ : Double = 360.0,
+  spacing~ : Double = @style.default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   if items.length() == 0 {
@@ -49,10 +49,10 @@ pub fn[Msg] toast_stack(
 ///|
 pub fn[Msg] snackbar(
   message : String,
-  action? : @controls.StateViewAction[Msg]? = None,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 360.0,
+  width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)

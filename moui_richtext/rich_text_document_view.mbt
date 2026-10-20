@@ -55,7 +55,7 @@ let rich_text_document_view_cache_store : Ref[
 ] = Ref([])
 
 ///|
-fn rich_text_document_view_cache_capacity() -> Int {
+fn rich_text_document_view_cache_capacity() -> Int32 {
   64
 }
 
@@ -255,7 +255,7 @@ fn rich_text_document_session_view_offset_at_point(
   visible_scroll_y : Double,
   visible_viewport_height : Double,
   visible_overscan : Double,
-) -> Int? {
+) -> Int32? {
   ignore(visible_overscan)
   let content = rich_text_editor_content_rect(frame)
   let session = MarkdownDocumentSession::new(source)
@@ -376,7 +376,7 @@ fn rich_text_document_view_wrap_block(
           soft_breaks[slice_start] <= offset {
       slice_start = slice_start + 1
     }
-    let local_breaks : Array[Int] = []
+    let local_breaks : Array[Int32] = []
     let mut slice_end = slice_start
     while slice_end < soft_breaks.length() &&
           soft_breaks[slice_end] <= offset + run_length {

@@ -3,12 +3,12 @@
 extern "C" fn validate_generated_project_stage_native(
   project_root : Bytes,
   log_path : Bytes,
-  stage : Int,
-  append : Int,
-) -> Int = "moui_cli_validate_generated_project_stage"
+  stage : Int32,
+  append : Int32,
+) -> Int32 = "moui_cli_validate_generated_project_stage"
 
 ///|
-fn project_validation_stage(code : Int) -> String {
+fn project_validation_stage(code : Int32) -> String {
   match code % 100 {
     1 => "moon update"
     2 => "moon check --target all --warn-list +73"
@@ -21,7 +21,7 @@ fn project_validation_stage(code : Int) -> String {
 fn run_generated_project_validation_stage(
   project_root : String,
   log_path : String,
-  stage : Int,
+  stage : Int32,
 ) -> Result[Unit, String] {
   let code = validate_generated_project_stage_native(
     nul_terminated(project_root),

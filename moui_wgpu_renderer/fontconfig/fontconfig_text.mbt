@@ -90,4 +90,4 @@ extern "C" fn linux_fontconfig_raster_glyph(payload : Bytes) -> Bytes = "moui_li
 
 ///|
 #borrow(payload)
-extern "C" fn linux_fontconfig_register_font_data(payload : Bytes) -> Int = "moui_linux_fontconfig_register_font_data"
+extern "C" fn linux_fontconfig_register_font_data(payload : Bytes) -> Int32 = "moui_linux_fontconfig_register_font_data"

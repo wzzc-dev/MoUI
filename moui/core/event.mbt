@@ -26,7 +26,7 @@ pub extend PointerPhase with ToJson::{to_json}
 pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
-  button : Int
+  button : Int32
   wheel_delta : Point
   time_ms : Double
   modifiers : KeyModifiers
@@ -78,8 +78,8 @@ pub extend KeyboardEvent with ToJson::{to_json}
 
 ///|
 pub(all) struct TextRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -115,7 +115,7 @@ pub(all) enum TextInputEvent {
   CompositionUpdate(CompositionUpdate)
   CompositionEnd(String)
   DeleteRange(TextRange)
-  DeleteSurrounding(Int, Int)
+  DeleteSurrounding(Int32, Int32)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -203,10 +203,10 @@ pub extend AppEvent with ToJson::{to_json}
 pub fn PointerEvent::new(
   position~ : Point,
   phase~ : PointerPhase,
-  button? : Int = 0,
-  wheel_delta? : Point = Point::new(x=0.0, y=0.0),
-  time_ms? : Double = 0.0,
-  modifiers? : KeyModifiers = KeyModifiers::none(),
+  button~ : Int32 = 0,
+  wheel_delta~ : Point = Point::new(x=0.0, y=0.0),
+  time_ms~ : Double = 0.0,
+  modifiers~ : KeyModifiers = KeyModifiers::none(),
 ) -> PointerEvent {
   { position, phase, button, wheel_delta, time_ms, modifiers, }
 }
@@ -218,10 +218,10 @@ pub fn KeyModifiers::none() -> KeyModifiers {
 
 ///|
 pub fn KeyModifiers::new(
-  shift? : Bool = false,
-  control? : Bool = false,
-  alt? : Bool = false,
-  meta? : Bool = false,
+  shift~ : Bool = false,
+  control~ : Bool = false,
+  alt~ : Bool = false,
+  meta~ : Bool = false,
 ) -> KeyModifiers {
   { shift, control, alt, meta, }
 }
@@ -229,21 +229,21 @@ pub fn KeyModifiers::new(
 ///|
 pub fn KeyboardEvent::new(
   key~ : String,
-  pressed? : Bool = true,
-  text? : String? = None,
-  repeat? : Bool = false,
-  modifiers? : KeyModifiers = KeyModifiers::none(),
+  pressed~ : Bool = true,
+  text~ : String? = None,
+  repeat~ : Bool = false,
+  modifiers~ : KeyModifiers = KeyModifiers::none(),
 ) -> KeyboardEvent {
   { key, text, pressed, repeat, modifiers, }
 }
 
 ///|
-pub fn TextRange::new(start~ : Int, end~ : Int) -> TextRange {
+pub fn TextRange::new(start~ : Int32, end~ : Int32) -> TextRange {
   { start, end, }
 }
 
 ///|
-pub fn TextRange::collapsed(index : Int) -> TextRange {
+pub fn TextRange::collapsed(index : Int32) -> TextRange {
   { start: index, end: index, }
 }
 
@@ -264,7 +264,7 @@ pub fn TextRange::is_collapsed(self : TextRange) -> Bool {
 ///|
 pub fn CompositionUpdate::new(
   text~ : String,
-  cursor? : TextRange? = None,
+  cursor~ : TextRange? = None,
 ) -> CompositionUpdate {
   { text, cursor, }
 }
@@ -282,8 +282,8 @@ pub fn CompositionUpdate::cursor(self : CompositionUpdate) -> TextRange? {
 ///|
 pub fn DragDropEvent::new(
   phase~ : DragDropPhase,
-  paths? : Array[String] = [],
-  position? : Point? = None,
+  paths~ : Array[String] = [],
+  position~ : Point? = None,
 ) -> DragDropEvent {
   { phase, paths, position, }
 }

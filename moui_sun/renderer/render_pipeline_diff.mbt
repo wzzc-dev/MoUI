@@ -14,8 +14,8 @@ pub fn Renderer::diff_pipelines(
 pub fn RenderPipeline::diff(
   previous : RenderPipeline,
   next : RenderPipeline,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> RenderPipelineDiffResult {
   let dirty_region = @graphics.DirtyRegion::new()
   let canvas_bounds = @graphics.PixelRect::new(x=0, y=0, width~, height~)

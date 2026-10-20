@@ -55,7 +55,7 @@ test "Font::get_glyph resolves composite transforms" {
 }
 
 ///|
-fn assert_point(point : GlyphPoint, x : Int, y : Int) -> Unit raise {
+fn assert_point(point : GlyphPoint, x : Int32, y : Int32) -> Unit raise {
   assert_eq(point.x, x)
   assert_eq(point.y, y)
 }
@@ -178,18 +178,18 @@ fn make_composite_header() -> Array[Byte] {
 }
 
 ///|
-fn composite_append_u16(out : Array[Byte], value : Int) -> Unit {
+fn composite_append_u16(out : Array[Byte], value : Int32) -> Unit {
   composite_append_byte(out, value >> 8)
   composite_append_byte(out, value)
 }
 
 ///|
-fn composite_append_i16(out : Array[Byte], value : Int) -> Unit {
+fn composite_append_i16(out : Array[Byte], value : Int32) -> Unit {
   let unsigned = if value < 0 { value + 65536 } else { value }
   composite_append_u16(out, unsigned)
 }
 
 ///|
-fn composite_append_byte(out : Array[Byte], value : Int) -> Unit {
+fn composite_append_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
 }

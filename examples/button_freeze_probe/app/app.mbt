@@ -16,7 +16,7 @@ pub struct Model {
   active : Bool
   review : Bool
   blocked : Bool
-  clicks : Int
+  clicks : Int32
   last_action : String
   previous_action : String
 }
@@ -80,11 +80,11 @@ pub fn update(model : Model, msg : Msg) -> Model {
 fn Model::record(
   self : Model,
   action : String,
-  query? : String? = None,
-  active? : Bool? = None,
-  review? : Bool? = None,
-  blocked? : Bool? = None,
-  count_click? : Bool = true,
+  query~ : String? = None,
+  active~ : Bool? = None,
+  review~ : Bool? = None,
+  blocked~ : Bool? = None,
+  count_click~ : Bool = true,
 ) -> Model {
   {
     query: query.unwrap_or(self.query),
@@ -204,7 +204,7 @@ fn Model::summary(self : Model) -> String {
 }
 
 ///|
-fn Model::result_count(self : Model) -> Int {
+fn Model::result_count(self : Model) -> Int32 {
   if self.query == "" && !self.active && !self.review && !self.blocked {
     10
   } else if self.active && self.review && self.blocked {

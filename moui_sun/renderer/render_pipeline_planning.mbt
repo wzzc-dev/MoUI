@@ -2,8 +2,8 @@
 /// Estimate the dirty region and command categories without replaying.
 pub fn RenderPipeline::analyze(
   self : RenderPipeline,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> RenderPipelineAnalysis {
   let dirty_region = @graphics.DirtyRegion::new()
   let canvas_bounds = @graphics.PixelRect::new(x=0, y=0, width~, height~)
@@ -40,9 +40,9 @@ pub fn RenderPipeline::analyze(
 /// Build a present plan from the pipeline's estimated dirty region.
 pub fn RenderPipeline::dirty_present_plan(
   self : RenderPipeline,
-  width : Int,
-  height : Int,
-  max_rects : Int,
+  width : Int32,
+  height : Int32,
+  max_rects : Int32,
 ) -> @graphics.DirtyPresentPlan {
   self.analyze(width, height).get_present_plan(width, height, max_rects)
 }
@@ -51,8 +51,8 @@ pub fn RenderPipeline::dirty_present_plan(
 /// Group contiguous commands by scheduling category and estimate batch dirties.
 pub fn RenderPipeline::batch_plan(
   self : RenderPipeline,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> RenderPipelineBatchPlan {
   let batches = []
   let plan_dirty_region = @graphics.DirtyRegion::new()

@@ -17,7 +17,7 @@ priv struct Native3DRenderer {
   mut pipeline : @wgpu_mbt.RenderPipeline?
   mut vertex_buffer : @wgpu_mbt.Buffer?
   mut vertex_payload : Bytes?
-  mut upload_count : Int
+  mut upload_count : Int32
   mut disposed : Bool
 }
 
@@ -79,7 +79,7 @@ fn Native3DRenderer::new(
 }
 
 ///|
-fn physical_width(metrics : @core.SurfaceMetrics) -> UInt {
+fn physical_width(metrics : @core.SurfaceMetrics) -> UInt32 {
   let width = if metrics.physical_size.width > 0.0 {
     metrics.physical_size.width
   } else {
@@ -89,7 +89,7 @@ fn physical_width(metrics : @core.SurfaceMetrics) -> UInt {
 }
 
 ///|
-fn physical_height(metrics : @core.SurfaceMetrics) -> UInt {
+fn physical_height(metrics : @core.SurfaceMetrics) -> UInt32 {
   let height = if metrics.physical_size.height > 0.0 {
     metrics.physical_size.height
   } else {

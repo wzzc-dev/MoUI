@@ -15,7 +15,7 @@ pub fn LayerTree::new() -> LayerTree {
 }
 
 ///|
-pub fn LayerTree::add_layer(self : LayerTree, layer : Layer) -> Int {
+pub fn LayerTree::add_layer(self : LayerTree, layer : Layer) -> Int32 {
   let index = self.layers.length()
   self.layers.push(layer)
   if layer_is_compositable(layer) {
@@ -25,7 +25,7 @@ pub fn LayerTree::add_layer(self : LayerTree, layer : Layer) -> Int {
 }
 
 ///|
-pub fn LayerTree::remove_layer(self : LayerTree, index : Int) -> Layer? {
+pub fn LayerTree::remove_layer(self : LayerTree, index : Int32) -> Layer? {
   guard is_valid_layer_index(self, index) else { return None }
   let layer = self.layers.remove(index)
   if layer_is_compositable(layer) {
@@ -37,7 +37,7 @@ pub fn LayerTree::remove_layer(self : LayerTree, index : Int) -> Layer? {
 ///|
 pub fn LayerTree::replace_layer(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   layer : Layer,
 ) -> Layer? {
   guard is_valid_layer_index(self, index) else { return None }
@@ -50,8 +50,8 @@ pub fn LayerTree::replace_layer(
 ///|
 pub fn LayerTree::reorder_layer(
   self : LayerTree,
-  from_index : Int,
-  to_index : Int,
+  from_index : Int32,
+  to_index : Int32,
 ) -> Bool {
   guard is_valid_layer_index(self, from_index) &&
     is_valid_layer_index(self, to_index) else {
@@ -67,12 +67,12 @@ pub fn LayerTree::reorder_layer(
 }
 
 ///|
-pub fn LayerTree::get_layer_count(self : LayerTree) -> Int {
+pub fn LayerTree::get_layer_count(self : LayerTree) -> Int32 {
   self.layers.length()
 }
 
 ///|
-pub fn LayerTree::get_compositable_layer_count(self : LayerTree) -> Int {
+pub fn LayerTree::get_compositable_layer_count(self : LayerTree) -> Int32 {
   let mut count = 0
   for layer in self.layers {
     if layer.is_compositable() {
@@ -83,7 +83,7 @@ pub fn LayerTree::get_compositable_layer_count(self : LayerTree) -> Int {
 }
 
 ///|
-pub fn LayerTree::get_layer(self : LayerTree, index : Int) -> Layer? {
+pub fn LayerTree::get_layer(self : LayerTree, index : Int32) -> Layer? {
   guard is_valid_layer_index(self, index) else { return None }
   Some(self.layers[index])
 }
@@ -102,7 +102,7 @@ pub fn LayerTree::invalidate_rect(self : LayerTree, rect : PixelRect) -> Unit {
 }
 
 ///|
-pub fn LayerTree::invalidate_layer(self : LayerTree, index : Int) -> Bool {
+pub fn LayerTree::invalidate_layer(self : LayerTree, index : Int32) -> Bool {
   match self.get_layer(index) {
     Some(layer) => {
       self.invalidate_rect(layer_target_bounds(layer))
@@ -115,9 +115,9 @@ pub fn LayerTree::invalidate_layer(self : LayerTree, index : Int) -> Bool {
 ///|
 pub fn LayerTree::set_layer_position(
   self : LayerTree,
-  index : Int,
-  x : Int,
-  y : Int,
+  index : Int32,
+  x : Int32,
+  y : Int32,
 ) -> Bool {
   match self.get_layer(index) {
     Some(layer) => {
@@ -138,7 +138,7 @@ pub fn LayerTree::set_layer_position(
 ///|
 pub fn LayerTree::set_layer_visible(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   visible : Bool,
 ) -> Bool {
   match self.get_layer(index) {
@@ -160,7 +160,7 @@ pub fn LayerTree::set_layer_visible(
 ///|
 pub fn LayerTree::set_layer_opacity(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   opacity : Double,
 ) -> Bool {
   match self.get_layer(index) {
@@ -183,7 +183,7 @@ pub fn LayerTree::set_layer_opacity(
 ///|
 pub fn LayerTree::set_layer_blend_mode(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   blend_mode : BlendMode,
 ) -> Bool {
   match self.get_layer(index) {
@@ -204,7 +204,7 @@ pub fn LayerTree::set_layer_blend_mode(
 ///|
 pub fn LayerTree::set_layer_filter(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   filter : PaintFilter,
 ) -> Bool {
   match self.get_layer(index) {
@@ -234,7 +234,7 @@ pub fn LayerTree::set_layer_filter(
 /// layer's local coordinates so layer movement does not shift the pattern.
 pub fn LayerTree::set_layer_shader(
   self : LayerTree,
-  index : Int,
+  index : Int32,
   shader : PaintShader,
 ) -> Bool {
   match self.get_layer(index) {
@@ -253,7 +253,7 @@ pub fn LayerTree::set_layer_shader(
 }
 
 ///|
-pub fn LayerTree::clear_layer_shader(self : LayerTree, index : Int) -> Bool {
+pub fn LayerTree::clear_layer_shader(self : LayerTree, index : Int32) -> Bool {
   match self.get_layer(index) {
     Some(layer) => {
       guard layer.get_shader() is Some(_) else { return true }
@@ -270,7 +270,7 @@ pub fn LayerTree::clear_layer_shader(self : LayerTree, index : Int) -> Bool {
 }
 
 ///|
-pub fn LayerTree::clear_layer_filter(self : LayerTree, index : Int) -> Bool {
+pub fn LayerTree::clear_layer_filter(self : LayerTree, index : Int32) -> Bool {
   match self.get_layer(index) {
     Some(layer) => {
       let previous_filter = layer.get_filter()
@@ -296,9 +296,9 @@ pub fn LayerTree::clear_layer_filter(self : LayerTree, index : Int) -> Bool {
 ///|
 pub fn LayerTree::resize_layer(
   self : LayerTree,
-  index : Int,
-  width : Int,
-  height : Int,
+  index : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   match self.get_layer(index) {
     Some(layer) => {
@@ -328,7 +328,7 @@ pub fn LayerTree::dirty_bounds(self : LayerTree) -> PixelRect? {
 ///|
 pub fn LayerTree::dirty_rects(
   self : LayerTree,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Array[PixelRect] {
   let region = self.collect_dirty_region()
   match region.bounds() {
@@ -342,7 +342,7 @@ pub fn[S : Surface] LayerTree::dirty_present_plan(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> DirtyPresentPlan {
   let region = self.combined_dirty_region(target)
   dirty_present_plan_for_region(region, target, surface, max_rects)
@@ -353,7 +353,7 @@ pub fn[S : Surface] LayerTree::dirty_submit_plan(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> DirtySubmitPlan {
   let region = self.combined_dirty_region(target)
   {
@@ -369,7 +369,7 @@ pub fn[S : Surface] LayerTree::submit_by_strategy_plan(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> RenderFrameSubmitPlan {
   let dirty_plan = self.dirty_submit_plan(target, surface, max_rects)
   let strategy = dirty_plan.get_present_strategy(
@@ -402,7 +402,7 @@ pub fn[S : Surface] LayerTree::submit_schedule(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> RenderFrameSchedule {
   render_frame_schedule(
     self.submit_by_strategy_plan(target, surface, max_rects),
@@ -414,7 +414,7 @@ pub fn[S : Surface] LayerTree::redraw_schedule(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> RenderFrameSchedule {
   self.submit_schedule_by_policy(target, surface, max_rects, CachedRedraw)
 }
@@ -424,7 +424,7 @@ pub fn[S : Surface] LayerTree::submit_schedule_by_policy(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   policy : RenderFrameSubmitPolicy,
 ) -> RenderFrameSchedule {
   match policy {
@@ -451,7 +451,7 @@ pub fn[S : Surface] LayerTree::submit_request_by_policy(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   policy : RenderFrameSubmitPolicy,
 ) -> RenderFrameSubmitRequest {
   render_frame_submit_request(
@@ -480,7 +480,7 @@ fn[S : Surface] dirty_present_plan_for_region(
   region : DirtyRegion,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> DirtyPresentPlan {
   let target_bounds = PixelRect::new(
     x=0,
@@ -501,7 +501,7 @@ fn[S : Surface] dirty_present_plan_for_region(
 }
 
 ///|
-pub fn LayerTree::composite_to(self : LayerTree, target : Canvas) -> Int {
+pub fn LayerTree::composite_to(self : LayerTree, target : Canvas) -> Int32 {
   let mut count = 0
   for layer in self.layers {
     count = count + layer.composite_to(target)
@@ -513,8 +513,8 @@ pub fn LayerTree::composite_to(self : LayerTree, target : Canvas) -> Int {
 pub fn LayerTree::composite_dirty_to(
   self : LayerTree,
   target : Canvas,
-  max_rects : Int,
-) -> Int {
+  max_rects : Int32,
+) -> Int32 {
   let rects = self.dirty_rects(max_rects)
   guard rects.length() > 0 else { return 0 }
   let target_bounds = PixelRect::new(
@@ -550,7 +550,7 @@ pub fn[S : Surface] LayerTree::present_dirty_to(
   self : LayerTree,
   target : Canvas,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   self.present_dirty_to_with_limit(
     target, surface, default_dirty_present_rect_limit,
   )
@@ -561,7 +561,7 @@ pub fn[S : Surface] LayerTree::present_all_to(
   self : LayerTree,
   target : Canvas,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   self.present_all_to_with_limit(
     target, surface, default_dirty_present_rect_limit,
   )
@@ -572,8 +572,8 @@ pub fn[S : Surface] LayerTree::present_all_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
-) -> Result[Int, PresentError] {
+  max_rects : Int32,
+) -> Result[Int32, PresentError] {
   target
   .get_dirty_region()
   .add_all(target.get_pixmap().get_width(), target.get_pixmap().get_height())
@@ -596,7 +596,7 @@ pub fn[S : Surface] LayerTree::submit_dirty_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Result[DirtySubmitResult, PresentError] {
   let submit_plan = self.dirty_submit_plan(target, surface, max_rects)
   match self.present_dirty_to_with_limit(target, surface, max_rects) {
@@ -622,7 +622,7 @@ pub fn[S : Surface] LayerTree::submit_scheduled_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   schedule : RenderFrameSchedule,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
   let current_schedule = self.current_submit_schedule_for_schedule(
@@ -638,7 +638,7 @@ fn[S : Surface] LayerTree::current_submit_schedule_for_schedule(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   schedule : RenderFrameSchedule,
 ) -> RenderFrameSchedule {
   match schedule.get_action() {
@@ -663,7 +663,7 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   current_schedule : RenderFrameSchedule,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
   match current_schedule.get_action() {
@@ -721,8 +721,8 @@ fn[S : Surface] LayerTree::submit_current_schedule_to_with_limit(
 fn[S : Surface] present_cached_target_all_to_with_limit(
   target : Canvas,
   surface : S,
-  max_rects : Int,
-) -> Result[Int, PresentError] {
+  max_rects : Int32,
+) -> Result[Int32, PresentError] {
   let dirty_region = target.get_dirty_region()
   let previous_dirty_rects = dirty_region.get_rects()
   dirty_region.add_all(
@@ -766,7 +766,7 @@ pub fn[S : Surface] LayerTree::submit_to_by_policy_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   policy : RenderFrameSubmitPolicy,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
   self.submit_scheduled_to_with_limit(
@@ -794,7 +794,7 @@ pub fn[S : Surface] LayerTree::submit_request_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   request : RenderFrameSubmitRequest,
 ) -> Result[RenderFrameSubmitResult, PresentError] {
   let current_schedule = self.current_submit_schedule_for_request(
@@ -810,7 +810,7 @@ fn[S : Surface] LayerTree::current_submit_schedule_for_request(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
   request : RenderFrameSubmitRequest,
 ) -> RenderFrameSchedule {
   let schedule = request.get_schedule()
@@ -841,8 +841,8 @@ pub fn[S : Surface] LayerTree::present_dirty_to_with_limit(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
-) -> Result[Int, PresentError] {
+  max_rects : Int32,
+) -> Result[Int32, PresentError] {
   let rects = self.combined_dirty_target_rects(target, max_rects)
   guard rects.length() > 0 else {
     return target.present_dirty_to_with_limit(surface, max_rects)
@@ -876,7 +876,7 @@ pub fn[S : Surface] LayerTree::dirty_present_batch(
   self : LayerTree,
   target : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Result[PresentBatch, PresentError] {
   let rects = self.combined_dirty_target_rects(target, max_rects)
   guard rects.length() > 0 else {
@@ -928,7 +928,7 @@ fn LayerTree::collect_dirty_region(self : LayerTree) -> DirtyRegion {
 fn LayerTree::combined_dirty_target_rects(
   self : LayerTree,
   target : Canvas,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Array[PixelRect] {
   dirty_rects_for_region(self.combined_dirty_region(target), target, max_rects)
 }
@@ -937,7 +937,7 @@ fn LayerTree::combined_dirty_target_rects(
 fn dirty_rects_for_region(
   region : DirtyRegion,
   target : Canvas,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Array[PixelRect] {
   let target_bounds = PixelRect::new(
     x=0,
@@ -964,7 +964,7 @@ fn LayerTree::composite_rects_to(
   self : LayerTree,
   target : Canvas,
   rects : Array[PixelRect],
-) -> Int {
+) -> Int32 {
   let draw_state = snapshot_canvas_draw_state(target)
   clear_canvas_draw_state(target)
   let mut draw_count = 0
@@ -1084,7 +1084,7 @@ fn restore_canvas_pixels(
 ///|
 fn write_snapshot_color(
   pixels : FixedArray[Byte],
-  offset : Int,
+  offset : Int32,
   color : Color,
 ) -> Unit {
   pixels[offset] = color.r
@@ -1094,12 +1094,12 @@ fn write_snapshot_color(
 }
 
 ///|
-fn is_valid_layer_index(tree : LayerTree, index : Int) -> Bool {
+fn is_valid_layer_index(tree : LayerTree, index : Int32) -> Bool {
   index >= 0 && index < tree.layers.length()
 }
 
 ///|
-fn insert_layer_at(layers : Array[Layer], index : Int, layer : Layer) -> Unit {
+fn insert_layer_at(layers : Array[Layer], index : Int32, layer : Layer) -> Unit {
   let tail = []
   while layers.length() > index {
     tail.push(layers.remove(index))
@@ -1151,7 +1151,7 @@ fn composite_layer_rect(
   layer : Layer,
   target : Canvas,
   target_rect : PixelRect,
-) -> Int {
+) -> Int32 {
   match layer_target_bounds(layer).intersection(target_rect) {
     Some(intersection) => {
       let src_rect = PixelRect::new(

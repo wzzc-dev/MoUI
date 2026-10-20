@@ -1,7 +1,7 @@
 ///|
 fn markdown_editor_transform_multiline_paste(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -47,7 +47,7 @@ fn markdown_editor_transform_multiline_paste(
 ///|
 fn markdown_editor_code_block_paste_insert(
   source : String,
-  caret : Int,
+  caret : Int32,
   input : String,
 ) -> String {
   let chars = source.to_array()
@@ -63,7 +63,7 @@ fn markdown_editor_code_block_paste_insert(
 fn markdown_editor_quoted_code_block_paste_insert(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
-  caret : Int,
+  caret : Int32,
   input : String,
 ) -> String {
   let chars = source.to_array()
@@ -151,7 +151,7 @@ fn markdown_editor_blank_paste_continuation_prefix(line : String) -> String {
 }
 
 ///|
-fn markdown_editor_ordered_continuation_number(line : String) -> Int {
+fn markdown_editor_ordered_continuation_number(line : String) -> Int32 {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -174,7 +174,10 @@ fn markdown_editor_ordered_continuation_number(line : String) -> Int {
 }
 
 ///|
-fn markdown_editor_ordered_paste_prefix(line : String, number : Int) -> String {
+fn markdown_editor_ordered_paste_prefix(
+  line : String,
+  number : Int32,
+) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -190,7 +193,7 @@ fn markdown_editor_ordered_paste_prefix(line : String, number : Int) -> String {
 }
 
 ///|
-fn markdown_editor_ordered_digit_end(chars : Array[Char]) -> Int {
+fn markdown_editor_ordered_digit_end(chars : Array[Char]) -> Int32 {
   let mut index = markdown_editor_leading_indent_length(chars)
   while index < chars.length() && chars[index].is_ascii_digit() {
     index = index + 1

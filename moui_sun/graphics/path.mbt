@@ -460,7 +460,7 @@ fn copy_path_segments(segments : Array[PathSegment]) -> Array[PathSegment] {
 
 ///|
 /// Return the number of path segments without exposing the segment array.
-pub fn Path::segment_count(self : Path) -> Int {
+pub fn Path::segment_count(self : Path) -> Int32 {
   self.segments.length()
 }
 
@@ -1134,7 +1134,7 @@ fn coincident_boundary_direction(
   from : Point,
   to : Point,
   polygon : Array[Point],
-) -> Int {
+) -> Int32 {
   for i in 0..<polygon.length() {
     let edge_start = polygon[i]
     let edge_end = polygon[(i + 1) % polygon.length()]
@@ -1298,7 +1298,7 @@ fn trace_polygon_boundary_segments(
 fn find_next_polygon_boundary_segment(
   segments : Array[PolygonBoundarySegment],
   point : Point,
-) -> Int {
+) -> Int32 {
   for i in 0..<segments.length() {
     if same_polygon_point(segments[i].from, point) {
       return i

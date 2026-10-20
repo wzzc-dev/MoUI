@@ -73,9 +73,9 @@ pub extend ShapingBuffer with Debug::{to_repr}
 /// Create a new shaping buffer
 pub fn ShapingBuffer::new(
   text : String,
-  direction? : TextDirection = LeftToRight,
-  script? : Script = Script::latin(),
-  font_size? : Double = 16.0,
+  direction~ : TextDirection = LeftToRight,
+  script~ : Script = Script::latin(),
+  font_size~ : Double = 16.0,
 ) -> ShapingBuffer {
   { text, direction, script, font_size, }
 }

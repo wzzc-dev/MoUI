@@ -5,7 +5,7 @@ fn band_rows(session : Session, label : String) -> Unit {
   let screen = session.screen()
   let mut out = ""
   for row in 0..<screen.rows {
-    let cols : Array[Int] = []
+    let cols : Array[Int32] = []
     for col in 0..<screen.cols {
       if screen.at(row, col).style.reverse {
         cols.push(col)
@@ -20,7 +20,7 @@ fn band_rows(session : Session, label : String) -> Unit {
 }
 
 ///|
-fn col_of(screen : Screen, row : Int, ch : Char) -> Int {
+fn col_of(screen : Screen, row : Int32, ch : Char) -> Int32 {
   let mut col = 0
   while col < screen.cols {
     if screen.at(row, col).ch == ch {
@@ -32,7 +32,7 @@ fn col_of(screen : Screen, row : Int, ch : Char) -> Int {
 }
 
 ///|
-async fn tap(session : Session, row : Int, col : Int) -> Unit {
+async fn tap(session : Session, row : Int32, col : Int32) -> Unit {
   session.send(
     "\u{1b}[<0;\{col + 1};\{row + 1}M\u{1b}[<0;\{col + 1};\{row + 1}m",
   )

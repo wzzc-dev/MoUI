@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] badge(
   label : String,
-  tone? : @style.BadgeTone = Neutral,
+  tone~ : @style.BadgeTone = Neutral,
   theme? : @core.Theme,
   style? : @style.BadgeStyle,
-  width? : Double = 72.0,
-  height? : Double = 24.0,
+  width~ : Double = 72.0,
+  height~ : Double = 24.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_badge_style(style, resolved_theme)
@@ -28,12 +28,12 @@ pub fn[Msg] badge(
 ///|
 pub fn[Msg] status_badge(
   label : String,
-  tone? : @style.BadgeTone = Neutral,
-  detail? : String = "",
+  tone~ : @style.BadgeTone = Neutral,
+  detail~ : String = "",
   theme? : @core.Theme,
   style? : @style.BadgeStyle,
-  width? : Double = 72.0,
-  height? : Double = 24.0,
+  width~ : Double = 72.0,
+  height~ : Double = 24.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let base = badge(label, tone~, theme=resolved_theme, style?, width~, height~).accessibility_label(
@@ -50,12 +50,12 @@ pub fn[Msg] status_badge(
 pub fn[Msg] stat_card(
   label : String,
   value : String,
-  caption? : String = "",
-  tone? : @style.FeedbackTone = Neutral,
+  caption~ : String = "",
+  tone~ : @style.FeedbackTone = Neutral,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 180.0,
-  height? : Double = 116.0,
+  width~ : Double = 180.0,
+  height~ : Double = 116.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)

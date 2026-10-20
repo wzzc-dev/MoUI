@@ -5,10 +5,10 @@ priv struct SkiaCachedLayerPictureEntry {
   runtime_key : String
   picture : @skia_native.Picture
   scale_factor : Double
-  content_revision : Int
+  content_revision : Int32
   byte_size : Int64
-  mut hit_count : Int
-  mut last_used : Int
+  mut hit_count : Int32
+  mut last_used : Int32
 }
 
 ///|
@@ -55,8 +55,8 @@ fn SkiaRasterRenderer::render_picture_command_range(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   scopes : Array[@render_common.PlanScopeKind],
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
@@ -106,8 +106,8 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
   if spec.frame.is_empty() {
@@ -224,8 +224,8 @@ fn SkiaRasterRenderer::render_uncached_picture_layer(
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
   let saved = canvas.save_count()
@@ -333,7 +333,7 @@ fn SkiaRasterRenderer::remove_picture_cached_layers_by_identity(
 ///|
 fn SkiaRasterRenderer::evict_picture_cached_layers_if_needed(
   self : SkiaRasterRenderer,
-) -> Int {
+) -> Int32 {
   let budget = self.layer_cache_budget_bytes()
   let mut evicted = 0
   while budget >= 0L && self.picture_layer_cache_total_bytes > budget {

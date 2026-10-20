@@ -17,10 +17,10 @@ pub fn[Msg] picker(
   items : Array[@style.PickerItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
-  placeholder? : String = "Select...",
+  placeholder~ : String = "Select...",
   theme? : @core.Theme,
   style? : @style.PickerStyle,
-  max_height? : Double = 200.0,
+  max_height~ : Double = 200.0,
 ) -> @core.View[Msg] {
   picker_control(
     items=picker_options(items),

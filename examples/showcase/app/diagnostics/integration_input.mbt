@@ -2,11 +2,11 @@
 pub(all) struct ShowcaseHostDiagnostics {
   label : String
   backend_label : String
-  service_count : Int
-  service_capacity : Int
+  service_count : Int32
+  service_capacity : Int32
   service_labels : Array[String]
-  input_count : Int
-  input_capacity : Int
+  input_count : Int32
+  input_capacity : Int32
   input_labels : Array[String]
   multi_window : Bool
   window_lifecycle : Bool
@@ -43,7 +43,7 @@ pub(all) struct ShowcaseRendererFeatureDiagnostic {
 pub(all) struct ShowcaseInspectorDiagnostics {
   scheduled_effect_label : String
   duplicate_effect_keys : Array[String]
-  subscription_source_count : Int
+  subscription_source_count : Int32
   active_subscription_label : String
   duplicate_subscription_keys : Array[String]
 }

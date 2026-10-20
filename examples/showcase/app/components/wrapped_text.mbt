@@ -24,7 +24,7 @@ fn wrap_text_lines(
   value : String,
   role : @views.TextRole,
   width : Double,
-  max_lines : Int,
+  max_lines : Int32,
 ) -> Array[String] {
   let max_chars = wrapped_text_max_chars(role, width)
   let lines : Array[String] = []
@@ -64,7 +64,7 @@ fn wrap_text_lines(
 }
 
 ///|
-fn wrapped_text_ellipsize(value : String, max_chars : Int) -> String {
+fn wrapped_text_ellipsize(value : String, max_chars : Int32) -> String {
   let chars = value.to_array()
   if chars.length() <= max_chars {
     value
@@ -76,12 +76,12 @@ fn wrapped_text_ellipsize(value : String, max_chars : Int) -> String {
 }
 
 ///|
-fn wrapped_text_length(value : String) -> Int {
+fn wrapped_text_length(value : String) -> Int32 {
   value.to_array().length()
 }
 
 ///|
-fn wrapped_text_max_chars(role : @views.TextRole, width : Double) -> Int {
+fn wrapped_text_max_chars(role : @views.TextRole, width : Double) -> Int32 {
   gallery_max_int(8, (width / wrapped_text_average_char_width(role)).to_int())
 }
 
@@ -117,7 +117,7 @@ fn gallery_grid_columns(
   width : Double,
   min_column_width : Double,
   column_spacing : Double,
-) -> Int {
+) -> Int32 {
   let min_column_width = gallery_max_double(1.0, min_column_width)
   let mut columns = 1
   let mut candidate = 2
@@ -135,7 +135,7 @@ fn gallery_grid_columns(
 ///|
 fn gallery_grid_column_width(
   width : Double,
-  columns : Int,
+  columns : Int32,
   column_spacing : Double,
 ) -> Double {
   let columns = gallery_max_int(1, columns)
@@ -155,7 +155,7 @@ fn gallery_max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn gallery_max_int(a : Int, b : Int) -> Int {
+fn gallery_max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

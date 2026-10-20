@@ -37,7 +37,7 @@ pub fn image_source_provider_clear() -> Unit {
 
 ///|
 /// Number of currently registered readers, for diagnostics and tests.
-pub fn image_source_provider_count() -> Int {
+pub fn image_source_provider_count() -> Int32 {
   image_source_providers.val.length()
 }
 

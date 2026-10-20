@@ -25,7 +25,7 @@ fn rich_text_visual_caret(
   text : String,
   control : @core.TextControlStateContext,
   focused~ : Bool,
-) -> Int {
+) -> Int32 {
   let caret = @core.clamp_int(control.caret, 0, text_length(text))
   if !focused {
     caret
@@ -42,7 +42,7 @@ fn rich_text_visual_caret(
 ///|
 fn rich_text_document_caret_rect_or_plain(
   document : RichTextDocument,
-  source_caret : Int,
+  source_caret : Int32,
   content : @core.Rect,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -67,7 +67,7 @@ fn rich_text_document_caret_rect_or_plain(
 ///|
 fn plain_rich_text_caret_rect(
   text : String,
-  caret : Int,
+  caret : Int32,
   content : @core.Rect,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -93,7 +93,7 @@ fn[Msg] rich_text_line_edge_move_result(
   ctx : @core.ViewEventContext,
   text : String,
   home~ : Bool,
-  on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
+  on_selection_change : ((Int32, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let caret = if home {
     multiline_line_start(text, ctx.text_control.caret)
@@ -131,14 +131,14 @@ fn[Msg] rich_text_line_edge_move_result(
 ///|
 fn rich_text_vertical_target_offset(
   document : RichTextDocument,
-  source_caret : Int,
+  source_caret : Int32,
   caret_rect : @core.Rect,
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
   goal_x~ : Double,
   up~ : Bool,
-) -> Int {
+) -> Int32 {
   if document.blocks.is_empty() {
     let line_height = if caret_rect.size.height > 0.0 {
       caret_rect.size.height
@@ -272,12 +272,12 @@ fn rich_text_block_is_blank_gap(block : RichTextBlock) -> Bool {
 ///|
 fn rich_text_vertical_block_boundary_offset(
   document : RichTextDocument,
-  block_index : Int,
-  source_caret : Int,
+  block_index : Int32,
+  source_caret : Int32,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
   up~ : Bool,
-) -> Int {
+) -> Int32 {
   // Blocks with no line box are pure spacing — the paragraph separator a
   // blank source line renders as — so the caret steps over them to the
   // neighbouring line, exactly like the pointer hit test does.
@@ -319,8 +319,8 @@ fn rich_text_vertical_block_boundary_offset(
 ///|
 fn rich_text_visual_offset_to_line(
   block : RichTextBlock,
-  visual_offset : Int,
-) -> Int {
+  visual_offset : Int32,
+) -> Int32 {
   let prefix_len = text_length(block.prefix)
   let mut consumed = prefix_len
   let mut line = 0
@@ -356,7 +356,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
   font : @core.FontSpec,
   up~ : Bool,
   extend_selection~ : Bool,
-  on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
+  on_selection_change : ((Int32, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let display_text = rich_text_with_composition(
     text,
@@ -444,7 +444,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
 }
 
 ///|
-fn multiline_line_start(text : String, caret : Int) -> Int {
+fn multiline_line_start(text : String, caret : Int32) -> Int32 {
   let chars = text.to_array()
   let mut index = @core.clamp_int(caret, 0, chars.length())
   while index > 0 && chars[index - 1] != '\n' {
@@ -454,7 +454,7 @@ fn multiline_line_start(text : String, caret : Int) -> Int {
 }
 
 ///|
-fn multiline_line_end(text : String, caret : Int) -> Int {
+fn multiline_line_end(text : String, caret : Int32) -> Int32 {
   let chars = text.to_array()
   let mut index = @core.clamp_int(caret, 0, chars.length())
   while index < chars.length() && chars[index] != '\n' {
@@ -465,7 +465,7 @@ fn multiline_line_end(text : String, caret : Int) -> Int {
 
 ///|
 fn rich_text_transform_insert(
-  input_transform : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
+  input_transform : ((String, Int32, @core.TextRange?, String) -> RichTextInputTransform?)?,
   text : String,
   control : @core.TextControlStateContext,
   inserted : String,
@@ -859,10 +859,10 @@ fn append_rich_text_block_selection_rect(
 ///|
 pub fn rich_text_document_caret_rect_at_source(
   document : RichTextDocument,
-  source_caret : Int,
+  source_caret : Int32,
   content : @core.Rect,
   base_font : @core.FontSpec,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> @core.Rect? {
   rich_text_document_caret_rect(
     document,
@@ -877,7 +877,7 @@ pub fn rich_text_document_caret_rect_at_source(
 ///|
 fn rich_text_document_caret_rect(
   document : RichTextDocument,
-  source_caret : Int,
+  source_caret : Int32,
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -985,12 +985,12 @@ fn rich_text_document_source_offset_at_point(
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int? {
+) -> Int32? {
   if !rich_text_document_has_source_ranges(document) {
     return None
   }
   let mut y = content.origin.y
-  let mut last_offset : Int? = None
+  let mut last_offset : Int32? = None
   let mut last_block : RichTextBlock? = None
   let mut last_frame = @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
   for block in document.blocks {
@@ -1062,7 +1062,7 @@ fn rich_text_document_source_offset_at_point(
 }
 
 ///|
-fn rich_text_block_end_source_offset(block : RichTextBlock) -> Int? {
+fn rich_text_block_end_source_offset(block : RichTextBlock) -> Int32? {
   match block.source_range {
     Some(range) => Some(range.end)
     None =>
@@ -1077,7 +1077,7 @@ fn rich_text_block_end_source_offset(block : RichTextBlock) -> Int? {
 
 ///|
 fn rich_text_caret_before_block(
-  source_caret : Int,
+  source_caret : Int32,
   block : RichTextBlock,
 ) -> Bool {
   match block.source_range {
@@ -1089,8 +1089,8 @@ fn rich_text_caret_before_block(
 ///|
 fn rich_text_block_visual_offset(
   block : RichTextBlock,
-  source_caret : Int,
-) -> Int? {
+  source_caret : Int32,
+) -> Int32? {
   match (block.source_range, block.content_range) {
     (Some(source), Some(content)) =>
       if source_caret < source.start || source_caret > source.end {
@@ -1123,12 +1123,12 @@ fn rich_text_document_prefix_source_offset_at_point(
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int? {
+) -> Int32? {
   if !rich_text_document_has_source_ranges(document) {
     return None
   }
   let mut y = content.origin.y
-  let mut fallback : Int? = None
+  let mut fallback : Int32? = None
   for block in document.blocks {
     let line_height = rich_text_block_line_height(
       block,
@@ -1172,7 +1172,7 @@ fn rich_text_block_prefix_source_offset_at_point(
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int? {
+) -> Int32? {
   if block.prefix == "" {
     return None
   }
@@ -1236,7 +1236,7 @@ fn rich_text_block_source_offset_at_point(
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int {
+) -> Int32 {
   let visual = rich_text_block_visual_offset_at_point(
     block, point, frame, base_font, text_system,
   )
@@ -1254,7 +1254,7 @@ fn rich_text_block_line_index_at_y(
   text_system : @core.TextSystem,
   available_width~ : Double,
   offset_y~ : Double,
-) -> Int {
+) -> Int32 {
   let mut cursor = 0.0
   for
     index, height in rich_text_block_line_heights(
@@ -1275,7 +1275,7 @@ fn rich_text_block_visual_offset_at_point(
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int {
+) -> Int32 {
   let font = rich_text_block_font(block, base_font)
   let target_line = @core.clamp_int(
     rich_text_block_line_index_at_y(
@@ -1386,8 +1386,8 @@ fn rich_text_run_visual_offset_at_x(
   x : Double,
   origin_x : Double,
   text_system : @core.TextSystem,
-  width? : Double? = None,
-) -> Int {
+  width~ : Double? = None,
+) -> Int32 {
   let chars = text.to_array()
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   if x <= origin_x {
@@ -1430,8 +1430,8 @@ fn rich_text_run_visual_offset_at_x(
 ///|
 fn rich_text_block_source_offset_from_visual(
   block : RichTextBlock,
-  visual_offset : Int,
-) -> Int {
+  visual_offset : Int32,
+) -> Int32 {
   match block.content_range {
     Some(content) => {
       let prefix_length = text_length(block.prefix)
@@ -1460,8 +1460,8 @@ fn rich_text_block_source_offset_from_visual(
 ///|
 fn rich_text_block_run_source_offset_from_visual(
   block : RichTextBlock,
-  visual_offset : Int,
-) -> Int? {
+  visual_offset : Int32,
+) -> Int32? {
   let mut remaining = visual_offset
   let mut fallback = match block.content_range {
     Some(content) => Some(content.start)
@@ -1507,9 +1507,9 @@ fn rich_text_block_run_source_offset_from_visual(
 ///|
 fn rich_text_block_source_offset_to_visual(
   block : RichTextBlock,
-  source_offset : Int,
+  source_offset : Int32,
   content : RichTextSourceRange,
-) -> Int {
+) -> Int32 {
   if source_offset < content.start {
     0
   } else if source_offset > content.end {
@@ -1531,8 +1531,8 @@ fn rich_text_block_source_offset_to_visual(
 ///|
 fn rich_text_block_run_visual_offset_from_source(
   block : RichTextBlock,
-  source_offset : Int,
-) -> Int? {
+  source_offset : Int32,
+) -> Int32? {
   let mut visual = 0
   for run in block.runs {
     let visual_text = rich_text_run_visual_text(run)
@@ -1559,7 +1559,7 @@ fn rich_text_block_run_visual_offset_from_source(
 ///|
 fn rich_text_block_caret_rect(
   block : RichTextBlock,
-  visual_offset : Int,
+  visual_offset : Int32,
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -1671,7 +1671,7 @@ fn rich_text_block_caret_rect(
 fn rich_text_run_segment_prefix_width(
   run : RichTextRun,
   text : String,
-  visual_offset : Int,
+  visual_offset : Int32,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
 ) -> Double {
@@ -1697,7 +1697,7 @@ fn rich_text_run_segment_prefix_width(
 }
 
 ///|
-fn rich_text_prefix(text : String, length : Int) -> String {
+fn rich_text_prefix(text : String, length : Int32) -> String {
   let chars = text.to_array()
   let end = @core.TextGraphemeBoundaries::new(text~).nearest_boundary(length)
   String::from_array(chars[0:end])
@@ -1718,7 +1718,7 @@ fn rich_text_cursor_rect_at(
 }
 
 ///|
-fn rich_text_block_visual_length(block : RichTextBlock) -> Int {
+fn rich_text_block_visual_length(block : RichTextBlock) -> Int32 {
   let mut length = text_length(block.prefix)
   for run in block.runs {
     length = length + text_length(rich_text_run_visual_text(run))
@@ -1733,7 +1733,7 @@ fn rich_text_block_table_source_offset_at_point(
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-) -> Int? {
+) -> Int32? {
   match block.table {
     Some(table) => {
       let row_count = table.rows.length()
@@ -1888,7 +1888,7 @@ fn rich_text_table_segment_offset_at_point(
   table : RichTextTable,
   layout : RichTextTableLayout,
   text_system~ : @core.TextSystem,
-) -> Int? {
+) -> Int32? {
   ignore(table)
   let first = cell_layout.segments[0]
   let last = cell_layout.segments[cell_layout.segments.length() - 1]
@@ -1970,7 +1970,7 @@ fn rich_text_table_segment_offset_at_point(
 /// the content end.
 fn rich_text_table_segment_caret_x(
   cell_layout : RichTextTableCellLayout,
-  local_offset~ : Int,
+  local_offset~ : Int32,
   text_x : Double,
   text_system~ : @core.TextSystem,
 ) -> Double {
@@ -1998,7 +1998,7 @@ fn rich_text_table_segment_caret_x(
 fn rich_text_block_table_caret_rect(
   block : RichTextBlock,
   table : RichTextTable,
-  source_caret : Int,
+  source_caret : Int32,
   frame : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,

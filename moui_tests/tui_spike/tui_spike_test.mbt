@@ -170,7 +170,7 @@ test "the layers demo projects as two panes side by side" {
 }
 
 ///|
-fn role_count(report : @tui_spike.ProjectionReport, name : String) -> Int {
+fn role_count(report : @tui_spike.ProjectionReport, name : String) -> Int32 {
   let mut total = 0
   for (role, count) in report.roles {
     if role == name {
@@ -181,7 +181,7 @@ fn role_count(report : @tui_spike.ProjectionReport, name : String) -> Int {
 }
 
 ///|
-fn col_of(report : @tui_spike.ProjectionReport, needle : String) -> Int raise {
+fn col_of(report : @tui_spike.ProjectionReport, needle : String) -> Int32 raise {
   let row = match @tui_spike.line_containing(report.lines, needle) {
     Some(i) => i
     None => fail("no projected row contains " + needle)

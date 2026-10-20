@@ -1,5 +1,5 @@
 ///|
-fn web_pointer_phase(kind : Int) -> @core.PointerPhase? {
+fn web_pointer_phase(kind : Int32) -> @core.PointerPhase? {
   match kind {
     20 | 21 => Some(Move)
     22 => Some(Exit)
@@ -20,7 +20,7 @@ fn web_pointer_phase(kind : Int) -> @core.PointerPhase? {
 /// button 0 as a non-primary event, which would stall every drag on web.
 /// Press/release carry DOM codes (0 left / 1 middle / 2 right) while core uses
 /// the native mapping (0 left / 1 right / 2 middle), so swap middle/right here.
-fn web_pointer_button(kind : Int, dom_button : Int) -> Int {
+fn web_pointer_button(kind : Int32, dom_button : Int32) -> Int32 {
   match kind {
     23 | 24 =>
       match dom_button {
@@ -33,7 +33,7 @@ fn web_pointer_button(kind : Int, dom_button : Int) -> Int {
 }
 
 ///|
-fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
+fn web_pointer_modifiers(bits : Int32) -> @core.KeyModifiers {
   @core.KeyModifiers::new(
     shift=(bits & 1) != 0,
     control=(bits & 2) != 0,
@@ -46,14 +46,14 @@ fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
 fn WebApp::dispatch_web_pointer_input(
   self : WebApp,
   window_id : @host.WindowId,
-  kind : Int,
+  kind : Int32,
   x_px : Double,
   y_px : Double,
   delta_x_px : Double,
   delta_y_px : Double,
-  button : Int,
-  modifier_bits : Int,
-) -> Int {
+  button : Int32,
+  modifier_bits : Int32,
+) -> Int32 {
   match web_pointer_phase(kind) {
     Some(phase) => {
       let scale_factor = self.current_scale_factor(window_id)
@@ -94,15 +94,15 @@ fn WebApp::dispatch_web_pointer_input(
 
 ///|
 pub fn web_dispatch_pointer_input(
-  raw_id : Int,
-  kind : Int,
+  raw_id : Int32,
+  kind : Int32,
   x_px : Double,
   y_px : Double,
   delta_x_px : Double,
   delta_y_px : Double,
-  button : Int,
-  modifiers : Int,
-) -> Int {
+  button : Int32,
+  modifiers : Int32,
+) -> Int32 {
   match web_active_app.val {
     Some(app) =>
       match

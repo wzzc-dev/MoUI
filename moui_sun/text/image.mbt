@@ -2,8 +2,8 @@
 /// Convert grayscale pixels to RGBA for display
 pub fn grayscale_to_rgba(
   pixels : FixedArray[Byte],
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> FixedArray[Byte] {
   let rgba_size = width * height * 4
   let rgba = FixedArray::make(rgba_size, b"\x00"[0])

@@ -47,8 +47,8 @@ pub extend SamplingOptions with Eq::{not_equal, equal}
 
 ///|
 pub fn SamplingOptions::new(
-  filter? : FilterMode = Nearest,
-  mipmap? : MipmapMode = None,
+  filter~ : FilterMode = Nearest,
+  mipmap~ : MipmapMode = None,
 ) -> SamplingOptions {
   { filter, mipmap, cubic: None, }
 }
@@ -84,12 +84,12 @@ pub fn SamplingOptions::uses_cubic(self : SamplingOptions) -> Bool {
 }
 
 ///|
-pub fn SamplingOptions::filter_ordinal(self : SamplingOptions) -> Int {
+pub fn SamplingOptions::filter_ordinal(self : SamplingOptions) -> Int32 {
   self.filter.to_skia_ordinal()
 }
 
 ///|
-pub fn SamplingOptions::mipmap_ordinal(self : SamplingOptions) -> Int {
+pub fn SamplingOptions::mipmap_ordinal(self : SamplingOptions) -> Int32 {
   self.mipmap.to_skia_ordinal()
 }
 

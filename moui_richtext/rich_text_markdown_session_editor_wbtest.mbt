@@ -21,9 +21,9 @@ fn session_editor_doubled_text_system() -> @core.TextSystem {
 
 ///|
 fn session_editor_text_control(
-  caret~ : Int,
-  anchor? : Int? = None,
-  origin? : @core.Point? = None,
+  caret~ : Int32,
+  anchor~ : Int32? = None,
+  origin~ : @core.Point? = None,
 ) -> @core.TextControlStateContext {
   {
     caret,
@@ -74,8 +74,8 @@ fn session_editor_pointer_event(
   selection~ : MarkdownEditorSelection,
   font~ : @core.FontSpec,
   event~ : @core.PointerEvent,
-  visible_scroll_y? : Double = 0.0,
-) -> @core.ViewEventResult[(Int, @core.TextRange?)] {
+  visible_scroll_y~ : Double = 0.0,
+) -> @core.ViewEventResult[(Int32, @core.TextRange?)] {
   markdown_session_pointer_event(
     ctx,
     session~,
@@ -103,7 +103,7 @@ fn session_editor_click_down(
   text_system~ : @core.TextSystem,
   point~ : @core.Point,
   selection~ : MarkdownEditorSelection,
-) -> (Int, @core.TextControlStateContext) raise {
+) -> (Int32, @core.TextControlStateContext) raise {
   let down_event = @core.PointerEvent::new(position=point, phase=Down)
   let down = session_editor_pointer_event(
     ctx=session_editor_ctx(
@@ -140,7 +140,7 @@ fn session_editor_assert_stationary_move_is_noop(
   font~ : @core.FontSpec,
   text_system~ : @core.TextSystem,
   point~ : @core.Point,
-  caret~ : Int,
+  caret~ : Int32,
   control~ : @core.TextControlStateContext,
   scroll_y~ : Double,
 ) -> Unit raise {

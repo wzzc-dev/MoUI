@@ -7,31 +7,31 @@ priv struct SkiaCachedLayerImageEntry {
   physical_size : @moui_skia.ISize
   scale_factor : Double
   surface_route : SkiaSurfaceRoute
-  content_revision : Int
+  content_revision : Int32
   byte_size : Int64
-  update_streak : Int
-  mut hit_count : Int
+  update_streak : Int32
+  mut hit_count : Int32
   skip_reason : String
-  last_admitted_frame : Int
-  mut last_used : Int
+  last_admitted_frame : Int32
+  mut last_used : Int32
 }
 
 ///|
 priv struct SkiaCachedLayerAdmissionRecord {
   identity_key : String
-  mut update_streak : Int
-  mut hit_count : Int
+  mut update_streak : Int32
+  mut hit_count : Int32
   mut skip_reason : String
-  mut last_admitted_frame : Int
-  mut last_revision : Int
+  mut last_admitted_frame : Int32
+  mut last_revision : Int32
 }
 
 ///|
 priv struct SkiaCachedLayerFrameStats {
-  mut cache_hit_count : Int
-  mut cache_miss_count : Int
-  mut cache_update_count : Int
-  mut cache_evict_count : Int
+  mut cache_hit_count : Int32
+  mut cache_miss_count : Int32
+  mut cache_update_count : Int32
+  mut cache_evict_count : Int32
 }
 
 ///|
@@ -68,11 +68,11 @@ fn SkiaRasterRenderer::render_cached_command_range(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   canvas_scopes : Array[@render_common.PlanScopeKind],
   stats : SkiaCachedLayerFrameStats,
-  damage? : @core.DamageRegion = @core.DamageRegion::full(
+  damage~ : @core.DamageRegion = @core.DamageRegion::full(
     "offscreen layer render",
   ),
 ) -> Bool {
@@ -147,9 +147,9 @@ fn SkiaRasterRenderer::should_skip_command_for_damage(
 ///|
 fn find_cached_layer_end(
   commands : Array[@render_common.PlanOp],
-  start_index : Int,
+  start_index : Int32,
   key : String,
-) -> Int? {
+) -> Int32? {
   let mut depth = 0
   for index in start_index..<commands.length() {
     match commands[index] {
@@ -176,8 +176,8 @@ fn SkiaRasterRenderer::update_cached_layer(
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
   if spec.frame.is_empty() {
@@ -356,8 +356,8 @@ fn SkiaRasterRenderer::render_uncached_layer_to_canvas(
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
 ) -> Bool {
   let saved = canvas.save_count()
@@ -534,7 +534,7 @@ fn SkiaRasterRenderer::layer_cache_admission_record(
 }
 
 ///|
-fn skia_layer_cache_admission_limit() -> Int {
+fn skia_layer_cache_admission_limit() -> Int32 {
   512
 }
 
@@ -596,7 +596,7 @@ fn SkiaRasterRenderer::layer_cache_has_identity(
 ///|
 fn SkiaCachedLayerAdmissionRecord::record_update(
   self : SkiaCachedLayerAdmissionRecord,
-  revision : Int,
+  revision : Int32,
 ) -> Unit {
   if self.last_revision != revision {
     self.update_streak = self.update_streak + 1
@@ -697,7 +697,7 @@ fn SkiaRasterRenderer::remove_cached_layers_by_identity(
 ///|
 fn SkiaRasterRenderer::evict_cached_layers_if_needed(
   self : SkiaRasterRenderer,
-) -> Int {
+) -> Int32 {
   let budget = self.layer_cache_budget_bytes()
   let mut evicted = 0
   while budget > 0L &&
@@ -807,7 +807,9 @@ fn SkiaRasterRenderer::layer_cache_budget_bytes(
 }
 
 ///|
-fn SkiaRasterRenderer::next_layer_cache_tick(self : SkiaRasterRenderer) -> Int {
+fn SkiaRasterRenderer::next_layer_cache_tick(
+  self : SkiaRasterRenderer,
+) -> Int32 {
   self.layer_cache_tick = self.layer_cache_tick + 1
   self.layer_cache_tick
 }

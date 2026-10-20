@@ -95,10 +95,10 @@ pub struct SkiaRasterRenderer {
   // revision change (async decode completion).  Retained-layer keys include
   // this generation so placeholders are never replayed after an image is
   // ready.
-  priv mut image_cache_generation : Int
+  priv mut image_cache_generation : Int32
   priv async_image_loading : Bool
-  priv mut present_count : Int
-  priv mut unsupported_command_count : Int
+  priv mut present_count : Int32
+  priv mut unsupported_command_count : Int32
   priv unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   priv mut last_frame : SkiaPixelFrame?
   priv layer_cache : Map[String, SkiaCachedLayerImageEntry]
@@ -108,7 +108,7 @@ pub struct SkiaRasterRenderer {
   priv layer_cache_admissions : Map[String, SkiaCachedLayerAdmissionRecord]
   priv mut layer_cache_total_bytes : Int64
   priv mut picture_layer_cache_total_bytes : Int64
-  priv mut layer_cache_tick : Int
+  priv mut layer_cache_tick : Int32
   priv mut platform_view_draw_fn : (() -> Unit)?
   priv mut platform_view_recording_canvas : @skia_native.Canvas?
   priv text_shaping_cache : SkiaTextShapingCache
@@ -189,8 +189,8 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
 pub fn create_with_present_target(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
-  async_image_loading? : Bool = false,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
+  async_image_loading~ : Bool = false,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   create_with_present_target_and_route(
     metrics,
@@ -205,10 +205,10 @@ pub fn create_with_present_target(
 pub fn create_with_present_target_and_route(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
-  surface_route? : SkiaSurfaceRoute = RasterSurfaceRoute,
-  gpu_target? : HostGpuPresentTarget? = None,
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
-  async_image_loading? : Bool = false,
+  surface_route~ : SkiaSurfaceRoute = RasterSurfaceRoute,
+  gpu_target~ : HostGpuPresentTarget? = None,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
+  async_image_loading~ : Bool = false,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
     raise SkiaUnavailable
@@ -670,14 +670,14 @@ pub fn SkiaRasterRenderer::backend_info(
 }
 
 ///|
-pub fn SkiaRasterRenderer::present_count(self : SkiaRasterRenderer) -> Int {
+pub fn SkiaRasterRenderer::present_count(self : SkiaRasterRenderer) -> Int32 {
   self.present_count
 }
 
 ///|
 pub fn SkiaRasterRenderer::unsupported_command_count(
   self : SkiaRasterRenderer,
-) -> Int {
+) -> Int32 {
   self.unsupported_command_count
 }
 
@@ -702,9 +702,9 @@ pub fn SkiaRasterRenderer::last_frame(
 pub fn SkiaRasterRenderer::draw_platform_view_pixels(
   self : SkiaRasterRenderer,
   pixels : Bytes,
-  src_width : Int,
-  src_height : Int,
-  src_stride : Int,
+  src_width : Int32,
+  src_height : Int32,
+  src_stride : Int32,
   dst_x : Double,
   dst_y : Double,
   dst_width : Double,

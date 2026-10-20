@@ -93,7 +93,7 @@ pub extend RouteHistoryEntry with ToJson::{to_json}
 ///|
 pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
-  cursor : Int
+  cursor : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -124,7 +124,7 @@ struct RouterState {
 ///|
 pub fn RouteLocation::new(
   path~ : String,
-  query? : Array[RouteQueryParam] = [],
+  query~ : Array[RouteQueryParam] = [],
 ) -> RouteLocation {
   { path, query, }
 }
@@ -143,8 +143,8 @@ pub fn RouteQueryParam::new(key~ : String, value~ : String) -> RouteQueryParam {
 pub fn RouteDescriptor::new(
   id~ : String,
   path~ : String,
-  title? : String = "",
-  fallback? : Bool = false,
+  title~ : String = "",
+  fallback~ : Bool = false,
 ) -> RouteDescriptor {
   { id, path, title, fallback, }
 }
@@ -157,8 +157,8 @@ pub fn RouterSnapshot::new(routes~ : Array[String]) -> RouterSnapshot {
 ///|
 pub fn RouteHistoryEntry::new(
   route~ : String,
-  title? : String = "",
-  source? : String = "app",
+  title~ : String = "",
+  source~ : String = "app",
 ) -> RouteHistoryEntry {
   { route, title, source, }
 }
@@ -170,9 +170,9 @@ pub fn RouteHistoryEntry::location(self : RouteHistoryEntry) -> RouteLocation {
 
 ///|
 pub fn RouteHistoryState::new(
-  initial? : RouteLocation = RouteLocation::new(path="/"),
-  title? : String = "",
-  source? : String = "app",
+  initial~ : RouteLocation = RouteLocation::new(path="/"),
+  title~ : String = "",
+  source~ : String = "app",
 ) -> RouteHistoryState {
   {
     entries: [RouteHistoryEntry::new(route=initial.to_route(), title~, source~)],
@@ -183,8 +183,8 @@ pub fn RouteHistoryState::new(
 ///|
 pub fn RouteHistoryState::from_deep_link(
   route : String,
-  title? : String = "",
-  source? : String = "deep-link",
+  title~ : String = "",
+  source~ : String = "deep-link",
 ) -> RouteHistoryState {
   RouteHistoryState::new(initial=RouteLocation::parse(route), title~, source~)
 }
@@ -192,9 +192,9 @@ pub fn RouteHistoryState::from_deep_link(
 ///|
 pub fn RouteHistoryState::from_routes(
   routes~ : Array[String],
-  cursor? : Int = -1,
-  title? : String = "",
-  source? : String = "app",
+  cursor~ : Int32 = -1,
+  title~ : String = "",
+  source~ : String = "app",
 ) -> RouteHistoryState {
   if routes.length() == 0 {
     RouteHistoryState::new(title~, source~)
@@ -214,8 +214,8 @@ pub fn RouteHistoryState::from_routes(
 ///|
 pub fn RouteHistoryState::from_snapshot(
   snapshot : RouterSnapshot,
-  title? : String = "",
-  source? : String = "router",
+  title~ : String = "",
+  source~ : String = "router",
 ) -> RouteHistoryState {
   RouteHistoryState::from_routes(routes=snapshot.routes, title~, source~)
 }
@@ -263,8 +263,8 @@ pub fn RouteHistoryState::can_go_forward(self : RouteHistoryState) -> Bool {
 pub fn RouteHistoryState::push(
   self : RouteHistoryState,
   location : RouteLocation,
-  title? : String = "",
-  source? : String = "app",
+  title~ : String = "",
+  source~ : String = "app",
 ) -> RouteHistoryState {
   let entry = RouteHistoryEntry::new(route=location.to_route(), title~, source~)
   let cursor = clamp_route_history_cursor(self.entries, self.cursor)
@@ -284,8 +284,8 @@ pub fn RouteHistoryState::push(
 pub fn RouteHistoryState::replace(
   self : RouteHistoryState,
   location : RouteLocation,
-  title? : String = "",
-  source? : String = "app",
+  title~ : String = "",
+  source~ : String = "app",
 ) -> RouteHistoryState {
   if self.entries.length() == 0 {
     RouteHistoryState::new(initial=location, title~, source~)
@@ -473,7 +473,7 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 
 ///|
 pub fn RouterState::new(
-  initial? : RouteLocation = RouteLocation::new(path="/"),
+  initial~ : RouteLocation = RouteLocation::new(path="/"),
 ) -> RouterState {
   { routes: [initial.to_route()], }
 }
@@ -595,8 +595,8 @@ fn split_once(value : String, separator : Char) -> (String, String)? {
 ///|
 fn clamp_route_history_cursor(
   entries : Array[RouteHistoryEntry],
-  cursor : Int,
-) -> Int {
+  cursor : Int32,
+) -> Int32 {
   if entries.length() == 0 {
     -1
   } else if cursor < 0 {
@@ -686,6 +686,6 @@ pub fn RouteHistoryState::entries(
 }
 
 ///|
-pub fn RouteHistoryState::cursor(self : RouteHistoryState) -> Int {
+pub fn RouteHistoryState::cursor(self : RouteHistoryState) -> Int32 {
   self.cursor
 }

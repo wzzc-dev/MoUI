@@ -7,8 +7,8 @@ priv struct WechatState {
   mut renderer_providers : Array[@render.RendererProvider]
   mut surface_id : String
   mut needs_render : Bool
-  mut surface_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut next_sequence : Int32
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn WechatAppOptions::new(
   canvas_id~ : String,
   logical_width~ : Double,
   logical_height~ : Double,
-  scale_factor? : Double = 2.0,
+  scale_factor~ : Double = 2.0,
 ) -> WechatAppOptions {
   { canvas_id, logical_width, logical_height, scale_factor, }
 }
@@ -109,27 +109,27 @@ fn WechatState::attach_surface(
 
 ///|
 pub fn wechat_dispatch_event(
-  _kind : Int,
-  _raw_id : Int,
-  _arg0 : Int,
-  _arg1 : Int,
+  _kind : Int32,
+  _raw_id : Int32,
+  _arg0 : Int32,
+  _arg1 : Int32,
   _argd : Double,
-  _text_id : Int,
+  _text_id : Int32,
 ) -> Unit {
 
 }
 
 ///|
 pub fn wechat_dispatch_pointer_input(
-  raw_id : Int,
-  kind : Int,
+  raw_id : Int32,
+  kind : Int32,
   x_px : Double,
   y_px : Double,
   delta_x_px : Double,
   delta_y_px : Double,
-  button : Int,
-  modifiers : Int,
-) -> Int {
+  button : Int32,
+  modifiers : Int32,
+) -> Int32 {
   let _ = raw_id
   let _ = modifiers
   match state.driver {

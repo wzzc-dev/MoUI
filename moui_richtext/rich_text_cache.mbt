@@ -35,7 +35,7 @@
 /// All maps are bounded; over-cap they clear wholesale. The runtime is
 /// single-threaded, so no synchronization is needed.
 priv struct RichTextBlockCacheEntry {
-  source_start : Int
+  source_start : Int32
   block : RichTextBlock
 }
 
@@ -57,7 +57,7 @@ let rich_text_block_heights : Map[UInt64, Array[(String, Double)]] = Map([])
 /// Number of exact (key, height) pairs across all digest buckets; the
 /// bounded clear and the empty-map short circuit read this instead of
 /// walking the bucket map.
-let rich_text_block_heights_count : Ref[Int] = Ref(0)
+let rich_text_block_heights_count : Ref[Int32] = Ref(0)
 
 ///|
 let rich_text_display_sessions : Map[String, MarkdownDocumentSession] = Map([])
@@ -81,7 +81,7 @@ let markdown_parse_cache : Map[String, Array[MarkdownBlock]] = Map([])
 /// epoch they were built at, so a wheel event rebuilds the height array
 /// only when geometry actually changed — steady-state scrolling performs
 /// zero block walks.
-let rich_text_block_heights_epoch : Ref[Int] = Ref(0)
+let rich_text_block_heights_epoch : Ref[Int32] = Ref(0)
 
 ///|
 /// Persisted scroll geometry for one (font, content width, source digest):
@@ -97,13 +97,13 @@ priv struct MarkdownDocumentScrollGeometry {
   // the re-parse window, point-update or rebuild the Fenwick tree) instead
   // of walking every block again.
   mut source_digest : UInt64
-  mut source_length : Int
+  mut source_length : Int32
   // Element writes go through the array; only the tree is replaced
   // wholesale on a count-changing rebase.
   heights : Array[Double]
   /// 1-based Fenwick tree over `heights`, length `heights.length() + 1`.
   mut tree : Array[Double]
-  epoch : Int
+  epoch : Int32
 }
 
 ///|
@@ -111,9 +111,9 @@ priv struct MarkdownDocumentScrollGeometry {
 /// O(n).
 fn markdown_document_scroll_geometry_from_heights(
   heights : Array[Double],
-  epoch~ : Int,
+  epoch~ : Int32,
   source_digest~ : UInt64,
-  source_length~ : Int,
+  source_length~ : Int32,
 ) -> MarkdownDocumentScrollGeometry {
   let tree = markdown_document_scroll_geometry_build_tree(heights)
   { heights, tree, epoch, source_digest, source_length, }
@@ -146,7 +146,7 @@ fn markdown_document_scroll_geometry_build_tree(
 /// this is the O(log n) Fenwick descent, clamped like an array read).
 fn markdown_document_scroll_geometry_prefix_at(
   geometry : MarkdownDocumentScrollGeometry,
-  count~ : Int,
+  count~ : Int32,
 ) -> Double {
   let mut i = count
   if i > geometry.heights.length() {
@@ -168,7 +168,7 @@ fn markdown_document_scroll_geometry_prefix_at(
 /// mutable in place: every holder of this geometry sees the update.
 fn markdown_document_scroll_geometry_set_height(
   geometry : MarkdownDocumentScrollGeometry,
-  index~ : Int,
+  index~ : Int32,
   height~ : Double,
 ) -> Unit {
   if index < 0 || index >= geometry.heights.length() {
@@ -207,8 +207,8 @@ fn markdown_document_source_digest(source : String) -> UInt64 {
 /// only for the edit strings instead of a whole-source hash.
 fn markdown_document_edit_digest(
   previous : UInt64,
-  length~ : Int,
-  start~ : Int,
+  length~ : Int32,
+  start~ : Int32,
   deleted~ : String,
   replacement~ : String,
 ) -> UInt64 {
@@ -333,7 +333,7 @@ fn markdown_editor_block_key_string(
 ///|
 fn rich_text_source_range_shift(
   range : RichTextSourceRange?,
-  delta : Int,
+  delta : Int32,
 ) -> RichTextSourceRange? {
   match range {
     Some(range) => Some({ start: range.start + delta, end: range.end + delta, })
@@ -347,7 +347,7 @@ fn rich_text_source_range_shift(
 /// only the mapping back into canonical source moves.
 fn markdown_editor_rich_block_shift(
   block : RichTextBlock,
-  delta : Int,
+  delta : Int32,
 ) -> RichTextBlock {
   if delta == 0 {
     return block
@@ -412,7 +412,7 @@ fn markdown_editor_block_conversion_key(
 /// session already knows its (length, digest) pair. The digest is computed
 /// once per cache entry, never per lookup.
 fn markdown_reference_definitions_cache_key(
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
 ) -> String {
   "defs:\{source_length}:\{source_digest}"
@@ -434,7 +434,7 @@ fn markdown_reference_definitions_cached(
 /// path never hashes the document just to consult the cache.
 fn markdown_reference_definitions_cached_keyed(
   source : String,
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
 ) -> Array[MarkdownReferenceDefinition] {
   let key = markdown_reference_definitions_cache_key(
@@ -461,7 +461,7 @@ fn markdown_reference_definitions_cached_keyed(
 
 ///|
 fn markdown_reference_definitions_cache_store_keyed(
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Unit {
@@ -643,9 +643,9 @@ fn rich_text_run_width_with_cache(
 fn rich_text_block_measured_height_key(
   base : @core.FontSpec,
   width~ : Double,
-  block_id~ : Int,
-  block_revision~ : Int,
-  source_digest? : UInt64? = None,
+  block_id~ : Int32,
+  block_revision~ : Int32,
+  source_digest~ : UInt64? = None,
 ) -> String {
   rich_text_cache_join_key([
     "height",
@@ -709,7 +709,7 @@ fn rich_text_digest_string(hash : UInt64, text : String) -> UInt64 {
 fn rich_text_block_height_digest_seed(
   base : @core.FontSpec,
   width~ : Double,
-  source_digest? : UInt64? = None,
+  source_digest~ : UInt64? = None,
 ) -> UInt64 {
   let hash = rich_text_digest_string(
     0xcbf29ce484222325UL,
@@ -733,8 +733,8 @@ fn rich_text_block_height_digest_seed(
 /// semantics of the content-keyed digest.
 fn rich_text_block_height_digest(
   seed~ : UInt64,
-  block_id~ : Int,
-  block_revision~ : Int,
+  block_id~ : Int32,
+  block_revision~ : Int32,
 ) -> UInt64 {
   let hash = rich_text_digest_mix(seed, block_id.to_uint64())
   rich_text_digest_mix(hash, block_revision.to_uint64())
@@ -750,10 +750,10 @@ fn rich_text_block_height_digest(
 fn rich_text_record_block_measured_height(
   base : @core.FontSpec,
   width~ : Double,
-  block_id~ : Int,
-  block_revision~ : Int,
+  block_id~ : Int32,
+  block_revision~ : Int32,
   height~ : Double,
-  source_digest? : UInt64? = None,
+  source_digest~ : UInt64? = None,
 ) -> Bool {
   if width <= 0.0 || height <= 0.0 {
     return false
@@ -855,9 +855,9 @@ fn rich_text_block_measured_height(
   base : @core.FontSpec,
   width~ : Double,
   seed~ : UInt64,
-  block_id~ : Int,
-  block_revision~ : Int,
-  source_digest? : UInt64? = None,
+  block_id~ : Int32,
+  block_revision~ : Int32,
+  source_digest~ : UInt64? = None,
 ) -> Double? {
   if width <= 0.0 {
     return None

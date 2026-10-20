@@ -15,17 +15,17 @@ pub extend TextInputSessionAction with Eq::{not_equal, equal}
 ///|
 pub(all) struct TextInputImeRequestDiagnostics {
   focused : Bool
-  text_length : Int
-  text_utf8_length : Int
-  cursor : Int
-  anchor : Int
-  cursor_utf8 : Int
-  anchor_utf8 : Int
+  text_length : Int32
+  text_utf8_length : Int32
+  cursor : Int32
+  anchor : Int32
+  cursor_utf8 : Int32
+  anchor_utf8 : Int32
   cursor_is_grapheme_boundary : Bool
   anchor_is_grapheme_boundary : Bool
   candidate_anchor : @core.Rect
   has_surrounding_text : Bool
-  surrounding_text_utf8_length : Int
+  surrounding_text_utf8_length : Int32
   // The text the IME request delivers as surrounding text. `None` on the
   // exact path, where the whole input text already fits the surrounding
   // text budget; oversized texts deliver a bounded window around the
@@ -52,7 +52,7 @@ pub extend TextInputImeRequestDiagnostics with ToJson::{to_json}
 pub struct TextInputImeStateKey {
   focused : Bool
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   composition : String?
   composition_cursor : @core.TextRange?
@@ -264,7 +264,7 @@ pub fn text_input_ime_request_diagnostics(
 /// Every practical grapheme cluster (emoji ZWJ chains, regional-indicator
 /// runs, Indic conjuncts) fits far inside this radius, so boundaries at
 /// the caret and anchor match the whole-text table.
-const TEXT_INPUT_IME_WINDOW_CHARS : Int = 128
+const TEXT_INPUT_IME_WINDOW_CHARS : Int32 = 128
 
 ///|
 /// A bounded, grapheme-snapped slice of the input text around one offset.
@@ -273,8 +273,8 @@ const TEXT_INPUT_IME_WINDOW_CHARS : Int = 128
 priv struct TextInputImeWindow {
   text : String
   boundaries : @core.TextGraphemeBoundaries
-  start : Int
-  utf8_length : Int
+  start : Int32
+  utf8_length : Int32
 }
 
 ///|
@@ -282,7 +282,7 @@ priv struct TextInputImeWindow {
 /// window edges are located with one scan that stops at the window end,
 /// so carets near the document start never walk the whole text; the
 /// slice itself is at most a few hundred bytes.
-fn text_input_ime_window(text : String, center : Int) -> TextInputImeWindow {
+fn text_input_ime_window(text : String, center : Int32) -> TextInputImeWindow {
   let start_char = (center - TEXT_INPUT_IME_WINDOW_CHARS).max(0)
   let end_char = center + TEXT_INPUT_IME_WINDOW_CHARS
   let mut char_index = 0
@@ -333,8 +333,8 @@ fn text_input_ime_window(text : String, center : Int) -> TextInputImeWindow {
 /// index) inside `window`; returns the text-relative position.
 fn text_input_ime_window_boundary(
   window : TextInputImeWindow,
-  offset : Int,
-) -> Int {
+  offset : Int32,
+) -> Int32 {
   let window_local = (offset - window.start)
     .max(0)
     .min(window.boundaries.length())
@@ -442,7 +442,7 @@ fn text_input_surrounding_text(
 }
 
 ///|
-fn text_input_selection_anchor(state : @core.TextInputState) -> Int {
+fn text_input_selection_anchor(state : @core.TextInputState) -> Int32 {
   match state.selection {
     Some(selection) =>
       if state.caret == selection.start {

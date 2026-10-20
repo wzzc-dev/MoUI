@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] expanded(
   child : @core.View[Msg],
-  weight? : Double = 1.0,
+  weight~ : Double = 1.0,
 ) -> @core.View[Msg] {
   child.expanded(weight~)
 }
@@ -9,7 +9,7 @@ pub fn[Msg] expanded(
 ///|
 pub fn[Msg] flexible(
   child : @core.View[Msg],
-  weight? : Double = 1.0,
+  weight~ : Double = 1.0,
 ) -> @core.View[Msg] {
   child.flexible(weight~)
 }
@@ -25,7 +25,7 @@ pub fn[Msg] layout_priority(
 ///|
 pub fn[Msg] align(
   child : @core.View[Msg],
-  alignment? : @core.Alignment = @core.Alignment::center(),
+  alignment~ : @core.Alignment = @core.Alignment::center(),
 ) -> @core.View[Msg] {
   child.align(alignment~)
 }
@@ -33,7 +33,7 @@ pub fn[Msg] align(
 ///|
 pub fn[Msg] rounded_clip(
   child : @core.View[Msg],
-  radius? : Double = 0.0,
+  radius~ : Double = 0.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(RoundedClip::{ radius, }, children=_node => [child])
 }
@@ -120,8 +120,8 @@ pub fn[Msg] custom_children_layout(
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
   paint~ : (@common.PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = Group,
-  semantics_label? : String = "",
+  semantics_role~ : @core.SemanticsRole = Group,
+  semantics_label~ : String = "",
 ) -> @core.View[Msg] {
   custom_children_layout_control(
     children~,

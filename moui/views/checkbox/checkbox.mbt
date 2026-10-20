@@ -10,7 +10,7 @@ pub fn[Msg] checkbox(
   box_size? : Double,
   box_shape? : @style.ChoiceControlShape,
   check_style? : @style.CheckMarkStyle,
-  height? : Double = 32.0,
+  height~ : Double = 32.0,
 ) -> @core.View[Msg] {
   checkbox_control(
     label~,
@@ -56,9 +56,9 @@ pub fn[Msg] checkbox_control(
   box_size? : Double,
   box_shape? : @style.ChoiceControlShape,
   check_style? : @style.CheckMarkStyle,
-  height? : Double = 32.0,
-  kind? : String = "Checkbox",
-  key? : String? = None,
+  height~ : Double = 32.0,
+  kind~ : String = "Checkbox",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let checked_snapshot = checked.value()
   @core.View::from_node(

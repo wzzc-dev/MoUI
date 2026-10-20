@@ -138,7 +138,7 @@ test "doctor parses HarmonyOS SDK metadata from the DevEco envelope" {
 }
 
 ///|
-fn doctor_harmony_mobile_fixture(compatible : Int) -> String {
+fn doctor_harmony_mobile_fixture(compatible : Int32) -> String {
   (
     {
       "schemaVersion": 1,

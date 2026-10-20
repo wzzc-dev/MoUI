@@ -15,11 +15,11 @@
 ///|
 /// Upper bound on the longest rasterized edge. Keeps a hostile or merely
 /// oversized document from allocating an enormous bitmap.
-let svg_raster_max_side : Int = 2048
+let svg_raster_max_side : Int32 = 2048
 
 ///|
 /// Upper bound on total rasterized pixels, independent of aspect ratio.
-let svg_raster_max_pixels : Int = 4194304
+let svg_raster_max_pixels : Int32 = 4194304
 
 ///|
 /// Preferred over-sampling factor. SVG is resolution independent: rasterizing
@@ -57,7 +57,7 @@ fn svg_bytes_contain_root_tag(bytes : Bytes) -> Bool {
 }
 
 ///|
-fn svg_byte(bytes : Bytes, index : Int) -> Int {
+fn svg_byte(bytes : Bytes, index : Int32) -> Int32 {
   match bytes.get(index) {
     Some(byte) => byte.to_int()
     None => -1
@@ -220,7 +220,7 @@ fn svg_parse_length_literal(value : String) -> Double? {
 ///|
 /// Rasterized pixel size for an intrinsic size, preserving aspect ratio while
 /// respecting the oversampling preference and the memory budget.
-pub fn svg_raster_target_size(intrinsic : @core.Size) -> (Int, Int) {
+pub fn svg_raster_target_size(intrinsic : @core.Size) -> (Int32, Int32) {
   let extent = if intrinsic.width > intrinsic.height {
     intrinsic.width
   } else {
@@ -244,7 +244,7 @@ pub fn svg_raster_target_size(intrinsic : @core.Size) -> (Int, Int) {
 }
 
 ///|
-fn svg_pixel_dimension(value : Double) -> Int {
+fn svg_pixel_dimension(value : Double) -> Int32 {
   if value <= 0.0 {
     return 1
   }
@@ -344,8 +344,8 @@ fn svg_ensure_root_view_box(svg_text : String) -> String {
 /// image payload, so the result is interchangeable with a codec's output.
 pub fn svg_rasterize_rgba(
   svg_text : String,
-  pixel_width : Int,
-  pixel_height : Int,
+  pixel_width : Int32,
+  pixel_height : Int32,
 ) -> Bytes? {
   if pixel_width <= 0 || pixel_height <= 0 {
     return None
@@ -368,8 +368,8 @@ pub fn svg_rasterize_rgba(
 /// stacking — no per-pixel host compositing is needed here.
 fn svg_render_document_rgba(
   document : @svg.SVGDocument,
-  pixel_width : Int,
-  pixel_height : Int,
+  pixel_width : Int32,
+  pixel_height : Int32,
 ) -> Array[@svg.Color] {
   let result = @svg.render_svg_document(
     document,
@@ -395,8 +395,8 @@ fn svg_render_document_rgba(
 /// Convert straight-alpha pixels into premultiplied RGBA8888 bytes.
 fn svg_pixels_to_premultiplied_rgba(
   pixels : Array[@svg.Color],
-  pixel_width : Int,
-  pixel_height : Int,
+  pixel_width : Int32,
+  pixel_height : Int32,
 ) -> Bytes {
   let row_bytes = pixel_width * 4
   let out : Array[Byte] = Array::make(row_bytes * pixel_height, b'\x00')
@@ -417,7 +417,7 @@ fn svg_pixels_to_premultiplied_rgba(
 }
 
 ///|
-fn svg_clamp_channel(value : Int) -> Int {
+fn svg_clamp_channel(value : Int32) -> Int32 {
   if value < 0 {
     0
   } else if value > 255 {
@@ -428,7 +428,7 @@ fn svg_clamp_channel(value : Int) -> Int {
 }
 
 ///|
-fn svg_premultiply(channel : Int, alpha : Int) -> Int {
+fn svg_premultiply(channel : Int32, alpha : Int32) -> Int32 {
   let clamped = svg_clamp_channel(channel)
   if clamped <= 0 {
     return 0

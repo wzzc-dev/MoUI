@@ -47,7 +47,7 @@ pub impl Default for BlendMode with fn default() {
 }
 
 ///|
-pub fn BlendMode::to_skia_ordinal(self : BlendMode) -> Int {
+pub fn BlendMode::to_skia_ordinal(self : BlendMode) -> Int32 {
   match self {
     Clear => 0
     Src => 1
@@ -104,7 +104,7 @@ pub impl Default for PaintStyle with fn default() {
 }
 
 ///|
-pub fn PaintStyle::to_skia_ordinal(self : PaintStyle) -> Int {
+pub fn PaintStyle::to_skia_ordinal(self : PaintStyle) -> Int32 {
   match self {
     Fill => 0
     Stroke => 1
@@ -135,7 +135,7 @@ pub impl Default for StrokeCap with fn default() {
 }
 
 ///|
-pub fn StrokeCap::to_skia_ordinal(self : StrokeCap) -> Int {
+pub fn StrokeCap::to_skia_ordinal(self : StrokeCap) -> Int32 {
   match self {
     Butt => 0
     Round => 1
@@ -166,7 +166,7 @@ pub impl Default for StrokeJoin with fn default() {
 }
 
 ///|
-pub fn StrokeJoin::to_skia_ordinal(self : StrokeJoin) -> Int {
+pub fn StrokeJoin::to_skia_ordinal(self : StrokeJoin) -> Int32 {
   match self {
     Miter => 0
     Round => 1
@@ -197,7 +197,7 @@ pub impl Default for PointMode with fn default() {
 }
 
 ///|
-pub fn PointMode::to_skia_ordinal(self : PointMode) -> Int {
+pub fn PointMode::to_skia_ordinal(self : PointMode) -> Int32 {
   match self {
     Points => 0
     Lines => 1
@@ -283,7 +283,7 @@ pub impl Default for TileMode with fn default() {
 }
 
 ///|
-pub fn TileMode::to_skia_ordinal(self : TileMode) -> Int {
+pub fn TileMode::to_skia_ordinal(self : TileMode) -> Int32 {
   match self {
     Clamp => 0
     Repeat => 1
@@ -326,7 +326,7 @@ pub impl Default for EncodedImageFormat with fn default() {
 }
 
 ///|
-pub fn EncodedImageFormat::to_skia_ordinal(self : EncodedImageFormat) -> Int {
+pub fn EncodedImageFormat::to_skia_ordinal(self : EncodedImageFormat) -> Int32 {
   match self {
     BMP => 0
     GIF => 1
@@ -347,7 +347,7 @@ pub fn EncodedImageFormat::to_skia_ordinal(self : EncodedImageFormat) -> Int {
 
 ///|
 pub fn EncodedImageFormat::from_skia_ordinal(
-  ordinal : Int,
+  ordinal : Int32,
 ) -> EncodedImageFormat? {
   match ordinal {
     0 => Some(BMP)
@@ -390,7 +390,7 @@ pub impl Default for ClipOp with fn default() {
 }
 
 ///|
-pub fn ClipOp::to_skia_ordinal(self : ClipOp) -> Int {
+pub fn ClipOp::to_skia_ordinal(self : ClipOp) -> Int32 {
   match self {
     Difference => 0
     Intersect => 1
@@ -419,7 +419,7 @@ pub impl Default for FilterMode with fn default() {
 }
 
 ///|
-pub fn FilterMode::to_skia_ordinal(self : FilterMode) -> Int {
+pub fn FilterMode::to_skia_ordinal(self : FilterMode) -> Int32 {
   match self {
     Nearest => 0
     Linear => 1
@@ -449,7 +449,7 @@ pub impl Default for MipmapMode with fn default() {
 }
 
 ///|
-pub fn MipmapMode::to_skia_ordinal(self : MipmapMode) -> Int {
+pub fn MipmapMode::to_skia_ordinal(self : MipmapMode) -> Int32 {
   match self {
     None => 0
     Nearest => 1

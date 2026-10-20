@@ -1,14 +1,14 @@
 ///|
 #borrow(path)
-extern "C" fn rendered_bmp_header_ok_raw(path : Bytes) -> Int = "moui_pdf_workbench_bmp_header_ok"
+extern "C" fn rendered_bmp_header_ok_raw(path : Bytes) -> Int32 = "moui_pdf_workbench_bmp_header_ok"
 
 ///|
 #borrow(path)
 extern "C" fn rendered_bmp_metadata_ok_raw(
   path : Bytes,
-  expected_width : Int,
-  expected_height : Int,
-) -> Int = "moui_pdf_workbench_bmp_metadata_ok"
+  expected_width : Int32,
+  expected_height : Int32,
+) -> Int32 = "moui_pdf_workbench_bmp_metadata_ok"
 
 ///|
 test "pdfium adapter reports explicit availability state" {
@@ -119,8 +119,8 @@ fn rendered_bmp_header_ok(path : String) -> Bool {
 ///|
 fn rendered_bmp_metadata_ok(
   path : String,
-  expected_width : Int,
-  expected_height : Int,
+  expected_width : Int32,
+  expected_height : Int32,
 ) -> Bool {
   rendered_bmp_metadata_ok_raw(
     @utf8.encode(path[:], bom=false),

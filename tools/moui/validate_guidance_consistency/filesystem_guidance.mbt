@@ -1,6 +1,6 @@
 ///|
 #borrow(path)
-extern "C" fn readlink_bytes(path : Bytes, path_len : Int) -> Bytes = "moui_tools_guidance_readlink"
+extern "C" fn readlink_bytes(path : Bytes, path_len : Int32) -> Bytes = "moui_tools_guidance_readlink"
 
 ///|
 fn push_file_exists_check(

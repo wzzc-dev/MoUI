@@ -33,8 +33,8 @@ pub extend DesignVariantResolverRecord with ToJson::{to_json}
 ///|
 pub fn variant_resolver_report(
   preset : @common.DesignPreset,
-  system_scheme? : @core.ColorScheme = Dark,
-  density? : @common.DesignDensity = Standard,
+  system_scheme~ : @core.ColorScheme = Dark,
+  density~ : @common.DesignDensity = Standard,
 ) -> Array[DesignVariantResolverRecord] {
   let records : Array[DesignVariantResolverRecord] = []
   for item in variant_coverage(preset) {
@@ -47,8 +47,8 @@ pub fn variant_resolver_report(
 pub fn variant_resolver_for(
   preset : @common.DesignPreset,
   variant : @common.DesignSchemeVariant,
-  system_scheme? : @core.ColorScheme = Dark,
-  density? : @common.DesignDensity = Standard,
+  system_scheme~ : @core.ColorScheme = Dark,
+  density~ : @common.DesignDensity = Standard,
 ) -> DesignVariantResolverRecord? {
   for item in variant_resolver_report(preset, system_scheme~, density~) {
     if item.variant == variant {
@@ -59,12 +59,12 @@ pub fn variant_resolver_for(
 }
 
 ///|
-pub fn variant_resolver_count(preset : @common.DesignPreset) -> Int {
+pub fn variant_resolver_count(preset : @common.DesignPreset) -> Int32 {
   variant_resolver_report(preset).length()
 }
 
 ///|
-pub fn variant_resolver_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn variant_resolver_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in variant_resolver_report(preset) {
     if !item.resolves_tokens ||
@@ -79,7 +79,9 @@ pub fn variant_resolver_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn variant_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn variant_resolver_source_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in variant_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -92,7 +94,7 @@ pub fn variant_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn variant_resolver_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in variant_resolver_report(preset) {
     if item.remaining_gap != "none" {

@@ -1,6 +1,6 @@
 ///|
 pub(all) struct CliOutcome {
-  exit_code : Int
+  exit_code : Int32
   stdout : String
   stderr : String
 }
@@ -158,7 +158,7 @@ fn failed_outcome(
   message : String,
   json : Bool,
   usage : String,
-  exit_code? : Int = 2,
+  exit_code~ : Int32 = 2,
 ) -> CliOutcome {
   let stderr = if json {
     let value : Json = {
@@ -564,7 +564,7 @@ fn run_doctor_command(args : Array[String], cwd : String) -> CliOutcome {
 fn doctor_report_outcome(
   report : DoctorReport,
   json : Bool,
-  fixes? : Array[String] = [],
+  fixes~ : Array[String] = [],
 ) -> CliOutcome {
   let text = if json {
     let root = @json.parse(report.to_json_text()) catch {

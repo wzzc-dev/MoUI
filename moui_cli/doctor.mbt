@@ -28,7 +28,7 @@ priv struct DoctorCheck {
 
 ///|
 priv struct DoctorReport {
-  schema_version : Int
+  schema_version : Int32
   ok : Bool
   host : String
   project_root : String
@@ -50,8 +50,8 @@ fn doctor_check(
   status : DoctorStatus,
   required : Bool,
   summary : String,
-  detail? : String = "",
-  remediation? : String = "",
+  detail~ : String = "",
+  remediation~ : String = "",
 ) -> DoctorCheck {
   { id, status, required, summary, detail, remediation, }
 }

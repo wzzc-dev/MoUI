@@ -6,8 +6,8 @@ fn text_editing_cursor_width() -> Double {
 ///|
 fn text_editing_visual_cursor_rect(
   caret_rect : @core.Rect,
-  caret : Int,
-  text_length : Int,
+  caret : Int32,
+  text_length : Int32,
 ) -> @core.Rect {
   let width = caret_rect.size.width
   let x = if caret > 0 && caret < text_length {

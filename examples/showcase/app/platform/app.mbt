@@ -17,18 +17,18 @@ using @views {
 pub struct Model {
   route : String
   timer_running : Bool
-  ticks : Int
+  ticks : Int32
   window_width : Double
   window_height : Double
   clipboard_text : String
   last_event : String
-  pending_service : Int?
-  next_service : Int
+  pending_service : Int32?
+  next_service : Int32
   stroke_points : Array[@geometry.Point]
   anim_phase : Double
   probe_text : String
-  probe_action_count : Int
-  probe_submit_count : Int
+  probe_action_count : Int32
+  probe_submit_count : Int32
   host_label : String
 }
 
@@ -41,9 +41,9 @@ pub(all) enum Msg {
   WriteClipboard
   ReadClipboard
   OpenFile
-  ClipboardWriteCompleted(Int, @services.ServiceTaskResult[Unit])
-  ClipboardReadCompleted(Int, @services.ServiceTaskResult[String])
-  FileOpenCompleted(Int, @services.ServiceTaskResult[String])
+  ClipboardWriteCompleted(Int32, @services.ServiceTaskResult[Unit])
+  ClipboardReadCompleted(Int32, @services.ServiceTaskResult[String])
+  FileOpenCompleted(Int32, @services.ServiceTaskResult[String])
   CanvasDrag(@geometry.Point)
   ClearCanvas
   AnimTick
@@ -71,9 +71,9 @@ pub fn normalize_platform_route(route : String) -> String {
 
 ///|
 pub fn Model::new(
-  timer_running? : Bool = false,
-  route? : String = "host-services",
-  host_label? : String = "Showcase platform host",
+  timer_running~ : Bool = false,
+  route~ : String = "host-services",
+  host_label~ : String = "Showcase platform host",
 ) -> Model {
   {
     route: normalize_platform_route(route),
@@ -113,7 +113,7 @@ pub fn Model::with_host_label(self : Model, host_label : String) -> Model {
 pub fn update(
   model : Model,
   msg : Msg,
-  services? : @services.AppServices = @services.AppServices::unavailable(),
+  services~ : @services.AppServices = @services.AppServices::unavailable(),
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
     Navigate(route) => (model.open(route), @moui.Effect::none())
@@ -481,7 +481,7 @@ fn route_session_page(model : Model) -> @moui.View[Msg] {
 
 ///|
 /// Hosted body for the unified Showcase shell (no local chrome).
-pub fn view_body(model : Model, width? : Double = 0.0) -> @moui.View[Msg] {
+pub fn view_body(model : Model, width~ : Double = 0.0) -> @moui.View[Msg] {
   ignore(width)
   match model.route {
     "canvas" => canvas_page(model)
@@ -501,7 +501,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
 /// so root workspace switches do not tear them down.
 pub fn subscriptions(
   model : Model,
-  timer_source? : @services.TimerSource? = None,
+  timer_source~ : @services.TimerSource? = None,
 ) -> @moui.Subscription[Msg] {
   let subs : Array[@moui.Subscription[Msg]] = []
   match timer_source {
@@ -534,8 +534,8 @@ pub fn subscriptions(
 
 ///|
 pub fn program(
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  route? : String = "host-services",
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  route~ : String = "host-services",
 ) -> @moui.Program[Model, Msg] {
   let init = Model::new(route~)
   @moui.Program::new(
@@ -570,10 +570,10 @@ pub fn program_commands() -> Array[@moui.ProgramCommand[Msg]] {
 ///|
 fn[T] Model::apply_service_result(
   self : Model,
-  generation : Int,
+  generation : Int32,
   result : @services.ServiceTaskResult[T],
   success : (T) -> String,
-  clipboard_text? : String? = None,
+  clipboard_text~ : String? = None,
 ) -> Model {
   if self.pending_service != Some(generation) {
     self

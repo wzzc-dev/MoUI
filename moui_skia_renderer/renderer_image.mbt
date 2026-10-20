@@ -380,8 +380,8 @@ fn SkiaRasterRenderer::mark_image_loading(
 fn SkiaRasterRenderer::mark_image_ready(
   self : SkiaRasterRenderer,
   source : String,
-  width~ : Int,
-  height~ : Int,
+  width~ : Int32,
+  height~ : Int32,
 ) -> Unit {
   ignore(self.image_lifecycle.mark_ready(source, width~, height~))
 }
@@ -427,8 +427,8 @@ pub fn skia_image_load_completion(
 pub fn skia_image_load_completion_from_bytes(
   source : String,
   bytes : Bytes,
-  background_io? : Bool = false,
-  background_decode? : Bool = false,
+  background_io~ : Bool = false,
+  background_decode~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   match @skia_native.Codec::from_bytes(bytes) {
     Some(codec) =>

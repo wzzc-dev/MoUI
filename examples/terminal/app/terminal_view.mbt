@@ -27,7 +27,7 @@ fn ansi_base16() -> Array[@graphics.Color] {
 
 ///|
 /// 256 色索引 → 颜色:0-15 基础色,16-231 6×6×6 立方体,232-255 灰度。
-fn ansi256_color(n : Int) -> @graphics.Color {
+fn ansi256_color(n : Int32) -> @graphics.Color {
   if n < 16 {
     ansi_base16()[n]
   } else if n < 232 {
@@ -35,7 +35,7 @@ fn ansi256_color(n : Int) -> @graphics.Color {
     let r = v / 36
     let g = v / 6 % 6
     let b = v % 6
-    let cube = fn(c : Int) -> Double {
+    let cube = fn(c : Int32) -> Double {
       if c == 0 {
         0.0
       } else {
@@ -109,8 +109,8 @@ pub fn cell_height(theme : @moui.Theme) -> Double {
 fn[Msg] terminal_row_view(
   row : @tui.TermRow,
   theme : @moui.Theme,
-  cols : Int,
-  selection_range : (Int, Int)?,
+  cols : Int32,
+  selection_range : (Int32, Int32)?,
 ) -> @moui.View[Msg] {
   let sel_bg = theme.palette.primary_container
   let sel_fg = theme.palette.on_primary_container
@@ -171,8 +171,8 @@ fn[Msg] terminal_row_view(
 pub fn[Msg] terminal_view(
   screen : @tui.TermScreen,
   theme : @moui.Theme,
-  scroll_offset? : Int = 0,
-  selection? : Selection? = None,
+  scroll_offset~ : Int32 = 0,
+  selection~ : Selection? = None,
 ) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = []
   let cols = screen.cols()

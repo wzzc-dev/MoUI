@@ -889,16 +889,16 @@ test "wgpu web retained layer hit repositions geometry for scroll moves" {
 
 ///|
 fn test_port(
-  created~ : Ref[Int],
-  capabilities? : @moui_web_renderer.WebGpuHostCapabilities = @moui_web_renderer.required_capabilities(),
-  on_resize? : () -> Unit = () => (),
-  on_measure? : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
+  created~ : Ref[Int32],
+  capabilities~ : @moui_web_renderer.WebGpuHostCapabilities = @moui_web_renderer.required_capabilities(),
+  on_resize~ : () -> Unit = () => (),
+  on_measure~ : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
     @core.TextSystem::fallback().measure_text(input)
   },
-  on_register? : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
-  on_image_resource? : (String) -> @render.ImageResourceRecord? = _ => None,
-  on_submit? : (Array[@moui_web_renderer.WebGpuHostCall]) -> Unit = _ => (),
-  on_dispose? : () -> Unit = () => (),
+  on_register~ : (@core.FontFamily, Bytes) -> Unit = (_family, _data) => (),
+  on_image_resource~ : (String) -> @render.ImageResourceRecord? = _ => None,
+  on_submit~ : (Array[@moui_web_renderer.WebGpuHostCall]) -> Unit = _ => (),
+  on_dispose~ : () -> Unit = () => (),
 ) -> @moui_web_renderer.WebGpuHostRendererPort {
   @moui_web_renderer.WebGpuHostRendererPort::new(
     capabilities=() => capabilities,

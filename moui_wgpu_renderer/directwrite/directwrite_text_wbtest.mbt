@@ -106,16 +106,16 @@ test "directwrite native stub parses font registration payload" {
 #borrow(font_spec)
 extern "C" fn windows_directwrite_debug_font_spec_family_count(
   font_spec : Bytes,
-) -> Int = "moui_windows_directwrite_debug_font_spec_family_count"
+) -> Int32 = "moui_windows_directwrite_debug_font_spec_family_count"
 
 ///|
-extern "C" fn windows_directwrite_debug_font_spec_protocol_version() -> Int = "moui_windows_directwrite_debug_font_spec_protocol_version"
+extern "C" fn windows_directwrite_debug_font_spec_protocol_version() -> Int32 = "moui_windows_directwrite_debug_font_spec_protocol_version"
 
 ///|
-extern "C" fn windows_directwrite_debug_font_registration_protocol_version() -> Int = "moui_windows_directwrite_debug_font_registration_protocol_version"
+extern "C" fn windows_directwrite_debug_font_registration_protocol_version() -> Int32 = "moui_windows_directwrite_debug_font_registration_protocol_version"
 
 ///|
 #borrow(payload)
 extern "C" fn windows_directwrite_debug_font_registration_data_len(
   payload : Bytes,
-) -> Int = "moui_windows_directwrite_debug_font_registration_data_len"
+) -> Int32 = "moui_windows_directwrite_debug_font_registration_data_len"

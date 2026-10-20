@@ -294,11 +294,11 @@ fn agent_action_error(
 
 ///|
 pub(all) struct RuntimeStateSnapshot {
-  dispatched_count : Int
-  update_count : Int
-  pending_message_count : Int
-  active_subscription_count : Int
-  active_effect_task_count : Int
+  dispatched_count : Int32
+  update_count : Int32
+  pending_message_count : Int32
+  active_subscription_count : Int32
+  active_effect_task_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -313,7 +313,7 @@ pub extend RuntimeStateSnapshot with ToJson::{to_json}
 ///|
 pub(all) struct PaintSummary {
   texts : Array[String]
-  draw_command_count : Int
+  draw_command_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|

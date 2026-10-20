@@ -17,8 +17,8 @@ fn[Msg] markdown_outline_row(
   item : @richtext.MarkdownEditorOutlineItem,
   folded : Bool,
   active : Bool,
-  on_jump~ : (Int) -> Msg,
-  on_toggle_fold~ : (Int) -> Msg,
+  on_jump~ : (Int32) -> Msg,
+  on_toggle_fold~ : (Int32) -> Msg,
   theme~ : @moui.Theme,
 ) -> @moui.View[Msg] {
   let indent = markdown_outline_indent_width(item.level)
@@ -52,14 +52,14 @@ fn[Msg] markdown_outline_row(
 pub fn[Msg] markdown_outline_panel(
   theme~ : @moui.Theme,
   outline~ : Array[@richtext.MarkdownEditorOutlineItem],
-  folded_starts~ : Array[Int],
-  caret~ : Int,
-  on_jump~ : (Int) -> Msg,
-  on_toggle_fold~ : (Int) -> Msg,
+  folded_starts~ : Array[Int32],
+  caret~ : Int32,
+  on_jump~ : (Int32) -> Msg,
+  on_toggle_fold~ : (Int32) -> Msg,
   height~ : Double,
-  width? : Double = MARKDOWN_OUTLINE_PANEL_WIDTH,
-  title? : String = "Outline",
-  empty_label? : String = "No headings",
+  width~ : Double = MARKDOWN_OUTLINE_PANEL_WIDTH,
+  title~ : String = "Outline",
+  empty_label~ : String = "No headings",
 ) -> @moui.View[Msg] {
   let content_width = (width - 28.0).max(96.0)
   let visible_outline = markdown_folded_outline(outline, folded_starts)

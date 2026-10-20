@@ -61,7 +61,7 @@ pub fn ImageFilterDescriptor::resource_key(
 ///|
 pub fn ImageFilterDescriptor::resource_descriptor(
   self : ImageFilterDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

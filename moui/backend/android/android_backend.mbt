@@ -105,7 +105,7 @@ pub struct AndroidSurfaceBinding {
 ///|
 pub fn AndroidSurfaceBinding::new(
   create_renderer~ : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface? : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
+  sync_surface~ : (AndroidSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
@@ -251,7 +251,7 @@ pub fn backend_info() -> AndroidBackendInfo {
 
 ///|
 pub fn android_capability_summary(
-  services? : @host.HostServiceCapabilities = android_service_capabilities(),
+  services~ : @host.HostServiceCapabilities = android_service_capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,

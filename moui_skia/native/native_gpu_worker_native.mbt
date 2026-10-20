@@ -29,24 +29,24 @@ extern "C" fn native_gpu_worker_submit_picture(
 #borrow(worker)
 extern "C" fn native_gpu_worker_submit_control(
   worker : NativeGpuWorkerHandle,
-  kind : Int,
+  kind : Int32,
   handle : UInt64,
   auxiliary_handle : UInt64,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Int64 = "moonbit_skia_native_gpu_worker_submit_control"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_completion_count(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_completion_count"
+) -> Int32 = "moonbit_skia_native_gpu_worker_completion_count"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_wait_completion(
   worker : NativeGpuWorkerHandle,
-  timeout_ms : Int,
+  timeout_ms : Int32,
 ) -> Bool = "moonbit_skia_native_gpu_worker_wait_completion"
 
 ///|
@@ -65,19 +65,19 @@ extern "C" fn native_gpu_worker_completion_control_token(
 #borrow(worker)
 extern "C" fn native_gpu_worker_completion_status(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_completion_status"
+) -> Int32 = "moonbit_skia_native_gpu_worker_completion_status"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_completion_surface_generation(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_completion_surface_generation"
+) -> Int32 = "moonbit_skia_native_gpu_worker_completion_surface_generation"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_completion_context_generation(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_completion_context_generation"
+) -> Int32 = "moonbit_skia_native_gpu_worker_completion_context_generation"
 
 ///|
 #borrow(worker)
@@ -143,13 +143,13 @@ extern "C" fn native_gpu_worker_replaced_pending(
 #borrow(worker)
 extern "C" fn native_gpu_worker_surface_generation(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_surface_generation"
+) -> Int32 = "moonbit_skia_native_gpu_worker_surface_generation"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_context_generation(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_context_generation"
+) -> Int32 = "moonbit_skia_native_gpu_worker_context_generation"
 
 ///|
 #borrow(worker)
@@ -167,13 +167,13 @@ extern "C" fn native_gpu_worker_resource_cache_bytes(
 #borrow(worker)
 extern "C" fn native_gpu_worker_control_pending(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_control_pending"
+) -> Int32 = "moonbit_skia_native_gpu_worker_control_pending"
 
 ///|
 #borrow(worker)
 extern "C" fn native_gpu_worker_completion_pending(
   worker : NativeGpuWorkerHandle,
-) -> Int = "moonbit_skia_native_gpu_worker_completion_pending"
+) -> Int32 = "moonbit_skia_native_gpu_worker_completion_pending"
 
 ///|
 #borrow(worker)
@@ -193,7 +193,7 @@ pub(all) enum NativeGpuWorkerCompletionStatus {
   ControlAcknowledged
   FallbackToRaster
   Presented
-  Unknown(Int)
+  Unknown(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -206,8 +206,8 @@ pub extend NativeGpuWorkerCompletionStatus with Eq::{not_equal, equal}
 pub(all) struct NativeGpuWorkerCompletion {
   sequence : Int64
   control_token : Int64
-  surface_generation : Int
-  context_generation : Int
+  surface_generation : Int32
+  context_generation : Int32
   image_resource_revision : Int64
   submitted_at_ms : Double
   processed_at_ms : Double
@@ -223,7 +223,7 @@ pub extend NativeGpuWorkerCompletion with Eq::{not_equal, equal}
 
 ///|
 fn native_gpu_worker_completion_status_from_int(
-  value : Int,
+  value : Int32,
 ) -> NativeGpuWorkerCompletionStatus {
   match value {
     1 => PictureRecorded
@@ -243,12 +243,12 @@ pub(all) struct NativeGpuWorkerDiagnostics {
   dropped : Int64
   replaced_pending : Int64
   readback_count : Int64
-  surface_generation : Int
-  context_generation : Int
+  surface_generation : Int32
+  context_generation : Int32
   recovery_count : Int64
   resource_cache_bytes : Int64
-  control_pending : Int
-  completion_pending : Int
+  control_pending : Int32
+  completion_pending : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -270,8 +270,8 @@ pub fn NativeGpuRenderWorker::new() -> NativeGpuRenderWorker? {
 ///|
 pub fn NativeGpuRenderWorker::submit_empty_picture(
   self : NativeGpuRenderWorker,
-  image_resource_revision? : Int64 = 0L,
-  submitted_at_ms? : Double = 0.0,
+  image_resource_revision~ : Int64 = 0L,
+  submitted_at_ms~ : Double = 0.0,
 ) -> Int64 {
   native_gpu_worker_submit_empty(
     self.handle,
@@ -286,8 +286,8 @@ pub fn NativeGpuRenderWorker::submit_empty_picture(
 pub fn NativeGpuRenderWorker::submit_picture(
   self : NativeGpuRenderWorker,
   picture : Picture,
-  image_resource_revision? : Int64 = 0L,
-  submitted_at_ms? : Double = 0.0,
+  image_resource_revision~ : Int64 = 0L,
+  submitted_at_ms~ : Double = 0.0,
 ) -> Int64 {
   native_gpu_worker_submit_picture(
     self.handle,
@@ -326,7 +326,7 @@ pub fn NativeGpuRenderWorker::submit_control(
 ///|
 pub fn NativeGpuRenderWorker::wait_completion(
   self : NativeGpuRenderWorker,
-  timeout_ms? : Int = 1000,
+  timeout_ms~ : Int32 = 1000,
 ) -> Bool {
   native_gpu_worker_wait_completion(self.handle, timeout_ms.max(0))
 }

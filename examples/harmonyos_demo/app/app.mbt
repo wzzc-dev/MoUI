@@ -15,8 +15,8 @@ using @views {
 
 ///|
 pub struct Model {
-  tap_count : Int
-  render_hint : Int
+  tap_count : Int32
+  render_hint : Int32
 }
 
 ///|

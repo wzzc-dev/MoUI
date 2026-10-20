@@ -13,9 +13,9 @@ pub extend Scene with Eq::{not_equal, equal}
 ///|
 pub struct Model {
   scene : Scene
-  count : Int
+  count : Int32
   /// Shared logical counter mirrored into scene payloads for demos.
-  shared_count : Int
+  shared_count : Int32
   /// Last known inspector window id after open, when the host reports it.
   inspector_window_id : WindowId?
   status : String
@@ -41,7 +41,7 @@ pub fn scene_from_window(scene : WindowScene) -> Scene? {
 }
 
 ///|
-pub fn Model::new(scene : Scene, shared_count? : Int = 0) -> Model {
+pub fn Model::new(scene : Scene, shared_count~ : Int32 = 0) -> Model {
   { scene, count: 0, shared_count, inspector_window_id: None, status: "Ready", }
 }
 
@@ -49,7 +49,7 @@ pub fn Model::new(scene : Scene, shared_count? : Int = 0) -> Model {
 pub fn program(
   scene : Scene,
   windows : WindowActions,
-  shared_count? : Int = 0,
+  shared_count~ : Int32 = 0,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new(
     init=() => (Model::new(scene, shared_count~), @moui.Effect::none()),
@@ -65,7 +65,7 @@ pub fn program(
 pub fn update(
   model : Model,
   msg : Msg,
-  windows? : WindowActions = WindowActions::unavailable(),
+  windows~ : WindowActions = WindowActions::unavailable(),
 ) -> (Model, @moui.Effect[Msg]) {
   match msg {
     OpenInspector =>

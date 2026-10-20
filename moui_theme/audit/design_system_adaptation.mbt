@@ -83,12 +83,12 @@ pub fn adaptation_report_for(
 }
 
 ///|
-pub fn adaptation_record_count(preset : @common.DesignPreset) -> Int {
+pub fn adaptation_record_count(preset : @common.DesignPreset) -> Int32 {
   adaptation_report(preset).length()
 }
 
 ///|
-pub fn aligned_adaptation_count(preset : @common.DesignPreset) -> Int {
+pub fn aligned_adaptation_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in adaptation_report(preset) {
     if item.status == ThemeMapped ||
@@ -101,7 +101,7 @@ pub fn aligned_adaptation_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn adaptation_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn adaptation_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in adaptation_report(preset) {
     if item.status == NotMapped ||
@@ -114,7 +114,7 @@ pub fn adaptation_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn adaptation_source_lock_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn adaptation_source_lock_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in adaptation_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -125,7 +125,9 @@ pub fn adaptation_source_lock_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn undeclared_adaptation_source_count(preset : @common.DesignPreset) -> Int {
+pub fn undeclared_adaptation_source_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in adaptation_report(preset) {
     if !item.source_declared {

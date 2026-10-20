@@ -151,7 +151,7 @@ pub fn RenderFrameDescriptor::is_ready(self : RenderFrameDescriptor) -> Bool {
 pub fn RenderFrameDescriptor::cache_resources(
   self : RenderFrameDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
-) -> Int {
+) -> Int32 {
   cache.insert_resource_plan(self.resource_plan)
 }
 
@@ -188,8 +188,8 @@ pub fn RenderFrameDescriptor::missing_cacheable_resource_plan(
 ///|
 pub fn RenderFrameDescriptor::present_descriptor(
   self : RenderFrameDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> SurfacePresentDescriptor? {
   if self.is_ready() && self.needs_present() && self.has_present() {
     Some(self.target.present_descriptor(frame_index~, buffer_index~))
@@ -201,8 +201,8 @@ pub fn RenderFrameDescriptor::present_descriptor(
 ///|
 pub fn RenderFrameDescriptor::present_resource_plan(
   self : RenderFrameDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> RendererResourcePlan {
   match self.present_descriptor(frame_index~, buffer_index~) {
     Some(descriptor) => descriptor.resource_plan()

@@ -88,7 +88,7 @@ pub fn[Msg] SemanticsRoleModifier::to_any_modifier(
 
 ///|
 pub(all) struct SemanticsLevelModifier {
-  level : Int
+  level : Int32
 }
 
 ///|

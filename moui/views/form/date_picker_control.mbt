@@ -8,7 +8,7 @@ priv enum DatePickerDisplayMode {
 ///|
 priv enum DatePickerViewDateState {
   FollowSelection
-  Month(Int, Int)
+  Month(Int32, Int32)
 }
 
 ///|
@@ -70,11 +70,11 @@ fn[Msg] date_picker_control(
   placeholder~ : String,
   theme? : @core.Theme,
   style? : @style.PickerStyle,
-  min_date? : @core.DateValue? = None,
-  max_date? : @core.DateValue? = None,
-  on_select? : ((@core.DateValue) -> Msg)? = None,
-  kind? : String = "DatePicker",
-  key? : String? = None,
+  min_date~ : @core.DateValue? = None,
+  max_date~ : @core.DateValue? = None,
+  on_select~ : ((@core.DateValue) -> Msg)? = None,
+  kind~ : String = "DatePicker",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let selected_snapshot = selected
   @core.View::from_node(
@@ -554,7 +554,7 @@ fn datepicker_day_at_position(
   panel_frame : @core.Rect,
   position : @core.Point,
   view_date : @core.DateValue,
-) -> Int? {
+) -> Int32? {
   let start_y = panel_frame.origin.y +
     datepicker_header_height() +
     datepicker_day_header_height()
@@ -602,7 +602,7 @@ fn datepicker_next_month(value : @core.DateValue) -> @core.DateValue {
 }
 
 ///|
-fn datepicker_compare_int(left : Int, right : Int) -> Int {
+fn datepicker_compare_int(left : Int32, right : Int32) -> Int32 {
   if left < right {
     -1
   } else if left > right {
@@ -616,7 +616,7 @@ fn datepicker_compare_int(left : Int, right : Int) -> Int {
 fn datepicker_compare_value(
   left : @core.DateValue,
   right : @core.DateValue,
-) -> Int {
+) -> Int32 {
   let year = datepicker_compare_int(left.year, right.year)
   if year != 0 {
     year
@@ -663,7 +663,10 @@ fn datepicker_value_in_range(
 }
 
 ///|
-fn datepicker_first_weekday_of_month_sunday0(year : Int, month : Int) -> Int {
+fn datepicker_first_weekday_of_month_sunday0(
+  year : Int32,
+  month : Int32,
+) -> Int32 {
   let q = 1
   let zeller_month = if month < 3 { month + 12 } else { month }
   let zeller_year = if month < 3 { year - 1 } else { year }
@@ -678,12 +681,12 @@ fn datepicker_first_weekday_of_month_sunday0(year : Int, month : Int) -> Int {
 }
 
 ///|
-fn datepicker_is_leap_year(year : Int) -> Bool {
+fn datepicker_is_leap_year(year : Int32) -> Bool {
   year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }
 
 ///|
-fn datepicker_days_in_month(year : Int, month : Int) -> Int {
+fn datepicker_days_in_month(year : Int32, month : Int32) -> Int32 {
   match month {
     1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
     4 | 6 | 9 | 11 => 30

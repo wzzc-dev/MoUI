@@ -37,7 +37,7 @@ pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
   target_id : Bytes
   present_mode : SurfacePresentMode?
-  max_frames_in_flight : Int
+  max_frames_in_flight : Int32
   gpu_context_key : RendererResourceKey?
 } derive(Debug, Eq)
 
@@ -90,16 +90,16 @@ fn normalized_surface_gpu_context_key(
 ///|
 pub fn SurfaceTargetDescriptor::new(
   surface : SurfaceDescriptor,
-  present_mode? : SurfacePresentMode? = None,
-  max_frames_in_flight? : Int = 1,
-  gpu_context_key? : RendererResourceKey? = None,
-  target_id? : Bytes = b"",
+  present_mode~ : SurfacePresentMode? = None,
+  max_frames_in_flight~ : Int32 = 1,
+  gpu_context_key~ : RendererResourceKey? = None,
+  target_id~ : Bytes = b"",
 ) -> SurfaceTargetDescriptor {
   {
     surface,
     target_id: normalized_surface_target_id(surface, target_id),
     present_mode: normalized_surface_present_mode(surface, present_mode),
-    max_frames_in_flight: Int::max(1, max_frames_in_flight),
+    max_frames_in_flight: Int32::max(1, max_frames_in_flight),
     gpu_context_key: normalized_surface_gpu_context_key(
       surface, gpu_context_key,
     ),
@@ -116,12 +116,12 @@ pub fn SurfaceTargetDescriptor::raster_n32_premul(
 ///|
 pub fn SurfaceTargetDescriptor::window_n32_premul(
   size : ISize,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  present_mode? : SurfacePresentMode = FifoPresent,
-  max_frames_in_flight? : Int = 2,
-  target_id? : Bytes = b"",
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  present_mode~ : SurfacePresentMode = FifoPresent,
+  max_frames_in_flight~ : Int32 = 2,
+  target_id~ : Bytes = b"",
 ) -> SurfaceTargetDescriptor {
   SurfaceTargetDescriptor::new(
     SurfaceDescriptor::window_n32_premul(
@@ -139,14 +139,14 @@ pub fn SurfaceTargetDescriptor::window_n32_premul(
 ///|
 pub fn SurfaceTargetDescriptor::gpu_n32_premul(
   size : ISize,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  budget? : SurfaceBudget = Budgeted,
-  present_mode? : SurfacePresentMode = FifoPresent,
-  max_frames_in_flight? : Int = 2,
-  gpu_context_key? : RendererResourceKey? = None,
-  target_id? : Bytes = b"",
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  budget~ : SurfaceBudget = Budgeted,
+  present_mode~ : SurfacePresentMode = FifoPresent,
+  max_frames_in_flight~ : Int32 = 2,
+  gpu_context_key~ : RendererResourceKey? = None,
+  target_id~ : Bytes = b"",
 ) -> SurfaceTargetDescriptor {
   SurfaceTargetDescriptor::new(
     SurfaceDescriptor::gpu_n32_premul(
@@ -274,7 +274,7 @@ pub fn SurfaceTargetDescriptor::without_present(
 ///|
 pub fn SurfaceTargetDescriptor::with_max_frames_in_flight(
   self : SurfaceTargetDescriptor,
-  max_frames_in_flight : Int,
+  max_frames_in_flight : Int32,
 ) -> SurfaceTargetDescriptor {
   SurfaceTargetDescriptor::new(
     self.surface,

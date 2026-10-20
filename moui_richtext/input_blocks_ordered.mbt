@@ -72,9 +72,9 @@ fn markdown_editor_normalize_ordered_edit_result(
 
 ///|
 priv struct MarkdownEditorOffsetReplacement {
-  start : Int
-  old_end : Int
-  new_end : Int
+  start : Int32
+  old_end : Int32
+  new_end : Int32
 }
 
 ///|
@@ -129,15 +129,15 @@ fn markdown_editor_renumber_ordered_lists(
 
 ///|
 priv struct MarkdownEditorOrderedRenumberContext {
-  indent : Int
+  indent : Int32
   context_prefix : String
-  expected : Int
+  expected : Int32
 }
 
 ///|
 fn markdown_editor_trim_ordered_renumber_contexts(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
-  indent : Int,
+  indent : Int32,
 ) -> Unit {
   while contexts.length() > 0 && contexts[contexts.length() - 1].indent > indent {
     ignore(contexts.pop())
@@ -148,7 +148,7 @@ fn markdown_editor_trim_ordered_renumber_contexts(
 fn markdown_editor_next_ordered_number(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   info : MarkdownEditorOrderedLineInfo,
-) -> Int {
+) -> Int32 {
   if contexts.length() > 0 &&
     contexts[contexts.length() - 1].indent == info.indent &&
     contexts[contexts.length() - 1].context_prefix == info.context_prefix {
@@ -198,12 +198,12 @@ fn markdown_editor_ordered_renumber_blank_line(line : String) -> Bool {
 
 ///|
 priv struct MarkdownEditorOrderedLineInfo {
-  indent : Int
+  indent : Int32
   context_prefix : String
-  digit_start : Int
-  digit_end : Int
+  digit_start : Int32
+  digit_end : Int32
   digits : String
-  number : Int
+  number : Int32
 }
 
 ///|
@@ -231,7 +231,7 @@ fn markdown_editor_ordered_line_info(
 }
 
 ///|
-fn markdown_editor_ordered_line_context_indent(line : String) -> Int {
+fn markdown_editor_ordered_line_context_indent(line : String) -> Int32 {
   let chars = line.to_array()
   let mut index = 0
   let mut scanning = true
@@ -254,8 +254,8 @@ fn markdown_editor_ordered_line_context_indent(line : String) -> Int {
 ///|
 fn markdown_editor_ordered_digit_end_at(
   chars : Array[Char],
-  start : Int,
-) -> Int {
+  start : Int32,
+) -> Int32 {
   let mut index = markdown_editor_clamp_int(start, 0, chars.length())
   while index < chars.length() && chars[index].is_ascii_digit() {
     index = index + 1
@@ -265,9 +265,9 @@ fn markdown_editor_ordered_digit_end_at(
 
 ///|
 fn markdown_editor_map_offset_after_replacements(
-  offset : Int,
+  offset : Int32,
   replacements : Array[MarkdownEditorOffsetReplacement],
-) -> Int {
+) -> Int32 {
   let mut mapped = offset
   for replacement in replacements {
     let delta = replacement.new_end - replacement.old_end
@@ -283,9 +283,9 @@ fn markdown_editor_map_offset_after_replacements(
 ///|
 fn markdown_editor_parse_digits(
   chars : Array[Char],
-  start : Int,
-  end : Int,
-) -> Int {
+  start : Int32,
+  end : Int32,
+) -> Int32 {
   let mut value = 0
   for index in start..<end {
     value = value * 10 + chars[index].to_int() - '0'.to_int()

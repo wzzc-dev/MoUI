@@ -2,7 +2,7 @@
 /// Return the number of commands replayed.
 pub fn RenderPipelineReplayResult::get_command_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
@@ -10,7 +10,7 @@ pub fn RenderPipelineReplayResult::get_command_count(
 /// Return the number of clear commands replayed.
 pub fn RenderPipelineReplayResult::get_clear_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.clear_count
 }
 
@@ -18,7 +18,7 @@ pub fn RenderPipelineReplayResult::get_clear_count(
 /// Return the number of fill commands replayed.
 pub fn RenderPipelineReplayResult::get_fill_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.fill_count
 }
 
@@ -26,7 +26,7 @@ pub fn RenderPipelineReplayResult::get_fill_count(
 /// Return the number of stroke commands replayed.
 pub fn RenderPipelineReplayResult::get_stroke_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.stroke_count
 }
 
@@ -34,7 +34,7 @@ pub fn RenderPipelineReplayResult::get_stroke_count(
 /// Return the number of image commands replayed.
 pub fn RenderPipelineReplayResult::get_image_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.image_count
 }
 
@@ -42,7 +42,7 @@ pub fn RenderPipelineReplayResult::get_image_count(
 /// Return the number of text commands replayed.
 pub fn RenderPipelineReplayResult::get_text_count(
   self : RenderPipelineReplayResult,
-) -> Int {
+) -> Int32 {
   self.text_count
 }
 
@@ -58,7 +58,7 @@ pub fn RenderPipelineResourceReplayResult::get_replay_result(
 /// Return the number of commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_command_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_command_count()
 }
 
@@ -66,7 +66,7 @@ pub fn RenderPipelineResourceReplayResult::get_command_count(
 /// Return the number of clear commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_clear_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_clear_count()
 }
 
@@ -74,7 +74,7 @@ pub fn RenderPipelineResourceReplayResult::get_clear_count(
 /// Return the number of fill commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_fill_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_fill_count()
 }
 
@@ -82,7 +82,7 @@ pub fn RenderPipelineResourceReplayResult::get_fill_count(
 /// Return the number of stroke commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_stroke_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_stroke_count()
 }
 
@@ -90,7 +90,7 @@ pub fn RenderPipelineResourceReplayResult::get_stroke_count(
 /// Return the number of image commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_image_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_image_count()
 }
 
@@ -98,7 +98,7 @@ pub fn RenderPipelineResourceReplayResult::get_image_count(
 /// Return the number of text commands replayed.
 pub fn RenderPipelineResourceReplayResult::get_text_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.replay_result.get_text_count()
 }
 
@@ -106,7 +106,7 @@ pub fn RenderPipelineResourceReplayResult::get_text_count(
 /// Return the number of keyed font commands replayed through the font cache.
 pub fn RenderPipelineResourceReplayResult::get_keyed_font_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.keyed_font_count
 }
 
@@ -114,7 +114,7 @@ pub fn RenderPipelineResourceReplayResult::get_keyed_font_count(
 /// Return the number of keyed image commands replayed through the image cache.
 pub fn RenderPipelineResourceReplayResult::get_keyed_image_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.keyed_image_count
 }
 
@@ -122,7 +122,7 @@ pub fn RenderPipelineResourceReplayResult::get_keyed_image_count(
 /// Return the number of keyed text commands replayed through the text cache.
 pub fn RenderPipelineResourceReplayResult::get_keyed_text_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.keyed_text_count
 }
 
@@ -130,7 +130,7 @@ pub fn RenderPipelineResourceReplayResult::get_keyed_text_count(
 /// Return the number of keyed atlas text commands replayed through glyph resources.
 pub fn RenderPipelineResourceReplayResult::get_keyed_atlas_text_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.keyed_atlas_text_count
 }
 
@@ -138,7 +138,7 @@ pub fn RenderPipelineResourceReplayResult::get_keyed_atlas_text_count(
 /// Return the number of keyed commands replayed through resource caches.
 pub fn RenderPipelineResourceReplayResult::get_keyed_resource_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.keyed_font_count +
   self.keyed_image_count +
   self.keyed_text_count +
@@ -149,7 +149,7 @@ pub fn RenderPipelineResourceReplayResult::get_keyed_resource_count(
 /// Return the number of keyed font commands that reused a cached font face.
 pub fn RenderPipelineResourceReplayResult::get_font_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.font_cache_hit_count
 }
 
@@ -157,7 +157,7 @@ pub fn RenderPipelineResourceReplayResult::get_font_cache_hit_count(
 /// Return the number of keyed font commands that parsed or loaded a new face.
 pub fn RenderPipelineResourceReplayResult::get_font_parse_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.font_parse_count
 }
 
@@ -165,7 +165,7 @@ pub fn RenderPipelineResourceReplayResult::get_font_parse_count(
 /// Return the number of keyed image commands that reused a cached pixmap.
 pub fn RenderPipelineResourceReplayResult::get_image_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.image_cache_hit_count
 }
 
@@ -173,7 +173,7 @@ pub fn RenderPipelineResourceReplayResult::get_image_cache_hit_count(
 /// Return the number of keyed image commands that inserted a pixmap cache entry.
 pub fn RenderPipelineResourceReplayResult::get_image_cache_insert_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.image_cache_insert_count
 }
 
@@ -181,7 +181,7 @@ pub fn RenderPipelineResourceReplayResult::get_image_cache_insert_count(
 /// Return the number of keyed text commands that reused a cached text mask.
 pub fn RenderPipelineResourceReplayResult::get_text_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.text_cache_hit_count
 }
 
@@ -189,7 +189,7 @@ pub fn RenderPipelineResourceReplayResult::get_text_cache_hit_count(
 /// Return the number of keyed text commands that rendered a new text mask.
 pub fn RenderPipelineResourceReplayResult::get_text_mask_render_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.text_mask_render_count
 }
 
@@ -197,7 +197,7 @@ pub fn RenderPipelineResourceReplayResult::get_text_mask_render_count(
 /// Return the number of atlas text glyph masks reused from the glyph cache.
 pub fn RenderPipelineResourceReplayResult::get_glyph_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.glyph_cache_hit_count
 }
 
@@ -205,7 +205,7 @@ pub fn RenderPipelineResourceReplayResult::get_glyph_cache_hit_count(
 /// Return the number of atlas text glyph masks rasterized into the glyph cache.
 pub fn RenderPipelineResourceReplayResult::get_glyph_mask_render_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.glyph_mask_render_count
 }
 
@@ -213,7 +213,7 @@ pub fn RenderPipelineResourceReplayResult::get_glyph_mask_render_count(
 /// Return the number of atlas glyph placements reused from the atlas.
 pub fn RenderPipelineResourceReplayResult::get_atlas_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.atlas_cache_hit_count
 }
 
@@ -221,7 +221,7 @@ pub fn RenderPipelineResourceReplayResult::get_atlas_cache_hit_count(
 /// Return the number of atlas glyph placements inserted into the atlas.
 pub fn RenderPipelineResourceReplayResult::get_atlas_insert_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.atlas_insert_count
 }
 
@@ -229,7 +229,7 @@ pub fn RenderPipelineResourceReplayResult::get_atlas_insert_count(
 /// Return the number of atlas draws that cleared the atlas while replaying.
 pub fn RenderPipelineResourceReplayResult::get_atlas_clear_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.atlas_clear_count
 }
 
@@ -237,7 +237,7 @@ pub fn RenderPipelineResourceReplayResult::get_atlas_clear_count(
 /// Return the number of keyed resource commands that hit a cache.
 pub fn RenderPipelineResourceReplayResult::get_resource_cache_hit_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.font_cache_hit_count +
   self.image_cache_hit_count +
   self.text_cache_hit_count +
@@ -249,7 +249,7 @@ pub fn RenderPipelineResourceReplayResult::get_resource_cache_hit_count(
 /// Return the number of keyed resource commands that populated a cache.
 pub fn RenderPipelineResourceReplayResult::get_resource_cache_miss_count(
   self : RenderPipelineResourceReplayResult,
-) -> Int {
+) -> Int32 {
   self.font_parse_count +
   self.image_cache_insert_count +
   self.text_mask_render_count +
@@ -261,7 +261,7 @@ pub fn RenderPipelineResourceReplayResult::get_resource_cache_miss_count(
 /// Return the number of commands analyzed.
 pub fn RenderPipelineAnalysis::get_command_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
@@ -269,7 +269,7 @@ pub fn RenderPipelineAnalysis::get_command_count(
 /// Return the number of clear commands analyzed.
 pub fn RenderPipelineAnalysis::get_clear_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.clear_count
 }
 
@@ -277,7 +277,7 @@ pub fn RenderPipelineAnalysis::get_clear_count(
 /// Return the number of fill commands analyzed.
 pub fn RenderPipelineAnalysis::get_fill_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.fill_count
 }
 
@@ -285,7 +285,7 @@ pub fn RenderPipelineAnalysis::get_fill_count(
 /// Return the number of stroke commands analyzed.
 pub fn RenderPipelineAnalysis::get_stroke_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.stroke_count
 }
 
@@ -293,7 +293,7 @@ pub fn RenderPipelineAnalysis::get_stroke_count(
 /// Return the number of image commands analyzed.
 pub fn RenderPipelineAnalysis::get_image_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.image_count
 }
 
@@ -301,7 +301,7 @@ pub fn RenderPipelineAnalysis::get_image_count(
 /// Return the number of text commands analyzed.
 pub fn RenderPipelineAnalysis::get_text_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.text_count
 }
 
@@ -323,7 +323,7 @@ pub fn RenderPipelineAnalysis::has_dirty(self : RenderPipelineAnalysis) -> Bool 
 /// Return the number of conservative dirty rectangles estimated.
 pub fn RenderPipelineAnalysis::get_dirty_rect_count(
   self : RenderPipelineAnalysis,
-) -> Int {
+) -> Int32 {
   self.dirty_region.get_rect_count()
 }
 
@@ -339,9 +339,9 @@ pub fn RenderPipelineAnalysis::get_dirty_bounds(
 /// Build a present plan from the estimated dirty region.
 pub fn RenderPipelineAnalysis::get_present_plan(
   self : RenderPipelineAnalysis,
-  width : Int,
-  height : Int,
-  max_rects : Int,
+  width : Int32,
+  height : Int32,
+  max_rects : Int32,
 ) -> @graphics.DirtyPresentPlan {
   self.dirty_region.present_plan(
     @graphics.PixelRect::new(x=0, y=0, width~, height~),
@@ -353,7 +353,7 @@ pub fn RenderPipelineAnalysis::get_present_plan(
 /// Return the number of commands in the previous display list.
 pub fn RenderPipelineDiffResult::get_previous_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.previous_command_count
 }
 
@@ -361,7 +361,7 @@ pub fn RenderPipelineDiffResult::get_previous_command_count(
 /// Return the number of commands in the next display list.
 pub fn RenderPipelineDiffResult::get_next_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.next_command_count
 }
 
@@ -369,7 +369,7 @@ pub fn RenderPipelineDiffResult::get_next_command_count(
 /// Return the number of commands retained without dirtying their bounds.
 pub fn RenderPipelineDiffResult::get_retained_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.retained_command_count
 }
 
@@ -377,7 +377,7 @@ pub fn RenderPipelineDiffResult::get_retained_command_count(
 /// Return the number of paired commands whose value changed.
 pub fn RenderPipelineDiffResult::get_changed_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.changed_command_count
 }
 
@@ -385,7 +385,7 @@ pub fn RenderPipelineDiffResult::get_changed_command_count(
 /// Return the number of commands inserted in the next display list.
 pub fn RenderPipelineDiffResult::get_inserted_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.inserted_command_count
 }
 
@@ -393,7 +393,7 @@ pub fn RenderPipelineDiffResult::get_inserted_command_count(
 /// Return the number of commands removed from the previous display list.
 pub fn RenderPipelineDiffResult::get_removed_command_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.removed_command_count
 }
 
@@ -427,7 +427,7 @@ pub fn RenderPipelineDiffResult::has_dirty(
 /// Return the number of conservative dirty rectangles in this diff.
 pub fn RenderPipelineDiffResult::get_dirty_rect_count(
   self : RenderPipelineDiffResult,
-) -> Int {
+) -> Int32 {
   self.dirty_region.get_rect_count()
 }
 
@@ -443,9 +443,9 @@ pub fn RenderPipelineDiffResult::get_dirty_bounds(
 /// Build a present plan from this diff's estimated dirty region.
 pub fn RenderPipelineDiffResult::get_present_plan(
   self : RenderPipelineDiffResult,
-  width : Int,
-  height : Int,
-  max_rects : Int,
+  width : Int32,
+  height : Int32,
+  max_rects : Int32,
 ) -> @graphics.DirtyPresentPlan {
   self.dirty_region.present_plan(
     @graphics.PixelRect::new(x=0, y=0, width~, height~),
@@ -463,7 +463,9 @@ pub fn RenderPipelineBatch::get_kind(
 
 ///|
 /// Return the first command index covered by this batch.
-pub fn RenderPipelineBatch::get_start_index(self : RenderPipelineBatch) -> Int {
+pub fn RenderPipelineBatch::get_start_index(
+  self : RenderPipelineBatch,
+) -> Int32 {
   self.start_index
 }
 
@@ -471,7 +473,7 @@ pub fn RenderPipelineBatch::get_start_index(self : RenderPipelineBatch) -> Int {
 /// Return the number of commands covered by this batch.
 pub fn RenderPipelineBatch::get_command_count(
   self : RenderPipelineBatch,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
@@ -493,7 +495,7 @@ pub fn RenderPipelineBatch::has_dirty(self : RenderPipelineBatch) -> Bool {
 /// Return the number of dirty rects estimated for this batch.
 pub fn RenderPipelineBatch::get_dirty_rect_count(
   self : RenderPipelineBatch,
-) -> Int {
+) -> Int32 {
   self.dirty_region.get_rect_count()
 }
 
@@ -509,9 +511,9 @@ pub fn RenderPipelineBatch::get_dirty_bounds(
 /// Build a present plan from this batch's estimated dirty region.
 pub fn RenderPipelineBatch::get_present_plan(
   self : RenderPipelineBatch,
-  width : Int,
-  height : Int,
-  max_rects : Int,
+  width : Int32,
+  height : Int32,
+  max_rects : Int32,
 ) -> @graphics.DirtyPresentPlan {
   self.dirty_region.present_plan(
     @graphics.PixelRect::new(x=0, y=0, width~, height~),
@@ -523,7 +525,7 @@ pub fn RenderPipelineBatch::get_present_plan(
 /// Return the number of commands covered by this plan.
 pub fn RenderPipelineBatchPlan::get_command_count(
   self : RenderPipelineBatchPlan,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
@@ -531,7 +533,7 @@ pub fn RenderPipelineBatchPlan::get_command_count(
 /// Return the number of contiguous command batches.
 pub fn RenderPipelineBatchPlan::get_batch_count(
   self : RenderPipelineBatchPlan,
-) -> Int {
+) -> Int32 {
   self.batches.length()
 }
 
@@ -571,9 +573,9 @@ pub fn RenderPipelineBatchPlan::get_dirty_bounds(
 /// Build a present plan from the batch plan's estimated dirty region.
 pub fn RenderPipelineBatchPlan::get_present_plan(
   self : RenderPipelineBatchPlan,
-  width : Int,
-  height : Int,
-  max_rects : Int,
+  width : Int32,
+  height : Int32,
+  max_rects : Int32,
 ) -> @graphics.DirtyPresentPlan {
   self.dirty_region.present_plan(
     @graphics.PixelRect::new(x=0, y=0, width~, height~),
@@ -585,7 +587,7 @@ pub fn RenderPipelineBatchPlan::get_present_plan(
 /// Return the command index that owns this image dependency.
 pub fn RenderPipelineImageDependency::get_command_index(
   self : RenderPipelineImageDependency,
-) -> Int {
+) -> Int32 {
   self.command_index
 }
 
@@ -609,7 +611,7 @@ pub fn RenderPipelineImageDependency::has_resource_key(
 /// Return the clipped source width read from the image resource.
 pub fn RenderPipelineImageDependency::get_source_width(
   self : RenderPipelineImageDependency,
-) -> Int {
+) -> Int32 {
   self.source_width
 }
 
@@ -617,7 +619,7 @@ pub fn RenderPipelineImageDependency::get_source_width(
 /// Return the clipped source height read from the image resource.
 pub fn RenderPipelineImageDependency::get_source_height(
   self : RenderPipelineImageDependency,
-) -> Int {
+) -> Int32 {
   self.source_height
 }
 
@@ -625,7 +627,7 @@ pub fn RenderPipelineImageDependency::get_source_height(
 /// Return the clipped source pixel count read from the image resource.
 pub fn RenderPipelineImageDependency::get_source_pixel_count(
   self : RenderPipelineImageDependency,
-) -> Int {
+) -> Int32 {
   self.source_pixel_count
 }
 
@@ -633,7 +635,7 @@ pub fn RenderPipelineImageDependency::get_source_pixel_count(
 /// Return the command index that owns this text dependency.
 pub fn RenderPipelineTextDependency::get_command_index(
   self : RenderPipelineTextDependency,
-) -> Int {
+) -> Int32 {
   self.command_index
 }
 
@@ -657,7 +659,7 @@ pub fn RenderPipelineTextDependency::has_resource_key(
 /// Return the number of bytes in the queued text string.
 pub fn RenderPipelineTextDependency::get_text_byte_count(
   self : RenderPipelineTextDependency,
-) -> Int {
+) -> Int32 {
   self.text_byte_count
 }
 
@@ -665,7 +667,7 @@ pub fn RenderPipelineTextDependency::get_text_byte_count(
 /// Return the number of layout runs precomputed for this text command.
 pub fn RenderPipelineTextDependency::get_run_count(
   self : RenderPipelineTextDependency,
-) -> Int {
+) -> Int32 {
   self.run_count
 }
 
@@ -673,7 +675,7 @@ pub fn RenderPipelineTextDependency::get_run_count(
 /// Return the number of positioned glyphs precomputed for this text command.
 pub fn RenderPipelineTextDependency::get_glyph_count(
   self : RenderPipelineTextDependency,
-) -> Int {
+) -> Int32 {
   self.glyph_count
 }
 
@@ -697,7 +699,7 @@ pub fn RenderPipelineTextDependency::get_layout_height(
 /// Return the command index for this font dependency.
 pub fn RenderPipelineFontDependency::get_command_index(
   self : RenderPipelineFontDependency,
-) -> Int {
+) -> Int32 {
   self.command_index
 }
 
@@ -713,7 +715,7 @@ pub fn RenderPipelineFontDependency::get_font_key(
 /// Return the number of bytes in the queued font data.
 pub fn RenderPipelineFontDependency::get_font_byte_count(
   self : RenderPipelineFontDependency,
-) -> Int {
+) -> Int32 {
   self.font_byte_count
 }
 
@@ -721,7 +723,7 @@ pub fn RenderPipelineFontDependency::get_font_byte_count(
 /// Return the number of commands scanned for resources.
 pub fn RenderPipelineResourcePlan::get_command_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
@@ -729,7 +731,7 @@ pub fn RenderPipelineResourcePlan::get_command_count(
 /// Return the number of discovered font-byte resource uses.
 pub fn RenderPipelineResourcePlan::get_font_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.font_dependencies.length()
 }
 
@@ -737,7 +739,7 @@ pub fn RenderPipelineResourcePlan::get_font_count(
 /// Return the number of font-byte resource uses with stable keys.
 pub fn RenderPipelineResourcePlan::get_keyed_font_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.font_dependencies.length()
 }
 
@@ -745,7 +747,7 @@ pub fn RenderPipelineResourcePlan::get_keyed_font_count(
 /// Return the number of discovered image resource uses.
 pub fn RenderPipelineResourcePlan::get_image_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.image_dependencies.length()
 }
 
@@ -753,7 +755,7 @@ pub fn RenderPipelineResourcePlan::get_image_count(
 /// Return the number of image resource uses with stable keys.
 pub fn RenderPipelineResourcePlan::get_keyed_image_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.image_dependencies {
     if dependency.has_resource_key() {
@@ -767,7 +769,7 @@ pub fn RenderPipelineResourcePlan::get_keyed_image_count(
 /// Return the number of discovered text resource uses.
 pub fn RenderPipelineResourcePlan::get_text_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.text_dependencies.length()
 }
 
@@ -775,7 +777,7 @@ pub fn RenderPipelineResourcePlan::get_text_count(
 /// Return the number of text resource uses with stable keys.
 pub fn RenderPipelineResourcePlan::get_keyed_text_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.text_dependencies {
     if dependency.has_resource_key() {
@@ -789,7 +791,7 @@ pub fn RenderPipelineResourcePlan::get_keyed_text_count(
 /// Return the number of discovered resource uses.
 pub fn RenderPipelineResourcePlan::get_resource_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.get_font_count() + self.get_image_count() + self.get_text_count()
 }
 
@@ -797,7 +799,7 @@ pub fn RenderPipelineResourcePlan::get_resource_count(
 /// Return the number of discovered resource uses with stable keys.
 pub fn RenderPipelineResourcePlan::get_keyed_resource_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   self.get_keyed_font_count() +
   self.get_keyed_image_count() +
   self.get_keyed_text_count()
@@ -839,7 +841,7 @@ pub fn RenderPipelineResourcePlan::get_text_dependencies(
 /// Return the total clipped source pixels read by image commands.
 pub fn RenderPipelineResourcePlan::get_image_source_pixel_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.image_dependencies {
     count += dependency.source_pixel_count
@@ -851,7 +853,7 @@ pub fn RenderPipelineResourcePlan::get_image_source_pixel_count(
 /// Return the total queued font byte count.
 pub fn RenderPipelineResourcePlan::get_font_byte_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.font_dependencies {
     count += dependency.font_byte_count
@@ -863,7 +865,7 @@ pub fn RenderPipelineResourcePlan::get_font_byte_count(
 /// Return the total queued text byte count.
 pub fn RenderPipelineResourcePlan::get_text_byte_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.text_dependencies {
     count += dependency.text_byte_count
@@ -875,7 +877,7 @@ pub fn RenderPipelineResourcePlan::get_text_byte_count(
 /// Return the total precomputed text layout run count.
 pub fn RenderPipelineResourcePlan::get_text_run_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.text_dependencies {
     count += dependency.run_count
@@ -887,7 +889,7 @@ pub fn RenderPipelineResourcePlan::get_text_run_count(
 /// Return the total precomputed positioned glyph count.
 pub fn RenderPipelineResourcePlan::get_text_glyph_count(
   self : RenderPipelineResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for dependency in self.text_dependencies {
     count += dependency.glyph_count

@@ -11,7 +11,7 @@ pub fn node_text(node : @core.SemanticsNode) -> String {
 }
 
 ///|
-fn clamp_cell(value : Int, limit : Int) -> Int {
+fn clamp_cell(value : Int32, limit : Int32) -> Int32 {
   if value < 0 {
     0
   } else if value >= limit {
@@ -33,8 +33,8 @@ fn quantize_span(
   edge : Double,
   span : Double,
   cell : Double,
-  limit : Int,
-) -> (Int, Int)? {
+  limit : Int32,
+) -> (Int32, Int32)? {
   let lo = (edge / cell - 0.5).ceil().to_int()
   let hi = ((edge + span) / cell - 0.5).ceil().to_int() - 1
   if hi < lo {
@@ -51,8 +51,8 @@ fn quantize_axis(
   edge : Double,
   span : Double,
   cell : Double,
-  limit : Int,
-) -> (Int, Int) {
+  limit : Int32,
+) -> (Int32, Int32) {
   match quantize_span(edge, span, cell, limit) {
     Some(pair) => pair
     None => {
@@ -67,9 +67,9 @@ fn quantize_axis(
 pub fn quantize(
   frame : @core.Rect,
   cell : CellBox,
-  cols : Int,
-  rows : Int,
-) -> (Int, Int, Int, Int) {
+  cols : Int32,
+  rows : Int32,
+) -> (Int32, Int32, Int32, Int32) {
   let (r0, r1) = quantize_axis(
     frame.origin.y,
     frame.size.height,
@@ -94,9 +94,9 @@ pub fn quantize(
 fn quantize_box(
   frame : @core.Rect,
   cell : CellBox,
-  cols : Int,
-  rows : Int,
-) -> (Int, Int, Int, Int)? {
+  cols : Int32,
+  rows : Int32,
+) -> (Int32, Int32, Int32, Int32)? {
   match quantize_span(frame.origin.y, frame.size.height, cell.height, rows) {
     None => None
     Some((r0, r1)) =>
@@ -111,7 +111,7 @@ fn quantize_box(
 fn index_of(
   nodes : Array[@core.SemanticsNode],
   id : @core.SemanticsNodeId,
-) -> Int? {
+) -> Int32? {
   let mut i = 0
   while i < nodes.length() {
     if nodes[i].node_id == id {
@@ -125,7 +125,7 @@ fn index_of(
 ///|
 /// 一个节点能被画到的最大范围。根节点用它起步,
 /// 深层节点只会继承更窄的范围。
-pub fn viewport(cell : CellBox, cols : Int, rows : Int) -> @core.Rect {
+pub fn viewport(cell : CellBox, cols : Int32, rows : Int32) -> @core.Rect {
   @core.Rect::new(
     x=0.0,
     y=0.0,
@@ -153,8 +153,8 @@ pub struct Clip {
 fn inside_ring(
   ring : @core.Rect,
   cell : CellBox,
-  cols : Int,
-  rows : Int,
+  cols : Int32,
+  rows : Int32,
 ) -> @core.Rect {
   let (r0, c0, r1, c1) = quantize(ring, cell, cols, rows)
   let (top, left) = (r0 + 1, c0 + 1)
@@ -179,8 +179,8 @@ fn child_clip(
   node : @core.SemanticsNode,
   inherited : Clip,
   cell : CellBox,
-  cols : Int,
-  rows : Int,
+  cols : Int32,
+  rows : Int32,
 ) -> Clip {
   if node.role != @core.ScrollView {
     inherited
@@ -205,14 +205,14 @@ pub fn clips_in_tree(
   nodes : Array[@core.SemanticsNode],
   root : @core.SemanticsNodeId?,
   cell : CellBox,
-  cols : Int,
-  rows : Int,
+  cols : Int32,
+  rows : Int32,
 ) -> Array[Clip] {
   let view = viewport(cell, cols, rows)
   let start = { chrome: view, content: view, }
   let clips = Array::make(nodes.length(), start)
   let visited = Array::make(nodes.length(), false)
-  let queue : Array[Int] = []
+  let queue : Array[Int32] = []
   let queue_clips : Array[Clip] = []
   match root {
     Some(id) =>
@@ -274,10 +274,10 @@ fn visible_box(frame : @core.Rect, clip : @core.Rect) -> @core.Rect? {
 pub fn paint_order(
   nodes : Array[@core.SemanticsNode],
   root : @core.SemanticsNodeId?,
-) -> Array[Int] {
-  let order : Array[Int] = []
+) -> Array[Int32] {
+  let order : Array[Int32] = []
   let visited = Array::make(nodes.length(), false)
-  let queue : Array[Int] = []
+  let queue : Array[Int32] = []
   match root {
     Some(id) =>
       match index_of(nodes, id) {
@@ -331,8 +331,8 @@ fn paint_content(
   role : String,
   text : String,
   attrs : @tui.CellAttrs,
-  box : (Int, Int, Int, Int),
-  seq : Int,
+  box : (Int32, Int32, Int32, Int32),
+  seq : Int32,
 ) -> Unit {
   let (r0, c0, r1, c1) = box
   if role == "Button" {
@@ -445,7 +445,7 @@ fn project_payload(
   cell : CellBox,
   log : DegradeLog,
   palette : TuiPalette,
-) -> Int {
+) -> Int32 {
   let nodes = payload.nodes()
   let clips = clips_in_tree(
     nodes,
@@ -454,7 +454,7 @@ fn project_payload(
     canvas.cols,
     canvas.rows,
   )
-  let painted : Array[(Int, @core.Rect)] = []
+  let painted : Array[(Int32, @core.Rect)] = []
   let mut offscreen = 0
   for i in paint_order(nodes, payload.root()) {
     match paint_node(canvas, nodes[i], cell, clips[i], log, palette) {

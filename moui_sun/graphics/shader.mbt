@@ -155,7 +155,7 @@ pub fn PaintShader::linear_gradient(
   y1~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     LinearGradient({ x0, y0, x1, y1, start_color, end_color, spread, }),
@@ -170,7 +170,7 @@ pub fn PaintShader::linear_gradient_stops(
   x1~ : Double,
   y1~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     LinearGradientStops({
@@ -192,7 +192,7 @@ pub fn PaintShader::radial_gradient(
   radius~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     RadialGradient({
@@ -213,7 +213,7 @@ pub fn PaintShader::radial_gradient_stops(
   cy~ : Double,
   radius~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     RadialGradientStops({
@@ -235,7 +235,7 @@ pub fn PaintShader::sweep_gradient(
   sweep_angle~ : Double,
   start_color~ : Color,
   end_color~ : Color,
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     SweepGradient({
@@ -258,7 +258,7 @@ pub fn PaintShader::sweep_gradient_stops(
   start_angle~ : Double,
   sweep_angle~ : Double,
   stops~ : Array[PaintGradientStop],
-  spread? : PaintShaderSpread = Clamp,
+  spread~ : PaintShaderSpread = Clamp,
 ) -> PaintShader {
   make_paint_shader(
     SweepGradientStops({
@@ -298,7 +298,7 @@ pub fn PaintShader::get_spread(self : PaintShader) -> PaintShaderSpread {
 ///|
 /// Return the number of color stops used by this gradient. Two-color gradient
 /// constructors report their implicit start/end stop pair.
-pub fn PaintShader::get_gradient_stop_count(self : PaintShader) -> Int {
+pub fn PaintShader::get_gradient_stop_count(self : PaintShader) -> Int32 {
   match self.kind {
     LinearGradient(_) | RadialGradient(_) | SweepGradient(_) => 2
     LinearGradientStops(shader) => shader.stops.length()
@@ -330,7 +330,7 @@ pub fn PaintShader::get_gradient_stops(
 /// Return a copied gradient stop at an index.
 pub fn PaintShader::get_gradient_stop(
   self : PaintShader,
-  index : Int,
+  index : Int32,
 ) -> PaintGradientStop? {
   let stops = self.get_gradient_stops()
   guard index >= 0 && index < stops.length() else { return None }

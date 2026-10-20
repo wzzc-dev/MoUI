@@ -1,10 +1,10 @@
 ///|
 priv struct RenderCommandResourceCounts {
-  image_resource_count : Int
-  shader_resource_count : Int
-  filter_resource_count : Int
-  path_resource_count : Int
-  text_resource_count : Int
+  image_resource_count : Int32
+  shader_resource_count : Int32
+  filter_resource_count : Int32
+  path_resource_count : Int32
+  text_resource_count : Int32
 }
 
 ///|
@@ -41,7 +41,7 @@ fn RenderCommand::resource_counts(
 pub fn RenderCommand::resource_count_for_kind(
   self : RenderCommand,
   kind : RendererResourceKind,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for descriptor in self.resource_descriptors() {
     if descriptor.key.kind == kind {
@@ -52,12 +52,12 @@ pub fn RenderCommand::resource_count_for_kind(
 }
 
 ///|
-pub fn RenderCommand::filter_resource_count(self : RenderCommand) -> Int {
+pub fn RenderCommand::filter_resource_count(self : RenderCommand) -> Int32 {
   self.resource_counts().filter_resource_count
 }
 
 ///|
-pub fn RenderCommand::text_resource_count(self : RenderCommand) -> Int {
+pub fn RenderCommand::text_resource_count(self : RenderCommand) -> Int32 {
   self.resource_counts().text_resource_count
 }
 

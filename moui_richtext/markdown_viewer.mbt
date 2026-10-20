@@ -10,17 +10,17 @@
 pub fn[Msg] markdown_viewer(
   source~ : String,
   size~ : @core.Size,
-  font? : @core.FontSpec = @core.FontSpec::new(),
-  foreground? : @core.Color = @core.Color::black(),
-  background? : @core.Brush = @core.Brush::solid(
+  font~ : @core.FontSpec = @core.FontSpec::new(),
+  foreground~ : @core.Color = @core.Color::black(),
+  background~ : @core.Brush = @core.Brush::solid(
     @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
   ),
-  corner_radius? : Double = 0.0,
-  on_link_click? : ((String) -> Msg)? = None,
-  visible_scroll_y? : Double = 0.0,
-  visible_viewport_height? : Double = 0.0,
-  visible_overscan? : Double = 320.0,
-  key? : String? = None,
+  corner_radius~ : Double = 0.0,
+  on_link_click~ : ((String) -> Msg)? = None,
+  visible_scroll_y~ : Double = 0.0,
+  visible_viewport_height~ : Double = 0.0,
+  visible_overscan~ : Double = 320.0,
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   markdown_viewer_snapshot(
     source~,

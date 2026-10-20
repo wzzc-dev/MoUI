@@ -1,21 +1,21 @@
 ///|
 /// Error returned by the checked TTF parser entry point.
 pub(all) enum FontParseError {
-  UnexpectedEndOfData(Int, Int, Int)
-  InvalidFontHeader(UInt)
-  UnsupportedFontIndex(Int)
+  UnexpectedEndOfData(Int32, Int32, Int32)
+  InvalidFontHeader(UInt32)
+  UnsupportedFontIndex(Int32)
   MissingTable(String)
-  TableOutOfBounds(String, Int, Int, Int)
-  TableTooShort(String, Int, Int)
-  UnsupportedIndexToLocFormat(Int)
+  TableOutOfBounds(String, Int32, Int32, Int32)
+  TableTooShort(String, Int32, Int32)
+  UnsupportedIndexToLocFormat(Int32)
   MissingHorizontalMetrics
   UnsortedLocaOffsets
   UnsortedGlyphContourEndpoints
   GlyphFlagRepeatOverflow
-  UnsupportedCmapVersion(Int)
-  InvalidCmapSegmentCount(Int)
-  InvalidCmapSegmentRange(Int, Int)
-  InvalidCmapGroupRange(Int, Int)
+  UnsupportedCmapVersion(Int32)
+  InvalidCmapSegmentCount(Int32)
+  InvalidCmapSegmentRange(Int32, Int32)
+  InvalidCmapGroupRange(Int32, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -152,7 +152,7 @@ fn parse_hhea_checked(
 fn parse_hmtx_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
-  num_h_metrics : Int,
+  num_h_metrics : Int32,
 ) -> Result[Array[LongHorMetric], FontParseError] {
   let hmtx = match require_table(data, tables, "hmtx") {
     Err(error) => return Err(error)
@@ -177,7 +177,7 @@ fn parse_hmtx_checked(
 fn parse_cmap_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
-) -> Result[Map[Int, Int], FontParseError] {
+) -> Result[Map[Int32, Int32], FontParseError] {
   parse_cmap(data, tables)
 }
 
@@ -185,7 +185,7 @@ fn parse_cmap_checked(
 fn parse_maxp_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
-) -> Result[Int, FontParseError] {
+) -> Result[Int32, FontParseError] {
   let maxp = match require_table(data, tables, "maxp") {
     Err(error) => return Err(error)
     Ok(table) => table
@@ -202,9 +202,9 @@ fn parse_maxp_checked(
 fn parse_loca_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
-  index_to_loc_format : Int,
-  num_glyphs : Int,
-) -> Result[Array[Int], FontParseError] {
+  index_to_loc_format : Int32,
+  num_glyphs : Int32,
+) -> Result[Array[Int32], FontParseError] {
   let loca = match require_table(data, tables, "loca") {
     Err(error) => return Err(error)
     Ok(table) => table
@@ -236,10 +236,10 @@ fn parse_loca_checked(
 fn parse_glyf_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
-  loca : Array[Int],
-  index_to_loc_format : Int,
-  num_glyphs : Int,
-) -> Result[(Array[GlyphData], Int), FontParseError] {
+  loca : Array[Int32],
+  index_to_loc_format : Int32,
+  num_glyphs : Int32,
+) -> Result[(Array[GlyphData], Int32), FontParseError] {
   let loca_table = match require_table(data, tables, "loca") {
     Err(error) => return Err(error)
     Ok(table) => table
@@ -305,7 +305,7 @@ fn require_table_bounds(
 ///|
 fn require_min_length(
   table : TableRecord,
-  minimum : Int,
+  minimum : Int32,
 ) -> Result[Unit, FontParseError] {
   let length = table.length.reinterpret_as_int()
   guard length >= minimum else {
@@ -319,8 +319,8 @@ fn validate_loca_offsets(
   data : Bytes,
   loca : TableRecord,
   glyf : TableRecord,
-  index_to_loc_format : Int,
-  num_glyphs : Int,
+  index_to_loc_format : Int32,
+  num_glyphs : Int32,
 ) -> Result[Unit, FontParseError] {
   let loca_offset = loca.offset.reinterpret_as_int()
   let glyf_len = glyf.length.reinterpret_as_int()
@@ -353,7 +353,7 @@ fn validate_loca_offsets(
 fn validate_glyf_table(
   data : Bytes,
   glyf : TableRecord,
-  loca : Array[Int],
+  loca : Array[Int32],
 ) -> Result[Unit, FontParseError] {
   let glyf_offset = glyf.offset.reinterpret_as_int()
   for i in 0..<(loca.length() - 1) {
@@ -374,8 +374,8 @@ fn validate_glyf_table(
 fn parse_glyf_data_checked(
   data : Bytes,
   glyf : TableRecord,
-  loca : Array[Int],
-) -> Result[(Array[GlyphData], Int), FontParseError] {
+  loca : Array[Int32],
+) -> Result[(Array[GlyphData], Int32), FontParseError] {
   let glyf_offset = glyf.offset.reinterpret_as_int()
   let glyph_count = loca.length() - 1
   let glyphs = []
@@ -407,8 +407,8 @@ fn parse_glyf_data_checked(
 ///|
 fn parse_glyph_checked(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[GlyphData, FontParseError] {
   match require_glyph_bytes(length, 0, 10) {
     Err(error) => return Err(error)
@@ -433,13 +433,13 @@ fn parse_glyph_checked(
 ///|
 fn parse_simple_glyph_checked(
   data : Bytes,
-  offset : Int,
-  length : Int,
-  num_contours : Int,
-  xmin : Int,
-  ymin : Int,
-  xmax : Int,
-  ymax : Int,
+  offset : Int32,
+  length : Int32,
+  num_contours : Int32,
+  xmin : Int32,
+  ymin : Int32,
+  xmax : Int32,
+  ymax : Int32,
 ) -> Result[GlyphData, FontParseError] {
   let mut pos = 10
   let end_points_len = num_contours * 2
@@ -471,7 +471,7 @@ fn parse_simple_glyph_checked(
   pos = pos + instruction_length
 
   let num_points = previous_end_point + 1
-  let flags : Array[Int] = []
+  let flags : Array[Int32] = []
   while flags.length() < num_points {
     match require_glyph_bytes(length, pos, 1) {
       Err(error) => return Err(error)
@@ -577,8 +577,8 @@ fn parse_simple_glyph_checked(
 ///|
 fn parse_composite_glyph_checked(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[GlyphData, FontParseError] {
   let components = []
 
@@ -676,8 +676,8 @@ fn parse_composite_glyph_checked(
 ///|
 fn validate_glyph_data(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[Unit, FontParseError] {
   match require_glyph_bytes(length, 0, 10) {
     Err(error) => return Err(error)
@@ -695,9 +695,9 @@ fn validate_glyph_data(
 ///|
 fn validate_simple_glyph_data(
   data : Bytes,
-  offset : Int,
-  length : Int,
-  num_contours : Int,
+  offset : Int32,
+  length : Int32,
+  num_contours : Int32,
 ) -> Result[Unit, FontParseError] {
   let mut pos = 10
   let end_points_len = num_contours * 2
@@ -766,8 +766,8 @@ fn validate_simple_glyph_data(
 ///|
 fn validate_composite_glyph_data(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[Unit, FontParseError] {
   let arg_1_and_2_are_words = 0x0001
   let more_components = 0x0020
@@ -815,10 +815,10 @@ fn validate_composite_glyph_data(
 
 ///|
 fn glyph_coordinate_bytes(
-  flags : Array[Int],
-  num_points : Int,
+  flags : Array[Int32],
+  num_points : Int32,
   is_x~ : Bool,
-) -> Int {
+) -> Int32 {
   let short_vector = if is_x { 0x02 } else { 0x04 }
   let same_or_positive = if is_x { 0x10 } else { 0x20 }
   let mut total = 0
@@ -835,9 +835,9 @@ fn glyph_coordinate_bytes(
 
 ///|
 fn require_glyph_bytes(
-  glyph_length : Int,
-  pos : Int,
-  required : Int,
+  glyph_length : Int32,
+  pos : Int32,
+  required : Int32,
 ) -> Result[Unit, FontParseError] {
   guard pos >= 0 &&
     required >= 0 &&
@@ -851,9 +851,9 @@ fn require_glyph_bytes(
 ///|
 fn require_table_bytes(
   tag : String,
-  table_length : Int,
-  pos : Int,
-  required : Int,
+  table_length : Int32,
+  pos : Int32,
+  required : Int32,
 ) -> Result[Unit, FontParseError] {
   guard pos >= 0 &&
     required >= 0 &&
@@ -867,8 +867,8 @@ fn require_table_bytes(
 ///|
 fn require_cmap_subtable_offset(
   table : TableRecord,
-  subtable_offset : Int,
-  data_length : Int,
+  subtable_offset : Int32,
+  data_length : Int32,
 ) -> Result[Unit, FontParseError] {
   let table_length = table.length.reinterpret_as_int()
   guard subtable_offset >= 0 && subtable_offset < table_length else {
@@ -885,14 +885,14 @@ fn require_cmap_subtable_offset(
 }
 
 ///|
-fn read_u16_be_at(data : Bytes, offset : Int) -> UInt16 {
+fn read_u16_be_at(data : Bytes, offset : Int32) -> UInt16 {
   let hi = data[offset].to_uint16()
   let lo = data[offset + 1].to_uint16()
   (hi << 8) | lo
 }
 
 ///|
-fn read_i16_be_at(data : Bytes, offset : Int) -> Int {
+fn read_i16_be_at(data : Bytes, offset : Int32) -> Int32 {
   let value = read_u16_be_at(data, offset).to_int()
   if value > 32767 {
     value - 65536
@@ -902,7 +902,7 @@ fn read_i16_be_at(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn read_i8_at(data : Bytes, offset : Int) -> Int {
+fn read_i8_at(data : Bytes, offset : Int32) -> Int32 {
   let value = data[offset].to_int()
   if value > 127 {
     value - 256
@@ -912,7 +912,7 @@ fn read_i8_at(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn read_u32_be_at(data : Bytes, offset : Int) -> UInt {
+fn read_u32_be_at(data : Bytes, offset : Int32) -> UInt32 {
   let b1 = data[offset].to_uint()
   let b2 = data[offset + 1].to_uint()
   let b3 = data[offset + 2].to_uint()
@@ -921,7 +921,7 @@ fn read_u32_be_at(data : Bytes, offset : Int) -> UInt {
 }
 
 ///|
-fn read_tag_at(data : Bytes, offset : Int) -> String {
+fn read_tag_at(data : Bytes, offset : Int32) -> String {
   let sb = StringBuilder()
   sb.write_char(data[offset].to_uint16().unsafe_to_char())
   sb.write_char(data[offset + 1].to_uint16().unsafe_to_char())
@@ -935,7 +935,7 @@ fn read_tag_at(data : Bytes, offset : Int) -> String {
 fn parse_cmap(
   data : Bytes,
   tables : Map[String, TableRecord],
-) -> Result[Map[Int, Int], FontParseError] {
+) -> Result[Map[Int32, Int32], FontParseError] {
   let table = match require_table(data, tables, "cmap") {
     Err(error) => return Err(error)
     Ok(table) => table
@@ -946,7 +946,7 @@ fn parse_cmap(
   }
   let base_offset = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
-  let cmap : Map[Int, Int] = Map([])
+  let cmap : Map[Int32, Int32] = Map([])
 
   let version = read_u16_be_at(data, base_offset).to_int()
   guard version is 0 else { return Err(UnsupportedCmapVersion(version)) }
@@ -1000,9 +1000,9 @@ fn parse_cmap(
 fn parse_cmap_format4(
   data : Bytes,
   table : TableRecord,
-  subtable_offset : Int,
-) -> Result[Map[Int, Int], FontParseError] {
-  let cmap : Map[Int, Int] = Map([])
+  subtable_offset : Int32,
+) -> Result[Map[Int32, Int32], FontParseError] {
+  let cmap : Map[Int32, Int32] = Map([])
   let table_base = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
   match require_table_bytes("cmap", table_length, subtable_offset, 4) {
@@ -1092,9 +1092,9 @@ fn parse_cmap_format4(
 fn parse_cmap_format12(
   data : Bytes,
   table : TableRecord,
-  subtable_offset : Int,
-) -> Result[Map[Int, Int], FontParseError] {
-  let cmap : Map[Int, Int] = Map([])
+  subtable_offset : Int32,
+) -> Result[Map[Int32, Int32], FontParseError] {
+  let cmap : Map[Int32, Int32] = Map([])
   let table_base = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
   match require_table_bytes("cmap", table_length, subtable_offset, 16) {

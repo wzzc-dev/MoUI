@@ -157,11 +157,11 @@ pub extend LinuxNativeHostBackend with @wzzc-dev/window/linux.ApplicationHandler
 
 ///|
 pub fn LinuxHostAppOptions::new(
-  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources? : @runtime.HostPlatformEventSources? = None,
-  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
-  transparent_titlebar? : Bool = false,
-  platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
+  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
+  transparent_titlebar~ : Bool = false,
+  platform_attributes~ : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
 ) -> LinuxHostAppOptions {
   {
     scene_resolver,
@@ -174,7 +174,7 @@ pub fn LinuxHostAppOptions::new(
 
 ///|
 pub fn LinuxHostSmokeOptions::new(
-  first_frame_smoke_auto_exit? : Bool = false,
+  first_frame_smoke_auto_exit~ : Bool = false,
 ) -> LinuxHostSmokeOptions {
   { first_frame_smoke_auto_exit, }
 }
@@ -182,7 +182,7 @@ pub fn LinuxHostSmokeOptions::new(
 ///|
 fn LinuxSurfaceBinding::new(
   create_renderer~ : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface? : (@window_linux.Window, @core.SurfaceMetrics) -> Unit = (
+  sync_surface~ : (@window_linux.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
@@ -193,7 +193,7 @@ fn LinuxSurfaceBinding::new(
 ///|
 pub fn LinuxClientDecorationState::new(
   active~ : Bool,
-  titlebar_height? : Double = linux_client_titlebar_height,
+  titlebar_height~ : Double = linux_client_titlebar_height,
 ) -> LinuxClientDecorationState {
   { active, titlebar_height: if active { titlebar_height } else { 0.0 }, }
 }

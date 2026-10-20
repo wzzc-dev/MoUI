@@ -3,9 +3,9 @@ fn ElementNode::dispatch_web_view_event(
   self : ElementNode,
   id : String,
   event : @core.PlatformViewEvent,
-  environment? : @core.Environment = @core.Environment::neutral(),
-  style? : @core.ViewStyle = @core.ViewStyle::empty(),
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  environment~ : @core.Environment = @core.Environment::neutral(),
+  style~ : @core.ViewStyle = @core.ViewStyle::empty(),
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> ElementEventResult {
   let result = self.dispatch_view_event(
     self.view_node,

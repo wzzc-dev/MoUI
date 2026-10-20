@@ -2,12 +2,12 @@
 pub fn[Msg] tree_view(
   items : Array[TreeItem],
   expanded~ : Array[String],
-  selected? : String = "",
-  on_select? : ((String) -> Msg)? = None,
-  on_toggle? : ((String) -> Msg)? = None,
-  on_secondary_tap? : ((String) -> Msg)? = None,
+  selected~ : String = "",
+  on_select~ : ((String) -> Msg)? = None,
+  on_toggle~ : ((String) -> Msg)? = None,
+  on_secondary_tap~ : ((String) -> Msg)? = None,
   theme? : @core.Theme,
-  width? : Double = 280.0,
+  width~ : Double = 280.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
@@ -34,7 +34,7 @@ pub fn[Msg] tree_view(
 fn[Msg] append_tree_rows(
   rows : Array[@core.View[Msg]],
   item : TreeItem,
-  depth~ : Int,
+  depth~ : Int32,
   expanded~ : Array[String],
   selected~ : String,
   on_select~ : ((String) -> Msg)?,
@@ -79,7 +79,7 @@ fn[Msg] append_tree_rows(
 ///|
 fn[Msg] tree_row(
   item : TreeItem,
-  depth~ : Int,
+  depth~ : Int32,
   expanded~ : Bool,
   selected~ : Bool,
   on_select~ : ((String) -> Msg)?,

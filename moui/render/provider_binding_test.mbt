@@ -12,8 +12,8 @@ fn provider_test_descriptor() -> @render.RendererDescriptor {
 
 ///|
 fn provider_test_session(
-  native_surface? : @render.NativeSurface? = None,
-  dispose? : () -> Unit = () => (),
+  native_surface~ : @render.NativeSurface? = None,
+  dispose~ : () -> Unit = () => (),
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_metrics => (),
@@ -26,7 +26,7 @@ fn provider_test_session(
 
 ///|
 fn provider_test_surface(
-  native_surface? : @render.NativeSurface? = None,
+  native_surface~ : @render.NativeSurface? = None,
 ) -> @render.HostSurface {
   @render.HostSurface::new(
     surface_id="test-surface",
@@ -45,8 +45,8 @@ fn provider_test_surface(
 fn provider_test_provider(
   id : String,
   accepts : Bool,
-  bind_count : Ref[Int],
-  allocation_count : Ref[Int],
+  bind_count : Ref[Int32],
+  allocation_count : Ref[Int32],
 ) -> @render.RendererProvider {
   @render.RendererProvider::new(
     id~,

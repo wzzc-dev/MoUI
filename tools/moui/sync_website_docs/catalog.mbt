@@ -39,7 +39,7 @@ struct CatalogExcluded {
 
 ///|
 struct WebsiteDocsCatalog {
-  schema_version : Int
+  schema_version : Int32
   site_url : String
   groups : Array[CatalogGroup]
   entries : Array[CatalogEntry]
@@ -185,7 +185,7 @@ fn json_array(value : Json?, label : String) -> Result[Array[Json], String] {
 }
 
 ///|
-fn json_int(value : Json?, label : String) -> Result[Int, String] {
+fn json_int(value : Json?, label : String) -> Result[Int32, String] {
   match value {
     Some(Json::Number(number, repr=_)) => Ok(number.to_int())
     _ => Err(label + " must be a number")

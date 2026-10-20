@@ -102,39 +102,39 @@ impl @core.ViewNode for RuntimeFixtureNode with fn flex_weight(self) {
 ///|
 fn[Msg] runtime_fixture_view(
   identity~ : () -> @core.ViewIdentity,
-  declaration? : () -> @core.ViewDeclaration = () => {
+  declaration~ : () -> @core.ViewDeclaration = () => {
     @core.ViewDeclaration::constant()
   },
-  children? : () -> Array[@core.View[Msg]] = () => [],
-  child_constraints? : (@core.Constraints) -> @core.Constraints = constraints => {
+  children~ : () -> Array[@core.View[Msg]] = () => [],
+  child_constraints~ : (@core.Constraints) -> @core.Constraints = constraints => {
     constraints.loosen()
   },
-  child_environment? : (@core.Environment) -> @core.Environment = environment => {
+  child_environment~ : (@core.Environment) -> @core.Environment = environment => {
     let captured_environment = environment
     captured_environment
   },
-  child_style? : (@core.ViewStyle) -> @core.ViewStyle = style => style,
+  child_style~ : (@core.ViewStyle) -> @core.ViewStyle = style => style,
   layout~ : (@core.ViewLayoutContext) -> @core.ViewLayoutResult,
-  paint? : (@core.ViewPaintContext) -> @core.ViewPaintPlan = _context => {
+  paint~ : (@core.ViewPaintContext) -> @core.ViewPaintPlan = _context => {
     @core.ViewPaintPlan::empty()
   },
-  platform_views? : (@core.ViewPlatformContext) -> Array[
+  platform_views~ : (@core.ViewPlatformContext) -> Array[
     @core.PlatformViewPlacement,
   ] = _context => [],
-  event? : (@core.ViewEventContext) -> @core.ViewEventResult[Msg] = _context => {
+  event~ : (@core.ViewEventContext) -> @core.ViewEventResult[Msg] = _context => {
     @core.ViewEventResult::ignored()
   },
-  text_input_state? : (@core.ViewPaintContext) -> @core.TextInputState? = _context => {
+  text_input_state~ : (@core.ViewPaintContext) -> @core.TextInputState? = _context => {
     None
   },
-  text_command? : (@core.ViewEventContext, @core.CommandIntent, String?) -> @core.ViewTextCommandResult[
+  text_command~ : (@core.ViewEventContext, @core.CommandIntent, String?) -> @core.ViewTextCommandResult[
     Msg,
   ] = (_context, _intent, _paste_text) => @core.ViewTextCommandResult::ignored(),
-  semantics? : () -> @core.ViewSemanticsInfo = () => {
+  semantics~ : () -> @core.ViewSemanticsInfo = () => {
     @core.ViewSemanticsInfo::new()
   },
-  focusable? : () -> Bool = () => false,
-  flex_weight? : () -> Double = () => 0.0,
+  focusable~ : () -> Bool = () => false,
+  flex_weight~ : () -> Double = () => 0.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     RuntimeFixtureNode::{

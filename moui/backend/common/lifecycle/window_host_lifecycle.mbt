@@ -25,7 +25,7 @@ pub fn WindowSurfaceActions::new(
   set_visible~ : (Bool) -> Unit,
   request_redraw~ : () -> Unit,
   request_ime_update~ : (@window_input.TextInputSessionAction) -> Unit,
-  set_drag_region? : (@core.Rect?) -> Unit = _ => (),
+  set_drag_region~ : (@core.Rect?) -> Unit = _ => (),
   drop~ : () -> Unit,
   native_view_handle~ : () -> UInt64?,
   dispose_platform_views~ : () -> Unit,
@@ -61,8 +61,8 @@ pub struct WindowLifecycle {
   priv runtime_slots : WindowRuntimeSlots
   priv platform_windows : PlatformWindowMap
   priv ledger : WindowLifecycleCore
-  priv mut surface_generation : Int
-  priv mut exit_intent : Int?
+  priv mut surface_generation : Int32
+  priv mut exit_intent : Int32?
   priv mut surfaces : Array[WindowSurfaceEntry]
 }
 
@@ -195,20 +195,20 @@ pub fn WindowLifecycle::detach_surface(
 }
 
 ///|
-pub fn WindowLifecycle::surface_generation(self : WindowLifecycle) -> Int {
+pub fn WindowLifecycle::surface_generation(self : WindowLifecycle) -> Int32 {
   self.surface_generation
 }
 
 ///|
 pub fn WindowLifecycle::request_exit(
   self : WindowLifecycle,
-  code : Int,
+  code : Int32,
 ) -> Unit {
   self.exit_intent = Some(code)
 }
 
 ///|
-pub fn WindowLifecycle::exit_intent(self : WindowLifecycle) -> Int? {
+pub fn WindowLifecycle::exit_intent(self : WindowLifecycle) -> Int32? {
   self.exit_intent
 }
 

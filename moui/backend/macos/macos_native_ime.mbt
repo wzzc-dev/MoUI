@@ -3,23 +3,23 @@
 extern "C" fn macos_native_ime_smoke_set_marked_text(
   raw_content_view_handle : UInt64,
   text : Bytes,
-  selected_location : Int,
-  selected_length : Int,
-) -> Int = "moui_macos_native_ime_smoke_set_marked_text"
+  selected_location : Int32,
+  selected_length : Int32,
+) -> Int32 = "moui_macos_native_ime_smoke_set_marked_text"
 
 ///|
 extern "C" fn macos_native_ime_smoke_first_rect(
   raw_content_view_handle : UInt64,
-  location : Int,
-  length : Int,
-) -> Int = "moui_macos_native_ime_smoke_first_rect"
+  location : Int32,
+  length : Int32,
+) -> Int32 = "moui_macos_native_ime_smoke_first_rect"
 
 ///|
 #borrow(text)
 extern "C" fn macos_native_ime_smoke_insert_text(
   raw_content_view_handle : UInt64,
   text : Bytes,
-) -> Int = "moui_macos_native_ime_smoke_insert_text"
+) -> Int32 = "moui_macos_native_ime_smoke_insert_text"
 
 ///|
 let macos_native_ime_smoke_max_wait_redraws = 12

@@ -103,7 +103,7 @@ fn markdown_editor_replace_with_block(
 }
 
 ///|
-fn markdown_editor_toc_indent(level : Int) -> String {
+fn markdown_editor_toc_indent(level : Int32) -> String {
   let spaces : Array[Char] = []
   let count = markdown_editor_max_int(0, level - 1) * 2
   for _ in 0..<count {

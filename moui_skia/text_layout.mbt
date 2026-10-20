@@ -32,8 +32,8 @@ pub fn TextDirection::is_right_to_left(self : TextDirection) -> Bool {
 ///|
 /// Half-open byte range for a shaped text run.
 pub(all) struct TextRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -43,13 +43,13 @@ pub extend TextRange with Debug::{to_repr}
 pub extend TextRange with Eq::{not_equal, equal}
 
 ///|
-pub fn TextRange::new(start : Int, end : Int) -> TextRange {
-  let start = Int::max(0, start)
-  { start, end: Int::max(start, end), }
+pub fn TextRange::new(start : Int32, end : Int32) -> TextRange {
+  let start = Int32::max(0, start)
+  { start, end: Int32::max(start, end), }
 }
 
 ///|
-pub fn TextRange::length(self : TextRange) -> Int {
+pub fn TextRange::length(self : TextRange) -> Int32 {
   self.end - self.start
 }
 
@@ -59,7 +59,7 @@ pub fn TextRange::is_empty(self : TextRange) -> Bool {
 }
 
 ///|
-pub fn TextRange::contains_offset(self : TextRange, offset : Int) -> Bool {
+pub fn TextRange::contains_offset(self : TextRange, offset : Int32) -> Bool {
   offset >= self.start && offset < self.end
 }
 
@@ -79,9 +79,9 @@ pub extend TextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn TextRunDescriptor::new(
-  range? : TextRange = TextRange::new(0, 0),
-  direction? : TextDirection = LeftToRight,
-  fallback? : FontFallbackRequest = FontFallbackRequest::new(),
+  range~ : TextRange = TextRange::new(0, 0),
+  direction~ : TextDirection = LeftToRight,
+  fallback~ : FontFallbackRequest = FontFallbackRequest::new(),
 ) -> TextRunDescriptor {
   { range, direction, fallback, }
 }

@@ -2,8 +2,8 @@
 pub fn[Msg] padding_layout(
   child~ : @core.View[Msg],
   insets~ : @core.Insets,
-  kind? : String = "Padding",
-  key? : String? = None,
+  kind~ : String = "Padding",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(PaddingLayout::{ insets, kind, key, }, children=_node => {
     [child]
@@ -73,8 +73,8 @@ pub fn[Msg] frame_layout(
   min_height~ : Double?,
   max_width~ : Double?,
   max_height~ : Double?,
-  kind? : String = "Frame",
-  key? : String? = None,
+  kind~ : String = "Frame",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     FrameLayout::{
@@ -156,15 +156,15 @@ impl @core.ViewNode for FrameLayout with fn semantics(_self) {
 
 ///|
 pub fn[Msg] container_box(
-  child? : @core.View[Msg]? = None,
-  size? : @core.Size? = None,
-  background? : @core.Brush? = None,
-  border? : @core.BorderStyle? = None,
-  corner_radius? : Double = 0.0,
-  shadow? : @core.ShadowStyle? = None,
-  ambient? : @style.ContainerVariant? = None,
-  kind? : String = "Container",
-  key? : String? = None,
+  child~ : @core.View[Msg]? = None,
+  size~ : @core.Size? = None,
+  background~ : @core.Brush? = None,
+  border~ : @core.BorderStyle? = None,
+  corner_radius~ : Double = 0.0,
+  shadow~ : @core.ShadowStyle? = None,
+  ambient~ : @style.ContainerVariant? = None,
+  kind~ : String = "Container",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     ContainerBox::{
@@ -302,11 +302,11 @@ impl @core.ViewNode for ContainerBox with fn semantics(_self) {
 ///|
 pub fn[Msg] grid_layout(
   children~ : Array[@core.View[Msg]],
-  columns? : Int = 1,
-  row_spacing? : Double = 0.0,
-  column_spacing? : Double = 0.0,
-  kind? : String = "Grid",
-  key? : String? = None,
+  columns~ : Int32 = 1,
+  row_spacing~ : Double = 0.0,
+  column_spacing~ : Double = 0.0,
+  kind~ : String = "Grid",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     GridLayout::{ columns, row_spacing, column_spacing, kind, key, },
@@ -316,7 +316,7 @@ pub fn[Msg] grid_layout(
 
 ///|
 priv struct GridLayout {
-  columns : Int
+  columns : Int32
   row_spacing : Double
   column_spacing : Double
   kind : String
@@ -382,9 +382,9 @@ impl @core.ViewNode for GridLayout with fn semantics(_self) {
 ///|
 pub fn[Msg] list_layout(
   children~ : Array[@core.View[Msg]],
-  spacing? : Double = 0.0,
-  kind? : String = "List",
-  key? : String? = None,
+  spacing~ : Double = 0.0,
+  kind~ : String = "List",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let child_views : (ListLayout) -> Array[@core.View[Msg]] = _node => {
     let captured_children = children
@@ -513,7 +513,7 @@ fn container_paint(
 }
 
 ///|
-fn grid_row_count(count : Int, columns : Int) -> Int {
+fn grid_row_count(count : Int32, columns : Int32) -> Int32 {
   if count == 0 {
     0
   } else {

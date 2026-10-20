@@ -33,8 +33,8 @@ pub extend Layer with Eq::{not_equal, equal}
 
 ///|
 pub(all) enum Msg {
-  CyclePane(Int)
-  Move(Int)
+  CyclePane(Int32)
+  Move(Int32)
   SelectLayer(String)
   ToggleLayer(String)
   ToggleFocused
@@ -61,7 +61,7 @@ pub struct Model {
   pane : Pane
   layer_scroll : Double
   tree_scroll : Double
-  serial : Int
+  serial : Int32
 }
 
 ///|
@@ -80,7 +80,7 @@ pub extend Node with Debug::{to_repr}
 pub fn node(
   id~ : String,
   label~ : String,
-  children? : Array[Node] = [],
+  children~ : Array[Node] = [],
 ) -> Node {
   { id, label, children: children.copy(), }
 }
@@ -250,7 +250,7 @@ fn Model::update_layer_visibility(self : Model, id : String) -> Model {
 /// Three panes, so a step wraps instead of flipping. `Tab` and `Shift-Tab` are
 /// the same command with a sign, which keeps the binding list honest about what
 /// the keyboard actually does.
-pub fn cycle_pane(pane : Pane, step : Int) -> Pane {
+pub fn cycle_pane(pane : Pane, step : Int32) -> Pane {
   let order = [LayersPane, FilesPane, FilterPane]
   let index = index_of_pane(pane)
   if step == 0 || index < 0 {
@@ -263,7 +263,7 @@ pub fn cycle_pane(pane : Pane, step : Int) -> Pane {
 }
 
 ///|
-fn index_of_pane(pane : Pane) -> Int {
+fn index_of_pane(pane : Pane) -> Int32 {
   match pane {
     LayersPane => 0
     FilesPane => 1
@@ -294,12 +294,12 @@ pub fn visible_layers(model : Model) -> Array[Layer] {
 }
 
 ///|
-pub fn hidden_count(model : Model) -> Int {
+pub fn hidden_count(model : Model) -> Int32 {
   model.layers.filter(layer => !layer.visible).length()
 }
 
 ///|
-fn Model::move_layer(self : Model, step : Int) -> Model {
+fn Model::move_layer(self : Model, step : Int32) -> Model {
   let rows = visible_layers(self)
   if rows.is_empty() {
     return self
@@ -310,7 +310,7 @@ fn Model::move_layer(self : Model, step : Int) -> Model {
 }
 
 ///|
-fn Model::move_node(self : Model, step : Int) -> Model {
+fn Model::move_node(self : Model, step : Int32) -> Model {
   let rows = visible_node_ids(self.tree, self.expanded)
   if rows.is_empty() {
     return self
@@ -450,7 +450,7 @@ fn toggle_id(ids : Array[String], id : String) -> Array[String] {
 }
 
 ///|
-fn[T] index_where(items : Array[T], f : (T) -> Bool) -> Int {
+fn[T] index_where(items : Array[T], f : (T) -> Bool) -> Int32 {
   let mut index = 0
   let mut found = -1
   while index < items.length() && found < 0 {
@@ -463,7 +463,7 @@ fn[T] index_where(items : Array[T], f : (T) -> Bool) -> Int {
 }
 
 ///|
-fn clamp_index(index : Int, length : Int) -> Int {
+fn clamp_index(index : Int32, length : Int32) -> Int32 {
   if length <= 0 {
     0
   } else if index < 0 {

@@ -18,15 +18,15 @@ priv struct NativeImagePlacement {
 
 ///|
 priv struct NativeDecodedImage {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   data : Bytes
 }
 
 ///|
 priv struct NativeImageResource {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   texture : @wgpu_mbt.Texture
   view : @wgpu_mbt.TextureView
   bind_group : @wgpu_mbt.BindGroup
@@ -249,7 +249,7 @@ pub fn native_image_load_completion(
 pub fn native_image_load_completion_from_bytes(
   source : String,
   bytes : Bytes,
-  background_io? : Bool = false,
+  background_io~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   match decode_native_image_bytes(bytes) {
     Some(decoded) =>
@@ -267,7 +267,7 @@ pub fn native_image_load_completion_from_bytes(
 fn native_image_completion_from_decoded(
   source : String,
   decoded : NativeDecodedImage,
-  background_io? : Bool = false,
+  background_io~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   @render.ImageResourceLoadCompletion::ready_decoded_rgba(
     source,

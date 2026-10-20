@@ -38,7 +38,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_effect_task(
 ///|
 fn ProgramRuntimeDiagnostics::complete_effect_task(
   self : ProgramRuntimeDiagnostics,
-  token : Int,
+  token : Int32,
 ) -> Bool {
   let mut completed : ActiveProgramEffectTask? = None
   let remaining : Array[ActiveProgramEffectTask] = []

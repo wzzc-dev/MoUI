@@ -61,7 +61,7 @@ fn pdf_workbench_inspector(
 fn pdf_workbench_inspector_summary(
   model : PdfWorkbenchModel,
   document : PdfWorkbenchDocument,
-  matches : Int,
+  matches : Int32,
   width : Double,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
@@ -398,7 +398,7 @@ fn pdf_workbench_inspector_caption(
 ///|
 fn pdf_workbench_edit_queue_row(
   edit : PdfWorkbenchEdit,
-  index : Int,
+  index : Int32,
   width : Double,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {

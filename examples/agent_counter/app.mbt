@@ -10,7 +10,7 @@ using @moui {type Program}
 
 ///|
 pub struct Model {
-  count : Int
+  count : Int32
 }
 
 ///|

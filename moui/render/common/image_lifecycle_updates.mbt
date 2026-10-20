@@ -10,8 +10,8 @@ pub fn ImageResourceLifecycle::mark_loading(
 pub fn ImageResourceLifecycle::mark_ready(
   self : ImageResourceLifecycle,
   source : String,
-  width~ : Int,
-  height~ : Int,
+  width~ : Int32,
+  height~ : Int32,
 ) -> Bool {
   self.store_record(@render.ImageResourceRecord::ready(source, width~, height~))
 }
@@ -56,7 +56,7 @@ fn ImageResourceLifecycle::store_record(
 ///|
 pub fn ImageResourceLifecycle::evict_disposed(
   self : ImageResourceLifecycle,
-) -> Int {
+) -> Int32 {
   let mut removed = 0
   let kept : Map[String, @render.ImageResourceRecord] = Map([])
   for key, record in self.records {

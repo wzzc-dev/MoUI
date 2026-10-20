@@ -6,7 +6,7 @@
 /// is GUI-free.
 
 ///|
-fn wrap_fixture_words(count : Int) -> String {
+fn wrap_fixture_words(count : Int32) -> String {
   let mut text = ""
   for index in 0..<count {
     text = text + "word" + index.to_string() + " "
@@ -15,8 +15,8 @@ fn wrap_fixture_words(count : Int) -> String {
 }
 
 ///|
-fn source_line_starts(text : String) -> Array[Int] {
-  let starts : Array[Int] = [0]
+fn source_line_starts(text : String) -> Array[Int32] {
+  let starts : Array[Int32] = [0]
   let chars = text.to_array()
   for index, ch in chars {
     if ch == '\n' && index + 1 < chars.length() {

@@ -8,56 +8,56 @@ pub fn RuntimeInspectorSnapshot::size(
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_element_ids
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_build_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_build_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_build_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_build_element_ids
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_layout_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_layout_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_layout_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_layout_element_ids
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_paint_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_paint_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_paint_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_paint_element_ids
 }
 
@@ -99,70 +99,70 @@ pub fn RuntimeInspectorSnapshot::needs_redraw(
 ///|
 pub fn RuntimeInspectorSnapshot::draw_command_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.draw_command_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::rebuild_pass_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.rebuild_pass_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::layout_pass_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.layout_pass_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::paint_pass_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.paint_pass_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::draw_command_build_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.draw_command_build_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::layout_cache_hit_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.layout_cache_hit_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::layout_cache_miss_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.layout_cache_miss_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::render_cache_hit_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.render_cache_hit_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::render_cache_miss_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.render_cache_miss_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::last_event_hit_path(
   self : RuntimeInspectorSnapshot,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.last_event_hit_path.copy()
 }
 
@@ -176,112 +176,112 @@ pub fn RuntimeInspectorSnapshot::last_frame_timing(
 ///|
 pub fn RuntimeInspectorSnapshot::program_dispatched_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_dispatched_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_update_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_update_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::ignored_program_dispatch_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_program_dispatch_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_message_enqueue_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_message_enqueue_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_message_drain_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_message_drain_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_pending_message_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_pending_message_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_max_pending_message_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_max_pending_message_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_plan_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_plan_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_none_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_none_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_batch_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_batch_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_send_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_send_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_dispatch_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_dispatch_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_run_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_run_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::program_effect_task_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_effect_task_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_key_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.duplicate_effect_descriptor_key_count
 }
 
@@ -295,7 +295,7 @@ pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_keys(
 ///|
 pub fn RuntimeInspectorSnapshot::superseded_effect_task_key_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.superseded_effect_task_key_count
 }
 
@@ -323,35 +323,35 @@ pub fn RuntimeInspectorSnapshot::last_scheduled_effect_summary(
 ///|
 pub fn RuntimeInspectorSnapshot::active_effect_task_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.active_effect_task_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::started_effect_task_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.started_effect_task_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::completed_effect_task_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.completed_effect_task_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::cancelled_effect_task_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.cancelled_effect_task_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::ignored_effect_task_dispatch_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_effect_task_dispatch_count
 }
 
@@ -372,7 +372,7 @@ pub fn RuntimeInspectorSnapshot::effect_task_lifecycle(
 ///|
 pub fn RuntimeInspectorSnapshot::program_subscription_plan_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.program_subscription_plan_count
 }
 
@@ -386,35 +386,35 @@ pub fn RuntimeInspectorSnapshot::last_subscription_plan_summary(
 ///|
 pub fn RuntimeInspectorSnapshot::active_subscription_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.active_subscription_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::started_subscription_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.started_subscription_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::reused_subscription_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.reused_subscription_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::cancelled_subscription_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.cancelled_subscription_count
 }
 
 ///|
 pub fn RuntimeInspectorSnapshot::duplicate_subscription_key_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.duplicate_subscription_key_count
 }
 
@@ -428,7 +428,7 @@ pub fn RuntimeInspectorSnapshot::duplicate_subscription_keys(
 ///|
 pub fn RuntimeInspectorSnapshot::ignored_subscription_dispatch_count(
   self : RuntimeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_subscription_dispatch_count
 }
 
@@ -470,56 +470,56 @@ pub fn RuntimeInspectorSnapshot::dirty_reasons(
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_count(
   self : RuntimeDirtyStateSummary,
-) -> Int {
+) -> Int32 {
   self.dirty_count
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_element_ids
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_build_count(
   self : RuntimeDirtyStateSummary,
-) -> Int {
+) -> Int32 {
   self.dirty_build_count
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_build_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_build_element_ids
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_layout_count(
   self : RuntimeDirtyStateSummary,
-) -> Int {
+) -> Int32 {
   self.dirty_layout_count
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_layout_element_ids
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_paint_count(
   self : RuntimeDirtyStateSummary,
-) -> Int {
+) -> Int32 {
   self.dirty_paint_count
 }
 
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.dirty_paint_element_ids
 }
 
@@ -582,7 +582,7 @@ pub fn RuntimeDirtyStateSummary::damage_kind(
 ///|
 pub fn RuntimeDirtyStateSummary::damage_rect_count(
   self : RuntimeDirtyStateSummary,
-) -> Int {
+) -> Int32 {
   self.damage_rect_count
 }
 
@@ -594,7 +594,7 @@ pub fn RuntimeDirtyStateSummary::damage_full_reason(
 }
 
 ///|
-pub fn ViewInspectorSummary::element_id(self : ViewInspectorSummary) -> Int {
+pub fn ViewInspectorSummary::element_id(self : ViewInspectorSummary) -> Int32 {
   self.element_id
 }
 
@@ -609,12 +609,12 @@ pub fn ViewInspectorSummary::key(self : ViewInspectorSummary) -> String {
 }
 
 ///|
-pub fn ViewInspectorSummary::depth(self : ViewInspectorSummary) -> Int {
+pub fn ViewInspectorSummary::depth(self : ViewInspectorSummary) -> Int32 {
   self.depth
 }
 
 ///|
-pub fn ViewInspectorSummary::child_count(self : ViewInspectorSummary) -> Int {
+pub fn ViewInspectorSummary::child_count(self : ViewInspectorSummary) -> Int32 {
   self.child_count
 }
 
@@ -643,42 +643,42 @@ pub fn ViewTreeInspectorSnapshot::root_kind(
 ///|
 pub fn ViewTreeInspectorSnapshot::node_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.node_count
 }
 
 ///|
 pub fn ViewTreeInspectorSnapshot::control_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.control_count
 }
 
 ///|
 pub fn ViewTreeInspectorSnapshot::modified_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.modified_count
 }
 
 ///|
 pub fn ViewTreeInspectorSnapshot::dirty_build_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_build_count
 }
 
 ///|
 pub fn ViewTreeInspectorSnapshot::dirty_layout_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_layout_count
 }
 
 ///|
 pub fn ViewTreeInspectorSnapshot::dirty_paint_count(
   self : ViewTreeInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.dirty_paint_count
 }
 
@@ -692,7 +692,7 @@ pub fn ViewTreeInspectorSnapshot::nodes(
 ///|
 pub fn LayoutBoundsInspectorEntry::element_id(
   self : LayoutBoundsInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.element_id
 }
 
@@ -713,14 +713,14 @@ pub fn LayoutBoundsInspectorEntry::constraints(
 ///|
 pub fn LayoutBoundsInspectorEntry::depth(
   self : LayoutBoundsInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.depth
 }
 
 ///|
 pub fn LayoutBoundsInspectorEntry::child_count(
   self : LayoutBoundsInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.child_count
 }
 
@@ -734,21 +734,21 @@ pub fn LayoutInspectorSnapshot::root_frame(
 ///|
 pub fn LayoutInspectorSnapshot::node_count(
   self : LayoutInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.node_count
 }
 
 ///|
 pub fn LayoutInspectorSnapshot::leaf_count(
   self : LayoutInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.leaf_count
 }
 
 ///|
 pub fn LayoutInspectorSnapshot::max_depth(
   self : LayoutInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.max_depth
 }
 
@@ -760,7 +760,7 @@ pub fn LayoutInspectorSnapshot::bounds(
 }
 
 ///|
-pub fn RenderInspectorEntry::element_id(self : RenderInspectorEntry) -> Int {
+pub fn RenderInspectorEntry::element_id(self : RenderInspectorEntry) -> Int32 {
   self.element_id
 }
 
@@ -777,24 +777,26 @@ pub fn RenderInspectorEntry::paint_bounds(
 }
 
 ///|
-pub fn RenderInspectorEntry::depth(self : RenderInspectorEntry) -> Int {
+pub fn RenderInspectorEntry::depth(self : RenderInspectorEntry) -> Int32 {
   self.depth
 }
 
 ///|
-pub fn RenderInspectorEntry::child_count(self : RenderInspectorEntry) -> Int {
+pub fn RenderInspectorEntry::child_count(self : RenderInspectorEntry) -> Int32 {
   self.child_count
 }
 
 ///|
-pub fn RenderInspectorEntry::command_count(self : RenderInspectorEntry) -> Int {
+pub fn RenderInspectorEntry::command_count(
+  self : RenderInspectorEntry,
+) -> Int32 {
   self.command_count
 }
 
 ///|
 pub fn RenderInspectorEntry::overlay_command_count(
   self : RenderInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.overlay_command_count
 }
 
@@ -813,84 +815,84 @@ pub fn RenderInspectorEntry::cache_key(self : RenderInspectorEntry) -> String {
 ///|
 pub fn RenderInspectorSnapshot::command_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.command_count
 }
 
 ///|
 pub fn RenderInspectorSnapshot::text_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.text_count
 }
 
 ///|
 pub fn RenderInspectorSnapshot::image_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.image_count
 }
 
 ///|
 pub fn RenderInspectorSnapshot::clip_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.clip_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::open_clip_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.open_clip_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::layer_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.layer_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::open_layer_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.open_layer_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::filter_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.filter_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::open_filter_depth(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.open_filter_depth
 }
 
 ///|
 pub fn RenderInspectorSnapshot::path_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.path_count
 }
 
 ///|
 pub fn RenderInspectorSnapshot::shader_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.shader_count
 }
 
 ///|
 pub fn RenderInspectorSnapshot::unbalanced_pop_count(
   self : RenderInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.unbalanced_pop_count
 }
 
@@ -933,21 +935,21 @@ pub fn SemanticsInspectorEntry::frame(
 }
 
 ///|
-pub fn SemanticsInspectorEntry::depth(self : SemanticsInspectorEntry) -> Int {
+pub fn SemanticsInspectorEntry::depth(self : SemanticsInspectorEntry) -> Int32 {
   self.depth
 }
 
 ///|
 pub fn SemanticsInspectorEntry::child_count(
   self : SemanticsInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.child_count
 }
 
 ///|
 pub fn SemanticsInspectorEntry::action_count(
   self : SemanticsInspectorEntry,
-) -> Int {
+) -> Int32 {
   self.action_count
 }
 
@@ -994,70 +996,70 @@ pub fn SemanticsInspectorSnapshot::root_role(
 ///|
 pub fn SemanticsInspectorSnapshot::node_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.node_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::focusable_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.focusable_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::action_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.action_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::max_depth(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.max_depth
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::selected_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.selected_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::checked_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.checked_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::expanded_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.expanded_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::invalid_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.invalid_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::required_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.required_count
 }
 
 ///|
 pub fn SemanticsInspectorSnapshot::described_count(
   self : SemanticsInspectorSnapshot,
-) -> Int {
+) -> Int32 {
   self.described_count
 }
 

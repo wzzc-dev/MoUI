@@ -2,12 +2,12 @@
 pub fn[Msg] data_filter_bar(
   query~ : String,
   on_query~ : (String) -> Msg,
-  filters? : Array[DataFilter[Msg]] = [],
-  result_count? : Int = 0,
-  on_clear? : Msg? = None,
-  placeholder? : String = "Search rows",
+  filters~ : Array[DataFilter[Msg]] = [],
+  result_count~ : Int32 = 0,
+  on_clear~ : Msg? = None,
+  placeholder~ : String = "Search rows",
   theme? : @core.Theme,
-  width? : Double = 520.0,
+  width~ : Double = 520.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let search_width = @common.view_max_double(160.0, width * 0.46)
@@ -113,7 +113,7 @@ fn[Msg] data_filter_clear_button(
 }
 
 ///|
-fn data_filter_result_label(result_count : Int) -> String {
+fn data_filter_result_label(result_count : Int32) -> String {
   if result_count == 1 {
     "1 result"
   } else {
@@ -135,7 +135,7 @@ fn[Msg] data_filter_has_selection(filters : Array[DataFilter[Msg]]) -> Bool {
 }
 
 ///|
-fn data_filter_bar_height(chip_count : Int) -> Double {
+fn data_filter_bar_height(chip_count : Int32) -> Double {
   if chip_count == 0 {
     58.0
   } else {

@@ -207,7 +207,7 @@ fn assert_includes_all(
 ///|
 fn validate_target(
   target_json : Json,
-  index : Int,
+  index : Int32,
   seen : Map[String, Bool],
 ) -> Array[String] {
   let failures : Array[String] = []
@@ -366,7 +366,7 @@ fn local_http_url(url : String) -> Bool {
 }
 
 ///|
-fn validate_check(check_json : Json, index : Int) -> Array[String] {
+fn validate_check(check_json : Json, index : Int32) -> Array[String] {
   let failures : Array[String] = []
   let check = match json_object_value(check_json) {
     Some(fields) => fields
@@ -513,7 +513,7 @@ fn print_prefixed_failures(path : String, failures : Array[String]) -> Unit {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

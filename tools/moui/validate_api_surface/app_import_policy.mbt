@@ -17,12 +17,12 @@ fn backend_runtime_interface_paths() -> Array[String] {
 }
 
 ///|
-fn max_shared_app_runtime_imports() -> Int {
+fn max_shared_app_runtime_imports() -> Int32 {
   0
 }
 
 ///|
-fn max_shared_app_core_imports() -> Int {
+fn max_shared_app_core_imports() -> Int32 {
   20
 }
 

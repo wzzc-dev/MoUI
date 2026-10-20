@@ -107,7 +107,7 @@ pub struct IosSurfaceBinding {
 ///|
 pub fn IosSurfaceBinding::new(
   create_renderer~ : (IosSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface? : (IosSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
+  sync_surface~ : (IosSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _view,
     _metrics,
   ) => (),
@@ -251,7 +251,7 @@ pub fn backend_info() -> IosBackendInfo {
 
 ///|
 pub fn ios_capability_summary(
-  services? : @host.HostServiceCapabilities = ios_service_capabilities(),
+  services~ : @host.HostServiceCapabilities = ios_service_capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,

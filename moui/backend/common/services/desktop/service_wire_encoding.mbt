@@ -21,7 +21,7 @@ pub fn encode_menu_commands(commands : Array[@core.ActionCommand]) -> Bytes {
 /// commands as unavailable.
 pub fn menu_command_response(
   commands : Array[@core.ActionCommand],
-  selected_index : Int,
+  selected_index : Int32,
 ) -> @host.HostServiceResponse {
   menu_command_response_with_unavailable_sentinel(
     commands,
@@ -35,7 +35,7 @@ pub fn menu_command_response(
 /// itself is unavailable, which maps to its own response message.
 pub fn menu_command_response_with_unavailable(
   commands : Array[@core.ActionCommand],
-  selected_index : Int,
+  selected_index : Int32,
 ) -> @host.HostServiceResponse {
   menu_command_response_with_unavailable_sentinel(
     commands,
@@ -47,8 +47,8 @@ pub fn menu_command_response_with_unavailable(
 ///|
 fn menu_command_response_with_unavailable_sentinel(
   commands : Array[@core.ActionCommand],
-  selected_index : Int,
-  unavailable_sentinel : Int?,
+  selected_index : Int32,
+  unavailable_sentinel : Int32?,
 ) -> @host.HostServiceResponse {
   match unavailable_sentinel {
     Some(sentinel) if selected_index == sentinel =>
@@ -69,7 +69,7 @@ fn menu_command_response_with_unavailable_sentinel(
 
 ///|
 /// Encode a file-dialog kind into the shared wire code.
-pub fn host_file_dialog_kind_code(kind : @host.HostFileDialogKind) -> Int {
+pub fn host_file_dialog_kind_code(kind : @host.HostFileDialogKind) -> Int32 {
   match kind {
     OpenFile => 0
     SaveFile => 1
@@ -95,7 +95,7 @@ pub fn encode_host_filter_list(filters : Array[String]) -> Bytes {
 /// preserve the raw bytes.
 pub fn decode_file_dialog_selection(
   bytes : Bytes,
-  trim_paths? : Bool = false,
+  trim_paths~ : Bool = false,
 ) -> Array[String] {
   let text = @utf8.decode_lossy(bytes[:], ignore_bom=false)
   let paths : Array[String] = []

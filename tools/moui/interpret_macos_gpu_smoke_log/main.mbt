@@ -3,7 +3,7 @@ struct SmokeInterpretation {
   metal_route : Bool
   surface_gpu : Bool
   gpu_smoke_passed : Bool
-  present_count : Int
+  present_count : Int32
   worker_owned : Bool
   short_path_ok : Bool
 }
@@ -24,7 +24,7 @@ fn contains_ci(text : String, needle : String) -> Bool {
 }
 
 ///|
-fn parse_present_count(text : String) -> Int {
+fn parse_present_count(text : String) -> Int32 {
   // look for present_count=<digits>
   let marker = "present_count="
   let lower = text.to_lower()
@@ -136,7 +136,7 @@ fn parse_cli(args : Array[String]) -> Result[(String, Bool), String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err("help") => {
       println(usage())

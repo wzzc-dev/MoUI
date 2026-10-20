@@ -205,7 +205,7 @@ fn parse_simctl_list(output : String) -> Array[Device] {
 /// where `value` is the substring between `open_index+1` and `length-1`, and
 /// the closing `)` is the last character of `text`. Returns `None` when the
 /// text does not end with `)` or has no `(`.
-fn last_paren_pair(text : String) -> (Int, String)? {
+fn last_paren_pair(text : String) -> (Int32, String)? {
   if !text.has_suffix(")") {
     return None
   }

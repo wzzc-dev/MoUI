@@ -37,14 +37,14 @@ pub fn AppLaunchRequest::window_requests(
 pub struct PlatformEntry {
   id : String
   launch_fn : (AppLaunchRequest) -> Unit
-  launch_async_fn : (async (AppLaunchRequest, Int) -> Unit)?
+  launch_async_fn : (async (AppLaunchRequest, Int32) -> Unit)?
 }
 
 ///|
 pub fn PlatformEntry::new(
   id~ : String,
   launch~ : (AppLaunchRequest) -> Unit,
-  launch_async? : (async (AppLaunchRequest, Int) -> Unit)? = None,
+  launch_async~ : (async (AppLaunchRequest, Int32) -> Unit)? = None,
 ) -> PlatformEntry {
   { id, launch_fn: launch, launch_async_fn: launch_async, }
 }
@@ -66,7 +66,7 @@ pub fn PlatformEntry::launch(
 pub async fn PlatformEntry::launch_async_pump(
   self : PlatformEntry,
   request : AppLaunchRequest,
-  frame_interval_ms : Int,
+  frame_interval_ms : Int32,
 ) -> Unit {
   match self.launch_async_fn {
     Some(launch) => launch(request, frame_interval_ms)
@@ -154,7 +154,7 @@ pub fn AppBuilder::run(self : AppBuilder) -> Unit {
 /// a dedicated pump fall back to their normal synchronous launch closure.
 pub async fn AppBuilder::run_async_pump(
   self : AppBuilder,
-  frame_interval_ms? : Int = 8,
+  frame_interval_ms~ : Int32 = 8,
 ) -> Unit {
   if self.renderer_providers.is_empty() {
     abort("runtime.run_app: at least one renderer provider is required")

@@ -21,7 +21,7 @@ fn hot_path_metrics_reset() -> Unit {
 }
 
 ///|
-fn hot_path_bench_document(block_count : Int) -> String {
+fn hot_path_bench_document(block_count : Int32) -> String {
   let parts : Array[String] = []
   for index in 0..<block_count {
     parts.push("## Section " + index.to_string())
@@ -117,7 +117,7 @@ fn legacy_window_range(
   scroll_y : Double,
   viewport_height : Double,
   overscan : Double,
-) -> (Int, Int, Double, Double) {
+) -> (Int32, Int32, Double, Double) {
   if heights.is_empty() {
     return (-1, -1, 0.0, 0.0)
   }
@@ -235,7 +235,7 @@ test "hot path: fenwick point updates match a rebuild" {
     24.0, 48.0, 12.0, 96.0, 30.0, 0.0, 60.0, 45.0, 18.0, 72.0,
   ]
   let geometry = geometry_of_heights(heights)
-  let updates : Array[(Int, Double)] = [
+  let updates : Array[(Int32, Double)] = [
     (0, 90.0),
     (9, 3.5),
     (5, 44.0),
@@ -287,7 +287,7 @@ test "hot path: window range matches the legacy scan after point updates" {
   let geometry = geometry_of_heights(heights)
   let expected : Array[Double] = []
   expected.append(heights)
-  let updates : Array[(Int, Double)] = [(1, 220.0), (0, 5.0), (8, 64.0)]
+  let updates : Array[(Int32, Double)] = [(1, 220.0), (0, 5.0), (8, 64.0)]
   for pair in updates {
     markdown_document_scroll_geometry_set_height(
       geometry,
@@ -500,7 +500,7 @@ fn hot_path_apply_edit(
 ///|
 /// Test-only char-space `index_of` (the editor document fixtures are ASCII,
 /// so char indices equal string slice offsets).
-fn hot_path_index_of(source : String, needle : String) -> Int {
+fn hot_path_index_of(source : String, needle : String) -> Int32 {
   let chars = source.to_array()
   let needle_chars = needle.to_array()
   let limit = chars.length() - needle_chars.length()
@@ -814,7 +814,7 @@ fn hot_path_fence_document() -> String {
 }
 
 ///|
-fn hot_path_insert_at(source : String, index : Int, text : String) -> String {
+fn hot_path_insert_at(source : String, index : Int32, text : String) -> String {
   (source[:index] + text + source[index:]).to_owned()
 }
 

@@ -21,7 +21,7 @@ pub fn sync_platform_view_plugins(
   plugins : Array[@backend_host.PlatformViewPlugin],
   handle : UInt64,
   frame : @core.DrawFrame,
-  content_offset? : Double = 0.0,
+  content_offset~ : Double = 0.0,
 ) -> Unit {
   for plugin in plugins {
     (plugin.sync_platform_views)(handle, frame, content_offset)

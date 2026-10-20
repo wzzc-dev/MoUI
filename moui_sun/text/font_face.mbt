@@ -43,7 +43,7 @@ pub fn FontData::parse(self : FontData) -> Result[FontFace, FontParseError] {
 struct FontFaceCache {
   mut faces : Map[String, FontFace]
   mut access_order : Array[String]
-  capacity : Int
+  capacity : Int32
   is_bounded : Bool
 } derive(Debug)
 
@@ -68,7 +68,7 @@ pub fn FontFaceCache::new() -> FontFaceCache {
 
 ///|
 /// Create an empty font-face cache with least-recently-used eviction.
-pub fn FontFaceCache::with_capacity(capacity : Int) -> FontFaceCache {
+pub fn FontFaceCache::with_capacity(capacity : Int32) -> FontFaceCache {
   {
     faces: Map([]),
     access_order: [],
@@ -103,7 +103,7 @@ pub fn FontFaceCacheParseResult::did_hit_cache(
 
 ///|
 /// Return the number of cached font faces.
-pub fn FontFaceCache::len(self : FontFaceCache) -> Int {
+pub fn FontFaceCache::len(self : FontFaceCache) -> Int32 {
   self.faces.length()
 }
 
@@ -115,7 +115,7 @@ pub fn FontFaceCache::is_empty(self : FontFaceCache) -> Bool {
 
 ///|
 /// Return the maximum number of cached font faces, or 0 for an unbounded cache.
-pub fn FontFaceCache::capacity(self : FontFaceCache) -> Int {
+pub fn FontFaceCache::capacity(self : FontFaceCache) -> Int32 {
   self.capacity
 }
 
@@ -247,24 +247,24 @@ pub fn FontFace::get_metrics(self : FontFace) -> FontMetrics {
 
 ///|
 /// Get units per em for the face.
-pub fn FontFace::get_units_per_em(self : FontFace) -> Int {
+pub fn FontFace::get_units_per_em(self : FontFace) -> Int32 {
   self.font.get_units_per_em()
 }
 
 ///|
 /// Map a Unicode codepoint to a glyph id.
-pub fn FontFace::char_to_glyph(self : FontFace, char_code : Int) -> Int {
+pub fn FontFace::char_to_glyph(self : FontFace, char_code : Int32) -> Int32 {
   self.font.char_to_glyph(char_code)
 }
 
 ///|
 /// Return whether this face maps a Unicode codepoint to a drawable glyph.
-pub fn FontFace::has_glyph_for_char(self : FontFace, char_code : Int) -> Bool {
+pub fn FontFace::has_glyph_for_char(self : FontFace, char_code : Int32) -> Bool {
   self.font.has_glyph_for_char(char_code)
 }
 
 ///|
 /// Get resolved glyph data for a glyph id.
-fn FontFace::get_glyph(self : FontFace, glyph_id : Int) -> GlyphData {
+fn FontFace::get_glyph(self : FontFace, glyph_id : Int32) -> GlyphData {
   self.font.get_glyph(glyph_id)
 }

@@ -3,13 +3,13 @@
 /// package.
 pub struct NativeSurface {
   handle : UInt64
-  mut width : Int
-  mut height : Int
+  mut width : Int32
+  mut height : Int32
   mut pre_present_hook : (() -> Unit)?
 }
 
 ///|
-fn normalize_native_surface_dimension(value : Int) -> Int {
+fn normalize_native_surface_dimension(value : Int32) -> Int32 {
   value.max(0)
 }
 
@@ -17,8 +17,8 @@ fn normalize_native_surface_dimension(value : Int) -> Int {
 /// Create a surface around a native window handle and an explicit pixel size.
 pub fn NativeSurface::new(
   handle : UInt64,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> NativeSurface {
   {
     handle,
@@ -37,12 +37,12 @@ pub fn NativeSurface::from_frame(
 }
 
 ///|
-pub fn NativeSurface::get_width(self : NativeSurface) -> Int {
+pub fn NativeSurface::get_width(self : NativeSurface) -> Int32 {
   self.width
 }
 
 ///|
-pub fn NativeSurface::get_height(self : NativeSurface) -> Int {
+pub fn NativeSurface::get_height(self : NativeSurface) -> Int32 {
   self.height
 }
 
@@ -54,8 +54,8 @@ pub fn NativeSurface::handle(self : NativeSurface) -> UInt64 {
 ///|
 pub fn NativeSurface::resize(
   self : NativeSurface,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   self.width = normalize_native_surface_dimension(width)
   self.height = normalize_native_surface_dimension(height)
@@ -116,9 +116,9 @@ pub fn NativeSurface::present(
 /// Present an RGBA byte buffer from a Bytes value (preferred for FFI).
 pub fn NativeSurface::present_bytes(
   self : NativeSurface,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
 ) -> Result[Unit, @graphics.PresentError] {
   guard width > 0 && height > 0 else {
@@ -151,9 +151,9 @@ pub fn NativeSurface::present_bytes(
 ///|
 pub fn NativeSurface::present_pixels(
   self : NativeSurface,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, @graphics.PresentError] {
   guard width > 0 && height > 0 else {
@@ -186,11 +186,11 @@ pub fn NativeSurface::present_pixels(
 ///|
 pub fn NativeSurface::present_pixels_rect(
   self : NativeSurface,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, @graphics.PresentError] {
   present_rect_to_handle(
@@ -211,7 +211,7 @@ pub fn NativeSurface::present_pixels_rect(
 pub fn NativeSurface::present_frame_dirty(
   self : NativeSurface,
   frame : @graphics.RenderFrame,
-) -> Result[Int, @graphics.PresentError] {
+) -> Result[Int32, @graphics.PresentError] {
   frame.present_dirty_to(self)
 }
 
@@ -388,7 +388,7 @@ pub fn NativeSurface::submit_synced_frame_by_strategy(
 pub fn NativeSurface::present_frame_all(
   self : NativeSurface,
   frame : @graphics.RenderFrame,
-) -> Result[Int, @graphics.PresentError] {
+) -> Result[Int32, @graphics.PresentError] {
   frame.present_all_to(self)
 }
 
@@ -429,15 +429,15 @@ pub impl @graphics.Surface for NativeSurface with fn present_pixels_rect(
 ///|
 fn present_rect_to_handle(
   handle : UInt64,
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
-  pre_present_hook? : (() -> Unit)? = None,
+  pre_present_hook~ : (() -> Unit)? = None,
 ) -> Result[Unit, @graphics.PresentError] {
   match
     @graphics.validate_present_rect(
@@ -477,15 +477,15 @@ fn present_rect_to_handle(
 ///|
 fn present_bytes_to_handle(
   handle : UInt64,
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
-  pre_present_hook? : (() -> Unit)? = None,
+  pre_present_hook~ : (() -> Unit)? = None,
 ) -> Result[Unit, @graphics.PresentError] {
   guard width > 0 && height > 0 else {
     return Err(@graphics.PresentError::InvalidDimensions(width, height))
@@ -510,9 +510,9 @@ fn notify_pre_present(hook : (() -> Unit)?) -> Unit {
 
 ///|
 fn copy_tightly_packed_rows(
-  height : Int,
-  row_bytes : Int,
-  packed_row_bytes : Int,
+  height : Int32,
+  row_bytes : Int32,
+  packed_row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> FixedArray[Byte] {
   let packed : FixedArray[Byte] = FixedArray::make(

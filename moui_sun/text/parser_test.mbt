@@ -593,15 +593,15 @@ fn parse_font_face_result(
 ///|
 struct TestTableRecord {
   tag : String
-  offset : Int
-  length : Int
+  offset : Int32
+  length : Int32
 }
 
 ///|
 fn make_table_record(
   tag : String,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> TestTableRecord {
   { tag, offset, length, }
 }
@@ -658,7 +658,7 @@ fn make_structural_font() -> Bytes {
 
 ///|
 fn make_structural_font_with_glyf(
-  loca_offsets : Array[Int],
+  loca_offsets : Array[Int32],
   glyf : Array[Byte],
 ) -> Bytes {
   make_structural_font_with_tables(
@@ -745,8 +745,8 @@ fn make_head_table() -> Array[Byte] {
 
 ///|
 fn make_head_table_with(
-  units_per_em : Int,
-  index_to_loc_format : Int,
+  units_per_em : Int32,
+  index_to_loc_format : Int32,
 ) -> Array[Byte] {
   let out = []
   append_u32(out, 0x00010000)
@@ -775,10 +775,10 @@ fn make_hhea_table() -> Array[Byte] {
 
 ///|
 fn make_hhea_table_with(
-  ascent : Int,
-  descent : Int,
-  line_gap : Int,
-  num_h_metrics : Int,
+  ascent : Int32,
+  descent : Int32,
+  line_gap : Int32,
+  num_h_metrics : Int32,
 ) -> Array[Byte] {
   let out = []
   append_u32(out, 0x00010000)
@@ -817,7 +817,7 @@ fn make_hmtx_table_two_metrics() -> Array[Byte] {
 }
 
 ///|
-fn make_hmtx_table_with_advances(advances : Array[Int]) -> Array[Byte] {
+fn make_hmtx_table_with_advances(advances : Array[Int32]) -> Array[Byte] {
   let out = []
   for advance in advances {
     append_u16(out, advance)
@@ -832,7 +832,7 @@ fn make_loca_table() -> Array[Byte] {
 }
 
 ///|
-fn make_loca_table_from_offsets(offsets : Array[Int]) -> Array[Byte] {
+fn make_loca_table_from_offsets(offsets : Array[Int32]) -> Array[Byte] {
   let out = []
   for offset in offsets {
     append_u16(out, offset / 2)
@@ -841,7 +841,7 @@ fn make_loca_table_from_offsets(offsets : Array[Int]) -> Array[Byte] {
 }
 
 ///|
-fn make_loca_long_table_from_offsets(offsets : Array[Int]) -> Array[Byte] {
+fn make_loca_long_table_from_offsets(offsets : Array[Int32]) -> Array[Byte] {
   let out = []
   for offset in offsets {
     append_u32(out, offset)
@@ -855,7 +855,7 @@ fn make_maxp_table() -> Array[Byte] {
 }
 
 ///|
-fn make_maxp_table_with(num_glyphs : Int) -> Array[Byte] {
+fn make_maxp_table_with(num_glyphs : Int32) -> Array[Byte] {
   let out = []
   append_u32(out, 0x00010000)
   append_u16(out, num_glyphs)
@@ -1037,8 +1037,8 @@ fn make_cmap_format12_mapping() -> Array[Byte] {
 
 ///|
 fn make_mixed_cmap_with_full_unicode(
-  full_platform_id : Int,
-  full_encoding_id : Int,
+  full_platform_id : Int32,
+  full_encoding_id : Int32,
   full_unicode_subtable : Array[Byte],
   bmp_subtable : Array[Byte],
 ) -> Array[Byte] {
@@ -1217,7 +1217,7 @@ fn make_bad_flag_repeat_glyph() -> Array[Byte] {
 }
 
 ///|
-fn append_i16(out : Array[Byte], value : Int) -> Unit {
+fn append_i16(out : Array[Byte], value : Int32) -> Unit {
   let unsigned = if value < 0 { value + 65536 } else { value }
   append_u16(out, unsigned)
 }
@@ -1231,13 +1231,13 @@ fn append_tag(out : Array[Byte], tag : String) -> Unit {
 }
 
 ///|
-fn append_u16(out : Array[Byte], value : Int) -> Unit {
+fn append_u16(out : Array[Byte], value : Int32) -> Unit {
   append_byte(out, value >> 8)
   append_byte(out, value)
 }
 
 ///|
-fn append_u32(out : Array[Byte], value : Int) -> Unit {
+fn append_u32(out : Array[Byte], value : Int32) -> Unit {
   append_byte(out, value >> 24)
   append_byte(out, value >> 16)
   append_byte(out, value >> 8)
@@ -1252,19 +1252,19 @@ fn append_array(out : Array[Byte], bytes : Array[Byte]) -> Unit {
 }
 
 ///|
-fn append_byte(out : Array[Byte], value : Int) -> Unit {
+fn append_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
 }
 
 ///|
-fn append_zeroes(out : Array[Byte], count : Int) -> Unit {
+fn append_zeroes(out : Array[Byte], count : Int32) -> Unit {
   for _ in 0..<count {
     append_byte(out, 0)
   }
 }
 
 ///|
-fn parser_test_string_from_codepoints(codepoints : Array[Int]) -> String {
+fn parser_test_string_from_codepoints(codepoints : Array[Int32]) -> String {
   let out = StringBuilder(size_hint=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())

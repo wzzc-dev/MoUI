@@ -36,8 +36,8 @@ struct ScenarioResult {
 
 ///|
 struct RuntimeCacheCounters {
-  hits : Int
-  misses : Int
+  hits : Int32
+  misses : Int32
 }
 
 ///|
@@ -47,7 +47,7 @@ fn[T] perf_fail(message : String) -> T {
 }
 
 ///|
-fn perf_parse_positive_int(value : String, fallback : Int) -> Int {
+fn perf_parse_positive_int(value : String, fallback : Int32) -> Int32 {
   let chars = value.trim().to_array()
   if chars.is_empty() {
     return fallback
@@ -63,7 +63,7 @@ fn perf_parse_positive_int(value : String, fallback : Int) -> Int {
 }
 
 ///|
-fn perf_env_int(name : String, fallback : Int) -> Int {
+fn perf_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => perf_parse_positive_int(value, fallback)
     None => fallback
@@ -125,7 +125,7 @@ fn perf_virtual_list_runtimes(
   width : Double,
   height : Double,
 ) -> Array[@runtime.AppRuntime] {
-  let items : Array[Int] = []
+  let items : Array[Int32] = []
   for index in 0..<100000 {
     items.push(index)
   }
@@ -156,14 +156,14 @@ fn perf_virtual_list_runtimes(
 
 ///|
 fn perf_deep_tree_node(
-  depth : Int,
-  width : Int,
-  msg_base : Int,
-) -> @core.View[Int] {
+  depth : Int32,
+  width : Int32,
+  msg_base : Int32,
+) -> @core.View[Int32] {
   if depth <= 0 {
     @views.button("x", on_click=msg_base)
   } else {
-    let children : Array[@core.View[Int]] = []
+    let children : Array[@core.View[Int32]] = []
     for col in 0..<width {
       children.push(perf_deep_tree_node(depth - 1, width, msg_base + col * 100))
     }
@@ -195,7 +195,7 @@ fn perf_deep_tree_runtimes(
 ///|
 fn perf_drive_deep_tree(
   runtimes : Array[@runtime.AppRuntime],
-  index : Int,
+  index : Int32,
 ) -> Unit {
   // Environment toggle forces mark_component_tree_build_dirty → rebuild on
   // every frame, mirroring full_cycle's F-deep-click scenario.
@@ -241,7 +241,7 @@ fn perf_no_prepare(_runtimes : Array[@runtime.AppRuntime]) -> Unit {
 ///|
 fn perf_drive_showcase(
   runtimes : Array[@runtime.AppRuntime],
-  index : Int,
+  index : Int32,
 ) -> Unit {
   let direction = if index / 18 % 2 == 0 { -44.0 } else { 44.0 }
   runtimes[0].dispatch_event(
@@ -256,7 +256,10 @@ fn perf_drive_showcase(
 }
 
 ///|
-fn perf_drive_excel(runtimes : Array[@runtime.AppRuntime], index : Int) -> Unit {
+fn perf_drive_excel(
+  runtimes : Array[@runtime.AppRuntime],
+  index : Int32,
+) -> Unit {
   let x = 92.0 + (index % 6).to_double() * 110.0
   let y = 172.0 + (index / 6 % 8).to_double() * 28.0
   runtimes[0].dispatch_event(
@@ -269,7 +272,7 @@ fn perf_drive_excel(runtimes : Array[@runtime.AppRuntime], index : Int) -> Unit 
 ///|
 fn perf_drive_virtual_list(
   runtimes : Array[@runtime.AppRuntime],
-  index : Int,
+  index : Int32,
 ) -> Unit {
   let direction = if index / 20 % 2 == 0 { -120.0 } else { 120.0 }
   runtimes[0].dispatch_event(
@@ -286,7 +289,7 @@ fn perf_drive_virtual_list(
 ///|
 fn perf_drive_multi_window(
   runtimes : Array[@runtime.AppRuntime],
-  index : Int,
+  index : Int32,
 ) -> Unit {
   for window, runtime in runtimes {
     runtime.set_environment(
@@ -374,9 +377,9 @@ fn perf_run_scenario(
   height : Double,
   make_runtimes : (Double, Double) -> Array[@runtime.AppRuntime],
   prepare : (Array[@runtime.AppRuntime]) -> Unit,
-  drive : (Array[@runtime.AppRuntime], Int) -> Unit,
-  frames : Int,
-  warmup : Int,
+  drive : (Array[@runtime.AppRuntime], Int32) -> Unit,
+  frames : Int32,
+  warmup : Int32,
 ) -> ScenarioResult {
   let startup_start = perf_now_ms()
   let runtimes = make_runtimes(width, height)

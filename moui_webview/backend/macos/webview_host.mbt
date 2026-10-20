@@ -4,20 +4,20 @@
 extern "C" fn macos_webview_install_event_callback(
   call_closure : FuncRef[
     (
-      (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+      (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
       UInt64,
-      Int,
+      Int32,
       Bytes,
       Bytes,
       Bytes,
-      Int,
+      Int32,
     ) -> Unit,
   ],
-  callback : (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+  callback : (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
 ) -> Unit = "moui_macos_webview_install_event_callback"
 
 ///|
-extern "C" fn macos_webview_native_available() -> Int = "moui_macos_webview_available"
+extern "C" fn macos_webview_native_available() -> Int32 = "moui_macos_webview_available"
 
 ///|
 /// Start the WebKit content process before the first platform-view sync.
@@ -37,8 +37,8 @@ extern "C" fn macos_webview_sync(
   title : Bytes,
   background : Bytes,
   scheme : Bytes,
-  policy : Int,
-  visible : Int,
+  policy : Int32,
+  visible : Int32,
   x : Double,
   y : Double,
   width : Double,
@@ -69,7 +69,7 @@ extern "C" fn macos_webview_configure(
 extern "C" fn macos_webview_sync_overlay_mask(
   raw_content_view_handle : UInt64,
   id : Bytes,
-  has_bounds : Int,
+  has_bounds : Int32,
   x : Double,
   y : Double,
   width : Double,
@@ -91,7 +91,7 @@ extern "C" fn macos_webview_platform_views_dispose(
 extern "C" fn macos_webview_command(
   raw_content_view_handle : UInt64,
   id : Bytes,
-  command : Int,
+  command : Int32,
   text : Bytes,
   detail : Bytes,
 ) -> Unit = "moui_macos_webview_command"
@@ -239,7 +239,7 @@ pub fn dispose_macos_platform_views(window : @window_macos.Window) -> Unit {
 pub fn drain_macos_webview_commands(
   window : @window_macos.Window,
   host : @host.WebViewHost,
-) -> Int {
+) -> Int32 {
   match macos_content_view_handle(window) {
     Some(raw_content_view_handle) =>
       host.drain_commands(command => {

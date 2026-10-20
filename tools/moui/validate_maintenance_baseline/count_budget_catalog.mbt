@@ -3,7 +3,7 @@ struct CountBudget {
   kind : String
   label : String
   path : String
-  max_count : Int
+  max_count : Int32
 }
 
 ///|

@@ -3,11 +3,11 @@ pub fn[Msg] clearable_text_field(
   value : String,
   on_input~ : (String) -> Msg,
   on_clear~ : Msg,
-  placeholder? : String = "",
-  variant? : @style.TextFieldVariant = Filled,
+  placeholder~ : String = "",
+  variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
-  width? : Double = 280.0,
-  height? : Double = 40.0,
+  width~ : Double = 280.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @layout.row(
@@ -41,11 +41,11 @@ pub fn[Msg] password_field(
   on_input~ : (String) -> Msg,
   revealed~ : Bool,
   on_toggle_reveal~ : Msg,
-  placeholder? : String = "Password",
-  variant? : @style.TextFieldVariant = Filled,
+  placeholder~ : String = "Password",
+  variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
-  width? : Double = 280.0,
-  height? : Double = 40.0,
+  width~ : Double = 280.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let display_value = if revealed { value } else { mask_text(value) }

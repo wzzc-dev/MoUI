@@ -183,11 +183,11 @@ pub fn plan_renderer_command_fallbacks(
 
 ///|
 fn renderer_command_fallback(
-  index~ : Int,
+  index~ : Int32,
   feature~ : @render.RendererFeature,
   command~ : String,
   reason~ : String,
-  kind? : @render.RendererCommandFallbackKind = PlannedFallback,
+  kind~ : @render.RendererCommandFallbackKind = PlannedFallback,
 ) -> @render.RendererCommandFallback {
   @render.RendererCommandFallback::new(
     index~,

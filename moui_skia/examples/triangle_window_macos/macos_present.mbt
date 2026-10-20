@@ -2,21 +2,21 @@
 #borrow(pixels)
 extern "C" fn native_present_rgba_to_window(
   raw_view_handle : UInt64,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
-  pixels_len : Int,
-) -> Int = "moui_skia_macos_present_rgba_to_window"
+  pixels_len : Int32,
+) -> Int32 = "moui_skia_macos_present_rgba_to_window"
 
 ///|
 let trace_logged : Array[Bool] = [false]
 
 ///|
 fn trace_present(
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
 ) -> Unit {
   if trace_logged[0] {
@@ -39,11 +39,11 @@ fn trace_present(
 ///|
 fn present_rgba_to_window(
   raw_view_handle : UInt64,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
-) -> Int {
+) -> Int32 {
   trace_present(width, height, row_bytes, pixels)
   native_present_rgba_to_window(
     raw_view_handle,

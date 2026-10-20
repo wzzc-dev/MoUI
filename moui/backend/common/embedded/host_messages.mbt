@@ -15,10 +15,10 @@ using @window_input {text_input_ime_request_diagnostics}
 /// Wire-neutral IME request payload. Native adapters keep the existing JSON
 /// schema while the runtime owns the conversion to and from core text ranges.
 pub(all) struct EmbeddedImeRequest {
-  revision : Int
+  revision : Int32
   enabled : Bool
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   composition : String?
   composition_cursor : @core.TextRange?
@@ -40,7 +40,7 @@ pub(all) struct EmbeddedSemanticsNode {
   node_id : @core.SemanticsNodeId
   semantic_id : @core.SemanticId?
   role : @core.SemanticsRole
-  level : Int?
+  level : Int32?
   url : String
   label : String
   value : String
@@ -53,7 +53,7 @@ pub(all) struct EmbeddedSemanticsNode {
   live : @core.SemanticsLive
   live_atomic : Bool
   actions : Array[@core.SemanticsActionKind]
-  focus_order : Int?
+  focus_order : Int32?
   frame : @core.Rect
   children : Array[@core.SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
@@ -91,7 +91,7 @@ pub extend EmbeddedSemanticsUpdate with ToJson::{to_json}
 
 ///|
 pub(all) struct EmbeddedPlatformViewSnapshot {
-  revision : Int
+  revision : Int32
   placements : Array[@core.PlatformViewPlacement]
 } derive(Eq, Debug, ToJson)
 
@@ -129,7 +129,7 @@ pub(all) enum EmbeddedHostResponse {
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
   Accessibility(@runtime.PerformSemanticsActionRequest)
-  PlatformView(Int, String, String, @core.PlatformViewEvent)
+  PlatformView(Int32, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
 
@@ -144,8 +144,8 @@ pub extend EmbeddedHostResponse with ToJson::{to_json}
 
 ///|
 pub(all) struct EmbeddedHostUpdateEnvelope {
-  schema_version : Int
-  session_generation : Int
+  schema_version : Int32
+  session_generation : Int32
   updates : Array[EmbeddedHostUpdate]
 } derive(Eq, Debug, ToJson)
 
@@ -160,8 +160,8 @@ pub extend EmbeddedHostUpdateEnvelope with ToJson::{to_json}
 
 ///|
 pub(all) struct EmbeddedHostResponseEnvelope {
-  schema_version : Int
-  session_generation : Int
+  schema_version : Int32
+  session_generation : Int32
   response : EmbeddedHostResponse
 } derive(Eq, Debug, ToJson)
 
@@ -176,10 +176,10 @@ pub extend EmbeddedHostResponseEnvelope with ToJson::{to_json}
 
 ///|
 pub fn embedded_text_input_response(
-  kind : Int,
+  kind : Int32,
   text : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> EmbeddedHostResponse? {
   let range = @core.TextRange::new(start~, end~)
   match kind {
@@ -203,7 +203,7 @@ pub fn embedded_text_input_response(
 }
 
 ///|
-pub fn embedded_command_response(kind : Int) -> EmbeddedHostResponse? {
+pub fn embedded_command_response(kind : Int32) -> EmbeddedHostResponse? {
   match kind {
     0 => Some(Command(Copy))
     1 => Some(Command(Cut))
@@ -229,12 +229,12 @@ pub fn embedded_accessibility_response(
 ///|
 pub struct EmbeddedRuntimeHostBridge {
   services : @host_services_embedded.EmbeddedHostServices
-  session_generation : Int
+  session_generation : Int32
   mut updates : Array[EmbeddedHostUpdate]
-  mut ime_revision : Int
+  mut ime_revision : Int32
   mut last_text_input : @core.TextInputState?
   mut semantics_cursor : @core.SemanticsGeneration?
-  mut platform_view_revision : Int
+  mut platform_view_revision : Int32
   mut last_platform_views : Array[@core.PlatformViewPlacement]
   mut disposed : Bool
 }

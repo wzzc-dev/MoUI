@@ -1,35 +1,35 @@
 ///|
-extern "C" fn win32_is_window(hwnd : UInt64) -> Int = "IsWindow"
+extern "C" fn win32_is_window(hwnd : UInt64) -> Int32 = "IsWindow"
 
 ///|
 extern "C" fn win32_get_dc(hwnd : UInt64) -> UInt64 = "GetDC"
 
 ///|
-extern "C" fn win32_release_dc(hwnd : UInt64, dc : UInt64) -> Int = "ReleaseDC"
+extern "C" fn win32_release_dc(hwnd : UInt64, dc : UInt64) -> Int32 = "ReleaseDC"
 
 ///|
 #borrow(bits, bitmap_info)
 extern "C" fn win32_stretch_dibits(
   dc : UInt64,
-  x_dest : Int,
-  y_dest : Int,
-  dest_width : Int,
-  dest_height : Int,
-  x_src : Int,
-  y_src : Int,
-  src_width : Int,
-  src_height : Int,
+  x_dest : Int32,
+  y_dest : Int32,
+  dest_width : Int32,
+  dest_height : Int32,
+  x_src : Int32,
+  y_src : Int32,
+  src_width : Int32,
+  src_height : Int32,
   bits : Bytes,
   bitmap_info : Bytes,
-  usage : UInt,
-  raster_op : UInt,
-) -> Int = "StretchDIBits"
+  usage : UInt32,
+  raster_op : UInt32,
+) -> Int32 = "StretchDIBits"
 
 ///|
-let dib_rgb_colors : UInt = 0
+let dib_rgb_colors : UInt32 = 0
 
 ///|
-let srccopy : UInt = 0x00cc0020
+let srccopy : UInt32 = 0x00cc0020
 
 ///|
 let gdi_error = -1
@@ -38,17 +38,17 @@ let gdi_error = -1
 let trace_logged : Array[Bool] = [false]
 
 ///|
-fn uint32_le_byte(value : UInt, index : Int) -> Byte {
+fn uint32_le_byte(value : UInt32, index : Int32) -> Byte {
   ((value >> (index * 8)) & 0xff).to_byte()
 }
 
 ///|
-fn int32_le_byte(value : Int, index : Int) -> Byte {
+fn int32_le_byte(value : Int32, index : Int32) -> Byte {
   uint32_le_byte(value.reinterpret_as_uint(), index)
 }
 
 ///|
-fn bitmap_info_byte(width : Int, height : Int, index : Int) -> Byte {
+fn bitmap_info_byte(width : Int32, height : Int32, index : Int32) -> Byte {
   if index < 4 {
     int32_le_byte(40, index)
   } else if index < 8 {
@@ -65,16 +65,16 @@ fn bitmap_info_byte(width : Int, height : Int, index : Int) -> Byte {
 }
 
 ///|
-fn make_bitmap_info(width : Int, height : Int) -> Bytes {
+fn make_bitmap_info(width : Int32, height : Int32) -> Bytes {
   Bytes::makei(44, index => bitmap_info_byte(width, height, index))
 }
 
 ///|
 fn bgra_dib_byte(
-  width : Int,
-  row_bytes : Int,
+  width : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
-  index : Int,
+  index : Int32,
 ) -> Byte {
   let pixel_index = index / 4
   let channel = index % 4
@@ -91,9 +91,9 @@ fn bgra_dib_byte(
 
 ///|
 fn make_bgra_dib_pixels(
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
 ) -> Bytes {
   Bytes::makei(width * height * 4, index => {
@@ -103,9 +103,9 @@ fn make_bgra_dib_pixels(
 
 ///|
 fn trace_present(
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
 ) -> Unit {
   if trace_logged[0] {
@@ -128,11 +128,11 @@ fn trace_present(
 ///|
 fn present_rgba_to_window(
   hwnd : UInt64,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : Bytes,
-) -> Int {
+) -> Int32 {
   if hwnd == 0 || win32_is_window(hwnd) == 0 {
     return 1
   }

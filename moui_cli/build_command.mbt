@@ -30,8 +30,8 @@ priv struct BuildCommandOptions {
   // Platform-specific product override.
   product_name : String?
   abi : String?
-  compile_sdk : Int?
-  target_sdk : Int?
+  compile_sdk : Int32?
+  target_sdk : Int32?
   sdk : String?
   arch : String?
   deployment_target : String?
@@ -107,8 +107,8 @@ fn parse_build_args(
   let release = Ref(false)
   let product_name : Ref[String?] = Ref(None)
   let abi : Ref[String?] = Ref(None)
-  let compile_sdk : Ref[Int?] = Ref(None)
-  let target_sdk : Ref[Int?] = Ref(None)
+  let compile_sdk : Ref[Int32?] = Ref(None)
+  let target_sdk : Ref[Int32?] = Ref(None)
   let sdk : Ref[String?] = Ref(None)
   let arch : Ref[String?] = Ref(None)
   let deployment_target : Ref[String?] = Ref(None)
@@ -270,7 +270,7 @@ fn parse_build_args(
 
 ///|
 /// Parse a decimal integer. Returns `Err` on empty input or non-digit characters.
-fn parse_int(value : String) -> Result[Int, String] {
+fn parse_int(value : String) -> Result[Int32, String] {
   if value == "" {
     return Err("empty integer")
   }

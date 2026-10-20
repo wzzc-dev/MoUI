@@ -76,7 +76,7 @@ pub(all) enum Shape {
   CapsuleY(Double, Double)
   CapsuleZ(Double, Double)
   Triangle(@moui_3d.Vec3, @moui_3d.Vec3, @moui_3d.Vec3)
-  Trimesh(Array[@moui_3d.Vec3], Array[(Int, Int, Int)])
+  Trimesh(Array[@moui_3d.Vec3], Array[(Int32, Int32, Int32)])
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -107,10 +107,10 @@ pub extend BodyDesc with ToJson::{to_json}
 
 ///|
 pub fn BodyDesc::new(
-  body_type? : BodyType = Dynamic,
-  position? : @moui_3d.Vec3 = @moui_3d.Vec3::zero(),
-  rotation? : @moui_3d.Quat = @moui_3d.Quat::identity(),
-  gravity_scale? : Double = 1.0,
+  body_type~ : BodyType = Dynamic,
+  position~ : @moui_3d.Vec3 = @moui_3d.Vec3::zero(),
+  rotation~ : @moui_3d.Quat = @moui_3d.Quat::identity(),
+  gravity_scale~ : Double = 1.0,
 ) -> BodyDesc {
   { body_type, position, rotation, gravity_scale, }
 }
@@ -156,10 +156,10 @@ pub extend ColliderDesc with ToJson::{to_json}
 ///|
 pub fn ColliderDesc::new(
   shape~ : Shape,
-  body? : BodyId? = None,
-  sensor? : Bool = false,
-  friction? : Double = 0.5,
-  restitution? : Double = 0.0,
+  body~ : BodyId? = None,
+  sensor~ : Bool = false,
+  friction~ : Double = 0.5,
+  restitution~ : Double = 0.0,
 ) -> ColliderDesc {
   {
     shape,
@@ -250,7 +250,7 @@ pub extend PhysicsWorld with Debug::{to_repr}
 
 ///|
 pub fn PhysicsWorld::new(
-  gravity? : @moui_3d.Vec3 = @moui_3d.Vec3::new(x=0.0, y=-9.81, z=0.0),
+  gravity~ : @moui_3d.Vec3 = @moui_3d.Vec3::new(x=0.0, y=-9.81, z=0.0),
 ) -> PhysicsWorld {
   { gravity, next_body: 1L, next_collider: 1L, bodies: {}, colliders: {}, }
 }
@@ -298,7 +298,7 @@ pub fn PhysicsWorld::collider(
 ///|
 /// Backend hook. The neutral world does not guess physics; an adapter owns the
 /// actual integration and returns a deterministic step count.
-pub fn PhysicsWorld::step(self : PhysicsWorld, delta_seconds : Double) -> Int {
+pub fn PhysicsWorld::step(self : PhysicsWorld, delta_seconds : Double) -> Int32 {
   ignore(self)
   if delta_seconds <= 0.0 {
     0

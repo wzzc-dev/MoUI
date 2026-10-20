@@ -12,7 +12,7 @@ pub struct WindowActions {
 
 ///|
 pub fn WindowActions::new(
-  queue? : WindowRequestQueue = WindowRequestQueue::new(),
+  queue~ : WindowRequestQueue = WindowRequestQueue::new(),
 ) -> WindowActions {
   { queue, }
 }
@@ -34,9 +34,9 @@ pub fn WindowActions::queue(self : WindowActions) -> WindowRequestQueue {
 pub fn WindowActions::open(
   self : WindowActions,
   title~ : String,
-  scene? : @backend_host.WindowScene = @backend_host.WindowScene::main(),
+  scene~ : @backend_host.WindowScene = @backend_host.WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  primary? : Bool = false,
+  primary~ : Bool = false,
 ) -> Unit {
   self.queue.open_window(title~, scene~, metrics~, primary~)
 }

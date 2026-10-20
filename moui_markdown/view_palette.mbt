@@ -58,11 +58,11 @@ pub fn[Msg] markdown_format_palette(
   on_action~ : (String) -> Msg,
   on_done~ : Msg,
   width~ : Double,
-  title? : String = "Quick Format",
-  filter_placeholder? : String = "Filter",
-  done_label? : String = "Done",
-  empty_label? : String = "No commands",
-  key_prefix? : String = "markdown",
+  title~ : String = "Quick Format",
+  filter_placeholder~ : String = "Filter",
+  done_label~ : String = "Done",
+  empty_label~ : String = "No commands",
+  key_prefix~ : String = "markdown",
 ) -> @moui.View[Msg] {
   let panel_width = width.min(MARKDOWN_FORMAT_PALETTE_WIDTH)
   let content_width = (panel_width - theme.spacing_scale.md * 2.0).max(120.0)

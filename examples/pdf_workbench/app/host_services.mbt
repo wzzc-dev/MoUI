@@ -2,7 +2,7 @@
 fn PdfWorkbenchModel::request_startup_pdf(
   self : PdfWorkbenchModel,
   startup_pdf_path : String,
-  startup_page_number : Int,
+  startup_page_number : Int32,
   services : @services.AppServices,
 ) -> PdfWorkbenchUpdate {
   let path = startup_pdf_path.trim().to_owned()

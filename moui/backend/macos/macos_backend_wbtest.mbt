@@ -72,24 +72,24 @@ test "macos host options carry optional scene resolver and smoke options stay se
 }
 
 ///|
-extern "C" fn macos_gpu_surface_presenter_test() -> Int = "moui_macos_gpu_surface_presenter_test"
+extern "C" fn macos_gpu_surface_presenter_test() -> Int32 = "moui_macos_gpu_surface_presenter_test"
 
 ///|
-extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int = "moui_macos_gpu_surface_partial_overlay_hit_test"
+extern "C" fn macos_gpu_surface_partial_overlay_hit_test() -> Int32 = "moui_macos_gpu_surface_partial_overlay_hit_test"
 
 ///|
 /// Exercises the presenter drag-region associated object, the `hitTest:` gate
 /// that lets `mouseDown:` run, and the set/clear FFI entry points.
-extern "C" fn macos_drag_region_test() -> Int = "moui_macos_drag_region_test"
+extern "C" fn macos_drag_region_test() -> Int32 = "moui_macos_drag_region_test"
 
 ///|
 /// The CPU presenter must keep a stable layer-backed view and swap its image
 /// contents directly; replacing an NSImageView image causes AppKit flash-white
 /// frames while a neighboring scroll view is invalidating the host window.
-extern "C" fn macos_cpu_presenter_stable_layer_test() -> Int = "moui_macos_cpu_presenter_stable_layer_test"
+extern "C" fn macos_cpu_presenter_stable_layer_test() -> Int32 = "moui_macos_cpu_presenter_stable_layer_test"
 
 ///|
-extern "C" fn macos_accessibility_view_adapter_test() -> Int = "moui_macos_accessibility_view_adapter_test"
+extern "C" fn macos_accessibility_view_adapter_test() -> Int32 = "moui_macos_accessibility_view_adapter_test"
 
 ///|
 test "macOS GPU surface uses a transparent reorderable presenter sibling" {

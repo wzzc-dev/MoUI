@@ -213,8 +213,8 @@ fn welcome_grid_columns(
   available~ : Double,
   min_column_width~ : Double,
   column_spacing~ : Double,
-  max_columns~ : Int,
-) -> Int {
+  max_columns~ : Int32,
+) -> Int32 {
   let min_column_width = min_column_width.max(1.0)
   let max_columns = max_columns.max(1)
   let mut columns = 1
@@ -234,7 +234,7 @@ fn welcome_grid_columns(
 ///|
 fn welcome_cell_width(
   available : Double,
-  columns : Int,
+  columns : Int32,
   column_spacing : Double,
 ) -> Double {
   let columns = columns.max(1)

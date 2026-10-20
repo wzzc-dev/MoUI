@@ -142,7 +142,7 @@ fn validate_step(
   repo_root : String,
   profile_name : String,
   step_json : Json,
-  step_index : Int,
+  step_index : Int32,
   failures : Array[String],
 ) -> Unit {
   let label = profile_name + ".steps[\{step_index}]"
@@ -310,7 +310,7 @@ fn load_catalog(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   let options = match parse_cli(args) {
     Ok(value) => value
     Err(message) => {

@@ -193,7 +193,7 @@ fn calendar_month_grid(
 
 ///|
 /// Days in a civil month, accounting for leap years on February.
-fn desktop_days_in_month(month : Int, year : Int) -> Int {
+fn desktop_days_in_month(month : Int32, year : Int32) -> Int32 {
   match month {
     1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
     4 | 6 | 9 | 11 => 30
@@ -210,7 +210,7 @@ fn desktop_days_in_month(month : Int, year : Int) -> Int {
 ///|
 fn calendar_row(
   labels : Array[String],
-  selected_day : Int?,
+  selected_day : Int32?,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {

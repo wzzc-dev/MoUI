@@ -15,7 +15,7 @@ pub(all) struct CodeCompletionItem {
 pub fn CodeCompletionItem::new(
   label~ : String,
   insert_text~ : String,
-  detail? : String = "",
+  detail~ : String = "",
 ) -> CodeCompletionItem {
   { label, insert_text, detail, }
 }
@@ -35,16 +35,16 @@ pub fn CodeHover::new(symbol~ : String, detail~ : String) -> CodeHover {
 pub(all) struct CodeDefinition {
   symbol : String
   file : String
-  line : Int
-  column : Int
+  line : Int32
+  column : Int32
 }
 
 ///|
 pub fn CodeDefinition::new(
   symbol~ : String,
   file~ : String,
-  line~ : Int,
-  column~ : Int,
+  line~ : Int32,
+  column~ : Int32,
 ) -> CodeDefinition {
   { symbol, file, line, column, }
 }
@@ -77,9 +77,9 @@ pub struct CodeLanguageProvider {
   id : String
   label : String
   tokenizer : (String) -> Array[CodeEditorToken]
-  completion_provider : (String, Int) -> Array[CodeCompletionItem]
-  hover_provider : (String, Int) -> CodeHover?
-  definition_provider : (String, Int) -> CodeDefinition?
+  completion_provider : (String, Int32) -> Array[CodeCompletionItem]
+  hover_provider : (String, Int32) -> CodeHover?
+  definition_provider : (String, Int32) -> CodeDefinition?
   diagnostic_provider : (String) -> Array[CodeDiagnostic]
 }
 
@@ -88,10 +88,10 @@ pub fn CodeLanguageProvider::new(
   id~ : String,
   label~ : String,
   tokenizer~ : (String) -> Array[CodeEditorToken],
-  completion_provider~ : (String, Int) -> Array[CodeCompletionItem],
-  hover_provider~ : (String, Int) -> CodeHover?,
-  definition_provider~ : (String, Int) -> CodeDefinition?,
-  diagnostic_provider? : (String) -> Array[CodeDiagnostic] = no_code_diagnostics,
+  completion_provider~ : (String, Int32) -> Array[CodeCompletionItem],
+  hover_provider~ : (String, Int32) -> CodeHover?,
+  definition_provider~ : (String, Int32) -> CodeDefinition?,
+  diagnostic_provider~ : (String) -> Array[CodeDiagnostic] = no_code_diagnostics,
 ) -> CodeLanguageProvider {
   {
     id,
@@ -154,7 +154,7 @@ pub fn CodeLanguageRegistry::completions(
   self : CodeLanguageRegistry,
   language_id : String,
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> Array[CodeCompletionItem] {
   match self.find_provider(language_id) {
     Some(provider) => (provider.completion_provider)(source, offset)
@@ -167,7 +167,7 @@ pub fn CodeLanguageRegistry::hover(
   self : CodeLanguageRegistry,
   language_id : String,
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> CodeHover? {
   match self.find_provider(language_id) {
     Some(provider) => (provider.hover_provider)(source, offset)
@@ -180,7 +180,7 @@ pub fn CodeLanguageRegistry::definition(
   self : CodeLanguageRegistry,
   language_id : String,
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> CodeDefinition? {
   match self.find_provider(language_id) {
     Some(provider) => (provider.definition_provider)(source, offset)
@@ -421,7 +421,7 @@ fn merge_adjacent_tokens(
 }
 
 ///|
-fn word_at(source : String, offset : Int) -> String {
+fn word_at(source : String, offset : Int32) -> String {
   let chars = source.to_array()
   if chars.is_empty() {
     return ""
@@ -446,7 +446,7 @@ fn word_at(source : String, offset : Int) -> String {
 }
 
 ///|
-fn word_prefix_at(source : String, offset : Int) -> String {
+fn word_prefix_at(source : String, offset : Int32) -> String {
   let chars = source.to_array()
   let end = clamp_int(offset, 0, chars.length())
   let mut start = end

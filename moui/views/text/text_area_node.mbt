@@ -6,7 +6,7 @@ priv struct TextArea {
   theme : @core.Theme?
   variant : @style.TextFieldVariant
   style : @style.TextFieldStyle?
-  lines : Int
+  lines : Int32
   line_height : Double
   has_on_submit : Bool
   key : String?

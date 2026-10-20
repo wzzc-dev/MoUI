@@ -1,9 +1,9 @@
 ///|
 fn host_test_text_field(
   value : String,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
-  outlined? : Bool = false,
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
+  outlined~ : Bool = false,
 ) -> @core.View[String] {
   let normal_border = if outlined {
     Some(
@@ -59,9 +59,9 @@ fn host_test_text_field(
 fn host_test_text_field_runtime(
   value~ : Ref[String],
   size~ : @core.Size,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
-  outlined? : Bool = false,
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
+  outlined~ : Bool = false,
 ) -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
     program=@core.Program::simple(

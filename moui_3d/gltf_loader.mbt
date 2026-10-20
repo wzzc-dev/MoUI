@@ -6,8 +6,8 @@
 /// are obtained through `resolve`.
 pub fn load_gltf_scene(
   json : String,
-  binary? : Bytes? = None,
-  resolve? : GltfResourceResolver? = None,
+  binary~ : Bytes? = None,
+  resolve~ : GltfResourceResolver? = None,
 ) -> Scene raise GltfError {
   let root : GltfRoot = @json.from_json(@json.parse(json)) catch {
     err => raise InvalidJson(err.to_string())
@@ -329,7 +329,7 @@ pub fn load_gltf_scene(
       ),
     )
   }
-  let parents : Array[Int?] = Array::make(nodes.length(), None)
+  let parents : Array[Int32?] = Array::make(nodes.length(), None)
   for parent_index, node in nodes {
     for child in node.children.unwrap_or([]) {
       if child < 0 || child >= parents.length() {
@@ -342,7 +342,7 @@ pub fn load_gltf_scene(
     }
   }
   for index in 0..<nodes.length() {
-    let seen : Array[Int] = []
+    let seen : Array[Int32] = []
     let mut current = index
     while current >= 0 {
       if seen.contains(current) {
@@ -661,8 +661,8 @@ fn vec4_from_array(values : Array[Double]?, fallback : Vec4) -> Vec4 {
 }
 
 ///|
-fn sequential_indices(length : Int) -> Array[Int] {
-  let result : Array[Int] = []
+fn sequential_indices(length : Int32) -> Array[Int32] {
+  let result : Array[Int32] = []
   for index in 0..<length {
     result.push(index)
   }
@@ -693,7 +693,7 @@ fn decode_data_uri(uri : String) -> Bytes? {
 
 ///|
 fn filter_from_gltf(
-  value : Int?,
+  value : Int32?,
   mipmap : Bool,
 ) -> SamplerFilter raise GltfError {
   match value {
@@ -709,7 +709,7 @@ fn filter_from_gltf(
 }
 
 ///|
-fn wrap_from_gltf(value : Int?) -> SamplerWrap raise GltfError {
+fn wrap_from_gltf(value : Int32?) -> SamplerWrap raise GltfError {
   match value {
     None => Repeat
     Some(10497) => Repeat
@@ -721,7 +721,7 @@ fn wrap_from_gltf(value : Int?) -> SamplerWrap raise GltfError {
 
 ///|
 fn decode_vec3_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
@@ -742,7 +742,7 @@ fn decode_vec3_accessor(
 
 ///|
 fn decode_vec2_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
@@ -763,7 +763,7 @@ fn decode_vec2_accessor(
 
 ///|
 fn decode_vec4_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
@@ -779,11 +779,11 @@ fn decode_vec4_accessor(
 
 ///|
 fn decode_joints_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
-) -> Array[(Int, Int, Int, Int)] raise GltfError {
+) -> Array[(Int32, Int32, Int32, Int32)] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "VEC4" ||
     (accessor.componentType != 5121 && accessor.componentType != 5123) {
@@ -796,7 +796,7 @@ fn decode_joints_accessor(
 
 ///|
 fn decode_mat4_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
@@ -829,11 +829,11 @@ fn decode_mat4_accessor(
 
 ///|
 fn decode_indices_accessor(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
-) -> Array[Int] raise GltfError {
+) -> Array[Int32] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   if accessor.accessor_kind != "SCALAR" {
     raise UnsupportedAccessorType(accessor.accessor_kind)
@@ -851,11 +851,11 @@ fn decode_indices_accessor(
 
 ///|
 fn decode_accessor_values(
-  accessor_index : Int,
+  accessor_index : Int32,
   accessors : Array[GltfAccessorJson],
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
-  components : Int,
+  components : Int32,
 ) -> Array[Array[Double]] raise GltfError {
   let accessor = accessor_at(accessor_index, accessors)
   let component_size = component_size_for(accessor.componentType)
@@ -984,7 +984,7 @@ fn decode_accessor_values(
 
 ///|
 fn accessor_at(
-  index : Int,
+  index : Int32,
   accessors : Array[GltfAccessorJson],
 ) -> GltfAccessorJson raise GltfError {
   if index < 0 || index >= accessors.length() {
@@ -994,7 +994,7 @@ fn accessor_at(
 }
 
 ///|
-fn component_size_for(component_type : Int) -> Int {
+fn component_size_for(component_type : Int32) -> Int32 {
   if component_type == 5120 || component_type == 5121 {
     1
   } else if component_type == 5122 || component_type == 5123 {
@@ -1009,8 +1009,8 @@ fn component_size_for(component_type : Int) -> Int {
 ///|
 fn read_component(
   bytes : Bytes,
-  offset : Int,
-  component_type : Int,
+  offset : Int32,
+  component_type : Int32,
   normalized : Bool,
 ) -> Double {
   if component_type == 5126 {
@@ -1053,12 +1053,12 @@ fn read_component(
 }
 
 ///|
-fn read_u16_le(bytes : Bytes, offset : Int) -> Int {
+fn read_u16_le(bytes : Bytes, offset : Int32) -> Int32 {
   bytes[offset].to_int() | (bytes[offset + 1].to_int() << 8)
 }
 
 ///|
-fn read_u32_le_unsigned(bytes : Bytes, offset : Int) -> UInt {
+fn read_u32_le_unsigned(bytes : Bytes, offset : Int32) -> UInt32 {
   bytes[offset].to_uint() |
   (bytes[offset + 1].to_uint() << 8) |
   (bytes[offset + 2].to_uint() << 16) |
@@ -1067,7 +1067,7 @@ fn read_u32_le_unsigned(bytes : Bytes, offset : Int) -> UInt {
 
 ///|
 fn read_buffer_view(
-  index : Int,
+  index : Int32,
   views : Array[GltfBufferView],
   buffers : Array[Bytes?],
 ) -> Bytes raise GltfError {

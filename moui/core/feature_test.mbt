@@ -1,6 +1,6 @@
 ///|
 struct ChildModel {
-  count : Int
+  count : Int32
   label : String
 } derive(Eq, Debug)
 

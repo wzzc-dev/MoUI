@@ -1,8 +1,8 @@
 ///|
 fn render_command_estimated_dirty_rect(
   command : RenderCommand,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   match command {
     Clear(_) =>
@@ -691,8 +691,8 @@ fn render_command_estimated_dirty_rect(
 ///|
 fn render_pixmap_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> @graphics.PixelRect? {
   non_empty_pixel_rect(
     @graphics.PixelRect::new(
@@ -707,10 +707,10 @@ fn render_pixmap_estimated_dirty_rect(
 ///|
 fn render_scaled_pixmap_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   guard width > 0 && height > 0 else { return None }
   guard pixmap.get_width() > 0 && pixmap.get_height() > 0 else { return None }
@@ -761,10 +761,10 @@ fn render_transformed_pixmap_rect_estimated_dirty_rect(
 fn render_scaled_pixmap_rect_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   guard width > 0 && height > 0 else { return None }
   let src_bounds = @graphics.PixelRect::new(
@@ -787,10 +787,10 @@ fn render_scaled_pixmap_rect_estimated_dirty_rect(
 ///|
 fn render_nine_patch_pixmap_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   guard width > 0 && height > 0 else { return None }
   guard pixmap.get_width() > 0 && pixmap.get_height() > 0 else { return None }
@@ -801,10 +801,10 @@ fn render_nine_patch_pixmap_estimated_dirty_rect(
 fn render_tiled_pixmap_rect_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   guard width > 0 && height > 0 else { return None }
   let src_bounds = @graphics.PixelRect::new(
@@ -828,8 +828,8 @@ fn render_tiled_pixmap_rect_estimated_dirty_rect(
 fn render_pixmap_rect_estimated_dirty_rect(
   pixmap : @graphics.Pixmap,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> @graphics.PixelRect? {
   let src_bounds = @graphics.PixelRect::new(
     x=0,

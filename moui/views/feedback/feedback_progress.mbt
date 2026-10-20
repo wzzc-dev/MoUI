@@ -2,15 +2,15 @@
 pub fn[Msg] progress_status(
   title : String,
   value~ : Double,
-  message? : String = "",
-  status? : String = "",
-  tone? : @style.FeedbackTone = Info,
-  action? : @controls.StateViewAction[Msg]? = None,
+  message~ : String = "",
+  status~ : String = "",
+  tone~ : @style.FeedbackTone = Info,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
   badge_style? : @style.BadgeStyle,
   progress_style? : @style.ProgressStyle,
-  width? : Double = 420.0,
+  width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)

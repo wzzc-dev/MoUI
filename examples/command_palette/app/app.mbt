@@ -282,7 +282,7 @@ pub fn CommandPaletteModel::view(
 ///|
 pub fn CommandPaletteApp::program(
   self : CommandPaletteApp,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
   program(environment~)
@@ -290,7 +290,7 @@ pub fn CommandPaletteApp::program(
 
 ///|
 pub fn program(
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   CommandPaletteModel::new().program(environment~)
 }
@@ -298,7 +298,7 @@ pub fn program(
 ///|
 pub fn CommandPaletteModel::program(
   self : CommandPaletteModel,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   let services = environment.services()
   @moui.Program::new(

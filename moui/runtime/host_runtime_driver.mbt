@@ -13,7 +13,7 @@ pub(all) struct HostRuntimeDriver {
 pub fn HostRuntimeDriver::new(
   runtime~ : AppRuntime,
   schedule_redraw~ : () -> Unit,
-  frame_clock? : (() -> Double)? = None,
+  frame_clock~ : (() -> Double)? = None,
 ) -> HostRuntimeDriver {
   let driver = {
     runtime,

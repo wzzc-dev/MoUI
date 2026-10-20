@@ -48,7 +48,7 @@ priv struct MarkdownReferenceDefinition {
 fn markdown_inline(
   text : String,
   kind : MarkdownInlineKind,
-  target? : String? = None,
+  target~ : String? = None,
 ) -> MarkdownInline {
   { text, kind, target, }
 }
@@ -56,7 +56,7 @@ fn markdown_inline(
 ///|
 struct MarkdownHtmlEntityDecodeResult {
   ch : Char
-  end : Int
+  end : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -88,7 +88,7 @@ fn markdown_decode_html_entities(text : String) -> String {
 ///|
 fn markdown_html_entity_decode_at(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
 ) -> MarkdownHtmlEntityDecodeResult? {
   if start < 0 || start >= chars.length() || chars[start] != '&' {
     return None
@@ -151,9 +151,9 @@ fn markdown_numeric_html_entity_char(name : String) -> Char? {
 ///|
 fn markdown_parse_html_entity_number(
   chars : Array[Char],
-  start : Int,
-  radix : Int,
-) -> Int? {
+  start : Int32,
+  radix : Int32,
+) -> Int32? {
   if start >= chars.length() {
     return None
   }
@@ -173,7 +173,7 @@ fn markdown_parse_html_entity_number(
 }
 
 ///|
-fn markdown_html_entity_digit_value(ch : Char, radix : Int) -> Int? {
+fn markdown_html_entity_digit_value(ch : Char, radix : Int32) -> Int32? {
   let value = if ch >= '0' && ch <= '9' {
     ch.to_int() - '0'.to_int()
   } else if ch >= 'a' && ch <= 'f' {
@@ -290,7 +290,7 @@ fn markdown_parse_inlines_preserving_plain_html(
 
 ///|
 /// End of the backtick run starting at `start` (exclusive).
-fn markdown_backtick_run_end(chars : Array[Char], start : Int) -> Int {
+fn markdown_backtick_run_end(chars : Array[Char], start : Int32) -> Int32 {
   let mut index = start
   while index < chars.length() && chars[index] == '`' {
     index = index + 1
@@ -304,9 +304,9 @@ fn markdown_backtick_run_end(chars : Array[Char], start : Int) -> Int {
 /// line and is therefore literal text.
 fn markdown_backtick_run_closer(
   chars : Array[Char],
-  from : Int,
-  length : Int,
-) -> Int? {
+  from : Int32,
+  length : Int32,
+) -> Int32? {
   let mut index = from
   while index < chars.length() && chars[index] != '\n' {
     if chars[index] == '`' {
@@ -351,7 +351,7 @@ fn markdown_append_parsed_inline_segment(
 /// the segment's trailing blank run the parse dropped.
 fn markdown_restore_trailing_whitespace(
   spans : Array[MarkdownInline],
-  from : Int,
+  from : Int32,
   text : String,
 ) -> Unit {
   let chars = text.to_array()
@@ -449,7 +449,7 @@ fn markdown_normalize_html_inlines(
 }
 
 ///|
-fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
+fn markdown_protected_inline_end(chars : Array[Char], start : Int32) -> Int32? {
   if chars[start] == '`' {
     let mut index = start + 1
     while index < chars.length() && chars[index] != '`' && chars[index] != '\n' {
@@ -472,7 +472,7 @@ fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
 }
 
 ///|
-fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
+fn markdown_bracketed_inline_end(chars : Array[Char], open : Int32) -> Int32? {
   let mut close = open + 1
   while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
     close = close + 1
@@ -541,7 +541,7 @@ fn markdown_html_inline_plain_text(html : String) -> String {
 }
 
 ///|
-fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
+fn markdown_html_inline_tag_end(chars : Array[Char], start : Int32) -> Int32? {
   if start + 2 >= chars.length() || chars[start] != '<' {
     return None
   }
@@ -1021,7 +1021,7 @@ fn markdown_expand_reference_links(
 ///|
 /// Index of the `]` matching the `[` at `start`, honoring backslash escapes
 /// and nested bracket pairs. `None` when the bracket never closes.
-fn markdown_scan_balanced_bracket(chars : Array[Char], start : Int) -> Int? {
+fn markdown_scan_balanced_bracket(chars : Array[Char], start : Int32) -> Int32? {
   let mut depth = 0
   let mut index = start
   while index < chars.length() {
@@ -1172,7 +1172,7 @@ fn markdown_definition_list_text(items : Array[@md.DefinitionItem]) -> String {
 /// for callers without source context (nested lists inside quotes).
 fn markdown_list_item_text(
   item : @md.ListItem,
-  source_text? : String? = None,
+  source_text~ : String? = None,
 ) -> String {
   match source_text {
     Some(source) =>
@@ -1205,7 +1205,7 @@ fn markdown_list_item_text_flattened(item : @md.ListItem) -> String {
 }
 
 ///|
-fn markdown_heading_source(level : Int, text : String) -> String {
+fn markdown_heading_source(level : Int32, text : String) -> String {
   let marks : Array[Char] = []
   for _ in 0..<level {
     marks.push('#')
@@ -1222,7 +1222,7 @@ fn markdown_heading_visible_source_text(source : StringView) -> String {
 }
 
 ///|
-fn markdown_heading_source_content_start_offset(source : StringView) -> Int {
+fn markdown_heading_source_content_start_offset(source : StringView) -> Int32 {
   let chars = source.to_array()
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
@@ -1240,8 +1240,8 @@ fn markdown_heading_source_content_start_offset(source : StringView) -> Int {
 ///|
 fn markdown_heading_source_content_end_offset(
   source : StringView,
-  content_start : Int,
-) -> Int {
+  content_start : Int32,
+) -> Int32 {
   let chars = source.to_array()
   let mut end = chars.length()
   while end > content_start && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {

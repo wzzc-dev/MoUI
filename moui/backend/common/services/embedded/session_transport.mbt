@@ -22,8 +22,8 @@ pub extend HostSessionState with ToJson::{to_json}
 
 ///|
 pub(all) struct HostSession {
-  mut generation : Int
-  mut surface_epoch : Int
+  mut generation : Int32
+  mut surface_epoch : Int32
   mut state : HostSessionState
   mut attached_once : Bool
 } derive(Debug, ToJson)
@@ -35,7 +35,7 @@ pub extend HostSession with Debug::{to_repr}
 pub extend HostSession with ToJson::{to_json}
 
 ///|
-pub fn HostSession::new(generation~ : Int) -> HostSession {
+pub fn HostSession::new(generation~ : Int32) -> HostSession {
   {
     generation: if generation > 0 {
       generation
@@ -49,12 +49,12 @@ pub fn HostSession::new(generation~ : Int) -> HostSession {
 }
 
 ///|
-pub fn HostSession::generation(self : HostSession) -> Int {
+pub fn HostSession::generation(self : HostSession) -> Int32 {
   self.generation
 }
 
 ///|
-pub fn HostSession::surface_epoch(self : HostSession) -> Int {
+pub fn HostSession::surface_epoch(self : HostSession) -> Int32 {
   self.surface_epoch
 }
 
@@ -64,7 +64,7 @@ pub fn HostSession::state(self : HostSession) -> HostSessionState {
 }
 
 ///|
-pub fn HostSession::attach(self : HostSession, surface_epoch~ : Int) -> Bool {
+pub fn HostSession::attach(self : HostSession, surface_epoch~ : Int32) -> Bool {
   if surface_epoch <= 0 {
     return false
   }
@@ -175,7 +175,7 @@ pub fn HostFrameScheduler::reset(self : HostFrameScheduler) -> Unit {
 
 ///|
 pub(all) struct HostRequestId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -189,7 +189,7 @@ pub extend HostRequestId with ToJson::{to_json}
 
 ///|
 pub struct HostChannel {
-  mut next_request_id : Int
+  mut next_request_id : Int32
   mut pending : Array[HostRequestId]
   mut updates : Array[HostWireUpdate]
 } derive(Debug, ToJson)
@@ -230,7 +230,7 @@ pub fn HostChannel::complete(self : HostChannel, id : HostRequestId) -> Bool {
 /// request type.
 pub fn HostChannel::track_request(
   self : HostChannel,
-  id~ : Int,
+  id~ : Int32,
 ) -> HostRequestId? {
   if id <= 0 || self.pending.any(item => item.value == id) {
     None
@@ -242,7 +242,7 @@ pub fn HostChannel::track_request(
 }
 
 ///|
-pub fn HostChannel::complete_request(self : HostChannel, id~ : Int) -> Bool {
+pub fn HostChannel::complete_request(self : HostChannel, id~ : Int32) -> Bool {
   match self.pending.search_by(item => item.value == id) {
     Some(index) => {
       ignore(self.pending.remove(index))
@@ -259,7 +259,7 @@ pub fn HostChannel::reset(self : HostChannel) -> Unit {
 }
 
 ///|
-pub fn HostChannel::pending_count(self : HostChannel) -> Int {
+pub fn HostChannel::pending_count(self : HostChannel) -> Int32 {
   self.pending.length()
 }
 
@@ -286,7 +286,7 @@ pub fn HostChannel::enqueue_update(
   self : HostChannel,
   kind~ : String,
   payload~ : Json,
-  request_id? : HostRequestId? = None,
+  request_id~ : HostRequestId? = None,
 ) -> Bool {
   if kind == "" {
     return false
@@ -304,9 +304,9 @@ pub fn HostChannel::drain_updates(self : HostChannel) -> Array[HostWireUpdate] {
 
 ///|
 pub(all) struct HostWireEnvelope {
-  schema_version : Int
-  session_generation : Int
-  surface_epoch : Int
+  schema_version : Int32
+  session_generation : Int32
+  surface_epoch : Int32
   updates : Array[HostWireUpdate]
 } derive(Eq, Debug, ToJson)
 
@@ -321,8 +321,8 @@ pub extend HostWireEnvelope with ToJson::{to_json}
 
 ///|
 pub fn HostWireEnvelope::new(
-  session_generation~ : Int,
-  surface_epoch~ : Int,
+  session_generation~ : Int32,
+  surface_epoch~ : Int32,
   updates~ : Array[HostWireUpdate],
 ) -> HostWireEnvelope {
   {
@@ -382,7 +382,7 @@ fn host_wire_string(value : Json?) -> String? {
 }
 
 ///|
-fn host_wire_int(value : Json?) -> Int? {
+fn host_wire_int(value : Json?) -> Int32? {
   match value {
     Some(Number(number, repr=_)) => {
       let integer = number.to_int()
@@ -446,7 +446,7 @@ pub struct HostSessionTransport {
 
 ///|
 pub fn HostSessionTransport::new(
-  initial_generation~ : Int,
+  initial_generation~ : Int32,
 ) -> HostSessionTransport {
   {
     session: HostSession::new(generation=initial_generation),
@@ -458,12 +458,14 @@ pub fn HostSessionTransport::new(
 ///|
 pub fn HostSessionTransport::session_generation(
   self : HostSessionTransport,
-) -> Int {
+) -> Int32 {
   self.session.generation()
 }
 
 ///|
-pub fn HostSessionTransport::surface_epoch(self : HostSessionTransport) -> Int {
+pub fn HostSessionTransport::surface_epoch(
+  self : HostSessionTransport,
+) -> Int32 {
   self.session.surface_epoch()
 }
 
@@ -475,7 +477,7 @@ pub fn HostSessionTransport::attached(self : HostSessionTransport) -> Bool {
 ///|
 pub fn HostSessionTransport::attach(
   self : HostSessionTransport,
-  surface_epoch~ : Int,
+  surface_epoch~ : Int32,
 ) -> Bool {
   let attached = self.session.attach(surface_epoch~)
   if attached {
@@ -534,7 +536,7 @@ pub fn HostSessionTransport::frame_requested(
 ///|
 pub fn HostSessionTransport::track_request(
   self : HostSessionTransport,
-  id~ : Int,
+  id~ : Int32,
 ) -> Bool {
   self.attached() && self.channel.track_request(id~) is Some(_)
 }
@@ -542,7 +544,7 @@ pub fn HostSessionTransport::track_request(
 ///|
 pub fn HostSessionTransport::complete_request(
   self : HostSessionTransport,
-  id~ : Int,
+  id~ : Int32,
 ) -> Bool {
   self.attached() && self.channel.complete_request(id~)
 }
@@ -552,7 +554,7 @@ pub fn HostSessionTransport::enqueue_update(
   self : HostSessionTransport,
   kind~ : String,
   payload~ : Json,
-  request_id? : Int? = None,
+  request_id~ : Int32? = None,
 ) -> Bool {
   if !self.attached() {
     return false
@@ -574,7 +576,7 @@ pub fn HostSessionTransport::enqueue_tracked_update(
   self : HostSessionTransport,
   kind~ : String,
   payload~ : Json,
-  request_id~ : Int,
+  request_id~ : Int32,
 ) -> Bool {
   if !self.attached() ||
     self.channel.pending.any(item => item.value == request_id) == false {
@@ -607,7 +609,7 @@ pub fn HostSessionTransport::drain_update_envelope_json(
 ///|
 pub fn HostSessionTransport::accepts_response_generation(
   self : HostSessionTransport,
-  generation~ : Int,
+  generation~ : Int32,
 ) -> Bool {
   self.attached() && generation == self.session.generation()
 }

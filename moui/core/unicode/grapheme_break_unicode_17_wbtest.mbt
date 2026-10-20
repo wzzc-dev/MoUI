@@ -5,7 +5,7 @@
 ///|
 fn assert_unicode_17_grapheme_break_fixture(
   text : String,
-  expected : Array[Int],
+  expected : Array[Int32],
   label : String,
 ) -> Unit raise {
   let actual = TextGraphemeBoundaries::new(text~).boundaries()

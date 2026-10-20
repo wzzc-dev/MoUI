@@ -56,9 +56,9 @@ pub(all) struct DesignOfficialTokenSourceUsage {
   source_ref : String
   token_path : String
   source_locked : Bool
-  anchor_count : Int
-  mapped_anchor_count : Int
-  unmapped_required_anchor_count : Int
+  anchor_count : Int32
+  mapped_anchor_count : Int32
+  unmapped_required_anchor_count : Int32
   status : DesignTokenStatus
   note : String
 } derive(Eq, Debug, ToJson)
@@ -130,12 +130,14 @@ pub fn official_token_source_usage(
 }
 
 ///|
-pub fn official_token_anchor_count(preset : @common.DesignPreset) -> Int {
+pub fn official_token_anchor_count(preset : @common.DesignPreset) -> Int32 {
   official_token_anchors(preset).length()
 }
 
 ///|
-pub fn mapped_official_token_anchor_count(preset : @common.DesignPreset) -> Int {
+pub fn mapped_official_token_anchor_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in official_token_coverage(preset) {
     if item.required &&
@@ -154,7 +156,7 @@ pub fn mapped_official_token_anchor_count(preset : @common.DesignPreset) -> Int 
 ///|
 pub fn unmapped_official_token_anchor_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in official_token_coverage(preset) {
     if item.required &&
@@ -184,14 +186,14 @@ pub fn golden_mappings_without_official_anchor(
 }
 
 ///|
-pub fn unanchored_golden_mapping_count(preset : @common.DesignPreset) -> Int {
+pub fn unanchored_golden_mapping_count(preset : @common.DesignPreset) -> Int32 {
   golden_mappings_without_official_anchor(preset).length()
 }
 
 ///|
 pub fn official_token_anchor_source_lock_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in official_token_coverage(preset) {
     if item.required && item.source_declared && item.source_locked {
@@ -204,7 +206,7 @@ pub fn official_token_anchor_source_lock_count(
 ///|
 pub fn official_token_anchor_source_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in official_token_coverage(preset) {
     if item.required && (!item.source_declared || !item.source_locked) {
@@ -217,7 +219,7 @@ pub fn official_token_anchor_source_gap_count(
 ///|
 pub fn undeclared_official_token_anchor_source_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in official_token_coverage(preset) {
     if item.required && !item.source_declared {
@@ -2369,7 +2371,7 @@ fn anchor(
   official_token : String,
   official_source : String,
   note : String,
-  required? : Bool = true,
+  required~ : Bool = true,
 ) -> DesignOfficialTokenAnchor {
   { preset, category, layer, official_token, official_source, required, note, }
 }
@@ -2404,9 +2406,9 @@ fn official_token_source_locked(source : DesignSystemSource) -> Bool {
 fn build_official_token_source_usage(
   preset : @common.DesignPreset,
   source : DesignSystemSource,
-  anchor_count~ : Int,
-  mapped_anchor_count~ : Int,
-  unmapped_required_anchor_count~ : Int,
+  anchor_count~ : Int32,
+  mapped_anchor_count~ : Int32,
+  unmapped_required_anchor_count~ : Int32,
 ) -> DesignOfficialTokenSourceUsage {
   let source_locked = official_token_source_locked(source)
   let status = if anchor_count == 0 {

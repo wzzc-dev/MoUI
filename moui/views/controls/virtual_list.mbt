@@ -15,7 +15,7 @@ fn[T, Msg] windowed_rows(
   item_height~ : Double,
   viewport_height~ : Double,
   spacing~ : Double,
-  overscan~ : Int,
+  overscan~ : Int32,
   offset~ : @core.Point,
   before_key~ : String,
   after_key~ : String,
@@ -76,9 +76,9 @@ pub fn[T, Msg] lazy_list(
   items : Array[T],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  item_height? : Double = 44.0,
-  viewport_height? : Double = 240.0,
-  spacing? : Double = 0.0,
+  item_height~ : Double = 44.0,
+  viewport_height~ : Double = 240.0,
+  spacing~ : Double = 0.0,
   offset~ : @core.Point,
   on_scroll~ : (@core.Point) -> Msg,
   request? : @core.ScrollRequest,
@@ -114,11 +114,11 @@ pub fn[T, Msg] virtual_list(
   items : Array[T],
   key : (T) -> String,
   row : (T) -> @core.View[Msg],
-  item_height? : Double = 44.0,
-  viewport_height? : Double = 240.0,
-  spacing? : Double = 0.0,
-  overscan? : Int = 1,
-  empty? : @core.View[Msg]? = None,
+  item_height~ : Double = 44.0,
+  viewport_height~ : Double = 240.0,
+  spacing~ : Double = 0.0,
+  overscan~ : Int32 = 1,
+  empty~ : @core.View[Msg]? = None,
   offset~ : @core.Point,
   on_scroll~ : (@core.Point) -> Msg,
   request? : @core.ScrollRequest,
@@ -167,10 +167,10 @@ pub fn[T, Msg] virtual_list(
 
 ///|
 pub fn scroll_to_index(
-  request_id~ : Int,
-  index~ : Int,
-  item_height? : Double = 44.0,
-  spacing? : Double = 0.0,
+  request_id~ : Int32,
+  index~ : Int32,
+  item_height~ : Double = 44.0,
+  spacing~ : Double = 0.0,
 ) -> @core.ScrollRequest {
   let index = @common.view_max_int(0, index)
   let offset = @core.Point::new(

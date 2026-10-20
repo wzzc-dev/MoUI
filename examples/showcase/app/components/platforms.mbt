@@ -155,7 +155,7 @@ pub fn session_runtime_from_selection(
   requested~ : String,
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
-  note? : String = "",
+  note~ : String = "",
 ) -> SessionRuntimeInfo {
   SessionRuntimeInfo::new(
     host~,

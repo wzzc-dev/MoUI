@@ -102,11 +102,11 @@ fn normalized_render_pass_target_key(
 ///|
 pub fn RenderPassDescriptor::new(
   surface : SurfaceDescriptor,
-  target_key? : RendererResourceKey? = None,
-  bounds? : IRect? = None,
-  load_op? : RenderPassLoadOp = LoadExisting,
-  clear_color? : Color? = None,
-  store_op? : RenderPassStoreOp = StorePixels,
+  target_key~ : RendererResourceKey? = None,
+  bounds~ : IRect? = None,
+  load_op~ : RenderPassLoadOp = LoadExisting,
+  clear_color~ : Color? = None,
+  store_op~ : RenderPassStoreOp = StorePixels,
 ) -> RenderPassDescriptor {
   let load_op = resolved_render_pass_load(load_op, clear_color)
   {
@@ -123,8 +123,8 @@ pub fn RenderPassDescriptor::new(
 pub fn RenderPassDescriptor::clear(
   surface : SurfaceDescriptor,
   color : Color,
-  bounds? : IRect? = None,
-  store_op? : RenderPassStoreOp = StorePixels,
+  bounds~ : IRect? = None,
+  store_op~ : RenderPassStoreOp = StorePixels,
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     surface,
@@ -138,10 +138,10 @@ pub fn RenderPassDescriptor::clear(
 ///|
 pub fn RenderPassDescriptor::for_target(
   target : SurfaceTargetDescriptor,
-  bounds? : IRect? = None,
-  load_op? : RenderPassLoadOp = LoadExisting,
-  clear_color? : Color? = None,
-  store_op? : RenderPassStoreOp? = None,
+  bounds~ : IRect? = None,
+  load_op~ : RenderPassLoadOp = LoadExisting,
+  clear_color~ : Color? = None,
+  store_op~ : RenderPassStoreOp? = None,
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     target.surface,
@@ -157,8 +157,8 @@ pub fn RenderPassDescriptor::for_target(
 pub fn RenderPassDescriptor::clear_target(
   target : SurfaceTargetDescriptor,
   color : Color,
-  bounds? : IRect? = None,
-  store_op? : RenderPassStoreOp? = None,
+  bounds~ : IRect? = None,
+  store_op~ : RenderPassStoreOp? = None,
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::for_target(
     target,
@@ -172,8 +172,8 @@ pub fn RenderPassDescriptor::clear_target(
 ///|
 pub fn RenderPassDescriptor::present(
   surface : SurfaceDescriptor,
-  bounds? : IRect? = None,
-  clear_color? : Color? = None,
+  bounds~ : IRect? = None,
+  clear_color~ : Color? = None,
 ) -> RenderPassDescriptor {
   RenderPassDescriptor::new(
     surface,

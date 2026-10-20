@@ -80,13 +80,13 @@ fn valid_fallback_files() -> Map[String, String] {
 
 ///|
 fn verify_fixture(
-  manifest? : Map[String, Json] = valid_manifest(),
-  ownership? : Map[String, Json] = valid_ownership(),
-  status? : Map[String, Json] = valid_status(),
-  targets? : Map[String, Array[String]] = valid_targets(),
-  native_files? : Map[String, String] = valid_native_files(),
-  fallback_files? : Map[String, String] = valid_fallback_files(),
-  smoke_source? : String = "native_canvas_marker=passed",
+  manifest~ : Map[String, Json] = valid_manifest(),
+  ownership~ : Map[String, Json] = valid_ownership(),
+  status~ : Map[String, Json] = valid_status(),
+  targets~ : Map[String, Array[String]] = valid_targets(),
+  native_files~ : Map[String, String] = valid_native_files(),
+  fallback_files~ : Map[String, String] = valid_fallback_files(),
+  smoke_source~ : String = "native_canvas_marker=passed",
 ) -> Result[Unit, String] {
   verify_capability_contract_data(
     manifest, ownership, status, targets, native_files, fallback_files, smoke_source,

@@ -59,7 +59,7 @@ fn performance_parse_cli(
 }
 
 ///|
-fn performance_budget_run(args : Array[String]) -> Int {
+fn performance_budget_run(args : Array[String]) -> Int32 {
   let options = match performance_parse_cli(args) {
     Ok(options) => options
     Err(message) => {

@@ -47,14 +47,14 @@ priv struct WebTextFileCacheEntry {
 
 ///|
 priv struct WebTextFileWriteEntry {
-  request_id : Int
+  request_id : Int32
   path : String
   text : String
 }
 
 ///|
 priv struct WebTextFileReadEntry {
-  request_id : Int
+  request_id : Int32
   path : String
 }
 
@@ -76,7 +76,9 @@ let web_text_file_writes : Ref[Array[WebTextFileWriteEntry]] = Ref([])
 let web_text_file_reads : Ref[Array[WebTextFileReadEntry]] = Ref([])
 
 ///|
-fn WebAsyncHostServiceKind::browser_code(self : WebAsyncHostServiceKind) -> Int {
+fn WebAsyncHostServiceKind::browser_code(
+  self : WebAsyncHostServiceKind,
+) -> Int32 {
   match self {
     ClipboardReadText => -1
     ClipboardReadImage => -4
@@ -227,7 +229,7 @@ fn web_async_host_service_queue() -> @window_services.ServiceAsyncQueue {
 
 ///|
 fn web_complete_async_clipboard_read_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   text : String,
 ) -> Bool {
@@ -251,7 +253,7 @@ fn web_complete_async_clipboard_read_text(
 
 ///|
 fn web_complete_async_clipboard_read_image_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   base64_png : String,
 ) -> Bool {
@@ -284,7 +286,7 @@ fn web_complete_async_clipboard_read_image_text(
 
 ///|
 fn web_complete_async_clipboard_write_image(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
 ) -> Bool {
   match web_active_async_queue.val {
@@ -302,7 +304,7 @@ fn web_complete_async_clipboard_write_image(
 
 ///|
 fn web_complete_async_text_file_read_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   text : String,
 ) -> Bool {
@@ -336,7 +338,7 @@ fn web_complete_async_text_file_read_text(
 
 ///|
 fn web_complete_async_text_file_write_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   text : String,
 ) -> Bool {
@@ -368,7 +370,7 @@ fn web_complete_async_text_file_write_text(
 
 ///|
 fn web_complete_async_file_open_text_values(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   path : String,
   text : String,
@@ -389,7 +391,7 @@ fn web_complete_async_file_open_text_values(
 
 ///|
 fn web_complete_async_file_dialog_selection_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
   selection_text : String,
 ) -> Bool {
@@ -416,9 +418,9 @@ fn web_complete_async_file_dialog_selection_text(
 
 ///|
 pub fn web_complete_async_clipboard_read(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_clipboard_read_text(
@@ -433,9 +435,9 @@ pub fn web_complete_async_clipboard_read(
 
 ///|
 pub fn web_complete_async_clipboard_read_image(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_clipboard_read_image_text(
@@ -448,9 +450,9 @@ pub fn web_complete_async_clipboard_read_image(
 
 ///|
 pub fn web_complete_async_file_dialog(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_file_dialog_selection_text(
@@ -463,10 +465,10 @@ pub fn web_complete_async_file_dialog(
 
 ///|
 pub fn web_complete_async_file_open_text(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  path_id : Int,
-  text_id : Int,
+  path_id : Int32,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_file_open_text_values(
@@ -480,9 +482,9 @@ pub fn web_complete_async_file_open_text(
 
 ///|
 pub fn web_complete_async_text_file_read(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_text_file_read_text(
@@ -495,9 +497,9 @@ pub fn web_complete_async_text_file_read(
 
 ///|
 pub fn web_complete_async_text_file_write(
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   ignore(
     web_complete_async_text_file_write_text(
@@ -523,7 +525,7 @@ fn decode_web_file_dialog_selection(text : String) -> Array[String] {
 }
 
 ///|
-fn web_remember_text_file_read(request_id : Int, path : String) -> Unit {
+fn web_remember_text_file_read(request_id : Int32, path : String) -> Unit {
   let entries : Array[WebTextFileReadEntry] = []
   for entry in web_text_file_reads.val {
     if entry.request_id != request_id {
@@ -535,7 +537,7 @@ fn web_remember_text_file_read(request_id : Int, path : String) -> Unit {
 }
 
 ///|
-fn web_take_text_file_read(request_id : Int) -> WebTextFileReadEntry? {
+fn web_take_text_file_read(request_id : Int32) -> WebTextFileReadEntry? {
   let entries : Array[WebTextFileReadEntry] = []
   let mut found : WebTextFileReadEntry? = None
   for entry in web_text_file_reads.val {
@@ -551,7 +553,7 @@ fn web_take_text_file_read(request_id : Int) -> WebTextFileReadEntry? {
 
 ///|
 fn web_remember_text_file_write(
-  request_id : Int,
+  request_id : Int32,
   path : String,
   text : String,
 ) -> Unit {
@@ -566,7 +568,7 @@ fn web_remember_text_file_write(
 }
 
 ///|
-fn web_take_text_file_write(request_id : Int) -> WebTextFileWriteEntry? {
+fn web_take_text_file_write(request_id : Int32) -> WebTextFileWriteEntry? {
   let entries : Array[WebTextFileWriteEntry] = []
   let mut found : WebTextFileWriteEntry? = None
   for entry in web_text_file_writes.val {

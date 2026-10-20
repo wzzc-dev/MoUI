@@ -18,7 +18,7 @@ pub extend InputDispatchResult with Eq::{not_equal, equal}
 pub extend InputDispatchResult with ToJson::{to_json}
 
 ///|
-pub fn InputDispatchResult::host_flags(self : InputDispatchResult) -> Int {
+pub fn InputDispatchResult::host_flags(self : InputDispatchResult) -> Int32 {
   (if self.handled { 1 } else { 0 }) |
   (if self.capture_pointer { 2 } else { 0 }) |
   (if self.release_pointer { 4 } else { 0 })

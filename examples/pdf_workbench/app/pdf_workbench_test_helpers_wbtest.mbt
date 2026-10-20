@@ -9,8 +9,8 @@ fn PdfWorkbenchModel::update(
 ///|
 fn PdfWorkbenchModel::runtime(
   self : PdfWorkbenchModel,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
+  width~ : Double = 1120.0,
+  height~ : Double = 720.0,
 ) -> @runtime.AppRuntime {
   pdf_workbench_test_runtime(self.program(), width~, height~)
 }
@@ -19,12 +19,12 @@ fn PdfWorkbenchModel::runtime(
 fn PdfWorkbenchModel::runtime_with_services(
   self : PdfWorkbenchModel,
   services : @services.AppServices,
-  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
-  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
-  startup_pdf_path? : String = "",
-  startup_page_number? : Int = 1,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
+  raster_services~ : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services~ : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  startup_pdf_path~ : String = "",
+  startup_page_number~ : Int32 = 1,
+  width~ : Double = 1120.0,
+  height~ : Double = 720.0,
 ) -> @runtime.AppRuntime {
   pdf_workbench_test_runtime(
     self.program(
@@ -60,8 +60,8 @@ fn run_pdf_workbench_effect(
 fn run_pdf_workbench_effect_chain(
   update : PdfWorkbenchUpdate,
   services : @services.AppServices,
-  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
-  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  raster_services~ : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services~ : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
   let model = Ref(update.model)
   let effect = Ref(update.effect)
@@ -196,9 +196,9 @@ fn pdf_workbench_engine_document_services() -> PdfWorkbenchDocumentServices {
 
 ///|
 fn pdf_workbench_ready_raster_services(
-  render_count : Ref[Int],
+  render_count : Ref[Int32],
   keys : Array[String],
-  page_count? : Int = 1,
+  page_count~ : Int32 = 1,
 ) -> PdfWorkbenchRasterServices {
   PdfWorkbenchRasterServices::new(render=request => {
     render_count.val = render_count.val + 1
@@ -271,7 +271,7 @@ fn pdf_workbench_draw_has_text_containing(
 fn pdf_workbench_draw_text_count(
   commands : Array[@core.DrawCommand],
   text : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for command in commands {
     match command {
@@ -288,7 +288,7 @@ fn pdf_workbench_draw_has_image(commands : Array[@core.DrawCommand]) -> Bool {
 }
 
 ///|
-fn pdf_workbench_draw_image_count(commands : Array[@core.DrawCommand]) -> Int {
+fn pdf_workbench_draw_image_count(commands : Array[@core.DrawCommand]) -> Int32 {
   let mut count = 0
   for command in commands {
     match command {

@@ -21,9 +21,9 @@ struct ProofReport {
   ci_run_url : String
   timestamp : String
   features : Array[FeatureEntry]
-  proven : Int
-  gap : Int
-  skipped : Int
+  proven : Int32
+  gap : Int32
+  skipped : Int32
 }
 
 ///|
@@ -472,7 +472,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err(message) => {
       println(message)

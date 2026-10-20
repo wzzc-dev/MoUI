@@ -6,14 +6,14 @@
 /// 被写脏」这个参照系。
 priv struct Session {
   pty : @pty.Pty
-  cols : Int
-  rows : Int
+  cols : Int32
+  rows : Int32
   raw : Array[Byte]
 }
 
 ///|
 /// SIGWINCH(macOS 与 Linux 都是 28)。
-const SIGWINCH : Int = 28
+const SIGWINCH : Int32 = 28
 
 ///|
 /// 确认窗(毫秒):等到内容或响应之后,这么久没有新字节才认为这一帧发完了。
@@ -21,28 +21,28 @@ const SIGWINCH : Int = 28
 /// 一次话」(`await_reply`);安静窗降级为把这一帧的尾巴刷干净。会话锁保证
 /// 单进程独占 CPU 之后,60ms 内漏帧只剩进程自身调度一种来源,而这正是
 /// 内容锚点兜底的:needle 没到就一直轮询,不靠猜。
-const CONFIRM_MS : Int = 60
+const CONFIRM_MS : Int32 = 60
 
 ///|
 /// 轮询步长(毫秒):needle 未命中时每轮最多等这么久。
-const POLL_MS : Int = 25
+const POLL_MS : Int32 = 25
 
 ///|
 /// 等内容的总预算(毫秒),包含被测进程派生与首帧延迟。超时不挂死也不判过:
 /// 让调用方的断言拿着整屏 dump 红,红得可复现(旧的 FIRST_FRAME_MS 是判据,
 /// 这里它只是失败上限)。
-const WAIT_BUDGET_MS : Int = 5000
+const WAIT_BUDGET_MS : Int32 = 5000
 
 ///|
 /// 等「应用起码回了一次话」的上限:用于只能靠「画面没变」来证明的断言
 /// (点命中盒外面、dead-zone 散焦)。首字节到了就转确认窗;整段预算没有动静
 /// 就按「确实没重绘」放行。
-const REPLY_BUDGET_MS : Int = 1500
+const REPLY_BUDGET_MS : Int32 = 1500
 
 ///|
 /// 排空循环的上限轮次。PTY 缓冲约 4KB,被测程序写满就阻塞在写帧上,
 /// 所以必须边等边读;这个上限只用来兜住「程序无限刷屏」这种不该红的挂死。
-const MAX_SETTLE_ROUNDS : Int = 512
+const MAX_SETTLE_ROUNDS : Int32 = 512
 
 ///|
 /// 同一进程里同时只允许一个会话活着:一个会话独占 CPU,确认窗才不用把
@@ -57,9 +57,9 @@ let session_lock : @async.Mutex = @async.Mutex::Mutex()
 /// 拿到锁的一刻到 `finish` 之间就是这个用例独享的终端。
 async fn Session::open(
   path : String,
-  cols~ : Int,
-  rows~ : Int,
-  args? : Array[String] = [],
+  cols~ : Int32,
+  rows~ : Int32,
+  args~ : Array[String] = [],
 ) -> Session {
   session_lock.acquire()
   match @pty.Pty::spawn(path, cols, rows, args~) {
@@ -73,7 +73,7 @@ async fn Session::open(
 
 ///|
 /// 一轮有界读:最多等 `timeout_ms` 拿新字节。返回是否真的读到了东西。
-async fn Session::drain_once(self : Session, timeout_ms : Int) -> Bool {
+async fn Session::drain_once(self : Session, timeout_ms : Int32) -> Bool {
   let buf : FixedArray[Byte] = FixedArray::make(65536, 0)
   let bytes = buf.unsafe_reinterpret_as_bytes()
   if !self.pty.wait_readable(timeout_ms) {
@@ -161,7 +161,7 @@ async fn Session::send(self : Session, text : String) -> Unit {
 /// (SETSID + dup2,不调 TIOCSCTTY)派生的子进程没有控制终端,所以这里由驱动
 /// 补发那一个信号。被测进程走的仍然是同一条 SIGWINCH→重排通路:证的是宿主,
 /// 不是内核的会话规则。
-fn Session::resize_to(self : Session, cols : Int, rows : Int) -> Unit {
+fn Session::resize_to(self : Session, cols : Int32, rows : Int32) -> Unit {
   self.pty.resize(cols, rows)
   self.pty.signal(SIGWINCH)
 }
@@ -229,10 +229,10 @@ fn layers_binary() -> String? {
 ///|
 /// 冒烟统一用 100x30:够宽放下两栏加分隔,够矮让 16 行列表溢出视口,
 /// 于是滚动与裁剪才是可观察的。
-const COLS : Int = 100
+const COLS : Int32 = 100
 
 ///|
-const ROWS : Int = 30
+const ROWS : Int32 = 30
 
 ///|
 /// 起一个 S7 八项合一 demo 会话;门没开时给 None,调用方直接跳过。

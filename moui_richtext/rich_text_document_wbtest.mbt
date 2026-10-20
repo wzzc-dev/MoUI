@@ -486,7 +486,7 @@ test "vertical caret movement steps onto the visible blank line" {
   // Down from the end of the first paragraph: over the separator, onto the
   // writing line (offset 5), then into the second paragraph.
   let mut down = 3
-  let down_steps : Array[Int] = []
+  let down_steps : Array[Int32] = []
   for index = 1; index <= 2; index = index + 1 {
     down = rich_text_vertical_target_offset(
       document,
@@ -504,7 +504,7 @@ test "vertical caret movement steps onto the visible blank line" {
   inspect(down_steps[1], content="7")
   // Up from the start of the second paragraph walks back the same way.
   let mut up = 7
-  let up_steps : Array[Int] = []
+  let up_steps : Array[Int32] = []
   for index = 1; index <= 2; index = index + 1 {
     up = rich_text_vertical_target_offset(
       document,
@@ -578,7 +578,7 @@ test "blank line runs alternate separator and visible empty line" {
   let text_system = @core.TextSystem::fallback()
   // One, three, and five blank lines: separator, separator + line, twice that.
   let run_em : Array[Double] = [0.4, 2.75, 5.1]
-  let visible_lines : Array[Int] = [0, 1, 2]
+  let visible_lines : Array[Int32] = [0, 1, 2]
   // Paragraph-to-paragraph distance: the line box plus the paragraph's own
   // 0.4em inset plus the run. Typora measures 2.34em for one blank line and
   // 4.72em for three in the same reference document.
@@ -684,12 +684,12 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
 /// vertical caret target in that window's geometry.
 fn vertical_caret_step(
   session : MarkdownDocumentSession,
-  caret : Int,
+  caret : Int32,
   base : @core.FontSpec,
   content : @core.Rect,
   text_system : @core.TextSystem,
   up~ : Bool,
-) -> Int {
+) -> Int32 {
   let window = markdown_session_visible_window(
     session,
     { caret, selection: None, },
@@ -841,13 +841,13 @@ test "every line box covers the font it renders" {
 /// rich_text_vertical_caret_move_result + 各重置构造点）。
 fn vertical_caret_step_goal(
   session : MarkdownDocumentSession,
-  caret : Int,
+  caret : Int32,
   goal_x : Double?,
   base : @core.FontSpec,
   content : @core.Rect,
   text_system : @core.TextSystem,
   up~ : Bool,
-) -> Int {
+) -> Int32 {
   let window = markdown_session_visible_window(
     session,
     { caret, selection: None, },

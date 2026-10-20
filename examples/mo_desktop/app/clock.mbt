@@ -19,7 +19,7 @@ fn desktop_month_year(clock : DesktopClock) -> String {
 }
 
 ///|
-fn clock_two_digits(value : Int) -> String {
+fn clock_two_digits(value : Int32) -> String {
   if value < 10 {
     "0" + value.to_string()
   } else {
@@ -28,7 +28,7 @@ fn clock_two_digits(value : Int) -> String {
 }
 
 ///|
-fn desktop_weekday_short(weekday : Int) -> String {
+fn desktop_weekday_short(weekday : Int32) -> String {
   match weekday {
     0 => "Sun"
     1 => "Mon"
@@ -41,7 +41,7 @@ fn desktop_weekday_short(weekday : Int) -> String {
 }
 
 ///|
-fn desktop_weekday_full(weekday : Int) -> String {
+fn desktop_weekday_full(weekday : Int32) -> String {
   match weekday {
     0 => "Sunday"
     1 => "Monday"
@@ -54,7 +54,7 @@ fn desktop_weekday_full(weekday : Int) -> String {
 }
 
 ///|
-fn desktop_month_short(month : Int) -> String {
+fn desktop_month_short(month : Int32) -> String {
   match month {
     1 => "Jan"
     2 => "Feb"
@@ -72,7 +72,7 @@ fn desktop_month_short(month : Int) -> String {
 }
 
 ///|
-fn desktop_month_full(month : Int) -> String {
+fn desktop_month_full(month : Int32) -> String {
   match month {
     1 => "January"
     2 => "February"

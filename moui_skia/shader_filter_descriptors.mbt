@@ -30,8 +30,8 @@ fn shader_filter_points_are_distinct(start : Point, end : Point) -> Bool {
 }
 
 ///|
-fn shader_filter_resource_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn shader_filter_resource_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn ShaderDescriptor::linear_gradient(
   end : Point,
   start_color : Color,
   end_color : Color,
-  tile_mode? : TileMode = Clamp,
+  tile_mode~ : TileMode = Clamp,
 ) -> ShaderDescriptor? {
   if shader_filter_point_is_finite(start) &&
     shader_filter_point_is_finite(end) &&
@@ -107,7 +107,7 @@ pub fn ShaderDescriptor::radial_gradient(
   radius : Float,
   inner_color : Color,
   outer_color : Color,
-  tile_mode? : TileMode = Clamp,
+  tile_mode~ : TileMode = Clamp,
 ) -> ShaderDescriptor? {
   if shader_filter_point_is_finite(center) &&
     shader_filter_scalar_is_finite(radius) &&
@@ -175,7 +175,7 @@ pub fn ShaderDescriptor::resource_key(
 ///|
 pub fn ShaderDescriptor::resource_descriptor(
   self : ShaderDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

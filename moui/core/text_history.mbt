@@ -13,10 +13,10 @@
 /// because `before` and `after` already describe both directions of
 /// the edit.
 pub(all) struct TextHistoryEntryContext {
-  start : Int
+  start : Int32
   before : String
   after : String
-  caret : Int
+  caret : Int32
   selection : TextRange?
 } derive(Eq, Debug, ToJson)
 
@@ -56,7 +56,7 @@ pub fn TextHistoryEntryContext::undo_text(
 pub fn text_history_delta(
   previous : String,
   next : String,
-) -> (Int, String, String) {
+) -> (Int32, String, String) {
   let before = previous.to_array()
   let after = next.to_array()
   let mut prefix = 0
@@ -82,9 +82,9 @@ pub fn text_history_delta(
 ///|
 fn text_history_apply_delta(
   text : String,
-  start : Int,
+  start : Int32,
   replacement : String,
-  removed_length : Int,
+  removed_length : Int32,
 ) -> String {
   let chars = text.to_array()
   let start = start.clamp(min=0, max=chars.length())

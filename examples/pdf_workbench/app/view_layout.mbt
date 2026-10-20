@@ -78,7 +78,7 @@ priv struct PdfWorkbenchLayoutMetrics {
 fn pdf_workbench_layout_metrics(
   viewport : @geometry.Size,
   theme : @moui.Theme,
-  reader_fullscreen? : Bool = false,
+  reader_fullscreen~ : Bool = false,
 ) -> PdfWorkbenchLayoutMetrics {
   let safe_width = viewport.width.max(640.0)
   let safe_height = viewport.height.max(520.0)

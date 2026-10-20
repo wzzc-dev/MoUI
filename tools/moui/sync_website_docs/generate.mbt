@@ -49,7 +49,7 @@ fn encode_uri_component(value : String) -> String {
 }
 
 ///|
-fn to_hex2(value : Int) -> String {
+fn to_hex2(value : Int32) -> String {
   let digits : Array[Char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
   ]

@@ -285,7 +285,7 @@ fn semantics_inspector_snapshot_from_state(
 }
 
 ///|
-fn layout_node_count(node : LayoutResult) -> Int {
+fn layout_node_count(node : LayoutResult) -> Int32 {
   let mut count = 1
   for child in node.children {
     count = count + layout_node_count(child)
@@ -294,7 +294,7 @@ fn layout_node_count(node : LayoutResult) -> Int {
 }
 
 ///|
-fn layout_leaf_count(node : LayoutResult) -> Int {
+fn layout_leaf_count(node : LayoutResult) -> Int32 {
   if node.children.length() == 0 {
     1
   } else {
@@ -307,7 +307,7 @@ fn layout_leaf_count(node : LayoutResult) -> Int {
 }
 
 ///|
-fn layout_max_depth(node : LayoutResult) -> Int {
+fn layout_max_depth(node : LayoutResult) -> Int32 {
   let mut depth = 1
   for child in node.children {
     depth = runtime_devtools_max_int(depth, 1 + layout_max_depth(child))
@@ -319,7 +319,7 @@ fn layout_max_depth(node : LayoutResult) -> Int {
 fn layout_bounds_entries(
   node : PlacedNode,
   element : ElementNode,
-  depth~ : Int,
+  depth~ : Int32,
 ) -> Array[LayoutBoundsInspectorEntry] {
   let entries : Array[LayoutBoundsInspectorEntry] = [
     {
@@ -345,7 +345,7 @@ fn layout_bounds_entries(
 ///|
 fn render_inspector_entries(
   node : RenderNode,
-  depth~ : Int,
+  depth~ : Int32,
 ) -> Array[RenderInspectorEntry] {
   let entries : Array[RenderInspectorEntry] = [
     {
@@ -371,7 +371,7 @@ fn render_inspector_entries(
 fn semantics_inspector_entries(
   id : SemanticsNodeId,
   nodes : Map[SemanticsNodeId, SemanticsNode],
-  depth~ : Int,
+  depth~ : Int32,
 ) -> Array[SemanticsInspectorEntry] {
   guard nodes.get(id) is Some(node) else { return [] }
   let entries : Array[SemanticsInspectorEntry] = [
@@ -474,7 +474,7 @@ fn render_inspector_from_commands(
 fn semantics_depth_from(
   id : SemanticsNodeId,
   nodes : Map[SemanticsNodeId, SemanticsNode],
-) -> Int {
+) -> Int32 {
   match nodes.get(id) {
     Some(node) => {
       let mut depth = 1
@@ -491,7 +491,7 @@ fn semantics_depth_from(
 }
 
 ///|
-fn runtime_devtools_max_int(a : Int, b : Int) -> Int {
+fn runtime_devtools_max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

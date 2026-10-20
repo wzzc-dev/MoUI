@@ -939,7 +939,10 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
 }
 
 ///|
-fn exact_text_count(commands : Array[@core.DrawCommand], text : String) -> Int {
+fn exact_text_count(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> Int32 {
   let mut count = 0
   for command in commands {
     match command {

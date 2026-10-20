@@ -32,7 +32,7 @@ test "re-declaring the same drag region every frame is idempotent" {
   let source = @services.WindowDragRegionSource::new()
   let band = Some(@core.Rect::new(x=0.0, y=0.0, width=1280.0, height=26.0))
   let (calls, set_region) = drag_region_spy()
-  let mut applied : Int? = None
+  let mut applied : Int32? = None
   // Layout republishes the band on every pass; the host polls each tick.
   for _ in 0..<60 {
     source.set_region(band)
@@ -62,7 +62,7 @@ test "re-declaring the same drag region every frame is idempotent" {
 test "an idle host with no declared drag region makes no native calls" {
   let source = @services.WindowDragRegionSource::new()
   let (calls, set_region) = drag_region_spy()
-  let mut applied : Int? = None
+  let mut applied : Int32? = None
   for _ in 0..<10 {
     applied = @services.apply_window_drag_region(source, applied, set_region)
   }

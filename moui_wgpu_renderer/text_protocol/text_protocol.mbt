@@ -1,14 +1,14 @@
 ///|
-pub let native_measure_layout_protocol_version : Int = 1
+pub let native_measure_layout_protocol_version : Int32 = 1
 
 ///|
-pub let native_run_layout_protocol_version : Int = 1
+pub let native_run_layout_protocol_version : Int32 = 1
 
 ///|
-pub let native_raster_glyph_protocol_version : Int = 1
+pub let native_raster_glyph_protocol_version : Int32 = 1
 
 ///|
-pub let native_font_registration_protocol_version : Int = 1
+pub let native_font_registration_protocol_version : Int32 = 1
 
 ///|
 pub struct NativeFontRegistrationPayload {
@@ -17,13 +17,13 @@ pub struct NativeFontRegistrationPayload {
 }
 
 ///|
-pub let native_font_spec_protocol_version : Int = 1
+pub let native_font_spec_protocol_version : Int32 = 1
 
 ///|
 pub struct NativeFontSpecPayload {
   priv size : Double
-  priv size_key : Int
-  priv weight : Int
+  priv size_key : Int32
+  priv weight : Int32
   priv style : @core.FontStyle
   priv family_names : Array[Bytes]
 }
@@ -48,12 +48,12 @@ pub fn NativeFontSpecPayload::size(self : NativeFontSpecPayload) -> Double {
 }
 
 ///|
-pub fn NativeFontSpecPayload::size_key(self : NativeFontSpecPayload) -> Int {
+pub fn NativeFontSpecPayload::size_key(self : NativeFontSpecPayload) -> Int32 {
   self.size_key
 }
 
 ///|
-pub fn NativeFontSpecPayload::weight(self : NativeFontSpecPayload) -> Int {
+pub fn NativeFontSpecPayload::weight(self : NativeFontSpecPayload) -> Int32 {
   self.weight
 }
 
@@ -85,7 +85,7 @@ pub fn native_utf32_bytes(text : String) -> Bytes {
 }
 
 ///|
-pub fn native_font_style_code(style : @core.FontStyle) -> Int {
+pub fn native_font_style_code(style : @core.FontStyle) -> Int32 {
   match style {
     Normal => 0
     Italic => 1
@@ -93,7 +93,7 @@ pub fn native_font_style_code(style : @core.FontStyle) -> Int {
 }
 
 ///|
-fn native_font_style_from_code(code : Int) -> @core.FontStyle? {
+fn native_font_style_from_code(code : Int32) -> @core.FontStyle? {
   match code {
     0 => Some(Normal)
     1 => Some(Italic)
@@ -190,7 +190,7 @@ pub fn native_font_registration_bytes(
 }
 
 ///|
-fn native_font_size_key(size : Double) -> Int {
+fn native_font_size_key(size : Double) -> Int32 {
   (size * 64.0).to_int()
 }
 
@@ -380,7 +380,7 @@ pub fn native_raster_glyph_from_bytes(
 }
 
 ///|
-fn i32_le(bytes : Bytes, offset : Int) -> Int {
+fn i32_le(bytes : Bytes, offset : Int32) -> Int32 {
   if offset + 3 >= bytes.length() {
     return 0
   }
@@ -397,7 +397,7 @@ fn i32_le(bytes : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn push_i32_le(out : Array[Byte], value : Int) -> Unit {
+fn push_i32_le(out : Array[Byte], value : Int32) -> Unit {
   out.push((value & 0xFF).to_byte())
   out.push(((value >> 8) & 0xFF).to_byte())
   out.push(((value >> 16) & 0xFF).to_byte())
@@ -405,7 +405,11 @@ fn push_i32_le(out : Array[Byte], value : Int) -> Unit {
 }
 
 ///|
-fn bytes_to_cache_key(bytes : Bytes, offset~ : Int, length~ : Int) -> String {
+fn bytes_to_cache_key(
+  bytes : Bytes,
+  offset~ : Int32,
+  length~ : Int32,
+) -> String {
   let mut out = "\{length}:"
   for index in 0..<length {
     out = out + "\{bytes[offset + index].to_int()},"
@@ -414,7 +418,7 @@ fn bytes_to_cache_key(bytes : Bytes, offset~ : Int, length~ : Int) -> String {
 }
 
 ///|
-fn double_le(bytes : Bytes, offset : Int) -> Double {
+fn double_le(bytes : Bytes, offset : Int32) -> Double {
   if offset + 7 >= bytes.length() {
     return 0.0
   }

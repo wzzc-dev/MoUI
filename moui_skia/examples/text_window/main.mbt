@@ -41,10 +41,10 @@ fn trace_text_pixmap(pixmap : @skia.Pixmap) -> Unit {
     return
   }
   text_trace_logged[0] = true
-  let bg_r = (16 : Int).to_byte()
-  let bg_g = (24 : Int).to_byte()
-  let bg_b = (34 : Int).to_byte()
-  let alpha = (255 : Int).to_byte()
+  let bg_r = (16 : Int32).to_byte()
+  let bg_g = (24 : Int32).to_byte()
+  let bg_b = (34 : Int32).to_byte()
+  let alpha = (255 : Int32).to_byte()
   let mut non_background_pixels = 0
   for y in 0..<pixmap.height() {
     for x in 0..<pixmap.width() {
@@ -63,7 +63,7 @@ fn trace_text_pixmap(pixmap : @skia.Pixmap) -> Unit {
 }
 
 ///|
-fn draw_text_with_skia(width : Int, height : Int) -> @skia.Pixmap? {
+fn draw_text_with_skia(width : Int32, height : Int32) -> @skia.Pixmap? {
   if width <= 0 || height <= 0 || !@native.skia_available() {
     None
   } else {

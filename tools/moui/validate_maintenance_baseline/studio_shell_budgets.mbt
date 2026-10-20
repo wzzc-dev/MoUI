@@ -360,7 +360,7 @@ fn count_studio_shell_decl(
   decl : String,
   is_member : (String) -> Bool,
   failures : Array[String],
-) -> Int {
+) -> Int32 {
   match read_repo_text(repo_root, path) {
     Ok(text) =>
       match studio_shell_decl_span_lines(text, decl) {

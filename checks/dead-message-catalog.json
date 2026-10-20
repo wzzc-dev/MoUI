@@ -33,11 +33,11 @@
     },
     {
       "name": "Msg",
-      "path": "examples/ai_world/app/msg.mbt",
+      "path": "examples/new_world/app/msg.mbt",
       "scanRoots": [
-        "examples/ai_world/app",
-        "examples/ai_world/web_wasm",
-        "examples/ai_world/macos_skia"
+        "examples/new_world/app",
+        "examples/new_world/web_wasm",
+        "examples/new_world/macos_skia"
       ],
       "waivers": []
     }

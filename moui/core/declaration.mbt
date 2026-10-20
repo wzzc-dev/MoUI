@@ -82,7 +82,7 @@ pub fn DeclarationKey::bool(value : Bool) -> DeclarationKey {
 
 ///|
 /// Builds a key for an exact signed 32-bit `Int` value.
-pub fn DeclarationKey::int(value : Int) -> DeclarationKey {
+pub fn DeclarationKey::int(value : Int32) -> DeclarationKey {
   let payload = Buffer(size_hint=4)
   payload.write_int_be(value)
   declaration_key_frame(2, payload.to_bytes())
@@ -90,7 +90,7 @@ pub fn DeclarationKey::int(value : Int) -> DeclarationKey {
 
 ///|
 /// Builds a key for an exact unsigned 32-bit `UInt` value.
-pub fn DeclarationKey::uint(value : UInt) -> DeclarationKey {
+pub fn DeclarationKey::uint(value : UInt32) -> DeclarationKey {
   let payload = Buffer(size_hint=4)
   payload.write_uint_be(value)
   declaration_key_frame(3, payload.to_bytes())

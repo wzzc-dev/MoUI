@@ -16,10 +16,10 @@ fn node(
   id : UInt64,
   role~ : @core.SemanticsRole,
   frame~ : @core.Rect,
-  label? : String = "",
-  value? : String = "",
-  state? : @core.SemanticsState = @core.SemanticsState::default(),
-  children? : Array[@core.SemanticsNodeId] = [],
+  label~ : String = "",
+  value~ : String = "",
+  state~ : @core.SemanticsState = @core.SemanticsState::default(),
+  children~ : Array[@core.SemanticsNodeId] = [],
 ) -> @core.SemanticsNode {
   {
     node_id: @core.SemanticsNodeId::new(id),
@@ -58,8 +58,8 @@ fn container(
 fn semantics_frame(
   nodes~ : Array[@core.SemanticsNode],
   root~ : @core.SemanticsNode,
-  commands? : Array[@core.DrawCommand] = [],
-  platform_views? : Array[@core.PlatformViewPlacement] = [],
+  commands~ : Array[@core.DrawCommand] = [],
+  platform_views~ : Array[@core.PlatformViewPlacement] = [],
 ) -> @core.DrawFrame {
   @core.DrawFrame::new(
     commands~,
@@ -78,8 +78,8 @@ fn semantics_frame(
 ///|
 /// 不带语义负载的帧:用来验证降级诊断而不是崩溃。
 fn empty_frame(
-  commands? : Array[@core.DrawCommand] = [],
-  platform_views? : Array[@core.PlatformViewPlacement] = [],
+  commands~ : Array[@core.DrawCommand] = [],
+  platform_views~ : Array[@core.PlatformViewPlacement] = [],
 ) -> @core.DrawFrame {
   @core.DrawFrame::new(
     commands~,
@@ -93,9 +93,9 @@ fn empty_frame(
 /// 用例只要关心"哪一个状态变了",所以差异收敛在这里,
 /// 而不是每个断言前重写 13 个字段的记录字面量。
 fn state(
-  focused? : Bool = false,
-  selected? : Bool = false,
-  pressed? : Bool = false,
+  focused~ : Bool = false,
+  selected~ : Bool = false,
+  pressed~ : Bool = false,
 ) -> @core.SemanticsState {
   let base = @core.SemanticsState::default()
   {
@@ -174,7 +174,7 @@ fn Capture::text(self : Capture) -> String {
 }
 
 ///|
-fn Capture::total(self : Capture) -> Int {
+fn Capture::total(self : Capture) -> Int32 {
   self.text().length()
 }
 
@@ -201,8 +201,8 @@ fn line_chars(text : String) -> Array[Char] {
 /// 列号必须按格累加,不能按字符下标取。
 fn cell_at(
   renderer : @moui_tui_renderer.TuiRenderer,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
 ) -> Char {
   let mut x = 0
   for ch in renderer.line_text(row) {
@@ -226,7 +226,7 @@ fn grid(lines : Array[String]) -> String {
 
 ///|
 /// ANSI 增量断言要数出现次数,而 `String` 只有 `contains`。
-fn count_occurrences(haystack : String, needle : String) -> Int {
+fn count_occurrences(haystack : String, needle : String) -> Int32 {
   let hay = line_chars(haystack)
   let pat = line_chars(needle)
   if pat.length() == 0 || hay.length() < pat.length() {

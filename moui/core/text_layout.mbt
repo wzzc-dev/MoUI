@@ -32,7 +32,7 @@ pub extend TextLayoutResult with ToJson::{to_json}
 
 ///|
 pub(all) struct TextParagraphLineMetrics {
-  line_index : Int
+  line_index : Int32
   text_range : TextRange
   origin : Point
   size : Size
@@ -52,10 +52,10 @@ pub extend TextParagraphLineMetrics with ToJson::{to_json}
 pub(all) struct TextParagraphVisualOrderMetadata {
   logical_text : String
   visual_text : String
-  logical_cluster_count : Int
-  visual_cluster_count : Int
-  segment_count : Int
-  glyph_count : Int
+  logical_cluster_count : Int32
+  visual_cluster_count : Int32
+  segment_count : Int32
+  glyph_count : Int32
   visual_order_differs : Bool
   bidi_visual_order_ready : Bool
 } derive(Eq, Debug, ToJson)
@@ -91,8 +91,8 @@ pub extend TextParagraphLayoutMetadata with ToJson::{to_json}
 
 ///|
 pub(all) struct TextParagraphHitTestResult {
-  offset : Int
-  line_index : Int
+  offset : Int32
+  line_index : Int32
   caret_rect : Rect
   is_inside : Bool
 } derive(Eq, Debug, ToJson)
@@ -147,8 +147,8 @@ pub fn TextLayoutInput::new(
 pub fn TextSystem::new(
   id~ : String,
   measure~ : (TextLayoutInput) -> TextLayoutResult,
-  paragraph_layout? : ((TextLayoutInput) -> TextParagraphLayoutResult)? = None,
-  register_font_data? : (FontFamily, Bytes) -> Unit = (_family, _data) => (),
+  paragraph_layout~ : ((TextLayoutInput) -> TextParagraphLayoutResult)? = None,
+  register_font_data~ : (FontFamily, Bytes) -> Unit = (_family, _data) => (),
 ) -> TextSystem {
   let paragraph_layout = match paragraph_layout {
     Some(layout) => layout
@@ -209,14 +209,14 @@ pub fn TextSystem::register_font_data(
 ///|
 pub fn TextParagraphLayoutResult::line_count(
   self : TextParagraphLayoutResult,
-) -> Int {
+) -> Int32 {
   self.lines.length()
 }
 
 ///|
 pub fn TextParagraphLayoutResult::caret_rect_at(
   self : TextParagraphLayoutResult,
-  offset : Int,
+  offset : Int32,
 ) -> Rect {
   if self.caret_rects.is_empty() {
     return Rect::new(x=0.0, y=0.0, width=1.0, height=0.0)
@@ -515,8 +515,8 @@ fn fallback_paragraph_range_measure(
 ///|
 fn fallback_paragraph_caret_span_width(
   measured : TextLayoutResult,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Double {
   max_double(
     0.0,
@@ -528,7 +528,7 @@ fn fallback_paragraph_caret_span_width(
 ///|
 fn fallback_paragraph_caret_position(
   measured : TextLayoutResult,
-  offset : Int,
+  offset : Int32,
 ) -> Double {
   if measured.caret_positions.is_empty() {
     return 0.0

@@ -5,30 +5,30 @@
 #borrow(args)
 extern "C" fn pty_spawn(
   shell : Bytes,
-  shell_len : Int,
+  shell_len : Int32,
   args : Bytes,
-  args_len : Int,
-  cols : Int,
-  rows : Int,
+  args_len : Int32,
+  cols : Int32,
+  rows : Int32,
 ) -> Int64 = "moonpty_spawn"
 
 ///|
-extern "C" fn pty_resize(fd : Int, cols : Int, rows : Int) -> Int64 = "moonpty_resize"
+extern "C" fn pty_resize(fd : Int32, cols : Int32, rows : Int32) -> Int64 = "moonpty_resize"
 
 ///|
-extern "C" fn pty_reap(pid : Int) -> Int64 = "moonpty_reap"
+extern "C" fn pty_reap(pid : Int32) -> Int64 = "moonpty_reap"
 
 ///|
-extern "C" fn pty_signal(pid : Int, sig : Int) -> Int64 = "moonpty_signal"
+extern "C" fn pty_signal(pid : Int32, sig : Int32) -> Int64 = "moonpty_signal"
 
 ///|
-extern "C" fn pty_wait(fd : Int, timeout_ms : Int) -> Int64 = "moonpty_wait"
+extern "C" fn pty_wait(fd : Int32, timeout_ms : Int32) -> Int64 = "moonpty_wait"
 
 ///|
 /// PTY 会话:master 端异步读写 + 原始 fd 用于 ioctl。
 pub struct Pty {
-  fd : Int
-  pid : Int
+  fd : Int32
+  pid : Int32
   raw : @raw_fd.RawFd
 }
 
@@ -37,9 +37,9 @@ pub struct Pty {
 /// (冒烟门用它开主题档等变体会话);空数组与旧行为完全一致。
 pub async fn Pty::spawn(
   shell : String,
-  cols : Int,
-  rows : Int,
-  args? : Array[String] = [],
+  cols : Int32,
+  rows : Int32,
+  args~ : Array[String] = [],
 ) -> Pty? {
   let bytes = @utf8.encode(shell)
   let arr : Array[Byte] = []
@@ -74,51 +74,51 @@ pub async fn Pty::spawn(
 /// 从原始 fd 整数构造 RawFd。
 /// Unix:系统 fd 即整数,直接包装。
 #cfg(not(platform="windows"))
-async fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
+async fn raw_fd_from_int(fd : Int32) -> @raw_fd.RawFd {
   RawFd(fd)
 }
 
 ///|
 /// Windows 上 PTY 宿主不可用(moonpty_* C stub 仅非 Windows 提供实现)。
 #cfg(platform="windows")
-fn raw_fd_from_int(fd : Int) -> @raw_fd.RawFd {
+fn raw_fd_from_int(fd : Int32) -> @raw_fd.RawFd {
   abort("pty_host: PTY is not supported on Windows, fd:" + fd.to_string())
 }
 
 ///|
 /// 子进程 pid。
-pub fn Pty::pid(self : Pty) -> Int {
+pub fn Pty::pid(self : Pty) -> Int32 {
   self.pid
 }
 
 ///|
 /// master fd(调试用)。
-pub fn Pty::fd(self : Pty) -> Int {
+pub fn Pty::fd(self : Pty) -> Int32 {
   self.fd
 }
 
 ///|
 /// 读输出到 buf,返回读取字节数(0 = EOF)。
-pub async fn Pty::read_output(self : Pty, buf : FixedArray[Byte]) -> Int {
+pub async fn Pty::read_output(self : Pty, buf : FixedArray[Byte]) -> Int32 {
   self.raw.read(buf)
 }
 
 ///|
 /// master 端在 `timeout_ms` 内是否可读。驱动方必须有这条有界等待:
 /// 只有阻塞读时,被测进程不回复的冒烟会挂住而不是红。
-pub fn Pty::wait_readable(self : Pty, timeout_ms : Int) -> Bool {
+pub fn Pty::wait_readable(self : Pty, timeout_ms : Int32) -> Bool {
   pty_wait(self.fd, timeout_ms) > 0L
 }
 
 ///|
 /// 写入输入(键盘/粘贴)。
-pub async fn Pty::write_input(self : Pty, data : Bytes) -> Int {
+pub async fn Pty::write_input(self : Pty, data : Bytes) -> Int32 {
   self.raw.write(data)
 }
 
 ///|
 /// 调整 PTY 尺寸(通知 shell 的 TIOCSWINSZ)。
-pub fn Pty::resize(self : Pty, cols : Int, rows : Int) -> Unit {
+pub fn Pty::resize(self : Pty, cols : Int32, rows : Int32) -> Unit {
   ignore(pty_resize(self.fd, cols, rows))
 }
 
@@ -129,7 +129,7 @@ pub fn Pty::resize(self : Pty, cols : Int, rows : Int) -> Unit {
 /// 而 posix_spawn(SETSID + dup2,无 TIOCSCTTY)派生的子进程没有控制终端,
 /// kernel 因此不会替真终端发这个信号。补发之后被测进程走的仍然是同一条
 /// SIGWINCH→重排通路,测的是宿主而不是内核。
-pub fn Pty::signal(self : Pty, sig : Int) -> Unit {
+pub fn Pty::signal(self : Pty, sig : Int32) -> Unit {
   ignore(pty_signal(self.pid, sig))
 }
 

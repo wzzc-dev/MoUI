@@ -1,5 +1,5 @@
 ///|
-fn glyph_atlas_entry_count(atlas : GlyphAtlas) -> Int {
+fn glyph_atlas_entry_count(atlas : GlyphAtlas) -> Int32 {
   atlas.entries.length()
 }
 
@@ -7,7 +7,7 @@ fn glyph_atlas_entry_count(atlas : GlyphAtlas) -> Int {
 fn atlas_entry_nonzero_row_bounds(
   atlas : GlyphAtlas,
   entry : GlyphAtlasEntry,
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   let mut min_y = entry.height
   let mut max_y = -1
   for y in 0..<entry.height {
@@ -128,10 +128,10 @@ test "native glyph atlas preserves color raster glyph pixels" {
 
 ///|
 test "native platform provider receives registered font data before fallback cache" {
-  let registered : Ref[Int] = Ref(0)
+  let registered : Ref[Int32] = Ref(0)
   let family_name : Ref[String] = Ref("")
-  let data_len : Ref[Int] = Ref(0)
-  let fallback_registered : Ref[Int] = Ref(0)
+  let data_len : Ref[Int32] = Ref(0)
+  let fallback_registered : Ref[Int32] = Ref(0)
   let system = native_text_system_with_engine(
     native_platform_text_engine_with_fallback(
       NativePlatformTextProvider::new(
@@ -737,8 +737,8 @@ test "native renderer marks color glyph text vertices" {
 
 ///|
 test "native renderer accepts layouts that omit whitespace glyphs" {
-  let fallback_layout_count : Ref[Int] = Ref(0)
-  let fallback_raster_count : Ref[Int] = Ref(0)
+  let fallback_layout_count : Ref[Int32] = Ref(0)
+  let fallback_raster_count : Ref[Int32] = Ref(0)
   let renderer = new_test_renderer_handle_with_text_engine(
     native_platform_text_engine_with_fallback(
       NativePlatformTextProvider::new(

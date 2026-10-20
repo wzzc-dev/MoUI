@@ -69,7 +69,7 @@ pub fn markdown_editor_image_context(
 ///|
 fn markdown_editor_link_context_at_caret(
   source : String,
-  caret : Int,
+  caret : Int32,
 ) -> MarkdownReferenceContext? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -95,7 +95,7 @@ fn markdown_editor_link_context_at_caret(
 ///|
 fn markdown_editor_image_context_at_caret(
   source : String,
-  caret : Int,
+  caret : Int32,
 ) -> MarkdownReferenceContext? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -114,7 +114,7 @@ fn markdown_editor_image_context_at_caret(
 fn markdown_editor_autolink_context_at_caret(
   source : String,
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> MarkdownReferenceContext? {
   let mut open = caret
   while open > 0 && chars[open - 1] != '<' && chars[open - 1] != '\n' {
@@ -140,7 +140,7 @@ fn markdown_editor_autolink_context_at_caret(
 ///|
 fn markdown_editor_bracketed_reference_range_at_caret(
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
   image~ : Bool,
 ) -> @core.TextRange? {
   let mut open = caret
@@ -215,9 +215,9 @@ pub fn markdown_editor_active_block_label(
 ///|
 fn markdown_editor_code_block_at_content_offset(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditorBlock? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
@@ -281,9 +281,9 @@ fn markdown_editor_code_block_at_selection(
 /// newline there instead of splitting with a blank writing line.
 fn markdown_editor_verbatim_block_at_content_offset(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditorBlock? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
@@ -333,7 +333,7 @@ fn markdown_editor_html_block_at_selection(
 ///|
 fn markdown_editor_code_block_enter(
   source : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
@@ -351,12 +351,12 @@ fn markdown_editor_code_block_enter(
 
 ///|
 pub(all) struct MarkdownLinkBounds {
-  open_start : Int
-  close_start : Int
-  target_end : Int
-  target_start : Int
-  definition_target_start : Int
-  definition_target_end : Int
+  open_start : Int32
+  close_start : Int32
+  target_end : Int32
+  target_start : Int32
+  definition_target_start : Int32
+  definition_target_end : Int32
   reference_label : String
 } derive(Eq, Debug)
 
@@ -506,7 +506,7 @@ fn markdown_editor_shortcut_reference_link_bounds_in(
   source : String,
   chars~ : MarkdownSourceChars,
   range : @core.TextRange,
-  open_start : Int,
+  open_start : Int32,
 ) -> MarkdownLinkBounds? {
   let label = match chars.slice(range.start, range.end) {
     Some(slice) => String::from_array(slice)
@@ -623,7 +623,7 @@ fn markdown_editor_reference_link_bounds_in(
   source : String,
   chars~ : MarkdownSourceChars,
   range : @core.TextRange,
-  open_start : Int,
+  open_start : Int32,
   bang~ : Bool,
 ) -> MarkdownLinkBounds? {
   let label_start = range.end + 2
@@ -911,7 +911,7 @@ fn markdown_editor_footnote_label_at_selection(
 ///|
 fn markdown_editor_footnote_reference_label_at(
   source : String,
-  anchor : Int,
+  anchor : Int32,
 ) -> String? {
   let chars = source.to_array()
   if chars.length() == 0 {
@@ -940,7 +940,7 @@ fn markdown_editor_footnote_reference_label_at(
 ///|
 fn markdown_editor_footnote_definition_label_at(
   source : String,
-  anchor : Int,
+  anchor : Int32,
 ) -> String? {
   for line in markdown_editor_lines(source) {
     if anchor >= line.start && anchor <= line.end {
@@ -1175,8 +1175,8 @@ fn markdown_editor_selected_line_range(
 ///|
 fn markdown_editor_line_range_around(
   chars : Array[Char],
-  start_anchor : Int,
-  end_anchor : Int,
+  start_anchor : Int32,
+  end_anchor : Int32,
 ) -> MarkdownSourceRange {
   let mut start = start_anchor
   while start > 0 && chars[start - 1] != '\n' {

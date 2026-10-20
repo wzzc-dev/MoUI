@@ -556,7 +556,7 @@ fn website_doc_tag_width(width : Double) -> Double {
 }
 
 ///|
-fn max_website_int(a : Int, b : Int) -> Int {
+fn max_website_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

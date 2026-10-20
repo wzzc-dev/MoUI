@@ -1,13 +1,13 @@
 ///|
 priv struct MarkdownTableParseResult {
   block : MarkdownBlock
-  end_index : Int
+  end_index : Int32
 }
 
 ///|
 fn markdown_table_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownTableParseResult? {
   if index + 1 >= lines.length() ||
     !markdown_table_separator_line(lines[index + 1]) {
@@ -246,7 +246,7 @@ fn markdown_table_cell_runs(
 fn markdown_table_find_run_range(
   chars : Array[Char],
   raw : String,
-  search : Int,
+  search : Int32,
 ) -> RichTextSourceRange? {
   if raw == "" {
     return None
@@ -272,8 +272,8 @@ fn markdown_table_find_run_range(
 ///|
 priv struct MarkdownTableCellPreviewRange {
   text : String
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 }
 
 ///|
@@ -347,7 +347,7 @@ fn markdown_table_alignment_for_separator_cell(
 ///|
 fn markdown_table_alignment_at(
   aligns : Array[@core.TextAlign?],
-  index : Int,
+  index : Int32,
 ) -> @core.TextAlign? {
   if index >= 0 && index < aligns.length() {
     aligns[index]
@@ -359,8 +359,8 @@ fn markdown_table_alignment_at(
 ///|
 fn markdown_table_trimmed_range(
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> RichTextSourceRange {
   let mut content_start = start
   let mut content_end = end

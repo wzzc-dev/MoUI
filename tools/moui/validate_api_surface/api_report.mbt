@@ -2,9 +2,9 @@
 struct ApiPackageReport {
   label : String
   path : String
-  lines : Int
-  public_declarations : Int
-  pub_all_declarations : Int
+  lines : Int32
+  public_declarations : Int32
+  pub_all_declarations : Int32
 } derive(ToJson)
 
 ///|

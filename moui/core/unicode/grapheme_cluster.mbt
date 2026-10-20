@@ -5,8 +5,8 @@
 ///|
 /// package free of any core dependency.
 pub(all) struct GraphemeRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -16,12 +16,12 @@ pub extend GraphemeRange with Debug::{to_repr}
 pub extend GraphemeRange with Eq::{not_equal, equal}
 
 ///|
-pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> GraphemeRange {
+pub fn GraphemeRange::new(start~ : Int32, end~ : Int32) -> GraphemeRange {
   { start, end, }
 }
 
 ///|
-pub fn GraphemeRange::collapsed(index : Int) -> GraphemeRange {
+pub fn GraphemeRange::collapsed(index : Int32) -> GraphemeRange {
   { start: index, end: index, }
 }
 
@@ -40,7 +40,7 @@ pub fn GraphemeRange::is_collapsed(self : GraphemeRange) -> Bool {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -49,7 +49,7 @@ fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {
@@ -62,7 +62,7 @@ fn clamp_int(value : Int, min : Int, max : Int) -> Int {
 ///|
 pub struct TextGraphemeBoundaries {
   priv text : String
-  priv boundaries : Array[Int]
+  priv boundaries : Array[Int32]
 } derive(Eq, Debug)
 
 ///|
@@ -78,8 +78,8 @@ pub extend TextGraphemeBoundaries with Eq::{not_equal, equal}
 /// general fallback walk, so keystrokes in ASCII documents never pay the
 /// per-pair cluster-rule evaluation and char-array copy. Returns None as
 /// soon as a non-ASCII codepoint appears, falling back to the general path.
-fn ascii_grapheme_boundaries(text : String) -> Array[Int]? {
-  let boundaries : Array[Int] = [0]
+fn ascii_grapheme_boundaries(text : String) -> Array[Int32]? {
+  let boundaries : Array[Int32] = [0]
   let mut index = 0
   let mut last_was_cr = false
   for ch in text {
@@ -106,7 +106,7 @@ pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
     None => ()
   }
   let chars = text.to_array()
-  let boundaries : Array[Int] = [0]
+  let boundaries : Array[Int32] = [0]
   let mut index = 1
   let mut last_boundary = 0
   while index < chars.length() {
@@ -130,12 +130,12 @@ pub fn TextGraphemeBoundaries::text(self : TextGraphemeBoundaries) -> String {
 ///|
 pub fn TextGraphemeBoundaries::boundaries(
   self : TextGraphemeBoundaries,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.boundaries.copy()
 }
 
 ///|
-pub fn TextGraphemeBoundaries::length(self : TextGraphemeBoundaries) -> Int {
+pub fn TextGraphemeBoundaries::length(self : TextGraphemeBoundaries) -> Int32 {
   match self.boundaries.last() {
     Some(length) => length
     None => 0
@@ -145,14 +145,14 @@ pub fn TextGraphemeBoundaries::length(self : TextGraphemeBoundaries) -> Int {
 ///|
 pub fn TextGraphemeBoundaries::cluster_count(
   self : TextGraphemeBoundaries,
-) -> Int {
+) -> Int32 {
   max_int(0, self.boundaries.length() - 1)
 }
 
 ///|
 pub fn TextGraphemeBoundaries::is_boundary(
   self : TextGraphemeBoundaries,
-  index : Int,
+  index : Int32,
 ) -> Bool {
   let index = self.clamp_index(index)
   self.boundaries.any(boundary => boundary == index)
@@ -161,16 +161,16 @@ pub fn TextGraphemeBoundaries::is_boundary(
 ///|
 pub fn TextGraphemeBoundaries::clamp_index(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   clamp_int(index, 0, self.length())
 }
 
 ///|
 pub fn TextGraphemeBoundaries::previous_boundary(
   self : TextGraphemeBoundaries,
-  caret : Int,
-) -> Int {
+  caret : Int32,
+) -> Int32 {
   let caret = self.clamp_index(caret)
   if caret <= 0 {
     return 0
@@ -188,8 +188,8 @@ pub fn TextGraphemeBoundaries::previous_boundary(
 ///|
 pub fn TextGraphemeBoundaries::next_boundary(
   self : TextGraphemeBoundaries,
-  caret : Int,
-) -> Int {
+  caret : Int32,
+) -> Int32 {
   let caret = self.clamp_index(caret)
   let length = self.length()
   if caret >= length {
@@ -206,8 +206,8 @@ pub fn TextGraphemeBoundaries::next_boundary(
 ///|
 pub fn TextGraphemeBoundaries::floor_boundary(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let index = self.clamp_index(index)
   let mut floor = 0
   for boundary in self.boundaries {
@@ -222,8 +222,8 @@ pub fn TextGraphemeBoundaries::floor_boundary(
 ///|
 pub fn TextGraphemeBoundaries::ceil_boundary(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let index = self.clamp_index(index)
   for boundary in self.boundaries {
     if boundary >= index {
@@ -236,8 +236,8 @@ pub fn TextGraphemeBoundaries::ceil_boundary(
 ///|
 pub fn TextGraphemeBoundaries::nearest_boundary(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let index = self.clamp_index(index)
   let floor = self.floor_boundary(index)
   let ceil = self.ceil_boundary(index)
@@ -267,9 +267,9 @@ pub fn TextGraphemeBoundaries::normalize_range(
 ///|
 pub fn TextGraphemeBoundaries::delete_range(
   self : TextGraphemeBoundaries,
-  caret : Int,
-  before : Int,
-  after : Int,
+  caret : Int32,
+  before : Int32,
+  after : Int32,
 ) -> GraphemeRange {
   let mut start = self.nearest_boundary(caret)
   let mut end = start
@@ -285,8 +285,8 @@ pub fn TextGraphemeBoundaries::delete_range(
 ///|
 pub fn TextGraphemeBoundaries::utf8_offset(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let chars = self.text.to_array()
   let index = self.clamp_index(index)
   @utf8.encode(String::from_array(chars[:index])[:], bom=false).length()
@@ -295,8 +295,8 @@ pub fn TextGraphemeBoundaries::utf8_offset(
 ///|
 pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(
   self : TextGraphemeBoundaries,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   self.utf8_offset(self.nearest_boundary(index))
 }
 
@@ -324,8 +324,8 @@ pub fn stabilize_grapheme_cluster_carets(
 ///|
 fn fallback_grapheme_should_break(
   chars : Array[Char],
-  last_boundary : Int,
-  index : Int,
+  last_boundary : Int32,
+  index : Int32,
 ) -> Bool {
   if index <= 0 || index >= chars.length() {
     return true
@@ -371,8 +371,8 @@ fn fallback_grapheme_should_break(
 ///|
 fn stabilize_caret_cluster(
   carets : Array[Double],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Unit {
   if start < 0 || end <= start + 1 || end >= carets.length() {
     return ()
@@ -387,39 +387,39 @@ fn stabilize_caret_cluster(
 }
 
 ///|
-pub fn previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn previous_grapheme_caret_boundary(text : String, caret : Int32) -> Int32 {
   TextGraphemeBoundaries::new(text~).previous_boundary(caret)
 }
 
 ///|
-pub fn next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn next_grapheme_caret_boundary(text : String, caret : Int32) -> Int32 {
   TextGraphemeBoundaries::new(text~).next_boundary(caret)
 }
 
 ///|
-fn fallback_codepoint_is_cr(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_cr(codepoint : Int32) -> Bool {
   unicode_grapheme_is_cr_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_lf(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_lf(codepoint : Int32) -> Bool {
   unicode_grapheme_is_lf_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_grapheme_break_control(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_grapheme_break_control(codepoint : Int32) -> Bool {
   fallback_codepoint_is_cr(codepoint) ||
   fallback_codepoint_is_lf(codepoint) ||
   unicode_grapheme_is_control_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_zwj(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_zwj(codepoint : Int32) -> Bool {
   unicode_grapheme_is_zwj_17_0(codepoint)
 }
 
 ///|
-fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
+fn fallback_hangul_allows_no_break(left : Int32, right : Int32) -> Bool {
   if fallback_codepoint_is_hangul_l(left) {
     return fallback_codepoint_is_hangul_l(right) ||
       fallback_codepoint_is_hangul_v(right) ||
@@ -441,7 +441,7 @@ fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
 ///|
 fn fallback_indic_conjunct_allows_no_break(
   chars : Array[Char],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   let right = chars[index].to_int()
   if !fallback_codepoint_is_indic_conjunct_consonant(right) {
@@ -473,22 +473,25 @@ fn fallback_indic_conjunct_allows_no_break(
 }
 
 ///|
-fn fallback_codepoint_is_indic_conjunct_linker(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_indic_conjunct_linker(codepoint : Int32) -> Bool {
   unicode_indic_conjunct_is_linker_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_indic_conjunct_consonant(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_indic_conjunct_consonant(codepoint : Int32) -> Bool {
   unicode_indic_conjunct_is_consonant_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_indic_conjunct_extend(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_indic_conjunct_extend(codepoint : Int32) -> Bool {
   unicode_indic_conjunct_is_extend_17_0(codepoint)
 }
 
 ///|
-fn fallback_emoji_zwj_allows_no_break(chars : Array[Char], index : Int) -> Bool {
+fn fallback_emoji_zwj_allows_no_break(
+  chars : Array[Char],
+  index : Int32,
+) -> Bool {
   if index <= 0 || !fallback_codepoint_is_zwj(chars[index - 1].to_int()) {
     return false
   }
@@ -511,9 +514,9 @@ fn fallback_emoji_zwj_allows_no_break(chars : Array[Char], index : Int) -> Bool 
 ///|
 fn fallback_regional_indicator_count_before(
   chars : Array[Char],
-  last_boundary : Int,
-  index : Int,
-) -> Int {
+  last_boundary : Int32,
+  index : Int32,
+) -> Int32 {
   let mut count = 0
   let mut cursor = index - 1
   while cursor >= last_boundary &&
@@ -528,61 +531,61 @@ fn fallback_regional_indicator_count_before(
 }
 
 ///|
-fn fallback_codepoint_is_grapheme_extend(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_grapheme_extend(codepoint : Int32) -> Bool {
   unicode_grapheme_is_extend_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_grapheme_prepend(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_grapheme_prepend(codepoint : Int32) -> Bool {
   unicode_grapheme_is_prepend_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_spacing_mark(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_spacing_mark(codepoint : Int32) -> Bool {
   unicode_grapheme_is_spacing_mark_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_hangul_l(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_l(codepoint : Int32) -> Bool {
   (codepoint >= 0x1100 && codepoint <= 0x115F) ||
   (codepoint >= 0xA960 && codepoint <= 0xA97C)
 }
 
 ///|
-fn fallback_codepoint_is_hangul_v(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_v(codepoint : Int32) -> Bool {
   (codepoint >= 0x1160 && codepoint <= 0x11A7) ||
   (codepoint >= 0xD7B0 && codepoint <= 0xD7C6)
 }
 
 ///|
-fn fallback_codepoint_is_hangul_t(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_t(codepoint : Int32) -> Bool {
   (codepoint >= 0x11A8 && codepoint <= 0x11FF) ||
   (codepoint >= 0xD7CB && codepoint <= 0xD7FB)
 }
 
 ///|
-fn fallback_codepoint_is_hangul_lv(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_lv(codepoint : Int32) -> Bool {
   fallback_codepoint_is_hangul_syllable(codepoint) &&
   (codepoint - 0xAC00) % 28 == 0
 }
 
 ///|
-fn fallback_codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_lvt(codepoint : Int32) -> Bool {
   fallback_codepoint_is_hangul_syllable(codepoint) &&
   (codepoint - 0xAC00) % 28 != 0
 }
 
 ///|
-fn fallback_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_hangul_syllable(codepoint : Int32) -> Bool {
   codepoint >= 0xAC00 && codepoint <= 0xD7A3
 }
 
 ///|
-fn fallback_codepoint_is_extended_pictographic(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_extended_pictographic(codepoint : Int32) -> Bool {
   unicode_emoji_is_extended_pictographic_17_0(codepoint)
 }
 
 ///|
-fn fallback_codepoint_is_regional_indicator(codepoint : Int) -> Bool {
+fn fallback_codepoint_is_regional_indicator(codepoint : Int32) -> Bool {
   unicode_grapheme_is_regional_indicator_17_0(codepoint)
 }

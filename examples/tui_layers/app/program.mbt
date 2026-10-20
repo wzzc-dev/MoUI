@@ -61,9 +61,9 @@ fn key_command(
   label : String,
   key : String,
   message : Msg,
-  shift? : Bool = false,
-  control? : Bool = false,
-  meta? : Bool = false,
+  shift~ : Bool = false,
+  control~ : Bool = false,
+  meta~ : Bool = false,
 ) -> @moui.ProgramCommand[Msg] {
   @moui.ProgramCommand::new(
     command=@views.ActionCommand::new(

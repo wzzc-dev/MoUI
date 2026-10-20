@@ -57,7 +57,7 @@ pub fn ModelConfig::context_preset(self : ModelConfig) -> String {
 
 ///|
 /// The character budget this preset yields (consumed by `plan_messages`).
-pub fn ModelConfig::context_budget(self : ModelConfig) -> Int {
+pub fn ModelConfig::context_budget(self : ModelConfig) -> Int32 {
   match self.context_preset {
     "compact" => 3000
     "roomy" => 12000

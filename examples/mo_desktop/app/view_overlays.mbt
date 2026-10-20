@@ -873,7 +873,7 @@ fn overlay_group(
   width : Double,
   height : Double,
   palette : DesktopPalette,
-  padding? : Double = 8.0,
+  padding~ : Double = 8.0,
 ) -> @moui.View[Msg] {
   @views.container(
     child,

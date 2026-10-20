@@ -184,7 +184,7 @@ fn dev_runner_text() -> String {
 }
 
 ///|
-fn app_text(title : String, template_id? : String = "counter") -> String {
+fn app_text(title : String, template_id~ : String = "counter") -> String {
   let title = moon_string(title)
   if template_id == "hello" {
     let template =
@@ -293,7 +293,7 @@ fn app_text(title : String, template_id? : String = "counter") -> String {
 }
 
 ///|
-fn app_test_text(template_id? : String = "counter") -> String {
+fn app_test_text(template_id~ : String = "counter") -> String {
   if template_id == "hello" {
     return (
       #|///|
@@ -321,7 +321,7 @@ fn app_test_text(template_id? : String = "counter") -> String {
 /// 除此之外两边是同一份契约（含 `web_abi_exports` 的宿主入口名单）。
 pub fn web_pkg_text(
   module_name : String,
-  app_alias? : String = "app",
+  app_alias~ : String = "app",
 ) -> String {
   let exports = web_abi_exports.map(name => "        \"\{name}\",").join("\n")
   let template =
@@ -577,7 +577,7 @@ fn mobile_platform_json(fields : Array[(String, Json)]) -> Json {
 ///|
 pub fn mobile_config_text(options : ProjectOptions) -> String {
   let root : Map[String, Json] = Map([
-    ("schemaVersion", (1 : Int).to_json()),
+    ("schemaVersion", (1 : Int32).to_json()),
     ("id", options.id.to_json()),
     ("displayName", options.title.to_json()),
     ("artifactName", options.id.to_json()),
@@ -587,7 +587,7 @@ pub fn mobile_config_text(options : ProjectOptions) -> String {
   if options.platforms.contains("android") {
     root["android"] = mobile_platform_json([
       ("applicationId", bundle_id.to_json()),
-      ("minSdk", (23 : Int).to_json()),
+      ("minSdk", (23 : Int32).to_json()),
     ])
   }
   if options.platforms.contains("ios") {
@@ -605,7 +605,7 @@ pub fn mobile_config_text(options : ProjectOptions) -> String {
       ("moduleName", "entry".to_json()),
       ("moduleDescription", (options.title + " HarmonyOS app").to_json()),
       ("entryDescription", (options.title + " entry ability").to_json()),
-      ("compatibleSdkVersion", (20 : Int).to_json()),
+      ("compatibleSdkVersion", (20 : Int32).to_json()),
     ])
   }
   Json::object(root).stringify(indent=2) + "\n"

@@ -1,7 +1,7 @@
 ///|
 pub struct SubscriptionKindCount {
   priv kind : String
-  priv count : Int
+  priv count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -114,43 +114,43 @@ pub extend EffectTaskLifecycleSnapshot with ToJson::{to_json}
 
 ///|
 pub struct ProgramRuntimeSnapshot {
-  priv dispatched_count : Int
-  priv update_count : Int
-  priv ignored_program_dispatch_count : Int
-  priv message_enqueue_count : Int
-  priv message_drain_count : Int
-  priv pending_message_count : Int
-  priv max_pending_message_count : Int
-  priv effect_plan_count : Int
-  priv effect_count : Int
-  priv effect_none_count : Int
-  priv effect_batch_count : Int
-  priv effect_send_count : Int
-  priv effect_dispatch_count : Int
-  priv effect_run_count : Int
-  priv effect_task_count : Int
-  priv duplicate_effect_descriptor_key_count : Int
+  priv dispatched_count : Int32
+  priv update_count : Int32
+  priv ignored_program_dispatch_count : Int32
+  priv message_enqueue_count : Int32
+  priv message_drain_count : Int32
+  priv pending_message_count : Int32
+  priv max_pending_message_count : Int32
+  priv effect_plan_count : Int32
+  priv effect_count : Int32
+  priv effect_none_count : Int32
+  priv effect_batch_count : Int32
+  priv effect_send_count : Int32
+  priv effect_dispatch_count : Int32
+  priv effect_run_count : Int32
+  priv effect_task_count : Int32
+  priv duplicate_effect_descriptor_key_count : Int32
   priv duplicate_effect_descriptor_keys : Array[String]
-  priv superseded_effect_task_key_count : Int
+  priv superseded_effect_task_key_count : Int32
   priv superseded_effect_task_keys : Array[String]
   priv last_effect_summary : EffectPlanSummary
   priv last_scheduled_effect_summary : EffectPlanSummary
-  priv active_effect_task_count : Int
-  priv started_effect_task_count : Int
-  priv completed_effect_task_count : Int
-  priv cancelled_effect_task_count : Int
-  priv ignored_effect_task_dispatch_count : Int
+  priv active_effect_task_count : Int32
+  priv started_effect_task_count : Int32
+  priv completed_effect_task_count : Int32
+  priv cancelled_effect_task_count : Int32
+  priv ignored_effect_task_dispatch_count : Int32
   priv active_effect_tasks : Array[@core.EffectDescriptor]
   priv effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  priv subscription_plan_count : Int
+  priv subscription_plan_count : Int32
   priv last_subscription_plan_summary : SubscriptionPlanSummary
-  priv active_subscription_count : Int
-  priv started_subscription_count : Int
-  priv reused_subscription_count : Int
-  priv cancelled_subscription_count : Int
-  priv duplicate_subscription_key_count : Int
+  priv active_subscription_count : Int32
+  priv started_subscription_count : Int32
+  priv reused_subscription_count : Int32
+  priv cancelled_subscription_count : Int32
+  priv duplicate_subscription_key_count : Int32
   priv duplicate_subscription_keys : Array[String]
-  priv ignored_subscription_dispatch_count : Int
+  priv ignored_subscription_dispatch_count : Int32
   priv active_subscriptions : Array[@core.SubscriptionDescriptor]
   priv active_subscription_kind_counts : Array[SubscriptionKindCount]
   priv subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
@@ -222,7 +222,7 @@ pub fn SubscriptionKindCount::kind(self : SubscriptionKindCount) -> String {
 }
 
 ///|
-pub fn SubscriptionKindCount::count(self : SubscriptionKindCount) -> Int {
+pub fn SubscriptionKindCount::count(self : SubscriptionKindCount) -> Int32 {
   self.count
 }
 
@@ -299,112 +299,112 @@ pub fn EffectTaskLifecycleSnapshot::cancel_reason(
 ///|
 pub fn ProgramRuntimeSnapshot::dispatched_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.dispatched_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::update_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.update_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::ignored_program_dispatch_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_program_dispatch_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::message_enqueue_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.message_enqueue_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::message_drain_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.message_drain_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::pending_message_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.pending_message_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::max_pending_message_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.max_pending_message_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_plan_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_plan_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_none_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_none_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_batch_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_batch_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_send_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_send_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_dispatch_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_dispatch_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_run_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_run_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::effect_task_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.effect_task_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::duplicate_effect_descriptor_key_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.duplicate_effect_descriptor_key_count
 }
 
@@ -418,7 +418,7 @@ pub fn ProgramRuntimeSnapshot::duplicate_effect_descriptor_keys(
 ///|
 pub fn ProgramRuntimeSnapshot::superseded_effect_task_key_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.superseded_effect_task_key_count
 }
 
@@ -446,35 +446,35 @@ pub fn ProgramRuntimeSnapshot::last_scheduled_effect_summary(
 ///|
 pub fn ProgramRuntimeSnapshot::active_effect_task_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.active_effect_task_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::started_effect_task_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.started_effect_task_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::completed_effect_task_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.completed_effect_task_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::cancelled_effect_task_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.cancelled_effect_task_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::ignored_effect_task_dispatch_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_effect_task_dispatch_count
 }
 
@@ -495,7 +495,7 @@ pub fn ProgramRuntimeSnapshot::effect_task_lifecycle(
 ///|
 pub fn ProgramRuntimeSnapshot::subscription_plan_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.subscription_plan_count
 }
 
@@ -509,35 +509,35 @@ pub fn ProgramRuntimeSnapshot::last_subscription_plan_summary(
 ///|
 pub fn ProgramRuntimeSnapshot::active_subscription_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.active_subscription_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::started_subscription_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.started_subscription_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::reused_subscription_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.reused_subscription_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::cancelled_subscription_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.cancelled_subscription_count
 }
 
 ///|
 pub fn ProgramRuntimeSnapshot::duplicate_subscription_key_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.duplicate_subscription_key_count
 }
 
@@ -551,7 +551,7 @@ pub fn ProgramRuntimeSnapshot::duplicate_subscription_keys(
 ///|
 pub fn ProgramRuntimeSnapshot::ignored_subscription_dispatch_count(
   self : ProgramRuntimeSnapshot,
-) -> Int {
+) -> Int32 {
   self.ignored_subscription_dispatch_count
 }
 

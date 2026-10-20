@@ -126,7 +126,7 @@ pub extend RendererSelection with ToJson::{to_json}
 /// package — the host converts between the two at the API boundary so that
 /// `moui/render` never imports `moui/backend`.
 pub(all) struct RenderWindowId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -139,7 +139,7 @@ pub extend RenderWindowId with Eq::{not_equal, equal}
 pub extend RenderWindowId with ToJson::{to_json}
 
 ///|
-pub fn RenderWindowId::new(value : Int) -> RenderWindowId {
+pub fn RenderWindowId::new(value : Int32) -> RenderWindowId {
   { value, }
 }
 
@@ -202,10 +202,10 @@ pub extend RenderFrameInput with ToJson::{to_json}
 pub(all) struct RenderFrameResult {
   presented : Bool
   queued : Bool
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
-  cache_evict_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
+  cache_evict_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -245,7 +245,7 @@ pub(all) struct RenderPresentCompletion {
   completed_at_ms : Double
   presented_at_ms : Double
   status : RenderPresentStatus
-  gpu_context_generation : Int
+  gpu_context_generation : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -296,7 +296,7 @@ pub fn RendererBackendInfo::new(
   can_render~ : Bool,
   can_resize~ : Bool,
   owns_surface~ : Bool,
-  description? : String = "",
+  description~ : String = "",
 ) -> RendererBackendInfo {
   { backend, status, can_render, can_resize, owns_surface, description, }
 }
@@ -394,7 +394,7 @@ pub fn RendererDescriptor::new(
   presentation~ : RendererPresentationModel,
   supported_targets~ : Array[RendererTarget],
   capabilities~ : Array[RendererBackendFeatureCapability],
-  description? : String = "",
+  description~ : String = "",
 ) -> RendererDescriptor {
   {
     backend,
@@ -410,22 +410,22 @@ pub fn RendererDescriptor::new(
 pub fn RenderFrameInput::new(
   metrics~ : @core.SurfaceMetrics,
   commands~ : Array[@core.DrawCommand],
-  damage? : @core.DamageRegion = @core.DamageRegion::full(
+  damage~ : @core.DamageRegion = @core.DamageRegion::full(
     "legacy render frame input",
   ),
-  clear_color? : @core.Color? = None,
+  clear_color~ : @core.Color? = None,
 ) -> RenderFrameInput {
   { metrics, commands, damage, clear_color, }
 }
 
 ///|
 pub fn RenderFrameResult::new(
-  presented? : Bool = true,
-  queued? : Bool = false,
-  cache_hit_count? : Int = 0,
-  cache_miss_count? : Int = 0,
-  cache_update_count? : Int = 0,
-  cache_evict_count? : Int = 0,
+  presented~ : Bool = true,
+  queued~ : Bool = false,
+  cache_hit_count~ : Int32 = 0,
+  cache_miss_count~ : Int32 = 0,
+  cache_update_count~ : Int32 = 0,
+  cache_evict_count~ : Int32 = 0,
 ) -> RenderFrameResult {
   {
     presented,
@@ -444,7 +444,7 @@ pub fn RenderPresentCompletion::new(
   completed_at_ms~ : Double,
   presented_at_ms~ : Double,
   status~ : RenderPresentStatus,
-  gpu_context_generation~ : Int,
+  gpu_context_generation~ : Int32,
 ) -> RenderPresentCompletion {
   {
     token,
@@ -494,7 +494,7 @@ pub fn RenderPresentCompletion::status(
 ///|
 pub fn RenderPresentCompletion::gpu_context_generation(
   self : RenderPresentCompletion,
-) -> Int {
+) -> Int32 {
   self.gpu_context_generation
 }
 
@@ -503,7 +503,7 @@ pub fn WgpuSurfaceContract::new(
   source~ : WgpuSurfaceSourceKind,
   backend~ : RendererBackendKind,
   ready~ : Bool,
-  description? : String = "",
+  description~ : String = "",
 ) -> WgpuSurfaceContract {
   { source, backend, ready, description, }
 }
@@ -825,7 +825,7 @@ fn pixel_y_to_ndc(y : Double, height : Double) -> Double {
 
 ///|
 fn push_f32le(out : Array[Byte], value : Double) -> Unit {
-  let bits : UInt = Float::from_double(value)
+  let bits : UInt32 = Float::from_double(value)
     .reinterpret_as_int()
     .reinterpret_as_uint()
   out.push((bits & 0xFF).to_byte())
@@ -844,7 +844,7 @@ pub fn grow_capacity(required : UInt64) -> UInt64 {
 }
 
 ///|
-pub fn size_dim_to_uint(value : Double) -> UInt {
+pub fn size_dim_to_uint(value : Double) -> UInt32 {
   if value < 1.0 {
     1U
   } else {

@@ -32,7 +32,7 @@ pub fn[Msg] tab_item(
 pub fn[Msg] navigation_stack_selected(
   selected : String,
   destinations : Array[NavigationDestination[Msg]],
-  fallback? : @core.View[Msg] = @container.empty(),
+  fallback~ : @core.View[Msg] = @container.empty(),
 ) -> @core.View[Msg] {
   for destination in destinations {
     if destination.route == selected {
@@ -46,7 +46,7 @@ pub fn[Msg] navigation_stack_selected(
 pub fn[Msg] router_stack(
   router : RouterState,
   destinations : Array[NavigationDestination[Msg]],
-  fallback? : @core.View[Msg] = @container.empty(),
+  fallback~ : @core.View[Msg] = @container.empty(),
 ) -> @core.View[Msg] {
   let location = router.current()
   for destination in destinations {
@@ -62,7 +62,7 @@ pub fn[Msg] router_stack(
 pub fn[Msg] tab_view(
   selected : String,
   tabs : Array[TabItem[Msg]],
-  spacing? : Double = 8.0,
+  spacing~ : Double = 8.0,
   on_select~ : (String) -> Msg,
 ) -> @core.View[Msg] {
   let buttons : Array[@core.View[Msg]] = []

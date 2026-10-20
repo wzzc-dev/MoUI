@@ -8,12 +8,12 @@ priv struct ResourceCacheItem[V] {
 ///|
 /// Observable counters for a resource cache.
 pub(all) struct ResourceCacheStats {
-  count : Int
+  count : Int32
   byte_size : Int64
   max_bytes : Int64
-  hits : Int
-  misses : Int
-  evictions : Int
+  hits : Int32
+  misses : Int32
+  evictions : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -29,9 +29,9 @@ pub(all) struct ResourceCache[K, V] {
   priv mut max_bytes : Int64
   priv mut current_bytes : Int64
   priv mut clock : Int64
-  priv mut hits : Int
-  priv mut misses : Int
-  priv mut evictions : Int
+  priv mut hits : Int32
+  priv mut misses : Int32
+  priv mut evictions : Int32
 }
 
 ///|
@@ -44,7 +44,7 @@ fn non_negative_i64(value : Int64) -> Int64 {
 }
 
 ///|
-pub fn[K, V] ResourceCache::new(max_bytes? : Int64 = 0L) -> ResourceCache[K, V] {
+pub fn[K, V] ResourceCache::new(max_bytes~ : Int64 = 0L) -> ResourceCache[K, V] {
   {
     entries: Default::default(),
     max_bytes: non_negative_i64(max_bytes),
@@ -57,7 +57,7 @@ pub fn[K, V] ResourceCache::new(max_bytes? : Int64 = 0L) -> ResourceCache[K, V] 
 }
 
 ///|
-pub fn[K, V] ResourceCache::length(self : ResourceCache[K, V]) -> Int {
+pub fn[K, V] ResourceCache::length(self : ResourceCache[K, V]) -> Int32 {
   self.entries.length()
 }
 
@@ -155,7 +155,7 @@ pub fn[K : Hash + Eq, V] ResourceCache::insert(
   self : ResourceCache[K, V],
   key : K,
   value : V,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> Bool {
   let byte_size = non_negative_i64(byte_size)
   if self.max_bytes > 0L && byte_size > self.max_bytes {

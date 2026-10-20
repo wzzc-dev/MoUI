@@ -3,10 +3,10 @@ pub fn[Msg] alert(
   title : String,
   message : String,
   primary_action~ : StateViewAction[Msg],
-  secondary_action? : StateViewAction[Msg]? = None,
-  tone? : @style.FeedbackTone = Info,
+  secondary_action~ : StateViewAction[Msg]? = None,
+  tone~ : @style.FeedbackTone = Info,
   theme? : @core.Theme,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let feedback_style = @style.FeedbackStyle::default(theme=resolved_theme)

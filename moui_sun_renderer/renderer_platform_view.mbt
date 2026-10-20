@@ -2,9 +2,9 @@
 pub fn SunRasterRenderer::draw_platform_view_pixels(
   self : SunRasterRenderer,
   pixels : Bytes,
-  src_width : Int,
-  src_height : Int,
-  src_stride : Int,
+  src_width : Int32,
+  src_height : Int32,
+  src_stride : Int32,
   dst_x : Double,
   dst_y : Double,
   dst_width : Double,
@@ -52,9 +52,9 @@ pub fn SunRasterRenderer::set_platform_view_draw_fn(
 ///|
 fn sun_tightly_packed_rgba(
   pixels : Bytes,
-  width~ : Int,
-  height~ : Int,
-  stride~ : Int,
+  width~ : Int32,
+  height~ : Int32,
+  stride~ : Int32,
 ) -> Bytes {
   let row_bytes = width * 4
   if stride == row_bytes && pixels.length() == row_bytes * height {

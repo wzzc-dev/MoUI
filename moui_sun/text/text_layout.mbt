@@ -39,7 +39,7 @@ pub fn GlyphRun::get_baseline_y(self : GlyphRun) -> Double {
 
 ///|
 /// Get glyph count in this run.
-pub fn GlyphRun::glyph_count(self : GlyphRun) -> Int {
+pub fn GlyphRun::glyph_count(self : GlyphRun) -> Int32 {
   self.glyphs.length()
 }
 
@@ -104,7 +104,7 @@ pub fn TextLayout::get_baseline(self : TextLayout) -> Double {
 
 ///|
 /// Get the number of glyph runs.
-pub fn TextLayout::run_count(self : TextLayout) -> Int {
+pub fn TextLayout::run_count(self : TextLayout) -> Int32 {
   self.runs.length()
 }
 

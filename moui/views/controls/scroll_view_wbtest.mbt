@@ -65,7 +65,7 @@ fn scroll_test_text_control_context() -> @core.TextControlStateContext {
 ///|
 fn scroll_test_layout_context(
   child_size~ : @core.Size,
-  state? : @core.ViewStateContext = scroll_test_state_context(),
+  state~ : @core.ViewStateContext = scroll_test_state_context(),
 ) -> @core.ViewLayoutContext {
   {
     constraints: @core.Constraints::tight(
@@ -84,7 +84,7 @@ fn scroll_test_layout_context(
 fn scroll_test_event_context(
   event~ : @core.AppEvent,
   child_frames~ : Array[@core.Rect],
-  state? : @core.ViewStateContext = scroll_test_state_context(),
+  state~ : @core.ViewStateContext = scroll_test_state_context(),
 ) -> @core.ViewEventContext {
   {
     frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
@@ -105,7 +105,7 @@ fn scroll_test_pointer(
   x~ : Double,
   y~ : Double,
   phase~ : @core.PointerPhase,
-  wheel_y? : Double = 0.0,
+  wheel_y~ : Double = 0.0,
 ) -> @core.AppEvent {
   Pointer(
     @core.PointerEvent::new(

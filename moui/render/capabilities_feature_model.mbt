@@ -99,7 +99,7 @@ pub extend RendererCommandFallbackKind with ToJson::{to_json}
 
 ///|
 pub struct RendererCommandFallback {
-  priv index : Int
+  priv index : Int32
   priv feature : RendererFeature
   priv command : String
   priv kind : RendererCommandFallbackKind
@@ -117,10 +117,10 @@ pub extend RendererCommandFallback with ToJson::{to_json}
 
 ///|
 pub struct RendererCommandPlan {
-  priv total_commands : Int
-  priv fallback_count : Int
-  priv final_layer_depth : Int
-  priv final_filter_depth : Int
+  priv total_commands : Int32
+  priv fallback_count : Int32
+  priv final_layer_depth : Int32
+  priv final_filter_depth : Int32
   priv fallbacks : Array[RendererCommandFallback]
 } derive(Eq, Debug, ToJson)
 
@@ -134,16 +134,16 @@ pub extend RendererCommandPlan with Eq::{not_equal, equal}
 pub extend RendererCommandPlan with ToJson::{to_json}
 
 ///|
-pub fn RendererCommandFallback::index(self : RendererCommandFallback) -> Int {
+pub fn RendererCommandFallback::index(self : RendererCommandFallback) -> Int32 {
   self.index
 }
 
 ///|
 pub fn RendererCommandFallback::new(
-  index~ : Int,
+  index~ : Int32,
   feature~ : RendererFeature,
   command~ : String,
-  kind? : RendererCommandFallbackKind = PlannedFallback,
+  kind~ : RendererCommandFallbackKind = PlannedFallback,
   reason~ : String,
 ) -> RendererCommandFallback {
   { index, feature, command, kind, reason, }
@@ -151,10 +151,10 @@ pub fn RendererCommandFallback::new(
 
 ///|
 pub fn RendererCommandPlan::new(
-  total_commands~ : Int,
-  fallback_count~ : Int,
-  final_layer_depth~ : Int,
-  final_filter_depth~ : Int,
+  total_commands~ : Int32,
+  fallback_count~ : Int32,
+  final_layer_depth~ : Int32,
+  final_filter_depth~ : Int32,
   fallbacks~ : Array[RendererCommandFallback],
 ) -> RendererCommandPlan {
   {
@@ -195,26 +195,26 @@ pub fn RendererCommandFallback::reason(
 }
 
 ///|
-pub fn RendererCommandPlan::total_commands(self : RendererCommandPlan) -> Int {
+pub fn RendererCommandPlan::total_commands(self : RendererCommandPlan) -> Int32 {
   self.total_commands
 }
 
 ///|
-pub fn RendererCommandPlan::fallback_count(self : RendererCommandPlan) -> Int {
+pub fn RendererCommandPlan::fallback_count(self : RendererCommandPlan) -> Int32 {
   self.fallback_count
 }
 
 ///|
 pub fn RendererCommandPlan::final_layer_depth(
   self : RendererCommandPlan,
-) -> Int {
+) -> Int32 {
   self.final_layer_depth
 }
 
 ///|
 pub fn RendererCommandPlan::final_filter_depth(
   self : RendererCommandPlan,
-) -> Int {
+) -> Int32 {
   self.final_filter_depth
 }
 
@@ -275,7 +275,7 @@ pub fn RendererBackendFeatureCapability::new(
   feature~ : RendererFeature,
   backend~ : RendererBackendKind,
   status~ : RendererFeatureStatus,
-  note? : String = "",
+  note~ : String = "",
 ) -> RendererBackendFeatureCapability {
   { provider_id, feature, backend, status, note, }
 }

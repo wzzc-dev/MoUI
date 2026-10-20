@@ -116,7 +116,7 @@ impl @core.ViewNode for AnimatedCanvas with fn semantics(self) {
 pub fn[Msg] canvas(
   measure~ : (@core.Constraints) -> @core.Size,
   draw~ : (PaintContext, @core.Rect) -> Unit,
-  semantics_label? : String = "",
+  semantics_label~ : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(Canvas::{ measure, draw, semantics_label, })
 }
@@ -138,7 +138,7 @@ pub fn[Msg] canvas(
 pub fn[Msg] measured_canvas(
   measure~ : (@core.Constraints, @core.TextSystem) -> @core.Size,
   draw~ : (PaintContext, @core.Rect) -> Unit,
-  semantics_label? : String = "",
+  semantics_label~ : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(MeasuredCanvas::{ measure, draw, semantics_label, })
 }
@@ -186,7 +186,7 @@ impl @core.ViewNode for MeasuredCanvas with fn paint(self, ctx) {
 pub fn[Msg] animated_canvas(
   measure~ : (@core.Constraints) -> @core.Size,
   draw~ : (PaintContext, @core.Rect, Double) -> Unit,
-  semantics_label? : String = "",
+  semantics_label~ : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(AnimatedCanvas::{ measure, draw, semantics_label, })
 }

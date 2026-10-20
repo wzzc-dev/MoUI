@@ -53,12 +53,12 @@ pub fn runtime_token_alignment_for(
 }
 
 ///|
-pub fn runtime_token_alignment_count(preset : @common.DesignPreset) -> Int {
+pub fn runtime_token_alignment_count(preset : @common.DesignPreset) -> Int32 {
   runtime_token_alignment_report(preset).length()
 }
 
 ///|
-pub fn runtime_token_aligned_count(preset : @common.DesignPreset) -> Int {
+pub fn runtime_token_aligned_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in runtime_token_alignment_report(preset) {
     if item.runtime_aligned {
@@ -69,7 +69,9 @@ pub fn runtime_token_aligned_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn runtime_token_alignment_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn runtime_token_alignment_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in runtime_token_alignment_report(preset) {
     if item.required && !item.runtime_aligned {
@@ -82,7 +84,7 @@ pub fn runtime_token_alignment_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn runtime_token_source_value_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in runtime_token_alignment_report(preset) {
     if item.required && item.source_imported && !item.source_value_resolved {
@@ -95,7 +97,7 @@ pub fn runtime_token_source_value_gap_count(
 ///|
 pub fn runtime_token_destination_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in runtime_token_alignment_report(preset) {
     if item.required && item.source_imported && !item.runtime_value_available {
@@ -896,7 +898,7 @@ fn runtime_double_value(value : Double) -> RuntimeTokenValue {
 }
 
 ///|
-fn runtime_int_value(value : Int) -> RuntimeTokenValue {
+fn runtime_int_value(value : Int32) -> RuntimeTokenValue {
   runtime_value(value.to_string())
 }
 

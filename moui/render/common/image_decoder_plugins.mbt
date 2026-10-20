@@ -31,7 +31,7 @@ pub fn image_decoder_plugin_clear() -> Unit {
 
 ///|
 /// Number of currently registered decoders, for diagnostics and tests.
-pub fn image_decoder_plugin_count() -> Int {
+pub fn image_decoder_plugin_count() -> Int32 {
   image_decoder_plugins.val.length()
 }
 
@@ -45,7 +45,7 @@ pub fn image_decoder_plugin_count() -> Int {
 /// above `fallback`, which stays the backend's own codec.
 pub fn image_decoder_plugin_chain(
   fallback : @render.RendererImageDecoder,
-  builtin? : Array[@render.RendererImageDecoder] = [],
+  builtin~ : Array[@render.RendererImageDecoder] = [],
 ) -> @render.RendererImageDecoder {
   @render.RendererImageDecoder::new(decode=(source, bytes) => {
     for plugin in image_decoder_plugins.val {

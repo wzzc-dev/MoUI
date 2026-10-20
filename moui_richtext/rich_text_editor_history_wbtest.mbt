@@ -12,13 +12,13 @@ fn history_stop_fake_clock() -> Unit {
 }
 
 ///|
-fn history_advance(ms : Int) -> Unit {
+fn history_advance(ms : Int32) -> Unit {
   rich_text_history_fake_clock_ms.val = rich_text_history_fake_clock_ms.val +
     ms.to_int64()
 }
 
 ///|
-fn history_test_control(caret? : Int = 0) -> @core.TextControlStateContext {
+fn history_test_control(caret~ : Int32 = 0) -> @core.TextControlStateContext {
   rich_text_history_reset_group()
   {
     caret,

@@ -39,7 +39,7 @@ pub fn DesignPreset::summary(self : DesignPreset) -> String {
 ///|
 pub fn preset(
   preset : DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> @core.Theme {
   preset.theme(scheme~)
 }
@@ -47,9 +47,9 @@ pub fn preset(
 ///|
 pub fn preset_for_variant(
   preset : DesignPreset,
-  variant? : DesignSchemeVariant = SchemeLight,
-  system_scheme? : @core.ColorScheme = Light,
-  density? : DesignDensity = Standard,
+  variant~ : DesignSchemeVariant = SchemeLight,
+  system_scheme~ : @core.ColorScheme = Light,
+  density~ : DesignDensity = Standard,
 ) -> @core.Theme {
   preset.theme_for_variant(variant~, system_scheme~, density~)
 }
@@ -57,8 +57,8 @@ pub fn preset_for_variant(
 ///|
 pub fn DesignPreset::theme(
   self : DesignPreset,
-  scheme? : @core.ColorScheme = Light,
-  density? : DesignDensity = Standard,
+  scheme~ : @core.ColorScheme = Light,
+  density~ : DesignDensity = Standard,
 ) -> @core.Theme {
   self.tokens(scheme~, density~).to_theme()
 }
@@ -66,9 +66,9 @@ pub fn DesignPreset::theme(
 ///|
 pub fn DesignPreset::theme_for_variant(
   self : DesignPreset,
-  variant? : DesignSchemeVariant = SchemeLight,
-  system_scheme? : @core.ColorScheme = Light,
-  density? : DesignDensity = Standard,
+  variant~ : DesignSchemeVariant = SchemeLight,
+  system_scheme~ : @core.ColorScheme = Light,
+  density~ : DesignDensity = Standard,
 ) -> @core.Theme {
   self.tokens_for_variant(variant~, system_scheme~, density~).to_theme()
 }
@@ -81,7 +81,7 @@ pub fn DesignPreset::theme_for_variant(
 /// attach it via the ambient resolver; this builder composes the neutral base
 /// only.
 pub fn custom(
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
   base? : @core.Theme,
   palette? : @core.ColorPalette,
   spacing_scale? : @core.SpacingScale,
@@ -151,7 +151,7 @@ fn shadow(
   alpha~ : Double,
   y~ : Double,
   blur~ : Double,
-  spread? : Double = 0.0,
+  spread~ : Double = 0.0,
 ) -> @core.ShadowStyle {
   @core.ShadowStyle::new(
     color=color(r=0.0, g=0.0, b=0.0, a=alpha),
@@ -166,17 +166,17 @@ pub fn color(
   r~ : Double,
   g~ : Double,
   b~ : Double,
-  a? : Double = 1.0,
+  a~ : Double = 1.0,
 ) -> @core.Color {
   @core.Color::rgba(r~, g~, b~, a~)
 }
 
 ///|
 pub fn color_byte(
-  r~ : Int,
-  g~ : Int,
-  b~ : Int,
-  a? : Double = 1.0,
+  r~ : Int32,
+  g~ : Int32,
+  b~ : Int32,
+  a~ : Double = 1.0,
 ) -> @core.Color {
   color(
     r=r.to_double() / 255.0,

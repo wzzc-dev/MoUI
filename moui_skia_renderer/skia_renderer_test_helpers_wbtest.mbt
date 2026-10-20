@@ -72,7 +72,7 @@ fn skia_test_region_has_dark_pixel(
 fn skia_test_region_has_matching_pixel(
   frame : SkiaPixelFrame,
   rect : @core.Rect,
-  matches : (Int, Int, Int, Int) -> Bool,
+  matches : (Int32, Int32, Int32, Int32) -> Bool,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
@@ -126,7 +126,7 @@ fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
 fn skia_test_region_darkest_channel(
   frame : SkiaPixelFrame,
   rect : @core.Rect,
-) -> Int {
+) -> Int32 {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
   let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
@@ -159,8 +159,8 @@ fn skia_test_region_darkest_channel(
 fn skia_test_region_is_flat_neutral(
   frame : SkiaPixelFrame,
   rect : @core.Rect,
-  min_channel~ : Int,
-  tolerance~ : Int,
+  min_channel~ : Int32,
+  tolerance~ : Int32,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)

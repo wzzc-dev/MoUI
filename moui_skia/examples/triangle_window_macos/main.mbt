@@ -4,7 +4,7 @@ struct App {
 }
 
 ///|
-fn make_triangle_path(width : Int, height : Int) -> @skia.Path {
+fn make_triangle_path(width : Int32, height : Int32) -> @skia.Path {
   let w = Float::from_int(width)
   let h = Float::from_int(height)
   @skia.Path::new()
@@ -15,7 +15,7 @@ fn make_triangle_path(width : Int, height : Int) -> @skia.Path {
 }
 
 ///|
-fn draw_triangle_with_skia(width : Int, height : Int) -> @skia.Pixmap? {
+fn draw_triangle_with_skia(width : Int32, height : Int32) -> @skia.Pixmap? {
   if width <= 0 || height <= 0 || !@native.skia_available() {
     None
   } else {

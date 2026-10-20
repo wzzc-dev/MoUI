@@ -20,8 +20,8 @@ pub fn WindowFrameStates::attach(
   self : WindowFrameStates,
   id : @backend_host.WindowId,
   renderer : @render.RendererSession,
-  surface_generation? : Int = 1,
-  hooks? : WindowFrameHooks = WindowFrameHooks::new(),
+  surface_generation~ : Int32 = 1,
+  hooks~ : WindowFrameHooks = WindowFrameHooks::new(),
 ) -> Bool {
   if self.lookup(id) is Some(_) {
     return false
@@ -90,6 +90,6 @@ pub fn WindowFrameStates::dispose_window(
 }
 
 ///|
-pub fn WindowFrameStates::count(self : WindowFrameStates) -> Int {
+pub fn WindowFrameStates::count(self : WindowFrameStates) -> Int32 {
   self.entries.length()
 }

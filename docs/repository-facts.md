@@ -60,7 +60,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/momark |
 | ./examples/terminal |
 | ./examples/tui_layers |
-| ./examples/ai_world |
+| ./examples/new_world |
 | ./moui_studio |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
@@ -79,7 +79,7 @@ This file is generated from repository manifests and validator reports.
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 890 | 596 | 24 |
 | core (moui/core/pkg.generated.mbti) | 2766 | 1165 | 190 |
-| views facade (moui/views/pkg.generated.mbti) | 690 | 329 | 1 |
+| views facade (moui/views/pkg.generated.mbti) | 694 | 331 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 606 | 279 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 430 | 166 | 13 |

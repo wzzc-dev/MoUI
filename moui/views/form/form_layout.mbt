@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] form(
   children : Array[@core.View[Msg]],
-  spacing? : Double = @style.default_theme().spacing_scale.lg,
+  spacing~ : Double = @style.default_theme().spacing_scale.lg,
   theme? : @core.Theme,
   width? : Double,
 ) -> @core.View[Msg] {
@@ -15,13 +15,13 @@ pub fn[Msg] form(
 
 ///|
 pub fn[Msg] form_section(
-  title? : String = "",
+  title~ : String = "",
   children : Array[@core.View[Msg]],
-  summary? : String = "",
-  spacing? : Double = @style.default_theme().spacing_scale.md,
+  summary~ : String = "",
+  spacing~ : Double = @style.default_theme().spacing_scale.md,
   theme? : @core.Theme,
   width? : Double,
-  padding? : Double = @style.default_theme().spacing_scale.md,
+  padding~ : Double = @style.default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let content_width = match width {

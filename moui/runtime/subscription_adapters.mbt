@@ -1,6 +1,6 @@
 ///|
 pub struct HostEventSource {
-  priv mut next_handler_value : Int
+  priv mut next_handler_value : Int32
   priv mut handlers : Array[HostEventSubscriptionHandler]
 }
 
@@ -12,8 +12,8 @@ pub struct HostPlatformEventSources {
 
 ///|
 pub(all) struct HostPlatformEventPublishResult {
-  host_event_count : Int
-  window_event_count : Int
+  host_event_count : Int32
+  window_event_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -42,19 +42,19 @@ pub extend HostWindowEvent with ToJson::{to_json}
 
 ///|
 pub struct HostWindowEventSource {
-  priv mut next_handler_value : Int
+  priv mut next_handler_value : Int32
   priv mut handlers : Array[HostWindowEventSubscriptionHandler]
 }
 
 ///|
 priv struct HostEventSubscriptionHandler {
-  token : Int
+  token : Int32
   handle : (@backend_host.Event) -> Unit
 }
 
 ///|
 priv struct HostWindowEventSubscriptionHandler {
-  token : Int
+  token : Int32
   handle : (HostWindowEvent) -> Unit
 }
 
@@ -65,8 +65,8 @@ pub fn HostEventSource::new() -> HostEventSource {
 
 ///|
 pub fn HostPlatformEventSources::new(
-  host_events? : HostEventSource = HostEventSource::new(),
-  window_events? : HostWindowEventSource = HostWindowEventSource::new(),
+  host_events~ : HostEventSource = HostEventSource::new(),
+  window_events~ : HostWindowEventSource = HostWindowEventSource::new(),
 ) -> HostPlatformEventSources {
   { host_events, window_events, }
 }
@@ -111,14 +111,14 @@ pub fn HostWindowEventSource::new() -> HostWindowEventSource {
 }
 
 ///|
-pub fn HostEventSource::active_handler_count(self : HostEventSource) -> Int {
+pub fn HostEventSource::active_handler_count(self : HostEventSource) -> Int32 {
   self.handlers.length()
 }
 
 ///|
 pub fn HostWindowEventSource::active_handler_count(
   self : HostWindowEventSource,
-) -> Int {
+) -> Int32 {
   self.handlers.length()
 }
 
@@ -126,7 +126,7 @@ pub fn HostWindowEventSource::active_handler_count(
 pub fn HostEventSource::publish(
   self : HostEventSource,
   event : @backend_host.Event,
-) -> Int {
+) -> Int32 {
   let handlers = self.handlers.copy()
   for handler in handlers {
     (handler.handle)(event)
@@ -137,8 +137,8 @@ pub fn HostEventSource::publish(
 ///|
 pub fn[Msg] HostEventSource::subscription(
   self : HostEventSource,
-  key? : String = "host:event",
-  label? : String = "Host event",
+  key~ : String = "host:event",
+  label~ : String = "Host event",
   map~ : (@backend_host.Event) -> Msg?,
 ) -> @core.Subscription[Msg] {
   let start = dispatch => {
@@ -158,7 +158,7 @@ pub fn HostWindowEventSource::publish(
   self : HostWindowEventSource,
   window_id~ : @backend_host.WindowId,
   event~ : @backend_host.Event,
-) -> Int {
+) -> Int32 {
   let handlers = self.handlers.copy()
   let window_event = HostWindowEvent::new(window_id~, event~)
   for handler in handlers {
@@ -170,8 +170,8 @@ pub fn HostWindowEventSource::publish(
 ///|
 pub fn[Msg] HostWindowEventSource::subscription(
   self : HostWindowEventSource,
-  key? : String = "host:window-event",
-  label? : String = "Host window event",
+  key~ : String = "host:window-event",
+  label~ : String = "Host window event",
   map~ : (HostWindowEvent) -> Msg?,
 ) -> @core.Subscription[Msg] {
   let start = dispatch => {
@@ -190,7 +190,7 @@ pub fn[Msg] HostWindowEventSource::subscription(
 fn HostEventSource::add_handler(
   self : HostEventSource,
   handle : (@backend_host.Event) -> Unit,
-) -> Int {
+) -> Int32 {
   let token = self.next_handler_value
   self.next_handler_value = self.next_handler_value + 1
   self.handlers.push({ token, handle, })
@@ -201,7 +201,7 @@ fn HostEventSource::add_handler(
 fn HostWindowEventSource::add_handler(
   self : HostWindowEventSource,
   handle : (HostWindowEvent) -> Unit,
-) -> Int {
+) -> Int32 {
   let token = self.next_handler_value
   self.next_handler_value = self.next_handler_value + 1
   self.handlers.push({ token, handle, })
@@ -209,7 +209,10 @@ fn HostWindowEventSource::add_handler(
 }
 
 ///|
-fn HostEventSource::remove_handler(self : HostEventSource, token : Int) -> Bool {
+fn HostEventSource::remove_handler(
+  self : HostEventSource,
+  token : Int32,
+) -> Bool {
   let mut removed = false
   let remaining : Array[HostEventSubscriptionHandler] = []
   for handler in self.handlers {
@@ -226,7 +229,7 @@ fn HostEventSource::remove_handler(self : HostEventSource, token : Int) -> Bool 
 ///|
 fn HostWindowEventSource::remove_handler(
   self : HostWindowEventSource,
-  token : Int,
+  token : Int32,
 ) -> Bool {
   let mut removed = false
   let remaining : Array[HostWindowEventSubscriptionHandler] = []

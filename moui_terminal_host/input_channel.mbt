@@ -19,13 +19,13 @@ pub struct TerminalInput {
 ///|
 /// SGR 的「无键移动」按钮号:1003 模式下拖动位置位、按钮号为 3,
 /// 表示当前没有键按下,不是第 4 个按钮。
-const NO_SGR_BUTTON : Int = 3
+const NO_SGR_BUTTON : Int32 = 3
 
 ///|
 /// 按钮编号对照:终端是 0 左 1 中 2 右,MoUI 核心是 0 左 1 右 2 中
 /// (`moui/backend/common/input/window_event_decode.mbt:127`)。
 /// 直接透传会把中键和右键互换。
-fn sgr_button_to_core(button : Int) -> Int {
+fn sgr_button_to_core(button : Int32) -> Int32 {
   match button {
     1 => 2
     2 => 1
@@ -37,8 +37,8 @@ fn sgr_button_to_core(button : Int) -> Int {
 /// 终端网格 → 逻辑像素视口。终端没有 DPR,缩放恒为 1:再乘一层只会让
 /// 「一格滚轮」和「一格点击」变成需要解释的东西。
 fn grid_metrics(
-  cols : Int,
-  rows : Int,
+  cols : Int32,
+  rows : Int32,
   cell : @tui_renderer.CellBox,
 ) -> @core.SurfaceMetrics {
   @core.SurfaceMetrics::from_logical(
@@ -55,9 +55,9 @@ fn grid_metrics(
 /// 宿主必须先用 `metrics` 造 HostSurface,再去绑渲染器——尺寸为 0 的 surface
 /// 会被共享的 bind gate 拒绝。
 pub fn TerminalInput::new(
-  cols~ : Int,
-  rows~ : Int,
-  cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
+  cols~ : Int32,
+  rows~ : Int32,
+  cell~ : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
 ) -> TerminalInput {
   {
     input: @window_input.InputState::new(
@@ -96,8 +96,8 @@ pub fn TerminalInput::metrics(self : TerminalInput) -> @core.SurfaceMetrics {
 /// ——让渲染会话按新度量重画,让运行时走完整的 update→layout→present。
 pub fn TerminalInput::resize(
   self : TerminalInput,
-  cols : Int,
-  rows : Int,
+  cols : Int32,
+  rows : Int32,
 ) -> @backend_host.Event {
   self.surface.resize(grid_metrics(cols, rows, self.cell))
 }

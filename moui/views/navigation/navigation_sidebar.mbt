@@ -4,8 +4,8 @@ pub fn[Msg] sidebar(
   items : Array[SidebarItem[Msg]],
   selected~ : String,
   theme? : @core.Theme,
-  width? : Double = 240.0,
-  height? : Double = 320.0,
+  width~ : Double = 240.0,
+  height~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let inner_width = @common.view_max_double(

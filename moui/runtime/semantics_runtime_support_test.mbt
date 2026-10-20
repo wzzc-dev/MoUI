@@ -163,18 +163,18 @@ impl @core.ViewNode for RuntimeSemanticTestNode with fn focusable(self) {
 
 ///|
 fn[Msg] runtime_semantic_test_view(
-  kind? : String = "RuntimeSemanticTestNode",
+  kind~ : String = "RuntimeSemanticTestNode",
   semantic_id? : @core.SemanticId,
-  role? : @core.SemanticsRole = Button,
-  label? : String = "",
-  value? : String = "",
-  description? : String = "",
-  disabled? : Bool = false,
-  selected? : Bool = false,
-  expanded? : Bool = false,
-  composition? : @core.SemanticsComposition = Boundary,
-  focusable? : Bool = false,
-  handlers? : Array[@core.ViewSemanticsActionHandler[Msg]] = [],
+  role~ : @core.SemanticsRole = Button,
+  label~ : String = "",
+  value~ : String = "",
+  description~ : String = "",
+  disabled~ : Bool = false,
+  selected~ : Bool = false,
+  expanded~ : Bool = false,
+  composition~ : @core.SemanticsComposition = Boundary,
+  focusable~ : Bool = false,
+  handlers~ : Array[@core.ViewSemanticsActionHandler[Msg]] = [],
 ) -> @core.View[Msg] {
   let node = RuntimeSemanticTestNode::{
     kind,
@@ -252,10 +252,10 @@ impl @core.ViewNode for RuntimeSemanticContainerNode with fn focus_trap(self) {
 ///|
 fn[Msg] runtime_semantic_container(
   children : Array[@core.View[Msg]],
-  kind? : String = "RuntimeSemanticContainer",
-  composition? : @core.SemanticsComposition = Transparent,
+  kind~ : String = "RuntimeSemanticContainer",
+  composition~ : @core.SemanticsComposition = Transparent,
   semantic_id? : @core.SemanticId,
-  focus_trap? : Bool = false,
+  focus_trap~ : Bool = false,
 ) -> @core.View[Msg] {
   let node = RuntimeSemanticContainerNode::{
     kind,

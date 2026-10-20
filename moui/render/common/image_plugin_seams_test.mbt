@@ -3,7 +3,7 @@ test "image decoder plugin chain prefers plugins and falls back" {
   @common.image_decoder_plugin_clear()
   defer @common.image_decoder_plugin_clear()
 
-  let fallback_calls : Ref[Int] = Ref(0)
+  let fallback_calls : Ref[Int32] = Ref(0)
   let fallback = @render.RendererImageDecoder::new(decode=(source, _bytes) => {
     fallback_calls.val = fallback_calls.val + 1
     @render.ImageResourceLoadCompletion::failed(source, diagnostic="no decoder")

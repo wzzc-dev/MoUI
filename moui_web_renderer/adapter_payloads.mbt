@@ -11,7 +11,7 @@ fn path_mesh_payload(mesh : @render_common.PathMesh) -> String {
 
 ///|
 priv struct HostLayerMaskPayload {
-  kind : Int
+  kind : Int32
   rect : @core.Rect
   radius : Double
 }
@@ -33,7 +33,7 @@ fn layer_mask_payload(mask : @core.LayerMask) -> HostLayerMaskPayload {
 
 ///|
 priv struct HostFilterPayload {
-  kind : Int
+  kind : Int32
   amount : Double
   matrix_values : String
 }
@@ -51,7 +51,7 @@ fn filter_effect_payload(filter : @core.FilterEffect) -> HostFilterPayload {
 }
 
 ///|
-fn blend_mode_host_code(mode : @core.BlendMode) -> Int {
+fn blend_mode_host_code(mode : @core.BlendMode) -> Int32 {
   match mode {
     SourceOver => 0
     Multiply => 1

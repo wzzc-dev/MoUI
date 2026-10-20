@@ -1,7 +1,7 @@
 ///|
 fn markdown_editor_paste_footnote_definition(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -104,7 +104,7 @@ fn markdown_editor_upsert_pasted_footnote_definition(
   source : String,
   label : String,
   text : String,
-  anchor : Int,
+  anchor : Int32,
 ) -> MarkdownEditorFootnoteDefinitionEdit {
   let key = markdown_reference_label_key(label)
   let source_length = markdown_editor_text_length(source)
@@ -143,7 +143,7 @@ fn markdown_editor_upsert_pasted_footnote_definition(
 ///|
 fn markdown_editor_paste_autolink(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -177,7 +177,7 @@ fn markdown_editor_paste_autolink(
 ///|
 fn markdown_editor_complete_autolink_on_space(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -216,7 +216,7 @@ fn markdown_editor_complete_autolink_on_space(
 ///|
 fn markdown_editor_complete_autolink_on_enter(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   line : String,
 ) -> RichTextInputTransform? {
@@ -257,8 +257,8 @@ fn markdown_editor_complete_autolink_on_enter(
 ///|
 fn markdown_editor_previous_token_start(
   chars : Array[Char],
-  caret : Int,
-) -> Int {
+  caret : Int32,
+) -> Int32 {
   let mut start = markdown_editor_clamp_int(caret, 0, chars.length())
   while start > 0 &&
         chars[start - 1] != ' ' &&
@@ -334,9 +334,9 @@ fn markdown_editor_autolink_trailing_wrapper(ch : Char) -> Bool {
 ///|
 fn markdown_editor_autolink_wrappers_balanced(
   chars : Array[Char],
-  start : Int,
-  end : Int,
-  wrapper_end : Int,
+  start : Int32,
+  end : Int32,
+  wrapper_end : Int32,
 ) -> Bool {
   let trailing = wrapper_end - end
   if start > trailing {
@@ -366,7 +366,7 @@ fn markdown_editor_autolink_trailing_punctuation(ch : Char) -> Bool {
 ///|
 fn markdown_editor_paste_html_block(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -477,7 +477,7 @@ fn markdown_editor_html_block_tag_name_supported(name : String) -> Bool {
 ///|
 fn markdown_editor_paste_reference_over_selection(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
 ) -> RichTextInputTransform? {
@@ -838,8 +838,8 @@ fn markdown_editor_paste_reference_label_over_selection(
 fn markdown_editor_reference_label_transform(
   source : String,
   visible_range : @core.TextRange,
-  replace_start : Int,
-  replace_end : Int,
+  replace_start : Int32,
+  replace_end : Int32,
   label : String,
   definition_text : String,
   image~ : Bool,
@@ -896,16 +896,16 @@ fn markdown_editor_append_pasted_reference_definition(
 ///|
 fn markdown_editor_reference_bounds_full_end(
   bounds : MarkdownLinkBounds,
-) -> Int {
+) -> Int32 {
   markdown_editor_max_int(bounds.close_start, bounds.target_end) + 1
 }
 
 ///|
 fn markdown_editor_find_unescaped_char(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   target : Char,
-) -> Int? {
+) -> Int32? {
   let mut index = start
   while index < chars.length() {
     if chars[index] == target && !markdown_editor_char_is_escaped(chars, index) {
@@ -917,7 +917,7 @@ fn markdown_editor_find_unescaped_char(
 }
 
 ///|
-fn markdown_editor_char_is_escaped(chars : Array[Char], index : Int) -> Bool {
+fn markdown_editor_char_is_escaped(chars : Array[Char], index : Int32) -> Bool {
   let mut slash_count = 0
   let mut cursor = index - 1
   while cursor >= 0 && chars[cursor] == '\\' {

@@ -117,8 +117,8 @@ pub fn Insets::all(value : Double) -> Insets {
 
 ///|
 pub fn Insets::symmetric(
-  horizontal? : Double = 0.0,
-  vertical? : Double = 0.0,
+  horizontal~ : Double = 0.0,
+  vertical~ : Double = 0.0,
 ) -> Insets {
   { top: vertical, right: horizontal, bottom: vertical, left: horizontal, }
 }
@@ -282,8 +282,8 @@ pub fn Rect::inset(self : Rect, insets : Insets) -> Rect {
 ///|
 pub fn Rect::offset(
   self : Rect,
-  dx? : Double = 0.0,
-  dy? : Double = 0.0,
+  dx~ : Double = 0.0,
+  dy~ : Double = 0.0,
 ) -> Rect {
   Rect::new(
     x=self.origin.x + dx,
@@ -347,7 +347,7 @@ fn min_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-pub fn min_int(a : Int, b : Int) -> Int {
+pub fn min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -356,7 +356,7 @@ pub fn min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn max_int(a : Int, b : Int) -> Int {
+pub fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -365,7 +365,7 @@ pub fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+pub fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {

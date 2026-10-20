@@ -167,13 +167,13 @@ async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
 ///|
 /// Backoff between fetch attempts, in milliseconds. The first entry follows
 /// the initial attempt.
-let remote_image_fetch_retry_delays_ms : Array[Int] = [1000, 2000, 4000]
+let remote_image_fetch_retry_delays_ms : Array[Int32] = [1000, 2000, 4000]
 
 ///|
 /// Connect/transfer budget for one fetch attempt. Without it a stalled host
 /// holds the image placeholder for the OS-level connect timeout, which can
 /// run minutes.
-let remote_image_fetch_timeout_ms : Int = 15000
+let remote_image_fetch_timeout_ms : Int32 = 15000
 
 ///|
 /// One bounded fetch attempt: `Some(bytes)` on a 2xx response, `None` on any

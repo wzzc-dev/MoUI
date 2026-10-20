@@ -656,15 +656,15 @@ fn sun_renderer_text_temp_path(filename : String) -> String {
 
 ///|
 priv struct SunTestGlyph {
-  codepoint : Int
-  advance : Int
+  codepoint : Int32
+  advance : Int32
   bytes : Array[Byte]
 }
 
 ///|
 priv struct SunTestPoint {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   on_curve : Bool
 }
 
@@ -676,14 +676,14 @@ priv struct SunTestContour {
 ///|
 priv struct SunTestOutline {
   contours : Array[SunTestContour]
-  xmin : Int
-  ymin : Int
-  xmax : Int
-  ymax : Int
+  xmin : Int32
+  ymin : Int32
+  xmax : Int32
+  ymax : Int32
 }
 
 ///|
-fn sun_test_ttf_for_codes(codepoints : Array[Int]) -> Bytes {
+fn sun_test_ttf_for_codes(codepoints : Array[Int32]) -> Bytes {
   let glyphs = []
   for codepoint in codepoints {
     glyphs.push(sun_test_glyph_for_codepoint(codepoint))
@@ -738,7 +738,7 @@ fn sun_test_ttf_with_glyphs(glyphs : Array[SunTestGlyph]) -> Bytes {
 }
 
 ///|
-fn sun_test_glyph_for_codepoint(codepoint : Int) -> SunTestGlyph {
+fn sun_test_glyph_for_codepoint(codepoint : Int32) -> SunTestGlyph {
   let bytes = if codepoint is 0x20 { [] } else { sun_test_box_glyph() }
   { codepoint, advance: if codepoint is 0x20 { 5 } else { 10 }, bytes, }
 }
@@ -870,7 +870,7 @@ fn sun_test_simple_glyph(glyph : SunTestOutline) -> Array[Byte] {
   }
   sun_test_append_u16(out, 0)
 
-  let flags : Array[Int] = []
+  let flags : Array[Int32] = []
   let x_bytes : Array[Byte] = []
   let y_bytes : Array[Byte] = []
   let mut prev_x = 0
@@ -898,7 +898,7 @@ fn sun_test_simple_glyph(glyph : SunTestOutline) -> Array[Byte] {
 }
 
 ///|
-fn sun_test_encode_x_delta(delta : Int, out : Array[Byte]) -> Int {
+fn sun_test_encode_x_delta(delta : Int32, out : Array[Byte]) -> Int32 {
   if delta == 0 {
     0x10
   } else if delta.abs() <= 255 {
@@ -915,7 +915,7 @@ fn sun_test_encode_x_delta(delta : Int, out : Array[Byte]) -> Int {
 }
 
 ///|
-fn sun_test_encode_y_delta(delta : Int, out : Array[Byte]) -> Int {
+fn sun_test_encode_y_delta(delta : Int32, out : Array[Byte]) -> Int32 {
   if delta == 0 {
     0x20
   } else if delta.abs() <= 255 {
@@ -953,19 +953,19 @@ fn sun_test_cmap_table(glyphs : Array[SunTestGlyph]) -> Array[Byte] {
 }
 
 ///|
-fn sun_test_append_u16(out : Array[Byte], value : Int) -> Unit {
+fn sun_test_append_u16(out : Array[Byte], value : Int32) -> Unit {
   sun_test_append_byte(out, value >> 8)
   sun_test_append_byte(out, value)
 }
 
 ///|
-fn sun_test_append_i16(out : Array[Byte], value : Int) -> Unit {
+fn sun_test_append_i16(out : Array[Byte], value : Int32) -> Unit {
   let unsigned = if value < 0 { value + 65536 } else { value }
   sun_test_append_u16(out, unsigned)
 }
 
 ///|
-fn sun_test_append_u32(out : Array[Byte], value : Int) -> Unit {
+fn sun_test_append_u32(out : Array[Byte], value : Int32) -> Unit {
   sun_test_append_byte(out, value >> 24)
   sun_test_append_byte(out, value >> 16)
   sun_test_append_byte(out, value >> 8)
@@ -973,7 +973,7 @@ fn sun_test_append_u32(out : Array[Byte], value : Int) -> Unit {
 }
 
 ///|
-fn sun_test_append_byte(out : Array[Byte], value : Int) -> Unit {
+fn sun_test_append_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
 }
 
@@ -992,7 +992,7 @@ fn sun_test_append_array(out : Array[Byte], bytes : Array[Byte]) -> Unit {
 }
 
 ///|
-fn sun_test_append_zeroes(out : Array[Byte], count : Int) -> Unit {
+fn sun_test_append_zeroes(out : Array[Byte], count : Int32) -> Unit {
   for _ in 0..<count {
     sun_test_append_byte(out, 0)
   }
@@ -1006,7 +1006,7 @@ fn sun_test_pad4(out : Array[Byte]) -> Unit {
 }
 
 ///|
-fn sun_test_align4(value : Int) -> Int {
+fn sun_test_align4(value : Int32) -> Int32 {
   if value % 4 == 0 {
     value
   } else {
@@ -1015,7 +1015,7 @@ fn sun_test_align4(value : Int) -> Int {
 }
 
 ///|
-fn sun_test_align2(value : Int) -> Int {
+fn sun_test_align2(value : Int32) -> Int32 {
   if value % 2 == 0 {
     value
   } else {
@@ -1024,7 +1024,7 @@ fn sun_test_align2(value : Int) -> Int {
 }
 
 ///|
-fn sun_test_string_from_codepoints(codepoints : Array[Int]) -> String {
+fn sun_test_string_from_codepoints(codepoints : Array[Int32]) -> String {
   let out = StringBuilder(size_hint=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())
@@ -1035,9 +1035,9 @@ fn sun_test_string_from_codepoints(codepoints : Array[Int]) -> String {
 ///|
 fn sun_test_dark_pixel_count(
   frame : @moui_sun_renderer.SunPixelFrame,
-  row_start~ : Int,
-  row_end~ : Int,
-) -> Int {
+  row_start~ : Int32,
+  row_end~ : Int32,
+) -> Int32 {
   let start = row_start.max(0).min(frame.height())
   let end = row_end.max(start).min(frame.height())
   let mut count = 0

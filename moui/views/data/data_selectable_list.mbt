@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] selectable_list(
   items : Array[SelectableListItem[Msg]],
-  selected? : String = "",
-  empty? : @core.View[Msg]? = None,
+  selected~ : String = "",
+  empty~ : @core.View[Msg]? = None,
   theme? : @core.Theme,
-  width? : Double = 360.0,
-  row_height? : Double = 64.0,
+  width~ : Double = 360.0,
+  row_height~ : Double = 64.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   if items.length() == 0 {
@@ -138,7 +138,7 @@ fn[Msg] selectable_list_row(
 
 ///|
 fn selectable_list_height(
-  row_count : Int,
+  row_count : Int32,
   row_height : Double,
   spacing~ : Double,
 ) -> Double {

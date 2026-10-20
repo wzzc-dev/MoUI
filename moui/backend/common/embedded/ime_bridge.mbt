@@ -1,6 +1,6 @@
 ///|
 pub fn EmbeddedImeRequest::from_state(
-  revision~ : Int,
+  revision~ : Int32,
   state : @core.TextInputState,
 ) -> EmbeddedImeRequest {
   let diagnostics = text_input_ime_request_diagnostics(state)
@@ -30,7 +30,7 @@ pub fn EmbeddedImeRequest::from_state(
 }
 
 ///|
-fn embedded_runtime_char_index_to_utf16(text : String, index : Int) -> Int {
+fn embedded_runtime_char_index_to_utf16(text : String, index : Int32) -> Int32 {
   let length = text.char_length()
   let index = if index < 0 {
     0
@@ -49,9 +49,9 @@ fn embedded_runtime_char_index_to_utf16(text : String, index : Int) -> Int {
 ///|
 fn embedded_runtime_utf16_to_char_index(
   text : String,
-  offset : Int,
+  offset : Int32,
   round_up~ : Bool,
-) -> Int {
+) -> Int32 {
   let utf16_length = text.length()
   let offset = if offset < 0 {
     0

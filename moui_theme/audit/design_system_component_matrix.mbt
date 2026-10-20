@@ -11,10 +11,10 @@ pub(all) struct DesignComponentTokenMatrixRecord {
   token_path : String
   source_locked : Bool
   moui_surface : String
-  mapped_token_count : Int
-  required_token_count : Int
-  source_imported_token_count : Int
-  runtime_aligned_token_count : Int
+  mapped_token_count : Int32
+  required_token_count : Int32
+  source_imported_token_count : Int32
+  runtime_aligned_token_count : Int32
   pending_token_family : String
   status : DesignTokenStatus
   note : String
@@ -55,12 +55,12 @@ pub fn component_token_matrix_for(
 }
 
 ///|
-pub fn component_token_matrix_count(preset : @common.DesignPreset) -> Int {
+pub fn component_token_matrix_count(preset : @common.DesignPreset) -> Int32 {
   component_token_matrix(preset).length()
 }
 
 ///|
-pub fn component_token_matrix_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn component_token_matrix_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     if item.status == NotMapped ||
@@ -76,7 +76,7 @@ pub fn component_token_matrix_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn component_token_matrix_source_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     if !item.source_declared || !item.source_locked {
@@ -89,7 +89,7 @@ pub fn component_token_matrix_source_gap_count(
 ///|
 pub fn component_token_matrix_mapped_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     count = count + item.mapped_token_count
@@ -100,7 +100,7 @@ pub fn component_token_matrix_mapped_count(
 ///|
 pub fn component_token_matrix_required_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     count = count + item.required_token_count
@@ -111,7 +111,7 @@ pub fn component_token_matrix_required_count(
 ///|
 pub fn component_token_matrix_source_imported_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     count = count + item.source_imported_token_count
@@ -122,7 +122,7 @@ pub fn component_token_matrix_source_imported_count(
 ///|
 pub fn component_token_matrix_runtime_aligned_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in component_token_matrix(preset) {
     count = count + item.runtime_aligned_token_count
@@ -693,8 +693,8 @@ fn matrix_record(
   official_scope : String,
   official_source : String,
   moui_surface : String,
-  mapped_token_count : Int,
-  required_token_count : Int,
+  mapped_token_count : Int32,
+  required_token_count : Int32,
   pending_token_family : String,
   status : DesignTokenStatus,
   note : String,
@@ -764,7 +764,7 @@ fn component_matrix_source_for_url(
 fn component_matrix_source_imported_count_for(
   preset : @common.DesignPreset,
   component : String,
-) -> Int {
+) -> Int32 {
   match preset {
     Material =>
       match component {
@@ -814,7 +814,7 @@ fn component_matrix_source_imported_count_for(
 fn component_matrix_runtime_aligned_count_for(
   preset : @common.DesignPreset,
   component : String,
-) -> Int {
+) -> Int32 {
   match preset {
     Material =>
       match component {

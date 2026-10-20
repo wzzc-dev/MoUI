@@ -1,34 +1,34 @@
 ///|
-extern "C" fn windows_clipboard_has_text() -> Int = "moui_windows_clipboard_has_text"
+extern "C" fn windows_clipboard_has_text() -> Int32 = "moui_windows_clipboard_has_text"
 
 ///|
 extern "C" fn windows_clipboard_read_text_bytes() -> Bytes = "moui_windows_clipboard_read_text"
 
 ///|
 #borrow(text)
-extern "C" fn windows_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_windows_clipboard_write_text"
+extern "C" fn windows_clipboard_write_text_bytes(text : Bytes) -> Int32 = "moui_windows_clipboard_write_text"
 
 ///|
 #borrow(url)
-extern "C" fn windows_open_url_bytes(url : Bytes) -> Int = "moui_windows_open_url"
+extern "C" fn windows_open_url_bytes(url : Bytes) -> Int32 = "moui_windows_open_url"
 
 ///|
-extern "C" fn windows_system_theme_is_light() -> Int = "moui_windows_system_theme_is_light"
+extern "C" fn windows_system_theme_is_light() -> Int32 = "moui_windows_system_theme_is_light"
 
 ///|
 /// Windows accessibility settings are read on the host thread so changes made
 /// while the app is running flow through the existing Environment object.
-extern "C" fn windows_accessibility_high_contrast() -> Int = "moui_windows_accessibility_high_contrast"
+extern "C" fn windows_accessibility_high_contrast() -> Int32 = "moui_windows_accessibility_high_contrast"
 
 ///|
-extern "C" fn windows_accessibility_reduce_motion() -> Int = "moui_windows_accessibility_reduce_motion"
+extern "C" fn windows_accessibility_reduce_motion() -> Int32 = "moui_windows_accessibility_reduce_motion"
 
 ///|
 extern "C" fn windows_accessibility_text_scale() -> Double = "moui_windows_accessibility_text_scale"
 
 ///|
 #borrow(key)
-extern "C" fn windows_settings_has_value(key : Bytes) -> Int = "moui_windows_settings_has_value"
+extern "C" fn windows_settings_has_value(key : Bytes) -> Int32 = "moui_windows_settings_has_value"
 
 ///|
 #borrow(key)
@@ -36,16 +36,16 @@ extern "C" fn windows_settings_read_bytes(key : Bytes) -> Bytes = "moui_windows_
 
 ///|
 #borrow(key, value)
-extern "C" fn windows_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_windows_settings_write"
+extern "C" fn windows_settings_write_bytes(key : Bytes, value : Bytes) -> Int32 = "moui_windows_settings_write"
 
 ///|
 #borrow(key)
-extern "C" fn windows_settings_remove_bytes(key : Bytes) -> Int = "moui_windows_settings_remove"
+extern "C" fn windows_settings_remove_bytes(key : Bytes) -> Int32 = "moui_windows_settings_remove"
 
 ///|
 #borrow(title, filters, default_name)
 extern "C" fn windows_file_dialog_bytes(
-  kind : Int,
+  kind : Int32,
   title : Bytes,
   filters : Bytes,
   default_name : Bytes,
@@ -53,7 +53,7 @@ extern "C" fn windows_file_dialog_bytes(
 
 ///|
 #borrow(commands)
-extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int = "moui_windows_show_menu"
+extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int32 = "moui_windows_show_menu"
 
 ///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
@@ -144,12 +144,12 @@ pub extend WindowsNativeHostBackend with @wzzc-dev/window/windows.ApplicationHan
 
 ///|
 pub fn WindowsHostAppOptions::new(
-  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources? : @runtime.HostPlatformEventSources? = None,
-  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
-  frame_clock? : (() -> Double)? = None,
-  on_frame_presented? : (() -> Unit)? = None,
-  pump_tick? : (async () -> Bool)? = None,
+  scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
+  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
+  frame_clock~ : (() -> Double)? = None,
+  on_frame_presented~ : (() -> Unit)? = None,
+  pump_tick~ : (async () -> Bool)? = None,
 ) -> WindowsHostAppOptions {
   {
     scene_resolver,
@@ -163,7 +163,7 @@ pub fn WindowsHostAppOptions::new(
 
 ///|
 pub fn WindowsHostSmokeOptions::new(
-  first_frame_smoke_auto_exit? : Bool = false,
+  first_frame_smoke_auto_exit~ : Bool = false,
 ) -> WindowsHostSmokeOptions {
   { first_frame_smoke_auto_exit, }
 }
@@ -171,7 +171,7 @@ pub fn WindowsHostSmokeOptions::new(
 ///|
 fn WindowsSurfaceBinding::new(
   create_renderer~ : (@win.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface? : (@win.Window, @core.SurfaceMetrics) -> Unit = (
+  sync_surface~ : (@win.Window, @core.SurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
@@ -183,8 +183,8 @@ fn WindowsSurfaceBinding::new(
 /// Renderer-neutral Windows composition entry. Renderer factories are
 /// resolved after Win32 has created a window handle.
 pub fn entry(
-  options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
-  smoke_options? : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
+  options~ : WindowsHostAppOptions = WindowsHostAppOptions::new(),
+  smoke_options~ : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(
     id="windows",
@@ -275,7 +275,7 @@ async fn launch_windows_app_async_pump(
   binding~ : WindowsSurfaceBinding,
   options~ : WindowsHostAppOptions,
   window_requests~ : @host.WindowRequests,
-  frame_interval_ms~ : Int,
+  frame_interval_ms~ : Int32,
 ) -> Unit {
   let (event_loop, app) = create_windows_app(
     title,
@@ -412,7 +412,7 @@ pub fn windows_input_capabilities() -> @host.HostInputCapabilities {
 
 ///|
 pub fn windows_capability_summary(
-  services? : @host.HostServiceCapabilities = windows_service_bridge().capabilities(),
+  services~ : @host.HostServiceCapabilities = windows_service_bridge().capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=windows_host_info(),
@@ -442,7 +442,7 @@ pub fn windows_system_theme() -> @core.ColorScheme {
 }
 
 ///|
-fn dispatch_windows_menu(commands : Array[@core.ActionCommand]) -> Int {
+fn dispatch_windows_menu(commands : Array[@core.ActionCommand]) -> Int32 {
   windows_show_menu_bytes(@host_services_desktop.encode_menu_commands(commands))
 }
 

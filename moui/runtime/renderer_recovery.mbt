@@ -56,11 +56,11 @@ pub(all) struct RendererRecoveryBudget {
   vsync_ms : Double
   /// Recovery deadline multiplier. The deadline is
   /// `vsync_ms * recovery_vsync_budget` (default 3).
-  recovery_vsync_budget : Int
+  recovery_vsync_budget : Int32
   /// Maximum consecutive recovery failures before falling back to raster.
   /// Default 2 per ADR 0006 (recovery is retried once; the second failure
   /// falls back).
-  max_consecutive_recovery_failures : Int
+  max_consecutive_recovery_failures : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -75,10 +75,10 @@ pub extend RendererRecoveryBudget with ToJson::{to_json}
 ///|
 pub struct RendererRecovery {
   mut state : RendererRecoveryState
-  mut loss_count : Int
+  mut loss_count : Int32
   mut last_loss_reason : String
   mut last_loss_time_ms : Double
-  mut consecutive_failures : Int
+  mut consecutive_failures : Int32
   mut recovery_started_for_loss : Bool
   budget : RendererRecoveryBudget
 }
@@ -97,8 +97,8 @@ pub fn RendererRecoveryBudget::default() -> RendererRecoveryBudget {
 /// VSync intervals (e.g. 120 Hz) and tighter/looser recovery windows.
 pub fn RendererRecoveryBudget::new(
   vsync_ms~ : Double,
-  recovery_vsync_budget~ : Int,
-  max_consecutive_recovery_failures~ : Int,
+  recovery_vsync_budget~ : Int32,
+  max_consecutive_recovery_failures~ : Int32,
 ) -> RendererRecoveryBudget {
   { vsync_ms, recovery_vsync_budget, max_consecutive_recovery_failures, }
 }
@@ -113,7 +113,7 @@ pub fn RendererRecoveryBudget::recovery_deadline_ms(
 
 ///|
 pub fn RendererRecovery::new(
-  budget? : RendererRecoveryBudget = RendererRecoveryBudget::default(),
+  budget~ : RendererRecoveryBudget = RendererRecoveryBudget::default(),
 ) -> RendererRecovery {
   {
     state: Idle,
@@ -140,7 +140,7 @@ pub fn RendererRecovery::state(
 /// Returns the total number of context-loss events observed since
 /// construction. Used by promotion manifests (Phase 2.3) as evidence that
 /// recovery has been exercised on matching hardware.
-pub fn RendererRecovery::loss_count(self : RendererRecovery) -> Int {
+pub fn RendererRecovery::loss_count(self : RendererRecovery) -> Int32 {
   self.loss_count
 }
 
@@ -154,7 +154,7 @@ pub fn RendererRecovery::last_loss_reason(self : RendererRecovery) -> String {
 ///|
 /// Returns the number of consecutive recovery failures since the last
 /// successful recovery. Resets to 0 on `report_recovery_succeeded`.
-pub fn RendererRecovery::consecutive_failures(self : RendererRecovery) -> Int {
+pub fn RendererRecovery::consecutive_failures(self : RendererRecovery) -> Int32 {
   self.consecutive_failures
 }
 
@@ -342,11 +342,11 @@ pub fn RendererRecovery::snapshot(
 ///|
 pub(all) struct RendererRecoverySnapshot {
   state : String
-  loss_count : Int
+  loss_count : Int32
   last_loss_reason : String
   last_loss_time_ms : Double
   recovery_deadline_ms : Double
-  consecutive_failures : Int
+  consecutive_failures : Int32
   fallback_reason : String
 } derive(Eq, Debug, ToJson)
 

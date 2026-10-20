@@ -14,7 +14,7 @@ fn markdown_block_view_wbtest_projects(block : MarkdownBlock) -> Bool {
 }
 
 ///|
-fn markdown_block_view_wbtest_images(block : MarkdownBlock) -> Int {
+fn markdown_block_view_wbtest_images(block : MarkdownBlock) -> Int32 {
   match
     markdown_block_view_project(
       block,

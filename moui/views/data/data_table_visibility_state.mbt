@@ -7,7 +7,7 @@ pub struct ColumnVisibilityState {
 ///|
 pub fn ColumnVisibilityState::new(
   visible~ : Array[String],
-  locked? : Array[String] = [],
+  locked~ : Array[String] = [],
 ) -> ColumnVisibilityState {
   { visible: visible.copy(), locked: locked.copy(), }
 }

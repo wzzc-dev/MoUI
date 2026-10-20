@@ -179,12 +179,12 @@ fn web_modifiers_after_key_event(
 
 ///|
 pub fn web_dispatch_event(
-  kind : Int,
-  raw_id : Int,
-  arg0 : Int,
-  arg1 : Int,
+  kind : Int32,
+  raw_id : Int32,
+  arg0 : Int32,
+  arg1 : Int32,
   argd : Double,
-  text_id : Int,
+  text_id : Int32,
 ) -> Unit {
   @window_web.web_dispatch_event_by_id(kind, raw_id, arg0, arg1, argd, text_id)
 }

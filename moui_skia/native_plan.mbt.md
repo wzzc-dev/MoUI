@@ -20,7 +20,7 @@ type NativeSurface
 
 ///|
 #borrow(surface)
-extern "c" fn skia_surface_width(surface : NativeSurface) -> Int = "moonbit_skia_surface_width"
+extern "c" fn skia_surface_width(surface : NativeSurface) -> Int32 = "moonbit_skia_surface_width"
 ```
 
 Minimal raster-surface milestone:

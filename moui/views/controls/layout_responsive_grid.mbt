@@ -1,10 +1,10 @@
 ///|
 pub fn[Msg] responsive_grid(
   children : Array[@core.View[Msg]],
-  width? : Double = 320.0,
-  min_column_width? : Double = 120.0,
-  row_spacing? : Double = 8.0,
-  column_spacing? : Double = 8.0,
+  width~ : Double = 320.0,
+  min_column_width~ : Double = 120.0,
+  row_spacing~ : Double = 8.0,
+  column_spacing~ : Double = 8.0,
 ) -> @core.View[Msg] {
   custom_children_layout(
     children~,
@@ -121,7 +121,7 @@ fn responsive_grid_columns(
   width : Double,
   min_column_width : Double,
   column_spacing : Double,
-) -> Int {
+) -> Int32 {
   let min_column_width = @layout.max_double(1.0, min_column_width)
   // Snap the available width to the nearest physical pixel to avoid sub-pixel
   // oscillation during live resize: a 0.5 logical pixel step on Retina can
@@ -146,7 +146,7 @@ fn responsive_grid_columns(
 ///|
 fn responsive_grid_column_width(
   width : Double,
-  columns : Int,
+  columns : Int32,
   column_spacing : Double,
 ) -> Double {
   let columns = @layout.max_int(1, columns)

@@ -119,12 +119,12 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn ascii_whitespace(code : Int) -> Bool {
+fn ascii_whitespace(code : Int32) -> Bool {
   code == ' ' || code == '\n' || code == '\r' || code == '\t'
 }
 
 ///|
-fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
+fn skip_whitespace(chars : Array[Char], start : Int32) -> Int32 {
   let mut index = start
   while index < chars.length() && ascii_whitespace(chars[index].to_int()) {
     index += 1
@@ -143,7 +143,7 @@ fn identifier_char(char : Char) -> Bool {
 }
 
 ///|
-fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
+fn chars_to_string(chars : Array[Char], start : Int32, end : Int32) -> String {
   let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
@@ -152,7 +152,7 @@ fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
 }
 
 ///|
-fn read_identifier(chars : Array[Char], start : Int) -> (String, Int)? {
+fn read_identifier(chars : Array[Char], start : Int32) -> (String, Int32)? {
   let start = skip_whitespace(chars, start)
   if start >= chars.length() || !identifier_start(chars[start]) {
     return None
@@ -165,7 +165,7 @@ fn read_identifier(chars : Array[Char], start : Int) -> (String, Int)? {
 }
 
 ///|
-fn read_quoted(chars : Array[Char], start : Int) -> (String, Int)? {
+fn read_quoted(chars : Array[Char], start : Int32) -> (String, Int32)? {
   if start >= chars.length() || chars[start] != '"' {
     return None
   }
@@ -190,7 +190,7 @@ fn read_quoted(chars : Array[Char], start : Int) -> (String, Int)? {
 }
 
 ///|
-fn word_at(chars : Array[Char], start : Int, word : String) -> Bool {
+fn word_at(chars : Array[Char], start : Int32, word : String) -> Bool {
   let word_chars = word.to_array()
   if start + word_chars.length() > chars.length() {
     return false
@@ -207,7 +207,7 @@ fn word_at(chars : Array[Char], start : Int, word : String) -> Bool {
 }
 
 ///|
-fn find_matching_paren(chars : Array[Char], open_index : Int) -> Int? {
+fn find_matching_paren(chars : Array[Char], open_index : Int32) -> Int32? {
   let mut depth = 0
   for index in open_index..<chars.length() {
     match chars[index] {
@@ -227,8 +227,8 @@ fn find_matching_paren(chars : Array[Char], open_index : Int) -> Int? {
 ///|
 fn parse_target_list(
   chars : Array[Char],
-  start : Int,
-) -> Result[(Array[String], Int), String] {
+  start : Int32,
+) -> Result[(Array[String], Int32), String] {
   let targets : Array[String] = []
   let mut index = start
   while index < chars.length() {
@@ -307,7 +307,10 @@ fn array_equal(left : Array[String], right : Array[String]) -> Bool {
 }
 
 ///|
-fn parse_public_function_at(chars : Array[Char], start : Int) -> (String, Int)? {
+fn parse_public_function_at(
+  chars : Array[Char],
+  start : Int32,
+) -> (String, Int32)? {
   if !word_at(chars, start, "pub") {
     return None
   }
@@ -901,7 +904,7 @@ fn verify_native_capability_contract(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

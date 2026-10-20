@@ -166,7 +166,7 @@ fn parse_cli(args : Array[String]) -> Result[(String, String), String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err("help") => {
       println(usage())

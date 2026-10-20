@@ -1,11 +1,11 @@
 ///|
-type HostWebGpuSurface = Int
+type HostWebGpuSurface = Int32
 
 ///|
-type HostWebGpuRenderer = Int
+type HostWebGpuRenderer = Int32
 
 ///|
-type HostWebGpuString = Int
+type HostWebGpuString = Int32
 
 ///|
 pub(all) suberror WebGpuHostError {
@@ -174,7 +174,7 @@ pub struct WebGpuWasmRenderer {
   priv surface : WebGpuHostSurface
   priv port : WebGpuHostRendererPort
   priv mut size : @core.Size
-  priv mut present_count : Int
+  priv mut present_count : Int32
   priv mut last_calls : Array[WebGpuHostCall]
   priv mut last_fallback_plan : @render.RendererCommandPlan
   priv image_lifecycle : @render_common.ImageResourceLifecycle
@@ -183,9 +183,9 @@ pub struct WebGpuWasmRenderer {
 
 ///|
 pub fn WebGpuHostCapabilities::new(
-  webgpu_available? : Bool = true,
-  adapter_ready? : Bool = true,
-  can_render? : Bool = true,
+  webgpu_available~ : Bool = true,
+  adapter_ready~ : Bool = true,
+  can_render~ : Bool = true,
 ) -> WebGpuHostCapabilities {
   { webgpu_available, adapter_ready, can_render, }
 }
@@ -196,7 +196,7 @@ pub fn WebGpuHostImportInfo::new(
   target~ : String,
   surface_resource~ : String,
   renderer_resource~ : String,
-  description? : String = "",
+  description~ : String = "",
 ) -> WebGpuHostImportInfo {
   { import_module, target, surface_resource, renderer_resource, description, }
 }
@@ -207,7 +207,7 @@ pub fn WebGpuHostAdapterInfo::new(
   surface_contract~ : @render.WgpuSurfaceContract,
   imports~ : WebGpuHostImportInfo,
   capabilities~ : WebGpuHostCapabilities,
-  description? : String = "",
+  description~ : String = "",
 ) -> WebGpuHostAdapterInfo {
   { renderer, surface_contract, imports, capabilities, description, }
 }
@@ -430,15 +430,15 @@ priv struct WebGpuLayerCommandCacheEntry {
 ///|
 priv struct WebGpuLayerCommandCache {
   entries : Array[WebGpuLayerCommandCacheEntry]
-  mut tick : Int
+  mut tick : Int32
 }
 
 ///|
 priv struct WebGpuLayerCommandExpansion {
   commands : Array[@core.DrawCommand]
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
 }
 
 ///|

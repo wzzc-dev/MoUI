@@ -27,7 +27,7 @@ pub(all) struct DesignSourceUsage {
   source_kind : String
   source_ref : String
   token_path : String
-  golden_mapping_count : Int
+  golden_mapping_count : Int32
   source_status : DesignTokenStatus
   status : DesignTokenStatus
   note : String
@@ -71,7 +71,7 @@ pub fn source_usage(preset : @common.DesignPreset) -> Array[DesignSourceUsage] {
 }
 
 ///|
-pub fn undeclared_golden_source_count(preset : @common.DesignPreset) -> Int {
+pub fn undeclared_golden_source_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   let sources = sources(preset)
   for mapping in golden_mappings(preset) {
@@ -83,7 +83,7 @@ pub fn undeclared_golden_source_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn unused_official_source_count(preset : @common.DesignPreset) -> Int {
+pub fn unused_official_source_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for usage in source_usage(preset) {
     if usage.golden_mapping_count == 0 &&
@@ -106,7 +106,7 @@ pub fn has_golden_mapping(
 }
 
 ///|
-pub fn golden_mapped_count(preset : @common.DesignPreset) -> Int {
+pub fn golden_mapped_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in golden_mappings(preset) {
     if item.status == ThemeMapped ||
@@ -119,7 +119,7 @@ pub fn golden_mapped_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn golden_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn golden_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in golden_mappings(preset) {
     if item.status == NotMapped ||
@@ -2684,7 +2684,7 @@ fn mapping(
 fn source_usage_entry(
   preset : @common.DesignPreset,
   source : DesignSystemSource,
-  count : Int,
+  count : Int32,
 ) -> DesignSourceUsage {
   let status = if count > 0 {
     if source.source_kind == "internal-token-contract" ||

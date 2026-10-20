@@ -1,8 +1,8 @@
 ///|
 pub struct SunPixelFrame {
-  priv width : Int
-  priv height : Int
-  priv row_bytes : Int
+  priv width : Int32
+  priv height : Int32
+  priv row_bytes : Int32
   priv scale_factor : Double
   priv pixels : FixedArray[Byte]
   priv bytes : Bytes
@@ -41,17 +41,17 @@ pub fn SunPresentTarget::new(
 }
 
 ///|
-pub fn SunPixelFrame::width(self : SunPixelFrame) -> Int {
+pub fn SunPixelFrame::width(self : SunPixelFrame) -> Int32 {
   self.width
 }
 
 ///|
-pub fn SunPixelFrame::height(self : SunPixelFrame) -> Int {
+pub fn SunPixelFrame::height(self : SunPixelFrame) -> Int32 {
   self.height
 }
 
 ///|
-pub fn SunPixelFrame::row_bytes(self : SunPixelFrame) -> Int {
+pub fn SunPixelFrame::row_bytes(self : SunPixelFrame) -> Int32 {
   self.row_bytes
 }
 

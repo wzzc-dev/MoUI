@@ -2,8 +2,8 @@
 fn assert_matrix_glyph(
   face : @text.FontFace,
   text : String,
-  filled : (Int, Int),
-  hole : (Int, Int)?,
+  filled : (Int32, Int32),
+  hole : (Int32, Int32)?,
   config : @text.LayoutConfig,
 ) -> Unit raise {
   let canvas = @graphics.Canvas::new(12, 12)
@@ -36,7 +36,7 @@ fn assert_matrix_glyph(
 fn assert_ascii_visible_glyph(
   face : @text.FontFace,
   text : String,
-  glyph_id : Int,
+  glyph_id : Int32,
   config : @text.LayoutConfig,
 ) -> Unit raise {
   let layout = @text.TextLayout::layout(face, text, config)
@@ -62,7 +62,7 @@ fn assert_ascii_visible_glyph(
 fn assert_ascii_space_glyph(
   face : @text.FontFace,
   text : String,
-  glyph_id : Int,
+  glyph_id : Int32,
   config : @text.LayoutConfig,
 ) -> Unit raise {
   let layout = @text.TextLayout::layout(face, text, config)
@@ -107,12 +107,12 @@ fn printable_ascii_string() -> String {
 }
 
 ///|
-fn printable_ascii_count() -> Int {
+fn printable_ascii_count() -> Int32 {
   0x7E - 0x20 + 1
 }
 
 ///|
-fn string_from_codepoints(codepoints : Array[Int]) -> String {
+fn string_from_codepoints(codepoints : Array[Int32]) -> String {
   let out = StringBuilder(size_hint=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())

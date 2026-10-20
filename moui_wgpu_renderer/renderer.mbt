@@ -104,17 +104,17 @@ pub fn WgpuRenderer::backend_info(
 }
 
 ///|
-pub fn WgpuRenderer::last_batch_count(self : WgpuRenderer) -> Int {
+pub fn WgpuRenderer::last_batch_count(self : WgpuRenderer) -> Int32 {
   self.backend.last_batches.length()
 }
 
 ///|
-pub fn WgpuRenderer::present_count(self : WgpuRenderer) -> Int {
+pub fn WgpuRenderer::present_count(self : WgpuRenderer) -> Int32 {
   self.backend.present_count
 }
 
 ///|
-pub fn WgpuRenderer::unsupported_command_count(self : WgpuRenderer) -> Int {
+pub fn WgpuRenderer::unsupported_command_count(self : WgpuRenderer) -> Int32 {
   self.backend.unsupported_command_count
 }
 

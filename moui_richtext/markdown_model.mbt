@@ -1,10 +1,10 @@
 ///|
 pub(all) enum MarkdownBlockKind {
-  Heading(Int)
+  Heading(Int32)
   Paragraph
   UnorderedListItem
   TaskListItem(Bool)
-  OrderedListItem(Int)
+  OrderedListItem(Int32)
   Blockquote
   CodeBlock
   HorizontalRule
@@ -44,7 +44,7 @@ pub extend MarkdownBlock with ToJson::{to_json}
 ///|
 priv struct MarkdownFrontMatterParseResult {
   block : MarkdownBlock
-  next_index : Int
+  next_index : Int32
 }
 
 ///|
@@ -188,7 +188,7 @@ fn parse_markdown_uncached(text : String) -> Array[MarkdownBlock] {
 ///|
 struct MarkdownHtmlBlockParseResult {
   block : MarkdownBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -200,7 +200,7 @@ pub extend MarkdownHtmlBlockParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_html_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownHtmlBlockParseResult? {
   if index < 0 || index >= lines.length() {
     return None
@@ -223,7 +223,7 @@ fn markdown_html_block_at(
 ///|
 fn markdown_html_comment_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -240,7 +240,7 @@ fn markdown_html_comment_block_at(
 ///|
 fn markdown_html_processing_instruction_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -257,7 +257,7 @@ fn markdown_html_processing_instruction_block_at(
 ///|
 fn markdown_html_cdata_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -274,7 +274,7 @@ fn markdown_html_cdata_block_at(
 ///|
 fn markdown_html_tag_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
   tag : String,
 ) -> MarkdownHtmlBlockParseResult {
   let container = markdown_html_block_tag_keeps_blank_lines(tag)
@@ -315,7 +315,7 @@ fn markdown_html_tag_block_at(
 ///|
 fn markdown_html_block_result(
   html_lines : Array[String],
-  end_index : Int,
+  end_index : Int32,
 ) -> MarkdownHtmlBlockParseResult {
   {
     block: markdown_block(HtmlBlock, markdown_join_lines(html_lines)),
@@ -380,7 +380,7 @@ fn markdown_html_block_start_tag(line : String) -> String? {
 }
 
 ///|
-fn markdown_html_block_indent(chars : Array[Char]) -> Int {
+fn markdown_html_block_indent(chars : Array[Char]) -> Int32 {
   let mut index = 0
   while index < chars.length() && chars[index] == ' ' {
     index = index + 1
@@ -499,10 +499,10 @@ fn markdown_html_block_tag_keeps_blank_lines(tag : String) -> Bool {
 /// terminator does.
 fn markdown_html_block_container_closes_within(
   lines : Array[String],
-  start : Int,
+  start : Int32,
   tag : String,
-  depth : Int,
-  cap : Int,
+  depth : Int32,
+  cap : Int32,
 ) -> Bool {
   let mut depth = depth
   let limit = if start + cap < lines.length() {
@@ -524,7 +524,7 @@ fn markdown_html_block_container_closes_within(
 /// opener and `-1` for each `</div`, ignoring HTML comment content. The
 /// block terminators use this nesting-aware count instead of a first
 /// closing-tag search, so a container closes at its own depth.
-fn markdown_html_block_tag_depth_delta(line : String, tag : String) -> Int {
+fn markdown_html_block_tag_depth_delta(line : String, tag : String) -> Int32 {
   let chars = line.to_array()
   let tag_chars = tag.to_array()
   let mut index = 0
@@ -556,7 +556,7 @@ fn markdown_html_block_tag_depth_delta(line : String, tag : String) -> Int {
 ///|
 fn markdown_html_block_tag_name_at(
   chars : Array[Char],
-  index : Int,
+  index : Int32,
   tag_chars : Array[Char],
 ) -> Bool {
   if index + tag_chars.length() > chars.length() {
@@ -584,7 +584,7 @@ fn markdown_html_block_ci_char(actual : Char, want_lower : Char) -> Bool {
 ///|
 fn markdown_html_block_line_comment_at(
   chars : Array[Char],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   index + 4 <= chars.length() &&
   chars[index] == '<' &&
@@ -596,8 +596,8 @@ fn markdown_html_block_line_comment_at(
 ///|
 fn markdown_html_block_line_comment_end(
   chars : Array[Char],
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let mut cursor = index + 4
   while cursor + 3 <= chars.length() {
     if chars[cursor] == '-' &&
@@ -613,7 +613,7 @@ fn markdown_html_block_line_comment_end(
 ///|
 struct MarkdownSetextHeadingParseResult {
   block : MarkdownBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -625,7 +625,7 @@ pub extend MarkdownSetextHeadingParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_setext_heading_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> MarkdownSetextHeadingParseResult? {
   let heading_lines : Array[String] = []
@@ -664,7 +664,7 @@ fn markdown_setext_heading_block_at(
 ///|
 fn markdown_setext_heading_content_line(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
@@ -678,7 +678,10 @@ fn markdown_setext_heading_content_line(
 }
 
 ///|
-fn markdown_setext_heading_level_at(lines : Array[String], index : Int) -> Int? {
+fn markdown_setext_heading_level_at(
+  lines : Array[String],
+  index : Int32,
+) -> Int32? {
   if index + 1 >= lines.length() {
     return None
   }
@@ -701,7 +704,7 @@ fn markdown_is_setext_paragraph_candidate(line : String) -> Bool {
 }
 
 ///|
-fn markdown_setext_underline_level(line : String) -> Int? {
+fn markdown_setext_underline_level(line : String) -> Int32? {
   let text = line.trim().to_owned()
   if text == "" {
     return None
@@ -722,7 +725,7 @@ fn markdown_setext_underline_level(line : String) -> Int? {
 ///|
 struct MarkdownIndentedCodeParseResult {
   block : MarkdownBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -734,7 +737,7 @@ pub extend MarkdownIndentedCodeParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_indented_code_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> MarkdownIndentedCodeParseResult? {
   if !markdown_indented_code_line(lines, index) {
     return None
@@ -767,8 +770,8 @@ fn markdown_indented_code_block_at(
 ///|
 fn markdown_next_indented_code_line_index(
   lines : Array[String],
-  start : Int,
-) -> Int? {
+  start : Int32,
+) -> Int32? {
   let mut index = start
   while index < lines.length() && markdown_blank_line(lines[index]) {
     index = index + 1
@@ -786,7 +789,7 @@ fn markdown_blank_line(line : String) -> Bool {
 }
 
 ///|
-fn markdown_indented_code_line(lines : Array[String], index : Int) -> Bool {
+fn markdown_indented_code_line(lines : Array[String], index : Int32) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
   }
@@ -801,7 +804,7 @@ fn markdown_indented_code_line_content(line : String) -> String {
 }
 
 ///|
-fn markdown_indented_code_content_offset(line : String) -> Int {
+fn markdown_indented_code_content_offset(line : String) -> Int32 {
   let chars = line.to_array()
   let mut index = 0
   let mut column = 0
@@ -824,12 +827,12 @@ fn markdown_indented_code_content_offset(line : String) -> Int {
 }
 
 ///|
-fn markdown_next_tab_stop(column : Int) -> Int {
+fn markdown_next_tab_stop(column : Int32) -> Int32 {
   (column / 4 + 1) * 4
 }
 
 ///|
-fn markdown_min_int(a : Int, b : Int) -> Int {
+fn markdown_min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -840,7 +843,7 @@ fn markdown_min_int(a : Int, b : Int) -> Int {
 ///|
 struct MarkdownParagraphParseResult {
   block : MarkdownBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -852,7 +855,7 @@ pub extend MarkdownParagraphParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_soft_wrapped_paragraph_block_at(
   lines : Array[String],
-  index : Int,
+  index : Int32,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> MarkdownParagraphParseResult? {
   if !markdown_soft_wrapped_paragraph_line(lines, index) {
@@ -885,7 +888,7 @@ fn markdown_soft_wrapped_paragraph_block_at(
 ///|
 fn markdown_soft_wrapped_paragraph_line(
   lines : Array[String],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
@@ -939,7 +942,7 @@ fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
 }
 
 ///|
-fn markdown_code_fence_info(chars : Array[Char], start : Int) -> String? {
+fn markdown_code_fence_info(chars : Array[Char], start : Int32) -> String? {
   let info = String::from_array(chars[start:]).trim().to_owned()
   if info == "" {
     None
@@ -980,7 +983,7 @@ fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
 ///|
 fn markdown_code_fence_indent_allowed(
   chars : Array[Char],
-  indent : Int,
+  indent : Int32,
 ) -> Bool {
   if indent > 3 {
     return false
@@ -994,7 +997,7 @@ fn markdown_code_fence_indent_allowed(
 }
 
 ///|
-fn markdown_leading_indent_length(chars : Array[Char]) -> Int {
+fn markdown_leading_indent_length(chars : Array[Char]) -> Int32 {
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
     index = index + 1
@@ -1007,7 +1010,7 @@ fn append_markdown_ast_block(
   blocks : Array[MarkdownBlock],
   block : @md.Block,
   definitions : Array[MarkdownReferenceDefinition],
-  source_text? : String? = None,
+  source_text~ : String? = None,
 ) -> Unit {
   match block {
     Heading(level~, children~, ..) => {

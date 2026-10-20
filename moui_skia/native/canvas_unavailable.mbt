@@ -6,7 +6,7 @@ pub fn Canvas::is_available(self : Canvas) -> Bool {
 }
 
 ///|
-pub fn Canvas::save(self : Canvas) -> Int {
+pub fn Canvas::save(self : Canvas) -> Int32 {
   ignore(self)
   0
 }
@@ -14,12 +14,12 @@ pub fn Canvas::save(self : Canvas) -> Int {
 ///|
 pub fn Canvas::save_layer(
   self : Canvas,
-  bounds? : @skia.Rect? = None,
-  paint? : @skia.Paint = @skia.Paint::new(),
-  color_filter? : ColorFilter? = None,
-  image_filter? : ImageFilter? = None,
-  mask_filter? : MaskFilter? = None,
-) -> Int {
+  bounds~ : @skia.Rect? = None,
+  paint~ : @skia.Paint = @skia.Paint::new(),
+  color_filter~ : ColorFilter? = None,
+  image_filter~ : ImageFilter? = None,
+  mask_filter~ : MaskFilter? = None,
+) -> Int32 {
   ignore(self)
   ignore(bounds)
   ignore(paint)
@@ -35,13 +35,13 @@ pub fn Canvas::restore(self : Canvas) -> Unit {
 }
 
 ///|
-pub fn Canvas::restore_to_count(self : Canvas, count : Int) -> Unit {
+pub fn Canvas::restore_to_count(self : Canvas, count : Int32) -> Unit {
   ignore(self)
   ignore(count)
 }
 
 ///|
-pub fn Canvas::save_count(self : Canvas) -> Int {
+pub fn Canvas::save_count(self : Canvas) -> Int32 {
   ignore(self)
   0
 }
@@ -90,8 +90,8 @@ pub fn Canvas::discard(self : Canvas) -> Unit {
 pub fn Canvas::clip_rect(
   self : Canvas,
   rect : @skia.Rect,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   ignore(self)
   ignore(rect)
@@ -103,8 +103,8 @@ pub fn Canvas::clip_rect(
 pub fn Canvas::clip_rrect(
   self : Canvas,
   rrect : @skia.RRect,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   ignore(self)
   ignore(rrect)
@@ -116,8 +116,8 @@ pub fn Canvas::clip_rrect(
 pub fn Canvas::clip_path(
   self : Canvas,
   path : Path,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   ignore(self)
   ignore(path)
@@ -155,7 +155,7 @@ pub fn Canvas::quick_reject_path(self : Canvas, path : Path) -> Bool {
 pub fn Canvas::draw_color(
   self : Canvas,
   color : @skia.Color,
-  blend_mode? : @skia.BlendMode = SrcOver,
+  blend_mode~ : @skia.BlendMode = SrcOver,
 ) -> Unit {
   ignore(self)
   ignore(color)
@@ -209,7 +209,7 @@ pub fn Canvas::draw_points(
   self : Canvas,
   points : Array[@skia.Point],
   paint : @skia.Paint,
-  mode? : @skia.PointMode = Points,
+  mode~ : @skia.PointMode = Points,
 ) -> Unit {
   ignore(self)
   ignore(points)
@@ -361,7 +361,7 @@ pub fn Canvas::draw_image_rect(
   src : @skia.Rect,
   dst : @skia.Rect,
   paint : @skia.Paint,
-  sampling? : @skia.SamplingOptions = @skia.SamplingOptions::new(),
+  sampling~ : @skia.SamplingOptions = @skia.SamplingOptions::new(),
 ) -> Unit {
   ignore(self)
   ignore(image)
@@ -434,7 +434,7 @@ pub fn Canvas::draw_glyphs_checked(
   positions : Array[@skia.Point],
   font : Font,
   paint : @skia.Paint,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Bool {
   ignore(self)
   ignore(glyphs)
@@ -452,7 +452,7 @@ pub fn Canvas::draw_glyphs(
   positions : Array[@skia.Point],
   font : Font,
   paint : @skia.Paint,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Unit {
   ignore(self)
   ignore(glyphs)
@@ -467,7 +467,7 @@ pub fn Canvas::draw_glyphs(
 pub fn Canvas::replay(
   self : Canvas,
   commands : @skia.RenderCommandList,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   ignore(self)
   ignore(font)
@@ -546,7 +546,7 @@ pub fn Canvas::replay(
 pub fn Canvas::replay_frame(
   self : Canvas,
   frame : @skia.RenderFrameDescriptor,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay(frame.command_list, font~)
 }
@@ -557,7 +557,7 @@ pub fn Canvas::replay_with_image_cache(
   self : Canvas,
   commands : @skia.RenderCommandList,
   image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image],
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   ignore(image_cache)
   self.replay(commands, font~)
@@ -569,7 +569,7 @@ pub fn Canvas::replay_with_resources(
   self : Canvas,
   commands : @skia.RenderCommandList,
   resources : NativeReplayResources,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   ignore(resources)
   self.replay(commands, font~)
@@ -581,7 +581,7 @@ pub fn Canvas::replay_frame_with_resources(
   self : Canvas,
   frame : @skia.RenderFrameDescriptor,
   resources : NativeReplayResources,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   ignore(resources)
   self.replay_frame(frame, font~)

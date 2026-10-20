@@ -5,27 +5,37 @@ fn fail_smoke(message : String) -> Unit {
 }
 
 ///|
-fn pixel_offset(frame : @skia_renderer.SkiaPixelFrame, x : Int, y : Int) -> Int {
+fn pixel_offset(
+  frame : @skia_renderer.SkiaPixelFrame,
+  x : Int32,
+  y : Int32,
+) -> Int32 {
   y * frame.row_bytes() + x * 4
 }
 
 ///|
-fn rect_min_x(rect : @core.Rect) -> Int {
+fn rect_min_x(rect : @core.Rect) -> Int32 {
   rect.origin.x.floor().to_int().max(0)
 }
 
 ///|
-fn rect_min_y(rect : @core.Rect) -> Int {
+fn rect_min_y(rect : @core.Rect) -> Int32 {
   rect.origin.y.floor().to_int().max(0)
 }
 
 ///|
-fn rect_max_x(frame : @skia_renderer.SkiaPixelFrame, rect : @core.Rect) -> Int {
+fn rect_max_x(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Int32 {
   (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width())
 }
 
 ///|
-fn rect_max_y(frame : @skia_renderer.SkiaPixelFrame, rect : @core.Rect) -> Int {
+fn rect_max_y(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Int32 {
   (rect.origin.y + rect.size.height).ceil().to_int().min(frame.height())
 }
 
@@ -33,7 +43,7 @@ fn rect_max_y(frame : @skia_renderer.SkiaPixelFrame, rect : @core.Rect) -> Int {
 fn rect_high_saturation_pixels(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
@@ -61,7 +71,7 @@ fn rect_high_saturation_pixels(
 fn rect_alpha_pixels(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
@@ -79,7 +89,7 @@ fn rect_alpha_pixels(
 }
 
 ///|
-fn row_seen(rows : Array[Int], row : Int) -> Bool {
+fn row_seen(rows : Array[Int32], row : Int32) -> Bool {
   rows.any(value => value == row)
 }
 
@@ -87,8 +97,8 @@ fn row_seen(rows : Array[Int], row : Int) -> Bool {
 fn rect_dark_rows(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-) -> Int {
-  let rows : Array[Int] = []
+) -> Int32 {
+  let rows : Array[Int32] = []
   let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
     for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
@@ -111,7 +121,7 @@ fn rect_dark_rows(
 fn rect_blue_pixels(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
@@ -132,7 +142,7 @@ fn rect_blue_pixels(
 }
 
 ///|
-fn int_array_equals(left : Array[Int], right : Array[Int]) -> Bool {
+fn int_array_equals(left : Array[Int32], right : Array[Int32]) -> Bool {
   if left.length() != right.length() {
     return false
   }
@@ -148,7 +158,7 @@ fn int_array_equals(left : Array[Int], right : Array[Int]) -> Bool {
 struct SkiaParagraphSmokeLine {
   text : String
   frame : @core.Rect
-  line_index : Int
+  line_index : Int32
   baseline : Double
   measured_width : Double
 }
@@ -252,8 +262,8 @@ fn skia_color_emoji_fallback_language_metadata_ready(
 ///|
 fn skia_color_emoji_diagnostic_metadata_ready(
   fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
-  high_saturation_pixels : Int,
-  alpha_pixels : Int,
+  high_saturation_pixels : Int32,
+  alpha_pixels : Int32,
 ) -> Bool {
   fallback.font_family() != "" &&
   fallback.font_family() != "unknown" &&

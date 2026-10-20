@@ -31,7 +31,7 @@ fn forbidden_patterns() -> Array[ForbiddenPattern] {
 }
 
 ///|
-fn line_of_offset(text : String, offset : Int) -> Int {
+fn line_of_offset(text : String, offset : Int32) -> Int32 {
   let mut lines = 1
   let mut index = 0
   while index < offset && index < text.length() {
@@ -44,7 +44,7 @@ fn line_of_offset(text : String, offset : Int) -> Int {
 }
 
 ///|
-fn first_match_offset(text : String, needle : String) -> Int? {
+fn first_match_offset(text : String, needle : String) -> Int32? {
   match text.find(needle) {
     Some(offset) => Some(offset)
     None => None
@@ -169,7 +169,7 @@ fn parse_repo_root(args : Array[String]) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_repo_root(args) {
     Err("help") => {
       println(usage())

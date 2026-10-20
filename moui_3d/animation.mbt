@@ -47,8 +47,8 @@ pub extend AnimationKeyframe with Debug::{to_repr}
 pub fn AnimationKeyframe::new(
   time~ : Double,
   value~ : Array[Double],
-  in_tangent? : Array[Double] = [],
-  out_tangent? : Array[Double] = [],
+  in_tangent~ : Array[Double] = [],
+  out_tangent~ : Array[Double] = [],
 ) -> AnimationKeyframe {
   {
     time,
@@ -140,7 +140,7 @@ pub extend AnimationClip with Debug::{to_repr}
 
 ///|
 pub fn AnimationClip::new(
-  name? : String = "",
+  name~ : String = "",
   channels~ : Array[AnimationChannel],
 ) -> AnimationClip {
   let mut duration = 0.0

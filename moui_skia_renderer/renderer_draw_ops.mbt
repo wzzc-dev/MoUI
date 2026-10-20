@@ -579,7 +579,7 @@ fn skia_vignette_radius_scale(spec : @core.ShaderEffectSpec) -> Double {
 }
 
 ///|
-fn skia_dim_to_int(value : Double) -> Int {
+fn skia_dim_to_int(value : Double) -> Int32 {
   value.ceil().max(1.0).to_int()
 }
 

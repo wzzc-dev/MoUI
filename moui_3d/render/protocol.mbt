@@ -53,7 +53,7 @@ pub fn ThreeDRendererDescriptor::new(
   id~ : String,
   backend~ : ThreeDRendererBackend,
   status~ : ThreeDRendererStatus,
-  description? : String = "",
+  description~ : String = "",
 ) -> ThreeDRendererDescriptor {
   { id, backend, status, description, }
 }
@@ -86,8 +86,8 @@ pub fn ThreeDRendererDescriptor::description(
 
 ///|
 pub(all) struct ThreeDViewportSize {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   scale_factor : Double
 } derive(Eq, Debug, ToJson)
 
@@ -102,9 +102,9 @@ pub extend ThreeDViewportSize with ToJson::{to_json}
 
 ///|
 pub fn ThreeDViewportSize::new(
-  width~ : Int,
-  height~ : Int,
-  scale_factor? : Double = 1.0,
+  width~ : Int32,
+  height~ : Int32,
+  scale_factor~ : Double = 1.0,
 ) -> ThreeDViewportSize {
   {
     width: if width < 1 {
@@ -126,12 +126,12 @@ pub fn ThreeDViewportSize::new(
 }
 
 ///|
-pub fn ThreeDViewportSize::width(self : ThreeDViewportSize) -> Int {
+pub fn ThreeDViewportSize::width(self : ThreeDViewportSize) -> Int32 {
   self.width
 }
 
 ///|
-pub fn ThreeDViewportSize::height(self : ThreeDViewportSize) -> Int {
+pub fn ThreeDViewportSize::height(self : ThreeDViewportSize) -> Int32 {
   self.height
 }
 
@@ -331,7 +331,7 @@ fn contains_resource_key(
 fn find_resource_key(
   keys : Array[ThreeDResourceKey],
   wanted : ThreeDResourceKey,
-) -> Int? {
+) -> Int32? {
   for index, key in keys {
     if key.kind() == wanted.kind() && key.value() == wanted.value() {
       return Some(index)
@@ -345,14 +345,14 @@ fn find_resource_key(
 /// creation; renderers no longer walk the mutable CPU Scene each frame.
 pub(all) struct ThreeDRenderItem {
   node : @moui_3d.NodeId
-  primitive_index : Int
+  primitive_index : Int32
   model : @moui_3d.Mat4
   vertices : Array[@moui_3d.Vertex]
-  indices : Array[Int]
+  indices : Array[Int32]
   base_color : @moui_3d.Vec4
   metallic : Double
   roughness : Double
-  skin : Int?
+  skin : Int32?
   morph_targets : Array[Array[@moui_3d.VertexDelta]]
 } derive(Debug)
 
@@ -365,7 +365,7 @@ pub fn ThreeDRenderItem::node(self : ThreeDRenderItem) -> @moui_3d.NodeId {
 }
 
 ///|
-pub fn ThreeDRenderItem::primitive_index(self : ThreeDRenderItem) -> Int {
+pub fn ThreeDRenderItem::primitive_index(self : ThreeDRenderItem) -> Int32 {
   self.primitive_index
 }
 
@@ -382,7 +382,7 @@ pub fn ThreeDRenderItem::vertices(
 }
 
 ///|
-pub fn ThreeDRenderItem::indices(self : ThreeDRenderItem) -> Array[Int] {
+pub fn ThreeDRenderItem::indices(self : ThreeDRenderItem) -> Array[Int32] {
   self.indices.copy()
 }
 
@@ -402,7 +402,7 @@ pub fn ThreeDRenderItem::roughness(self : ThreeDRenderItem) -> Double {
 }
 
 ///|
-pub fn ThreeDRenderItem::skin(self : ThreeDRenderItem) -> Int? {
+pub fn ThreeDRenderItem::skin(self : ThreeDRenderItem) -> Int32? {
   self.skin
 }
 
@@ -903,7 +903,7 @@ pub fn ThreeDRendererSession::new(
   descriptor~ : ThreeDRendererDescriptor,
   resize~ : (ThreeDViewportSize) -> Unit,
   render~ : (ThreeDFrame) -> ThreeDRenderResult,
-  dispose? : () -> Unit = () => (),
+  dispose~ : () -> Unit = () => (),
 ) -> ThreeDRendererSession {
   {
     descriptor,
@@ -969,7 +969,7 @@ pub struct ThreeDRendererProvider {
 pub fn ThreeDRendererProvider::new(
   descriptor~ : ThreeDRendererDescriptor,
   bind~ : () -> ThreeDRendererSession?,
-  bind_surface? : (UInt64, ThreeDViewportSize) -> ThreeDRendererSession? = (
+  bind_surface~ : (UInt64, ThreeDViewportSize) -> ThreeDRendererSession? = (
     _handle,
     _size,
   ) => None,
@@ -1024,7 +1024,7 @@ pub fn resolve_provider(
 pub fn connect_viewport_host(
   provider : ThreeDRendererProvider,
   host : @moui_3d.ThreeDViewportHost,
-  unavailable_reason? : String = "3D GPU host is unavailable",
+  unavailable_reason~ : String = "3D GPU host is unavailable",
 ) -> Unit {
   let session : Ref[ThreeDRendererSession?] = Ref(None)
   let surface_handle : Ref[UInt64?] = Ref(None)

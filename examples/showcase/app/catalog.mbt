@@ -41,8 +41,8 @@ pub fn CatalogItem::new(
   group_id~ : String,
   title~ : String,
   summary~ : String,
-  badge? : String = "",
-  tone? : @views.BadgeTone = Neutral,
+  badge~ : String = "",
+  tone~ : @views.BadgeTone = Neutral,
 ) -> CatalogItem {
   { workspace, id, group_id, title, summary, badge, tone, }
 }

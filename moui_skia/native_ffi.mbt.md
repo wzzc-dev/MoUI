@@ -53,8 +53,8 @@ priv extern "C" fn native_data_from_bytes(bytes : Bytes) -> NativeData = "moonbi
 #borrow(image)
 priv extern "C" fn native_image_encode_to_data(
   image : NativeImage,
-  format : Int,
-  quality : Int,
+  format : Int32,
+  quality : Int32,
 ) -> NativeData = "moonbit_skia_image_encode_to_data"
 
 ///|
@@ -65,8 +65,8 @@ priv extern "C" fn native_image_from_encoded_data(
 
 ///|
 priv extern "C" fn native_surface_raster_n32_premul(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> NativeSurface = "moonbit_skia_surface_raster_n32_premul"
 
 ///|
@@ -82,11 +82,11 @@ priv extern "C" fn native_gpu_context_is_null(
 #borrow(context)
 priv extern "C" fn native_surface_gpu_n32_premul(
   context : NativeGpuContext,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
   budgeted : Bool,
 ) -> NativeSurface = "moonbit_skia_surface_gpu_n32_premul"
 
@@ -101,11 +101,11 @@ priv extern "C" fn native_surface_gpu_metal_runtime_available() -> Bool = "moonb
 
 ///|
 #borrow(surface)
-priv extern "C" fn native_surface_width(surface : NativeSurface) -> Int = "moonbit_skia_surface_width"
+priv extern "C" fn native_surface_width(surface : NativeSurface) -> Int32 = "moonbit_skia_surface_width"
 
 ///|
 #borrow(surface)
-priv extern "C" fn native_surface_height(surface : NativeSurface) -> Int = "moonbit_skia_surface_height"
+priv extern "C" fn native_surface_height(surface : NativeSurface) -> Int32 = "moonbit_skia_surface_height"
 
 ///|
 #borrow(surface)
@@ -123,15 +123,15 @@ priv extern "C" fn native_surface_image_snapshot(
 #borrow(surface)
 priv extern "C" fn native_surface_image_snapshot_with_bounds(
   surface : NativeSurface,
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
 ) -> NativeImage = "moonbit_skia_surface_image_snapshot_with_bounds"
 
 ///|
 #borrow(canvas)
-priv extern "C" fn native_canvas_save(canvas : NativeCanvas) -> Int = "moonbit_skia_canvas_save"
+priv extern "C" fn native_canvas_save(canvas : NativeCanvas) -> Int32 = "moonbit_skia_canvas_save"
 
 ///|
 #borrow(canvas)
@@ -164,7 +164,7 @@ priv extern "C" fn native_canvas_clip_rect(
   top : Float,
   right : Float,
   bottom : Float,
-  op : Int,
+  op : Int32,
   anti_alias : Bool,
 ) -> Unit = "moonbit_skia_canvas_clip_rect"
 
@@ -176,15 +176,15 @@ priv extern "C" fn native_canvas_draw_rect(
   top : Float,
   right : Float,
   bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_rect"
 
 ///|
@@ -197,15 +197,15 @@ priv extern "C" fn native_canvas_draw_round_rect(
   bottom : Float,
   rx : Float,
   ry : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_round_rect"
 
 ///|
@@ -213,15 +213,15 @@ priv extern "C" fn native_canvas_draw_round_rect(
 priv extern "C" fn native_canvas_draw_path(
   canvas : NativeCanvas,
   path : NativePath,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_path"
 
 ///|
@@ -246,15 +246,15 @@ priv extern "C" fn native_canvas_draw_image_rect(
   dst_top : Float,
   dst_right : Float,
   dst_bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_image_rect"
 ```
 

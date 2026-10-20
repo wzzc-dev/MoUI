@@ -1,9 +1,9 @@
 ///|
 fn render_pipeline_make_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String?,
-  source_width : Int,
-  source_height : Int,
+  source_width : Int32,
+  source_height : Int32,
 ) -> RenderPipelineImageDependency {
   {
     command_index,
@@ -16,7 +16,7 @@ fn render_pipeline_make_image_dependency(
 
 ///|
 fn render_pipeline_make_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String?,
   pixmap : @graphics.Pixmap,
   src_rect : @graphics.PixelRect,
@@ -42,7 +42,7 @@ fn render_pipeline_make_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_decoded_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   decoded : Result[@graphics.Pixmap, @graphics.PixmapDecodeError],
 ) -> RenderPipelineImageDependency {
@@ -66,7 +66,7 @@ fn render_pipeline_make_decoded_image_dependency(
 
 ///|
 fn render_pipeline_make_bmp_bytes_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
 ) -> RenderPipelineImageDependency {
@@ -79,7 +79,7 @@ fn render_pipeline_make_bmp_bytes_image_dependency(
 
 ///|
 fn render_pipeline_make_png_bytes_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
 ) -> RenderPipelineImageDependency {
@@ -92,11 +92,11 @@ fn render_pipeline_make_png_bytes_image_dependency(
 
 ///|
 fn render_pipeline_make_rgba_bytes_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
-  image_width : Int,
-  image_height : Int,
+  image_width : Int32,
+  image_height : Int32,
 ) -> RenderPipelineImageDependency {
   render_pipeline_make_image_bytes_dependency(
     command_index,
@@ -107,7 +107,7 @@ fn render_pipeline_make_rgba_bytes_image_dependency(
 
 ///|
 fn render_pipeline_make_bmp_bytes_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
   src_rect : @graphics.PixelRect,
@@ -122,7 +122,7 @@ fn render_pipeline_make_bmp_bytes_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_png_bytes_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
   src_rect : @graphics.PixelRect,
@@ -137,11 +137,11 @@ fn render_pipeline_make_png_bytes_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_rgba_bytes_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image_data : Bytes,
-  image_width : Int,
-  image_height : Int,
+  image_width : Int32,
+  image_height : Int32,
   src_rect : @graphics.PixelRect,
 ) -> RenderPipelineImageDependency {
   render_pipeline_make_image_bytes_rect_dependency(
@@ -154,7 +154,7 @@ fn render_pipeline_make_rgba_bytes_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_font_dependency(
-  command_index : Int,
+  command_index : Int32,
   font_key : String,
   font_data : Bytes,
 ) -> RenderPipelineFontDependency {
@@ -163,7 +163,7 @@ fn render_pipeline_make_font_dependency(
 
 ///|
 fn render_pipeline_make_loaded_font_dependency(
-  command_index : Int,
+  command_index : Int32,
   font_key : String,
 ) -> RenderPipelineFontDependency {
   { command_index, font_key, font_byte_count: 0, }
@@ -171,7 +171,7 @@ fn render_pipeline_make_loaded_font_dependency(
 
 ///|
 fn render_pipeline_make_text_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String?,
   face : @text.FontFace,
   text : String,
@@ -203,7 +203,7 @@ fn render_pipeline_make_text_dependency(
 
 ///|
 fn render_pipeline_make_font_bytes_text_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   font_data : Bytes,
   text : String,
@@ -229,7 +229,7 @@ fn render_pipeline_make_font_bytes_text_dependency(
 
 ///|
 fn render_pipeline_make_unresolved_text_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String?,
   text : String,
 ) -> RenderPipelineTextDependency {

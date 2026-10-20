@@ -8,7 +8,7 @@ fn[Msg] markdown_panel_draw_commands(
   width : Double,
   height : Double,
 ) -> Array[@core.DrawCommand] {
-  let program : @core.Program[Int, Msg] = @moui.Program::new_with_environment(
+  let program : @core.Program[Int32, Msg] = @moui.Program::new_with_environment(
     init=() => (0, @moui.Effect::none()),
     update=(current, _) => (current, @moui.Effect::none()),
     view=(_, _) => view,
@@ -43,7 +43,7 @@ fn markdown_panel_theme() -> @moui.Theme {
 
 ///|
 test "markdown find bar renders all controls and status" {
-  let view : @moui.View[Int] = markdown_find_bar(
+  let view : @moui.View[Int32] = markdown_find_bar(
     theme=markdown_panel_theme(),
     query="needle",
     replace_text="thread",
@@ -75,7 +75,7 @@ test "markdown find bar renders all controls and status" {
 ///|
 test "markdown format palette filters rows and reports empty state" {
   let options = markdown_format_palette_filtered_items("bold")
-  let view : @moui.View[Int] = markdown_format_palette(
+  let view : @moui.View[Int32] = markdown_format_palette(
     theme=markdown_panel_theme(),
     query="bold",
     items=options,
@@ -94,7 +94,7 @@ test "markdown format palette filters rows and reports empty state" {
   assert_true(markdown_panel_has_text(commands, "Quick Format"))
   assert_false(markdown_panel_has_text(commands, "Paragraph"))
 
-  let empty_view : @moui.View[Int] = markdown_format_palette(
+  let empty_view : @moui.View[Int32] = markdown_format_palette(
     theme=markdown_panel_theme(),
     query="zzz",
     items=markdown_format_palette_filtered_items("zzz"),
@@ -112,7 +112,7 @@ test "markdown format palette filters rows and reports empty state" {
 test "markdown outline panel shows headings and empty state" {
   let source = "# First\n\n## Second\n\n### Third"
   let snapshot = @richtext.MarkdownEditorSnapshot::parse(source)
-  let view : @moui.View[Int] = markdown_outline_panel(
+  let view : @moui.View[Int32] = markdown_outline_panel(
     theme=markdown_panel_theme(),
     outline=snapshot.outline,
     folded_starts=[],
@@ -127,7 +127,7 @@ test "markdown outline panel shows headings and empty state" {
   assert_true(markdown_panel_has_text(commands, "H2 Second"))
   assert_true(markdown_panel_has_text(commands, "H3 Third"))
 
-  let empty_view : @moui.View[Int] = markdown_outline_panel(
+  let empty_view : @moui.View[Int32] = markdown_outline_panel(
     theme=markdown_panel_theme(),
     outline=[],
     folded_starts=[],
@@ -146,7 +146,7 @@ test "markdown outline panel hides folded children" {
     "# First\n\n## Second\n\n### Third",
   )
   let second_start = snapshot.outline[1].source_start
-  let view : @moui.View[Int] = markdown_outline_panel(
+  let view : @moui.View[Int32] = markdown_outline_panel(
     theme=markdown_panel_theme(),
     outline=snapshot.outline,
     folded_starts=[second_start],
@@ -166,7 +166,7 @@ test "markdown document info panel renders metric groups" {
   let source = "# Draft\n\nBody with [link](https://example.com)"
   let snapshot = @richtext.MarkdownEditorSnapshot::parse(source)
   let info = markdown_document_info_from_snapshot(snapshot)
-  let view : @moui.View[Int] = markdown_document_info_panel(
+  let view : @moui.View[Int32] = markdown_document_info_panel(
     theme=markdown_panel_theme(),
     info~,
     word_count=snapshot.word_count,

@@ -274,8 +274,8 @@ fn skia_stabilize_grapheme_cluster_carets(
 ///|
 fn skia_stabilize_caret_cluster(
   carets : Array[Double],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Unit {
   if start < 0 || end <= start + 1 || end >= carets.length() {
     return ()
@@ -290,8 +290,8 @@ fn skia_stabilize_caret_cluster(
 }
 
 ///|
-fn skia_utf8_char_offsets(text : String) -> Array[Int] {
-  let offsets : Array[Int] = [0]
+fn skia_utf8_char_offsets(text : String) -> Array[Int32] {
+  let offsets : Array[Int32] = [0]
   let mut offset = 0
   for ch in text {
     offset += @utf8.encode(ch.to_string()[:], bom=false).length()
@@ -301,7 +301,10 @@ fn skia_utf8_char_offsets(text : String) -> Array[Int] {
 }
 
 ///|
-fn skia_char_index_for_utf8_offset(offsets : Array[Int], offset : Int) -> Int? {
+fn skia_char_index_for_utf8_offset(
+  offsets : Array[Int32],
+  offset : Int32,
+) -> Int32? {
   if offset < 0 {
     return None
   }
@@ -322,8 +325,8 @@ fn skia_char_index_for_utf8_offset(offsets : Array[Int], offset : Int) -> Int? {
 /// hit-test APIs accept UTF-8 bytes, so line metrics need their own table:
 /// for ASCII the two coincide, and only mixed CJK/Latin text exposes the
 /// difference.
-fn skia_utf16_char_offsets(text : String) -> Array[Int] {
-  let offsets : Array[Int] = [0]
+fn skia_utf16_char_offsets(text : String) -> Array[Int32] {
+  let offsets : Array[Int32] = [0]
   let mut offset = 0
   for ch in text {
     offset += if ch.to_int() < 0x10000 { 1 } else { 2 }
@@ -333,6 +336,9 @@ fn skia_utf16_char_offsets(text : String) -> Array[Int] {
 }
 
 ///|
-fn skia_char_index_for_utf16_offset(offsets : Array[Int], units : Int) -> Int? {
+fn skia_char_index_for_utf16_offset(
+  offsets : Array[Int32],
+  units : Int32,
+) -> Int32? {
   skia_char_index_for_utf8_offset(offsets, units)
 }

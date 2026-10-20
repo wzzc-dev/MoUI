@@ -18,7 +18,7 @@ pub fn WindowImageTaskStates::new() -> WindowImageTaskStates {
 pub fn WindowImageTaskStates::attach(
   self : WindowImageTaskStates,
   id : @backend_host.WindowId,
-  starter? : WindowImageTaskStarter = WindowImageTaskStarter::immediate(),
+  starter~ : WindowImageTaskStarter = WindowImageTaskStarter::immediate(),
   request_redraw~ : () -> Unit,
 ) -> Bool {
   if self.lookup(id) is Some(_) {
@@ -77,6 +77,6 @@ pub fn WindowImageTaskStates::dispose_window(
 }
 
 ///|
-pub fn WindowImageTaskStates::count(self : WindowImageTaskStates) -> Int {
+pub fn WindowImageTaskStates::count(self : WindowImageTaskStates) -> Int32 {
   self.entries.length()
 }

@@ -1,7 +1,7 @@
 ///|
 struct WrapperBudget {
   path : String
-  max_lines : Int
+  max_lines : Int32
 }
 
 ///|

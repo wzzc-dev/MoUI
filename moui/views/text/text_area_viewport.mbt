@@ -55,13 +55,16 @@ fn text_area_scroll_offset(state : @core.ViewStateContext) -> Double {
 }
 
 ///|
-fn text_area_content_height(line_count~ : Int, line_height~ : Double) -> Double {
+fn text_area_content_height(
+  line_count~ : Int32,
+  line_height~ : Double,
+) -> Double {
   @core.max_int(line_count, 1).to_double() * line_height
 }
 
 ///|
 fn text_area_max_scroll_offset(
-  line_count~ : Int,
+  line_count~ : Int32,
   line_height~ : Double,
   viewport_height~ : Double,
 ) -> Double {
@@ -73,7 +76,7 @@ fn text_area_max_scroll_offset(
 ///|
 fn text_area_clamped_scroll_offset(
   raw : Double,
-  line_count~ : Int,
+  line_count~ : Int32,
   line_height~ : Double,
   viewport_height~ : Double,
 ) -> Double {
@@ -91,7 +94,7 @@ fn text_area_clamped_scroll_offset(
 fn text_area_scroll_offset_after_wheel(
   current~ : Double,
   delta_y~ : Double,
-  line_count~ : Int,
+  line_count~ : Int32,
   line_height~ : Double,
   viewport_height~ : Double,
 ) -> Double {
@@ -110,9 +113,9 @@ fn text_area_scroll_offset_after_wheel(
 fn text_area_visible_line_window(
   offset~ : Double,
   viewport_height~ : Double,
-  line_count~ : Int,
+  line_count~ : Int32,
   line_height~ : Double,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   if line_count == 0 {
     (0, 0)
   } else if line_height <= 0.0 {
@@ -138,8 +141,8 @@ fn text_area_visible_line_window(
 /// caret nudges do not chase the scroll.
 fn text_area_offset_for_caret_reveal(
   current~ : Double,
-  caret_line~ : Int,
-  line_count~ : Int,
+  caret_line~ : Int32,
+  line_count~ : Int32,
   line_height~ : Double,
   viewport_height~ : Double,
 ) -> Double {
@@ -166,10 +169,10 @@ fn text_area_offset_for_caret_reveal(
 /// `line_height`), while paragraph metrics use the engine's own line
 /// advance, so pointer hits snap to the visible row first.
 fn text_area_line_index_for_slot_y(
-  line_count : Int,
+  line_count : Int32,
   slot_y : Double,
   line_height : Double,
-) -> Int {
+) -> Int32 {
   if line_count == 0 || line_height <= 0.0 {
     0
   } else {
@@ -184,7 +187,7 @@ fn text_area_hit_offset_at_slot(
   paragraph : @core.TextParagraphLayoutResult,
   slot_point : @core.Point,
   line_height : Double,
-) -> Int {
+) -> Int32 {
   if paragraph.lines.is_empty() {
     0
   } else {

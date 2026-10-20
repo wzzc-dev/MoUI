@@ -142,12 +142,14 @@ pub fn customization_report_for(
 }
 
 ///|
-pub fn customization_report_count(preset : @common.DesignPreset) -> Int {
+pub fn customization_report_count(preset : @common.DesignPreset) -> Int32 {
   customization_report(preset).length()
 }
 
 ///|
-pub fn customization_capability_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn customization_capability_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in customization_report(preset) {
     if item.status == NotMapped ||
@@ -162,7 +164,7 @@ pub fn customization_capability_gap_count(preset : @common.DesignPreset) -> Int 
 ///|
 pub fn customization_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in customization_report(preset) {
     if item.remaining_gap != "none" {

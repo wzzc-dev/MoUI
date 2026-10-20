@@ -116,7 +116,7 @@ fn split_cells(line : String) -> Array[String] {
 /// A single parsed table row. The Web column is intentionally not stored:
 /// the "Web wasm-gc" column is out of scope (see module doc).
 struct ReportRow {
-  line_no : Int
+  line_no : Int32
   feature_name : String
   skia : String
   wgpu : String
@@ -127,7 +127,7 @@ struct ReportRow {
 ///|
 /// Parse the capability table out of the report text. Returns the header
 /// line number (1-based) and the data rows.
-fn parse_table(text : String) -> (Int, Array[ReportRow]) {
+fn parse_table(text : String) -> (Int32, Array[ReportRow]) {
   let rows : Array[ReportRow] = []
   let mut header_line = 0
   let mut line_no = 0
@@ -230,7 +230,7 @@ fn report_cell(row : ReportRow, label : String) -> String {
 }
 
 ///|
-fn run(repo_root : String) -> Int {
+fn run(repo_root : String) -> Int32 {
   let report_path = @tools.resolve_path(
     repo_root, "docs/renderer-capability-report.md",
   )

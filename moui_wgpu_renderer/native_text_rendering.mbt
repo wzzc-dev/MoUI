@@ -253,7 +253,7 @@ fn text_vertices_to_bytes(vertices : Array[TextVertex]) -> Bytes {
 
 ///|
 fn push_text_f32le(out : Array[Byte], value : Double) -> Unit {
-  let bits : UInt = Float::from_double(value)
+  let bits : UInt32 = Float::from_double(value)
     .reinterpret_as_int()
     .reinterpret_as_uint()
   out.push((bits & 0xFF).to_byte())

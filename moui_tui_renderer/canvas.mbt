@@ -8,42 +8,42 @@
 /// - 同优先级先到先得,所以两个兄弟盒重叠时不会互相打断笔画
 priv struct Canvas {
   screen : @tui.TermScreen
-  mut cols : Int
-  mut rows : Int
+  mut cols : Int32
+  mut rows : Int32
   /// 本帧每格的 paint sequence,0 表示未被占。
-  mut owners : Array[Array[Int]]
+  mut owners : Array[Array[Int32]]
   /// 本帧每格首字符占用的 cell 数:1 单宽、2 宽字符左半、-1 宽字符右半。
-  mut widths : Array[Array[Int]]
+  mut widths : Array[Array[Int32]]
   /// 上一帧的同一对掩码:这一帧没再画的格子要靠它擦掉。
-  mut prev_owners : Array[Array[Int]]
-  mut prev_widths : Array[Array[Int]]
+  mut prev_owners : Array[Array[Int32]]
+  mut prev_widths : Array[Array[Int32]]
   /// 本帧被样式带碰过的格子。样式带只改 attrs、故意不认领格子,
   /// 归属清扫永远轮不到它们,带的擦除只能凭这份掩码。
-  mut bands : Array[Array[Int]]
+  mut bands : Array[Array[Int32]]
   /// 上一帧的带掩码:这一帧没再碰的带格子要靠它擦掉。
-  mut prev_bands : Array[Array[Int]]
+  mut prev_bands : Array[Array[Int32]]
   /// 上一次真正写给终端的栅格:增量的唯一依据。
   mut sent : Array[Array[@tui.Cell]]
   /// 尺寸变化后必须先整屏重建,否则缩窗留下的残字擦不掉。
   mut rebuild : Bool
-  mut prio : Array[Int]
+  mut prio : Array[Int32]
 }
 
 ///|
 priv struct Cursor {
-  mut row : Int
-  mut col : Int
-  c0 : Int
-  r1 : Int
-  c1 : Int
+  mut row : Int32
+  mut col : Int32
+  c0 : Int32
+  r1 : Int32
+  c1 : Int32
   attrs : @tui.CellAttrs
-  seq : Int
+  seq : Int32
 }
 
 ///|
-fn cell_mask(cols : Int, rows : Int, fill : Int) -> Array[Array[Int]] {
+fn cell_mask(cols : Int32, rows : Int32, fill : Int32) -> Array[Array[Int32]] {
   // 每行要有自己的底层数组,嵌套 make 会让所有行共享同一份。
-  let mask : Array[Array[Int]] = []
+  let mask : Array[Array[Int32]] = []
   for _ in 0..<rows {
     mask.push(Array::make(cols, fill))
   }
@@ -51,7 +51,7 @@ fn cell_mask(cols : Int, rows : Int, fill : Int) -> Array[Array[Int]] {
 }
 
 ///|
-fn blank_grid(cols : Int, rows : Int) -> Array[Array[@tui.Cell]] {
+fn blank_grid(cols : Int32, rows : Int32) -> Array[Array[@tui.Cell]] {
   let blank = @tui.blank_cell(@tui.CellAttrs::default())
   let grid : Array[Array[@tui.Cell]] = []
   for _ in 0..<rows {
@@ -62,7 +62,7 @@ fn blank_grid(cols : Int, rows : Int) -> Array[Array[@tui.Cell]] {
 }
 
 ///|
-fn Canvas::new(cols : Int, rows : Int) -> Canvas {
+fn Canvas::new(cols : Int32, rows : Int32) -> Canvas {
   {
     screen: @tui.TermScreen::new(cols, rows),
     cols,
@@ -92,7 +92,7 @@ fn Canvas::new(cols : Int, rows : Int) -> Canvas {
 /// 所以这里显式清空而不是只标脏。放弃的方案:让 `rebuild` 分支先清屏再靠
 /// `sweep_stale` 擦残格 —— 清屏由终端做了,但栅格里的残格仍会被逐行重画出去,
 /// 而且 `prev_owners` 在换尺寸时无效可查,擦不到。
-fn Canvas::resize(self : Canvas, cols : Int, rows : Int) -> Unit {
+fn Canvas::resize(self : Canvas, cols : Int32, rows : Int32) -> Unit {
   if cols == self.cols && rows == self.rows {
     return
   }
@@ -157,8 +157,8 @@ fn Canvas::sweep_stale(self : Canvas) -> Unit {
 ///|
 fn Canvas::erase_cell(
   self : Canvas,
-  y : Int,
-  x : Int,
+  y : Int32,
+  x : Int32,
   attrs : @tui.CellAttrs,
 ) -> Unit {
   self.widths[y][x] = 1
@@ -166,7 +166,7 @@ fn Canvas::erase_cell(
 }
 
 ///|
-fn Canvas::new_seq(self : Canvas, prio : Int) -> Int {
+fn Canvas::new_seq(self : Canvas, prio : Int32) -> Int32 {
   let seq = self.prio.length() + 1
   self.prio.push(prio)
   seq
@@ -174,7 +174,7 @@ fn Canvas::new_seq(self : Canvas, prio : Int) -> Int {
 
 ///|
 /// 归属判定:空格与自己都可写,否则只有更高优先级才能抢占。
-fn Canvas::can_claim(self : Canvas, y : Int, x : Int, seq : Int) -> Bool {
+fn Canvas::can_claim(self : Canvas, y : Int32, x : Int32, seq : Int32) -> Bool {
   if y < 0 || y >= self.rows || x < 0 || x >= self.cols {
     return false
   }
@@ -187,7 +187,7 @@ fn Canvas::can_claim(self : Canvas, y : Int, x : Int, seq : Int) -> Bool {
 }
 
 ///|
-fn Canvas::take_cell(self : Canvas, y : Int, x : Int, seq : Int) -> Unit {
+fn Canvas::take_cell(self : Canvas, y : Int32, x : Int32, seq : Int32) -> Unit {
   self.owners[y][x] = seq
 }
 
@@ -196,9 +196,9 @@ fn Canvas::take_cell(self : Canvas, y : Int, x : Int, seq : Int) -> Unit {
 /// 残留右半格 width==0 不产生文本,行会凭空少一格。
 fn Canvas::drop_partner(
   self : Canvas,
-  y : Int,
-  x : Int,
-  seq : Int,
+  y : Int32,
+  x : Int32,
+  seq : Int32,
   attrs : @tui.CellAttrs,
 ) -> Unit {
   let previous = self.widths[y][x]
@@ -219,11 +219,11 @@ fn Canvas::drop_partner(
 /// 写入一个字符:先确认整个跨度都能归属本 seq,再落盘。
 fn Canvas::put(
   self : Canvas,
-  y : Int,
-  x : Int,
+  y : Int32,
+  x : Int32,
   ch : String,
   attrs : @tui.CellAttrs,
-  seq : Int,
+  seq : Int32,
 ) -> Bool {
   if y < 0 || y >= self.rows || x < 0 || x >= self.cols {
     return false
@@ -301,13 +301,13 @@ fn Canvas::put_word(self : Canvas, cur : Cursor, word : String) -> Bool {
 /// 否则兄弟节点会互相插字。
 fn Canvas::write_boxed(
   self : Canvas,
-  r0 : Int,
-  c0 : Int,
-  r1 : Int,
-  c1 : Int,
+  r0 : Int32,
+  c0 : Int32,
+  r1 : Int32,
+  c1 : Int32,
   text : String,
   attrs : @tui.CellAttrs,
-  seq : Int,
+  seq : Int32,
 ) -> Unit {
   let cur : Cursor = { row: r0, col: c0, c0, r1, c1, attrs, seq, }
   let mut word = ""
@@ -339,12 +339,12 @@ fn Canvas::write_boxed(
 /// 框上不再写标题:标题是内容,归子节点画。
 fn Canvas::draw_box(
   self : Canvas,
-  r0 : Int,
-  c0 : Int,
-  r1 : Int,
-  c1 : Int,
+  r0 : Int32,
+  c0 : Int32,
+  r1 : Int32,
+  c1 : Int32,
   attrs : @tui.CellAttrs,
-  chrome : Int,
+  chrome : Int32,
 ) -> Unit {
   if r1 - r0 < 2 || c1 - c0 < 2 {
     ignore(self.put(r0, c0, "~", attrs, chrome))
@@ -381,10 +381,10 @@ fn Canvas::draw_box(
 /// 画出两根悬空的黄线。底色/反白在空格上是色带,仍然全幅铺开。
 fn Canvas::style_range(
   self : Canvas,
-  r0 : Int,
-  c0 : Int,
-  r1 : Int,
-  c1 : Int,
+  r0 : Int32,
+  c0 : Int32,
+  r1 : Int32,
+  c1 : Int32,
   attrs : @tui.CellAttrs,
 ) -> Unit {
   let mut y = r0.clamp(min=0, max=self.rows - 1)
@@ -423,7 +423,7 @@ fn Canvas::style_range(
 ///|
 /// 最终内容与上一次写给终端的栅格是否不同。逐格比而不比行文本:
 /// 属性变了但字符没变(焦点态换前景色)也必须重画。
-fn Canvas::row_changed(self : Canvas, y : Int) -> Bool {
+fn Canvas::row_changed(self : Canvas, y : Int32) -> Bool {
   let current = self.screen.line_at(y).cells
   let previous = self.sent[y]
   if current.length() != previous.length() {
@@ -454,7 +454,7 @@ fn Canvas::final_damage(self : Canvas, candidates : @tui.Damage) -> @tui.Damage 
     self.sent = self.snapshot()
     rebuild
   } else {
-    let rows : Array[Int] = []
+    let rows : Array[Int32] = []
     for y in candidates.rows {
       if y >= 0 && y < self.rows && self.row_changed(y) {
         rows.push(y)

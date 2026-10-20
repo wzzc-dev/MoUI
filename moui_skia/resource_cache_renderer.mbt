@@ -14,7 +14,7 @@ pub fn ResourceCache::insert_resource_descriptor(
 pub fn ResourceCache::insert_resource_plan(
   self : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
   plan : RendererResourcePlan,
-) -> Int {
+) -> Int32 {
   let mut inserted = 0
   for descriptor in plan.descriptors {
     if self.insert_resource_descriptor(descriptor) {

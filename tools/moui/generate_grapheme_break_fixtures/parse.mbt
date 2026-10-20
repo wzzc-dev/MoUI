@@ -1,8 +1,8 @@
 ///|
 struct GraphemeSample {
-  line_number : Int
-  codepoints : Array[Int]
-  boundaries : Array[Int]
+  line_number : Int32
+  codepoints : Array[Int32]
+  boundaries : Array[Int32]
   comment : String
 }
 
@@ -26,7 +26,7 @@ fn is_hex_token(token : String) -> Bool {
 }
 
 ///|
-fn parse_hex_int(token : String) -> Result[Int, String] {
+fn parse_hex_int(token : String) -> Result[Int32, String] {
   let mut value = 0
   for ch in token {
     let digit = if ch.is_ascii_digit() {
@@ -83,7 +83,7 @@ fn normalize_spaces(text : String) -> String {
 ///|
 fn parse_fixture_line(
   line : String,
-  line_number : Int,
+  line_number : Int32,
   input_label : String,
 ) -> Result[GraphemeSample?, String] {
   let (raw_body, raw_comment) = split_comment(line)
@@ -92,8 +92,8 @@ fn parse_fixture_line(
     return Ok(None)
   }
   let tokens = tokenize_body(body)
-  let codepoints : Array[Int] = []
-  let boundaries : Array[Int] = []
+  let codepoints : Array[Int32] = []
+  let boundaries : Array[Int32] = []
   let mut pending_boundary : Bool? = None
   let mut expected_boundary_at = 0
   for token in tokens {
@@ -224,7 +224,7 @@ fn valid_helper_name(name : String) -> Bool {
 }
 
 ///|
-fn utf8_len_of_codepoint(codepoint : Int) -> Int {
+fn utf8_len_of_codepoint(codepoint : Int32) -> Int32 {
   if codepoint <= 0x7F {
     1
   } else if codepoint <= 0x7FF {
@@ -238,10 +238,10 @@ fn utf8_len_of_codepoint(codepoint : Int) -> Int {
 
 ///|
 fn utf8_offsets_for_boundaries(
-  codepoints : Array[Int],
-  boundaries : Array[Int],
-) -> Array[Int] {
-  let offsets : Array[Int] = []
+  codepoints : Array[Int32],
+  boundaries : Array[Int32],
+) -> Array[Int32] {
+  let offsets : Array[Int32] = []
   for boundary in boundaries {
     let mut total = 0
     for index in 0..<boundary {
@@ -253,7 +253,7 @@ fn utf8_offsets_for_boundaries(
 }
 
 ///|
-fn to_hex_upper(value : Int) -> String {
+fn to_hex_upper(value : Int32) -> String {
   if value == 0 {
     return "0"
   }
@@ -274,7 +274,7 @@ fn to_hex_upper(value : Int) -> String {
 }
 
 ///|
-fn escape_moon_string(codepoints : Array[Int]) -> String {
+fn escape_moon_string(codepoints : Array[Int32]) -> String {
   let builder = StringBuilder()
   for codepoint in codepoints {
     builder.write_string("\\u{")
@@ -294,7 +294,7 @@ fn sample_label(sample : GraphemeSample) -> String {
 }
 
 ///|
-fn join_ints(values : Array[Int]) -> String {
+fn join_ints(values : Array[Int32]) -> String {
   let parts = values.map(value => value.to_string())
   parts.join(", ")
 }

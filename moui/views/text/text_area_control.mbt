@@ -4,13 +4,13 @@ fn[Msg] text_area_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = Outline,
+  variant~ : @style.TextFieldVariant = Outline,
   style? : @style.TextFieldStyle,
-  on_input? : ((String) -> Msg)? = None,
-  on_submit? : Msg? = None,
-  lines? : Int = 4,
-  line_height? : Double = 28.0,
-  key? : String? = None,
+  on_input~ : ((String) -> Msg)? = None,
+  on_submit~ : Msg? = None,
+  lines~ : Int32 = 4,
+  line_height~ : Double = 28.0,
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let value_snapshot = value
   @core.View::from_node(

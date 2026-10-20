@@ -3,7 +3,7 @@
 /// host owns DOM placement; this addon only forwards the neutral viewport
 /// bridge and does not depend on the concrete WebGPU renderer.
 pub fn plugin(
-  host? : @moui_3d.ThreeDViewportHost? = None,
+  host~ : @moui_3d.ThreeDViewportHost? = None,
 ) -> @host.PlatformViewPlugin {
   let bridge = match host {
     Some(value) => value
@@ -112,16 +112,19 @@ pub fn plugin(
 priv type Web3DCanvas
 
 ///|
-extern "wasm" fn web_3d_begin_string() -> Int = "window_web" "begin_create_string"
+extern "wasm" fn web_3d_begin_string() -> Int32 = "window_web" "begin_create_string"
 
 ///|
-extern "wasm" fn web_3d_string_append(handle : Int, code_point : Int) -> Unit = "window_web" "string_append_char"
+extern "wasm" fn web_3d_string_append(
+  handle : Int32,
+  code_point : Int32,
+) -> Unit = "window_web" "string_append_char"
 
 ///|
-extern "wasm" fn web_3d_finish_string(handle : Int) -> Int = "window_web" "finish_create_string"
+extern "wasm" fn web_3d_finish_string(handle : Int32) -> Int32 = "window_web" "finish_create_string"
 
 ///|
-fn web_3d_string(value : String) -> Int {
+fn web_3d_string(value : String) -> Int32 {
   let handle = web_3d_begin_string()
   for index in 0..<value.length() {
     web_3d_string_append(
@@ -134,13 +137,13 @@ fn web_3d_string(value : String) -> Int {
 
 ///|
 extern "wasm" fn web_3d_create_canvas(
-  id : Int,
-  width : Int,
-  height : Int,
+  id : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Web3DCanvas = "window_web" "create_canvas"
 
 ///|
-extern "wasm" fn web_3d_get_canvas(id : Int) -> Web3DCanvas = "window_web" "get_canvas_by_id"
+extern "wasm" fn web_3d_get_canvas(id : Int32) -> Web3DCanvas = "window_web" "get_canvas_by_id"
 
 ///|
 extern "wasm" fn web_3d_canvas_valid(canvas : Web3DCanvas) -> Bool = "window_web" "canvas_is_valid"
@@ -158,13 +161,13 @@ extern "wasm" fn web_3d_set_canvas_position(
   y : Double,
   width : Double,
   height : Double,
-  z_index : Int,
+  z_index : Int32,
 ) -> Unit = "window_web" "set_canvas_position"
 
 ///|
 extern "wasm" fn web_3d_set_canvas_layer(
   canvas : Web3DCanvas,
-  z_index : Int,
+  z_index : Int32,
 ) -> Unit = "window_web" "set_canvas_layer"
 
 ///|
@@ -175,14 +178,14 @@ extern "wasm" fn web_3d_destroy_canvas(canvas : Web3DCanvas) -> Unit = "window_w
 
 ///|
 extern "wasm" fn web_3d_install_platform_canvas_events(
-  raw_id : Int,
+  raw_id : Int32,
   canvas : Web3DCanvas,
-  platform_view_id : Int,
+  platform_view_id : Int32,
 ) -> Unit = "window_web" "install_platform_canvas_events"
 
 ///|
 extern "wasm" fn web_3d_remove_platform_canvas_events(
-  raw_id : Int,
+  raw_id : Int32,
   canvas : Web3DCanvas,
 ) -> Unit = "window_web" "remove_platform_canvas_events"
 

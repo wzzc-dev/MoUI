@@ -1,14 +1,14 @@
 ///|
-let sun_cached_layer_max_entries : Int = 32
+let sun_cached_layer_max_entries : Int32 = 32
 
 ///|
-let sun_cached_layer_admission_max_records : Int = 512
+let sun_cached_layer_admission_max_records : Int32 = 512
 
 ///|
 pub struct SunCachedLayerAdmissionDiagnostic {
   priv identity_key : String
-  priv update_streak : Int
-  priv hit_count : Int
+  priv update_streak : Int32
+  priv hit_count : Int32
   priv skip_reason : String
   priv churn_without_hit : Bool
 } derive(Eq, Debug, ToJson)
@@ -24,14 +24,14 @@ pub extend SunCachedLayerAdmissionDiagnostic with ToJson::{to_json}
 
 ///|
 pub struct SunCachedLayerDiagnostic {
-  priv cached_layer_count : Int
-  priv max_cached_layer_count : Int
-  priv total_hit_count : Int
-  priv total_miss_count : Int
-  priv total_update_count : Int
-  priv total_evict_count : Int
-  priv admission_record_count : Int
-  priv churn_without_hit_count : Int
+  priv cached_layer_count : Int32
+  priv max_cached_layer_count : Int32
+  priv total_hit_count : Int32
+  priv total_miss_count : Int32
+  priv total_update_count : Int32
+  priv total_evict_count : Int32
+  priv admission_record_count : Int32
+  priv churn_without_hit_count : Int32
   priv cached_layer_keys : Array[String]
   priv admission_records : Array[SunCachedLayerAdmissionDiagnostic]
   priv cache_ready : Bool
@@ -56,14 +56,14 @@ pub fn SunCachedLayerAdmissionDiagnostic::identity_key(
 ///|
 pub fn SunCachedLayerAdmissionDiagnostic::update_streak(
   self : SunCachedLayerAdmissionDiagnostic,
-) -> Int {
+) -> Int32 {
   self.update_streak
 }
 
 ///|
 pub fn SunCachedLayerAdmissionDiagnostic::hit_count(
   self : SunCachedLayerAdmissionDiagnostic,
-) -> Int {
+) -> Int32 {
   self.hit_count
 }
 
@@ -84,56 +84,56 @@ pub fn SunCachedLayerAdmissionDiagnostic::churn_without_hit(
 ///|
 pub fn SunCachedLayerDiagnostic::cached_layer_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.cached_layer_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::max_cached_layer_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.max_cached_layer_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::total_hit_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.total_hit_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::total_miss_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.total_miss_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::total_update_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.total_update_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::total_evict_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.total_evict_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::admission_record_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.admission_record_count
 }
 
 ///|
 pub fn SunCachedLayerDiagnostic::churn_without_hit_count(
   self : SunCachedLayerDiagnostic,
-) -> Int {
+) -> Int32 {
   self.churn_without_hit_count
 }
 
@@ -161,18 +161,18 @@ pub fn SunCachedLayerDiagnostic::cache_ready(
 ///|
 pub struct SunCachedLayerAdmissionRecord {
   identity_key : String
-  mut update_streak : Int
-  mut hit_count : Int
+  mut update_streak : Int32
+  mut hit_count : Int32
   mut skip_reason : String
-  mut last_revision : Int
+  mut last_revision : Int32
 }
 
 ///|
 priv struct SunCachedLayerFrameStats {
-  mut cache_hit_count : Int
-  mut cache_miss_count : Int
-  mut cache_update_count : Int
-  mut cache_evict_count : Int
+  mut cache_hit_count : Int32
+  mut cache_miss_count : Int32
+  mut cache_update_count : Int32
+  mut cache_evict_count : Int32
 }
 
 ///|
@@ -201,7 +201,7 @@ fn SunCachedLayerAdmissionRecord::new(
 ///|
 fn SunCachedLayerAdmissionRecord::record_update(
   self : SunCachedLayerAdmissionRecord,
-  revision : Int,
+  revision : Int32,
 ) -> Unit {
   if self.last_revision != revision {
     self.update_streak = self.update_streak + 1
@@ -349,9 +349,9 @@ fn SunRasterRenderer::cached_layer_admission_skip_reason(
 ///|
 fn sun_find_cached_layer_end(
   commands : Array[@render_common.PlanOp],
-  start : Int,
+  start : Int32,
   key : String,
-) -> Int? {
+) -> Int32? {
   let mut depth = 0
   for index in start..<commands.length() {
     match commands[index] {
@@ -376,8 +376,8 @@ fn sun_find_cached_layer_end(
 fn SunRasterRenderer::render_cached_command_range(
   self : SunRasterRenderer,
   commands : Array[@render_common.PlanOp],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
   canvas_scopes : Array[@render_common.PlanScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],
@@ -434,8 +434,8 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
   self : SunRasterRenderer,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  child_start : Int,
-  child_end : Int,
+  child_start : Int32,
+  child_end : Int32,
   opacity : Double,
   stats : SunCachedLayerFrameStats,
 ) -> Bool {
@@ -469,8 +469,8 @@ fn SunRasterRenderer::update_cached_layer(
   self : SunRasterRenderer,
   spec : @core.RetainedLayerSpec,
   commands : Array[@render_common.PlanOp],
-  child_start : Int,
-  child_end : Int,
+  child_start : Int32,
+  child_end : Int32,
   opacity : Double,
   stats : SunCachedLayerFrameStats,
 ) -> Bool {
@@ -608,7 +608,7 @@ fn SunRasterRenderer::draw_cached_layer_pixmap(
 ///|
 fn SunRasterRenderer::evict_cached_layers_if_needed(
   self : SunRasterRenderer,
-) -> Int {
+) -> Int32 {
   let mut evicted = 0
   while self.cached_layer_order.length() > sun_cached_layer_max_entries {
     if self.cached_layer_order.length() > 0 {
@@ -689,6 +689,6 @@ fn sun_cached_layer_is_empty(spec : @core.RetainedLayerSpec) -> Bool {
 }
 
 ///|
-fn sun_cached_layer_dim(value : Double, scale : Double) -> Int {
+fn sun_cached_layer_dim(value : Double, scale : Double) -> Int32 {
   (value * scale).ceil().max(1.0).to_int()
 }

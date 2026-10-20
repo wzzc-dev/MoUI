@@ -107,7 +107,7 @@ pub struct HarmonyOSSurfaceBinding {
 ///|
 pub fn HarmonyOSSurfaceBinding::new(
   create_renderer~ : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface? : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
+  sync_surface~ : (HarmonyOSSurfaceHandle, @core.SurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
@@ -251,7 +251,7 @@ pub fn backend_info() -> HarmonyOSBackendInfo {
 
 ///|
 pub fn harmonyos_capability_summary(
-  services? : @host.HostServiceCapabilities = harmonyos_service_capabilities(),
+  services~ : @host.HostServiceCapabilities = harmonyos_service_capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,

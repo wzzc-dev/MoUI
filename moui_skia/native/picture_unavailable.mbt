@@ -6,8 +6,8 @@ pub fn PictureRecorder::new() -> PictureRecorder? {
 ///|
 pub fn PictureRecorder::record_empty(
   self : PictureRecorder,
-  _width : Int,
-  _height : Int,
+  _width : Int32,
+  _height : Int32,
 ) -> Unit {
   let _ = self
 }
@@ -15,8 +15,8 @@ pub fn PictureRecorder::record_empty(
 ///|
 pub fn PictureRecorder::begin(
   self : PictureRecorder,
-  _width : Int,
-  _height : Int,
+  _width : Int32,
+  _height : Int32,
 ) -> Canvas? {
   let _ = self
   None
@@ -41,7 +41,7 @@ pub fn Picture::approximate_bytes_used(self : Picture) -> Int64 {
 }
 
 ///|
-pub fn Picture::unique_id(self : Picture) -> Int {
+pub fn Picture::unique_id(self : Picture) -> Int32 {
   let _ = self
   0
 }

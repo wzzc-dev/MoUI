@@ -22,7 +22,7 @@ pub(all) struct PersistedShape {
   /// `(conversation key, summary)` for conversations with a non-empty summary.
   summaries : Array[(String, String)]
   /// `(conversation key, summarized_upto)`.
-  coverage : Array[(String, Int)]
+  coverage : Array[(String, Int32)]
   /// World-book contents, in order.
   book : Array[String]
   /// Every event line that is world history (not session chatter).
@@ -61,7 +61,7 @@ fn persisted_shape(model : WorldModel) -> PersistedShape {
   })
   let conversations : Array[(String, Array[(String, String)])] = []
   let summaries : Array[(String, String)] = []
-  let coverage : Array[(String, Int)] = []
+  let coverage : Array[(String, Int32)] = []
   for key in keys {
     let conversation = model.conversations.for_character(key)
     let lines : Array[(String, String)] = []

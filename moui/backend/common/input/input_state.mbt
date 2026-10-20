@@ -9,9 +9,9 @@ pub(all) struct InputState {
 
 ///|
 pub fn InputState::new(
-  focused? : Bool = false,
-  modifiers? : @core.KeyModifiers = @core.KeyModifiers::none(),
-  contract? : @backend_host.HostInputContract = @backend_host.HostInputContract::new(),
+  focused~ : Bool = false,
+  modifiers~ : @core.KeyModifiers = @core.KeyModifiers::none(),
+  contract~ : @backend_host.HostInputContract = @backend_host.HostInputContract::new(),
 ) -> InputState {
   { focused, modifiers, contract, }
 }
@@ -52,7 +52,7 @@ pub fn InputState::coordinate_policy(
 pub fn InputState::focus_event(
   self : InputState,
   focused~ : Bool,
-  pointer_cancel_position? : @core.Point? = None,
+  pointer_cancel_position~ : @core.Point? = None,
 ) -> @backend_host.Event? {
   if self.contract.capabilities.focus {
     self.focused = focused
@@ -70,9 +70,9 @@ pub fn InputState::focus_event(
 pub fn InputState::keyboard_event(
   self : InputState,
   key~ : String,
-  text? : String? = None,
-  pressed? : Bool = true,
-  repeat? : Bool = false,
+  text~ : String? = None,
+  pressed~ : Bool = true,
+  repeat~ : Bool = false,
 ) -> @backend_host.Event? {
   if self.contract.capabilities.keyboard {
     Some(

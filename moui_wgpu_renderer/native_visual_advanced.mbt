@@ -42,10 +42,10 @@ fn advanced_rect_vertices(
   filter~ : @core.FilterEffect?,
   color0~ : @core.Color,
   color1~ : @core.Color,
-  uv_rect? : @core.Rect? = None,
-  mask_radius? : Double = 0.0,
-  mask_kind? : Double = 0.0,
-  transform? : @core.Transform2D = @core.Transform2D::identity(),
+  uv_rect~ : @core.Rect? = None,
+  mask_radius~ : Double = 0.0,
+  mask_kind~ : Double = 0.0,
+  transform~ : @core.Transform2D = @core.Transform2D::identity(),
 ) -> Array[AdvancedVertex] {
   let vertices : Array[AdvancedVertex] = []
   let x0 = rect.origin.x

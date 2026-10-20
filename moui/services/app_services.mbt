@@ -81,16 +81,16 @@ pub struct AppServices {
 
 ///|
 pub fn ClipboardServices::new(
-  read_text? : () -> ServiceTask[String] = () => {
+  read_text~ : () -> ServiceTask[String] = () => {
     unavailable_task("clipboard:read-text", "clipboard read")
   },
-  write_text? : (String) -> ServiceTask[Unit] = _text => {
+  write_text~ : (String) -> ServiceTask[Unit] = _text => {
     unavailable_task("clipboard:write-text", "clipboard write")
   },
-  read_image? : () -> ServiceTask[ClipboardImage] = () => {
+  read_image~ : () -> ServiceTask[ClipboardImage] = () => {
     unavailable_task("clipboard:read-image", "clipboard image read")
   },
-  write_image? : (ClipboardImage) -> ServiceTask[Unit] = _image => {
+  write_image~ : (ClipboardImage) -> ServiceTask[Unit] = _image => {
     unavailable_task("clipboard:write-image", "clipboard image write")
   },
 ) -> ClipboardServices {
@@ -134,7 +134,7 @@ pub fn ClipboardServices::write_image(
 
 ///|
 pub fn UrlServices::new(
-  open? : (String) -> ServiceTask[Unit] = _url => {
+  open~ : (String) -> ServiceTask[Unit] = _url => {
     unavailable_task("url:open", "URL open")
   },
 ) -> UrlServices {
@@ -148,13 +148,13 @@ pub fn UrlServices::open(self : UrlServices, url : String) -> ServiceTask[Unit] 
 
 ///|
 pub fn SettingsServices::new(
-  read? : (String) -> ServiceTask[String?] = _key => {
+  read~ : (String) -> ServiceTask[String?] = _key => {
     unavailable_task("settings:read", "settings read")
   },
-  write? : (String, String) -> ServiceTask[Unit] = (_key, _value) => {
+  write~ : (String, String) -> ServiceTask[Unit] = (_key, _value) => {
     unavailable_task("settings:write", "settings write")
   },
-  remove? : (String) -> ServiceTask[Unit] = _key => {
+  remove~ : (String) -> ServiceTask[Unit] = _key => {
     unavailable_task("settings:remove", "settings remove")
   },
 ) -> SettingsServices {
@@ -188,7 +188,7 @@ pub fn SettingsServices::remove(
 
 ///|
 pub fn AppearanceServices::new(
-  system_color_scheme? : () -> ServiceTask[@core.ColorScheme] = () => {
+  system_color_scheme~ : () -> ServiceTask[@core.ColorScheme] = () => {
     unavailable_task("appearance:system-color-scheme", "system color scheme")
   },
 ) -> AppearanceServices {
@@ -206,7 +206,7 @@ pub fn AppearanceServices::system_color_scheme(
 pub fn ApplicationMenu::new(
   title~ : String,
   items~ : Array[ApplicationMenuItem],
-  placement? : ApplicationMenuPlacement = MenuBar,
+  placement~ : ApplicationMenuPlacement = MenuBar,
 ) -> ApplicationMenu {
   { title, items, placement, }
 }
@@ -222,10 +222,10 @@ pub fn ApplicationMenu::application(
 
 ///|
 pub fn MenuServices::new(
-  show_context? : (Array[@core.ActionCommand]) -> ServiceTask[
+  show_context~ : (Array[@core.ActionCommand]) -> ServiceTask[
     @core.ActionCommand,
   ] = _commands => unavailable_task("menu:context", "context menu"),
-  install_application? : (Array[ApplicationMenu]) -> ServiceTask[Unit] = _menus => {
+  install_application~ : (Array[ApplicationMenu]) -> ServiceTask[Unit] = _menus => {
     unavailable_task("menu:application", "application menu")
   },
 ) -> MenuServices {
@@ -253,13 +253,13 @@ pub fn MenuServices::install_application(
 
 ///|
 pub fn AppServices::new(
-  files? : FileServices = FileServices::unavailable(),
-  clipboard? : ClipboardServices = ClipboardServices::new(),
-  urls? : UrlServices = UrlServices::new(),
-  settings? : SettingsServices = SettingsServices::new(),
-  appearance? : AppearanceServices = AppearanceServices::new(),
-  menus? : MenuServices = MenuServices::new(),
-  platform? : PlatformServices = PlatformServices::unavailable(),
+  files~ : FileServices = FileServices::unavailable(),
+  clipboard~ : ClipboardServices = ClipboardServices::new(),
+  urls~ : UrlServices = UrlServices::new(),
+  settings~ : SettingsServices = SettingsServices::new(),
+  appearance~ : AppearanceServices = AppearanceServices::new(),
+  menus~ : MenuServices = MenuServices::new(),
+  platform~ : PlatformServices = PlatformServices::unavailable(),
 ) -> AppServices {
   {
     files_value: files,

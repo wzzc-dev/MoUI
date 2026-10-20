@@ -12,7 +12,7 @@ let project_load_dispatch : Ref[((String) -> Unit)?] = Ref(None)
 
 ///|
 pub fn start_compile(
-  revision : Int,
+  revision : Int32,
   request : String,
   dispatch : (String) -> Unit,
 ) -> Unit {

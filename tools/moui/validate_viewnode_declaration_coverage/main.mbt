@@ -15,7 +15,7 @@ struct NodeField {
 ///|
 struct StructDef {
   name : String
-  line : Int
+  line : Int32
   fields : Array[NodeField]
 } derive(Eq, Debug)
 
@@ -51,7 +51,7 @@ struct Baseline {
 struct Finding {
   violations : Array[Violation]
   stale_waivers : Array[Waiver]
-  scanned_nodes : Int
+  scanned_nodes : Int32
 }
 
 ///|
@@ -122,7 +122,7 @@ fn ident_u16(code : UInt16) -> Bool {
 ///|
 /// Read an identifier run starting at byte `from` (identifier starts must be
 /// ASCII; scanning stops at the first non-identifier byte).
-fn ident_at(line : String, from : Int) -> String? {
+fn ident_at(line : String, from : Int32) -> String? {
   let mut i = from
   let mut found = false
   let buf = StringBuilder()
@@ -255,7 +255,10 @@ fn struct_open(line : String) -> (String, Bool)? {
 /// the closing brace at column 0. A field line is `name : Type` (single-line
 /// types only; continuation lines are skipped). A trailing
 /// `// declaration-exempt:` comment marks an intentional exclusion.
-fn struct_fields(lines : Array[String], start : Int) -> (Array[NodeField], Int) {
+fn struct_fields(
+  lines : Array[String],
+  start : Int32,
+) -> (Array[NodeField], Int32) {
   let fields : Array[NodeField] = []
   let mut index = start
   while index < lines.length() {
@@ -317,7 +320,7 @@ fn impl_view_node_open(line : String) -> (String, String)? {
 /// Body text of the block opened at `start` (line after the open line),
 /// ending at the closing brace at column 0. Single-line bodies return the
 /// open line itself.
-fn block_body(lines : Array[String], start : Int) -> (String, Int) {
+fn block_body(lines : Array[String], start : Int32) -> (String, Int32) {
   let mut index = start
   let buf = StringBuilder()
   if index >= lines.length() {
@@ -704,7 +707,7 @@ fn violations_to_json(finding : Finding) -> Json {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   let options = match parse_cli(args) {
     Ok(value) => value
     Err(message) => {

@@ -25,13 +25,13 @@ pub fn DesktopHostServices::new(
   file_dialog~ : (@host.HostFileDialogOptions) -> Array[String],
   settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse,
   show_menu~ : (Array[@core.ActionCommand]) -> @host.HostServiceResponse,
-  set_application_menu? : (Array[@host.HostApplicationMenu]) -> @host.HostServiceResponse = _ => {
+  set_application_menu~ : (Array[@host.HostApplicationMenu]) -> @host.HostServiceResponse = _ => {
     Unavailable("application menu bar service is unavailable")
   },
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
-  list_directory? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
-  delete_file? : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_delete_file,
+  text_file~ : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file~ : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
+  list_directory~ : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
+  delete_file~ : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_delete_file,
 ) -> DesktopHostServices {
   {
     capabilities,

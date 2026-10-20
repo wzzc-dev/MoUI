@@ -1,5 +1,5 @@
 ///|
-fn viewport_test_state(offset_y? : Double = 0.0) -> @core.ViewStateContext {
+fn viewport_test_state(offset_y~ : Double = 0.0) -> @core.ViewStateContext {
   let base : @core.ViewStateContext = {
     focused: false,
     hovered: false,
@@ -14,7 +14,7 @@ fn viewport_test_state(offset_y? : Double = 0.0) -> @core.ViewStateContext {
 }
 
 ///|
-fn viewport_test_text_control(caret~ : Int) -> @core.TextControlStateContext {
+fn viewport_test_text_control(caret~ : Int32) -> @core.TextControlStateContext {
   {
     caret,
     selection: None,

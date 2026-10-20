@@ -1,12 +1,12 @@
 ///|
 pub fn[Msg] drop_zone(
-  title? : String = "Drop files here",
-  message? : String = "",
+  title~ : String = "Drop files here",
+  message~ : String = "",
   on_drop~ : (Array[String]) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  height? : Double = 104.0,
-  enabled? : Bool = true,
+  width~ : Double = 320.0,
+  height~ : Double = 104.0,
+  enabled~ : Bool = true,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let title_height = 28.0
@@ -74,13 +74,13 @@ pub fn[Msg] drop_zone(
 pub fn[Msg] file_import_panel(
   selection~ : FileSelection,
   on_drop~ : (Array[String]) -> Msg,
-  on_browse? : Msg? = None,
-  availability? : FileImportAvailability = Available,
-  title? : String = "Import files",
-  drop_title? : String = "Drop files here",
-  empty_message? : String = "No files selected",
+  on_browse~ : Msg? = None,
+  availability~ : FileImportAvailability = Available,
+  title~ : String = "Import files",
+  drop_title~ : String = "Drop files here",
+  empty_message~ : String = "No files selected",
   theme? : @core.Theme,
-  width? : Double = 360.0,
+  width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let enabled = availability is Available

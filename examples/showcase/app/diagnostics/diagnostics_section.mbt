@@ -10,64 +10,64 @@ priv struct ShowcaseInspectorSnapshot {
 ///|
 priv struct ShowcaseRuntimeInspectorSnapshot {
   dirty_state : ShowcaseDirtyStateSummary
-  program_dispatched_count : Int
-  program_update_count : Int
-  program_effect_plan_count : Int
-  program_effect_run_count : Int
-  active_effect_task_count : Int
-  completed_effect_task_count : Int
-  cancelled_effect_task_count : Int
+  program_dispatched_count : Int32
+  program_update_count : Int32
+  program_effect_plan_count : Int32
+  program_effect_run_count : Int32
+  active_effect_task_count : Int32
+  completed_effect_task_count : Int32
+  cancelled_effect_task_count : Int32
   scheduled_effect_label : String
   duplicate_effect_keys : Array[String]
-  program_subscription_plan_count : Int
-  subscription_source_count : Int
+  program_subscription_plan_count : Int32
+  subscription_source_count : Int32
   duplicate_subscription_keys : Array[String]
-  active_subscription_count : Int
-  started_subscription_count : Int
+  active_subscription_count : Int32
+  started_subscription_count : Int32
   active_subscriptions : Array[String]
   active_subscription_kind_counts : Array[ShowcaseSubscriptionKindCount]
 }
 
 ///|
 priv struct ShowcaseDirtyStateSummary {
-  dirty_count : Int
+  dirty_count : Int32
   reason : String
 }
 
 ///|
 priv struct ShowcaseSubscriptionKindCount {
   kind : String
-  count : Int
+  count : Int32
 }
 
 ///|
 priv struct ShowcaseViewTreeInspectorSnapshot {
-  node_count : Int
+  node_count : Int32
 }
 
 ///|
 priv struct ShowcaseLayoutInspectorSnapshot {
-  bounds_count : Int
-  max_depth : Int
+  bounds_count : Int32
+  max_depth : Int32
 }
 
 ///|
 priv struct ShowcaseRenderInspectorSnapshot {
-  command_count : Int
-  text_count : Int
-  clip_depth : Int
-  open_clip_depth : Int
-  layer_depth : Int
-  open_layer_depth : Int
-  filter_depth : Int
-  open_filter_depth : Int
-  unbalanced_pop_count : Int
+  command_count : Int32
+  text_count : Int32
+  clip_depth : Int32
+  open_clip_depth : Int32
+  layer_depth : Int32
+  open_layer_depth : Int32
+  filter_depth : Int32
+  open_filter_depth : Int32
+  unbalanced_pop_count : Int32
 }
 
 ///|
 priv struct ShowcaseSemanticsInspectorSnapshot {
-  node_count : Int
-  invalid_count : Int
+  node_count : Int32
+  invalid_count : Int32
 }
 
 ///|

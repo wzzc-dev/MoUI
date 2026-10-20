@@ -1,6 +1,6 @@
 ///|
 test "program commands dispatch through the FIFO typed update queue" {
-  let seen : Array[Int] = []
+  let seen : Array[Int32] = []
   let program = @core.Program::simple(
     init=0,
     update=(model, message) => {

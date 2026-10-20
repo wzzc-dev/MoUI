@@ -10,9 +10,9 @@ pub(all) struct DesignSourcePackageRecord {
   package_path : String
   category : DesignTokenCategory
   layer : DesignTokenLayer
-  tracked_path_count : Int
-  mapped_token_count : Int
-  imported_token_count : Int
+  tracked_path_count : Int32
+  mapped_token_count : Int32
+  imported_token_count : Int32
   status : DesignTokenStatus
   pending_gap : String
   note : String
@@ -40,12 +40,12 @@ pub fn source_package_inventory(
 }
 
 ///|
-pub fn source_package_inventory_count(preset : @common.DesignPreset) -> Int {
+pub fn source_package_inventory_count(preset : @common.DesignPreset) -> Int32 {
   source_package_inventory(preset).length()
 }
 
 ///|
-pub fn source_package_snapshot_count(preset : @common.DesignPreset) -> Int {
+pub fn source_package_snapshot_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_package_inventory(preset) {
     if item.snapshot_url != "" {
@@ -56,7 +56,9 @@ pub fn source_package_snapshot_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn source_package_snapshot_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_package_snapshot_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in source_package_inventory(preset) {
     if item.snapshot_url == "" {
@@ -69,7 +71,7 @@ pub fn source_package_snapshot_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn source_package_imported_token_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_package_inventory(preset) {
     count = count + item.imported_token_count
@@ -78,7 +80,9 @@ pub fn source_package_imported_token_count(
 }
 
 ///|
-pub fn source_package_mapped_token_count(preset : @common.DesignPreset) -> Int {
+pub fn source_package_mapped_token_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in source_package_inventory(preset) {
     count = count + item.mapped_token_count
@@ -87,7 +91,7 @@ pub fn source_package_mapped_token_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn source_package_import_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_package_import_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_package_inventory(preset) {
     if item.imported_token_count == 0 ||
@@ -483,9 +487,9 @@ fn source_package(
   package_path : String,
   category : DesignTokenCategory,
   layer : DesignTokenLayer,
-  tracked_path_count~ : Int,
-  mapped_token_count~ : Int,
-  imported_token_count~ : Int,
+  tracked_path_count~ : Int32,
+  mapped_token_count~ : Int32,
+  imported_token_count~ : Int32,
   status~ : DesignTokenStatus,
   pending_gap~ : String,
   note~ : String,

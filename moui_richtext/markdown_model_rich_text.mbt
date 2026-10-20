@@ -2,7 +2,7 @@
 pub fn markdown_block_to_rich_text(
   block : MarkdownBlock,
   base : @core.FontSpec,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> RichTextBlock {
   match block.kind {
     Heading(level) => {
@@ -256,7 +256,7 @@ fn markdown_code_block_runs(
 }
 
 ///|
-fn markdown_heading_size_scale(level : Int) -> Double {
+fn markdown_heading_size_scale(level : Int32) -> Double {
   if level <= 1 {
     1.95
   } else if level == 2 {
@@ -280,7 +280,7 @@ fn markdown_heading_size_scale(level : Int) -> Double {
 /// descender of "Today" was cut off. Every heading therefore gets this leading
 /// over its scaled size, which also covers CJK fallback faces whose ascent plus
 /// descent is taller than a Latin font's.
-fn markdown_heading_line_height_scale(level : Int) -> Double {
+fn markdown_heading_line_height_scale(level : Int32) -> Double {
   markdown_heading_size_scale(level) * 1.4
 }
 
@@ -288,7 +288,7 @@ fn markdown_heading_line_height_scale(level : Int) -> Double {
 fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> Array[RichTextRun] {
   let runs : Array[RichTextRun] = []
   for span in inlines {
@@ -324,7 +324,7 @@ fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
 ///|
 fn markdown_inline_image_source(
   inline : MarkdownInline,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> String? {
   match inline.kind {
     Image =>

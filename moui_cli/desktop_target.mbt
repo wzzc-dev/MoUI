@@ -26,7 +26,7 @@ fn desktop_platform_supported(platform : String) -> Bool {
 /// diagnostic routes when the Skia entrypoint does not exist.
 fn desktop_entrypoint_candidates(
   platform : String,
-  renderer? : String = "auto",
+  renderer~ : String = "auto",
 ) -> Result[Array[String], String] {
   if platform == "web" {
     return Ok(["web_wasm"])
@@ -69,7 +69,7 @@ fn desktop_entrypoint_exists(root : String, candidate : String) -> Bool {
 fn resolve_desktop_target(
   app_root : String,
   platform : String,
-  renderer? : String = "auto",
+  renderer~ : String = "auto",
 ) -> Result[DesktopTarget, String] {
   let candidates = match desktop_entrypoint_candidates(platform, renderer~) {
     Ok(value) => value
@@ -101,7 +101,7 @@ fn resolve_desktop_root(
   base : String,
   app : String,
   platform : String,
-  renderer? : String = "auto",
+  renderer~ : String = "auto",
 ) -> Result[String, String] {
   let root = resolve_path(base, app)
   let candidates = match desktop_entrypoint_candidates(platform, renderer~) {
@@ -157,7 +157,7 @@ fn desktop_artifact_path(
   build_base : String,
   package_path : String,
   target : String,
-  release? : Bool = false,
+  release~ : Bool = false,
 ) -> String {
   let stage = if release { "release" } else { "debug" }
   let extension = if target == "wasm-gc" { ".wasm" } else { ".exe" }
@@ -212,7 +212,7 @@ fn resolve_desktop_flow(
   base : String,
   app : String,
   platform : String,
-  renderer? : String = "auto",
+  renderer~ : String = "auto",
 ) -> Result[DesktopFlow, String] {
   let app_root = match resolve_desktop_root(base, app, platform, renderer~) {
     Ok(value) => value

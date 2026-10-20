@@ -123,11 +123,11 @@ impl @core.ViewNode for Divider with fn semantics(_self) {
 
 ///|
 pub fn[Msg] divider(
-  axis? : @core.Axis = Horizontal,
+  axis~ : @core.Axis = Horizontal,
   theme? : @core.Theme,
-  thickness? : Double = 1.0,
+  thickness~ : Double = 1.0,
   color? : @core.Color,
-  inset? : Double = 0.0,
+  inset~ : Double = 0.0,
 ) -> @core.View[Msg] {
   // 显式 color/theme 钉死取色;两者都缺省时保持 None,绘制期从
   // 环境主题解析 outline_variant(`.theme()` 子树即时生效)。

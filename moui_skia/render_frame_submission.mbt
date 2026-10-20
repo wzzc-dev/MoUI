@@ -22,7 +22,7 @@ fn render_frame_submission_resource_plan(
 /// per-frame present resources.
 pub(all) struct RenderFrameSubmissionDescriptor {
   frame : RenderFrameDescriptor
-  frame_index : Int
+  frame_index : Int32
   validation_status : RenderFrameValidationStatus
   present : SurfacePresentDescriptor?
   resource_plan : RendererResourcePlan
@@ -37,10 +37,10 @@ pub extend RenderFrameSubmissionDescriptor with Eq::{not_equal, equal}
 ///|
 pub fn RenderFrameSubmissionDescriptor::new(
   frame : RenderFrameDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> RenderFrameSubmissionDescriptor {
-  let frame_index = Int::max(0, frame_index)
+  let frame_index = Int32::max(0, frame_index)
   let present = frame.present_descriptor(frame_index~, buffer_index~)
   {
     frame,
@@ -54,8 +54,8 @@ pub fn RenderFrameSubmissionDescriptor::new(
 ///|
 pub fn RenderFrameDescriptor::submission_descriptor(
   self : RenderFrameDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> RenderFrameSubmissionDescriptor {
   RenderFrameSubmissionDescriptor::new(self, frame_index~, buffer_index~)
 }
@@ -115,7 +115,7 @@ pub fn RenderFrameSubmissionDescriptor::missing_cacheable_resource_plan(
 pub fn RenderFrameSubmissionDescriptor::cache_resources(
   self : RenderFrameSubmissionDescriptor,
   cache : ResourceCache[RendererResourceKey, RendererResourceDescriptor],
-) -> Int {
+) -> Int32 {
   if self.is_ready() {
     cache.insert_resource_plan(self.resource_plan)
   } else {

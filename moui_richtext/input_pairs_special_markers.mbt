@@ -1,7 +1,7 @@
 ///|
 fn markdown_editor_backspace_footnote_marker(
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret <= 0 {
     return None
@@ -42,7 +42,7 @@ fn markdown_editor_backspace_footnote_marker(
 ///|
 fn markdown_editor_delete_footnote_marker(
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret >= chars.length() {
     return None
@@ -85,8 +85,8 @@ fn markdown_editor_delete_footnote_marker(
 ///|
 fn markdown_editor_footnote_close_after(
   chars : Array[Char],
-  content_start : Int,
-) -> Int? {
+  content_start : Int32,
+) -> Int32? {
   let mut close_start = content_start
   while close_start < chars.length() &&
         chars[close_start] != ']' &&
@@ -105,8 +105,8 @@ fn markdown_editor_footnote_close_after(
 ///|
 fn markdown_editor_footnote_open_before(
   chars : Array[Char],
-  close_start : Int,
-) -> Int? {
+  close_start : Int32,
+) -> Int32? {
   if close_start >= chars.length() || chars[close_start] != ']' {
     return None
   }
@@ -133,7 +133,7 @@ fn markdown_editor_footnote_open_before(
 ///|
 fn markdown_editor_backspace_autolink_marker(
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret <= 0 {
     return None
@@ -174,7 +174,7 @@ fn markdown_editor_backspace_autolink_marker(
 ///|
 fn markdown_editor_delete_autolink_marker(
   chars : Array[Char],
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   if caret >= chars.length() {
     return None
@@ -215,8 +215,8 @@ fn markdown_editor_delete_autolink_marker(
 ///|
 fn markdown_editor_autolink_close_after(
   chars : Array[Char],
-  content_start : Int,
-) -> Int? {
+  content_start : Int32,
+) -> Int32? {
   let mut close = content_start
   while close < chars.length() && chars[close] != '>' && chars[close] != '\n' {
     close = close + 1
@@ -235,8 +235,8 @@ fn markdown_editor_autolink_close_after(
 ///|
 fn markdown_editor_autolink_open_before(
   chars : Array[Char],
-  close_start : Int,
-) -> Int? {
+  close_start : Int32,
+) -> Int32? {
   let mut open = close_start
   while open > 0 && chars[open - 1] != '<' && chars[open - 1] != '\n' {
     open = open - 1

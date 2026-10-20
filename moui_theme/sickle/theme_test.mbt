@@ -36,7 +36,12 @@ test "sickle flat mode removes depth while preserving brand tokens" {
 }
 
 ///|
-fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double = 1.0) -> @core.Color {
+fn color_byte(
+  r~ : Int32,
+  g~ : Int32,
+  b~ : Int32,
+  a~ : Double = 1.0,
+) -> @core.Color {
   @core.Color::rgba(
     r=r.to_double() / 255.0,
     g=g.to_double() / 255.0,

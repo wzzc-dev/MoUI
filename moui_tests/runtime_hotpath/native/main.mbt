@@ -9,7 +9,7 @@
 extern "c" fn bench_now_ms() -> Double = "moui_reconciliation_benchmark_now_ms"
 
 ///|
-fn bench_env_int(name : String, fallback : Int) -> Int {
+fn bench_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => {
       let trimmed = value.trim()
@@ -30,11 +30,11 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
 }
 
 ///|
-fn bench_deep_view(depth : Int, width_per_level : Int) -> @core.View[Int] {
+fn bench_deep_view(depth : Int32, width_per_level : Int32) -> @core.View[Int32] {
   if depth <= 0 {
     @views.text("leaf")
   } else {
-    let children : Array[@core.View[Int]] = []
+    let children : Array[@core.View[Int32]] = []
     for _ in 0..<width_per_level {
       children.push(bench_deep_view(depth - 1, width_per_level))
     }
@@ -45,9 +45,9 @@ fn bench_deep_view(depth : Int, width_per_level : Int) -> @core.View[Int] {
 ///|
 fn bench_dirty(
   label : String,
-  depth : Int,
-  width_per_level : Int,
-  frames : Int,
+  depth : Int32,
+  width_per_level : Int32,
+  frames : Int32,
 ) -> Unit {
   // Toggle environment between light and dark each frame to force
   // the full rebuild→layout→paint→draw cycle.

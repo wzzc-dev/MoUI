@@ -385,7 +385,7 @@ pub fn SemanticsNumericValue::new(
 ///|
 pub(all) struct SemanticsTextValue {
   selection : TextRange?
-  caret : Int?
+  caret : Int32?
   editable : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -401,22 +401,22 @@ pub extend SemanticsTextValue with ToJson::{to_json}
 ///|
 pub fn SemanticsTextValue::new(
   selection? : TextRange,
-  caret? : Int,
-  editable? : Bool = false,
+  caret? : Int32,
+  editable~ : Bool = false,
 ) -> SemanticsTextValue {
   { selection, caret, editable, }
 }
 
 ///|
 pub(all) struct SemanticsCollectionInfo {
-  row_index : Int?
-  row_count : Int?
-  row_span : Int?
-  column_index : Int?
-  column_count : Int?
-  column_span : Int?
-  set_size : Int?
-  set_position : Int?
+  row_index : Int32?
+  row_count : Int32?
+  row_span : Int32?
+  column_index : Int32?
+  column_count : Int32?
+  column_span : Int32?
+  set_size : Int32?
+  set_position : Int32?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -430,14 +430,14 @@ pub extend SemanticsCollectionInfo with ToJson::{to_json}
 
 ///|
 pub fn SemanticsCollectionInfo::new(
-  row_index? : Int,
-  row_count? : Int,
-  row_span? : Int,
-  column_index? : Int,
-  column_count? : Int,
-  column_span? : Int,
-  set_size? : Int,
-  set_position? : Int,
+  row_index? : Int32,
+  row_count? : Int32,
+  row_span? : Int32,
+  column_index? : Int32,
+  column_count? : Int32,
+  column_span? : Int32,
+  set_size? : Int32,
+  set_position? : Int32,
 ) -> SemanticsCollectionInfo {
   {
     row_index,
@@ -472,11 +472,11 @@ pub extend SemanticsRelationsDeclaration with ToJson::{to_json}
 
 ///|
 pub fn SemanticsRelationsDeclaration::new(
-  labelled_by? : Array[SemanticId] = [],
-  described_by? : Array[SemanticId] = [],
-  controls? : Array[SemanticId] = [],
-  error_message? : Array[SemanticId] = [],
-  active_descendant? : Array[SemanticId] = [],
+  labelled_by~ : Array[SemanticId] = [],
+  described_by~ : Array[SemanticId] = [],
+  controls~ : Array[SemanticId] = [],
+  error_message~ : Array[SemanticId] = [],
+  active_descendant~ : Array[SemanticId] = [],
 ) -> SemanticsRelationsDeclaration {
   { labelled_by, described_by, controls, error_message, active_descendant, }
 }
@@ -578,7 +578,7 @@ pub extend SemanticsTarget with ToJson::{to_json}
 /// node. The wire decoder rejects such a step, and runtime resolution treats
 /// it as no match, so an agent cannot request one.
 pub(all) struct SemanticsPathSegment {
-  index : Int
+  index : Int32
   role : SemanticsRole?
   label : String?
   value : String?
@@ -625,7 +625,7 @@ pub(all) struct SemanticsNode {
   node_id : SemanticsNodeId
   semantic_id : SemanticId?
   role : SemanticsRole
-  level : Int?
+  level : Int32?
   url : String
   label : String
   value : String
@@ -638,7 +638,7 @@ pub(all) struct SemanticsNode {
   live : SemanticsLive
   live_atomic : Bool
   actions : Array[SemanticsActionKind]
-  focus_order : Int?
+  focus_order : Int32?
   frame : Rect
   children : Array[SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
@@ -700,8 +700,8 @@ pub extend SemanticsFramePayload with ToJson::{to_json}
 pub fn SemanticsFramePayload::new(
   generation~ : SemanticsGeneration,
   nodes~ : Array[SemanticsNode],
-  root? : SemanticsNodeId? = None,
-  focused? : SemanticsNodeId? = None,
+  root~ : SemanticsNodeId? = None,
+  focused~ : SemanticsNodeId? = None,
 ) -> SemanticsFramePayload {
   { generation, nodes, root, focused, }
 }
@@ -728,7 +728,7 @@ pub fn SemanticsFramePayload::focused(
 }
 
 ///|
-pub fn SemanticsFramePayload::node_count(self : SemanticsFramePayload) -> Int {
+pub fn SemanticsFramePayload::node_count(self : SemanticsFramePayload) -> Int32 {
   self.nodes.length()
 }
 

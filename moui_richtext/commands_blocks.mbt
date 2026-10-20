@@ -325,7 +325,7 @@ fn markdown_editor_line_has_same_block_marker(
 }
 
 ///|
-fn markdown_editor_heading_marker_level(line : String) -> Int {
+fn markdown_editor_heading_marker_level(line : String) -> Int32 {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let mut index = indent
@@ -342,8 +342,8 @@ fn markdown_editor_heading_marker_level(line : String) -> Int {
 ///|
 fn markdown_editor_caret_offset_in_stripped_line(
   line : String,
-  caret_offset : Int,
-) -> Int {
+  caret_offset : Int32,
+) -> Int32 {
   let marker_length = markdown_editor_marker_prefix_length(line)
   let stripped_length = markdown_editor_text_length(line) - marker_length
   markdown_editor_clamp_int(caret_offset - marker_length, 0, stripped_length)
@@ -440,7 +440,7 @@ fn markdown_editor_transform_line_segment(
 ///|
 priv struct MarkdownEditorLineBlockParts {
   context_prefix : String
-  content_start : Int
+  content_start : Int32
   content : String
 }
 
@@ -468,8 +468,8 @@ fn markdown_editor_line_block_parts(
 ///|
 fn markdown_editor_caret_offset_in_line_block_parts(
   parts : MarkdownEditorLineBlockParts,
-  caret_offset : Int,
-) -> Int {
+  caret_offset : Int32,
+) -> Int32 {
   markdown_editor_clamp_int(
     caret_offset - parts.content_start,
     0,
@@ -534,7 +534,7 @@ fn markdown_editor_line_has_same_block_marker_after_context(
 }
 
 ///|
-fn markdown_editor_block_command_context_prefix_length(line : String) -> Int {
+fn markdown_editor_block_command_context_prefix_length(line : String) -> Int32 {
   let chars = line.to_array()
   let mut index = 0
   let mut scanning = true
@@ -557,8 +557,8 @@ fn markdown_editor_block_command_context_prefix_length(line : String) -> Int {
 ///|
 fn markdown_editor_marker_prefix_length_after_context(
   line : String,
-  context_length : Int,
-) -> Int {
+  context_length : Int32,
+) -> Int32 {
   let chars = line.to_array()
   let nested_marker_length = markdown_editor_marker_prefix_length(
     String::from_array(chars[context_length:]),
@@ -574,7 +574,7 @@ fn markdown_editor_marker_prefix_length_after_context(
 fn markdown_editor_next_selected_ordered_number(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   context_prefix : String,
-) -> Int {
+) -> Int32 {
   let indent = markdown_editor_text_length(context_prefix)
   markdown_editor_trim_ordered_renumber_contexts(contexts, indent)
   if contexts.length() > 0 &&
@@ -597,15 +597,15 @@ fn markdown_editor_next_selected_ordered_number(
 ///|
 priv struct MarkdownEditorBlockPosition {
   block : MarkdownEditorBlock
-  index : Int
+  index : Int32
 }
 
 ///|
 priv struct MarkdownEditorBlockGroup {
-  start_index : Int
-  end_index : Int
-  source_start : Int
-  source_end : Int
+  start_index : Int32
+  end_index : Int32
+  source_start : Int32
+  source_end : Int32
 }
 
 ///|
@@ -780,7 +780,7 @@ fn markdown_editor_moved_group_result(
   source : String,
   selection : MarkdownEditorSelection,
   group : MarkdownEditorBlockGroup,
-  new_start~ : Int,
+  new_start~ : Int32,
 ) -> MarkdownEditorEditResult {
   {
     source,
@@ -875,7 +875,7 @@ fn markdown_editor_active_edit_block_from_blocks(
 ///|
 fn markdown_editor_previous_edit_block(
   blocks : Array[MarkdownEditorBlock],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorBlock? {
   let mut candidate = index - 1
   while candidate >= 0 {
@@ -891,7 +891,7 @@ fn markdown_editor_previous_edit_block(
 ///|
 fn markdown_editor_next_edit_block(
   blocks : Array[MarkdownEditorBlock],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorBlock? {
   let mut candidate = index + 1
   while candidate < blocks.length() {
@@ -913,10 +913,10 @@ fn markdown_editor_empty_line_block_for_edit(
 
 ///|
 fn markdown_editor_map_offset_to_group(
-  offset : Int,
+  offset : Int32,
   group : MarkdownEditorBlockGroup,
-  group_start : Int,
-) -> Int {
+  group_start : Int32,
+) -> Int32 {
   group_start +
   markdown_editor_clamp_int(
     offset - group.source_start,
@@ -929,7 +929,7 @@ fn markdown_editor_map_offset_to_group(
 fn markdown_editor_map_selection_to_group(
   selection : @core.TextRange?,
   group : MarkdownEditorBlockGroup,
-  group_start : Int,
+  group_start : Int32,
 ) -> @core.TextRange? {
   match markdown_editor_active_selection(selection) {
     Some(range) =>
@@ -976,7 +976,7 @@ fn markdown_editor_strip_block_marker(line : String) -> String {
 }
 
 ///|
-fn markdown_editor_marker_prefix_length(line : StringView) -> Int {
+fn markdown_editor_marker_prefix_length(line : StringView) -> Int32 {
   // Allocation-free prefix scan over the view: the shell parse runs this
   // once per content line on large documents, and a per-line char-array
   // materialization dominated that cost. Marker prefixes are ASCII, so
@@ -1045,7 +1045,7 @@ fn markdown_editor_marker_prefix_length(line : StringView) -> Int {
 }
 
 ///|
-fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
+fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int32 {
   let indent = markdown_editor_leading_indent_length(chars)
   let mut index = indent
   while index < chars.length() && chars[index].is_ascii_digit() {
@@ -1062,12 +1062,12 @@ fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
 }
 
 ///|
-fn markdown_editor_line_indent_prefix_length(line : String) -> Int {
+fn markdown_editor_line_indent_prefix_length(line : String) -> Int32 {
   markdown_editor_leading_indent_length(line.to_array())
 }
 
 ///|
-fn markdown_editor_leading_indent_length(chars : Array[Char]) -> Int {
+fn markdown_editor_leading_indent_length(chars : Array[Char]) -> Int32 {
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
     index = index + 1

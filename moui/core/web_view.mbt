@@ -58,8 +58,8 @@ pub fn PlatformViewPlacement::new(
   id~ : String,
   kind~ : String,
   frame~ : Rect,
-  clip? : Rect? = None,
-  properties? : Array[PlatformViewProperty] = [],
+  clip~ : Rect? = None,
+  properties~ : Array[PlatformViewProperty] = [],
 ) -> PlatformViewPlacement {
   { id, kind, frame, clip, properties, }
 }

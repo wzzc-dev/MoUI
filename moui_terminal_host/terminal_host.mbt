@@ -20,8 +20,8 @@ priv struct TerminalState {
   mut modes_active : Bool
   mut needs_render : Bool
   mut close_requested : Bool
-  mut surface_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut next_sequence : Int32
   mut write_failure : String?
 }
 
@@ -101,7 +101,7 @@ const EXIT_MODES : String = DISABLE_MOUSE +
 /// 一轮等待输入的最长时间(毫秒)。它同时是裸 ESC 的消歧窗口:太长会让 Escape
 /// 键按起来没反应,太短会把跨两次 read 送达的序列拆成两条事实。
 /// 50ms 落在「人手达不到、终端拆包够得着」的折中点。
-const DEFAULT_IDLE_TIMEOUT_MS : Int = 50
+const DEFAULT_IDLE_TIMEOUT_MS : Int32 = 50
 
 ///|
 /// 宿主退出原因。正常退出只有一种:应用自己请求关闭。
@@ -149,9 +149,9 @@ pub fn TerminalExit::describe(self : TerminalExit) -> String {
 /// 可回退,择优失败只会把原因藏起来。
 pub fn[Model, Msg] run_program(
   program~ : @core.Program[Model, Msg],
-  cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
-  idle_timeout_ms? : Int = DEFAULT_IDLE_TIMEOUT_MS,
-  theme? : @core.Theme? = None,
+  cell~ : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
+  idle_timeout_ms~ : Int32 = DEFAULT_IDLE_TIMEOUT_MS,
+  theme~ : @core.Theme? = None,
 ) -> TerminalExit {
   match probe_tty() {
     Err(exit) => exit
@@ -170,10 +170,10 @@ pub fn[Model, Msg] run_program(
 /// 跑一个根 View,给不需要 Program 的薄入口用。
 pub fn[Msg] run_view(
   root~ : @core.View[Msg],
-  cell? : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
-  idle_timeout_ms? : Int = DEFAULT_IDLE_TIMEOUT_MS,
-  on_message? : ((Msg) -> Unit)? = None,
-  theme? : @core.Theme? = None,
+  cell~ : @tui_renderer.CellBox = @tui_renderer.CellBox::default(),
+  idle_timeout_ms~ : Int32 = DEFAULT_IDLE_TIMEOUT_MS,
+  on_message~ : ((Msg) -> Unit)? = None,
+  theme~ : @core.Theme? = None,
 ) -> TerminalExit {
   match probe_tty() {
     Err(exit) => exit
@@ -201,7 +201,7 @@ fn palette_for(theme : @core.Theme?) -> @tui_renderer.TuiPalette {
 }
 
 ///|
-fn probe_tty() -> Result[(Tty, Int, Int), TerminalExit] {
+fn probe_tty() -> Result[(Tty, Int32, Int32), TerminalExit] {
   let tty = Tty::current()
   if !tty.is_terminal() {
     Err(NotTerminal)
@@ -220,7 +220,7 @@ fn run(
   tty : Tty,
   runtime : @runtime.AppRuntime,
   input : TerminalInput,
-  idle_timeout_ms : Int,
+  idle_timeout_ms : Int32,
   palette : @tui_renderer.TuiPalette,
 ) -> TerminalExit {
   let state = TerminalState::new()
@@ -321,7 +321,7 @@ fn TerminalState::enter_modes(self : TerminalState, tty : Tty) -> String? {
 /// 应用自关闭在「把终端交回去」这件事上没有区别。
 fn TerminalState::pump(
   self : TerminalState,
-  idle_timeout_ms~ : Int,
+  idle_timeout_ms~ : Int32,
 ) -> TerminalExit {
   let tty = match self.tty {
     Some(tty) => tty

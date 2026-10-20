@@ -324,7 +324,7 @@ fn pdf_workbench_pdflite_json_string_or(
 fn pdf_workbench_pdflite_json_int(
   fields : Map[String, Json],
   key : String,
-) -> Int? {
+) -> Int32? {
   match fields.get(key) {
     Some(value) => pdf_workbench_pdflite_json_value_int(value)
     None => None
@@ -547,7 +547,7 @@ fn pdf_workbench_pdflite_json_value_string(value : Json) -> String? {
 }
 
 ///|
-fn pdf_workbench_pdflite_json_value_int(value : Json) -> Int? {
+fn pdf_workbench_pdflite_json_value_int(value : Json) -> Int32? {
   match pdf_workbench_pdflite_json_value_double(value) {
     Some(number) => Some(number.to_int())
     None => None

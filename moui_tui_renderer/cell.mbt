@@ -19,7 +19,7 @@ pub fn CellBox::default() -> CellBox {
 }
 
 ///|
-fn cell_count(px : Double, unit : Double) -> Int {
+fn cell_count(px : Double, unit : Double) -> Int32 {
   if unit <= 0.0 {
     return 1
   }
@@ -33,19 +33,25 @@ fn cell_count(px : Double, unit : Double) -> Int {
 
 ///|
 /// 可视区列数:向下取整,至少 1 列。
-pub fn CellBox::cols_of(self : CellBox, metrics : @core.SurfaceMetrics) -> Int {
+pub fn CellBox::cols_of(
+  self : CellBox,
+  metrics : @core.SurfaceMetrics,
+) -> Int32 {
   cell_count(metrics.logical_size.width, self.width)
 }
 
 ///|
 /// 可视区行数:向下取整,至少 1 行。
-pub fn CellBox::rows_of(self : CellBox, metrics : @core.SurfaceMetrics) -> Int {
+pub fn CellBox::rows_of(
+  self : CellBox,
+  metrics : @core.SurfaceMetrics,
+) -> Int32 {
   cell_count(metrics.logical_size.height, self.height)
 }
 
 ///|
 /// 文本占用的 cell 数(换行符不占格,CJK/emoji 按双宽计)。
-pub fn cell_units(text : String) -> Int {
+pub fn cell_units(text : String) -> Int32 {
   let mut units = 0
   for ch in text {
     if ch != '\n' {
@@ -57,7 +63,7 @@ pub fn cell_units(text : String) -> Int {
 
 ///|
 /// 按可用列数做贪心折行,返回占用行数。
-fn wrapped_line_count(text : String, cols : Int) -> Int {
+fn wrapped_line_count(text : String, cols : Int32) -> Int32 {
   let cols = if cols < 1 { 1 } else { cols }
   let mut lines = 1
   let mut used = 0

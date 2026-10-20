@@ -1,6 +1,6 @@
 ///|
 priv struct HostWindowCompletionHandler {
-  token : Int
+  token : Int32
   handle : (@backend_host.WindowRequestCompletion) -> Unit
 }
 
@@ -8,7 +8,7 @@ priv struct HostWindowCompletionHandler {
 pub struct WindowRequestQueue {
   mut requests : Array[@backend_host.WindowRequest]
   mut completed : Array[@backend_host.WindowRequestCompletion]
-  priv mut next_completion_handler : Int
+  priv mut next_completion_handler : Int32
   priv mut completion_handlers : Array[HostWindowCompletionHandler]
 }
 
@@ -38,12 +38,12 @@ pub fn WindowRequestQueue::requests(
 }
 
 ///|
-pub fn WindowRequestQueue::pending_count(self : WindowRequestQueue) -> Int {
+pub fn WindowRequestQueue::pending_count(self : WindowRequestQueue) -> Int32 {
   self.requests.length()
 }
 
 ///|
-pub fn WindowRequestQueue::completed_count(self : WindowRequestQueue) -> Int {
+pub fn WindowRequestQueue::completed_count(self : WindowRequestQueue) -> Int32 {
   self.completed.length()
 }
 
@@ -64,9 +64,9 @@ pub fn WindowRequestQueue::push(
 pub fn WindowRequestQueue::open_window(
   self : WindowRequestQueue,
   title~ : String,
-  scene? : @backend_host.WindowScene = @backend_host.WindowScene::main(),
+  scene~ : @backend_host.WindowScene = @backend_host.WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  primary? : Bool = false,
+  primary~ : Bool = false,
 ) -> Unit {
   self.push(
     OpenWindow(
@@ -193,7 +193,7 @@ fn WindowRequestQueue::record_completion(
 ///|
 fn WindowRequestQueue::remove_completion_handler(
   self : WindowRequestQueue,
-  token : Int,
+  token : Int32,
 ) -> Bool {
   let remaining = []
   let mut removed = false

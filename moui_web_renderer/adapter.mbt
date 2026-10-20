@@ -147,7 +147,7 @@ pub fn adapter_info() -> WebGpuHostAdapterInfo {
 pub fn create_webgpu_renderer(
   canvas_id~ : String,
   logical_size~ : @core.Size,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> WebGpuWasmRenderer raise WebGpuHostError {
   create_renderer(
     canvas_id~,
@@ -257,7 +257,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
 pub fn create_surface(
   canvas_id~ : String,
   logical_size~ : @core.Size,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
   port~ : WebGpuHostRendererPort,
 ) -> WebGpuHostSurface raise WebGpuHostError {
   let metrics = @core.SurfaceMetrics::from_logical(
@@ -271,7 +271,7 @@ pub fn create_surface(
 pub fn create_renderer(
   canvas_id~ : String,
   logical_size~ : @core.Size,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
   port~ : WebGpuHostRendererPort,
 ) -> WebGpuWasmRenderer raise WebGpuHostError {
   let capabilities = port.capabilities()
@@ -369,7 +369,7 @@ pub fn WebGpuWasmRenderer::dispose(self : WebGpuWasmRenderer) -> Unit {
 }
 
 ///|
-pub fn WebGpuWasmRenderer::present_count(self : WebGpuWasmRenderer) -> Int {
+pub fn WebGpuWasmRenderer::present_count(self : WebGpuWasmRenderer) -> Int32 {
   self.present_count
 }
 

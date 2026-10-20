@@ -1,9 +1,9 @@
 ///|
 pub fn ImageResourceLoadCompletion::ready(
   source : String,
-  width~ : Int,
-  height~ : Int,
-  background_io? : Bool = false,
+  width~ : Int32,
+  height~ : Int32,
+  background_io~ : Bool = false,
 ) -> ImageResourceLoadCompletion {
   {
     source,
@@ -21,12 +21,12 @@ pub fn ImageResourceLoadCompletion::ready(
 ///|
 pub fn ImageResourceLoadCompletion::ready_decoded_rgba(
   source : String,
-  width~ : Int,
-  height~ : Int,
-  row_bytes~ : Int,
+  width~ : Int32,
+  height~ : Int32,
+  row_bytes~ : Int32,
   pixels : Bytes,
-  background_io? : Bool = false,
-  background_decode? : Bool = false,
+  background_io~ : Bool = false,
+  background_decode~ : Bool = false,
 ) -> ImageResourceLoadCompletion {
   {
     source,
@@ -45,7 +45,7 @@ pub fn ImageResourceLoadCompletion::ready_decoded_rgba(
 pub fn ImageResourceLoadCompletion::failed(
   source : String,
   diagnostic~ : String,
-  background_io? : Bool = false,
+  background_io~ : Bool = false,
 ) -> ImageResourceLoadCompletion {
   {
     source,

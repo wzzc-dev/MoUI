@@ -1,17 +1,17 @@
 ///|
 priv struct SunCpuRasterPreflight {
-  physical_width : Int
-  physical_height : Int
-  row_bytes : Int
-  byte_size : Int
+  physical_width : Int32
+  physical_height : Int32
+  row_bytes : Int32
+  byte_size : Int32
   canvas_ready : Bool
   frame_ready : Bool
   resource_cache_ready : Bool
-  font_face_capacity : Int
-  text_mask_capacity : Int
-  glyph_mask_capacity : Int
-  atlas_capacity : Int
-  image_capacity : Int
+  font_face_capacity : Int32
+  text_mask_capacity : Int32
+  glyph_mask_capacity : Int32
+  atlas_capacity : Int32
+  image_capacity : Int32
 }
 
 ///|

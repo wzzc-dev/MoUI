@@ -72,7 +72,7 @@ test "linux webview controller commands preserve FIFO and navigation ids" {
     Err(_) => fail("controller creation failed")
   }
   let _ = controller.navigate("https://example.test").start(_ => ())
-  let commands : Array[(Int, UInt64, UInt64, String)] = []
+  let commands : Array[(Int32, UInt64, UInt64, String)] = []
   let drained = host.drain_commands(command => {
     commands.push(@host.webview_encode_native_command(command))
   })

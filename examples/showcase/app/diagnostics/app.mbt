@@ -21,15 +21,15 @@ pub(all) struct ShowcaseModel {
   data_filter_review : Bool
   data_sort_column : String
   data_sort_ascending : Bool
-  data_page : Int
+  data_page : Int32
   data_visible_columns : Array[String]
   feedback_dismissed_toasts : Array[String]
   slider_value : Double
   picker_value : String
   date_value : @views.DateValue
-  counter_count : Int
+  counter_count : Int32
   todo_items : Array[ShowcaseTodoItem]
-  todo_next_id : Int
+  todo_next_id : Int32
   todo_draft : String
   last_drop_label : String
   gesture_label : String
@@ -39,7 +39,7 @@ pub(all) struct ShowcaseModel {
 
 ///|
 pub(all) struct ShowcaseTodoItem {
-  id : Int
+  id : Int32
   text : String
   completed : Bool
 } derive(Eq, Debug, ToJson)
@@ -87,8 +87,8 @@ pub(all) enum ShowcaseMsg {
   CounterIncrement
   TodoDraftChanged(String)
   TodoSubmitDraft
-  TodoToggled(Int, Bool)
-  TodoRemove(Int)
+  TodoToggled(Int32, Bool)
+  TodoRemove(Int32)
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
@@ -228,7 +228,7 @@ pub fn subscriptions(_model : ShowcaseModel) -> @moui.Subscription[ShowcaseMsg] 
 }
 
 ///|
-pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
+pub fn ShowcaseTodoItem::new(id~ : Int32, text~ : String) -> ShowcaseTodoItem {
   { id, text, completed: false, }
 }
 
@@ -241,7 +241,7 @@ pub fn ShowcaseRouteHost::new(
 }
 
 ///|
-pub fn ShowcaseModel::todo_count(self : ShowcaseModel) -> Int {
+pub fn ShowcaseModel::todo_count(self : ShowcaseModel) -> Int32 {
   self.todo_items.length()
 }
 
@@ -498,7 +498,7 @@ fn ShowcaseModel::with_host_route_event(
 fn showcase_route_history_cursor_for_route(
   history : @views.RouteHistoryState,
   route : String,
-) -> Int? {
+) -> Int32? {
   for index, entry in history.entries {
     if entry.route == route {
       return Some(index)
@@ -539,7 +539,7 @@ fn showcase_route_title(route : String) -> String {
 pub fn ShowcaseModel::view_body(
   self : ShowcaseModel,
   env : @moui.ViewEnvironment,
-  width? : Double = 0.0,
+  width~ : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
   let theme = match self.scheme {
     Light => @views.light_theme()

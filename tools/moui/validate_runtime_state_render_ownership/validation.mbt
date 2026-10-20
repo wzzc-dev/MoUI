@@ -124,7 +124,7 @@ fn collect_files(
 }
 
 ///|
-fn first_token_offset(text : String, token : String) -> Int? {
+fn first_token_offset(text : String, token : String) -> Int32? {
   text.find(token)
 }
 

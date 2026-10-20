@@ -5,7 +5,7 @@ fn markdown_session_clamped_scroll_y(
   source_mode~ : Bool,
   scroll_y : Double,
   viewport_height : Double,
-  content_width? : Double = 0.0,
+  content_width~ : Double = 0.0,
 ) -> Double {
   if viewport_height <= 0.0 {
     return max_double(0.0, scroll_y)
@@ -46,8 +46,8 @@ fn markdown_session_visible_window(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  content_width? : Double = 0.0,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  content_width~ : Double = 0.0,
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentRichTextWindow {
   let scroll_y = markdown_session_clamped_scroll_y(
     session,
@@ -93,14 +93,14 @@ fn markdown_session_visible_window(
 fn markdown_session_input_transform_for(
   session : MarkdownDocumentSession,
   split_paragraph_on_enter~ : Bool,
-) -> (String, Int, @core.TextRange?, String) -> RichTextInputTransform? {
+) -> (String, Int32, @core.TextRange?, String) -> RichTextInputTransform? {
   let context : MarkdownEditorInputContext = {
     blocks: session.editor_blocks,
     store: session.text_store,
   }
   fn(
     source : String,
-    caret : Int,
+    caret : Int32,
     range : @core.TextRange?,
     inserted : String,
   ) {
@@ -119,7 +119,7 @@ fn markdown_session_input_transform_for(
 fn[Msg] markdown_session_on_input_edit(
   session : MarkdownDocumentSession,
   on_transaction : (MarkdownEditTransaction) -> Msg,
-) -> (String, Int, @core.TextRange?, RichTextInputEdit?) -> Msg {
+) -> (String, Int32, @core.TextRange?, RichTextInputEdit?) -> Msg {
   (next_source, caret, next_selection, edit) => {
     let transaction = match edit {
       // The control knows the exact range it replaced; carrying it
@@ -350,9 +350,9 @@ fn[Msg] markdown_session_editor_event(
   source_mode~ : Bool,
   focus_mode~ : Bool,
   base_dir~ : String?,
-  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
-  on_prefix_click~ : ((Int) -> Msg)?,
-  on_command_click~ : ((Int) -> Msg)?,
+  on_selection_change~ : ((Int32, @core.TextRange?) -> Msg)?,
+  on_prefix_click~ : ((Int32) -> Msg)?,
+  on_command_click~ : ((Int32) -> Msg)?,
   accepts_tab_input~ : Bool,
   visible_scroll_y~ : Double,
   on_scroll~ : ((Double, Double) -> Msg)?,
@@ -468,9 +468,9 @@ fn[Msg] markdown_session_pointer_event(
   source_mode~ : Bool,
   focus_mode~ : Bool,
   base_dir~ : String?,
-  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
-  on_prefix_click~ : ((Int) -> Msg)?,
-  on_command_click~ : ((Int) -> Msg)?,
+  on_selection_change~ : ((Int32, @core.TextRange?) -> Msg)?,
+  on_prefix_click~ : ((Int32) -> Msg)?,
+  on_command_click~ : ((Int32) -> Msg)?,
   event~ : @core.PointerEvent,
   visible_scroll_y~ : Double,
   on_scroll~ : ((Double, Double) -> Msg)?,
@@ -793,7 +793,7 @@ fn markdown_session_record_measured_block_heights(
   )
   let was_at_bottom = old_max_scroll > 0.0 &&
     visible_scroll_y >= old_max_scroll - 1.0
-  let updates : Array[(Int, Double)] = []
+  let updates : Array[(Int32, Double)] = []
   for offset, window_block in window.document.blocks {
     match session.editor_blocks.get(window.visible_start + offset) {
       Some(editor_block) => {
@@ -956,7 +956,7 @@ fn markdown_session_record_measured_block_heights(
 ///|
 fn markdown_session_estimated_caret_inset_x(
   session : MarkdownDocumentSession,
-  source_caret : Int,
+  source_caret : Int32,
   font~ : @core.FontSpec,
   base_dir~ : String?,
   content_width~ : Double,
@@ -1099,7 +1099,7 @@ fn markdown_session_estimated_caret_inset_x(
 /// failing — callers must fall back to the session-level estimate.
 fn markdown_session_window_covers_caret(
   window : MarkdownDocumentRichTextWindow,
-  caret : Int,
+  caret : Int32,
 ) -> Bool {
   match (window.document.blocks.get(0), window.document.blocks.last()) {
     (Some(first), Some(last)) =>
@@ -1226,7 +1226,7 @@ fn markdown_session_input_state(
 ///|
 fn markdown_session_estimated_caret_rect(
   session : MarkdownDocumentSession,
-  source_caret : Int,
+  source_caret : Int32,
   content : @core.Rect,
   font : @core.FontSpec,
   source_mode~ : Bool,
@@ -1262,7 +1262,7 @@ fn[Msg] markdown_session_editor_command(
   session~ : MarkdownDocumentSession,
   selection~ : MarkdownEditorSelection,
   on_transaction~ : (MarkdownEditTransaction) -> Msg,
-  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
+  on_selection_change~ : ((Int32, @core.TextRange?) -> Msg)?,
   font~ : @core.FontSpec,
   source_mode~ : Bool,
   focus_mode~ : Bool,

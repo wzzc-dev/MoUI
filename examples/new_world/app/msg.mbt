@@ -68,7 +68,7 @@ pub(all) enum Msg {
   /// A scene reply arrived: `(scene key, respondent id, reply)`.
   SceneReply(String, String, String?)
   /// Switch the single visible panel in medium/compact layouts.
-  ShellTabChanged(Int)
+  ShellTabChanged(Int32)
   /// Open the settings page (re-reads `config.json` from the library).
   OpenSettings
   /// Back to the main layout.
@@ -107,7 +107,7 @@ pub(all) enum Msg {
   CharacterCreated
   /// Fill the creator from a built-in archetype (index into
   /// `creator_archetypes`).
-  UseArchetype(Int)
+  UseArchetype(Int32)
   /// The one-line character idea being typed.
   CharacterIdeaChanged(String)
   /// Ask the provider to draft the card from that idea.
@@ -123,13 +123,13 @@ pub(all) enum Msg {
   /// The context-budget preset changed from the settings page.
   ContextChanged(String)
   /// A memory-compression reply arrived; `None` = failure (retry later).
-  SummaryArrived(String, Int, String?)
+  SummaryArrived(String, Int32, String?)
   /// A memory-extraction reply arrived; `None` = failure.
   MemoryProposalsArrived(String?)
   /// Adopt a proposed memory entry into the world book.
-  AcceptMemory(Int)
+  AcceptMemory(Int32)
   /// Drop a proposed memory entry.
-  DiscardMemory(Int)
+  DiscardMemory(Int32)
   /// Show / hide the API key on the settings page.
   ToggleApiKeyReveal
   // ---- conversation editing ----
@@ -139,9 +139,9 @@ pub(all) enum Msg {
   /// A regeneration request settled; `None` = failure (keep the old reply).
   Regenerated(String?)
   /// Move within a reply's candidates. `(line index, direction)`.
-  SwipeReply(Int, Int)
+  SwipeReply(Int32, Int32)
   /// Start editing one history line.
-  EditLine(Int)
+  EditLine(Int32)
   /// The edit buffer changed.
   EditLineChanged(String)
   /// Commit the edited text back into the history.
@@ -149,12 +149,12 @@ pub(all) enum Msg {
   /// Abandon the edit.
   EditLineCancel
   /// Delete one history line.
-  DeleteLine(Int)
+  DeleteLine(Int32)
   /// Clear the selected character's conversation.
   ClearConversation
   /// Branch the conversation at a line: keep everything up to it and start a
   /// new history from there, leaving the original intact on disk.
-  BranchAt(Int)
+  BranchAt(Int32)
   // ---- portability ----
   /// Write the current world out as a shareable bundle.
   ExportWorld

@@ -5,9 +5,9 @@ fn section_panel(
   summary : String,
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-  eyebrow? : String = "",
-  scroll_offset? : @geometry.Point = @geometry.Point::new(x=0.0, y=0.0),
-  on_scroll? : ((@geometry.Point) -> ShowcaseMsg)? = None,
+  eyebrow~ : String = "",
+  scroll_offset~ : @geometry.Point = @geometry.Point::new(x=0.0, y=0.0),
+  on_scroll~ : ((@geometry.Point) -> ShowcaseMsg)? = None,
 ) -> @moui.View[ShowcaseMsg] {
   let header_extra = if eyebrow == "" {
     0.0
@@ -88,7 +88,7 @@ fn ShowcaseModel::section_panel(
   summary : String,
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-  eyebrow? : String = "",
+  eyebrow~ : String = "",
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   section_panel(theme, title, summary, body, metrics~, eyebrow~)
@@ -122,7 +122,7 @@ fn showcase_soft_card(
   child : @moui.View[ShowcaseMsg],
   width~ : Double,
   height~ : Double,
-  padding? : Double = 0.0,
+  padding~ : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
   container(child, width~, height~, variant=Raised, theme~, padding~).border(
     showcase_card_border(theme),
@@ -592,7 +592,7 @@ fn example_preview(
   theme : @moui.Theme,
   title : String,
   child : @moui.View[ShowcaseMsg],
-  width? : Double = 500.0,
+  width~ : Double = 500.0,
 ) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(220.0, width - 30.0)
   container(
@@ -620,7 +620,7 @@ fn visual_card(
   image_source : String,
   caption : String,
   badge : String,
-  width? : Double = 240.0,
+  width~ : Double = 240.0,
 ) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(180.0, width - 24.0)
   container(

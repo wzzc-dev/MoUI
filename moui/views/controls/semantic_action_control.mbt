@@ -117,7 +117,7 @@ pub fn[Msg] semantic_toggle_action_control(
 pub fn[Msg] semantic_dismiss_action_control(
   child : @core.View[Msg],
   message : Msg,
-  role? : @core.SemanticsRole? = None,
+  role~ : @core.SemanticsRole? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     SemanticActionControl::{ action: Dismiss, expanded: None, role, },

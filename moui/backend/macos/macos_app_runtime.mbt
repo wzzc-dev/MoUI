@@ -5,8 +5,8 @@ let macos_first_present_pump_limit = 16
 /// Renderer-neutral macOS composition entry. Renderer factories are resolved
 /// after AppKit has created a window and supplied its content-view handle.
 pub fn entry(
-  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
+  options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
+  smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(
     id="macos",
@@ -113,9 +113,9 @@ fn launch_macos_app(
   title : String,
   runtime : @runtime.AppRuntime,
   binding~ : MacosSurfaceBinding,
-  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
-  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
+  options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
+  smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
+  window_requests~ : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
     title,
@@ -184,10 +184,10 @@ async fn launch_macos_app_async_pump(
   title : String,
   runtime : @runtime.AppRuntime,
   binding~ : MacosSurfaceBinding,
-  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
-  smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
-  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
-  frame_interval_ms? : Int = 8,
+  options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
+  smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
+  window_requests~ : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
+  frame_interval_ms~ : Int32 = 8,
 ) -> Unit {
   let (event_loop, app) = create_macos_app(
     title,
@@ -358,7 +358,7 @@ fn run_app_until_first_present(
 async fn run_async_pump_until_first_present(
   event_loop : @window_macos.EventLoop,
   app : MacosNativeHostBackend,
-  frame_interval_ms : Int,
+  frame_interval_ms : Int32,
 ) -> Unit {
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {

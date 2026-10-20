@@ -421,12 +421,12 @@ pub fn accesskit_semantics_action_request(
 
 ///|
 pub fn AccessKitBridge::new(
-  diagnostic_name? : String = "accesskit",
-  available? : Bool = true,
-  publish? : (@runtime.SemanticsRead) -> AccessKitUpdate? = read => {
+  diagnostic_name~ : String = "accesskit",
+  available~ : Bool = true,
+  publish~ : (@runtime.SemanticsRead) -> AccessKitUpdate? = read => {
     accesskit_update_from_semantics_read(read)
   },
-  perform? : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult = _request => {
+  perform~ : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult = _request => {
     BridgeUnavailable("accessibility action transport is not configured")
   },
 ) -> AccessKitBridge {
@@ -435,8 +435,8 @@ pub fn AccessKitBridge::new(
 
 ///|
 pub fn AccessKitBridge::unavailable(
-  diagnostic_name? : String = "accesskit",
-  reason? : String = "accessibility bridge is unavailable",
+  diagnostic_name~ : String = "accesskit",
+  reason~ : String = "accessibility bridge is unavailable",
 ) -> AccessKitBridge {
   AccessKitBridge::new(diagnostic_name~, available=false, perform=_request => {
     BridgeUnavailable(reason)
@@ -471,7 +471,7 @@ pub fn AccessKitBridge::perform_action(
 
 ///|
 pub fn AccessKitBridge::driver(
-  diagnostic_name? : String = "accesskit",
+  diagnostic_name~ : String = "accesskit",
   driver~ : @runtime.HostRuntimeDriver,
 ) -> AccessKitBridge {
   AccessKitBridge::new(diagnostic_name~, perform=request => {

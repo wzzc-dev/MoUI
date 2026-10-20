@@ -4,7 +4,7 @@ pub struct ColumnOrderState {
 }
 
 ///|
-pub fn ColumnOrderState::new(order? : Array[String] = []) -> ColumnOrderState {
+pub fn ColumnOrderState::new(order~ : Array[String] = []) -> ColumnOrderState {
   { order: order.copy(), }
 }
 

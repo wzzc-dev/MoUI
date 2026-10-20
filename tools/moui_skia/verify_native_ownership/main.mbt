@@ -41,7 +41,7 @@ struct RegularObject {
   wrapper_struct : String
   factory : String
   allocation : String
-  pointer_field_count : Int
+  pointer_field_count : Int32
   pointer_fields : Array[String]
   value_fields : Array[String]
 }
@@ -242,7 +242,7 @@ fn json_int_field(
   fields : Map[String, Json],
   key : String,
   label : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match fields.get(key) {
     Some(Json::Number(number, repr=_)) => {
       let value = number.to_int()
@@ -459,7 +459,7 @@ fn identifier_start(char : Char) -> Bool {
 }
 
 ///|
-fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
+fn chars_to_string(chars : Array[Char], start : Int32, end : Int32) -> String {
   let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
@@ -471,8 +471,8 @@ fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
 fn find_substring(
   text : Array[Char],
   needle : Array[Char],
-  start : Int,
-) -> Int? {
+  start : Int32,
+) -> Int32? {
   if needle.is_empty() {
     return Some(start)
   }
@@ -498,7 +498,7 @@ fn find_substring(
 }
 
 ///|
-fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
+fn skip_whitespace(chars : Array[Char], start : Int32) -> Int32 {
   let mut index = start
   while index < chars.length() && is_ascii_whitespace(chars[index]) {
     index += 1
@@ -507,7 +507,7 @@ fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
 }
 
 ///|
-fn read_identifier(chars : Array[Char], start : Int) -> (String, Int)? {
+fn read_identifier(chars : Array[Char], start : Int32) -> (String, Int32)? {
   let index = skip_whitespace(chars, start)
   if index >= chars.length() || !identifier_start(chars[index]) {
     return None
@@ -520,7 +520,11 @@ fn read_identifier(chars : Array[Char], start : Int) -> (String, Int)? {
 }
 
 ///|
-fn has_identifier_boundary(chars : Array[Char], start : Int, end : Int) -> Bool {
+fn has_identifier_boundary(
+  chars : Array[Char],
+  start : Int32,
+  end : Int32,
+) -> Bool {
   let before_ok = start == 0 || !identifier_char(chars[start - 1])
   let after_ok = end >= chars.length() || !identifier_char(chars[end])
   before_ok && after_ok
@@ -530,8 +534,8 @@ fn has_identifier_boundary(chars : Array[Char], start : Int, end : Int) -> Bool 
 fn find_identifier_occurrence(
   text : String,
   name : String,
-  start : Int,
-) -> Int? {
+  start : Int32,
+) -> Int32? {
   let chars = text.to_array()
   let needle = name.to_array()
   let search = Ref(start)
@@ -551,7 +555,7 @@ fn find_identifier_occurrence(
 }
 
 ///|
-fn find_next_char(chars : Array[Char], start : Int, target : Char) -> Int? {
+fn find_next_char(chars : Array[Char], start : Int32, target : Char) -> Int32? {
   for index in start..<chars.length() {
     if chars[index] == target {
       return Some(index)
@@ -561,7 +565,7 @@ fn find_next_char(chars : Array[Char], start : Int, target : Char) -> Int? {
 }
 
 ///|
-fn matching_brace(chars : Array[Char], open_index : Int) -> Int? {
+fn matching_brace(chars : Array[Char], open_index : Int32) -> Int32? {
   let mut depth = 0
   for index in open_index..<chars.length() {
     match chars[index] {
@@ -581,7 +585,7 @@ fn matching_brace(chars : Array[Char], open_index : Int) -> Int? {
 ///|
 fn braced_body_after(
   text : String,
-  start : Int,
+  start : Int32,
   label : String,
 ) -> Result[String, String] {
   let chars = text.to_array()
@@ -1644,7 +1648,7 @@ fn verify_native_ownership(options : CliOptions) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

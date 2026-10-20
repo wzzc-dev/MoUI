@@ -15,7 +15,7 @@ pub(all) enum Msg {
   SelectExample(String)
   SetFindQuery(String)
   SetReplaceText(String)
-  EditorSelectionChanged(Int, @text.TextRange?)
+  EditorSelectionChanged(Int32, @text.TextRange?)
   EditorScrollChanged(@geometry.Point)
   ReplaceAll
   FindNext
@@ -40,7 +40,7 @@ pub(all) struct Model {
   status : String
   preview_status : String
   lesson_id : String
-  revision : Int
+  revision : Int32
 }
 
 ///|
@@ -234,7 +234,11 @@ fn compile_diagnostic_to_editor(
 }
 
 ///|
-fn compile_diagnostic_offset(source : String, line : Int, column : Int) -> Int {
+fn compile_diagnostic_offset(
+  source : String,
+  line : Int32,
+  column : Int32,
+) -> Int32 {
   let lines = @code_editor.code_editor_source_lines(source)
   if lines.is_empty() {
     return 0
@@ -245,7 +249,7 @@ fn compile_diagnostic_offset(source : String, line : Int, column : Int) -> Int {
 }
 
 ///|
-fn clamp_playground_int(value : Int, lower : Int, upper : Int) -> Int {
+fn clamp_playground_int(value : Int32, lower : Int32, upper : Int32) -> Int32 {
   if value < lower {
     lower
   } else if value > upper {

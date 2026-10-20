@@ -53,7 +53,7 @@ pub(open) trait ViewNode {
   /// placeholder origins); the runtime re-places them at the returned frames
   /// after base layout. Returning `None` (the default) marks the node as
   /// having no overlay-positioned children.
-  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int, Rect)]? = _
+  fn place_overlays(Self, OverlayPlacementContext) -> Array[(Int32, Rect)]? = _
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
@@ -227,7 +227,7 @@ fn[Msg] ViewAdapter::text_command_result(
   self : ViewAdapter[Msg],
   context : ViewEventContext,
   intent : CommandIntent,
-  paste_text? : String? = None,
+  paste_text~ : String? = None,
 ) -> ViewTextCommandResult[Msg] {
   (self.text_command_fn)(context, intent, paste_text)
 }

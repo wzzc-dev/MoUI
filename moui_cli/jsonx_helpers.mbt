@@ -40,7 +40,7 @@ fn json_required_int(
   fields : Map[String, Json],
   key : String,
   label : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match fields.get(key) {
     Some(Number(value, repr=_)) if value.to_int().to_double() == value =>
       Ok(value.to_int())

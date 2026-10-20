@@ -57,7 +57,7 @@ fn bytes_has_nonzero(bytes : Bytes) -> Bool {
 ///|
 fn glyph_nonzero_row_bounds(
   glyph : @wgpu_renderer.NativeRasterGlyph,
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   let mut min_y = glyph.height()
   let mut max_y = -1
   for y in 0..<glyph.height() {
@@ -77,9 +77,9 @@ fn glyph_nonzero_row_bounds(
 
 ///|
 fn test_raster_system_glyph(
-  codepoint~ : Int,
+  codepoint~ : Int32,
   size~ : Double,
-  weight~ : Int,
+  weight~ : Int32,
   style~ : @core.FontStyle,
   scale_factor~ : Double,
 ) -> @wgpu_renderer.NativeRasterGlyph? {
@@ -300,45 +300,45 @@ fn push_f64_bits_le(out : Array[Byte], bits : UInt64) -> Unit {
 
 ///|
 extern "C" fn macos_coretext_glyph_id_for_codepoint(
-  codepoint : Int,
+  codepoint : Int32,
   size : Double,
-  weight : Int,
-  style : Int,
-) -> Int = "moui_macos_coretext_glyph_id_for_codepoint"
+  weight : Int32,
+  style : Int32,
+) -> Int32 = "moui_macos_coretext_glyph_id_for_codepoint"
 
 ///|
 extern "C" fn macos_coretext_system_font_name(
   size : Double,
-  weight : Int,
-  style : Int,
+  weight : Int32,
+  style : Int32,
 ) -> Bytes = "moui_macos_coretext_system_font_name"
 
 ///|
 #borrow(payload)
 extern "C" fn macos_coretext_debug_font_registration_data_len(
   payload : Bytes,
-) -> Int = "moui_macos_coretext_debug_font_registration_data_len"
+) -> Int32 = "moui_macos_coretext_debug_font_registration_data_len"
 
 ///|
-extern "C" fn macos_coretext_debug_font_spec_protocol_version() -> Int = "moui_macos_coretext_debug_font_spec_protocol_version"
+extern "C" fn macos_coretext_debug_font_spec_protocol_version() -> Int32 = "moui_macos_coretext_debug_font_spec_protocol_version"
 
 ///|
-extern "C" fn macos_coretext_debug_font_registration_protocol_version() -> Int = "moui_macos_coretext_debug_font_registration_protocol_version"
+extern "C" fn macos_coretext_debug_font_registration_protocol_version() -> Int32 = "moui_macos_coretext_debug_font_registration_protocol_version"
 
 ///|
 #borrow(family_name)
 extern "C" fn macos_coretext_debug_generic_font_name_len(
   family_name : Bytes,
-) -> Int = "moui_macos_coretext_debug_generic_font_name_len"
+) -> Int32 = "moui_macos_coretext_debug_generic_font_name_len"
 
 ///|
 #borrow(font_name)
 extern "C" fn macos_coretext_debug_raster_format_for_font_name(
   font_name : Bytes,
   size : Double,
-  weight : Int,
-  style : Int,
-) -> Int = "moui_macos_coretext_debug_raster_format_for_font_name"
+  weight : Int32,
+  style : Int32,
+) -> Int32 = "moui_macos_coretext_debug_raster_format_for_font_name"
 
 ///|
 test "coretext native protocol versions match shared text protocol" {

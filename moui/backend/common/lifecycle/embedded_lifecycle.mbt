@@ -20,7 +20,7 @@ pub extend EmbeddedHostLifecyclePhase with Eq::{not_equal, equal}
 pub struct EmbeddedHostSurface {
   handle : UInt64
   metrics : @core.SurfaceMetrics
-  generation : Int
+  generation : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -34,10 +34,10 @@ pub enum EmbeddedWindowHostAction {
   Resumed
   CanCreateSurfaces
   SurfaceAttached(EmbeddedHostSurface)
-  SurfaceDetached(Int)
+  SurfaceDetached(Int32)
   DestroySurfaces
   Suspended
-  Exit(Int)
+  Exit(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -53,10 +53,10 @@ pub extend EmbeddedWindowHostAction with Eq::{not_equal, equal}
 /// primary-window identity, detach semantics, and application exit intent.
 pub struct EmbeddedLifecycle {
   mut phase : EmbeddedHostLifecyclePhase
-  mut generation : Int
+  mut generation : Int32
   mut surface : EmbeddedHostSurface?
   mut primary_window : @backend_host.WindowId?
-  mut exit_intent : Int?
+  mut exit_intent : Int32?
 }
 
 ///|
@@ -78,7 +78,7 @@ pub fn EmbeddedLifecycle::phase(
 }
 
 ///|
-pub fn EmbeddedLifecycle::surface_generation(self : EmbeddedLifecycle) -> Int {
+pub fn EmbeddedLifecycle::surface_generation(self : EmbeddedLifecycle) -> Int32 {
   self.generation
 }
 
@@ -205,7 +205,7 @@ pub fn EmbeddedLifecycle::suspended(
 ///|
 pub fn EmbeddedLifecycle::request_exit(
   self : EmbeddedLifecycle,
-  code : Int,
+  code : Int32,
 ) -> EmbeddedWindowHostAction {
   self.exit_intent = Some(code)
   self.phase = Exited
@@ -213,6 +213,6 @@ pub fn EmbeddedLifecycle::request_exit(
 }
 
 ///|
-pub fn EmbeddedLifecycle::exit_intent(self : EmbeddedLifecycle) -> Int? {
+pub fn EmbeddedLifecycle::exit_intent(self : EmbeddedLifecycle) -> Int32? {
   self.exit_intent
 }

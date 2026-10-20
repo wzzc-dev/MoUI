@@ -6,13 +6,13 @@
 /// need updates should pair it with an app-facing `@services.TimerSource`
 /// subscription supplied by the composition root.
 pub(all) struct HostWallClock {
-  year : Int
-  month : Int
-  day : Int
-  weekday : Int
-  hour : Int
-  minute : Int
-  second : Int
+  year : Int32
+  month : Int32
+  day : Int32
+  weekday : Int32
+  hour : Int32
+  minute : Int32
+  second : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -26,13 +26,13 @@ pub extend HostWallClock with ToJson::{to_json}
 
 ///|
 pub fn HostWallClock::new(
-  year : Int,
-  month : Int,
-  day : Int,
-  weekday : Int,
-  hour : Int,
-  minute : Int,
-  second? : Int = 0,
+  year : Int32,
+  month : Int32,
+  day : Int32,
+  weekday : Int32,
+  hour : Int32,
+  minute : Int32,
+  second~ : Int32 = 0,
 ) -> HostWallClock {
   { year, month, day, weekday, hour, minute, second, }
 }

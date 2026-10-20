@@ -116,7 +116,7 @@ fn verify_native_smoke_log(options : CliOptions) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

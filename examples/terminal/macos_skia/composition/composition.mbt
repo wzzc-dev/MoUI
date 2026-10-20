@@ -15,7 +15,7 @@ pub enum InputWork {
 
 ///|
 /// 终端初始行列(与窗口画布尺寸、PTY 初始窗口尺寸保持一致)。
-fn terminal_size() -> (Int, Int) {
+fn terminal_size() -> (Int32, Int32) {
   (90, 26)
 }
 

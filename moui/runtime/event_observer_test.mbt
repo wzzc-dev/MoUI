@@ -3,7 +3,7 @@ fn[Msg] event_observer_test_rect(
   width~ : Double,
   height~ : Double,
   color~ : @core.Color,
-  on_tap? : Msg? = None,
+  on_tap~ : Msg? = None,
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
@@ -37,7 +37,7 @@ fn[Msg] event_observer_test_rect(
 /// Regression: without an event observer installed, dispatch_event behaves
 /// exactly as before the additive hook — messages still flow, no panics.
 test "event_observer: dispatch works with default (no-op) observer" {
-  let received : Array[Int] = []
+  let received : Array[Int32] = []
   let runtime = @runtime.AppRuntime::new_view(
     root=event_observer_test_rect(
       width=20.0,
@@ -64,7 +64,7 @@ test "event_observer: dispatch works with default (no-op) observer" {
 /// that processing (message dispatch) still occurs normally afterward.
 test "event_observer: installed observer receives events before processing" {
   let observed : Array[String] = []
-  let received : Array[Int] = []
+  let received : Array[Int32] = []
   let runtime = @runtime.AppRuntime::new_view(
     root=event_observer_test_rect(
       width=20.0,

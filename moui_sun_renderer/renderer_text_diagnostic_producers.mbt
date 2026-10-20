@@ -1,9 +1,9 @@
 ///|
 pub fn SunRasterRenderer::text_maturity_diagnostic(
   self : SunRasterRenderer,
-  text? : String = "MoUI Sun text diagnostics",
-  font? : @core.FontSpec = @core.FontSpec::new(size=14.0),
-  max_width? : Double = 96.0,
+  text~ : String = "MoUI Sun text diagnostics",
+  font~ : @core.FontSpec = @core.FontSpec::new(size=14.0),
+  max_width~ : Double = 96.0,
 ) -> SunTextMaturityDiagnostic {
   let system = self.text_system()
   let layout = system.layout_paragraph(
@@ -60,8 +60,8 @@ pub fn SunRasterRenderer::text_maturity_diagnostic(
 ///|
 pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
   self : SunRasterRenderer,
-  text? : String = "\u{1F600}",
-  font? : @core.FontSpec = @core.FontSpec::new(
+  text~ : String = "\u{1F600}",
+  font~ : @core.FontSpec = @core.FontSpec::new(
     families=@core.FontFamilyStack::new([Emoji]),
     size=32.0,
   ),
@@ -159,8 +159,8 @@ pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(
 pub fn SunRasterRenderer::text_visual_order_diagnostic(
   self : SunRasterRenderer,
   text : String,
-  font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
-  max_width? : Double = 1000000000.0,
+  font~ : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
+  max_width~ : Double = 1000000000.0,
 ) -> SunTextVisualOrderDiagnostic? {
   if text == "" {
     return None
@@ -185,10 +185,10 @@ pub fn SunRasterRenderer::text_visual_order_diagnostic(
 ///|
 pub fn SunRasterRenderer::text_selection_geometry_diagnostic(
   self : SunRasterRenderer,
-  text? : String = "MoUI Sun text diagnostics",
-  selection? : @core.TextRange? = None,
-  font? : @core.FontSpec = @core.FontSpec::new(size=14.0),
-  max_width? : Double = 96.0,
+  text~ : String = "MoUI Sun text diagnostics",
+  selection~ : @core.TextRange? = None,
+  font~ : @core.FontSpec = @core.FontSpec::new(size=14.0),
+  max_width~ : Double = 96.0,
 ) -> SunTextSelectionGeometryDiagnostic {
   let system = self.text_system()
   let layout = system.layout_paragraph(
@@ -291,7 +291,7 @@ fn sun_text_diagnostic_hit_test(
 fn sun_selected_line_count(
   layout : @core.TextParagraphLayoutResult,
   range : @core.TextRange,
-) -> Int {
+) -> Int32 {
   let normalized = range.normalized()
   let mut count = 0
   for line in layout.lines {
@@ -341,14 +341,14 @@ fn sun_emoji_glyph_key(
   font_source : String,
   text_system_id : String,
   shaper : String,
-  resolved_fallback_face_index : Int,
+  resolved_fallback_face_index : Int32,
   fallback_script_tag : String,
   fallback_language_tags : Array[String],
-  fallback_request_language_count : Int,
+  fallback_request_language_count : Int32,
   requested_font_family : String,
-  registered_font_count : Int,
-  resolved_face_count : Int,
-  fallback_character : Int,
+  registered_font_count : Int32,
+  resolved_face_count : Int32,
+  fallback_character : Int32,
   glyph_format : String,
 ) -> String {
   let script_key = if fallback_script_tag == "" {
@@ -365,7 +365,7 @@ fn sun_emoji_glyph_key(
 }
 
 ///|
-fn sun_resolved_face_label(face_index : Int) -> String {
+fn sun_resolved_face_label(face_index : Int32) -> String {
   if face_index < 0 {
     "missing"
   } else {
@@ -374,7 +374,7 @@ fn sun_resolved_face_label(face_index : Int) -> String {
 }
 
 ///|
-fn sun_positive_pixel_extent(value : Double) -> Int {
+fn sun_positive_pixel_extent(value : Double) -> Int32 {
   value.ceil().to_int().max(1)
 }
 
@@ -405,7 +405,7 @@ fn sun_fallback_script_tag(tags : Array[String]) -> String {
 }
 
 ///|
-fn sun_script_language_tag_for_codepoint(codepoint : Int) -> String? {
+fn sun_script_language_tag_for_codepoint(codepoint : Int32) -> String? {
   if codepoint <= 0 {
     None
   } else if @render_common.codepoint_is_emoji_hint(codepoint) {
@@ -448,49 +448,49 @@ fn sun_push_language_tag(tags : Array[String], tag : String) -> Unit {
 }
 
 ///|
-fn sun_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_hebrew_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0590 && codepoint <= 0x05FF
 }
 
 ///|
-fn sun_codepoint_is_arabic_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_arabic_script(codepoint : Int32) -> Bool {
   (codepoint >= 0x0600 && codepoint <= 0x08FF) ||
   (codepoint >= 0xFB50 && codepoint <= 0xFDFF) ||
   (codepoint >= 0xFE70 && codepoint <= 0xFEFF)
 }
 
 ///|
-fn sun_codepoint_is_devanagari_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_devanagari_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0900 && codepoint <= 0x097F
 }
 
 ///|
-fn sun_codepoint_is_thai_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_thai_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0E00 && codepoint <= 0x0E7F
 }
 
 ///|
-fn sun_codepoint_is_lao_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_lao_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0E80 && codepoint <= 0x0EFF
 }
 
 ///|
-fn sun_codepoint_is_sinhala_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_sinhala_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0D80 && codepoint <= 0x0DFF
 }
 
 ///|
-fn sun_codepoint_is_khmer_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_khmer_script(codepoint : Int32) -> Bool {
   codepoint >= 0x1780 && codepoint <= 0x17FF
 }
 
 ///|
-fn sun_codepoint_is_myanmar_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_myanmar_script(codepoint : Int32) -> Bool {
   codepoint >= 0x1000 && codepoint <= 0x109F
 }
 
 ///|
-fn sun_codepoint_is_latin_script(codepoint : Int) -> Bool {
+fn sun_codepoint_is_latin_script(codepoint : Int32) -> Bool {
   (codepoint >= 0x0041 && codepoint <= 0x005A) ||
   (codepoint >= 0x0061 && codepoint <= 0x007A) ||
   (codepoint >= 0x00C0 && codepoint <= 0x024F) ||
@@ -498,7 +498,7 @@ fn sun_codepoint_is_latin_script(codepoint : Int) -> Bool {
 }
 
 ///|
-fn sun_text_ready_count(values : Array[Bool]) -> Int {
+fn sun_text_ready_count(values : Array[Bool]) -> Int32 {
   let mut count = 0
   for value in values {
     if value {
@@ -509,7 +509,7 @@ fn sun_text_ready_count(values : Array[Bool]) -> Int {
 }
 
 ///|
-fn sun_text_gap_count(values : Array[Bool]) -> Int {
+fn sun_text_gap_count(values : Array[Bool]) -> Int32 {
   let mut count = 0
   for value in values {
     if !value {

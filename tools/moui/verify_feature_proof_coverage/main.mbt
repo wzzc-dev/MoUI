@@ -8,9 +8,9 @@ struct CoverageGap {
 ///|
 struct CoverageResult {
   gaps : Array[CoverageGap]
-  proven : Int
-  gap_count : Int
-  skipped : Int
+  proven : Int32
+  gap_count : Int32
+  skipped : Int32
 }
 
 ///|
@@ -193,7 +193,7 @@ fn parse_cli(args : Array[String]) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Err("help") | Err("missing --report") => {
       println(usage())

@@ -32,22 +32,22 @@ pub extend GpuRenderWorkerFrame with Debug::{to_repr}
 ///|
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
-  submitted : Int
-  started : Int
-  completed : Int
-  dropped : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
-  gpu_context_generation : Int
-  recovery_count : Int
-  recovery_failures : Int
-  readback_count : Int
+  submitted : Int32
+  started : Int32
+  completed : Int32
+  dropped : Int32
+  replaced_pending : Int32
+  rejected_generation : Int32
+  surface_generation : Int32
+  gpu_context_generation : Int32
+  recovery_count : Int32
+  recovery_failures : Int32
+  readback_count : Int32
   resource_cache_bytes : Int64
   in_flight : Bool
   pending : Bool
-  control_pending : Int
-  worker_thread_id : Int
+  control_pending : Int32
+  worker_thread_id : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -62,31 +62,31 @@ pub extend GpuRenderWorkerDiagnostics with ToJson::{to_json}
 ///|
 pub struct GpuRenderWorker {
   mut state : GpuRenderWorkerState
-  mut surface_generation : Int
-  mut gpu_context_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut gpu_context_generation : Int32
+  mut next_sequence : Int32
   mut in_flight : GpuRenderWorkerFrame?
   mut pending : GpuRenderWorkerFrame?
   controls : Array[@render.RendererControlMessage]
   completions : Array[@render.RenderPresentCompletion]
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut dropped : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
-  mut recovery_count : Int
-  mut recovery_failures : Int
-  readback_count : Int
+  mut submitted : Int32
+  mut started : Int32
+  mut completed : Int32
+  mut dropped : Int32
+  mut replaced_pending : Int32
+  mut rejected_generation : Int32
+  mut recovery_count : Int32
+  mut recovery_failures : Int32
+  readback_count : Int32
   resource_cache_bytes : Int64
-  worker_thread_id : Int
+  worker_thread_id : Int32
   mut fail_next_recovery : Bool
 }
 
 ///|
 pub fn GpuRenderWorker::new(
-  surface_generation? : Int = 1,
-  worker_thread_id? : Int = 0,
+  surface_generation~ : Int32 = 1,
+  worker_thread_id~ : Int32 = 0,
 ) -> GpuRenderWorker {
   {
     state: Idle,
@@ -118,12 +118,12 @@ pub fn GpuRenderWorker::state(self : GpuRenderWorker) -> GpuRenderWorkerState {
 }
 
 ///|
-pub fn GpuRenderWorker::surface_generation(self : GpuRenderWorker) -> Int {
+pub fn GpuRenderWorker::surface_generation(self : GpuRenderWorker) -> Int32 {
   self.surface_generation
 }
 
 ///|
-pub fn GpuRenderWorker::gpu_context_generation(self : GpuRenderWorker) -> Int {
+pub fn GpuRenderWorker::gpu_context_generation(self : GpuRenderWorker) -> Int32 {
   self.gpu_context_generation
 }
 
@@ -131,7 +131,7 @@ pub fn GpuRenderWorker::gpu_context_generation(self : GpuRenderWorker) -> Int {
 pub fn GpuRenderWorker::submit_control(
   self : GpuRenderWorker,
   control : @render.RendererControlMessage,
-) -> Int {
+) -> Int32 {
   if self.state is Shutdown {
     return self.controls.length()
   }
@@ -153,7 +153,7 @@ pub fn GpuRenderWorker::submit(
   self : GpuRenderWorker,
   input : @render.RenderFrameInput,
   token? : @render.FrameToken,
-  submitted_at_ms? : Double = 0.0,
+  submitted_at_ms~ : Double = 0.0,
 ) -> @render.RenderFrameResult {
   if self.state is Shutdown || self.state is FallbackToRaster {
     self.dropped = self.dropped + 1
@@ -260,7 +260,7 @@ fn GpuRenderWorker::recover_if_needed(self : GpuRenderWorker) -> Unit {
 /// from their event loop; fallback-safe providers call it from the host tick.
 pub fn GpuRenderWorker::poll(
   self : GpuRenderWorker,
-  completed_at_ms? : Double = 0.0,
+  completed_at_ms~ : Double = 0.0,
 ) -> Unit {
   while !self.controls.is_empty() {
     let control = self.controls.remove(0)

@@ -1,12 +1,12 @@
 ///|
 pub fn[Msg] form_actions(
   primary~ : @controls.StateViewAction[Msg],
-  secondary? : @controls.StateViewAction[Msg]? = None,
-  status? : String = "",
-  primary_enabled? : Bool = true,
-  secondary_enabled? : Bool = true,
+  secondary~ : @controls.StateViewAction[Msg]? = None,
+  status~ : String = "",
+  primary_enabled~ : Bool = true,
+  secondary_enabled~ : Bool = true,
   theme? : @core.Theme,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let action_width = 116.0
@@ -71,15 +71,15 @@ pub fn[Msg] form_actions(
 pub fn[Msg] form_workflow_bar(
   summary~ : FormValidationSummary,
   primary~ : @controls.StateViewAction[Msg],
-  secondary? : @controls.StateViewAction[Msg]? = None,
-  focus_scope? : @core.FocusScope? = None,
-  focus_invalid? : @controls.StateViewAction[Msg]? = None,
-  valid_message? : String = "",
-  invalid_title? : String = "Review required",
-  status? : String = "",
+  secondary~ : @controls.StateViewAction[Msg]? = None,
+  focus_scope~ : @core.FocusScope? = None,
+  focus_invalid~ : @controls.StateViewAction[Msg]? = None,
+  valid_message~ : String = "",
+  invalid_title~ : String = "Review required",
+  status~ : String = "",
   theme? : @core.Theme,
   style? : @style.FormValidationStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []

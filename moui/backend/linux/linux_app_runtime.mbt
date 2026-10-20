@@ -3,8 +3,8 @@
 /// supplied by the application and are resolved only after a native window
 /// exists and can provide its host surface kit.
 pub fn entry(
-  options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
-  smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
+  options~ : LinuxHostAppOptions = LinuxHostAppOptions::new(),
+  smoke_options~ : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(
     id="linux",
@@ -103,7 +103,7 @@ async fn launch_linux_app_async_pump(
   binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   window_requests~ : @host.WindowRequests,
-  frame_interval_ms~ : Int,
+  frame_interval_ms~ : Int32,
 ) -> Unit {
   let (event_loop, app) = create_linux_app(
     title,

@@ -10,9 +10,9 @@ struct PackageBudget {
   label : String
   path : String
   package_token : String
-  max_lines : Int
-  max_pub_lines : Int
-  max_pub_all_lines : Int
+  max_lines : Int32
+  max_pub_lines : Int32
+  max_pub_all_lines : Int32
   required_tokens : Array[String]
   forbidden_tokens : Array[String]
 }
@@ -28,8 +28,8 @@ struct ViewReturnRule {
 struct LegacyCoreFamilyBudget {
   label : String
   tokens : Array[String]
-  max_occurrences : Int
-  target_occurrences : Int
+  max_occurrences : Int32
+  target_occurrences : Int32
 }
 
 ///|
@@ -651,7 +651,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
 }
 
 ///|
-fn line_count(text : String) -> Int {
+fn line_count(text : String) -> Int32 {
   let end = for index = text.length(); index > 0; {
     if text[index - 1] == '\n' {
       continue index - 1
@@ -674,7 +674,7 @@ fn line_count(text : String) -> Int {
 }
 
 ///|
-fn count_lines_with_prefix(text : String, prefix : String) -> Int {
+fn count_lines_with_prefix(text : String, prefix : String) -> Int32 {
   let mut count = 0
   for line_view in text.split("\n") {
     let line = line_view.to_owned()
@@ -775,8 +775,8 @@ fn collect_moon_pkg_files(
 fn push_max_check(
   failures : Array[String],
   label : String,
-  actual : Int,
-  max : Int,
+  actual : Int32,
+  max : Int32,
 ) -> Unit {
   if actual > max {
     failures.push(label + " is \{actual}, above budget \{max}")
@@ -959,7 +959,7 @@ fn validate_root_facade_shape(
 }
 
 ///|
-fn count_token_occurrences(text : String, token : String) -> Int {
+fn count_token_occurrences(text : String, token : String) -> Int32 {
   let mut count = 0
   let mut start = 0
   while start < text.length() {
@@ -1640,7 +1640,7 @@ fn run_checks(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

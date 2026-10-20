@@ -11,7 +11,7 @@ pub fn Data::is_available(self : Data) -> Bool {
 }
 
 ///|
-pub fn Data::size(self : Data) -> Int {
+pub fn Data::size(self : Data) -> Int32 {
   ignore(self)
   0
 }
@@ -46,13 +46,13 @@ pub fn Codec::is_available(self : Codec) -> Bool {
 }
 
 ///|
-pub fn Codec::width(self : Codec) -> Int {
+pub fn Codec::width(self : Codec) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn Codec::height(self : Codec) -> Int {
+pub fn Codec::height(self : Codec) -> Int32 {
   ignore(self)
   0
 }
@@ -86,13 +86,13 @@ pub fn Image::is_available(self : Image) -> Bool {
 }
 
 ///|
-pub fn Image::width(self : Image) -> Int {
+pub fn Image::width(self : Image) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn Image::height(self : Image) -> Int {
+pub fn Image::height(self : Image) -> Int32 {
   ignore(self)
   0
 }
@@ -128,8 +128,8 @@ pub fn Image::from_encoded_bytes(bytes : Bytes) -> Image? {
 ///|
 pub fn Image::encode_to_data(
   self : Image,
-  format? : @skia.EncodedImageFormat = PNG,
-  quality? : Int = 100,
+  format~ : @skia.EncodedImageFormat = PNG,
+  quality~ : Int32 = 100,
 ) -> Data? {
   ignore(self)
   ignore(format)
@@ -146,9 +146,9 @@ pub fn Bitmap::alloc_n32_premul(size : @skia.ISize) -> Bitmap? {
 ///|
 pub fn Bitmap::from_pixels(
   pixels : Bytes,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
 ) -> Bitmap? {
   ignore(pixels)
   ignore(width)
@@ -164,13 +164,13 @@ pub fn Bitmap::is_available(self : Bitmap) -> Bool {
 }
 
 ///|
-pub fn Bitmap::width(self : Bitmap) -> Int {
+pub fn Bitmap::width(self : Bitmap) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn Bitmap::height(self : Bitmap) -> Int {
+pub fn Bitmap::height(self : Bitmap) -> Int32 {
   ignore(self)
   0
 }
@@ -186,13 +186,13 @@ pub fn Bitmap::image_info(self : Bitmap) -> @skia.ImageInfo {
 }
 
 ///|
-pub fn Bitmap::row_bytes(self : Bitmap) -> Int {
+pub fn Bitmap::row_bytes(self : Bitmap) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn Bitmap::byte_size(self : Bitmap) -> Int {
+pub fn Bitmap::byte_size(self : Bitmap) -> Int32 {
   ignore(self)
   0
 }
@@ -496,13 +496,13 @@ pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
 }
 
 ///|
-pub fn Surface::width(self : Surface) -> Int {
+pub fn Surface::width(self : Surface) -> Int32 {
   ignore(self)
   0
 }
 
 ///|
-pub fn Surface::height(self : Surface) -> Int {
+pub fn Surface::height(self : Surface) -> Int32 {
   ignore(self)
   0
 }
@@ -541,8 +541,8 @@ pub fn Surface::copy_from(self : Surface, source : Surface) -> Bool {
 pub fn Surface::render_frame(
   self : Surface,
   frame : @skia.RenderFrameDescriptor,
-  font? : Font? = None,
-  frame_index? : Int = 0,
+  font~ : Font? = None,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFrameReplayStats {
   ignore(self)
   ignore(font)
@@ -560,8 +560,8 @@ pub fn Surface::render_frame_with_resources(
   self : Surface,
   frame : @skia.RenderFrameDescriptor,
   resources : NativeReplayResources,
-  font? : Font? = None,
-  frame_index? : Int = 0,
+  font~ : Font? = None,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFrameReplayStats {
   ignore(resources)
   self.render_frame(frame, font~, frame_index~)
@@ -589,7 +589,7 @@ pub fn Surface::image_snapshot_with_bounds(
 /// Read surface pixels into an owned MoonBit `Pixmap`.
 pub fn Surface::read_pixels(
   self : Surface,
-  bounds? : @skia.IRect = self.image_info().bounds(),
+  bounds~ : @skia.IRect = self.image_info().bounds(),
 ) -> @skia.Pixmap? {
   ignore(self)
   ignore(bounds)

@@ -1,11 +1,11 @@
 ///|
 struct LineBudgetOverflow {
   path : String
-  lines : Int
+  lines : Int32
 }
 
 ///|
-fn oversized_file_threshold() -> Int {
+fn oversized_file_threshold() -> Int32 {
   1800
 }
 

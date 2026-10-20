@@ -201,6 +201,6 @@ fn Model::status_line(self : Model, theme~ : @moui.Theme) -> @moui.View[Msg] {
 }
 
 ///|
-fn scroll_cells(offset : Double) -> Int {
+fn scroll_cells(offset : Double) -> Int32 {
   (offset / scroll_line).to_int()
 }

@@ -14,7 +14,7 @@ priv struct PlacedNode {
   /// Element child indices whose placed frames are overlay-positioned: their
   /// render subtrees are hoisted and painted after the whole tree so popup
   /// content escapes ancestor clip rects.
-  overlay_child_indices : Array[Int]
+  overlay_child_indices : Array[Int32]
   /// Hit region: the frame intersected with the accumulated ancestor clip.
   /// Hit-testing uses this instead of paint bounds so clipped content never
   /// wins hit-test over content painted below it.
@@ -34,7 +34,7 @@ fn ElementNode::measure_with_text_system(
   self : ElementNode,
   constraints : Constraints,
   environment~ : Environment,
-  style? : ViewStyle = ViewStyle::empty(),
+  style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
 ) -> MeasuredNode {
   if !self.has_dirty_layout() &&
@@ -93,10 +93,10 @@ fn ElementNode::place_with_text_system(
   self : ElementNode,
   bounds : Rect,
   environment~ : Environment,
-  style? : ViewStyle = ViewStyle::empty(),
+  style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  layout_direction? : LayoutDirection = LeftToRight,
-  overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
+  layout_direction~ : LayoutDirection = LeftToRight,
+  overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
 ) -> PlacedNode {
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_place_frame == Some(bounds) &&
@@ -144,9 +144,9 @@ fn ElementNode::place_measured_with_text_system(
   style~ : ViewStyle,
   text_system~ : TextSystem,
   layout_direction~ : LayoutDirection,
-  overlay_overrides? : Array[(Int, Array[(Int, Rect)])] = [],
-  accumulated_clip? : Rect? = None,
-  fit_measured_sizes? : Bool = false,
+  overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
+  accumulated_clip~ : Rect? = None,
+  fit_measured_sizes~ : Bool = false,
 ) -> PlacedNode {
   // A tight-fit re-measure already settled this subtree under the final
   // frame's tight constraints, so its `measured` child sizes are the wrapped
@@ -193,7 +193,7 @@ fn ElementNode::place_measured_with_text_system(
     accumulated_clip
   }
   let children : Array[PlacedNode] = []
-  let overlay_child_indices : Array[Int] = []
+  let overlay_child_indices : Array[Int32] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
       // Overlay-positioned children skip their parent-assigned provisional
@@ -259,9 +259,9 @@ fn ElementNode::place_measured_with_text_system(
 
 ///|
 fn overlay_overrides_for(
-  overrides : Array[(Int, Array[(Int, Rect)])],
-  element_id : Int,
-) -> Array[(Int, Rect)]? {
+  overrides : Array[(Int32, Array[(Int32, Rect)])],
+  element_id : Int32,
+) -> Array[(Int32, Rect)]? {
   for entry in overrides {
     if entry.0 == element_id {
       return Some(entry.1)
@@ -271,7 +271,10 @@ fn overlay_overrides_for(
 }
 
 ///|
-fn overlay_child_override(pairs : Array[(Int, Rect)]?, index : Int) -> Rect? {
+fn overlay_child_override(
+  pairs : Array[(Int32, Rect)]?,
+  index : Int32,
+) -> Rect? {
   match pairs {
     Some(pairs) =>
       for pair in pairs {

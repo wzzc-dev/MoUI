@@ -16,7 +16,7 @@ priv struct DesktopPalette {
 }
 
 ///|
-fn rgba8(r : Int, g : Int, b : Int, a? : Double = 1.0) -> @graphics.Color {
+fn rgba8(r : Int32, g : Int32, b : Int32, a~ : Double = 1.0) -> @graphics.Color {
   @graphics.Color::rgba(
     r=r.to_double() / 255.0,
     g=g.to_double() / 255.0,
@@ -215,8 +215,8 @@ fn[Msg] glass_panel(
   width : Double,
   height : Double,
   palette : DesktopPalette,
-  radius? : Double = 18.0,
-  padding? : Double = 0.0,
+  radius~ : Double = 18.0,
+  padding~ : Double = 0.0,
 ) -> @moui.View[Msg] {
   @views.container(
     child,
@@ -236,8 +236,8 @@ fn[Msg] solid_panel(
   height : Double,
   palette : DesktopPalette,
   background? : @graphics.Color,
-  radius? : Double = 14.0,
-  padding? : Double = 0.0,
+  radius~ : Double = 14.0,
+  padding~ : Double = 0.0,
 ) -> @moui.View[Msg] {
   @views.container(
     child,

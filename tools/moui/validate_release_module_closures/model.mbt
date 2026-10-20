@@ -203,7 +203,7 @@ fn catalog_module(catalog : ReleaseCatalog, name : String) -> ReleaseModule? {
 }
 
 ///|
-fn release_stage_index(catalog : ReleaseCatalog, stage : String) -> Int {
+fn release_stage_index(catalog : ReleaseCatalog, stage : String) -> Int32 {
   for index, value in catalog.release_stages {
     if value == stage {
       return index

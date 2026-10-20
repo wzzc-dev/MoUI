@@ -25,8 +25,8 @@ pub extend RendererResourceDescriptor with Eq::{not_equal, equal}
 ///|
 pub fn RendererResourceDescriptor::new(
   key : RendererResourceKey,
-  byte_size? : Int64 = 0L,
-  cacheable? : Bool = true,
+  byte_size~ : Int64 = 0L,
+  cacheable~ : Bool = true,
 ) -> RendererResourceDescriptor {
   {
     key,
@@ -39,8 +39,8 @@ pub fn RendererResourceDescriptor::new(
 pub fn RendererResourceDescriptor::of_kind(
   kind : RendererResourceKind,
   id : Bytes,
-  byte_size? : Int64 = 0L,
-  cacheable? : Bool = true,
+  byte_size~ : Int64 = 0L,
+  cacheable~ : Bool = true,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::new(
     RendererResourceKey::new(kind, id),
@@ -52,7 +52,7 @@ pub fn RendererResourceDescriptor::of_kind(
 ///|
 pub fn RendererResourceDescriptor::image(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(ImageResource, id, byte_size~)
 }
@@ -60,7 +60,7 @@ pub fn RendererResourceDescriptor::image(
 ///|
 pub fn RendererResourceDescriptor::shader(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(ShaderResource, id, byte_size~)
 }
@@ -68,7 +68,7 @@ pub fn RendererResourceDescriptor::shader(
 ///|
 pub fn RendererResourceDescriptor::color_filter(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(ColorFilterResource, id, byte_size~)
 }
@@ -76,7 +76,7 @@ pub fn RendererResourceDescriptor::color_filter(
 ///|
 pub fn RendererResourceDescriptor::image_filter(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(ImageFilterResource, id, byte_size~)
 }
@@ -84,7 +84,7 @@ pub fn RendererResourceDescriptor::image_filter(
 ///|
 pub fn RendererResourceDescriptor::mask_filter(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(MaskFilterResource, id, byte_size~)
 }
@@ -92,7 +92,7 @@ pub fn RendererResourceDescriptor::mask_filter(
 ///|
 pub fn RendererResourceDescriptor::filter(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::image_filter(id, byte_size~)
 }
@@ -100,7 +100,7 @@ pub fn RendererResourceDescriptor::filter(
 ///|
 pub fn RendererResourceDescriptor::typeface(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(TypefaceResource, id, byte_size~)
 }
@@ -108,7 +108,7 @@ pub fn RendererResourceDescriptor::typeface(
 ///|
 pub fn RendererResourceDescriptor::font(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(FontResource, id, byte_size~)
 }
@@ -116,7 +116,7 @@ pub fn RendererResourceDescriptor::font(
 ///|
 pub fn RendererResourceDescriptor::path(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(PathResource, id, byte_size~)
 }
@@ -124,7 +124,7 @@ pub fn RendererResourceDescriptor::path(
 ///|
 pub fn RendererResourceDescriptor::text_run(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(TextRunResource, id, byte_size~)
 }
@@ -132,7 +132,7 @@ pub fn RendererResourceDescriptor::text_run(
 ///|
 pub fn RendererResourceDescriptor::surface(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(SurfaceResource, id, byte_size~)
 }
@@ -140,7 +140,7 @@ pub fn RendererResourceDescriptor::surface(
 ///|
 pub fn RendererResourceDescriptor::gpu_context(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(GpuContextResource, id, byte_size~)
 }
@@ -148,7 +148,7 @@ pub fn RendererResourceDescriptor::gpu_context(
 ///|
 pub fn RendererResourceDescriptor::gpu_surface(
   id : Bytes,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::of_kind(GpuSurfaceResource, id, byte_size~)
 }

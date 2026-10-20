@@ -1,8 +1,8 @@
 ///|
 pub fn[Msg] data_grid_semantics(
   view : @core.View[Msg],
-  row_count~ : Int,
-  column_count~ : Int,
+  row_count~ : Int32,
+  column_count~ : Int32,
 ) -> @core.View[Msg] {
   view
   .semantics_role(Grid)
@@ -17,9 +17,9 @@ pub fn[Msg] data_grid_semantics(
 ///|
 pub fn[Msg] data_grid_row_semantics(
   view : @core.View[Msg],
-  row_index~ : Int,
-  row_count~ : Int,
-  column_count~ : Int,
+  row_index~ : Int32,
+  row_count~ : Int32,
+  column_count~ : Int32,
 ) -> @core.View[Msg] {
   view
   .semantics_role(Row)
@@ -35,12 +35,12 @@ pub fn[Msg] data_grid_row_semantics(
 ///|
 pub fn[Msg] data_grid_cell_semantics(
   view : @core.View[Msg],
-  row_index~ : Int,
-  column_index~ : Int,
-  row_count~ : Int,
-  column_count~ : Int,
-  selected? : Bool = false,
-  read_only? : Bool = true,
+  row_index~ : Int32,
+  column_index~ : Int32,
+  row_count~ : Int32,
+  column_count~ : Int32,
+  selected~ : Bool = false,
+  read_only~ : Bool = true,
 ) -> @core.View[Msg] {
   view
   .semantics_role(Cell)

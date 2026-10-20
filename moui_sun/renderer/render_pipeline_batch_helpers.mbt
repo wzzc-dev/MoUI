@@ -3,8 +3,8 @@ fn render_pipeline_add_command_dirty(
   dirty_region : @graphics.DirtyRegion,
   canvas_bounds : @graphics.PixelRect,
   command : RenderCommand,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   match render_command_estimated_dirty_rect(command, width, height) {
     Some(rect) => dirty_region.add_clipped_rect(rect, canvas_bounds)
@@ -15,8 +15,8 @@ fn render_pipeline_add_command_dirty(
 ///|
 fn render_pipeline_make_batch(
   kind : RenderPipelineBatchKind,
-  start_index : Int,
-  command_count : Int,
+  start_index : Int32,
+  command_count : Int32,
   dirty_region : @graphics.DirtyRegion,
 ) -> RenderPipelineBatch {
   { kind, start_index, command_count, dirty_region, }

@@ -17,7 +17,7 @@ fn run_checks(repo_root : String, scope : String) -> Array[String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

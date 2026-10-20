@@ -16,8 +16,8 @@ pub extend TextSystem with FontLoader::{load_font_data}
 ///|
 /// Caret geometry in layout-local coordinates for one text insertion point.
 struct TextCaret {
-  index : Int
-  line : Int
+  index : Int32
+  line : Int32
   x : Double
   y : Double
   height : Double
@@ -33,9 +33,9 @@ pub extend TextCaret with Eq::{not_equal, equal}
 ///|
 /// Highlight geometry for one visual line of a text selection.
 struct TextSelectionRect {
-  start_index : Int
-  end_index : Int
-  line : Int
+  start_index : Int32
+  end_index : Int32
+  line : Int32
   x : Double
   y : Double
   width : Double
@@ -57,7 +57,7 @@ struct TextSystemFontRegistration {
   font_data : FontData
   did_replace : Bool
   did_replace_cached_face : Bool
-  font_count : Int
+  font_count : Int32
 } derive(Debug)
 
 ///|
@@ -79,8 +79,8 @@ pub extend TextSystemLayout with Debug::{to_repr}
 
 ///|
 priv struct TextLineSourceSpan {
-  start_index : Int
-  end_index : Int
+  start_index : Int32
+  end_index : Int32
 }
 
 ///|
@@ -95,7 +95,7 @@ pub fn TextSystem::new() -> TextSystem {
 
 ///|
 /// Create an empty text system with an LRU parsed-face cache capacity.
-pub fn TextSystem::with_font_cache_capacity(capacity : Int) -> TextSystem {
+pub fn TextSystem::with_font_cache_capacity(capacity : Int32) -> TextSystem {
   {
     loader: MemoryFontLoader::new(),
     face_cache: FontFaceCache::with_capacity(capacity),
@@ -109,7 +109,7 @@ pub fn TextSystem::register_font_bytes(
   self : TextSystem,
   key : String,
   data : Bytes,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> Result[FontFace, FontParseError] {
   match self.register_font_bytes_result(key, data, font_index~) {
     Ok(result) => Ok(result.get_face())
@@ -123,7 +123,7 @@ pub fn TextSystem::register_font_bytes_result(
   self : TextSystem,
   key : String,
   data : Bytes,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> Result[TextSystemFontRegistration, FontParseError] {
   self.register_font_data_result(key, FontData::new(data, font_index~))
 }
@@ -176,7 +176,7 @@ pub fn TextSystem::register_font_file(
   self : TextSystem,
   key : String,
   path : String,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> Result[FontFace, FontLoadError] {
   match self.register_font_file_result(key, path, font_index~) {
     Ok(result) => Ok(result.get_face())
@@ -191,7 +191,7 @@ pub fn TextSystem::register_font_file_result(
   self : TextSystem,
   key : String,
   path : String,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> Result[TextSystemFontRegistration, FontLoadError] {
   let loaded : Bytes? = Some(read_file(path)) catch { _ => None }
   match loaded {
@@ -249,13 +249,13 @@ pub fn TextSystemFontRegistration::did_replace_cached_face(
 /// Return the registered font-data entry count after this registration.
 pub fn TextSystemFontRegistration::get_font_count(
   self : TextSystemFontRegistration,
-) -> Int {
+) -> Int32 {
   self.font_count
 }
 
 ///|
 /// Return the number of registered font-data entries.
-pub fn TextSystem::font_count(self : TextSystem) -> Int {
+pub fn TextSystem::font_count(self : TextSystem) -> Int32 {
   self.loader.len()
 }
 
@@ -267,7 +267,7 @@ pub fn TextSystem::get_font_keys(self : TextSystem) -> Array[String] {
 
 ///|
 /// Return a registered font key by registration-order index.
-pub fn TextSystem::get_font_key(self : TextSystem, index : Int) -> String? {
+pub fn TextSystem::get_font_key(self : TextSystem, index : Int32) -> String? {
   guard index >= 0 && index < self.font_keys.length() else { return None }
   Some(self.font_keys[index])
 }
@@ -337,13 +337,13 @@ fn TextSystem::remove_font_key(self : TextSystem, key : String) -> Unit {
 
 ///|
 /// Return the number of parsed font faces currently cached.
-pub fn TextSystem::font_face_cache_len(self : TextSystem) -> Int {
+pub fn TextSystem::font_face_cache_len(self : TextSystem) -> Int32 {
   self.face_cache.len()
 }
 
 ///|
 /// Return the parsed face cache capacity, or 0 for unbounded caches.
-pub fn TextSystem::font_face_cache_capacity(self : TextSystem) -> Int {
+pub fn TextSystem::font_face_cache_capacity(self : TextSystem) -> Int32 {
   self.face_cache.capacity()
 }
 
@@ -461,7 +461,7 @@ pub fn TextSystemLayout::get_layout(self : TextSystemLayout) -> TextLayout {
 /// Compute caret geometry for a text insertion index from this prepared layout.
 pub fn TextSystemLayout::caret_for_index(
   self : TextSystemLayout,
-  index : Int,
+  index : Int32,
 ) -> TextCaret {
   text_caret_from_layout(self.face, self.layout, self.text, index, self.config)
 }
@@ -488,8 +488,8 @@ pub fn TextSystemLayout::caret_at_position(
 /// Compute selection highlight rectangles from this prepared layout.
 pub fn TextSystemLayout::selection_rects(
   self : TextSystemLayout,
-  start_index : Int,
-  end_index : Int,
+  start_index : Int32,
+  end_index : Int32,
 ) -> Array[TextSelectionRect] {
   text_selection_rects_from_layout(
     self.layout,
@@ -506,7 +506,7 @@ pub fn TextSystem::caret_for_text(
   self : TextSystem,
   key : String,
   text : String,
-  index : Int,
+  index : Int32,
   config : LayoutConfig,
 ) -> Result[TextCaret, FontLoadError] {
   match self.get_font_face(key) {
@@ -544,8 +544,8 @@ pub fn TextSystem::selection_rects_for_text(
   self : TextSystem,
   key : String,
   text : String,
-  start_index : Int,
-  end_index : Int,
+  start_index : Int32,
+  end_index : Int32,
   config : LayoutConfig,
 ) -> Result[Array[TextSelectionRect], FontLoadError] {
   match self.get_font_face(key) {
@@ -563,13 +563,13 @@ pub fn TextSystem::selection_rects_for_text(
 
 ///|
 /// Return the clamped text insertion index.
-pub fn TextCaret::get_index(self : TextCaret) -> Int {
+pub fn TextCaret::get_index(self : TextCaret) -> Int32 {
   self.index
 }
 
 ///|
 /// Return the zero-based visual line containing this caret.
-pub fn TextCaret::get_line(self : TextCaret) -> Int {
+pub fn TextCaret::get_line(self : TextCaret) -> Int32 {
   self.line
 }
 
@@ -599,19 +599,19 @@ pub fn TextCaret::get_baseline_y(self : TextCaret) -> Double {
 
 ///|
 /// Return the clamped source start index covered by this selection rect.
-pub fn TextSelectionRect::get_start_index(self : TextSelectionRect) -> Int {
+pub fn TextSelectionRect::get_start_index(self : TextSelectionRect) -> Int32 {
   self.start_index
 }
 
 ///|
 /// Return the clamped source end index covered by this selection rect.
-pub fn TextSelectionRect::get_end_index(self : TextSelectionRect) -> Int {
+pub fn TextSelectionRect::get_end_index(self : TextSelectionRect) -> Int32 {
   self.end_index
 }
 
 ///|
 /// Return the zero-based visual line containing this selection rect.
-pub fn TextSelectionRect::get_line(self : TextSelectionRect) -> Int {
+pub fn TextSelectionRect::get_line(self : TextSelectionRect) -> Int32 {
   self.line
 }
 
@@ -650,7 +650,7 @@ fn text_caret_from_layout(
   face : FontFace,
   layout : TextLayout,
   text : String,
-  index : Int,
+  index : Int32,
   config : LayoutConfig,
 ) -> TextCaret {
   let caret_index = clamp_text_caret_index(text, index)
@@ -734,7 +734,7 @@ let text_hit_coordinate_limit = 1.0e100
 ///|
 fn empty_text_caret(
   face : FontFace,
-  index : Int,
+  index : Int32,
   config : LayoutConfig,
 ) -> TextCaret {
   let baseline_y = scaled_ascent(face, config)
@@ -742,12 +742,12 @@ fn empty_text_caret(
 }
 
 ///|
-fn clamp_text_caret_index(text : String, index : Int) -> Int {
+fn clamp_text_caret_index(text : String, index : Int32) -> Int32 {
   normalize_text_caret_index(text, index.max(0).min(text.length()))
 }
 
 ///|
-fn normalize_text_caret_index(text : String, index : Int) -> Int {
+fn normalize_text_caret_index(text : String, index : Int32) -> Int32 {
   guard index > 0 && index < text.length() else { return index }
   match text.get_char(index) {
     None => next_text_char_index(text, index)
@@ -762,9 +762,9 @@ fn normalize_text_caret_index(text : String, index : Int) -> Int {
 ///|
 fn clamp_text_range(
   text : String,
-  start_index : Int,
-  end_index : Int,
-) -> (Int, Int) {
+  start_index : Int32,
+  end_index : Int32,
+) -> (Int32, Int32) {
   let start = clamp_text_caret_index(text, start_index)
   let end = clamp_text_caret_index(text, end_index)
   if start <= end {
@@ -778,8 +778,8 @@ fn clamp_text_range(
 fn text_selection_rects_from_layout(
   layout : TextLayout,
   text : String,
-  start_index : Int,
-  end_index : Int,
+  start_index : Int32,
+  end_index : Int32,
   config : LayoutConfig,
 ) -> Array[TextSelectionRect] {
   let (range_start, range_end) = clamp_text_range(text, start_index, end_index)
@@ -852,7 +852,7 @@ fn text_line_source_spans(
 }
 
 ///|
-fn consume_visible_text(text : String, index : Int, count : Int) -> Int {
+fn consume_visible_text(text : String, index : Int32, count : Int32) -> Int32 {
   let mut cursor = index
   let mut remaining = count
   while cursor < text.length() && remaining > 0 {
@@ -873,7 +873,7 @@ fn consume_visible_text(text : String, index : Int, count : Int) -> Int {
 }
 
 ///|
-fn consume_line_break_at(text : String, index : Int) -> Int {
+fn consume_line_break_at(text : String, index : Int32) -> Int32 {
   match text.get_char(index) {
     Some('\r') => {
       let next_index = next_text_char_index(text, index)
@@ -890,8 +890,8 @@ fn consume_line_break_at(text : String, index : Int) -> Int {
 ///|
 fn consume_zero_width_text_before_line_boundary(
   text : String,
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   let mut cursor = index
   while cursor < text.length() {
     match text.get_char(cursor) {
@@ -912,8 +912,8 @@ fn consume_zero_width_text_before_line_boundary(
 ///|
 fn text_caret_line_for_index(
   spans : Array[TextLineSourceSpan],
-  index : Int,
-) -> Int {
+  index : Int32,
+) -> Int32 {
   guard spans.length() > 0 else { return 0 }
   for i in 0..<spans.length() {
     let span = spans[i]
@@ -939,7 +939,7 @@ fn text_caret_line_for_y(
   runs : Array[GlyphRun],
   y : Double,
   config : LayoutConfig,
-) -> Int {
+) -> Int32 {
   guard runs.length() > 0 else { return 0 }
   for i in 0..<runs.length() {
     let top = runs[i].get_baseline_y() - layout.get_baseline()
@@ -953,9 +953,9 @@ fn text_caret_line_for_y(
 ///|
 fn visible_text_count_before(
   text : String,
-  start_index : Int,
-  end_index : Int,
-) -> Int {
+  start_index : Int32,
+  end_index : Int32,
+) -> Int32 {
   let mut count = 0
   let mut cursor = start_index
   while cursor < end_index && cursor < text.length() {
@@ -976,7 +976,7 @@ fn visible_text_count_before(
 }
 
 ///|
-fn text_caret_visible_count_for_x(run : GlyphRun, x : Double) -> Int {
+fn text_caret_visible_count_for_x(run : GlyphRun, x : Double) -> Int32 {
   let glyphs = run.get_glyphs()
   guard glyphs.length() > 0 else { return 0 }
   for i in 0..<glyphs.length() {
@@ -992,10 +992,10 @@ fn text_caret_visible_count_for_x(run : GlyphRun, x : Double) -> Int {
 ///|
 fn text_index_after_visible_count(
   text : String,
-  start_index : Int,
-  end_index : Int,
-  visible_count : Int,
-) -> Int {
+  start_index : Int32,
+  end_index : Int32,
+  visible_count : Int32,
+) -> Int32 {
   guard visible_count > 0 else { return start_index }
   let mut remaining = visible_count
   let mut cursor = start_index
@@ -1020,7 +1020,7 @@ fn text_index_after_visible_count(
 }
 
 ///|
-fn next_text_char_index(text : String, index : Int) -> Int {
+fn next_text_char_index(text : String, index : Int32) -> Int32 {
   let mut cursor = (index + 1).max(0)
   while cursor < text.length() {
     match text.get_char(cursor) {
@@ -1032,7 +1032,7 @@ fn next_text_char_index(text : String, index : Int) -> Int {
 }
 
 ///|
-fn text_caret_x_for_run(run : GlyphRun, visible_before : Int) -> Double {
+fn text_caret_x_for_run(run : GlyphRun, visible_before : Int32) -> Double {
   let glyphs = run.get_glyphs()
   guard glyphs.length() > 0 else { return 0.0 }
   let glyph_index = visible_before.max(0).min(glyphs.length())

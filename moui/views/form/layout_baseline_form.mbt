@@ -1,10 +1,10 @@
 ///|
 pub fn[Msg] baseline_form_rows(
   rows : Array[BaselineFormRow[Msg]],
-  width? : Double = 420.0,
-  label_width? : Double = 140.0,
-  row_spacing? : Double = 10.0,
-  column_spacing? : Double = 12.0,
+  width~ : Double = 420.0,
+  label_width~ : Double = 140.0,
+  row_spacing~ : Double = 10.0,
+  column_spacing~ : Double = 12.0,
 ) -> @core.View[Msg] {
   let children : Array[@core.View[Msg]] = []
   for row in rows {
@@ -123,7 +123,7 @@ fn baseline_form_place(
 fn baseline_form_row_height(
   sizes : Array[@core.Size],
   baselines : Array[Double?],
-  row : Int,
+  row : Int32,
 ) -> Double {
   let label_index = row * 2
   let control_index = label_index + 1
@@ -141,7 +141,7 @@ fn baseline_form_row_height(
 ///|
 fn baseline_at(
   baselines : Array[Double?],
-  index : Int,
+  index : Int32,
   size : @core.Size,
 ) -> Double {
   if index < baselines.length() {

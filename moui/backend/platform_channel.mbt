@@ -34,7 +34,7 @@ pub extend PlatformChannelResponse with ToJson::{to_json}
 pub fn PlatformChannelRequest::new(
   channel~ : String,
   operation~ : String,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> PlatformChannelRequest {
   { channel, operation, payload, }
 }

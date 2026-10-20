@@ -1,9 +1,9 @@
 ///|
 /// Skia-style font style request shared by native typeface matching and fallback.
 pub(all) struct FontStyleRequest {
-  weight : Int
-  width : Int
-  slant : Int
+  weight : Int32
+  width : Int32
+  slant : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -22,9 +22,9 @@ pub impl Default for FontStyleRequest with fn default() {
 
 ///|
 pub fn FontStyleRequest::new(
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> FontStyleRequest {
   {
     weight: weight.clamp(min=1, max=1000),
@@ -98,12 +98,12 @@ pub extend FontDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn FontDescriptor::new(
-  typeface_key? : RendererResourceKey = RendererResourceKey::typeface(
+  typeface_key~ : RendererResourceKey = RendererResourceKey::typeface(
     b"default",
   ),
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
 ) -> FontDescriptor {
   {
     typeface_key,
@@ -116,13 +116,13 @@ pub fn FontDescriptor::new(
 ///|
 pub fn FontDescriptor::from_typeface(
   typeface_key : RendererResourceKey,
-  size? : Float = 12.0,
+  size~ : Float = 12.0,
 ) -> FontDescriptor {
   FontDescriptor::new(typeface_key~, size~)
 }
 
 ///|
-pub fn FontDescriptor::default(size? : Float = 12.0) -> FontDescriptor {
+pub fn FontDescriptor::default(size~ : Float = 12.0) -> FontDescriptor {
   FontDescriptor::new(size~)
 }
 
@@ -210,7 +210,7 @@ pub fn FontDescriptor::resource_key(
 ///|
 pub fn FontDescriptor::resource_descriptor(
   self : FontDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

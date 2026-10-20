@@ -9,7 +9,7 @@ test "viewport host forwards latest snapshot and geometry" {
   )
   ignore(binding.publish(snapshot))
   let host = @moui_3d.ThreeDViewportHost::new(binding~)
-  let seen : @ref.Ref[(UInt64, Int, Int, Double, Int64)?] = Ref(None)
+  let seen : @ref.Ref[(UInt64, Int32, Int32, Double, Int64)?] = Ref(None)
   host.set_surface_handler((handle, width, height, scale) => {
     seen.val = Some((handle, width, height, scale, 0L))
   })

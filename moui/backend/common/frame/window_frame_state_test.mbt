@@ -1,5 +1,5 @@
 ///|
-fn frame_test_renderer(disposals : Ref[Int]) -> @render.RendererSession {
+fn frame_test_renderer(disposals : Ref[Int32]) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),
     render_frame=_ => @render.RenderFrameResult::new(presented=true),

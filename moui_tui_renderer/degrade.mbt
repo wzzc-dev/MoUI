@@ -3,7 +3,7 @@
 pub(all) struct DegradeRecord {
   source : String
   detail : String
-  count : Int
+  count : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -71,7 +71,7 @@ pub fn DegradeLog::find(self : DegradeLog, source : String) -> DegradeRecord? {
 
 ///|
 /// 被丢弃的项目总数(按来源合并后的次数累加)。
-pub fn DegradeLog::total(self : DegradeLog) -> Int {
+pub fn DegradeLog::total(self : DegradeLog) -> Int32 {
   let mut sum = 0
   for record in self.records {
     sum = sum + record.count

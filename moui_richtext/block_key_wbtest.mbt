@@ -7,11 +7,11 @@
 
 ///|
 fn key_sample_block(
-  kind? : MarkdownBlockKind = Paragraph,
-  text? : String = "",
-  inlines? : Array[MarkdownInline] = [],
-  alignments? : Array[@core.TextAlign?] = [],
-  code_language? : String? = None,
+  kind~ : MarkdownBlockKind = Paragraph,
+  text~ : String = "",
+  inlines~ : Array[MarkdownInline] = [],
+  alignments~ : Array[@core.TextAlign?] = [],
+  code_language~ : String? = None,
 ) -> MarkdownBlock {
   { kind, text, inlines, table_alignments: alignments, code_language, }
 }
@@ -19,8 +19,8 @@ fn key_sample_block(
 ///|
 fn key_inline(
   text~ : String,
-  kind? : MarkdownInlineKind = Plain,
-  target? : String? = None,
+  kind~ : MarkdownInlineKind = Plain,
+  target~ : String? = None,
 ) -> MarkdownInline {
   { text, kind, target, }
 }

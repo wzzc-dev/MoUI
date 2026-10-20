@@ -4,9 +4,9 @@ pub fn[Msg] disclosure(
   content~ : @core.View[Msg],
   expanded~ : Bool,
   on_toggle~ : Msg,
-  subtitle? : String = "",
+  subtitle~ : String = "",
   theme? : @core.Theme,
-  width? : Double = 420.0,
+  width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let title_width = @common.view_max_double(80.0, width - 54.0)
@@ -67,7 +67,7 @@ pub fn[Msg] accordion(
   expanded~ : Array[String],
   on_toggle~ : (String) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 420.0,
+  width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
@@ -95,9 +95,9 @@ pub fn[Msg] collapsible_panel(
   content~ : @core.View[Msg],
   expanded~ : Bool,
   on_toggle~ : Msg,
-  subtitle? : String = "",
+  subtitle~ : String = "",
   theme? : @core.Theme,
-  width? : Double = 420.0,
+  width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   @container.container(
@@ -129,10 +129,10 @@ pub fn[Msg] resizable_panel(
   content~ : @core.View[Msg],
   size~ : Double,
   theme? : @core.Theme,
-  height? : Double = 160.0,
-  min_size? : Double = 120.0,
-  max_size? : Double = 520.0,
-  on_drag? : ((Double) -> Msg)? = None,
+  height~ : Double = 160.0,
+  min_size~ : Double = 120.0,
+  max_size~ : Double = 520.0,
+  on_drag~ : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let panel_width = disclosure_clamp_double(size, min_size, max_size)

@@ -27,7 +27,7 @@ pub(all) struct MarkdownEditTransaction {
   // control's committed edit record) already knows it; deriving it from
   // `previous_source` would slice the whole document per keystroke.
   deleted : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   reason : MarkdownEditReason
 } derive(Eq, Debug, ToJson)
@@ -43,10 +43,10 @@ pub extend MarkdownEditTransaction with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentDirtyRange {
-  start_block : Int
-  end_block : Int
-  source_start : Int
-  source_end : Int
+  start_block : Int32
+  end_block : Int32
+  source_start : Int32
+  source_end : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -60,11 +60,11 @@ pub extend MarkdownDocumentDirtyRange with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentBlock {
-  id : Int
+  id : Int32
   // The dirty ±1 edge re-stamps its revision in place on the shared
   // record; absolute offsets shift in place with the incremental apply
   // (shared mutable core, same contract as the text store).
-  mut revision : Int
+  mut revision : Int32
   mut source_range : MarkdownSourceRange
   mut content_range : MarkdownSourceRange
   kind : MarkdownBlockKind
@@ -74,7 +74,7 @@ pub(all) struct MarkdownDocumentBlock {
   // concatenation, which allocated two small strings per block — on the
   // stress fixture that was ~200k allocations per document open.
   fingerprint : UInt64
-  inline_count : Int
+  inline_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -88,9 +88,9 @@ pub extend MarkdownDocumentBlock with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentLayoutBlock {
-  block_id : Int
-  block_index : Int
-  revision : Int
+  block_id : Int32
+  block_index : Int32
+  revision : Int32
   top : Double
   height : Double
   source_range : MarkdownSourceRange
@@ -109,9 +109,9 @@ pub extend MarkdownDocumentLayoutBlock with ToJson::{to_json}
 pub(all) struct MarkdownDocumentBlockHeightMetric {
   // Identity re-stamps in place when a dirty edge bumps the block's
   // revision; position/offset/top fields shift with the incremental apply.
-  mut block_id : Int
-  mut block_index : Int
-  mut revision : Int
+  mut block_id : Int32
+  mut block_index : Int32
+  mut revision : Int32
   mut source_range : MarkdownSourceRange
   mut visual_top_units : Double
   visual_height_units : Double
@@ -146,14 +146,14 @@ pub extend MarkdownDocumentHeightIndex with ToJson::{to_json}
 
 ///|
 pub(all) struct MarkdownDocumentLayoutCache {
-  revision : Int
+  revision : Int32
   width : Double
   scroll_y : Double
   viewport_height : Double
   overscan : Double
   content_height : Double
-  visible_start : Int
-  visible_end : Int
+  visible_start : Int32
+  visible_end : Int32
   blocks : Array[MarkdownDocumentLayoutBlock]
 } derive(Eq, Debug, ToJson)
 
@@ -174,15 +174,15 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   scroll_y : Double
   viewport_height : Double
   overscan : Double
-  visible_start : Int
-  visible_end : Int
-  block_count : Int
-  rendered_block_count : Int
+  visible_start : Int32
+  visible_end : Int32
+  block_count : Int32
+  rendered_block_count : Int32
   // Visual lines clipped off the top of `visible_start`'s block. The document
   // below starts at that line, and `top_padding` already accounts for the
   // height above it, so consumers place content correctly without reading
   // this. It is exposed for assertions and diagnostics.
-  clip_lines : Int
+  clip_lines : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -200,24 +200,24 @@ pub(all) struct MarkdownDocumentSession {
   // whole-source view (`source`). Edits mutate the store in place; every
   // session value derived from an edit shares it.
   text_store : MarkdownDocumentTextStore
-  source_length : Int
+  source_length : Int32
   source_digest : UInt64
   // Stable identity for the lifetime of one open document. Unlike
   // `source_digest`, this survives incremental edits so measured block
   // heights remain valid for blocks whose content did not change.
-  document_identity : Int
+  document_identity : Int32
   blocks : Array[MarkdownDocumentBlock]
   editor_blocks : Array[MarkdownEditorBlock]
-  line_count : Int
-  word_count : Int
-  reading_minutes : Int
+  line_count : Int32
+  word_count : Int32
+  reading_minutes : Int32
   active_heading : String
   metadata_title : String
   metadata_tags : Array[String]
   outline : Array[MarkdownEditorOutlineItem]
-  revision : Int
-  parse_count : Int
-  next_block_id : Int
+  revision : Int32
+  parse_count : Int32
+  next_block_id : Int32
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
@@ -234,10 +234,10 @@ pub extend MarkdownDocumentSession with ToJson::{to_json}
 
 ///|
 /// Process-local identity allocator for document-scoped layout caches.
-let markdown_document_next_identity : Ref[Int] = Ref(1)
+let markdown_document_next_identity : Ref[Int32] = Ref(1)
 
 ///|
-fn markdown_document_fresh_identity() -> Int {
+fn markdown_document_fresh_identity() -> Int32 {
   let identity = markdown_document_next_identity.val
   markdown_document_next_identity.val = identity + 1
   identity
@@ -247,9 +247,9 @@ fn markdown_document_fresh_identity() -> Int {
 pub fn MarkdownEditTransaction::replace_all(
   previous_source : String,
   source : String,
-  caret? : Int = markdown_editor_text_length(source),
-  selection? : @core.TextRange? = None,
-  reason? : MarkdownEditReason = ReplaceEdit,
+  caret~ : Int32 = markdown_editor_text_length(source),
+  selection~ : @core.TextRange? = None,
+  reason~ : MarkdownEditReason = ReplaceEdit,
 ) -> MarkdownEditTransaction {
   MarkdownEditTransaction::from_sources(
     previous_source,
@@ -264,9 +264,9 @@ pub fn MarkdownEditTransaction::replace_all(
 pub fn MarkdownEditTransaction::from_sources(
   previous_source : String,
   source : String,
-  caret? : Int = markdown_editor_text_length(source),
-  selection? : @core.TextRange? = None,
-  reason? : MarkdownEditReason = TextInput,
+  caret~ : Int32 = markdown_editor_text_length(source),
+  selection~ : @core.TextRange? = None,
+  reason~ : MarkdownEditReason = TextInput,
 ) -> MarkdownEditTransaction {
   let previous_length = markdown_editor_text_length(previous_source)
   let source_length = markdown_editor_text_length(source)
@@ -298,9 +298,9 @@ pub fn MarkdownEditTransaction::from_sources(
 fn markdown_document_common_prefix(
   previous_source : String,
   source : String,
-  previous_length : Int,
-  source_length : Int,
-) -> (Int, Int, Int) {
+  previous_length : Int32,
+  source_length : Int32,
+) -> (Int32, Int32, Int32) {
   let previous_utf16_length = previous_source.length()
   let source_utf16_length = source.length()
   let limit = markdown_editor_min_int(previous_length, source_length)
@@ -333,10 +333,10 @@ fn markdown_document_common_prefix(
 fn markdown_document_common_suffix_length(
   previous_source : String,
   source : String,
-  previous_length : Int,
-  source_length : Int,
-  prefix : Int,
-) -> Int {
+  previous_length : Int32,
+  source_length : Int32,
+  prefix : Int32,
+) -> Int32 {
   let limit = markdown_editor_min_int(
     previous_length - prefix,
     source_length - prefix,
@@ -361,10 +361,10 @@ fn markdown_document_common_suffix_length(
 ///|
 fn markdown_document_source_substring_after_prefix(
   source : String,
-  source_length : Int,
-  start : Int,
-  end : Int,
-  start_offset : Int,
+  source_length : Int32,
+  start : Int32,
+  end : Int32,
+  start_offset : Int32,
 ) -> String {
   let source_utf16_length = source.length()
   let end_offset = if end == source_length {
@@ -389,7 +389,7 @@ fn MarkdownEditTransaction::from_replacement_range(
   previous_source : String,
   source : String,
   edit_range : MarkdownSourceRange,
-  caret~ : Int,
+  caret~ : Int32,
   selection~ : @core.TextRange?,
   reason~ : MarkdownEditReason,
 ) -> MarkdownEditTransaction {
@@ -433,7 +433,7 @@ fn MarkdownEditTransaction::from_replacement_range(
 pub fn MarkdownEditTransaction::from_edit_result(
   previous_source : String,
   result : MarkdownEditorEditResult,
-  reason? : MarkdownEditReason = CommandEdit,
+  reason~ : MarkdownEditReason = CommandEdit,
 ) -> MarkdownEditTransaction {
   match result.edit_range {
     // The command recorded the exact range it replaced, so build the
@@ -463,7 +463,7 @@ pub fn MarkdownEditTransaction::from_edit_result(
 pub fn MarkdownEditTransaction::from_input_transform(
   previous_source : String,
   transform : RichTextInputTransform,
-  reason? : MarkdownEditReason = TextInput,
+  reason~ : MarkdownEditReason = TextInput,
 ) -> MarkdownEditTransaction {
   match transform.edit_range {
     // The transform chain recorded the exact range it replaced, so build
@@ -495,12 +495,12 @@ pub fn MarkdownEditTransaction::from_input_transform(
 pub fn MarkdownEditTransaction::from_edit(
   previous_source : String,
   source : String,
-  start : Int,
+  start : Int32,
   deleted~ : String,
   replacement~ : String,
-  caret~ : Int,
-  selection? : @core.TextRange? = None,
-  reason? : MarkdownEditReason = TextInput,
+  caret~ : Int32,
+  selection~ : @core.TextRange? = None,
+  reason~ : MarkdownEditReason = TextInput,
 ) -> MarkdownEditTransaction {
   {
     previous_source,
@@ -524,7 +524,7 @@ pub fn MarkdownEditTransaction::from_edit(
 /// view (a multi-megabyte join) on the open path.
 fn markdown_document_session_seed_definitions(
   source : String,
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
 ) -> Unit {
   markdown_reference_definitions_cache_store_keyed(
@@ -587,8 +587,8 @@ fn markdown_document_session_materialized_blocks(
 ///|
 pub fn MarkdownDocumentSession::snapshot(
   self : MarkdownDocumentSession,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  base_dir? : String? = None,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  base_dir~ : String? = None,
 ) -> MarkdownEditorSnapshot {
   // Export-grade output: every block with its real inline runs.
   let materialized = markdown_document_session_materialized_blocks(self)
@@ -661,10 +661,10 @@ fn markdown_editor_session_reveal_html_block_source(
 pub fn MarkdownDocumentSession::rich_text(
   self : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  source_mode? : Bool = false,
-  focus_mode? : Bool = false,
-  base_dir? : String? = None,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  source_mode~ : Bool = false,
+  focus_mode~ : Bool = false,
+  base_dir~ : String? = None,
 ) -> RichTextDocument {
   if source_mode {
     markdown_editor_format_source_mode(self.source(), base)
@@ -707,14 +707,14 @@ pub fn MarkdownDocumentSession::rich_text(
 pub fn MarkdownDocumentSession::rich_text_window(
   self : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  source_mode? : Bool = false,
-  focus_mode? : Bool = false,
-  base_dir? : String? = None,
-  scroll_y? : Double = 0.0,
-  viewport_height? : Double = 0.0,
-  overscan? : Double = 320.0,
-  content_width? : Double = 0.0,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  source_mode~ : Bool = false,
+  focus_mode~ : Bool = false,
+  base_dir~ : String? = None,
+  scroll_y~ : Double = 0.0,
+  viewport_height~ : Double = 0.0,
+  overscan~ : Double = 320.0,
+  content_width~ : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
   let range = markdown_document_window_range(
     self,
@@ -893,9 +893,9 @@ pub fn MarkdownDocumentSession::rich_text_window(
 ///|
 pub fn MarkdownDocumentSession::estimated_content_height(
   self : MarkdownDocumentSession,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  source_mode? : Bool = false,
-  content_width? : Double = 0.0,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  source_mode~ : Bool = false,
+  content_width~ : Double = 0.0,
 ) -> Double {
   if source_mode {
     self.height_index.source_content_units * base.size
@@ -914,10 +914,10 @@ pub fn MarkdownDocumentSession::estimated_content_height(
 ///|
 pub fn MarkdownDocumentSession::source_offset_y(
   self : MarkdownDocumentSession,
-  source_offset : Int,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  source_mode? : Bool = false,
-  content_width? : Double = 0.0,
+  source_offset : Int32,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  source_mode~ : Bool = false,
+  content_width~ : Double = 0.0,
 ) -> Double {
   if self.editor_blocks.length() == 0 {
     return 0.0
@@ -1001,7 +1001,7 @@ fn markdown_document_session_apply_in_line_edit(
   session : MarkdownDocumentSession,
   transaction : MarkdownEditTransaction,
   cluster : MarkdownDocumentEditCluster,
-  delta~ : Int,
+  delta~ : Int32,
 ) -> MarkdownDocumentSession? {
   // Upstream newlines_safe already rejected edits touching a newline for
   // non-fence clusters, so the edit provably stays on one line.
@@ -1644,10 +1644,10 @@ fn markdown_document_text_may_touch_reference_definition(text : String) -> Bool 
 
 ///|
 priv struct MarkdownDocumentEditCluster {
-  start_index : Int
-  end_index : Int
-  start_block_start : Int
-  end_block_end : Int
+  start_index : Int32
+  end_index : Int32
+  start_block_start : Int32
+  end_block_end : Int32
 }
 
 ///|
@@ -1663,16 +1663,16 @@ priv struct MarkdownDocumentEditCluster {
 /// character edit itself, which the count deltas need.
 priv struct MarkdownDocumentReindexWindow {
   previous_source_digest : UInt64
-  previous_source_length : Int
-  prefix_count : Int
-  suffix_new_start : Int
-  suffix_shift : Int
-  old_region_start : Int
-  old_region_end : Int
-  edit_start : Int
+  previous_source_length : Int32
+  prefix_count : Int32
+  suffix_new_start : Int32
+  suffix_shift : Int32
+  old_region_start : Int32
+  old_region_end : Int32
+  edit_start : Int32
   deleted : String
   replacement : String
-  char_delta : Int
+  char_delta : Int32
 }
 
 ///|
@@ -1681,7 +1681,7 @@ priv struct MarkdownDocumentReindexWindow {
 fn markdown_document_reindex_window_fits(
   window : MarkdownDocumentReindexWindow,
   previous : MarkdownDocumentSession,
-  new_block_count : Int,
+  new_block_count : Int32,
 ) -> Bool {
   let suffix_old_start = window.suffix_new_start + window.suffix_shift
   let old_window_count = suffix_old_start - window.prefix_count
@@ -1704,8 +1704,8 @@ fn markdown_document_reindex_window_fits(
 /// 100k-block document from allocating a fresh table per pass.
 fn[T] markdown_document_shift_tail(
   array : Array[T],
-  from : Int,
-  shift : Int,
+  from : Int32,
+  shift : Int32,
 ) -> Unit {
   let length = array.length()
   if shift == 0 {
@@ -1740,7 +1740,7 @@ fn[T] markdown_document_shift_tail(
 /// revision (or a full rebuild) falls back to the full block walk. The
 /// UI runs single-threaded, so a module-level ref mirrors how the other
 /// process-local caches work.
-let markdown_document_last_rebase : Ref[(Int, MarkdownDocumentReindexWindow?)] = Ref(
+let markdown_document_last_rebase : Ref[(Int32, MarkdownDocumentReindexWindow?)] = Ref(
   (0, None),
 )
 
@@ -1754,7 +1754,7 @@ let markdown_document_last_rebase : Ref[(Int, MarkdownDocumentReindexWindow?)] =
 /// shift); every other apply invalidates it, and the next query rebuilds
 /// it from one line scan — free on the open path, whose merged scan is
 /// still cached.
-let markdown_document_line_index : Ref[(Int, Array[Int])] = Ref((-1, []))
+let markdown_document_line_index : Ref[(Int32, Array[Int32])] = Ref((-1, []))
 
 ///|
 fn markdown_document_line_index_invalidate() -> Unit {
@@ -1764,13 +1764,13 @@ fn markdown_document_line_index_invalidate() -> Unit {
 ///|
 fn markdown_document_session_line_index(
   session : MarkdownDocumentSession,
-) -> Array[Int] {
+) -> Array[Int32] {
   let cached = markdown_document_line_index.val
   if cached.0 == session.document_identity && cached.1.length() > 0 {
     return cached.1
   }
   let scanned = markdown_editor_line_scan_cached_lines(session.source())
-  let starts : Array[Int] = []
+  let starts : Array[Int32] = []
   for line in scanned {
     starts.push(line.start)
   }
@@ -1864,7 +1864,7 @@ fn markdown_document_editor_block_is_blank(block : MarkdownEditorBlock) -> Bool 
 pub fn MarkdownDocumentSession::replace_source(
   self : MarkdownDocumentSession,
   source : String,
-  reason? : MarkdownEditReason = ReplaceEdit,
+  reason~ : MarkdownEditReason = ReplaceEdit,
 ) -> MarkdownDocumentSession {
   ignore(reason)
   if source == self.source() {
@@ -1900,8 +1900,8 @@ pub fn MarkdownDocumentSession::with_layout_cache(
   width~ : Double,
   scroll_y~ : Double,
   viewport_height~ : Double,
-  overscan? : Double = 320.0,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  overscan~ : Double = 320.0,
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentSession {
   {
     ..self,
@@ -1928,8 +1928,8 @@ fn MarkdownDocumentLayoutCache::new(
   width~ : Double,
   scroll_y~ : Double,
   viewport_height~ : Double,
-  overscan? : Double = 320.0,
-  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+  overscan~ : Double = 320.0,
+  text_system~ : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentLayoutCache {
   let layout_blocks : Array[MarkdownDocumentLayoutBlock] = []
   let mut top = 0.0
@@ -1990,8 +1990,8 @@ fn MarkdownDocumentLayoutCache::new(
 
 ///|
 priv struct MarkdownDocumentWindowRange {
-  visible_start : Int
-  visible_end : Int
+  visible_start : Int32
+  visible_end : Int32
   // Height of everything above the first rendered line. It folds in the
   // visual lines clipped from the top of `visible_start`'s block, so
   // `content_rect` already places the window correctly and no consumer needs
@@ -2080,7 +2080,7 @@ const MARKDOWN_EDITOR_LINE_WINDOW_THRESHOLD : Double = 4.0
 fn markdown_document_block_needs_line_window(
   session : MarkdownDocumentSession,
   base : @core.FontSpec,
-  index : Int,
+  index : Int32,
   viewport_height : Double,
 ) -> Bool {
   if index < 0 || index >= session.editor_blocks.length() {
@@ -2114,12 +2114,12 @@ fn markdown_document_block_needs_line_window(
 fn markdown_document_clip_lines_for_window(
   session : MarkdownDocumentSession,
   base : @core.FontSpec,
-  visible_start : Int,
+  visible_start : Int32,
   block_top : Double,
   scroll_y : Double,
   viewport_height : Double,
   overscan : Double,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let whole = (0, MARKDOWN_EDITOR_SLICE_TO_LAST_LINE)
   if visible_start < 0 ||
     visible_start >= session.editor_blocks.length() ||
@@ -2460,7 +2460,7 @@ fn markdown_document_session_has_gallery_blocks(
 fn markdown_document_apply_measured_height(
   session : MarkdownDocumentSession,
   base : @core.FontSpec,
-  block_index~ : Int,
+  block_index~ : Int32,
   width~ : Double,
   height~ : Double,
 ) -> Unit {
@@ -2492,7 +2492,7 @@ fn markdown_document_block_height_at(
   session : MarkdownDocumentSession,
   base : @core.FontSpec,
   content_width~ : Double,
-  index : Int,
+  index : Int32,
 ) -> Double {
   match
     markdown_document_scroll_geometry_cache.get(
@@ -2517,7 +2517,7 @@ fn markdown_document_anchor_index(
   base : @core.FontSpec,
   content_width~ : Double,
   offset~ : Double,
-) -> Int {
+) -> Int32 {
   match markdown_document_block_geometry(session, base, content_width~) {
     Some(geometry) => {
       let mut low = 0
@@ -2637,7 +2637,7 @@ fn markdown_document_window_range_for_geometry(
 ///|
 fn markdown_document_gallery_source_offset_y(
   session : MarkdownDocumentSession,
-  source_offset : Int,
+  source_offset : Int32,
   heights : Array[Double],
 ) -> Double {
   let mut top = 0.0
@@ -2670,28 +2670,28 @@ fn markdown_document_height_index(
   source : String,
   editor_blocks : Array[MarkdownEditorBlock],
   blocks : Array[MarkdownDocumentBlock],
-  previous? : MarkdownDocumentSession? = None,
-  reuse? : MarkdownDocumentReindexWindow? = None,
+  previous~ : MarkdownDocumentSession? = None,
+  reuse~ : MarkdownDocumentReindexWindow? = None,
   // Whether the previous height index can be updated in place. Callers
   // must capture this before the in-place block assignment runs: the
   // apply mutates `previous.blocks` to the new count first, so a length
   // comparison here would always miss.
-  reuse_ok? : Bool = false,
+  reuse_ok~ : Bool = false,
   // Precomputed per-block newline counts from the open path's merged
   // scan; when present the full height index skips its own source scan.
-  full_line_counts? : Array[Int]? = None,
+  full_line_counts~ : Array[Int32]? = None,
   // The apply's dirty block window; its ±1 revision edge decides whether
   // the in-place reuse path can skip the suffix top re-accumulation.
-  dirty_range? : MarkdownDocumentDirtyRange? = None,
+  dirty_range~ : MarkdownDocumentDirtyRange? = None,
   // The live store advanced by the incremental apply, when present: the
   // window decode reads through it (bounded by the window) instead of
   // scanning the whole source for char offsets.
-  text_store? : MarkdownDocumentTextStore? = None,
+  text_store~ : MarkdownDocumentTextStore? = None,
   // The edit provably kept every block boundary and line count (a pure
   // insertion strictly inside one line), so the window's heights equal the
   // previous metrics and the window decode can be skipped entirely — the
   // per-keystroke cost on a document that is one huge block.
-  structure_preserving? : Bool = false,
+  structure_preserving~ : Bool = false,
 ) -> MarkdownDocumentHeightIndex {
   match (previous, reuse) {
     (Some(prev), Some(window)) if reuse_ok =>
@@ -2723,7 +2723,7 @@ fn markdown_document_height_index_full(
   source : String,
   editor_blocks : Array[MarkdownEditorBlock],
   blocks : Array[MarkdownDocumentBlock],
-  line_counts? : Array[Int]? = None,
+  line_counts~ : Array[Int32]? = None,
 ) -> MarkdownDocumentHeightIndex {
   let counts = match line_counts {
     Some(counts) => counts
@@ -2768,8 +2768,8 @@ fn markdown_document_height_index_full(
 fn markdown_document_block_source_line_counts(
   source : String,
   editor_blocks : Array[MarkdownEditorBlock],
-) -> Array[Int] {
-  let counts : Array[Int] = []
+) -> Array[Int32] {
+  let counts : Array[Int32] = []
   for _ in editor_blocks {
     counts.push(1)
   }
@@ -2802,8 +2802,8 @@ fn markdown_document_block_source_line_counts(
 fn markdown_document_source_digest_and_line_counts(
   source : String,
   editor_blocks : Array[MarkdownEditorBlock],
-) -> (UInt64, Array[Int]) {
-  let counts : Array[Int] = []
+) -> (UInt64, Array[Int32]) {
+  let counts : Array[Int32] = []
   for _ in editor_blocks {
     counts.push(1)
   }
@@ -2857,9 +2857,9 @@ fn markdown_document_height_index_reuse(
   blocks : Array[MarkdownDocumentBlock],
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
-  dirty_range? : MarkdownDocumentDirtyRange? = None,
-  text_store? : MarkdownDocumentTextStore? = None,
-  structure_preserving? : Bool = false,
+  dirty_range~ : MarkdownDocumentDirtyRange? = None,
+  text_store~ : MarkdownDocumentTextStore? = None,
+  structure_preserving~ : Bool = false,
 ) -> MarkdownDocumentHeightIndex {
   let metrics = previous.height_index.blocks
   let window_open = window.suffix_new_start > window.prefix_count
@@ -3061,7 +3061,7 @@ fn markdown_document_height_index_block_at_units(
   index : MarkdownDocumentHeightIndex,
   y_units : Double,
   source_mode~ : Bool,
-) -> Int {
+) -> Int32 {
   let count = index.blocks.length()
   if count == 0 {
     return -1
@@ -3090,7 +3090,7 @@ fn markdown_document_height_index_block_at_units(
 ///|
 fn markdown_document_height_index_source_offset_y(
   index : MarkdownDocumentHeightIndex,
-  source_offset : Int,
+  source_offset : Int32,
   base : @core.FontSpec,
   source_mode~ : Bool,
 ) -> Double {
@@ -3185,7 +3185,7 @@ fn markdown_document_estimated_editor_block_height_units(
 ///|
 fn markdown_document_estimated_visual_line_count(
   editor_block : MarkdownEditorBlock,
-) -> Int {
+) -> Int32 {
   let text_lines = markdown_editor_max_int(
     1,
     1 + markdown_document_newline_count(editor_block.block.text),
@@ -3256,7 +3256,7 @@ fn markdown_text_contains_image_marker(text : String) -> Bool {
 }
 
 ///|
-fn markdown_document_newline_count(text : String) -> Int {
+fn markdown_document_newline_count(text : String) -> Int32 {
   let mut count = 0
   for ch in text {
     if ch == '\n' {
@@ -3270,7 +3270,7 @@ fn markdown_document_newline_count(text : String) -> Int {
 fn markdown_document_source_range_line_count(
   source_chars : Array[Char],
   range : MarkdownSourceRange,
-) -> Int {
+) -> Int32 {
   if source_chars.length() == 0 {
     return 1
   }
@@ -3288,9 +3288,9 @@ fn markdown_document_source_range_line_count(
 ///|
 fn markdown_document_source_chars_in_range(
   source : String,
-  char_length : Int,
-  start : Int,
-  end : Int,
+  char_length : Int32,
+  start : Int32,
+  end : Int32,
 ) -> Array[Char] {
   let start = markdown_editor_clamp_int(start, 0, char_length)
   let end = markdown_editor_clamp_int(end, start, char_length)
@@ -3311,7 +3311,7 @@ fn markdown_document_source_chars_in_range(
 ///|
 fn markdown_document_source_mode_block_to_rich_text(
   source_chars : Array[Char],
-  source_char_offset : Int,
+  source_char_offset : Int32,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
 ) -> RichTextBlock {
@@ -3341,7 +3341,7 @@ fn markdown_document_source_mode_block_to_rich_text(
 ///|
 fn markdown_document_source_mode_block_to_rich_text_uncached(
   source_chars : Array[Char],
-  source_char_offset : Int,
+  source_char_offset : Int32,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
 ) -> RichTextBlock {
@@ -3377,18 +3377,18 @@ fn markdown_document_session_from_blocks(
   source : String,
   editor_blocks : Array[MarkdownEditorBlock],
   previous~ : MarkdownDocumentSession?,
-  revision~ : Int,
-  parse_count~ : Int,
+  revision~ : Int32,
+  parse_count~ : Int32,
   dirty_range~ : MarkdownDocumentDirtyRange?,
-  reindex? : MarkdownDocumentReindexWindow? = None,
+  reindex~ : MarkdownDocumentReindexWindow? = None,
   // Precomputed content digest for this source; callers that already hold
   // one (the incremental apply) skip the second whole-source hash.
-  source_digest? : UInt64? = None,
+  source_digest~ : UInt64? = None,
   // The live document store already advanced by the incremental apply.
   // When present the session adopts it; otherwise one is seeded from
   // `source`, segmented per block on large documents so local text reads
   // never scan the whole document.
-  text_store? : MarkdownDocumentTextStore? = None,
+  text_store~ : MarkdownDocumentTextStore? = None,
 ) -> MarkdownDocumentSession {
   // Only trust the reindex window when it describes the sessions exactly;
   // every derived bookkeeping step falls back to its full computation
@@ -3431,7 +3431,7 @@ fn markdown_document_session_from_blocks(
   // Full rebuilds (no chained digest) pay one merged scan for the content
   // digest and the height-index newline counts; the incremental path
   // chains the digest instead and reuses the previous height metrics.
-  let merged_scan : (UInt64, Array[Int])? = if source_digest is None &&
+  let merged_scan : (UInt64, Array[Int32])? = if source_digest is None &&
     reuse is None {
     Some(markdown_document_source_digest_and_line_counts(source, editor_blocks))
   } else {
@@ -3478,7 +3478,7 @@ fn markdown_document_session_from_blocks(
   let text_store = match text_store {
     Some(store) => store
     None if editor_blocks.length() > 32 => {
-      let boundaries : Array[Int] = []
+      let boundaries : Array[Int32] = []
       let stride = 64
       for index, block in editor_blocks {
         if index > 0 && index % stride == 0 {
@@ -3535,16 +3535,16 @@ fn markdown_document_session_from_blocks(
 ///|
 priv struct MarkdownDocumentBlockAssignment {
   blocks : Array[MarkdownDocumentBlock]
-  next_id : Int
+  next_id : Int32
 }
 
 ///|
 fn markdown_document_assign_blocks(
   editor_blocks : Array[MarkdownEditorBlock],
   previous~ : MarkdownDocumentSession?,
-  next_id~ : Int,
+  next_id~ : Int32,
   dirty_range~ : MarkdownDocumentDirtyRange?,
-  reuse? : MarkdownDocumentReindexWindow? = None,
+  reuse~ : MarkdownDocumentReindexWindow? = None,
 ) -> MarkdownDocumentBlockAssignment {
   match (previous, reuse) {
     (Some(prev), Some(window)) =>
@@ -3582,7 +3582,7 @@ fn markdown_document_assign_blocks_reuse(
   editor_blocks : Array[MarkdownEditorBlock],
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
-  next_id~ : Int,
+  next_id~ : Int32,
   dirty_range~ : MarkdownDocumentDirtyRange?,
 ) -> MarkdownDocumentBlockAssignment {
   let blocks = previous.blocks
@@ -3684,8 +3684,8 @@ fn markdown_document_assign_blocks_reuse(
 ///|
 fn markdown_document_assigned_block(
   editor_block : MarkdownEditorBlock,
-  id~ : Int,
-  revision~ : Int,
+  id~ : Int32,
+  revision~ : Int32,
   fingerprint~ : UInt64,
 ) -> MarkdownDocumentBlock {
   {
@@ -3704,7 +3704,7 @@ fn markdown_document_assigned_block(
 fn markdown_document_assign_blocks_full(
   editor_blocks : Array[MarkdownEditorBlock],
   previous~ : MarkdownDocumentSession?,
-  next_id~ : Int,
+  next_id~ : Int32,
   dirty_range~ : MarkdownDocumentDirtyRange?,
 ) -> MarkdownDocumentBlockAssignment {
   let blocks : Array[MarkdownDocumentBlock] = []
@@ -3759,9 +3759,9 @@ fn markdown_document_assign_blocks_full(
 fn markdown_document_match_previous_block(
   previous : MarkdownDocumentSession?,
   used_previous : Array[Bool],
-  index : Int,
+  index : Int32,
   fingerprint : UInt64,
-) -> Int? {
+) -> Int32? {
   match previous {
     Some(prev) => {
       if index < prev.blocks.length() &&
@@ -3787,7 +3787,7 @@ fn markdown_document_match_previous_block(
 ///|
 fn markdown_document_block_index_dirty(
   dirty_range : MarkdownDocumentDirtyRange?,
-  index : Int,
+  index : Int32,
 ) -> Bool {
   match dirty_range {
     Some(range) => index >= range.start_block && index <= range.end_block
@@ -3920,7 +3920,7 @@ fn markdown_document_outline_after_edit(
 fn markdown_document_word_starts_in(
   text : String,
   after_whitespace~ : Bool,
-) -> (Int, Bool) {
+) -> (Int32, Bool) {
   let mut count = 0
   let mut whitespace = after_whitespace
   for ch in text {
@@ -3947,7 +3947,7 @@ fn markdown_document_word_starts_in(
 fn markdown_document_word_count_after_edit(
   previous : MarkdownDocumentSession,
   window : MarkdownDocumentReindexWindow,
-) -> Int {
+) -> Int32 {
   // The shared store already carries the post-edit text by the time the
   // bookkeeping runs: the left probe sits before the edit start (its char
   // is untouched by the splice) and the right probe is taken after the
@@ -3996,7 +3996,7 @@ fn markdown_document_line_count_after_edit(
   previous : MarkdownDocumentSession,
   source : String,
   window : MarkdownDocumentReindexWindow,
-) -> Int {
+) -> Int32 {
   let previous_newlines = if previous.line_count == 0 {
     0
   } else {
@@ -4103,10 +4103,10 @@ fn markdown_document_transaction_needs_global_context(
 
 ///|
 fn markdown_document_ranges_touch(
-  start_a : Int,
-  end_a : Int,
-  start_b : Int,
-  end_b : Int,
+  start_a : Int32,
+  end_a : Int32,
+  start_b : Int32,
+  end_b : Int32,
 ) -> Bool {
   if start_b == end_b {
     start_b >= start_a && start_b <= end_a
@@ -4118,8 +4118,8 @@ fn markdown_document_ranges_touch(
 ///|
 fn markdown_document_block_index_after_source(
   blocks : Array[MarkdownEditorBlock],
-  source_offset : Int,
-) -> Int {
+  source_offset : Int32,
+) -> Int32 {
   for index, block in blocks {
     if source_offset <= block.source_range.end {
       return index
@@ -4132,7 +4132,7 @@ fn markdown_document_block_index_after_source(
 /// Slack past a run's visible text that a reveal span can still reach: the
 /// closing markers and a link or image target, which the run's source range
 /// does not cover.
-const MARKDOWN_EDITOR_REVEAL_TARGET_SLACK : Int = 4096
+const MARKDOWN_EDITOR_REVEAL_TARGET_SLACK : Int32 = 4096
 
 ///|
 /// Whether a run is close enough to the reveal anchor that a marker span could
@@ -4140,7 +4140,7 @@ const MARKDOWN_EDITOR_REVEAL_TARGET_SLACK : Int = 4096
 /// treated as near — that keeps the un-ranged case on the original path.
 fn markdown_editor_run_near_reveal_anchor(
   run : RichTextRun,
-  anchor : Int,
+  anchor : Int32,
 ) -> Bool {
   match run.source_range {
     Some(range) =>
@@ -4235,7 +4235,7 @@ fn rich_text_block_total_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
-  block_width? : Double = 0.0,
+  block_width~ : Double = 0.0,
 ) -> Double {
   rich_text_block_line_height(block, base_font, text_system, block_width~) +
   block.inset.top +

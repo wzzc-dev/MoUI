@@ -250,7 +250,7 @@ test "repaint_boundary modifier identity" {
 
 ///|
 test "on_tap identity focusable and button semantics role" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
     kind: "tappable",
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_tap(42)
@@ -261,7 +261,7 @@ test "on_tap identity focusable and button semantics role" {
 
 ///|
 test "on_secondary_tap only activates for the secondary mouse button" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
     kind: "secondary-tappable",
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_secondary_tap(7)
@@ -274,7 +274,7 @@ test "on_secondary_tap only activates for the secondary mouse button" {
 
 ///|
 test "on_long_press identity and focusable" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
     kind: "pressable",
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_long_press(42)
@@ -284,7 +284,7 @@ test "on_long_press identity and focusable" {
 
 ///|
 test "on_double_tap identity" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
     kind: "dbl-tap",
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_double_tap(42)
@@ -293,7 +293,7 @@ test "on_double_tap identity" {
 
 ///|
 test "on_drag identity" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
     kind: "draggable",
     size: @core.Size::new(width=8.0, height=8.0),
   }).on_drag(fn(_event) { 42 })
@@ -538,7 +538,7 @@ test "focusable modifier identity and value" {
 
 ///|
 test "chained layout and paint and event compose correctly" {
-  let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
+  let view : @core.View[Int32] = @core.View::from_node(ModTestNode::{
       kind: "chain",
       size: @core.Size::new(width=8.0, height=8.0),
     })

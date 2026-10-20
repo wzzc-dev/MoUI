@@ -1,5 +1,5 @@
 ///|
-extern "c" fn renderer_macos_presenter_passthrough_ready() -> Int = "renderer_macos_presenter_passthrough_ready"
+extern "c" fn renderer_macos_presenter_passthrough_ready() -> Int32 = "renderer_macos_presenter_passthrough_ready"
 
 ///|
 pub fn macos_presenter_passthrough_ready() -> Bool {
@@ -16,12 +16,12 @@ pub fn macos_presenter_passthrough_ready() -> Bool {
 extern "c" fn renderer_present_surface_rect(
   window : UInt64,
   pixels : FixedArray[Byte],
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) = "renderer_present_surface_rect"
 
 ///|
@@ -31,24 +31,24 @@ extern "c" fn renderer_present_surface_rect(
 extern "c" fn renderer_present_surface_rect_bytes(
   window : UInt64,
   pixels : Bytes,
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) = "renderer_present_surface_rect"
 
 ///|
 fn display_pixels_rect(
   hwnd : UInt64,
   pixels : FixedArray[Byte],
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   renderer_present_surface_rect(
     hwnd, pixels, surface_width, surface_height, x, y, width, height,
@@ -59,12 +59,12 @@ fn display_pixels_rect(
 fn display_bytes_rect(
   hwnd : UInt64,
   pixels : Bytes,
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   renderer_present_surface_rect_bytes(
     hwnd, pixels, surface_width, surface_height, x, y, width, height,

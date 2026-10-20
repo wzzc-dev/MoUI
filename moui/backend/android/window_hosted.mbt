@@ -34,7 +34,7 @@ pub struct AndroidHostAppOptions {
 
 ///|
 pub fn AndroidHostAppOptions::new(
-  status_bar_immersive? : Bool = false,
+  status_bar_immersive~ : Bool = false,
 ) -> AndroidHostAppOptions {
   { status_bar_immersive, }
 }
@@ -57,10 +57,10 @@ pub fn AndroidHostAppOptions::with_status_bar_immersive(
 
 ///|
 pub fn AndroidEmbeddedRuntimeBackend::new(
-  title? : String = "MoUI",
+  title~ : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
-  auto_exit_after_frames? : Int? = None,
+  auto_exit_after_frames~ : Int32? = None,
 ) -> AndroidEmbeddedRuntimeBackend {
   new_android_embedded_runtime(
     title~,
@@ -73,8 +73,8 @@ pub fn AndroidEmbeddedRuntimeBackend::new(
 ///|
 /// Application-builder entry for the Android window-hosted event loop.
 pub fn entry(
-  options? : AndroidHostAppOptions = AndroidHostAppOptions::new(),
-  auto_exit_after_frames? : Int? = None,
+  options~ : AndroidHostAppOptions = AndroidHostAppOptions::new(),
+  auto_exit_after_frames~ : Int32? = None,
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="android", launch=request => {
     ignore(
@@ -103,7 +103,7 @@ fn new_android_embedded_runtime(
   title~ : String,
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> AndroidSurfaceBinding,
-  auto_exit_after_frames~ : Int?,
+  auto_exit_after_frames~ : Int32?,
 ) -> AndroidEmbeddedRuntimeBackend {
   {
     backend: @embedded_runtime.HostedWindowBackend::new(
@@ -120,14 +120,14 @@ fn new_android_embedded_runtime(
 ///|
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(
   self : AndroidEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.frames_presented()
 }
 
 ///|
 pub fn AndroidEmbeddedRuntimeBackend::surface_generation(
   self : AndroidEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.surface_generation()
 }
 
@@ -225,10 +225,10 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn android_window_hosted_pump_host_sim(
   app : AndroidEmbeddedRuntimeBackend,
-  surface_handle? : UInt64 = 0xABCUL,
-  width? : Int = 320,
-  height? : Int = 640,
-  scale? : Double = 2.0,
+  surface_handle~ : UInt64 = 0xABCUL,
+  width~ : Int32 = 320,
+  height~ : Int32 = 640,
+  scale~ : Double = 2.0,
 ) -> Unit {
   @window_android.host_reset_for_test()
   let event_loop = @window_android.EventLoop::new()

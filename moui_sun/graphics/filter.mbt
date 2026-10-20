@@ -118,7 +118,7 @@ pub fn PaintFilter::is_identity(self : PaintFilter) -> Bool {
 
 ///|
 /// Return the number of filter stages in this chain.
-pub fn PaintFilter::get_filter_count(self : PaintFilter) -> Int {
+pub fn PaintFilter::get_filter_count(self : PaintFilter) -> Int32 {
   self.filters.length()
 }
 
@@ -126,7 +126,7 @@ pub fn PaintFilter::get_filter_count(self : PaintFilter) -> Int {
 /// Return the filter stage family at an index.
 pub fn PaintFilter::get_stage_type(
   self : PaintFilter,
-  index : Int,
+  index : Int32,
 ) -> PaintFilterType? {
   match self.get_stage_kind(index) {
     Some(kind) => Some(paint_filter_type_of(kind))
@@ -136,7 +136,10 @@ pub fn PaintFilter::get_stage_type(
 
 ///|
 /// Return the stage color for color-bearing filter stages.
-pub fn PaintFilter::get_stage_color(self : PaintFilter, index : Int) -> Color? {
+pub fn PaintFilter::get_stage_color(
+  self : PaintFilter,
+  index : Int32,
+) -> Color? {
   match self.get_stage_kind(index) {
     Some(Modulate(color)) => Some(color)
     _ => None
@@ -147,7 +150,7 @@ pub fn PaintFilter::get_stage_color(self : PaintFilter, index : Int) -> Color? {
 /// Return the numeric factor for factor-bearing filter stages.
 pub fn PaintFilter::get_stage_factor(
   self : PaintFilter,
-  index : Int,
+  index : Int32,
 ) -> Double? {
   match self.get_stage_kind(index) {
     Some(Brightness(factor))
@@ -161,7 +164,7 @@ pub fn PaintFilter::get_stage_factor(
 /// Return a copied 4x5 RGBA color matrix for matrix filter stages.
 pub fn PaintFilter::get_stage_color_matrix(
   self : PaintFilter,
-  index : Int,
+  index : Int32,
 ) -> Array[Double]? {
   match self.get_stage_kind(index) {
     Some(ColorMatrix(matrix)) => Some(copy_filter_matrix(matrix))
@@ -229,7 +232,7 @@ fn normalize_filter_factor(factor : Double) -> Double {
 ///|
 fn PaintFilter::get_stage_kind(
   self : PaintFilter,
-  index : Int,
+  index : Int32,
 ) -> PaintFilterKind? {
   guard index >= 0 && index < self.filters.length() else { return None }
   Some(self.filters[index])
@@ -387,9 +390,9 @@ fn saturate_rgb_byte(value : Byte, gray : Byte, factor : Double) -> Byte {
 ///|
 fn sepia_rgb_byte(
   color : Color,
-  red_weight : Int,
-  green_weight : Int,
-  blue_weight : Int,
+  red_weight : Int32,
+  green_weight : Int32,
+  blue_weight : Int32,
 ) -> Byte {
   clamp_byte(
     (
@@ -438,7 +441,7 @@ fn apply_color_matrix(matrix : Array[Double], color : Color) -> Color {
 ///|
 fn color_matrix_byte(
   matrix : Array[Double],
-  row : Int,
+  row : Int32,
   r : Double,
   g : Double,
   b : Double,

@@ -44,7 +44,7 @@ fn RuntimeState::dispatch_action_command(
 fn RuntimeState::dispatch_focused_text_command(
   self : RuntimeState,
   intent : CommandIntent,
-  paste_text? : String? = None,
+  paste_text~ : String? = None,
 ) -> TextCommandResult {
   match self.animfocus.focused_element {
     Some(target) => {
@@ -406,7 +406,7 @@ fn RuntimeState::dispatch_pointer_event(
 ///|
 fn RuntimeState::move_focus(
   self : RuntimeState,
-  reverse? : Bool = false,
+  reverse~ : Bool = false,
 ) -> Bool {
   self.ensure_render_tree()
   let previous_focus = self.animfocus.focused_element

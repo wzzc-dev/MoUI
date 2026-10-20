@@ -1,5 +1,5 @@
 ///|
-fn image_task_test_session(applied : Ref[Int]) -> @render.RendererSession {
+fn image_task_test_session(applied : Ref[Int32]) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),
     render_frame=_ => @render.RenderFrameResult::new(presented=true),
@@ -21,7 +21,7 @@ fn image_task_test_session(applied : Ref[Int]) -> @render.RendererSession {
 ///|
 fn next_image_request(
   renderer : @render.RendererSession,
-  sequence : Int,
+  sequence : Int32,
 ) -> @render.RendererImageLoadRequest {
   ignore(
     renderer.render_frame(
@@ -94,8 +94,8 @@ test "window image tasks de-duplicate, apply once, and ignore late completion" {
 ///|
 fn deferred_image_starter_session(
   source : String,
-  applied : Ref[Int],
-  bytes_len : Ref[Int],
+  applied : Ref[Int32],
+  bytes_len : Ref[Int32],
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),

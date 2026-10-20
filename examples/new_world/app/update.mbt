@@ -54,7 +54,7 @@ pub struct WorldModel {
   api_key_revealed : Bool
   /// The history line being edited (`None` = not editing), plus its buffer.
   /// Transient UI state: an edit only reaches the world on commit.
-  editing_line : Int?
+  editing_line : Int32?
   edit_buffer : String
   /// The one-line character idea in the creation wizard.
   character_idea : String
@@ -259,7 +259,7 @@ pub fn WorldModel::composer_ready(self : WorldModel) -> Bool {
 
 ///|
 /// The history line being edited, if any.
-pub fn WorldModel::editing_line(self : WorldModel) -> Int? {
+pub fn WorldModel::editing_line(self : WorldModel) -> Int32? {
   self.editing_line
 }
 
@@ -298,7 +298,7 @@ fn set_lines(
 ///|
 /// The generated reply for a turn: the line to regenerate, if the last line of
 /// the conversation is a character line.
-fn last_reply_index(conversation : Conversation) -> Int? {
+fn last_reply_index(conversation : Conversation) -> Int32? {
   let lines = conversation.lines()
   if lines.is_empty() {
     return None
@@ -383,7 +383,7 @@ pub fn WorldModel::push_log(self : WorldModel, line : String) -> Unit {
 
 ///|
 /// Maximum retained log lines.
-pub let world_log_limit : Int = 40
+pub let world_log_limit : Int32 = 40
 
 ///|
 /// Start a new model value whose mutable containers are **not** shared with

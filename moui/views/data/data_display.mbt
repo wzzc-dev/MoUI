@@ -2,9 +2,9 @@
 pub fn[Msg] description_list(
   items : Array[DescriptionItem],
   theme? : @core.Theme,
-  width? : Double = 360.0,
-  term_width? : Double = 112.0,
-  row_height? : Double = 30.0,
+  width~ : Double = 360.0,
+  term_width~ : Double = 112.0,
+  row_height~ : Double = 30.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
@@ -44,12 +44,12 @@ pub fn[Msg] description_list(
 pub fn[Msg] detail_panel(
   title : String,
   items : Array[DescriptionItem],
-  subtitle? : String = "",
-  action? : @controls.StateViewAction[Msg]? = None,
-  empty? : @core.View[Msg]? = None,
+  subtitle~ : String = "",
+  action~ : @controls.StateViewAction[Msg]? = None,
+  empty~ : @core.View[Msg]? = None,
   theme? : @core.Theme,
-  width? : Double = 280.0,
-  height? : Double = 180.0,
+  width~ : Double = 280.0,
+  height~ : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let inner_width = @common.view_max_double(

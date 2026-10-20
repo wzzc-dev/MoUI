@@ -70,8 +70,8 @@ pub fn base64_decode(text : String) -> Bytes? {
     let b = base64_value(chars[index + 1])
     let third = chars[index + 2]
     let fourth = chars[index + 3]
-    let c : Int? = if third == '=' { Some(0) } else { base64_value(third) }
-    let d : Int? = if fourth == '=' { Some(0) } else { base64_value(fourth) }
+    let c : Int32? = if third == '=' { Some(0) } else { base64_value(third) }
+    let d : Int32? = if fourth == '=' { Some(0) } else { base64_value(fourth) }
     let (va, vb, vc, vd) = match (a, b, c, d) {
       (Some(va), Some(vb), Some(vc), Some(vd)) => (va, vb, vc, vd)
       _ => return None
@@ -89,7 +89,7 @@ pub fn base64_decode(text : String) -> Bytes? {
 }
 
 ///|
-fn base64_value(ch : Char) -> Int? {
+fn base64_value(ch : Char) -> Int32? {
   if ch >= 'A' && ch <= 'Z' {
     Some(ch.to_int() - 'A'.to_int())
   } else if ch >= 'a' && ch <= 'z' {

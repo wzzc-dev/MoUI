@@ -2,7 +2,7 @@
 // 不该为了被断言就晋升成包外 API。
 
 ///|
-fn cell_at(canvas : Canvas, row : Int, col : Int) -> @tui.Cell {
+fn cell_at(canvas : Canvas, row : Int32, col : Int32) -> @tui.Cell {
   canvas.screen.line_at(row).cells[col]
 }
 

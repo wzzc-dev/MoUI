@@ -1,20 +1,20 @@
 ///|
-fn normalized_surface_present_frame_index(frame_index : Int) -> Int {
-  Int::max(0, frame_index)
+fn normalized_surface_present_frame_index(frame_index : Int32) -> Int32 {
+  Int32::max(0, frame_index)
 }
 
 ///|
-fn surface_present_mod(value : Int, divisor : Int) -> Int {
-  let divisor = Int::max(1, divisor)
+fn surface_present_mod(value : Int32, divisor : Int32) -> Int32 {
+  let divisor = Int32::max(1, divisor)
   value - value / divisor * divisor
 }
 
 ///|
 fn normalized_surface_present_buffer_index(
   target : SurfaceTargetDescriptor,
-  frame_index : Int,
-  buffer_index : Int,
-) -> Int {
+  frame_index : Int32,
+  buffer_index : Int32,
+) -> Int32 {
   if !target.is_presentable() {
     0
   } else {
@@ -33,8 +33,8 @@ fn normalized_surface_present_buffer_index(
 /// Per-frame presentation scheduling metadata for a presentable target.
 pub(all) struct SurfacePresentDescriptor {
   target : SurfaceTargetDescriptor
-  frame_index : Int
-  buffer_index : Int
+  frame_index : Int32
+  buffer_index : Int32
   present_mode : SurfacePresentMode?
 } derive(Debug, Eq)
 
@@ -47,8 +47,8 @@ pub extend SurfacePresentDescriptor with Eq::{not_equal, equal}
 ///|
 pub fn SurfacePresentDescriptor::new(
   target : SurfaceTargetDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> SurfacePresentDescriptor {
   let frame_index = normalized_surface_present_frame_index(frame_index)
   {
@@ -68,8 +68,8 @@ pub fn SurfacePresentDescriptor::new(
 ///|
 pub fn SurfaceTargetDescriptor::present_descriptor(
   self : SurfaceTargetDescriptor,
-  frame_index? : Int = 0,
-  buffer_index? : Int = -1,
+  frame_index~ : Int32 = 0,
+  buffer_index~ : Int32 = -1,
 ) -> SurfacePresentDescriptor {
   SurfacePresentDescriptor::new(self, frame_index~, buffer_index~)
 }
@@ -78,7 +78,7 @@ pub fn SurfaceTargetDescriptor::present_descriptor(
 /// Per-frame surface finalization metadata before a backend flushes/submits work.
 pub(all) struct SurfaceFinalizationDescriptor {
   target : SurfaceTargetDescriptor
-  frame_index : Int
+  frame_index : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -90,7 +90,7 @@ pub extend SurfaceFinalizationDescriptor with Eq::{not_equal, equal}
 ///|
 pub fn SurfaceFinalizationDescriptor::new(
   target : SurfaceTargetDescriptor,
-  frame_index? : Int = 0,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFinalizationDescriptor {
   { target, frame_index: normalized_surface_present_frame_index(frame_index), }
 }
@@ -98,7 +98,7 @@ pub fn SurfaceFinalizationDescriptor::new(
 ///|
 pub fn SurfaceTargetDescriptor::finalization_descriptor(
   self : SurfaceTargetDescriptor,
-  frame_index? : Int = 0,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFinalizationDescriptor {
   SurfaceFinalizationDescriptor::new(self, frame_index~)
 }

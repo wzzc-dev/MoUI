@@ -38,7 +38,7 @@ pub fn default_theme() -> @core.Theme {
 /// neutral base only.
 pub fn theme(
   base? : @core.Theme,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
   palette? : @core.ColorPalette,
   spacing_scale? : @core.SpacingScale,
   radius_scale? : @core.RadiusScale,

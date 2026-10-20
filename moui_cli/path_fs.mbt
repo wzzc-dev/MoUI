@@ -175,19 +175,19 @@ fn nul_terminated(value : String) -> Bytes {
 
 ///|
 #borrow(source, destination)
-extern "C" fn rename_path_native(source : Bytes, destination : Bytes) -> Int = "moui_cli_rename_path"
+extern "C" fn rename_path_native(source : Bytes, destination : Bytes) -> Int32 = "moui_cli_rename_path"
 
 ///|
 #borrow(source, destination)
-extern "C" fn replace_path_native(source : Bytes, destination : Bytes) -> Int = "moui_cli_replace_path"
+extern "C" fn replace_path_native(source : Bytes, destination : Bytes) -> Int32 = "moui_cli_replace_path"
 
 ///|
 #borrow(path)
-extern "C" fn path_is_executable_native(path : Bytes) -> Int = "moui_cli_path_is_executable"
+extern "C" fn path_is_executable_native(path : Bytes) -> Int32 = "moui_cli_path_is_executable"
 
 ///|
 #borrow(path)
-extern "C" fn make_executable_native(path : Bytes) -> Int = "moui_cli_make_executable"
+extern "C" fn make_executable_native(path : Bytes) -> Int32 = "moui_cli_make_executable"
 
 ///|
 fn make_executable(path : String) -> Result[Unit, String] {
@@ -200,7 +200,7 @@ fn make_executable(path : String) -> Result[Unit, String] {
 
 ///|
 #borrow(path)
-extern "C" fn path_is_symlink_native(path : Bytes) -> Int = "moui_cli_path_is_symlink"
+extern "C" fn path_is_symlink_native(path : Bytes) -> Int32 = "moui_cli_path_is_symlink"
 
 ///|
 #borrow(path)

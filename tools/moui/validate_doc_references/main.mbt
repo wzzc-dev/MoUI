@@ -71,7 +71,7 @@ fn strip_anchor(target : String) -> String {
 }
 
 ///|
-fn find_from(text : String, needle : String, start : Int) -> Int? {
+fn find_from(text : String, needle : String, start : Int32) -> Int32? {
   if start >= text.length() {
     return None
   }
@@ -337,14 +337,14 @@ fn collect_md_files(
 /// One failed reference.
 struct RefFailure {
   path : String
-  line_no : Int
+  line_no : Int32
   reference : String
   detail : String
 }
 
 ///|
-fn last_slash_index(s : String) -> Int? {
-  let mut result : Int? = None
+fn last_slash_index(s : String) -> Int32? {
+  let mut result : Int32? = None
   let mut i = 0
   while i < s.length() {
     if s[i] == '/' {
@@ -359,7 +359,7 @@ fn last_slash_index(s : String) -> Int? {
 fn check_path(
   repo_root : String,
   rel_path : String,
-  line_no : Int,
+  line_no : Int32,
   path : String,
   failures : Array[RefFailure],
 ) -> Unit {
@@ -386,7 +386,7 @@ fn path_exists(repo_root : String, path : String) -> Bool {
 fn check_inline_path(
   repo_root : String,
   rel_path : String,
-  line_no : Int,
+  line_no : Int32,
   path : String,
   failures : Array[RefFailure],
 ) -> Unit {
@@ -530,7 +530,7 @@ fn check_file(
 }
 
 ///|
-fn run(repo_root : String) -> Int {
+fn run(repo_root : String) -> Int32 {
   let docs_root = @tools.resolve_path(repo_root, "docs")
   let files : Array[String] = []
   collect_md_files(docs_root, "docs", files)

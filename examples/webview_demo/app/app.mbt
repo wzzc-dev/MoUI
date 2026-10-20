@@ -69,7 +69,7 @@ pub(all) enum Msg {
 ///|
 pub fn Model::new(
   capability~ : WebViewCapability,
-  url? : String = default_url,
+  url~ : String = default_url,
 ) -> Model {
   {
     url,
@@ -91,14 +91,14 @@ pub fn Model::new(
 
 ///|
 pub fn WebViewCapability::available(
-  description? : String = "Native controlled WebView embedding is available.",
+  description~ : String = "Native controlled WebView embedding is available.",
 ) -> WebViewCapability {
   { available: true, description, }
 }
 
 ///|
 pub fn WebViewCapability::unavailable(
-  description? : String = "Native WebView is unavailable on this host.",
+  description~ : String = "Native WebView is unavailable on this host.",
 ) -> WebViewCapability {
   { available: false, description, }
 }
@@ -363,7 +363,7 @@ fn compact_text(value : String) -> String {
 
 ///|
 pub fn program(
-  controller? : @webview_host.WebViewController? = None,
+  controller~ : @webview_host.WebViewController? = None,
   capability~ : WebViewCapability,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new(

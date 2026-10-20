@@ -1,9 +1,9 @@
 ///|
 pub struct SunTextMaturityDiagnostic {
   priv text_system_id : String
-  priv registered_font_count : Int
-  priv paragraph_line_count : Int
-  priv selection_rect_count : Int
+  priv registered_font_count : Int32
+  priv paragraph_line_count : Int32
+  priv selection_rect_count : Int32
   priv hit_test_inside : Bool
   priv paragraph_layout_ready : Bool
   priv line_metrics_ready : Bool
@@ -13,8 +13,8 @@ pub struct SunTextMaturityDiagnostic {
   priv native_paragraph_ready : Bool
   priv color_emoji_ready : Bool
   priv unicode_17_grapheme_boundary_ready : Bool
-  priv ready_count : Int
-  priv gap_count : Int
+  priv ready_count : Int32
+  priv gap_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -30,10 +30,10 @@ pub extend SunTextMaturityDiagnostic with ToJson::{to_json}
 pub struct SunTextVisualOrderDiagnostic {
   priv logical_text : String
   priv visual_text : String
-  priv logical_cluster_count : Int
-  priv visual_cluster_count : Int
-  priv segment_count : Int
-  priv glyph_count : Int
+  priv logical_cluster_count : Int32
+  priv visual_cluster_count : Int32
+  priv segment_count : Int32
+  priv glyph_count : Int32
   priv width : Double
   priv visual_order_differs : Bool
   priv bidi_visual_order_ready : Bool
@@ -52,15 +52,15 @@ pub extend SunTextVisualOrderDiagnostic with ToJson::{to_json}
 pub struct SunTextSelectionGeometryDiagnostic {
   priv text : String
   priv selection_range : @core.TextRange
-  priv selection_rect_count : Int
-  priv selected_line_count : Int
-  priv line_count : Int
-  priv hit_test_offset : Int
-  priv hit_test_line_index : Int
+  priv selection_rect_count : Int32
+  priv selected_line_count : Int32
+  priv line_count : Int32
+  priv hit_test_offset : Int32
+  priv hit_test_line_index : Int32
   priv hit_test_inside : Bool
   priv bidi_visual_order_ready : Bool
   priv visual_order_differs : Bool
-  priv visual_segment_count : Int
+  priv visual_segment_count : Int32
   priv bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -80,30 +80,30 @@ pub struct SunEmojiFontFallbackDiagnostic {
   priv requested_font_family : String
   priv font_source : String
   priv shaper : String
-  priv resolved_fallback_face_index : Int
+  priv resolved_fallback_face_index : Int32
   priv resolved_font_name : String
   priv fallback_language_tags : Array[String]
   priv fallback_script_tag : String
-  priv fallback_language_tag_count : Int
-  priv fallback_request_language_count : Int
-  priv registered_font_count : Int
-  priv resolved_face_count : Int
-  priv span_count : Int
-  priv fallback_span_count : Int
-  priv missing_char_count : Int
-  priv covered_char_count : Int
+  priv fallback_language_tag_count : Int32
+  priv fallback_request_language_count : Int32
+  priv registered_font_count : Int32
+  priv resolved_face_count : Int32
+  priv span_count : Int32
+  priv fallback_span_count : Int32
+  priv missing_char_count : Int32
+  priv covered_char_count : Int32
   priv emoji_hint : Bool
   priv registered_font_fallback_ready : Bool
   priv missing_glyph_recovery_ready : Bool
   priv deterministic_color_emoji_ready : Bool
   priv glyph_format : String
   priv glyph_key : String
-  priv glyph_count : Int
-  priv cluster_count : Int
-  priv glyph_width : Int
-  priv glyph_height : Int
-  priv resolved_missing_glyph_count : Int
-  priv fallback_character : Int
+  priv glyph_count : Int32
+  priv cluster_count : Int32
+  priv glyph_width : Int32
+  priv glyph_height : Int32
+  priv resolved_missing_glyph_count : Int32
+  priv fallback_character : Int32
   priv emoji_fallback_attempted : Bool
   priv fallback_request_ready : Bool
 } derive(Eq, Debug, ToJson)
@@ -127,21 +127,21 @@ pub fn SunTextMaturityDiagnostic::text_system_id(
 ///|
 pub fn SunTextMaturityDiagnostic::registered_font_count(
   self : SunTextMaturityDiagnostic,
-) -> Int {
+) -> Int32 {
   self.registered_font_count
 }
 
 ///|
 pub fn SunTextMaturityDiagnostic::paragraph_line_count(
   self : SunTextMaturityDiagnostic,
-) -> Int {
+) -> Int32 {
   self.paragraph_line_count
 }
 
 ///|
 pub fn SunTextMaturityDiagnostic::selection_rect_count(
   self : SunTextMaturityDiagnostic,
-) -> Int {
+) -> Int32 {
   self.selection_rect_count
 }
 
@@ -211,14 +211,14 @@ pub fn SunTextMaturityDiagnostic::unicode_17_grapheme_boundary_ready(
 ///|
 pub fn SunTextMaturityDiagnostic::ready_count(
   self : SunTextMaturityDiagnostic,
-) -> Int {
+) -> Int32 {
   self.ready_count
 }
 
 ///|
 pub fn SunTextMaturityDiagnostic::gap_count(
   self : SunTextMaturityDiagnostic,
-) -> Int {
+) -> Int32 {
   self.gap_count
 }
 
@@ -239,28 +239,28 @@ pub fn SunTextVisualOrderDiagnostic::visual_text(
 ///|
 pub fn SunTextVisualOrderDiagnostic::logical_cluster_count(
   self : SunTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.logical_cluster_count
 }
 
 ///|
 pub fn SunTextVisualOrderDiagnostic::visual_cluster_count(
   self : SunTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.visual_cluster_count
 }
 
 ///|
 pub fn SunTextVisualOrderDiagnostic::segment_count(
   self : SunTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.segment_count
 }
 
 ///|
 pub fn SunTextVisualOrderDiagnostic::glyph_count(
   self : SunTextVisualOrderDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_count
 }
 
@@ -302,35 +302,35 @@ pub fn SunTextSelectionGeometryDiagnostic::selection_range(
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::selection_rect_count(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.selection_rect_count
 }
 
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::selected_line_count(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.selected_line_count
 }
 
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::line_count(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.line_count
 }
 
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::hit_test_offset(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.hit_test_offset
 }
 
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::hit_test_line_index(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.hit_test_line_index
 }
 
@@ -358,7 +358,7 @@ pub fn SunTextSelectionGeometryDiagnostic::visual_order_differs(
 ///|
 pub fn SunTextSelectionGeometryDiagnostic::visual_segment_count(
   self : SunTextSelectionGeometryDiagnostic,
-) -> Int {
+) -> Int32 {
   self.visual_segment_count
 }
 
@@ -407,7 +407,7 @@ pub fn SunEmojiFontFallbackDiagnostic::shaper(
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::resolved_fallback_face_index(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.resolved_fallback_face_index
 }
 
@@ -435,56 +435,56 @@ pub fn SunEmojiFontFallbackDiagnostic::fallback_script_tag(
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::fallback_language_tag_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_language_tag_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::fallback_request_language_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_request_language_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::registered_font_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.registered_font_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::resolved_face_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.resolved_face_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::span_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.span_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::fallback_span_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_span_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::missing_char_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.missing_char_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::covered_char_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.covered_char_count
 }
 
@@ -533,42 +533,42 @@ pub fn SunEmojiFontFallbackDiagnostic::glyph_key(
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::glyph_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::cluster_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.cluster_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::glyph_width(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_width
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::glyph_height(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.glyph_height
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.resolved_missing_glyph_count
 }
 
 ///|
 pub fn SunEmojiFontFallbackDiagnostic::fallback_character(
   self : SunEmojiFontFallbackDiagnostic,
-) -> Int {
+) -> Int32 {
   self.fallback_character
 }
 

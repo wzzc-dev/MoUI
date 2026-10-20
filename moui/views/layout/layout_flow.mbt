@@ -64,9 +64,9 @@ impl @core.ViewNode for Flow with fn semantics(_self) {
 ///|
 pub fn[Msg] wrap(
   children : Array[@core.View[Msg]],
-  width? : Double = 320.0,
-  spacing? : Double = 8.0,
-  row_spacing? : Double = 8.0,
+  width~ : Double = 320.0,
+  spacing~ : Double = 8.0,
+  row_spacing~ : Double = 8.0,
 ) -> @core.View[Msg] {
   flow(children, width~, spacing~, row_spacing~)
 }
@@ -74,9 +74,9 @@ pub fn[Msg] wrap(
 ///|
 pub fn[Msg] flow(
   children : Array[@core.View[Msg]],
-  width? : Double = 320.0,
-  spacing? : Double = 8.0,
-  row_spacing? : Double = 8.0,
+  width~ : Double = 320.0,
+  spacing~ : Double = 8.0,
+  row_spacing~ : Double = 8.0,
 ) -> @core.View[Msg] {
   let static_children = (_node : Flow) => children
   @core.View::from_node(
@@ -106,7 +106,7 @@ fn flow_size(
 
 ///|
 priv struct FlowItemPlacement {
-  index : Int
+  index : Int32
   x : Double
   y : Double
 }

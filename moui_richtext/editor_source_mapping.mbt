@@ -7,7 +7,7 @@ pub fn MarkdownEditorSnapshot::parse(source : String) -> MarkdownEditorSnapshot 
 pub fn MarkdownEditorSnapshot::parse_with_font(
   source : String,
   base : @core.FontSpec,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> MarkdownEditorSnapshot {
   let blocks = parse_markdown_editor_blocks(source)
   let word_count = markdown_editor_word_count(source)
@@ -34,8 +34,8 @@ pub fn MarkdownEditorSnapshot::parse_with_font(
 ///|
 pub fn markdown_editor_format(
   source : String,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  base_dir? : String? = None,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  base_dir~ : String? = None,
 ) -> RichTextDocument {
   MarkdownEditorSnapshot::parse_with_font(source, base, base_dir~).rich_text
 }
@@ -44,8 +44,8 @@ pub fn markdown_editor_format(
 pub fn markdown_editor_format_for_selection(
   source : String,
   selection : MarkdownEditorSelection,
-  base? : @core.FontSpec = @core.FontSpec::new(),
-  base_dir? : String? = None,
+  base~ : @core.FontSpec = @core.FontSpec::new(),
+  base_dir~ : String? = None,
 ) -> RichTextDocument {
   let document = markdown_editor_format(source, base~, base_dir~)
   let blocks : Array[RichTextBlock] = []
@@ -113,8 +113,8 @@ fn markdown_editor_blank_gap_line_height_scale() -> Double {
 /// stock Github theme measures 2.34em from paragraph to paragraph for one
 /// blank line and 4.72em for three, which is exactly this alternation.
 fn markdown_editor_blank_gap_is_writing_line(
-  offset : Int,
-  run_start : Int,
+  offset : Int32,
+  run_start : Int32,
 ) -> Bool {
   (offset - run_start) % 2 == 1
 }
@@ -124,8 +124,8 @@ fn markdown_editor_blank_gap_is_writing_line(
 /// at `start`.
 fn markdown_editor_blank_gap_run_end(
   blocks : Array[RichTextBlock],
-  start : Int,
-) -> Int {
+  start : Int32,
+) -> Int32 {
   let mut end = start
   while end < blocks.length() && rich_text_block_is_blank_gap(blocks[end]) {
     end = end + 1
@@ -229,9 +229,9 @@ fn markdown_editor_gap_selection_active(
 pub fn markdown_editor_format_for_writing_mode(
   source : String,
   selection : MarkdownEditorSelection,
-  base? : @core.FontSpec = @core.FontSpec::new(),
+  base~ : @core.FontSpec = @core.FontSpec::new(),
   focus_mode~ : Bool,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> RichTextDocument {
   let document = markdown_editor_format_for_selection(
     source,
@@ -419,7 +419,7 @@ fn markdown_editor_active_code_block(
 fn markdown_editor_code_block_active_line_delta(
   source_text : String,
   block : RichTextBlock,
-) -> Int {
+) -> Int32 {
   rich_text_text_newline_count(source_text) +
   1 -
   rich_text_block_visual_line_count(block)
@@ -537,11 +537,11 @@ fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
 /// find there.
 priv struct MarkdownSourceChars {
   chars : Array[Char]
-  offset : Int
+  offset : Int32
 }
 
 ///|
-fn MarkdownSourceChars::get(self : MarkdownSourceChars, index : Int) -> Char? {
+fn MarkdownSourceChars::get(self : MarkdownSourceChars, index : Int32) -> Char? {
   let offset = index - self.offset
   if offset < 0 || offset >= self.chars.length() {
     None
@@ -551,7 +551,7 @@ fn MarkdownSourceChars::get(self : MarkdownSourceChars, index : Int) -> Char? {
 }
 
 ///|
-fn MarkdownSourceChars::length(self : MarkdownSourceChars) -> Int {
+fn MarkdownSourceChars::length(self : MarkdownSourceChars) -> Int32 {
   self.offset + self.chars.length()
 }
 
@@ -560,8 +560,8 @@ fn MarkdownSourceChars::length(self : MarkdownSourceChars) -> Int {
 /// when either edge falls outside it.
 fn MarkdownSourceChars::slice(
   self : MarkdownSourceChars,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Array[Char]? {
   let lo = start - self.offset
   let hi = end - self.offset
@@ -592,8 +592,8 @@ fn markdown_editor_source_chars_all(source : String) -> MarkdownSourceChars {
 /// `range.start - 2`, so the results are unchanged.
 fn markdown_editor_block_source_chars_near(
   source : String,
-  block_source_start : Int,
-  block_source_end : Int,
+  block_source_start : Int32,
+  block_source_end : Int32,
 ) -> MarkdownSourceChars {
   let doc_length = markdown_editor_text_length(source)
   let start = markdown_editor_clamp_int(block_source_start - 2, 0, doc_length)
@@ -607,7 +607,7 @@ fn markdown_editor_block_source_chars_near(
 ///|
 fn markdown_editor_window_has_marker(
   chars : MarkdownSourceChars,
-  start : Int,
+  start : Int32,
   marker : String,
 ) -> Bool {
   if start < chars.offset {
@@ -627,7 +627,7 @@ fn markdown_editor_window_has_marker(
 ///|
 fn markdown_editor_single_inline_marker_at_window(
   chars : MarkdownSourceChars,
-  index : Int,
+  index : Int32,
   marker : Char,
 ) -> Bool {
   let ch = match chars.get(index) {
@@ -814,8 +814,8 @@ fn parse_markdown_editor_blocks_uncached(
 /// never need to scan every block. `None` when no range contains `offset`.
 fn markdown_editor_block_index_at_offset(
   blocks : Array[MarkdownEditorBlock],
-  offset : Int,
-) -> Int? {
+  offset : Int32,
+) -> Int32? {
   let mut low = 0
   let mut high = blocks.length() - 1
   while low <= high {
@@ -861,7 +861,7 @@ fn parse_markdown_editor_blocks_shell(
 fn parse_markdown_editor_blocks_with_definitions(
   source : String,
   definitions~ : Array[MarkdownReferenceDefinition]?,
-  parse_inlines? : Bool = true,
+  parse_inlines~ : Bool = true,
 ) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
   if source == "" {
@@ -1083,7 +1083,7 @@ fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
 ///|
 priv struct MarkdownEditorFrontMatterParseResult {
   block : MarkdownEditorBlock
-  next_index : Int
+  next_index : Int32
 }
 
 ///|
@@ -1115,7 +1115,7 @@ fn markdown_editor_front_matter_block_at(
 ///|
 struct MarkdownEditorHtmlBlockParseResult {
   block : MarkdownEditorBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -1127,7 +1127,7 @@ pub extend MarkdownEditorHtmlBlockParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_editor_html_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorHtmlBlockParseResult? {
   if index < 0 || index >= lines.length() {
     return None
@@ -1152,7 +1152,7 @@ fn markdown_editor_html_block_at(
 ///|
 fn markdown_editor_html_comment_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -1171,7 +1171,7 @@ fn markdown_editor_html_comment_block_at(
 ///|
 fn markdown_editor_html_processing_instruction_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -1192,7 +1192,7 @@ fn markdown_editor_html_processing_instruction_block_at(
 ///|
 fn markdown_editor_html_cdata_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorHtmlBlockParseResult? {
   let html_lines : Array[String] = []
   let mut next = index
@@ -1211,7 +1211,7 @@ fn markdown_editor_html_cdata_block_at(
 ///|
 fn markdown_editor_html_tag_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
   tag : String,
 ) -> MarkdownEditorHtmlBlockParseResult {
   let container = markdown_html_block_tag_keeps_blank_lines(tag)
@@ -1257,10 +1257,10 @@ fn markdown_editor_html_tag_block_at(
 ///|
 fn markdown_editor_html_container_closes_within(
   lines : Array[MarkdownLine],
-  start : Int,
+  start : Int32,
   tag : String,
-  depth : Int,
-  cap : Int,
+  depth : Int32,
+  cap : Int32,
 ) -> Bool {
   let mut depth = depth
   let limit = if start + cap < lines.length() {
@@ -1285,8 +1285,8 @@ fn markdown_editor_html_container_closes_within(
 fn markdown_editor_html_block_result(
   lines : Array[MarkdownLine],
   html_lines : Array[String],
-  start_index : Int,
-  end_index : Int,
+  start_index : Int32,
+  end_index : Int32,
 ) -> MarkdownEditorHtmlBlockParseResult {
   let first = lines[start_index]
   let last = lines[end_index]
@@ -1303,7 +1303,7 @@ fn markdown_editor_html_block_result(
 ///|
 struct MarkdownEditorSetextHeadingParseResult {
   block : MarkdownEditorBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -1315,9 +1315,9 @@ pub extend MarkdownEditorSetextHeadingParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_editor_setext_heading_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
   definitions : Array[MarkdownReferenceDefinition],
-  parse_inlines? : Bool = true,
+  parse_inlines~ : Bool = true,
 ) -> MarkdownEditorSetextHeadingParseResult? {
   let heading_lines : Array[MarkdownLine] = []
   let text_lines : Array[String] = []
@@ -1367,8 +1367,8 @@ fn markdown_editor_setext_heading_block_at(
 ///|
 fn markdown_editor_setext_heading_content_line(
   lines : Array[MarkdownLine],
-  index : Int,
-  parse_inlines? : Bool = true,
+  index : Int32,
+  parse_inlines~ : Bool = true,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
@@ -1464,7 +1464,7 @@ fn markdown_editor_shell_line_is_indented(text : StringView) -> Bool {
 /// content, even though the marker rules cannot see it.
 fn markdown_editor_shell_line_opens_html(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   let line = lines[index]
   markdown_editor_shell_line_may_open_html(line.text) &&
@@ -1637,8 +1637,8 @@ fn markdown_editor_shell_structural_kind(
 /// rare footnote label on the shell path.
 fn markdown_editor_shell_slice(
   text : StringView,
-  start~ : Int,
-  end~ : Int,
+  start~ : Int32,
+  end~ : Int32,
 ) -> String {
   let builder = StringBuilder()
   let mut index = start
@@ -1660,7 +1660,7 @@ fn markdown_editor_shell_slice(
 /// coincide for `skip_marker_length`.
 fn markdown_editor_shell_content_text(
   text : StringView,
-  skip_marker_length~ : Int,
+  skip_marker_length~ : Int32,
 ) -> String {
   let length = text.length()
   let mut offset = skip_marker_length
@@ -1741,7 +1741,7 @@ fn markdown_editor_block_is_shell(editor_block : MarkdownEditorBlock) -> Bool {
 /// instead of corrupting block positions.
 fn markdown_editor_block_materialized(
   source : String,
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
   editor_block : MarkdownEditorBlock,
 ) -> MarkdownEditorBlock {
@@ -1787,13 +1787,13 @@ fn markdown_editor_block_materialized(
 /// the same block from several paths, and a document whose text is one
 /// paragraph makes each miss cost the whole document.
 let markdown_editor_materialized_block_memo : Ref[
-  (UInt64, Int, Int, MarkdownEditorBlock)?,
+  (UInt64, Int32, Int32, MarkdownEditorBlock)?,
 ] = Ref(None)
 
 ///|
 fn markdown_editor_block_materialized_uncached(
   source : String,
-  source_length~ : Int,
+  source_length~ : Int32,
   source_digest~ : UInt64,
   editor_block : MarkdownEditorBlock,
 ) -> MarkdownEditorBlock {
@@ -1855,7 +1855,7 @@ fn markdown_editor_block_with_references(
 ///|
 struct MarkdownEditorIndentedCodeParseResult {
   block : MarkdownEditorBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -1867,7 +1867,7 @@ pub extend MarkdownEditorIndentedCodeParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_editor_indented_code_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorIndentedCodeParseResult? {
   if !markdown_editor_indented_code_line(lines, index) {
     return None
@@ -1913,8 +1913,8 @@ fn markdown_editor_indented_code_block_at(
 ///|
 fn markdown_editor_next_indented_code_line_index(
   lines : Array[MarkdownLine],
-  start : Int,
-) -> Int? {
+  start : Int32,
+) -> Int32? {
   let mut index = start
   while index < lines.length() && markdown_editor_blank_line(lines[index]) {
     index = index + 1
@@ -1946,7 +1946,7 @@ fn markdown_editor_line_text_is_blank(text : StringView) -> Bool {
 ///|
 fn markdown_editor_indented_code_line(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
@@ -1957,7 +1957,7 @@ fn markdown_editor_indented_code_line(
 ///|
 struct MarkdownEditorParagraphParseResult {
   block : MarkdownEditorBlock
-  end_index : Int
+  end_index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -1969,9 +1969,9 @@ pub extend MarkdownEditorParagraphParseResult with Eq::{not_equal, equal}
 ///|
 fn markdown_editor_soft_wrapped_paragraph_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
   definitions : Array[MarkdownReferenceDefinition],
-  parse_inlines? : Bool = true,
+  parse_inlines~ : Bool = true,
 ) -> MarkdownEditorParagraphParseResult? {
   if !markdown_editor_soft_wrapped_paragraph_line(lines, index, parse_inlines~) {
     return None
@@ -2025,8 +2025,8 @@ fn markdown_editor_soft_wrapped_paragraph_block_at(
 /// rules instead of running the markdown parser on every line.
 fn markdown_editor_soft_wrapped_paragraph_line(
   lines : Array[MarkdownLine],
-  index : Int,
-  parse_inlines? : Bool = true,
+  index : Int32,
+  parse_inlines~ : Bool = true,
 ) -> Bool {
   if index < 0 || index >= lines.length() {
     return false
@@ -2072,13 +2072,13 @@ fn markdown_editor_soft_wrapped_paragraph_line(
 ///|
 priv struct MarkdownEditorTableParseResult {
   block : MarkdownEditorBlock
-  end_index : Int
+  end_index : Int32
 }
 
 ///|
 fn markdown_editor_table_block_at(
   lines : Array[MarkdownLine],
-  index : Int,
+  index : Int32,
 ) -> MarkdownEditorTableParseResult? {
   // A separator row must contain `|`; lines whose next line has none skip
   // the trimmed cell scan entirely (this check runs once per line).
@@ -2187,8 +2187,8 @@ fn markdown_editor_split_table_cells(line : String) -> Array[String] {
 ///|
 fn markdown_editor_setext_heading_level_at(
   lines : Array[MarkdownLine],
-  index : Int,
-) -> Int? {
+  index : Int32,
+) -> Int32? {
   if index + 1 >= lines.length() {
     return None
   }
@@ -2222,7 +2222,7 @@ fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
 }
 
 ///|
-fn markdown_editor_setext_underline_level(line : StringView) -> Int? {
+fn markdown_editor_setext_underline_level(line : StringView) -> Int32? {
   // Allocation-free scan: skip leading whitespace, then require a run of
   // `=` (level 1) or `-` (level 2) covering the rest of the line.
   let length = line.length()
@@ -2303,7 +2303,7 @@ fn markdown_editor_blocks_to_rich_text(
   source : String,
   blocks : Array[MarkdownEditorBlock],
   base : @core.FontSpec,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> RichTextDocument {
   let rich_blocks : Array[RichTextBlock] = []
   for block in blocks {
@@ -2319,7 +2319,7 @@ fn markdown_editor_block_to_rich_text(
   source : String,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
-  base_dir? : String? = None,
+  base_dir~ : String? = None,
 ) -> RichTextBlock {
   markdown_editor_block_to_rich_text_with_cache(
     source,
@@ -2424,11 +2424,11 @@ fn markdown_editor_table_with_source_ranges(
           }
           // Cell runs carry cell-relative ranges; re-base them onto the
           // document source so reveal/hit math on the absolute source works.
-          let previous_start : Int = match cell.source_range {
+          let previous_start : Int32 = match cell.source_range {
             Some(previous) => previous.start
             None => 0
           }
-          let shift : Int = match next_source_range {
+          let shift : Int32 = match next_source_range {
             Some(next_range) => next_range.start - previous_start
             None => 0
           }
@@ -2465,8 +2465,8 @@ fn markdown_editor_table_with_source_ranges(
 ///|
 fn markdown_editor_find_table_cell(
   cells : Array[MarkdownEditorTableCellRange],
-  row : Int,
-  column : Int,
+  row : Int32,
+  column : Int32,
 ) -> MarkdownEditorTableCellRange? {
   for cell in cells {
     if cell.row == row && cell.column == column {
@@ -2692,7 +2692,7 @@ fn markdown_join_strings(parts : Array[String]) -> String {
 }
 
 ///|
-fn markdown_editor_heading_source(level : Int, text : String) -> String {
+fn markdown_editor_heading_source(level : Int32, text : String) -> String {
   let marks : Array[Char] = []
   for _ in 0..<level {
     marks.push('#')
@@ -2702,8 +2702,8 @@ fn markdown_editor_heading_source(level : Int, text : String) -> String {
 
 ///|
 struct MarkdownEditorRunSourceRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -2716,7 +2716,7 @@ pub extend MarkdownEditorRunSourceRange with Eq::{not_equal, equal}
 fn markdown_editor_find_run_source_range(
   content_chars : Array[Char],
   run_text : String,
-  start : Int,
+  start : Int32,
 ) -> MarkdownEditorRunSourceRange {
   let run_chars = run_text.to_array()
   if run_chars.length() == 0 {
@@ -2738,9 +2738,9 @@ fn markdown_editor_find_run_source_range(
 ///|
 fn markdown_editor_match_run_source_end(
   content : Array[Char],
-  start : Int,
+  start : Int32,
   target : Array[Char],
-) -> Int? {
+) -> Int32? {
   let mut source_index = start
   let mut target_index = 0
   while target_index < target.length() {
@@ -2823,7 +2823,7 @@ fn markdown_editor_content_range(
 }
 
 ///|
-fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
+fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int32 {
   // Allocation-free view scan; marker prefixes are ASCII, so char indices
   // and UTF-16 unit indices coincide.
   let length = line.length()
@@ -2880,12 +2880,12 @@ fn markdown_editor_footnote_marker_prefix_length(line : StringView) -> Int {
 /// and when the slice would cover the whole block (a no-op, matching the
 /// scan path's "unchanged" contract).
 fn markdown_editor_block_slice_bounds_via_index(
-  index : Array[Int],
+  index : Array[Int32],
   content_range : MarkdownSourceRange,
-  first_line : Int,
-  last_line : Int,
-  source_length : Int,
-) -> (Int, Int)? {
+  first_line : Int32,
+  last_line : Int32,
+  source_length : Int32,
+) -> (Int32, Int32)? {
   let mut low = 0
   let mut high = index.length() - 1
   let mut block_line = 0
@@ -2933,9 +2933,9 @@ fn markdown_editor_block_slice_bounds_via_index(
 fn markdown_editor_block_slice_to_source_lines(
   source : String,
   editor_block : MarkdownEditorBlock,
-  first_line : Int,
-  last_line : Int,
-  line_index? : Array[Int]? = None,
+  first_line : Int32,
+  last_line : Int32,
+  line_index~ : Array[Int32]? = None,
 ) -> MarkdownEditorBlock {
   let content_start = editor_block.content_range.start
   let content_end = editor_block.content_range.end
@@ -2975,7 +2975,7 @@ fn markdown_editor_block_slice_to_source_lines(
   let chars = markdown_editor_substring(source, content_start, content_end).to_array()
   // Offsets of each line's first character within the slice, plus one past the
   // last line's end.
-  let line_starts : Array[Int] = [0]
+  let line_starts : Array[Int32] = [0]
   for index, ch in chars {
     if ch == '\n' {
       line_starts.push(index + 1)
@@ -3028,4 +3028,4 @@ fn markdown_editor_block_slice_to_source_lines(
 }
 
 ///|
-const MARKDOWN_EDITOR_SLICE_TO_LAST_LINE : Int = 1073741824
+const MARKDOWN_EDITOR_SLICE_TO_LAST_LINE : Int32 = 1073741824

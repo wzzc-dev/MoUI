@@ -3,9 +3,9 @@ fn ElementNode::dispatch_text_input(
   self : ElementNode,
   target : ElementId,
   event : TextInputEvent,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
     self.dispatch_view_event(

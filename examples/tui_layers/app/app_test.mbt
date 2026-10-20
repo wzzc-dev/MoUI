@@ -226,8 +226,8 @@ fn any_moved(before~ : Array[Double], after~ : Array[Double]) -> Bool {
 fn press(
   runtime : @runtime.AppRuntime,
   key~ : String,
-  shift? : Bool = false,
-  control? : Bool = false,
+  shift~ : Bool = false,
+  control~ : Bool = false,
 ) -> Unit {
   runtime.dispatch_event(
     Keyboard(

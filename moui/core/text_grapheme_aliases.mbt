@@ -19,13 +19,16 @@ pub fn fallback_stabilize_grapheme_cluster_carets(
 
 ///|
 /// Returns the previous grapheme boundary before `caret`.
-pub fn text_previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn text_previous_grapheme_caret_boundary(
+  text : String,
+  caret : Int32,
+) -> Int32 {
   @unicode.previous_grapheme_caret_boundary(text, caret)
 }
 
 ///|
 /// Returns the next grapheme boundary after `caret`.
-pub fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn text_next_grapheme_caret_boundary(text : String, caret : Int32) -> Int32 {
   @unicode.next_grapheme_caret_boundary(text, caret)
 }
 
@@ -49,9 +52,9 @@ pub fn normalize_grapheme_range(
 /// bridges the core `TextRange` contract to the unicode package's API.
 pub fn delete_grapheme_range(
   boundaries : TextGraphemeBoundaries,
-  caret : Int,
-  before : Int,
-  after : Int,
+  caret : Int32,
+  before : Int32,
+  after : Int32,
 ) -> TextRange {
   let result = boundaries.delete_range(caret, before, after)
   TextRange::new(start=result.start, end=result.end)

@@ -8,10 +8,10 @@ pub struct WindowFrameHooks {
 
 ///|
 pub fn WindowFrameHooks::new(
-  prepare_frame? : () -> Unit = () => (),
-  finish_presented? : (Bool) -> Unit = _ => (),
-  request_redraw? : () -> Unit = () => (),
-  sync_ime? : () -> Unit = () => (),
+  prepare_frame~ : () -> Unit = () => (),
+  finish_presented~ : (Bool) -> Unit = _ => (),
+  request_redraw~ : () -> Unit = () => (),
+  sync_ime~ : () -> Unit = () => (),
 ) -> WindowFrameHooks {
   { prepare_frame, finish_presented, request_redraw, sync_ime, }
 }
@@ -21,18 +21,18 @@ pub fn WindowFrameHooks::new(
 pub struct WindowFrameState {
   renderer : @render.RendererSession
   hooks : WindowFrameHooks
-  surface_generation : Int
-  mut next_sequence : Int
+  surface_generation : Int32
+  mut next_sequence : Int32
   mut current_token : @render.FrameToken?
-  mut presented_frames : Int
+  mut presented_frames : Int32
   mut disposed : Bool
 }
 
 ///|
 pub fn WindowFrameState::new(
   renderer~ : @render.RendererSession,
-  surface_generation? : Int = 1,
-  hooks? : WindowFrameHooks = WindowFrameHooks::new(),
+  surface_generation~ : Int32 = 1,
+  hooks~ : WindowFrameHooks = WindowFrameHooks::new(),
 ) -> WindowFrameState {
   {
     renderer,
@@ -153,12 +153,12 @@ pub fn WindowFrameState::pending(self : WindowFrameState) -> Bool {
 }
 
 ///|
-pub fn WindowFrameState::surface_generation(self : WindowFrameState) -> Int {
+pub fn WindowFrameState::surface_generation(self : WindowFrameState) -> Int32 {
   self.surface_generation
 }
 
 ///|
-pub fn WindowFrameState::presented_count(self : WindowFrameState) -> Int {
+pub fn WindowFrameState::presented_count(self : WindowFrameState) -> Int32 {
   self.presented_frames
 }
 

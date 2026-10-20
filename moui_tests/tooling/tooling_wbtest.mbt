@@ -1,7 +1,7 @@
 ///|
 test "quickcheck keeps text layout caret positions monotonic" {
   @quickcheck.quick_check_fn(
-    fn(seed : Int) {
+    fn(seed : Int32) {
       let char_count = bounded_abs(seed, 32)
       let max_width = (bounded_abs(seed / 32, 64) + 1).to_double()
       let chars : Array[Char] = []
@@ -41,7 +41,7 @@ test "pixelmatch reports stable image equality and one pixel delta" {
 ///|
 test "quickcheck exercises svg rect lowering dimensions" {
   @quickcheck.quick_check_fn(
-    fn(seed : Int) {
+    fn(seed : Int32) {
       let width = (bounded_abs(seed, 50) + 1).to_double()
       let height = (bounded_abs(seed / 50, 50) + 1).to_double()
       let svg = "<svg><rect x=\"0\" y=\"0\" width=\"" +
@@ -59,7 +59,7 @@ test "quickcheck exercises svg rect lowering dimensions" {
 }
 
 ///|
-fn bounded_abs(value : Int, bound : Int) -> Int {
+fn bounded_abs(value : Int32, bound : Int32) -> Int32 {
   let remainder = value % bound
   if remainder < 0 {
     -remainder

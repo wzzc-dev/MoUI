@@ -41,8 +41,8 @@ pub fn[Msg, Style] themeable_control(
   paint : (@core.ViewPaintContext, Style) -> @core.ViewPaintPlan,
   semantics? : () -> @core.ViewSemanticsInfo,
   event? : (@core.ViewEventContext, Style) -> @core.ViewEventResult[Msg],
-  focusable? : Bool = true,
-  key? : String? = None,
+  focusable~ : Bool = true,
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let node = ThemedControl::{
     kind,

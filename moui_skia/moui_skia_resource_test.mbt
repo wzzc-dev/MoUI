@@ -1,6 +1,6 @@
 ///|
 test "resource cache tracks lru budget and stats" {
-  let cache : @moui_skia.ResourceCache[String, Int] = @moui_skia.ResourceCache::new(
+  let cache : @moui_skia.ResourceCache[String, Int32] = @moui_skia.ResourceCache::new(
     max_bytes=10L,
   )
   assert_true(cache.is_empty())

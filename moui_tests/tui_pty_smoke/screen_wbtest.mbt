@@ -59,22 +59,22 @@ fn blank_cell() -> Cell {
 /// 固定尺寸的反解栅格。尺寸取会话开始时的行列:缩小窗口后再放大时,
 /// 「有没有残影」要看的是超出当前行列的区域是否真的空了,所以模型不能跟着缩。
 priv struct Screen {
-  cols : Int
-  rows : Int
+  cols : Int32
+  rows : Int32
   cells : Array[Cell]
-  mut row : Int
-  mut col : Int
+  mut row : Int32
+  mut col : Int32
   mut style : Style
   /// `ESC[2J` 次数:一次全屏重建。缩小窗口不重建就会留残影。
-  mut rebuilds : Int
+  mut rebuilds : Int32
   /// 最近一次全屏重建之后被逐行定位写过的行。
   painted : Array[Bool]
   /// `ESC[<row>;<col>H` 总数:增量通路的工作量。
-  mut locates : Int
+  mut locates : Int32
 }
 
 ///|
-fn screen_new(cols : Int, rows : Int) -> Screen {
+fn screen_new(cols : Int32, rows : Int32) -> Screen {
   {
     cols,
     rows,
@@ -104,7 +104,7 @@ fn char_is_wide(ch : Char) -> Bool {
 }
 
 ///|
-fn digit_value(ch : Char) -> Int? {
+fn digit_value(ch : Char) -> Int32? {
   let c = ch.to_int()
   if c >= 0x30 && c <= 0x39 {
     Some(c - 0x30)
@@ -116,7 +116,7 @@ fn digit_value(ch : Char) -> Int? {
 ///|
 /// 逐位累计一个非负整数,返回消费的下标。SGR 参数与状态行里的数字都走这条,
 /// 所以整个反解器没有一次 String→Int 转换。
-fn scan_int(chars : Array[Char], start : Int) -> (Int, Int) {
+fn scan_int(chars : Array[Char], start : Int32) -> (Int32, Int32) {
   let mut i = start
   let mut value = 0
   while i < chars.length() {
@@ -152,12 +152,17 @@ fn split_params(params : String) -> Array[String] {
 }
 
 ///|
-fn Screen::at(self : Screen, row : Int, col : Int) -> Cell {
+fn Screen::at(self : Screen, row : Int32, col : Int32) -> Cell {
   self.cells[row * self.cols + col]
 }
 
 ///|
-fn Screen::put_cell(self : Screen, row : Int, col : Int, cell : Cell) -> Unit {
+fn Screen::put_cell(
+  self : Screen,
+  row : Int32,
+  col : Int32,
+  cell : Cell,
+) -> Unit {
   if row >= 0 && row < self.rows && col >= 0 && col < self.cols {
     self.cells[row * self.cols + col] = cell
   }
@@ -196,7 +201,7 @@ fn Screen::clear(self : Screen) -> Unit {
 }
 
 ///|
-fn Screen::move_to(self : Screen, row : Int, col : Int) -> Unit {
+fn Screen::move_to(self : Screen, row : Int32, col : Int32) -> Unit {
   self.row = row
   self.col = col
   if row >= 0 && row < self.rows {
@@ -260,7 +265,7 @@ fn Screen::sgr(self : Screen, params : String) -> Unit {
 
 ///|
 /// `ESC[<row>;<col>H` 的参数是 1 基,缺省都当 1。
-fn parse_position(params : String) -> (Int, Int) {
+fn parse_position(params : String) -> (Int32, Int32) {
   let chars = params.to_array()
   let (row, after) = scan_int(chars, 0)
   let col = if after < chars.length() && chars[after] == ';' {
@@ -276,7 +281,7 @@ fn parse_position(params : String) -> (Int, Int) {
 /// 吃掉一个转义序列,返回它的最后一个下标(调用方再 +1)。
 /// 只认渲染器与宿主真会发的形态:CSI 私有模式(`h`/`l`)、kitty(`u`)忽略,
 /// `H`/`f` 定位、`J` 清屏、`K` 清行、`m` 属性。
-fn Screen::escape(self : Screen, chars : Array[Char], start : Int) -> Int {
+fn Screen::escape(self : Screen, chars : Array[Char], start : Int32) -> Int32 {
   if start >= chars.length() {
     return start
   }
@@ -348,7 +353,7 @@ fn Screen::feed(self : Screen, text : String) -> Unit {
 }
 
 ///|
-fn Screen::line_text(self : Screen, row : Int) -> String {
+fn Screen::line_text(self : Screen, row : Int32) -> String {
   if row < 0 || row >= self.rows {
     return ""
   }
@@ -383,7 +388,7 @@ fn Screen::has(self : Screen, needle : String) -> Bool {
 }
 
 ///|
-fn Screen::find_row(self : Screen, needle : String) -> Int? {
+fn Screen::find_row(self : Screen, needle : String) -> Int32? {
   for r in 0..<self.rows {
     if self.line_text(r).contains(needle) {
       return Some(r)
@@ -393,7 +398,7 @@ fn Screen::find_row(self : Screen, needle : String) -> Int? {
 }
 
 ///|
-fn Screen::styled_count(self : Screen, matches : (Style) -> Bool) -> Int {
+fn Screen::styled_count(self : Screen, matches : (Style) -> Bool) -> Int32 {
   let mut count = 0
   for cell in self.cells {
     if matches(cell.style) {
@@ -406,7 +411,7 @@ fn Screen::styled_count(self : Screen, matches : (Style) -> Bool) -> Int {
 ///|
 /// 全屏重建之后被写过的行数。缩小窗口时它必须等于新行数,
 /// 放大回来时必须等于总行数,否则就有从没被覆盖的旧格。
-fn Screen::painted_count(self : Screen) -> Int {
+fn Screen::painted_count(self : Screen) -> Int32 {
   let mut count = 0
   for flag in self.painted {
     if flag {
@@ -418,13 +423,13 @@ fn Screen::painted_count(self : Screen) -> Int {
 
 ///|
 /// 第 `row` 行是否在重建之后一个字节都没写过(残影的唯一来源)。
-fn Screen::row_untouched(self : Screen, row : Int) -> Bool {
+fn Screen::row_untouched(self : Screen, row : Int32) -> Bool {
   row < self.painted.length() && !self.painted[row]
 }
 
 ///|
 /// 手写 `search`:反解器不依赖核心库的字符串查找,少一处会变的依赖。
-fn index_of(hay : Array[Char], pat : Array[Char]) -> Int? {
+fn index_of(hay : Array[Char], pat : Array[Char]) -> Int32? {
   if pat.length() == 0 || pat.length() > hay.length() {
     None
   } else {
@@ -447,7 +452,7 @@ fn index_of(hay : Array[Char], pat : Array[Char]) -> Int? {
 /// 第一处含 `needle` 的文本里,`needle` 之后的第一个整数(允许负号)。
 /// demo 的状态行 `sel=` / `list=` / `tree=` 与 `Entries N` / `Files N`
 /// 就是给断言用的可读目标,不需要去数字符格。
-fn Screen::int_after(self : Screen, needle : String) -> Int? {
+fn Screen::int_after(self : Screen, needle : String) -> Int32? {
   match self.find_row(needle) {
     None => None
     Some(row) => {
@@ -478,7 +483,7 @@ fn Screen::int_after(self : Screen, needle : String) -> Int? {
 
 ///|
 /// 状态行里的一个整数,拿不到就是冒烟自己的问题(状态行没了),直接红。
-fn Screen::int_or_fail(self : Screen, needle : String) -> Int {
+fn Screen::int_or_fail(self : Screen, needle : String) -> Int32 {
   match self.int_after(needle) {
     Some(value) => value
     None => {

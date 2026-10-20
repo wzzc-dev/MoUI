@@ -2,21 +2,21 @@
 pub(all) struct PdfWorkbenchRasterRequest {
   path : String
   bytes : Bytes
-  page_number : Int
+  page_number : Int32
   zoom : Double
-  dpi : Int
-  max_pixel_edge : Int
+  dpi : Int32
+  max_pixel_edge : Int32
   cache_key : String
 }
 
 ///|
 pub(all) struct PdfWorkbenchRasterPage {
   cache_key : String
-  page_number : Int
+  page_number : Int32
   zoom : Double
-  page_count : Int
-  width_px : Int
-  height_px : Int
+  page_count : Int32
+  width_px : Int32
+  height_px : Int32
   image_source : String
   diagnostic : String
 } derive(Eq, Debug, ToJson)
@@ -240,7 +240,7 @@ fn PdfWorkbenchModel::current_raster_cache_key(
 ///|
 fn pdf_workbench_raster_cache_key(
   document : PdfWorkbenchDocument,
-  page_number~ : Int,
+  page_number~ : Int32,
   zoom~ : Double,
 ) -> String {
   pdf_workbench_document_key(document) +
@@ -260,7 +260,7 @@ fn pdf_workbench_document_key(document : PdfWorkbenchDocument) -> String {
 }
 
 ///|
-fn pdf_workbench_zoom_bucket(zoom : Double) -> Int {
+fn pdf_workbench_zoom_bucket(zoom : Double) -> Int32 {
   let bucket = (zoom * 100.0).to_int()
   if bucket < 1 {
     1
@@ -270,7 +270,7 @@ fn pdf_workbench_zoom_bucket(zoom : Double) -> Int {
 }
 
 ///|
-fn pdf_workbench_max_raster_cache_entries() -> Int {
+fn pdf_workbench_max_raster_cache_entries() -> Int32 {
   12
 }
 
@@ -345,7 +345,7 @@ fn pdf_workbench_sanitize_cache_segment(value : String) -> String {
 }
 
 ///|
-fn pdf_workbench_string_hash(value : String) -> Int {
+fn pdf_workbench_string_hash(value : String) -> Int32 {
   let mut hash = 5381
   for ch in value.to_array() {
     hash = hash * 33 + ch.to_int()

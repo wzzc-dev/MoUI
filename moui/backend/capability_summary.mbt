@@ -29,20 +29,20 @@ pub extend HostCapabilitySummary with ToJson::{to_json}
 ///|
 pub fn HostCapabilitySummary::new(
   backend~ : HostBackendKind,
-  label? : String = "Host",
-  services? : HostServiceCapabilities = HostServiceCapabilities::none(),
-  input? : HostInputCapabilities = HostInputCapabilities::none(),
-  window_lifecycle? : Bool = false,
-  multi_window? : Bool = false,
-  text_input_available? : Bool = input.text_input,
-  ime_available? : Bool = input.ime,
-  drag_drop_available? : Bool = input.drag_drop,
-  async_services? : Bool = false,
-  native_accessibility_available? : Bool = false,
-  web_view_available? : Bool = false,
-  host_modal_available? : Bool = false,
-  web_view_description? : String = "Native WebView is unavailable on this host.",
-  description? : String = "",
+  label~ : String = "Host",
+  services~ : HostServiceCapabilities = HostServiceCapabilities::none(),
+  input~ : HostInputCapabilities = HostInputCapabilities::none(),
+  window_lifecycle~ : Bool = false,
+  multi_window~ : Bool = false,
+  text_input_available~ : Bool = input.text_input,
+  ime_available~ : Bool = input.ime,
+  drag_drop_available~ : Bool = input.drag_drop,
+  async_services~ : Bool = false,
+  native_accessibility_available~ : Bool = false,
+  web_view_available~ : Bool = false,
+  host_modal_available~ : Bool = false,
+  web_view_description~ : String = "Native WebView is unavailable on this host.",
+  description~ : String = "",
 ) -> HostCapabilitySummary {
   {
     backend,
@@ -68,18 +68,18 @@ pub fn HostCapabilitySummary::from_contracts(
   info~ : HostAppInfo,
   services~ : HostServiceCapabilities,
   input~ : HostInputCapabilities,
-  label? : String = info.backend.label(),
-  window_lifecycle? : Bool = true,
-  multi_window? : Bool = false,
-  text_input_available? : Bool = input.text_input,
-  ime_available? : Bool = input.ime,
-  drag_drop_available? : Bool = input.drag_drop,
-  async_services? : Bool = false,
-  native_accessibility_available? : Bool = false,
-  web_view_available? : Bool = false,
-  host_modal_available? : Bool = false,
-  web_view_description? : String = "Native WebView is unavailable on this host.",
-  description? : String = info.description,
+  label~ : String = info.backend.label(),
+  window_lifecycle~ : Bool = true,
+  multi_window~ : Bool = false,
+  text_input_available~ : Bool = input.text_input,
+  ime_available~ : Bool = input.ime,
+  drag_drop_available~ : Bool = input.drag_drop,
+  async_services~ : Bool = false,
+  native_accessibility_available~ : Bool = false,
+  web_view_available~ : Bool = false,
+  host_modal_available~ : Bool = false,
+  web_view_description~ : String = "Native WebView is unavailable on this host.",
+  description~ : String = info.description,
 ) -> HostCapabilitySummary {
   HostCapabilitySummary::new(
     backend=info.backend,
@@ -102,15 +102,15 @@ pub fn HostCapabilitySummary::from_contracts(
 
 ///|
 pub fn HostCapabilitySummary::unavailable(
-  label? : String = "Unavailable host",
-  description? : String = "No platform host capability summary is available.",
+  label~ : String = "Unavailable host",
+  description~ : String = "No platform host capability summary is available.",
 ) -> HostCapabilitySummary {
   HostCapabilitySummary::new(backend=Test, label~, description~)
 }
 
 ///|
 pub fn HostCapabilitySummary::test_host(
-  label? : String = "Test host",
+  label~ : String = "Test host",
 ) -> HostCapabilitySummary {
   HostCapabilitySummary::from_contracts(
     info=HostAppInfo::new(
@@ -143,7 +143,7 @@ pub fn HostCapabilitySummary::has_required_app_basics(
 ///|
 pub fn HostCapabilitySummary::service_count(
   self : HostCapabilitySummary,
-) -> Int {
+) -> Int32 {
   bool_score(self.services.clipboard) +
   bool_score(self.services.menus) +
   bool_score(self.services.file_dialogs) +
@@ -153,7 +153,9 @@ pub fn HostCapabilitySummary::service_count(
 }
 
 ///|
-pub fn HostCapabilitySummary::input_count(self : HostCapabilitySummary) -> Int {
+pub fn HostCapabilitySummary::input_count(
+  self : HostCapabilitySummary,
+) -> Int32 {
   bool_score(self.input.pointer) +
   bool_score(self.input.scroll) +
   bool_score(self.input.keyboard) +
@@ -239,7 +241,7 @@ pub fn HostInputCapabilities::enabled_labels(
 }
 
 ///|
-fn bool_score(value : Bool) -> Int {
+fn bool_score(value : Bool) -> Int32 {
   if value {
     1
   } else {

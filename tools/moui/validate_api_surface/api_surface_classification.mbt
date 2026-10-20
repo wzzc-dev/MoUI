@@ -2,7 +2,7 @@
 struct ApiSurfaceCategoryBudget {
   path : String
   category : String
-  max_count : Int
+  max_count : Int32
 }
 
 ///|
@@ -332,7 +332,7 @@ fn count_api_surface_category(
   path : String,
   text : String,
   category : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for line_view in text.split("\n") {
     let line = line_view.to_owned()

@@ -77,7 +77,7 @@ fn push_advanced_matrix_f32le(
 
 ///|
 fn push_visual_f32le(out : Array[Byte], value : Double) -> Unit {
-  let bits : UInt = Float::from_double(value)
+  let bits : UInt32 = Float::from_double(value)
     .reinterpret_as_int()
     .reinterpret_as_uint()
   out.push((bits & 0xFF).to_byte())

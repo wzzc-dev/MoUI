@@ -130,7 +130,7 @@ fn platform_permission_result(
 ///|
 fn HostServicesAdapter::app_platform_services(
   self : HostServicesAdapter,
-  lifecycle? : @app_services.AppLifecycleSource? = None,
+  lifecycle~ : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.PlatformServices {
   @app_services.PlatformServices::new(
     notifications=@app_services.NotificationServices::new(
@@ -542,7 +542,7 @@ fn HostServicesAdapter::app_menu_services(
 ///|
 fn HostServicesAdapter::as_app_services(
   self : HostServicesAdapter,
-  lifecycle? : @app_services.AppLifecycleSource? = None,
+  lifecycle~ : @app_services.AppLifecycleSource? = None,
 ) -> @app_services.AppServices {
   @app_services.AppServices::new(
     files=self.app_file_services(),
@@ -622,10 +622,10 @@ fn HostServicesAdapter::as_app_services(
 ///|
 fn HostServicesAdapter::app_environment(
   self : HostServicesAdapter,
-  timer? : @app_services.TimerSource? = None,
-  routes? : @app_services.RouteSource? = None,
-  lifecycle? : @app_services.AppLifecycleSource? = None,
-  clock? : (() -> Double)? = None,
+  timer~ : @app_services.TimerSource? = None,
+  routes~ : @app_services.RouteSource? = None,
+  lifecycle~ : @app_services.AppLifecycleSource? = None,
+  clock~ : (() -> Double)? = None,
 ) -> @app_services.AppEnvironment {
   @app_services.AppEnvironment::new(
     services=self.as_app_services(lifecycle~),
@@ -640,9 +640,9 @@ fn HostServicesAdapter::app_environment(
 /// Request ids and completion queues remain private to this package.
 pub fn app_services(
   bridge~ : @backend_host.HostServiceBridge,
-  async_queue? : ServiceAsyncQueue? = None,
-  lifecycle? : @app_services.AppLifecycleSource? = None,
-  window_drag? : @app_services.WindowDragRegionSource? = None,
+  async_queue~ : ServiceAsyncQueue? = None,
+  lifecycle~ : @app_services.AppLifecycleSource? = None,
+  window_drag~ : @app_services.WindowDragRegionSource? = None,
 ) -> @app_services.AppServices {
   HostServicesAdapter::new(bridge~, async_queue~, window_drag~).as_app_services(
     lifecycle~,
@@ -653,12 +653,12 @@ pub fn app_services(
 /// Build the app-facing environment supplied to a Program closure.
 pub fn app_environment(
   bridge~ : @backend_host.HostServiceBridge,
-  async_queue? : ServiceAsyncQueue? = None,
-  timer? : @app_services.TimerSource? = None,
-  routes? : @app_services.RouteSource? = None,
-  lifecycle? : @app_services.AppLifecycleSource? = None,
-  clock? : (() -> Double)? = None,
-  window_drag? : @app_services.WindowDragRegionSource? = None,
+  async_queue~ : ServiceAsyncQueue? = None,
+  timer~ : @app_services.TimerSource? = None,
+  routes~ : @app_services.RouteSource? = None,
+  lifecycle~ : @app_services.AppLifecycleSource? = None,
+  clock~ : (() -> Double)? = None,
+  window_drag~ : @app_services.WindowDragRegionSource? = None,
 ) -> @app_services.AppEnvironment {
   HostServicesAdapter::new(bridge~, async_queue~, window_drag~).app_environment(
     timer~,

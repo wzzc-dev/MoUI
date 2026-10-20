@@ -66,7 +66,7 @@ fn ElementNode::view_tree_inspector_snapshot(
 }
 
 ///|
-fn ElementNode::inspector_layout_cache_hits(self : ElementNode) -> Int {
+fn ElementNode::inspector_layout_cache_hits(self : ElementNode) -> Int32 {
   let mut total = self.layout_cache.hit_count
   for child in self.children {
     total = total + child.inspector_layout_cache_hits()
@@ -75,7 +75,7 @@ fn ElementNode::inspector_layout_cache_hits(self : ElementNode) -> Int {
 }
 
 ///|
-fn ElementNode::inspector_layout_cache_misses(self : ElementNode) -> Int {
+fn ElementNode::inspector_layout_cache_misses(self : ElementNode) -> Int32 {
   let mut total = self.layout_cache.miss_count
   for child in self.children {
     total = total + child.inspector_layout_cache_misses()
@@ -84,7 +84,7 @@ fn ElementNode::inspector_layout_cache_misses(self : ElementNode) -> Int {
 }
 
 ///|
-fn ElementNode::inspector_render_cache_hits(self : ElementNode) -> Int {
+fn ElementNode::inspector_render_cache_hits(self : ElementNode) -> Int32 {
   let mut total = self.render_cache.hit_count
   for child in self.children {
     total = total + child.inspector_render_cache_hits()
@@ -93,7 +93,7 @@ fn ElementNode::inspector_render_cache_hits(self : ElementNode) -> Int {
 }
 
 ///|
-fn ElementNode::inspector_render_cache_misses(self : ElementNode) -> Int {
+fn ElementNode::inspector_render_cache_misses(self : ElementNode) -> Int32 {
   let mut total = self.render_cache.miss_count
   for child in self.children {
     total = total + child.inspector_render_cache_misses()
@@ -106,7 +106,7 @@ fn ElementNode::inspector_hit_path(
   self : ElementNode,
   point : @core.Point,
   render : RenderNode,
-) -> Array[Int] {
+) -> Array[Int32] {
   let path = [self.id.value()]
   let mut index = self.children.length() - 1
   while index >= 0 {
@@ -126,7 +126,7 @@ fn ElementNode::inspector_hit_path(
 fn ElementNode::collect_view_summaries(
   self : ElementNode,
   nodes : Array[ViewInspectorSummary],
-  depth~ : Int,
+  depth~ : Int32,
 ) -> Unit {
   nodes.push({
     element_id: self.id.value(),
@@ -147,7 +147,7 @@ fn ElementNode::collect_view_summaries(
 }
 
 ///|
-fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
+fn ElementNode::inspector_control_count(self : ElementNode) -> Int32 {
   let mut count = if runtime_view_node_inspector_is_control(self.view_node) {
     1
   } else {
@@ -160,7 +160,7 @@ fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
 }
 
 ///|
-fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
+fn ElementNode::inspector_modified_count(self : ElementNode) -> Int32 {
   let mut count = if self.view_node.identity().kind.has_prefix("Modified<") {
     1
   } else {

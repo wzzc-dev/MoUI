@@ -179,7 +179,7 @@ pub fn requirement_audit_for(
 }
 
 ///|
-pub fn requirement_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn requirement_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in requirement_audit(preset) {
     if item.status != OfficialComplete {

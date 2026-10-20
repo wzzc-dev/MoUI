@@ -9,7 +9,7 @@ pub const SETTINGS_STORAGE_KEY : String = "mo_desktop:desktop"
 ///|
 /// Current snapshot schema version. Bump when the shape changes and add a
 /// migration branch in `decode_desktop_snapshot`.
-pub const SNAPSHOT_SCHEMA_VERSION : Int = 4
+pub const SNAPSHOT_SCHEMA_VERSION : Int32 = 4
 
 ///|
 /// Persisted position of one desktop icon relative to its default slot.
@@ -38,7 +38,7 @@ pub extend DesktopIconPlacement with ToJson::{to_json}
 /// launch: appearance, media levels, icon layout, window geometry, and the
 /// recently imported files.
 pub(all) struct DesktopSnapshot {
-  schema_version : Int
+  schema_version : Int32
   dark_mode : Bool
   wallpaper_source : String
   volume : Double
@@ -235,7 +235,7 @@ pub fn encode_desktop_snapshot(snapshot : DesktopSnapshot) -> String {
 /// payloads are migrated forward instead of being discarded.
 pub fn decode_desktop_snapshot(text : String) -> DesktopSnapshot? {
   let payload = @json.parse(text) catch { _ => return None }
-  let version : Int = match payload {
+  let version : Int32 = match payload {
     Object(fields) =>
       match fields.get("schema_version") {
         Some(Number(raw, ..)) => raw.to_int()
@@ -333,7 +333,7 @@ pub fn DesktopModel::restore_snapshot(
 }
 
 ///|
-fn next_serial_after(windows : Array[WindowRecord]) -> Int {
+fn next_serial_after(windows : Array[WindowRecord]) -> Int32 {
   let mut highest = 0
   for record in windows {
     if record.id.serial > highest {
@@ -344,7 +344,7 @@ fn next_serial_after(windows : Array[WindowRecord]) -> Int {
 }
 
 ///|
-fn next_z_after(windows : Array[WindowRecord]) -> Int {
+fn next_z_after(windows : Array[WindowRecord]) -> Int32 {
   let mut highest = 0
   for record in windows {
     if record.z_order > highest {

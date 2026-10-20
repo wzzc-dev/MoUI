@@ -9,7 +9,7 @@ pub struct Model {
   base_scene : @moui_3d.Scene
   snapshot : @moui_3d.ViewportSnapshot
   player : @moui_3d.AnimationPlayer
-  selected_clip : Int
+  selected_clip : Int32
   picked_node : @moui_3d.NodeId?
   fixture_loaded : Bool
   orbit_time : Double
@@ -24,7 +24,7 @@ pub(all) enum Msg {
   Viewport(@moui_3d.ViewportEvent)
   TogglePlayback
   SeekStart
-  SelectClip(Int)
+  SelectClip(Int32)
   Advance(Double)
 }
 
@@ -213,7 +213,7 @@ pub fn program() -> @moui.Program[Model, Msg] {
 ///|
 pub fn program_with_binding(
   binding : @moui_3d.ThreeDViewportBinding,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::simple(init=Model::new_with_binding(binding), update~, view~, subscriptions=model => {
     playback_subscription(model, environment.timer())
@@ -375,7 +375,7 @@ fn cube_scene() -> @moui_3d.Scene {
 }
 
 ///|
-fn cube_face(face : Int) -> (Array[@moui_3d.Vec3], @moui_3d.Vec3) {
+fn cube_face(face : Int32) -> (Array[@moui_3d.Vec3], @moui_3d.Vec3) {
   let n = (x, y, z) => @moui_3d.Vec3::new(x~, y~, z~)
   match face {
     0 =>

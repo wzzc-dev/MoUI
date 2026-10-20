@@ -2,8 +2,8 @@
 priv struct SunTextLine {
   text : String
   width : Double
-  start_scalar : Int
-  scalar_count : Int
+  start_scalar : Int32
+  scalar_count : Int32
 }
 
 ///|
@@ -15,8 +15,8 @@ priv struct SunTextLinePlan {
 
 ///|
 priv enum SunTextLayoutToken {
-  Text(String, Int)
-  LineBreak(Int)
+  Text(String, Int32)
+  LineBreak(Int32)
 }
 
 ///|
@@ -88,8 +88,8 @@ fn sun_text_line_plan_push(
   faces : Array[@sun_text.FontFace],
   config : @sun_text.LayoutConfig,
   text : String,
-  start_scalar : Int,
-  scalar_count : Int,
+  start_scalar : Int32,
+  scalar_count : Int32,
 ) -> Unit {
   lines.push({
     text,
@@ -359,7 +359,7 @@ fn sun_text_cluster_is_rtl(cluster : String) -> Bool {
 }
 
 ///|
-fn sun_text_segment_count(clusters : Array[String]) -> Int {
+fn sun_text_segment_count(clusters : Array[String]) -> Int32 {
   if clusters.is_empty() {
     return 0
   }
@@ -376,7 +376,7 @@ fn sun_text_segment_count(clusters : Array[String]) -> Int {
 }
 
 ///|
-fn sun_text_segment_class(cluster : String) -> Int {
+fn sun_text_segment_class(cluster : String) -> Int32 {
   let representative = @render_common.representative_fallback_codepoint(
     cluster,
     skip_joiners=true,

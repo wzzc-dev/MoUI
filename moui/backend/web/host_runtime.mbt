@@ -80,7 +80,7 @@ fn run_app_internal(
   runtime : @runtime.AppRuntime,
   renderer_providers : Array[@render.RendererProvider],
   options~ : WebAppOptions,
-  window_requests? : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
+  window_requests~ : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
 ) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(Poll)
@@ -162,7 +162,7 @@ fn web_environment_with_accessibility_settings(
 
 ///|
 pub fn entry(
-  options? : WebAppOptions = WebAppOptions::new(),
+  options~ : WebAppOptions = WebAppOptions::new(),
 ) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="web", launch=request => {
     run_app_internal(
@@ -177,10 +177,10 @@ pub fn entry(
 
 ///|
 pub fn WebAppOptions::new(
-  scene_resolver? : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources? : @runtime.HostPlatformEventSources? = None,
-  route_source? : @services.RouteSource? = None,
-  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
+  scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
+  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  route_source~ : @services.RouteSource? = None,
+  platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
 ) -> WebAppOptions {
   { scene_resolver, event_sources, route_source, platform_view_plugins, }
 }

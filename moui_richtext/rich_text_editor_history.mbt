@@ -9,11 +9,11 @@
 /// insertions, edits behind an active selection, and edits after a
 /// history restore always start a fresh group.
 priv struct RichTextHistoryGroupState {
-  mut kind : Int
-  mut start : Int
-  mut after_length : Int
+  mut kind : Int32
+  mut start : Int32
+  mut after_length : Int32
   mut last_push_ms : Int64
-  mut expected_stack_length : Int
+  mut expected_stack_length : Int32
 }
 
 ///|
@@ -48,7 +48,7 @@ fn rich_text_history_now_ms() -> Int64 {
 ///|
 /// Consecutive edits landing within this many milliseconds of each
 /// other extend the open undo group.
-let rich_text_history_merge_window_ms : Int = 500
+let rich_text_history_merge_window_ms : Int32 = 500
 
 ///|
 /// What the caller must do with the undo stack for an accepted edit:
@@ -58,7 +58,7 @@ let rich_text_history_merge_window_ms : Int = 500
 /// left edge also shifts `start`).
 priv enum RichTextHistoryAction {
   PushHistory
-  MergeHistory(Int, Char)
+  MergeHistory(Int32, Char)
 }
 
 ///|
@@ -71,9 +71,9 @@ priv enum RichTextHistoryAction {
 fn rich_text_history_single_edit(
   previous : String,
   next : String,
-  caret : Int,
+  caret : Int32,
   selection_active~ : Bool,
-) -> (Int, Int, Char)? {
+) -> (Int32, Int32, Char)? {
   if selection_active {
     return None
   }
@@ -144,7 +144,7 @@ fn rich_text_history_single_edit(
 /// Position the next same-kind edit must land on to stay in the open
 /// group: one past the previous insertion, one before the previous
 /// backspace, or the same spot for a repeated forward delete.
-fn rich_text_history_group_delta(kind : Int) -> Int {
+fn rich_text_history_group_delta(kind : Int32) -> Int32 {
   if kind == 1 {
     1
   } else if kind == 2 {
@@ -164,11 +164,11 @@ fn rich_text_history_record_edit(
   control : @core.TextControlStateContext,
   previous : String,
   next : String,
-  caret : Int,
+  caret : Int32,
   // Classification computed from the applied edit's known range. Absent
   // means "rescan the documents"; `Some(None)` means "known to be not a
   // single-character edit".
-  shape? : (Int, Int, Char)?? = None,
+  shape~ : (Int32, Int32, Char)?? = None,
 ) -> RichTextHistoryAction {
   let now = rich_text_history_now_ms()
   let selection_active = @core.active_text_selection(control.selection)
@@ -230,7 +230,7 @@ fn rich_text_history_record_edit(
 ///|
 /// Codepoint delta of a single-edit shape: kind 1 inserts one codepoint,
 /// kinds 2 (backspace) and 3 (forward delete) remove one.
-fn rich_text_history_shape_char_delta(kind : Int) -> Int {
+fn rich_text_history_shape_char_delta(kind : Int32) -> Int32 {
   if kind == 1 {
     1
   } else {

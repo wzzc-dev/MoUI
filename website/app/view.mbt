@@ -153,7 +153,7 @@ fn nav_button(
   label : String,
   active : Bool,
   message : Msg,
-  width? : Double = 76.0,
+  width~ : Double = 76.0,
 ) -> @moui.View[Msg] {
   button(
     label,

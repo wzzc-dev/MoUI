@@ -1,7 +1,7 @@
 ///|
 extern "C" fn native_bitmap_alloc_n32_premul(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> BitmapHandle = "moonbit_skia_bitmap_alloc_n32_premul"
 
 ///|
@@ -10,19 +10,19 @@ extern "C" fn native_bitmap_is_null(bitmap : BitmapHandle) -> Bool = "moonbit_sk
 
 ///|
 #borrow(bitmap)
-extern "C" fn native_bitmap_width(bitmap : BitmapHandle) -> Int = "moonbit_skia_bitmap_width"
+extern "C" fn native_bitmap_width(bitmap : BitmapHandle) -> Int32 = "moonbit_skia_bitmap_width"
 
 ///|
 #borrow(bitmap)
-extern "C" fn native_bitmap_height(bitmap : BitmapHandle) -> Int = "moonbit_skia_bitmap_height"
+extern "C" fn native_bitmap_height(bitmap : BitmapHandle) -> Int32 = "moonbit_skia_bitmap_height"
 
 ///|
 #borrow(bitmap)
-extern "C" fn native_bitmap_row_bytes(bitmap : BitmapHandle) -> Int = "moonbit_skia_bitmap_row_bytes"
+extern "C" fn native_bitmap_row_bytes(bitmap : BitmapHandle) -> Int32 = "moonbit_skia_bitmap_row_bytes"
 
 ///|
 #borrow(bitmap)
-extern "C" fn native_bitmap_byte_size(bitmap : BitmapHandle) -> Int = "moonbit_skia_bitmap_byte_size"
+extern "C" fn native_bitmap_byte_size(bitmap : BitmapHandle) -> Int32 = "moonbit_skia_bitmap_byte_size"
 
 ///|
 #borrow(bitmap)
@@ -32,7 +32,7 @@ extern "C" fn native_bitmap_to_bytes(bitmap : BitmapHandle) -> Bytes = "moonbit_
 #borrow(bitmap)
 extern "C" fn native_bitmap_erase_color(
   bitmap : BitmapHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
 ) -> Unit = "moonbit_skia_bitmap_erase_color"
 
 ///|
@@ -40,9 +40,9 @@ extern "C" fn native_bitmap_erase_color(
 #borrow(pixels)
 extern "C" fn native_bitmap_from_pixels(
   pixels : Bytes,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
 ) -> BitmapHandle = "moonbit_skia_bitmap_from_pixels"
 
 ///|
@@ -55,7 +55,7 @@ extern "C" fn native_data_is_null(data : DataHandle) -> Bool = "moonbit_skia_dat
 
 ///|
 #borrow(data)
-extern "C" fn native_data_size(data : DataHandle) -> Int = "moonbit_skia_data_size"
+extern "C" fn native_data_size(data : DataHandle) -> Int32 = "moonbit_skia_data_size"
 
 ///|
 #borrow(data)
@@ -71,15 +71,15 @@ extern "C" fn native_codec_is_null(codec : CodecHandle) -> Bool = "moonbit_skia_
 
 ///|
 #borrow(codec)
-extern "C" fn native_codec_width(codec : CodecHandle) -> Int = "moonbit_skia_codec_width"
+extern "C" fn native_codec_width(codec : CodecHandle) -> Int32 = "moonbit_skia_codec_width"
 
 ///|
 #borrow(codec)
-extern "C" fn native_codec_height(codec : CodecHandle) -> Int = "moonbit_skia_codec_height"
+extern "C" fn native_codec_height(codec : CodecHandle) -> Int32 = "moonbit_skia_codec_height"
 
 ///|
 #borrow(codec)
-extern "C" fn native_codec_encoded_format(codec : CodecHandle) -> Int = "moonbit_skia_codec_encoded_format"
+extern "C" fn native_codec_encoded_format(codec : CodecHandle) -> Int32 = "moonbit_skia_codec_encoded_format"
 
 ///|
 #borrow(codec)
@@ -93,11 +93,11 @@ extern "C" fn native_image_is_null(image : ImageHandle) -> Bool = "moonbit_skia_
 
 ///|
 #borrow(image)
-extern "C" fn native_image_width(image : ImageHandle) -> Int = "moonbit_skia_image_width"
+extern "C" fn native_image_width(image : ImageHandle) -> Int32 = "moonbit_skia_image_width"
 
 ///|
 #borrow(image)
-extern "C" fn native_image_height(image : ImageHandle) -> Int = "moonbit_skia_image_height"
+extern "C" fn native_image_height(image : ImageHandle) -> Int32 = "moonbit_skia_image_height"
 
 ///|
 #borrow(bitmap)
@@ -107,8 +107,8 @@ extern "C" fn native_image_from_bitmap(bitmap : BitmapHandle) -> ImageHandle = "
 #borrow(image)
 extern "C" fn native_image_encode_to_data(
   image : ImageHandle,
-  format : Int,
-  quality : Int,
+  format : Int32,
+  quality : Int32,
 ) -> DataHandle = "moonbit_skia_image_encode_to_data"
 
 ///|
@@ -117,8 +117,8 @@ extern "C" fn native_image_from_encoded_data(data : DataHandle) -> ImageHandle =
 
 ///|
 extern "C" fn native_surface_raster_n32_premul(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_raster_n32_premul"
 
 ///|
@@ -132,11 +132,11 @@ extern "C" fn native_gpu_context_is_null(context : GpuContextHandle) -> Bool = "
 #borrow(context)
 extern "C" fn native_surface_gpu_n32_premul(
   context : GpuContextHandle,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
   budgeted : Bool,
 ) -> SurfaceHandle = "moonbit_skia_surface_gpu_n32_premul"
 
@@ -152,11 +152,11 @@ extern "C" fn native_surface_gpu_n32_premul(
 extern "C" fn native_surface_metal_window(
   context : GpuContextHandle,
   layer_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_metal_window"
 
 ///|
@@ -174,11 +174,11 @@ extern "C" fn native_surface_metal_window(
 extern "C" fn native_surface_metal_present_and_acquire_next(
   surface : SurfaceHandle,
   layer_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_metal_present_and_acquire_next"
 
 ///|
@@ -207,11 +207,11 @@ extern "C" fn native_gpu_context_direct3d() -> GpuContextHandle = "moonbit_skia_
 extern "C" fn native_surface_direct3d_window(
   context : GpuContextHandle,
   hwnd_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_direct3d_window"
 
 ///|
@@ -227,11 +227,11 @@ extern "C" fn native_surface_direct3d_window(
 extern "C" fn native_surface_direct3d_present_and_acquire_next(
   surface : SurfaceHandle,
   hwnd_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_direct3d_present_and_acquire_next"
 
 ///|
@@ -260,11 +260,11 @@ extern "C" fn native_gpu_context_vulkan() -> GpuContextHandle = "moonbit_skia_gp
 extern "C" fn native_surface_vulkan_window(
   context : GpuContextHandle,
   anw_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_vulkan_window"
 
 ///|
@@ -281,11 +281,11 @@ extern "C" fn native_surface_vulkan_window(
 extern "C" fn native_surface_vulkan_present_and_acquire_next(
   surface : SurfaceHandle,
   anw_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_vulkan_present_and_acquire_next"
 
 ///|
@@ -313,11 +313,11 @@ extern "C" fn native_surface_vulkan_wayland_window(
   context : GpuContextHandle,
   display_ptr : UInt64,
   surface_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_vulkan_wayland_window"
 
 ///|
@@ -337,11 +337,11 @@ extern "C" fn native_gpu_context_egl() -> GpuContextHandle = "moonbit_skia_gpu_c
 extern "C" fn native_surface_egl_window(
   context : GpuContextHandle,
   native_window_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_egl_window"
 
 ///|
@@ -358,11 +358,11 @@ extern "C" fn native_surface_egl_window(
 extern "C" fn native_surface_egl_present_and_acquire_next(
   surface : SurfaceHandle,
   native_window_ptr : UInt64,
-  width : Int,
-  height : Int,
-  origin : Int,
-  sample_count : Int,
-  stencil_bits : Int,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
 ) -> SurfaceHandle = "moonbit_skia_surface_egl_present_and_acquire_next"
 
 ///|
@@ -380,11 +380,11 @@ extern "C" fn native_surface_is_null(surface : SurfaceHandle) -> Bool = "moonbit
 
 ///|
 #borrow(surface)
-extern "C" fn native_surface_width(surface : SurfaceHandle) -> Int = "moonbit_skia_surface_width"
+extern "C" fn native_surface_width(surface : SurfaceHandle) -> Int32 = "moonbit_skia_surface_width"
 
 ///|
 #borrow(surface)
-extern "C" fn native_surface_height(surface : SurfaceHandle) -> Int = "moonbit_skia_surface_height"
+extern "C" fn native_surface_height(surface : SurfaceHandle) -> Int32 = "moonbit_skia_surface_height"
 
 ///|
 #borrow(surface)
@@ -411,20 +411,20 @@ extern "C" fn native_surface_image_snapshot(
 #borrow(surface)
 extern "C" fn native_surface_image_snapshot_with_bounds(
   surface : SurfaceHandle,
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
 ) -> ImageHandle = "moonbit_skia_surface_image_snapshot_with_bounds"
 
 ///|
 #borrow(surface)
 extern "C" fn native_surface_read_pixels(
   surface : SurfaceHandle,
-  left : Int,
-  top : Int,
-  width : Int,
-  height : Int,
+  left : Int32,
+  top : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Bytes = "moonbit_skia_surface_read_pixels"
 
 ///|
@@ -451,7 +451,7 @@ pub fn Data::is_available(self : Data) -> Bool {
 }
 
 ///|
-pub fn Data::size(self : Data) -> Int {
+pub fn Data::size(self : Data) -> Int32 {
   native_data_size(self.handle)
 }
 
@@ -493,12 +493,12 @@ pub fn Codec::is_available(self : Codec) -> Bool {
 }
 
 ///|
-pub fn Codec::width(self : Codec) -> Int {
+pub fn Codec::width(self : Codec) -> Int32 {
   native_codec_width(self.handle)
 }
 
 ///|
-pub fn Codec::height(self : Codec) -> Int {
+pub fn Codec::height(self : Codec) -> Int32 {
   native_codec_height(self.handle)
 }
 
@@ -539,12 +539,12 @@ pub fn Image::is_available(self : Image) -> Bool {
 }
 
 ///|
-pub fn Image::width(self : Image) -> Int {
+pub fn Image::width(self : Image) -> Int32 {
   native_image_width(self.handle)
 }
 
 ///|
-pub fn Image::height(self : Image) -> Int {
+pub fn Image::height(self : Image) -> Int32 {
   native_image_height(self.handle)
 }
 
@@ -584,15 +584,15 @@ fn native_image_encode_format_is_supported(
 }
 
 ///|
-fn native_image_encode_quality(quality : Int) -> Int {
+fn native_image_encode_quality(quality : Int32) -> Int32 {
   quality.clamp(min=0, max=100)
 }
 
 ///|
 pub fn Image::encode_to_data(
   self : Image,
-  format? : @skia.EncodedImageFormat = PNG,
-  quality? : Int = 100,
+  format~ : @skia.EncodedImageFormat = PNG,
+  quality~ : Int32 = 100,
 ) -> Data? {
   if !native_image_encode_format_is_supported(format) {
     None
@@ -629,9 +629,9 @@ pub fn Bitmap::alloc_n32_premul(size : @skia.ISize) -> Bitmap? {
 /// Create Bitmap from external pixel buffer (RGBA8888 premultiplied)
 pub fn Bitmap::from_pixels(
   pixels : Bytes,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
 ) -> Bitmap? {
   if width <= 0 || height <= 0 {
     None
@@ -648,12 +648,12 @@ pub fn Bitmap::is_available(self : Bitmap) -> Bool {
 }
 
 ///|
-pub fn Bitmap::width(self : Bitmap) -> Int {
+pub fn Bitmap::width(self : Bitmap) -> Int32 {
   native_bitmap_width(self.handle)
 }
 
 ///|
-pub fn Bitmap::height(self : Bitmap) -> Int {
+pub fn Bitmap::height(self : Bitmap) -> Int32 {
   native_bitmap_height(self.handle)
 }
 
@@ -668,12 +668,12 @@ pub fn Bitmap::image_info(self : Bitmap) -> @skia.ImageInfo {
 }
 
 ///|
-pub fn Bitmap::row_bytes(self : Bitmap) -> Int {
+pub fn Bitmap::row_bytes(self : Bitmap) -> Int32 {
   native_bitmap_row_bytes(self.handle)
 }
 
 ///|
-pub fn Bitmap::byte_size(self : Bitmap) -> Int {
+pub fn Bitmap::byte_size(self : Bitmap) -> Int32 {
   native_bitmap_byte_size(self.handle)
 }
 
@@ -766,7 +766,7 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
 }
 
 ///|
-fn native_surface_origin_ordinal(origin : @skia.SurfaceOrigin) -> Int {
+fn native_surface_origin_ordinal(origin : @skia.SurfaceOrigin) -> Int32 {
   match origin {
     TopLeft => 0
     BottomLeft => 1
@@ -966,7 +966,7 @@ pub fn Surface::direct3d_present_and_acquire_next(
   surface : Surface,
   context : GpuContext,
   hwnd_ptr : UInt64,
-  expected_size? : @skia.ISize? = None,
+  expected_size~ : @skia.ISize? = None,
 ) -> Surface? {
   if !context.is_available() || hwnd_ptr == 0 {
     return None
@@ -1361,12 +1361,12 @@ pub fn Surface::for_target(target : @skia.SurfaceTargetDescriptor) -> Surface? {
 }
 
 ///|
-pub fn Surface::width(self : Surface) -> Int {
+pub fn Surface::width(self : Surface) -> Int32 {
   native_surface_width(self.handle)
 }
 
 ///|
-pub fn Surface::height(self : Surface) -> Int {
+pub fn Surface::height(self : Surface) -> Int32 {
   native_surface_height(self.handle)
 }
 
@@ -1410,7 +1410,7 @@ fn Surface::render_frame_internal(
   frame : @skia.RenderFrameDescriptor,
   font : Font?,
   resources : NativeReplayResources?,
-  frame_index : Int,
+  frame_index : Int32,
 ) -> SurfaceFrameReplayStats {
   let validation_status = frame.validation_status()
   let surface_matches = self.descriptor() == frame.target.surface
@@ -1436,8 +1436,8 @@ fn Surface::render_frame_internal(
 pub fn Surface::render_frame(
   self : Surface,
   frame : @skia.RenderFrameDescriptor,
-  font? : Font? = None,
-  frame_index? : Int = 0,
+  font~ : Font? = None,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFrameReplayStats {
   self.render_frame_internal(frame, font, None, frame_index)
 }
@@ -1448,8 +1448,8 @@ pub fn Surface::render_frame_with_resources(
   self : Surface,
   frame : @skia.RenderFrameDescriptor,
   resources : NativeReplayResources,
-  font? : Font? = None,
-  frame_index? : Int = 0,
+  font~ : Font? = None,
+  frame_index~ : Int32 = 0,
 ) -> SurfaceFrameReplayStats {
   self.render_frame_internal(frame, font, Some(resources), frame_index)
 }
@@ -1485,7 +1485,7 @@ pub fn Surface::image_snapshot_with_bounds(
 /// Read surface pixels into an owned MoonBit `Pixmap`.
 pub fn Surface::read_pixels(
   self : Surface,
-  bounds? : @skia.IRect = self.image_info().bounds(),
+  bounds~ : @skia.IRect = self.image_info().bounds(),
 ) -> @skia.Pixmap? {
   if !self.contains_pixel_bounds(bounds) {
     None

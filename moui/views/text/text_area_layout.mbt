@@ -32,7 +32,7 @@ fn text_area_glyph_row_height(
 ///|
 fn text_area_line_slot_y(
   text_frame : @core.Rect,
-  line_index : Int,
+  line_index : Int32,
   line_height : Double,
   glyph_height : Double,
 ) -> Double {
@@ -49,8 +49,8 @@ fn text_area_line_slot_y(
 /// to the previous line's end.
 fn text_area_line_index_for_paragraph_offset(
   paragraph : @core.TextParagraphLayoutResult,
-  offset : Int,
-) -> Int {
+  offset : Int32,
+) -> Int32 {
   let max_len = paragraph.text.to_array().length()
   let boundaries = @core.TextGraphemeBoundaries::new(text=paragraph.text)
   let offset = boundaries.nearest_boundary(offset.clamp(min=0, max=max_len))
@@ -81,7 +81,7 @@ fn text_area_display_caret_rect(
   text_system : @core.TextSystem,
   text_frame : @core.Rect,
   font : @core.FontSpec,
-  visual_offset : Int,
+  visual_offset : Int32,
   line_height : Double,
 ) -> @core.Rect {
   let line_index = text_area_line_index_for_paragraph_offset(
@@ -157,7 +157,7 @@ fn text_area_draw_line_text(
   font : @core.FontSpec,
   color : @core.Color,
   text_frame : @core.Rect,
-  line_index : Int,
+  line_index : Int32,
   line_height : Double,
   line_left : Double,
   line_width : Double,

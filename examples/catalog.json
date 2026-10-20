@@ -92,10 +92,6 @@
       "featured": false
     },
     {
-      "title": "Browser",
-      "featured": false
-    },
-    {
       "id": "webview_demo",
       "path": "examples/webview_demo",
       "title": "WebView Demo",

@@ -59,8 +59,8 @@ fn sun_image_decoder() -> @render.RendererImageDecoder {
 ///|
 pub fn SunRasterRenderer::to_renderer_session(
   self : SunRasterRenderer,
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=metrics => {

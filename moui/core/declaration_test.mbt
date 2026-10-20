@@ -7,10 +7,10 @@ fn declaration_change_tuple(
 
 ///|
 fn declaration_with_channel(
-  layout? : @core.DeclarationChannel = Constant,
-  paint? : @core.DeclarationChannel = Constant,
-  semantics? : @core.DeclarationChannel = Constant,
-  platform? : @core.DeclarationChannel = Constant,
+  layout~ : @core.DeclarationChannel = Constant,
+  paint~ : @core.DeclarationChannel = Constant,
+  semantics~ : @core.DeclarationChannel = Constant,
+  platform~ : @core.DeclarationChannel = Constant,
 ) -> @core.ViewDeclaration {
   @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
 }

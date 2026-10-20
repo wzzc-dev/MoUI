@@ -4,8 +4,8 @@
 /// parent canvas.
 pub struct Layer {
   mut canvas : Canvas
-  mut x : Int
-  mut y : Int
+  mut x : Int32
+  mut y : Int32
   mut visible : Bool
   mut opacity : Double
   mut blend_mode : BlendMode
@@ -19,7 +19,7 @@ pub extend Layer with Debug::{to_repr}
 ///|
 /// Telemetry for a dirty layer composite attempt.
 pub struct LayerCompositeResult {
-  composited_rect_count : Int
+  composited_rect_count : Int32
   local_dirty_bounds : PixelRect?
   target_dirty_bounds : PixelRect?
   uses_bounds_fallback : Bool
@@ -31,7 +31,7 @@ pub struct LayerCompositeResult {
 pub extend LayerCompositeResult with Debug::{to_repr}
 
 ///|
-pub fn Layer::new(width : Int, height : Int) -> Layer {
+pub fn Layer::new(width : Int32, height : Int32) -> Layer {
   {
     canvas: Canvas::new(width, height),
     x: 0,
@@ -55,12 +55,12 @@ pub fn Layer::get_pixmap(self : Layer) -> Pixmap {
 }
 
 ///|
-pub fn Layer::get_width(self : Layer) -> Int {
+pub fn Layer::get_width(self : Layer) -> Int32 {
   self.canvas.get_pixmap().get_width()
 }
 
 ///|
-pub fn Layer::get_height(self : Layer) -> Int {
+pub fn Layer::get_height(self : Layer) -> Int32 {
   self.canvas.get_pixmap().get_height()
 }
 
@@ -75,7 +75,7 @@ pub fn Layer::translated_bounds(self : Layer) -> PixelRect {
 }
 
 ///|
-pub fn Layer::resize(self : Layer, width : Int, height : Int) -> Layer {
+pub fn Layer::resize(self : Layer, width : Int32, height : Int32) -> Layer {
   let safe_width = width.max(0)
   let safe_height = height.max(0)
   guard safe_width != self.get_width() || safe_height != self.get_height() else {
@@ -99,19 +99,19 @@ pub fn Layer::resize(self : Layer, width : Int, height : Int) -> Layer {
 }
 
 ///|
-pub fn Layer::set_position(self : Layer, x : Int, y : Int) -> Layer {
+pub fn Layer::set_position(self : Layer, x : Int32, y : Int32) -> Layer {
   self.x = x
   self.y = y
   self
 }
 
 ///|
-pub fn Layer::get_x(self : Layer) -> Int {
+pub fn Layer::get_x(self : Layer) -> Int32 {
   self.x
 }
 
 ///|
-pub fn Layer::get_y(self : Layer) -> Int {
+pub fn Layer::get_y(self : Layer) -> Int32 {
   self.y
 }
 
@@ -395,7 +395,7 @@ pub fn Layer::translated_dirty_bounds(self : Layer) -> PixelRect? {
 ///|
 pub fn Layer::translated_dirty_rects(
   self : Layer,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Array[PixelRect] {
   let rects = []
   for
@@ -408,7 +408,7 @@ pub fn Layer::translated_dirty_rects(
 }
 
 ///|
-pub fn Layer::composite_to(self : Layer, target : Canvas) -> Int {
+pub fn Layer::composite_to(self : Layer, target : Canvas) -> Int32 {
   guard self.is_compositable() else { return 0 }
   target.draw_layer_pixmap(
     self.canvas.get_pixmap(),
@@ -423,8 +423,8 @@ pub fn Layer::composite_to(self : Layer, target : Canvas) -> Int {
 pub fn Layer::composite_dirty_to(
   self : Layer,
   target : Canvas,
-  max_rects : Int,
-) -> Int {
+  max_rects : Int32,
+) -> Int32 {
   self.composite_dirty_to_result(target, max_rects).get_composited_rect_count()
 }
 
@@ -433,7 +433,7 @@ pub fn Layer::composite_dirty_to(
 pub fn Layer::composite_dirty_to_result(
   self : Layer,
   target : Canvas,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> LayerCompositeResult {
   guard self.is_compositable() else {
     return {
@@ -489,7 +489,7 @@ pub fn Layer::composite_dirty_to_result(
 /// Return the number of dirty rectangles composited into the target.
 pub fn LayerCompositeResult::get_composited_rect_count(
   self : LayerCompositeResult,
-) -> Int {
+) -> Int32 {
   self.composited_rect_count
 }
 
@@ -553,7 +553,7 @@ fn Layer::composite_paint(self : Layer) -> Paint {
 }
 
 ///|
-fn translate_pixel_rect(rect : PixelRect, x : Int, y : Int) -> PixelRect {
+fn translate_pixel_rect(rect : PixelRect, x : Int32, y : Int32) -> PixelRect {
   PixelRect::new(
     x=rect.x + x,
     y=rect.y + y,

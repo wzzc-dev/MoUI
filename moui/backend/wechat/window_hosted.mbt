@@ -6,7 +6,7 @@
 pub fn canvas_metrics(
   logical_width~ : Double,
   logical_height~ : Double,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> @core.SurfaceMetrics {
   @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=logical_width, height=logical_height),

@@ -4,20 +4,20 @@
 extern "C" fn macos_3d_install_event_callback(
   call_closure : FuncRef[
     (
-      (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+      (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
       UInt64,
-      Int,
+      Int32,
       Bytes,
       Bytes,
       Bytes,
-      Int,
+      Int32,
     ) -> Unit,
   ],
-  callback : (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+  callback : (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
 ) -> Unit = "moui_macos_3d_install_event_callback"
 
 ///|
-extern "C" fn macos_3d_available() -> Int = "moui_macos_3d_available"
+extern "C" fn macos_3d_available() -> Int32 = "moui_macos_3d_available"
 
 ///|
 #borrow(id)
@@ -54,7 +54,7 @@ extern "C" fn macos_3d_surface_scale(surface_handle : UInt64) -> Double = "moui_
 extern "C" fn macos_3d_sync_overlay_mask(
   raw_content_view_handle : UInt64,
   id : Bytes,
-  has_bounds : Int,
+  has_bounds : Int32,
   x : Double,
   y : Double,
   width : Double,

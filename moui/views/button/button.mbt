@@ -7,13 +7,13 @@
 pub fn[Msg] button(
   text : String,
   on_click? : Msg,
-  variant? : @style.ButtonVariant = Primary,
+  variant~ : @style.ButtonVariant = Primary,
   theme? : @core.Theme,
   style? : @style.ButtonStyle,
-  icon? : @style.IconName? = None,
-  width? : Double = 100.0,
-  height? : Double = 40.0,
-  label_align? : @core.TextAlign = TextCenter,
+  icon~ : @style.IconName? = None,
+  width~ : Double = 100.0,
+  height~ : Double = 40.0,
+  label_align~ : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   button_control(
     text~,
@@ -34,11 +34,11 @@ fn[Msg] button_control(
   min_size~ : @core.Size,
   theme? : @core.Theme,
   style? : @style.ButtonStyle,
-  leading_icon? : @style.IconName? = None,
-  on_click? : Msg? = None,
-  kind? : String = "Button",
-  key? : String? = None,
-  label_align? : @core.TextAlign = TextCenter,
+  leading_icon~ : @style.IconName? = None,
+  on_click~ : Msg? = None,
+  kind~ : String = "Button",
+  key~ : String? = None,
+  label_align~ : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     Button::{

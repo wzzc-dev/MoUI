@@ -2,11 +2,11 @@
 pub fn[Msg] searchbar(
   query~ : String,
   on_input~ : (String) -> Msg,
-  placeholder? : String = "Search...",
-  variant? : @style.TextFieldVariant = Filled,
+  placeholder~ : String = "Search...",
+  variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
-  on_submit? : Msg? = None,
-  on_clear? : Msg? = None,
+  on_submit~ : Msg? = None,
+  on_clear~ : Msg? = None,
 ) -> @core.View[Msg] {
   @text.controlled_search_bar_control(
     query~,

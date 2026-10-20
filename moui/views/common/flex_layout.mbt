@@ -14,11 +14,11 @@ pub fn first_child_size(sizes : Array[@core.Size]) -> @core.Size {
 pub fn[Msg] flex_layout(
   children~ : Array[@core.View[Msg]],
   axis~ : @core.Axis,
-  spacing? : Double = 0.0,
-  main_axis_alignment? : @core.MainAxisAlignment = MainStart,
-  cross_axis_alignment? : @core.CrossAxisAlignment = CrossStretch,
-  kind? : String = "Flex",
-  key? : String? = None,
+  spacing~ : Double = 0.0,
+  main_axis_alignment~ : @core.MainAxisAlignment = MainStart,
+  cross_axis_alignment~ : @core.CrossAxisAlignment = CrossStretch,
+  kind~ : String = "Flex",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     FlexLayout::{
@@ -328,7 +328,7 @@ fn flex_offsets(
   alignment : @core.MainAxisAlignment,
   remaining : Double,
   base_gap : Double,
-  count : Int,
+  count : Int32,
 ) -> FlexOffsets {
   match alignment {
     MainStart => { leading: 0.0, gap: base_gap, }

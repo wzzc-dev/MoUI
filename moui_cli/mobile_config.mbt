@@ -1,10 +1,10 @@
 ///|
-let mobile_config_schema_version : Int = 1
+let mobile_config_schema_version : Int32 = 1
 
 ///|
 priv struct MobileAndroid {
   application_id : String
-  min_sdk : Int
+  min_sdk : Int32
 }
 
 ///|
@@ -20,7 +20,7 @@ priv struct MobileHarmonyos {
   module_name : String?
   module_description : String?
   entry_description : String?
-  compatible_sdk_version : Int
+  compatible_sdk_version : Int32
 }
 
 ///|
@@ -49,14 +49,14 @@ fn mobile_optional_string(
 ///|
 fn mobile_numeric_dotted_version_at_least(
   value : String,
-  major : Int,
-  minor : Int,
+  major : Int32,
+  minor : Int32,
 ) -> Bool {
   let parts = value.split(".").to_array()
   if parts.is_empty() || parts.length() > 3 {
     return false
   }
-  let parsed : Array[Int] = []
+  let parsed : Array[Int32] = []
   for part in parts {
     let text = part.to_owned()
     if text == "" || !text.all(char => char >= '0' && char <= '9') {

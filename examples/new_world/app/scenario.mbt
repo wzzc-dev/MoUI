@@ -198,7 +198,7 @@ pub struct WorldEntry {
   /// Higher priority entries are injected first and survive budget trimming
   /// longer. SillyTavern's lorebook has the same knob; without it a long
   /// conversation can push the one fact that matters out of the prompt.
-  priority : Int
+  priority : Int32
   /// Where in the request the entry belongs. `Before` rides at the top of the
   /// system prompt (world rules), `After` sits just before the history (scene
   /// facts). Placement is what makes lore feel like setting rather than an
@@ -206,11 +206,11 @@ pub struct WorldEntry {
   position : LorePosition
   /// Re-scan the injected text for further triggers (`depth` = how many extra
   /// rounds). A single pass misses chains like "当铺" → "周掌柜" → "官文".
-  recursion : Int
+  recursion : Int32
   /// Percentage chance (0-100) an entry is injected when it matches. 100 is
   /// always. Below 100 lets a world keep a fact occasional so it stays fresh;
   /// the roll is deterministic per (entry, turn) so a retry is reproducible.
-  probability : Int
+  probability : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -237,10 +237,10 @@ pub extend WorldEntry with Eq::{not_equal, equal}
 pub fn WorldEntry::new(
   keys~ : Array[String],
   content~ : String,
-  priority? : Int,
+  priority? : Int32,
   position? : LorePosition,
-  recursion? : Int,
-  probability? : Int,
+  recursion? : Int32,
+  probability? : Int32,
 ) -> WorldEntry {
   {
     keys,
@@ -253,7 +253,7 @@ pub fn WorldEntry::new(
 }
 
 ///|
-pub fn WorldEntry::priority(self : WorldEntry) -> Int {
+pub fn WorldEntry::priority(self : WorldEntry) -> Int32 {
   self.priority
 }
 
@@ -263,12 +263,12 @@ pub fn WorldEntry::position(self : WorldEntry) -> LorePosition {
 }
 
 ///|
-pub fn WorldEntry::recursion(self : WorldEntry) -> Int {
+pub fn WorldEntry::recursion(self : WorldEntry) -> Int32 {
   self.recursion
 }
 
 ///|
-pub fn WorldEntry::probability(self : WorldEntry) -> Int {
+pub fn WorldEntry::probability(self : WorldEntry) -> Int32 {
   self.probability
 }
 
@@ -424,7 +424,7 @@ pub fn Scenario::character_point(
 ///
 /// Only those need spreading: a character with an explicit point is already
 /// where the author put them.
-fn Scenario::location_cast_count(self : Scenario, location : String) -> Int {
+fn Scenario::location_cast_count(self : Scenario, location : String) -> Int32 {
   let mut count = 0
   for card in self.characters() {
     if card.location == location && card.point.x == 0.0 && card.point.y == 0.0 {
@@ -438,7 +438,7 @@ fn Scenario::location_cast_count(self : Scenario, location : String) -> Int {
 /// This character's position among the coordinate-less characters of its own
 /// location, in cast order. Stable across reloads because it follows the card
 /// order the folder was read in.
-fn Scenario::location_slot(self : Scenario, id : String) -> Int {
+fn Scenario::location_slot(self : Scenario, id : String) -> Int32 {
   let mut slot = 0
   let target = self.character(id)
   for card in self.characters() {
@@ -465,8 +465,8 @@ fn Scenario::location_slot(self : Scenario, id : String) -> Int {
 fn ring_point(
   center : @geometry.Point,
   bounds : @geometry.Rect,
-  slot : Int,
-  count : Int,
+  slot : Int32,
+  count : Int32,
 ) -> @geometry.Point {
   if count <= 1 {
     return center

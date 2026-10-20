@@ -53,7 +53,7 @@ pub fn mobile_host_surface_binding(
   presenter_description~ : String,
   cpu_present~ : (UInt64, @render.PixelFrame) -> Bool,
   native_surface~ : (UInt64) -> @render.NativeSurface?,
-  sync? : (UInt64, @core.SurfaceMetrics) -> Unit = (_raw, _metrics) => (),
+  sync~ : (UInt64, @core.SurfaceMetrics) -> Unit = (_raw, _metrics) => (),
 ) -> HostSurfaceBinding {
   let image_source = @host_image_native.filesystem_image_source()
   HostSurfaceBinding::new(
@@ -102,7 +102,7 @@ pub fn HostedRuntimeSession::create(
   raw_handle~ : UInt64,
   metrics~ : @core.SurfaceMetrics,
   binding~ : HostSurfaceBinding,
-  surface_generation~ : Int,
+  surface_generation~ : Int32,
 ) -> HostedRuntimeSession? {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
@@ -126,7 +126,7 @@ pub fn HostedRuntimeSession::attach(
   raw_handle~ : UInt64,
   metrics~ : @core.SurfaceMetrics,
   binding~ : HostSurfaceBinding,
-  surface_generation~ : Int,
+  surface_generation~ : Int32,
 ) -> Bool {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
@@ -182,12 +182,14 @@ pub fn HostedRuntimeSession::surface_attached(
 ///|
 pub fn HostedRuntimeSession::session_generation(
   self : HostedRuntimeSession,
-) -> Int {
+) -> Int32 {
   self.core.session_generation()
 }
 
 ///|
-pub fn HostedRuntimeSession::surface_epoch(self : HostedRuntimeSession) -> Int {
+pub fn HostedRuntimeSession::surface_epoch(
+  self : HostedRuntimeSession,
+) -> Int32 {
   self.core.surface_epoch()
 }
 
@@ -289,7 +291,9 @@ pub fn HostedRuntimeSession::take_redraw_requested(
 }
 
 ///|
-pub fn HostedRuntimeSession::present_count(self : HostedRuntimeSession) -> Int {
+pub fn HostedRuntimeSession::present_count(
+  self : HostedRuntimeSession,
+) -> Int32 {
   self.core.present_count()
 }
 
@@ -313,17 +317,17 @@ pub struct HostedWindowBackend {
   lifecycle : @window_lifecycle.EmbeddedLifecycle
   mut last_pointer : @core.Point
   modifiers : @core.KeyModifiers
-  mut frames_presented : Int
-  auto_exit_after_frames : Int?
+  mut frames_presented : Int32
+  auto_exit_after_frames : Int32?
 }
 
 ///|
 pub fn HostedWindowBackend::new(
-  title? : String = "MoUI",
+  title~ : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> HostSurfaceBinding,
-  ime_sync? : ((@runtime.AppRuntime?) -> Unit)? = None,
-  auto_exit_after_frames? : Int? = None,
+  ime_sync~ : ((@runtime.AppRuntime?) -> Unit)? = None,
+  auto_exit_after_frames~ : Int32? = None,
 ) -> HostedWindowBackend {
   {
     title,
@@ -347,14 +351,16 @@ pub fn HostedWindowBackend::title(self : HostedWindowBackend) -> String {
 }
 
 ///|
-pub fn HostedWindowBackend::frames_presented(self : HostedWindowBackend) -> Int {
+pub fn HostedWindowBackend::frames_presented(
+  self : HostedWindowBackend,
+) -> Int32 {
   self.frames_presented
 }
 
 ///|
 pub fn HostedWindowBackend::surface_generation(
   self : HostedWindowBackend,
-) -> Int {
+) -> Int32 {
   self.lifecycle.surface_generation()
 }
 

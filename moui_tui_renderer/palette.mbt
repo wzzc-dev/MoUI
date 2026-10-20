@@ -54,7 +54,7 @@ fn fg(color : @tui.TermColor) -> @tui.CellAttrs {
 
 ///|
 /// 0..1 通道 → xterm 6x6x6 立方的一档(台阶 0/95/135/175/215/255)。
-fn cube_step(v : Double) -> Int {
+fn cube_step(v : Double) -> Int32 {
   let steps = [0, 95, 135, 175, 215, 255]
   let target = (v.clamp(min=0.0, max=1.0) * 255.0).round().to_int()
   let mut best = 0

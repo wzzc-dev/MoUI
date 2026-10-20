@@ -108,7 +108,7 @@ pub extend HostServiceCapabilities with ToJson::{to_json}
 
 ///|
 pub fn HostCoordinatePolicy::logical(
-  description? : String = "Host input and surface metrics use logical pixels after DPR scaling.",
+  description~ : String = "Host input and surface metrics use logical pixels after DPR scaling.",
 ) -> HostCoordinatePolicy {
   {
     input_space: LogicalPixels,
@@ -120,7 +120,7 @@ pub fn HostCoordinatePolicy::logical(
 
 ///|
 pub fn HostCoordinatePolicy::physical(
-  description? : String = "Host input and surface metrics use physical pixels.",
+  description~ : String = "Host input and surface metrics use physical pixels.",
 ) -> HostCoordinatePolicy {
   {
     input_space: PhysicalPixels,
@@ -133,10 +133,10 @@ pub fn HostCoordinatePolicy::physical(
 ///|
 pub fn HostAppInfo::new(
   backend~ : HostBackendKind,
-  description? : String = "",
-  uses_shared_event_model? : Bool = true,
-  uses_shared_surface_model? : Bool = true,
-  uses_shared_input_model? : Bool = true,
+  description~ : String = "",
+  uses_shared_event_model~ : Bool = true,
+  uses_shared_surface_model~ : Bool = true,
+  uses_shared_input_model~ : Bool = true,
 ) -> HostAppInfo {
   {
     backend,
@@ -149,14 +149,14 @@ pub fn HostAppInfo::new(
 
 ///|
 pub fn HostInputCapabilities::new(
-  pointer? : Bool = true,
-  scroll? : Bool = true,
-  keyboard? : Bool = true,
-  focus? : Bool = true,
-  text_input? : Bool = true,
-  ime? : Bool = false,
-  clipboard? : Bool = false,
-  drag_drop? : Bool = false,
+  pointer~ : Bool = true,
+  scroll~ : Bool = true,
+  keyboard~ : Bool = true,
+  focus~ : Bool = true,
+  text_input~ : Bool = true,
+  ime~ : Bool = false,
+  clipboard~ : Bool = false,
+  drag_drop~ : Bool = false,
 ) -> HostInputCapabilities {
   { pointer, scroll, keyboard, focus, text_input, ime, clipboard, drag_drop, }
 }
@@ -190,13 +190,13 @@ pub fn HostServiceCapabilities::none() -> HostServiceCapabilities {
 
 ///|
 pub fn HostServiceCapabilities::new(
-  clipboard? : Bool = false,
-  menus? : Bool = false,
-  file_dialogs? : Bool = false,
-  file_access? : Bool = false,
-  open_url? : Bool = false,
-  system_theme? : Bool = false,
-  settings? : Bool = false,
+  clipboard~ : Bool = false,
+  menus~ : Bool = false,
+  file_dialogs~ : Bool = false,
+  file_access~ : Bool = false,
+  open_url~ : Bool = false,
+  system_theme~ : Bool = false,
+  settings~ : Bool = false,
 ) -> HostServiceCapabilities {
   {
     clipboard,

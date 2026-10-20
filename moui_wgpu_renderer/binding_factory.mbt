@@ -129,9 +129,9 @@ fn native_surface_error(
 ///|
 pub fn WgpuRenderer::to_renderer_session(
   self : WgpuRenderer,
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
-  native_surface? : @render.NativeSurface? = None,
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
+  native_surface~ : @render.NativeSurface? = None,
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=metrics => {

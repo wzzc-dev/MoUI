@@ -18,7 +18,7 @@ pub extend GpuRenderWorkerState with Eq::{not_equal, equal}
 pub(all) enum GpuRenderWorkerControl {
   Attach(UInt64)
   AttachSurface(UInt64, UInt64)
-  Resize(Int, Int)
+  Resize(Int32, Int32)
   Detach
   ContextLoss(String)
   Shutdown
@@ -46,14 +46,14 @@ pub extend GpuRenderCompletionStatus with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct GpuRenderCompletion {
-  sequence : Int
-  surface_generation : Int
+  sequence : Int32
+  surface_generation : Int32
   image_resource_revision : Int64
   submitted_at_ms : Double
   gpu_completed_at_ms : Double
   presented_at_ms : Double
   status : GpuRenderCompletionStatus
-  context_generation : Int
+  context_generation : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -65,19 +65,19 @@ pub extend GpuRenderCompletion with Eq::{not_equal, equal}
 ///|
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
-  submitted : Int
-  started : Int
-  completed : Int
-  dropped : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
-  context_generation : Int
-  recovery_count : Int
-  recovery_failures : Int
-  readback_count : Int
+  submitted : Int32
+  started : Int32
+  completed : Int32
+  dropped : Int32
+  replaced_pending : Int32
+  rejected_generation : Int32
+  surface_generation : Int32
+  context_generation : Int32
+  recovery_count : Int32
+  recovery_failures : Int32
+  readback_count : Int32
   resource_cache_bytes : Int64
-  control_pending : Int
+  control_pending : Int32
   in_flight : Bool
   pending : Bool
   worker_thread_id : Int64
@@ -91,8 +91,8 @@ pub extend GpuRenderWorkerDiagnostics with Eq::{not_equal, equal}
 
 ///|
 struct GpuRenderPictureFrame {
-  sequence : Int
-  surface_generation : Int
+  sequence : Int32
+  surface_generation : Int32
   image_resource_revision : Int64
   submitted_at_ms : Double
   picture : Picture?
@@ -103,21 +103,21 @@ struct GpuRenderPictureFrame {
 /// from the renderer worker thread; the queue never invokes MoonBit callbacks.
 pub struct GpuRenderWorker {
   mut state : GpuRenderWorkerState
-  mut next_sequence : Int
-  mut surface_generation : Int
-  mut context_generation : Int
+  mut next_sequence : Int32
+  mut surface_generation : Int32
+  mut context_generation : Int32
   mut in_flight : GpuRenderPictureFrame?
   mut pending : GpuRenderPictureFrame?
   controls : Array[GpuRenderWorkerControl]
   completions : Array[GpuRenderCompletion]
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut dropped : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
-  mut recovery_count : Int
-  mut recovery_failures : Int
+  mut submitted : Int32
+  mut started : Int32
+  mut completed : Int32
+  mut dropped : Int32
+  mut replaced_pending : Int32
+  mut rejected_generation : Int32
+  mut recovery_count : Int32
+  mut recovery_failures : Int32
   mut fail_next_recovery : Bool
   resource_cache_bytes : Int64
   worker_thread_id : Int64
@@ -125,8 +125,8 @@ pub struct GpuRenderWorker {
 
 ///|
 pub fn GpuRenderWorker::new(
-  surface_generation? : Int = 1,
-  worker_thread_id? : Int64 = 0L,
+  surface_generation~ : Int32 = 1,
+  worker_thread_id~ : Int64 = 0L,
 ) -> GpuRenderWorker {
   {
     state: Idle,
@@ -155,9 +155,9 @@ pub fn GpuRenderWorker::new(
 pub fn GpuRenderWorker::submit(
   self : GpuRenderWorker,
   picture : Picture?,
-  image_resource_revision? : Int64 = 0L,
-  submitted_at_ms? : Double = 0.0,
-) -> Int {
+  image_resource_revision~ : Int64 = 0L,
+  submitted_at_ms~ : Double = 0.0,
+) -> Int32 {
   if self.state is Shutdown || self.state is FallbackToRaster {
     self.dropped = self.dropped + 1
     return 0
@@ -183,7 +183,7 @@ pub fn GpuRenderWorker::submit(
 pub fn GpuRenderWorker::submit_control(
   self : GpuRenderWorker,
   control : GpuRenderWorkerControl,
-) -> Int {
+) -> Int32 {
   if self.state is Shutdown {
     return self.controls.length()
   }
@@ -271,8 +271,8 @@ fn GpuRenderWorker::recover_if_needed(self : GpuRenderWorker) -> Unit {
 ///|
 pub fn GpuRenderWorker::poll(
   self : GpuRenderWorker,
-  gpu_completed_at_ms? : Double = 0.0,
-  presented_at_ms? : Double = 0.0,
+  gpu_completed_at_ms~ : Double = 0.0,
+  presented_at_ms~ : Double = 0.0,
 ) -> Unit {
   let _ = presented_at_ms
   while !self.controls.is_empty() {

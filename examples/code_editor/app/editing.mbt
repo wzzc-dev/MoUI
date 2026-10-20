@@ -1,13 +1,13 @@
 ///|
 pub(all) struct CodeCursor {
-  position : Int
+  position : Int32
   selection : @text.TextRange?
 }
 
 ///|
 pub fn CodeCursor::new(
-  position~ : Int,
-  selection? : @text.TextRange? = None,
+  position~ : Int32,
+  selection~ : @text.TextRange? = None,
 ) -> CodeCursor {
   { position, selection, }
 }
@@ -17,7 +17,7 @@ pub(all) struct CodeFindState {
   query : String
   replacement : String
   matches : Array[@text.TextRange]
-  active_index : Int
+  active_index : Int32
 }
 
 ///|
@@ -102,7 +102,7 @@ pub fn code_replace_all(
 }
 
 ///|
-fn chars_match(chars : Array[Char], start : Int, query : Array[Char]) -> Bool {
+fn chars_match(chars : Array[Char], start : Int32, query : Array[Char]) -> Bool {
   for i in 0..<query.length() {
     if chars[start + i] != query[i] {
       return false
@@ -152,14 +152,14 @@ pub fn code_insert_text(
 
 ///|
 priv struct CursorEdit {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 }
 
 ///|
 fn sort_cursor_edits(
   cursors : Array[CodeCursor],
-  source_length : Int,
+  source_length : Int32,
 ) -> Array[CursorEdit] {
   let sorted = cursors.map(cursor => cursor_edit(cursor, source_length))
   for i in 0..<sorted.length() {
@@ -176,7 +176,7 @@ fn sort_cursor_edits(
 }
 
 ///|
-fn cursor_edit(cursor : CodeCursor, source_length : Int) -> CursorEdit {
+fn cursor_edit(cursor : CodeCursor, source_length : Int32) -> CursorEdit {
   match cursor.selection {
     Some(range) => {
       let raw_start = if range.start < range.end {
@@ -202,7 +202,7 @@ fn cursor_edit(cursor : CodeCursor, source_length : Int) -> CursorEdit {
 }
 
 ///|
-pub fn auto_indent_for_position(source : String, position : Int) -> String {
+pub fn auto_indent_for_position(source : String, position : Int32) -> String {
   let chars = source.to_array()
   let pos = clamp_int(position, 0, chars.length())
   let mut line_start = pos
@@ -224,12 +224,12 @@ pub fn auto_indent_for_position(source : String, position : Int) -> String {
 
 ///|
 pub(all) struct BracketMatch {
-  open : Int
-  close : Int
+  open : Int32
+  close : Int32
 }
 
 ///|
-pub fn code_bracket_match(source : String, offset : Int) -> BracketMatch? {
+pub fn code_bracket_match(source : String, offset : Int32) -> BracketMatch? {
   let chars = source.to_array()
   if chars.is_empty() {
     return None
@@ -248,7 +248,7 @@ pub fn code_bracket_match(source : String, offset : Int) -> BracketMatch? {
 }
 
 ///|
-fn code_bracket_match_at(chars : Array[Char], index : Int) -> BracketMatch? {
+fn code_bracket_match_at(chars : Array[Char], index : Int32) -> BracketMatch? {
   let ch = chars[index]
   if ch == '(' || ch == '[' || ch == '{' {
     return find_forward_bracket(chars, index, ch, matching_close(ch))
@@ -262,7 +262,7 @@ fn code_bracket_match_at(chars : Array[Char], index : Int) -> BracketMatch? {
 ///|
 fn find_forward_bracket(
   chars : Array[Char],
-  start : Int,
+  start : Int32,
   open : Char,
   close : Char,
 ) -> BracketMatch? {
@@ -283,7 +283,7 @@ fn find_forward_bracket(
 ///|
 fn find_backward_bracket(
   chars : Array[Char],
-  end : Int,
+  end : Int32,
   open : Char,
   close : Char,
 ) -> BracketMatch? {
@@ -324,7 +324,7 @@ fn matching_open(ch : Char) -> Char {
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
   if value < min {
     min
   } else if value > max {

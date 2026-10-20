@@ -528,10 +528,10 @@ fn path_fill_contours(
 
 ///|
 fn emit_normalized_triangle(
-  emit : (Int, Int, Int) -> Unit,
-  i0 : Int,
-  i1 : Int,
-  i2 : Int,
+  emit : (Int32, Int32, Int32) -> Unit,
+  i0 : Int32,
+  i1 : Int32,
+  i2 : Int32,
 ) -> Unit {
   // 以最小原始索引为旋转基准，保持绕序不变并让三角形发射顺序稳定。
   if i0 <= i1 && i0 <= i2 {
@@ -549,13 +549,13 @@ fn emit_normalized_triangle(
 /// 多轮廓按独立多边形分别处理。
 fn triangulate_contour(
   contour : Array[@zeno.Vector],
-  emit : (Int, Int, Int) -> Unit,
+  emit : (Int32, Int32, Int32) -> Unit,
 ) -> Unit {
   let n = contour.length()
   if n < 3 {
     return
   }
-  let indices : Array[Int] = []
+  let indices : Array[Int32] = []
   for i in 0..<n {
     indices.push(i)
   }

@@ -12,8 +12,8 @@ pub extend ImageDescriptor with Debug::{to_repr}
 pub extend ImageDescriptor with Eq::{not_equal, equal}
 
 ///|
-fn image_descriptor_resource_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn image_descriptor_resource_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|
@@ -44,8 +44,8 @@ fn image_descriptor_optional_size_id(dimensions : ISize?) -> Bytes {
 ///|
 pub fn ImageDescriptor::encoded(
   bytes : Bytes,
-  format? : EncodedImageFormat? = None,
-  dimensions? : ISize? = None,
+  format~ : EncodedImageFormat? = None,
+  dimensions~ : ISize? = None,
 ) -> ImageDescriptor? {
   if bytes.is_empty() {
     None
@@ -116,7 +116,7 @@ pub fn ImageDescriptor::resource_key(
 ///|
 pub fn ImageDescriptor::resource_descriptor(
   self : ImageDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

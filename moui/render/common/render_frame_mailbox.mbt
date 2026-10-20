@@ -1,7 +1,7 @@
 ///|
 pub(all) struct RenderFramePacket {
-  sequence : Int
-  surface_generation : Int
+  sequence : Int32
+  surface_generation : Int32
   input : @render.RenderFrameInput
 } derive(Eq, Debug, ToJson)
 
@@ -16,17 +16,17 @@ pub extend RenderFramePacket with ToJson::{to_json}
 
 ///|
 pub(all) struct RenderFrameMailboxDiagnostics {
-  submitted : Int
-  started : Int
-  completed : Int
-  replaced_pending : Int
-  rejected_generation : Int
-  surface_generation : Int
+  submitted : Int32
+  started : Int32
+  completed : Int32
+  replaced_pending : Int32
+  rejected_generation : Int32
+  surface_generation : Int32
   in_flight : Bool
   pending : Bool
-  control_pending : Int
-  control_submitted : Int
-  control_drained : Int
+  control_pending : Int32
+  control_submitted : Int32
+  control_drained : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -40,24 +40,24 @@ pub extend RenderFrameMailboxDiagnostics with ToJson::{to_json}
 
 ///|
 pub struct RenderFrameMailbox {
-  mut surface_generation : Int
-  mut next_sequence : Int
+  mut surface_generation : Int32
+  mut next_sequence : Int32
   mut in_flight : RenderFramePacket?
   mut pending : RenderFramePacket?
-  mut submitted : Int
-  mut started : Int
-  mut completed : Int
-  mut replaced_pending : Int
-  mut rejected_generation : Int
+  mut submitted : Int32
+  mut started : Int32
+  mut completed : Int32
+  mut replaced_pending : Int32
+  mut rejected_generation : Int32
   control_queue : Array[@render.RendererControlMessage]
-  mut control_submitted : Int
-  mut control_drained : Int
+  mut control_submitted : Int32
+  mut control_drained : Int32
 }
 
 ///|
 pub fn RenderFramePacket::new(
-  sequence~ : Int,
-  surface_generation~ : Int,
+  sequence~ : Int32,
+  surface_generation~ : Int32,
   input : @render.RenderFrameInput,
 ) -> RenderFramePacket {
   {
@@ -69,7 +69,7 @@ pub fn RenderFramePacket::new(
 
 ///|
 pub fn RenderFrameMailbox::new(
-  surface_generation? : Int = 1,
+  surface_generation~ : Int32 = 1,
 ) -> RenderFrameMailbox {
   {
     surface_generation,
@@ -96,7 +96,7 @@ pub fn RenderFrameMailbox::new(
 pub fn RenderFrameMailbox::submit_control(
   self : RenderFrameMailbox,
   message : @render.RendererControlMessage,
-) -> Int {
+) -> Int32 {
   self.control_queue.push(message)
   self.control_submitted = self.control_submitted + 1
   self.control_queue.length()
@@ -126,7 +126,7 @@ pub fn RenderFrameMailbox::drain_control(
 
 ///|
 /// Returns the number of pending control messages without draining.
-pub fn RenderFrameMailbox::control_pending(self : RenderFrameMailbox) -> Int {
+pub fn RenderFrameMailbox::control_pending(self : RenderFrameMailbox) -> Int32 {
   self.control_queue.length()
 }
 
@@ -134,7 +134,7 @@ pub fn RenderFrameMailbox::control_pending(self : RenderFrameMailbox) -> Int {
 pub fn RenderFrameMailbox::submit(
   self : RenderFrameMailbox,
   input : @render.RenderFrameInput,
-) -> Int {
+) -> Int32 {
   let sequence = self.next_sequence
   self.next_sequence = self.next_sequence + 1
   let packet = RenderFramePacket::new(
@@ -176,7 +176,7 @@ pub fn RenderFrameMailbox::begin_next(
 ///|
 pub fn RenderFrameMailbox::complete(
   self : RenderFrameMailbox,
-  sequence : Int,
+  sequence : Int32,
 ) -> Bool {
   match self.in_flight {
     Some(packet) =>
@@ -194,7 +194,7 @@ pub fn RenderFrameMailbox::complete(
 ///|
 pub fn RenderFrameMailbox::replace_surface_generation(
   self : RenderFrameMailbox,
-  generation : Int,
+  generation : Int32,
 ) -> Unit {
   if generation != self.surface_generation {
     self.surface_generation = generation

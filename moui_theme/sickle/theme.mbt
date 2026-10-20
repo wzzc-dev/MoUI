@@ -25,8 +25,8 @@ pub fn SickleStyleMode::label(self : SickleStyleMode) -> String {
 
 ///|
 pub fn theme(
-  scheme? : @core.ColorScheme = Light,
-  mode? : SickleStyleMode = Hybrid,
+  scheme~ : @core.ColorScheme = Light,
+  mode~ : SickleStyleMode = Hybrid,
 ) -> @core.Theme {
   let base = match scheme {
     Light =>
@@ -45,32 +45,32 @@ pub fn theme(
 }
 
 ///|
-pub fn light_theme(mode? : SickleStyleMode = Hybrid) -> @core.Theme {
+pub fn light_theme(mode~ : SickleStyleMode = Hybrid) -> @core.Theme {
   theme(scheme=Light, mode~)
 }
 
 ///|
-pub fn dark_theme(mode? : SickleStyleMode = Hybrid) -> @core.Theme {
+pub fn dark_theme(mode~ : SickleStyleMode = Hybrid) -> @core.Theme {
   theme(scheme=Dark, mode~)
 }
 
 ///|
-pub fn skeuo_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+pub fn skeuo_theme(scheme~ : @core.ColorScheme = Light) -> @core.Theme {
   theme(scheme~, mode=Skeuo)
 }
 
 ///|
-pub fn flat_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+pub fn flat_theme(scheme~ : @core.ColorScheme = Light) -> @core.Theme {
   theme(scheme~, mode=Flat)
 }
 
 ///|
-pub fn hybrid_theme(scheme? : @core.ColorScheme = Light) -> @core.Theme {
+pub fn hybrid_theme(scheme~ : @core.ColorScheme = Light) -> @core.Theme {
   theme(scheme~, mode=Hybrid)
 }
 
 ///|
-pub fn palette(scheme? : @core.ColorScheme = Light) -> @core.ColorPalette {
+pub fn palette(scheme~ : @core.ColorScheme = Light) -> @core.ColorPalette {
   sickle_palette(scheme)
 }
 
@@ -80,8 +80,8 @@ pub fn palette(scheme? : @core.ColorScheme = Light) -> @core.ColorPalette {
 /// to `core.Theme` (which is now neutral). Apps that want sickle's branded
 /// control tokens resolve this alongside the neutral `theme()`.
 pub fn control_theme_set(
-  scheme? : @core.ColorScheme = Light,
-  mode? : SickleStyleMode = Hybrid,
+  scheme~ : @core.ColorScheme = Light,
+  mode~ : SickleStyleMode = Hybrid,
 ) -> @views.ControlThemeSet {
   sickle_components(sickle_palette(scheme), scheme, mode)
 }
@@ -520,8 +520,8 @@ fn control_tokens(
   border~ : @core.Color,
   border_width~ : Double,
   radius~ : Double,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> @views.ControlStateTokens {
   @views.ControlStateTokens::new(
     foreground~,
@@ -553,7 +553,7 @@ fn shadow(
   alpha~ : Double,
   y~ : Double,
   blur~ : Double,
-  spread? : Double = 0.0,
+  spread~ : Double = 0.0,
 ) -> @core.ShadowStyle {
   @core.ShadowStyle::new(
     color=color(r=0.0, g=0.0, b=0.0, a=alpha),
@@ -568,13 +568,18 @@ fn color(
   r~ : Double,
   g~ : Double,
   b~ : Double,
-  a? : Double = 1.0,
+  a~ : Double = 1.0,
 ) -> @core.Color {
   @core.Color::rgba(r~, g~, b~, a~)
 }
 
 ///|
-fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double = 1.0) -> @core.Color {
+fn color_byte(
+  r~ : Int32,
+  g~ : Int32,
+  b~ : Int32,
+  a~ : Double = 1.0,
+) -> @core.Color {
   color(
     r=r.to_double() / 255.0,
     g=g.to_double() / 255.0,

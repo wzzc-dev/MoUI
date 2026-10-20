@@ -1,7 +1,7 @@
 ///|
 pub struct DataGridCell {
-  row : Int
-  column : Int
+  row : Int32
+  column : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -14,17 +14,17 @@ pub extend DataGridCell with Eq::{not_equal, equal}
 pub extend DataGridCell with ToJson::{to_json}
 
 ///|
-pub fn data_grid_cell(row~ : Int, column~ : Int) -> DataGridCell {
+pub fn data_grid_cell(row~ : Int32, column~ : Int32) -> DataGridCell {
   { row: row.max(0), column: column.max(0), }
 }
 
 ///|
-pub fn DataGridCell::row(self : DataGridCell) -> Int {
+pub fn DataGridCell::row(self : DataGridCell) -> Int32 {
   self.row
 }
 
 ///|
-pub fn DataGridCell::column(self : DataGridCell) -> Int {
+pub fn DataGridCell::column(self : DataGridCell) -> Int32 {
   self.column
 }
 
@@ -91,7 +91,9 @@ pub fn DataGridSelectionRange::contains(
 }
 
 ///|
-pub fn DataGridSelectionRange::cell_count(self : DataGridSelectionRange) -> Int {
+pub fn DataGridSelectionRange::cell_count(
+  self : DataGridSelectionRange,
+) -> Int32 {
   (self.last.row - self.first.row + 1) *
   (self.last.column - self.first.column + 1)
 }
@@ -113,8 +115,8 @@ pub extend DataGridSelectionState with ToJson::{to_json}
 
 ///|
 pub fn DataGridSelectionState::new(
-  row? : Int = 0,
-  column? : Int = 0,
+  row~ : Int32 = 0,
+  column~ : Int32 = 0,
 ) -> DataGridSelectionState {
   let cell = data_grid_cell(row~, column~)
   { anchor: cell, focus: cell, }
@@ -145,7 +147,7 @@ pub fn DataGridSelectionState::range(
 pub fn DataGridSelectionState::select(
   self : DataGridSelectionState,
   cell : DataGridCell,
-  extending? : Bool = false,
+  extending~ : Bool = false,
 ) -> DataGridSelectionState {
   if extending {
     { ..self, focus: cell, }
@@ -156,10 +158,10 @@ pub fn DataGridSelectionState::select(
 
 ///|
 fn data_grid_clamp_cell(
-  row : Int,
-  column : Int,
-  row_count : Int,
-  column_count : Int,
+  row : Int32,
+  column : Int32,
+  row_count : Int32,
+  column_count : Int32,
 ) -> DataGridCell {
   data_grid_cell(
     row=row.max(0).min((row_count - 1).max(0)),
@@ -170,11 +172,11 @@ fn data_grid_clamp_cell(
 ///|
 pub fn DataGridSelectionState::move_by(
   self : DataGridSelectionState,
-  row_delta~ : Int,
-  column_delta~ : Int,
-  row_count~ : Int,
-  column_count~ : Int,
-  extending? : Bool = false,
+  row_delta~ : Int32,
+  column_delta~ : Int32,
+  row_count~ : Int32,
+  column_count~ : Int32,
+  extending~ : Bool = false,
 ) -> DataGridSelectionState {
   let next = data_grid_clamp_cell(
     self.focus.row + row_delta,
@@ -192,9 +194,9 @@ pub fn DataGridSelectionState::move_by(
 pub fn DataGridSelectionState::handle_key(
   self : DataGridSelectionState,
   event : @core.KeyboardEvent,
-  row_count~ : Int,
-  column_count~ : Int,
-  page_rows? : Int = 10,
+  row_count~ : Int32,
+  column_count~ : Int32,
+  page_rows~ : Int32 = 10,
 ) -> DataGridSelectionState {
   if !event.pressed || row_count <= 0 || column_count <= 0 {
     return self

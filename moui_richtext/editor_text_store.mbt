@@ -20,8 +20,8 @@
 /// construct or mutate segments directly — go through the store API.
 pub(all) struct MarkdownTextSegment {
   // Absolute char offsets, mutated in place when edits before shift the tail.
-  mut start : Int
-  mut end : Int
+  mut start : Int32
+  mut end : Int32
   mut text : String
 } derive(Eq, Debug, ToJson)
 
@@ -40,9 +40,9 @@ pub(all) struct MarkdownDocumentTextStore {
   // starts at 0, each next starts where its predecessor ended. A segment
   // may only be empty when it is the sole content of an empty document.
   segments : Ref[Array[MarkdownTextSegment]]
-  revision : Ref[Int]
+  revision : Ref[Int32]
   // (revision at which the joined text was cached, joined text).
-  materialized : Ref[(Int, String)]
+  materialized : Ref[(Int32, String)]
 }
 
 ///|
@@ -87,7 +87,7 @@ pub impl ToJson for MarkdownDocumentTextStore with fn to_json(self) {
 /// to grow past this many characters. A document whose text collapses
 /// into one block would otherwise be one segment, making every keystroke
 /// rewrite — and every char probe rescan — the whole document.
-const MARKDOWN_TEXT_STORE_SEGMENT_CAP : Int = 262144
+const MARKDOWN_TEXT_STORE_SEGMENT_CAP : Int32 = 262144
 
 ///|
 /// Push `text` at absolute char offset `start` into `out`, splitting it
@@ -96,7 +96,7 @@ const MARKDOWN_TEXT_STORE_SEGMENT_CAP : Int = 262144
 fn markdown_text_store_push_capped(
   out : Array[MarkdownTextSegment],
   text : String,
-  start : Int,
+  start : Int32,
 ) -> Unit {
   let length = text.char_length()
   if length == 0 {
@@ -136,7 +136,7 @@ fn markdown_text_store_push_capped(
 /// over the cap is split. This is what keeps an edit's rewrite bounded by
 /// the cap on every later keystroke.
 fn markdown_text_store_capped_chunks(
-  pieces : Array[(String, Int)],
+  pieces : Array[(String, Int32)],
 ) -> Array[MarkdownTextSegment] {
   let chunks : Array[MarkdownTextSegment] = []
   let mut current = ""
@@ -232,7 +232,7 @@ pub fn MarkdownDocumentTextStore::from_texts(
 /// is seeded with `source` itself, so the whole text stays free to read.
 pub fn MarkdownDocumentTextStore::segmented(
   source : String,
-  boundaries : Array[Int],
+  boundaries : Array[Int32],
 ) -> MarkdownDocumentTextStore {
   // Fast path: when the open path's line scan just decoded `source`, the
   // utf16 offset of every line start is already known. Block boundaries
@@ -294,9 +294,9 @@ pub fn MarkdownDocumentTextStore::segmented(
 /// falls back to the char walk.
 fn MarkdownDocumentTextStore::segmented_at_line_starts(
   source : String,
-  boundaries : Array[Int],
+  boundaries : Array[Int32],
   lines : Array[MarkdownLine],
-  unit_starts : Array[Int],
+  unit_starts : Array[Int32],
 ) -> MarkdownDocumentTextStore? {
   let segments : Array[MarkdownTextSegment] = []
   let mut next = 0
@@ -362,7 +362,7 @@ pub fn MarkdownDocumentTextStore::replace_all(
 ///|
 pub fn MarkdownDocumentTextStore::revision(
   self : MarkdownDocumentTextStore,
-) -> Int {
+) -> Int32 {
   self.revision.val
 }
 
@@ -370,7 +370,7 @@ pub fn MarkdownDocumentTextStore::revision(
 /// Char length of the document. O(1) — the tail segment carries the end.
 pub fn MarkdownDocumentTextStore::length(
   self : MarkdownDocumentTextStore,
-) -> Int {
+) -> Int32 {
   let segments = self.segments.val
   if segments.length() == 0 {
     0
@@ -417,7 +417,7 @@ pub fn MarkdownDocumentTextStore::seed(
 /// the document.
 pub fn MarkdownDocumentTextStore::char_at(
   self : MarkdownDocumentTextStore,
-  index : Int,
+  index : Int32,
 ) -> Char? {
   let segments = self.segments.val
   if index < 0 {
@@ -443,8 +443,8 @@ pub fn MarkdownDocumentTextStore::char_at(
 /// `segments.length()` when `offset` sits at (or past) the document end.
 fn markdown_text_store_segment_index(
   segments : Array[MarkdownTextSegment],
-  offset : Int,
-) -> Int {
+  offset : Int32,
+) -> Int32 {
   let mut low = 0
   let mut high = segments.length()
   while low < high {
@@ -464,8 +464,8 @@ fn markdown_text_store_segment_index(
 /// by the segment, not by the document.
 fn markdown_text_segment_slice(
   segment : MarkdownTextSegment,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
 ) -> String {
   let text = segment.text
   if from <= segment.start && to >= segment.end {
@@ -498,8 +498,8 @@ fn markdown_text_segment_slice(
 /// the whole document.
 pub fn MarkdownDocumentTextStore::text_of(
   self : MarkdownDocumentTextStore,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> String {
   let segments = self.segments.val
   if end <= start || segments.length() == 0 {

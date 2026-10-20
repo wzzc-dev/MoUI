@@ -45,7 +45,7 @@ fn native_test_pixmap_has_dark_pixel(pixmap : @skia.Pixmap) -> Bool {
 ///|
 fn native_test_surface_has_dark_pixel(
   surface : @native.Surface,
-  bounds? : @skia.IRect? = None,
+  bounds~ : @skia.IRect? = None,
 ) -> Bool {
   let read_bounds = match bounds {
     Some(bounds) => bounds
@@ -76,8 +76,8 @@ fn native_test_assert_replay_resource_counts(
 ///|
 fn native_test_assert_path_snapshot(
   path : @native.Path,
-  verbs : Int,
-  points : Int,
+  verbs : Int32,
+  points : Int32,
   bounds : @skia.Rect?,
 ) -> Unit raise {
   assert_true(path.is_finite())

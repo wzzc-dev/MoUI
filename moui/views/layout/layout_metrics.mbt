@@ -29,7 +29,7 @@ pub fn layout_mirror_x(
 }
 
 ///|
-pub fn layout_ceil_div(a : Int, b : Int) -> Int {
+pub fn layout_ceil_div(a : Int32, b : Int32) -> Int32 {
   let b = max_int(1, b)
   if a == 0 {
     0
@@ -39,7 +39,7 @@ pub fn layout_ceil_div(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn max_int(a : Int, b : Int) -> Int {
+pub fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -48,7 +48,7 @@ pub fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-pub fn min_int(a : Int, b : Int) -> Int {
+pub fn min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {

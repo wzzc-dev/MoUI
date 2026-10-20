@@ -46,7 +46,7 @@ fn build_header_row(
 ///|
 fn build_data_row(
   model : ExcelModel,
-  row : Int,
+  row : Int32,
   heat_range : (Double, Double)?,
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
@@ -91,8 +91,8 @@ fn header_cell(
 ///|
 fn build_cell(
   model : ExcelModel,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   heat_range : (Double, Double)?,
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
@@ -141,8 +141,8 @@ fn build_cell(
 fn cell_display_content(
   model : ExcelModel,
   cell : @cell.Cell,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let selected = model.workbook.cell_is_selected(row, col)
@@ -203,8 +203,8 @@ fn ends_with_text(value : String, suffix : String) -> Bool {
 fn cell_background(
   model : ExcelModel,
   cell : @cell.Cell,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   heat_range : (Double, Double)?,
   theme : @moui.Theme,
 ) -> @graphics.Color {
@@ -290,7 +290,7 @@ fn parse_hex_color(hex : String) -> @graphics.Color? {
 }
 
 ///|
-fn hex_pair(hex : String, index : Int) -> Int? {
+fn hex_pair(hex : String, index : Int32) -> Int32? {
   match (hex_digit(hex[index]), hex_digit(hex[index + 1])) {
     (Some(hi), Some(lo)) => Some(hi * 16 + lo)
     _ => None
@@ -298,7 +298,7 @@ fn hex_pair(hex : String, index : Int) -> Int? {
 }
 
 ///|
-fn hex_digit(c : UInt16) -> Int? {
+fn hex_digit(c : UInt16) -> Int32? {
   match c {
     '0' => Some(0)
     '1' => Some(1)

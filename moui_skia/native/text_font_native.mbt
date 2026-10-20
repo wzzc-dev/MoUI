@@ -35,46 +35,49 @@ extern "C" fn native_font_measure_text_utf8(
 extern "C" fn native_font_count_text_utf8(
   font : FontHandle,
   text : Bytes,
-) -> Int = "moonbit_skia_font_count_text_utf8"
+) -> Int32 = "moonbit_skia_font_count_text_utf8"
 
 ///|
 #borrow(font, text)
 extern "C" fn native_font_text_to_glyphs_utf8_value(
   font : FontHandle,
   text : Bytes,
-  index : Int,
-) -> Int = "moonbit_skia_font_text_to_glyphs_utf8_value"
+  index : Int32,
+) -> Int32 = "moonbit_skia_font_text_to_glyphs_utf8_value"
 
 ///|
 #borrow(font)
-extern "C" fn native_font_glyph_width(font : FontHandle, glyph : Int) -> Float = "moonbit_skia_font_glyph_width"
+extern "C" fn native_font_glyph_width(
+  font : FontHandle,
+  glyph : Int32,
+) -> Float = "moonbit_skia_font_glyph_width"
 
 ///|
 #borrow(font)
 extern "C" fn native_font_glyph_bounds_left(
   font : FontHandle,
-  glyph : Int,
+  glyph : Int32,
 ) -> Float = "moonbit_skia_font_glyph_bounds_left"
 
 ///|
 #borrow(font)
 extern "C" fn native_font_glyph_bounds_top(
   font : FontHandle,
-  glyph : Int,
+  glyph : Int32,
 ) -> Float = "moonbit_skia_font_glyph_bounds_top"
 
 ///|
 #borrow(font)
 extern "C" fn native_font_glyph_bounds_right(
   font : FontHandle,
-  glyph : Int,
+  glyph : Int32,
 ) -> Float = "moonbit_skia_font_glyph_bounds_right"
 
 ///|
 #borrow(font)
 extern "C" fn native_font_glyph_bounds_bottom(
   font : FontHandle,
-  glyph : Int,
+  glyph : Int32,
 ) -> Float = "moonbit_skia_font_glyph_bounds_bottom"
 
 ///|
@@ -116,12 +119,15 @@ extern "C" fn native_font_measure_text_bounds_utf8_bottom(
 #borrow(font)
 extern "C" fn native_font_metrics_value(
   font : FontHandle,
-  metric : Int,
+  metric : Int32,
 ) -> Float = "moonbit_skia_font_metrics_value"
 
 ///|
 #borrow(font)
-extern "C" fn native_font_metrics_has(font : FontHandle, metric : Int) -> Bool = "moonbit_skia_font_metrics_has"
+extern "C" fn native_font_metrics_has(
+  font : FontHandle,
+  metric : Int32,
+) -> Bool = "moonbit_skia_font_metrics_has"
 
 ///|
 #borrow(font, text)
@@ -140,7 +146,7 @@ extern "C" fn native_shaped_text_run_is_null(run : ShapedTextRunHandle) -> Bool 
 #borrow(run)
 extern "C" fn native_shaped_text_run_glyph_count(
   run : ShapedTextRunHandle,
-) -> Int = "moonbit_skia_shaped_text_run_glyph_count"
+) -> Int32 = "moonbit_skia_shaped_text_run_glyph_count"
 
 ///|
 #borrow(run)
@@ -158,29 +164,29 @@ extern "C" fn native_shaped_text_run_advance_y(
 #borrow(run)
 extern "C" fn native_shaped_text_run_glyph_value(
   run : ShapedTextRunHandle,
-  index : Int,
-) -> Int = "moonbit_skia_shaped_text_run_glyph_value"
+  index : Int32,
+) -> Int32 = "moonbit_skia_shaped_text_run_glyph_value"
 
 ///|
 #borrow(run)
 extern "C" fn native_shaped_text_run_position_x(
   run : ShapedTextRunHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_shaped_text_run_position_x"
 
 ///|
 #borrow(run)
 extern "C" fn native_shaped_text_run_position_y(
   run : ShapedTextRunHandle,
-  index : Int,
+  index : Int32,
 ) -> Float = "moonbit_skia_shaped_text_run_position_y"
 
 ///|
 #borrow(run)
 extern "C" fn native_shaped_text_run_cluster_value(
   run : ShapedTextRunHandle,
-  index : Int,
-) -> Int = "moonbit_skia_shaped_text_run_cluster_value"
+  index : Int32,
+) -> Int32 = "moonbit_skia_shaped_text_run_cluster_value"
 
 ///|
 extern "C" fn native_typeface_default() -> TypefaceHandle = "moonbit_skia_typeface_default"
@@ -194,13 +200,13 @@ extern "C" fn native_font_mgr_is_null(font_mgr : FontMgrHandle) -> Bool = "moonb
 
 ///|
 #borrow(font_mgr)
-extern "C" fn native_font_mgr_count_families(font_mgr : FontMgrHandle) -> Int = "moonbit_skia_font_mgr_count_families"
+extern "C" fn native_font_mgr_count_families(font_mgr : FontMgrHandle) -> Int32 = "moonbit_skia_font_mgr_count_families"
 
 ///|
 #borrow(font_mgr)
 extern "C" fn native_font_mgr_family_name(
   font_mgr : FontMgrHandle,
-  index : Int,
+  index : Int32,
 ) -> Bytes = "moonbit_skia_font_mgr_family_name"
 
 ///|
@@ -208,9 +214,9 @@ extern "C" fn native_font_mgr_family_name(
 extern "C" fn native_font_mgr_match_family_style(
   font_mgr : FontMgrHandle,
   family_name : Bytes,
-  weight : Int,
-  width : Int,
-  slant : Int,
+  weight : Int32,
+  width : Int32,
+  slant : Int32,
 ) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style"
 
 ///|
@@ -219,26 +225,26 @@ extern "C" fn native_font_mgr_match_family_style_character(
   font_mgr : FontMgrHandle,
   family_name : Bytes,
   language_tag : Bytes,
-  character : Int,
-  weight : Int,
-  width : Int,
-  slant : Int,
+  character : Int32,
+  weight : Int32,
+  width : Int32,
+  slant : Int32,
 ) -> TypefaceHandle = "moonbit_skia_font_mgr_match_family_style_character"
 
 ///|
 #borrow(family_name)
 extern "C" fn native_typeface_from_name(
   family_name : Bytes,
-  weight : Int,
-  width : Int,
-  slant : Int,
+  weight : Int32,
+  width : Int32,
+  slant : Int32,
 ) -> TypefaceHandle = "moonbit_skia_typeface_from_name"
 
 ///|
 #borrow(path)
 extern "C" fn native_typeface_from_file(
   path : Bytes,
-  index : Int,
+  index : Int32,
 ) -> TypefaceHandle = "moonbit_skia_typeface_from_file"
 
 ///|
@@ -248,7 +254,7 @@ extern "C" fn native_typeface_from_file(
 #borrow(data)
 extern "C" fn native_typeface_from_data(
   data : Bytes,
-  index : Int,
+  index : Int32,
 ) -> TypefaceHandle = "moonbit_skia_typeface_from_data"
 
 ///|
@@ -259,7 +265,7 @@ extern "C" fn native_typeface_from_data(
 extern "C" fn native_typeface_register_data(
   family_alias : Bytes,
   data : Bytes,
-  index : Int,
+  index : Int32,
 ) -> TypefaceHandle = "moonbit_skia_typeface_register_data"
 
 ///|
@@ -336,7 +342,7 @@ fn native_font_position_origin(origin : @skia.Point) -> @skia.Point {
 }
 
 ///|
-pub fn Font::default(size? : Float = 12.0) -> Font? {
+pub fn Font::default(size~ : Float = 12.0) -> Font? {
   if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
@@ -345,7 +351,7 @@ pub fn Font::default(size? : Float = 12.0) -> Font? {
 }
 
 ///|
-pub fn Font::empty(size? : Float = 12.0) -> Font? {
+pub fn Font::empty(size~ : Float = 12.0) -> Font? {
   if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
@@ -354,7 +360,7 @@ pub fn Font::empty(size? : Float = 12.0) -> Font? {
 }
 
 ///|
-pub fn Font::from_typeface(typeface : Typeface, size? : Float = 12.0) -> Font? {
+pub fn Font::from_typeface(typeface : Typeface, size~ : Float = 12.0) -> Font? {
   if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
@@ -389,7 +395,7 @@ pub fn Font::measure_text_utf8(self : Font, text : Bytes) -> Float {
 }
 
 ///|
-pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int {
+pub fn Font::count_text_utf8(self : Font, text : Bytes) -> Int32 {
   if text.is_empty() {
     0
   } else {
@@ -436,7 +442,7 @@ pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] 
 pub fn Font::glyph_x_positions(
   self : Font,
   glyphs : Array[GlyphId],
-  origin? : Float = 0.0,
+  origin~ : Float = 0.0,
 ) -> Array[Float] {
   let positions : Array[Float] = Array(capacity=glyphs.length())
   let origin = native_font_position_scalar(origin)
@@ -451,7 +457,7 @@ pub fn Font::glyph_x_positions(
 pub fn Font::glyph_positions(
   self : Font,
   glyphs : Array[GlyphId],
-  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+  origin~ : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
   let positions : Array[@skia.Point] = Array(capacity=glyphs.length())
   let origin = native_font_position_origin(origin)
@@ -466,7 +472,7 @@ pub fn Font::glyph_positions(
 pub fn Font::text_glyph_x_positions_utf8(
   self : Font,
   text : Bytes,
-  origin? : Float = 0.0,
+  origin~ : Float = 0.0,
 ) -> Array[Float] {
   // Build the result in MoonBit rather than calling the C batch function
   // native_font_text_glyph_x_positions_utf8. The C function returns
@@ -484,7 +490,7 @@ pub fn Font::text_glyph_x_positions_utf8(
 pub fn Font::text_glyph_positions_utf8(
   self : Font,
   text : Bytes,
-  origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
+  origin~ : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
   // Build the result in MoonBit rather than calling the C batch function
   // native_font_text_glyph_positions_utf8. The C function returns
@@ -542,7 +548,7 @@ pub fn Font::measure_text_bounds_utf8(self : Font, text : Bytes) -> @skia.Rect? 
 }
 
 ///|
-fn font_metric_optional(font : FontHandle, metric : Int) -> Float? {
+fn font_metric_optional(font : FontHandle, metric : Int32) -> Float? {
   if native_font_metrics_has(font, metric) {
     Some(native_font_metrics_value(font, metric))
   } else {
@@ -588,8 +594,8 @@ pub fn Font::shape_text_utf8(
   text : Bytes,
   // Unconstrained wrap width for single-line runs. Keep finite and moderate so
   // native shapers never allocate pathological run buffers.
-  width? : Float = 1000000.0,
-  left_to_right? : Bool = true,
+  width~ : Float = 1000000.0,
+  left_to_right~ : Bool = true,
 ) -> ShapedTextRun? {
   if text.is_empty() || !native_font_positive_scalar_is_valid(width) {
     None
@@ -638,7 +644,7 @@ pub fn Font::shape_text_run_utf8(
       None => None
       Some(run) => {
         let glyphs = run.glyphs()
-        let glyph_ids : Array[Int] = Array(capacity=glyphs.length())
+        let glyph_ids : Array[Int32] = Array(capacity=glyphs.length())
         for glyph in glyphs {
           glyph_ids.push(glyph.to_int())
         }
@@ -677,7 +683,7 @@ pub fn ShapedTextRun::is_available(self : ShapedTextRun) -> Bool {
 }
 
 ///|
-pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int {
+pub fn ShapedTextRun::glyph_count(self : ShapedTextRun) -> Int32 {
   native_shaped_text_run_glyph_count(self.handle)
 }
 
@@ -721,12 +727,12 @@ pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
 }
 
 ///|
-pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
+pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int32] {
   let count = self.glyph_count()
-  let clusters : Array[Int] = Array(capacity=count)
+  let clusters : Array[Int32] = Array(capacity=count)
   for index in 0..<count {
     clusters.push(
-      Int::max(0, native_shaped_text_run_cluster_value(self.handle, index)),
+      Int32::max(0, native_shaped_text_run_cluster_value(self.handle, index)),
     )
   }
   clusters
@@ -753,26 +759,26 @@ pub fn Typeface::default() -> Typeface? {
 }
 
 ///|
-fn skia_font_style_weight(weight : Int) -> Int {
+fn skia_font_style_weight(weight : Int32) -> Int32 {
   weight.clamp(min=1, max=1000)
 }
 
 ///|
-fn skia_font_style_width(width : Int) -> Int {
+fn skia_font_style_width(width : Int32) -> Int32 {
   width.clamp(min=1, max=9)
 }
 
 ///|
-fn skia_font_style_slant(slant : Int) -> Int {
+fn skia_font_style_slant(slant : Int32) -> Int32 {
   slant.clamp(min=0, max=2)
 }
 
 ///|
 pub fn Typeface::from_name(
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   if family_name.is_empty() {
     None
@@ -802,7 +808,7 @@ pub fn Typeface::from_name_style(
 }
 
 ///|
-pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
+pub fn Typeface::from_file(path : Bytes, index~ : Int32 = 0) -> Typeface? {
   if path.is_empty() || index < 0 {
     None
   } else {
@@ -815,7 +821,7 @@ pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
 /// `index` selects a face from a TTC collection. The resulting typeface is
 /// usable for measurement and drawing but is not registered for family-name
 /// resolution; use `register_data` when paragraph layout must resolve it too.
-pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
+pub fn Typeface::from_data(data : Bytes, index~ : Int32 = 0) -> Typeface? {
   if data.is_empty() || index < 0 {
     None
   } else {
@@ -830,7 +836,7 @@ pub fn Typeface::from_data(data : Bytes, index? : Int = 0) -> Typeface? {
 pub fn Typeface::register_data(
   family_alias : Bytes,
   data : Bytes,
-  index? : Int = 0,
+  index~ : Int32 = 0,
 ) -> Typeface? {
   if family_alias.is_empty() || data.is_empty() || index < 0 {
     None
@@ -888,12 +894,12 @@ pub fn FontMgr::is_available(self : FontMgr) -> Bool {
 }
 
 ///|
-pub fn FontMgr::count_families(self : FontMgr) -> Int {
+pub fn FontMgr::count_families(self : FontMgr) -> Int32 {
   native_font_mgr_count_families(self.handle)
 }
 
 ///|
-pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
+pub fn FontMgr::family_name(self : FontMgr, index : Int32) -> Bytes? {
   if index < 0 || index >= self.count_families() {
     None
   } else {
@@ -910,9 +916,9 @@ pub fn FontMgr::family_name(self : FontMgr, index : Int) -> Bytes? {
 pub fn FontMgr::match_family_style(
   self : FontMgr,
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   if family_name.is_empty() {
     None
@@ -948,7 +954,7 @@ fn FontMgr::match_family_style_character_language(
   self : FontMgr,
   family_name : Bytes,
   language_tag : Bytes,
-  character : Int,
+  character : Int32,
   style : @skia.FontStyleRequest,
 ) -> Typeface? {
   if character <= 0 {
@@ -973,8 +979,8 @@ pub fn FontMgr::match_family_style_character(
   self : FontMgr,
   family_name : Bytes,
   bcp47 : Array[Bytes],
-  character : Int,
-  style? : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
+  character : Int32,
+  style~ : @skia.FontStyleRequest = @skia.FontStyleRequest::new(),
 ) -> Typeface? {
   if character <= 0 {
     None
@@ -1089,9 +1095,9 @@ pub fn FontMgr::resolve_fallback_request(
 pub fn Typeface::from_font_mgr_family(
   font_mgr : FontMgr,
   family_name : Bytes,
-  weight? : Int = 400,
-  width? : Int = 5,
-  slant? : Int = 0,
+  weight~ : Int32 = 400,
+  width~ : Int32 = 5,
+  slant~ : Int32 = 0,
 ) -> Typeface? {
   font_mgr.match_family_style(family_name, weight~, width~, slant~)
 }

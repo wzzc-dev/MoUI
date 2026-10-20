@@ -1,5 +1,5 @@
 ///|
-fn GlyphAtlas::new(width~ : Int, height~ : Int) -> GlyphAtlas {
+fn GlyphAtlas::new(width~ : Int32, height~ : Int32) -> GlyphAtlas {
   {
     width,
     height,
@@ -65,9 +65,9 @@ fn GlyphAtlas::ensure_glyph(
 ///|
 fn GlyphAtlas::place_glyph(
   self : GlyphAtlas,
-  width : Int,
-  height : Int,
-) -> (Int, Int)? {
+  width : Int32,
+  height : Int32,
+) -> (Int32, Int32)? {
   if width == 0 || height == 0 {
     return Some((0, 0))
   }
@@ -94,8 +94,8 @@ fn GlyphAtlas::place_glyph(
 ///|
 fn GlyphAtlas::blit_glyph(
   self : GlyphAtlas,
-  dst_x : Int,
-  dst_y : Int,
+  dst_x : Int32,
+  dst_y : Int32,
   raster : NativeRasterGlyph,
 ) -> Unit {
   match raster.format {

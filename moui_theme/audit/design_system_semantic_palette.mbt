@@ -32,9 +32,9 @@ pub(all) struct DesignSemanticPaletteRoleRecord {
   token_surface : String
   core_surface : String
   official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
+  official_token_count : Int32
+  source_imported_count : Int32
+  runtime_aligned_count : Int32
   source_declared : Bool
   source_label : String
   source_kind : String
@@ -64,9 +64,9 @@ pub extend DesignSemanticPaletteRoleRecord with ToJson::{to_json}
 ///|
 priv struct SemanticPaletteSourceEvidence {
   official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
+  official_token_count : Int32
+  source_imported_count : Int32
+  runtime_aligned_count : Int32
   source_declared : Bool
   source_label : String
   source_kind : String
@@ -102,7 +102,7 @@ pub fn DesignSemanticPaletteRole::label(
 ///|
 pub fn semantic_palette_role_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> Array[DesignSemanticPaletteRoleRecord] {
   [
     semantic_palette_role_record(preset, PaletteForeground, scheme),
@@ -126,7 +126,7 @@ pub fn semantic_palette_role_report(
 pub fn semantic_palette_role_for(
   preset : @common.DesignPreset,
   role : DesignSemanticPaletteRole,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> DesignSemanticPaletteRoleRecord? {
   for item in semantic_palette_role_report(preset, scheme~) {
     if item.role == role {
@@ -137,12 +137,14 @@ pub fn semantic_palette_role_for(
 }
 
 ///|
-pub fn semantic_palette_role_count(preset : @common.DesignPreset) -> Int {
+pub fn semantic_palette_role_count(preset : @common.DesignPreset) -> Int32 {
   semantic_palette_role_report(preset).length()
 }
 
 ///|
-pub fn semantic_palette_role_mapped_count(preset : @common.DesignPreset) -> Int {
+pub fn semantic_palette_role_mapped_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in semantic_palette_role_report(preset) {
     if item.resolves_core_surface && item.official_token_count > 0 {
@@ -155,7 +157,7 @@ pub fn semantic_palette_role_mapped_count(preset : @common.DesignPreset) -> Int 
 ///|
 pub fn semantic_palette_role_aligned_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in semantic_palette_role_report(preset) {
     if item.runtime_aligned_count > 0 {
@@ -166,7 +168,7 @@ pub fn semantic_palette_role_aligned_count(
 }
 
 ///|
-pub fn semantic_palette_role_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn semantic_palette_role_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in semantic_palette_role_report(preset) {
     if item.required &&
@@ -186,7 +188,7 @@ pub fn semantic_palette_role_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn semantic_palette_role_source_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in semantic_palette_role_report(preset) {
     if item.required &&
@@ -205,7 +207,7 @@ pub fn semantic_palette_role_source_gap_count(
 ///|
 pub fn semantic_palette_role_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in semantic_palette_role_report(preset) {
     if item.required && item.remaining_gap != "none" {

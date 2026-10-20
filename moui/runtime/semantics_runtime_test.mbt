@@ -12,7 +12,7 @@ priv enum RuntimeSemanticActionMessage {
 
 ///|
 priv struct RuntimeSemanticActionModel {
-  activations : Int
+  activations : Int32
   value : String
   selected : Bool
   expanded : Bool
@@ -1222,11 +1222,11 @@ test "runtime semantics: expired delta cursor falls back to full snapshot" {
 
 ///|
 fn path_segment(
-  index? : Int = 0,
-  role? : @core.SemanticsRole? = None,
-  label? : String? = None,
-  value? : String? = None,
-  semantic_id? : @core.SemanticId? = None,
+  index~ : Int32 = 0,
+  role~ : @core.SemanticsRole? = None,
+  label~ : String? = None,
+  value~ : String? = None,
+  semantic_id~ : @core.SemanticId? = None,
 ) -> @core.SemanticsPathSegment {
   { index, role, label, value, semantic_id, }
 }
@@ -1276,7 +1276,7 @@ fn runtime_path_runtime() -> @runtime.AppRuntime {
 }
 
 ///|
-fn runtime_path_root_child_count(runtime : @runtime.AppRuntime) -> Int raise {
+fn runtime_path_root_child_count(runtime : @runtime.AppRuntime) -> Int32 raise {
   let snapshot = runtime_expect_full_semantics(runtime)
   guard snapshot.root() is Some(root_id) else { fail("missing synthetic root") }
   for node in snapshot.nodes() {

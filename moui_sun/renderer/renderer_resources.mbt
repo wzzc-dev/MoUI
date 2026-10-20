@@ -23,18 +23,18 @@ pub extend RendererResources with Debug::{to_repr}
 ///|
 /// Snapshot of renderer text resource cache and atlas state.
 pub struct RendererTextResourcesSnapshot {
-  text_mask_count : Int
-  text_mask_capacity : Int
+  text_mask_count : Int32
+  text_mask_capacity : Int32
   text_mask_is_bounded : Bool
-  glyph_mask_count : Int
-  glyph_mask_capacity : Int
+  glyph_mask_count : Int32
+  glyph_mask_capacity : Int32
   glyph_mask_is_bounded : Bool
-  atlas_entry_count : Int
-  atlas_width : Int
-  atlas_height : Int
-  atlas_capacity : Int
-  atlas_used_pixel_count : Int
-  atlas_free_pixel_count : Int
+  atlas_entry_count : Int32
+  atlas_width : Int32
+  atlas_height : Int32
+  atlas_capacity : Int32
+  atlas_used_pixel_count : Int32
+  atlas_free_pixel_count : Int32
   atlas_occupancy_ratio : Double
 } derive(Debug)
 
@@ -44,12 +44,12 @@ pub extend RendererTextResourcesSnapshot with Debug::{to_repr}
 ///|
 /// Snapshot of renderer-wide resource cache state.
 pub struct RendererResourcesSnapshot {
-  font_face_count : Int
-  font_face_capacity : Int
+  font_face_count : Int32
+  font_face_capacity : Int32
   font_face_is_bounded : Bool
   text_snapshot : RendererTextResourcesSnapshot
-  image_count : Int
-  image_capacity : Int
+  image_count : Int32
+  image_capacity : Int32
   image_is_bounded : Bool
 } derive(Debug)
 
@@ -69,8 +69,8 @@ pub extend FontBytesFallbackSource with Debug::{to_repr}
 ///|
 /// Create text resources with unbounded text/glyph caches and a glyph atlas.
 pub fn RendererTextResources::new(
-  atlas_width : Int,
-  atlas_height : Int,
+  atlas_width : Int32,
+  atlas_height : Int32,
 ) -> RendererTextResources {
   {
     text_cache: @text.TextMaskCache::new(),
@@ -82,10 +82,10 @@ pub fn RendererTextResources::new(
 ///|
 /// Create text resources with bounded text/glyph caches and a glyph atlas.
 pub fn RendererTextResources::with_capacities(
-  atlas_width : Int,
-  atlas_height : Int,
-  text_mask_capacity : Int,
-  glyph_mask_capacity : Int,
+  atlas_width : Int32,
+  atlas_height : Int32,
+  text_mask_capacity : Int32,
+  glyph_mask_capacity : Int32,
 ) -> RendererTextResources {
   {
     text_cache: @text.TextMaskCache::with_capacity(text_mask_capacity),
@@ -97,8 +97,8 @@ pub fn RendererTextResources::with_capacities(
 ///|
 /// Create renderer resources with unbounded font, text, and image caches.
 pub fn RendererResources::new(
-  atlas_width : Int,
-  atlas_height : Int,
+  atlas_width : Int32,
+  atlas_height : Int32,
 ) -> RendererResources {
   {
     font_cache: @text.FontFaceCache::new(),
@@ -110,11 +110,11 @@ pub fn RendererResources::new(
 ///|
 /// Create renderer resources with bounded text and image caches.
 pub fn RendererResources::with_capacities(
-  atlas_width : Int,
-  atlas_height : Int,
-  text_mask_capacity : Int,
-  glyph_mask_capacity : Int,
-  image_capacity : Int,
+  atlas_width : Int32,
+  atlas_height : Int32,
+  text_mask_capacity : Int32,
+  glyph_mask_capacity : Int32,
+  image_capacity : Int32,
 ) -> RendererResources {
   {
     font_cache: @text.FontFaceCache::new(),
@@ -128,12 +128,12 @@ pub fn RendererResources::with_capacities(
 ///|
 /// Create renderer resources with bounded font, text, and image caches.
 pub fn RendererResources::with_font_capacity(
-  atlas_width : Int,
-  atlas_height : Int,
-  font_face_capacity : Int,
-  text_mask_capacity : Int,
-  glyph_mask_capacity : Int,
-  image_capacity : Int,
+  atlas_width : Int32,
+  atlas_height : Int32,
+  font_face_capacity : Int32,
+  text_mask_capacity : Int32,
+  glyph_mask_capacity : Int32,
+  image_capacity : Int32,
 ) -> RendererResources {
   {
     font_cache: @text.FontFaceCache::with_capacity(font_face_capacity),
@@ -148,7 +148,7 @@ pub fn RendererResources::with_font_capacity(
 /// Return the number of cached text masks in this snapshot.
 pub fn RendererTextResourcesSnapshot::get_text_mask_count(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.text_mask_count
 }
 
@@ -156,7 +156,7 @@ pub fn RendererTextResourcesSnapshot::get_text_mask_count(
 /// Return the text-mask cache capacity, or 0 for unbounded caches.
 pub fn RendererTextResourcesSnapshot::get_text_mask_capacity(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.text_mask_capacity
 }
 
@@ -172,7 +172,7 @@ pub fn RendererTextResourcesSnapshot::is_text_mask_capacity_bounded(
 /// Return the number of cached glyph masks in this snapshot.
 pub fn RendererTextResourcesSnapshot::get_glyph_mask_count(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.glyph_mask_count
 }
 
@@ -180,7 +180,7 @@ pub fn RendererTextResourcesSnapshot::get_glyph_mask_count(
 /// Return the glyph-mask cache capacity, or 0 for unbounded caches.
 pub fn RendererTextResourcesSnapshot::get_glyph_mask_capacity(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.glyph_mask_capacity
 }
 
@@ -196,7 +196,7 @@ pub fn RendererTextResourcesSnapshot::is_glyph_mask_capacity_bounded(
 /// Return the number of placed glyph atlas entries.
 pub fn RendererTextResourcesSnapshot::get_atlas_entry_count(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_entry_count
 }
 
@@ -204,7 +204,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_entry_count(
 /// Return the glyph atlas width.
 pub fn RendererTextResourcesSnapshot::get_atlas_width(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_width
 }
 
@@ -212,7 +212,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_width(
 /// Return the glyph atlas height.
 pub fn RendererTextResourcesSnapshot::get_atlas_height(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_height
 }
 
@@ -220,7 +220,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_height(
 /// Return the total glyph atlas pixel capacity.
 pub fn RendererTextResourcesSnapshot::get_atlas_capacity(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_capacity
 }
 
@@ -228,7 +228,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_capacity(
 /// Return the number of glyph atlas pixels currently occupied.
 pub fn RendererTextResourcesSnapshot::get_atlas_used_pixel_count(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_used_pixel_count
 }
 
@@ -236,7 +236,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_used_pixel_count(
 /// Return the number of glyph atlas pixels still free.
 pub fn RendererTextResourcesSnapshot::get_atlas_free_pixel_count(
   self : RendererTextResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.atlas_free_pixel_count
 }
 
@@ -252,7 +252,7 @@ pub fn RendererTextResourcesSnapshot::get_atlas_occupancy_ratio(
 /// Return the number of cached font faces in this snapshot.
 pub fn RendererResourcesSnapshot::get_font_face_count(
   self : RendererResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.font_face_count
 }
 
@@ -260,7 +260,7 @@ pub fn RendererResourcesSnapshot::get_font_face_count(
 /// Return the font-face cache capacity, or 0 for unbounded caches.
 pub fn RendererResourcesSnapshot::get_font_face_capacity(
   self : RendererResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.font_face_capacity
 }
 
@@ -284,7 +284,7 @@ pub fn RendererResourcesSnapshot::get_text_snapshot(
 /// Return the number of cached image pixmaps in this snapshot.
 pub fn RendererResourcesSnapshot::get_image_count(
   self : RendererResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.image_count
 }
 
@@ -292,7 +292,7 @@ pub fn RendererResourcesSnapshot::get_image_count(
 /// Return the image cache capacity, or 0 for unbounded caches.
 pub fn RendererResourcesSnapshot::get_image_capacity(
   self : RendererResourcesSnapshot,
-) -> Int {
+) -> Int32 {
   self.image_capacity
 }
 

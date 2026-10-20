@@ -126,7 +126,7 @@ test "ViewNode: typed adapters map messages without replacing the node" {
 
 ///|
 struct SnapshotProbeNode {
-  calls : Ref[Array[Int]]
+  calls : Ref[Array[Int32]]
 }
 
 ///|

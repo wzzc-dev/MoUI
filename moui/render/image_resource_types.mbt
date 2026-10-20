@@ -19,8 +19,8 @@ pub extend ImageResourceStatus with ToJson::{to_json}
 pub(all) struct ImageResourceRecord {
   source : String
   status : ImageResourceStatus
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   diagnostic : String
 } derive(Eq, Debug, ToJson)
 
@@ -52,12 +52,12 @@ pub extend ImageResourceLoadCompletionStatus with ToJson::{to_json}
 pub(all) struct ImageResourceLoadCompletion {
   source : String
   status : ImageResourceLoadCompletionStatus
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   diagnostic : String
   background_io : Bool
   decoded_pixels : Bytes
-  decoded_row_bytes : Int
+  decoded_row_bytes : Int32
   background_decode : Bool
 } derive(Eq, Debug, ToJson)
 

@@ -6,8 +6,8 @@ pub struct VariableListAnchor {
 
 ///|
 pub struct VariableListRange {
-  first_index : Int
-  last_index : Int
+  first_index : Int32
+  last_index : Int32
   before_extent : Double
   after_extent : Double
 }
@@ -15,7 +15,7 @@ pub struct VariableListRange {
 ///|
 pub struct VariableListGeometryChange {
   key : String
-  index : Int
+  index : Int32
   old_height : Double
   new_height : Double
   delta : Double
@@ -39,7 +39,7 @@ pub fn[T] variable_list_metrics(
   items : Array[T],
   key : (T) -> String,
   estimated_height : (T) -> Double,
-  spacing? : Double = 0.0,
+  spacing~ : Double = 0.0,
 ) -> VariableListMetrics {
   let keys : Array[String] = []
   let heights : Array[Double] = []
@@ -111,7 +111,7 @@ fn variable_list_build_tree(
 ///|
 fn VariableListMetrics::prefix_at(
   self : VariableListMetrics,
-  count : Int,
+  count : Int32,
 ) -> Double {
   let mut i = count.min(self.count()).max(0)
   let mut result = 0.0
@@ -125,7 +125,7 @@ fn VariableListMetrics::prefix_at(
 ///|
 fn VariableListMetrics::point_delta(
   self : VariableListMetrics,
-  index : Int,
+  index : Int32,
   delta : Double,
 ) -> Unit {
   let mut i = index + 1
@@ -136,7 +136,7 @@ fn VariableListMetrics::point_delta(
 }
 
 ///|
-pub fn VariableListMetrics::count(self : VariableListMetrics) -> Int {
+pub fn VariableListMetrics::count(self : VariableListMetrics) -> Int32 {
   self.keys.length()
 }
 
@@ -148,7 +148,7 @@ pub fn VariableListMetrics::total_extent(self : VariableListMetrics) -> Double {
 ///|
 pub fn VariableListMetrics::height_at(
   self : VariableListMetrics,
-  index : Int,
+  index : Int32,
 ) -> Double? {
   self.heights.get(index)
 }
@@ -156,7 +156,7 @@ pub fn VariableListMetrics::height_at(
 ///|
 pub fn VariableListMetrics::is_measured(
   self : VariableListMetrics,
-  index : Int,
+  index : Int32,
 ) -> Bool {
   self.measured.get(index).unwrap_or(false)
 }
@@ -164,7 +164,7 @@ pub fn VariableListMetrics::is_measured(
 ///|
 pub fn VariableListMetrics::offset_at(
   self : VariableListMetrics,
-  index : Int,
+  index : Int32,
 ) -> Double? {
   if index < 0 || index >= self.count() {
     None
@@ -236,10 +236,10 @@ pub fn VariableListMetrics::update_heights(
 ///|
 pub fn VariableListMetrics::insert(
   self : VariableListMetrics,
-  index : Int,
+  index : Int32,
   key : String,
   estimated_height : Double,
-) -> Int {
+) -> Int32 {
   let at = index.max(0).min(self.count())
   self.keys.insert(at, key)
   self.heights.insert(at, estimated_height.max(0.0))
@@ -254,7 +254,7 @@ pub fn VariableListMetrics::insert(
 pub fn VariableListMetrics::remove(
   self : VariableListMetrics,
   key : String,
-) -> Int? {
+) -> Int32? {
   for index, item_key in self.keys {
     if item_key == key {
       ignore(self.keys.remove(index))
@@ -284,7 +284,7 @@ pub fn VariableListMetrics::with_height(
 fn VariableListMetrics::first_index_at(
   self : VariableListMetrics,
   offset : Double,
-) -> Int {
+) -> Int32 {
   let count = self.count()
   if count == 0 {
     return 0
@@ -307,7 +307,7 @@ fn VariableListMetrics::first_index_at(
 fn VariableListMetrics::first_start_at_or_after(
   self : VariableListMetrics,
   offset : Double,
-) -> Int {
+) -> Int32 {
   let mut low = 0
   let mut high = self.count()
   while low < high {
@@ -326,7 +326,7 @@ pub fn VariableListMetrics::visible_range(
   self : VariableListMetrics,
   offset_y~ : Double,
   viewport_height~ : Double,
-  overscan? : Int = 1,
+  overscan~ : Int32 = 1,
 ) -> VariableListRange? {
   let count = self.count()
   if count == 0 {
@@ -383,7 +383,7 @@ pub fn VariableListMetrics::anchor_for_offset(
 pub fn VariableListMetrics::offset_for_anchor(
   self : VariableListMetrics,
   anchor : VariableListAnchor,
-  fallback? : Double = 0.0,
+  fallback~ : Double = 0.0,
 ) -> Double {
   for index, key in self.keys {
     if key == anchor.key {
@@ -427,12 +427,12 @@ pub fn VariableListAnchor::inset(self : VariableListAnchor) -> Double {
 }
 
 ///|
-pub fn VariableListRange::first_index(self : VariableListRange) -> Int {
+pub fn VariableListRange::first_index(self : VariableListRange) -> Int32 {
   self.first_index
 }
 
 ///|
-pub fn VariableListRange::last_index(self : VariableListRange) -> Int {
+pub fn VariableListRange::last_index(self : VariableListRange) -> Int32 {
   self.last_index
 }
 
@@ -456,7 +456,7 @@ pub fn VariableListGeometryChange::key(
 ///|
 pub fn VariableListGeometryChange::index(
   self : VariableListGeometryChange,
-) -> Int {
+) -> Int32 {
   self.index
 }
 

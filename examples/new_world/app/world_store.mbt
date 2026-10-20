@@ -523,8 +523,8 @@ fn lore_text(modifiers : Array[(String, String)], key : String) -> String {
 fn lore_int(
   modifiers : Array[(String, String)],
   key : String,
-  fallback : Int,
-) -> Int {
+  fallback : Int32,
+) -> Int32 {
   for pair in modifiers {
     if pair.0 == key {
       return @string.parse_int(pair.1) catch { _ => return fallback }
@@ -631,7 +631,7 @@ fn md_number_field(text : String, field : String) -> Double {
 }
 
 ///|
-fn needle_length(needle : String) -> Int {
+fn needle_length(needle : String) -> Int32 {
   let mut length = 0
   for _ch in needle {
     length += 1
@@ -641,7 +641,7 @@ fn needle_length(needle : String) -> Int {
 
 ///|
 /// Start index of the first `needle` inside `text`, or `None`.
-fn find_substring(text : String, needle : String) -> Int? {
+fn find_substring(text : String, needle : String) -> Int32? {
   let chars : Array[Char] = []
   for ch in text {
     chars.push(ch)
@@ -836,12 +836,12 @@ pub fn world_folder_name(name : String) -> String {
 /// time with a bare "invalid argument" the player cannot act on. Truncating
 /// here keeps the failure impossible instead of surprising. 120 leaves room for
 /// the `~N` disambiguation suffix and the path separator.
-let folder_name_max_bytes : Int = 120
+let folder_name_max_bytes : Int32 = 120
 
 ///|
 /// The UTF-8 length of one character, so a budget in bytes can be spent
 /// exactly instead of assuming the worst case for ASCII.
-fn utf8_width(ch : Char) -> Int {
+fn utf8_width(ch : Char) -> Int32 {
   let code = ch.to_int()
   if code < 0x80 {
     1

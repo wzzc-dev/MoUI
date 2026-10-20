@@ -74,7 +74,7 @@ pub fn PlatformSurfaceLifecycle::metrics(
 pub fn transform_cross_platform_event(
   event : @window_core.WindowEvent,
   scale_factor~ : Double,
-  surface_size? : @dpi.PhysicalSize? = None,
+  surface_size~ : @dpi.PhysicalSize? = None,
 ) -> TransformedWindowEvent {
   ignore(surface_size)
   match event {

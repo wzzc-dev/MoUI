@@ -4,20 +4,20 @@
 extern "C" fn windows_webview_install_event_callback(
   call_closure : FuncRef[
     (
-      (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+      (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
       UInt64,
-      Int,
+      Int32,
       Bytes,
       Bytes,
       Bytes,
-      Int,
+      Int32,
     ) -> Unit,
   ],
-  callback : (UInt64, Int, Bytes, Bytes, Bytes, Int) -> Unit,
+  callback : (UInt64, Int32, Bytes, Bytes, Bytes, Int32) -> Unit,
 ) -> Unit = "moui_windows_webview_install_event_callback"
 
 ///|
-extern "C" fn windows_webview_native_available() -> Int = "moui_windows_webview_available"
+extern "C" fn windows_webview_native_available() -> Int32 = "moui_windows_webview_available"
 
 ///|
 extern "C" fn windows_webview_platform_views_begin(hwnd : UInt64) -> Unit = "moui_windows_webview_platform_views_begin"
@@ -31,8 +31,8 @@ extern "C" fn windows_webview_sync(
   title : Bytes,
   background : Bytes,
   scheme : Bytes,
-  policy : Int,
-  visible : Int,
+  policy : Int32,
+  visible : Int32,
   x : Double,
   y : Double,
   width : Double,
@@ -53,7 +53,7 @@ extern "C" fn windows_webview_configure(
 ///|
 extern "C" fn windows_webview_sync_overlay_mask(
   hwnd : UInt64,
-  has_bounds : Int,
+  has_bounds : Int32,
   x : Double,
   y : Double,
   width : Double,
@@ -71,7 +71,7 @@ extern "C" fn windows_webview_platform_views_dispose(hwnd : UInt64) -> Unit = "m
 extern "C" fn windows_webview_command(
   hwnd : UInt64,
   id : Bytes,
-  command : Int,
+  command : Int32,
   text : Bytes,
   detail : Bytes,
 ) -> Unit = "moui_windows_webview_command"
@@ -173,7 +173,7 @@ pub fn dispose_windows_platform_views(window : @win.Window) -> Unit {
 pub fn drain_windows_webview_commands(
   window : @win.Window,
   host : @host.WebViewHost,
-) -> Int {
+) -> Int32 {
   let hwnd = window.native_window_handle()
   host.drain_commands(command => {
     match host.native_config(command.controller_id) {

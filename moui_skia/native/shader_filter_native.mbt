@@ -1,5 +1,5 @@
 ///|
-extern "C" fn native_shader_color(color_argb : UInt) -> ShaderHandle = "moonbit_skia_shader_color"
+extern "C" fn native_shader_color(color_argb : UInt32) -> ShaderHandle = "moonbit_skia_shader_color"
 
 ///|
 extern "C" fn native_color_filter_null() -> ColorFilterHandle = "moonbit_skia_color_filter_null"
@@ -49,9 +49,9 @@ extern "C" fn native_shader_linear_gradient(
   y0 : Float,
   x1 : Float,
   y1 : Float,
-  color0_argb : UInt,
-  color1_argb : UInt,
-  tile_mode : Int,
+  color0_argb : UInt32,
+  color1_argb : UInt32,
+  tile_mode : Int32,
 ) -> ShaderHandle = "moonbit_skia_shader_linear_gradient"
 
 ///|
@@ -59,9 +59,9 @@ extern "C" fn native_shader_radial_gradient(
   center_x : Float,
   center_y : Float,
   radius : Float,
-  color0_argb : UInt,
-  color1_argb : UInt,
-  tile_mode : Int,
+  color0_argb : UInt32,
+  color1_argb : UInt32,
+  tile_mode : Int32,
 ) -> ShaderHandle = "moonbit_skia_shader_radial_gradient"
 
 ///|
@@ -227,7 +227,7 @@ pub fn Shader::linear_gradient(
   end : @skia.Point,
   start_color : @skia.Color,
   end_color : @skia.Color,
-  tile_mode? : @skia.TileMode = Clamp,
+  tile_mode~ : @skia.TileMode = Clamp,
 ) -> Shader? {
   if !start.is_finite() ||
     !end.is_finite() ||
@@ -254,7 +254,7 @@ pub fn Shader::radial_gradient(
   radius : Float,
   inner_color : @skia.Color,
   outer_color : @skia.Color,
-  tile_mode? : @skia.TileMode = Clamp,
+  tile_mode~ : @skia.TileMode = Clamp,
 ) -> Shader? {
   if !center.is_finite() || !skia_scalar_is_finite(radius) || radius <= 0.0 {
     None

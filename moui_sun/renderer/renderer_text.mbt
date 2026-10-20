@@ -595,8 +595,8 @@ pub fn Renderer::draw_glyph_atlas_entry(
   self : Renderer,
   atlas_mask : @text.CoverageMask,
   entry : @text.GlyphAtlasEntry,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : @graphics.Paint,
 ) -> Unit {
   draw_glyph_atlas_entry(self.canvas, atlas_mask, entry, x, y, paint)
@@ -610,8 +610,8 @@ fn draw_text_face(
   text : String,
   x : Double,
   y : Double,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> Unit {
@@ -629,8 +629,8 @@ fn draw_text_face_cached(
   text : String,
   x : Double,
   y : Double,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   config : @text.LayoutConfig,
   text_cache : @text.TextMaskCache,
   text_key : String,
@@ -651,8 +651,8 @@ fn draw_text_fallback_line(
   text : String,
   x : Double,
   y : Double,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> TextFallbackDrawResult {
@@ -679,8 +679,8 @@ fn draw_text_fallback_line_cached(
   text : String,
   x : Double,
   y : Double,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   config : @text.LayoutConfig,
   text_cache : @text.TextMaskCache,
   text_key_prefix : String,
@@ -797,8 +797,8 @@ fn draw_text_fallback_line_with_cache(
   text : String,
   x : Double,
   y : Double,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   config : @text.LayoutConfig,
   text_cache : @text.TextMaskCache?,
   text_key_prefix : String,
@@ -992,11 +992,11 @@ fn estimate_missing_span_advance(
 ///|
 fn fallback_text_cache_key(
   prefix : String,
-  span_index : Int,
-  face_index : Int,
+  span_index : Int32,
+  face_index : Int32,
   text : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   x : Double,
   y : Double,
   config : @text.LayoutConfig,
@@ -1027,7 +1027,7 @@ fn fallback_text_cache_key(
 ///|
 fn fallback_glyph_atlas_cache_prefix(
   prefix : String,
-  face_index : Int,
+  face_index : Int32,
 ) -> String {
   prefix + ":fallback-face:" + face_index.to_string()
 }
@@ -1055,8 +1055,8 @@ fn draw_glyph_atlas_entry(
   canvas : @graphics.Canvas,
   atlas_mask : @text.CoverageMask,
   entry : @text.GlyphAtlasEntry,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : @graphics.Paint,
 ) -> Unit {
   canvas.draw_mask_rect(
@@ -1078,14 +1078,14 @@ fn draw_glyph_atlas_entry(
 ///|
 fn glyph_atlas_cache_key(
   prefix : String,
-  glyph_id : Int,
+  glyph_id : Int32,
   font_size : Double,
 ) -> String {
   prefix + ":glyph:" + glyph_id.to_string() + ":size:" + font_size.to_string()
 }
 
 ///|
-fn floor_to_int(value : Double) -> Int {
+fn floor_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() > value {
     truncated - 1
@@ -1095,7 +1095,7 @@ fn floor_to_int(value : Double) -> Int {
 }
 
 ///|
-fn ceil_to_int(value : Double) -> Int {
+fn ceil_to_int(value : Double) -> Int32 {
   let truncated = value.to_int()
   if truncated.to_double() < value {
     truncated + 1

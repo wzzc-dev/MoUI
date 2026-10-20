@@ -33,10 +33,10 @@ pub extend XrBackend with ToJson::{to_json}
 pub(all) struct XrView {
   view : @moui_3d.Mat4
   projection : @moui_3d.Mat4
-  viewport_x : Int
-  viewport_y : Int
-  viewport_width : Int
-  viewport_height : Int
+  viewport_x : Int32
+  viewport_y : Int32
+  viewport_width : Int32
+  viewport_height : Int32
 } derive(Debug)
 
 ///|
@@ -46,10 +46,10 @@ pub extend XrView with Debug::{to_repr}
 pub fn XrView::new(
   view~ : @moui_3d.Mat4,
   projection~ : @moui_3d.Mat4,
-  viewport_x~ : Int,
-  viewport_y~ : Int,
-  viewport_width~ : Int,
-  viewport_height~ : Int,
+  viewport_x~ : Int32,
+  viewport_y~ : Int32,
+  viewport_width~ : Int32,
+  viewport_height~ : Int32,
 ) -> XrView {
   { view, projection, viewport_x, viewport_y, viewport_width, viewport_height, }
 }
@@ -65,12 +65,12 @@ pub fn XrView::projection(self : XrView) -> @moui_3d.Mat4 {
 }
 
 ///|
-pub fn XrView::viewport_width(self : XrView) -> Int {
+pub fn XrView::viewport_width(self : XrView) -> Int32 {
   self.viewport_width
 }
 
 ///|
-pub fn XrView::viewport_height(self : XrView) -> Int {
+pub fn XrView::viewport_height(self : XrView) -> Int32 {
   self.viewport_height
 }
 
@@ -121,9 +121,9 @@ pub extend XrInputSource with Debug::{to_repr}
 ///|
 pub fn XrInputSource::new(
   id~ : String,
-  handedness? : String = "none",
-  grip? : XrPose? = None,
-  target_ray? : XrPose? = None,
+  handedness~ : String = "none",
+  grip~ : XrPose? = None,
+  target_ray~ : XrPose? = None,
 ) -> XrInputSource {
   { id, handedness, grip, target_ray, }
 }
@@ -162,7 +162,7 @@ pub extend XrFrame with Debug::{to_repr}
 pub fn XrFrame::new(
   timestamp~ : Double,
   views~ : Array[XrView],
-  input_sources? : Array[XrInputSource] = [],
+  input_sources~ : Array[XrInputSource] = [],
 ) -> XrFrame {
   { timestamp, views: views.copy(), input_sources: input_sources.copy(), }
 }

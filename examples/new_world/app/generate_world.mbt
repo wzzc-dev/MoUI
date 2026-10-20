@@ -46,7 +46,7 @@ pub fn extract_json_object(text : String) -> String? {
   for ch in text {
     chars.push(ch)
   }
-  let mut first : Int? = None
+  let mut first : Int32? = None
   let mut cursor = 0
   while cursor < chars.length() {
     if chars[cursor] == '{' {
@@ -61,7 +61,7 @@ pub fn extract_json_object(text : String) -> String? {
       // Depth scan from the first `{`: nested objects (points, rects) are
       // expected, so the reply must close the outermost brace.
       let mut depth = 0
-      let mut close : Int? = None
+      let mut close : Int32? = None
       let mut at = open
       while at < chars.length() {
         if chars[at] == '{' {

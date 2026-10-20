@@ -12,7 +12,7 @@ fn contract_descriptor() -> @render.RendererDescriptor {
 
 ///|
 fn contract_surface(
-  native_surface? : @render.NativeSurface? = None,
+  native_surface~ : @render.NativeSurface? = None,
 ) -> @render.HostSurface {
   @render.HostSurface::new(
     surface_id="contract-surface",
@@ -31,17 +31,17 @@ fn contract_surface(
 
 ///|
 fn contract_session(
-  present_count? : () -> Int = () => 0,
-  recover? : (String) -> @render.RecoveryResult = _ => RecoverySucceeded,
-  drain? : () -> Array[@render.RendererEvent] = () => [],
-  image_records? : () -> Array[@render.ImageResourceRecord] = () => [],
-  apply_image_load_completion? : (@render.ImageResourceLoadCompletion) -> Bool = _ => {
+  present_count~ : () -> Int32 = () => 0,
+  recover~ : (String) -> @render.RecoveryResult = _ => RecoverySucceeded,
+  drain~ : () -> Array[@render.RendererEvent] = () => [],
+  image_records~ : () -> Array[@render.ImageResourceRecord] = () => [],
+  apply_image_load_completion~ : (@render.ImageResourceLoadCompletion) -> Bool = _ => {
     false
   },
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
-  native_surface? : @render.NativeSurface? = None,
-  dispose? : () -> Unit = () => (),
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
+  native_surface~ : @render.NativeSurface? = None,
+  dispose~ : () -> Unit = () => (),
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),

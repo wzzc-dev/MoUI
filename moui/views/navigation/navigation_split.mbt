@@ -2,10 +2,10 @@
 pub fn[Msg] split_view(
   primary~ : @core.View[Msg],
   detail~ : @core.View[Msg],
-  primary_width? : Double = 240.0,
-  detail_width? : Double = 480.0,
-  height? : Double = 320.0,
-  spacing? : Double = @style.default_theme().spacing_scale.md,
+  primary_width~ : Double = 240.0,
+  detail_width~ : Double = 480.0,
+  height~ : Double = 320.0,
+  spacing~ : Double = @style.default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   @layout.row(
     [
@@ -22,12 +22,12 @@ pub fn[Msg] resizable_split_view(
   primary~ : @core.View[Msg],
   detail~ : @core.View[Msg],
   primary_width~ : Double,
-  detail_width? : Double = 480.0,
-  height? : Double = 320.0,
-  min_primary_width? : Double = 160.0,
-  max_primary_width? : Double = 420.0,
-  spacing? : Double = @style.default_theme().spacing_scale.sm,
-  handle_width? : Double = 8.0,
+  detail_width~ : Double = 480.0,
+  height~ : Double = 320.0,
+  min_primary_width~ : Double = 160.0,
+  max_primary_width~ : Double = 420.0,
+  spacing~ : Double = @style.default_theme().spacing_scale.sm,
+  handle_width~ : Double = 8.0,
   theme? : @core.Theme,
   on_drag~ : (Double) -> Msg,
 ) -> @core.View[Msg] {
@@ -69,10 +69,10 @@ pub fn[Msg] resizable_split_view(
 pub fn[Msg] master_detail(
   master~ : @core.View[Msg],
   detail~ : @core.View[Msg],
-  master_width? : Double = 220.0,
-  detail_width? : Double = 420.0,
-  height? : Double = 300.0,
-  spacing? : Double = @style.default_theme().spacing_scale.md,
+  master_width~ : Double = 220.0,
+  detail_width~ : Double = 420.0,
+  height~ : Double = 300.0,
+  spacing~ : Double = @style.default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   split_view(
     primary=master,

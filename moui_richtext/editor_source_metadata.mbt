@@ -160,7 +160,7 @@ fn markdown_editor_front_matter_scalar(source : String) -> String {
 }
 
 ///|
-fn markdown_editor_reading_minutes(word_count : Int) -> Int {
+fn markdown_editor_reading_minutes(word_count : Int32) -> Int32 {
   if word_count <= 0 {
     0
   } else {

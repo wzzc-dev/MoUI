@@ -5,10 +5,10 @@
 fn lore_entry(
   keys : Array[String],
   content : String,
-  priority? : Int,
+  priority? : Int32,
   position? : LorePosition,
-  recursion? : Int,
-  probability? : Int,
+  recursion? : Int32,
+  probability? : Int32,
 ) -> WorldEntry {
   WorldEntry::new(
     keys~,
@@ -136,7 +136,7 @@ test "recursion chains one trigger into the next" {
   let chained = select_lore(scenario, "来点酒", "", 0)
   assert_eq(chained.length(), 3)
   // Chain depth is recorded, so the UI/log can explain the chain.
-  let depths : Array[Int] = []
+  let depths : Array[Int32] = []
   for hit in chained {
     depths.push(hit.depth)
   }
@@ -322,16 +322,20 @@ test "intents frame the wire; the journal keeps the marked player line" {
     WorldFilesArrived("tavern", true, tavern_files()),
   )
   let selected = step(model, Select(Some("林掌柜")))
-  let (sent, _e) = update(step(selected, DoDraftChanged("推开门")), SendComposer, world_host={
-    list_worlds: _done => (),
-    pick_root: _done => (),
-    read_world: (_folder, _done) => (),
-    write_world: (_folder, _files, _done) => (),
-    read_config: _done => (),
-    write_config: (_content, _done) => (),
-    export_world: (_folder, _files, _done) => (),
-    import_world: _done => (),
-  })
+  let (sent, _e) = update(
+    step(selected, DoDraftChanged("推开门")),
+    SendComposer,
+    world_host={
+      list_worlds: _done => (),
+      pick_root: _done => (),
+      read_world: (_folder, _done) => (),
+      write_world: (_folder, _files, _done) => (),
+      read_config: _done => (),
+      write_config: (_content, _done) => (),
+      export_world: (_folder, _files, _done) => (),
+      import_world: _done => (),
+    },
+  )
   assert_eq(
     sent.conversations.for_character("林掌柜").lines()[0].text(),
     "（动作）推开门",

@@ -2,8 +2,8 @@
 /// 终端颜色:默认色、256 索引色、真彩色 RGB。
 pub(all) enum TermColor {
   Default
-  Indexed(Int)
-  Rgb(Int, Int, Int)
+  Indexed(Int32)
+  Rgb(Int32, Int32, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -47,13 +47,13 @@ pub fn CellAttrs::default() -> CellAttrs {
 /// 复制属性并替换部分字段(SGR 序列用)。
 pub fn attrs_with(
   attrs : CellAttrs,
-  fg? : TermColor? = None,
-  bg? : TermColor? = None,
-  bold? : Bool? = None,
-  dim? : Bool? = None,
-  italic? : Bool? = None,
-  underline? : Bool? = None,
-  reverse? : Bool? = None,
+  fg~ : TermColor? = None,
+  bg~ : TermColor? = None,
+  bold~ : Bool? = None,
+  dim~ : Bool? = None,
+  italic~ : Bool? = None,
+  underline~ : Bool? = None,
+  reverse~ : Bool? = None,
 ) -> CellAttrs {
   {
     fg: match fg {
@@ -97,7 +97,7 @@ pub fn attrs_with_fg(attrs : CellAttrs, fg : TermColor) -> CellAttrs {
 /// 单元格:一个字符(宽字符占两格,第二格为 continuation,ch 为空)。
 pub(all) struct Cell {
   ch : String
-  width : Int
+  width : Int32
   attrs : CellAttrs
 } derive(Eq, Debug)
 
@@ -120,7 +120,7 @@ pub fn continuation_cell(attrs : CellAttrs) -> Cell {
 
 ///|
 /// 提取字符串首字符的 Unicode 码点(String::at 返回 UTF-16 code unit)。
-fn utf8_codepoint(s : String) -> Int {
+fn utf8_codepoint(s : String) -> Int32 {
   let u = s[0].to_int()
   if u >= 0xD800 && u <= 0xDBFF && s.length() >= 2 {
     let lo = s[1].to_int()
@@ -133,7 +133,7 @@ fn utf8_codepoint(s : String) -> Int {
 ///|
 /// 简化 wcwidth:ASCII 1,常见宽字符区间 2,其余 1。
 /// 组合符未合并进基字符格,按 1 计(投影器不区分带符与基符)。
-pub fn unicode_width(ch : String) -> Int {
+pub fn unicode_width(ch : String) -> Int32 {
   let cp = utf8_codepoint(ch)
   if cp >= 0x20 && cp <= 0x7E {
     return 1

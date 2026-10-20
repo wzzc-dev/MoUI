@@ -14,7 +14,7 @@ fn hot_path_bench_enabled() -> Bool {
 ///|
 /// Document size override for stress-scale runs; the default keeps the
 /// suite fast while still exercising the windowed paths.
-fn hot_path_bench_document_blocks() -> Int {
+fn hot_path_bench_document_blocks() -> Int32 {
   match @env.get_env_var("MOUI_EDITOR_HOT_BENCH_BLOCKS") {
     Some(value) => {
       let mut parsed = 0
@@ -44,7 +44,7 @@ fn hot_path_bench_print(key : String, value : Double) -> Unit {
 }
 
 ///|
-fn hot_path_bench_print_int(key : String, value : Int) -> Unit {
+fn hot_path_bench_print_int(key : String, value : Int32) -> Unit {
   let line = "hot-bench " + key + "=" + value.to_string()
   println(line)
 }
@@ -53,7 +53,7 @@ fn hot_path_bench_print_int(key : String, value : Int) -> Unit {
 /// Keystroke input at the document end. The baseline column reproduces the
 /// pre-incremental shape (full-document parse per keystroke); the current
 /// column uses `MarkdownDocumentSession::apply` with the incremental path.
-fn hot_path_bench_input(fixture : String, keystrokes : Int) -> Unit {
+fn hot_path_bench_input(fixture : String, keystrokes : Int32) -> Unit {
   let mut baseline_session = MarkdownDocumentSession::new(fixture)
   let mut baseline_keep = 0
   let baseline_start = @bench.monotonic_clock_start()
@@ -124,7 +124,7 @@ fn hot_path_bench_input(fixture : String, keystrokes : Int) -> Unit {
 /// Scroll geometry: per wheel step, rebuild the measured block-height
 /// array and locate the visible window — the exact pair of calls the wheel
 /// handler performs today.
-fn hot_path_bench_scroll(fixture : String, steps : Int) -> Unit {
+fn hot_path_bench_scroll(fixture : String, steps : Int32) -> Unit {
   let session = MarkdownDocumentSession::new(fixture)
   let base = @core.FontSpec::new()
   let viewport = 900.0
@@ -164,7 +164,7 @@ fn hot_path_bench_scroll(fixture : String, steps : Int) -> Unit {
 /// Viewport rebuild: `rich_text_window` at successive scroll offsets, which
 /// is what a wheel-triggered repaint performs (geometry window + visible
 /// block conversions).
-fn hot_path_bench_rebuild(fixture : String, steps : Int) -> Unit {
+fn hot_path_bench_rebuild(fixture : String, steps : Int32) -> Unit {
   let session = MarkdownDocumentSession::new(fixture)
   let selection = { caret: 0, selection: None, }
   hot_path_metrics_reset()
@@ -261,7 +261,7 @@ test "hot path: gated end-to-end benchmark" {
 /// The app-side cost of materializing `next` is identical in both arms
 /// and precomputed once, so the difference is purely the transaction
 /// construction this edit-range recording targets.
-fn hot_path_bench_transaction(fixture : String, ops : Int) -> Unit {
+fn hot_path_bench_transaction(fixture : String, ops : Int32) -> Unit {
   let insert_at = markdown_editor_text_length(fixture) / 2
   let next = markdown_editor_substring(fixture, 0, insert_at) +
     "x" +
@@ -317,7 +317,7 @@ fn hot_path_bench_transaction(fixture : String, ops : Int) -> Unit {
 /// move its absolute source/content ranges by the edit delta, so this
 /// exercises the worst-case suffix path that end-of-document typing (the
 /// suffix is empty there) never touches.
-fn hot_path_bench_input_at_start(fixture : String, keystrokes : Int) -> Unit {
+fn hot_path_bench_input_at_start(fixture : String, keystrokes : Int32) -> Unit {
   hot_path_metrics_reset()
   let mut current = MarkdownDocumentSession::new(fixture)
   let mut current_keep = 0

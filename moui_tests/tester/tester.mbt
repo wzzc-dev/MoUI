@@ -17,7 +17,7 @@ pub extend TesterStepResult with ToJson::{to_json}
 ///|
 pub(all) struct RuntimeSmokeSnapshot {
   title : String
-  draw_command_count : Int
+  draw_command_count : Int32
   focused_text_input : Bool
   text_input_text : String
   inspector : @runtime.InspectorSnapshot
@@ -35,7 +35,7 @@ pub extend RuntimeSmokeSnapshot with ToJson::{to_json}
 ///|
 pub fn TesterStepResult::pass(
   name~ : String,
-  detail? : String = "",
+  detail~ : String = "",
 ) -> TesterStepResult {
   { name, passed: true, detail, }
 }
@@ -43,7 +43,7 @@ pub fn TesterStepResult::pass(
 ///|
 pub fn TesterStepResult::fail(
   name~ : String,
-  detail? : String = "",
+  detail~ : String = "",
 ) -> TesterStepResult {
   { name, passed: false, detail, }
 }

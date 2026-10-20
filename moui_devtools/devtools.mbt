@@ -2,13 +2,13 @@
 pub(all) struct SnapshotSummary {
   width : Double
   height : Double
-  dirty_count : Int
-  draw_command_count : Int
-  view_node_count : Int
-  layout_node_count : Int
-  semantics_node_count : Int
-  active_effect_task_count : Int
-  active_subscription_count : Int
+  dirty_count : Int32
+  draw_command_count : Int32
+  view_node_count : Int32
+  layout_node_count : Int32
+  semantics_node_count : Int32
+  active_effect_task_count : Int32
+  active_subscription_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -173,7 +173,7 @@ pub fn inspector_report_text(snapshot : @runtime.InspectorSnapshot) -> String {
 ///|
 pub fn snapshot_report_json(
   snapshot : @runtime.InspectorSnapshot,
-  indent? : Int = 2,
+  indent~ : Int32 = 2,
 ) -> String {
   ToJson::to_json(InspectorReport::from_snapshot(snapshot)).stringify(indent~)
 }
@@ -181,7 +181,7 @@ pub fn snapshot_report_json(
 ///|
 pub fn snapshot_json(
   snapshot : @runtime.InspectorSnapshot,
-  indent? : Int = 2,
+  indent~ : Int32 = 2,
 ) -> String {
   snapshot_report_json(snapshot, indent~)
 }
@@ -200,7 +200,7 @@ pub fn SnapshotHistory::push(
 }
 
 ///|
-pub fn SnapshotHistory::length(self : SnapshotHistory) -> Int {
+pub fn SnapshotHistory::length(self : SnapshotHistory) -> Int32 {
   self.entries.length()
 }
 

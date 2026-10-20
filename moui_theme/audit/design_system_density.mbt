@@ -39,7 +39,7 @@ pub extend DesignDensityResolverRecord with ToJson::{to_json}
 ///|
 pub fn density_resolver_report(
   preset : @common.DesignPreset,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> Array[DesignDensityResolverRecord] {
   [
     density_resolver_record(preset, Compact, scheme),
@@ -52,7 +52,7 @@ pub fn density_resolver_report(
 pub fn density_resolver_for(
   preset : @common.DesignPreset,
   density : @common.DesignDensity,
-  scheme? : @core.ColorScheme = Light,
+  scheme~ : @core.ColorScheme = Light,
 ) -> DesignDensityResolverRecord? {
   for item in density_resolver_report(preset, scheme~) {
     if item.density == density {
@@ -63,12 +63,12 @@ pub fn density_resolver_for(
 }
 
 ///|
-pub fn density_resolver_count(preset : @common.DesignPreset) -> Int {
+pub fn density_resolver_count(preset : @common.DesignPreset) -> Int32 {
   density_resolver_report(preset).length()
 }
 
 ///|
-pub fn density_resolver_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn density_resolver_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in density_resolver_report(preset) {
     if !item.resolves_tokens ||
@@ -84,7 +84,9 @@ pub fn density_resolver_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn density_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn density_resolver_source_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in density_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -97,7 +99,7 @@ pub fn density_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn density_resolver_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in density_resolver_report(preset) {
     if item.remaining_gap != "none" {

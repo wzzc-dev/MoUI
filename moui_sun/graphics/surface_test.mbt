@@ -1575,29 +1575,29 @@ test "present_pixels_rect helper dispatches through Surface trait" {
 
 ///|
 struct MutatingSurface {
-  width : Int
-  height : Int
-  mut present_count : Int
+  width : Int32
+  height : Int32
+  mut present_count : Int32
 } derive(Debug)
 
 ///|
-fn MutatingSurface::new(width : Int, height : Int) -> MutatingSurface {
+fn MutatingSurface::new(width : Int32, height : Int32) -> MutatingSurface {
   { width, height, present_count: 0, }
 }
 
 ///|
-fn MutatingSurface::get_present_count(self : MutatingSurface) -> Int {
+fn MutatingSurface::get_present_count(self : MutatingSurface) -> Int32 {
   self.present_count
 }
 
 ///|
 fn MutatingSurface::present_rect(
   self : MutatingSurface,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, @graphics.PresentError] {
   match
@@ -1656,15 +1656,15 @@ impl Surface for MutatingSurface with fn present_pixels_rect(
 
 ///|
 struct BackendFailingSurface {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   present_rects : Array[@graphics.PixelRect]
 } derive(Debug)
 
 ///|
 fn BackendFailingSurface::new(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> BackendFailingSurface {
   { width, height, present_rects: [], }
 }
@@ -1672,14 +1672,14 @@ fn BackendFailingSurface::new(
 ///|
 fn BackendFailingSurface::get_present_rect_count(
   self : BackendFailingSurface,
-) -> Int {
+) -> Int32 {
   self.present_rects.length()
 }
 
 ///|
 fn BackendFailingSurface::get_present_rect(
   self : BackendFailingSurface,
-  index : Int,
+  index : Int32,
 ) -> @graphics.PixelRect {
   self.present_rects[index]
 }
@@ -1687,11 +1687,11 @@ fn BackendFailingSurface::get_present_rect(
 ///|
 fn BackendFailingSurface::present_rect(
   self : BackendFailingSurface,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, @graphics.PresentError] {
   match
@@ -1755,7 +1755,7 @@ impl Surface for BackendFailingSurface with fn present_pixels_rect(
 ///|
 fn write_rgba(
   pixels : FixedArray[Byte],
-  offset : Int,
+  offset : Int32,
   color : @graphics.Color,
 ) -> Unit {
   pixels[offset] = color.r
@@ -1767,7 +1767,7 @@ fn write_rgba(
 ///|
 fn assert_rgba(
   pixels : FixedArray[Byte],
-  offset : Int,
+  offset : Int32,
   color : @graphics.Color,
 ) -> Unit raise {
   assert_eq(pixels[offset], color.r)

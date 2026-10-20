@@ -70,7 +70,7 @@ pub(all) struct CodeEditorModel {
 pub(all) enum CodeEditorMsg {
   SourceChanged(String)
   InsertText(String)
-  SelectionChanged(Int, @text.TextRange?)
+  SelectionChanged(Int32, @text.TextRange?)
   EditorScrollChanged(@geometry.Point)
   SetFindQuery(String)
   SetReplaceText(String)
@@ -89,7 +89,7 @@ pub(all) enum CodeEditorMsg {
   ToggleDiffEditor
   ToggleFind
   CloseFind
-  ApplyCompletion(Int)
+  ApplyCompletion(Int32)
   OpenPanel(CodeEditorSidePanel?)
   SetMode(CodeEditorMode)
   ChangeLanguage(String)
@@ -140,7 +140,7 @@ pub fn CodeEditorModel::with_source(
 ///|
 pub fn CodeEditorModel::with_cursor(
   self : CodeEditorModel,
-  position : Int,
+  position : Int32,
 ) -> CodeEditorModel {
   self.with_cursors([CodeCursor::new(position~)])
 }
@@ -171,7 +171,7 @@ pub fn CodeEditorModel::with_replace(
 }
 
 ///|
-fn CodeEditorModel::primary_offset(self : CodeEditorModel) -> Int {
+fn CodeEditorModel::primary_offset(self : CodeEditorModel) -> Int32 {
   match self.cursors {
     [cursor, ..] => cursor.position
     [] => 0
@@ -357,7 +357,7 @@ fn CodeEditorModel::toggle_diff_mode(self : CodeEditorModel) -> CodeEditorModel 
 ///|
 fn CodeEditorModel::apply_completion(
   self : CodeEditorModel,
-  index : Int,
+  index : Int32,
 ) -> CodeEditorModel {
   if index < 0 || index >= self.completions.length() {
     return {
@@ -593,9 +593,9 @@ pub fn code_editor_document(
 ///|
 fn code_editor_line_block(
   line : String,
-  line_start~ : Int,
-  content_end~ : Int,
-  source_end~ : Int,
+  line_start~ : Int32,
+  content_end~ : Int32,
+  source_end~ : Int32,
   language_id~ : String,
   registry~ : CodeLanguageRegistry,
   font~ : @text.FontSpec,

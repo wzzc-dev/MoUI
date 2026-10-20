@@ -227,7 +227,7 @@ fn pdf_workbench_page_thumbnail(
 ///|
 fn PdfWorkbenchModel::thumbnail_raster_for_page(
   self : PdfWorkbenchModel,
-  page_number : Int,
+  page_number : Int32,
 ) -> PdfWorkbenchRasterPage? {
   match self.raster_page {
     Some(page) => if page.page_number == page_number { return Some(page) }

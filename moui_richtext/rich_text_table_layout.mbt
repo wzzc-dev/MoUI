@@ -12,8 +12,8 @@
 /// One visual line of a table cell. `start`/`end` are char offsets into
 /// `RichTextTableCell.text`; `width` is the laid-out line width.
 priv struct RichTextTableCellLine {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
   width : Double
   text : String
 }
@@ -27,9 +27,9 @@ priv struct RichTextTableCellLine {
 /// latter.
 priv struct RichTextTableCellSegment {
   run : RichTextRun
-  line : Int
-  start : Int
-  end : Int
+  line : Int32
+  start : Int32
+  end : Int32
   x : Double
   width : Double
   text : String
@@ -61,7 +61,7 @@ priv struct RichTextTableLayout {
 /// without assuming the historical uniform `table.row_height`.
 fn RichTextTableLayout::row_top(
   self : RichTextTableLayout,
-  row_index : Int,
+  row_index : Int32,
 ) -> Double {
   let mut y = 0.0
   for index, row in self.rows {
@@ -87,8 +87,8 @@ fn rich_text_table_cell_font(
   table : RichTextTable,
   block : RichTextBlock,
   base_font : @core.FontSpec,
-  row_index~ : Int,
-  column_index~ : Int,
+  row_index~ : Int32,
+  column_index~ : Int32,
 ) -> @core.FontSpec {
   let header = match table.rows.get(row_index) {
     Some(row) =>
@@ -189,7 +189,7 @@ fn rich_text_table_layout(
 ///|
 priv struct RichTextTableCellSegmentsLayout {
   layout : RichTextTableCellLayout
-  line_count : Int
+  line_count : Int32
 }
 
 ///|

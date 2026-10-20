@@ -1,21 +1,21 @@
 ///|
 struct TestGlyph {
-  codepoint : Int
-  advance : Int
+  codepoint : Int32
+  advance : Int32
   bytes : Array[Byte]
 }
 
 ///|
 struct TestKernPair {
-  left : Int
-  right : Int
-  value : Int
+  left : Int32
+  right : Int32
+  value : Int32
 }
 
 ///|
 struct TestPoint {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   on_curve : Bool
 }
 
@@ -27,10 +27,10 @@ struct TestContour {
 ///|
 struct TestOutline {
   contours : Array[TestContour]
-  xmin : Int
-  ymin : Int
-  xmax : Int
-  ymax : Int
+  xmin : Int32
+  ymin : Int32
+  xmax : Int32
+  ymax : Int32
 }
 
 ///|
@@ -51,7 +51,7 @@ fn make_kerning_ttf() -> Bytes {
 }
 
 ///|
-fn make_ttf_for_codes(codepoints : Array[Int]) -> Bytes {
+fn make_ttf_for_codes(codepoints : Array[Int32]) -> Bytes {
   let glyphs = []
   for codepoint in codepoints {
     glyphs.push(make_ascii_test_glyph(codepoint))
@@ -132,7 +132,7 @@ fn make_test_glyphs() -> Array[TestGlyph] {
 }
 
 ///|
-fn make_ascii_test_glyph(codepoint : Int) -> TestGlyph {
+fn make_ascii_test_glyph(codepoint : Int32) -> TestGlyph {
   let bytes = match codepoint {
     0x20 => []
     65 => make_box_glyph()
@@ -153,7 +153,7 @@ fn make_ascii_test_glyph(codepoint : Int) -> TestGlyph {
 }
 
 ///|
-fn square_component_glyph_id() -> Int {
+fn square_component_glyph_id() -> Int32 {
   printable_ascii_count() + 1
 }
 
@@ -430,7 +430,7 @@ fn make_lower_d_glyph() -> Array[Byte] {
 }
 
 ///|
-fn make_ascii_fallback_glyph(codepoint : Int) -> Array[Byte] {
+fn make_ascii_fallback_glyph(codepoint : Int32) -> Array[Byte] {
   let stem_x = 1 + codepoint % 4
   let stem_top = 2 + codepoint % 3
   let bar_y = 1 + codepoint % 7
@@ -594,7 +594,7 @@ fn make_simple_glyph(glyph : TestOutline) -> Array[Byte] {
   }
   append_u16(out, 0) // instructionLength
 
-  let flags : Array[Int] = []
+  let flags : Array[Int32] = []
   let x_bytes : Array[Byte] = []
   let y_bytes : Array[Byte] = []
   let mut prev_x = 0
@@ -622,7 +622,7 @@ fn make_simple_glyph(glyph : TestOutline) -> Array[Byte] {
 }
 
 ///|
-fn encode_x_delta(delta : Int, out : Array[Byte]) -> Int {
+fn encode_x_delta(delta : Int32, out : Array[Byte]) -> Int32 {
   if delta == 0 {
     0x10
   } else if delta.abs() <= 255 {
@@ -639,7 +639,7 @@ fn encode_x_delta(delta : Int, out : Array[Byte]) -> Int {
 }
 
 ///|
-fn encode_y_delta(delta : Int, out : Array[Byte]) -> Int {
+fn encode_y_delta(delta : Int32, out : Array[Byte]) -> Int32 {
   if delta == 0 {
     0x20
   } else if delta.abs() <= 255 {
@@ -697,19 +697,19 @@ fn make_kern_table(pairs : Array[TestKernPair]) -> Array[Byte] {
 }
 
 ///|
-fn append_u16(out : Array[Byte], value : Int) -> Unit {
+fn append_u16(out : Array[Byte], value : Int32) -> Unit {
   append_byte(out, value >> 8)
   append_byte(out, value)
 }
 
 ///|
-fn append_i16(out : Array[Byte], value : Int) -> Unit {
+fn append_i16(out : Array[Byte], value : Int32) -> Unit {
   let unsigned = if value < 0 { value + 65536 } else { value }
   append_u16(out, unsigned)
 }
 
 ///|
-fn append_u32(out : Array[Byte], value : Int) -> Unit {
+fn append_u32(out : Array[Byte], value : Int32) -> Unit {
   append_byte(out, value >> 24)
   append_byte(out, value >> 16)
   append_byte(out, value >> 8)
@@ -717,7 +717,7 @@ fn append_u32(out : Array[Byte], value : Int) -> Unit {
 }
 
 ///|
-fn append_byte(out : Array[Byte], value : Int) -> Unit {
+fn append_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
 }
 
@@ -736,7 +736,7 @@ fn append_array(out : Array[Byte], bytes : Array[Byte]) -> Unit {
 }
 
 ///|
-fn append_zeroes(out : Array[Byte], count : Int) -> Unit {
+fn append_zeroes(out : Array[Byte], count : Int32) -> Unit {
   for _ in 0..<count {
     append_byte(out, 0)
   }
@@ -750,7 +750,7 @@ fn pad4(out : Array[Byte]) -> Unit {
 }
 
 ///|
-fn align4(value : Int) -> Int {
+fn align4(value : Int32) -> Int32 {
   if value % 4 == 0 {
     value
   } else {
@@ -759,7 +759,7 @@ fn align4(value : Int) -> Int {
 }
 
 ///|
-fn align2(value : Int) -> Int {
+fn align2(value : Int32) -> Int32 {
   if value % 2 == 0 {
     value
   } else {

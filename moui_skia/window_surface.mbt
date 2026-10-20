@@ -58,10 +58,10 @@ pub(all) struct WindowSurfaceDescriptor {
   physical_size : ISize
   device_pixel_ratio : Float
   origin : SurfaceOrigin
-  sample_count : Int
-  stencil_bits : Int
+  sample_count : Int32
+  stencil_bits : Int32
   present_mode : SurfacePresentMode
-  max_frames_in_flight : Int
+  max_frames_in_flight : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -72,15 +72,15 @@ pub extend WindowSurfaceDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn WindowSurfaceDescriptor::new(
-  window_id? : Bytes = b"",
-  logical_size? : Size = Size::empty(),
-  physical_size? : ISize = ISize::empty(),
-  device_pixel_ratio? : Float = 1.0,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  present_mode? : SurfacePresentMode = FifoPresent,
-  max_frames_in_flight? : Int = 2,
+  window_id~ : Bytes = b"",
+  logical_size~ : Size = Size::empty(),
+  physical_size~ : ISize = ISize::empty(),
+  device_pixel_ratio~ : Float = 1.0,
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  present_mode~ : SurfacePresentMode = FifoPresent,
+  max_frames_in_flight~ : Int32 = 2,
 ) -> WindowSurfaceDescriptor {
   let device_pixel_ratio = normalized_window_surface_device_pixel_ratio(
     device_pixel_ratio,
@@ -107,10 +107,10 @@ pub fn WindowSurfaceDescriptor::new(
     physical_size,
     device_pixel_ratio,
     origin,
-    sample_count: Int::max(1, sample_count),
-    stencil_bits: Int::max(0, stencil_bits),
+    sample_count: Int32::max(1, sample_count),
+    stencil_bits: Int32::max(0, stencil_bits),
     present_mode,
-    max_frames_in_flight: Int::max(1, max_frames_in_flight),
+    max_frames_in_flight: Int32::max(1, max_frames_in_flight),
   }
 }
 
@@ -118,12 +118,12 @@ pub fn WindowSurfaceDescriptor::new(
 pub fn WindowSurfaceDescriptor::from_physical_size(
   window_id : Bytes,
   physical_size : ISize,
-  device_pixel_ratio? : Float = 1.0,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  present_mode? : SurfacePresentMode = FifoPresent,
-  max_frames_in_flight? : Int = 2,
+  device_pixel_ratio~ : Float = 1.0,
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  present_mode~ : SurfacePresentMode = FifoPresent,
+  max_frames_in_flight~ : Int32 = 2,
 ) -> WindowSurfaceDescriptor {
   WindowSurfaceDescriptor::new(
     window_id~,
@@ -195,8 +195,8 @@ pub fn WindowSurfaceDescriptor::target_descriptor(
 ///|
 pub fn WindowSurfaceDescriptor::gpu_target_descriptor(
   self : WindowSurfaceDescriptor,
-  budget? : SurfaceBudget = Budgeted,
-  gpu_context_key? : RendererResourceKey? = None,
+  budget~ : SurfaceBudget = Budgeted,
+  gpu_context_key~ : RendererResourceKey? = None,
 ) -> SurfaceTargetDescriptor {
   SurfaceTargetDescriptor::gpu_n32_premul(
     self.physical_size,
@@ -221,7 +221,7 @@ pub fn WindowSurfaceDescriptor::resource_key(
 ///|
 pub fn WindowSurfaceDescriptor::resource_descriptor(
   self : WindowSurfaceDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   self.target_descriptor().resource_descriptor(byte_size~)
 }
@@ -229,7 +229,7 @@ pub fn WindowSurfaceDescriptor::resource_descriptor(
 ///|
 pub fn WindowSurfaceDescriptor::resource_plan(
   self : WindowSurfaceDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   self.target_descriptor().resource_plan(byte_size~)
 }
@@ -337,7 +337,7 @@ pub fn WindowSurfaceDescriptor::with_present_mode(
 ///|
 pub fn WindowSurfaceDescriptor::with_max_frames_in_flight(
   self : WindowSurfaceDescriptor,
-  max_frames_in_flight : Int,
+  max_frames_in_flight : Int32,
 ) -> WindowSurfaceDescriptor {
   WindowSurfaceDescriptor::new(
     window_id=self.window_id,

@@ -1,18 +1,18 @@
 ///|
 /// A renderer-neutral pixel frame supplied to a host presenter.
 pub(all) struct PixelFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
+  width : Int32
+  height : Int32
+  row_bytes : Int32
   scale_factor : Double
   pixels : Bytes
 }
 
 ///|
 pub fn PixelFrame::new(
-  width~ : Int,
-  height~ : Int,
-  row_bytes~ : Int,
+  width~ : Int32,
+  height~ : Int32,
+  row_bytes~ : Int32,
   scale_factor~ : Double,
   pixels~ : Bytes,
 ) -> PixelFrame {
@@ -20,17 +20,17 @@ pub fn PixelFrame::new(
 }
 
 ///|
-pub fn PixelFrame::width(self : PixelFrame) -> Int {
+pub fn PixelFrame::width(self : PixelFrame) -> Int32 {
   self.width
 }
 
 ///|
-pub fn PixelFrame::height(self : PixelFrame) -> Int {
+pub fn PixelFrame::height(self : PixelFrame) -> Int32 {
   self.height
 }
 
 ///|
-pub fn PixelFrame::row_bytes(self : PixelFrame) -> Int {
+pub fn PixelFrame::row_bytes(self : PixelFrame) -> Int32 {
   self.row_bytes
 }
 
@@ -196,11 +196,11 @@ pub struct NativeSurface {
 ///|
 pub fn NativeSurface::new(
   surface_handle~ : UInt64,
-  display_handle? : UInt64? = None,
-  acquire? : (@core.SurfaceMetrics) -> UInt64? = _ => None,
-  present? : (UInt64) -> Bool = _ => false,
-  resize? : (@core.SurfaceMetrics) -> Unit = _ => (),
-  dispose? : () -> Unit = () => (),
+  display_handle~ : UInt64? = None,
+  acquire~ : (@core.SurfaceMetrics) -> UInt64? = _ => None,
+  present~ : (UInt64) -> Bool = _ => false,
+  resize~ : (@core.SurfaceMetrics) -> Unit = _ => (),
+  dispose~ : () -> Unit = () => (),
 ) -> NativeSurface? {
   if surface_handle == 0UL || display_handle == Some(0UL) {
     return None
@@ -315,11 +315,11 @@ pub struct HostSurface {
 
 ///|
 pub fn HostSurface::new(
-  surface_id? : String = "",
+  surface_id~ : String = "",
   metrics~ : @core.SurfaceMetrics,
-  cpu_present? : PresentTarget? = None,
-  native_surface? : NativeSurface? = None,
-  image_source? : HostImageSource? = None,
+  cpu_present~ : PresentTarget? = None,
+  native_surface~ : NativeSurface? = None,
+  image_source~ : HostImageSource? = None,
 ) -> HostSurface {
   let capability = ClosureHostSurfaceCapability::{
     surface_id,

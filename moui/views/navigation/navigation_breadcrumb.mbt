@@ -2,7 +2,7 @@
 pub fn[Msg] breadcrumb(
   items : Array[BreadcrumbItem[Msg]],
   theme? : @core.Theme,
-  spacing? : Double = @style.default_theme().spacing_scale.xs,
+  spacing~ : Double = @style.default_theme().spacing_scale.xs,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let children : Array[@core.View[Msg]] = []

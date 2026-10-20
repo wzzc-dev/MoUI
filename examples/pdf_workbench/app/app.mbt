@@ -34,7 +34,7 @@ pub extend PdfWorkbenchOperation with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct PdfWorkbenchPageSummary {
-  page_number : Int
+  page_number : Int32
   text_preview : String
   content_diagnostic : String
 } derive(Eq, Debug, ToJson)
@@ -67,12 +67,12 @@ pub extend PdfWorkbenchCropBox with ToJson::{to_json}
 
 ///|
 pub(all) enum PdfWorkbenchEdit {
-  RotatePage(Int, Int)
-  CropPage(Int, PdfWorkbenchCropBox)
-  StampText(Int, String)
+  RotatePage(Int32, Int32)
+  CropPage(Int32, PdfWorkbenchCropBox)
+  StampText(Int32, String)
   SetMetadataTitle(String)
-  AddBookmark(Int, String)
-  AddTextAnnotation(Int, String)
+  AddBookmark(Int32, String)
+  AddTextAnnotation(Int32, String)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -88,8 +88,8 @@ pub extend PdfWorkbenchEdit with ToJson::{to_json}
 pub(all) struct PdfWorkbenchDocument {
   path : String
   original_bytes : Bytes
-  page_count : Int
-  selected_page : Int
+  page_count : Int32
+  selected_page : Int32
   extracted_text : String
   dirty : Bool
   writeback_available : Bool
@@ -128,7 +128,7 @@ pub struct PdfWorkbenchModel {
   bookmark_title_draft : String
   annotation_text_draft : String
   page_number_draft : String
-  startup_page_after_load : Int?
+  startup_page_after_load : Int32?
   pending_operation : PdfWorkbenchOperation?
   zoom : Double
   last_event : String
@@ -159,7 +159,7 @@ pub enum PdfWorkbenchMsg {
   RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
   PreviousPage
   NextPage
-  SelectPage(Int)
+  SelectPage(Int32)
   SearchChanged(String)
   SearchPrevious
   SearchNext
@@ -218,7 +218,7 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
 ///|
 fn PdfWorkbenchUpdate::new(
   model : PdfWorkbenchModel,
-  effect? : @moui.Effect[PdfWorkbenchMsg] = @moui.Effect::none(),
+  effect~ : @moui.Effect[PdfWorkbenchMsg] = @moui.Effect::none(),
 ) -> PdfWorkbenchUpdate {
   { model, effect, }
 }
@@ -235,8 +235,8 @@ fn PdfWorkbenchModel::update_with_services(
   self : PdfWorkbenchModel,
   message : PdfWorkbenchMsg,
   services : @services.AppServices,
-  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
-  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  raster_services~ : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services~ : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
   match message {
     OpenRequested => self.request_open(services)
@@ -339,11 +339,11 @@ fn PdfWorkbenchModel::update_with_services(
 ///|
 pub fn PdfWorkbenchApp::program(
   self : PdfWorkbenchApp,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
-  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
-  startup_pdf_path? : String = "",
-  startup_page_number? : Int = 1,
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  raster_services~ : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services~ : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  startup_pdf_path~ : String = "",
+  startup_page_number~ : Int32 = 1,
 ) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
   PdfWorkbenchModel::new().program(
@@ -358,11 +358,11 @@ pub fn PdfWorkbenchApp::program(
 ///|
 pub fn PdfWorkbenchModel::program(
   self : PdfWorkbenchModel,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
-  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
-  startup_pdf_path? : String = "",
-  startup_page_number? : Int = 1,
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  raster_services~ : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services~ : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  startup_pdf_path~ : String = "",
+  startup_page_number~ : Int32 = 1,
 ) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   let services = environment.services()
   @moui.Program::new_with_environment(

@@ -115,7 +115,7 @@ fn flatten_contour_polygon(
       scale,
     )
   }
-  fn emit(x : Int, y : Int) -> Unit {
+  fn emit(x : Int32, y : Int32) -> Unit {
     out.push(
       (origin_x + x.to_double() * scale, baseline_y - y.to_double() * scale),
     )
@@ -123,7 +123,11 @@ fn flatten_contour_polygon(
 
   /// Subdivide the quadratic with control point `ctrl` and on-curve end `end`,
   /// emitting interior points; the caller emits `end` itself.
-  fn quad_steps(from : GlyphPoint, ctrl : GlyphPoint, end : GlyphPoint) -> Int {
+  fn quad_steps(
+    from : GlyphPoint,
+    ctrl : GlyphPoint,
+    end : GlyphPoint,
+  ) -> Int32 {
     let dx = (from.x - ctrl.x).to_double().abs() +
       (ctrl.x - end.x).to_double().abs()
     let dy = (from.y - ctrl.y).to_double().abs() +

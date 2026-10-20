@@ -23,7 +23,7 @@ pub extend SurfaceMetrics with ToJson::{to_json}
 pub fn SurfaceMetrics::new(
   logical_size~ : Size,
   physical_size~ : Size,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> SurfaceMetrics {
   { logical_size, physical_size, scale_factor: normalize_scale(scale_factor), }
 }
@@ -31,7 +31,7 @@ pub fn SurfaceMetrics::new(
 ///|
 pub fn SurfaceMetrics::from_logical(
   size~ : Size,
-  scale_factor? : Double = 1.0,
+  scale_factor~ : Double = 1.0,
 ) -> SurfaceMetrics {
   let scale_factor = normalize_scale(scale_factor)
   {

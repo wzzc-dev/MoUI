@@ -64,7 +64,7 @@ pub fn source_lock_report(
 }
 
 ///|
-pub fn source_lock_quality_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_lock_quality_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_lock_report(preset) {
     if !item.stable_lock {
@@ -75,7 +75,7 @@ pub fn source_lock_quality_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn stable_source_lock_count(preset : @common.DesignPreset) -> Int {
+pub fn stable_source_lock_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_lock_report(preset) {
     if item.stable_lock {
@@ -86,7 +86,7 @@ pub fn stable_source_lock_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn source_snapshot_url_count(preset : @common.DesignPreset) -> Int {
+pub fn source_snapshot_url_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_lock_report(preset) {
     if item.snapshot_url != "" {
@@ -97,7 +97,7 @@ pub fn source_snapshot_url_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn source_snapshot_url_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_snapshot_url_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_lock_report(preset) {
     if item.source_kind == "official-source" &&
@@ -110,7 +110,7 @@ pub fn source_snapshot_url_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn moving_source_ref_count(preset : @common.DesignPreset) -> Int {
+pub fn moving_source_ref_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_lock_report(preset) {
     if item.ref_kind == LiveDocumentationRef || item.ref_kind == MovingBranchRef {

@@ -54,11 +54,11 @@ fn MacosNativeHostBackend::dispatch_host_event(
 fn push_window_drag_region_to_surface(
   source : @services.WindowDragRegionSource,
   window_id : @host.WindowId,
-  applied : Int?,
+  applied : Int32?,
   applied_window : @host.WindowId?,
   available : Bool,
   set_region : (@core.Rect?) -> Unit,
-) -> (Int?, @host.WindowId?) {
+) -> (Int32?, @host.WindowId?) {
   if !available {
     return (applied, applied_window)
   }

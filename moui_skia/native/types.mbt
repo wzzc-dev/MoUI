@@ -50,11 +50,11 @@ pub(all) struct Paragraph {
 ///|
 /// SkParagraph line metrics exposed with UTF-8 byte ranges.
 pub(all) struct ParagraphLineMetric {
-  start : Int
-  end : Int
-  end_excluding_whitespace : Int
-  end_including_newline : Int
-  line_number : Int
+  start : Int32
+  end : Int32
+  end_excluding_whitespace : Int32
+  end_including_newline : Int32
+  line_number : Int32
   hard_break : Bool
   left : Float
   width : Float
@@ -87,7 +87,7 @@ pub fn ParagraphLineMetric::is_valid(self : ParagraphLineMetric) -> Bool {
 ///|
 /// SkParagraph hit-test result exposed as a UTF-8 byte offset.
 pub(all) struct ParagraphHitTestResult {
-  offset : Int
+  offset : Int32
   downstream : Bool
 } derive(Debug, Eq)
 
@@ -119,7 +119,7 @@ pub fn GlyphId::to_uint16(self : GlyphId) -> UInt16 {
 }
 
 ///|
-pub fn GlyphId::to_int(self : GlyphId) -> Int {
+pub fn GlyphId::to_int(self : GlyphId) -> Int32 {
   self.to_uint16().to_int()
 }
 
@@ -172,9 +172,9 @@ pub fn ResolvedTypeface::is_available(self : ResolvedTypeface) -> Bool {
 ///|
 pub fn ResolvedTypeface::font_descriptor(
   self : ResolvedTypeface,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
 ) -> @skia.FontDescriptor {
   self.resolution.font_descriptor(size~, scale_x~, skew_x~)
 }
@@ -182,13 +182,13 @@ pub fn ResolvedTypeface::font_descriptor(
 ///|
 pub fn ResolvedTypeface::resource_plan(
   self : ResolvedTypeface,
-  size? : Float = 12.0,
-  scale_x? : Float = 1.0,
-  skew_x? : Float = 0.0,
-  request_byte_size? : Int64 = -1L,
-  resolution_byte_size? : Int64 = -1L,
-  match_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = -1L,
+  size~ : Float = 12.0,
+  scale_x~ : Float = 1.0,
+  skew_x~ : Float = 0.0,
+  request_byte_size~ : Int64 = -1L,
+  resolution_byte_size~ : Int64 = -1L,
+  match_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = -1L,
 ) -> @skia.RendererResourcePlan {
   self.resolution.resource_plan(
     size~,
@@ -348,22 +348,22 @@ pub(all) struct Canvas {
 ///|
 /// Summary of replaying a value-layer render command list into a native Canvas.
 pub(all) struct CanvasReplayStats {
-  command_count : Int
-  replayed_count : Int
-  skipped_count : Int
-  draw_count : Int
-  state_count : Int
-  transform_count : Int
-  clip_count : Int
-  clear_count : Int
-  text_count : Int
-  present_count : Int
-  resource_declaration_count : Int
-  image_resource_count : Int
-  shader_resource_count : Int
-  filter_resource_count : Int
-  path_resource_count : Int
-  text_resource_count : Int
+  command_count : Int32
+  replayed_count : Int32
+  skipped_count : Int32
+  draw_count : Int32
+  state_count : Int32
+  transform_count : Int32
+  clip_count : Int32
+  clear_count : Int32
+  text_count : Int32
+  present_count : Int32
+  resource_declaration_count : Int32
+  image_resource_count : Int32
+  shader_resource_count : Int32
+  filter_resource_count : Int32
+  path_resource_count : Int32
+  text_resource_count : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -433,11 +433,11 @@ pub fn CanvasReplayStats::status(
 
 ///|
 priv struct CanvasReplayCommandResourceCounts {
-  image_resource_count : Int
-  shader_resource_count : Int
-  filter_resource_count : Int
-  path_resource_count : Int
-  text_resource_count : Int
+  image_resource_count : Int32
+  shader_resource_count : Int32
+  filter_resource_count : Int32
+  path_resource_count : Int32
+  text_resource_count : Int32
 }
 
 ///|
@@ -624,13 +624,13 @@ pub fn SurfaceFrameReplayStats::finalization_resource_plan(
 ///|
 /// Aggregate counters across the native replay resource caches.
 pub(all) struct NativeReplayResourceStats {
-  cache_count : Int
-  resource_count : Int
+  cache_count : Int32
+  resource_count : Int32
   byte_size : Int64
   max_bytes : Int64
-  hits : Int
-  misses : Int
-  evictions : Int
+  hits : Int32
+  misses : Int32
+  evictions : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -699,15 +699,15 @@ pub(all) enum NativeReplayTextRun {
 
 ///|
 pub fn NativeReplayResources::new(
-  image_max_bytes? : Int64 = 0L,
-  shader_max_bytes? : Int64 = 0L,
-  path_max_bytes? : Int64 = 0L,
-  text_run_max_bytes? : Int64 = 0L,
-  font_max_bytes? : Int64 = 0L,
-  typeface_max_bytes? : Int64 = 0L,
-  color_filter_max_bytes? : Int64 = 0L,
-  image_filter_max_bytes? : Int64 = 0L,
-  mask_filter_max_bytes? : Int64 = 0L,
+  image_max_bytes~ : Int64 = 0L,
+  shader_max_bytes~ : Int64 = 0L,
+  path_max_bytes~ : Int64 = 0L,
+  text_run_max_bytes~ : Int64 = 0L,
+  font_max_bytes~ : Int64 = 0L,
+  typeface_max_bytes~ : Int64 = 0L,
+  color_filter_max_bytes~ : Int64 = 0L,
+  image_filter_max_bytes~ : Int64 = 0L,
+  mask_filter_max_bytes~ : Int64 = 0L,
 ) -> NativeReplayResources {
   {
     image_cache: @skia.ResourceCache::new(max_bytes=image_max_bytes),

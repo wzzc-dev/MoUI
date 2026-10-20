@@ -5,7 +5,7 @@
 pub fn EmbeddedRuntimeHostBridge::dispose(
   self : EmbeddedRuntimeHostBridge,
   driver? : @runtime.HostRuntimeDriver,
-  reason? : String = "embedded runtime host channel disposed",
+  reason~ : String = "embedded runtime host channel disposed",
 ) -> Unit {
   if !self.disposed {
     // Fail closed before invoking handlers; cancellation callbacks may try to

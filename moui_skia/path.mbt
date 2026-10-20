@@ -27,7 +27,7 @@ pub fn PathFillType::is_inverse(self : PathFillType) -> Bool {
 }
 
 ///|
-pub fn PathFillType::to_skia_ordinal(self : PathFillType) -> Int {
+pub fn PathFillType::to_skia_ordinal(self : PathFillType) -> Int32 {
   match self {
     Winding => 0
     EvenOdd => 1
@@ -58,7 +58,7 @@ pub impl Default for PathDirection with fn default() {
 }
 
 ///|
-pub fn PathDirection::to_skia_ordinal(self : PathDirection) -> Int {
+pub fn PathDirection::to_skia_ordinal(self : PathDirection) -> Int32 {
   match self {
     CW => 0
     CCW => 1
@@ -146,7 +146,7 @@ pub fn PathRect::new(
 
 ///|
 /// Bitmask of path segment kinds, matching Skia's public segment-mask values.
-pub(all) struct PathSegmentMask(Int) derive(Debug, Eq)
+pub(all) struct PathSegmentMask(Int32) derive(Debug, Eq)
 
 ///|
 pub extend PathSegmentMask with Debug::{to_repr}
@@ -155,7 +155,7 @@ pub extend PathSegmentMask with Debug::{to_repr}
 pub extend PathSegmentMask with Eq::{not_equal, equal}
 
 ///|
-pub fn PathSegmentMask::new(value : Int) -> PathSegmentMask {
+pub fn PathSegmentMask::new(value : Int32) -> PathSegmentMask {
   PathSegmentMask(value)
 }
 
@@ -185,7 +185,7 @@ pub fn PathSegmentMask::cubic() -> PathSegmentMask {
 }
 
 ///|
-pub fn PathSegmentMask::bits(self : PathSegmentMask) -> Int {
+pub fn PathSegmentMask::bits(self : PathSegmentMask) -> Int32 {
   let PathSegmentMask(value) = self
   value
 }
@@ -228,7 +228,7 @@ pub extend Path with Default::{default}
 pub extend Path with Eq::{not_equal, equal}
 
 ///|
-pub fn Path::new(fill_type? : PathFillType = Winding) -> Path {
+pub fn Path::new(fill_type~ : PathFillType = Winding) -> Path {
   { fill_type, verbs: Array(), current_point: None, }
 }
 
@@ -243,17 +243,17 @@ pub fn Path::is_empty(self : Path) -> Bool {
 }
 
 ///|
-pub fn Path::verb_count(self : Path) -> Int {
+pub fn Path::verb_count(self : Path) -> Int32 {
   self.verbs.length()
 }
 
 ///|
-pub fn Path::count_verbs(self : Path) -> Int {
+pub fn Path::count_verbs(self : Path) -> Int32 {
   self.verb_count()
 }
 
 ///|
-pub fn Path::count_points(self : Path) -> Int {
+pub fn Path::count_points(self : Path) -> Int32 {
   let initial_count = 0
   for count = initial_count, i = 0; i < self.verbs.length(); i = i + 1 {
     let increment = match self.verbs[i] {

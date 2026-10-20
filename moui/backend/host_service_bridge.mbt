@@ -114,7 +114,7 @@ pub extend HostDirectoryEntry with ToJson::{to_json}
 pub fn HostDirectoryEntry::new(
   name~ : String,
   path~ : String,
-  is_directory? : Bool = false,
+  is_directory~ : Bool = false,
 ) -> HostDirectoryEntry {
   { name, path, is_directory, }
 }
@@ -137,7 +137,7 @@ pub fn HostDirectoryEntry::is_directory(self : HostDirectoryEntry) -> Bool {
 ///|
 pub struct HostBinaryFileDiagnostic {
   priv path : String
-  priv byte_length : Int
+  priv byte_length : Int32
   priv operation : String
 } derive(Eq, Debug, ToJson)
 
@@ -221,9 +221,9 @@ pub extend HostApplicationMenu with ToJson::{to_json}
 /// `key_modifier_mask` (platform bit masks; see platform notes).
 pub(all) struct HostApplicationMenuItem {
   title : String
-  action_id : Int
+  action_id : Int32
   key_equivalent : String
-  key_modifier_mask : Int
+  key_modifier_mask : Int32
   separator : Bool
   enabled : Bool
 } derive(Eq, Debug, ToJson)
@@ -241,7 +241,7 @@ pub extend HostApplicationMenuItem with ToJson::{to_json}
 pub fn HostApplicationMenu::new(
   title~ : String,
   items~ : Array[HostApplicationMenuItem],
-  placement? : HostApplicationMenuPlacement = MenuBar,
+  placement~ : HostApplicationMenuPlacement = MenuBar,
 ) -> HostApplicationMenu {
   { title, items, placement, }
 }
@@ -249,11 +249,11 @@ pub fn HostApplicationMenu::new(
 ///|
 pub fn HostApplicationMenuItem::new(
   title~ : String,
-  action_id~ : Int,
-  key_equivalent? : String = "",
-  key_modifier_mask? : Int = 0,
-  separator? : Bool = false,
-  enabled? : Bool = true,
+  action_id~ : Int32,
+  key_equivalent~ : String = "",
+  key_modifier_mask~ : Int32 = 0,
+  separator~ : Bool = false,
+  enabled~ : Bool = true,
 ) -> HostApplicationMenuItem {
   { title, action_id, key_equivalent, key_modifier_mask, separator, enabled, }
 }
@@ -337,9 +337,9 @@ pub struct HostServiceBridge {
 ///|
 pub fn HostFileDialogOptions::new(
   kind~ : HostFileDialogKind,
-  title? : String = "",
-  filters? : Array[String] = [],
-  default_name? : String? = None,
+  title~ : String = "",
+  filters~ : Array[String] = [],
+  default_name~ : String? = None,
 ) -> HostFileDialogOptions {
   { kind, title, filters, default_name, }
 }
@@ -365,7 +365,7 @@ pub fn HostBinaryFileDiagnostic::path(
 ///|
 pub fn HostBinaryFileDiagnostic::byte_length(
   self : HostBinaryFileDiagnostic,
-) -> Int {
+) -> Int32 {
   self.byte_length
 }
 

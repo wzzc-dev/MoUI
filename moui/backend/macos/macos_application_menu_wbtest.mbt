@@ -101,13 +101,13 @@ test "macOS application Edit commands reach focused MoUI text and clipboard" {
 extern "C" fn macos_perform_menu_item(
   menu_title : Bytes,
   item_title : Bytes,
-) -> Int = "moui_macos_perform_menu_item"
+) -> Int32 = "moui_macos_perform_menu_item"
 
 ///|
-extern "C" fn macos_first_responder_edit_actions_test() -> Int = "moui_macos_first_responder_edit_actions_test"
+extern "C" fn macos_first_responder_edit_actions_test() -> Int32 = "moui_macos_first_responder_edit_actions_test"
 
 ///|
-extern "C" fn macos_application_menu_key_equivalent_test() -> Int = "moui_macos_application_menu_key_equivalent_test"
+extern "C" fn macos_application_menu_key_equivalent_test() -> Int32 = "moui_macos_application_menu_key_equivalent_test"
 
 ///|
 test "macOS native first responder receives standard Edit commands" {

@@ -2,10 +2,10 @@
 pub fn[Msg] empty_state(
   title : String,
   message : String,
-  action? : @controls.StateViewAction[Msg]? = None,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)
@@ -22,11 +22,11 @@ pub fn[Msg] empty_state(
 
 ///|
 pub fn[Msg] loading_state(
-  title? : String = "Loading",
-  message? : String = "Please wait while content is prepared.",
+  title~ : String = "Loading",
+  message~ : String = "Please wait while content is prepared.",
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)
@@ -45,10 +45,10 @@ pub fn[Msg] loading_state(
 pub fn[Msg] error_state(
   title : String,
   message : String,
-  action? : @controls.StateViewAction[Msg]? = None,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
-  width? : Double = 320.0,
+  width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)
@@ -66,11 +66,11 @@ pub fn[Msg] error_state(
 ///|
 pub fn[Msg] inline_error(
   message : String,
-  action? : @controls.StateViewAction[Msg]? = None,
+  action~ : @controls.StateViewAction[Msg]? = None,
   theme? : @core.Theme,
   style? : @style.FeedbackStyle,
   badge_style? : @style.BadgeStyle,
-  width? : Double = 360.0,
+  width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let style = resolve_feedback_style(style, resolved_theme)

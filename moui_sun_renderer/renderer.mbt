@@ -1,6 +1,6 @@
 ///|
 pub(all) suberror SunRendererError {
-  InvalidSurfaceSize(Int, Int)
+  InvalidSurfaceSize(Int32, Int32)
   PresentFailed(String)
 } derive(Eq, Debug, ToJson)
 
@@ -27,8 +27,8 @@ pub struct SunRasterRenderer {
   mut metrics : @core.SurfaceMetrics
   target : SunPresentTarget
   mut canvas : @sun_graphics.Canvas
-  mut present_count : Int
-  mut unsupported_command_count : Int
+  mut present_count : Int32
+  mut unsupported_command_count : Int32
   unsupported_command_diagnostics : Array[SunUnsupportedCommandDiagnostic]
   mut last_frame : SunPixelFrame?
   text_system : @sun_text.TextSystem
@@ -38,13 +38,13 @@ pub struct SunRasterRenderer {
   mut canvas_stack : Array[@sun_graphics.Canvas]
   mut filter_stack : Array[@sun_graphics.PaintFilter]
   mut cached_layer_pixmaps : Map[String, @sun_graphics.Pixmap]
-  mut cached_layer_revisions : Map[String, Int]
+  mut cached_layer_revisions : Map[String, Int32]
   mut cached_layer_scales : Map[String, Double]
   mut cached_layer_order : Array[String]
-  mut cached_layer_hit_count : Int
-  mut cached_layer_miss_count : Int
-  mut cached_layer_update_count : Int
-  mut cached_layer_evict_count : Int
+  mut cached_layer_hit_count : Int32
+  mut cached_layer_miss_count : Int32
+  mut cached_layer_update_count : Int32
+  mut cached_layer_evict_count : Int32
   cached_layer_admissions : Array[SunCachedLayerAdmissionRecord]
   mut blur_radius_stack : Array[Double]
   mut rounded_clip_stack : Array[@core.RoundedRect]
@@ -89,7 +89,7 @@ pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
 pub fn create_with_present_target(
   metrics : @core.SurfaceMetrics,
   target : SunPresentTarget,
-  async_image_loading? : Bool = false,
+  async_image_loading~ : Bool = false,
 ) -> SunRasterRenderer raise SunRendererError {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)
@@ -214,14 +214,14 @@ pub fn SunRasterRenderer::text_system(
 }
 
 ///|
-pub fn SunRasterRenderer::present_count(self : SunRasterRenderer) -> Int {
+pub fn SunRasterRenderer::present_count(self : SunRasterRenderer) -> Int32 {
   self.present_count
 }
 
 ///|
 pub fn SunRasterRenderer::unsupported_command_count(
   self : SunRasterRenderer,
-) -> Int {
+) -> Int32 {
   self.unsupported_command_count
 }
 
@@ -242,14 +242,14 @@ pub fn SunRasterRenderer::last_frame(
 ///|
 pub fn SunRasterRenderer::cached_layer_hit_count(
   self : SunRasterRenderer,
-) -> Int {
+) -> Int32 {
   self.cached_layer_hit_count
 }
 
 ///|
 pub fn SunRasterRenderer::cached_layer_miss_count(
   self : SunRasterRenderer,
-) -> Int {
+) -> Int32 {
   self.cached_layer_miss_count
 }
 
@@ -279,7 +279,7 @@ pub fn SunRasterRenderer::register_font_file(
   self : SunRasterRenderer,
   key : String,
   path : String,
-  font_index? : Int = 0,
+  font_index~ : Int32 = 0,
 ) -> Unit {
   ignore(self.text_system.register_font_file(key, path, font_index~))
 }

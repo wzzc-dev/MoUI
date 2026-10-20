@@ -138,10 +138,10 @@ fn append_rich_text_document_layers(
   base_font : @core.FontSpec,
   foreground : @core.Color,
   text_system~ : @core.TextSystem,
-  visible_scroll_y? : Double = 0.0,
-  visible_viewport_height? : Double = 0.0,
-  visible_overscan? : Double = 320.0,
-  clip_rect? : @core.Rect? = None,
+  visible_scroll_y~ : Double = 0.0,
+  visible_viewport_height~ : Double = 0.0,
+  visible_overscan~ : Double = 320.0,
+  clip_rect~ : @core.Rect? = None,
 ) -> Unit {
   // `content` sets the block positioning origin (may already include -scroll_y
   // or a window top_padding). `clip` is the untranslated viewport used for
@@ -240,9 +240,9 @@ fn append_rich_text_block_commands(
   // windowing is active at all. A block taller than the viewport (a
   // soft-wrapped paragraph holding a whole novel, say) is never culled by the
   // block loop, so its off-screen lines have to be skipped here.
-  visible_top? : Double = 0.0,
-  visible_bottom? : Double = 0.0,
-  windowed? : Bool = false,
+  visible_top~ : Double = 0.0,
+  visible_bottom~ : Double = 0.0,
+  windowed~ : Bool = false,
 ) -> Unit {
   match block.background {
     Some(background) =>
@@ -337,9 +337,9 @@ fn append_rich_text_block_runs(
   base_font : @core.FontSpec,
   foreground : @core.Color,
   text_system~ : @core.TextSystem,
-  visible_top? : Double = 0.0,
-  visible_bottom? : Double = 0.0,
-  windowed? : Bool = false,
+  visible_top~ : Double = 0.0,
+  visible_bottom~ : Double = 0.0,
+  windowed~ : Bool = false,
 ) -> Unit {
   let block_font = rich_text_block_font(block, base_font)
   let block_color = rich_text_block_color(block, foreground)
@@ -478,7 +478,7 @@ fn rich_text_block_line_start_x(
   block : RichTextBlock,
   frame : @core.Rect,
   line_widths : Array[Double],
-  line : Int,
+  line : Int32,
 ) -> Double {
   let width = min_double(
     frame.size.width,
@@ -753,12 +753,12 @@ fn append_rich_text_editor_overlay(
   cursor_color~ : @core.Color,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
-  clip_rect? : @core.Rect? = None,
+  clip_rect~ : @core.Rect? = None,
   // Precomputed caret rect for a caret the window document does not
   // contain (the visible band is clipped and the caret sits outside it):
   // the document walk would pin such a caret to the first rendered line,
   // so the caller supplies the session-level estimate instead.
-  caret_rect_override? : @core.Rect? = None,
+  caret_rect_override~ : @core.Rect? = None,
 ) -> Unit {
   let clip = match clip_rect {
     Some(r) => r

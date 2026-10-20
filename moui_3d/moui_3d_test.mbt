@@ -331,7 +331,7 @@ test "scene applies sampled translation, rotation and scale without mutation" {
 }
 
 ///|
-fn assert_texture_id(value : @moui_3d.TextureId?, expected : Int) -> Bool {
+fn assert_texture_id(value : @moui_3d.TextureId?, expected : Int32) -> Bool {
   match value {
     Some(id) => id.value() == expected
     None => false
@@ -339,7 +339,7 @@ fn assert_texture_id(value : @moui_3d.TextureId?, expected : Int) -> Bool {
 }
 
 ///|
-fn glb_u32(value : Int) -> Array[Byte] {
+fn glb_u32(value : Int32) -> Array[Byte] {
   [
     (value & 0xFF).to_byte(),
     ((value >> 8) & 0xFF).to_byte(),

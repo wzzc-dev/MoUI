@@ -11,7 +11,7 @@ priv struct ActiveProgramSubscription {
 
 ///|
 priv struct ActiveProgramEffectTask {
-  token : Int
+  token : Int32
   descriptor : @core.EffectDescriptor
   active : Ref[Bool]
   cancel : Ref[(() -> Unit)?]
@@ -19,42 +19,42 @@ priv struct ActiveProgramEffectTask {
 
 ///|
 priv struct ProgramRuntimeDiagnostics {
-  mut dispatched_count : Int
-  mut update_count : Int
-  mut ignored_program_dispatch_count : Int
-  mut message_enqueue_count : Int
-  mut message_drain_count : Int
-  mut pending_message_count : Int
-  mut max_pending_message_count : Int
-  mut effect_plan_count : Int
-  mut effect_count : Int
-  mut effect_none_count : Int
-  mut effect_batch_count : Int
-  mut effect_send_count : Int
-  mut effect_dispatch_count : Int
-  mut effect_run_count : Int
-  mut effect_task_count : Int
-  mut duplicate_effect_descriptor_key_count : Int
+  mut dispatched_count : Int32
+  mut update_count : Int32
+  mut ignored_program_dispatch_count : Int32
+  mut message_enqueue_count : Int32
+  mut message_drain_count : Int32
+  mut pending_message_count : Int32
+  mut max_pending_message_count : Int32
+  mut effect_plan_count : Int32
+  mut effect_count : Int32
+  mut effect_none_count : Int32
+  mut effect_batch_count : Int32
+  mut effect_send_count : Int32
+  mut effect_dispatch_count : Int32
+  mut effect_run_count : Int32
+  mut effect_task_count : Int32
+  mut duplicate_effect_descriptor_key_count : Int32
   duplicate_effect_descriptor_keys : Array[String]
-  mut superseded_effect_task_key_count : Int
+  mut superseded_effect_task_key_count : Int32
   superseded_effect_task_keys : Array[String]
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
-  mut next_effect_task_value : Int
-  mut started_effect_task_count : Int
-  mut completed_effect_task_count : Int
-  mut cancelled_effect_task_count : Int
-  mut ignored_effect_task_dispatch_count : Int
+  mut next_effect_task_value : Int32
+  mut started_effect_task_count : Int32
+  mut completed_effect_task_count : Int32
+  mut cancelled_effect_task_count : Int32
+  mut ignored_effect_task_dispatch_count : Int32
   mut active_effect_tasks : Array[ActiveProgramEffectTask]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  mut subscription_plan_count : Int
+  mut subscription_plan_count : Int32
   mut last_subscription_plan_summary : SubscriptionPlanSummary
-  mut started_subscription_count : Int
-  mut reused_subscription_count : Int
-  mut cancelled_subscription_count : Int
-  mut duplicate_subscription_key_count : Int
+  mut started_subscription_count : Int32
+  mut reused_subscription_count : Int32
+  mut cancelled_subscription_count : Int32
+  mut duplicate_subscription_key_count : Int32
   duplicate_subscription_keys : Array[String]
-  mut ignored_subscription_dispatch_count : Int
+  mut ignored_subscription_dispatch_count : Int32
   mut active_subscriptions : Array[ActiveProgramSubscription]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 }
@@ -127,7 +127,7 @@ fn ProgramRuntimeDiagnostics::record_ignored_program_dispatch(
 ///|
 fn ProgramRuntimeDiagnostics::record_message_enqueued(
   self : ProgramRuntimeDiagnostics,
-  pending_count : Int,
+  pending_count : Int32,
 ) -> Unit {
   self.message_enqueue_count = self.message_enqueue_count + 1
   self.record_pending_message_count(pending_count)
@@ -136,7 +136,7 @@ fn ProgramRuntimeDiagnostics::record_message_enqueued(
 ///|
 fn ProgramRuntimeDiagnostics::record_message_drain_started(
   self : ProgramRuntimeDiagnostics,
-  pending_count : Int,
+  pending_count : Int32,
 ) -> Unit {
   if pending_count > 0 {
     self.message_drain_count = self.message_drain_count + 1
@@ -147,7 +147,7 @@ fn ProgramRuntimeDiagnostics::record_message_drain_started(
 ///|
 fn ProgramRuntimeDiagnostics::record_message_processed(
   self : ProgramRuntimeDiagnostics,
-  pending_count : Int,
+  pending_count : Int32,
 ) -> Unit {
   self.record_pending_message_count(pending_count)
 }
@@ -162,7 +162,7 @@ fn ProgramRuntimeDiagnostics::record_message_queue_cleared(
 ///|
 fn ProgramRuntimeDiagnostics::record_pending_message_count(
   self : ProgramRuntimeDiagnostics,
-  pending_count : Int,
+  pending_count : Int32,
 ) -> Unit {
   self.pending_message_count = pending_count
   if pending_count > self.max_pending_message_count {
@@ -174,7 +174,7 @@ fn ProgramRuntimeDiagnostics::record_pending_message_count(
 fn ProgramRuntimeDiagnostics::record_effects(
   self : ProgramRuntimeDiagnostics,
   summary : EffectPlanSummary,
-  executed_count : Int,
+  executed_count : Int32,
 ) -> Unit {
   self.effect_plan_count = self.effect_plan_count + 1
   self.effect_count = self.effect_count + executed_count

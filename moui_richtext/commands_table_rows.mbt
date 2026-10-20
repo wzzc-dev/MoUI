@@ -76,7 +76,7 @@ fn markdown_editor_table_insert_row_end(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
-) -> Int {
+) -> Int32 {
   let row_end = markdown_editor_table_row_end(source, cells, current.row)
   if current.row != 0 {
     return row_end
@@ -89,7 +89,10 @@ fn markdown_editor_table_insert_row_end(
 }
 
 ///|
-fn markdown_editor_table_row_line_end(chars : Array[Char], start : Int) -> Int {
+fn markdown_editor_table_row_line_end(
+  chars : Array[Char],
+  start : Int32,
+) -> Int32 {
   let mut end = markdown_editor_clamp_int(start, 0, chars.length())
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
@@ -98,7 +101,7 @@ fn markdown_editor_table_row_line_end(chars : Array[Char], start : Int) -> Int {
 }
 
 ///|
-fn markdown_editor_empty_table_row_column_caret(column : Int) -> Int {
+fn markdown_editor_empty_table_row_column_caret(column : Int32) -> Int32 {
   2 + column * 3
 }
 
@@ -196,7 +199,7 @@ fn markdown_editor_clear_table_row(
 ///|
 fn markdown_editor_table_data_row_count(
   cells : Array[MarkdownEditorTableCellRange],
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for cell in cells {
     if cell.row > 0 && cell.column == 0 {
@@ -209,8 +212,8 @@ fn markdown_editor_table_data_row_count(
 ///|
 fn markdown_editor_table_row_start(
   cells : Array[MarkdownEditorTableCellRange],
-  row : Int,
-) -> Int {
+  row : Int32,
+) -> Int32 {
   let mut start = -1
   for cell in cells {
     if cell.row == row && (start < 0 || cell.hit_start < start) {
@@ -228,7 +231,7 @@ fn markdown_editor_table_row_start(
 fn markdown_editor_append_table_row(
   source : String,
   block : MarkdownEditorBlock,
-  first_row : Int,
+  first_row : Int32,
 ) -> RichTextInputTransform {
   let cells = markdown_editor_table_cells_for_block(source, block)
   let column_count = cells.filter(cell => cell.row == first_row).length()
@@ -243,7 +246,7 @@ fn markdown_editor_append_table_row(
 }
 
 ///|
-fn markdown_editor_empty_table_row(column_count : Int) -> String {
+fn markdown_editor_empty_table_row(column_count : Int32) -> String {
   let cells : Array[String] = []
   for _ in 0..<column_count {
     cells.push("")

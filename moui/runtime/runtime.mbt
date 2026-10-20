@@ -6,14 +6,14 @@ pub struct AppRuntime {
 }
 
 ///|
-fn program_message_drain_limit() -> Int {
+fn program_message_drain_limit() -> Int32 {
   1024
 }
 
 ///|
 fn[Msg] compact_pending_program_messages(
   pending_messages : Array[Msg],
-  start : Int,
+  start : Int32,
 ) -> Unit {
   let remaining : Array[Msg] = []
   for index in start..<pending_messages.length() {
@@ -28,7 +28,7 @@ fn[Msg] run_effect(
   effect : @core.Effect[Msg],
   dispatch : (Msg) -> Unit,
   start_task : (@core.EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   effect.runtime_visit(
     message => {
@@ -55,8 +55,8 @@ fn[Msg] run_effect(
 pub fn[Msg] AppRuntime::new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::neutral(),
-  on_message? : ((Msg) -> Unit)? = None,
+  environment~ : @core.Environment = @core.Environment::neutral(),
+  on_message~ : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
   {
     state: RuntimeState::new_view(root~, size~, environment~, on_message~),
@@ -69,7 +69,7 @@ pub fn[Msg] AppRuntime::new_view(
 pub fn[Model, Msg] AppRuntime::new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::neutral(),
+  environment~ : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
   let model = Ref(initial_model)
@@ -228,8 +228,8 @@ pub fn[Model, Msg] AppRuntime::new_program(
 pub fn[Msg] new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::neutral(),
-  on_message? : ((Msg) -> Unit)? = None,
+  environment~ : @core.Environment = @core.Environment::neutral(),
+  on_message~ : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
   AppRuntime::new_view(root~, size~, environment~, on_message~)
 }
@@ -238,7 +238,7 @@ pub fn[Msg] new_view(
 pub fn[Model, Msg] new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::neutral(),
+  environment~ : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   AppRuntime::new_program(program~, size~, environment~)
 }
@@ -248,7 +248,7 @@ pub fn[Model, Msg] new_program_with_dimensions(
   program~ : @core.Program[Model, Msg],
   width~ : Double,
   height~ : Double,
-  environment? : @core.Environment = @core.Environment::neutral(),
+  environment~ : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   AppRuntime::new_program(
     program~,
@@ -405,12 +405,12 @@ pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
 }
 
 ///|
-pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
+pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int32 {
   self.state.dirty_count()
 }
 
 ///|
-pub fn AppRuntime::dirty_element_ids(self : AppRuntime) -> Array[Int] {
+pub fn AppRuntime::dirty_element_ids(self : AppRuntime) -> Array[Int32] {
   self.state.dirty_element_ids().map(id => id.value())
 }
 
@@ -473,7 +473,7 @@ pub fn AppRuntime::dispatch_action_command(
 pub fn AppRuntime::dispatch_focused_text_command(
   self : AppRuntime,
   intent : @core.CommandIntent,
-  paste_text? : String? = None,
+  paste_text~ : String? = None,
 ) -> @core.TextCommandResult {
   self.state.dispatch_focused_text_command(intent, paste_text~)
 }

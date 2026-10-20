@@ -1,10 +1,10 @@
 ///|
 pub fn[Msg] route_header(
   title : String,
-  subtitle? : String = "",
-  actions? : Array[ActionItem[Msg]] = [],
+  subtitle~ : String = "",
+  actions~ : Array[ActionItem[Msg]] = [],
   theme? : @core.Theme,
-  width? : Double = 520.0,
+  width~ : Double = 520.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let padding = resolved_theme.spacing_scale.md

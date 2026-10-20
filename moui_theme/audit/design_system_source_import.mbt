@@ -101,7 +101,7 @@ pub fn source_imported_tokens(
 }
 
 ///|
-pub fn source_imported_token_count(preset : @common.DesignPreset) -> Int {
+pub fn source_imported_token_count(preset : @common.DesignPreset) -> Int32 {
   source_imported_tokens(preset).length()
 }
 
@@ -130,7 +130,9 @@ pub fn source_import_integrity_for(
 }
 
 ///|
-pub fn source_import_integrity_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_import_integrity_gap_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in source_import_integrity_report(preset) {
     if !item.integrity_ok {
@@ -143,7 +145,7 @@ pub fn source_import_integrity_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn source_import_manifest_lock_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_import_integrity_report(preset) {
     if !item.source_declared || !item.source_locked {
@@ -154,7 +156,7 @@ pub fn source_import_manifest_lock_gap_count(
 }
 
 ///|
-pub fn source_import_scope_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_import_scope_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_import_integrity_report(preset) {
     if !item.source_file_scoped {
@@ -167,7 +169,7 @@ pub fn source_import_scope_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn source_import_anchor_mismatch_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_import_integrity_report(preset) {
     if !item.anchor_declared ||
@@ -182,7 +184,7 @@ pub fn source_import_anchor_mismatch_count(
 ///|
 pub fn source_import_golden_mismatch_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_import_integrity_report(preset) {
     if !item.moui_token_matches_golden {
@@ -193,7 +195,9 @@ pub fn source_import_golden_mismatch_count(
 }
 
 ///|
-pub fn source_imported_token_mapped_count(preset : @common.DesignPreset) -> Int {
+pub fn source_imported_token_mapped_count(
+  preset : @common.DesignPreset,
+) -> Int32 {
   let mut count = 0
   for item in source_imported_tokens(preset) {
     if item.status == ThemeMapped ||
@@ -208,7 +212,7 @@ pub fn source_imported_token_mapped_count(preset : @common.DesignPreset) -> Int 
 ///|
 pub fn source_imported_token_source_lock_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_imported_tokens(preset) {
     if item.source_ref == "" ||
@@ -246,14 +250,14 @@ pub fn source_import_coverage(
 }
 
 ///|
-pub fn source_import_coverage_count(preset : @common.DesignPreset) -> Int {
+pub fn source_import_coverage_count(preset : @common.DesignPreset) -> Int32 {
   source_import_coverage(preset).length()
 }
 
 ///|
 pub fn source_imported_official_token_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_import_coverage(preset) {
     if item.required && item.source_imported {
@@ -264,7 +268,7 @@ pub fn source_imported_official_token_count(
 }
 
 ///|
-pub fn source_import_coverage_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn source_import_coverage_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_import_coverage(preset) {
     if item.required && !item.source_imported {
@@ -275,7 +279,7 @@ pub fn source_import_coverage_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn source_import_unanchored_count(preset : @common.DesignPreset) -> Int {
+pub fn source_import_unanchored_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in source_imported_tokens(preset) {
     if !has_official_token_anchor(preset, item.official_token) {
@@ -302,7 +306,7 @@ pub fn source_import_coverage_for(
 fn source_imported_token_count_for_package(
   preset : @common.DesignPreset,
   package_path : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in source_imported_tokens(preset) {
     if item.package_path == package_path {
@@ -544,7 +548,7 @@ fn imported_token(
   moui_token : String,
   status : DesignTokenStatus,
   note : String,
-  official_token? : String = "",
+  official_token~ : String = "",
 ) -> DesignSourceImportedToken {
   let official_token = if official_token == "" {
     token_name

@@ -75,8 +75,8 @@ pub fn[Msg] View::border(self : View[Msg], style : BorderStyle) -> View[Msg] {
 ///|
 pub fn[Msg] View::offset(
   self : View[Msg],
-  dx? : Double = 0.0,
-  dy? : Double = 0.0,
+  dx~ : Double = 0.0,
+  dy~ : Double = 0.0,
 ) -> View[Msg] {
   self.apply_modifier(OffsetModifier::{ dx, dy, }.to_any_modifier())
 }
@@ -89,8 +89,8 @@ pub fn[Msg] View::clip(self : View[Msg]) -> View[Msg] {
 ///|
 pub fn[Msg] View::scale(
   self : View[Msg],
-  sx? : Double = 1.0,
-  sy? : Double = 1.0,
+  sx~ : Double = 1.0,
+  sy~ : Double = 1.0,
 ) -> View[Msg] {
   self.apply_modifier(ScaleModifier::{ sx, sy, }.to_any_modifier())
 }
@@ -98,9 +98,9 @@ pub fn[Msg] View::scale(
 ///|
 pub fn[Msg] View::transition(
   self : View[Msg],
-  spec? : TransitionSpec = TransitionSpec::new(),
-  progress? : Double = 1.0,
-  reduced_motion? : Bool = false,
+  spec~ : TransitionSpec = TransitionSpec::new(),
+  progress~ : Double = 1.0,
+  reduced_motion~ : Bool = false,
 ) -> View[Msg] {
   self.apply_transition_style(spec.sample(progress, reduced_motion~).style)
 }
@@ -109,9 +109,9 @@ pub fn[Msg] View::transition(
 pub fn[Msg] View::presence(
   self : View[Msg],
   present~ : Bool,
-  spec? : TransitionSpec = TransitionSpec::fade(),
-  progress? : Double = 1.0,
-  reduced_motion? : Bool = false,
+  spec~ : TransitionSpec = TransitionSpec::fade(),
+  progress~ : Double = 1.0,
+  reduced_motion~ : Bool = false,
 ) -> View[Msg] {
   let sample = spec.presence(present~, progress~, reduced_motion~)
   if sample.present {
@@ -143,7 +143,7 @@ fn[Msg] View::apply_transition_style(
 ///|
 pub fn[Msg] View::disabled(
   self : View[Msg],
-  disabled? : Bool = true,
+  disabled~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(DisabledModifier::{ disabled, }.to_any_modifier())
 }
@@ -204,7 +204,7 @@ pub fn[Msg] View::semantics_role(
 }
 
 ///|
-pub fn[Msg] View::semantics_level(self : View[Msg], level : Int) -> View[Msg] {
+pub fn[Msg] View::semantics_level(self : View[Msg], level : Int32) -> View[Msg] {
   self.apply_modifier(SemanticsLevelModifier::{ level, }.to_any_modifier())
 }
 
@@ -216,7 +216,7 @@ pub fn[Msg] View::semantics_url(self : View[Msg], url : String) -> View[Msg] {
 ///|
 pub fn[Msg] View::semantics_selected(
   self : View[Msg],
-  selected? : Bool = true,
+  selected~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(
     SemanticsSelectedModifier::{ selected, }.to_any_modifier(),
@@ -226,7 +226,7 @@ pub fn[Msg] View::semantics_selected(
 ///|
 pub fn[Msg] View::semantics_pressed(
   self : View[Msg],
-  pressed? : Bool = true,
+  pressed~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsPressedModifier::{ pressed, }.to_any_modifier())
 }
@@ -234,7 +234,7 @@ pub fn[Msg] View::semantics_pressed(
 ///|
 pub fn[Msg] View::semantics_checked(
   self : View[Msg],
-  checked? : SemanticsCheckedState = Checked,
+  checked~ : SemanticsCheckedState = Checked,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsCheckedModifier::{ checked, }.to_any_modifier())
 }
@@ -242,7 +242,7 @@ pub fn[Msg] View::semantics_checked(
 ///|
 pub fn[Msg] View::semantics_expanded(
   self : View[Msg],
-  expanded? : Bool = true,
+  expanded~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(
     SemanticsExpandedModifier::{ expanded, }.to_any_modifier(),
@@ -252,7 +252,7 @@ pub fn[Msg] View::semantics_expanded(
 ///|
 pub fn[Msg] View::semantics_invalid(
   self : View[Msg],
-  invalid? : Bool = true,
+  invalid~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsInvalidModifier::{ invalid, }.to_any_modifier())
 }
@@ -260,7 +260,7 @@ pub fn[Msg] View::semantics_invalid(
 ///|
 pub fn[Msg] View::semantics_required(
   self : View[Msg],
-  required? : Bool = true,
+  required~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(
     SemanticsRequiredModifier::{ required, }.to_any_modifier(),
@@ -343,7 +343,7 @@ pub fn[Msg] View::semantics_relations(
 pub fn[Msg] View::semantics_live(
   self : View[Msg],
   live : SemanticsLive,
-  live_atomic? : Bool = false,
+  live_atomic~ : Bool = false,
 ) -> View[Msg] {
   self.apply_modifier(
     SemanticsMetadataModifier::{
@@ -355,7 +355,7 @@ pub fn[Msg] View::semantics_live(
 ///|
 pub fn[Msg] View::focusable(
   self : View[Msg],
-  focusable? : Bool = true,
+  focusable~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(FocusableModifier::{ focusable, }.to_any_modifier())
 }
@@ -363,7 +363,7 @@ pub fn[Msg] View::focusable(
 ///|
 pub fn[Msg] View::focus_trap(
   self : View[Msg],
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> View[Msg] {
   self.apply_modifier(FocusTrapModifier::{ trap: enabled, }.to_any_modifier())
 }
@@ -477,7 +477,7 @@ pub fn[Msg] View::keyboard_shortcut(
 ///|
 pub fn[Msg] View::flexible(
   self : View[Msg],
-  weight? : Double = 1.0,
+  weight~ : Double = 1.0,
 ) -> View[Msg] {
   self.apply_modifier(
     FlexibleModifier::{ weight: max_double(0.0, weight), }.to_any_modifier(),
@@ -495,7 +495,7 @@ pub fn[Msg] View::layout_priority(
 ///|
 pub fn[Msg] View::expanded(
   self : View[Msg],
-  weight? : Double = 1.0,
+  weight~ : Double = 1.0,
 ) -> View[Msg] {
   self.flexible(weight~)
 }
@@ -503,7 +503,7 @@ pub fn[Msg] View::expanded(
 ///|
 pub fn[Msg] View::align(
   self : View[Msg],
-  alignment? : Alignment = Alignment::center(),
+  alignment~ : Alignment = Alignment::center(),
 ) -> View[Msg] {
   self.apply_modifier(AlignModifier::{ alignment, }.to_any_modifier())
 }

@@ -1,7 +1,7 @@
 ///|
 struct CodeRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 }
 
 ///|
@@ -24,7 +24,7 @@ fn is_hex_token(token : String) -> Bool {
 }
 
 ///|
-fn parse_hex_int(token : String) -> Result[Int, String] {
+fn parse_hex_int(token : String) -> Result[Int32, String] {
   let mut value = 0
   for ch in token {
     let digit = if ch.is_ascii_digit() {
@@ -49,8 +49,8 @@ fn parse_hex_int(token : String) -> Result[Int, String] {
 fn parse_codepoint(
   value : String,
   source : String,
-  line_number : Int,
-) -> Result[Int, String] {
+  line_number : Int32,
+) -> Result[Int32, String] {
   if !is_hex_token(value) {
     return Err(
       source +
@@ -79,7 +79,7 @@ fn parse_codepoint(
 fn parse_range(
   value : String,
   source : String,
-  line_number : Int,
+  line_number : Int32,
 ) -> Result[CodeRange, String] {
   match value.find("..") {
     None =>
@@ -258,7 +258,7 @@ fn merge_ranges(ranges : Array[CodeRange]) -> Array[CodeRange] {
 }
 
 ///|
-fn moon_hex(value : Int) -> String {
+fn moon_hex(value : Int32) -> String {
   let hex_digits : Array[Char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
   ]
@@ -283,7 +283,7 @@ fn moon_hex(value : Int) -> String {
 }
 
 ///|
-fn range_chunk_size() -> Int {
+fn range_chunk_size() -> Int32 {
   48
 }
 

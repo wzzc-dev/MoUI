@@ -7,7 +7,7 @@ pub(all) struct SectionListSection[T] {
 
 ///|
 pub(all) struct ScrollToIndexIntent {
-  index : Int
+  index : Int32
   offset : @core.Point
 }
 

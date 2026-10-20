@@ -4,10 +4,10 @@ pub fn[Msg] dropdown(
   items : Array[@controls.MenuItem[Msg]],
   state~ : DropdownState,
   on_toggle~ : Msg,
-  placeholder? : String = "Select",
+  placeholder~ : String = "Select",
   theme? : @core.Theme,
-  width? : Double = 240.0,
-  max_height? : Double = 180.0,
+  width~ : Double = 240.0,
+  max_height~ : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let selected_label = dropdown_selected_label(
@@ -60,10 +60,10 @@ pub fn[Msg] combobox(
   items : Array[@controls.MenuItem[Msg]],
   expanded~ : Bool,
   on_toggle~ : Msg,
-  placeholder? : String = "Search",
+  placeholder~ : String = "Search",
   theme? : @core.Theme,
-  width? : Double = 280.0,
-  max_height? : Double = 180.0,
+  width~ : Double = 280.0,
+  max_height~ : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let anchor_view = @layout.row(

@@ -63,12 +63,12 @@ fn smoke_temp_path(filename : String) -> String {
 ///|
 fn assert_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
-  x : Int,
-  y : Int,
-  r : Int,
-  g : Int,
-  b : Int,
-  a : Int,
+  x : Int32,
+  y : Int32,
+  r : Int32,
+  g : Int32,
+  b : Int32,
+  a : Int32,
 ) -> Unit {
   if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
@@ -93,13 +93,13 @@ fn assert_pixel(
 ///|
 fn assert_pixel_near(
   frame : @skia_renderer.SkiaPixelFrame,
-  x : Int,
-  y : Int,
-  r : Int,
-  g : Int,
-  b : Int,
-  a : Int,
-  tolerance : Int,
+  x : Int32,
+  y : Int32,
+  r : Int32,
+  g : Int32,
+  b : Int32,
+  a : Int32,
+  tolerance : Int32,
 ) -> Unit {
   if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
@@ -131,17 +131,17 @@ fn assert_pixel_near(
 /// a no-op. In that case the source color is drawn unchanged.
 fn assert_pixel_near_filter_aware(
   frame : @skia_renderer.SkiaPixelFrame,
-  x : Int,
-  y : Int,
-  filtered_r : Int,
-  filtered_g : Int,
-  filtered_b : Int,
-  filtered_a : Int,
-  unfiltered_r : Int,
-  unfiltered_g : Int,
-  unfiltered_b : Int,
-  unfiltered_a : Int,
-  tolerance : Int,
+  x : Int32,
+  y : Int32,
+  filtered_r : Int32,
+  filtered_g : Int32,
+  filtered_b : Int32,
+  filtered_a : Int32,
+  unfiltered_r : Int32,
+  unfiltered_g : Int32,
+  unfiltered_b : Int32,
+  unfiltered_a : Int32,
+  tolerance : Int32,
 ) -> Unit {
   let (er, eg, eb, ea) = if color_filters_available() {
     (filtered_r, filtered_g, filtered_b, filtered_a)
@@ -154,11 +154,11 @@ fn assert_pixel_near_filter_aware(
 ///|
 fn assert_pixel_luma_between(
   frame : @skia_renderer.SkiaPixelFrame,
-  x : Int,
-  y : Int,
-  min_luma : Int,
-  max_luma : Int,
-  a : Int,
+  x : Int32,
+  y : Int32,
+  min_luma : Int32,
+  max_luma : Int32,
+  a : Int32,
 ) -> Unit {
   if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
@@ -187,11 +187,11 @@ fn assert_pixel_luma_between(
 fn assert_region_has_pixel_near(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-  r : Int,
-  g : Int,
-  b : Int,
-  a : Int,
-  tolerance : Int,
+  r : Int32,
+  g : Int32,
+  b : Int32,
+  a : Int32,
+  tolerance : Int32,
 ) -> Unit {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
@@ -229,7 +229,7 @@ fn assert_region_has_pixel_near(
 }
 
 ///|
-fn component_near(actual : Int, expected : Int, tolerance : Int) -> Bool {
+fn component_near(actual : Int32, expected : Int32, tolerance : Int32) -> Bool {
   (actual - expected).abs() <= tolerance
 }
 
@@ -319,7 +319,7 @@ fn assert_region_has_no_dark_pixel(
 fn region_has_pixel_matching(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
-  predicate : (Int, Int, Int, Int) -> Bool,
+  predicate : (Int32, Int32, Int32, Int32) -> Bool,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)

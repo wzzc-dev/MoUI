@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] selection_toolbar(
-  selected_count~ : Int,
-  total_count? : Int = 0,
-  actions? : Array[@controls.ActionItem[Msg]] = [],
-  on_clear? : Msg? = None,
+  selected_count~ : Int32,
+  total_count~ : Int32 = 0,
+  actions~ : Array[@controls.ActionItem[Msg]] = [],
+  on_clear~ : Msg? = None,
   theme? : @core.Theme,
-  width? : Double = 520.0,
+  width~ : Double = 520.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let selected = @common.view_max_int(0, selected_count)
@@ -77,7 +77,10 @@ pub fn[Msg] selection_toolbar(
 }
 
 ///|
-fn selection_toolbar_label(selected_count : Int, total_count : Int) -> String {
+fn selection_toolbar_label(
+  selected_count : Int32,
+  total_count : Int32,
+) -> String {
   if selected_count == 0 {
     "No rows selected"
   } else if total_count > 0 {
@@ -98,7 +101,7 @@ fn selection_toolbar_action_width(label : String) -> Double {
 }
 
 ///|
-fn selection_toolbar_height(action_count : Int) -> Double {
+fn selection_toolbar_height(action_count : Int32) -> Double {
   if action_count > 3 {
     86.0
   } else {

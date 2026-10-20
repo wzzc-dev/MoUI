@@ -51,7 +51,7 @@ fn package_report_json(
     Err(message) => return Err(message)
   }
   let root : Map[String, Json] = Map([
-    ("schemaVersion", (1 : Int).to_json()),
+    ("schemaVersion", (1 : Int32).to_json()),
     ("ok", true.to_json()),
     ("command", "package".to_json()),
     ("projectRoot", options.project_root.to_json()),
@@ -173,7 +173,7 @@ fn package_manifest_json(
   Ok(
     Json::object(
       Map([
-        ("schemaVersion", (1 : Int).to_json()),
+        ("schemaVersion", (1 : Int32).to_json()),
         ("ok", true.to_json()),
         ("command", "package".to_json()),
         (

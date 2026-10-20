@@ -25,11 +25,11 @@ fn showcase_text_field_style(
 fn[Msg] showcase_markdown_editor(
   value : String,
   on_input~ : (String) -> Msg,
-  placeholder? : String = "",
-  width? : Double = 240.0,
-  height? : Double = 40.0,
-  variant? : @views.TextFieldVariant = Filled,
-  theme? : @moui.Theme = @views.default_theme(),
+  placeholder~ : String = "",
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
+  variant~ : @views.TextFieldVariant = Filled,
+  theme~ : @moui.Theme = @views.default_theme(),
 ) -> @moui.View[Msg] {
   let style = showcase_text_field_style(variant, theme)
   let normal = style.normal

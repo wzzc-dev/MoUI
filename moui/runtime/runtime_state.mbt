@@ -8,7 +8,7 @@ priv struct RuntimeState {
   mut size : Size
   dirty : DirtyTracking
   stats : RenderStats
-  mut next_element_id : Int
+  mut next_element_id : Int32
   animfocus : AnimFocusState
   mut environment : Environment
   mut text_system : TextSystem
@@ -20,11 +20,11 @@ priv struct RuntimeState {
   mut root_builder : (() -> &RuntimeViewNode)?
   clock : Clock
   mut pending_scroll_request : ScrollRequest?
-  mut last_event_hit_path : Array[Int]
+  mut last_event_hit_path : Array[Int32]
   mut last_frame_timing : RuntimeFrameTiming
   /// Post-layout overlay frame overrides: host element id -> (child index,
   /// absolute rect). Applied by the placement pass after the layout fixpoint.
-  mut overlay_overrides : Array[(Int, Array[(Int, Rect)])]
+  mut overlay_overrides : Array[(Int32, Array[(Int32, Rect)])]
   /// Keyboard dismissal layer stack, back-to-front. The top-most entry
   /// receives Escape/Back before in-flow content (ADR 0033).
   mut layer_stack : Array[ElementId]
@@ -51,10 +51,10 @@ priv struct ScrollRequest {
 fn[Msg] RuntimeState::new_view(
   root~ : @core.View[Msg],
   size~ : Size,
-  environment? : Environment = Environment::neutral(),
-  on_message? : ((Msg) -> Unit)? = None,
-  begin_message_batch? : () -> Unit = () => (),
-  end_message_batch? : () -> Unit = () => (),
+  environment~ : Environment = Environment::neutral(),
+  on_message~ : ((Msg) -> Unit)? = None,
+  begin_message_batch~ : () -> Unit = () => (),
+  end_message_batch~ : () -> Unit = () => (),
 ) -> RuntimeState {
   let emit = match on_message {
     Some(handler) => handler
@@ -73,9 +73,9 @@ fn[Msg] RuntimeState::new_view(
 fn RuntimeState::new_runtime_view_node(
   root~ : &RuntimeViewNode,
   size~ : Size,
-  environment? : Environment = Environment::neutral(),
-  begin_message_batch? : () -> Unit = () => (),
-  end_message_batch? : () -> Unit = () => (),
+  environment~ : Environment = Environment::neutral(),
+  begin_message_batch~ : () -> Unit = () => (),
+  end_message_batch~ : () -> Unit = () => (),
 ) -> RuntimeState {
   let initial = mount_runtime_view_node_with_next(root, 1)
   let state = {
@@ -477,7 +477,7 @@ fn RuntimeState::set_root_builder(
 ///|
 fn RuntimeState::request_root_rebuild(
   self : RuntimeState,
-  reason? : String = "program model changed",
+  reason~ : String = "program model changed",
 ) -> Unit {
   if self.root_builder is Some(_) {
     self.dirty.needs_rebuild = true
@@ -500,7 +500,7 @@ fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
 /// invalidation); the array preserves queue order for phase processing.
 priv struct DirtyIdSet {
   items : Array[ElementId]
-  seen : Map[Int, Unit]
+  seen : Map[Int32, Unit]
 }
 
 ///|
@@ -524,7 +524,7 @@ fn DirtyIdSet::clear(self : DirtyIdSet) -> Unit {
 }
 
 ///|
-fn DirtyIdSet::length(self : DirtyIdSet) -> Int {
+fn DirtyIdSet::length(self : DirtyIdSet) -> Int32 {
   self.items.length()
 }
 
@@ -594,18 +594,18 @@ priv struct AnimFocusState {
   mut active_focus_trap : ElementId?
   mut saved_focus_key : String?
   mut saved_focus_semantic_id : SemanticId?
-  mut saved_focus_order : Int?
+  mut saved_focus_order : Int32?
 }
 
 ///|
 /// Subsystem: render counters and damage bookkeeping.
 priv struct RenderStats {
-  mut rebuild_pass_count : Int
-  mut layout_pass_count : Int
-  mut paint_pass_count : Int
-  mut semantics_recompute_count : Int
-  mut draw_command_build_count : Int
-  mut last_command_count : Int
+  mut rebuild_pass_count : Int32
+  mut layout_pass_count : Int32
+  mut paint_pass_count : Int32
+  mut semantics_recompute_count : Int32
+  mut draw_command_build_count : Int32
+  mut last_command_count : Int32
   mut last_damage_region : DamageRegion
 }
 

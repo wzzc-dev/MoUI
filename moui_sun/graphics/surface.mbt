@@ -1,11 +1,11 @@
 ///|
 /// Error returned when presenting RGBA pixels to a surface fails.
 pub(all) enum PresentError {
-  InvalidDimensions(Int, Int)
-  SizeMismatch(Int, Int, Int, Int)
-  RectOutOfBounds(Int, Int, Int, Int, Int, Int)
-  InvalidRowBytes(Int, Int)
-  PixelBufferTooSmall(Int, Int)
+  InvalidDimensions(Int32, Int32)
+  SizeMismatch(Int32, Int32, Int32, Int32)
+  RectOutOfBounds(Int32, Int32, Int32, Int32, Int32, Int32)
+  InvalidRowBytes(Int32, Int32)
+  PixelBufferTooSmall(Int32, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -18,8 +18,8 @@ pub extend PresentError with Eq::{not_equal, equal}
 /// Validated geometry for a rectangle present call. Backends can use this to
 /// share row-stride and buffer-size checks with the reference MemorySurface.
 pub(all) struct PresentRectInfo {
-  required_row_bytes : Int
-  required_len : Int
+  required_row_bytes : Int32
+  required_len : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -32,7 +32,7 @@ pub extend PresentRectInfo with Eq::{not_equal, equal}
 /// Packed source pixels for one rectangle present operation.
 pub struct PresentRectPayload {
   rect : PixelRect
-  row_bytes : Int
+  row_bytes : Int32
   pixels : FixedArray[Byte]
 } derive(Debug)
 
@@ -43,8 +43,8 @@ pub extend PresentRectPayload with Debug::{to_repr}
 /// A materialized batch of packed rectangle present payloads.
 pub struct PresentBatch {
   payloads : Array[PresentRectPayload]
-  present_pixel_count : Int
-  present_byte_count : Int
+  present_pixel_count : Int32
+  present_byte_count : Int32
 } derive(Debug)
 
 ///|
@@ -55,8 +55,8 @@ pub extend PresentBatch with Debug::{to_repr}
 /// concrete surface.
 pub struct PresentBatchSubmitPlan {
   batch : PresentBatch
-  surface_width : Int
-  surface_height : Int
+  surface_width : Int32
+  surface_height : Int32
 } derive(Debug)
 
 ///|
@@ -66,7 +66,7 @@ pub extend PresentBatchSubmitPlan with Debug::{to_repr}
 /// Result of submitting a materialized present batch to a concrete surface.
 pub struct PresentBatchSubmitResult {
   submit_plan : PresentBatchSubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(Debug)
 
 ///|
@@ -76,7 +76,7 @@ pub extend PresentBatchSubmitResult with Debug::{to_repr}
 /// One validated present operation recorded by MemorySurface.
 pub struct MemoryPresentRecord {
   rect : PixelRect
-  row_bytes : Int
+  row_bytes : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -86,12 +86,12 @@ pub extend MemoryPresentRecord with Debug::{to_repr}
 pub extend MemoryPresentRecord with Eq::{not_equal, equal}
 
 ///|
-pub fn PresentRectInfo::required_row_bytes(self : PresentRectInfo) -> Int {
+pub fn PresentRectInfo::required_row_bytes(self : PresentRectInfo) -> Int32 {
   self.required_row_bytes
 }
 
 ///|
-pub fn PresentRectInfo::required_len(self : PresentRectInfo) -> Int {
+pub fn PresentRectInfo::required_len(self : PresentRectInfo) -> Int32 {
   self.required_len
 }
 
@@ -99,7 +99,7 @@ pub fn PresentRectInfo::required_len(self : PresentRectInfo) -> Int {
 /// Build a validated rectangle present payload from caller-provided RGBA rows.
 pub fn PresentRectPayload::new(
   rect : PixelRect,
-  row_bytes : Int,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[PresentRectPayload, PresentError] {
   match
@@ -124,7 +124,7 @@ pub fn PresentRectPayload::get_rect(self : PresentRectPayload) -> PixelRect {
 }
 
 ///|
-pub fn PresentRectPayload::get_row_bytes(self : PresentRectPayload) -> Int {
+pub fn PresentRectPayload::get_row_bytes(self : PresentRectPayload) -> Int32 {
   self.row_bytes
 }
 
@@ -138,28 +138,28 @@ pub fn PresentRectPayload::get_pixels(
 ///|
 pub fn PresentRectPayload::get_present_pixel_count(
   self : PresentRectPayload,
-) -> Int {
+) -> Int32 {
   self.rect.area()
 }
 
 ///|
 pub fn PresentRectPayload::get_present_byte_count(
   self : PresentRectPayload,
-) -> Int {
+) -> Int32 {
   self.get_present_pixel_count() * 4
 }
 
 ///|
 pub fn PresentRectPayload::get_source_byte_count(
   self : PresentRectPayload,
-) -> Int {
+) -> Int32 {
   self.row_bytes * self.rect.height
 }
 
 ///|
 pub fn PresentRectPayload::get_source_padding_byte_count(
   self : PresentRectPayload,
-) -> Int {
+) -> Int32 {
   (self.get_source_byte_count() - self.get_present_byte_count()).max(0)
 }
 
@@ -186,7 +186,7 @@ pub fn PresentBatch::get_payloads(
 }
 
 ///|
-pub fn PresentBatch::get_rect_count(self : PresentBatch) -> Int {
+pub fn PresentBatch::get_rect_count(self : PresentBatch) -> Int32 {
   self.payloads.length()
 }
 
@@ -205,20 +205,20 @@ pub fn PresentBatch::is_empty(self : PresentBatch) -> Bool {
 }
 
 ///|
-pub fn PresentBatch::get_present_pixel_count(self : PresentBatch) -> Int {
+pub fn PresentBatch::get_present_pixel_count(self : PresentBatch) -> Int32 {
   self.present_pixel_count
 }
 
 ///|
-pub fn PresentBatch::get_present_byte_count(self : PresentBatch) -> Int {
+pub fn PresentBatch::get_present_byte_count(self : PresentBatch) -> Int32 {
   self.present_byte_count
 }
 
 ///|
 pub fn PresentBatch::saves_full_present_pixels(
   self : PresentBatch,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   self.get_full_present_pixel_savings(width, height) > 0
 }
@@ -229,9 +229,9 @@ pub fn PresentBatch::saves_full_present_pixels(
 /// not a partial present.
 pub fn PresentBatch::get_full_present_pixel_savings(
   self : PresentBatch,
-  width : Int,
-  height : Int,
-) -> Int {
+  width : Int32,
+  height : Int32,
+) -> Int32 {
   guard !self.is_empty() else { return 0 }
   let full_pixels = PixelRect::new(x=0, y=0, width~, height~).area()
   guard full_pixels > 0 else { return 0 }
@@ -243,17 +243,17 @@ pub fn PresentBatch::get_full_present_pixel_savings(
 /// the full target surface.
 pub fn PresentBatch::get_full_present_byte_savings(
   self : PresentBatch,
-  width : Int,
-  height : Int,
-) -> Int {
+  width : Int32,
+  height : Int32,
+) -> Int32 {
   self.get_full_present_pixel_savings(width, height) * 4
 }
 
 ///|
 pub fn PresentBatch::get_present_strategy(
   self : PresentBatch,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> DirtyPresentStrategy {
   guard !self.is_empty() else { return Skip }
   if self.saves_full_present_pixels(width, height) {
@@ -264,7 +264,7 @@ pub fn PresentBatch::get_present_strategy(
 }
 
 ///|
-pub fn PresentBatch::get_source_byte_count(self : PresentBatch) -> Int {
+pub fn PresentBatch::get_source_byte_count(self : PresentBatch) -> Int32 {
   let mut bytes = 0
   for payload in self.payloads {
     bytes = bytes + payload.get_source_byte_count()
@@ -273,7 +273,9 @@ pub fn PresentBatch::get_source_byte_count(self : PresentBatch) -> Int {
 }
 
 ///|
-pub fn PresentBatch::get_source_padding_byte_count(self : PresentBatch) -> Int {
+pub fn PresentBatch::get_source_padding_byte_count(
+  self : PresentBatch,
+) -> Int32 {
   let mut bytes = 0
   for payload in self.payloads {
     bytes = bytes + payload.get_source_padding_byte_count()
@@ -291,14 +293,14 @@ pub fn PresentBatchSubmitPlan::get_batch(
 ///|
 pub fn PresentBatchSubmitPlan::get_surface_width(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.surface_width
 }
 
 ///|
 pub fn PresentBatchSubmitPlan::get_surface_height(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.surface_height
 }
 
@@ -312,7 +314,7 @@ pub fn PresentBatchSubmitPlan::get_present_strategy(
 ///|
 pub fn PresentBatchSubmitPlan::get_rect_count(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_rect_count()
 }
 
@@ -333,28 +335,28 @@ pub fn PresentBatchSubmitPlan::get_present_bounds(
 ///|
 pub fn PresentBatchSubmitPlan::get_present_pixel_count(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_present_pixel_count()
 }
 
 ///|
 pub fn PresentBatchSubmitPlan::get_present_byte_count(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_present_byte_count()
 }
 
 ///|
 pub fn PresentBatchSubmitPlan::get_source_byte_count(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_source_byte_count()
 }
 
 ///|
 pub fn PresentBatchSubmitPlan::get_source_padding_byte_count(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_source_padding_byte_count()
 }
 
@@ -368,7 +370,7 @@ pub fn PresentBatchSubmitPlan::saves_full_present_pixels(
 ///|
 pub fn PresentBatchSubmitPlan::get_full_present_pixel_savings(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_full_present_pixel_savings(
     self.surface_width,
     self.surface_height,
@@ -378,7 +380,7 @@ pub fn PresentBatchSubmitPlan::get_full_present_pixel_savings(
 ///|
 pub fn PresentBatchSubmitPlan::get_full_present_byte_savings(
   self : PresentBatchSubmitPlan,
-) -> Int {
+) -> Int32 {
   self.batch.get_full_present_byte_savings(
     self.surface_width,
     self.surface_height,
@@ -451,14 +453,14 @@ fn copy_present_batch_submit_plan(
 ///|
 pub fn PresentBatchSubmitResult::get_surface_width(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_surface_width()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_surface_height(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_surface_height()
 }
 
@@ -472,14 +474,14 @@ pub fn PresentBatchSubmitResult::get_present_strategy(
 ///|
 pub fn PresentBatchSubmitResult::get_rect_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_rect_count()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_presented_rect_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.presented_rect_count
 }
 
@@ -507,28 +509,28 @@ pub fn PresentBatchSubmitResult::get_present_bounds(
 ///|
 pub fn PresentBatchSubmitResult::get_present_pixel_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_pixel_count()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_present_byte_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_byte_count()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_source_byte_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_source_byte_count()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_source_padding_byte_count(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_source_padding_byte_count()
 }
 
@@ -542,14 +544,14 @@ pub fn PresentBatchSubmitResult::saves_full_present_pixels(
 ///|
 pub fn PresentBatchSubmitResult::get_full_present_pixel_savings(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_full_present_pixel_savings()
 }
 
 ///|
 pub fn PresentBatchSubmitResult::get_full_present_byte_savings(
   self : PresentBatchSubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_full_present_byte_savings()
 }
 
@@ -559,35 +561,35 @@ pub fn MemoryPresentRecord::get_rect(self : MemoryPresentRecord) -> PixelRect {
 }
 
 ///|
-pub fn MemoryPresentRecord::get_row_bytes(self : MemoryPresentRecord) -> Int {
+pub fn MemoryPresentRecord::get_row_bytes(self : MemoryPresentRecord) -> Int32 {
   self.row_bytes
 }
 
 ///|
 pub fn MemoryPresentRecord::get_present_pixel_count(
   self : MemoryPresentRecord,
-) -> Int {
+) -> Int32 {
   self.rect.area()
 }
 
 ///|
 pub fn MemoryPresentRecord::get_present_byte_count(
   self : MemoryPresentRecord,
-) -> Int {
+) -> Int32 {
   self.get_present_pixel_count() * 4
 }
 
 ///|
 pub fn MemoryPresentRecord::get_source_byte_count(
   self : MemoryPresentRecord,
-) -> Int {
+) -> Int32 {
   self.row_bytes * self.rect.height
 }
 
 ///|
 pub fn MemoryPresentRecord::get_source_padding_byte_count(
   self : MemoryPresentRecord,
-) -> Int {
+) -> Int32 {
   (self.get_source_byte_count() - self.get_present_byte_count()).max(0)
 }
 
@@ -636,7 +638,7 @@ pub fn[S : Surface] PresentBatch::submit_plan_for(
 pub fn[S : Surface] PresentBatch::submit_to(
   self : PresentBatch,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   match self.submit_to_result(surface) {
     Ok(result) => Ok(result.get_presented_rect_count())
     Err(error) => Err(error)
@@ -660,7 +662,7 @@ pub fn[S : Surface] PresentBatch::submit_to_result(
 pub fn[S : Surface] PresentBatchSubmitPlan::submit_to(
   self : PresentBatchSubmitPlan,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   match self.submit_to_result(surface) {
     Ok(result) => Ok(result.get_presented_rect_count())
     Err(error) => Err(error)
@@ -706,22 +708,22 @@ pub fn[S : Surface] PresentBatchSubmitPlan::submit_to_result(
 ///|
 /// Destination for CPU-rendered RGBA pixels.
 pub(open) trait Surface {
-  fn get_width(Self) -> Int
-  fn get_height(Self) -> Int
+  fn get_width(Self) -> Int32
+  fn get_height(Self) -> Int32
   fn present_pixels(
     Self,
-    width : Int,
-    height : Int,
-    row_bytes : Int,
+    width : Int32,
+    height : Int32,
+    row_bytes : Int32,
     pixels : FixedArray[Byte],
   ) -> Result[Unit, PresentError]
   fn present_pixels_rect(
     Self,
-    x : Int,
-    y : Int,
-    width : Int,
-    height : Int,
-    row_bytes : Int,
+    x : Int32,
+    y : Int32,
+    width : Int32,
+    height : Int32,
+    row_bytes : Int32,
     pixels : FixedArray[Byte],
   ) -> Result[Unit, PresentError]
 }
@@ -729,10 +731,10 @@ pub(open) trait Surface {
 ///|
 /// In-memory surface used as the reference backend for tests and headless tools.
 pub struct MemorySurface {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   pixels : FixedArray[Byte]
-  mut present_count : Int
+  mut present_count : Int32
   present_records : Array[MemoryPresentRecord]
 } derive(Debug)
 
@@ -740,7 +742,7 @@ pub struct MemorySurface {
 pub extend MemorySurface with Debug::{to_repr}
 
 ///|
-pub fn MemorySurface::new(width : Int, height : Int) -> MemorySurface {
+pub fn MemorySurface::new(width : Int32, height : Int32) -> MemorySurface {
   let safe_width = width.max(0)
   let safe_height = height.max(0)
   {
@@ -753,12 +755,12 @@ pub fn MemorySurface::new(width : Int, height : Int) -> MemorySurface {
 }
 
 ///|
-pub fn MemorySurface::get_width(self : MemorySurface) -> Int {
+pub fn MemorySurface::get_width(self : MemorySurface) -> Int32 {
   self.width
 }
 
 ///|
-pub fn MemorySurface::get_height(self : MemorySurface) -> Int {
+pub fn MemorySurface::get_height(self : MemorySurface) -> Int32 {
   self.height
 }
 
@@ -769,12 +771,12 @@ pub fn MemorySurface::get_pixels(self : MemorySurface) -> FixedArray[Byte] {
 }
 
 ///|
-pub fn MemorySurface::get_present_count(self : MemorySurface) -> Int {
+pub fn MemorySurface::get_present_count(self : MemorySurface) -> Int32 {
   self.present_count
 }
 
 ///|
-pub fn MemorySurface::get_present_pixel_count(self : MemorySurface) -> Int {
+pub fn MemorySurface::get_present_pixel_count(self : MemorySurface) -> Int32 {
   let mut pixels = 0
   for record in self.present_records {
     pixels = pixels + record.get_present_pixel_count()
@@ -783,7 +785,7 @@ pub fn MemorySurface::get_present_pixel_count(self : MemorySurface) -> Int {
 }
 
 ///|
-pub fn MemorySurface::get_present_byte_count(self : MemorySurface) -> Int {
+pub fn MemorySurface::get_present_byte_count(self : MemorySurface) -> Int32 {
   let mut bytes = 0
   for record in self.present_records {
     bytes = bytes + record.get_present_byte_count()
@@ -794,7 +796,7 @@ pub fn MemorySurface::get_present_byte_count(self : MemorySurface) -> Int {
 ///|
 pub fn MemorySurface::get_present_source_byte_count(
   self : MemorySurface,
-) -> Int {
+) -> Int32 {
   let mut bytes = 0
   for record in self.present_records {
     bytes = bytes + record.get_source_byte_count()
@@ -805,7 +807,7 @@ pub fn MemorySurface::get_present_source_byte_count(
 ///|
 pub fn MemorySurface::get_present_source_padding_byte_count(
   self : MemorySurface,
-) -> Int {
+) -> Int32 {
   let mut bytes = 0
   for record in self.present_records {
     bytes = bytes + record.get_source_padding_byte_count()
@@ -860,8 +862,8 @@ pub fn MemorySurface::reset_present_telemetry(self : MemorySurface) -> Unit {
 ///|
 pub fn MemorySurface::get_pixel(
   self : MemorySurface,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> Color {
   guard x >= 0 && x < self.width && y >= 0 && y < self.height else {
     return Color::transparent()
@@ -914,7 +916,7 @@ pub fn MemorySurface::to_rgba_bytes(self : MemorySurface) -> Bytes {
 
 ///|
 /// Return a deterministic lightweight checksum of the current surface pixels.
-pub fn MemorySurface::checksum(self : MemorySurface) -> Int {
+pub fn MemorySurface::checksum(self : MemorySurface) -> Int32 {
   checksum_rgba_bytes(self.pixels)
 }
 
@@ -995,7 +997,7 @@ pub fn MemorySurface::to_rgba_rect_bytes(
 pub fn MemorySurface::checksum_rect(
   self : MemorySurface,
   rect : PixelRect,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   match validate_pixel_rect_bounds(self.width, self.height, rect) {
     Err(error) => Err(error)
     Ok(_) =>
@@ -1006,9 +1008,9 @@ pub fn MemorySurface::checksum_rect(
 ///|
 pub fn MemorySurface::present_pixels(
   self : MemorySurface,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, PresentError] {
   guard width > 0 && height > 0 else {
@@ -1023,11 +1025,11 @@ pub fn MemorySurface::present_pixels(
 ///|
 pub fn MemorySurface::present_pixels_rect(
   self : MemorySurface,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, PresentError] {
   match
@@ -1062,13 +1064,13 @@ pub fn MemorySurface::present_pixels_rect(
 
 ///|
 pub fn validate_present_rect(
-  surface_width : Int,
-  surface_height : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  surface_width : Int32,
+  surface_height : Int32,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[PresentRectInfo, PresentError] {
   guard width > 0 && height > 0 else {
@@ -1130,9 +1132,9 @@ pub impl Surface for MemorySurface with fn present_pixels_rect(
 ///|
 pub fn[S : Surface] present_pixels(
   surface : S,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, PresentError] {
   surface.present_pixels(width, height, row_bytes, pixels)
@@ -1141,11 +1143,11 @@ pub fn[S : Surface] present_pixels(
 ///|
 pub fn[S : Surface] present_pixels_rect(
   surface : S,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-  row_bytes : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+  row_bytes : Int32,
   pixels : FixedArray[Byte],
 ) -> Result[Unit, PresentError] {
   surface.present_pixels_rect(x, y, width, height, row_bytes, pixels)
@@ -1214,7 +1216,7 @@ pub fn Pixmap::copy_rect(
 pub fn Pixmap::checksum_rect(
   self : Pixmap,
   rect : PixelRect,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   match validate_pixmap_present_rect(self, rect) {
     Err(error) => Err(error)
     Ok(_) => Ok(checksum_rgba_bytes(copy_pixmap_rect(self, rect)))
@@ -1308,7 +1310,7 @@ pub fn[S : Surface] Canvas::present_to(
 pub fn[S : Surface] Canvas::present_dirty_to(
   self : Canvas,
   surface : S,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   self.present_dirty_to_with_limit(surface, default_dirty_present_rect_limit)
 }
 
@@ -1316,7 +1318,7 @@ pub fn[S : Surface] Canvas::present_dirty_to(
 pub fn[S : Surface] Canvas::dirty_present_plan(
   self : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> DirtyPresentPlan {
   let dirty_region = self.get_dirty_region()
   guard !dirty_region.is_empty() else { return { mode: Empty, rects: [], } }
@@ -1342,7 +1344,7 @@ pub fn[S : Surface] Canvas::dirty_present_plan(
 pub fn[S : Surface] Canvas::dirty_present_batch(
   self : Canvas,
   surface : S,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Result[PresentBatch, PresentError] {
   self.get_pixmap().present_batch(self.dirty_present_plan(surface, max_rects))
 }
@@ -1351,8 +1353,8 @@ pub fn[S : Surface] Canvas::dirty_present_batch(
 pub fn[S : Surface] Canvas::present_dirty_to_with_limit(
   self : Canvas,
   surface : S,
-  max_rects : Int,
-) -> Result[Int, PresentError] {
+  max_rects : Int32,
+) -> Result[Int32, PresentError] {
   let dirty_region = self.get_dirty_region()
   guard !dirty_region.is_empty() else { return Ok(0) }
   let plan = self.dirty_present_plan(surface, max_rects)
@@ -1374,7 +1376,7 @@ fn[S : Surface] Canvas::present_dirty_plan_to(
   self : Canvas,
   surface : S,
   plan : DirtyPresentPlan,
-) -> Result[Int, PresentError] {
+) -> Result[Int32, PresentError] {
   guard !plan.is_empty() else { return Ok(0) }
   match self.get_pixmap().present_batch(plan) {
     Ok(batch) => batch.submit_to(surface)
@@ -1395,8 +1397,8 @@ fn validate_pixmap_present_rect(
 
 ///|
 fn validate_pixel_rect_bounds(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   rect : PixelRect,
 ) -> Result[Unit, PresentError] {
   guard !rect.is_empty() else {
@@ -1421,7 +1423,7 @@ fn copy_pixmap_rect(pixmap : Pixmap, rect : PixelRect) -> FixedArray[Byte] {
 ///|
 fn copy_rgba_rect(
   source : FixedArray[Byte],
-  source_width : Int,
+  source_width : Int32,
   rect : PixelRect,
 ) -> FixedArray[Byte] {
   let row_bytes = rect.width * 4
@@ -1439,8 +1441,8 @@ fn copy_rgba_rect(
 
 ///|
 fn pixmap_from_packed_rgba(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   pixels : FixedArray[Byte],
 ) -> Pixmap {
   let pixmap = Pixmap::new(width, height)

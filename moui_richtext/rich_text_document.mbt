@@ -4,7 +4,7 @@ type RichTextFormatter = (String) -> RichTextDocument
 ///|
 pub(all) struct RichTextInputTransform {
   text : String
-  caret : Int
+  caret : Int32
   selection : @core.TextRange?
   // Char range in the previous source replaced by this transform. None means
   // the range is unknown (from_input_transform then falls back to the O(doc)
@@ -23,8 +23,8 @@ pub extend RichTextInputTransform with ToJson::{to_json}
 
 ///|
 pub(all) struct RichTextSourceRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -182,17 +182,17 @@ pub extend RichTextDocument with ToJson::{to_json}
 ///|
 pub fn RichTextRun::new(
   text~ : String,
-  visual_text? : String? = None,
-  image_source? : String? = None,
-  image_size? : @core.Size? = None,
-  image_fit? : @core.ImageFit = Contain,
-  font? : @core.FontSpec? = None,
-  color? : @core.Color? = None,
-  background? : @core.Brush? = None,
-  background_radius? : Double = 4.0,
-  decoration? : RichTextDecoration? = None,
-  source_range? : RichTextSourceRange? = None,
-  image_width_fraction? : Double? = None,
+  visual_text~ : String? = None,
+  image_source~ : String? = None,
+  image_size~ : @core.Size? = None,
+  image_fit~ : @core.ImageFit = Contain,
+  font~ : @core.FontSpec? = None,
+  color~ : @core.Color? = None,
+  background~ : @core.Brush? = None,
+  background_radius~ : Double = 4.0,
+  decoration~ : RichTextDecoration? = None,
+  source_range~ : RichTextSourceRange? = None,
+  image_width_fraction~ : Double? = None,
 ) -> RichTextRun {
   {
     text,
@@ -213,9 +213,9 @@ pub fn RichTextRun::new(
 ///|
 pub fn RichTextInputTransform::new(
   text~ : String,
-  caret~ : Int,
-  selection? : @core.TextRange? = None,
-  edit_range? : MarkdownSourceRange? = None,
+  caret~ : Int32,
+  selection~ : @core.TextRange? = None,
+  edit_range~ : MarkdownSourceRange? = None,
 ) -> RichTextInputTransform {
   { text, caret, selection, edit_range, }
 }
@@ -223,20 +223,20 @@ pub fn RichTextInputTransform::new(
 ///|
 pub fn RichTextBlock::new(
   runs~ : Array[RichTextRun],
-  table? : RichTextTable? = None,
-  prefix? : String = "",
-  marker? : RichTextMarker? = None,
-  font? : @core.FontSpec? = None,
-  color? : @core.Color? = None,
-  background? : @core.Brush? = None,
-  border_left? : @core.BorderStyle? = None,
-  inset? : @core.Insets = @core.Insets::symmetric(),
-  line_height? : Double? = None,
-  corner_radius? : Double = 0.0,
-  rule? : Bool = false,
-  source_range? : RichTextSourceRange? = None,
-  content_range? : RichTextSourceRange? = None,
-  line_align? : @core.TextAlign? = None,
+  table~ : RichTextTable? = None,
+  prefix~ : String = "",
+  marker~ : RichTextMarker? = None,
+  font~ : @core.FontSpec? = None,
+  color~ : @core.Color? = None,
+  background~ : @core.Brush? = None,
+  border_left~ : @core.BorderStyle? = None,
+  inset~ : @core.Insets = @core.Insets::symmetric(),
+  line_height~ : Double? = None,
+  corner_radius~ : Double = 0.0,
+  rule~ : Bool = false,
+  source_range~ : RichTextSourceRange? = None,
+  content_range~ : RichTextSourceRange? = None,
+  line_align~ : @core.TextAlign? = None,
 ) -> RichTextBlock {
   {
     runs,

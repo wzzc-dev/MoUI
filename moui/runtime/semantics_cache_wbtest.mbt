@@ -24,7 +24,7 @@ fn runtime_semantics_cache_leaf(label : String) -> @core.View[Unit] {
 
 ///|
 fn runtime_semantics_cache_tree(
-  composition? : @core.SemanticsComposition = Transparent,
+  composition~ : @core.SemanticsComposition = Transparent,
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="SemanticsCacheRoot"),
@@ -76,7 +76,7 @@ fn runtime_semantics_only_leaf(label : String) -> @core.View[Unit] {
 
 ///|
 fn runtime_semantics_deep_chain(
-  depth : Int,
+  depth : Int32,
   leaf_id : @core.SemanticId,
 ) -> @core.View[Unit] {
   let mut current = runtime_wb_fixture_view(

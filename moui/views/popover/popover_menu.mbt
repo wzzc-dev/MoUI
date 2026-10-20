@@ -4,8 +4,8 @@ fn[Msg] dropdown_menu(
   theme~ : @core.Theme,
   width~ : Double,
   max_height~ : Double,
-  selected? : String = "",
-  label? : String = "Menu options",
+  selected~ : String = "",
+  label~ : String = "Menu options",
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {

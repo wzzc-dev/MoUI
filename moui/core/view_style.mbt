@@ -175,15 +175,15 @@ pub fn ViewStyle::empty() -> ViewStyle {
 ///|
 pub fn ShadowStyle::new(
   color~ : Color,
-  offset? : Point = Point::new(x=0.0, y=2.0),
-  blur_radius? : Double = 8.0,
-  spread? : Double = 0.0,
+  offset~ : Point = Point::new(x=0.0, y=2.0),
+  blur_radius~ : Double = 8.0,
+  spread~ : Double = 0.0,
 ) -> ShadowStyle {
   { color, offset, blur_radius, spread, }
 }
 
 ///|
-pub fn BorderStyle::new(brush~ : Brush, width? : Double = 1.0) -> BorderStyle {
+pub fn BorderStyle::new(brush~ : Brush, width~ : Double = 1.0) -> BorderStyle {
   { brush, width, }
 }
 
@@ -232,7 +232,7 @@ pub fn Alignment::bottom_trailing() -> Alignment {
 ///|
 pub fn KeyboardShortcut::new(
   key~ : String,
-  modifiers? : KeyModifiers = KeyModifiers::none(),
+  modifiers~ : KeyModifiers = KeyModifiers::none(),
 ) -> KeyboardShortcut {
   { key, modifiers, }
 }

@@ -3269,14 +3269,14 @@ test "RenderFrame preserves dirty state after surface error" {
 
 ///|
 struct RenderFrameFailingSurface {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
 } derive(Debug)
 
 ///|
 fn RenderFrameFailingSurface::new(
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> RenderFrameFailingSurface {
   { width, height, }
 }

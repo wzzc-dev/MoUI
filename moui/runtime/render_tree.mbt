@@ -258,18 +258,18 @@ fn RenderNode::subtree_overlay_contains(
 /// parent-chain walks.
 priv struct DamageIndexEntry {
   paint_bounds : Rect
-  parent_id : Int?
+  parent_id : Int32?
   is_repaint_boundary : Bool
 }
 
 ///|
 priv struct DamageIndex {
-  entries : Map[Int, DamageIndexEntry]
+  entries : Map[Int32, DamageIndexEntry]
 }
 
 ///|
 fn DamageIndex::build(root : RenderNode) -> DamageIndex {
-  let entries : Map[Int, DamageIndexEntry] = Map([])
+  let entries : Map[Int32, DamageIndexEntry] = Map([])
   DamageIndex::build_node(root, None, entries)
   { entries, }
 }
@@ -277,8 +277,8 @@ fn DamageIndex::build(root : RenderNode) -> DamageIndex {
 ///|
 fn DamageIndex::build_node(
   node : RenderNode,
-  parent_id : Int?,
-  entries : Map[Int, DamageIndexEntry],
+  parent_id : Int32?,
+  entries : Map[Int32, DamageIndexEntry],
 ) -> Unit {
   for child in node.children {
     DamageIndex::build_node(child, Some(node.element_id.value()), entries)
@@ -342,10 +342,10 @@ fn ElementNode::render_focused_with_text_system(
   self : ElementNode,
   placed : PlacedNode,
   focused~ : ElementId?,
-  environment? : Environment = Environment::neutral(),
+  environment~ : Environment = Environment::neutral(),
   text_system~ : TextSystem,
   now_ms~ : Double,
-  overlay_enter? : Array[(ElementId, Double)] = [],
+  overlay_enter~ : Array[(ElementId, Double)] = [],
 ) -> RenderNode {
   self.render_with_environment(
     placed,

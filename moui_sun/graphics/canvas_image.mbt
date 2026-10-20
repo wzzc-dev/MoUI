@@ -2,10 +2,10 @@
 /// Draw a grayscale coverage mask with the given paint
 pub fn Canvas::draw_mask(
   self : Canvas,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   mask : FixedArray[Byte],
   paint : Paint,
 ) -> Unit {
@@ -50,10 +50,10 @@ pub fn Canvas::draw_mask(
 /// Draw a source rectangle from a grayscale coverage mask with the given paint.
 pub fn Canvas::draw_mask_rect(
   self : Canvas,
-  x : Int,
-  y : Int,
-  mask_width : Int,
-  mask_height : Int,
+  x : Int32,
+  y : Int32,
+  mask_width : Int32,
+  mask_height : Int32,
   mask : FixedArray[Byte],
   src_rect : PixelRect,
   paint : Paint,
@@ -115,8 +115,8 @@ pub fn Canvas::draw_mask_rect(
 pub fn Canvas::draw_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -146,8 +146,8 @@ pub fn Canvas::draw_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -190,8 +190,8 @@ pub fn Canvas::draw_pixmap_rect(
 fn Canvas::draw_layer_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.has_shader() else {
@@ -212,8 +212,8 @@ fn Canvas::draw_layer_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.has_shader() else {
@@ -265,10 +265,10 @@ fn Canvas::draw_layer_pixmap_rect(
 pub fn Canvas::draw_scaled_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -306,10 +306,10 @@ pub fn Canvas::draw_scaled_pixmap(
 pub fn Canvas::draw_scaled_pixmap_bilinear(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -347,10 +347,10 @@ pub fn Canvas::draw_scaled_pixmap_bilinear(
 pub fn Canvas::draw_scaled_pixmap_bicubic(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -388,10 +388,10 @@ pub fn Canvas::draw_scaled_pixmap_bicubic(
 pub fn Canvas::draw_sampled_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
   sampling : ImageSampling,
 ) -> Unit {
@@ -408,10 +408,10 @@ pub fn Canvas::draw_sampled_pixmap(
 pub fn Canvas::draw_quality_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
   quality : ImageQuality,
 ) -> Unit {
@@ -432,10 +432,10 @@ pub fn Canvas::draw_scaled_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   self.draw_sampled_pixmap_rect(
@@ -456,10 +456,10 @@ pub fn Canvas::draw_scaled_pixmap_rect_bilinear(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   self.draw_sampled_pixmap_rect(
@@ -480,10 +480,10 @@ pub fn Canvas::draw_scaled_pixmap_rect_bicubic(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   self.draw_sampled_pixmap_rect(
@@ -504,10 +504,10 @@ pub fn Canvas::draw_sampled_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
   sampling : ImageSampling,
 ) -> Unit {
@@ -560,10 +560,10 @@ pub fn Canvas::draw_quality_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
   quality : ImageQuality,
 ) -> Unit {
@@ -732,10 +732,10 @@ pub fn Canvas::draw_tiled_pixmap_rect(
   self : Canvas,
   src : Pixmap,
   src_rect : PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : Paint,
 ) -> Unit {
   guard paint.style is Fill else { return }
@@ -785,10 +785,10 @@ pub fn Canvas::draw_tiled_pixmap_rect(
 pub fn Canvas::draw_nine_patch_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   insets : NinePatchInsets,
   paint : Paint,
   sampling : ImageSampling,
@@ -830,10 +830,10 @@ pub fn Canvas::draw_nine_patch_pixmap(
 pub fn Canvas::draw_quality_nine_patch_pixmap(
   self : Canvas,
   src : Pixmap,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   insets : NinePatchInsets,
   paint : Paint,
   quality : ImageQuality,
@@ -857,7 +857,7 @@ fn transformed_rect_bounds(
   y : Double,
   width : Double,
   height : Double,
-) -> (Int, Int, Int, Int) {
+) -> (Int32, Int32, Int32, Int32) {
   let (x0, y0) = transform.apply(x, y)
   let (x1, y1) = transform.apply(x + width, y)
   let (x2, y2) = transform.apply(x, y + height)
@@ -875,7 +875,7 @@ fn transformed_rect_bounds(
 }
 
 ///|
-fn ceil_to_int(value : Double) -> Int {
+fn ceil_to_int(value : Double) -> Int32 {
   -floor_to_int(-value)
 }
 

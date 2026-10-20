@@ -26,7 +26,7 @@ using @views {
 pub fn view_body(
   model : ComponentGalleryModel,
   env : @moui.ViewEnvironment,
-  width? : Double = 0.0,
+  width~ : Double = 0.0,
 ) -> @moui.View[ComponentGalleryMsg] {
   let theme = @views.light_theme()
   let viewport = env.viewport_size()

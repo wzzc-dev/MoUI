@@ -276,7 +276,7 @@ pub fn DesignSystemManifest::has_component(
 ///|
 pub fn DesignSystemManifest::official_source_count(
   preset : DesignSystemManifest,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for source in preset.sources {
     if source.source_kind == "official-source" {
@@ -289,7 +289,7 @@ pub fn DesignSystemManifest::official_source_count(
 ///|
 pub fn DesignSystemManifest::source_lock_count(
   preset : DesignSystemManifest,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for source in preset.sources {
     if source.source_kind == "official-source" &&
@@ -894,9 +894,9 @@ fn source(
   url : String,
   source_kind : String,
   note : String,
-  source_ref? : String = "live",
-  token_path? : String = "",
-  status? : DesignTokenStatus = SourceMapped,
+  source_ref~ : String = "live",
+  token_path~ : String = "",
+  status~ : DesignTokenStatus = SourceMapped,
 ) -> DesignSystemSource {
   { label, url, source_kind, source_ref, token_path, status, note, }
 }

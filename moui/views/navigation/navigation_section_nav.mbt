@@ -4,10 +4,10 @@ pub fn[Msg] section_nav(
   items : Array[SectionNavItem[Msg]],
   selected~ : String,
   theme? : @core.Theme,
-  width? : Double = 520.0,
-  item_width? : Double = 150.0,
-  item_height? : Double = 76.0,
-  orientation? : @core.Axis = Horizontal,
+  width~ : Double = 520.0,
+  item_width~ : Double = 150.0,
+  item_height~ : Double = 76.0,
+  orientation~ : @core.Axis = Horizontal,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let item_padding = resolved_theme.spacing_scale.sm
@@ -119,7 +119,7 @@ fn[Msg] section_nav_item_accessibility_label(
 }
 
 ///|
-fn section_nav_max_int(a : Int, b : Int) -> Int {
+fn section_nav_max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

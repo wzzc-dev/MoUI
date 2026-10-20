@@ -12,7 +12,7 @@ pub extend CompileFile with ToJson::{to_json}
 
 ///|
 pub(all) struct CompileRequest {
-  revision : Int
+  revision : Int32
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, FromJson)
@@ -25,7 +25,7 @@ pub extend CompileRequest with ToJson::{to_json}
 
 ///|
 pub(all) struct PlaygroundProject {
-  schema_version : Int
+  schema_version : Int32
   files : Array[CompileFile]
   lesson_id : String
 } derive(ToJson, FromJson)
@@ -57,10 +57,10 @@ pub(all) struct CompileDiagnostic {
   severity : String
   message : String
   file : String
-  line : Int
-  column : Int
-  end_line : Int
-  end_column : Int
+  line : Int32
+  column : Int32
+  end_line : Int32
+  end_column : Int32
 } derive(ToJson, FromJson)
 
 ///|
@@ -71,7 +71,7 @@ pub extend CompileDiagnostic with ToJson::{to_json}
 
 ///|
 pub(all) struct CompileResult {
-  revision : Int
+  revision : Int32
   status : CompileStatus
   diagnostics : Array[CompileDiagnostic]
 } derive(ToJson, FromJson)

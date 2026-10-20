@@ -11,7 +11,7 @@
 /// wholesale-clear pattern of the rich-text caches.
 priv struct TextParagraphCacheEntry {
   text_system_id : String
-  font_generation : Int
+  font_generation : Int32
   input : TextLayoutInput
   result : TextParagraphLayoutResult
 }
@@ -21,19 +21,19 @@ let text_paragraph_cache_buckets : Map[UInt64, Array[TextParagraphCacheEntry]] =
 )
 
 ///|
-let text_paragraph_cache_count : Ref[Int] = Ref(0)
+let text_paragraph_cache_count : Ref[Int32] = Ref(0)
 
 ///|
-let text_paragraph_cache_text_bytes : Ref[Int] = Ref(0)
+let text_paragraph_cache_text_bytes : Ref[Int32] = Ref(0)
 
 ///|
-let text_paragraph_cache_font_generation : Ref[Int] = Ref(0)
+let text_paragraph_cache_font_generation : Ref[Int32] = Ref(0)
 
 ///|
-let text_paragraph_cache_capacity : Ref[Int] = Ref(4096)
+let text_paragraph_cache_capacity : Ref[Int32] = Ref(4096)
 
 ///|
-let text_paragraph_cache_text_budget_bytes : Ref[Int] = Ref(16 * 1024 * 1024)
+let text_paragraph_cache_text_budget_bytes : Ref[Int32] = Ref(16 * 1024 * 1024)
 
 ///|
 fn text_paragraph_cache_digest_mix(hash : UInt64, value : UInt64) -> UInt64 {

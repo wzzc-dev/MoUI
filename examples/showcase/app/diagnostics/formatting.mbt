@@ -19,7 +19,7 @@ fn max_showcase_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn max_showcase_int(a : Int, b : Int) -> Int {
+fn max_showcase_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -28,7 +28,7 @@ fn max_showcase_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn min_showcase_int(a : Int, b : Int) -> Int {
+fn min_showcase_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -75,8 +75,8 @@ fn gallery_items() -> Array[String] {
 fn showcase_grid_columns(
   body_width : Double,
   compact : Bool,
-  max_columns : Int,
-) -> Int {
+  max_columns : Int32,
+) -> Int32 {
   if compact || max_columns <= 1 {
     1
   } else if max_columns >= 3 && body_width >= 920.0 {
@@ -91,7 +91,7 @@ fn showcase_grid_columns(
 ///|
 fn showcase_grid_card_width(
   body_width : Double,
-  columns : Int,
+  columns : Int32,
   spacing : Double,
 ) -> Double {
   if columns <= 1 {

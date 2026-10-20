@@ -3,7 +3,7 @@
 pub fn view_body(
   model : Model,
   env : @moui.ViewEnvironment,
-  width? : Double = 0.0,
+  width~ : Double = 0.0,
 ) -> @moui.View[Msg] {
   let theme = @views.light_theme()
   let page_width = if width > 0.0 {

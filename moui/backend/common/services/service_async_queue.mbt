@@ -1,16 +1,16 @@
 ///|
 pub struct ServiceAsyncQueue {
-  mut next_value : Int
+  mut next_value : Int32
   mut pending : Array[@backend_host.HostPendingServiceRequest]
   mut in_flight : Array[@backend_host.HostPendingServiceRequest]
   mut completed : Array[@backend_host.HostCompletedServiceResponse]
-  priv mut next_completion_handler_value : Int
+  priv mut next_completion_handler_value : Int32
   priv mut completion_handlers : Array[HostServiceCompletionHandler]
 }
 
 ///|
 priv struct HostServiceCompletionHandler {
-  token : Int
+  token : Int32
   id : @backend_host.HostServiceRequestId
   handle : (@backend_host.HostCompletedServiceResponse) -> Unit
 }
@@ -28,22 +28,22 @@ pub fn ServiceAsyncQueue::new() -> ServiceAsyncQueue {
 }
 
 ///|
-pub fn ServiceAsyncQueue::pending_count(self : ServiceAsyncQueue) -> Int {
+pub fn ServiceAsyncQueue::pending_count(self : ServiceAsyncQueue) -> Int32 {
   self.pending.length()
 }
 
 ///|
-pub fn ServiceAsyncQueue::completed_count(self : ServiceAsyncQueue) -> Int {
+pub fn ServiceAsyncQueue::completed_count(self : ServiceAsyncQueue) -> Int32 {
   self.completed.length()
 }
 
 ///|
-pub fn ServiceAsyncQueue::in_flight_count(self : ServiceAsyncQueue) -> Int {
+pub fn ServiceAsyncQueue::in_flight_count(self : ServiceAsyncQueue) -> Int32 {
   self.in_flight.length()
 }
 
 ///|
-pub fn ServiceAsyncQueue::outstanding_count(self : ServiceAsyncQueue) -> Int {
+pub fn ServiceAsyncQueue::outstanding_count(self : ServiceAsyncQueue) -> Int32 {
   self.pending.length() + self.in_flight.length()
 }
 
@@ -183,7 +183,7 @@ fn ServiceAsyncQueue::dispatch_completion_handlers(
 ///|
 fn ServiceAsyncQueue::cancel_completion_handler(
   self : ServiceAsyncQueue,
-  token : Int,
+  token : Int32,
 ) -> Bool {
   let mut cancelled = false
   let remaining : Array[HostServiceCompletionHandler] = []
@@ -231,7 +231,7 @@ pub fn ServiceAsyncQueue::cancel(
 /// Drop every outstanding request and completion handler during host teardown.
 /// Subsequent completions are rejected because their request ids no longer
 /// exist in either pending or in-flight state.
-pub fn ServiceAsyncQueue::cancel_all(self : ServiceAsyncQueue) -> Int {
+pub fn ServiceAsyncQueue::cancel_all(self : ServiceAsyncQueue) -> Int32 {
   let count = self.outstanding_count()
   self.pending = []
   self.in_flight = []

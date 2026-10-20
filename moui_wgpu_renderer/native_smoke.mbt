@@ -1,37 +1,41 @@
 ///|
 pub struct NativeRendererSmokeFrame {
-  priv width : Int
-  priv height : Int
-  priv row_bytes : Int
+  priv width : Int32
+  priv height : Int32
+  priv row_bytes : Int32
   priv pixels : Bytes
   priv flip_y : Bool
 }
 
 ///|
 pub fn NativeRendererSmokeFrame::new(
-  width~ : Int,
-  height~ : Int,
-  row_bytes~ : Int,
+  width~ : Int32,
+  height~ : Int32,
+  row_bytes~ : Int32,
   pixels~ : Bytes,
-  flip_y? : Bool = false,
+  flip_y~ : Bool = false,
 ) -> NativeRendererSmokeFrame {
   { width, height, row_bytes, pixels, flip_y, }
 }
 
 ///|
-pub fn NativeRendererSmokeFrame::width(self : NativeRendererSmokeFrame) -> Int {
+pub fn NativeRendererSmokeFrame::width(
+  self : NativeRendererSmokeFrame,
+) -> Int32 {
   self.width
 }
 
 ///|
-pub fn NativeRendererSmokeFrame::height(self : NativeRendererSmokeFrame) -> Int {
+pub fn NativeRendererSmokeFrame::height(
+  self : NativeRendererSmokeFrame,
+) -> Int32 {
   self.height
 }
 
 ///|
 pub fn NativeRendererSmokeFrame::row_bytes(
   self : NativeRendererSmokeFrame,
-) -> Int {
+) -> Int32 {
   self.row_bytes
 }
 
@@ -393,7 +397,7 @@ fn RendererHandle::render_offscreen_proof_frame(
 }
 
 ///|
-fn align_native_smoke_row_bytes(value : Int) -> Int {
+fn align_native_smoke_row_bytes(value : Int32) -> Int32 {
   let rem = value % 256
   if rem == 0 {
     value
@@ -783,9 +787,9 @@ fn assert_native_smoke_image_status(
 ///|
 fn NativeRendererSmokeFrame::pixel(
   self : NativeRendererSmokeFrame,
-  x : Int,
-  y : Int,
-) -> (Int, Int, Int, Int) {
+  x : Int32,
+  y : Int32,
+) -> (Int32, Int32, Int32, Int32) {
   if x < 0 || y < 0 || x >= self.width || y >= self.height {
     return (0, 0, 0, 0)
   }
@@ -836,7 +840,7 @@ fn detect_native_smoke_frame_orientation(
 fn native_smoke_orientation_score(
   frame : NativeRendererSmokeFrame,
   flip_y~ : Bool,
-) -> Int {
+) -> Int32 {
   let candidate = frame.with_y_orientation(flip_y)
   let mut score = 0
   if region_has_redish_pixel(
@@ -873,31 +877,31 @@ fn native_smoke_orientation_score(
 }
 
 ///|
-fn pixel_is_redish(pixel : (Int, Int, Int, Int)) -> Bool {
+fn pixel_is_redish(pixel : (Int32, Int32, Int32, Int32)) -> Bool {
   let (r, g, b, a) = pixel
   a > 200 && r > 180 && g < 100 && b < 120
 }
 
 ///|
-fn pixel_is_blueish(pixel : (Int, Int, Int, Int)) -> Bool {
+fn pixel_is_blueish(pixel : (Int32, Int32, Int32, Int32)) -> Bool {
   let (r, g, b, a) = pixel
   a > 200 && b > 160 && r < 130 && g < 130
 }
 
 ///|
-fn pixel_is_purpleish(pixel : (Int, Int, Int, Int)) -> Bool {
+fn pixel_is_purpleish(pixel : (Int32, Int32, Int32, Int32)) -> Bool {
   let (r, g, b, a) = pixel
   a > 200 && r > 80 && b > 80 && g < 140
 }
 
 ///|
-fn pixel_is_dark_magenta(pixel : (Int, Int, Int, Int)) -> Bool {
+fn pixel_is_dark_magenta(pixel : (Int32, Int32, Int32, Int32)) -> Bool {
   let (r, g, b, a) = pixel
   a > 100 && r > 80 && b > 80 && g < 80
 }
 
 ///|
-fn pixel_is_cyanish(pixel : (Int, Int, Int, Int)) -> Bool {
+fn pixel_is_cyanish(pixel : (Int32, Int32, Int32, Int32)) -> Bool {
   let (r, g, b, a) = pixel
   a > 100 && g > 120 && b > 120 && r < 100
 }
@@ -1181,7 +1185,7 @@ fn region_has_dark_pixel(
 }
 
 ///|
-fn count_high_saturation_rgba(bytes : Bytes) -> Int {
+fn count_high_saturation_rgba(bytes : Bytes) -> Int32 {
   let mut count = 0
   let mut offset = 0
   while offset + 3 < bytes.length() {
@@ -1198,7 +1202,12 @@ fn count_high_saturation_rgba(bytes : Bytes) -> Int {
 }
 
 ///|
-fn unpremultiplied_rgb_delta(r : Int, g : Int, b : Int, a : Int) -> Int {
+fn unpremultiplied_rgb_delta(
+  r : Int32,
+  g : Int32,
+  b : Int32,
+  a : Int32,
+) -> Int32 {
   if a <= 0 {
     0
   } else {

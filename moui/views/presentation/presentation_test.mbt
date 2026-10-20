@@ -106,7 +106,7 @@ test "toast presentations dock bottom-center in the viewport" {
 /// 的悬停全部失效（含顶栏既有图标按钮）。这里锁定「toast 在场时，底层
 /// 内容仍能收到 `Move`」，这是 hover 可用的前提。
 test "non-modal barrier passes Move through to the base" {
-  let moves : Ref[Int] = Ref(0)
+  let moves : Ref[Int32] = Ref(0)
   let base : @core.View[Unit] = @container.container(
     @container.container(
       @text.text("Base"),
@@ -163,7 +163,7 @@ test "non-modal barrier passes Move through to the base" {
 /// 模态屏障仍然吞掉一切：`Move` 不得穿到背景内容（背景不可交互是模态的
 /// 定义）。与上一条构成一对——放行只针对**非模态**屏障。
 test "modal barrier still swallows Move" {
-  let moves : Ref[Int] = Ref(0)
+  let moves : Ref[Int32] = Ref(0)
   let base : @core.View[Unit] = @container.container(
     @container.container(
       @text.text("Base"),

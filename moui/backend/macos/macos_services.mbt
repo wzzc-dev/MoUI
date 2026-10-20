@@ -1,12 +1,12 @@
 ///|
-extern "C" fn macos_clipboard_has_text() -> Int = "moui_macos_clipboard_has_text"
+extern "C" fn macos_clipboard_has_text() -> Int32 = "moui_macos_clipboard_has_text"
 
 ///|
 extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard_read_text"
 
 ///|
 #borrow(text)
-extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
+extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int32 = "moui_macos_clipboard_write_text"
 
 ///|
 /// 写入剪贴板文本(macOS NSPasteboard)。返回是否写入成功。
@@ -30,7 +30,7 @@ pub fn macos_clipboard_read_text() -> String? {
 //|
 
 ///|
-extern "C" fn macos_clipboard_has_image() -> Int = "moui_macos_clipboard_has_image"
+extern "C" fn macos_clipboard_has_image() -> Int32 = "moui_macos_clipboard_has_image"
 
 //|
 
@@ -41,24 +41,24 @@ extern "C" fn macos_clipboard_read_image_bytes() -> Bytes = "moui_macos_clipboar
 
 ///|
 #borrow(data)
-extern "C" fn macos_clipboard_write_image_bytes(data : Bytes) -> Int = "moui_macos_clipboard_write_image"
+extern "C" fn macos_clipboard_write_image_bytes(data : Bytes) -> Int32 = "moui_macos_clipboard_write_image"
 
 ///|
 #borrow(url)
-extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
+extern "C" fn macos_open_url_bytes(url : Bytes) -> Int32 = "moui_macos_open_url"
 
 ///|
-extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
+extern "C" fn macos_system_theme_is_dark() -> Int32 = "moui_macos_system_theme_is_dark"
 
 ///|
-extern "C" fn macos_accessibility_increase_contrast() -> Int = "moui_macos_accessibility_increase_contrast"
+extern "C" fn macos_accessibility_increase_contrast() -> Int32 = "moui_macos_accessibility_increase_contrast"
 
 ///|
-extern "C" fn macos_accessibility_reduce_motion() -> Int = "moui_macos_accessibility_reduce_motion"
+extern "C" fn macos_accessibility_reduce_motion() -> Int32 = "moui_macos_accessibility_reduce_motion"
 
 ///|
 #borrow(key)
-extern "C" fn macos_settings_has_value(key : Bytes) -> Int = "moui_macos_settings_has_value"
+extern "C" fn macos_settings_has_value(key : Bytes) -> Int32 = "moui_macos_settings_has_value"
 
 ///|
 #borrow(key)
@@ -66,16 +66,16 @@ extern "C" fn macos_settings_read_bytes(key : Bytes) -> Bytes = "moui_macos_sett
 
 ///|
 #borrow(key, value)
-extern "C" fn macos_settings_write_bytes(key : Bytes, value : Bytes) -> Int = "moui_macos_settings_write"
+extern "C" fn macos_settings_write_bytes(key : Bytes, value : Bytes) -> Int32 = "moui_macos_settings_write"
 
 ///|
 #borrow(key)
-extern "C" fn macos_settings_remove_bytes(key : Bytes) -> Int = "moui_macos_settings_remove"
+extern "C" fn macos_settings_remove_bytes(key : Bytes) -> Int32 = "moui_macos_settings_remove"
 
 ///|
 #borrow(title, filters, default_name)
 extern "C" fn macos_file_dialog_bytes(
-  kind : Int,
+  kind : Int32,
   title : Bytes,
   filters : Bytes,
   default_name : Bytes,
@@ -83,30 +83,32 @@ extern "C" fn macos_file_dialog_bytes(
 
 ///|
 #borrow(commands)
-extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int = "moui_macos_show_menu"
+extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int32 = "moui_macos_show_menu"
 
 ///|
 #borrow(payload, call_closure)
 #owned(callback)
 extern "C" fn macos_install_application_menu_items(
   payload : Bytes,
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-) -> Int = "moui_macos_install_application_menu_items"
+  call_closure : FuncRef[((Int32) -> Unit, Int32) -> Unit],
+  callback : (Int32) -> Unit,
+) -> Int32 = "moui_macos_install_application_menu_items"
 
 ///|
 #borrow(payload, call_closure, callback)
 extern "C" fn macos_bind_menu_bar_items(
   payload : Bytes,
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-) -> Int = "moui_macos_bind_menu_bar_items"
+  call_closure : FuncRef[((Int32) -> Unit, Int32) -> Unit],
+  callback : (Int32) -> Unit,
+) -> Int32 = "moui_macos_bind_menu_bar_items"
 
 ///|
-extern "C" fn macos_dispatch_first_responder_edit_action(action : Int) -> Int = "moui_macos_dispatch_first_responder_edit_action"
+extern "C" fn macos_dispatch_first_responder_edit_action(
+  action : Int32,
+) -> Int32 = "moui_macos_dispatch_first_responder_edit_action"
 
 ///|
-extern "C" fn macos_install_application_menu_key_equivalent_monitor() -> Int = "moui_macos_install_application_menu_key_equivalent_monitor"
+extern "C" fn macos_install_application_menu_key_equivalent_monitor() -> Int32 = "moui_macos_install_application_menu_key_equivalent_monitor"
 
 ///|
 
@@ -157,7 +159,7 @@ pub fn macos_input_capabilities() -> @host.HostInputCapabilities {
 
 ///|
 pub fn macos_capability_summary(
-  services? : @host.HostServiceCapabilities = macos_service_bridge().capabilities(),
+  services~ : @host.HostServiceCapabilities = macos_service_bridge().capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,
@@ -202,14 +204,14 @@ fn macos_environment_with_accessibility_settings(
 
 ///|
 pub fn macos_service_bridge(
-  system_theme? : @core.ColorScheme = macos_system_theme(),
-  clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_macos_clipboard,
-  open_url? : (String) -> Bool = dispatch_macos_open_url,
-  file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
-  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
-  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
-  settings? : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_macos_settings,
-  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
+  system_theme~ : @core.ColorScheme = macos_system_theme(),
+  clipboard~ : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_macos_clipboard,
+  open_url~ : (String) -> Bool = dispatch_macos_open_url,
+  file_dialog~ : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
+  text_file~ : (@host.HostTextFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_text_file,
+  binary_file~ : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
+  settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_macos_settings,
+  menu~ : (Array[@core.ActionCommand]) -> Int32 = dispatch_macos_menu,
 ) -> @host.HostServiceBridge {
   @host_services_desktop.DesktopHostServices::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -282,7 +284,7 @@ fn dispatch_macos_settings(
 /// host can apply the drag band the app declares for self-drawn window chrome.
 /// Declarations made through an unwired source are simply never applied.
 pub fn app_environment(
-  window_drag? : @services.WindowDragRegionSource? = None,
+  window_drag~ : @services.WindowDragRegionSource? = None,
 ) -> @services.AppEnvironment {
   @window_services.app_environment(
     bridge=macos_service_bridge(),
@@ -302,7 +304,7 @@ pub fn application_menu_on_ready(
 ) -> () -> Unit {
   () => {
     let commands = macos_application_menu_commands(menus)
-    let dispatch = fn(action_id : Int) {
+    let dispatch = fn(action_id : Int32) {
       match commands.get(action_id - 1) {
         Some(command) => dispatch_macos_application_command(runtime, command)
         None => ()
@@ -535,7 +537,7 @@ fn macos_application_menu_bar_items(
 ///|
 fn bind_macos_menu_bar_items(
   menus : Array[@host.HostApplicationMenu],
-  dispatch : (Int) -> Unit,
+  dispatch : (Int32) -> Unit,
 ) -> Bool {
   let text = (menus.to_json() : Json).stringify()
   macos_bind_menu_bar_items(
@@ -549,7 +551,7 @@ fn bind_macos_menu_bar_items(
 ///|
 fn install_macos_application_menu_items(
   items : Array[@host.HostApplicationMenuItem],
-  dispatch : (Int) -> Unit,
+  dispatch : (Int32) -> Unit,
 ) -> Bool {
   let text = (items.to_json() : Json).stringify()
   macos_install_application_menu_items(
@@ -563,7 +565,7 @@ fn install_macos_application_menu_items(
 ///|
 fn macos_application_menu_shortcut(
   command : @core.ActionCommand,
-) -> (String, Int) {
+) -> (String, Int32) {
   match command.shortcut {
     Some(shortcut) => {
       let mut mask = 0
@@ -619,7 +621,7 @@ fn dispatch_macos_application_menu(
 }
 
 ///|
-fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int {
+fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int32 {
   macos_show_menu_bytes(@host_services_desktop.encode_menu_commands(commands))
 }
 

@@ -30,7 +30,7 @@ pub struct RapierWorld {
 
 ///|
 pub fn RapierWorld::new(
-  gravity? : @moui_3d.Vec3 = @moui_3d.Vec3::new(x=0.0, y=-9.81, z=0.0),
+  gravity~ : @moui_3d.Vec3 = @moui_3d.Vec3::new(x=0.0, y=-9.81, z=0.0),
 ) -> RapierWorld {
   {
     gravity,
@@ -164,7 +164,7 @@ pub fn RapierWorld::body_rotation(
 }
 
 ///|
-pub fn RapierWorld::step(self : RapierWorld, delta_seconds : Double) -> Int {
+pub fn RapierWorld::step(self : RapierWorld, delta_seconds : Double) -> Int32 {
   if delta_seconds <= 0.0 {
     return 0
   }

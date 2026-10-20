@@ -7,7 +7,7 @@ fn ElementNode::render_with_environment(
   placed : PlacedNode,
   focused : ElementId?,
   environment : RenderEnvironment,
-  overlay_enter? : Array[(ElementId, Double)] = [],
+  overlay_enter~ : Array[(ElementId, Double)] = [],
 ) -> RenderNode {
   let bounds = placed.frame
   // An in-flight enter fade changes the subtree's opacity every frame; the

@@ -25,10 +25,10 @@ pub extend HarmonyOSEmbeddedRuntimeBackend with @wzzc-dev/window/harmonyos.Appli
 
 ///|
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(
-  title? : String = "MoUI",
+  title~ : String = "MoUI",
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
-  auto_exit_after_frames? : Int? = None,
+  auto_exit_after_frames~ : Int32? = None,
 ) -> HarmonyOSEmbeddedRuntimeBackend {
   new_harmonyos_embedded_runtime(
     title~,
@@ -40,7 +40,7 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::new(
 
 ///|
 /// Application-builder entry for the HarmonyOS window-hosted event loop.
-pub fn entry(auto_exit_after_frames? : Int? = None) -> @runtime.PlatformEntry {
+pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry {
   @runtime.PlatformEntry::new(id="harmonyos", launch=request => {
     let runtime = request.runtime()
     let app = HarmonyOSEmbeddedRuntimeBackend::new(
@@ -59,7 +59,7 @@ fn new_harmonyos_embedded_runtime(
   title~ : String,
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> HarmonyOSSurfaceBinding,
-  auto_exit_after_frames~ : Int?,
+  auto_exit_after_frames~ : Int32?,
 ) -> HarmonyOSEmbeddedRuntimeBackend {
   {
     backend: @embedded_runtime.HostedWindowBackend::new(
@@ -76,14 +76,14 @@ fn new_harmonyos_embedded_runtime(
 ///|
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(
   self : HarmonyOSEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.frames_presented()
 }
 
 ///|
 pub fn HarmonyOSEmbeddedRuntimeBackend::surface_generation(
   self : HarmonyOSEmbeddedRuntimeBackend,
-) -> Int {
+) -> Int32 {
   self.backend.surface_generation()
 }
 
@@ -181,10 +181,10 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn harmonyos_window_hosted_pump_host_sim(
   app : HarmonyOSEmbeddedRuntimeBackend,
-  surface_handle? : UInt64 = 0xABCUL,
-  width? : Int = 320,
-  height? : Int = 640,
-  scale? : Double = 2.0,
+  surface_handle~ : UInt64 = 0xABCUL,
+  width~ : Int32 = 320,
+  height~ : Int32 = 640,
+  scale~ : Double = 2.0,
 ) -> Unit {
   @window_harmonyos.host_reset_for_test()
   let event_loop = @window_harmonyos.EventLoop::new()

@@ -8,13 +8,13 @@
 /// subsequent items until the next heading at the same or higher level.
 pub fn markdown_folded_outline(
   items : Array[@richtext.MarkdownEditorOutlineItem],
-  folded_starts : Array[Int],
+  folded_starts : Array[Int32],
 ) -> Array[@richtext.MarkdownEditorOutlineItem] {
   if folded_starts.length() == 0 {
     return items
   }
   let visible : Array[@richtext.MarkdownEditorOutlineItem] = []
-  let mut hide_until_level : Int? = None
+  let mut hide_until_level : Int32? = None
   for item in items {
     match hide_until_level {
       Some(limit) =>
@@ -43,7 +43,7 @@ pub fn markdown_folded_outline(
 ///|
 /// The indent width in points for a heading at `level` (12pt per level
 /// below the first).
-pub fn markdown_outline_indent_width(level : Int) -> Double {
+pub fn markdown_outline_indent_width(level : Int32) -> Double {
   @richtext.markdown_editor_max_int(0, level - 1).to_double() * 12.0
 }
 
@@ -73,8 +73,8 @@ pub fn markdown_outline_truncate_title(title : String) -> String {
 /// source start is at or before the caret), or -1 when no heading precedes it.
 pub fn markdown_active_outline_index(
   outline : Array[@richtext.MarkdownEditorOutlineItem],
-  caret : Int,
-) -> Int {
+  caret : Int32,
+) -> Int32 {
   let mut active = -1
   for index in 0..<outline.length() {
     if outline[index].source_start <= caret {
@@ -90,7 +90,7 @@ pub fn markdown_active_outline_index(
 pub fn markdown_outline_item_is_active(
   full_outline : Array[@richtext.MarkdownEditorOutlineItem],
   item : @richtext.MarkdownEditorOutlineItem,
-  active_index : Int,
+  active_index : Int32,
 ) -> Bool {
   if active_index < 0 || active_index >= full_outline.length() {
     false
@@ -125,9 +125,9 @@ pub fn markdown_snapshot_reading_label(
 
 ///|
 fn markdown_reading_label_parts(
-  word_count : Int,
-  line_count : Int,
-  reading_minutes : Int,
+  word_count : Int32,
+  line_count : Int32,
+  reading_minutes : Int32,
 ) -> String {
   let minutes = if reading_minutes == 0 {
     "less than 1 min"
@@ -156,7 +156,7 @@ pub fn markdown_snapshot_reading_time_short_label(
 }
 
 ///|
-fn markdown_reading_time_short_label(reading_minutes : Int) -> String {
+fn markdown_reading_time_short_label(reading_minutes : Int32) -> String {
   if reading_minutes == 0 {
     "<1 min"
   } else if reading_minutes == 1 {

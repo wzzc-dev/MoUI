@@ -1,6 +1,6 @@
 ///|
 pub(all) struct WindowId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -134,14 +134,14 @@ pub extend WindowRequestCompletion with Eq::{not_equal, equal}
 pub extend WindowRequestCompletion with ToJson::{to_json}
 
 ///|
-pub fn WindowId::new(value : Int) -> WindowId {
+pub fn WindowId::new(value : Int32) -> WindowId {
   { value, }
 }
 
 ///|
 pub fn WindowScene::new(
   scene_id~ : String,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> WindowScene {
   { scene_id, payload, }
 }
@@ -155,10 +155,10 @@ pub fn WindowScene::main() -> WindowScene {
 pub fn WindowRecord::new(
   id~ : WindowId,
   title~ : String,
-  scene? : WindowScene = WindowScene::main(),
+  scene~ : WindowScene = WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  phase? : WindowLifecyclePhase = WindowCreated,
-  primary? : Bool = false,
+  phase~ : WindowLifecyclePhase = WindowCreated,
+  primary~ : Bool = false,
 ) -> WindowRecord {
   { id, title, scene, metrics, phase, primary, }
 }
@@ -166,9 +166,9 @@ pub fn WindowRecord::new(
 ///|
 pub fn WindowOpenRequest::new(
   title~ : String,
-  scene? : WindowScene = WindowScene::main(),
+  scene~ : WindowScene = WindowScene::main(),
   metrics~ : @core.SurfaceMetrics,
-  primary? : Bool = false,
+  primary~ : Bool = false,
 ) -> WindowOpenRequest {
   { title, scene, metrics, primary, }
 }

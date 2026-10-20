@@ -64,10 +64,10 @@ fn check_transform(
 /// Drive one keystroke through the real transform chain and check it.
 fn check_fast_path(
   previous : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   input : String,
-  context? : MarkdownEditorInputContext? = None,
+  context~ : MarkdownEditorInputContext? = None,
 ) -> MarkdownEditTransaction raise Error {
   guard markdown_editor_transform_input(
       previous,

@@ -1,16 +1,16 @@
 ///|
 pub(all) struct CodeEditorSourceLine {
-  number : Int
-  start : Int
-  end : Int
+  number : Int32
+  start : Int32
+  end : Int32
   text : String
 }
 
 ///|
 pub(all) struct CodeEditorCaretPosition {
-  line : Int
-  column : Int
-  offset : Int
+  line : Int32
+  column : Int32
+  offset : Int32
 }
 
 ///|
@@ -49,7 +49,7 @@ pub fn code_editor_source_lines(source : String) -> Array[CodeEditorSourceLine] 
 ///|
 pub fn code_editor_caret_position(
   source : String,
-  offset : Int,
+  offset : Int32,
 ) -> CodeEditorCaretPosition {
   let chars = source.to_array()
   let clamped = clamp_int(offset, 0, chars.length())
@@ -75,8 +75,8 @@ pub fn code_editor_caret_position(
 pub fn code_editor_diagnostic_lines(
   source : String,
   diagnostics : Array[CodeDiagnostic],
-) -> Array[Int] {
-  let lines : Array[Int] = []
+) -> Array[Int32] {
+  let lines : Array[Int32] = []
   for diagnostic in diagnostics {
     let position = code_editor_caret_position(source, diagnostic.range.start)
     if !lines.contains(position.line) {
@@ -87,7 +87,7 @@ pub fn code_editor_diagnostic_lines(
 }
 
 ///|
-fn code_editor_text_offset(source : String, needle : String) -> Int {
+fn code_editor_text_offset(source : String, needle : String) -> Int32 {
   let source_chars = source.to_array()
   let needle_chars = needle.to_array()
   if needle_chars.is_empty() || needle_chars.length() > source_chars.length() {
@@ -108,7 +108,7 @@ fn code_editor_text_offset(source : String, needle : String) -> Int {
 }
 
 ///|
-fn code_editor_word_prefix_start(source : String, offset : Int) -> Int {
+fn code_editor_word_prefix_start(source : String, offset : Int32) -> Int32 {
   let chars = source.to_array()
   let mut start = clamp_int(offset, 0, chars.length())
   while start > 0 && code_editor_is_word_char(chars[start - 1]) {

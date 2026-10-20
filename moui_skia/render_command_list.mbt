@@ -20,10 +20,10 @@ pub fn RenderCommandList::new(pass : RenderPassDescriptor) -> RenderCommandList 
 ///|
 pub fn RenderCommandList::for_target(
   target : SurfaceTargetDescriptor,
-  bounds? : IRect? = None,
-  load_op? : RenderPassLoadOp = LoadExisting,
-  clear_color? : Color? = None,
-  store_op? : RenderPassStoreOp? = None,
+  bounds~ : IRect? = None,
+  load_op~ : RenderPassLoadOp = LoadExisting,
+  clear_color~ : Color? = None,
+  store_op~ : RenderPassStoreOp? = None,
 ) -> RenderCommandList {
   let commands = RenderCommandList::new(
     RenderPassDescriptor::for_target(
@@ -41,7 +41,7 @@ pub fn RenderCommandList::for_target(
 }
 
 ///|
-pub fn RenderCommandList::length(self : RenderCommandList) -> Int {
+pub fn RenderCommandList::length(self : RenderCommandList) -> Int32 {
   self.commands.length()
 }
 
@@ -75,11 +75,11 @@ pub fn RenderCommandList::restore(
 ///|
 pub fn RenderCommandList::save_layer(
   self : RenderCommandList,
-  bounds? : Rect? = None,
-  paint? : Paint = Paint::new(),
-  color_filter? : ColorFilterDescriptor? = None,
-  image_filter? : ImageFilterDescriptor? = None,
-  mask_filter? : MaskFilterDescriptor? = None,
+  bounds~ : Rect? = None,
+  paint~ : Paint = Paint::new(),
+  color_filter~ : ColorFilterDescriptor? = None,
+  image_filter~ : ImageFilterDescriptor? = None,
+  mask_filter~ : MaskFilterDescriptor? = None,
 ) -> RenderCommandList {
   self.append(
     RenderCommand::save_layer(
@@ -151,7 +151,7 @@ pub fn RenderCommandList::clear(
 pub fn RenderCommandList::draw_color(
   self : RenderCommandList,
   color : Color,
-  blend_mode? : BlendMode = SrcOver,
+  blend_mode~ : BlendMode = SrcOver,
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_color(color, blend_mode~))
 }
@@ -159,7 +159,7 @@ pub fn RenderCommandList::draw_color(
 ///|
 pub fn RenderCommandList::draw_paint(
   self : RenderCommandList,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_paint(paint))
 }
@@ -168,7 +168,7 @@ pub fn RenderCommandList::draw_paint(
 pub fn RenderCommandList::draw_paint_shader(
   self : RenderCommandList,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_paint_shader(shader, paint~))
 }
@@ -177,7 +177,7 @@ pub fn RenderCommandList::draw_paint_shader(
 pub fn RenderCommandList::clip_rect(
   self : RenderCommandList,
   rect : Rect,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommandList {
   self.append(RenderCommand::clip_rect(rect, op~))
 }
@@ -186,7 +186,7 @@ pub fn RenderCommandList::clip_rect(
 pub fn RenderCommandList::clip_rrect(
   self : RenderCommandList,
   rrect : RRect,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommandList {
   self.append(RenderCommand::clip_rrect(rrect, op~))
 }
@@ -195,7 +195,7 @@ pub fn RenderCommandList::clip_rrect(
 pub fn RenderCommandList::clip_path(
   self : RenderCommandList,
   path : Path,
-  op? : ClipOp = Intersect,
+  op~ : ClipOp = Intersect,
 ) -> RenderCommandList {
   self.append(RenderCommand::clip_path(path, op~))
 }
@@ -204,7 +204,7 @@ pub fn RenderCommandList::clip_path(
 pub fn RenderCommandList::draw_point(
   self : RenderCommandList,
   point : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_point(point, paint~))
 }
@@ -214,7 +214,7 @@ pub fn RenderCommandList::draw_line(
   self : RenderCommandList,
   start : Point,
   end : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_line(start, end, paint~))
 }
@@ -223,8 +223,8 @@ pub fn RenderCommandList::draw_line(
 pub fn RenderCommandList::draw_points(
   self : RenderCommandList,
   points : Array[Point],
-  paint? : Paint = Paint::new(),
-  mode? : PointMode = Points,
+  paint~ : Paint = Paint::new(),
+  mode~ : PointMode = Points,
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_points(points, paint~, mode~))
 }
@@ -233,7 +233,7 @@ pub fn RenderCommandList::draw_points(
 pub fn RenderCommandList::draw_rect(
   self : RenderCommandList,
   rect : Rect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_rect(rect, paint~))
 }
@@ -242,7 +242,7 @@ pub fn RenderCommandList::draw_rect(
 pub fn RenderCommandList::draw_oval(
   self : RenderCommandList,
   oval : Rect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_oval(oval, paint~))
 }
@@ -252,7 +252,7 @@ pub fn RenderCommandList::draw_circle(
   self : RenderCommandList,
   center : Point,
   radius : Float,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_circle(center, radius, paint~))
 }
@@ -264,7 +264,7 @@ pub fn RenderCommandList::draw_arc(
   start_angle : Float,
   sweep_angle : Float,
   use_center : Bool,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(
     RenderCommand::draw_arc(oval, start_angle, sweep_angle, use_center, paint~),
@@ -277,7 +277,7 @@ pub fn RenderCommandList::draw_round_rect(
   rect : Rect,
   rx : Float,
   ry : Float,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_round_rect(rect, rx, ry, paint~))
 }
@@ -286,7 +286,7 @@ pub fn RenderCommandList::draw_round_rect(
 pub fn RenderCommandList::draw_rrect(
   self : RenderCommandList,
   rrect : RRect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_rrect(rrect, paint~))
 }
@@ -296,7 +296,7 @@ pub fn RenderCommandList::draw_drrect(
   self : RenderCommandList,
   outer : RRect,
   inner : RRect,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_drrect(outer, inner, paint~))
 }
@@ -306,7 +306,7 @@ pub fn RenderCommandList::draw_rect_shader(
   self : RenderCommandList,
   rect : Rect,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_rect_shader(rect, shader, paint~))
 }
@@ -318,7 +318,7 @@ pub fn RenderCommandList::draw_round_rect_shader(
   rx : Float,
   ry : Float,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(
     RenderCommand::draw_round_rect_shader(rect, rx, ry, shader, paint~),
@@ -329,7 +329,7 @@ pub fn RenderCommandList::draw_round_rect_shader(
 pub fn RenderCommandList::draw_path(
   self : RenderCommandList,
   path : Path,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_path(path, paint~))
 }
@@ -339,7 +339,7 @@ pub fn RenderCommandList::draw_path_shader(
   self : RenderCommandList,
   path : Path,
   shader : ShaderDescriptor,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_path_shader(path, shader, paint~))
 }
@@ -359,8 +359,8 @@ pub fn RenderCommandList::draw_image_rect(
   image : ImageDescriptor,
   src : Rect,
   dst : Rect,
-  paint? : Paint = Paint::new(),
-  sampling? : SamplingOptions = SamplingOptions::new(),
+  paint~ : Paint = Paint::new(),
+  sampling~ : SamplingOptions = SamplingOptions::new(),
 ) -> RenderCommandList {
   self.append(
     RenderCommand::draw_image_rect(image, src, dst, paint~, sampling~),
@@ -372,7 +372,7 @@ pub fn RenderCommandList::draw_text_utf8(
   self : RenderCommandList,
   text : Bytes,
   origin : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(RenderCommand::draw_text_utf8(text, origin, paint~))
 }
@@ -382,9 +382,9 @@ pub fn RenderCommandList::draw_text_run_utf8(
   self : RenderCommandList,
   text : Bytes,
   origin : Point,
-  descriptor? : TextRunDescriptor? = None,
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  paint? : Paint = Paint::new(),
+  descriptor~ : TextRunDescriptor? = None,
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(
     RenderCommand::draw_text_run_utf8(
@@ -403,7 +403,7 @@ pub fn RenderCommandList::draw_shaped_glyph_run_utf8(
   text : Bytes,
   glyph_run : ShapedGlyphRunDescriptor,
   origin : Point,
-  paint? : Paint = Paint::new(),
+  paint~ : Paint = Paint::new(),
 ) -> RenderCommandList {
   self.append(
     RenderCommand::draw_shaped_glyph_run_utf8(text, glyph_run, origin, paint~),

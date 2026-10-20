@@ -2,15 +2,15 @@
 pub struct LinuxATSPIBinding {
   priv published_nodes : Map[@core.SemanticsNodeId, Unit]
   priv dispatch : (@runtime.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult
-  priv mut action_dispatch_count : Int
+  priv mut action_dispatch_count : Int32
   priv mut disposed : Bool
 }
 
 ///|
 pub(all) struct LinuxATSPIBindingDiagnostics {
   native_binding_ready : Bool
-  published_node_count : Int
-  action_dispatch_count : Int
+  published_node_count : Int32
+  action_dispatch_count : Int32
   disposed : Bool
 } derive(Eq, Debug, ToJson)
 

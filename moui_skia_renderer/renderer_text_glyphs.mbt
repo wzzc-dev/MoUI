@@ -2,7 +2,7 @@
 priv struct SkiaGlyphRun {
   glyphs : Array[@skia_native.GlyphId]
   positions : Array[@moui_skia.Point]
-  clusters : Array[Int]
+  clusters : Array[Int32]
   width : Double
 }
 
@@ -76,7 +76,7 @@ fn skia_glyph_run_has_visible_glyphs(run : SkiaGlyphRun) -> Bool {
 }
 
 ///|
-fn skia_glyph_run_missing_glyph_count(run : SkiaGlyphRun) -> Int {
+fn skia_glyph_run_missing_glyph_count(run : SkiaGlyphRun) -> Int32 {
   let mut count = 0
   for glyph in run.glyphs {
     if glyph.to_int() == 0 {
@@ -217,49 +217,49 @@ fn skia_text_contains_emoji_hint(text : String) -> Bool {
 }
 
 ///|
-fn skia_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_hebrew_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0590 && codepoint <= 0x05FF
 }
 
 ///|
-fn skia_codepoint_is_arabic_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_arabic_script(codepoint : Int32) -> Bool {
   (codepoint >= 0x0600 && codepoint <= 0x08FF) ||
   (codepoint >= 0xFB50 && codepoint <= 0xFDFF) ||
   (codepoint >= 0xFE70 && codepoint <= 0xFEFF)
 }
 
 ///|
-fn skia_codepoint_is_devanagari_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_devanagari_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0900 && codepoint <= 0x097F
 }
 
 ///|
-fn skia_codepoint_is_thai_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_thai_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0E00 && codepoint <= 0x0E7F
 }
 
 ///|
-fn skia_codepoint_is_lao_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_lao_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0E80 && codepoint <= 0x0EFF
 }
 
 ///|
-fn skia_codepoint_is_sinhala_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_sinhala_script(codepoint : Int32) -> Bool {
   codepoint >= 0x0D80 && codepoint <= 0x0DFF
 }
 
 ///|
-fn skia_codepoint_is_khmer_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_khmer_script(codepoint : Int32) -> Bool {
   codepoint >= 0x1780 && codepoint <= 0x17FF
 }
 
 ///|
-fn skia_codepoint_is_myanmar_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_myanmar_script(codepoint : Int32) -> Bool {
   codepoint >= 0x1000 && codepoint <= 0x109F
 }
 
 ///|
-fn skia_codepoint_is_latin_script(codepoint : Int) -> Bool {
+fn skia_codepoint_is_latin_script(codepoint : Int32) -> Bool {
   (codepoint >= 0x0041 && codepoint <= 0x005A) ||
   (codepoint >= 0x0061 && codepoint <= 0x007A) ||
   (codepoint >= 0x00C0 && codepoint <= 0x024F) ||
@@ -363,7 +363,7 @@ priv struct SkiaFallbackMemo {
 /// while a large document opened. The request count is small (one per script
 /// and style in play), so comparing against a bounded list is both correct and
 /// far cheaper.
-let skia_fallback_memo : Ref[Map[Int, Array[SkiaFallbackMemo]]] = Ref(Map([]))
+let skia_fallback_memo : Ref[Map[Int32, Array[SkiaFallbackMemo]]] = Ref(Map([]))
 
 ///|
 /// Bucketed by the representative codepoint, which is what actually varies
@@ -481,7 +481,7 @@ fn skia_push_language_tag(tags : Array[String], tag : String) -> Unit {
 }
 
 ///|
-fn skia_script_language_tag_for_codepoint(codepoint : Int) -> String? {
+fn skia_script_language_tag_for_codepoint(codepoint : Int32) -> String? {
   if codepoint <= 0 {
     None
   } else if @render_common.codepoint_is_emoji_hint(codepoint) {
@@ -595,7 +595,7 @@ fn skia_fangsong_families() -> Array[String] {
 }
 
 ///|
-fn skia_font_slant(style : @core.FontStyle) -> Int {
+fn skia_font_slant(style : @core.FontStyle) -> Int32 {
   match style {
     Normal => 0
     Italic => 1

@@ -18,8 +18,8 @@ fn append_text_field_commands(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   theme~ : @core.Theme,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
+  bottom_border_only~ : Bool = false,
+  inner_focus_border~ : @core.Color? = None,
 ) -> Unit {
   ignore(size)
   let border = if focused { focused_border } else { border }
@@ -223,7 +223,7 @@ fn append_inner_focus_border(
 /// 已经按空数组防过)。`clamp_int(_, 0, len - 1)` 看着像防越界,对空数组却正好
 /// 造出一个合法下标 0,后面那次按下标取就是 panic —— 真终端里点一下文本框
 /// 就整个应用崩掉,走的是这条。没有几何可依据时退回盒起点。
-fn caret_offset(caret_positions : Array[Double], index : Int) -> Double {
+fn caret_offset(caret_positions : Array[Double], index : Int32) -> Double {
   let length = caret_positions.length()
   if length == 0 {
     0.0

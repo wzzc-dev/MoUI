@@ -12,7 +12,7 @@ pub(all) struct ExcelModel {
   editing : Bool
   edit_value : String
   edit_original_value : String
-  edit_undo_depth : Int
+  edit_undo_depth : Int32
   edit_redo_stack : Array[@sheet.UndoOp]
   file_name : String
   status : String
@@ -21,36 +21,36 @@ pub(all) struct ExcelModel {
   cell_ref_input : String
   heat_map : Bool
   autocomplete_suggestions : Array[String]
-  autocomplete_index : Int
+  autocomplete_index : Int32
   last_clipboard_text : String
   last_clipboard_from_app : Bool
 }
 
 ///|
 pub(all) enum ExcelMsg {
-  SheetSelected(Int)
-  CellSelected(Int, Int)
-  RowSelected(Int)
-  ColumnSelected(Int)
+  SheetSelected(Int32)
+  CellSelected(Int32, Int32)
+  RowSelected(Int32)
+  ColumnSelected(Int32)
   SelectAllCells
   CellEditStarted
   CellRefChanged(String)
   CellValueChanged(String)
-  CellRawChanged(Int, Int, String)
+  CellRawChanged(Int32, Int32, String)
   CellEditCommitted
-  CellEditCommittedAndNavigate(Int, Int)
+  CellEditCommittedAndNavigate(Int32, Int32)
   CellEditCancelled
   NewWorkbook
   LoadDemo
   FileOpenRequested
   FileSaveRequested
   ServiceCompleted(ExcelServiceCompletion)
-  CellNavigate(Int, Int)
-  CellNavigateTo(Int, Int)
-  CellNavigateDataEdge(Int, Int)
-  SelectionNavigate(Int, Int)
-  SelectionNavigateTo(Int, Int)
-  SelectionNavigateDataEdge(Int, Int)
+  CellNavigate(Int32, Int32)
+  CellNavigateTo(Int32, Int32)
+  CellNavigateDataEdge(Int32, Int32)
+  SelectionNavigate(Int32, Int32)
+  SelectionNavigateTo(Int32, Int32)
+  SelectionNavigateDataEdge(Int32, Int32)
   CopyCells
   CutCells
   PasteCells
@@ -74,8 +74,8 @@ pub(all) enum ExcelMsg {
   SetCellFormat(@cell.NumFormat)
   ClearCell
   AddSheet
-  DeleteSheet(Int)
-  AutocompleteSelect(Int)
+  DeleteSheet(Int32)
+  AutocompleteSelect(Int32)
   AutocompleteNext
   AutocompletePrev
   HideAutocomplete
@@ -224,8 +224,8 @@ pub fn ExcelModel::sheet_names(self : ExcelModel) -> Array[String] {
 ///|
 pub fn ExcelModel::select_cell(
   self : ExcelModel,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.select_cell(row, col)
   let selected = workbook.selected_cell()
@@ -244,7 +244,7 @@ pub fn ExcelModel::select_cell(
 }
 
 ///|
-pub fn ExcelModel::select_row(self : ExcelModel, row : Int) -> ExcelModel {
+pub fn ExcelModel::select_row(self : ExcelModel, row : Int32) -> ExcelModel {
   let sheet = self.active_sheet()
   let workbook = self.workbook.select_range(row, 0, row, sheet.col_count - 1)
   let selected = workbook.selected_cell()
@@ -263,7 +263,7 @@ pub fn ExcelModel::select_row(self : ExcelModel, row : Int) -> ExcelModel {
 }
 
 ///|
-pub fn ExcelModel::select_column(self : ExcelModel, col : Int) -> ExcelModel {
+pub fn ExcelModel::select_column(self : ExcelModel, col : Int32) -> ExcelModel {
   let sheet = self.active_sheet()
   let workbook = self.workbook.select_range(0, col, sheet.row_count - 1, col)
   let selected = workbook.selected_cell()
@@ -306,7 +306,7 @@ pub fn ExcelModel::select_all_cells(self : ExcelModel) -> ExcelModel {
 }
 
 ///|
-pub fn ExcelModel::switch_sheet(self : ExcelModel, index : Int) -> ExcelModel {
+pub fn ExcelModel::switch_sheet(self : ExcelModel, index : Int32) -> ExcelModel {
   let workbook = self.workbook.switch_sheet(index)
   {
     ..self,
@@ -362,8 +362,8 @@ pub fn ExcelModel::commit_edit(self : ExcelModel) -> ExcelModel {
 ///|
 pub fn ExcelModel::commit_edit_and_navigate(
   self : ExcelModel,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> ExcelModel {
   self.commit_edit().navigate(drow, dcol)
 }
@@ -371,8 +371,8 @@ pub fn ExcelModel::commit_edit_and_navigate(
 ///|
 pub fn ExcelModel::set_cell_raw(
   self : ExcelModel,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
   value : String,
 ) -> ExcelModel {
   let selected_workbook = self.workbook.select_cell(row, col)
@@ -471,8 +471,8 @@ pub fn ExcelModel::cancel_edit(self : ExcelModel) -> ExcelModel {
 ///|
 pub fn ExcelModel::navigate(
   self : ExcelModel,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.navigate(drow, dcol)
   let selected = workbook.selected_cell()
@@ -493,8 +493,8 @@ pub fn ExcelModel::navigate(
 ///|
 pub fn ExcelModel::navigate_to_data_edge(
   self : ExcelModel,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.navigate_to_data_edge(drow, dcol)
   let selected = workbook.selected_cell()
@@ -515,8 +515,8 @@ pub fn ExcelModel::navigate_to_data_edge(
 ///|
 pub fn ExcelModel::extend_selection(
   self : ExcelModel,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.extend_selection(drow, dcol)
   let selected = workbook.selected_cell()
@@ -538,8 +538,8 @@ pub fn ExcelModel::extend_selection(
 ///|
 pub fn ExcelModel::extend_selection_to(
   self : ExcelModel,
-  row : Int,
-  col : Int,
+  row : Int32,
+  col : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.extend_selection_to(row, col)
   let selected = workbook.selected_cell()
@@ -561,8 +561,8 @@ pub fn ExcelModel::extend_selection_to(
 ///|
 pub fn ExcelModel::extend_selection_to_data_edge(
   self : ExcelModel,
-  drow : Int,
-  dcol : Int,
+  drow : Int32,
+  dcol : Int32,
 ) -> ExcelModel {
   let workbook = self.workbook.extend_selection_to_data_edge(drow, dcol)
   let selected = workbook.selected_cell()
@@ -647,7 +647,7 @@ pub fn ExcelModel::update_autocomplete(
 ///|
 pub fn ExcelModel::select_autocomplete(
   self : ExcelModel,
-  index : Int,
+  index : Int32,
 ) -> ExcelModel {
   if index >= 0 && index < self.autocomplete_suggestions.length() {
     let value = "=" + self.autocomplete_suggestions[index] + "("

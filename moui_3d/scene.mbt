@@ -1,6 +1,6 @@
 ///|
 pub(all) struct MeshId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -14,7 +14,7 @@ pub extend MeshId with ToJson::{to_json}
 
 ///|
 pub(all) struct MaterialId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -28,7 +28,7 @@ pub extend MaterialId with ToJson::{to_json}
 
 ///|
 pub(all) struct TextureId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -42,7 +42,7 @@ pub extend TextureId with ToJson::{to_json}
 
 ///|
 pub(all) struct SamplerId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -56,7 +56,7 @@ pub extend SamplerId with ToJson::{to_json}
 
 ///|
 pub(all) struct NodeId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -69,52 +69,52 @@ pub extend NodeId with Eq::{not_equal, equal}
 pub extend NodeId with ToJson::{to_json}
 
 ///|
-pub fn MeshId::new(value : Int) -> MeshId {
+pub fn MeshId::new(value : Int32) -> MeshId {
   { value, }
 }
 
 ///|
-pub fn MaterialId::new(value : Int) -> MaterialId {
+pub fn MaterialId::new(value : Int32) -> MaterialId {
   { value, }
 }
 
 ///|
-pub fn TextureId::new(value : Int) -> TextureId {
+pub fn TextureId::new(value : Int32) -> TextureId {
   { value, }
 }
 
 ///|
-pub fn SamplerId::new(value : Int) -> SamplerId {
+pub fn SamplerId::new(value : Int32) -> SamplerId {
   { value, }
 }
 
 ///|
-pub fn NodeId::new(value : Int) -> NodeId {
+pub fn NodeId::new(value : Int32) -> NodeId {
   { value, }
 }
 
 ///|
-pub fn MeshId::value(self : MeshId) -> Int {
+pub fn MeshId::value(self : MeshId) -> Int32 {
   self.value
 }
 
 ///|
-pub fn MaterialId::value(self : MaterialId) -> Int {
+pub fn MaterialId::value(self : MaterialId) -> Int32 {
   self.value
 }
 
 ///|
-pub fn TextureId::value(self : TextureId) -> Int {
+pub fn TextureId::value(self : TextureId) -> Int32 {
   self.value
 }
 
 ///|
-pub fn SamplerId::value(self : SamplerId) -> Int {
+pub fn SamplerId::value(self : SamplerId) -> Int32 {
   self.value
 }
 
 ///|
-pub fn NodeId::value(self : NodeId) -> Int {
+pub fn NodeId::value(self : NodeId) -> Int32 {
   self.value
 }
 
@@ -123,7 +123,7 @@ pub(all) struct Vertex {
   position : Vec3
   normal : Vec3
   texcoord : Vec2
-  joints : (Int, Int, Int, Int)
+  joints : (Int32, Int32, Int32, Int32)
   weights : Vec4
 } derive(Eq, Debug, ToJson)
 
@@ -139,10 +139,10 @@ pub extend Vertex with ToJson::{to_json}
 ///|
 pub fn Vertex::new(
   position~ : Vec3,
-  normal? : Vec3 = Vec3::new(x=0.0, y=1.0, z=0.0),
-  texcoord? : Vec2 = Vec2::zero(),
-  joints? : (Int, Int, Int, Int) = (0, 0, 0, 0),
-  weights? : Vec4 = Vec4::zero(),
+  normal~ : Vec3 = Vec3::new(x=0.0, y=1.0, z=0.0),
+  texcoord~ : Vec2 = Vec2::zero(),
+  joints~ : (Int32, Int32, Int32, Int32) = (0, 0, 0, 0),
+  weights~ : Vec4 = Vec4::zero(),
 ) -> Vertex {
   { position, normal, texcoord, joints, weights, }
 }
@@ -163,7 +163,7 @@ pub fn Vertex::texcoord(self : Vertex) -> Vec2 {
 }
 
 ///|
-pub fn Vertex::joints(self : Vertex) -> (Int, Int, Int, Int) {
+pub fn Vertex::joints(self : Vertex) -> (Int32, Int32, Int32, Int32) {
   self.joints
 }
 
@@ -235,10 +235,10 @@ pub extend Sampler with ToJson::{to_json}
 
 ///|
 pub fn Sampler::new(
-  mag_filter? : SamplerFilter = Linear,
-  min_filter? : SamplerFilter = LinearMipmapLinear,
-  wrap_s? : SamplerWrap = Repeat,
-  wrap_t? : SamplerWrap = Repeat,
+  mag_filter~ : SamplerFilter = Linear,
+  min_filter~ : SamplerFilter = LinearMipmapLinear,
+  wrap_s~ : SamplerWrap = Repeat,
+  wrap_t~ : SamplerWrap = Repeat,
 ) -> Sampler {
   { mag_filter, min_filter, wrap_s, wrap_t, }
 }
@@ -276,8 +276,8 @@ pub extend Texture with Debug::{to_repr}
 ///|
 pub fn Texture::uri(
   uri : String,
-  mime_type? : String? = None,
-  sampler? : SamplerId? = None,
+  mime_type~ : String? = None,
+  sampler~ : SamplerId? = None,
 ) -> Texture {
   { source: Uri(uri), mime_type, sampler, }
 }
@@ -285,8 +285,8 @@ pub fn Texture::uri(
 ///|
 pub fn Texture::embedded(
   bytes : Bytes,
-  mime_type? : String? = None,
-  sampler? : SamplerId? = None,
+  mime_type~ : String? = None,
+  sampler~ : SamplerId? = None,
 ) -> Texture {
   { source: Embedded(bytes), mime_type, sampler, }
 }
@@ -362,7 +362,7 @@ pub extend Camera with ToJson::{to_json}
 
 ///|
 pub fn Camera::new(
-  name? : String = "",
+  name~ : String = "",
   projection~ : CameraProjection,
 ) -> Camera {
   { name, projection, }
@@ -395,7 +395,7 @@ pub extend SceneDefinition with ToJson::{to_json}
 
 ///|
 pub fn SceneDefinition::new(
-  name? : String = "",
+  name~ : String = "",
   roots~ : Array[NodeId],
 ) -> SceneDefinition {
   { name, roots: roots.copy(), }
@@ -429,9 +429,9 @@ pub extend VertexDelta with ToJson::{to_json}
 
 ///|
 pub fn VertexDelta::new(
-  position? : Vec3 = Vec3::zero(),
-  normal? : Vec3 = Vec3::zero(),
-  tangent? : Vec3 = Vec3::zero(),
+  position~ : Vec3 = Vec3::zero(),
+  normal~ : Vec3 = Vec3::zero(),
+  tangent~ : Vec3 = Vec3::zero(),
 ) -> VertexDelta {
   { position, normal, tangent, }
 }
@@ -464,10 +464,10 @@ pub extend Skin with Debug::{to_repr}
 
 ///|
 pub fn Skin::new(
-  name? : String = "",
+  name~ : String = "",
   joints~ : Array[NodeId],
-  inverse_bind_matrices? : Array[Mat4] = [],
-  skeleton? : NodeId? = None,
+  inverse_bind_matrices~ : Array[Mat4] = [],
+  skeleton~ : NodeId? = None,
 ) -> Skin {
   {
     name,
@@ -515,17 +515,17 @@ pub extend AlphaMode with ToJson::{to_json}
 
 ///|
 pub fn Material::pbr(
-  base_color? : Vec4 = Vec4::new(x=1.0, y=1.0, z=1.0, w=1.0),
-  metallic? : Double = 0.0,
-  roughness? : Double = 1.0,
-  base_color_texture? : TextureId? = None,
-  normal_texture? : TextureId? = None,
-  occlusion_texture? : TextureId? = None,
-  emissive_texture? : TextureId? = None,
-  emissive_factor? : Vec3 = Vec3::zero(),
-  alpha_mode? : AlphaMode = Opaque,
-  alpha_cutoff? : Double = 0.5,
-  double_sided? : Bool = false,
+  base_color~ : Vec4 = Vec4::new(x=1.0, y=1.0, z=1.0, w=1.0),
+  metallic~ : Double = 0.0,
+  roughness~ : Double = 1.0,
+  base_color_texture~ : TextureId? = None,
+  normal_texture~ : TextureId? = None,
+  occlusion_texture~ : TextureId? = None,
+  emissive_texture~ : TextureId? = None,
+  emissive_factor~ : Vec3 = Vec3::zero(),
+  alpha_mode~ : AlphaMode = Opaque,
+  alpha_cutoff~ : Double = 0.5,
+  double_sided~ : Bool = false,
 ) -> Material {
   {
     base_color,
@@ -600,7 +600,7 @@ pub fn Material::double_sided(self : Material) -> Bool {
 ///|
 pub(all) struct Primitive {
   vertices : Array[Vertex]
-  indices : Array[Int]
+  indices : Array[Int32]
   material : MaterialId?
   bounds : Aabb
   morph_targets : Array[Array[VertexDelta]]
@@ -612,9 +612,9 @@ pub extend Primitive with Debug::{to_repr}
 ///|
 pub fn Primitive::new(
   vertices~ : Array[Vertex],
-  indices~ : Array[Int],
-  material? : MaterialId? = None,
-  morph_targets? : Array[Array[VertexDelta]] = [],
+  indices~ : Array[Int32],
+  material~ : MaterialId? = None,
+  morph_targets~ : Array[Array[VertexDelta]] = [],
 ) -> Primitive {
   let points = vertices.map(vertex => vertex.position)
   {
@@ -632,7 +632,7 @@ pub fn Primitive::vertices(self : Primitive) -> Array[Vertex] {
 }
 
 ///|
-pub fn Primitive::indices(self : Primitive) -> Array[Int] {
+pub fn Primitive::indices(self : Primitive) -> Array[Int32] {
   self.indices.copy()
 }
 
@@ -664,9 +664,9 @@ pub extend Mesh with Debug::{to_repr}
 
 ///|
 pub fn Mesh::new(
-  name? : String = "",
+  name~ : String = "",
   primitives~ : Array[Primitive],
-  weights? : Array[Double] = [],
+  weights~ : Array[Double] = [],
 ) -> Mesh {
   let mut bounds = Aabb::empty()
   for primitive in primitives {
@@ -702,8 +702,8 @@ pub(all) struct Node {
   children : Array[NodeId]
   local_transform : Mat4
   mesh : MeshId?
-  camera : Int?
-  skin : Int?
+  camera : Int32?
+  skin : Int32?
   weights : Array[Double]?
 } derive(Debug)
 
@@ -712,13 +712,13 @@ pub extend Node with Debug::{to_repr}
 
 ///|
 pub fn Node::new(
-  name? : String = "",
-  parent? : NodeId? = None,
-  local_transform? : Mat4 = Mat4::identity(),
-  mesh? : MeshId? = None,
-  camera? : Int? = None,
-  skin? : Int? = None,
-  weights? : Array[Double]? = None,
+  name~ : String = "",
+  parent~ : NodeId? = None,
+  local_transform~ : Mat4 = Mat4::identity(),
+  mesh~ : MeshId? = None,
+  camera~ : Int32? = None,
+  skin~ : Int32? = None,
+  weights~ : Array[Double]? = None,
 ) -> Node {
   { name, parent, children: [], local_transform, mesh, camera, skin, weights, }
 }
@@ -756,12 +756,12 @@ pub fn Node::mesh(self : Node) -> MeshId? {
 }
 
 ///|
-pub fn Node::camera(self : Node) -> Int? {
+pub fn Node::camera(self : Node) -> Int32? {
   self.camera
 }
 
 ///|
-pub fn Node::skin(self : Node) -> Int? {
+pub fn Node::skin(self : Node) -> Int32? {
   self.skin
 }
 
@@ -779,7 +779,7 @@ pub fn Node::with_child(self : Node, child : NodeId) -> Node {
 ///|
 pub(all) struct PickHit {
   node : NodeId
-  primitive_index : Int
+  primitive_index : Int32
   distance : Double
   position : Vec3
 } derive(Eq, Debug, ToJson)
@@ -799,7 +799,7 @@ pub fn PickHit::node(self : PickHit) -> NodeId {
 }
 
 ///|
-pub fn PickHit::primitive_index(self : PickHit) -> Int {
+pub fn PickHit::primitive_index(self : PickHit) -> Int32 {
   self.primitive_index
 }
 
@@ -822,7 +822,7 @@ pub(all) struct Scene {
   cameras : Array[Camera]
   definitions : Array[SceneDefinition]
   skins : Array[Skin]
-  mut default_scene : Int?
+  mut default_scene : Int32?
   nodes : Array[Node]
   animations : Array[AnimationClip]
 } derive(Debug)
@@ -976,7 +976,7 @@ pub fn Scene::animations(self : Scene) -> Array[AnimationClip] {
 }
 
 ///|
-pub fn Scene::add_animation(self : Scene, animation : AnimationClip) -> Int {
+pub fn Scene::add_animation(self : Scene, animation : AnimationClip) -> Int32 {
   let index = self.animations.length()
   self.animations.push(animation)
   index
@@ -1021,7 +1021,7 @@ pub fn Scene::cameras(self : Scene) -> Array[Camera] {
 }
 
 ///|
-pub fn Scene::add_camera(self : Scene, camera : Camera) -> Int {
+pub fn Scene::add_camera(self : Scene, camera : Camera) -> Int32 {
   let index = self.cameras.length()
   self.cameras.push(camera)
   index
@@ -1036,7 +1036,7 @@ pub fn Scene::scene_definitions(self : Scene) -> Array[SceneDefinition] {
 pub fn Scene::add_scene_definition(
   self : Scene,
   definition : SceneDefinition,
-) -> Int {
+) -> Int32 {
   let index = self.definitions.length()
   self.definitions.push(definition)
   index
@@ -1048,19 +1048,19 @@ pub fn Scene::skins(self : Scene) -> Array[Skin] {
 }
 
 ///|
-pub fn Scene::add_skin(self : Scene, skin : Skin) -> Int {
+pub fn Scene::add_skin(self : Scene, skin : Skin) -> Int32 {
   let index = self.skins.length()
   self.skins.push(skin)
   index
 }
 
 ///|
-pub fn Scene::default_scene(self : Scene) -> Int? {
+pub fn Scene::default_scene(self : Scene) -> Int32? {
   self.default_scene
 }
 
 ///|
-pub fn Scene::set_default_scene(self : Scene, index : Int?) -> Unit {
+pub fn Scene::set_default_scene(self : Scene, index : Int32?) -> Unit {
   self.default_scene = index
 }
 

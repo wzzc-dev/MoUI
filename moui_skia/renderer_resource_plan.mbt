@@ -32,9 +32,9 @@ fn renderer_resource_plan_unique_descriptors(
 pub(all) struct RendererResourcePlan {
   descriptors : Array[RendererResourceDescriptor]
   byte_size : Int64
-  cacheable_count : Int
-  uncacheable_count : Int
-  gpu_backed_count : Int
+  cacheable_count : Int32
+  uncacheable_count : Int32
+  gpu_backed_count : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -78,7 +78,7 @@ pub fn RendererResourcePlan::empty() -> RendererResourcePlan {
 }
 
 ///|
-pub fn RendererResourcePlan::length(self : RendererResourcePlan) -> Int {
+pub fn RendererResourcePlan::length(self : RendererResourcePlan) -> Int32 {
   self.descriptors.length()
 }
 
@@ -208,7 +208,7 @@ pub fn RendererResourcePlan::descriptors_of_kind(
 pub fn RendererResourcePlan::count_kind(
   self : RendererResourcePlan,
   kind : RendererResourceKind,
-) -> Int {
+) -> Int32 {
   self.descriptors_of_kind(kind).length()
 }
 

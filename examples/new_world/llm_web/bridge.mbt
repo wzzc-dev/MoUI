@@ -19,68 +19,68 @@
 
 ///|
 extern "wasm" fn host_llm_submit(
-  request_id : Int,
-  endpoint_id : Int,
-  key_id : Int,
-  body_id : Int,
+  request_id : Int32,
+  endpoint_id : Int32,
+  key_id : Int32,
+  body_id : Int32,
 ) -> Unit = "new_world_host" "llm_submit"
 
 ///|
-extern "wasm" fn host_fs_pick(request_id : Int) -> Unit = "new_world_host" "fs_pick"
+extern "wasm" fn host_fs_pick(request_id : Int32) -> Unit = "new_world_host" "fs_pick"
 
 ///|
-extern "wasm" fn host_fs_list(request_id : Int) -> Unit = "new_world_host" "fs_list"
+extern "wasm" fn host_fs_list(request_id : Int32) -> Unit = "new_world_host" "fs_list"
 
 ///|
-extern "wasm" fn host_fs_read(request_id : Int, folder_id : Int) -> Unit = "new_world_host" "fs_read"
+extern "wasm" fn host_fs_read(request_id : Int32, folder_id : Int32) -> Unit = "new_world_host" "fs_read"
 
 ///|
 extern "wasm" fn host_fs_write(
-  request_id : Int,
-  folder_id : Int,
-  manifest_id : Int,
+  request_id : Int32,
+  folder_id : Int32,
+  manifest_id : Int32,
 ) -> Unit = "new_world_host" "fs_write"
 
 ///|
-extern "wasm" fn host_fs_config_read(request_id : Int) -> Unit = "new_world_host" "fs_config_read"
+extern "wasm" fn host_fs_config_read(request_id : Int32) -> Unit = "new_world_host" "fs_config_read"
 
 ///|
 extern "wasm" fn host_fs_config_write(
-  request_id : Int,
-  content_id : Int,
+  request_id : Int32,
+  content_id : Int32,
 ) -> Unit = "new_world_host" "fs_config_write"
 
 ///|
 extern "wasm" fn host_fs_export_world(
-  request_id : Int,
-  folder_id : Int,
-  manifest_id : Int,
+  request_id : Int32,
+  folder_id : Int32,
+  manifest_id : Int32,
 ) -> Unit = "new_world_host" "fs_export_world"
 
 ///|
-extern "wasm" fn host_fs_import_world(request_id : Int) -> Unit = "new_world_host" "fs_import_world"
+extern "wasm" fn host_fs_import_world(request_id : Int32) -> Unit = "new_world_host" "fs_import_world"
 
 ///|
-extern "wasm" fn host_begin_create_string() -> Int = "new_world_host" "begin_create_string"
+extern "wasm" fn host_begin_create_string() -> Int32 = "new_world_host" "begin_create_string"
 
 ///|
-extern "wasm" fn host_string_append_char(handle : Int, code : Int) -> Unit = "new_world_host" "string_append_char"
+extern "wasm" fn host_string_append_char(handle : Int32, code : Int32) -> Unit = "new_world_host" "string_append_char"
 
 ///|
-extern "wasm" fn host_finish_create_string(handle : Int) -> Int = "new_world_host" "finish_create_string"
+extern "wasm" fn host_finish_create_string(handle : Int32) -> Int32 = "new_world_host" "finish_create_string"
 
 ///|
-extern "wasm" fn host_begin_read_string(id : Int) -> Int = "new_world_host" "begin_read_string"
+extern "wasm" fn host_begin_read_string(id : Int32) -> Int32 = "new_world_host" "begin_read_string"
 
 ///|
-extern "wasm" fn host_string_read_char(handle : Int) -> Int = "new_world_host" "string_read_char"
+extern "wasm" fn host_string_read_char(handle : Int32) -> Int32 = "new_world_host" "string_read_char"
 
 ///|
-extern "wasm" fn host_finish_read_string(handle : Int) -> Unit = "new_world_host" "finish_read_string"
+extern "wasm" fn host_finish_read_string(handle : Int32) -> Unit = "new_world_host" "finish_read_string"
 
 ///|
 /// Build a string on the JS side, receiving its id for later host calls.
-fn host_string_id(text : String) -> Int {
+fn host_string_id(text : String) -> Int32 {
   let handle = host_begin_create_string()
   for ch in text {
     host_string_append_char(handle, ch.to_int())
@@ -90,7 +90,7 @@ fn host_string_id(text : String) -> Int {
 
 ///|
 /// Read a JS-side string by id.
-fn host_string(text_id : Int) -> String {
+fn host_string(text_id : Int32) -> String {
   if text_id == 0 {
     return ""
   }
@@ -122,9 +122,9 @@ pub(all) enum FsJob {
 /// The gateway: one instance per web composition root, created before the
 /// program starts and shared by the ABI callbacks.
 pub struct WebGateway {
-  next_id : Ref[Int]
-  llm_pending : Map[Int, (String?) -> Unit]
-  fs_pending : Map[Int, FsJob]
+  next_id : Ref[Int32]
+  llm_pending : Map[Int32, (String?) -> Unit]
+  fs_pending : Map[Int32, FsJob]
 }
 
 ///|
@@ -133,7 +133,7 @@ pub fn WebGateway::new() -> WebGateway {
 }
 
 ///|
-fn allocate(gateway : WebGateway) -> Int {
+fn allocate(gateway : WebGateway) -> Int32 {
   let id = gateway.next_id.val
   gateway.next_id.val = gateway.next_id.val + 1
   id
@@ -164,9 +164,9 @@ pub fn WebGateway::llm_turn(
 /// The exported callback for provider replies.
 pub fn WebGateway::llm_complete(
   self : WebGateway,
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  body_text_id : Int,
+  body_text_id : Int32,
 ) -> Unit {
   match self.llm_pending.get(request_id) {
     Some(on_result) => {
@@ -284,9 +284,9 @@ pub fn WebGateway::fs_import_world(
 /// The exported callback for filesystem results.
 pub fn WebGateway::fs_complete(
   self : WebGateway,
-  request_id : Int,
+  request_id : Int32,
   ok : Bool,
-  payload_text_id : Int,
+  payload_text_id : Int32,
 ) -> Unit {
   let payload = if ok { host_string(payload_text_id) } else { "" }
   match self.fs_pending.get(request_id) {

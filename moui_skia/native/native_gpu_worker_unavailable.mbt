@@ -9,15 +9,15 @@ pub(all) enum NativeGpuWorkerCompletionStatus {
   ControlAcknowledged
   FallbackToRaster
   Presented
-  Unknown(Int)
+  Unknown(Int32)
 } derive(Eq, Debug)
 
 ///|
 pub(all) struct NativeGpuWorkerCompletion {
   sequence : Int64
   control_token : Int64
-  surface_generation : Int
-  context_generation : Int
+  surface_generation : Int32
+  context_generation : Int32
   image_resource_revision : Int64
   submitted_at_ms : Double
   processed_at_ms : Double
@@ -33,12 +33,12 @@ pub(all) struct NativeGpuWorkerDiagnostics {
   dropped : Int64
   replaced_pending : Int64
   readback_count : Int64
-  surface_generation : Int
-  context_generation : Int
+  surface_generation : Int32
+  context_generation : Int32
   recovery_count : Int64
   resource_cache_bytes : Int64
-  control_pending : Int
-  completion_pending : Int
+  control_pending : Int32
+  completion_pending : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -67,8 +67,8 @@ pub fn NativeGpuRenderWorker::new() -> NativeGpuRenderWorker? {
 ///|
 pub fn NativeGpuRenderWorker::submit_empty_picture(
   self : NativeGpuRenderWorker,
-  image_resource_revision? : Int64 = 0L,
-  submitted_at_ms? : Double = 0.0,
+  image_resource_revision~ : Int64 = 0L,
+  submitted_at_ms~ : Double = 0.0,
 ) -> Int64 {
   let _ = (self, image_resource_revision, submitted_at_ms)
   0L
@@ -78,8 +78,8 @@ pub fn NativeGpuRenderWorker::submit_empty_picture(
 pub fn NativeGpuRenderWorker::submit_picture(
   self : NativeGpuRenderWorker,
   picture : Picture,
-  image_resource_revision? : Int64 = 0L,
-  submitted_at_ms? : Double = 0.0,
+  image_resource_revision~ : Int64 = 0L,
+  submitted_at_ms~ : Double = 0.0,
 ) -> Int64 {
   let _ = (self, picture, image_resource_revision, submitted_at_ms)
   0L
@@ -97,7 +97,7 @@ pub fn NativeGpuRenderWorker::submit_control(
 ///|
 pub fn NativeGpuRenderWorker::wait_completion(
   self : NativeGpuRenderWorker,
-  timeout_ms? : Int = 1000,
+  timeout_ms~ : Int32 = 1000,
 ) -> Bool {
   let _ = (self, timeout_ms)
   false

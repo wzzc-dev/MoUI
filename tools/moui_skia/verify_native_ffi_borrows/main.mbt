@@ -75,8 +75,8 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 fn find_substring(
   text : Array[Char],
   needle : Array[Char],
-  start : Int,
-) -> Int? {
+  start : Int32,
+) -> Int32? {
   if needle.is_empty() {
     return Some(start)
   }
@@ -102,7 +102,7 @@ fn find_substring(
 }
 
 ///|
-fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
+fn chars_to_string(chars : Array[Char], start : Int32, end : Int32) -> String {
   let builder = StringBuilder()
   for index in start..<end {
     builder.write_char(chars[index])
@@ -116,7 +116,7 @@ fn ascii_whitespace(char : Char) -> Bool {
 }
 
 ///|
-fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
+fn skip_whitespace(chars : Array[Char], start : Int32) -> Int32 {
   let mut index = start
   while index < chars.length() && ascii_whitespace(chars[index]) {
     index += 1
@@ -133,7 +133,7 @@ fn identifier_char(char : Char) -> Bool {
 }
 
 ///|
-fn read_identifier(chars : Array[Char], start : Int) -> (String, Int)? {
+fn read_identifier(chars : Array[Char], start : Int32) -> (String, Int32)? {
   let index = skip_whitespace(chars, start)
   if index >= chars.length() {
     return None
@@ -205,7 +205,7 @@ fn split_top_level(text : String) -> Array[String] {
 }
 
 ///|
-fn find_matching_paren(chars : Array[Char], open_index : Int) -> Int? {
+fn find_matching_paren(chars : Array[Char], open_index : Int32) -> Int32? {
   let mut depth = 0
   for index in open_index..<chars.length() {
     match chars[index] {
@@ -345,7 +345,7 @@ fn parse_annotations(
 }
 
 ///|
-fn extern_match(chars : Array[Char]) -> (Int, Int, String)? {
+fn extern_match(chars : Array[Char]) -> (Int32, Int32, String)? {
   let upper = "extern \"C\" fn".to_array()
   let lower = "extern \"c\" fn".to_array()
   let found = match find_substring(chars, upper, 0) {
@@ -489,7 +489,7 @@ fn verify_native_ffi_borrows(options : CliOptions) -> Result[String, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

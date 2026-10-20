@@ -25,12 +25,16 @@ fn make_text_font(size : Float) -> @native.Font? {
 }
 
 ///|
-fn top_half_height(height : Int) -> Int {
-  Int::max(1, height / 2)
+fn top_half_height(height : Int32) -> Int32 {
+  Int32::max(1, height / 2)
 }
 
 ///|
-fn draw_background(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
+fn draw_background(
+  canvas : @native.Canvas,
+  width : Int32,
+  height : Int32,
+) -> Unit {
   let w = Float::from_int(width)
   let h = Float::from_int(height)
   let split = Float::from_int(top_half_height(height))
@@ -56,7 +60,11 @@ fn draw_background(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
 }
 
 ///|
-fn draw_hello_text(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
+fn draw_hello_text(
+  canvas : @native.Canvas,
+  width : Int32,
+  height : Int32,
+) -> Unit {
   let split = Float::from_int(top_half_height(height))
   let font_size = Float::min(64.0, Float::max(34.0, split * 0.34))
   guard make_text_font(font_size) is Some(font) else { return }
@@ -76,7 +84,7 @@ fn draw_hello_text(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
 }
 
 ///|
-fn make_triangle_path(width : Int, height : Int) -> @skia.Path {
+fn make_triangle_path(width : Int32, height : Int32) -> @skia.Path {
   let w = Float::from_int(width)
   let split = Float::from_int(top_half_height(height))
   let lower_h = Float::max(1.0, Float::from_int(height) - split)
@@ -88,7 +96,11 @@ fn make_triangle_path(width : Int, height : Int) -> @skia.Path {
 }
 
 ///|
-fn draw_triangle(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
+fn draw_triangle(
+  canvas : @native.Canvas,
+  width : Int32,
+  height : Int32,
+) -> Unit {
   let triangle = make_triangle_path(width, height)
   canvas.draw_path_value(
     triangle,
@@ -107,7 +119,7 @@ fn draw_triangle(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
 }
 
 ///|
-fn draw_scene(width : Int, height : Int) -> @skia.Pixmap? {
+fn draw_scene(width : Int32, height : Int32) -> @skia.Pixmap? {
   if width <= 0 || height <= 0 || !@native.skia_available() {
     None
   } else {

@@ -1,8 +1,8 @@
 ///|
 pub fn snapshot_overlay(
   snapshot : @runtime.InspectorSnapshot,
-  theme? : @core.Theme = @views.default_theme(),
-  max_lines? : Int = 12,
+  theme~ : @core.Theme = @views.default_theme(),
+  max_lines~ : Int32 = 12,
 ) -> @core.View[Unit] {
   let lines = @devtools.inspector_report_text(snapshot)
     .split("\n")

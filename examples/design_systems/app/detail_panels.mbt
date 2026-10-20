@@ -476,12 +476,12 @@ fn design_report_for(
 }
 
 ///|
-fn design_source_imported_token_count(preset : DesignSystemChoice) -> Int {
+fn design_source_imported_token_count(preset : DesignSystemChoice) -> Int32 {
   @audit.source_imported_token_count(required_source_mapped_preset(preset))
 }
 
 ///|
-fn design_density_resolver_gap_count(preset : DesignSystemChoice) -> Int {
+fn design_density_resolver_gap_count(preset : DesignSystemChoice) -> Int32 {
   @audit.density_resolver_gap_count(required_source_mapped_preset(preset))
 }
 
@@ -493,14 +493,14 @@ fn design_component_token_matrix(
 }
 
 ///|
-fn design_customization_report_count(preset : DesignSystemChoice) -> Int {
+fn design_customization_report_count(preset : DesignSystemChoice) -> Int32 {
   @audit.customization_report_count(required_source_mapped_preset(preset))
 }
 
 ///|
 fn design_customization_capability_gap_count(
   preset : DesignSystemChoice,
-) -> Int {
+) -> Int32 {
   @audit.customization_capability_gap_count(
     required_source_mapped_preset(preset),
   )

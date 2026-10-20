@@ -4,12 +4,12 @@ fn[Msg] text_field_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = Filled,
+  variant~ : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
-  on_input? : ((String) -> Msg)? = None,
-  on_submit? : Msg? = None,
-  kind? : String = "TextField",
-  key? : String? = None,
+  on_input~ : ((String) -> Msg)? = None,
+  on_submit~ : Msg? = None,
+  kind~ : String = "TextField",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let value_snapshot = value
   @core.View::from_node(
@@ -108,11 +108,11 @@ fn[Msg] controlled_text_field_control(
   placeholder~ : String,
   size~ : @core.Size,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = Filled,
+  variant~ : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
-  on_submit? : Msg? = None,
-  kind? : String = "TextField",
-  key? : String? = None,
+  on_submit~ : Msg? = None,
+  kind~ : String = "TextField",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   text_field_control(
     value~,
@@ -133,13 +133,13 @@ fn[Msg] search_bar_control(
   query~ : String,
   placeholder~ : String,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = Filled,
+  variant~ : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
-  on_input? : ((String) -> Msg)? = None,
-  on_submit? : Msg? = None,
-  on_clear? : Msg? = None,
-  kind? : String = "SearchBar",
-  key? : String? = None,
+  on_input~ : ((String) -> Msg)? = None,
+  on_submit~ : Msg? = None,
+  on_clear~ : Msg? = None,
+  kind~ : String = "SearchBar",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let query_snapshot = query
   @core.View::from_node(
@@ -217,12 +217,12 @@ pub fn[Msg] controlled_search_bar_control(
   on_input~ : (String) -> Msg,
   placeholder~ : String,
   theme? : @core.Theme,
-  variant? : @style.TextFieldVariant = Filled,
+  variant~ : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
-  on_submit? : Msg? = None,
-  on_clear? : Msg? = None,
-  kind? : String = "SearchBar",
-  key? : String? = None,
+  on_submit~ : Msg? = None,
+  on_clear~ : Msg? = None,
+  kind~ : String = "SearchBar",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   search_bar_control(
     query~,

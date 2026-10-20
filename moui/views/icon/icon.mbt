@@ -907,9 +907,9 @@ pub fn icon_scale_verbs(
 /// A vector icon rendered from normalized 24x24 stroke path data.
 pub fn[Msg] icon(
   name : @style.IconName,
-  size? : Double = 20.0,
+  size~ : Double = 20.0,
   color? : @core.Color,
-  weight? : Double = 1.6,
+  weight~ : Double = 1.6,
 ) -> @core.View[Msg] {
   let verbs = icon_path(name)
   let label = icon_label(name)

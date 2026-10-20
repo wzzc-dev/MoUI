@@ -1,7 +1,7 @@
 ///|
 pub struct DataGridFreezePanes {
-  rows : Int
-  columns : Int
+  rows : Int32
+  columns : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -15,30 +15,30 @@ pub extend DataGridFreezePanes with ToJson::{to_json}
 
 ///|
 pub fn data_grid_freeze_panes(
-  rows? : Int = 0,
-  columns? : Int = 0,
+  rows~ : Int32 = 0,
+  columns~ : Int32 = 0,
 ) -> DataGridFreezePanes {
   { rows: rows.max(0), columns: columns.max(0), }
 }
 
 ///|
-pub fn DataGridFreezePanes::rows(self : DataGridFreezePanes) -> Int {
+pub fn DataGridFreezePanes::rows(self : DataGridFreezePanes) -> Int32 {
   self.rows
 }
 
 ///|
-pub fn DataGridFreezePanes::columns(self : DataGridFreezePanes) -> Int {
+pub fn DataGridFreezePanes::columns(self : DataGridFreezePanes) -> Int32 {
   self.columns
 }
 
 ///|
 pub struct DataGridViewport {
-  first_row : Int
-  last_row : Int
-  first_column : Int
-  last_column : Int
-  row_count : Int
-  column_count : Int
+  first_row : Int32
+  last_row : Int32
+  first_column : Int32
+  last_column : Int32
+  row_count : Int32
+  column_count : Int32
   freeze : DataGridFreezePanes
 } derive(Eq, Debug, ToJson)
 
@@ -53,14 +53,14 @@ pub extend DataGridViewport with ToJson::{to_json}
 
 ///|
 pub fn data_grid_viewport(
-  first_row~ : Int,
-  last_row~ : Int,
-  first_column~ : Int,
-  last_column~ : Int,
-  row_count~ : Int,
-  column_count~ : Int,
-  overscan_rows? : Int = 0,
-  overscan_columns? : Int = 0,
+  first_row~ : Int32,
+  last_row~ : Int32,
+  first_column~ : Int32,
+  last_column~ : Int32,
+  row_count~ : Int32,
+  column_count~ : Int32,
+  overscan_rows~ : Int32 = 0,
+  overscan_columns~ : Int32 = 0,
   freeze? : DataGridFreezePanes,
 ) -> DataGridViewport {
   let rows = row_count.max(0)
@@ -104,7 +104,7 @@ pub fn DataGridViewport::contains(
 
 ///|
 pub fn DataGridViewport::cells(self : DataGridViewport) -> Array[DataGridCell] {
-  let rows : Array[Int] = []
+  let rows : Array[Int32] = []
   for row in 0..<self.freeze.rows {
     rows.push(row)
   }
@@ -114,7 +114,7 @@ pub fn DataGridViewport::cells(self : DataGridViewport) -> Array[DataGridCell] {
       rows.push(row)
     }
   }
-  let columns : Array[Int] = []
+  let columns : Array[Int32] = []
   for column in 0..<self.freeze.columns {
     columns.push(column)
   }

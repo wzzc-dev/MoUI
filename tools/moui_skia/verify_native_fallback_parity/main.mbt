@@ -76,12 +76,12 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn ascii_whitespace(code : Int) -> Bool {
+fn ascii_whitespace(code : Int32) -> Bool {
   code == ' ' || code == '\n' || code == '\r' || code == '\t'
 }
 
 ///|
-fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
+fn skip_whitespace(chars : Array[Char], start : Int32) -> Int32 {
   let mut index = start
   while index < chars.length() && ascii_whitespace(chars[index].to_int()) {
     index += 1
@@ -90,7 +90,7 @@ fn skip_whitespace(chars : Array[Char], start : Int) -> Int {
 }
 
 ///|
-fn read_quoted(chars : Array[Char], start : Int) -> (String, Int)? {
+fn read_quoted(chars : Array[Char], start : Int32) -> (String, Int32)? {
   if start >= chars.length() || chars[start] != '"' {
     return None
   }
@@ -158,8 +158,8 @@ fn parse_target_entries(
 ///|
 fn parse_target_list(
   chars : Array[Char],
-  start : Int,
-) -> Result[(Array[String], Int), String] {
+  start : Int32,
+) -> Result[(Array[String], Int32), String] {
   let targets : Array[String] = []
   let mut index = start
   while index < chars.length() {
@@ -378,7 +378,7 @@ fn entry_path_is_known(path : String) -> Bool {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

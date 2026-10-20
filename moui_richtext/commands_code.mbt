@@ -79,7 +79,7 @@ fn markdown_editor_replace_code_language(
 fn markdown_editor_code_fence_marker_end(
   source : String,
   block : MarkdownEditorBlock,
-) -> Int {
+) -> Int32 {
   let chars = source.to_array()
   let mut index = block.source_range.start
   while index < chars.length() && chars[index] != '`' {
@@ -150,7 +150,7 @@ fn markdown_editor_containing_quoted_code_block(
 /// narrow the line array to the enclosing quote block.
 fn markdown_editor_quoted_code_block_scan(
   lines : Array[MarkdownLine],
-  anchor : Int,
+  anchor : Int32,
 ) -> MarkdownEditorQuotedCodeBlock? {
   if lines.length() < 2 {
     return None
@@ -204,8 +204,8 @@ fn markdown_editor_quoted_code_block_scan(
 ///|
 fn markdown_editor_line_index_at_offset(
   lines : Array[MarkdownLine],
-  offset : Int,
-) -> Int {
+  offset : Int32,
+) -> Int32 {
   let mut result = 0
   for index in 0..<lines.length() {
     if offset >= lines[index].start && offset <= lines[index].end {
@@ -309,11 +309,11 @@ fn markdown_editor_unwrap_quoted_code_block(
 
 ///|
 fn markdown_editor_unwrapped_quoted_code_offset(
-  offset : Int,
+  offset : Int32,
   block : MarkdownEditorQuotedCodeBlock,
-  removed_before_content : Int,
-  removed_total : Int,
-) -> Int {
+  removed_before_content : Int32,
+  removed_total : Int32,
+) -> Int32 {
   if offset <= block.source_range.start {
     offset
   } else if offset <= block.source_range.end {
@@ -418,11 +418,11 @@ fn markdown_editor_unwrap_code_block(
 
 ///|
 fn markdown_editor_unwrapped_code_offset(
-  offset : Int,
+  offset : Int32,
   block : MarkdownEditorBlock,
-  removed_before_content : Int,
-  removed_total : Int,
-) -> Int {
+  removed_before_content : Int32,
+  removed_total : Int32,
+) -> Int32 {
   if offset <= block.source_range.start {
     offset
   } else if offset <= block.source_range.end {

@@ -55,7 +55,7 @@ fn workflow_test_actions(
 ///|
 fn workflow_test_renderer(
   trace : Array[String],
-  with_image? : Bool = false,
+  with_image~ : Bool = false,
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),

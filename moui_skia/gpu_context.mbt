@@ -46,7 +46,7 @@ pub(all) struct GpuContextDescriptor {
   id : Bytes
   adapter_id : Bytes
   device_id : Bytes
-  queue_family_index : Int
+  queue_family_index : Int32
   protected_context : Bool
 } derive(Debug, Eq)
 
@@ -58,26 +58,26 @@ pub extend GpuContextDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn GpuContextDescriptor::new(
-  backend? : GpuContextBackend = MockGpuContext,
-  id? : Bytes = b"",
-  adapter_id? : Bytes = b"",
-  device_id? : Bytes = b"",
-  queue_family_index? : Int = 0,
-  protected_context? : Bool = false,
+  backend~ : GpuContextBackend = MockGpuContext,
+  id~ : Bytes = b"",
+  adapter_id~ : Bytes = b"",
+  device_id~ : Bytes = b"",
+  queue_family_index~ : Int32 = 0,
+  protected_context~ : Bool = false,
 ) -> GpuContextDescriptor {
   {
     backend,
     id,
     adapter_id,
     device_id,
-    queue_family_index: Int::max(0, queue_family_index),
+    queue_family_index: Int32::max(0, queue_family_index),
     protected_context,
   }
 }
 
 ///|
 pub fn GpuContextDescriptor::mock(
-  id? : Bytes = b"mock",
+  id~ : Bytes = b"mock",
 ) -> GpuContextDescriptor {
   GpuContextDescriptor::new(backend=MockGpuContext, id~)
 }
@@ -85,8 +85,8 @@ pub fn GpuContextDescriptor::mock(
 ///|
 pub fn GpuContextDescriptor::metal(
   id : Bytes,
-  adapter_id? : Bytes = b"",
-  device_id? : Bytes = b"",
+  adapter_id~ : Bytes = b"",
+  device_id~ : Bytes = b"",
 ) -> GpuContextDescriptor {
   GpuContextDescriptor::new(
     backend=MetalGpuContext,
@@ -99,9 +99,9 @@ pub fn GpuContextDescriptor::metal(
 ///|
 pub fn GpuContextDescriptor::vulkan(
   id : Bytes,
-  adapter_id? : Bytes = b"",
-  device_id? : Bytes = b"",
-  queue_family_index? : Int = 0,
+  adapter_id~ : Bytes = b"",
+  device_id~ : Bytes = b"",
+  queue_family_index~ : Int32 = 0,
 ) -> GpuContextDescriptor {
   GpuContextDescriptor::new(
     backend=VulkanGpuContext,
@@ -115,8 +115,8 @@ pub fn GpuContextDescriptor::vulkan(
 ///|
 pub fn GpuContextDescriptor::direct3d12(
   id : Bytes,
-  adapter_id? : Bytes = b"",
-  device_id? : Bytes = b"",
+  adapter_id~ : Bytes = b"",
+  device_id~ : Bytes = b"",
 ) -> GpuContextDescriptor {
   GpuContextDescriptor::new(
     backend=Direct3D12GpuContext,
@@ -129,8 +129,8 @@ pub fn GpuContextDescriptor::direct3d12(
 ///|
 pub fn GpuContextDescriptor::opengl(
   id : Bytes,
-  adapter_id? : Bytes = b"",
-  device_id? : Bytes = b"",
+  adapter_id~ : Bytes = b"",
+  device_id~ : Bytes = b"",
 ) -> GpuContextDescriptor {
   GpuContextDescriptor::new(
     backend=OpenGLGpuContext,
@@ -167,8 +167,8 @@ fn GpuContextBackend::gpu_context_resource_name(
 }
 
 ///|
-fn gpu_context_resource_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn gpu_context_resource_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|
@@ -212,7 +212,7 @@ pub fn GpuContextDescriptor::resource_key(
 ///|
 pub fn GpuContextDescriptor::resource_descriptor(
   self : GpuContextDescriptor,
-  byte_size? : Int64 = 0L,
+  byte_size~ : Int64 = 0L,
 ) -> RendererResourceDescriptor {
   RendererResourceDescriptor::gpu_context(self.resource_id(), byte_size~)
 }

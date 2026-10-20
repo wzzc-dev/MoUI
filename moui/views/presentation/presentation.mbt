@@ -199,13 +199,13 @@ pub fn[Msg] PresentationSpec::new(
   id~ : String,
   kind~ : PresentationKind,
   content~ : @core.View[Msg],
-  anchor? : PresentationAnchor = Viewport(@core.Point::new(x=0.0, y=0.0)),
-  placement? : PresentationPlacement? = None,
-  modality? : PresentationModality = NonModal,
-  dismiss? : PresentationDismissPolicy[Msg] = PresentationDismissPolicy::none(),
-  host_policy? : PresentationHostPolicy = ViewOnly,
-  transition? : PresentationTransition = Fade,
-  presented? : Bool = true,
+  anchor~ : PresentationAnchor = Viewport(@core.Point::new(x=0.0, y=0.0)),
+  placement~ : PresentationPlacement? = None,
+  modality~ : PresentationModality = NonModal,
+  dismiss~ : PresentationDismissPolicy[Msg] = PresentationDismissPolicy::none(),
+  host_policy~ : PresentationHostPolicy = ViewOnly,
+  transition~ : PresentationTransition = Fade,
+  presented~ : Bool = true,
 ) -> PresentationSpec[Msg] {
   let resolved_placement = placement.unwrap_or(PresentationPlacement::new())
   {
@@ -238,28 +238,28 @@ pub fn[Msg] PresentationDismissPolicy::none() -> PresentationDismissPolicy[Msg] 
 ///|
 /// Construct a policy with independent outside/Escape/Back/host switches.
 pub fn[Msg] PresentationDismissPolicy::new(
-  outside_tap? : Bool = false,
-  escape? : Bool = true,
-  system_back? : Bool = true,
-  host_close? : Bool = true,
-  message? : Msg? = None,
+  outside_tap~ : Bool = false,
+  escape~ : Bool = true,
+  system_back~ : Bool = true,
+  host_close~ : Bool = true,
+  message~ : Msg? = None,
 ) -> PresentationDismissPolicy[Msg] {
   { outside_tap, escape, system_back, host_close, message, }
 }
 
 ///|
 pub fn PresentationPlacement::new(
-  candidates? : Array[PresentationPlacementCandidate] = [BelowStart],
-  viewport_insets? : @core.Insets = @core.Insets::all(8.0),
-  clamp_to_viewport? : Bool = true,
+  candidates~ : Array[PresentationPlacementCandidate] = [BelowStart],
+  viewport_insets~ : @core.Insets = @core.Insets::all(8.0),
+  clamp_to_viewport~ : Bool = true,
 ) -> PresentationPlacement {
   { candidates: candidates.copy(), viewport_insets, clamp_to_viewport, }
 }
 
 ///|
 pub fn PresentationPlacement::viewport(
-  candidates? : Array[PresentationPlacementCandidate] = [Center],
-  viewport_insets? : @core.Insets = @core.Insets::all(8.0),
+  candidates~ : Array[PresentationPlacementCandidate] = [Center],
+  viewport_insets~ : @core.Insets = @core.Insets::all(8.0),
 ) -> PresentationPlacement {
   PresentationPlacement::new(candidates~, viewport_insets~)
 }
@@ -558,7 +558,7 @@ fn[Msg] overlay_host_with_sizing(
 ///|
 fn[Msg] deepest_modal_index(
   presentations : Array[PresentationSpec[Msg]],
-) -> Int {
+) -> Int32 {
   let mut result = -1
   for index, presentation in presentations {
     if presentation.presented && presentation.modality is Modal {
@@ -693,7 +693,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
       0.0
     },
   )
-  let pairs : Array[(Int, @core.Rect)] = []
+  let pairs : Array[(Int32, @core.Rect)] = []
   let mut child_index = 1
   for presentation in self.presentations {
     if presentation.presented {

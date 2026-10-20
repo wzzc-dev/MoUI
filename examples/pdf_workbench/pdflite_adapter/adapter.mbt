@@ -209,7 +209,7 @@ pub fn writeback_document(
 ///|
 fn pdflite_add_text_annotation(
   document : @pdf.PdfDocument,
-  page : Int,
+  page : Int32,
   text : String,
 ) -> @pdf.PdfDocument raise @pdfcore.PdfError {
   let note_text = text.trim().to_owned()
@@ -251,7 +251,7 @@ fn pdflite_annotation_rect_near_top(
 ///|
 fn pdflite_add_bookmark(
   document : @pdf.PdfDocument,
-  page : Int,
+  page : Int32,
   title : String,
 ) -> @pdf.PdfDocument raise @pdfcore.PdfError {
   let bookmark_title = title.trim().to_owned()
@@ -278,9 +278,9 @@ fn pdflite_metadata_title(document : @pdf.PdfDocument) -> String {
 
 ///|
 fn pdflite_metadata_summary(
-  major : Int,
-  minor : Int,
-  byte_length : Int,
+  major : Int32,
+  minor : Int32,
+  byte_length : Int32,
   title : String,
 ) -> String {
   let prefix = "PDF \{major}.\{minor}; bytes=\{byte_length}; parser=pdflite-adapter"
@@ -313,7 +313,7 @@ fn pdflite_set_metadata_title(
 ///|
 fn pdflite_add_stamp_text(
   document : @pdf.PdfDocument,
-  page : Int,
+  page : Int32,
   text : String,
 ) -> @pdf.PdfDocument raise @pdfcore.PdfError {
   let stamp_text = text.trim().to_owned()
@@ -365,7 +365,7 @@ pub fn pdflite_rotate_crop_roundtrip(bytes : Bytes) -> Bool {
 ///|
 fn pdflite_extract_text(
   document : @pdf.PdfDocument,
-  pages : Array[Int],
+  pages : Array[Int32],
 ) -> String {
   let bytes = document.test_extract_text(pages) catch { _ => return "" }
   @utf8.decode_lossy(bytes[:], ignore_bom=true)
@@ -374,7 +374,7 @@ fn pdflite_extract_text(
 ///|
 fn pdflite_page_summaries(
   document : @pdf.PdfDocument,
-  page_count : Int,
+  page_count : Int32,
 ) -> Array[@app.PdfWorkbenchPageSummary] {
   let summaries : Array[@app.PdfWorkbenchPageSummary] = []
   for page in 1..<=page_count {
@@ -389,8 +389,8 @@ fn pdflite_page_summaries(
 }
 
 ///|
-fn pdflite_page_numbers(page_count : Int) -> Array[Int] {
-  let pages : Array[Int] = []
+fn pdflite_page_numbers(page_count : Int32) -> Array[Int32] {
+  let pages : Array[Int32] = []
   for page in 1..<=page_count {
     pages.push(page)
   }
@@ -408,7 +408,7 @@ fn pdflite_bookmark_summary(document : @pdf.PdfDocument) -> String {
 ///|
 fn pdflite_annotation_summary(
   document : @pdf.PdfDocument,
-  pages : Array[Int],
+  pages : Array[Int32],
 ) -> String {
   let bytes = document.annotations_json_blob(pages) catch {
     _ => return "Annotations unavailable"

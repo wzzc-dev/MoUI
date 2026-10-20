@@ -146,7 +146,7 @@ pub extend WebViewChannelPolicy with ToJson::{to_json}
 ///|
 pub fn WebViewChannelPolicy::new(
   name~ : String,
-  direction? : WebViewChannelDirection = Bidirectional,
+  direction~ : WebViewChannelDirection = Bidirectional,
 ) -> WebViewChannelPolicy {
   { name, direction, }
 }
@@ -156,8 +156,8 @@ pub(all) struct WebViewSecurityPolicy {
   allowed_origins : Array[WebViewOrigin]
   allowed_channels : Array[WebViewChannelPolicy]
   allow_file_urls : Bool
-  max_message_bytes : Int
-  max_pending_requests : Int
+  max_message_bytes : Int32
+  max_pending_requests : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -179,11 +179,11 @@ pub fn WebViewSecurityPolicy::deny_all() -> WebViewSecurityPolicy {
 
 ///|
 pub fn WebViewSecurityPolicy::new(
-  allowed_origins? : Array[WebViewOrigin] = [],
-  allowed_channels? : Array[WebViewChannelPolicy] = [],
-  allow_file_urls? : Bool = false,
-  max_message_bytes? : Int = 256 * 1024,
-  max_pending_requests? : Int = 64,
+  allowed_origins~ : Array[WebViewOrigin] = [],
+  allowed_channels~ : Array[WebViewChannelPolicy] = [],
+  allow_file_urls~ : Bool = false,
+  max_message_bytes~ : Int32 = 256 * 1024,
+  max_pending_requests~ : Int32 = 64,
 ) -> WebViewSecurityPolicy {
   {
     allowed_origins,
@@ -215,9 +215,9 @@ pub fn HostPatchBundle::new(
   id~ : String,
   version~ : String,
   allowed_origins~ : Array[WebViewOrigin],
-  stylesheet? : String? = None,
-  document_start_script? : String? = None,
-  document_end_script? : String? = None,
+  stylesheet~ : String? = None,
+  document_start_script~ : String? = None,
+  document_end_script~ : String? = None,
 ) -> HostPatchBundle {
   {
     id,
@@ -244,9 +244,9 @@ pub extend WebViewControllerConfig with Eq::{not_equal, equal}
 
 ///|
 pub fn WebViewControllerConfig::new(
-  security? : WebViewSecurityPolicy = WebViewSecurityPolicy::deny_all(),
-  capabilities? : Array[String] = [],
-  host_patches? : Array[HostPatchBundle] = [],
+  security~ : WebViewSecurityPolicy = WebViewSecurityPolicy::deny_all(),
+  capabilities~ : Array[String] = [],
+  host_patches~ : Array[HostPatchBundle] = [],
 ) -> WebViewControllerConfig {
   { security, capabilities, host_patches, }
 }
@@ -295,7 +295,7 @@ pub struct WebViewTask[T] {
 pub fn[T] WebViewTask::new(
   key~ : String,
   start~ : ((WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?,
-  label? : String = "",
+  label~ : String = "",
 ) -> WebViewTask[T] {
   { key, label, start_fn: start, }
 }
@@ -448,7 +448,7 @@ pub extend HostWebViewCapabilities with ToJson::{to_json}
 
 ///|
 pub fn HostWebViewCapabilities::unavailable(
-  description? : String = "Native WebView is unavailable on this host.",
+  description~ : String = "Native WebView is unavailable on this host.",
 ) -> HostWebViewCapabilities {
   {
     available: false,
@@ -463,7 +463,7 @@ pub fn HostWebViewCapabilities::unavailable(
 
 ///|
 pub fn HostWebViewCapabilities::native_available(
-  description? : String = "Native controlled WebView embedding is available.",
+  description~ : String = "Native controlled WebView embedding is available.",
 ) -> HostWebViewCapabilities {
   {
     available: true,
@@ -565,13 +565,13 @@ pub fn WebViewNoDragRegion::new(
 ///|
 pub fn WebViewSpec::new(
   id~ : String,
-  width? : Double? = None,
-  height? : Double? = None,
-  title? : String = "",
-  visible? : Bool = true,
-  background_color? : @core.Color? = None,
-  color_scheme? : @core.ColorScheme? = None,
-  no_drag_regions? : Array[WebViewNoDragRegion] = [],
+  width~ : Double? = None,
+  height~ : Double? = None,
+  title~ : String = "",
+  visible~ : Bool = true,
+  background_color~ : @core.Color? = None,
+  color_scheme~ : @core.ColorScheme? = None,
+  no_drag_regions~ : Array[WebViewNoDragRegion] = [],
 ) -> WebViewSpec {
   {
     id,
@@ -589,7 +589,7 @@ pub fn WebViewSpec::new(
 pub fn WebViewSpec::platform_view_placement(
   self : WebViewSpec,
   frame~ : @core.Rect,
-  clip? : @core.Rect? = None,
+  clip~ : @core.Rect? = None,
 ) -> @core.PlatformViewPlacement {
   @core.PlatformViewPlacement::new(id=self.id, kind="web_view", frame~, clip~, properties=[
     @core.PlatformViewProperty::new(key="title", value=self.title),

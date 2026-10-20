@@ -53,7 +53,7 @@ pub extend MarkdownFindSeed with ToJson::{to_json}
 pub fn markdown_find_matches(
   source : String,
   query : String,
-  options? : MarkdownFindOptions = MarkdownFindOptions::default(),
+  options~ : MarkdownFindOptions = MarkdownFindOptions::default(),
 ) -> Array[@core.TextRange] {
   let matches : Array[@core.TextRange] = []
   if query == "" {
@@ -165,9 +165,9 @@ pub fn markdown_find_compile_regex(
 ///|
 fn markdown_find_regex_whole_word_boundary(
   source : String,
-  source_length : Int,
-  start : Int,
-  end : Int,
+  source_length : Int32,
+  start : Int32,
+  end : Int32,
 ) -> Bool {
   let before = if start <= 0 {
     None
@@ -193,11 +193,11 @@ fn markdown_find_regex_whole_word_boundary(
 ///|
 fn markdown_find_query_match_at_utf16(
   source : String,
-  source_utf16_length : Int,
-  offset : Int,
+  source_utf16_length : Int32,
+  offset : Int32,
   query : Array[Char],
   case_sensitive~ : Bool,
-) -> (Int, Char)? {
+) -> (Int32, Char)? {
   let mut cursor = offset
   let mut last_char = query[0]
   for expected in query {
@@ -235,9 +235,9 @@ fn markdown_find_whole_word_boundary(before : Char?, after : Char?) -> Bool {
 ///|
 fn markdown_find_utf16_offset_for_char_index(
   source : String,
-  char_length : Int,
-  index : Int,
-) -> Int {
+  char_length : Int32,
+  index : Int32,
+) -> Int32 {
   let index = @richtext.markdown_editor_clamp_int(index, 0, char_length)
   if index == char_length {
     source.length()
@@ -372,7 +372,7 @@ pub fn markdown_find_seed_from_caret_word(
 pub fn markdown_find_next_index(
   matches : Array[@core.TextRange],
   selection : @richtext.MarkdownEditorSelection,
-) -> Int {
+) -> Int32 {
   if matches.length() == 0 {
     return -1
   }
@@ -394,7 +394,7 @@ pub fn markdown_find_next_index(
 pub fn markdown_find_previous_index(
   matches : Array[@core.TextRange],
   selection : @richtext.MarkdownEditorSelection,
-) -> Int {
+) -> Int32 {
   if matches.length() == 0 {
     return -1
   }
@@ -417,7 +417,7 @@ pub fn markdown_find_previous_index(
 pub fn markdown_find_active_index(
   matches : Array[@core.TextRange],
   selection : @richtext.MarkdownEditorSelection,
-) -> Int {
+) -> Int32 {
   guard selection.selection is Some(range) else { return -1 }
   let active = range.normalized()
   for index in 0..<matches.length() {
@@ -435,7 +435,7 @@ pub fn markdown_find_active_index(
 pub fn markdown_find_live_update_index(
   matches : Array[@core.TextRange],
   selection : @richtext.MarkdownEditorSelection,
-) -> Int {
+) -> Int32 {
   if matches.length() == 0 {
     return -1
   }
@@ -475,8 +475,8 @@ pub fn markdown_replace_source_range(
 /// the first match at/after the replacement, else the first one before it.
 pub fn markdown_next_match_after_replacement(
   matches : Array[@core.TextRange],
-  replaced_start : Int,
-  replacement_end : Int,
+  replaced_start : Int32,
+  replacement_end : Int32,
 ) -> @core.TextRange? {
   for range in matches {
     let normalized = range.normalized()
@@ -540,11 +540,11 @@ pub fn markdown_replace_all_matches(
 ///|
 fn markdown_find_advance_source_offset(
   source : String,
-  utf16_length : Int,
-  from_index : Int,
-  from_offset : Int,
-  target_index : Int,
-) -> Int {
+  utf16_length : Int32,
+  from_index : Int32,
+  from_offset : Int32,
+  target_index : Int32,
+) -> Int32 {
   let mut index = from_index
   let mut offset = from_offset
   while index < target_index && offset < utf16_length {
@@ -566,7 +566,7 @@ pub fn markdown_find_status_label(
   query : String,
   matches : Array[@core.TextRange],
   selection : @richtext.MarkdownEditorSelection,
-  options? : MarkdownFindOptions = MarkdownFindOptions::default(),
+  options~ : MarkdownFindOptions = MarkdownFindOptions::default(),
 ) -> String {
   if query == "" {
     "Ready"

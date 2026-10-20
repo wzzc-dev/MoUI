@@ -14,8 +14,8 @@ priv struct BuildAndroidOptions {
   workspace_root : String
   skia_root : String
   abi : String
-  compile_sdk : Int
-  target_sdk : Int
+  compile_sdk : Int32
+  target_sdk : Int32
   renderer : String
   build_dir : String
   output_apk : String
@@ -125,8 +125,8 @@ fn stage_android_window_hosted_project(
 fn apply_android_window_hosted_identity(
   project_root : String,
   app : MobileApp,
-  compile_sdk : Int,
-  target_sdk : Int,
+  compile_sdk : Int32,
+  target_sdk : Int32,
   _renderer : String,
 ) -> Result[Unit, String] {
   let android = match app.android {
@@ -193,9 +193,9 @@ fn patch_android_build_gradle(
   text : String,
   application_id : String,
   mo_namespace : String,
-  compile_sdk : Int,
-  target_sdk : Int,
-  min_sdk : Int,
+  compile_sdk : Int32,
+  target_sdk : Int32,
+  min_sdk : Int32,
   app_label : String,
 ) -> String {
   let out : Array[String] = []

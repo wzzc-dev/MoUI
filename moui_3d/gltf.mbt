@@ -7,25 +7,25 @@ priv struct GltfAsset {
 
 ///|
 priv struct GltfBuffer {
-  byteLength : Int
+  byteLength : Int32
   uri : String?
 }
 
 ///|
 priv struct GltfBufferView {
-  buffer : Int
-  byteOffset : Int?
-  byteLength : Int
-  byteStride : Int?
+  buffer : Int32
+  byteOffset : Int32?
+  byteLength : Int32
+  byteStride : Int32?
 }
 
 ///|
 priv struct GltfPrimitiveJson {
-  attributes : Map[String, Int]
-  indices : Int?
-  material : Int?
-  mode : Int?
-  targets : Array[Map[String, Int]]?
+  attributes : Map[String, Int32]
+  indices : Int32?
+  material : Int32?
+  mode : Int32?
+  targets : Array[Map[String, Int32]]?
 }
 
 ///|
@@ -37,11 +37,11 @@ priv struct GltfMeshJson {
 
 ///|
 priv struct GltfNodeJson {
-  mesh : Int?
-  camera : Int?
-  skin : Int?
+  mesh : Int32?
+  camera : Int32?
+  skin : Int32?
   weights : Array[Double]?
-  children : Array[Int]?
+  children : Array[Int32]?
   name : String?
   matrix : Array[Double]?
   translation : Array[Double]?
@@ -51,7 +51,7 @@ priv struct GltfNodeJson {
 
 ///|
 priv struct GltfTextureInfo {
-  index : Int
+  index : Int32
 } derive(FromJson)
 
 ///|
@@ -78,21 +78,21 @@ priv struct GltfMaterialJson {
 priv struct GltfImageJson {
   uri : String?
   mimeType : String?
-  bufferView : Int?
+  bufferView : Int32?
 }
 
 ///|
 priv struct GltfTextureJson {
-  source : Int?
-  sampler : Int?
+  source : Int32?
+  sampler : Int32?
 }
 
 ///|
 priv struct GltfSamplerJson {
-  magFilter : Int?
-  minFilter : Int?
-  wrapS : Int?
-  wrapT : Int?
+  magFilter : Int32?
+  minFilter : Int32?
+  wrapS : Int32?
+  wrapT : Int32?
 }
 
 ///|
@@ -121,46 +121,46 @@ priv struct GltfCameraJson {
 
 ///|
 priv struct GltfSceneJson {
-  nodes : Array[Int]?
+  nodes : Array[Int32]?
   name : String?
 }
 
 ///|
 priv struct GltfSparseIndicesJson {
-  bufferView : Int
-  byteOffset : Int?
-  componentType : Int
+  bufferView : Int32
+  byteOffset : Int32?
+  componentType : Int32
 }
 
 ///|
 priv struct GltfSparseValuesJson {
-  bufferView : Int
-  byteOffset : Int?
+  bufferView : Int32
+  byteOffset : Int32?
 }
 
 ///|
 priv struct GltfAccessorSparseJson {
-  count : Int
+  count : Int32
   indices : GltfSparseIndicesJson
   values : GltfSparseValuesJson
 }
 
 ///|
 priv struct GltfAnimationSamplerJson {
-  input : Int
-  output : Int
+  input : Int32
+  output : Int32
   interpolation : String?
 }
 
 ///|
 priv struct GltfAnimationTargetJson {
-  node : Int?
+  node : Int32?
   path : String
 }
 
 ///|
 priv struct GltfAnimationChannelJson {
-  sampler : Int
+  sampler : Int32
   target : GltfAnimationTargetJson
 }
 
@@ -185,7 +185,7 @@ priv struct GltfRoot {
   samplers : Array[GltfSamplerJson]?
   cameras : Array[GltfCameraJson]?
   scenes : Array[GltfSceneJson]?
-  scene : Int?
+  scene : Int32?
   skins : Array[GltfSkinJson]?
   animations : Array[GltfAnimationJson]?
   extensionsUsed : Array[String]?
@@ -194,19 +194,19 @@ priv struct GltfRoot {
 
 ///|
 priv struct GltfSkinJson {
-  inverseBindMatrices : Int?
-  skeleton : Int?
-  joints : Array[Int]
+  inverseBindMatrices : Int32?
+  skeleton : Int32?
+  joints : Array[Int32]
   name : String?
 }
 
 ///|
 priv struct GltfAccessorJson {
-  bufferView : Int?
-  byteOffset : Int?
-  componentType : Int
+  bufferView : Int32?
+  byteOffset : Int32?
+  componentType : Int32
   normalized : Bool?
-  count : Int
+  count : Int32
   accessor_kind : String
   sparse : GltfAccessorSparseJson?
 }
@@ -530,32 +530,32 @@ impl @json.FromJson for GltfRoot with fn from_json(json, path) {
 pub(all) suberror GltfError {
   EmptyInput
   InvalidMagic
-  UnsupportedVersion(Int)
+  UnsupportedVersion(Int32)
   InvalidDeclaredLength
   TruncatedChunk
   MissingJsonChunk
   InvalidJson(String)
   UnsupportedAssetVersion(String)
-  MissingBuffer(Int)
-  MissingBufferView(Int)
-  MissingAccessor(Int)
+  MissingBuffer(Int32)
+  MissingBufferView(Int32)
+  MissingAccessor(Int32)
   MissingAttribute(String)
-  InvalidAccessor(Int)
-  UnsupportedComponentType(Int)
+  InvalidAccessor(Int32)
+  UnsupportedComponentType(Int32)
   UnsupportedAccessorType(String)
-  UnsupportedPrimitiveMode(Int)
+  UnsupportedPrimitiveMode(Int32)
   UnsupportedExtension(String)
   UnsupportedRequiredExtension(String)
   ExternalResourceUnavailable(String)
-  InvalidTexture(Int)
-  InvalidSampler(Int)
-  InvalidCamera(Int)
-  InvalidScene(Int)
-  InvalidSkin(Int)
-  InvalidAnimation(Int)
+  InvalidTexture(Int32)
+  InvalidSampler(Int32)
+  InvalidCamera(Int32)
+  InvalidScene(Int32)
+  InvalidSkin(Int32)
+  InvalidAnimation(Int32)
   UnsupportedAnimationPath(String)
-  InvalidNode(Int)
-  InvalidNodeCycle(Int)
+  InvalidNode(Int32)
+  InvalidNodeCycle(Int32)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -575,13 +575,13 @@ pub type GltfResourceResolver = (String) -> Bytes?
 pub(all) struct GltfDocument {
   json : String
   binary : Bytes?
-  mesh_count : Int
-  node_count : Int
-  material_count : Int
-  texture_count : Int
-  sampler_count : Int
-  camera_count : Int
-  scene_count : Int
+  mesh_count : Int32
+  node_count : Int32
+  material_count : Int32
+  texture_count : Int32
+  sampler_count : Int32
+  camera_count : Int32
+  scene_count : Int32
 } derive(Debug)
 
 ///|
@@ -598,37 +598,37 @@ pub fn GltfDocument::binary(self : GltfDocument) -> Bytes? {
 }
 
 ///|
-pub fn GltfDocument::mesh_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::mesh_count(self : GltfDocument) -> Int32 {
   self.mesh_count
 }
 
 ///|
-pub fn GltfDocument::node_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::node_count(self : GltfDocument) -> Int32 {
   self.node_count
 }
 
 ///|
-pub fn GltfDocument::material_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::material_count(self : GltfDocument) -> Int32 {
   self.material_count
 }
 
 ///|
-pub fn GltfDocument::texture_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::texture_count(self : GltfDocument) -> Int32 {
   self.texture_count
 }
 
 ///|
-pub fn GltfDocument::sampler_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::sampler_count(self : GltfDocument) -> Int32 {
   self.sampler_count
 }
 
 ///|
-pub fn GltfDocument::camera_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::camera_count(self : GltfDocument) -> Int32 {
   self.camera_count
 }
 
 ///|
-pub fn GltfDocument::scene_count(self : GltfDocument) -> Int {
+pub fn GltfDocument::scene_count(self : GltfDocument) -> Int32 {
   self.scene_count
 }
 
@@ -692,7 +692,7 @@ pub fn parse_glb(bytes : Bytes) -> GltfDocument raise GltfError {
 ///|
 pub fn parse_gltf_json(
   json : String,
-  binary? : Bytes? = None,
+  binary~ : Bytes? = None,
 ) -> GltfDocument raise GltfError {
   let root : GltfRoot = @json.from_json(@json.parse(json)) catch {
     err => raise InvalidJson(err.to_string())
@@ -714,7 +714,7 @@ pub fn parse_gltf_json(
 }
 
 ///|
-fn read_u32_le(bytes : Bytes, offset : Int) -> Int {
+fn read_u32_le(bytes : Bytes, offset : Int32) -> Int32 {
   if offset < 0 || offset + 3 >= bytes.length() {
     return 0
   }

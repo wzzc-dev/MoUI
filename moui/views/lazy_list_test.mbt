@@ -1,6 +1,6 @@
 ///|
 /// Helper: builds `count` string items.
-fn lazy_test_items(count : Int) -> Array[String] {
+fn lazy_test_items(count : Int32) -> Array[String] {
   let items : Array[String] = []
   for i in 0..<count {
     items.push("item-\{i}")

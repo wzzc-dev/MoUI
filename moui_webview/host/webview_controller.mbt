@@ -48,7 +48,7 @@ pub fn WebViewHost::new() -> WebViewHost {
 pub fn WebViewHost::create_controller(
   self : WebViewHost,
   id~ : String,
-  config? : WebViewControllerConfig = WebViewControllerConfig::new(),
+  config~ : WebViewControllerConfig = WebViewControllerConfig::new(),
 ) -> Result[WebViewController, WebViewError] {
   if id.is_empty() {
     return Err(
@@ -164,7 +164,7 @@ pub fn WebViewController::request(
   self : WebViewController,
   channel~ : String,
   payload~ : Json,
-  timeout_ms? : Int = 10000,
+  timeout_ms~ : Int32 = 10000,
 ) -> WebViewTask[Json] {
   WebViewTask::new(
     key="webview:" + self.id + ":request:" + channel,
@@ -227,12 +227,12 @@ fn WebViewController::command_task(
 }
 
 ///|
-pub fn WebViewHost::pending_command_count(self : WebViewHost) -> Int {
+pub fn WebViewHost::pending_command_count(self : WebViewHost) -> Int32 {
   self.commands.length()
 }
 
 ///|
-pub fn WebViewHost::pending_request_count(self : WebViewHost) -> Int {
+pub fn WebViewHost::pending_request_count(self : WebViewHost) -> Int32 {
   self.requests.length()
 }
 
@@ -240,7 +240,7 @@ pub fn WebViewHost::pending_request_count(self : WebViewHost) -> Int {
 pub fn WebViewHost::drain_commands(
   self : WebViewHost,
   handle : (HostWebViewQueuedCommand) -> Unit,
-) -> Int {
+) -> Int32 {
   let commands = self.commands
   self.commands = []
   for command in commands {
@@ -431,7 +431,7 @@ fn WebViewHost::start_request(
   id : String,
   channel : String,
   payload : Json,
-  timeout_ms : Int,
+  timeout_ms : Int32,
   complete : (WebViewTaskResult[Json]) -> Unit,
 ) -> (() -> Unit)? {
   guard self.find_state(id) is Some(state) && !state.disposed else {

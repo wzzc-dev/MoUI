@@ -1,6 +1,6 @@
 ///|
 pub fn program(
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[ExcelApp, ExcelMsg] {
   ExcelApp::new().program(environment~)
 }
@@ -8,7 +8,7 @@ pub fn program(
 ///|
 pub fn ExcelApp::program(
   self : ExcelApp,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
 ) -> @moui.Program[ExcelApp, ExcelMsg] {
   let services = environment.services()
   @moui.Program::new(
@@ -200,10 +200,10 @@ fn excel_command(
   label : String,
   key : String,
   message : ExcelMsg,
-  meta? : Bool = false,
-  control? : Bool = false,
-  shift? : Bool = false,
-  intent? : @views.CommandIntent = Activate,
+  meta~ : Bool = false,
+  control~ : Bool = false,
+  shift~ : Bool = false,
+  intent~ : @views.CommandIntent = Activate,
 ) -> @moui.ProgramCommand[ExcelMsg] {
   @moui.ProgramCommand::new(
     command=@views.ActionCommand::new(
@@ -233,7 +233,7 @@ fn excel_dual_commands(
 }
 
 ///|
-fn excel_selection_origin(model : ExcelModel) -> (Int, Int) {
+fn excel_selection_origin(model : ExcelModel) -> (Int32, Int32) {
   match model.workbook.selection {
     Some(selection) => (selection.row, selection.col)
     None => (0, 0)
@@ -241,7 +241,11 @@ fn excel_selection_origin(model : ExcelModel) -> (Int, Int) {
 }
 
 ///|
-fn excel_commit_message(model : ExcelModel, drow : Int, dcol : Int) -> ExcelMsg {
+fn excel_commit_message(
+  model : ExcelModel,
+  drow : Int32,
+  dcol : Int32,
+) -> ExcelMsg {
   if model.autocomplete_suggestions.is_empty() {
     CellEditCommittedAndNavigate(drow, dcol)
   } else {
@@ -250,6 +254,6 @@ fn excel_commit_message(model : ExcelModel, drow : Int, dcol : Int) -> ExcelMsg 
 }
 
 ///|
-fn page_row_step() -> Int {
+fn page_row_step() -> Int32 {
   15
 }

@@ -10,47 +10,47 @@
 ///   送达」可用 `moon test` 复现,不需要真终端;
 /// - 鼠标只输出 cell 坐标(终端唯一能给的位置单位)。换算成逻辑像素是
 ///   `input_channel` 的职责:cell 尺寸随 resize 变化,不属于解码语义。
-const ESC_BYTE : Int = 0x1b
+const ESC_BYTE : Int32 = 0x1b
 
 ///|
-const CSI_BYTE : Int = 0x5b // '['
+const CSI_BYTE : Int32 = 0x5b // '['
 
 ///|
-const SS3_BYTE : Int = 0x4f // 'O'
+const SS3_BYTE : Int32 = 0x4f // 'O'
 
 ///|
-const CR_BYTE : Int = 0x0d
+const CR_BYTE : Int32 = 0x0d
 
 ///|
-const LF_BYTE : Int = 0x0a
+const LF_BYTE : Int32 = 0x0a
 
 ///|
-const TAB_BYTE : Int = 0x09
+const TAB_BYTE : Int32 = 0x09
 
 ///|
-const BACKSPACE_BYTE : Int = 0x08
+const BACKSPACE_BYTE : Int32 = 0x08
 
 ///|
-const DEL_BYTE : Int = 0x7f
+const DEL_BYTE : Int32 = 0x7f
 
 ///|
 /// CSI 私有标记字节区间的首尾:`<`(SGR 鼠标/键盘协议扩展)到 `?`(设备模式)。
 /// read_csi 只在这段区间里认标记,dispatch_mouse 只接受 `<`。
-const SGR_MARKER_BYTE : Int = 0x3c // '<'
+const SGR_MARKER_BYTE : Int32 = 0x3c // '<'
 
 ///|
-const PRIVATE_MODE_BYTE : Int = 0x3f // '?'
+const PRIVATE_MODE_BYTE : Int32 = 0x3f // '?'
 
 ///|
 /// 缓冲里长期拼不出序列时的上限。超过即清空:一段非法输入不该永久卡住解码,
 /// 也不该让缓冲随键盘垃圾无限增长。
-const PENDING_LIMIT : Int = 4096
+const PENDING_LIMIT : Int32 = 4096
 
 ///|
 /// 终端报告的位置:cell 坐标,0 起算(SGR 的 1 起算在解码时已折算)。
 pub(all) struct CellPosition {
-  col : Int
-  row : Int
+  col : Int32
+  row : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -77,7 +77,7 @@ pub extend MousePhase with Debug::{to_repr}
 /// 3 表示「无键移动」(1003 模式),不是第 4 个按钮。
 pub(all) struct MouseReport {
   position : CellPosition
-  button : Int
+  button : Int32
   phase : MousePhase
   modifiers : @core.KeyModifiers
 } derive(Eq, Debug)
@@ -121,7 +121,7 @@ pub extend TerminalEvent with Debug::{to_repr}
 
 ///|
 pub struct TerminalDecoder {
-  mut pending : Array[Int]
+  mut pending : Array[Int32]
 }
 
 ///|
@@ -131,7 +131,7 @@ pub fn TerminalDecoder::new() -> TerminalDecoder {
 
 ///|
 /// 尚未拼成完整序列的字节数,诊断与测试用。
-pub fn TerminalDecoder::pending_bytes(self : TerminalDecoder) -> Int {
+pub fn TerminalDecoder::pending_bytes(self : TerminalDecoder) -> Int32 {
   self.pending.length()
 }
 
@@ -141,7 +141,7 @@ pub fn TerminalDecoder::feed_bytes(
   self : TerminalDecoder,
   chunk : Bytes,
 ) -> Array[TerminalEvent] {
-  let raw : Array[Int] = []
+  let raw : Array[Int32] = []
   for i in 0..<chunk.length() {
     raw.push(chunk[i].to_int())
   }
@@ -270,9 +270,9 @@ fn TerminalDecoder::step_ss3(
 }
 
 ///|
-fn TerminalDecoder::take(self : TerminalDecoder, k : Int) -> Unit {
+fn TerminalDecoder::take(self : TerminalDecoder, k : Int32) -> Unit {
   let n = self.pending.length()
-  let rest : Array[Int] = []
+  let rest : Array[Int32] = []
   if k < n {
     for i in k..<n {
       rest.push(self.pending[i])
@@ -284,17 +284,17 @@ fn TerminalDecoder::take(self : TerminalDecoder, k : Int) -> Unit {
 ///|
 /// 一条已拼完整的 CSI 序列:`ESC [ <私有标记> 参数... 终结字节`。
 priv struct Csi {
-  marker : Int
-  params : Array[Int]
-  terminator : Int
-  consumed : Int
+  marker : Int32
+  params : Array[Int32]
+  terminator : Int32
+  consumed : Int32
 }
 
 ///|
 /// 缺省字段按 0 取(`ESC[A` 无参数,`ESC[;5A` 的第一段是 0)。
 /// 参数按 `;` 与 `:` 一并切分:kitty 的子参数(事件类型)落在同一段里,
 /// 但对解码而言只是「后一个数」,不需要保留层级。
-fn Csi::param(self : Csi, index : Int) -> Int {
+fn Csi::param(self : Csi, index : Int32) -> Int32 {
   if index < self.params.length() {
     self.params[index]
   } else {
@@ -313,7 +313,7 @@ fn TerminalDecoder::read_csi(self : TerminalDecoder) -> Csi? {
     marker = buf[i]
     i = i + 1
   }
-  let params : Array[Int] = []
+  let params : Array[Int32] = []
   let mut value = 0
   let mut has_value = false
   let mut final_byte = 0
@@ -441,11 +441,11 @@ fn Csi::dispatch_csi_u(self : Csi, out : Array[TerminalEvent]) -> Unit {
       if cp < 0x20 {
         control_key_name(cp)
       } else {
-        Some(String::make(1, Int::unsafe_to_char(cp)))
+        Some(String::make(1, Int32::unsafe_to_char(cp)))
       }
   }
   let char_text = if is_text {
-    Some(String::make(1, Int::unsafe_to_char(cp)))
+    Some(String::make(1, Int32::unsafe_to_char(cp)))
   } else {
     None
   }
@@ -512,7 +512,7 @@ fn Csi::dispatch_mouse(self : Csi, out : Array[TerminalEvent]) -> Unit {
 ///|
 /// SGR 修饰位:shift=4、alt=8、control=16(xterm 与 crossterm 一致)。
 /// 32 是「拖动中」,不是修饰键。
-fn mouse_modifiers(code : Int) -> @core.KeyModifiers {
+fn mouse_modifiers(code : Int32) -> @core.KeyModifiers {
   @core.KeyModifiers::new(
     shift=(code & 0x04) != 0,
     alt=(code & 0x08) != 0,
@@ -523,7 +523,7 @@ fn mouse_modifiers(code : Int) -> @core.KeyModifiers {
 ///|
 /// xterm 传统修饰键码:`值 = 1 + shift + 2*alt + 4*ctrl + 8*meta`。
 /// 0 与 1 都表示无修饰(缺省字段按 0 读)。
-fn legacy_modifiers(code : Int) -> @core.KeyModifiers {
+fn legacy_modifiers(code : Int32) -> @core.KeyModifiers {
   if code <= 1 {
     @core.KeyModifiers::none()
   } else {
@@ -540,8 +540,8 @@ fn legacy_modifiers(code : Int) -> @core.KeyModifiers {
 ///|
 /// 可打印码位:同时给 Keyboard 与 TextInput——前者驱动瞬时按键,后者驱动
 /// 文本控件的插入,和 `examples/terminal/addon/keyboard_input.mbt` 的两侧消费一致。
-fn emit_text_key(cp : Int, out : Array[TerminalEvent]) -> Unit {
-  let name = String::make(1, Int::unsafe_to_char(cp))
+fn emit_text_key(cp : Int32, out : Array[TerminalEvent]) -> Unit {
+  let name = String::make(1, Int32::unsafe_to_char(cp))
   out.push(
     Key(@core.KeyboardEvent::new(key=name, pressed=true, text=Some(name))),
   )
@@ -549,11 +549,11 @@ fn emit_text_key(cp : Int, out : Array[TerminalEvent]) -> Unit {
 }
 
 ///|
-fn emit_alt_text(cp : Int, out : Array[TerminalEvent]) -> Unit {
+fn emit_alt_text(cp : Int32, out : Array[TerminalEvent]) -> Unit {
   out.push(
     Key(
       @core.KeyboardEvent::new(
-        key=String::make(1, Int::unsafe_to_char(cp)),
+        key=String::make(1, Int32::unsafe_to_char(cp)),
         pressed=true,
         modifiers=@core.KeyModifiers::new(alt=true),
       ),
@@ -563,7 +563,7 @@ fn emit_alt_text(cp : Int, out : Array[TerminalEvent]) -> Unit {
 
 ///|
 /// `ESC <byte>`:控制字节按控制键名 + alt,可打印字节按字符 + alt。
-fn emit_alt_byte(byte : Int, out : Array[TerminalEvent]) -> Unit {
+fn emit_alt_byte(byte : Int32, out : Array[TerminalEvent]) -> Unit {
   if byte == ESC_BYTE {
     out.push(
       Key(
@@ -592,7 +592,7 @@ fn emit_alt_byte(byte : Int, out : Array[TerminalEvent]) -> Unit {
     out.push(
       Key(
         @core.KeyboardEvent::new(
-          key=String::make(1, Int::unsafe_to_char(byte)),
+          key=String::make(1, Int32::unsafe_to_char(byte)),
           pressed=true,
           modifiers=@core.KeyModifiers::new(alt=true),
         ),
@@ -614,7 +614,7 @@ fn merge_alt(m : @core.KeyModifiers) -> @core.KeyModifiers {
 
 ///|
 /// 裸控制字节 → 按键事件(legacy 编码下按键总是 press)。
-fn legacy_control(byte : Int) -> @core.KeyboardEvent? {
+fn legacy_control(byte : Int32) -> @core.KeyboardEvent? {
   match control_key_name(byte) {
     None => None
     Some(key) =>
@@ -631,7 +631,7 @@ fn legacy_control(byte : Int) -> @core.KeyboardEvent? {
 
 ///|
 /// 控制码 → 键名,词表与编码侧一致。
-fn control_key_name(byte : Int) -> String? {
+fn control_key_name(byte : Int32) -> String? {
   if byte == CR_BYTE || byte == LF_BYTE {
     Some("Enter")
   } else if byte == TAB_BYTE {
@@ -641,7 +641,7 @@ fn control_key_name(byte : Int) -> String? {
   } else if byte == 0x00 {
     Some("Space")
   } else if byte >= 0x01 && byte <= 0x1a {
-    Some(String::make(1, Int::unsafe_to_char(byte + 0x60)))
+    Some(String::make(1, Int32::unsafe_to_char(byte + 0x60)))
   } else {
     None
   }
@@ -650,7 +650,7 @@ fn control_key_name(byte : Int) -> String? {
 ///|
 /// Ctrl 前缀字母与 Ctrl+Space 带 control;Enter/Tab/Backspace 本身就是控制码,
 /// 再叠 control 会让应用收到「Ctrl+Enter」这种终端并未表达的键位。
-fn control_modifiers(byte : Int) -> @core.KeyModifiers {
+fn control_modifiers(byte : Int32) -> @core.KeyModifiers {
   let ordinary_control_code = byte == CR_BYTE ||
     byte == LF_BYTE ||
     byte == TAB_BYTE ||
@@ -663,7 +663,7 @@ fn control_modifiers(byte : Int) -> @core.KeyModifiers {
 }
 
 ///|
-fn ss3_key_name(terminator : Int) -> String? {
+fn ss3_key_name(terminator : Int32) -> String? {
   match terminator {
     0x50 => Some("F1")
     0x51 => Some("F2")
@@ -681,7 +681,7 @@ fn ss3_key_name(terminator : Int) -> String? {
 
 ///|
 /// `ESC[<num>~` 编号表,与编码侧一一对应。
-fn tilde_key_name(code : Int) -> String? {
+fn tilde_key_name(code : Int32) -> String? {
   match code {
     1 => Some("Home")
     2 => Some("Insert")
@@ -709,7 +709,7 @@ fn tilde_key_name(code : Int) -> String? {
 
 ///|
 /// kitty CSI-u 功能键码位段(`ESC[>1u` 之后终端用这段码位表达无文本对应的键)。
-fn functional_key_name(cp : Int) -> String? {
+fn functional_key_name(cp : Int32) -> String? {
   match cp {
     57344 => Some("Escape")
     57345 => Some("Enter")
@@ -743,7 +743,7 @@ fn functional_key_name(cp : Int) -> String? {
 
 ///|
 /// 一个 UTF-8 起始字节需要的总长度;非法起始字节返回 0。
-fn utf8_sequence_length(lead : Int) -> Int {
+fn utf8_sequence_length(lead : Int32) -> Int32 {
   if lead < 0x80 {
     1
   } else if lead >= 0xc2 && lead <= 0xdf {
@@ -759,14 +759,14 @@ fn utf8_sequence_length(lead : Int) -> Int {
 
 ///|
 priv struct Utf8Piece {
-  cp : Int
-  size : Int
+  cp : Int32
+  size : Int32
 }
 
 ///|
 /// 缓冲不足一个完整码位时返回 None:半个汉字不能变成替换符,
 /// 否则会污染 renderer 的文本投影(它按字节块 feed,自行拼接)。
-fn decode_utf8(buf : Array[Int], at~ : Int) -> Utf8Piece? {
+fn decode_utf8(buf : Array[Int32], at~ : Int32) -> Utf8Piece? {
   if at >= buf.length() {
     return None
   }

@@ -12,7 +12,7 @@
 ///|
 /// How many characters of prompt we are willing to send. Bounded so a
 /// misbehaving provider cannot be handed an unbounded request.
-pub let context_char_budget : Int = 6000
+pub let context_char_budget : Int32 = 6000
 
 ///|
 /// Build the system prompt for a conversation with one character.
@@ -105,7 +105,7 @@ pub fn plan_messages(
   card : CharacterCard,
   conversation : Conversation,
   player_text : String,
-  budget? : Int = context_char_budget,
+  budget~ : Int32 = context_char_budget,
 ) -> MessagePlan {
   let messages : Array[(String, String)] = []
   // Position matters: `Before` entries are world rules and belong ahead of the
@@ -184,7 +184,7 @@ pub fn build_messages(
 }
 
 ///|
-fn total_chars(messages : Array[(String, String)]) -> Int {
+fn total_chars(messages : Array[(String, String)]) -> Int32 {
   let mut total = 0
   for message in messages {
     total += message.0.length() + message.1.length()
@@ -210,11 +210,11 @@ pub fn prompt_summary(
 
 ///|
 /// How many recent lines stay raw (un-summarized) in the request.
-pub let summary_keep_recent : Int = 10
+pub let summary_keep_recent : Int32 = 10
 
 ///|
 /// Minimum number of NEW conversation lines before compression runs again.
-pub let summary_min_new_lines : Int = 10
+pub let summary_min_new_lines : Int32 = 10
 
 ///|
 /// The oldest chunk of a conversation: everything before the last
@@ -235,7 +235,7 @@ pub fn compression_source(conversation : Conversation) -> Array[ChatLine] {
 /// summary, so the provider is not asked on every send.
 pub fn needs_compression(
   conversation : Conversation,
-  evicted_count : Int,
+  evicted_count : Int32,
 ) -> Bool {
   let under_pressure = conversation.lines().length() >=
     chat_history_limit - summary_keep_recent ||
@@ -252,7 +252,7 @@ pub fn needs_compression(
 fn render_lines(
   lines : Array[ChatLine],
   character_name : String,
-  keep_recent : Int,
+  keep_recent : Int32,
 ) -> String {
   let rendered : Array[String] = []
   for line in lines {
@@ -285,11 +285,11 @@ pub fn summarize_prompt(
 
 ///|
 /// How many recent lines the memory extractor reads.
-pub let memory_proposal_recent_lines : Int = 12
+pub let memory_proposal_recent_lines : Int32 = 12
 
 ///|
 /// How many appends between memory-extraction proposals.
-pub let memory_proposal_every : Int = 10
+pub let memory_proposal_every : Int32 = 10
 
 ///|
 /// The prompt pair asking the provider to distill durable facts into
@@ -308,7 +308,7 @@ pub fn propose_memory_prompt(
 
 ///|
 /// Hard-truncate a summary so a misbehaving provider cannot inflate it.
-pub fn clip_chars(text : String, max_chars : Int) -> String {
+pub fn clip_chars(text : String, max_chars : Int32) -> String {
   let chars : Array[Char] = []
   for ch in text {
     chars.push(ch)

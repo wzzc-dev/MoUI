@@ -93,8 +93,8 @@ pub(all) struct SurfaceDescriptor {
   backend : SurfaceBackend
   image_info : ImageInfo
   origin : SurfaceOrigin
-  sample_count : Int
-  stencil_bits : Int
+  sample_count : Int32
+  stencil_bits : Int32
   budget : SurfaceBudget
 } derive(Debug, Eq)
 
@@ -108,17 +108,17 @@ pub extend SurfaceDescriptor with Eq::{not_equal, equal}
 pub fn SurfaceDescriptor::new(
   backend : SurfaceBackend,
   image_info : ImageInfo,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  budget? : SurfaceBudget = Unbudgeted,
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  budget~ : SurfaceBudget = Unbudgeted,
 ) -> SurfaceDescriptor {
   {
     backend,
     image_info,
     origin,
-    sample_count: Int::max(1, sample_count),
-    stencil_bits: Int::max(0, stencil_bits),
+    sample_count: Int32::max(1, sample_count),
+    stencil_bits: Int32::max(0, stencil_bits),
     budget,
   }
 }
@@ -131,9 +131,9 @@ pub fn SurfaceDescriptor::raster_n32_premul(size : ISize) -> SurfaceDescriptor {
 ///|
 pub fn SurfaceDescriptor::window_n32_premul(
   size : ISize,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
 ) -> SurfaceDescriptor {
   SurfaceDescriptor::new(
     Window,
@@ -147,10 +147,10 @@ pub fn SurfaceDescriptor::window_n32_premul(
 ///|
 pub fn SurfaceDescriptor::gpu_n32_premul(
   size : ISize,
-  origin? : SurfaceOrigin = TopLeft,
-  sample_count? : Int = 1,
-  stencil_bits? : Int = 0,
-  budget? : SurfaceBudget = Budgeted,
+  origin~ : SurfaceOrigin = TopLeft,
+  sample_count~ : Int32 = 1,
+  stencil_bits~ : Int32 = 0,
+  budget~ : SurfaceBudget = Budgeted,
 ) -> SurfaceDescriptor {
   SurfaceDescriptor::new(
     Gpu,
@@ -168,12 +168,12 @@ pub fn SurfaceDescriptor::dimensions(self : SurfaceDescriptor) -> ISize {
 }
 
 ///|
-pub fn SurfaceDescriptor::width(self : SurfaceDescriptor) -> Int {
+pub fn SurfaceDescriptor::width(self : SurfaceDescriptor) -> Int32 {
   self.image_info.width()
 }
 
 ///|
-pub fn SurfaceDescriptor::height(self : SurfaceDescriptor) -> Int {
+pub fn SurfaceDescriptor::height(self : SurfaceDescriptor) -> Int32 {
   self.image_info.height()
 }
 
@@ -252,17 +252,17 @@ pub fn SurfaceDescriptor::with_origin(
 ///|
 pub fn SurfaceDescriptor::with_sample_count(
   self : SurfaceDescriptor,
-  sample_count : Int,
+  sample_count : Int32,
 ) -> SurfaceDescriptor {
-  { ..self, sample_count: Int::max(1, sample_count), }
+  { ..self, sample_count: Int32::max(1, sample_count), }
 }
 
 ///|
 pub fn SurfaceDescriptor::with_stencil_bits(
   self : SurfaceDescriptor,
-  stencil_bits : Int,
+  stencil_bits : Int32,
 ) -> SurfaceDescriptor {
-  { ..self, stencil_bits: Int::max(0, stencil_bits), }
+  { ..self, stencil_bits: Int32::max(0, stencil_bits), }
 }
 
 ///|

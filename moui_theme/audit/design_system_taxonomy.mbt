@@ -73,12 +73,12 @@ pub fn token_taxonomy_for(
 }
 
 ///|
-pub fn token_taxonomy_count(preset : @common.DesignPreset) -> Int {
+pub fn token_taxonomy_count(preset : @common.DesignPreset) -> Int32 {
   token_taxonomy_report(preset).length()
 }
 
 ///|
-pub fn token_taxonomy_required_count(preset : @common.DesignPreset) -> Int {
+pub fn token_taxonomy_required_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
     if item.required {
@@ -89,7 +89,7 @@ pub fn token_taxonomy_required_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn token_taxonomy_mapped_count(preset : @common.DesignPreset) -> Int {
+pub fn token_taxonomy_mapped_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
     if item.status != NotMapped &&
@@ -103,7 +103,7 @@ pub fn token_taxonomy_mapped_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn token_taxonomy_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn token_taxonomy_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
     if item.required &&
@@ -120,7 +120,7 @@ pub fn token_taxonomy_gap_count(preset : @common.DesignPreset) -> Int {
 }
 
 ///|
-pub fn token_taxonomy_source_gap_count(preset : @common.DesignPreset) -> Int {
+pub fn token_taxonomy_source_gap_count(preset : @common.DesignPreset) -> Int32 {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
     if item.required && (!item.source_declared || !item.source_locked) {
@@ -133,7 +133,7 @@ pub fn token_taxonomy_source_gap_count(preset : @common.DesignPreset) -> Int {
 ///|
 pub fn token_taxonomy_official_parity_gap_count(
   preset : @common.DesignPreset,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for item in token_taxonomy_report(preset) {
     if item.required && item.remaining_gap != "none" {

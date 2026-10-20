@@ -17,7 +17,7 @@ fn[Msg] flex_test_box(width~ : Double, height~ : Double) -> @core.View[Msg] {
 /// root frame.
 fn flex_child_layout(
   layout : @core.LayoutResult,
-  index : Int,
+  index : Int32,
 ) -> @core.LayoutResult? {
   match layout.children.get(0) {
     Some(row) => row.children.get(index)

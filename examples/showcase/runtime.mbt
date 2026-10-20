@@ -3,13 +3,13 @@
 /// environment and diagnostic DTO sources; app state remains platform-neutral.
 pub fn runtime(
   host_summary~ : @host.HostCapabilitySummary,
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  renderer_providers? : Array[@render.RendererProvider] = [],
-  route? : String = @app.ShowcaseRoute::default().format(),
-  route_host? : @app.ShowcaseRouteHost? = None,
-  initial_section_code? : Int = 0,
-  width? : Double = 1100.0,
-  height? : Double = 680.0,
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  renderer_providers~ : Array[@render.RendererProvider] = [],
+  route~ : String = @app.ShowcaseRoute::default().format(),
+  route_host~ : @app.ShowcaseRouteHost? = None,
+  initial_section_code~ : Int32 = 0,
+  width~ : Double = 1100.0,
+  height~ : Double = 680.0,
 ) -> @runtime.AppRuntime {
   let diagnostics_input = diagnostics_input(host_summary, renderer_providers)
   let model = @app.ShowcaseModel::new(diagnostics_input~, route~)

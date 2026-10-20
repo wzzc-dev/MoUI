@@ -5,7 +5,7 @@
 /// bytes on the MoonBit side so it is safe across backend boundaries.
 pub(all) struct Pixmap {
   image_info : ImageInfo
-  row_bytes : Int
+  row_bytes : Int32
   pixels : Bytes
 } derive(Debug, Eq)
 
@@ -18,7 +18,7 @@ pub extend Pixmap with Eq::{not_equal, equal}
 ///|
 pub fn Pixmap::new(
   image_info : ImageInfo,
-  row_bytes : Int,
+  row_bytes : Int32,
   pixels : Bytes,
 ) -> Pixmap? {
   if image_info.is_empty() || !image_info.valid_row_bytes(row_bytes) {
@@ -31,12 +31,12 @@ pub fn Pixmap::new(
 }
 
 ///|
-pub fn Pixmap::width(self : Pixmap) -> Int {
+pub fn Pixmap::width(self : Pixmap) -> Int32 {
   self.image_info.width()
 }
 
 ///|
-pub fn Pixmap::height(self : Pixmap) -> Int {
+pub fn Pixmap::height(self : Pixmap) -> Int32 {
   self.image_info.height()
 }
 
@@ -61,22 +61,22 @@ pub fn Pixmap::alpha_type(self : Pixmap) -> AlphaType {
 }
 
 ///|
-pub fn Pixmap::bytes_per_pixel(self : Pixmap) -> Int {
+pub fn Pixmap::bytes_per_pixel(self : Pixmap) -> Int32 {
   self.image_info.bytes_per_pixel()
 }
 
 ///|
-pub fn Pixmap::shift_per_pixel(self : Pixmap) -> Int {
+pub fn Pixmap::shift_per_pixel(self : Pixmap) -> Int32 {
   self.image_info.shift_per_pixel()
 }
 
 ///|
-pub fn Pixmap::row_bytes(self : Pixmap) -> Int {
+pub fn Pixmap::row_bytes(self : Pixmap) -> Int32 {
   self.row_bytes
 }
 
 ///|
-pub fn Pixmap::byte_size(self : Pixmap) -> Int {
+pub fn Pixmap::byte_size(self : Pixmap) -> Int32 {
   self.image_info.compute_byte_size(self.row_bytes)
 }
 
@@ -96,7 +96,7 @@ pub fn Pixmap::contains(self : Pixmap, point : IPoint) -> Bool {
 }
 
 ///|
-pub fn Pixmap::offset(self : Pixmap, point : IPoint) -> Int? {
+pub fn Pixmap::offset(self : Pixmap, point : IPoint) -> Int32? {
   if self.contains(point) {
     Some(self.image_info.compute_offset(point, self.row_bytes))
   } else {

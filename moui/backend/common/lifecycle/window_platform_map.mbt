@@ -21,7 +21,7 @@ pub fn PlatformWindowMap::new() -> PlatformWindowMap {
 }
 
 ///|
-pub fn PlatformWindowMap::count(self : PlatformWindowMap) -> Int {
+pub fn PlatformWindowMap::count(self : PlatformWindowMap) -> Int32 {
   self.bindings.length()
 }
 

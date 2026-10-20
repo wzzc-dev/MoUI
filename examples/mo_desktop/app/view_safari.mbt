@@ -195,7 +195,7 @@ fn safari_tab_bar(
 
 ///|
 fn safari_tab(
-  index : Int,
+  index : Int32,
   title : String,
   selected : Bool,
   width : Double,

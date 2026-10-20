@@ -1,67 +1,67 @@
 ///|
 pub struct RuntimeInspectorSnapshot {
   priv size : @core.Size
-  priv dirty_count : Int
-  priv dirty_element_ids : Array[Int]
-  priv dirty_build_count : Int
-  priv dirty_build_element_ids : Array[Int]
-  priv dirty_layout_count : Int
-  priv dirty_layout_element_ids : Array[Int]
-  priv dirty_paint_count : Int
-  priv dirty_paint_element_ids : Array[Int]
+  priv dirty_count : Int32
+  priv dirty_element_ids : Array[Int32]
+  priv dirty_build_count : Int32
+  priv dirty_build_element_ids : Array[Int32]
+  priv dirty_layout_count : Int32
+  priv dirty_layout_element_ids : Array[Int32]
+  priv dirty_paint_count : Int32
+  priv dirty_paint_element_ids : Array[Int32]
   priv dirty_state : RuntimeDirtyStateSummary
   priv needs_rebuild : Bool
   priv needs_layout : Bool
   priv needs_paint : Bool
   priv needs_redraw : Bool
-  priv draw_command_count : Int
-  priv rebuild_pass_count : Int
-  priv layout_pass_count : Int
-  priv paint_pass_count : Int
-  priv draw_command_build_count : Int
-  priv layout_cache_hit_count : Int
-  priv layout_cache_miss_count : Int
-  priv render_cache_hit_count : Int
-  priv render_cache_miss_count : Int
-  priv last_event_hit_path : Array[Int]
+  priv draw_command_count : Int32
+  priv rebuild_pass_count : Int32
+  priv layout_pass_count : Int32
+  priv paint_pass_count : Int32
+  priv draw_command_build_count : Int32
+  priv layout_cache_hit_count : Int32
+  priv layout_cache_miss_count : Int32
+  priv render_cache_hit_count : Int32
+  priv render_cache_miss_count : Int32
+  priv last_event_hit_path : Array[Int32]
   priv last_frame_timing : RuntimeFrameTiming
-  priv program_dispatched_count : Int
-  priv program_update_count : Int
-  priv ignored_program_dispatch_count : Int
-  priv program_message_enqueue_count : Int
-  priv program_message_drain_count : Int
-  priv program_pending_message_count : Int
-  priv program_max_pending_message_count : Int
-  priv program_effect_plan_count : Int
-  priv program_effect_count : Int
-  priv program_effect_none_count : Int
-  priv program_effect_batch_count : Int
-  priv program_effect_send_count : Int
-  priv program_effect_dispatch_count : Int
-  priv program_effect_run_count : Int
-  priv program_effect_task_count : Int
-  priv duplicate_effect_descriptor_key_count : Int
+  priv program_dispatched_count : Int32
+  priv program_update_count : Int32
+  priv ignored_program_dispatch_count : Int32
+  priv program_message_enqueue_count : Int32
+  priv program_message_drain_count : Int32
+  priv program_pending_message_count : Int32
+  priv program_max_pending_message_count : Int32
+  priv program_effect_plan_count : Int32
+  priv program_effect_count : Int32
+  priv program_effect_none_count : Int32
+  priv program_effect_batch_count : Int32
+  priv program_effect_send_count : Int32
+  priv program_effect_dispatch_count : Int32
+  priv program_effect_run_count : Int32
+  priv program_effect_task_count : Int32
+  priv duplicate_effect_descriptor_key_count : Int32
   priv duplicate_effect_descriptor_keys : Array[String]
-  priv superseded_effect_task_key_count : Int
+  priv superseded_effect_task_key_count : Int32
   priv superseded_effect_task_keys : Array[String]
   priv last_effect_summary : EffectPlanSummary
   priv last_scheduled_effect_summary : EffectPlanSummary
-  priv active_effect_task_count : Int
-  priv started_effect_task_count : Int
-  priv completed_effect_task_count : Int
-  priv cancelled_effect_task_count : Int
-  priv ignored_effect_task_dispatch_count : Int
+  priv active_effect_task_count : Int32
+  priv started_effect_task_count : Int32
+  priv completed_effect_task_count : Int32
+  priv cancelled_effect_task_count : Int32
+  priv ignored_effect_task_dispatch_count : Int32
   priv active_effect_tasks : Array[@core.EffectDescriptor]
   priv effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  priv program_subscription_plan_count : Int
+  priv program_subscription_plan_count : Int32
   priv last_subscription_plan_summary : SubscriptionPlanSummary
-  priv active_subscription_count : Int
-  priv started_subscription_count : Int
-  priv reused_subscription_count : Int
-  priv cancelled_subscription_count : Int
-  priv duplicate_subscription_key_count : Int
+  priv active_subscription_count : Int32
+  priv started_subscription_count : Int32
+  priv reused_subscription_count : Int32
+  priv cancelled_subscription_count : Int32
+  priv duplicate_subscription_key_count : Int32
   priv duplicate_subscription_keys : Array[String]
-  priv ignored_subscription_dispatch_count : Int
+  priv ignored_subscription_dispatch_count : Int32
   priv active_subscriptions : Array[@core.SubscriptionDescriptor]
   priv active_subscription_kind_counts : Array[SubscriptionKindCount]
   priv subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
@@ -80,14 +80,14 @@ pub extend RuntimeInspectorSnapshot with ToJson::{to_json}
 
 ///|
 pub struct RuntimeDirtyStateSummary {
-  priv dirty_count : Int
-  priv dirty_element_ids : Array[Int]
-  priv dirty_build_count : Int
-  priv dirty_build_element_ids : Array[Int]
-  priv dirty_layout_count : Int
-  priv dirty_layout_element_ids : Array[Int]
-  priv dirty_paint_count : Int
-  priv dirty_paint_element_ids : Array[Int]
+  priv dirty_count : Int32
+  priv dirty_element_ids : Array[Int32]
+  priv dirty_build_count : Int32
+  priv dirty_build_element_ids : Array[Int32]
+  priv dirty_layout_count : Int32
+  priv dirty_layout_element_ids : Array[Int32]
+  priv dirty_paint_count : Int32
+  priv dirty_paint_element_ids : Array[Int32]
   priv needs_rebuild : Bool
   priv needs_layout : Bool
   priv needs_paint : Bool
@@ -96,7 +96,7 @@ pub struct RuntimeDirtyStateSummary {
   priv reason : String
   priv reasons : Array[String]
   priv damage_kind : String
-  priv damage_rect_count : Int
+  priv damage_rect_count : Int32
   priv damage_full_reason : String
 } derive(Eq, Debug, ToJson)
 
@@ -111,11 +111,11 @@ pub extend RuntimeDirtyStateSummary with ToJson::{to_json}
 
 ///|
 pub struct ViewInspectorSummary {
-  priv element_id : Int
+  priv element_id : Int32
   priv kind : String
   priv key : String
-  priv depth : Int
-  priv child_count : Int
+  priv depth : Int32
+  priv child_count : Int32
   priv needs_build : Bool
   priv needs_layout : Bool
   priv needs_paint : Bool
@@ -133,12 +133,12 @@ pub extend ViewInspectorSummary with ToJson::{to_json}
 ///|
 pub struct ViewTreeInspectorSnapshot {
   priv root_kind : String
-  priv node_count : Int
-  priv control_count : Int
-  priv modified_count : Int
-  priv dirty_build_count : Int
-  priv dirty_layout_count : Int
-  priv dirty_paint_count : Int
+  priv node_count : Int32
+  priv control_count : Int32
+  priv modified_count : Int32
+  priv dirty_build_count : Int32
+  priv dirty_layout_count : Int32
+  priv dirty_paint_count : Int32
   priv nodes : Array[ViewInspectorSummary]
 } derive(Eq, Debug, ToJson)
 
@@ -153,11 +153,11 @@ pub extend ViewTreeInspectorSnapshot with ToJson::{to_json}
 
 ///|
 pub struct LayoutBoundsInspectorEntry {
-  priv element_id : Int
+  priv element_id : Int32
   priv frame : @core.Rect
   priv constraints : @core.Constraints
-  priv depth : Int
-  priv child_count : Int
+  priv depth : Int32
+  priv child_count : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -172,9 +172,9 @@ pub extend LayoutBoundsInspectorEntry with ToJson::{to_json}
 ///|
 pub struct LayoutInspectorSnapshot {
   priv root_frame : @core.Rect
-  priv node_count : Int
-  priv leaf_count : Int
-  priv max_depth : Int
+  priv node_count : Int32
+  priv leaf_count : Int32
+  priv max_depth : Int32
   priv bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, Debug, ToJson)
 
@@ -189,13 +189,13 @@ pub extend LayoutInspectorSnapshot with ToJson::{to_json}
 
 ///|
 pub struct RenderInspectorEntry {
-  priv element_id : Int
+  priv element_id : Int32
   priv frame : @core.Rect
   priv paint_bounds : @core.Rect
-  priv depth : Int
-  priv child_count : Int
-  priv command_count : Int
-  priv overlay_command_count : Int
+  priv depth : Int32
+  priv child_count : Int32
+  priv command_count : Int32
+  priv overlay_command_count : Int32
   priv repaint_boundary : Bool
   priv cache_key : String
 } derive(Eq, Debug, ToJson)
@@ -211,18 +211,18 @@ pub extend RenderInspectorEntry with ToJson::{to_json}
 
 ///|
 pub struct RenderInspectorSnapshot {
-  priv command_count : Int
-  priv text_count : Int
-  priv image_count : Int
-  priv clip_depth : Int
-  priv open_clip_depth : Int
-  priv layer_depth : Int
-  priv open_layer_depth : Int
-  priv filter_depth : Int
-  priv open_filter_depth : Int
-  priv path_count : Int
-  priv shader_count : Int
-  priv unbalanced_pop_count : Int
+  priv command_count : Int32
+  priv text_count : Int32
+  priv image_count : Int32
+  priv clip_depth : Int32
+  priv open_clip_depth : Int32
+  priv layer_depth : Int32
+  priv open_layer_depth : Int32
+  priv filter_depth : Int32
+  priv open_filter_depth : Int32
+  priv path_count : Int32
+  priv shader_count : Int32
+  priv unbalanced_pop_count : Int32
   priv nodes : Array[RenderInspectorEntry]
 } derive(Eq, Debug, ToJson)
 
@@ -242,9 +242,9 @@ pub struct SemanticsInspectorEntry {
   priv label : String
   priv value : String
   priv frame : @core.Rect
-  priv depth : Int
-  priv child_count : Int
-  priv action_count : Int
+  priv depth : Int32
+  priv child_count : Int32
+  priv action_count : Int32
   priv focusable : Bool
   priv selected : Bool
   priv checked : Bool
@@ -264,16 +264,16 @@ pub extend SemanticsInspectorEntry with ToJson::{to_json}
 ///|
 pub struct SemanticsInspectorSnapshot {
   priv root_role : @core.SemanticsRole
-  priv node_count : Int
-  priv focusable_count : Int
-  priv action_count : Int
-  priv max_depth : Int
-  priv selected_count : Int
-  priv checked_count : Int
-  priv expanded_count : Int
-  priv invalid_count : Int
-  priv required_count : Int
-  priv described_count : Int
+  priv node_count : Int32
+  priv focusable_count : Int32
+  priv action_count : Int32
+  priv max_depth : Int32
+  priv selected_count : Int32
+  priv checked_count : Int32
+  priv expanded_count : Int32
+  priv invalid_count : Int32
+  priv required_count : Int32
+  priv described_count : Int32
   priv nodes : Array[SemanticsInspectorEntry]
 } derive(Eq, Debug, ToJson)
 

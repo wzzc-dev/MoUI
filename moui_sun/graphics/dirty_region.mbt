@@ -1,10 +1,10 @@
 ///|
 /// Pixel-aligned rectangle used for dirty-region tracking.
 pub struct PixelRect {
-  x : Int
-  y : Int
-  width : Int
-  height : Int
+  x : Int32
+  y : Int32
+  width : Int32
+  height : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -83,7 +83,7 @@ pub extend DirtySubmitPlan with Debug::{to_repr}
 /// the number of rectangles actually presented to the surface.
 pub struct DirtySubmitResult {
   submit_plan : DirtySubmitPlan
-  presented_rect_count : Int
+  presented_rect_count : Int32
 } derive(Debug)
 
 ///|
@@ -102,7 +102,7 @@ pub fn DirtyPresentPlan::get_rects(self : DirtyPresentPlan) -> Array[PixelRect] 
 }
 
 ///|
-pub fn DirtyPresentPlan::get_rect_count(self : DirtyPresentPlan) -> Int {
+pub fn DirtyPresentPlan::get_rect_count(self : DirtyPresentPlan) -> Int32 {
   self.rects.length()
 }
 
@@ -117,7 +117,7 @@ pub fn DirtyPresentPlan::get_present_bounds(
 ///|
 pub fn DirtyPresentPlan::get_present_pixel_count(
   self : DirtyPresentPlan,
-) -> Int {
+) -> Int32 {
   guard !self.is_empty() else { return 0 }
   let mut pixels = 0
   for rect in self.rects {
@@ -127,15 +127,17 @@ pub fn DirtyPresentPlan::get_present_pixel_count(
 }
 
 ///|
-pub fn DirtyPresentPlan::get_present_byte_count(self : DirtyPresentPlan) -> Int {
+pub fn DirtyPresentPlan::get_present_byte_count(
+  self : DirtyPresentPlan,
+) -> Int32 {
   self.get_present_pixel_count() * 4
 }
 
 ///|
 pub fn DirtyPresentPlan::saves_full_present_pixels(
   self : DirtyPresentPlan,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   guard !self.is_empty() else { return false }
   let full_pixels = PixelRect::new(x=0, y=0, width~, height~).area()
@@ -145,8 +147,8 @@ pub fn DirtyPresentPlan::saves_full_present_pixels(
 ///|
 pub fn DirtyPresentPlan::get_present_strategy(
   self : DirtyPresentPlan,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> DirtyPresentStrategy {
   guard !self.is_empty() else { return Skip }
   if self.saves_full_present_pixels(width, height) {
@@ -203,17 +205,19 @@ pub fn DirtySubmitPlan::get_state(self : DirtySubmitPlan) -> DirtySubmitState {
 }
 
 ///|
-pub fn DirtySubmitPlan::get_present_rect_count(self : DirtySubmitPlan) -> Int {
+pub fn DirtySubmitPlan::get_present_rect_count(self : DirtySubmitPlan) -> Int32 {
   self.present_plan.get_rect_count()
 }
 
 ///|
-pub fn DirtySubmitPlan::get_present_pixel_count(self : DirtySubmitPlan) -> Int {
+pub fn DirtySubmitPlan::get_present_pixel_count(
+  self : DirtySubmitPlan,
+) -> Int32 {
   self.present_plan.get_present_pixel_count()
 }
 
 ///|
-pub fn DirtySubmitPlan::get_present_byte_count(self : DirtySubmitPlan) -> Int {
+pub fn DirtySubmitPlan::get_present_byte_count(self : DirtySubmitPlan) -> Int32 {
   self.present_plan.get_present_byte_count()
 }
 
@@ -227,8 +231,8 @@ pub fn DirtySubmitPlan::get_present_bounds(
 ///|
 pub fn DirtySubmitPlan::saves_full_present_pixels(
   self : DirtySubmitPlan,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   self.present_plan.saves_full_present_pixels(width, height)
 }
@@ -236,8 +240,8 @@ pub fn DirtySubmitPlan::saves_full_present_pixels(
 ///|
 pub fn DirtySubmitPlan::get_present_strategy(
   self : DirtySubmitPlan,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> DirtyPresentStrategy {
   self.present_plan.get_present_strategy(width, height)
 }
@@ -298,21 +302,21 @@ pub fn DirtySubmitResult::did_present(self : DirtySubmitResult) -> Bool {
 ///|
 pub fn DirtySubmitResult::get_presented_rect_count(
   self : DirtySubmitResult,
-) -> Int {
+) -> Int32 {
   self.presented_rect_count
 }
 
 ///|
 pub fn DirtySubmitResult::get_present_pixel_count(
   self : DirtySubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_pixel_count()
 }
 
 ///|
 pub fn DirtySubmitResult::get_present_byte_count(
   self : DirtySubmitResult,
-) -> Int {
+) -> Int32 {
   self.submit_plan.get_present_byte_count()
 }
 
@@ -326,8 +330,8 @@ pub fn DirtySubmitResult::get_present_bounds(
 ///|
 pub fn DirtySubmitResult::saves_full_present_pixels(
   self : DirtySubmitResult,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Bool {
   self.submit_plan.saves_full_present_pixels(width, height)
 }
@@ -335,29 +339,29 @@ pub fn DirtySubmitResult::saves_full_present_pixels(
 ///|
 pub fn DirtySubmitResult::get_present_strategy(
   self : DirtySubmitResult,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> DirtyPresentStrategy {
   self.submit_plan.get_present_strategy(width, height)
 }
 
 ///|
 pub fn PixelRect::new(
-  x~ : Int,
-  y~ : Int,
-  width~ : Int,
-  height~ : Int,
+  x~ : Int32,
+  y~ : Int32,
+  width~ : Int32,
+  height~ : Int32,
 ) -> PixelRect {
   { x, y, width, height, }
 }
 
 ///|
-pub fn PixelRect::right(self : PixelRect) -> Int {
+pub fn PixelRect::right(self : PixelRect) -> Int32 {
   self.x + self.width
 }
 
 ///|
-pub fn PixelRect::bottom(self : PixelRect) -> Int {
+pub fn PixelRect::bottom(self : PixelRect) -> Int32 {
   self.y + self.height
 }
 
@@ -367,7 +371,7 @@ pub fn PixelRect::is_empty(self : PixelRect) -> Bool {
 }
 
 ///|
-pub fn PixelRect::area(self : PixelRect) -> Int {
+pub fn PixelRect::area(self : PixelRect) -> Int32 {
   if self.is_empty() {
     return 0
   }
@@ -375,7 +379,7 @@ pub fn PixelRect::area(self : PixelRect) -> Int {
 }
 
 ///|
-pub fn PixelRect::contains(self : PixelRect, x : Int, y : Int) -> Bool {
+pub fn PixelRect::contains(self : PixelRect, x : Int32, y : Int32) -> Bool {
   !self.is_empty() &&
   x >= self.x &&
   x < self.right() &&
@@ -470,10 +474,10 @@ fn pixel_rects_can_merge(a : PixelRect, b : PixelRect) -> Bool {
 
 ///|
 fn ranges_overlap(
-  a_start : Int,
-  a_end : Int,
-  b_start : Int,
-  b_end : Int,
+  a_start : Int32,
+  a_end : Int32,
+  b_start : Int32,
+  b_end : Int32,
 ) -> Bool {
   a_start.max(b_start) < a_end.min(b_end)
 }
@@ -503,7 +507,7 @@ pub fn DirtyRegion::clear(self : DirtyRegion) -> Unit {
 }
 
 ///|
-pub fn DirtyRegion::get_rect_count(self : DirtyRegion) -> Int {
+pub fn DirtyRegion::get_rect_count(self : DirtyRegion) -> Int32 {
   self.rects.length()
 }
 
@@ -550,8 +554,8 @@ pub fn DirtyRegion::add_clipped_rect(
 ///|
 pub fn DirtyRegion::add_all(
   self : DirtyRegion,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   self.add_rect(PixelRect::new(x=0, y=0, width~, height~))
 }
@@ -565,7 +569,7 @@ pub fn DirtyRegion::bounds(self : DirtyRegion) -> PixelRect? {
 pub fn DirtyRegion::present_rects(
   self : DirtyRegion,
   bounds : PixelRect,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> Array[PixelRect] {
   self.present_plan(bounds, max_rects).get_rects()
 }
@@ -574,7 +578,7 @@ pub fn DirtyRegion::present_rects(
 pub fn DirtyRegion::present_plan(
   self : DirtyRegion,
   bounds : PixelRect,
-  max_rects : Int,
+  max_rects : Int32,
 ) -> DirtyPresentPlan {
   let clipped = []
   for rect in self.rects {

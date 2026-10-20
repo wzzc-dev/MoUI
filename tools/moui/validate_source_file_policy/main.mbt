@@ -7,7 +7,7 @@ suberror SourcePolicyError {
 struct PolicyEntry {
   path : String
   classification : String
-  max_lines : Int
+  max_lines : Int32
   reason : String
   generator : String
   check_command : String
@@ -18,14 +18,14 @@ struct PolicyEntry {
 struct SourcePolicy {
   roots : Array[String]
   extensions : Array[String]
-  review_lines : Int
-  hard_limit_lines : Int
+  review_lines : Int32
+  hard_limit_lines : Int32
   entries : Array[PolicyEntry]
 }
 
 ///|
 struct PolicyResult {
-  file_count : Int
+  file_count : Int32
   review_paths : Array[String]
   failures : Array[String]
 }
@@ -71,7 +71,7 @@ fn json_string(value : Json?, label : String) -> String raise SourcePolicyError 
 }
 
 ///|
-fn json_int(value : Json?, label : String) -> Int raise SourcePolicyError {
+fn json_int(value : Json?, label : String) -> Int32 raise SourcePolicyError {
   match value {
     Some(Json::Number(number, repr=_)) => number.to_int()
     _ => raise SourcePolicyError::Invalid(label + " must be a number")
@@ -240,7 +240,7 @@ fn collect_source_files(
 }
 
 ///|
-fn source_line_count(text : String) -> Int {
+fn source_line_count(text : String) -> Int32 {
   if text == "" {
     return 0
   }
@@ -269,9 +269,9 @@ fn entry_for_path(entries : Array[PolicyEntry], path : String) -> PolicyEntry? {
 
 ///|
 fn unregistered_logic_classification(
-  lines : Int,
-  review_lines : Int,
-  hard_limit_lines : Int,
+  lines : Int32,
+  review_lines : Int32,
+  hard_limit_lines : Int32,
 ) -> String {
   if lines > hard_limit_lines {
     "hard-limit"
@@ -421,7 +421,7 @@ fn validate_policy(repo_root : String, policy : SourcePolicy) -> PolicyResult {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   let repo_root = Ref(@env.current_dir().unwrap_or(""))
   let mut index = 0
   while index < args.length() {

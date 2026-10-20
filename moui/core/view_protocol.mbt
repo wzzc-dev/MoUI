@@ -127,7 +127,7 @@ pub extend ViewPaintPlan with Eq::{not_equal, equal}
 pub(all) struct ViewPaintLayer {
   frame : Rect
   cache_key : String
-  content_revision : Int
+  content_revision : Int32
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
 } derive(Eq, Debug)
@@ -205,7 +205,7 @@ pub(all) struct ViewSemanticsInfo {
   composition : SemanticsComposition
   semantic_id : SemanticId?
   role : SemanticsRole?
-  level : Int?
+  level : Int32?
   url : String?
   label : String?
   value : String?
@@ -259,9 +259,9 @@ pub extend ViewStateContext with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct TextControlStateContext {
-  caret : Int
+  caret : Int32
   selection : TextRange?
-  text_selection_anchor : Int?
+  text_selection_anchor : Int32?
   /// Screen position where the current pointer selection gesture began
   /// (set on Down, cleared on Up). A Move landing on this point is the
   /// click's own event stream, not pointer travel: the selection must not
@@ -286,7 +286,7 @@ pub extend TextControlStateContext with Eq::{not_equal, equal}
 pub extend TextControlStateContext with ToJson::{to_json}
 
 ///|
-pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity {
+pub fn ViewIdentity::new(kind~ : String, key~ : String? = None) -> ViewIdentity {
   {
     kind,
     key: match key {
@@ -299,9 +299,9 @@ pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity 
 ///|
 pub fn ViewLayoutResult::new(
   size~ : Size,
-  child_frames? : Array[Rect] = [],
-  clips_children? : Bool = false,
-  child_frames_tight? : Bool = false,
+  child_frames~ : Array[Rect] = [],
+  clips_children~ : Bool = false,
+  child_frames_tight~ : Bool = false,
 ) -> ViewLayoutResult {
   { size, child_frames, clips_children, child_frames_tight, }
 }
@@ -345,9 +345,9 @@ pub fn ViewPaintPlan::animating_commands(
 pub fn ViewPaintLayer::new(
   frame~ : Rect,
   cache_key~ : String,
-  content_revision~ : Int,
-  commands? : Array[DrawCommand] = [],
-  overlay_commands? : Array[DrawCommand] = [],
+  content_revision~ : Int32,
+  commands~ : Array[DrawCommand] = [],
+  overlay_commands~ : Array[DrawCommand] = [],
 ) -> ViewPaintLayer {
   { frame, cache_key, content_revision, commands, overlay_commands, }
 }
@@ -388,18 +388,18 @@ pub fn[Msg] ViewTextCommandResult::ignored() -> ViewTextCommandResult[Msg] {
 ///|
 pub fn[Msg] ViewTextCommandResult::new(
   result~ : TextCommandResult,
-  text_control? : TextControlStateContext? = None,
-  messages? : Array[Msg] = [],
+  text_control~ : TextControlStateContext? = None,
+  messages~ : Array[Msg] = [],
 ) -> ViewTextCommandResult[Msg] {
   { result, text_control, messages, }
 }
 
 ///|
 pub fn ViewSemanticsInfo::new(
-  composition? : SemanticsComposition = Transparent,
+  composition~ : SemanticsComposition = Transparent,
   semantic_id? : SemanticId,
   role? : SemanticsRole,
-  level? : Int,
+  level? : Int32,
   url? : String,
   label? : String,
   value? : String,
@@ -469,16 +469,16 @@ pub struct View[Msg] {
 /// preserves those frozen snapshots.
 pub fn[Node : ViewNode, Msg] View::from_node(
   node : Node,
-  children? : (Node) -> Array[View[Msg]] = _node => [],
-  event? : (Node, ViewEventContext) -> ViewEventResult[Msg] = (_node, _context) => {
+  children~ : (Node) -> Array[View[Msg]] = _node => [],
+  event~ : (Node, ViewEventContext) -> ViewEventResult[Msg] = (_node, _context) => {
     ViewEventResult::ignored()
   },
-  text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
+  text_command~ : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
   ] = (_node, _context, _intent, _paste_text) => {
     ViewTextCommandResult::ignored()
   },
-  semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]] = _node => {
+  semantics_actions~ : (Node) -> Array[ViewSemanticsActionHandler[Msg]] = _node => {
     []
   },
 ) -> View[Msg] {
@@ -555,7 +555,7 @@ pub fn[Msg] View::layout(
 pub fn[Msg] View::place_overlays(
   self : View[Msg],
   context : OverlayPlacementContext,
-) -> Array[(Int, Rect)]? {
+) -> Array[(Int32, Rect)]? {
   self.adapter.node.place_overlays(context)
 }
 
@@ -596,7 +596,7 @@ pub fn[Msg] View::text_command(
   self : View[Msg],
   context : ViewEventContext,
   intent : CommandIntent,
-  paste_text? : String? = None,
+  paste_text~ : String? = None,
 ) -> TextCommandResult {
   self.adapter.text_command_result(context, intent, paste_text~).result
 }
@@ -606,7 +606,7 @@ pub fn[Msg] View::text_command_result(
   self : View[Msg],
   context : ViewEventContext,
   intent : CommandIntent,
-  paste_text? : String? = None,
+  paste_text~ : String? = None,
 ) -> ViewTextCommandResult[Msg] {
   self.adapter.text_command_result(context, intent, paste_text~)
 }

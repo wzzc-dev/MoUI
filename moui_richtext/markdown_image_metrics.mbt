@@ -166,7 +166,10 @@ pub fn markdown_image_metrics_size_from_bytes(bytes : Bytes) -> @core.Size? {
 }
 
 ///|
-fn markdown_image_metrics_webp_size(bytes : Bytes, length : Int) -> @core.Size? {
+fn markdown_image_metrics_webp_size(
+  bytes : Bytes,
+  length : Int32,
+) -> @core.Size? {
   if markdown_image_metrics_byte(bytes, 12) != 0x56 ||
     markdown_image_metrics_byte(bytes, 13) != 0x50 ||
     markdown_image_metrics_byte(bytes, 14) != 0x38 {
@@ -216,7 +219,10 @@ fn markdown_image_metrics_webp_size(bytes : Bytes, length : Int) -> @core.Size? 
 
 ///|
 /// Scan JPEG marker segments for a start-of-frame carrying the dimensions.
-fn markdown_image_metrics_jpeg_size(bytes : Bytes, length : Int) -> @core.Size? {
+fn markdown_image_metrics_jpeg_size(
+  bytes : Bytes,
+  length : Int32,
+) -> @core.Size? {
   let mut index = 2
   while index + 9 <= length {
     if markdown_image_metrics_byte(bytes, index) != 0xff {
@@ -250,7 +256,7 @@ fn markdown_image_metrics_jpeg_size(bytes : Bytes, length : Int) -> @core.Size? 
 }
 
 ///|
-fn markdown_image_metrics_byte(bytes : Bytes, index : Int) -> Int {
+fn markdown_image_metrics_byte(bytes : Bytes, index : Int32) -> Int32 {
   match bytes.get(index) {
     Some(byte) => byte.to_int()
     None => -1
@@ -260,8 +266,8 @@ fn markdown_image_metrics_byte(bytes : Bytes, index : Int) -> Int {
 ///|
 fn markdown_image_metrics_bytes_are(
   bytes : Bytes,
-  start : Int,
-  expected : Array[Int],
+  start : Int32,
+  expected : Array[Int32],
 ) -> Bool {
   for offset, want in expected {
     if markdown_image_metrics_byte(bytes, start + offset) != want {
@@ -272,31 +278,31 @@ fn markdown_image_metrics_bytes_are(
 }
 
 ///|
-fn markdown_image_metrics_be16(bytes : Bytes, start : Int) -> Int {
+fn markdown_image_metrics_be16(bytes : Bytes, start : Int32) -> Int32 {
   (markdown_image_metrics_byte(bytes, start) << 8) |
   markdown_image_metrics_byte(bytes, start + 1)
 }
 
 ///|
-fn markdown_image_metrics_be32(bytes : Bytes, start : Int) -> Int {
+fn markdown_image_metrics_be32(bytes : Bytes, start : Int32) -> Int32 {
   (markdown_image_metrics_be16(bytes, start) << 16) |
   markdown_image_metrics_be16(bytes, start + 2)
 }
 
 ///|
-fn markdown_image_metrics_le16(bytes : Bytes, start : Int) -> Int {
+fn markdown_image_metrics_le16(bytes : Bytes, start : Int32) -> Int32 {
   markdown_image_metrics_byte(bytes, start) |
   (markdown_image_metrics_byte(bytes, start + 1) << 8)
 }
 
 ///|
-fn markdown_image_metrics_le24(bytes : Bytes, start : Int) -> Int {
+fn markdown_image_metrics_le24(bytes : Bytes, start : Int32) -> Int32 {
   markdown_image_metrics_le16(bytes, start) |
   (markdown_image_metrics_byte(bytes, start + 2) << 16)
 }
 
 ///|
-fn markdown_image_metrics_le32(bytes : Bytes, start : Int) -> Int {
+fn markdown_image_metrics_le32(bytes : Bytes, start : Int32) -> Int32 {
   markdown_image_metrics_le16(bytes, start) |
   (markdown_image_metrics_le16(bytes, start + 2) << 16)
 }

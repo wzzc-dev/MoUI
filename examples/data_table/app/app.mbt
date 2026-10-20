@@ -63,7 +63,7 @@ pub extend DataSortKey with ToJson::{to_json}
 
 ///|
 pub(all) struct DataRecord {
-  id : Int
+  id : Int32
   project : String
   status : String
   owner : String
@@ -86,7 +86,7 @@ pub(all) struct DataTableModel {
   query : String
   selected_team : String
   selected_statuses : Array[String]
-  selected_row : Int
+  selected_row : Int32
   selected_rows : @views.SelectionState
   visible_columns : @views.ColumnVisibilityState
   column_widths : @views.ColumnWidthState
@@ -104,7 +104,7 @@ pub(all) enum DataTableMsg {
   TeamSelected(String)
   ToggleStatusFilter(String)
   ClearFilters
-  RowSelected(Int)
+  RowSelected(Int32)
   ClearSelection
   ArchiveSelection
   ExportSelection
@@ -127,7 +127,7 @@ pub fn DataTableApp::new() -> DataTableApp {
 
 ///|
 pub fn DataRecord::new(
-  id~ : Int,
+  id~ : Int32,
   project~ : String,
   status~ : String,
   owner~ : String,
@@ -299,7 +299,7 @@ pub fn DataTableModel::visible_records(
 }
 
 ///|
-pub fn DataTableModel::page_count(self : DataTableModel) -> Int {
+pub fn DataTableModel::page_count(self : DataTableModel) -> Int32 {
   self.pagination_state().page_count()
 }
 
@@ -845,7 +845,7 @@ fn compare_records(
   right : DataRecord,
   key~ : DataSortKey,
   ascending~ : Bool,
-) -> Int {
+) -> Int32 {
   let left_value = record_sort_value(left, key)
   let right_value = record_sort_value(right, key)
   let result = compare_string(left_value, right_value)
@@ -866,12 +866,12 @@ fn record_sort_value(record : DataRecord, key : DataSortKey) -> String {
 }
 
 ///|
-fn compare_string(left : String, right : String) -> Int {
+fn compare_string(left : String, right : String) -> Int32 {
   data_compare_int(sort_rank(left), sort_rank(right))
 }
 
 ///|
-fn sort_rank(value : String) -> Int {
+fn sort_rank(value : String) -> Int32 {
   match value {
     "Audit Trail" => 10
     "Billing Flow" => 20
@@ -894,7 +894,7 @@ fn sort_rank(value : String) -> Int {
 }
 
 ///|
-fn data_compare_int(left : Int, right : Int) -> Int {
+fn data_compare_int(left : Int32, right : Int32) -> Int32 {
   if left < right {
     -1
   } else if left > right {
@@ -905,7 +905,7 @@ fn data_compare_int(left : Int, right : Int) -> Int {
 }
 
 ///|
-fn selected_visible_index(records : Array[DataRecord], id : Int) -> Int? {
+fn selected_visible_index(records : Array[DataRecord], id : Int32) -> Int32? {
   for index, record in records {
     if record.id == id {
       return Some(index)

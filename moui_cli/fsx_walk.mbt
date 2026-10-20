@@ -5,7 +5,7 @@
 /// used internally for recursion.
 fn collect_template_files(
   root : String,
-  relative? : String = "",
+  relative~ : String = "",
 ) -> Result[Array[@plan.PlannedFile], String] {
   let directory = if relative == "" { root } else { join_path(root, relative) }
   let entries : Array[String] = @fs.read_dir(directory).to_owned() catch {

@@ -20,7 +20,7 @@ pub struct WindowServiceState {
 ///|
 pub fn WindowServiceState::new(
   bridge~ : @backend_host.HostServiceBridge,
-  dispose? : () -> Unit = () => (),
+  dispose~ : () -> Unit = () => (),
 ) -> WindowServiceState {
   { bridge, dispose_fn: dispose, open: true, }
 }
@@ -53,8 +53,8 @@ pub fn WindowServiceState::is_open(self : WindowServiceState) -> Bool {
 ///|
 fn HostServicesAdapter::new(
   bridge~ : @backend_host.HostServiceBridge,
-  async_queue? : ServiceAsyncQueue? = None,
-  window_drag? : @app_services.WindowDragRegionSource? = None,
+  async_queue~ : ServiceAsyncQueue? = None,
+  window_drag~ : @app_services.WindowDragRegionSource? = None,
 ) -> HostServicesAdapter {
   { bridge, async_queue, window_drag, }
 }

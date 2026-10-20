@@ -19,7 +19,7 @@ extern "C" fn macos_timer_cancel(handle : UInt64) -> Unit = "moui_macos_timer_ca
 /// frame is currently live. The async pump keeps its polling tight while this
 /// holds so frame-paced animation ticks are delivered without waiting out the
 /// idle sleep.
-extern "C" fn macos_timer_sub_frame_active_extern() -> Int = "moui_macos_timer_sub_frame_active"
+extern "C" fn macos_timer_sub_frame_active_extern() -> Int32 = "moui_macos_timer_sub_frame_active"
 
 ///|
 pub fn macos_timer_sub_frame_active() -> Bool {

@@ -14,13 +14,13 @@ priv struct CosmicTextCache {
   loaded_paths : Map[String, Bool]
   warned_paths : Map[String, Bool]
   glyph_keys : Map[String, @moon_cosmic.CacheKey]
-  emoji_font_ids : Array[Int]
+  emoji_font_ids : Array[Int32]
 }
 
 ///|
 priv struct RasterGlyphPixel {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
   color : @moon_cosmic.Color
 }
 
@@ -534,7 +534,10 @@ fn cosmic_text_layout_result_from_runs(
 }
 
 ///|
-fn cosmic_text_utf16_offset_to_char_index(text : String, offset : Int) -> Int {
+fn cosmic_text_utf16_offset_to_char_index(
+  text : String,
+  offset : Int32,
+) -> Int32 {
   if offset <= 0 {
     return 0
   }
@@ -551,7 +554,7 @@ fn cosmic_text_utf16_offset_to_char_index(text : String, offset : Int) -> Int {
 }
 
 ///|
-fn cosmic_text_utf16_len_of_char(ch : Char) -> Int {
+fn cosmic_text_utf16_len_of_char(ch : Char) -> Int32 {
   if ch.to_int() <= 0xFFFF {
     1
   } else {
@@ -621,7 +624,11 @@ fn cosmic_clamp_text_layout_result(
 }
 
 ///|
-fn cosmic_clamp_int(value : Int, min_value : Int, max_value : Int) -> Int {
+fn cosmic_clamp_int(
+  value : Int32,
+  min_value : Int32,
+  max_value : Int32,
+) -> Int32 {
   if value < min_value {
     min_value
   } else if value > max_value {
@@ -855,7 +862,7 @@ fn cosmic_text_should_use_fallback_glyph(
   run : @core.TextRun,
   glyph : @moon_cosmic.LayoutGlyph,
   cache_key : @moon_cosmic.CacheKey,
-  codepoint : UInt,
+  codepoint : UInt32,
 ) -> Bool {
   if !cosmic_text_glyph_matches_codepoint(cache, glyph, codepoint) {
     return true
@@ -869,7 +876,7 @@ fn cosmic_text_should_use_fallback_glyph(
 fn cosmic_text_glyph_matches_codepoint(
   cache : CosmicTextCache,
   glyph : @moon_cosmic.LayoutGlyph,
-  codepoint : UInt,
+  codepoint : UInt32,
 ) -> Bool {
   if glyph.glyph_id == 0 {
     return false
@@ -887,7 +894,7 @@ fn cosmic_text_glyph_matches_codepoint(
 }
 
 ///|
-fn cosmic_text_codepoint_needs_direct_cmap_check(codepoint : UInt) -> Bool {
+fn cosmic_text_codepoint_needs_direct_cmap_check(codepoint : UInt32) -> Bool {
   (codepoint >= 0x2E80U && codepoint <= 0x9FFFU) ||
   (codepoint >= 0xF900U && codepoint <= 0xFAFFU) ||
   (codepoint >= 0x20000U && codepoint <= 0x2FA1FU) ||
@@ -897,7 +904,7 @@ fn cosmic_text_codepoint_needs_direct_cmap_check(codepoint : UInt) -> Bool {
 }
 
 ///|
-fn cosmic_text_codepoint_is_emoji(codepoint : UInt) -> Bool {
+fn cosmic_text_codepoint_is_emoji(codepoint : UInt32) -> Bool {
   (codepoint >= 0x1F000U && codepoint <= 0x1FAFFU) ||
   (codepoint >= 0x2600U && codepoint <= 0x27BFU)
 }
@@ -907,7 +914,7 @@ fn cosmic_text_fallback_cache_key(
   cache : CosmicTextCache,
   run : @core.TextRun,
   cache_key : @moon_cosmic.CacheKey,
-  codepoint : UInt,
+  codepoint : UInt32,
 ) -> @moon_cosmic.CacheKey {
   if cosmic_text_preserves_source_text(run.font) &&
     cosmic_text_codepoint_is_emoji(codepoint) {
@@ -955,9 +962,9 @@ fn cosmic_text_fallback_cache_key(
 ///|
 fn cosmic_text_fallback_cache_key_from_font_ids(
   cache : CosmicTextCache,
-  font_ids : Array[Int],
+  font_ids : Array[Int32],
   cache_key : @moon_cosmic.CacheKey,
-  codepoint : UInt,
+  codepoint : UInt32,
 ) -> @moon_cosmic.CacheKey? {
   for font_id in font_ids {
     match
@@ -974,9 +981,9 @@ fn cosmic_text_fallback_cache_key_from_font_ids(
 ///|
 fn cosmic_text_fallback_cache_key_from_font_id(
   cache : CosmicTextCache,
-  font_id : Int,
+  font_id : Int32,
   cache_key : @moon_cosmic.CacheKey,
-  codepoint : UInt,
+  codepoint : UInt32,
 ) -> @moon_cosmic.CacheKey? {
   match cache.font_system.get_font_entry(font_id) {
     None => None
@@ -1001,7 +1008,7 @@ fn cosmic_text_fallback_cache_key_from_font_id(
 }
 
 ///|
-fn cosmic_text_codepoint_at_utf16(text : String, offset : Int) -> UInt? {
+fn cosmic_text_codepoint_at_utf16(text : String, offset : Int32) -> UInt32? {
   let index = cosmic_text_utf16_offset_to_char_index(text, offset)
   match cosmic_text_char_at_index(text, index) {
     Some(ch) => Some(ch.to_uint())
@@ -1010,7 +1017,7 @@ fn cosmic_text_codepoint_at_utf16(text : String, offset : Int) -> UInt? {
 }
 
 ///|
-fn cosmic_text_char_at_index(text : String, index : Int) -> Char? {
+fn cosmic_text_char_at_index(text : String, index : Int32) -> Char? {
   if index < 0 {
     return None
   }
@@ -1027,8 +1034,8 @@ fn cosmic_text_char_at_index(text : String, index : Int) -> Char? {
 ///|
 fn cosmic_text_source_range_is_whitespace(
   text : String,
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Bool {
   if end <= start {
     return false

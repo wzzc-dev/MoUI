@@ -49,7 +49,7 @@ pub fn WindowRuntimeSlots::new() -> WindowRuntimeSlots {
 }
 
 ///|
-pub fn WindowRuntimeSlots::count(self : WindowRuntimeSlots) -> Int {
+pub fn WindowRuntimeSlots::count(self : WindowRuntimeSlots) -> Int32 {
   self.slots.length()
 }
 
@@ -163,7 +163,7 @@ pub fn WindowRuntimeSlots::sync_from_registry(
 pub fn WindowRuntimeSlots::sync_open_from_registry(
   self : WindowRuntimeSlots,
   registry : WindowRegistry,
-) -> Int {
+) -> Int32 {
   let mut synced = 0
   for record in registry.open_windows() {
     if self.sync_record(record) {
@@ -222,7 +222,7 @@ pub fn WindowRuntimeSlots::remove(
 }
 
 ///|
-pub fn WindowRuntimeSlots::remove_closed(self : WindowRuntimeSlots) -> Int {
+pub fn WindowRuntimeSlots::remove_closed(self : WindowRuntimeSlots) -> Int32 {
   let before = self.slots.length()
   self.slots = self.slots.filter(slot => slot.record.phase != WindowClosed)
   before - self.slots.length()

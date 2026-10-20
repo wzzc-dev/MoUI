@@ -15,7 +15,7 @@ struct ResourceBudget {
 
 ///|
 struct ScenarioBudget {
-  minimum_samples : Int
+  minimum_samples : Int32
   timings : Map[String, PercentileBudget]
   resources : Map[String, ResourceBudget]
 }
@@ -99,7 +99,7 @@ fn[T] performance_has_exact_keys(
 ///|
 fn performance_nearest_rank(
   samples : Array[Double],
-  percentile : Int,
+  percentile : Int32,
 ) -> Double {
   if samples.is_empty() {
     return 0.0

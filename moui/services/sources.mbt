@@ -50,13 +50,13 @@ pub extend RouteEvent with ToJson::{to_json}
 
 ///|
 priv struct RouteHandler {
-  token : Int
+  token : Int32
   handle : (RouteEvent) -> Unit
 }
 
 ///|
 pub struct RouteSource {
-  priv mut next_token : Int
+  priv mut next_token : Int32
   priv mut handlers : Array[RouteHandler]
 }
 
@@ -74,7 +74,7 @@ pub fn TimerSource::new(
 pub fn TimerSource::from_native_timer(
   start~ : (FuncRef[(() -> Unit) -> Unit], Double, () -> Unit) -> UInt64,
   cancel~ : (UInt64) -> Unit,
-  clock? : (() -> Double)? = None,
+  clock~ : (() -> Double)? = None,
 ) -> TimerSource {
   TimerSource::new(start=(interval_ms, dispatch) => {
     let tick = match clock {
@@ -100,8 +100,8 @@ pub fn[Msg] TimerSource::subscription(
   self : TimerSource,
   interval_ms~ : Double,
   map~ : (@core.Frame) -> Msg,
-  key? : String = "app:timer",
-  label? : String = "App timer",
+  key~ : String = "app:timer",
+  label~ : String = "App timer",
 ) -> @core.Subscription[Msg] {
   @core.Subscription::timer(key~, label~, start=dispatch => {
     (self.start_fn)(interval_ms, frame => dispatch(map(frame)))
@@ -111,7 +111,7 @@ pub fn[Msg] TimerSource::subscription(
 ///|
 pub fn RouteLocation::new(
   path~ : String,
-  query? : Array[RouteQueryParam] = [],
+  query~ : Array[RouteQueryParam] = [],
 ) -> RouteLocation {
   { path, query, }
 }
@@ -168,7 +168,7 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 ///|
 pub fn RouteEvent::new(
   location~ : RouteLocation,
-  source? : String = "host-route",
+  source~ : String = "host-route",
 ) -> RouteEvent {
   { location, source, }
 }
@@ -176,7 +176,7 @@ pub fn RouteEvent::new(
 ///|
 pub fn RouteEvent::from_route(
   route~ : String,
-  source? : String = "host-route",
+  source~ : String = "host-route",
 ) -> RouteEvent {
   RouteEvent::new(location=RouteLocation::parse(route), source~)
 }
@@ -184,7 +184,7 @@ pub fn RouteEvent::from_route(
 ///|
 pub fn RouteEvent::from_path(
   path : String,
-  source? : String = "host-route",
+  source~ : String = "host-route",
 ) -> RouteEvent {
   RouteEvent::new(location=RouteLocation::new(path~), source~)
 }
@@ -200,7 +200,7 @@ pub fn RouteSource::new() -> RouteSource {
 }
 
 ///|
-pub fn RouteSource::publish(self : RouteSource, event : RouteEvent) -> Int {
+pub fn RouteSource::publish(self : RouteSource, event : RouteEvent) -> Int32 {
   let handlers = self.handlers.copy()
   for handler in handlers {
     (handler.handle)(event)
@@ -209,7 +209,7 @@ pub fn RouteSource::publish(self : RouteSource, event : RouteEvent) -> Int {
 }
 
 ///|
-pub fn RouteSource::active_handler_count(self : RouteSource) -> Int {
+pub fn RouteSource::active_handler_count(self : RouteSource) -> Int32 {
   self.handlers.length()
 }
 
@@ -217,8 +217,8 @@ pub fn RouteSource::active_handler_count(self : RouteSource) -> Int {
 pub fn[Msg] RouteSource::subscription(
   self : RouteSource,
   map~ : (RouteEvent) -> Msg?,
-  key? : String = "app:route",
-  label? : String = "App route",
+  key~ : String = "app:route",
+  label~ : String = "App route",
 ) -> @core.Subscription[Msg] {
   @core.Subscription::route_event(key~, label~, start=dispatch => {
     let token = self.next_token
@@ -248,10 +248,10 @@ pub struct AppEnvironment {
 
 ///|
 pub fn AppEnvironment::new(
-  services? : AppServices = AppServices::unavailable(),
-  timer? : TimerSource? = None,
-  routes? : RouteSource? = None,
-  clock? : (() -> Double)? = None,
+  services~ : AppServices = AppServices::unavailable(),
+  timer~ : TimerSource? = None,
+  routes~ : RouteSource? = None,
+  clock~ : (() -> Double)? = None,
 ) -> AppEnvironment {
   {
     services_value: services,

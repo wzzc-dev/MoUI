@@ -2,12 +2,12 @@
 pub fn[Msg] focus_ring(
   child : @core.View[Msg],
   focused~ : Bool,
-  label? : String = "Focused item",
+  label~ : String = "Focused item",
   theme? : @core.Theme,
   width? : Double,
   height? : Double,
-  padding? : Double = 3.0,
-  radius? : Double = 8.0,
+  padding~ : Double = 3.0,
+  radius~ : Double = 8.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let ring = @core.BorderStyle::new(
@@ -41,10 +41,10 @@ pub fn[Msg] focus_ring(
 pub fn[Msg] menu_button(
   label : String,
   on_click? : Msg,
-  variant? : @style.ButtonVariant = Tonal,
+  variant~ : @style.ButtonVariant = Tonal,
   theme? : @core.Theme,
-  width? : Double = 160.0,
-  height? : Double = 40.0,
+  width~ : Double = 160.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let spec = match on_click {
@@ -75,7 +75,7 @@ pub fn[Msg] menu_button(
 pub fn[Msg] tooltip(
   child : @core.View[Msg],
   message : String,
-  visible? : Bool = false,
+  visible~ : Bool = false,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   if !visible {

@@ -1,8 +1,8 @@
 ///|
 /// Integer point or vector.
 pub(all) struct IPoint {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -15,7 +15,7 @@ pub extend IPoint with Default::{default}
 pub extend IPoint with Eq::{not_equal, equal}
 
 ///|
-pub fn IPoint::new(x : Int, y : Int) -> IPoint {
+pub fn IPoint::new(x : Int32, y : Int32) -> IPoint {
   { x, y, }
 }
 
@@ -35,12 +35,12 @@ pub fn IPoint::is_zero(self : IPoint) -> Bool {
 }
 
 ///|
-pub fn IPoint::equals(self : IPoint, x : Int, y : Int) -> Bool {
+pub fn IPoint::equals(self : IPoint, x : Int32, y : Int32) -> Bool {
   self == IPoint::new(x, y)
 }
 
 ///|
-pub fn IPoint::offset(self : IPoint, dx : Int, dy : Int) -> IPoint {
+pub fn IPoint::offset(self : IPoint, dx : Int32, dy : Int32) -> IPoint {
   IPoint::new(self.x + dx, self.y + dy)
 }
 
@@ -182,8 +182,8 @@ pub fn Point::to_ipoint_round(self : Point) -> IPoint {
 ///|
 /// Integer width and height.
 pub(all) struct ISize {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -196,7 +196,7 @@ pub extend ISize with Default::{default}
 pub extend ISize with Eq::{not_equal, equal}
 
 ///|
-pub fn ISize::new(width : Int, height : Int) -> ISize {
+pub fn ISize::new(width : Int32, height : Int32) -> ISize {
   { width, height, }
 }
 
@@ -295,10 +295,10 @@ pub fn Size::to_isize_round(self : Size) -> ISize {
 ///|
 /// Integer rectangle stored as left/top/right/bottom bounds.
 pub(all) struct IRect {
-  left : Int
-  top : Int
-  right : Int
-  bottom : Int
+  left : Int32
+  top : Int32
+  right : Int32
+  bottom : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -311,16 +311,21 @@ pub extend IRect with Default::{default}
 pub extend IRect with Eq::{not_equal, equal}
 
 ///|
-pub fn IRect::new(left : Int, top : Int, right : Int, bottom : Int) -> IRect {
+pub fn IRect::new(
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
+) -> IRect {
   { left, top, right, bottom, }
 }
 
 ///|
 pub fn IRect::from_ltrb(
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
 ) -> IRect {
   IRect::new(left, top, right, bottom)
 }
@@ -331,12 +336,17 @@ pub fn IRect::empty() -> IRect {
 }
 
 ///|
-pub fn IRect::from_wh(width : Int, height : Int) -> IRect {
+pub fn IRect::from_wh(width : Int32, height : Int32) -> IRect {
   IRect::from_xywh(0, 0, width, height)
 }
 
 ///|
-pub fn IRect::from_xywh(x : Int, y : Int, width : Int, height : Int) -> IRect {
+pub fn IRect::from_xywh(
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
+) -> IRect {
   IRect::new(x, y, x + width, y + height)
 }
 
@@ -356,37 +366,37 @@ pub impl Default for IRect with fn default() {
 }
 
 ///|
-pub fn IRect::x(self : IRect) -> Int {
+pub fn IRect::x(self : IRect) -> Int32 {
   self.left
 }
 
 ///|
-pub fn IRect::y(self : IRect) -> Int {
+pub fn IRect::y(self : IRect) -> Int32 {
   self.top
 }
 
 ///|
-pub fn IRect::left(self : IRect) -> Int {
+pub fn IRect::left(self : IRect) -> Int32 {
   self.left
 }
 
 ///|
-pub fn IRect::top(self : IRect) -> Int {
+pub fn IRect::top(self : IRect) -> Int32 {
   self.top
 }
 
 ///|
-pub fn IRect::right(self : IRect) -> Int {
+pub fn IRect::right(self : IRect) -> Int32 {
   self.right
 }
 
 ///|
-pub fn IRect::bottom(self : IRect) -> Int {
+pub fn IRect::bottom(self : IRect) -> Int32 {
   self.bottom
 }
 
 ///|
-pub fn IRect::width(self : IRect) -> Int {
+pub fn IRect::width(self : IRect) -> Int32 {
   self.right - self.left
 }
 
@@ -396,7 +406,7 @@ pub fn IRect::width_64(self : IRect) -> Int64 {
 }
 
 ///|
-pub fn IRect::height(self : IRect) -> Int {
+pub fn IRect::height(self : IRect) -> Int32 {
   self.bottom - self.top
 }
 
@@ -455,7 +465,7 @@ pub fn IRect::intersects(self : IRect, other : IRect) -> Bool {
 }
 
 ///|
-pub fn IRect::offset(self : IRect, dx : Int, dy : Int) -> IRect {
+pub fn IRect::offset(self : IRect, dx : Int32, dy : Int32) -> IRect {
   IRect::new(self.left + dx, self.top + dy, self.right + dx, self.bottom + dy)
 }
 
@@ -470,7 +480,7 @@ pub fn IRect::with_offset_to(self : IRect, point : IPoint) -> IRect {
 }
 
 ///|
-pub fn IRect::inset(self : IRect, dx : Int, dy : Int) -> IRect {
+pub fn IRect::inset(self : IRect, dx : Int32, dy : Int32) -> IRect {
   IRect::new(self.left + dx, self.top + dy, self.right - dx, self.bottom - dy)
 }
 
@@ -480,7 +490,7 @@ pub fn IRect::with_inset(self : IRect, inset : ISize) -> IRect {
 }
 
 ///|
-pub fn IRect::outset(self : IRect, dx : Int, dy : Int) -> IRect {
+pub fn IRect::outset(self : IRect, dx : Int32, dy : Int32) -> IRect {
   self.inset(-dx, -dy)
 }
 
@@ -492,10 +502,10 @@ pub fn IRect::with_outset(self : IRect, outset : ISize) -> IRect {
 ///|
 pub fn IRect::with_adjustment(
   self : IRect,
-  delta_left : Int,
-  delta_top : Int,
-  delta_right : Int,
-  delta_bottom : Int,
+  delta_left : Int32,
+  delta_top : Int32,
+  delta_right : Int32,
+  delta_bottom : Int32,
 ) -> IRect {
   IRect::new(
     self.left + delta_left,
@@ -508,20 +518,20 @@ pub fn IRect::with_adjustment(
 ///|
 pub fn IRect::sorted(self : IRect) -> IRect {
   IRect::new(
-    Int::min(self.left, self.right),
-    Int::min(self.top, self.bottom),
-    Int::max(self.left, self.right),
-    Int::max(self.top, self.bottom),
+    Int32::min(self.left, self.right),
+    Int32::min(self.top, self.bottom),
+    Int32::max(self.left, self.right),
+    Int32::max(self.top, self.bottom),
   )
 }
 
 ///|
 pub fn IRect::intersect(self : IRect, other : IRect) -> IRect? {
   let result = IRect::new(
-    Int::max(self.left, other.left),
-    Int::max(self.top, other.top),
-    Int::min(self.right, other.right),
-    Int::min(self.bottom, other.bottom),
+    Int32::max(self.left, other.left),
+    Int32::max(self.top, other.top),
+    Int32::min(self.right, other.right),
+    Int32::min(self.bottom, other.bottom),
   )
   if result.is_empty() {
     None
@@ -538,10 +548,10 @@ pub fn IRect::join(self : IRect, other : IRect) -> IRect {
     self
   } else {
     IRect::new(
-      Int::min(self.left, other.left),
-      Int::min(self.top, other.top),
-      Int::max(self.right, other.right),
-      Int::max(self.bottom, other.bottom),
+      Int32::min(self.left, other.left),
+      Int32::min(self.top, other.top),
+      Int32::max(self.right, other.right),
+      Int32::max(self.bottom, other.bottom),
     )
   }
 }
@@ -605,7 +615,7 @@ pub fn Rect::from_wh(width : Scalar, height : Scalar) -> Rect {
 }
 
 ///|
-pub fn Rect::from_iwh(width : Int, height : Int) -> Rect {
+pub fn Rect::from_iwh(width : Int32, height : Int32) -> Rect {
   Rect::from_wh(Float::from_int(width), Float::from_int(height))
 }
 
@@ -776,7 +786,7 @@ pub fn Rect::bl(self : Rect) -> Point {
 ///|
 pub fn Rect::to_quad(
   self : Rect,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Array[Point] {
   if direction is CW {
     [self.top_left(), self.top_right(), self.bottom_right(), self.bottom_left()]

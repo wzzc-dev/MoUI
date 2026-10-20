@@ -8,7 +8,7 @@ pub fn attach_window_surface(
   id : @backend_host.WindowId,
   renderer : @render.RendererSession,
   actions : @window_lifecycle.WindowSurfaceActions,
-  image_task_starter? : @window_image.WindowImageTaskStarter = @window_image.window_image_task_starter_default(),
+  image_task_starter~ : @window_image.WindowImageTaskStarter = @window_image.window_image_task_starter_default(),
 ) -> Bool {
   if lifecycle.surface_actions(id) is Some(_) ||
     frames.lookup(id) is Some(_) ||
@@ -102,7 +102,7 @@ pub fn apply_window_request(
   services : @window_services.WindowServiceState,
   request : @backend_host.WindowRequest,
   open_window~ : (@backend_host.WindowOpenRequest) -> @backend_host.WindowRequestResult,
-  dispose_window? : (@backend_host.WindowId) -> Unit = _ => (),
+  dispose_window~ : (@backend_host.WindowId) -> Unit = _ => (),
   exit~ : () -> Unit,
 ) -> @backend_host.WindowRequestResult {
   match request {
@@ -193,7 +193,7 @@ pub fn run_window_redraw(
     @window_lifecycle.WindowRuntimeSlot,
     @render.RenderFrameSubmission,
   ) -> @render.RenderFrameResult,
-  finish_presented? : (@window_lifecycle.WindowRuntimeSlot) -> Bool = _ => false,
+  finish_presented~ : (@window_lifecycle.WindowRuntimeSlot) -> Bool = _ => false,
 ) -> Bool {
   match (lifecycle.runtime_slot_lookup(id), frames.lookup(id)) {
     (Some(slot), Some(frame_state)) => {

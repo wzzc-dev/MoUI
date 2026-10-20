@@ -89,7 +89,7 @@ pub extend FontVariation with ToJson::{to_json}
 pub(all) struct FontSpec {
   families : FontFamilyStack
   size : Double
-  weight : Int
+  weight : Int32
   style : FontStyle
   variations : Array[FontVariation]
 } derive(Eq, Debug, ToJson)
@@ -312,7 +312,7 @@ pub extend LayerSpec with ToJson::{to_json}
 pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
-  content_revision : Int
+  content_revision : Int32
   scale_factor : Double
 } derive(Eq, Debug, ToJson)
 
@@ -439,7 +439,7 @@ pub fn Color::rgba(
   r~ : Double,
   g~ : Double,
   b~ : Double,
-  a? : Double = 1.0,
+  a~ : Double = 1.0,
 ) -> Color {
   { r, g, b, a, }
 }
@@ -615,11 +615,11 @@ pub fn FontVariation::value(self : FontVariation) -> Double {
 
 ///|
 pub fn FontSpec::new(
-  families? : FontFamilyStack = FontFamilyStack::system_ui(),
-  size? : Double = 16.0,
-  weight? : Int = 400,
-  style? : FontStyle = Normal,
-  variations? : Array[FontVariation] = [],
+  families~ : FontFamilyStack = FontFamilyStack::system_ui(),
+  size~ : Double = 16.0,
+  weight~ : Int32 = 400,
+  style~ : FontStyle = Normal,
+  variations~ : Array[FontVariation] = [],
 ) -> FontSpec {
   { families, size, weight, style, variations, }
 }
@@ -667,13 +667,13 @@ pub fn TextRun::new(
   frame~ : Rect,
   font~ : FontSpec,
   color~ : Color,
-  align? : TextAlign = TextCenter,
+  align~ : TextAlign = TextCenter,
 ) -> TextRun {
   { text, frame, font, color, align, }
 }
 
 ///|
-pub fn RoundedRect::new(rect~ : Rect, radius? : Double = 0.0) -> RoundedRect {
+pub fn RoundedRect::new(rect~ : Rect, radius~ : Double = 0.0) -> RoundedRect {
   { rect, radius, }
 }
 
@@ -758,9 +758,9 @@ pub fn Brush::multiply_alpha(self : Brush, opacity : Double) -> Brush {
 pub fn ShadowSpec::new(
   rect~ : RoundedRect,
   color~ : Color,
-  offset? : Point = Point::new(x=0.0, y=2.0),
-  blur_radius? : Double = 8.0,
-  spread? : Double = 0.0,
+  offset~ : Point = Point::new(x=0.0, y=2.0),
+  blur_radius~ : Double = 8.0,
+  spread~ : Double = 0.0,
 ) -> ShadowSpec {
   { rect, color, offset, blur_radius, spread, }
 }
@@ -782,10 +782,10 @@ pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Transform2D {
 
 ///|
 pub fn LayerSpec::new(
-  opacity? : Double = 1.0,
-  blend_mode? : BlendMode = SourceOver,
-  mask? : LayerMask = NoMask,
-  offscreen? : Bool = false,
+  opacity~ : Double = 1.0,
+  blend_mode~ : BlendMode = SourceOver,
+  mask~ : LayerMask = NoMask,
+  offscreen~ : Bool = false,
 ) -> LayerSpec {
   { opacity: clamp_double(opacity, 0.0, 1.0), blend_mode, mask, offscreen, }
 }
@@ -794,8 +794,8 @@ pub fn LayerSpec::new(
 pub fn RetainedLayerSpec::new(
   key~ : String,
   frame~ : Rect,
-  content_revision~ : Int,
-  scale_factor? : Double = 1.0,
+  content_revision~ : Int32,
+  scale_factor~ : Double = 1.0,
 ) -> RetainedLayerSpec {
   { key, frame, content_revision, scale_factor, }
 }
@@ -808,9 +808,9 @@ pub fn FilterEffect::blur(radius : Double) -> FilterEffect {
 ///|
 pub fn PathSpec::new(
   verbs~ : Array[PathVerb],
-  fill? : Brush? = None,
-  stroke? : Brush? = None,
-  stroke_width? : Double = 1.0,
+  fill~ : Brush? = None,
+  stroke~ : Brush? = None,
+  stroke_width~ : Double = 1.0,
 ) -> PathSpec {
   { verbs, fill, stroke, stroke_width, }
 }
@@ -819,8 +819,8 @@ pub fn PathSpec::new(
 pub fn ShaderEffectSpec::new(
   name~ : String,
   frame~ : Rect,
-  uniforms? : Array[Double] = [],
-  fallback? : Brush = Brush::solid(Color::black()),
+  uniforms~ : Array[Double] = [],
+  fallback~ : Brush = Brush::solid(Color::black()),
 ) -> ShaderEffectSpec {
   { name, frame, uniforms, fallback, }
 }

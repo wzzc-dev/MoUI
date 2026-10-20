@@ -1,17 +1,17 @@
 ///|
 priv struct MarkdownEditorTableCellRange {
-  hit_start : Int
-  hit_end : Int
-  content_start : Int
-  content_end : Int
-  row : Int
-  column : Int
+  hit_start : Int32
+  hit_end : Int32
+  content_start : Int32
+  content_end : Int32
+  row : Int32
+  column : Int32
 }
 
 ///|
 fn markdown_editor_move_table_cell(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
   forward~ : Bool,
 ) -> RichTextInputTransform? {
@@ -120,7 +120,7 @@ fn markdown_editor_table_cells_for_block(
 ///|
 fn markdown_editor_table_cells_for_line(
   line : MarkdownLine,
-  row : Int,
+  row : Int32,
 ) -> Array[MarkdownEditorTableCellRange] {
   let cells : Array[MarkdownEditorTableCellRange] = []
   let chars = line.text.to_array()
@@ -165,7 +165,7 @@ fn markdown_editor_table_cells_for_line(
 ///|
 fn markdown_editor_table_pipe_is_separator(
   chars : Array[Char],
-  index : Int,
+  index : Int32,
 ) -> Bool {
   if index < 0 || index >= chars.length() || chars[index] != '|' {
     return false
@@ -182,8 +182,8 @@ fn markdown_editor_table_pipe_is_separator(
 ///|
 fn markdown_editor_table_cell_content_range(
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> MarkdownSourceRange {
   let mut content_start = start
   let mut content_end = end
@@ -201,8 +201,8 @@ fn markdown_editor_table_cell_content_range(
 ///|
 fn markdown_editor_table_cell_index_at(
   cells : Array[MarkdownEditorTableCellRange],
-  caret : Int,
-) -> Int? {
+  caret : Int32,
+) -> Int32? {
   for index in 0..<cells.length() {
     let cell = cells[index]
     if caret >= cell.hit_start && caret <= cell.hit_end {
@@ -215,7 +215,7 @@ fn markdown_editor_table_cell_index_at(
 ///|
 fn markdown_editor_insert_table_row_on_enter(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -293,7 +293,7 @@ fn markdown_editor_exit_table_after_empty_last_row_on_enter(
 ///|
 fn markdown_editor_table_last_data_row(
   cells : Array[MarkdownEditorTableCellRange],
-) -> Int {
+) -> Int32 {
   let mut row = 0
   for cell in cells {
     if cell.row > row {
@@ -307,7 +307,7 @@ fn markdown_editor_table_last_data_row(
 fn markdown_editor_table_row_empty(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
-  row : Int,
+  row : Int32,
 ) -> Bool {
   let mut found = false
   for cell in cells {
@@ -329,7 +329,7 @@ fn markdown_editor_table_row_empty(
 ///|
 fn markdown_editor_exit_table_after_table_end(
   source : String,
-  table_end : Int,
+  table_end : Int32,
 ) -> RichTextInputTransform {
   let chars = source.to_array()
   let table_end = markdown_editor_clamp_int(table_end, 0, chars.length())
@@ -364,7 +364,7 @@ fn markdown_editor_exit_table_after_table_end(
 ///|
 fn markdown_editor_backspace_empty_trailing_table_row(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   markdown_editor_remove_empty_trailing_table_row_at_caret(
@@ -375,7 +375,7 @@ fn markdown_editor_backspace_empty_trailing_table_row(
 ///|
 fn markdown_editor_delete_empty_trailing_table_row(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   markdown_editor_remove_empty_trailing_table_row_at_caret(
@@ -386,7 +386,7 @@ fn markdown_editor_delete_empty_trailing_table_row(
 ///|
 fn markdown_editor_remove_empty_trailing_table_row_at_caret(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -462,9 +462,9 @@ fn markdown_editor_remove_empty_trailing_table_row_on_backspace(
 ///|
 fn markdown_editor_previous_table_row_column_caret(
   cells : Array[MarkdownEditorTableCellRange],
-  row : Int,
-  column : Int,
-) -> Int {
+  row : Int32,
+  column : Int32,
+) -> Int32 {
   let mut fallback = 0
   for cell in cells {
     if cell.row == row - 1 {
@@ -482,7 +482,7 @@ fn markdown_editor_previous_table_row_column_caret(
 ///|
 fn markdown_editor_table_column_count(
   cells : Array[MarkdownEditorTableCellRange],
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for cell in cells {
     if cell.column + 1 > count {
@@ -496,8 +496,8 @@ fn markdown_editor_table_column_count(
 fn markdown_editor_table_row_end(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
-  row : Int,
-) -> Int {
+  row : Int32,
+) -> Int32 {
   let mut end = 0
   for cell in cells {
     if cell.row == row && cell.hit_end > end {

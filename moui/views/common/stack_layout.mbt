@@ -3,8 +3,8 @@
 /// implementation for the root facade and every view sub-package.
 pub fn[Msg] stack_layout(
   children~ : Array[@core.View[Msg]],
-  kind? : String = "Stack",
-  key? : String? = None,
+  kind~ : String = "Stack",
+  key~ : String? = None,
 ) -> @core.View[Msg] {
   let child_views : (StackLayout) -> Array[@core.View[Msg]] = _node => {
     let captured_children = children

@@ -224,7 +224,7 @@ pub fn Mat4::values(self : Mat4) -> Array[Double] {
 }
 
 ///|
-pub fn Mat4::at(self : Mat4, row : Int, column : Int) -> Double {
+pub fn Mat4::at(self : Mat4, row : Int32, column : Int32) -> Double {
   if row < 0 || row >= 4 || column < 0 || column >= 4 {
     0.0
   } else {

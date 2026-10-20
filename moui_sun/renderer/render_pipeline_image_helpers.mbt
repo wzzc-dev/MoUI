@@ -2,7 +2,7 @@
 priv enum RenderPipelineImageBytes {
   Bmp(Bytes)
   Png(Bytes)
-  Rgba(Bytes, Int, Int)
+  Rgba(Bytes, Int32, Int32)
 }
 
 ///|
@@ -19,10 +19,10 @@ fn RenderPipelineImageBytes::decode(
 
 ///|
 fn render_pipeline_make_declared_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
-  source_width : Int,
-  source_height : Int,
+  source_width : Int32,
+  source_height : Int32,
 ) -> RenderPipelineImageDependency {
   if source_width > 0 && source_height > 0 {
     render_pipeline_make_image_dependency(
@@ -43,10 +43,10 @@ fn render_pipeline_make_declared_image_dependency(
 
 ///|
 fn render_pipeline_make_declared_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
-  source_width : Int,
-  source_height : Int,
+  source_width : Int32,
+  source_height : Int32,
   src_rect : @graphics.PixelRect,
 ) -> RenderPipelineImageDependency {
   let src_bounds = @graphics.PixelRect::new(
@@ -75,7 +75,7 @@ fn render_pipeline_make_declared_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_requested_rect_image_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   src_rect : @graphics.PixelRect,
 ) -> RenderPipelineImageDependency {
@@ -98,7 +98,7 @@ fn render_pipeline_make_requested_rect_image_dependency(
 
 ///|
 fn render_pipeline_make_image_bytes_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image : RenderPipelineImageBytes,
 ) -> RenderPipelineImageDependency {
@@ -118,7 +118,7 @@ fn render_pipeline_make_image_bytes_dependency(
 
 ///|
 fn render_pipeline_make_image_bytes_rect_dependency(
-  command_index : Int,
+  command_index : Int32,
   resource_key : String,
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
@@ -161,8 +161,8 @@ fn render_pipeline_draw_image_bytes_result(
   canvas : @graphics.Canvas,
   resource_key : String,
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : @graphics.Paint,
 ) -> Result[Unit, RenderPipelineReplayError] {
   match render_pipeline_decode_image_bytes(resource_key, image) {
@@ -180,8 +180,8 @@ fn render_pipeline_draw_image_bytes_rect_result(
   resource_key : String,
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
   paint : @graphics.Paint,
 ) -> Result[Unit, RenderPipelineReplayError] {
   match render_pipeline_decode_image_bytes(resource_key, image) {
@@ -198,10 +198,10 @@ fn render_pipeline_draw_sampled_image_bytes_result(
   canvas : @graphics.Canvas,
   resource_key : String,
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : @graphics.Paint,
   sampling : @graphics.ImageSampling,
 ) -> Result[Unit, RenderPipelineReplayError] {
@@ -220,10 +220,10 @@ fn render_pipeline_draw_sampled_image_bytes_rect_result(
   resource_key : String,
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : @graphics.Paint,
   sampling : @graphics.ImageSampling,
 ) -> Result[Unit, RenderPipelineReplayError] {
@@ -243,10 +243,10 @@ fn render_pipeline_draw_quality_image_bytes_result(
   canvas : @graphics.Canvas,
   resource_key : String,
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : @graphics.Paint,
   quality : @graphics.ImageQuality,
 ) -> Result[Unit, RenderPipelineReplayError] {
@@ -265,10 +265,10 @@ fn render_pipeline_draw_quality_image_bytes_rect_result(
   resource_key : String,
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : @graphics.Paint,
   quality : @graphics.ImageQuality,
 ) -> Result[Unit, RenderPipelineReplayError] {
@@ -383,10 +383,10 @@ fn render_pipeline_draw_tiled_image_bytes_rect_result(
   resource_key : String,
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   paint : @graphics.Paint,
 ) -> Result[Unit, RenderPipelineReplayError] {
   match render_pipeline_decode_image_bytes(resource_key, image) {
@@ -405,10 +405,10 @@ fn render_pipeline_draw_nine_patch_image_bytes_result(
   canvas : @graphics.Canvas,
   resource_key : String,
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
   insets : @graphics.NinePatchInsets,
   paint : @graphics.Paint,
   sampling : @graphics.ImageSampling,
@@ -427,10 +427,10 @@ fn render_pipeline_draw_nine_patch_image_bytes_result(
 ///|
 fn render_image_bytes_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  canvas_width : Int,
-  canvas_height : Int,
+  x : Int32,
+  y : Int32,
+  canvas_width : Int32,
+  canvas_height : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) => render_pixmap_estimated_dirty_rect(pixmap, x, y)
@@ -445,8 +445,8 @@ fn render_image_bytes_estimated_dirty_rect(
 fn render_image_bytes_rect_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) =>
@@ -458,10 +458,10 @@ fn render_image_bytes_rect_estimated_dirty_rect(
 ///|
 fn render_scaled_image_bytes_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) =>
@@ -474,10 +474,10 @@ fn render_scaled_image_bytes_estimated_dirty_rect(
 fn render_scaled_image_bytes_rect_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) =>
@@ -529,10 +529,10 @@ fn render_transformed_image_bytes_rect_estimated_dirty_rect(
 fn render_tiled_image_bytes_rect_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) =>
@@ -547,10 +547,10 @@ fn render_tiled_image_bytes_rect_estimated_dirty_rect(
 ///|
 fn render_nine_patch_image_bytes_estimated_dirty_rect(
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   match image.decode() {
     Ok(pixmap) =>
@@ -562,10 +562,10 @@ fn render_nine_patch_image_bytes_estimated_dirty_rect(
 ///|
 fn render_image_bytes_fallback_dirty_rect(
   image : RenderPipelineImageBytes,
-  x : Int,
-  y : Int,
-  canvas_width : Int,
-  canvas_height : Int,
+  x : Int32,
+  y : Int32,
+  canvas_width : Int32,
+  canvas_height : Int32,
 ) -> @graphics.PixelRect? {
   match image {
     Rgba(_, image_width, image_height) =>
@@ -576,8 +576,8 @@ fn render_image_bytes_fallback_dirty_rect(
 
 ///|
 fn render_canvas_dirty_rect(
-  canvas_width : Int,
-  canvas_height : Int,
+  canvas_width : Int32,
+  canvas_height : Int32,
 ) -> @graphics.PixelRect? {
   non_empty_pixel_rect(
     @graphics.PixelRect::new(x=0, y=0, width=canvas_width, height=canvas_height),
@@ -586,10 +586,10 @@ fn render_canvas_dirty_rect(
 
 ///|
 fn render_pixel_target_dirty_rect(
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   non_empty_pixel_rect(@graphics.PixelRect::new(x~, y~, width~, height~))
 }
@@ -597,8 +597,8 @@ fn render_pixel_target_dirty_rect(
 ///|
 fn render_point_source_target_dirty_rect(
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
+  x : Int32,
+  y : Int32,
 ) -> @graphics.PixelRect? {
   guard !src_rect.is_empty() else { return None }
   render_pixel_target_dirty_rect(x, y, src_rect.width, src_rect.height)
@@ -607,10 +607,10 @@ fn render_point_source_target_dirty_rect(
 ///|
 fn render_pixel_source_target_dirty_rect(
   src_rect : @graphics.PixelRect,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @graphics.PixelRect? {
   guard !src_rect.is_empty() else { return None }
   render_pixel_target_dirty_rect(x, y, width, height)

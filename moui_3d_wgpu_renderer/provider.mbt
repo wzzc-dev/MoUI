@@ -25,7 +25,7 @@ pub extend WgpuNative3DPlatform with Eq::{not_equal, equal}
 
 ///|
 pub fn create_provider(
-  platform? : WgpuNative3DPlatform = MacOS,
+  platform~ : WgpuNative3DPlatform = MacOS,
 ) -> @render.ThreeDRendererProvider {
   @render.ThreeDRendererProvider::new(
     descriptor=descriptor(),

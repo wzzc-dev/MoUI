@@ -1,10 +1,10 @@
 ///|
 pub fn[Msg] menu_bar(
   menus : Array[MenuItem[Msg]],
-  active? : String = "",
+  active~ : String = "",
   theme? : @core.Theme,
-  width? : Double = 520.0,
-  height? : Double = 42.0,
+  width~ : Double = 520.0,
+  height~ : Double = 42.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let items : Array[@core.View[Msg]] = []
@@ -41,8 +41,8 @@ pub fn[Msg] command_menu(
   sections : Array[CommandMenuSection],
   on_select~ : (@core.CommandIntent) -> Msg,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  max_height? : Double = 280.0,
+  width~ : Double = 320.0,
+  max_height~ : Double = 280.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
@@ -121,8 +121,8 @@ pub fn[Msg] context_menu_region(
   child~ : @core.View[Msg],
   menu~ : @core.View[Msg],
   visible~ : Bool,
-  anchor? : @core.Point? = None,
-  dismiss? : Msg? = None,
+  anchor~ : @core.Point? = None,
+  dismiss~ : Msg? = None,
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)

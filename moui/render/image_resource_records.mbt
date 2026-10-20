@@ -6,8 +6,8 @@ pub fn ImageResourceRecord::loading(source : String) -> ImageResourceRecord {
 ///|
 pub fn ImageResourceRecord::ready(
   source : String,
-  width~ : Int,
-  height~ : Int,
+  width~ : Int32,
+  height~ : Int32,
 ) -> ImageResourceRecord {
   { source, status: ImageReady, width, height, diagnostic: "", }
 }

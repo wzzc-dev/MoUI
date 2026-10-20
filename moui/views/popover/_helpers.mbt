@@ -7,9 +7,9 @@ fn[Msg] scroll_view(
   offset? : @core.Point,
   width? : Double,
   height? : Double,
-  on_scroll? : ((@core.Point) -> Msg)? = None,
+  on_scroll~ : ((@core.Point) -> Msg)? = None,
   request? : @core.ScrollRequest,
-  shows_indicator? : Bool = false,
+  shows_indicator~ : Bool = false,
 ) -> @core.View[Msg] {
   let viewport = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))

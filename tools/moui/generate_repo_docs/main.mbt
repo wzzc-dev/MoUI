@@ -23,9 +23,9 @@ struct CliOptions {
 struct ApiRow {
   label : String
   path : String
-  lines : Int
-  public_declarations : Int
-  pub_all_declarations : Int
+  lines : Int32
+  public_declarations : Int32
+  pub_all_declarations : Int32
 }
 
 ///|
@@ -70,7 +70,7 @@ struct MobilePlatformContractFacts {
 struct DocsGroupRow {
   id : String
   title : String
-  entry_count : Int
+  entry_count : Int32
 }
 
 ///|
@@ -168,7 +168,7 @@ fn json_string(value : Json?, label : String) -> Result[String, String] {
 }
 
 ///|
-fn json_int(value : Json?, label : String) -> Result[Int, String] {
+fn json_int(value : Json?, label : String) -> Result[Int32, String] {
   match value {
     Some(Json::Number(number, repr=_)) => Ok(number.to_int())
     _ => Err(label + " must be a number")
@@ -627,7 +627,7 @@ fn read_platform_rows(
 ///|
 fn read_docs_groups(
   repo_root : String,
-) -> Result[(Int, Array[DocsGroupRow]), String] raise RepoDocsError {
+) -> Result[(Int32, Array[DocsGroupRow]), String] raise RepoDocsError {
   let path = "website/docs-catalog.json"
   let root = json_object(read_json(repo_root, path).or_raise(), path).or_raise()
   if json_int(root.get("schemaVersion"), path + ".schemaVersion").or_raise() !=
@@ -676,7 +676,7 @@ fn render_repository_facts(
   workspace : Array[String],
   examples : Array[ExampleRow],
   platforms : Array[PlatformRow],
-  docs_count : Int,
+  docs_count : Int32,
   docs_groups : Array[DocsGroupRow],
 ) -> String {
   let builder = StringBuilder()
@@ -806,7 +806,7 @@ fn generate(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

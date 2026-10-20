@@ -29,7 +29,7 @@ pub extend RoleKind with Eq::{not_equal, equal}
 ///|
 /// 绘制优先级:边框 1 < 标题 2 < 叶子内容 3。同优先级先到先得。
 /// `Item` 不写字,拿边框档,免得它的占位符挤掉真正的叶子。
-pub fn role_priority(kind : RoleKind) -> Int {
+pub fn role_priority(kind : RoleKind) -> Int32 {
   match kind {
     Region | Item => 1
     Label => 2

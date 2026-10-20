@@ -119,7 +119,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
     anchor_frames: self.anchor_registry.snapshot(),
     state: self.element_tree.root.control.view_state,
   }
-  let overrides : Array[(Int, Array[(Int, Rect)])] = []
+  let overrides : Array[(Int32, Array[(Int32, Rect)])] = []
   let spines : Array[ElementId] = []
   let layers : Array[ElementId] = []
   let active_surfaces : Array[ElementId] = []
@@ -172,7 +172,7 @@ fn collect_overlay_overrides(
   placed : PlacedNode,
   context : @core.OverlayPlacementContext,
   path : Array[ElementId],
-  out : Array[(Int, Array[(Int, Rect)])],
+  out : Array[(Int32, Array[(Int32, Rect)])],
   spines : Array[ElementId],
   layers : Array[ElementId],
   active_surfaces : Array[ElementId],
@@ -521,7 +521,7 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
 }
 
 ///|
-fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
+fn RuntimeState::dirty_count(self : RuntimeState) -> Int32 {
   self.dirty.dirty_elements.length()
 }
 

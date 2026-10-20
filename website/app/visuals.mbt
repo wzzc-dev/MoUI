@@ -4,7 +4,7 @@ fn hero_demo_panel(
   width : Double,
   height : Double,
   compact : Bool,
-  count : Int,
+  count : Int32,
   locale : String,
 ) -> @moui.View[Msg] {
   let padding = if compact { 8.0 } else { 10.0 }
@@ -72,7 +72,7 @@ fn hero_counter_panel(
   width : Double,
   height : Double,
   compact : Bool,
-  count : Int,
+  count : Int32,
   locale : String,
 ) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
@@ -221,7 +221,7 @@ fn hero_counter_demo(
   width : Double,
   height : Double,
   compact : Bool,
-  count : Int,
+  count : Int32,
   locale : String,
 ) -> @moui.View[Msg] {
   let narrow = width < 220.0
@@ -485,8 +485,8 @@ fn moonbit_syntax_segments(value : String) -> Array[SyntaxSegment] {
 fn syntax_push_segment(
   segments : Array[SyntaxSegment],
   chars : Array[Char],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
   tone : SyntaxTone,
 ) -> Unit {
   if end > start {

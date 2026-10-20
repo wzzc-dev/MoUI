@@ -72,13 +72,13 @@ fn append_png_bytes(out : Array[Byte], bytes : Array[Byte]) -> Unit {
 }
 
 ///|
-fn append_png_u16_le(out : Array[Byte], value : Int) -> Unit {
+fn append_png_u16_le(out : Array[Byte], value : Int32) -> Unit {
   out.push(value.land(0xFF).to_byte())
   out.push((value >> 8).land(0xFF).to_byte())
 }
 
 ///|
-fn append_png_u32_be(out : Array[Byte], value : UInt) -> Unit {
+fn append_png_u32_be(out : Array[Byte], value : UInt32) -> Unit {
   out.push((value >> 24).to_byte())
   out.push((value >> 16).to_byte())
   out.push((value >> 8).to_byte())
@@ -132,7 +132,7 @@ fn png_zlib_stored_stream(data : Array[Byte]) -> Array[Byte] {
 }
 
 ///|
-fn png_adler32(data : Array[Byte]) -> UInt {
+fn png_adler32(data : Array[Byte]) -> UInt32 {
   let mod_adler = 65521
   let mut s1 = 1
   let mut s2 = 0
@@ -144,8 +144,8 @@ fn png_adler32(data : Array[Byte]) -> UInt {
 }
 
 ///|
-fn png_crc32_chunk(chunk_type : Array[Byte], data : Array[Byte]) -> UInt {
-  let mut crc : UInt = 0xFFFFFFFF
+fn png_crc32_chunk(chunk_type : Array[Byte], data : Array[Byte]) -> UInt32 {
+  let mut crc : UInt32 = 0xFFFFFFFF
   for byte in chunk_type {
     crc = png_crc32_update(crc, byte)
   }
@@ -156,7 +156,7 @@ fn png_crc32_chunk(chunk_type : Array[Byte], data : Array[Byte]) -> UInt {
 }
 
 ///|
-fn png_crc32_update(crc : UInt, byte : Byte) -> UInt {
+fn png_crc32_update(crc : UInt32, byte : Byte) -> UInt32 {
   let mut c = crc ^ byte.to_uint()
   for _ in 0..<8 {
     c = if (c & 1) != 0 { (c >> 1) ^ 0xEDB88320 } else { c >> 1 }
@@ -166,8 +166,8 @@ fn png_crc32_update(crc : UInt, byte : Byte) -> UInt {
 
 ///|
 struct PngInfo {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   idat : Array[Byte]
 } derive(Debug)
 
@@ -176,8 +176,8 @@ pub extend PngInfo with Debug::{to_repr}
 
 ///|
 struct PngHeader {
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
 } derive(Debug)
 
 ///|
@@ -186,9 +186,9 @@ pub extend PngHeader with Debug::{to_repr}
 ///|
 struct PngDeflateBitReader {
   data : Array[Byte]
-  stream_end : Int
-  mut byte_offset : Int
-  mut bit_offset : Int
+  stream_end : Int32
+  mut byte_offset : Int32
+  mut bit_offset : Int32
 } derive(Debug)
 
 ///|
@@ -196,9 +196,9 @@ pub extend PngDeflateBitReader with Debug::{to_repr}
 
 ///|
 struct PngDeflateHuffmanEntry {
-  symbol : Int
-  length : Int
-  code : Int
+  symbol : Int32
+  length : Int32
+  code : Int32
 } derive(Debug)
 
 ///|
@@ -207,7 +207,7 @@ pub extend PngDeflateHuffmanEntry with Debug::{to_repr}
 ///|
 struct PngDeflateHuffman {
   entries : Array[PngDeflateHuffmanEntry]
-  max_bits : Int
+  max_bits : Int32
 } derive(Debug)
 
 ///|
@@ -292,8 +292,8 @@ fn decode_png_info(data : Bytes) -> Result[PngInfo, PixmapDecodeError] {
 ///|
 fn decode_png_header(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[PngHeader, PixmapDecodeError] {
   guard length == 13 else { return Err(UnsupportedPngHeaderSize(length)) }
   let width = read_png_u32_be_int_at(data, offset)
@@ -407,8 +407,8 @@ fn png_zlib_stream_decode(
 ///|
 fn png_deflate_read_bits(
   reader : PngDeflateBitReader,
-  count : Int,
-) -> Result[Int, PixmapDecodeError] {
+  count : Int32,
+) -> Result[Int32, PixmapDecodeError] {
   let mut value = 0
   for shift in 0..<count {
     guard reader.byte_offset < reader.stream_end else {
@@ -473,7 +473,7 @@ fn png_deflate_decode_stored_block(
 
 ///|
 fn png_deflate_fixed_tables() -> PngDeflateTables {
-  let literal_lengths : Array[Int] = []
+  let literal_lengths : Array[Int32] = []
   for symbol in 0..<288 {
     let length = if symbol < 144 {
       8
@@ -486,7 +486,7 @@ fn png_deflate_fixed_tables() -> PngDeflateTables {
     }
     literal_lengths.push(length)
   }
-  let distance_lengths : Array[Int] = []
+  let distance_lengths : Array[Int32] = []
   for _ in 0..<32 {
     distance_lengths.push(5)
   }
@@ -512,10 +512,10 @@ fn png_deflate_decode_dynamic_tables(
     Err(error) => return Err(error)
     Ok(bits) => bits + 4
   }
-  let code_length_order : Array[Int] = [
+  let code_length_order : Array[Int32] = [
     16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15,
   ]
-  let code_length_lengths : Array[Int] = []
+  let code_length_lengths : Array[Int32] = []
   for _ in 0..<19 {
     code_length_lengths.push(0)
   }
@@ -527,7 +527,7 @@ fn png_deflate_decode_dynamic_tables(
   }
   let code_length_huffman = png_deflate_build_huffman(code_length_lengths)
   let total_lengths = hlit + hdist
-  let lengths : Array[Int] = []
+  let lengths : Array[Int32] = []
   let mut previous = 0
   while lengths.length() < total_lengths {
     let symbol = match png_deflate_decode_huffman(reader, code_length_huffman) {
@@ -572,11 +572,11 @@ fn png_deflate_decode_dynamic_tables(
     }
   }
 
-  let literal_lengths : Array[Int] = []
+  let literal_lengths : Array[Int32] = []
   for i in 0..<hlit {
     literal_lengths.push(lengths[i])
   }
-  let distance_lengths : Array[Int] = []
+  let distance_lengths : Array[Int32] = []
   for i in 0..<hdist {
     distance_lengths.push(lengths[hlit + i])
   }
@@ -587,7 +587,7 @@ fn png_deflate_decode_dynamic_tables(
 }
 
 ///|
-fn png_deflate_build_huffman(code_lengths : Array[Int]) -> PngDeflateHuffman {
+fn png_deflate_build_huffman(code_lengths : Array[Int32]) -> PngDeflateHuffman {
   let bit_counts = FixedArray::make(16, 0)
   let mut max_bits = 0
   for length in code_lengths {
@@ -619,7 +619,7 @@ fn png_deflate_build_huffman(code_lengths : Array[Int]) -> PngDeflateHuffman {
 }
 
 ///|
-fn png_deflate_reverse_bits(value : Int, length : Int) -> Int {
+fn png_deflate_reverse_bits(value : Int32, length : Int32) -> Int32 {
   let mut input = value
   let mut output = 0
   for _ in 0..<length {
@@ -633,7 +633,7 @@ fn png_deflate_reverse_bits(value : Int, length : Int) -> Int {
 fn png_deflate_decode_huffman(
   reader : PngDeflateBitReader,
   huffman : PngDeflateHuffman,
-) -> Result[Int, PixmapDecodeError] {
+) -> Result[Int32, PixmapDecodeError] {
   guard huffman.max_bits > 0 else { return Err(InvalidPngDeflateCode) }
   let mut code = 0
   for length in 1..<=huffman.max_bits {
@@ -658,19 +658,19 @@ fn png_deflate_decode_compressed_block(
   literal_lengths : PngDeflateHuffman,
   distances : PngDeflateHuffman,
 ) -> Result[Unit, PixmapDecodeError] {
-  let length_bases : Array[Int] = [
+  let length_bases : Array[Int32] = [
     3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67,
     83, 99, 115, 131, 163, 195, 227, 258,
   ]
-  let length_extra_bits : Array[Int] = [
+  let length_extra_bits : Array[Int32] = [
     0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5,
     5, 5, 0,
   ]
-  let distance_bases : Array[Int] = [
+  let distance_bases : Array[Int32] = [
     1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769,
     1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577,
   ]
-  let distance_extra_bits : Array[Int] = [
+  let distance_extra_bits : Array[Int32] = [
     0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11,
     11, 12, 12, 13, 13,
   ]
@@ -767,7 +767,7 @@ fn decode_png_rgba_pixmap(
 }
 
 ///|
-fn png_paeth_predictor(a : Int, b : Int, c : Int) -> Int {
+fn png_paeth_predictor(a : Int32, b : Int32, c : Int32) -> Int32 {
   let p = a + b - c
   let pa = (p - a).abs()
   let pb = (p - b).abs()
@@ -797,8 +797,8 @@ fn has_png_signature(data : Bytes) -> Bool {
 fn append_png_chunk_data(
   out : Array[Byte],
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Unit {
   for i in 0..<length {
     out.push(data[offset + i])
@@ -808,11 +808,11 @@ fn append_png_chunk_data(
 ///|
 fn png_chunk_type_is(
   data : Bytes,
-  offset : Int,
-  b0 : Int,
-  b1 : Int,
-  b2 : Int,
-  b3 : Int,
+  offset : Int32,
+  b0 : Int32,
+  b1 : Int32,
+  b2 : Int32,
+  b3 : Int32,
 ) -> Bool {
   data[offset].to_int() == b0 &&
   data[offset + 1].to_int() == b1 &&
@@ -821,7 +821,7 @@ fn png_chunk_type_is(
 }
 
 ///|
-fn png_chunk_is_unsupported_critical(data : Bytes, offset : Int) -> Bool {
+fn png_chunk_is_unsupported_critical(data : Bytes, offset : Int32) -> Bool {
   let is_critical = data[offset].to_int().land(0x20) == 0
   is_critical && !png_chunk_type_is(data, offset, 80, 76, 84, 69)
 }
@@ -829,11 +829,11 @@ fn png_chunk_is_unsupported_critical(data : Bytes, offset : Int) -> Bool {
 ///|
 fn png_crc32_chunk_at(
   data : Bytes,
-  type_offset : Int,
-  data_offset : Int,
-  length : Int,
-) -> UInt {
-  let mut crc : UInt = 0xFFFFFFFF
+  type_offset : Int32,
+  data_offset : Int32,
+  length : Int32,
+) -> UInt32 {
+  let mut crc : UInt32 = 0xFFFFFFFF
   for i in 0..<4 {
     crc = png_crc32_update(crc, data[type_offset + i])
   }
@@ -846,8 +846,8 @@ fn png_crc32_chunk_at(
 ///|
 fn require_png_available(
   data : Bytes,
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[Unit, PixmapDecodeError] {
   guard offset >= 0 && length >= 0 && offset + length <= data.length() else {
     return Err(UnexpectedEndOfData(offset, length, data.length()))
@@ -858,8 +858,8 @@ fn require_png_available(
 ///|
 fn require_png_array_available(
   data : Array[Byte],
-  offset : Int,
-  length : Int,
+  offset : Int32,
+  length : Int32,
 ) -> Result[Unit, PixmapDecodeError] {
   guard offset >= 0 && length >= 0 && offset + length <= data.length() else {
     return Err(UnexpectedEndOfData(offset, length, data.length()))
@@ -868,12 +868,12 @@ fn require_png_array_available(
 }
 
 ///|
-fn read_png_u16_le_array_at(data : Array[Byte], offset : Int) -> Int {
+fn read_png_u16_le_array_at(data : Array[Byte], offset : Int32) -> Int32 {
   data[offset].to_int() + data[offset + 1].to_int() * 256
 }
 
 ///|
-fn read_png_u32_be_int_at(data : Bytes, offset : Int) -> Int {
+fn read_png_u32_be_int_at(data : Bytes, offset : Int32) -> Int32 {
   data[offset].to_int() * 16777216 +
   data[offset + 1].to_int() * 65536 +
   data[offset + 2].to_int() * 256 +
@@ -881,7 +881,7 @@ fn read_png_u32_be_int_at(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn read_png_u32_be_uint_at(data : Bytes, offset : Int) -> UInt {
+fn read_png_u32_be_uint_at(data : Bytes, offset : Int32) -> UInt32 {
   let b0 = data[offset].to_uint()
   let b1 = data[offset + 1].to_uint()
   let b2 = data[offset + 2].to_uint()
@@ -890,7 +890,7 @@ fn read_png_u32_be_uint_at(data : Bytes, offset : Int) -> UInt {
 }
 
 ///|
-fn read_png_u32_be_uint_array_at(data : Array[Byte], offset : Int) -> UInt {
+fn read_png_u32_be_uint_array_at(data : Array[Byte], offset : Int32) -> UInt32 {
   let b0 = data[offset].to_uint()
   let b1 = data[offset + 1].to_uint()
   let b2 = data[offset + 2].to_uint()

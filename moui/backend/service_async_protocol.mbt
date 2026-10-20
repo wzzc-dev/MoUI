@@ -1,6 +1,6 @@
 ///|
 pub(all) struct HostServiceRequestId {
-  value : Int
+  value : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -44,7 +44,7 @@ pub extend HostCompletedServiceResponse with Eq::{not_equal, equal}
 pub extend HostCompletedServiceResponse with ToJson::{to_json}
 
 ///|
-pub fn HostServiceRequestId::new(value : Int) -> HostServiceRequestId {
+pub fn HostServiceRequestId::new(value : Int32) -> HostServiceRequestId {
   { value, }
 }
 

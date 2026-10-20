@@ -3,11 +3,11 @@
 /// export. The concrete addon owns the event vocabulary and decoding; the Web
 /// backend only resolves the window and forwards the platform-view payload.
 pub fn web_dispatch_platform_view_event(
-  raw_id : Int,
-  id_text_id : Int,
-  name_text_id : Int,
-  value_text_id : Int,
-  detail_text_id : Int,
+  raw_id : Int32,
+  id_text_id : Int32,
+  name_text_id : Int32,
+  value_text_id : Int32,
+  detail_text_id : Int32,
   flag : Bool,
 ) -> Unit {
   match web_active_app.val {

@@ -8,14 +8,14 @@
 
 ///|
 priv struct ThrowawayState {
-  mut binds : Int
+  mut binds : Int32
 }
 
 ///|
 let throwaway_state : ThrowawayState = { binds: 0, }
 
 ///|
-pub fn throwaway_bind_count() -> Int {
+pub fn throwaway_bind_count() -> Int32 {
   throwaway_state.binds
 }
 

@@ -2,9 +2,9 @@
 pub struct RendererPlatformViewCapability {
   priv draw_platform_view_pixels_fn : (
     Bytes,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
     Double,
     Double,
     Double,
@@ -16,7 +16,7 @@ pub struct RendererPlatformViewCapability {
 ///|
 pub struct RendererGpuRecoveryCapability {
   priv inject_context_loss_fn : () -> Unit
-  priv gpu_recovery_count_fn : () -> Int
+  priv gpu_recovery_count_fn : () -> Int32
   priv gpu_fallback_active_fn : () -> Bool
 }
 
@@ -35,7 +35,7 @@ pub struct RendererSession {
   priv mut image_tokens : Array[RendererImageLoadToken]
   priv mut image_sources : Array[String]
   priv mut image_events : Array[RendererEvent]
-  priv present_count_fn : () -> Int
+  priv present_count_fn : () -> Int32
   priv recover_fn : (String) -> RecoveryResult
   priv dispose_fn : () -> Unit
   priv native_surface : NativeSurface?
@@ -46,17 +46,17 @@ pub struct RendererSession {
 
 ///|
 pub fn RendererPlatformViewCapability::new(
-  draw_platform_view_pixels? : (
+  draw_platform_view_pixels~ : (
     Bytes,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
     Double,
     Double,
     Double,
     Double,
   ) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {  },
-  set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
+  set_platform_view_draw_fn~ : ((() -> Unit)?) -> Unit = _fn => (),
 ) -> RendererPlatformViewCapability {
   {
     draw_platform_view_pixels_fn: draw_platform_view_pixels,
@@ -66,9 +66,9 @@ pub fn RendererPlatformViewCapability::new(
 
 ///|
 pub fn RendererGpuRecoveryCapability::new(
-  inject_context_loss? : () -> Unit = () => (),
-  gpu_recovery_count? : () -> Int = () => 0,
-  gpu_fallback_active? : () -> Bool = () => false,
+  inject_context_loss~ : () -> Unit = () => (),
+  gpu_recovery_count~ : () -> Int32 = () => 0,
+  gpu_fallback_active~ : () -> Bool = () => false,
 ) -> RendererGpuRecoveryCapability {
   {
     inject_context_loss_fn: inject_context_loss,
@@ -81,20 +81,20 @@ pub fn RendererGpuRecoveryCapability::new(
 pub fn RendererSession::new(
   resize~ : (@core.SurfaceMetrics) -> Unit,
   render_frame~ : (RenderFrameSubmission) -> RenderFrameResult,
-  drain_events? : (() -> Array[RendererEvent])? = None,
+  drain_events~ : (() -> Array[RendererEvent])? = None,
   text_system~ : () -> @core.TextSystem,
-  present_count? : () -> Int = () => 0,
-  recover? : (String) -> RecoveryResult = _ => RecoverySucceeded,
-  dispose? : () -> Unit = () => (),
-  image_records? : () -> Array[ImageResourceRecord] = () => [],
-  apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool = _ => {
+  present_count~ : () -> Int32 = () => 0,
+  recover~ : (String) -> RecoveryResult = _ => RecoverySucceeded,
+  dispose~ : () -> Unit = () => (),
+  image_records~ : () -> Array[ImageResourceRecord] = () => [],
+  apply_image_load_completion~ : (ImageResourceLoadCompletion) -> Bool = _ => {
     false
   },
-  image_source? : HostImageSource = HostImageSource::unavailable(),
-  image_decoder? : RendererImageDecoder? = None,
-  native_surface? : NativeSurface? = None,
-  platform_view? : RendererPlatformViewCapability = RendererPlatformViewCapability::new(),
-  gpu_recovery? : RendererGpuRecoveryCapability = RendererGpuRecoveryCapability::new(),
+  image_source~ : HostImageSource = HostImageSource::unavailable(),
+  image_decoder~ : RendererImageDecoder? = None,
+  native_surface~ : NativeSurface? = None,
+  platform_view~ : RendererPlatformViewCapability = RendererPlatformViewCapability::new(),
+  gpu_recovery~ : RendererGpuRecoveryCapability = RendererGpuRecoveryCapability::new(),
 ) -> RendererSession {
   let drain_events_fn = match drain_events {
     Some(drain) => drain
@@ -219,7 +219,7 @@ pub fn RendererSession::image_diagnostics(
 }
 
 ///|
-pub fn RendererSession::present_count(self : RendererSession) -> Int {
+pub fn RendererSession::present_count(self : RendererSession) -> Int32 {
   (self.present_count_fn)()
 }
 
@@ -243,7 +243,7 @@ pub fn RendererSession::inject_context_loss(self : RendererSession) -> Unit {
 }
 
 ///|
-pub fn RendererSession::gpu_recovery_count(self : RendererSession) -> Int {
+pub fn RendererSession::gpu_recovery_count(self : RendererSession) -> Int32 {
   (self.gpu_recovery.gpu_recovery_count_fn)()
 }
 
@@ -271,9 +271,9 @@ pub fn RendererSession::dispose(self : RendererSession) -> Unit {
 pub fn RendererSession::draw_platform_view_pixels(
   self : RendererSession,
   pixels : Bytes,
-  src_width : Int,
-  src_height : Int,
-  src_stride : Int,
+  src_width : Int32,
+  src_height : Int32,
+  src_stride : Int32,
   dst_x : Double,
   dst_y : Double,
   dst_width : Double,

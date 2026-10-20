@@ -3,7 +3,7 @@
 pub struct PixmapCache {
   mut pixmaps : Map[String, Pixmap]
   mut access_order : Array[String]
-  capacity : Int
+  capacity : Int32
   is_bounded : Bool
 } derive(Debug)
 
@@ -38,7 +38,7 @@ pub fn PixmapCache::new() -> PixmapCache {
 
 ///|
 /// Create an empty pixmap cache with least-recently-used eviction.
-pub fn PixmapCache::with_capacity(capacity : Int) -> PixmapCache {
+pub fn PixmapCache::with_capacity(capacity : Int32) -> PixmapCache {
   {
     pixmaps: Map([]),
     access_order: [],
@@ -97,7 +97,7 @@ pub fn PixmapCacheDecodeResult::did_hit_cache(
 
 ///|
 /// Return the number of cached pixmaps.
-pub fn PixmapCache::len(self : PixmapCache) -> Int {
+pub fn PixmapCache::len(self : PixmapCache) -> Int32 {
   self.pixmaps.length()
 }
 
@@ -109,7 +109,7 @@ pub fn PixmapCache::is_empty(self : PixmapCache) -> Bool {
 
 ///|
 /// Return the maximum number of cached pixmaps, or 0 for an unbounded cache.
-pub fn PixmapCache::capacity(self : PixmapCache) -> Int {
+pub fn PixmapCache::capacity(self : PixmapCache) -> Int32 {
   self.capacity
 }
 
@@ -245,8 +245,8 @@ pub fn PixmapCache::get_or_decode_png_result(
 pub fn PixmapCache::get_or_decode_rgba(
   self : PixmapCache,
   key : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   data : Bytes,
 ) -> Result[Pixmap, PixmapDecodeError] {
   match self.get_or_decode_rgba_result(key, width, height, data) {
@@ -260,8 +260,8 @@ pub fn PixmapCache::get_or_decode_rgba(
 pub fn PixmapCache::get_or_decode_rgba_result(
   self : PixmapCache,
   key : String,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
   data : Bytes,
 ) -> Result[PixmapCacheDecodeResult, PixmapDecodeError] {
   match self.get(key) {

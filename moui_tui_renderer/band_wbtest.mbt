@@ -61,8 +61,8 @@ fn nid(v : UInt64) -> @core.SemanticsNodeId {
 /// 本工具链版本没有 `{ ... }` 记录更新,全字段字面量照 `SemanticsState::default()`
 /// 展开;测试只关心 focused/selected 两维,其余一律取默认值。
 fn mk_state(
-  focused? : Bool = false,
-  selected? : Bool = false,
+  focused~ : Bool = false,
+  selected~ : Bool = false,
 ) -> @core.SemanticsState {
   let base = @core.SemanticsState::default()
   {

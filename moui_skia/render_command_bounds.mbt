@@ -71,9 +71,9 @@ fn point_mode_draw_bounds(
 
 ///|
 fn text_utf8_draw_bounds(
-  byte_count : Int,
+  byte_count : Int32,
   origin : Point,
-  is_right_to_left? : Bool = false,
+  is_right_to_left~ : Bool = false,
 ) -> Rect? {
   if byte_count <= 0 {
     None

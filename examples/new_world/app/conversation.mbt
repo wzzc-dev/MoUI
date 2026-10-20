@@ -45,7 +45,7 @@ pub struct ChatLine {
   alternatives : Array[String]
   /// Index into the logical list `[text] + alternatives`, so a swipe can move
   /// left/right without losing the original answer.
-  selected : Int
+  selected : Int32
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -133,13 +133,13 @@ pub fn ChatLine::alternatives(self : ChatLine) -> Array[String] {
 
 ///|
 /// Which candidate is shown (`0` = the original reply).
-pub fn ChatLine::selected(self : ChatLine) -> Int {
+pub fn ChatLine::selected(self : ChatLine) -> Int32 {
   self.selected
 }
 
 ///|
 /// How many candidates this line has (1 when it was never regenerated).
-pub fn ChatLine::candidate_count(self : ChatLine) -> Int {
+pub fn ChatLine::candidate_count(self : ChatLine) -> Int32 {
   1 + self.alternatives.length()
 }
 
@@ -178,7 +178,7 @@ fn ChatLine::candidate_slots(self : ChatLine) -> Array[String] {
 
 ///|
 /// Move to another candidate, keeping `text` in sync with `selected`.
-pub fn ChatLine::with_candidate(self : ChatLine, index : Int) -> ChatLine {
+pub fn ChatLine::with_candidate(self : ChatLine, index : Int32) -> ChatLine {
   let slots = self.candidate_slots()
   if index < 0 || index >= slots.length() {
     return self
@@ -232,7 +232,7 @@ pub fn ChatLine::with_text(self : ChatLine, text : String) -> ChatLine {
 
 ///|
 /// Upper bound on retained lines per conversation.
-pub let chat_history_limit : Int = 60
+pub let chat_history_limit : Int32 = 60
 
 ///|
 /// One character's conversation.
@@ -247,10 +247,10 @@ pub struct Conversation {
   summary : String
   /// How many lines had been appended in total when the summary last covered
   /// the history. Monotonic watermark against `appended`.
-  summarized_upto : Int
+  summarized_upto : Int32
   /// Monotonic count of appended lines, unaffected by the cap. Powers the
   /// compression trigger's "enough new lines" test.
-  appended : Int
+  appended : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -317,12 +317,12 @@ pub fn Conversation::summary(self : Conversation) -> String {
 }
 
 ///|
-pub fn Conversation::summarized_upto(self : Conversation) -> Int {
+pub fn Conversation::summarized_upto(self : Conversation) -> Int32 {
   self.summarized_upto
 }
 
 ///|
-pub fn Conversation::appended(self : Conversation) -> Int {
+pub fn Conversation::appended(self : Conversation) -> Int32 {
   self.appended
 }
 
@@ -332,7 +332,7 @@ pub fn Conversation::appended(self : Conversation) -> Int {
 pub fn Conversation::with_summary(
   self : Conversation,
   summary : String,
-  marker : Int,
+  marker : Int32,
 ) -> Conversation {
   { ..self, summary, summarized_upto: marker, }
 }
@@ -426,7 +426,7 @@ pub fn ConversationBook::clear(self : ConversationBook) -> Unit {
 
 ///|
 /// How many characters currently have a conversation with history.
-pub fn ConversationBook::active_count(self : ConversationBook) -> Int {
+pub fn ConversationBook::active_count(self : ConversationBook) -> Int32 {
   let mut count = 0
   for entry in self.entries {
     if !entry.lines().is_empty() {

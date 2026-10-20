@@ -69,7 +69,7 @@ fn make_consecutive_off_curve_glyph() -> SimpleGlyph {
 
 ///|
 fn make_box_font() -> Font {
-  let cmap : Map[Int, Int] = Map([])
+  let cmap : Map[Int32, Int32] = Map([])
   cmap['A'.to_int()] = 1
   cmap['B'.to_int()] = 1
   cmap[' '.to_int()] = 2
@@ -93,7 +93,7 @@ fn make_box_font() -> Font {
 
 ///|
 fn make_space_only_font() -> Font {
-  let cmap : Map[Int, Int] = Map([])
+  let cmap : Map[Int32, Int32] = Map([])
   cmap[' '.to_int()] = 1
   {
     head: { units_per_em: 10, index_to_loc_format: 0, },
@@ -162,7 +162,11 @@ test "Rasterizer glyph coverage snapshots are stable" {
 }
 
 ///|
-fn dump_pixels(pixels : FixedArray[Byte], width : Int, height : Int) -> String {
+fn dump_pixels(
+  pixels : FixedArray[Byte],
+  width : Int32,
+  height : Int32,
+) -> String {
   let out = StringBuilder(size_hint=(width + 1) * height)
   for y in 0..<height {
     if y > 0 {
@@ -176,7 +180,7 @@ fn dump_pixels(pixels : FixedArray[Byte], width : Int, height : Int) -> String {
 }
 
 ///|
-fn coverage_char(value : Int) -> Char {
+fn coverage_char(value : Int32) -> Char {
   if value == 0 {
     '.'
   } else if value < 96 {
@@ -189,7 +193,7 @@ fn coverage_char(value : Int) -> Char {
 }
 
 ///|
-fn string_from_codepoints(codepoints : Array[Int]) -> String {
+fn string_from_codepoints(codepoints : Array[Int32]) -> String {
   let out = StringBuilder(size_hint=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())

@@ -11,16 +11,16 @@ extern "C" fn native_picture_recorder_is_null(
 #borrow(recorder)
 extern "C" fn native_picture_recorder_record_empty(
   recorder : PictureRecorderHandle,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit = "moonbit_skia_picture_recorder_record_empty"
 
 ///|
 #borrow(recorder)
 extern "C" fn native_picture_recorder_begin(
   recorder : PictureRecorderHandle,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> CanvasHandle = "moonbit_skia_picture_recorder_begin"
 
 ///|
@@ -47,7 +47,7 @@ extern "C" fn native_picture_approximate_bytes_used(
 
 ///|
 #borrow(picture)
-extern "C" fn native_picture_unique_id(picture : PictureHandle) -> Int = "moonbit_skia_picture_unique_id"
+extern "C" fn native_picture_unique_id(picture : PictureHandle) -> Int32 = "moonbit_skia_picture_unique_id"
 
 ///|
 pub fn PictureRecorder::new() -> PictureRecorder? {
@@ -64,8 +64,8 @@ pub fn PictureRecorder::new() -> PictureRecorder? {
 /// the native Canvas bridge before `finish` in platform integrations.
 pub fn PictureRecorder::record_empty(
   self : PictureRecorder,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   native_picture_recorder_record_empty(self.handle, width, height)
 }
@@ -76,8 +76,8 @@ pub fn PictureRecorder::record_empty(
 /// `finish`.
 pub fn PictureRecorder::begin(
   self : PictureRecorder,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Canvas? {
   let handle = native_picture_recorder_begin(self.handle, width, height)
   if native_picture_recorder_canvas_is_null(handle) {
@@ -108,6 +108,6 @@ pub fn Picture::approximate_bytes_used(self : Picture) -> Int64 {
 }
 
 ///|
-pub fn Picture::unique_id(self : Picture) -> Int {
+pub fn Picture::unique_id(self : Picture) -> Int32 {
   native_picture_unique_id(self.handle)
 }

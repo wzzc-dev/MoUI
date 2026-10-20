@@ -286,8 +286,8 @@ fn ParentImporterModel::view(
 fn ParentImporterModel::runtime_with_services(
   self : ParentImporterModel,
   services : @services.AppServices,
-  width? : Double = 900.0,
-  height? : Double = 680.0,
+  width~ : Double = 900.0,
+  height~ : Double = 680.0,
 ) -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
     program=@moui.Program::new(

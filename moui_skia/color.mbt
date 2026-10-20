@@ -1,6 +1,6 @@
 ///|
 /// Packed Skia ARGB color in 0xAARRGGBB order.
-pub(all) struct Color(UInt) derive(Debug, Eq)
+pub(all) struct Color(UInt32) derive(Debug, Eq)
 
 ///|
 pub extend Color with Debug::{to_repr}
@@ -12,7 +12,7 @@ pub extend Color with Default::{default}
 pub extend Color with Eq::{not_equal, equal}
 
 ///|
-pub fn Color::new(argb : UInt) -> Color {
+pub fn Color::new(argb : UInt32) -> Color {
   Color(argb)
 }
 
@@ -31,7 +31,7 @@ pub fn Color::from_rgb(r : Byte, g : Byte, b : Byte) -> Color {
 }
 
 ///|
-pub fn Color::argb(self : Color) -> UInt {
+pub fn Color::argb(self : Color) -> UInt32 {
   let Color(value) = self
   value
 }

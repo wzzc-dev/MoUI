@@ -1,6 +1,6 @@
 ///|
-fn text_run_cache_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn text_run_cache_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|

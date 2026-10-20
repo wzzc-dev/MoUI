@@ -135,7 +135,7 @@ fn discover_window_consumers(
 }
 
 ///|
-fn count_window_workspace_members(work : String) -> Int {
+fn count_window_workspace_members(work : String) -> Int32 {
   let mut count = 0
   for line in work.split("\n") {
     let workspace_entry = line.trim().to_owned()
@@ -363,7 +363,7 @@ fn validate_window_dependency(repo_root : String) -> ValidationResult {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

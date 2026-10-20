@@ -1,7 +1,7 @@
 ///|
 /// Glyph ID type (wraps Int)
 struct GlyphId {
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -12,13 +12,13 @@ pub extend GlyphId with Eq::{not_equal, equal}
 
 ///|
 /// Create a glyph ID
-pub fn GlyphId::new(id : Int) -> GlyphId {
+pub fn GlyphId::new(id : Int32) -> GlyphId {
   { id, }
 }
 
 ///|
 /// Get the underlying ID value
-pub fn GlyphId::to_int(self : GlyphId) -> Int {
+pub fn GlyphId::to_int(self : GlyphId) -> Int32 {
   self.id
 }
 
@@ -26,10 +26,10 @@ pub fn GlyphId::to_int(self : GlyphId) -> Int {
 /// Glyph position with advance and offset
 struct GlyphPosition {
   glyph_id : GlyphId
-  x_advance : Int
-  y_advance : Int
-  x_offset : Int
-  y_offset : Int
+  x_advance : Int32
+  y_advance : Int32
+  x_offset : Int32
+  y_offset : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -42,10 +42,10 @@ pub extend GlyphPosition with Eq::{not_equal, equal}
 /// Create a glyph position
 pub fn GlyphPosition::new(
   glyph_id~ : GlyphId,
-  x_advance? : Int = 0,
-  y_advance? : Int = 0,
-  x_offset? : Int = 0,
-  y_offset? : Int = 0,
+  x_advance~ : Int32 = 0,
+  y_advance~ : Int32 = 0,
+  x_offset~ : Int32 = 0,
+  y_offset~ : Int32 = 0,
 ) -> GlyphPosition {
   { glyph_id, x_advance, y_advance, x_offset, y_offset, }
 }
@@ -58,25 +58,25 @@ pub fn GlyphPosition::get_glyph_id(self : GlyphPosition) -> GlyphId {
 
 ///|
 /// Get horizontal advance in font units.
-pub fn GlyphPosition::get_x_advance(self : GlyphPosition) -> Int {
+pub fn GlyphPosition::get_x_advance(self : GlyphPosition) -> Int32 {
   self.x_advance
 }
 
 ///|
 /// Get vertical advance in font units.
-pub fn GlyphPosition::get_y_advance(self : GlyphPosition) -> Int {
+pub fn GlyphPosition::get_y_advance(self : GlyphPosition) -> Int32 {
   self.y_advance
 }
 
 ///|
 /// Get horizontal offset in font units.
-pub fn GlyphPosition::get_x_offset(self : GlyphPosition) -> Int {
+pub fn GlyphPosition::get_x_offset(self : GlyphPosition) -> Int32 {
   self.x_offset
 }
 
 ///|
 /// Get vertical offset in font units.
-pub fn GlyphPosition::get_y_offset(self : GlyphPosition) -> Int {
+pub fn GlyphPosition::get_y_offset(self : GlyphPosition) -> Int32 {
   self.y_offset
 }
 
@@ -84,7 +84,7 @@ pub fn GlyphPosition::get_y_offset(self : GlyphPosition) -> Int {
 /// Glyph info with cluster mapping
 struct GlyphInfo {
   glyph_id : GlyphId
-  cluster : Int
+  cluster : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -95,7 +95,7 @@ pub extend GlyphInfo with Eq::{not_equal, equal}
 
 ///|
 /// Create glyph info
-pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int) -> GlyphInfo {
+pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int32) -> GlyphInfo {
   { glyph_id, cluster, }
 }
 
@@ -107,7 +107,7 @@ pub fn GlyphInfo::get_glyph_id(self : GlyphInfo) -> GlyphId {
 
 ///|
 /// Get the source cluster index.
-pub fn GlyphInfo::get_cluster(self : GlyphInfo) -> Int {
+pub fn GlyphInfo::get_cluster(self : GlyphInfo) -> Int32 {
   self.cluster
 }
 
@@ -116,7 +116,7 @@ pub fn GlyphInfo::get_cluster(self : GlyphInfo) -> Int {
 struct ShapedText {
   glyphs : Array[GlyphInfo]
   positions : Array[GlyphPosition]
-  width : Int
+  width : Int32
 } derive(Debug)
 
 ///|
@@ -124,13 +124,13 @@ pub extend ShapedText with Debug::{to_repr}
 
 ///|
 /// Get the total width of the shaped text
-pub fn ShapedText::get_width(self : ShapedText) -> Int {
+pub fn ShapedText::get_width(self : ShapedText) -> Int32 {
   self.width
 }
 
 ///|
 /// Get the glyph count
-pub fn ShapedText::glyph_count(self : ShapedText) -> Int {
+pub fn ShapedText::glyph_count(self : ShapedText) -> Int32 {
   self.glyphs.length()
 }
 

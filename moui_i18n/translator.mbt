@@ -38,7 +38,7 @@ pub fn Translator::translate(
 pub fn Translator::translate_count(
   self : Translator,
   key : String,
-  count : Int,
+  count : Int32,
   values? : ArrayView[(String, String)],
 ) -> String {
   let plural_key = key + "." + self.plural_category(count)
@@ -74,7 +74,7 @@ fn Translator::lookup(self : Translator, key : String) -> String? {
 }
 
 ///|
-fn Translator::plural_category(self : Translator, count : Int) -> String {
+fn Translator::plural_category(self : Translator, count : Int32) -> String {
   if self.locale.language() == "zh" {
     "other"
   } else if self.locale.language() == "en" && count == 1 {
@@ -128,7 +128,7 @@ fn interpolate(
 }
 
 ///|
-fn closing_brace(chars : Array[Char], start : Int) -> Int? {
+fn closing_brace(chars : Array[Char], start : Int32) -> Int32? {
   let mut index = start
   while index < chars.length() {
     if chars[index] == '}' {

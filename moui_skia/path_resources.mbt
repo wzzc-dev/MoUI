@@ -1,6 +1,6 @@
 ///|
-fn path_resource_u64(value : Int) -> Bytes {
-  Int::max(0, value).to_uint64().to_be_bytes()
+fn path_resource_u64(value : Int32) -> Bytes {
+  Int32::max(0, value).to_uint64().to_be_bytes()
 }
 
 ///|
@@ -67,7 +67,7 @@ pub fn Path::resource_key(self : Path) -> RendererResourceKey {
 ///|
 pub fn Path::resource_descriptor(
   self : Path,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

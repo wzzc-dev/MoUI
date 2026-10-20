@@ -10,7 +10,7 @@
 fn desktop_build_once(
   flow : DesktopFlow,
   host : @plan.HostPlatform,
-  release? : Bool = false,
+  release~ : Bool = false,
 ) -> Result[String, String] {
   let argv = [
     "moon",

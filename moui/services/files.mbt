@@ -36,40 +36,40 @@ pub struct FileServices {
 
 ///|
 pub fn FileDialogOptions::new(
-  title? : String = "",
-  filters? : Array[String] = [],
-  default_name? : String? = None,
+  title~ : String = "",
+  filters~ : Array[String] = [],
+  default_name~ : String? = None,
 ) -> FileDialogOptions {
   { title, filters, default_name, }
 }
 
 ///|
 pub fn FileServices::new(
-  open_file? : (FileDialogOptions) -> ServiceTask[String] = _options => {
+  open_file~ : (FileDialogOptions) -> ServiceTask[String] = _options => {
     unavailable_task("file:open", "file open")
   },
-  save_file? : (FileDialogOptions) -> ServiceTask[String] = _options => {
+  save_file~ : (FileDialogOptions) -> ServiceTask[String] = _options => {
     unavailable_task("file:save", "file save")
   },
-  pick_directory? : (FileDialogOptions) -> ServiceTask[String] = _options => {
+  pick_directory~ : (FileDialogOptions) -> ServiceTask[String] = _options => {
     unavailable_task("file:pick-directory", "directory picker")
   },
-  read_text? : (String) -> ServiceTask[String] = _path => {
+  read_text~ : (String) -> ServiceTask[String] = _path => {
     unavailable_task("file:read-text", "text file read")
   },
-  write_text? : (String, String) -> ServiceTask[Unit] = (_path, _text) => {
+  write_text~ : (String, String) -> ServiceTask[Unit] = (_path, _text) => {
     unavailable_task("file:write-text", "text file write")
   },
-  read_bytes? : (String) -> ServiceTask[Bytes] = _path => {
+  read_bytes~ : (String) -> ServiceTask[Bytes] = _path => {
     unavailable_task("file:read-bytes", "binary file read")
   },
-  write_bytes? : (String, Bytes) -> ServiceTask[Unit] = (_path, _bytes) => {
+  write_bytes~ : (String, Bytes) -> ServiceTask[Unit] = (_path, _bytes) => {
     unavailable_task("file:write-bytes", "binary file write")
   },
-  list_directory? : (String) -> ServiceTask[Array[DirectoryEntry]] = _path => {
+  list_directory~ : (String) -> ServiceTask[Array[DirectoryEntry]] = _path => {
     unavailable_task("file:list-directory", "directory listing")
   },
-  delete_file? : (String) -> ServiceTask[Unit] = _path => {
+  delete_file~ : (String) -> ServiceTask[Unit] = _path => {
     unavailable_task("file:delete", "file deletion")
   },
 ) -> FileServices {
@@ -94,7 +94,7 @@ pub fn FileServices::unavailable() -> FileServices {
 ///|
 pub fn FileServices::open_file(
   self : FileServices,
-  options? : FileDialogOptions = FileDialogOptions::new(),
+  options~ : FileDialogOptions = FileDialogOptions::new(),
 ) -> ServiceTask[String] {
   (self.open_file_fn)(options)
 }
@@ -102,7 +102,7 @@ pub fn FileServices::open_file(
 ///|
 pub fn FileServices::save_file(
   self : FileServices,
-  options? : FileDialogOptions = FileDialogOptions::new(),
+  options~ : FileDialogOptions = FileDialogOptions::new(),
 ) -> ServiceTask[String] {
   (self.save_file_fn)(options)
 }
@@ -110,7 +110,7 @@ pub fn FileServices::save_file(
 ///|
 pub fn FileServices::pick_directory(
   self : FileServices,
-  options? : FileDialogOptions = FileDialogOptions::new(),
+  options~ : FileDialogOptions = FileDialogOptions::new(),
 ) -> ServiceTask[String] {
   (self.pick_directory_fn)(options)
 }

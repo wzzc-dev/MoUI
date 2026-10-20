@@ -54,7 +54,7 @@ pub extend WebsiteDocEntry with ToJson::{to_json}
 
 ///|
 pub struct WebsiteDocsCatalog {
-  schemaVersion : Int
+  schemaVersion : Int32
   siteUrl : String
   groups : Array[WebsiteDocGroup]
   entries : Array[WebsiteDocEntry]
@@ -75,7 +75,7 @@ pub extend WebsiteDocsCatalog with ToJson::{to_json}
 ///|
 pub enum WebsiteCatalogLoadState {
   CatalogNotLoaded
-  CatalogLoading(Int)
+  CatalogLoading(Int32)
   CatalogLoaded(WebsiteDocsCatalog)
   CatalogFailed(String)
 }
@@ -89,7 +89,7 @@ pub struct WebsiteDocDocument {
 ///|
 pub enum WebsiteDocLoadState {
   DocNotLoaded
-  DocLoading(Int, String)
+  DocLoading(Int32, String)
   DocLoaded(String, WebsiteDocDocument)
   DocFailed(String, String)
   DocNotFound(String)
@@ -113,12 +113,12 @@ pub struct WebsiteRouteHost {
 ///|
 pub fn WebsiteRouteHost::new(
   route_source~ : @services.RouteSource,
-  push_route? : (String) -> Unit = _route => (),
-  scroll_to_key? : (String, @core.ScrollAlignment) -> Unit = (_key, _alignment) => {
+  push_route~ : (String) -> Unit = _route => (),
+  scroll_to_key~ : (String, @core.ScrollAlignment) -> Unit = (_key, _alignment) => {
     ()
   },
-  apply_locale? : (String) -> Unit = _locale => (),
-  update_metadata? : (String, String, String, String, String) -> Unit = (
+  apply_locale~ : (String) -> Unit = _locale => (),
+  update_metadata~ : (String, String, String, String, String) -> Unit = (
     _title,
     _description,
     _canonical,
@@ -282,7 +282,10 @@ fn website_doc_wrap_lines(
 }
 
 ///|
-fn website_doc_wrap_unbroken_line(value : String, limit : Int) -> Array[String] {
+fn website_doc_wrap_unbroken_line(
+  value : String,
+  limit : Int32,
+) -> Array[String] {
   let chars = value.to_array()
   if chars.is_empty() {
     return [""]
@@ -298,7 +301,7 @@ fn website_doc_wrap_unbroken_line(value : String, limit : Int) -> Array[String] 
 }
 
 ///|
-fn min_website_int(a : Int, b : Int) -> Int {
+fn min_website_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {

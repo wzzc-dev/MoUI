@@ -39,17 +39,17 @@ fn LinuxAtspiHostState::remove(
 }
 
 ///|
-extern "C" fn linux_atspi_attach_native() -> Int = "moui_linux_atspi_attach"
+extern "C" fn linux_atspi_attach_native() -> Int32 = "moui_linux_atspi_attach"
 
 ///|
 extern "C" fn linux_atspi_begin_native(
   window_id : UInt64,
-  full : Int,
+  full : Int32,
   generation : UInt64,
   root : UInt64,
   focused : UInt64,
   semantic_focused : UInt64,
-) -> Int = "moui_linux_atspi_begin"
+) -> Int32 = "moui_linux_atspi_begin"
 
 ///|
 #borrow(semantic_id, role, name, value, description, children, labelled_by, described_by, controls, error_message, active_descendant)
@@ -62,27 +62,27 @@ extern "C" fn linux_atspi_upsert_native(
   name : Bytes,
   value : Bytes,
   description : Bytes,
-  state : UInt,
-  checked : Int,
-  numeric_flags : Int,
+  state : UInt32,
+  checked : Int32,
+  numeric_flags : Int32,
   current : Double,
   minimum : Double,
   maximum : Double,
   increment : Double,
-  selection_start : Int,
-  selection_end : Int,
-  caret : Int,
-  row_index : Int,
-  row_count : Int,
-  row_span : Int,
-  column_index : Int,
-  column_count : Int,
-  column_span : Int,
-  set_size : Int,
-  set_position : Int,
-  actions : UInt,
-  live : Int,
-  live_atomic : Int,
+  selection_start : Int32,
+  selection_end : Int32,
+  caret : Int32,
+  row_index : Int32,
+  row_count : Int32,
+  row_span : Int32,
+  column_index : Int32,
+  column_count : Int32,
+  column_span : Int32,
+  set_size : Int32,
+  set_position : Int32,
+  actions : UInt32,
+  live : Int32,
+  live_atomic : Int32,
   frame_x : Double,
   frame_y : Double,
   frame_width : Double,
@@ -109,8 +109,8 @@ extern "C" fn linux_atspi_end_native(window_id : UInt64) -> Unit = "moui_linux_a
 extern "C" fn linux_atspi_announce_native(
   window_id : UInt64,
   node_id : UInt64,
-  live : Int,
-  is_atomic : Int,
+  live : Int32,
+  is_atomic : Int32,
   text : Bytes,
 ) -> Unit = "moui_linux_atspi_announce"
 
@@ -124,7 +124,7 @@ extern "C" fn linux_atspi_dispose_native(window_id : UInt64) -> Unit = "moui_lin
 fn linux_atspi_state_flags(
   state : @core.SemanticsState,
   text : @core.SemanticsTextValue?,
-) -> UInt {
+) -> UInt32 {
   let mut flags = 0U
   if state.disabled {
     flags = flags | 1U
@@ -169,7 +169,7 @@ fn linux_atspi_state_flags(
 }
 
 ///|
-fn linux_atspi_action_flag(action : @core.SemanticsActionKind) -> UInt {
+fn linux_atspi_action_flag(action : @core.SemanticsActionKind) -> UInt32 {
   match action {
     Activate => 1U
     Focus => 2U
@@ -189,7 +189,9 @@ fn linux_atspi_action_flag(action : @core.SemanticsActionKind) -> UInt {
 }
 
 ///|
-fn linux_atspi_action_flags(actions : Array[@core.SemanticsActionKind]) -> UInt {
+fn linux_atspi_action_flags(
+  actions : Array[@core.SemanticsActionKind],
+) -> UInt32 {
   actions.fold(init=0U, (flags, action) => {
     flags | linux_atspi_action_flag(action)
   })
@@ -225,7 +227,7 @@ fn linux_atspi_role_code(role : @core.SemanticsRole) -> String {
 }
 
 ///|
-fn linux_atspi_optional(value : Int?) -> Int {
+fn linux_atspi_optional(value : Int32?) -> Int32 {
   value.unwrap_or(-1)
 }
 
@@ -323,7 +325,7 @@ fn linux_atspi_parse_decimal_u64(value : String) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }

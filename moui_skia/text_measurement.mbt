@@ -26,11 +26,11 @@ pub extend TextMeasurementDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn TextMeasurementDescriptor::new(
-  run? : TextRunDescriptor = TextRunDescriptor::new(),
-  font_key? : RendererResourceKey = RendererResourceKey::font(b""),
-  width? : Float = 1000000000.0,
-  measure_bounds? : Bool = true,
-  shape? : Bool = false,
+  run~ : TextRunDescriptor = TextRunDescriptor::new(),
+  font_key~ : RendererResourceKey = RendererResourceKey::font(b""),
+  width~ : Float = 1000000000.0,
+  measure_bounds~ : Bool = true,
+  shape~ : Bool = false,
 ) -> TextMeasurementDescriptor {
   {
     run,
@@ -106,7 +106,7 @@ pub fn TextMeasurementDescriptor::resource_key(
 pub fn TextMeasurementDescriptor::resource_descriptor(
   self : TextMeasurementDescriptor,
   text : Bytes,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_key(text).id
   let measured_byte_size = if byte_size < 0L {
@@ -121,10 +121,10 @@ pub fn TextMeasurementDescriptor::resource_descriptor(
 pub fn TextMeasurementDescriptor::resource_plan(
   self : TextMeasurementDescriptor,
   text : Bytes,
-  measurement_byte_size? : Int64 = -1L,
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  measurement_byte_size~ : Int64 = -1L,
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(
@@ -194,9 +194,9 @@ pub extend MeasuredTextRunDescriptor with Eq::{not_equal, equal}
 
 ///|
 pub fn MeasuredTextRunDescriptor::new(
-  measurement? : TextMeasurementDescriptor = TextMeasurementDescriptor::new(),
-  advance? : Float = 0.0,
-  bounds? : Rect? = None,
+  measurement~ : TextMeasurementDescriptor = TextMeasurementDescriptor::new(),
+  advance~ : Float = 0.0,
+  bounds~ : Rect? = None,
 ) -> MeasuredTextRunDescriptor {
   {
     measurement,
@@ -208,8 +208,8 @@ pub fn MeasuredTextRunDescriptor::new(
 ///|
 pub fn TextMeasurementDescriptor::measured_run_descriptor(
   self : TextMeasurementDescriptor,
-  advance? : Float = 0.0,
-  bounds? : Rect? = None,
+  advance~ : Float = 0.0,
+  bounds~ : Rect? = None,
 ) -> MeasuredTextRunDescriptor {
   MeasuredTextRunDescriptor::new(measurement=self, advance~, bounds~)
 }
@@ -261,7 +261,7 @@ pub fn MeasuredTextRunDescriptor::resource_key(
 pub fn MeasuredTextRunDescriptor::resource_descriptor(
   self : MeasuredTextRunDescriptor,
   text : Bytes,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id(text)
   let measured_byte_size = if byte_size < 0L {
@@ -276,11 +276,11 @@ pub fn MeasuredTextRunDescriptor::resource_descriptor(
 pub fn MeasuredTextRunDescriptor::resource_plan(
   self : MeasuredTextRunDescriptor,
   text : Bytes,
-  measured_byte_size? : Int64 = -1L,
-  measurement_byte_size? : Int64 = -1L,
-  text_byte_size? : Int64 = -1L,
-  font_byte_size? : Int64 = 0L,
-  fallback_byte_size? : Int64 = -1L,
+  measured_byte_size~ : Int64 = -1L,
+  measurement_byte_size~ : Int64 = -1L,
+  text_byte_size~ : Int64 = -1L,
+  font_byte_size~ : Int64 = 0L,
+  fallback_byte_size~ : Int64 = -1L,
 ) -> RendererResourcePlan {
   let descriptors : Array[RendererResourceDescriptor] = Array()
   descriptors.push(self.resource_descriptor(text, byte_size=measured_byte_size))

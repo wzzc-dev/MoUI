@@ -123,7 +123,7 @@ test "a button label is drawn on a row the click can hit" {
   )
   ignore(renderer.render_frame(semantics_frame(nodes=[button], root=button)))
   let cell = @moui_tui_renderer.CellBox::default()
-  let label_rows : Array[Int] = []
+  let label_rows : Array[Int32] = []
   for y in 0..<renderer.rows() {
     if renderer.line_text(y).contains("[-]") {
       label_rows.push(y)

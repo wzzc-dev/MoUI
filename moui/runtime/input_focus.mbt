@@ -12,7 +12,7 @@ fn ElementNode::find_focusable_at(
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
-  let search_order : Array[Int] = []
+  let search_order : Array[Int32] = []
   let mut overlay_search = render.children.length() - 1
   while overlay_search >= 0 {
     if overlay_search < self.children.length() &&
@@ -149,7 +149,10 @@ fn ElementNode::stable_focus_identity(
 }
 
 ///|
-fn ElementNode::focusable_order(self : ElementNode, target : ElementId) -> Int? {
+fn ElementNode::focusable_order(
+  self : ElementNode,
+  target : ElementId,
+) -> Int32? {
   let ids : Array[ElementId] = []
   self.focusable_ids(ids)
   for index, id in ids {
@@ -163,7 +166,7 @@ fn ElementNode::focusable_order(self : ElementNode, target : ElementId) -> Int? 
 ///|
 fn ElementNode::focusable_at_order(
   self : ElementNode,
-  order : Int,
+  order : Int32,
 ) -> ElementId? {
   let ids : Array[ElementId] = []
   self.focusable_ids(ids)

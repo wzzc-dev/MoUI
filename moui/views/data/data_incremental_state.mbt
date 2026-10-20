@@ -9,11 +9,11 @@ pub(all) enum IncrementalDataChange[T] {
 ///|
 pub struct IncrementalData[T] {
   items : Array[T]
-  revision : Int
+  revision : Int32
 }
 
 ///|
-pub fn[T] IncrementalData::new(items? : Array[T] = []) -> IncrementalData[T] {
+pub fn[T] IncrementalData::new(items~ : Array[T] = []) -> IncrementalData[T] {
   { items: items.copy(), revision: 0, }
 }
 
@@ -23,7 +23,7 @@ pub fn[T] IncrementalData::items(self : IncrementalData[T]) -> Array[T] {
 }
 
 ///|
-pub fn[T] IncrementalData::revision(self : IncrementalData[T]) -> Int {
+pub fn[T] IncrementalData::revision(self : IncrementalData[T]) -> Int32 {
   self.revision
 }
 

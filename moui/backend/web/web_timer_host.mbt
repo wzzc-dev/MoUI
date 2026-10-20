@@ -1,6 +1,6 @@
 ///|
 priv struct WebTimerRegistration {
-  token : Int
+  token : Int32
   interval_ms : Double
   last_time_ms : Double
   dispatch : (@core.Frame) -> Unit
@@ -8,7 +8,7 @@ priv struct WebTimerRegistration {
 
 ///|
 priv struct WebTimerRegistry {
-  mut next_token : Int
+  mut next_token : Int32
   mut registrations : Array[WebTimerRegistration]
 }
 
@@ -66,7 +66,7 @@ fn web_timer_dispatch_due_at(now_ms : Double) -> Unit {
 }
 
 ///|
-fn web_timer_remove(token : Int) -> Unit {
+fn web_timer_remove(token : Int32) -> Unit {
   let next : Array[WebTimerRegistration] = []
   for registration in web_timer_registry.val.registrations {
     if registration.token != token {

@@ -104,7 +104,7 @@ pub fn ColorFilterDescriptor::resource_key(
 ///|
 pub fn ColorFilterDescriptor::resource_descriptor(
   self : ColorFilterDescriptor,
-  byte_size? : Int64 = -1L,
+  byte_size~ : Int64 = -1L,
 ) -> RendererResourceDescriptor {
   let id = self.resource_id()
   let measured_byte_size = if byte_size < 0L {

@@ -1,17 +1,17 @@
 ///|
 test "ServiceTask reports success failure and explicit cancellation" {
-  let results : Array[@services.ServiceTaskResult[Int]] = []
+  let results : Array[@services.ServiceTaskResult[Int32]] = []
   ignore(
     @services.ServiceTask::succeed(key="ok", value=7).start(result => {
       results.push(result)
     }),
   )
-  let failed : @services.ServiceTask[Int] = @services.ServiceTask::fail(
+  let failed : @services.ServiceTask[Int32] = @services.ServiceTask::fail(
     key="fail",
     error=@services.ServiceError::new(code="io", message="disk"),
   )
   ignore(failed.start(result => results.push(result)))
-  let cancelled : @services.ServiceTask[Int] = @services.ServiceTask::cancelled(
+  let cancelled : @services.ServiceTask[Int32] = @services.ServiceTask::cancelled(
     key="cancel",
   )
   ignore(cancelled.start(result => results.push(result)))
@@ -26,7 +26,7 @@ test "ServiceTask reports success failure and explicit cancellation" {
 
 ///|
 test "ServiceTask cleanup suppresses a stale completion in an adapter" {
-  let completion : Ref[((@services.ServiceTaskResult[Int]) -> Unit)?] = Ref(
+  let completion : Ref[((@services.ServiceTaskResult[Int32]) -> Unit)?] = Ref(
     None,
   )
   let active = Ref(true)
@@ -34,7 +34,7 @@ test "ServiceTask cleanup suppresses a stale completion in an adapter" {
     completion.val = Some(complete)
     Some(() => active.val = false)
   })
-  let results : Array[@services.ServiceTaskResult[Int]] = []
+  let results : Array[@services.ServiceTaskResult[Int32]] = []
   let cleanup = task.start(result => if active.val { results.push(result) })
   match cleanup {
     Some(cancel) => cancel()

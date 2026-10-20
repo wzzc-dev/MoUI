@@ -5,7 +5,7 @@ struct RendererHandle {
   mut scale_factor : Double
   mut last_batches : Array[@render.RectBatch]
   mut configured : Bool
-  mut present_count : Int
+  mut present_count : Int32
   mut surface_format : @wgpu_mbt.TextureFormat
   mut instance : @wgpu_mbt.Instance?
   mut adapter : @wgpu_mbt.Adapter?
@@ -60,7 +60,7 @@ struct RendererHandle {
   mut image_vertices : Array[ImageVertex]
   mut draw_items : Array[NativeDrawItem]
   mut text_atlas_dirty : Bool
-  mut unsupported_command_count : Int
+  mut unsupported_command_count : Int32
 }
 
 ///|
@@ -144,7 +144,7 @@ fn wgpu_contains_format(
 }
 
 ///|
-fn wgpu_contains_u32(values : Array[UInt], target : UInt) -> Bool {
+fn wgpu_contains_u32(values : Array[UInt32], target : UInt32) -> Bool {
   for v in values {
     if v == target {
       return true
@@ -202,8 +202,8 @@ fn wgpu_configure_surface_preferred(
   surface : @wgpu_mbt.Surface,
   adapter : @wgpu_mbt.Adapter,
   device : @wgpu_mbt.Device,
-  width : UInt,
-  height : UInt,
+  width : UInt32,
+  height : UInt32,
   usage : @wgpu_mbt.TextureUsage,
 ) -> @wgpu_mbt.TextureFormat {
   let format = wgpu_pick_preferred_surface_format(surface, adapter)
@@ -742,7 +742,7 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
 ///|
 fn count_native_unsupported_commands(
   commands : Array[@core.DrawCommand],
-) -> Int {
+) -> Int32 {
   @render_common.plan_renderer_command_fallbacks(commands).fallback_count()
 }
 
@@ -909,8 +909,8 @@ fn RendererHandle::draw_plan_item_span(
   queue : @wgpu_mbt.Queue,
   items : Array[NativeDrawItem],
   buffers : NativePlanGpuBuffers,
-  start_index~ : Int,
-  end_index~ : Int,
+  start_index~ : Int32,
+  end_index~ : Int32,
   clear~ : @core.Color,
   clear_pass~ : Bool,
   frame_buffers~ : Array[@wgpu_mbt.Buffer],
@@ -1594,7 +1594,7 @@ fn RendererHandle::apply_scissor(
 }
 
 ///|
-fn max_native_int(a : Int, b : Int) -> Int {
+fn max_native_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {

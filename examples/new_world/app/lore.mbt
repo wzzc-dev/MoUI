@@ -21,7 +21,7 @@
 pub(all) struct LoreHit {
   entry : WorldEntry
   /// How many recursion rounds it took to reach this entry (0 = direct match).
-  depth : Int
+  depth : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -34,11 +34,11 @@ pub extend LoreHit with Eq::{not_equal, equal}
 /// The maximum recursion depth a single turn will walk, no matter what a file
 /// asks for. A hand-edited `[recursion=99]` must not turn into an unbounded
 /// scan (or an unbounded prompt).
-pub let lore_recursion_cap : Int = 4
+pub let lore_recursion_cap : Int32 = 4
 
 ///|
 /// A stable, cheap hash used to make the probability roll reproducible.
-fn lore_roll(entry : WorldEntry, turn : Int) -> Int {
+fn lore_roll(entry : WorldEntry, turn : Int32) -> Int32 {
   let mut hash = 5381
   for key in entry.keys() {
     for ch in key {
@@ -53,7 +53,7 @@ fn lore_roll(entry : WorldEntry, turn : Int) -> Int {
 
 ///|
 /// Does this entry pass its probability gate on this turn?
-pub fn lore_passes_probability(entry : WorldEntry, turn : Int) -> Bool {
+pub fn lore_passes_probability(entry : WorldEntry, turn : Int32) -> Bool {
   let chance = entry.probability()
   if chance >= 100 {
     true
@@ -75,7 +75,7 @@ pub fn select_lore(
   scenario : Scenario,
   player_text : String,
   recursion_text : String,
-  turn : Int,
+  turn : Int32,
 ) -> Array[LoreHit] {
   let hits : Array[LoreHit] = []
   let seen : Array[String] = []

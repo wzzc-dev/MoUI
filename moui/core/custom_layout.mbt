@@ -36,9 +36,9 @@ pub extend ChildLayoutInfo with Eq::{not_equal, equal}
 /// use it when building tests for custom layout delegates.
 pub fn ChildLayoutInfo::new(
   size~ : Size,
-  first_baseline? : Double? = None,
-  priority? : Double = 0.0,
-  flex_weight? : Double = 0.0,
+  first_baseline~ : Double? = None,
+  priority~ : Double = 0.0,
+  flex_weight~ : Double = 0.0,
 ) -> ChildLayoutInfo {
   {
     size,
@@ -111,7 +111,7 @@ pub(all) struct CustomPlacementContext {
 ///|
 pub fn AlignmentGuideSet::from_size(
   size : Size,
-  first_baseline? : Double? = None,
+  first_baseline~ : Double? = None,
 ) -> AlignmentGuideSet {
   {
     leading: 0.0,

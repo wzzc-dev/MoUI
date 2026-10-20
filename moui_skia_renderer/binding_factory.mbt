@@ -1,7 +1,7 @@
 ///|
 /// Build a Skia CPU raster provider from the renderer-neutral host contract.
 pub fn raster(
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
@@ -46,7 +46,7 @@ pub fn raster(
 /// renderer module and interprets the opaque native handles after binding.
 pub fn gpu(
   platform~ : NativeGpuPlatform,
-  font_resolution? : SkiaFontResolution = SystemFontMgr,
+  font_resolution~ : SkiaFontResolution = SystemFontMgr,
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
@@ -143,8 +143,8 @@ fn create_skia_gpu_host_renderer(
   platform : NativeGpuPlatform,
   native_surface : @render.NativeSurface,
   font_resolution : SkiaFontResolution,
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
 ) -> @render.RendererSession {
   let route = NativePlatformSurface::surface_route(platform)
   // The host window's current physical size. Direct3D swap chains are resized
@@ -378,9 +378,9 @@ fn create_skia_raster_host_renderer(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
   font_resolution : SkiaFontResolution,
-  image_source? : @render.HostImageSource = @render.HostImageSource::unavailable(),
-  image_decoder? : @render.RendererImageDecoder? = None,
-  native_surface? : @render.NativeSurface? = None,
+  image_source~ : @render.HostImageSource = @render.HostImageSource::unavailable(),
+  image_decoder~ : @render.RendererImageDecoder? = None,
+  native_surface~ : @render.NativeSurface? = None,
 ) -> @render.RendererSession {
   create_with_present_target(
     metrics,
@@ -453,7 +453,7 @@ fn skia_gpu_present_and_acquire_next(
   context : @skia_native.GpuContext,
   platform : NativeGpuPlatform,
   native_surface : @render.NativeSurface,
-  expected_size? : @moui_skia.ISize? = None,
+  expected_size~ : @moui_skia.ISize? = None,
 ) -> @skia_native.Surface? {
   match platform {
     MacOS | IOS =>

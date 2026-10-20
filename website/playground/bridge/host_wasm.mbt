@@ -1,32 +1,32 @@
 ///|
-extern "wasm" fn begin_compile_request(revision : Int) -> Int = "moui_playground" "begin_compile_request"
+extern "wasm" fn begin_compile_request(revision : Int32) -> Int32 = "moui_playground" "begin_compile_request"
 
 ///|
-extern "wasm" fn append_compile_char(handle : Int, character : Char) -> Unit = "moui_playground" "append_compile_char"
+extern "wasm" fn append_compile_char(handle : Int32, character : Char) -> Unit = "moui_playground" "append_compile_char"
 
 ///|
-extern "wasm" fn finish_compile_request(handle : Int) -> Unit = "moui_playground" "finish_compile_request"
+extern "wasm" fn finish_compile_request(handle : Int32) -> Unit = "moui_playground" "finish_compile_request"
 
 ///|
-extern "wasm" fn begin_share_request() -> Int = "moui_playground" "begin_share_request"
+extern "wasm" fn begin_share_request() -> Int32 = "moui_playground" "begin_share_request"
 
 ///|
-extern "wasm" fn append_share_char(handle : Int, character : Char) -> Unit = "moui_playground" "append_share_char"
+extern "wasm" fn append_share_char(handle : Int32, character : Char) -> Unit = "moui_playground" "append_share_char"
 
 ///|
-extern "wasm" fn finish_share_request(handle : Int) -> Unit = "moui_playground" "finish_share_request"
+extern "wasm" fn finish_share_request(handle : Int32) -> Unit = "moui_playground" "finish_share_request"
 
 ///|
-extern "wasm" fn begin_example_request() -> Int = "moui_playground" "begin_example_request"
+extern "wasm" fn begin_example_request() -> Int32 = "moui_playground" "begin_example_request"
 
 ///|
-extern "wasm" fn append_example_char(handle : Int, character : Char) -> Unit = "moui_playground" "append_example_char"
+extern "wasm" fn append_example_char(handle : Int32, character : Char) -> Unit = "moui_playground" "append_example_char"
 
 ///|
-extern "wasm" fn finish_example_request(handle : Int) -> Unit = "moui_playground" "finish_example_request"
+extern "wasm" fn finish_example_request(handle : Int32) -> Unit = "moui_playground" "finish_example_request"
 
 ///|
-pub fn request_compile(revision : Int, request : String) -> Unit {
+pub fn request_compile(revision : Int32, request : String) -> Unit {
   let handle = begin_compile_request(revision)
   for character in request {
     append_compile_char(handle, character)

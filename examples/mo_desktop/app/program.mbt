@@ -1,8 +1,8 @@
 ///|
 pub fn program(
-  wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
-  environment? : @services.AppEnvironment = @services.AppEnvironment::new(),
-  wall_clock? : () -> DesktopClock = default_desktop_clock,
+  wallpaper_source~ : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
+  environment~ : @services.AppEnvironment = @services.AppEnvironment::new(),
+  wall_clock~ : () -> DesktopClock = default_desktop_clock,
 ) -> @moui.Program[DesktopModel, Msg] {
   let services = environment.services()
   let initial = DesktopModel::new(wallpaper_source~, clock=wall_clock())

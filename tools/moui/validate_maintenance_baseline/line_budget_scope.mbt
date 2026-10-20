@@ -8,7 +8,7 @@ fn line_budget_file_budgets(scope : String) -> Array[FileBudget] {
 }
 
 ///|
-fn tracked_budget_paths(scope? : String = "daily") -> Array[String] {
+fn tracked_budget_paths(scope~ : String = "daily") -> Array[String] {
   let paths : Array[String] = []
   for budget in line_budget_file_budgets(scope) {
     paths.push(budget.path)

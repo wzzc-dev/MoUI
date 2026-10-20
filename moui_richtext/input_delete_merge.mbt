@@ -1,5 +1,5 @@
 ///|
-fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
+fn markdown_editor_line_start(chars : Array[Char], caret : Int32) -> Int32 {
   let mut start = markdown_editor_clamp_int(caret, 0, chars.length())
   while start > 0 && chars[start - 1] != '\n' {
     start = start - 1
@@ -10,8 +10,8 @@ fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
 ///|
 fn markdown_editor_line_indent(
   chars : Array[Char],
-  line_start : Int,
-  caret : Int,
+  line_start : Int32,
+  caret : Int32,
 ) -> String {
   let indent : Array[Char] = []
   let mut index = markdown_editor_clamp_int(line_start, 0, chars.length())
@@ -26,7 +26,7 @@ fn markdown_editor_line_indent(
 ///|
 fn markdown_editor_backspace_marker(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -81,7 +81,7 @@ fn markdown_editor_backspace_quoted_inner_marker(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-  caret : Int,
+  caret : Int32,
 ) -> RichTextInputTransform? {
   let context_length = markdown_editor_block_command_context_prefix_length(line)
   let context_prefix = markdown_editor_substring(line, 0, context_length)
@@ -111,7 +111,7 @@ fn markdown_editor_backspace_quoted_inner_marker(
 ///|
 fn markdown_editor_delete_marker(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -156,7 +156,7 @@ fn markdown_editor_delete_marker(
 ///|
 fn markdown_editor_delete_quoted_inner_marker(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -194,7 +194,7 @@ fn markdown_editor_delete_quoted_inner_marker(
 ///|
 fn markdown_editor_backspace_merge_block(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -254,7 +254,7 @@ fn markdown_editor_backspace_merge_block(
 ///|
 fn markdown_editor_delete_merge_block(
   source : String,
-  caret : Int,
+  caret : Int32,
   selection : @core.TextRange?,
 ) -> RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
@@ -392,7 +392,7 @@ fn markdown_editor_merge_block_marker_prefix(line : String) -> String {
 }
 
 ///|
-fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int32 {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -406,7 +406,7 @@ fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int {
 }
 
 ///|
-fn markdown_editor_next_line_end(chars : Array[Char], start : Int) -> Int {
+fn markdown_editor_next_line_end(chars : Array[Char], start : Int32) -> Int32 {
   let mut end = markdown_editor_clamp_int(start, 0, chars.length())
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
@@ -417,8 +417,8 @@ fn markdown_editor_next_line_end(chars : Array[Char], start : Int) -> Int {
 ///|
 fn markdown_editor_previous_line_start(
   chars : Array[Char],
-  previous_end : Int,
-) -> Int {
+  previous_end : Int32,
+) -> Int32 {
   let mut start = markdown_editor_clamp_int(previous_end, 0, chars.length())
   while start > 0 && chars[start - 1] != '\n' {
     start = start - 1

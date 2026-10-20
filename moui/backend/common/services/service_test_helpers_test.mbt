@@ -1,8 +1,8 @@
 ///|
 fn host_test_text_field(
   value : String,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
 ) -> @core.View[String] {
   let normal = @views.new_control_state_style(
     foreground=@core.Color::black(),
@@ -31,8 +31,8 @@ fn host_test_text_field(
 fn window_test_text_field_runtime(
   value~ : Ref[String],
   size~ : @core.Size,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
 ) -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
     program=@core.Program::simple(

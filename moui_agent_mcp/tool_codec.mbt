@@ -30,7 +30,7 @@ priv struct ToolSpec[Host] {
 }
 
 ///|
-fn object_schema(properties : Json, required? : Array[String] = []) -> Json {
+fn object_schema(properties : Json, required~ : Array[String] = []) -> Json {
   (
     {
       "type": "object",
@@ -80,7 +80,7 @@ fn parse_decimal_u64(value : String) -> UInt64? {
     if code < '0' || code > '9' {
       return None
     }
-    let digit = (code - ('0' : Int)).to_uint64()
+    let digit = (code - ('0' : Int32)).to_uint64()
     if parsed > (18446744073709551615UL - digit) / 10UL {
       return None
     }
@@ -90,7 +90,7 @@ fn parse_decimal_u64(value : String) -> UInt64? {
 }
 
 ///|
-fn decimal_u64_codec(positive? : Bool = false) -> JsonCodec[UInt64] {
+fn decimal_u64_codec(positive~ : Bool = false) -> JsonCodec[UInt64] {
   let expected = if positive {
     "a canonical positive UInt64 decimal string"
   } else {

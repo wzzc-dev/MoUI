@@ -117,7 +117,7 @@ fn normalize_patch_path(path : String) -> String {
 }
 
 ///|
-fn find_substring(text : String, needle : String) -> Int? {
+fn find_substring(text : String, needle : String) -> Int32? {
   if needle == "" {
     return Some(0)
   }
@@ -351,7 +351,7 @@ fn verify_acceptance_state_patch(
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

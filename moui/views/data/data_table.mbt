@@ -2,16 +2,16 @@
 pub fn[Msg] table(
   columns : Array[TableColumn],
   rows : Array[Array[String]],
-  selected_row? : Int? = None,
-  on_row_select? : ((Int) -> Msg)? = None,
-  sort_column? : String = "",
-  sort_ascending? : Bool = true,
-  on_sort? : ((String) -> Msg)? = None,
-  sortable_columns? : Array[String] = [],
-  cell? : ((Int, TableColumn, String) -> @core.View[Msg])? = None,
-  empty? : @core.View[Msg]? = None,
+  selected_row~ : Int32? = None,
+  on_row_select~ : ((Int32) -> Msg)? = None,
+  sort_column~ : String = "",
+  sort_ascending~ : Bool = true,
+  on_sort~ : ((String) -> Msg)? = None,
+  sortable_columns~ : Array[String] = [],
+  cell~ : ((Int32, TableColumn, String) -> @core.View[Msg])? = None,
+  empty~ : @core.View[Msg]? = None,
   theme? : @core.Theme,
-  row_height? : Double = 38.0,
+  row_height~ : Double = 38.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   if rows.length() == 0 {

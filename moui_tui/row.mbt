@@ -5,7 +5,7 @@ pub(all) struct TermRow {
 }
 
 ///|
-pub fn TermRow::new(cols : Int, attrs : CellAttrs) -> TermRow {
+pub fn TermRow::new(cols : Int32, attrs : CellAttrs) -> TermRow {
   let cells : Array[Cell] = []
   for _ in 0..<cols {
     cells.push(blank_cell(attrs))
@@ -16,8 +16,8 @@ pub fn TermRow::new(cols : Int, attrs : CellAttrs) -> TermRow {
 ///|
 /// 行内按连续相同属性合并的渲染 run:(文本, 占列数, 属性)。
 /// continuation 单元格(width == 0)不产生文本。
-pub fn TermRow::runs(self : TermRow) -> Array[(String, Int, CellAttrs)] {
-  let out : Array[(String, Int, CellAttrs)] = []
+pub fn TermRow::runs(self : TermRow) -> Array[(String, Int32, CellAttrs)] {
+  let out : Array[(String, Int32, CellAttrs)] = []
   let mut current_attrs : CellAttrs? = None
   for cell in self.cells {
     if cell.width == 0 {

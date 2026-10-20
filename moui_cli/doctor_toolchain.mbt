@@ -9,7 +9,7 @@ priv enum DoctorProbeKind {
 
 ///|
 priv struct DoctorProbeResult {
-  status : Int
+  status : Int32
   output : String
 }
 
@@ -42,14 +42,14 @@ fn run_doctor_probe(
 }
 
 ///|
-fn numeric_version_at(text : String, start : Int) -> Array[Int]? {
+fn numeric_version_at(text : String, start : Int32) -> Array[Int32]? {
   if start < 0 ||
     start >= text.length() ||
     text[start] < '0' ||
     text[start] > '9' {
     return None
   }
-  let parts : Array[Int] = []
+  let parts : Array[Int32] = []
   let number = Ref(0)
   let digits = Ref(0)
   for index in start..<text.length() {
@@ -80,7 +80,7 @@ fn numeric_version_at(text : String, start : Int) -> Array[Int]? {
 }
 
 ///|
-fn first_numeric_version(text : String, start? : Int = 0) -> Array[Int]? {
+fn first_numeric_version(text : String, start~ : Int32 = 0) -> Array[Int32]? {
   let start = if start < 0 { 0 } else { start }
   for index in start..<text.length() {
     let unit = text[index]
@@ -97,7 +97,7 @@ fn first_numeric_version(text : String, start? : Int = 0) -> Array[Int]? {
 }
 
 ///|
-fn numeric_version_after(text : String, marker : String) -> Array[Int]? {
+fn numeric_version_after(text : String, marker : String) -> Array[Int32]? {
   match text.find(marker) {
     Some(offset) => first_numeric_version(text, start=offset + marker.length())
     None => None
@@ -105,7 +105,10 @@ fn numeric_version_after(text : String, marker : String) -> Array[Int]? {
 }
 
 ///|
-fn numeric_version_at_least(actual : Array[Int], required : Array[Int]) -> Bool {
+fn numeric_version_at_least(
+  actual : Array[Int32],
+  required : Array[Int32],
+) -> Bool {
   let length = actual.length().max(required.length())
   for index in 0..<length {
     let left = if index < actual.length() { actual[index] } else { 0 }
@@ -122,8 +125,8 @@ fn numeric_version_at_least(actual : Array[Int], required : Array[Int]) -> Bool 
 
 ///|
 fn numeric_version_has_prefix(
-  actual : Array[Int],
-  expected : Array[Int],
+  actual : Array[Int32],
+  expected : Array[Int32],
 ) -> Bool {
   if actual.length() < expected.length() {
     return false
@@ -137,12 +140,12 @@ fn numeric_version_has_prefix(
 }
 
 ///|
-fn numeric_version_text(version : Array[Int]) -> String {
+fn numeric_version_text(version : Array[Int32]) -> String {
   version.map(part => part.to_string()).join(".")
 }
 
 ///|
-fn detected_version(output : String, marker : String) -> Array[Int]? {
+fn detected_version(output : String, marker : String) -> Array[Int32]? {
   match numeric_version_after(output, marker) {
     Some(version) => Some(version)
     None => first_numeric_version(output)
@@ -154,7 +157,7 @@ fn probe_version_floor(
   executable : String,
   kind : DoctorProbeKind,
   marker : String,
-  required : Array[Int],
+  required : Array[Int32],
   label : String,
 ) -> Result[String, String] {
   let probe = run_doctor_probe(executable, kind)
@@ -180,7 +183,7 @@ fn probe_version_floor(
 }
 
 ///|
-fn java_major_version(output : String) -> Int? {
+fn java_major_version(output : String) -> Int32? {
   let version = match detected_version(output, "version") {
     Some(version) => version
     None => return None
@@ -211,7 +214,7 @@ fn probe_java_floor(executable : String) -> Result[String, String] {
 }
 
 ///|
-fn property_version(text : String, key : String) -> Array[Int]? {
+fn property_version(text : String, key : String) -> Array[Int32]? {
   for line in text.split("\n") {
     let line = line.to_owned()
     if line.trim().has_prefix(key) {
@@ -229,7 +232,7 @@ fn property_version(text : String, key : String) -> Array[Int]? {
 }
 
 ///|
-fn ndk_revision(root : String) -> Array[Int]? {
+fn ndk_revision(root : String) -> Array[Int32]? {
   let properties = @fs.read_file_to_string(join_path(root, "source.properties")) catch {
     _ => return None
   }
@@ -237,13 +240,13 @@ fn ndk_revision(root : String) -> Array[Int]? {
 }
 
 ///|
-fn gradle_wrapper_version(properties : String) -> Array[Int]? {
+fn gradle_wrapper_version(properties : String) -> Array[Int32]? {
   numeric_version_after(properties, "gradle-")
 }
 
 ///|
 fn gradle_declared_version_floor(
-  version : Array[Int],
+  version : Array[Int32],
   source : String,
 ) -> Result[String, String] {
   let actual = numeric_version_text(version)
@@ -318,13 +321,13 @@ fn gradle_version_floor(
 fn versioned_android_executable(
   root : String,
   relative_executable : String,
-  required : Array[Int],
+  required : Array[Int32],
 ) -> (String, String)? {
   if !path_is_dir(root) {
     return None
   }
   let entries : ArrayView[String] = @fs.read_dir(root) catch { _ => [] }
-  let best_version : Ref[Array[Int]?] = Ref(None)
+  let best_version : Ref[Array[Int32]?] = Ref(None)
   let best_path = Ref("")
   for entry in entries {
     let version = match first_numeric_version(entry) {
@@ -352,7 +355,7 @@ fn versioned_android_executable(
 }
 
 ///|
-fn json_int(value : Json?) -> Int? {
+fn json_int(value : Json?) -> Int32? {
   match value {
     Some(Number(number, repr=_)) if number.to_int().to_double() == number =>
       Some(number.to_int())
@@ -366,7 +369,7 @@ fn json_int(value : Json?) -> Int? {
 }
 
 ///|
-fn harmony_sdk_metadata_text(text : String) -> Result[(Int, String), String] {
+fn harmony_sdk_metadata_text(text : String) -> Result[(Int32, String), String] {
   let parsed = @json.parse(text) catch {
     _ => return Err("HarmonyOS SDK metadata is not valid JSON")
   }
@@ -407,7 +410,9 @@ fn harmony_sdk_metadata_text(text : String) -> Result[(Int, String), String] {
 }
 
 ///|
-fn harmony_sdk_metadata(root : String) -> Result[(Int, String, String), String] {
+fn harmony_sdk_metadata(
+  root : String,
+) -> Result[(Int32, String, String), String] {
   let candidates = [
     join_path(root, "sdk-pkg.json"),
     join_path(root, "default/sdk-pkg.json"),

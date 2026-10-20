@@ -9,7 +9,7 @@ fn skia_wrap_corpus_ends(
   text : String,
   font : @core.FontSpec,
   width : Double,
-) -> Array[Int] {
+) -> Array[Int32] {
   let paragraph = system.layout_paragraph(
     @core.TextLayoutInput::new(text~, font~, max_width=width),
   )
@@ -17,7 +17,7 @@ fn skia_wrap_corpus_ends(
 }
 
 ///|
-fn skia_wrap_corpus_describe(ends : Array[Int]) -> String {
+fn skia_wrap_corpus_describe(ends : Array[Int32]) -> String {
   let parts : Array[String] = []
   for end in ends {
     parts.push(end.to_string())

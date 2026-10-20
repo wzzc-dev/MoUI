@@ -22,7 +22,7 @@ fn build_native_draw_plan(
 ///|
 priv struct NativeDrawPlanRangeResult {
   plan : NativeDrawPlan
-  next_index : Int
+  next_index : Int32
 }
 
 ///|
@@ -30,7 +30,7 @@ fn build_native_draw_plan_range(
   cache : NativeFontCache,
   atlas : GlyphAtlas,
   commands : Array[@render_common.PlanOp],
-  start_index~ : Int,
+  start_index~ : Int32,
   stop_at_layer~ : Bool,
   stop_at_filter~ : Bool,
   initial_state~ : NativePaintState,

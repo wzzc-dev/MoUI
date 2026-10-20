@@ -99,7 +99,7 @@ pub fn Path::close(self : Path) -> Path {
 pub fn Path::add_poly(
   self : Path,
   points : Array[Point],
-  close? : Bool = false,
+  close~ : Bool = false,
 ) -> Path {
   if points.is_empty() {
     self
@@ -157,8 +157,8 @@ fn Path::append_path_verbs(
 pub fn Path::add_path(
   self : Path,
   path : Path,
-  matrix? : Matrix = Matrix::identity(),
-  mode? : AddPathMode = Append,
+  matrix~ : Matrix = Matrix::identity(),
+  mode~ : AddPathMode = Append,
 ) -> Path {
   self.append_path_verbs(path.transform(matrix), mode)
 }
@@ -168,7 +168,7 @@ pub fn Path::add_path_matrix(
   self : Path,
   path : Path,
   matrix : Matrix,
-  mode? : AddPathMode = Append,
+  mode~ : AddPathMode = Append,
 ) -> Path {
   self.add_path(path, matrix~, mode~)
 }
@@ -178,7 +178,7 @@ pub fn Path::add_path_offset(
   self : Path,
   path : Path,
   offset : Point,
-  mode? : AddPathMode = Append,
+  mode~ : AddPathMode = Append,
 ) -> Path {
   self.add_path(path, matrix=Matrix::translate(offset.x, offset.y), mode~)
 }
@@ -192,7 +192,7 @@ pub fn Path::with_offset(self : Path, offset : Point) -> Path {
 pub fn Path::add_rect(
   self : Path,
   rect : Rect,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Path {
   if direction is CW {
     self
@@ -215,7 +215,7 @@ pub fn Path::add_rect(
 pub fn Path::add_oval(
   self : Path,
   oval : Rect,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Path {
   let oval = oval.sorted()
   if oval.is_empty() {
@@ -253,7 +253,7 @@ pub fn Path::add_circle(
   self : Path,
   center : Point,
   radius : Scalar,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Path {
   if radius <= 0.0 {
     self
@@ -276,7 +276,7 @@ pub fn Path::add_round_rect(
   rect : Rect,
   rx : Scalar,
   ry : Scalar,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Path {
   let rect = rect.sorted()
   if rect.is_empty() {
@@ -347,7 +347,7 @@ fn Path::append_rrect_corner(
 pub fn Path::add_rrect(
   self : Path,
   rrect : RRect,
-  direction? : PathDirection = CW,
+  direction~ : PathDirection = CW,
 ) -> Path {
   if rrect.is_empty() {
     self

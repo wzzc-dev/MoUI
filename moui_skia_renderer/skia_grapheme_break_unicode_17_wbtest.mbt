@@ -4,9 +4,9 @@
 
 ///|
 fn assert_skia_unicode_17_grapheme_break_fixture_expected_floor(
-  index : Int,
-  expected : Array[Int],
-) -> Int {
+  index : Int32,
+  expected : Array[Int32],
+) -> Int32 {
   let mut floor = 0
   for boundary in expected {
     if boundary > index {
@@ -19,9 +19,9 @@ fn assert_skia_unicode_17_grapheme_break_fixture_expected_floor(
 
 ///|
 fn assert_skia_unicode_17_grapheme_break_fixture_expected_ceil(
-  index : Int,
-  expected : Array[Int],
-) -> Int {
+  index : Int32,
+  expected : Array[Int32],
+) -> Int32 {
   for boundary in expected {
     if boundary >= index {
       return boundary
@@ -35,9 +35,9 @@ fn assert_skia_unicode_17_grapheme_break_fixture_expected_ceil(
 
 ///|
 fn assert_skia_unicode_17_grapheme_break_fixture_expected_nearest(
-  index : Int,
-  expected : Array[Int],
-) -> Int {
+  index : Int32,
+  expected : Array[Int32],
+) -> Int32 {
   let floor = assert_skia_unicode_17_grapheme_break_fixture_expected_floor(
     index, expected,
   )
@@ -54,8 +54,8 @@ fn assert_skia_unicode_17_grapheme_break_fixture_expected_nearest(
 ///|
 fn assert_skia_unicode_17_grapheme_break_fixture_utf8_offset(
   text : String,
-  boundary : Int,
-) -> Int {
+  boundary : Int32,
+) -> Int32 {
   let chars = text.to_array()
   @utf8.encode(String::from_array(chars[:boundary])[:], bom=false).length()
 }
@@ -63,7 +63,7 @@ fn assert_skia_unicode_17_grapheme_break_fixture_utf8_offset(
 ///|
 fn assert_skia_unicode_17_grapheme_break_fixture(
   text : String,
-  expected : Array[Int],
+  expected : Array[Int32],
   label : String,
 ) -> Unit raise {
   let actual = [0]

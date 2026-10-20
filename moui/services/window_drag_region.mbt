@@ -13,7 +13,7 @@
 /// watches the revision performs at most one native call per real change.
 pub struct WindowDragRegionSource {
   priv mut region_value : @core.Rect?
-  priv mut revision_value : Int
+  priv mut revision_value : Int32
 }
 
 ///|
@@ -58,7 +58,7 @@ pub fn WindowDragRegionSource::region(
 ///|
 /// Monotonic counter that advances only when the declared band changes. Hosts
 /// poll this to skip redundant native work.
-pub fn WindowDragRegionSource::revision(self : WindowDragRegionSource) -> Int {
+pub fn WindowDragRegionSource::revision(self : WindowDragRegionSource) -> Int32 {
   self.revision_value
 }
 
@@ -76,9 +76,9 @@ pub fn WindowDragRegionSource::revision(self : WindowDragRegionSource) -> Int {
 /// not exist when the app first publishes.
 pub fn apply_window_drag_region(
   source : WindowDragRegionSource,
-  applied : Int?,
+  applied : Int32?,
   set_region : (@core.Rect?) -> Bool,
-) -> Int? {
+) -> Int32? {
   let current = source.revision()
   if applied == Some(current) {
     return applied

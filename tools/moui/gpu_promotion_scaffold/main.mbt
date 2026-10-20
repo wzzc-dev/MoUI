@@ -13,7 +13,7 @@ struct CliOptions {
   metrics_json : String
   runner : String
   artifact : String
-  duration_seconds : Int
+  duration_seconds : Int32
 }
 
 ///|
@@ -56,7 +56,7 @@ struct ShortSmokeObservation {
   metal_route : Bool
   surface_gpu : Bool
   gpu_smoke_passed : Bool
-  present_count : Int
+  present_count : Int32
   worker_owned : Bool
   short_path_ok : Bool
 }
@@ -272,7 +272,7 @@ fn contains_ci(text : String, needle : String) -> Bool {
 }
 
 ///|
-fn parse_int_or_none(text : StringView) -> Int? {
+fn parse_int_or_none(text : StringView) -> Int32? {
   try @string.parse_int(text) catch {
     _ => None
   } noraise {
@@ -281,7 +281,7 @@ fn parse_int_or_none(text : StringView) -> Int? {
 }
 
 ///|
-fn parse_present_count(text : String) -> Int {
+fn parse_present_count(text : String) -> Int32 {
   let marker = "present_count="
   let lower = text.to_lower()
   match lower.find(marker) {
@@ -495,7 +495,7 @@ fn build_pending_manifest(
   mode : String,
   runner : String,
   artifact : String,
-  duration_seconds_requested : Int,
+  duration_seconds_requested : Int32,
   observation : ShortSmokeObservation,
   metrics : MetricsOverlay,
 ) -> Json {
@@ -902,7 +902,7 @@ fn run_scaffold(options : CliOptions) -> Result[Unit, String] {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   match parse_cli(args) {
     Ok(options) if options.help => {
       println(usage())

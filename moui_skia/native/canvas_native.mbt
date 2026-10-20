@@ -4,7 +4,7 @@ extern "C" fn native_canvas_is_null(canvas : CanvasHandle) -> Bool = "moonbit_sk
 
 ///|
 #borrow(canvas)
-extern "C" fn native_canvas_save(canvas : CanvasHandle) -> Int = "moonbit_skia_canvas_save"
+extern "C" fn native_canvas_save(canvas : CanvasHandle) -> Int32 = "moonbit_skia_canvas_save"
 
 ///|
 #borrow(canvas, color_filter, image_filter, mask_filter)
@@ -15,19 +15,19 @@ extern "C" fn native_canvas_save_layer(
   top : Float,
   right : Float,
   bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
   color_filter : ColorFilterHandle,
   image_filter : ImageFilterHandle,
   mask_filter : MaskFilterHandle,
-) -> Int = "moonbit_skia_canvas_save_layer"
+) -> Int32 = "moonbit_skia_canvas_save_layer"
 
 ///|
 #borrow(canvas)
@@ -37,12 +37,12 @@ extern "C" fn native_canvas_restore(canvas : CanvasHandle) -> Unit = "moonbit_sk
 #borrow(canvas)
 extern "C" fn native_canvas_restore_to_count(
   canvas : CanvasHandle,
-  count : Int,
+  count : Int32,
 ) -> Unit = "moonbit_skia_canvas_restore_to_count"
 
 ///|
 #borrow(canvas)
-extern "C" fn native_canvas_save_count(canvas : CanvasHandle) -> Int = "moonbit_skia_canvas_save_count"
+extern "C" fn native_canvas_save_count(canvas : CanvasHandle) -> Int32 = "moonbit_skia_canvas_save_count"
 
 ///|
 #borrow(canvas)
@@ -106,7 +106,7 @@ extern "C" fn native_canvas_clip_rect(
   top : Float,
   right : Float,
   bottom : Float,
-  op : Int,
+  op : Int32,
   anti_alias : Bool,
 ) -> Unit = "moonbit_skia_canvas_clip_rect"
 
@@ -126,7 +126,7 @@ extern "C" fn native_canvas_clip_rrect(
   lower_right_height : Float,
   lower_left_width : Float,
   lower_left_height : Float,
-  op : Int,
+  op : Int32,
   anti_alias : Bool,
 ) -> Unit = "moonbit_skia_canvas_clip_rrect"
 
@@ -135,7 +135,7 @@ extern "C" fn native_canvas_clip_rrect(
 extern "C" fn native_canvas_clip_path(
   canvas : CanvasHandle,
   path : PathHandle,
-  op : Int,
+  op : Int32,
   anti_alias : Bool,
 ) -> Unit = "moonbit_skia_canvas_clip_path"
 
@@ -175,25 +175,25 @@ extern "C" fn native_canvas_device_clip_bounds(canvas : CanvasHandle) -> Bool = 
 #borrow(canvas)
 extern "C" fn native_canvas_device_clip_bounds_left(
   canvas : CanvasHandle,
-) -> Int = "moonbit_skia_canvas_device_clip_bounds_left"
+) -> Int32 = "moonbit_skia_canvas_device_clip_bounds_left"
 
 ///|
 #borrow(canvas)
 extern "C" fn native_canvas_device_clip_bounds_top(
   canvas : CanvasHandle,
-) -> Int = "moonbit_skia_canvas_device_clip_bounds_top"
+) -> Int32 = "moonbit_skia_canvas_device_clip_bounds_top"
 
 ///|
 #borrow(canvas)
 extern "C" fn native_canvas_device_clip_bounds_right(
   canvas : CanvasHandle,
-) -> Int = "moonbit_skia_canvas_device_clip_bounds_right"
+) -> Int32 = "moonbit_skia_canvas_device_clip_bounds_right"
 
 ///|
 #borrow(canvas)
 extern "C" fn native_canvas_device_clip_bounds_bottom(
   canvas : CanvasHandle,
-) -> Int = "moonbit_skia_canvas_device_clip_bounds_bottom"
+) -> Int32 = "moonbit_skia_canvas_device_clip_bounds_bottom"
 
 ///|
 #borrow(canvas)
@@ -216,8 +216,8 @@ extern "C" fn native_canvas_quick_reject_path(
 #borrow(canvas)
 extern "C" fn native_canvas_draw_color(
   canvas : CanvasHandle,
-  color_argb : UInt,
-  blend_mode : Int,
+  color_argb : UInt32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_color"
 
 ///|
@@ -231,15 +231,15 @@ extern "C" fn native_canvas_draw_picture(
 #borrow(canvas)
 extern "C" fn native_canvas_draw_paint(
   canvas : CanvasHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_paint"
 
 ///|
@@ -248,15 +248,15 @@ extern "C" fn native_canvas_draw_point(
   canvas : CanvasHandle,
   x : Float,
   y : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_point"
 
 ///|
@@ -267,15 +267,15 @@ extern "C" fn native_canvas_draw_line(
   y0 : Float,
   x1 : Float,
   y1 : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_line"
 
 ///|
@@ -286,15 +286,15 @@ extern "C" fn native_canvas_draw_rect(
   top : Float,
   right : Float,
   bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_rect"
 
 ///|
@@ -305,15 +305,15 @@ extern "C" fn native_canvas_draw_oval(
   top : Float,
   right : Float,
   bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_oval"
 
 ///|
@@ -323,15 +323,15 @@ extern "C" fn native_canvas_draw_circle(
   x : Float,
   y : Float,
   radius : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_circle"
 
 ///|
@@ -345,15 +345,15 @@ extern "C" fn native_canvas_draw_arc(
   start_angle : Float,
   sweep_angle : Float,
   use_center : Bool,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_arc"
 
 ///|
@@ -366,15 +366,15 @@ extern "C" fn native_canvas_draw_round_rect(
   bottom : Float,
   rx : Float,
   ry : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_round_rect"
 
 ///|
@@ -393,15 +393,15 @@ extern "C" fn native_canvas_draw_rrect(
   lower_right_height : Float,
   lower_left_width : Float,
   lower_left_height : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_rrect"
 
 ///|
@@ -432,15 +432,15 @@ extern "C" fn native_canvas_draw_drrect(
   inner_lower_right_height : Float,
   inner_lower_left_width : Float,
   inner_lower_left_height : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_drrect"
 
 ///|
@@ -448,15 +448,15 @@ extern "C" fn native_canvas_draw_drrect(
 extern "C" fn native_canvas_draw_path(
   canvas : CanvasHandle,
   path : PathHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_path"
 
 ///|
@@ -465,15 +465,15 @@ extern "C" fn native_canvas_draw_path_shader(
   canvas : CanvasHandle,
   path : PathHandle,
   shader : ShaderHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_path_shader"
 
 ///|
@@ -498,17 +498,17 @@ extern "C" fn native_canvas_draw_image_rect(
   dst_top : Float,
   dst_right : Float,
   dst_bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
-  sampling_filter : Int,
-  sampling_mipmap : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
+  sampling_filter : Int32,
+  sampling_mipmap : Int32,
   sampling_use_cubic : Bool,
   sampling_cubic_b : Float,
   sampling_cubic_c : Float,
@@ -519,15 +519,15 @@ extern "C" fn native_canvas_draw_image_rect(
 extern "C" fn native_canvas_draw_paint_shader(
   canvas : CanvasHandle,
   shader : ShaderHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_paint_shader"
 
 ///|
@@ -539,15 +539,15 @@ extern "C" fn native_canvas_draw_rect_shader(
   top : Float,
   right : Float,
   bottom : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_rect_shader"
 
 ///|
@@ -561,15 +561,15 @@ extern "C" fn native_canvas_draw_round_rect_shader(
   bottom : Float,
   rx : Float,
   ry : Float,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_round_rect_shader"
 
 ///|
@@ -580,15 +580,15 @@ extern "C" fn native_canvas_draw_text_utf8(
   x : Float,
   y : Float,
   font : FontHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Unit = "moonbit_skia_canvas_draw_text_utf8"
 
 ///|
@@ -597,19 +597,19 @@ extern "C" fn native_canvas_draw_glyphs(
   canvas : CanvasHandle,
   glyph_bytes : Bytes,
   position_bytes : Bytes,
-  glyph_count : Int,
+  glyph_count : Int32,
   origin_x : Float,
   origin_y : Float,
   font : FontHandle,
-  color_argb : UInt,
+  color_argb : UInt32,
   anti_alias : Bool,
   dither : Bool,
-  style : Int,
+  style : Int32,
   stroke_width : Float,
   stroke_miter : Float,
-  stroke_cap : Int,
-  stroke_join : Int,
-  blend_mode : Int,
+  stroke_cap : Int32,
+  stroke_join : Int32,
+  blend_mode : Int32,
 ) -> Bool = "moonbit_skia_canvas_draw_glyphs"
 
 ///|
@@ -619,19 +619,19 @@ pub fn Canvas::is_available(self : Canvas) -> Bool {
 }
 
 ///|
-pub fn Canvas::save(self : Canvas) -> Int {
+pub fn Canvas::save(self : Canvas) -> Int32 {
   native_canvas_save(self.handle)
 }
 
 ///|
 pub fn Canvas::save_layer(
   self : Canvas,
-  bounds? : @skia.Rect? = None,
-  paint? : @skia.Paint = @skia.Paint::new(),
-  color_filter? : ColorFilter? = None,
-  image_filter? : ImageFilter? = None,
-  mask_filter? : MaskFilter? = None,
-) -> Int {
+  bounds~ : @skia.Rect? = None,
+  paint~ : @skia.Paint = @skia.Paint::new(),
+  color_filter~ : ColorFilter? = None,
+  image_filter~ : ImageFilter? = None,
+  mask_filter~ : MaskFilter? = None,
+) -> Int32 {
   let color_filter_handle = match color_filter {
     Some(filter) => filter.handle
     None => native_color_filter_null()
@@ -700,12 +700,12 @@ pub fn Canvas::restore(self : Canvas) -> Unit {
 }
 
 ///|
-pub fn Canvas::restore_to_count(self : Canvas, count : Int) -> Unit {
+pub fn Canvas::restore_to_count(self : Canvas, count : Int32) -> Unit {
   native_canvas_restore_to_count(self.handle, count)
 }
 
 ///|
-pub fn Canvas::save_count(self : Canvas) -> Int {
+pub fn Canvas::save_count(self : Canvas) -> Int32 {
   native_canvas_save_count(self.handle)
 }
 
@@ -837,8 +837,8 @@ pub fn Canvas::discard(self : Canvas) -> Unit {
 pub fn Canvas::clip_rect(
   self : Canvas,
   rect : @skia.Rect,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   if rect.is_finite() {
     native_canvas_clip_rect(
@@ -857,8 +857,8 @@ pub fn Canvas::clip_rect(
 pub fn Canvas::clip_rrect(
   self : Canvas,
   rrect : @skia.RRect,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   if native_canvas_rrect_is_finite(rrect) {
     native_canvas_clip_rrect(
@@ -885,8 +885,8 @@ pub fn Canvas::clip_rrect(
 pub fn Canvas::clip_path(
   self : Canvas,
   path : Path,
-  op? : @skia.ClipOp = Intersect,
-  anti_alias? : Bool = false,
+  op~ : @skia.ClipOp = Intersect,
+  anti_alias~ : Bool = false,
 ) -> Unit {
   native_canvas_clip_path(
     self.handle,
@@ -949,7 +949,7 @@ pub fn Canvas::quick_reject_path(self : Canvas, path : Path) -> Bool {
 pub fn Canvas::draw_color(
   self : Canvas,
   color : @skia.Color,
-  blend_mode? : @skia.BlendMode = SrcOver,
+  blend_mode~ : @skia.BlendMode = SrcOver,
 ) -> Unit {
   native_canvas_draw_color(
     self.handle,
@@ -1040,7 +1040,7 @@ pub fn Canvas::draw_points(
   self : Canvas,
   points : Array[@skia.Point],
   paint : @skia.Paint,
-  mode? : @skia.PointMode = Points,
+  mode~ : @skia.PointMode = Points,
 ) -> Unit {
   match mode {
     Points =>
@@ -1360,7 +1360,7 @@ pub fn Canvas::draw_image_rect(
   src : @skia.Rect,
   dst : @skia.Rect,
   paint : @skia.Paint,
-  sampling? : @skia.SamplingOptions = @skia.SamplingOptions::new(),
+  sampling~ : @skia.SamplingOptions = @skia.SamplingOptions::new(),
 ) -> Unit {
   if src.is_finite() && dst.is_finite() {
     native_canvas_draw_image_rect(
@@ -1545,7 +1545,7 @@ pub fn Canvas::draw_glyphs_checked(
   positions : Array[@skia.Point],
   font : Font,
   paint : @skia.Paint,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Bool {
   if glyphs.is_empty() ||
     glyphs.length() != positions.length() ||
@@ -1583,7 +1583,7 @@ pub fn Canvas::draw_glyphs(
   positions : Array[@skia.Point],
   font : Font,
   paint : @skia.Paint,
-  origin? : @skia.Point = @skia.Point::zero(),
+  origin~ : @skia.Point = @skia.Point::zero(),
 ) -> Unit {
   ignore(self.draw_glyphs_checked(glyphs, positions, font, paint, origin~))
 }
@@ -2495,7 +2495,7 @@ fn Canvas::replay_frame_internal(
 pub fn Canvas::replay(
   self : Canvas,
   commands : @skia.RenderCommandList,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay_internal(commands, font, None)
 }
@@ -2505,7 +2505,7 @@ pub fn Canvas::replay(
 pub fn Canvas::replay_frame(
   self : Canvas,
   frame : @skia.RenderFrameDescriptor,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay_frame_internal(frame, font, None)
 }
@@ -2516,7 +2516,7 @@ pub fn Canvas::replay_with_resources(
   self : Canvas,
   commands : @skia.RenderCommandList,
   resources : NativeReplayResources,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay_internal(commands, font, Some(resources))
 }
@@ -2527,7 +2527,7 @@ pub fn Canvas::replay_frame_with_resources(
   self : Canvas,
   frame : @skia.RenderFrameDescriptor,
   resources : NativeReplayResources,
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay_frame_internal(frame, font, Some(resources))
 }
@@ -2538,7 +2538,7 @@ pub fn Canvas::replay_with_image_cache(
   self : Canvas,
   commands : @skia.RenderCommandList,
   image_cache : @skia.ResourceCache[@skia.RendererResourceKey, Image],
-  font? : Font? = None,
+  font~ : Font? = None,
 ) -> CanvasReplayStats {
   self.replay_with_resources(
     commands,

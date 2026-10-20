@@ -3,9 +3,9 @@ fn ElementNode::focused_text_input(
   self : ElementNode,
   target : ElementId,
   render : RenderNode,
-  text_system? : TextSystem = TextSystem::fallback(),
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
+  text_system~ : TextSystem = TextSystem::fallback(),
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
 ) -> TextInputState? {
   if self.id == target {
     view_text_input_state(

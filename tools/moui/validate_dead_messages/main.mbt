@@ -48,8 +48,8 @@ struct Waiver {
 
 ///|
 struct ScanResult {
-  enums : Int
-  variants : Int
+  enums : Int32
+  variants : Int32
   violations : Array[Violation]
   stale_waivers : Array[Violation]
 }
@@ -388,7 +388,7 @@ fn is_upper_ident(value : String) -> Bool {
 }
 
 ///|
-fn paren_delta(line : String) -> Int {
+fn paren_delta(line : String) -> Int32 {
   let mut delta = 0
   for ch in line {
     if ch == '(' {
@@ -454,7 +454,7 @@ fn has_construction_site(text : String, variant : String) -> Bool {
 ///|
 /// From `pos`, skip whitespace and an optional balanced `(...)` payload, then
 /// report whether `=>` follows. `Variant =>` and `Variant(a) =>` are arms.
-fn arm_arrow_follows(text : String, pos : Int) -> Bool {
+fn arm_arrow_follows(text : String, pos : Int32) -> Bool {
   let n = text.length()
   let mut i = pos
   while i < n && is_space_u16(text[i]) {
@@ -501,7 +501,7 @@ fn is_space_u16(code : UInt16) -> Bool {
 
 ///|
 /// True when the token immediately before `pos` is `is` or `|` (pattern use).
-fn preceded_by_is_or_pipe(text : String, pos : Int) -> Bool {
+fn preceded_by_is_or_pipe(text : String, pos : Int32) -> Bool {
   let mut i = pos
   while i > 0 && is_space_u16(text[i - 1]) {
     i -= 1
@@ -718,7 +718,7 @@ fn result_to_json(result : ScanResult) -> Json {
 }
 
 ///|
-fn run(args : Array[String]) -> Int {
+fn run(args : Array[String]) -> Int32 {
   let options = match parse_cli(args) {
     Ok(value) => value
     Err(message) => {

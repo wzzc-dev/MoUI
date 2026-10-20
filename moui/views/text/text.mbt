@@ -13,12 +13,12 @@
 /// overflowing its row.
 pub fn[Msg] text(
   text : String,
-  role? : @style.TextRole = Body,
+  role~ : @style.TextRole = Body,
   theme? : @core.Theme,
-  width? : Double = 160.0,
-  height? : Double = 32.0,
-  align? : @core.TextAlign = TextCenter,
-  wrap? : Bool = false,
+  width~ : Double = 160.0,
+  height~ : Double = 32.0,
+  align~ : @core.TextAlign = TextCenter,
+  wrap~ : Bool = false,
 ) -> @core.View[Msg] {
   let size = @core.Size::new(width~, height~)
   @core.View::from_node(Text::{ text, role, theme, size, align, wrap, })
@@ -223,13 +223,13 @@ impl @core.ViewNode for Text with fn semantics(self) {
 pub fn[Msg] text_field(
   value : String,
   on_input~ : (String) -> Msg,
-  on_submit? : Msg? = None,
-  placeholder? : String = "",
-  variant? : @style.TextFieldVariant = Filled,
+  on_submit~ : Msg? = None,
+  placeholder~ : String = "",
+  variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
   style? : @style.TextFieldStyle,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
+  width~ : Double = 240.0,
+  height~ : Double = 40.0,
 ) -> @core.View[Msg] {
   // Style is resolved ambient-ly inside the control (an explicit theme?
   // overrides ctx.environment.theme) so the field tracks dark-mode / a11y
@@ -250,13 +250,13 @@ pub fn[Msg] text_field(
 pub fn[Msg] text_area(
   value : String,
   on_input~ : (String) -> Msg,
-  placeholder? : String = "",
-  lines? : Int = 4,
-  variant? : @style.TextFieldVariant = Outline,
+  placeholder~ : String = "",
+  lines~ : Int32 = 4,
+  variant~ : @style.TextFieldVariant = Outline,
   theme? : @core.Theme,
-  width? : Double = 320.0,
-  line_height? : Double = 28.0,
-  on_submit? : Msg? = None,
+  width~ : Double = 320.0,
+  line_height~ : Double = 28.0,
+  on_submit~ : Msg? = None,
 ) -> @core.View[Msg] {
   text_area_control(
     value~,

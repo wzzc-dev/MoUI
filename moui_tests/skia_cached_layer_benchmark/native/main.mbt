@@ -4,13 +4,13 @@ extern "c" fn bench_now_ms() -> Double = "moui_skia_cached_layer_benchmark_now_m
 ///|
 struct BenchRunResult {
   label : String
-  frames : Int
+  frames : Int32
   elapsed_ms : Double
-  cache_hit_count : Int
-  cache_miss_count : Int
-  cache_update_count : Int
-  cache_evict_count : Int
-  present_count : Int
+  cache_hit_count : Int32
+  cache_miss_count : Int32
+  cache_update_count : Int32
+  cache_evict_count : Int32
+  present_count : Int32
 }
 
 ///|
@@ -20,7 +20,7 @@ fn[T] fail_bench(message : String) -> T {
 }
 
 ///|
-fn bench_parse_positive_int(value : String, fallback : Int) -> Int {
+fn bench_parse_positive_int(value : String, fallback : Int32) -> Int32 {
   let chars = value.trim().to_array()
   if chars.length() == 0 {
     return fallback
@@ -36,7 +36,7 @@ fn bench_parse_positive_int(value : String, fallback : Int) -> Int {
 }
 
 ///|
-fn bench_env_int(name : String, fallback : Int) -> Int {
+fn bench_env_int(name : String, fallback : Int32) -> Int32 {
   match @env.get_env_var(name) {
     Some(value) => bench_parse_positive_int(value, fallback)
     None => fallback
@@ -74,13 +74,13 @@ fn bench_color(
   r : Double,
   g : Double,
   b : Double,
-  a? : Double = 1.0,
+  a~ : Double = 1.0,
 ) -> @core.Color {
   @core.Color::rgba(r~, g~, b~, a~)
 }
 
 ///|
-fn bench_font(size : Double, weight? : Int = 400) -> @core.FontSpec {
+fn bench_font(size : Double, weight~ : Int32 = 400) -> @core.FontSpec {
   @core.FontSpec::new(size~, weight~)
 }
 
@@ -237,7 +237,7 @@ fn bench_append_static(
 }
 
 ///|
-fn bench_overlay_rect(frame_index : Int) -> @core.Rect {
+fn bench_overlay_rect(frame_index : Int32) -> @core.Rect {
   let x = 70.0 + (frame_index * 13 % 620).to_double()
   @core.Rect::new(x~, y=458.0, width=28.0, height=28.0)
 }
@@ -245,7 +245,7 @@ fn bench_overlay_rect(frame_index : Int) -> @core.Rect {
 ///|
 fn bench_append_overlay(
   commands : Array[@core.DrawCommand],
-  frame_index : Int,
+  frame_index : Int32,
 ) -> Unit {
   let rect = bench_overlay_rect(frame_index)
   commands.push(
@@ -264,7 +264,7 @@ fn bench_append_overlay(
 }
 
 ///|
-fn bench_overlay_damage(frame_index : Int) -> @core.DamageRegion {
+fn bench_overlay_damage(frame_index : Int32) -> @core.DamageRegion {
   @core.DamageRegion::from_rects(
     [bench_overlay_rect(frame_index).inflate(2.0)],
     bench_surface_rect(),
@@ -299,7 +299,7 @@ fn bench_cached_update_frame(
 fn bench_cached_hit_frame(
   spec : @core.RetainedLayerSpec,
   static_commands : Array[@core.DrawCommand],
-  frame_index : Int,
+  frame_index : Int32,
 ) -> @core.DrawFrame {
   let commands : Array[@core.DrawCommand] = [BeginRetainedLayer(spec)]
   bench_append_static(commands, static_commands)
@@ -311,7 +311,7 @@ fn bench_cached_hit_frame(
 ///|
 fn bench_full_repaint_frame(
   static_commands : Array[@core.DrawCommand],
-  frame_index : Int,
+  frame_index : Int32,
 ) -> @core.DrawFrame {
   let commands : Array[@core.DrawCommand] = []
   bench_append_static(commands, static_commands)
@@ -323,7 +323,7 @@ fn bench_full_repaint_frame(
 fn bench_cached_hit_frames(
   spec : @core.RetainedLayerSpec,
   static_commands : Array[@core.DrawCommand],
-  frames : Int,
+  frames : Int32,
 ) -> Array[@core.DrawFrame] {
   let result : Array[@core.DrawFrame] = []
   for index in 0..<frames {
@@ -335,7 +335,7 @@ fn bench_cached_hit_frames(
 ///|
 fn bench_full_repaint_frames(
   static_commands : Array[@core.DrawCommand],
-  frames : Int,
+  frames : Int32,
 ) -> Array[@core.DrawFrame] {
   let result : Array[@core.DrawFrame] = []
   for index in 0..<frames {

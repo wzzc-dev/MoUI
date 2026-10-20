@@ -48,9 +48,9 @@ fn xcode_version_string() -> String {
 ///|
 /// Parse a dotted numeric version into an array of integers. Trailing
 /// non-numeric parts are dropped. Empty array when parsing fails.
-fn parse_dotted_version(value : String) -> Array[Int] {
+fn parse_dotted_version(value : String) -> Array[Int32] {
   let parts = value.split(".").to_array()
-  let result : Array[Int] = []
+  let result : Array[Int32] = []
   for part in parts {
     let trimmed = part.trim()
     if trimmed == "" {

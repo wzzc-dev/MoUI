@@ -2,7 +2,7 @@
 pub struct Model {
   dark : Bool
   locale : String
-  hero_count : Int
+  hero_count : Int32
   page : WebsitePage
   selected_doc_slug : String
   catalog_state : WebsiteCatalogLoadState
@@ -19,7 +19,7 @@ pub struct Model {
   route_history : @views.RouteHistoryState
   pending_anchor : String?
   copied_text : String?
-  next_service_token : Int
+  next_service_token : Int32
 }
 
 ///|
@@ -55,8 +55,8 @@ pub enum Msg {
   ShowcaseGridScrolled(@geometry.Point)
   TutorialScrolled(@geometry.Point)
   HostRouteChanged(@services.RouteEvent)
-  HostCatalogCompleted(Int, @services.ServiceTaskResult[String])
-  HostDocsCompleted(Int, String, @services.ServiceTaskResult[String])
+  HostCatalogCompleted(Int32, @services.ServiceTaskResult[String])
+  HostDocsCompleted(Int32, String, @services.ServiceTaskResult[String])
   HostActionCompleted(@services.ServiceTaskResult[Unit])
 }
 
@@ -742,7 +742,7 @@ fn Model::program(self : Model) -> @moui.Program[Model, Msg] {
 fn Model::program_with_services(
   self : Model,
   services : @services.AppServices,
-  route_host? : WebsiteRouteHost? = None,
+  route_host~ : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new_with_environment(
     init=() => {
@@ -863,7 +863,7 @@ fn Model::request_selected_doc(
 ///|
 fn Model::apply_catalog_completion(
   self : Model,
-  token : Int,
+  token : Int32,
   result : @services.ServiceTaskResult[String],
 ) -> Model {
   if !self.catalog_completion_matches(token) {
@@ -893,7 +893,7 @@ fn Model::apply_catalog_completion(
 }
 
 ///|
-fn Model::catalog_completion_matches(self : Model, token : Int) -> Bool {
+fn Model::catalog_completion_matches(self : Model, token : Int32) -> Bool {
   match self.catalog_state {
     CatalogLoading(active_token) => active_token == token
     _ => false
@@ -903,7 +903,7 @@ fn Model::catalog_completion_matches(self : Model, token : Int) -> Bool {
 ///|
 fn Model::apply_docs_completion(
   self : Model,
-  token : Int,
+  token : Int32,
   path : String,
   result : @services.ServiceTaskResult[String],
 ) -> Model {
@@ -931,7 +931,7 @@ fn Model::apply_docs_completion(
 ///|
 fn Model::docs_completion_matches_current(
   self : Model,
-  token : Int,
+  token : Int32,
   path : String,
 ) -> Bool {
   match self.doc_state {
@@ -949,7 +949,7 @@ pub fn program() -> @moui.Program[Model, Msg] {
 ///|
 pub fn program_with_services(
   services : @services.AppServices,
-  route_host? : WebsiteRouteHost? = None,
+  route_host~ : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
   Model::new().program_with_services(services, route_host~)
 }
