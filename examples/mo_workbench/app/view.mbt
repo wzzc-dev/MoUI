@@ -1068,15 +1068,6 @@ fn appearance_label(appearance : AppearanceMode) -> String {
 }
 
 ///|
-fn next_thinking_choice(thinking : ThinkingChoice) -> ThinkingChoice {
-  match thinking {
-    Normal => High
-    High => Max
-    Max => Normal
-  }
-}
-
-///|
 fn task_filter_label(filter : TaskFilter) -> String {
   match filter {
     AllTasks => "All"

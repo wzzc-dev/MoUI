@@ -249,20 +249,6 @@ fn code_input_text_area_theme(theme : @moui.Theme) -> @moui.Theme {
 }
 
 ///|
-/// Compact model chip. Tapping toggles the inline model picker; the expanded
-/// panel is rendered by the caller (`code_input_card` / `code_composer`) so it
-/// can drop down over the surrounding surface.
-fn code_model_picker(
-  code : CodeWorkspace,
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[CodeMsg] {
-  code_compact_select_chip(code.current_model, theme, width).on_tap(
-    ToggleModelPicker,
-  )
-}
-
-///|
 fn code_agent_controls(
   code : CodeWorkspace,
   settings : SettingsWorkspace,
@@ -374,16 +360,6 @@ fn acp_config_value_picker(
     theme~,
     width~,
   )
-}
-
-///|
-fn code_model_picker_width(
-  code : CodeWorkspace,
-  max_width~ : Double = 320.0,
-) -> Double {
-  let text_width = code.current_model.to_array().length().to_double() * 7.2 +
-    24.0
-  text_width.max(74.0).min(max_width)
 }
 
 ///|
@@ -561,22 +537,6 @@ fn model_option_row(
     padding=8.0,
   )
   row.on_tap(ModelChanged(provider_id, model_id))
-}
-
-///|
-fn code_thinking_picker(
-  code : CodeWorkspace,
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[CodeMsg] {
-  let label = match code.current_thinking {
-    Normal => "Normal"
-    High => "High"
-    Max => "Max"
-  }
-  code_compact_select_chip(label, theme, width).on_tap(
-    ThinkingChanged(next_thinking_choice(code.current_thinking)),
-  )
 }
 
 ///|

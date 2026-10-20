@@ -174,7 +174,7 @@
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1521,
+      "maxLines": 1514,
       "reason": "Existing workbench integration test with declaration invalidation coverage. Raised 1520->1521: wbtest coverage growth."
     },
     {

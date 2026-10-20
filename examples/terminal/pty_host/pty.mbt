@@ -1,8 +1,7 @@
 ///|
 /// PTY 宿主:openpty + posix_spawn 派生真实终端会话,经 RawFd 异步读写。
 /// 仅支持 Unix(native)。
-#borrow(shell)
-#borrow(args)
+#borrow(shell, args)
 extern "C" fn pty_spawn(
   shell : Bytes,
   shell_len : Int32,

@@ -1124,13 +1124,6 @@ test "thinking changed updates current thinking" {
 }
 
 ///|
-test "compact picker cycles are stable" {
-  inspect(next_thinking_choice(Normal) == High, content="true")
-  inspect(next_thinking_choice(High) == Max, content="true")
-  inspect(next_thinking_choice(Max) == Normal, content="true")
-}
-
-///|
 test "progress notice does not add a message" {
   let model = test_model(script=_cmd => [])
   let (model, _effect) = model.update(
