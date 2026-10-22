@@ -81,11 +81,6 @@ pub fn AccessibilityContrast::not_equal(Self, Self) -> Bool
 pub fn AccessibilityContrast::to_json(Self) -> Json
 pub fn AccessibilityContrast::to_repr(Self) -> @debug.Repr
 
-pub(all) struct AccessibilityLabelModifier {
-  label : String
-}
-pub fn[Msg] AccessibilityLabelModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct ActionCommand {
   intent : CommandIntent
   shortcut : KeyboardShortcut?
@@ -111,11 +106,6 @@ pub fn ActionCommandMap::dispatch_intent(Self, CommandIntent) -> Bool
 pub fn ActionCommandMap::dispatch_shortcut(Self, KeyboardEvent) -> CommandIntent?
 pub fn ActionCommandMap::find_shortcut(Self, KeyboardEvent) -> ActionCommand?
 pub fn ActionCommandMap::new(bindings? : Array[CommandBinding]) -> Self
-
-pub(all) struct AlignModifier {
-  alignment : Alignment
-}
-pub fn[Msg] AlignModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct Alignment {
   x : Double
@@ -187,11 +177,6 @@ pub fn AppEvent::not_equal(Self, Self) -> Bool
 pub fn AppEvent::to_json(Self) -> Json
 pub fn AppEvent::to_repr(Self) -> @debug.Repr
 
-pub(all) struct AspectRatioModifier {
-  ratio : Double
-}
-pub fn[Msg] AspectRatioModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum Axis {
   Horizontal
   Vertical
@@ -200,11 +185,6 @@ pub fn Axis::equal(Self, Self) -> Bool
 pub fn Axis::not_equal(Self, Self) -> Bool
 pub fn Axis::to_json(Self) -> Json
 pub fn Axis::to_repr(Self) -> @debug.Repr
-
-pub(all) struct BackgroundModifier {
-  brush : Brush
-}
-pub fn[Msg] BackgroundModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) enum BlendMode {
   SourceOver
@@ -218,11 +198,6 @@ pub fn BlendMode::equal(Self, Self) -> Bool
 pub fn BlendMode::not_equal(Self, Self) -> Bool
 pub fn BlendMode::to_json(Self) -> Json
 pub fn BlendMode::to_repr(Self) -> @debug.Repr
-
-pub(all) struct BorderModifier {
-  style : BorderStyle
-}
-pub fn[Msg] BorderModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct BorderStyle {
   brush : Brush
@@ -252,19 +227,14 @@ pub fn Brush::to_repr(Self) -> @debug.Repr
 pub(all) struct ChildLayoutInfo {
   size : Size
   first_baseline : Double?
-  priority : Double
   alignment_guides : AlignmentGuideSet
   flex_weight : Double
 } derive(Eq, @debug.Debug)
 pub fn ChildLayoutInfo::baseline_or_estimate(Self) -> Double
 pub fn ChildLayoutInfo::equal(Self, Self) -> Bool
-pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, priority? : Double, flex_weight? : Double) -> Self
+pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, flex_weight? : Double) -> Self
 pub fn ChildLayoutInfo::not_equal(Self, Self) -> Bool
 pub fn ChildLayoutInfo::to_repr(Self) -> @debug.Repr
-
-pub(all) struct ClipModifier {
-}
-pub fn[Msg] ClipModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct Color {
   r : Double
@@ -420,11 +390,6 @@ pub fn[T, Msg] ControlledValue::changed(Self[T, Msg], T) -> Msg
 pub fn[T, Msg] ControlledValue::new(value~ : T, changed~ : (T) -> Msg) -> Self[T, Msg]
 pub fn[T, Msg] ControlledValue::value(Self[T, Msg]) -> T
 
-pub(all) struct CornerRadiusModifier {
-  radius : Double
-}
-pub fn[Msg] CornerRadiusModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum CrossAxisAlignment {
   CrossStart
   CrossCenter
@@ -435,11 +400,6 @@ pub fn CrossAxisAlignment::equal(Self, Self) -> Bool
 pub fn CrossAxisAlignment::not_equal(Self, Self) -> Bool
 pub fn CrossAxisAlignment::to_json(Self) -> Json
 pub fn CrossAxisAlignment::to_repr(Self) -> @debug.Repr
-
-pub(all) struct CrossAxisAlignmentModifier {
-  alignment : CrossAxisAlignment
-}
-pub fn[Msg] CrossAxisAlignmentModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
@@ -535,11 +495,6 @@ pub fn DeclarationKey::string(String) -> Self
 pub fn DeclarationKey::to_repr(Self) -> @debug.Repr
 pub fn DeclarationKey::uint(UInt32) -> Self
 pub fn DeclarationKey::uint64(UInt64) -> Self
-
-pub(all) struct DisabledModifier {
-  disabled : Bool
-}
-pub fn[Msg] DisabledModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
@@ -708,11 +663,6 @@ pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 pub fn Environment::with_theme_spec(Self, ThemeSpec) -> Self
 
-pub(all) struct EnvironmentModifier {
-  environment : Environment
-}
-pub fn[Msg] EnvironmentModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 type Feature[Model, Msg]
 pub fn[Model, Msg] Feature::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Feature::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
@@ -736,11 +686,6 @@ pub fn FilterEffect::equal(Self, Self) -> Bool
 pub fn FilterEffect::not_equal(Self, Self) -> Bool
 pub fn FilterEffect::to_json(Self) -> Json
 pub fn FilterEffect::to_repr(Self) -> @debug.Repr
-
-pub(all) struct FlexibleModifier {
-  weight : Double
-}
-pub fn[Msg] FlexibleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct FocusRequest {
   id : Int32
@@ -769,11 +714,6 @@ pub fn FocusScopeItem::equal(Self, Self) -> Bool
 pub fn FocusScopeItem::new(id~ : String, enabled? : Bool, focusable? : Bool) -> Self
 pub fn FocusScopeItem::not_equal(Self, Self) -> Bool
 
-pub(all) struct FocusTrapModifier {
-  trap : Bool
-}
-pub fn[Msg] FocusTrapModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum FocusTraversalDirection {
   Next
   Previous
@@ -782,11 +722,6 @@ pub fn FocusTraversalDirection::equal(Self, Self) -> Bool
 pub fn FocusTraversalDirection::not_equal(Self, Self) -> Bool
 pub fn FocusTraversalDirection::to_json(Self) -> Json
 pub fn FocusTraversalDirection::to_repr(Self) -> @debug.Repr
-
-pub(all) struct FocusableModifier {
-  focusable : Bool
-}
-pub fn[Msg] FocusableModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) enum FontFamily {
   Name(String)
@@ -823,11 +758,6 @@ pub fn FontFamilyStack::system_ui() -> Self
 pub fn FontFamilyStack::to_json(Self) -> Json
 pub fn FontFamilyStack::to_repr(Self) -> @debug.Repr
 pub fn FontFamilyStack::with_fallback(Self, FontFamily) -> Self
-
-pub(all) struct FontModifier {
-  font : FontSpec
-}
-pub fn[Msg] FontModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct FontSpec {
   families : FontFamilyStack
@@ -867,11 +797,6 @@ pub fn FontVariation::to_json(Self) -> Json
 pub fn FontVariation::to_repr(Self) -> @debug.Repr
 pub fn FontVariation::value(Self) -> Double
 
-pub(all) struct ForegroundModifier {
-  color : Color
-}
-pub fn[Msg] ForegroundModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct Frame {
   time_ms : Double
   delta_ms : Double
@@ -881,16 +806,6 @@ pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 pub fn Frame::not_equal(Self, Self) -> Bool
 pub fn Frame::to_json(Self) -> Json
 pub fn Frame::to_repr(Self) -> @debug.Repr
-
-pub(all) struct FrameModifier {
-  width : Double?
-  height : Double?
-  min_width : Double?
-  min_height : Double?
-  max_width : Double?
-  max_height : Double?
-}
-pub fn[Msg] FrameModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) enum ImageFit {
   Contain
@@ -943,24 +858,11 @@ pub fn InteractionState::not_equal(Self, Self) -> Bool
 pub fn InteractionState::to_json(Self) -> Json
 pub fn InteractionState::to_repr(Self) -> @debug.Repr
 
-pub(all) struct IntrinsicHeightModifier {
-}
-pub fn[Msg] IntrinsicHeightModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
-pub(all) struct IntrinsicWidthModifier {
-}
-pub fn[Msg] IntrinsicWidthModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 type Key derive(Eq)
 pub fn Key::equal(Self, Self) -> Bool
 pub fn Key::new(String) -> Self
 pub fn Key::not_equal(Self, Self) -> Bool
 pub fn Key::value(Self) -> String
-
-pub(all) struct KeyModifier {
-  key : Key
-}
-pub fn[Msg] KeyModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct KeyModifiers {
   shift : Bool
@@ -1006,11 +908,6 @@ pub fn KeyboardShortcut::not_equal(Self, Self) -> Bool
 pub fn KeyboardShortcut::to_json(Self) -> Json
 pub fn KeyboardShortcut::to_repr(Self) -> @debug.Repr
 
-pub(all) struct KeyboardShortcutModifier {
-  shortcut : KeyboardShortcut
-}
-pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum LayerMask {
   NoMask
   RectMask(Rect)
@@ -1041,11 +938,6 @@ pub fn LayoutDirection::equal(Self, Self) -> Bool
 pub fn LayoutDirection::not_equal(Self, Self) -> Bool
 pub fn LayoutDirection::to_json(Self) -> Json
 pub fn LayoutDirection::to_repr(Self) -> @debug.Repr
-
-pub(all) struct LayoutPriorityModifier {
-  priority : Double
-}
-pub fn[Msg] LayoutPriorityModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct LayoutResult {
   frame : Rect
@@ -1081,11 +973,6 @@ pub fn MainAxisAlignment::not_equal(Self, Self) -> Bool
 pub fn MainAxisAlignment::to_json(Self) -> Json
 pub fn MainAxisAlignment::to_repr(Self) -> @debug.Repr
 
-pub(all) struct MainAxisAlignmentModifier {
-  alignment : MainAxisAlignment
-}
-pub fn[Msg] MainAxisAlignmentModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct MotionScale {
   fast_ms : Double
   normal_ms : Double
@@ -1098,47 +985,6 @@ pub fn MotionScale::not_equal(Self, Self) -> Bool
 pub fn MotionScale::to_json(Self) -> Json
 pub fn MotionScale::to_repr(Self) -> @debug.Repr
 
-pub(all) struct OffsetModifier {
-  dx : Double
-  dy : Double
-}
-pub fn[Msg] OffsetModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
-pub(all) struct OnDoubleTapModifier[Msg] {
-  message : Msg
-}
-pub fn[Msg] OnDoubleTapModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OnDragModifier[Msg] {
-  handler : (DragGestureEvent) -> Msg
-}
-pub fn[Msg] OnDragModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OnDragWithFrameModifier[Msg] {
-  handler : (DragGestureEvent, Rect) -> Msg
-}
-pub fn[Msg] OnDragWithFrameModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OnFileDropModifier[Msg] {
-  handler : (Array[String], Point) -> Msg
-}
-pub fn[Msg] OnFileDropModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OnLongPressModifier[Msg] {
-  message : Msg
-}
-pub fn[Msg] OnLongPressModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OnTapModifier[Msg] {
-  message : Msg
-}
-pub fn[Msg] OnTapModifier::to_any_modifier(Self[Msg]) -> AnyModifier[Msg]
-
-pub(all) struct OpacityModifier {
-  opacity : Double
-}
-pub fn[Msg] OpacityModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct OverlayPlacementContext {
   viewport : Rect
   host_frame : Rect
@@ -1146,11 +992,6 @@ pub(all) struct OverlayPlacementContext {
   anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
 }
-
-pub(all) struct PaddingModifier {
-  insets : Insets
-}
-pub fn[Msg] PaddingModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct PathSpec {
   verbs : Array[PathVerb]
@@ -1341,10 +1182,6 @@ pub fn RedrawReason::not_equal(Self, Self) -> Bool
 pub fn RedrawReason::to_json(Self) -> Json
 pub fn RedrawReason::to_repr(Self) -> @debug.Repr
 
-pub(all) struct RepaintBoundaryModifier {
-}
-pub fn[Msg] RepaintBoundaryModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
@@ -1366,12 +1203,6 @@ pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
 pub fn RoundedRect::not_equal(Self, Self) -> Bool
 pub fn RoundedRect::to_json(Self) -> Json
 pub fn RoundedRect::to_repr(Self) -> @debug.Repr
-
-pub(all) struct ScaleModifier {
-  sx : Double
-  sy : Double
-}
-pub fn[Msg] ScaleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub struct ScopedFeature[Parent, Child, ChildMsg, ParentMsg] {
   // private fields
@@ -1422,11 +1253,6 @@ pub fn SemanticId::to_repr(Self) -> @debug.Repr
 pub fn SemanticId::value(Self) -> String
 pub impl ToJson for SemanticId
 
-pub(all) struct SemanticIdModifier {
-  semantic_id : SemanticId
-}
-pub fn[Msg] SemanticIdModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum SemanticsAction {
   Activate
   Focus
@@ -1470,11 +1296,6 @@ pub fn SemanticsActionKind::not_equal(Self, Self) -> Bool
 pub fn SemanticsActionKind::to_json(Self) -> Json
 pub fn SemanticsActionKind::to_repr(Self) -> @debug.Repr
 
-pub(all) struct SemanticsCheckedModifier {
-  checked : SemanticsCheckedState
-}
-pub fn[Msg] SemanticsCheckedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum SemanticsCheckedState {
   Unchecked
   Checked
@@ -1512,21 +1333,6 @@ pub fn SemanticsComposition::not_equal(Self, Self) -> Bool
 pub fn SemanticsComposition::to_json(Self) -> Json
 pub fn SemanticsComposition::to_repr(Self) -> @debug.Repr
 
-pub(all) struct SemanticsCompositionModifier {
-  composition : SemanticsComposition
-}
-pub fn[Msg] SemanticsCompositionModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
-pub(all) struct SemanticsDescriptionModifier {
-  description : String
-}
-pub fn[Msg] SemanticsDescriptionModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
-pub(all) struct SemanticsExpandedModifier {
-  expanded : Bool
-}
-pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub struct SemanticsFramePayload {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -1560,16 +1366,6 @@ pub fn SemanticsGeneration::to_wire(Self) -> String
 pub fn SemanticsGeneration::value(Self) -> UInt64
 pub impl ToJson for SemanticsGeneration
 
-pub(all) struct SemanticsInvalidModifier {
-  invalid : Bool
-}
-pub fn[Msg] SemanticsInvalidModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
-pub(all) struct SemanticsLevelModifier {
-  level : Int32
-}
-pub fn[Msg] SemanticsLevelModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum SemanticsLive {
   Off
   Polite
@@ -1579,11 +1375,6 @@ pub fn SemanticsLive::equal(Self, Self) -> Bool
 pub fn SemanticsLive::not_equal(Self, Self) -> Bool
 pub fn SemanticsLive::to_json(Self) -> Json
 pub fn SemanticsLive::to_repr(Self) -> @debug.Repr
-
-pub(all) struct SemanticsMetadataModifier {
-  info : ViewSemanticsInfo
-}
-pub fn[Msg] SemanticsMetadataModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct SemanticsNode {
   node_id : SemanticsNodeId
@@ -1655,11 +1446,6 @@ pub fn SemanticsPathSegment::not_equal(Self, Self) -> Bool
 pub fn SemanticsPathSegment::to_json(Self) -> Json
 pub fn SemanticsPathSegment::to_repr(Self) -> @debug.Repr
 
-pub(all) struct SemanticsPressedModifier {
-  pressed : Bool
-}
-pub fn[Msg] SemanticsPressedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum SemanticsRelationKind {
   LabelledBy
   DescribedBy
@@ -1697,11 +1483,6 @@ pub fn SemanticsRelationsDeclaration::new(labelled_by? : Array[SemanticId], desc
 pub fn SemanticsRelationsDeclaration::not_equal(Self, Self) -> Bool
 pub fn SemanticsRelationsDeclaration::to_json(Self) -> Json
 pub fn SemanticsRelationsDeclaration::to_repr(Self) -> @debug.Repr
-
-pub(all) struct SemanticsRequiredModifier {
-  required : Bool
-}
-pub fn[Msg] SemanticsRequiredModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) enum SemanticsRole {
   None
@@ -1747,11 +1528,6 @@ pub fn SemanticsRole::not_equal(Self, Self) -> Bool
 pub fn SemanticsRole::to_json(Self) -> Json
 pub fn SemanticsRole::to_repr(Self) -> @debug.Repr
 
-pub(all) struct SemanticsRoleModifier {
-  role : SemanticsRole
-}
-pub fn[Msg] SemanticsRoleModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum SemanticsScrollDirection {
   Forward
   Backward
@@ -1764,11 +1540,6 @@ pub fn SemanticsScrollDirection::equal(Self, Self) -> Bool
 pub fn SemanticsScrollDirection::not_equal(Self, Self) -> Bool
 pub fn SemanticsScrollDirection::to_json(Self) -> Json
 pub fn SemanticsScrollDirection::to_repr(Self) -> @debug.Repr
-
-pub(all) struct SemanticsSelectedModifier {
-  selected : Bool
-}
-pub fn[Msg] SemanticsSelectedModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct SemanticsState {
   focused : Bool
@@ -1812,11 +1583,6 @@ pub fn SemanticsTextValue::not_equal(Self, Self) -> Bool
 pub fn SemanticsTextValue::to_json(Self) -> Json
 pub fn SemanticsTextValue::to_repr(Self) -> @debug.Repr
 
-pub(all) struct SemanticsUrlModifier {
-  url : String
-}
-pub fn[Msg] SemanticsUrlModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) struct ShaderEffectSpec {
   name : String
   frame : Rect
@@ -1828,11 +1594,6 @@ pub fn ShaderEffectSpec::new(name~ : String, frame~ : Rect, uniforms? : Array[Do
 pub fn ShaderEffectSpec::not_equal(Self, Self) -> Bool
 pub fn ShaderEffectSpec::to_json(Self) -> Json
 pub fn ShaderEffectSpec::to_repr(Self) -> @debug.Repr
-
-pub(all) struct ShadowModifier {
-  style : ShadowStyle
-}
-pub fn[Msg] ShadowModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct ShadowScale {
   sm : ShadowStyle
@@ -1881,11 +1642,6 @@ pub fn Size::new(width~ : Double, height~ : Double) -> Self
 pub fn Size::not_equal(Self, Self) -> Bool
 pub fn Size::to_json(Self) -> Json
 pub fn Size::to_repr(Self) -> @debug.Repr
-
-pub(all) struct SpacingModifier {
-  spacing : Double
-}
-pub fn[Msg] SpacingModifier::to_any_modifier(Self) -> AnyModifier[Msg]
 
 pub(all) struct SpacingScale {
   xs : Double
@@ -2232,11 +1988,6 @@ pub fn ThemeDensity::not_equal(Self, Self) -> Bool
 pub fn ThemeDensity::to_json(Self) -> Json
 pub fn ThemeDensity::to_repr(Self) -> @debug.Repr
 
-pub(all) struct ThemeModifier {
-  theme : Theme
-}
-pub fn[Msg] ThemeModifier::to_any_modifier(Self) -> AnyModifier[Msg]
-
 pub(all) enum ThemePreset {
   Minimal
   Material
@@ -2368,7 +2119,6 @@ pub fn[Msg] View::child_style(Self[Msg], ViewStyle) -> ViewStyle
 pub fn[Msg] View::children(Self[Msg]) -> Array[Self[Msg]]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
-pub fn[Msg] View::cross_axis_alignment(Self[Msg], CrossAxisAlignment) -> Self[Msg]
 pub fn[Msg] View::declaration(Self[Msg]) -> ViewDeclaration
 pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
 pub fn[Msg] View::dispatch_semantics_action(Self[Msg], ViewSemanticsActionContext, SemanticsAction) -> ViewSemanticsActionResult[Msg]
@@ -2385,14 +2135,10 @@ pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width?
 pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]]) -> Self[Msg]
 pub fn[Msg] View::hide_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
-pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::keyboard_policy(Self[Msg]) -> KeyboardPolicy
 pub fn[Msg] View::keyboard_shortcut(Self[Msg], KeyboardShortcut) -> Self[Msg]
 pub fn[Msg] View::layout(Self[Msg], ViewLayoutContext) -> ViewLayoutResult
-pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
-pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::merge_descendant_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
@@ -2437,7 +2183,6 @@ pub fn[Msg] View::semantics_state(Self[Msg], read_only? : Bool, busy? : Bool, mu
 pub fn[Msg] View::semantics_text_metadata(Self[Msg], SemanticsTextValue) -> Self[Msg]
 pub fn[Msg] View::semantics_url(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
-pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::text_command(Self[Msg], ViewEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
 pub fn[Msg] View::text_command_result(Self[Msg], ViewEventContext, CommandIntent, paste_text? : String?) -> ViewTextCommandResult[Msg]
 pub fn[Msg] View::text_input_state(Self[Msg], ViewPaintContext) -> TextInputState?

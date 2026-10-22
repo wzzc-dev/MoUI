@@ -198,13 +198,11 @@ fn view(draft : String) -> @moui.View[Msg] {
 | Constructor | Source | Theme | Semantics | Tests | 示例覆盖 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `expanded` / `flexible` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Flex child modifier。 |
-| `layout_priority` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`、`core/advanced_layout_test.mbt` | Showcase | 为 custom layout delegate 提供 priority metadata。 |
 | `wrap` / `flow` / `responsive_grid` / `baseline_form_rows` | `views/layout_flow.mbt`、`views/views.mbt`、`views/views.mbt` | N/A | Group | `views/tests/smoke`、Showcase 测试 | Showcase Layout | 用 `custom_children_layout` 构建 responsive wrapping、adaptive grid column 和 baseline-aligned form row；无需 renderer 变化。 |
 | `align` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`、`core/advanced_layout_wbtest.mbt` | Showcase、Dialog host、Tooltip | 使用请求的 alignment 将 child 放入 parent frame。 |
 | `aspect_ratio` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Ratio constraint wrapper。 |
-| `intrinsic_width` / `intrinsic_height` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Intrinsic measurement wrapper。 |
 | `custom_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke` | Showcase Advanced Rendering | 构建 custom `View[Msg]`；Showcase 用它发出 layer/blend、filter、shader、path、transform 和 opacity draw command。 |
-| `custom_children_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke`、`core/advanced_layout_wbtest.mbt` | Showcase | 构建 custom child-layout `View[Msg]`，带 child size、baseline、priority 和 placement callback。 |
+| `custom_children_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke`、`core/advanced_layout_wbtest.mbt` | Showcase | 构建 custom child-layout `View[Msg]`，带 child size、baseline 和 placement callback。 |
 | `component` | `views/views.mbt` | 基于 ComponentContext | Built child semantics | `views/tests/smoke` | 通过 app component 的示例 | 包装 `@core.Component::new`。 |
 
 ## 维护清单

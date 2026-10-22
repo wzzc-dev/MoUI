@@ -334,13 +334,11 @@ consume those neutral style contracts through optional `style`,
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `expanded` / `flexible` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Flex child modifiers. |
-| `layout_priority` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`, `core/advanced_layout_test.mbt` | Showcase | Supplies priority metadata to custom layout delegates. |
 | `wrap` / `flow` / `responsive_grid` / `baseline_form_rows` | `views/layout_flow.mbt`, `views/views.mbt`, `views/views.mbt` | N/A | Group | `views/tests/smoke`, Showcase tests | Showcase Layout | Responsive wrapping, adaptive grid columns, and baseline-aligned form rows built with `custom_children_layout`; no renderer changes. |
 | `align` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke`, `core/advanced_layout_wbtest.mbt` | Showcase, Dialog host, Tooltip | Places the child within its parent frame using the requested alignment. |
 | `aspect_ratio` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Ratio constraint wrapper. |
-| `intrinsic_width` / `intrinsic_height` | `views/views.mbt` | N/A | Child semantics | `views/tests/smoke` | Showcase | Intrinsic measurement wrappers. |
 | `custom_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke` | Showcase Advanced Rendering | Builds a custom `View[Msg]`; Showcase uses it to emit layer/blend, filter, shader, path, transform, and opacity draw commands. |
-| `custom_children_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke`, `core/advanced_layout_wbtest.mbt` | Showcase | Builds a custom child-layout `View[Msg]` with child size, baseline, priority, and placement callbacks. |
+| `custom_children_layout` | `views/views.mbt` | Caller-defined | Caller-defined | `views/tests/smoke`, `core/advanced_layout_wbtest.mbt` | Showcase | Builds a custom child-layout `View[Msg]` with child size, baseline, and placement callbacks. |
 | `component` | `views/views.mbt` | ComponentContext-based | Built child semantics | `views/tests/smoke` | Examples via app components | Wraps `@core.Component::new`. |
 
 ## Maintenance Checklist

@@ -347,9 +347,15 @@ fn package_budgets() -> Array[PackageBudget] {
       // the runtime mid-paint. It is a carrier only — quantization, clipping and
       // overlap repair stay in the consuming renderer — and pixel hosts never
       // build it. +6 lines, +11 pub.
-      max_lines: 2766,
-      max_pub_lines: 1165,
-      max_pub_all_lines: 190,
+      // Modifier descriptor structs are package-private: -248 lines, -49 pub,
+      // -49 pub(all).
+      // Inert modifier APIs removed: `spacing`, `layout_priority`,
+      // `main_axis_alignment`, `cross_axis_alignment`, `intrinsic_width`,
+      // `intrinsic_height` (-7 lines, -6 pub). `ChildLayoutInfo.priority` was
+      // never populated and is removed with them.
+      max_lines: 2511,
+      max_pub_lines: 1110,
+      max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
@@ -418,8 +424,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // one optional parameter each (`wrap`, `theme`). flow is used by the
       // framework's own data_filter_bar / data_selection_toolbar; wrap and
       // the extended text are the app-facing layout vocabulary.
-      max_lines: 694,
-      max_pub_lines: 331,
+      // Inert `layout_priority` / `intrinsic_width` / `intrinsic_height`
+      // helpers removed with their core modifiers (-6 lines, -3 pub).
+      max_lines: 688,
+      max_pub_lines: 328,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

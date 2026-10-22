@@ -15,7 +15,7 @@
 ## 创建 Custom Layout
 
 1. 第一版使用 `@views.custom_children_layout`。
-2. 阅读 `CustomLayoutContext.child_sizes`、`child_baselines`、`child_alignment_guides`、`child_priorities`、`safe_area`、`viewport` 和 `layout_direction`。
+2. 阅读 `CustomLayoutContext.children`（child size、baseline、flex weight、alignment guide）、`safe_area`、`viewport` 和 `layout_direction`。
 3. 在 `CustomLayoutContext.cache` 中存储可复用 measurement。
 4. 使用 `CustomPlacementContext::mirror_x` 进行 RTL-aware x 放置。
 5. 在 `moui/views`（`tests/smoke` 或聚焦 `*_test.mbt`）中添加测试；如果 runtime contract 变化，则添加 core white-box 测试。

@@ -15,12 +15,12 @@ fn semantics_info_declaration(info : ViewSemanticsInfo) -> ViewDeclaration {
 }
 
 ///|
-pub(all) struct AccessibilityLabelModifier {
+priv struct AccessibilityLabelModifier {
   label : String
 }
 
 ///|
-pub fn[Msg] AccessibilityLabelModifier::to_any_modifier(
+fn[Msg] AccessibilityLabelModifier::to_any_modifier(
   self : AccessibilityLabelModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(label=self.label)
@@ -33,12 +33,12 @@ pub fn[Msg] AccessibilityLabelModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticIdModifier {
+priv struct SemanticIdModifier {
   semantic_id : SemanticId
 }
 
 ///|
-pub fn[Msg] SemanticIdModifier::to_any_modifier(
+fn[Msg] SemanticIdModifier::to_any_modifier(
   self : SemanticIdModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(semantic_id=self.semantic_id)
@@ -51,12 +51,12 @@ pub fn[Msg] SemanticIdModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsCompositionModifier {
+priv struct SemanticsCompositionModifier {
   composition : SemanticsComposition
 }
 
 ///|
-pub fn[Msg] SemanticsCompositionModifier::to_any_modifier(
+fn[Msg] SemanticsCompositionModifier::to_any_modifier(
   self : SemanticsCompositionModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(composition=self.composition)
@@ -69,12 +69,12 @@ pub fn[Msg] SemanticsCompositionModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsRoleModifier {
+priv struct SemanticsRoleModifier {
   role : SemanticsRole
 }
 
 ///|
-pub fn[Msg] SemanticsRoleModifier::to_any_modifier(
+fn[Msg] SemanticsRoleModifier::to_any_modifier(
   self : SemanticsRoleModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(role=self.role)
@@ -87,12 +87,12 @@ pub fn[Msg] SemanticsRoleModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsLevelModifier {
+priv struct SemanticsLevelModifier {
   level : Int32
 }
 
 ///|
-pub fn[Msg] SemanticsLevelModifier::to_any_modifier(
+fn[Msg] SemanticsLevelModifier::to_any_modifier(
   self : SemanticsLevelModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(level=self.level)
@@ -105,12 +105,12 @@ pub fn[Msg] SemanticsLevelModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsUrlModifier {
+priv struct SemanticsUrlModifier {
   url : String
 }
 
 ///|
-pub fn[Msg] SemanticsUrlModifier::to_any_modifier(
+fn[Msg] SemanticsUrlModifier::to_any_modifier(
   self : SemanticsUrlModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(url=self.url)
@@ -123,12 +123,12 @@ pub fn[Msg] SemanticsUrlModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsSelectedModifier {
+priv struct SemanticsSelectedModifier {
   selected : Bool
 }
 
 ///|
-pub fn[Msg] SemanticsSelectedModifier::to_any_modifier(
+fn[Msg] SemanticsSelectedModifier::to_any_modifier(
   self : SemanticsSelectedModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(selected=self.selected)
@@ -141,12 +141,12 @@ pub fn[Msg] SemanticsSelectedModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsPressedModifier {
+priv struct SemanticsPressedModifier {
   pressed : Bool
 }
 
 ///|
-pub fn[Msg] SemanticsPressedModifier::to_any_modifier(
+fn[Msg] SemanticsPressedModifier::to_any_modifier(
   self : SemanticsPressedModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(pressed=self.pressed)
@@ -159,12 +159,12 @@ pub fn[Msg] SemanticsPressedModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsCheckedModifier {
+priv struct SemanticsCheckedModifier {
   checked : SemanticsCheckedState
 }
 
 ///|
-pub fn[Msg] SemanticsCheckedModifier::to_any_modifier(
+fn[Msg] SemanticsCheckedModifier::to_any_modifier(
   self : SemanticsCheckedModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(checked=self.checked)
@@ -177,12 +177,12 @@ pub fn[Msg] SemanticsCheckedModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsExpandedModifier {
+priv struct SemanticsExpandedModifier {
   expanded : Bool
 }
 
 ///|
-pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(
+fn[Msg] SemanticsExpandedModifier::to_any_modifier(
   self : SemanticsExpandedModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(expanded=self.expanded)
@@ -195,12 +195,12 @@ pub fn[Msg] SemanticsExpandedModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsInvalidModifier {
+priv struct SemanticsInvalidModifier {
   invalid : Bool
 }
 
 ///|
-pub fn[Msg] SemanticsInvalidModifier::to_any_modifier(
+fn[Msg] SemanticsInvalidModifier::to_any_modifier(
   self : SemanticsInvalidModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(invalid=self.invalid)
@@ -213,12 +213,12 @@ pub fn[Msg] SemanticsInvalidModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsRequiredModifier {
+priv struct SemanticsRequiredModifier {
   required : Bool
 }
 
 ///|
-pub fn[Msg] SemanticsRequiredModifier::to_any_modifier(
+fn[Msg] SemanticsRequiredModifier::to_any_modifier(
   self : SemanticsRequiredModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(required=self.required)
@@ -231,12 +231,12 @@ pub fn[Msg] SemanticsRequiredModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SemanticsDescriptionModifier {
+priv struct SemanticsDescriptionModifier {
   description : String
 }
 
 ///|
-pub fn[Msg] SemanticsDescriptionModifier::to_any_modifier(
+fn[Msg] SemanticsDescriptionModifier::to_any_modifier(
   self : SemanticsDescriptionModifier,
 ) -> AnyModifier[Msg] {
   let info = ViewSemanticsInfo::new(description=self.description)
@@ -250,7 +250,7 @@ pub fn[Msg] SemanticsDescriptionModifier::to_any_modifier(
 
 ///|
 /// Grouped advanced semantics metadata with an exact cache key.
-pub(all) struct SemanticsMetadataModifier {
+priv struct SemanticsMetadataModifier {
   info : ViewSemanticsInfo
 }
 
@@ -374,7 +374,7 @@ pub fn ViewSemanticsInfo::overlaying(
 }
 
 ///|
-pub fn[Msg] SemanticsMetadataModifier::to_any_modifier(
+fn[Msg] SemanticsMetadataModifier::to_any_modifier(
   self : SemanticsMetadataModifier,
 ) -> AnyModifier[Msg] {
   let info = self.info

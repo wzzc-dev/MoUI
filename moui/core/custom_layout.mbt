@@ -2,10 +2,9 @@
 /// Layout-side metadata for a single child of a custom children layout.
 ///
 /// Replaces the previous parallel arrays (`child_sizes`, `child_baselines`,
-/// `child_priorities`, `child_alignment_guides`) with a single, typed record
-/// per child. The runtime fills this from the measured/placed child element,
-/// so custom layouts no longer have to rely on guessed baseline values or
-/// hard-coded priorities.
+/// `child_alignment_guides`) with a single, typed record per child. The
+/// runtime fills this from the measured/placed child element, so custom
+/// layouts no longer have to rely on guessed baseline values.
 pub(all) struct ChildLayoutInfo {
   /// Measured size of the child after its own layout pass.
   size : Size
@@ -14,9 +13,6 @@ pub(all) struct ChildLayoutInfo {
   /// reasonable default (e.g. `size.height * 0.8`) rather than treating the
   /// child as baseline-less.
   first_baseline : Double?
-  /// Layout priority declared by the child (higher wins space disputes).
-  /// Children that do not declare a priority report `0.0`.
-  priority : Double
   /// Alignment guides derived from the child size and baseline. Computed by
   /// the runtime so authors do not have to reconstruct them per child.
   alignment_guides : AlignmentGuideSet
@@ -37,13 +33,11 @@ pub extend ChildLayoutInfo with Eq::{not_equal, equal}
 pub fn ChildLayoutInfo::new(
   size~ : Size,
   first_baseline~ : Double? = None,
-  priority~ : Double = 0.0,
   flex_weight~ : Double = 0.0,
 ) -> ChildLayoutInfo {
   {
     size,
     first_baseline,
-    priority,
     flex_weight,
     alignment_guides: AlignmentGuideSet::from_size(size, first_baseline~),
   }

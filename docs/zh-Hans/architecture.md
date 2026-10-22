@@ -317,7 +317,7 @@ Constraints down -> Size up -> parent places children
 `Constraints::tighten` 和 `Constraints::unbounded` 可在 `core` 中使用。
 `Padding` 会 deflate child constraints 并 inflate 自身 measured size。`Frame` 会 tighten child constraints。`Flex`、`Grid`、`List`、`Stack`、`Scroll` 和有序 layout modifiers 在 `moui/views` 中实现为具体 custom view behavior；runtime 测量 children，将 child sizes 传入 owning virtual node，并把返回的 child frames 存入 `PlacedNode`。Paint 会复用这些 placed child frames，而不会再次运行 layout。
 
-高级 layout authors 可以使用 `@views.custom_children_layout` 定义 child layout delegate，同时仍返回 `View[Msg]`。该 delegate 接收 measured child sizes，返回自身 size，并用显式 frames 放置 children。它的 context 也暴露 child baselines 和 layout priorities，使 custom layouts 能对齐文本并做出 priority-aware placement decisions；paint 和 semantics metadata 保留在同一个 concrete `ViewNode` behavior surface 上。
+高级 layout authors 可以使用 `@views.custom_children_layout` 定义 child layout delegate，同时仍返回 `View[Msg]`。该 delegate 接收 measured child sizes，返回自身 size，并用显式 frames 放置 children。它的 context 也暴露 child baselines，使 custom layouts 能对齐文本；paint 和 semantics metadata 保留在同一个 concrete `ViewNode` behavior surface 上。
 
 ## 修饰器与环境
 

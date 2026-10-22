@@ -114,12 +114,9 @@ pub using @layout {type SectionListSection, type ScrollToIndexIntent}
 pub using @controls {
   expanded,
   flexible,
-  layout_priority,
   align,
   rounded_clip,
   aspect_ratio,
-  intrinsic_width,
-  intrinsic_height,
   custom_children_layout,
   scroll_view,
   responsive_grid,

@@ -3,12 +3,12 @@
 /// Shadow, Border, Clip, Scale, RepaintBoundary.
 
 ///|
-pub(all) struct BackgroundModifier {
+priv struct BackgroundModifier {
   brush : Brush
 }
 
 ///|
-pub fn[Msg] BackgroundModifier::to_any_modifier(
+fn[Msg] BackgroundModifier::to_any_modifier(
   self : BackgroundModifier,
 ) -> AnyModifier[Msg] {
   let brush = self.brush
@@ -31,12 +31,12 @@ pub fn[Msg] BackgroundModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct ForegroundModifier {
+priv struct ForegroundModifier {
   color : Color
 }
 
 ///|
-pub fn[Msg] ForegroundModifier::to_any_modifier(
+fn[Msg] ForegroundModifier::to_any_modifier(
   self : ForegroundModifier,
 ) -> AnyModifier[Msg] {
   {
@@ -53,14 +53,12 @@ pub fn[Msg] ForegroundModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct FontModifier {
+priv struct FontModifier {
   font : FontSpec
 }
 
 ///|
-pub fn[Msg] FontModifier::to_any_modifier(
-  self : FontModifier,
-) -> AnyModifier[Msg] {
+fn[Msg] FontModifier::to_any_modifier(self : FontModifier) -> AnyModifier[Msg] {
   {
     ..noop_modifier(),
     identity_kind: "Font",
@@ -75,12 +73,12 @@ pub fn[Msg] FontModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct CornerRadiusModifier {
+priv struct CornerRadiusModifier {
   radius : Double
 }
 
 ///|
-pub fn[Msg] CornerRadiusModifier::to_any_modifier(
+fn[Msg] CornerRadiusModifier::to_any_modifier(
   self : CornerRadiusModifier,
 ) -> AnyModifier[Msg] {
   {
@@ -97,12 +95,12 @@ pub fn[Msg] CornerRadiusModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OpacityModifier {
+priv struct OpacityModifier {
   opacity : Double
 }
 
 ///|
-pub fn[Msg] OpacityModifier::to_any_modifier(
+fn[Msg] OpacityModifier::to_any_modifier(
   self : OpacityModifier,
 ) -> AnyModifier[Msg] {
   let opacity = self.opacity
@@ -129,12 +127,12 @@ pub fn[Msg] OpacityModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct ShadowModifier {
+priv struct ShadowModifier {
   style : ShadowStyle
 }
 
 ///|
-pub fn[Msg] ShadowModifier::to_any_modifier(
+fn[Msg] ShadowModifier::to_any_modifier(
   self : ShadowModifier,
 ) -> AnyModifier[Msg] {
   let style = self.style
@@ -164,12 +162,12 @@ pub fn[Msg] ShadowModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct BorderModifier {
+priv struct BorderModifier {
   style : BorderStyle
 }
 
 ///|
-pub fn[Msg] BorderModifier::to_any_modifier(
+fn[Msg] BorderModifier::to_any_modifier(
   self : BorderModifier,
 ) -> AnyModifier[Msg] {
   let style = self.style
@@ -200,12 +198,10 @@ pub fn[Msg] BorderModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct ClipModifier {}
+priv struct ClipModifier {}
 
 ///|
-pub fn[Msg] ClipModifier::to_any_modifier(
-  _self : ClipModifier,
-) -> AnyModifier[Msg] {
+fn[Msg] ClipModifier::to_any_modifier(_self : ClipModifier) -> AnyModifier[Msg] {
   {
     ..noop_modifier(),
     identity_kind: "Clip",
@@ -223,13 +219,13 @@ pub fn[Msg] ClipModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct ScaleModifier {
+priv struct ScaleModifier {
   sx : Double
   sy : Double
 }
 
 ///|
-pub fn[Msg] ScaleModifier::to_any_modifier(
+fn[Msg] ScaleModifier::to_any_modifier(
   self : ScaleModifier,
 ) -> AnyModifier[Msg] {
   let sx = self.sx
@@ -262,10 +258,10 @@ pub fn[Msg] ScaleModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct RepaintBoundaryModifier {}
+priv struct RepaintBoundaryModifier {}
 
 ///|
-pub fn[Msg] RepaintBoundaryModifier::to_any_modifier(
+fn[Msg] RepaintBoundaryModifier::to_any_modifier(
   _self : RepaintBoundaryModifier,
 ) -> AnyModifier[Msg] {
   {

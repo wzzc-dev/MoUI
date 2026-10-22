@@ -15,14 +15,6 @@ pub fn[Msg] flexible(
 }
 
 ///|
-pub fn[Msg] layout_priority(
-  child : @core.View[Msg],
-  priority : Double,
-) -> @core.View[Msg] {
-  child.layout_priority(priority)
-}
-
-///|
 pub fn[Msg] align(
   child : @core.View[Msg],
   alignment~ : @core.Alignment = @core.Alignment::center(),
@@ -102,16 +94,6 @@ pub fn[Msg] aspect_ratio(
   ratio : Double,
 ) -> @core.View[Msg] {
   child.aspect_ratio(ratio)
-}
-
-///|
-pub fn[Msg] intrinsic_width(child : @core.View[Msg]) -> @core.View[Msg] {
-  child.intrinsic_width()
-}
-
-///|
-pub fn[Msg] intrinsic_height(child : @core.View[Msg]) -> @core.View[Msg] {
-  child.intrinsic_height()
 }
 
 ///|

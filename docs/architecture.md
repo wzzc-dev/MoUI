@@ -525,9 +525,8 @@ Advanced layout authors can use `@views.custom_children_layout` to define a
 child layout delegate while still returning `View[Msg]`. The delegate receives
 measured child sizes, returns its own
 size, and places children with explicit frames. Its context also exposes child
-baselines and layout priorities so custom layouts can align text and make
-priority-aware placement decisions; paint and semantics metadata are kept on
-the same concrete `ViewNode` behavior surface.
+baselines so custom layouts can align text; paint and semantics metadata are
+kept on the same concrete `ViewNode` behavior surface.
 
 ## Modifiers And Environment
 

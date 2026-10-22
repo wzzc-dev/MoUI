@@ -163,16 +163,6 @@ test "aspect_ratio modifier identity" {
   assert_true(view.identity().kind.contains("AspectRatio"))
 }
 
-///|
-test "intrinsic_width and intrinsic_height identity" {
-  assert_true(
-    test_leaf().intrinsic_width().identity().kind.contains("IntrinsicWidth"),
-  )
-  assert_true(
-    test_leaf().intrinsic_height().identity().kind.contains("IntrinsicHeight"),
-  )
-}
-
 // == Paint modifiers ==
 
 ///|

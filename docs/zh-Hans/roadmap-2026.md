@@ -48,7 +48,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - 将 input、focus、text editing、layout、paint 和 semantics 行为保留在平台无关包中。
 - 用 `moon info` 和生成的 `pkg.generated.mbti` diff 审查公开 API 变更。
 
-component effect、saveable string/bool/int state、custom child layout delegate 和 keyed effect reuse 的首批 P0 基础现在已经存在。后续工作应把 saveable state 扩展成通用 codec model，增加超出当前 `on_mount`/`on_dispose` helper 的更丰富 lifecycle 覆盖，并用 layout cache 和 alignment guide 扩展 custom layout protocol。Custom layout 已经接收 child baseline 和 layout priority signal。
+component effect、saveable string/bool/int state、custom child layout delegate 和 keyed effect reuse 的首批 P0 基础现在已经存在。后续工作应把 saveable state 扩展成通用 codec model，增加超出当前 `on_mount`/`on_dispose` helper 的更丰富 lifecycle 覆盖，并用 layout cache 和 alignment guide 扩展 custom layout protocol。Custom layout 已经接收 child baseline signal。
 
 验证：
 

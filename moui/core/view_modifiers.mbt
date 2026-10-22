@@ -485,14 +485,6 @@ pub fn[Msg] View::flexible(
 }
 
 ///|
-pub fn[Msg] View::layout_priority(
-  self : View[Msg],
-  priority : Double,
-) -> View[Msg] {
-  self.apply_modifier(LayoutPriorityModifier::{ priority, }.to_any_modifier())
-}
-
-///|
 pub fn[Msg] View::expanded(
   self : View[Msg],
   weight~ : Double = 1.0,
@@ -516,16 +508,6 @@ pub fn[Msg] View::aspect_ratio(self : View[Msg], ratio : Double) -> View[Msg] {
 }
 
 ///|
-pub fn[Msg] View::intrinsic_width(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicWidthModifier::{ }.to_any_modifier())
-}
-
-///|
-pub fn[Msg] View::intrinsic_height(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicHeightModifier::{ }.to_any_modifier())
-}
-
-///|
 pub fn[Msg] View::repaint_boundary(self : View[Msg]) -> View[Msg] {
   self.apply_modifier(RepaintBoundaryModifier::{ }.to_any_modifier())
 }
@@ -534,31 +516,6 @@ pub fn[Msg] View::repaint_boundary(self : View[Msg]) -> View[Msg] {
 pub fn[Msg] View::padding(self : View[Msg], value : Double) -> View[Msg] {
   self.apply_modifier(
     PaddingModifier::{ insets: Insets::all(value), }.to_any_modifier(),
-  )
-}
-
-///|
-pub fn[Msg] View::spacing(self : View[Msg], spacing : Double) -> View[Msg] {
-  self.apply_modifier(SpacingModifier::{ spacing, }.to_any_modifier())
-}
-
-///|
-pub fn[Msg] View::main_axis_alignment(
-  self : View[Msg],
-  alignment : MainAxisAlignment,
-) -> View[Msg] {
-  self.apply_modifier(
-    MainAxisAlignmentModifier::{ alignment, }.to_any_modifier(),
-  )
-}
-
-///|
-pub fn[Msg] View::cross_axis_alignment(
-  self : View[Msg],
-  alignment : CrossAxisAlignment,
-) -> View[Msg] {
-  self.apply_modifier(
-    CrossAxisAlignmentModifier::{ alignment, }.to_any_modifier(),
   )
 }
 

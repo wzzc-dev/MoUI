@@ -3,7 +3,7 @@
 /// OnDragWithFrame, OnTapWithFrame, OnFileDrop, KeyboardShortcut.
 
 ///|
-pub(all) struct OnTapModifier[Msg] {
+priv struct OnTapModifier[Msg] {
   message : Msg
 }
 
@@ -139,7 +139,7 @@ fn[Msg] OnSecondaryTapWithFrameModifier::to_any_modifier(
 }
 
 ///|
-pub fn[Msg] OnTapModifier::to_any_modifier(
+fn[Msg] OnTapModifier::to_any_modifier(
   self : OnTapModifier[Msg],
 ) -> AnyModifier[Msg] {
   let message = self.message
@@ -200,12 +200,12 @@ pub fn[Msg] OnTapModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OnLongPressModifier[Msg] {
+priv struct OnLongPressModifier[Msg] {
   message : Msg
 }
 
 ///|
-pub fn[Msg] OnLongPressModifier::to_any_modifier(
+fn[Msg] OnLongPressModifier::to_any_modifier(
   self : OnLongPressModifier[Msg],
 ) -> AnyModifier[Msg] {
   let message = self.message
@@ -244,12 +244,12 @@ pub fn[Msg] OnLongPressModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OnDoubleTapModifier[Msg] {
+priv struct OnDoubleTapModifier[Msg] {
   message : Msg
 }
 
 ///|
-pub fn[Msg] OnDoubleTapModifier::to_any_modifier(
+fn[Msg] OnDoubleTapModifier::to_any_modifier(
   self : OnDoubleTapModifier[Msg],
 ) -> AnyModifier[Msg] {
   let message = self.message
@@ -279,12 +279,12 @@ pub fn[Msg] OnDoubleTapModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OnDragModifier[Msg] {
+priv struct OnDragModifier[Msg] {
   handler : (DragGestureEvent) -> Msg
 }
 
 ///|
-pub fn[Msg] OnDragModifier::to_any_modifier(
+fn[Msg] OnDragModifier::to_any_modifier(
   self : OnDragModifier[Msg],
 ) -> AnyModifier[Msg] {
   let handler = self.handler
@@ -301,7 +301,7 @@ pub fn[Msg] OnDragModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OnDragWithFrameModifier[Msg] {
+priv struct OnDragWithFrameModifier[Msg] {
   handler : (DragGestureEvent, Rect) -> Msg
 }
 
@@ -369,7 +369,7 @@ fn[Msg] OnTapWithFrameModifier::to_any_modifier(
 }
 
 ///|
-pub fn[Msg] OnDragWithFrameModifier::to_any_modifier(
+fn[Msg] OnDragWithFrameModifier::to_any_modifier(
   self : OnDragWithFrameModifier[Msg],
 ) -> AnyModifier[Msg] {
   let handler = self.handler
@@ -464,12 +464,12 @@ fn[Msg] handle_drag_modifier_event(
 }
 
 ///|
-pub(all) struct OnFileDropModifier[Msg] {
+priv struct OnFileDropModifier[Msg] {
   handler : (Array[String], Point) -> Msg
 }
 
 ///|
-pub fn[Msg] OnFileDropModifier::to_any_modifier(
+fn[Msg] OnFileDropModifier::to_any_modifier(
   self : OnFileDropModifier[Msg],
 ) -> AnyModifier[Msg] {
   let handler = self.handler
@@ -504,12 +504,12 @@ pub fn[Msg] OnFileDropModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct KeyboardShortcutModifier {
+priv struct KeyboardShortcutModifier {
   shortcut : KeyboardShortcut
 }
 
 ///|
-pub fn[Msg] KeyboardShortcutModifier::to_any_modifier(
+fn[Msg] KeyboardShortcutModifier::to_any_modifier(
   self : KeyboardShortcutModifier,
 ) -> AnyModifier[Msg] {
   let shortcut = self.shortcut

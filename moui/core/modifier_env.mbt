@@ -3,12 +3,12 @@
 /// Focusable, FocusTrap.
 
 ///|
-pub(all) struct ThemeModifier {
+priv struct ThemeModifier {
   theme : Theme
 }
 
 ///|
-pub fn[Msg] ThemeModifier::to_any_modifier(
+fn[Msg] ThemeModifier::to_any_modifier(
   self : ThemeModifier,
 ) -> AnyModifier[Msg] {
   let theme = self.theme
@@ -20,12 +20,12 @@ pub fn[Msg] ThemeModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct EnvironmentModifier {
+priv struct EnvironmentModifier {
   environment : Environment
 }
 
 ///|
-pub fn[Msg] EnvironmentModifier::to_any_modifier(
+fn[Msg] EnvironmentModifier::to_any_modifier(
   self : EnvironmentModifier,
 ) -> AnyModifier[Msg] {
   let env = self.environment
@@ -37,12 +37,12 @@ pub fn[Msg] EnvironmentModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct DisabledModifier {
+priv struct DisabledModifier {
   disabled : Bool
 }
 
 ///|
-pub fn[Msg] DisabledModifier::to_any_modifier(
+fn[Msg] DisabledModifier::to_any_modifier(
   self : DisabledModifier,
 ) -> AnyModifier[Msg] {
   let disabled = self.disabled
@@ -74,24 +74,24 @@ pub fn[Msg] DisabledModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct FocusableModifier {
+priv struct FocusableModifier {
   focusable : Bool
 }
 
 ///|
-pub fn[Msg] FocusableModifier::to_any_modifier(
+fn[Msg] FocusableModifier::to_any_modifier(
   self : FocusableModifier,
 ) -> AnyModifier[Msg] {
   { ..noop_modifier(), identity_kind: "Focusable", focusable: self.focusable, }
 }
 
 ///|
-pub(all) struct FocusTrapModifier {
+priv struct FocusTrapModifier {
   trap : Bool
 }
 
 ///|
-pub fn[Msg] FocusTrapModifier::to_any_modifier(
+fn[Msg] FocusTrapModifier::to_any_modifier(
   self : FocusTrapModifier,
 ) -> AnyModifier[Msg] {
   {

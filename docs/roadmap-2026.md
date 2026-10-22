@@ -77,7 +77,7 @@ state, custom child layout delegates, and keyed effect reuse. Follow-up work
 should broaden saveable state into a general codec model, add richer lifecycle
 coverage beyond the current `on_mount`/`on_dispose` helpers, and extend the
 custom layout protocol with layout cache and alignment guides. Custom layouts
-already receive child baseline and layout priority signals.
+already receive child baseline signals.
 
 Validation:
 

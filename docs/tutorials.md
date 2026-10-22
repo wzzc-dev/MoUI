@@ -22,9 +22,8 @@ lowering arms for a new control.
 ## Create A Custom Layout
 
 1. Use `@views.custom_children_layout` for the first version.
-2. Read `CustomLayoutContext.child_sizes`, `child_baselines`,
-   `child_alignment_guides`, `child_priorities`, `safe_area`, `viewport`, and
-   `layout_direction`.
+2. Read `CustomLayoutContext.children` (child size, baseline, flex weight,
+   alignment guides), `safe_area`, `viewport`, and `layout_direction`.
 3. Store reusable measurements in `CustomLayoutContext.cache`.
 4. Use `CustomPlacementContext::mirror_x` for RTL-aware x placement.
 5. Add tests in `moui/views` (`tests/smoke` or a focused `*_test.mbt`) or core white-box tests when the runtime

@@ -53,15 +53,15 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2766,
-      "public_declarations": 1165,
-      "pub_all_declarations": 190
+      "lines": 2511,
+      "public_declarations": 1110,
+      "pub_all_declarations": 141
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 694,
-      "public_declarations": 331,
+      "lines": 688,
+      "public_declarations": 328,
       "pub_all_declarations": 1
     },
     {

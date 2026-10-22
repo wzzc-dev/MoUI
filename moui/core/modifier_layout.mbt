@@ -1,13 +1,11 @@
 ///|
-/// Layout modifiers: Padding, Frame, Flexible, Offset, Align, AspectRatio,
-/// Spacing, LayoutPriority, MainAxisAlignment, CrossAxisAlignment,
-/// IntrinsicWidth, IntrinsicHeight, Key.
-pub(all) struct PaddingModifier {
+/// Layout modifiers: Padding, Frame, Flexible, Offset, Align, AspectRatio, Key.
+priv struct PaddingModifier {
   insets : Insets
 }
 
 ///|
-pub fn[Msg] PaddingModifier::to_any_modifier(
+fn[Msg] PaddingModifier::to_any_modifier(
   self : PaddingModifier,
 ) -> AnyModifier[Msg] {
   let insets = self.insets
@@ -35,7 +33,7 @@ pub fn[Msg] PaddingModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct FrameModifier {
+priv struct FrameModifier {
   width : Double?
   height : Double?
   min_width : Double?
@@ -80,7 +78,7 @@ fn frame_child(data : FrameModifier, bounds : Rect) -> Rect {
 }
 
 ///|
-pub fn[Msg] FrameModifier::to_any_modifier(
+fn[Msg] FrameModifier::to_any_modifier(
   self : FrameModifier,
 ) -> AnyModifier[Msg] {
   let data = self
@@ -116,12 +114,12 @@ pub fn[Msg] FrameModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct FlexibleModifier {
+priv struct FlexibleModifier {
   weight : Double
 }
 
 ///|
-pub fn[Msg] FlexibleModifier::to_any_modifier(
+fn[Msg] FlexibleModifier::to_any_modifier(
   self : FlexibleModifier,
 ) -> AnyModifier[Msg] {
   {
@@ -147,13 +145,13 @@ pub fn[Msg] FlexibleModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct OffsetModifier {
+priv struct OffsetModifier {
   dx : Double
   dy : Double
 }
 
 ///|
-pub fn[Msg] OffsetModifier::to_any_modifier(
+fn[Msg] OffsetModifier::to_any_modifier(
   self : OffsetModifier,
 ) -> AnyModifier[Msg] {
   let dx = self.dx
@@ -183,7 +181,7 @@ pub fn[Msg] OffsetModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct AlignModifier {
+priv struct AlignModifier {
   alignment : Alignment
 }
 
@@ -197,7 +195,7 @@ fn mod_aligned_rect(bounds : Rect, cs : Size, a : Alignment) -> Rect {
 }
 
 ///|
-pub fn[Msg] AlignModifier::to_any_modifier(
+fn[Msg] AlignModifier::to_any_modifier(
   self : AlignModifier,
 ) -> AnyModifier[Msg] {
   let a = self.alignment
@@ -219,7 +217,7 @@ pub fn[Msg] AlignModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct AspectRatioModifier {
+priv struct AspectRatioModifier {
   ratio : Double
 }
 
@@ -241,7 +239,7 @@ fn mod_ar_rect(f : Rect, r : Double) -> Rect {
 }
 
 ///|
-pub fn[Msg] AspectRatioModifier::to_any_modifier(
+fn[Msg] AspectRatioModifier::to_any_modifier(
   self : AspectRatioModifier,
 ) -> AnyModifier[Msg] {
   let r = self.ratio
@@ -259,82 +257,12 @@ pub fn[Msg] AspectRatioModifier::to_any_modifier(
 }
 
 ///|
-pub(all) struct SpacingModifier {
-  spacing : Double
-}
-
-///|
-pub fn[Msg] SpacingModifier::to_any_modifier(
-  _self : SpacingModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "Spacing", }
-}
-
-///|
-pub(all) struct LayoutPriorityModifier {
-  priority : Double
-}
-
-///|
-pub fn[Msg] LayoutPriorityModifier::to_any_modifier(
-  _self : LayoutPriorityModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "LayoutPriority", }
-}
-
-///|
-pub(all) struct MainAxisAlignmentModifier {
-  alignment : MainAxisAlignment
-}
-
-///|
-pub fn[Msg] MainAxisAlignmentModifier::to_any_modifier(
-  _self : MainAxisAlignmentModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "MainAxisAlignment", }
-}
-
-///|
-pub(all) struct CrossAxisAlignmentModifier {
-  alignment : CrossAxisAlignment
-}
-
-///|
-pub fn[Msg] CrossAxisAlignmentModifier::to_any_modifier(
-  _self : CrossAxisAlignmentModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "CrossAxisAlignment", }
-}
-
-///|
-pub(all) struct IntrinsicWidthModifier {}
-
-///|
-pub fn[Msg] IntrinsicWidthModifier::to_any_modifier(
-  _self : IntrinsicWidthModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "IntrinsicWidth", }
-}
-
-///|
-pub(all) struct IntrinsicHeightModifier {}
-
-///|
-pub fn[Msg] IntrinsicHeightModifier::to_any_modifier(
-  _self : IntrinsicHeightModifier,
-) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "IntrinsicHeight", }
-}
-
-///|
-pub(all) struct KeyModifier {
+priv struct KeyModifier {
   key : Key
 }
 
 ///|
-pub fn[Msg] KeyModifier::to_any_modifier(
-  self : KeyModifier,
-) -> AnyModifier[Msg] {
+fn[Msg] KeyModifier::to_any_modifier(self : KeyModifier) -> AnyModifier[Msg] {
   let key = self.key
   { ..noop_modifier(), identity_kind: "Key", identity_key: Some(key), }
 }
