@@ -56,6 +56,16 @@ typed messages, but only the application's `update` function changes the app
 model. Rebuilds re-declare the view from the resulting model; unmounting drops
 the runtime slot.
 
+Gesture recognizers use the same transient slots, because recognition spans
+pointer events (a press origin, a start time, a first tap). A hold that completes
+on elapsed time — `View::on_long_press` — has no further pointer sample to be
+evaluated against, so the armed subtree claims the same paint latch that
+animation uses (`ViewPaintPlan.animating`) and the runtime re-samples the pressed
+position as a `Move` on each frame until it settles. The wake is therefore frame
+granular, and the host keeps producing frames for at most the hold duration.
+There is no app-visible timer and no `Msg` for the wake itself; the app only sees
+the ordinary typed message when the gesture completes.
+
 Agent actions follow the same loop. Runtime commits the current semantics,
 validates a generation-tagged typed action, applies transient UI state, delivers
 typed messages FIFO, drains synchronous TEA work, and commits again. It never

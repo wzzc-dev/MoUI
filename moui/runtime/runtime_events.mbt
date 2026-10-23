@@ -86,6 +86,21 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         self.dirty.needs_paint = true
         self.dirty.needs_redraw = true
         self.mark_dirty(self.element_tree.id())
+        // A hold produces no pointer sample of its own, so a recognizer that
+        // completes on elapsed time would have nothing to re-evaluate. Re-emit
+        // the pressed position as a `Move` while the frame latch is held and a
+        // pointer is down; recognizers at an unchanged position are idempotent,
+        // so controls that only respond to movement see no effect. The subtree
+        // stops asking for frames once it settles, which ends the re-sampling.
+        // Snapshot first: dispatching can release a press and mutate the map.
+        for stream in self.animfocus.pointer_presses.to_array() {
+          let (id, position) = stream
+          ignore(
+            self.dispatch_pointer_event(
+              PointerEvent::new(position~, phase=Move, id~),
+            ),
+          )
+        }
       }
     }
     Resize(size) => {
@@ -103,6 +118,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Keyboard(event) => {
+      let layout = self.layout_tree_for_input()
       // Top-most dismissal layer stack (ADR 0033): overlay hosts registered
       // during the placement pass receive Escape/Back top-most-first, so a
       // popover nested inside a dialog dismisses before the dialog.
@@ -142,6 +158,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               let result = self.element_tree.root.dispatch_keyboard(
                 target,
                 event,
+                layout~,
                 environment=self.environment,
                 text_system=self.text_system,
               )
@@ -170,6 +187,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             let result = self.element_tree.root.dispatch_keyboard(
               target,
               event,
+              layout~,
               environment=self.environment,
               text_system=self.text_system,
             )
@@ -192,9 +210,11 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     TextInput(event) =>
       match self.animfocus.focused_element {
         Some(target) => {
+          let layout = self.layout_tree_for_input()
           let result = self.element_tree.root.dispatch_text_input(
             target,
             event,
+            layout~,
             environment=self.environment,
             text_system=self.text_system,
           )
@@ -246,6 +266,14 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     CloseRequested => ()
   }
+  // Caret/selection reveals are resolved against the placed tree once the
+  // event that moved the caret has been folded in. Only input events can
+  // move a caret, so a frame tick or resize skips the walk entirely.
+  match event {
+    Pointer(_) | Keyboard(_) | TextInput(_) =>
+      self.try_pending_text_reveal_from_current_layout()
+    _ => ()
+  }
 }
 
 ///|
@@ -285,11 +313,29 @@ fn RuntimeState::dispatch_pointer_event(
     event.position,
     self.render_tree.root,
   )
-  let release_pointer = match self.animfocus.active_pointer_capture {
+  let release_pointer = match self.animfocus.pointer_captures.get(event.id) {
     Some(_) => event.phase == Up || event.phase == Cancel
     None => false
   }
-  if event.phase == Down {
+  // Track the pressed position per stream for the frame-tick re-sample that
+  // lets a duration-based recognizer complete while a finger holds still
+  // (`Move` updates it so the synthesised sample follows the real pointer, and
+  // `Exit` must not clear it: hover can leave a control while the press
+  // continues).
+  match event.phase {
+    Down => self.animfocus.pointer_presses[event.id] = event.position
+    Move =>
+      if self.animfocus.pointer_presses.contains(event.id) {
+        self.animfocus.pointer_presses[event.id] = event.position
+      }
+    Up | Cancel => self.animfocus.pointer_presses.remove(event.id)
+    _ => ()
+  }
+  // Focus, like hover, has one owner: the primary stream. A second finger
+  // pressing elsewhere mid-gesture must not pull focus away from the control
+  // the first finger is dragging (hosts that report one finger only, such as
+  // the embedded ones, always arrive as the primary id and are unaffected).
+  if event.phase == Down && event.id == primary_pointer_id {
     let previous_focus = self.animfocus.focused_element
     let candidate_focus = self.element_tree.root.find_focusable_at(
       event.position,
@@ -304,7 +350,7 @@ fn RuntimeState::dispatch_pointer_event(
       ),
     )
   }
-  let result = match self.animfocus.active_pointer_capture {
+  let result = match self.animfocus.pointer_captures.get(event.id) {
     Some(target) =>
       if event.phase == Down {
         self.element_tree.root.dispatch_pointer(
@@ -327,7 +373,7 @@ fn RuntimeState::dispatch_pointer_event(
           ) {
           Some(result) => result
           None => {
-            self.animfocus.active_pointer_capture = None
+            self.animfocus.pointer_captures.remove(event.id)
             self.element_tree.root.dispatch_pointer(
               event,
               self.render_tree.root,
@@ -361,7 +407,7 @@ fn RuntimeState::dispatch_pointer_event(
     // focusable hit target so the matching Up reaches the same element even
     // if browser focus/semantics updates repaint the tree between DOM events.
     // A control with an explicit local capture keeps precedence.
-    self.animfocus.active_pointer_capture = match
+    let captured_target = match
       self.element_tree.root.active_pointer_capture_id(Move) {
       Some(target) => Some(target)
       None =>
@@ -374,8 +420,12 @@ fn RuntimeState::dispatch_pointer_event(
           None
         }
     }
+    match captured_target {
+      Some(target) => self.animfocus.pointer_captures[event.id] = target
+      None => self.animfocus.pointer_captures.remove(event.id)
+    }
   } else if event.phase == Up || event.phase == Cancel {
-    self.animfocus.active_pointer_capture = None
+    self.animfocus.pointer_captures.remove(event.id)
   }
   self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
   self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
@@ -446,12 +496,11 @@ fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
 
 ///|
 fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
-  match self.animfocus.active_pointer_capture {
-    Some(target) =>
-      if !self.element_tree.root.contains_element_id(target) {
-        self.animfocus.active_pointer_capture = None
-      }
-    None => ()
+  for stream in self.animfocus.pointer_captures.to_array() {
+    let (id, target) = stream
+    if !self.element_tree.root.contains_element_id(target) {
+      self.animfocus.pointer_captures.remove(id)
+    }
   }
 }
 
@@ -464,11 +513,13 @@ fn RuntimeState::dispatch_dismissal_layers(
 ) -> Bool {
   let mut consumed = false
   let mut index = self.layer_stack.length() - 1
+  let layout = self.layout_tree_for_input()
   while index >= 0 {
     if !consumed {
       let result = self.element_tree.root.dispatch_keyboard(
         self.layer_stack[index],
         event,
+        layout~,
         environment=self.environment,
         text_system=self.text_system,
       )
