@@ -642,6 +642,10 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
     // every node's measured size back into its parent's child constraints.
     @core.Constraints::unbounded()
   } else {
+    // A viewport-sized host fills the viewport; the base child keeps the
+    // size it measured for itself. Relaxing the minimum lets a base that
+    // wants to be content-sized (a toolbar, an anchored anchor) stay that
+    // size — the host still places it at the origin of the viewport.
     constraints.loosen()
   }
 }

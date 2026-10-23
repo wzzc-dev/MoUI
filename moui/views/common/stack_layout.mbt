@@ -25,6 +25,20 @@ impl @core.ViewNode for StackLayout with fn identity(self) {
 }
 
 ///|
+impl @core.ViewNode for StackLayout with fn child_constraints(
+  _self,
+  constraints,
+) {
+  // A stack keeps its children's minimums: every child is placed at the
+  // stack's own frame, so a child that can use the room (a shell column
+  // handing its height to a weighted body) must be allowed to measure at
+  // that size. The default node behaviour relaxes the minimum, which would
+  // collapse such a subtree to its content height while the stack still
+  // paints it full-frame — an empty-looking window.
+  constraints
+}
+
+///|
 impl @core.ViewNode for StackLayout with fn declaration(_self) {
   @core.ViewDeclaration::constant()
 }

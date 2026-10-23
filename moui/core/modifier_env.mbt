@@ -15,6 +15,12 @@ fn[Msg] ThemeModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "Theme",
+    // A theme changes colours, never sizes: the subtree keeps the incoming
+    // constraints (including their minimums). Relaxing them here would
+    // collapse every weighted layout under the theme — a column with
+    // `expanded(child, weight=1.0)` measures its content height instead of
+    // the space the parent offers, and the subtree collapses to zero height.
+    child_constraints: fn(c) { c },
     child_environment: fn(e) { e.with_theme(theme) },
   }
 }
@@ -32,6 +38,9 @@ fn[Msg] EnvironmentModifier::to_any_modifier(
   {
     ..noop_modifier(),
     identity_kind: "Environment",
+    // Same rule as the theme modifier: an environment swap is a context
+    // change, not a resize.
+    child_constraints: fn(c) { c },
     child_environment: fn(_e) { env },
   }
 }
