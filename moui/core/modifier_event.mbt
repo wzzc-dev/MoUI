@@ -214,32 +214,70 @@ fn[Msg] OnLongPressModifier::to_any_modifier(
     identity_kind: "OnLongPress",
     focusable: true,
     semantics: ViewSemanticsInfo::new(role=Button),
-    event: fn(ctx) {
-      // Primary button only: see OnTapModifier.
-      match ctx.event {
-        Pointer(event) if event.button == 0 => {
-          let result = LongPressGestureState::new().update(
-            event,
-            inside=ctx.frame.contains(event.position),
-          )
-          if result.recognized {
-            ViewEventResult::message(message)
-          } else {
-            {
-              ..ViewEventResult::ignored(),
-              changed: result.cancelled,
-              captured: result.cancelled,
-              dirty: if result.cancelled {
-                ViewPaintDirty
-              } else {
-                ViewClean
-              },
-            }
-          }
-        }
-        _ => ViewEventResult::ignored()
+    event: fn(ctx) { handle_long_press_modifier_event(ctx, message~) },
+    paint: fn(ctx) {
+      // Draws nothing; claims a frame while the recognizer waits on elapsed
+      // time. See `long_press_gesture_is_holding`.
+      if long_press_gesture_is_holding(ctx.state) {
+        ViewPaintPlan::animating_commands([])
+      } else {
+        ViewPaintPlan::empty()
       }
     },
+  }
+}
+
+///|
+fn[Msg] handle_long_press_modifier_event(
+  ctx : ViewEventContext,
+  message~ : Msg,
+) -> ViewEventResult[Msg] {
+  // Primary button only: see OnTapModifier.
+  match ctx.event {
+    Pointer(event) if event.button == 0 => {
+      let slot = long_press_gesture_view_state_slot()
+      let result = ctx.state
+        .read_slot(slot)
+        .update(
+          event,
+          inside=ctx.frame.contains(event.position),
+          now_ms=ctx.now_ms,
+        )
+      let next_state = if result.state.phase == Idle {
+        ctx.state.without_slot(slot)
+      } else {
+        ctx.state.with_slot(slot, result.state)
+      }
+      let settled = next_state != ctx.state
+      if !result.recognized && !settled {
+        // Nothing to commit: stay fully ignored so the runtime does not mark
+        // this element's semantics dirty for an ordinary hover move.
+        ViewEventResult::ignored()
+      } else {
+        // `captured` stays false on purpose. Capture would route the following
+        // `Up` by target instead of by hit test, so a press that ends on
+        // another control would be dispatched to this one.
+        {
+          changed: result.recognized || settled,
+          activated: result.recognized,
+          focused: false,
+          captured: false,
+          state: Some(next_state),
+          text_control: None,
+          dirty: if result.recognized || settled {
+            ViewPaintDirty
+          } else {
+            ViewClean
+          },
+          messages: if result.recognized {
+            [message]
+          } else {
+            []
+          },
+        }
+      }
+    }
+    _ => ViewEventResult::ignored()
   }
 }
 
@@ -258,23 +296,59 @@ fn[Msg] OnDoubleTapModifier::to_any_modifier(
     identity_kind: "OnDoubleTap",
     focusable: true,
     semantics: ViewSemanticsInfo::new(role=Button),
-    event: fn(ctx) {
-      // Primary button only: see OnTapModifier.
-      match ctx.event {
-        Pointer(event) if event.button == 0 => {
-          let result = DoubleTapGestureState::new().update(
-            event,
-            inside=ctx.frame.contains(event.position),
-          )
-          if result.recognized {
-            ViewEventResult::message(message)
-          } else {
-            ViewEventResult::ignored()
-          }
-        }
-        _ => ViewEventResult::ignored()
+    event: fn(ctx) { handle_double_tap_modifier_event(ctx, message~) },
+  }
+}
+
+///|
+fn[Msg] handle_double_tap_modifier_event(
+  ctx : ViewEventContext,
+  message~ : Msg,
+) -> ViewEventResult[Msg] {
+  // Primary button only: see OnTapModifier.
+  match ctx.event {
+    Pointer(event) if event.button == 0 => {
+      let slot = double_tap_gesture_view_state_slot()
+      let result = ctx.state
+        .read_slot(slot)
+        .update(
+          event,
+          inside=ctx.frame.contains(event.position),
+          now_ms=ctx.now_ms,
+        )
+      let next_state = if result.state.first_position is None {
+        ctx.state.without_slot(slot)
+      } else {
+        ctx.state.with_slot(slot, result.state)
       }
-    },
+      let settled = next_state != ctx.state
+      if !result.recognized && !settled {
+        ViewEventResult::ignored()
+      } else {
+        // A paired `on_tap` still activates on the second `Up`: suppressing it
+        // from here needs a cross-modifier consume signal, which does not
+        // exist yet. Documented in `docs/view-catalog.md`.
+        {
+          changed: result.recognized || settled,
+          activated: result.recognized,
+          focused: false,
+          captured: false,
+          state: Some(next_state),
+          text_control: None,
+          dirty: if result.recognized || settled {
+            ViewPaintDirty
+          } else {
+            ViewClean
+          },
+          messages: if result.recognized {
+            [message]
+          } else {
+            []
+          },
+        }
+      }
+    }
+    _ => ViewEventResult::ignored()
   }
 }
 

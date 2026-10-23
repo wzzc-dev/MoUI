@@ -732,9 +732,8 @@ fn[Msg] markdown_session_pointer_event(
 ///
 /// The clock value is the runtime animation clock (`ctx.now_ms`) — the same
 /// timeline the glide is evaluated on at paint time — so an app can stamp a
-/// new glide with it and get a self-consistent animation. The pointer
-/// contract's own `time_ms` is not used: the input path does not populate
-/// it (it stays 0.0).
+/// new glide with it and get a self-consistent animation. The pointer event
+/// itself carries no timestamp: the input path never populated one.
 fn[Msg] markdown_session_scroll_event(
   event~ : @core.PointerEvent,
   on_scroll~ : ((Double, Double) -> Msg)?,

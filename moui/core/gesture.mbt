@@ -9,7 +9,6 @@ priv enum LongPressGesturePhase {
   Idle
   Pressing
   Recognized
-  Cancelled
 } derive(Eq)
 
 ///|
@@ -25,7 +24,6 @@ priv struct LongPressGestureState {
 priv struct LongPressGestureResult {
   state : LongPressGestureState
   recognized : Bool
-  cancelled : Bool
 }
 
 ///|
@@ -34,9 +32,115 @@ test {
     LongPressGestureResult::{
       state: LongPressGestureState::new(),
       recognized: true,
-      cancelled: true,
     }.state,
   )
+}
+
+///|
+impl ViewStateValue for LongPressGestureState with fn view_state_type_key() {
+  DeclarationKey::string("moui.core.LongPressGestureState.v1")
+}
+
+///|
+impl ViewStateValue for LongPressGestureState with fn encode_view_state(self) {
+  let output = Buffer(size_hint=42)
+  output.write_byte(
+    match self.phase {
+      Idle => 0
+      Pressing => 1
+      Recognized => 2
+    },
+  )
+  match self.origin {
+    Some(point) => {
+      output.write_byte(1)
+      output.write_double_be(point.x)
+      output.write_double_be(point.y)
+    }
+    None => {
+      output.write_byte(0)
+      output.write_double_be(0.0)
+      output.write_double_be(0.0)
+    }
+  }
+  output.write_double_be(self.start_time_ms)
+  output.write_double_be(self.duration_ms)
+  output.write_double_be(self.max_movement)
+  output.to_bytes()
+}
+
+///|
+impl ViewStateValue for LongPressGestureState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes.length() != 42 {
+    return None
+  }
+  let phase = match bytes[0] {
+    0 => Some(LongPressGesturePhase::Idle)
+    1 => Some(Pressing)
+    2 => Some(Recognized)
+    _ => None
+  }
+  let origin_x = ViewStateValue::decode_view_state(0.0, bytes[2:10].to_owned())
+  let origin_y = ViewStateValue::decode_view_state(0.0, bytes[10:18].to_owned())
+  let start_time_ms = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[18:26].to_owned(),
+  )
+  let duration_ms = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[26:34].to_owned(),
+  )
+  let max_movement = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[34:42].to_owned(),
+  )
+  match (phase, origin_x, origin_y, start_time_ms, duration_ms, max_movement) {
+    (
+      Some(phase),
+      Some(origin_x),
+      Some(origin_y),
+      Some(start_time_ms),
+      Some(duration_ms),
+      Some(max_movement),
+    ) =>
+      Some({
+        phase,
+        origin: if bytes[1] == 1 {
+          Some(Point::new(x=origin_x, y=origin_y))
+        } else if bytes[1] == 0 {
+          None
+        } else {
+          return None
+        },
+        start_time_ms,
+        duration_ms,
+        max_movement,
+      })
+    _ => None
+  }
+}
+
+///|
+fn long_press_gesture_view_state_slot() -> ViewStateSlot[LongPressGestureState] {
+  ViewStateSlot::new(
+    key=DeclarationKey::string("moui.core.long-press-gesture"),
+    initial=LongPressGestureState::new(),
+  )
+}
+
+///|
+/// Whether a long-press recognizer is currently waiting on elapsed time.
+///
+/// The modifier reports this from `paint` through `ViewPaintPlan.animating`,
+/// which is the existing "this subtree needs another frame" latch. A hold
+/// produces no further pointer samples, so without a frame there is no clock
+/// sample either and the recognizer can never reach its duration; the runtime
+/// re-evaluates it from a synthesised `Move` while the latch is held.
+fn long_press_gesture_is_holding(state : ViewStateContext) -> Bool {
+  state.read_slot(long_press_gesture_view_state_slot()).phase == Pressing
 }
 
 ///|
@@ -60,6 +164,86 @@ test {
       state: DoubleTapGestureState::new(),
       recognized: false,
     }.state,
+  )
+}
+
+///|
+impl ViewStateValue for DoubleTapGestureState with fn view_state_type_key() {
+  DeclarationKey::string("moui.core.DoubleTapGestureState.v1")
+}
+
+///|
+impl ViewStateValue for DoubleTapGestureState with fn encode_view_state(self) {
+  let output = Buffer(size_hint=41)
+  match self.first_position {
+    Some(point) => {
+      output.write_byte(1)
+      output.write_double_be(point.x)
+      output.write_double_be(point.y)
+    }
+    None => {
+      output.write_byte(0)
+      output.write_double_be(0.0)
+      output.write_double_be(0.0)
+    }
+  }
+  output.write_double_be(self.first_time_ms)
+  output.write_double_be(self.timeout_ms)
+  output.write_double_be(self.max_distance)
+  output.to_bytes()
+}
+
+///|
+impl ViewStateValue for DoubleTapGestureState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes.length() != 41 {
+    return None
+  }
+  let first_x = ViewStateValue::decode_view_state(0.0, bytes[1:9].to_owned())
+  let first_y = ViewStateValue::decode_view_state(0.0, bytes[9:17].to_owned())
+  let first_time_ms = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[17:25].to_owned(),
+  )
+  let timeout_ms = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[25:33].to_owned(),
+  )
+  let max_distance = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[33:41].to_owned(),
+  )
+  match (first_x, first_y, first_time_ms, timeout_ms, max_distance) {
+    (
+      Some(first_x),
+      Some(first_y),
+      Some(first_time_ms),
+      Some(timeout_ms),
+      Some(max_distance),
+    ) =>
+      Some({
+        first_position: if bytes[0] == 1 {
+          Some(Point::new(x=first_x, y=first_y))
+        } else if bytes[0] == 0 {
+          None
+        } else {
+          return None
+        },
+        first_time_ms,
+        timeout_ms,
+        max_distance,
+      })
+    _ => None
+  }
+}
+
+///|
+fn double_tap_gesture_view_state_slot() -> ViewStateSlot[DoubleTapGestureState] {
+  ViewStateSlot::new(
+    key=DeclarationKey::string("moui.core.double-tap-gesture"),
+    initial=DoubleTapGestureState::new(),
   )
 }
 
@@ -321,10 +505,17 @@ fn LongPressGestureState::new(
 }
 
 ///|
+
+///|
+/// Recognition spans pointer events, so the caller supplies the runtime clock
+/// (`ViewEventContext.now_ms`) instead of a timestamp carried by the pointer
+/// event: not every host backend delivers one, and mixing a host epoch with
+/// the runtime animation clock left every press started at 0.0.
 fn LongPressGestureState::update(
   self : LongPressGestureState,
   event : PointerEvent,
   inside~ : Bool = true,
+  now_ms~ : Double,
 ) -> LongPressGestureResult {
   match event.phase {
     Down => {
@@ -340,46 +531,51 @@ fn LongPressGestureState::update(
         } else {
           None
         },
-        start_time_ms: event.time_ms,
+        start_time_ms: now_ms,
       }
-      { state: next, recognized: false, cancelled: false, }
+      { state: next, recognized: false, }
     }
     Move =>
       match self.origin {
         Some(origin) => {
           let outside = !inside ||
             point_distance(origin, event.position) > self.max_movement
-          let due = event.time_ms - self.start_time_ms >= self.duration_ms
-          if outside {
-            {
-              state: { ..self, phase: Cancelled, },
-              recognized: false,
-              cancelled: true,
-            }
-          } else if self.phase == Pressing && due {
-            {
-              state: { ..self, phase: Recognized, },
-              recognized: true,
-              cancelled: false,
-            }
+          // A `Pressing` record left behind by a dropped `Up` must not fire
+          // when a later hover Move happens to land on the old origin.
+          let stale = now_ms - self.start_time_ms > self.stale_horizon_ms()
+          let due = self.phase == Pressing &&
+            now_ms - self.start_time_ms >= self.duration_ms
+          if outside || stale {
+            { state: self.reset(), recognized: false, }
+          } else if due {
+            { state: { ..self, phase: Recognized, }, recognized: true, }
           } else {
-            { state: self, recognized: false, cancelled: false, }
+            { state: self, recognized: false, }
           }
         }
-        None => { state: self, recognized: false, cancelled: false, }
+        None => { state: self, recognized: false, }
       }
-    Up | Cancel | Exit => {
-      let cancelled = self.phase == Pressing
-      {
-        state: LongPressGestureState::new(
-          duration_ms=self.duration_ms,
-          max_movement=self.max_movement,
-        ),
-        recognized: false,
-        cancelled,
-      }
-    }
+    Up | Cancel | Exit => { state: self.reset(), recognized: false, }
   }
+}
+
+///|
+fn LongPressGestureState::reset(
+  self : LongPressGestureState,
+) -> LongPressGestureState {
+  LongPressGestureState::new(
+    duration_ms=self.duration_ms,
+    max_movement=self.max_movement,
+  )
+}
+
+///|
+/// How long a `Pressing` record may stay unrefreshed before it is treated as
+/// leftovers from a lost `Up` instead of a live press.
+fn LongPressGestureState::stale_horizon_ms(
+  self : LongPressGestureState,
+) -> Double {
+  self.duration_ms + max_double(1000.0, self.duration_ms * 4.0)
 }
 
 ///|
@@ -437,16 +633,40 @@ fn DoubleTapGestureState::tap(
 }
 
 ///|
+
+///|
+/// Arms from `Down`, not `Up`: a child tap modifier reports `activated` on the
+/// second `Up`, and an activated child short-circuits its ancestors
+/// (`moui/runtime/input_pointer.mbt`), so a double tap built on `Up` would
+/// never observe the event that completes it.
 fn DoubleTapGestureState::update(
   self : DoubleTapGestureState,
   event : PointerEvent,
   inside~ : Bool = true,
+  now_ms~ : Double,
 ) -> DoubleTapGestureResult {
-  if inside && event.phase == Up {
-    self.tap(event.position, event.time_ms)
-  } else {
-    { state: self, recognized: false, }
+  match event.phase {
+    Down =>
+      if inside {
+        self.tap(event.position, now_ms)
+      } else {
+        { state: self, recognized: false, }
+      }
+    // A cancelled or exited stream abandons the pending first tap; a normal
+    // `Up` keeps it, because the completing event is the next `Down`.
+    Cancel | Exit => { state: self.reset(), recognized: false, }
+    Move | Up => { state: self, recognized: false, }
   }
+}
+
+///|
+fn DoubleTapGestureState::reset(
+  self : DoubleTapGestureState,
+) -> DoubleTapGestureState {
+  DoubleTapGestureState::new(
+    timeout_ms=self.timeout_ms,
+    max_distance=self.max_distance,
+  )
 }
 
 ///|

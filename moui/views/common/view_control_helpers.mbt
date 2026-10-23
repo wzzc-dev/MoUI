@@ -219,6 +219,35 @@ pub fn view_max_int(left : Int32, right : Int32) -> Int32 {
 }
 
 ///|
+/// Decode consecutive big-endian doubles from a view-state slot payload,
+/// rejecting a corrupt sample instead of guessing at it.
+pub fn view_decode_doubles(
+  bytes : Bytes,
+  from~ : Int32,
+  count~ : Int32,
+) -> Array[Double]? {
+  let values : Array[Double] = []
+  let mut index = from
+  let mut failed = false
+  while index < from + count * 8 && !failed {
+    match
+      @core.ViewStateValue::decode_view_state(
+        0.0,
+        bytes[index:index + 8].to_owned(),
+      ) {
+      Some(value) => values.push(value)
+      None => failed = true
+    }
+    index = index + 8
+  }
+  if failed || values.length() != count {
+    None
+  } else {
+    Some(values)
+  }
+}
+
+///|
 pub fn view_button_next_state(
   current : @core.PressableState,
   inside : Bool,
