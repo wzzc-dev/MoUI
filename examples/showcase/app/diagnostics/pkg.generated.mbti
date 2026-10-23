@@ -123,6 +123,7 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
+  selection_text : String
   diagnostics_input : ShowcaseDiagnosticsInput
   diagnostics_panel_scroll : @core.Point
 }
@@ -173,6 +174,7 @@ pub(all) enum ShowcaseMsg {
   TodoRemove(Int32)
   RecordFileDrop(Array[String])
   RecordGesture(String)
+  SelectionTextChanged(String)
   ResizePanel(Double)
   DiagnosticsPanelScrolled(@core.Point)
 }

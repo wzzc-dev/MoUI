@@ -108,6 +108,8 @@ pub fn view_declaration(layout? : @core.DeclarationChannel, paint? : @core.Decla
 
 pub fn view_declaration_auto(String, @core.Theme?, Array[(String, @core.DeclarationKey)], Array[(String, @core.DeclarationKey)], Array[(String, @core.DeclarationKey)], layout_theme_dependent? : Bool, paint_theme_dependent? : Bool) -> @core.ViewDeclaration
 
+pub fn view_decode_doubles(Bytes, from~ : Int32, count~ : Int32) -> Array[Double]?
+
 pub fn view_double_option_key(Double?) -> @core.DeclarationKey
 
 pub fn[Msg] view_event_result(changed? : Bool, activated? : Bool, focused? : Bool, captured? : Bool, state? : @core.ViewStateContext?, text_control? : @core.TextControlStateContext?, dirty? : @core.ViewDirtyHint, messages? : Array[Msg]) -> @core.ViewEventResult[Msg]

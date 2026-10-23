@@ -79,7 +79,7 @@ pub(all) struct PresentationPlacement {
 pub fn PresentationPlacement::equal(Self, Self) -> Bool
 pub fn PresentationPlacement::new(candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets, clamp_to_viewport? : Bool) -> Self
 pub fn PresentationPlacement::not_equal(Self, Self) -> Bool
-pub fn PresentationPlacement::resolve(Self, @core.Rect, @core.Rect, @core.Size) -> @core.Rect
+pub fn PresentationPlacement::resolve(Self, @core.Rect, @core.Rect, @core.Size, direction~ : @core.LayoutDirection) -> @core.Rect
 pub fn PresentationPlacement::to_repr(Self) -> @debug.Repr
 pub fn PresentationPlacement::viewport(candidates? : Array[PresentationPlacementCandidate], viewport_insets? : @core.Insets) -> Self
 

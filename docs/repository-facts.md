@@ -78,7 +78,7 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 890 | 596 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2511 | 1110 | 141 |
+| core (moui/core/pkg.generated.mbti) | 2518 | 1113 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 606 | 279 | 31 |

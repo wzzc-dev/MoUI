@@ -62,8 +62,10 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 268,
     },
     {
+      // 304 -> 412 (2026-10-23, pointer-input-parity §4): finger identity and
+      // force decode evidence for every source kind.
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 304,
+      max_lines: 412,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
@@ -155,7 +157,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 433,
+      max_lines: 441,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -331,12 +333,18 @@ fn file_budgets() -> Array[FileBudget] {
     // Text controls now publish selection/caret actions for native and Web
     // accessibility clients.
     { path: "moui/views/text/text_input_controls.mbt", max_lines: 245, },
-    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 250, },
+    // 250 -> 317 (2026-10-23, pointer-input-parity): the pointer path now
+    // resolves click counts, a caret-drag anchor, and reveal requests.
+    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 317, },
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400, },
-    { path: "moui/views/text/text_input_editing.mbt", max_lines: 500, },
+    // 500 -> 307 (2026-10-23): the duplicated caret engine was deleted in
+    // favour of the core editing primitives, so the ratchet takes it back.
+    { path: "moui/views/text/text_input_editing.mbt", max_lines: 307, },
     { path: "moui/views/text/text_input_paint.mbt", max_lines: 510, },
     // 525 -> 640 (2026-09-05): richtext perf commits; see followups plan.
-    { path: "moui/views/text/text_area_control.mbt", max_lines: 640, },
+    // 640 -> 672 (2026-10-23): the field publishes its caret as a reveal
+    // request so an ancestor scroll view can bring it back into view.
+    { path: "moui/views/text/text_area_control.mbt", max_lines: 672, },
     { path: "moui/views/feedback/feedback_state.mbt", max_lines: 110, },
     { path: "moui/views/feedback/feedback_guidance.mbt", max_lines: 55, },
     { path: "moui/views/feedback/feedback_panel.mbt", max_lines: 105, },
@@ -421,8 +429,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/runtime/diagnostics.mbt", max_lines: 579, },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 305, },
     {
+      // 1113 -> 1116 (2026-10-23, §4): `last_event_hit_path` documents that the
+      // readout is not keyed by pointer id.
       path: "moui/runtime/diagnostics_inspector_accessors.mbt",
-      max_lines: 1113,
+      max_lines: 1116,
     },
     { path: "moui/runtime/program_runtime_diagnostics.mbt", max_lines: 292, },
     { path: "moui/runtime/program_runtime_effect_tasks.mbt", max_lines: 130, },

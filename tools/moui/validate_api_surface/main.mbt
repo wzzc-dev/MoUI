@@ -353,8 +353,25 @@ fn package_budgets() -> Array[PackageBudget] {
       // `main_axis_alignment`, `cross_axis_alignment`, `intrinsic_width`,
       // `intrinsic_height` (-7 lines, -6 pub). `ChildLayoutInfo.priority` was
       // never populated and is removed with them.
-      max_lines: 2511,
-      max_pub_lines: 1110,
+      // Pointer-input parity: +2 lines, +1 pub. `text_word_range_at` is the
+      // word-boundary subset double-click selection needs, and
+      // `TextControlStateContext.reveal` is the rect a text view publishes so a
+      // scrolling ancestor can bring a caret back into view. `PointerEvent.time_ms`
+      // was removed with them: only Linux ever filled it, so gesture timing read
+      // zero on macOS, Windows and Web while `ctx.now_ms` was already the
+      // runtime's single clock.
+      // Multi-pointer transport adds +2 lines, +0 pub: `PointerEvent.id` and
+      // `pressure` are fields of an existing `pub(all)` struct, defaulted in
+      // `PointerEvent::new` so no call site changes. They are transport-only
+      // until §7; the runtime keys capture and the frame-tick re-sample by id.
+      // RTL mirroring adds +3 lines, +2 pub: `Rect::mirrored_x` and
+      // `Insets::mirrored` are the one copy of the mirror formula, so the views
+      // helpers that each subpackage used to keep can be deleted instead of
+      // duplicated; `direction` labels on `AlignmentGuideSet::from_size` and
+      // `ChildLayoutInfo::new` and `OverlayPlacementContext.layout_direction`
+      // are existing surfaces widened, not new ones.
+      max_lines: 2518,
+      max_pub_lines: 1113,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

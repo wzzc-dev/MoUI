@@ -69,6 +69,8 @@ pub fn text_next_grapheme_caret_boundary(String, Int32) -> Int32
 
 pub fn text_previous_grapheme_caret_boundary(String, Int32) -> Int32
 
+pub fn text_word_range_at(String, Int32) -> TextRange
+
 // Errors
 
 // Types and methods
@@ -129,7 +131,7 @@ pub(all) struct AlignmentGuideSet {
   first_baseline : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AlignmentGuideSet::equal(Self, Self) -> Bool
-pub fn AlignmentGuideSet::from_size(Size, first_baseline? : Double?) -> Self
+pub fn AlignmentGuideSet::from_size(Size, first_baseline? : Double?, direction? : LayoutDirection) -> Self
 pub fn AlignmentGuideSet::not_equal(Self, Self) -> Bool
 pub fn AlignmentGuideSet::to_json(Self) -> Json
 pub fn AlignmentGuideSet::to_repr(Self) -> @debug.Repr
@@ -232,7 +234,7 @@ pub(all) struct ChildLayoutInfo {
 } derive(Eq, @debug.Debug)
 pub fn ChildLayoutInfo::baseline_or_estimate(Self) -> Double
 pub fn ChildLayoutInfo::equal(Self, Self) -> Bool
-pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, flex_weight? : Double) -> Self
+pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, flex_weight? : Double, direction? : LayoutDirection) -> Self
 pub fn ChildLayoutInfo::not_equal(Self, Self) -> Bool
 pub fn ChildLayoutInfo::to_repr(Self) -> @debug.Repr
 
@@ -839,6 +841,7 @@ pub(all) struct Insets {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Insets::all(Double) -> Self
 pub fn Insets::equal(Self, Self) -> Bool
+pub fn Insets::mirrored(Self, LayoutDirection) -> Self
 pub fn Insets::not_equal(Self, Self) -> Bool
 pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
 pub fn Insets::to_json(Self) -> Json
@@ -991,6 +994,7 @@ pub(all) struct OverlayPlacementContext {
   child_sizes : Array[Size]
   anchor_frames : Array[(String, Rect)]
   state : ViewStateContext
+  layout_direction : LayoutDirection
 }
 
 pub(all) struct PathSpec {
@@ -1072,11 +1076,12 @@ pub(all) struct PointerEvent {
   phase : PointerPhase
   button : Int32
   wheel_delta : Point
-  time_ms : Double
   modifiers : KeyModifiers
+  id : Int32
+  pressure : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PointerEvent::equal(Self, Self) -> Bool
-pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int32, wheel_delta? : Point, time_ms? : Double, modifiers? : KeyModifiers) -> Self
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int32, wheel_delta? : Point, modifiers? : KeyModifiers, id? : Int32, pressure? : Double) -> Self
 pub fn PointerEvent::not_equal(Self, Self) -> Bool
 pub fn PointerEvent::to_json(Self) -> Json
 pub fn PointerEvent::to_repr(Self) -> @debug.Repr
@@ -1164,6 +1169,7 @@ pub fn Rect::intersection(Self, Self) -> Self?
 pub fn Rect::is_empty(Self) -> Bool
 pub fn Rect::max_x(Self) -> Double
 pub fn Rect::max_y(Self) -> Double
+pub fn Rect::mirrored_x(Self, x~ : Double, width~ : Double, direction~ : LayoutDirection) -> Double
 pub fn Rect::new(x~ : Double, y~ : Double, width~ : Double, height~ : Double) -> Self
 pub fn Rect::not_equal(Self, Self) -> Bool
 pub fn Rect::offset(Self, dx? : Double, dy? : Double) -> Self
@@ -1771,6 +1777,7 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
   goal_column : Double?
+  reveal : Rect?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextControlStateContext::equal(Self, Self) -> Bool
 pub fn TextControlStateContext::not_equal(Self, Self) -> Bool

@@ -84,8 +84,8 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1685,
-      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments."
+      "maxLines": 1710,
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
@@ -174,8 +174,8 @@
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1514,
-      "reason": "Existing workbench integration test with declaration invalidation coverage. Raised 1520->1521: wbtest coverage growth."
+      "maxLines": 1515,
+      "reason": "Existing workbench integration test with declaration invalidation coverage. Raised 1520->1521: wbtest coverage growth. Raised 1514->1515 2026-10-23: the fixture enumerates every TextControlStateContext field, and pointer-input-parity added reveal."
     },
     {
       "path": "moui_skia_renderer/skia_renderer_text_wbtest.mbt",
@@ -214,8 +214,8 @@
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",
-      "maxLines": 1366,
-      "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration."
+      "maxLines": 1441,
+      "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration. Raised 1366->1441 2026-10-23 for pointer-input-parity evidence: long-press timed wake, caret reveal resolved against the placed tree, and the targeted-dispatch ancestor re-place regression."
     },
     {
       "path": "moui_sun/text/parser_test.mbt",
@@ -254,8 +254,8 @@
     },
     {
       "path": "moui_richtext/rich_text_markdown_session_editor.mbt",
-      "maxLines": 1316,
-      "reason": "Existing rich-text markdown session editor state and rendering. Raised 1313->1316: session-editor growth from the markdown slices."
+      "maxLines": 1315,
+      "reason": "Existing rich-text markdown session editor state and rendering. Raised 1313->1316: session-editor growth from the markdown slices. Lowered 1316->1315 2026-10-22: the gesture clock now comes from ViewEventContext.now_ms instead of a per-event timestamp field."
     },
     {
       "path": "moui_richtext/editor_selection.mbt",
