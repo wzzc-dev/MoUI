@@ -19,8 +19,16 @@ The initial addon supports deterministic `en-US` and `zh-Hans` catalogs:
 
 It intentionally does **not** provide ICU MessageFormat, gender/select rules,
 CLDR data, locale-aware date/number/currency/list formatting, catalog loading
-from a filesystem or network, automatic platform-locale detection, or RTL
-support. Language selection and writing direction are separate decisions.
+from a filesystem or network, automatic platform-locale detection, or any
+decision about writing direction. Language selection and writing direction are
+separate decisions, and the addon is not the place where direction is set.
+
+Direction is the framework's own concern: a host or app sets
+`Environment.layout_direction`, and layout mirroring follows from it. As of
+2026-10-23 that covers block placement — flex, flow, grid, padding, alignment
+and guides, scroll offsets, and popup placement all mirror — and does **not**
+cover run order inside a text block, because `TextSystem` measurement is still
+direction-free. Nothing here detects a locale and turns mirroring on by itself.
 
 ## Application pattern
 

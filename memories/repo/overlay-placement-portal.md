@@ -12,6 +12,10 @@
   differ. Layout caches must never key on anchor data.
 - `ViewNode.place_overlays(context)` (core, default None) is the hook overlay
   hosts implement; the geometry engine stays in `moui/views/presentation`.
+  Overlays escape the base layout pass, so `OverlayPlacementContext` carries
+  `layout_direction` itself (filled from the root environment by
+  `runtime_render_pipeline.mbt`) and `PresentationPlacement::resolve` takes a
+  required `direction~` — see `layout-direction-mirroring.md`.
 - `View::popup_host(base, specs)` = base-sized portal for control popups;
   `PresentationAnchor::HostBase` anchors to the base child frame.
 - Hoisted overlay children (`PlacedNode.overlay_child_indices`) are painted

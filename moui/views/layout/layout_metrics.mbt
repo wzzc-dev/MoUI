@@ -16,19 +16,6 @@ pub fn placement_width(width : Double, frame : @core.Rect) -> Double {
 }
 
 ///|
-pub fn layout_mirror_x(
-  frame : @core.Rect,
-  local_x : Double,
-  width : Double,
-  direction : @core.LayoutDirection,
-) -> Double {
-  match direction {
-    LeftToRight => frame.origin.x + local_x
-    RightToLeft => frame.origin.x + frame.size.width - local_x - width
-  }
-}
-
-///|
 pub fn layout_ceil_div(a : Int32, b : Int32) -> Int32 {
   let b = max_int(1, b)
   if a == 0 {

@@ -124,6 +124,17 @@ pub fn Insets::symmetric(
 }
 
 ///|
+/// Reading-order insets: padding and viewport margins are authored as
+/// leading/trailing distances, so under right-to-left layout the horizontal
+/// pair swaps. Vertical values are untouched.
+pub fn Insets::mirrored(self : Insets, direction : LayoutDirection) -> Insets {
+  match direction {
+    LeftToRight => self
+    RightToLeft => { ..self, left: self.right, right: self.left, }
+  }
+}
+
+///|
 pub fn Constraints::tight(size : Size) -> Constraints {
   { min: size, max: size, }
 }
@@ -213,6 +224,23 @@ pub fn Rect::area(self : Rect) -> Double {
     0.0
   } else {
     self.size.width * self.size.height
+  }
+}
+
+///|
+/// Reflect a box across the vertical centre line of `self`, so one placement
+/// routine serves both reading directions. `x` and the result live in `self`'s
+/// coordinate space; `width` is the extent of the box being placed, because
+/// mirroring a left edge means mirroring the whole box.
+pub fn Rect::mirrored_x(
+  self : Rect,
+  x~ : Double,
+  width~ : Double,
+  direction~ : LayoutDirection,
+) -> Double {
+  match direction {
+    LeftToRight => x
+    RightToLeft => self.origin.x + self.size.width - (x - self.origin.x) - width
   }
 }
 

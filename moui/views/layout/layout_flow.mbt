@@ -36,13 +36,18 @@ impl @core.ViewNode for Flow with fn layout(self, ctx) {
   let size = ctx.constraints.constrain(measured)
   let rows = flow_rows(sizes, available, self.spacing, self.row_spacing)
   let frames : Array[@core.Rect] = []
+  let container = @core.Rect::new(
+    x=0.0,
+    y=0.0,
+    width=size.width,
+    height=size.height,
+  )
   for item in rows {
     let item_size = sizes[item.index]
-    let x = layout_mirror_x(
-      @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-      item.x,
-      item_size.width,
-      ctx.environment.layout_direction,
+    let x = container.mirrored_x(
+      x=item.x,
+      width=item_size.width,
+      direction=ctx.environment.layout_direction,
     )
     frames.push(
       @core.Rect::new(

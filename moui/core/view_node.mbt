@@ -26,6 +26,10 @@ pub(all) struct OverlayPlacementContext {
   /// The host node's transient control state (e.g. `expanded` decides whether
   /// a control's popup participates in placement at all).
   state : ViewStateContext
+  /// Reading direction of the placed tree, taken from the root environment.
+  /// Overlays escape the base layout pass, so this is the only way a host can
+  /// mirror its popup against the UI it is anchored to.
+  layout_direction : LayoutDirection
 }
 
 ///|

@@ -34,6 +34,9 @@ pub extend PresentationAnchor with Eq::{not_equal, equal}
 
 ///|
 /// Candidate placement around an anchor. Candidates are tried in order.
+/// `Start` and `End` name the anchor's leading and trailing edges, and
+/// `Left`/`Right` are the two physical sides, so right-to-left layout mirrors
+/// each candidate rather than using a second set of names.
 pub(all) enum PresentationPlacementCandidate {
   AboveStart
   AboveCenter
@@ -267,27 +270,28 @@ pub fn PresentationPlacement::viewport(
 ///|
 /// Resolve a placement from an anchor frame and viewport. Candidates are
 /// attempted in declaration order; when none fit, the first candidate is
-/// clamped to the inset viewport.
+/// clamped to the inset viewport. Candidates are declared in reading order, so
+/// right-to-left layout mirrors each one before measuring the fit.
 pub fn PresentationPlacement::resolve(
   self : PresentationPlacement,
   anchor_frame : @core.Rect,
   viewport : @core.Rect,
   content_size : @core.Size,
+  direction~ : @core.LayoutDirection,
 ) -> @core.Rect {
+  // The margin pair is authored as leading/trailing distances, so under
+  // right-to-left the available rect starts at the mirrored inset.
+  let insets = self.viewport_insets.mirrored(direction)
   let available = @core.Rect::new(
-    x=viewport.origin.x + self.viewport_insets.left,
-    y=viewport.origin.y + self.viewport_insets.top,
+    x=viewport.origin.x + insets.left,
+    y=viewport.origin.y + insets.top,
     width=@common.view_max_double(
       0.0,
-      viewport.size.width -
-      self.viewport_insets.left -
-      self.viewport_insets.right,
+      viewport.size.width - insets.left - insets.right,
     ),
     height=@common.view_max_double(
       0.0,
-      viewport.size.height -
-      self.viewport_insets.top -
-      self.viewport_insets.bottom,
+      viewport.size.height - insets.top - insets.bottom,
     ),
   )
   let mut first = @core.Rect::new(
@@ -298,7 +302,7 @@ pub fn PresentationPlacement::resolve(
   )
   for candidate in self.candidates {
     let proposed = presentation_candidate_rect(
-      candidate, anchor_frame, content_size,
+      candidate, anchor_frame, content_size, direction,
     )
     if first.origin.x == available.origin.x &&
       first.origin.y == available.origin.y {
@@ -320,11 +324,42 @@ pub fn PresentationPlacement::resolve(
 }
 
 ///|
+/// Reflect one candidate into the reading direction. `Start`/`End` flip because
+/// they name the anchor's leading and trailing edges, `Left`/`Right` flip
+/// because they name physical sides, and the Above/Below axis is direction
+/// neutral. Centered variants are already symmetric, and for the side
+/// candidates `Start`/`Center`/`End` share one rectangle, so the suffix is kept.
+fn presentation_mirrored_candidate(
+  candidate : PresentationPlacementCandidate,
+  direction : @core.LayoutDirection,
+) -> PresentationPlacementCandidate {
+  match direction {
+    LeftToRight => candidate
+    RightToLeft =>
+      match candidate {
+        AboveStart => AboveEnd
+        AboveEnd => AboveStart
+        BelowStart => BelowEnd
+        BelowEnd => BelowStart
+        LeftStart => RightStart
+        LeftCenter => RightCenter
+        LeftEnd => RightEnd
+        RightStart => LeftStart
+        RightCenter => LeftCenter
+        RightEnd => LeftEnd
+        AboveCenter | BelowCenter | Center => candidate
+      }
+  }
+}
+
+///|
 fn presentation_candidate_rect(
   candidate : PresentationPlacementCandidate,
   anchor : @core.Rect,
   size : @core.Size,
+  direction : @core.LayoutDirection,
 ) -> @core.Rect {
+  let candidate = presentation_mirrored_candidate(candidate, direction)
   let x = match candidate {
     AboveStart | BelowStart | LeftStart | RightStart => anchor.origin.x
     AboveCenter | BelowCenter | LeftCenter | RightCenter | Center =>
@@ -736,7 +771,12 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
             height=measured.height,
           )
         _ =>
-          presentation.placement.resolve(anchor_frame, viewport_rect, measured)
+          presentation.placement.resolve(
+            anchor_frame,
+            viewport_rect,
+            measured,
+            direction=context.layout_direction,
+          )
       }
       pairs.push((child_index, frame))
       child_index = child_index + 1

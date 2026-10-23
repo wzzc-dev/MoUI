@@ -221,6 +221,7 @@ impl @core.ViewNode for DatePicker with fn place_overlays(_self, context) {
     context.host_frame,
     context.viewport,
     content_size,
+    direction=context.layout_direction,
   )
   Some([(0, frame)])
 }

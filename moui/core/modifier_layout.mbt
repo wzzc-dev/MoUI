@@ -186,10 +186,21 @@ priv struct AlignModifier {
 }
 
 ///|
-fn mod_aligned_rect(bounds : Rect, cs : Size, a : Alignment) -> Rect {
+fn mod_aligned_rect(
+  bounds : Rect,
+  cs : Size,
+  a : Alignment,
+  direction~ : LayoutDirection,
+) -> Rect {
   let w = min_double(bounds.size.width, cs.width)
   let h = min_double(bounds.size.height, cs.height)
-  let dx = max_double(0.0, bounds.size.width - w) * (a.x + 1.0) / 2.0
+  // `Alignment.x` is a visual -1/left .. 1/right axis, so under RTL the
+  // horizontal sign flips while y keeps pointing down.
+  let ax = match direction {
+    LeftToRight => a.x
+    RightToLeft => 0.0 - a.x
+  }
+  let dx = max_double(0.0, bounds.size.width - w) * (ax + 1.0) / 2.0
   let dy = max_double(0.0, bounds.size.height - h) * (a.y + 1.0) / 2.0
   Rect::new(x=bounds.origin.x + dx, y=bounds.origin.y + dy, width=w, height=h)
 }
@@ -210,6 +221,7 @@ fn[Msg] AlignModifier::to_any_modifier(
           Rect::new(x=0.0, y=0.0, width=s.width, height=s.height),
           cs,
           a,
+          direction=ctx.environment.layout_direction,
         ),
       ])
     },

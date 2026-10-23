@@ -109,6 +109,7 @@ impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
       ctx.child_sizes,
       ctx.child_flex_weights,
       size,
+      direction=ctx.environment.layout_direction,
     ),
     // Weighted children are measured under the loose main-axis extent but
     // placed into their narrower weighted share, so the frames below are
@@ -171,6 +172,7 @@ fn flex_child_frames(
   child_sizes : Array[@core.Size],
   child_flex_weights : Array[Double],
   size : @core.Size,
+  direction~ : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
   let count = child_sizes.length()
   let frames : Array[@core.Rect] = []
@@ -209,6 +211,16 @@ fn flex_child_frames(
       available_main - grown_total - total_spacing,
     )
     let offsets = flex_offsets(main_axis_alignment, remaining, spacing, count)
+    // Main-axis travel stays reading-order (the cursor walks from the leading
+    // edge); only the emitted x is reflected, so `MainEnd`, the `Space*` gaps
+    // and a column's `CrossStart`/`CrossEnd` all follow without a second
+    // alignment routine. In left-to-right `mirrored_x` is the identity.
+    let container = @core.Rect::new(
+      x=0.0,
+      y=0.0,
+      width=size.width,
+      height=size.height,
+    )
     let mut cursor = offsets.leading
     for index, child_size in child_sizes {
       let main_size = main_sizes[index]
@@ -226,14 +238,14 @@ fn flex_child_frames(
       let frame = match axis {
         Horizontal =>
           @core.Rect::new(
-            x=cursor,
+            x=container.mirrored_x(x=cursor, width=main_size, direction~),
             y=cross.offset,
             width=main_size,
             height=cross.size,
           )
         Vertical =>
           @core.Rect::new(
-            x=cross.offset,
+            x=container.mirrored_x(x=cross.offset, width=cross.size, direction~),
             y=cursor,
             width=cross.size,
             height=main_size,

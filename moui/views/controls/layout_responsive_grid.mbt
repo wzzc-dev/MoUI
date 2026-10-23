@@ -22,13 +22,7 @@ pub fn[Msg] responsive_grid(
     place=ctx => {
       let sizes = ctx.children.map(child => child.size)
       responsive_grid_place(
-        sizes,
-        ctx.frame,
-        width,
-        min_column_width,
-        row_spacing,
-        column_spacing,
-        ctx.layout_direction,
+        sizes, ctx, width, min_column_width, row_spacing, column_spacing,
       )
     },
     semantics_label="Responsive grid",
@@ -69,13 +63,13 @@ fn responsive_grid_measure(
 ///|
 fn responsive_grid_place(
   sizes : Array[@core.Size],
-  frame : @core.Rect,
+  ctx : @core.CustomPlacementContext,
   width : Double,
   min_column_width : Double,
   row_spacing : Double,
   column_spacing : Double,
-  direction : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
+  let frame = ctx.frame
   let available = @layout.placement_width(width, frame)
   let columns = responsive_grid_columns(
     available, min_column_width, column_spacing,
@@ -99,12 +93,7 @@ fn responsive_grid_place(
         column.to_double() * (column_width + column_spacing)
       rects.push(
         @core.Rect::new(
-          x=@layout.layout_mirror_x(
-            frame,
-            x - frame.origin.x,
-            column_width,
-            direction,
-          ),
+          x=ctx.mirror_x(x~, width=column_width),
           y~,
           width=column_width,
           height=sizes[index].height,

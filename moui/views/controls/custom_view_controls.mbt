@@ -71,14 +71,15 @@ impl @core.ViewNode for CustomChildrenLayout with fn declaration(self) {
 
 ///|
 impl @core.ViewNode for CustomChildrenLayout with fn layout(self, ctx) {
+  let direction = ctx.environment.layout_direction
   let children : Array[@core.ChildLayoutInfo] = []
   for size in ctx.child_sizes {
-    children.push(@core.ChildLayoutInfo::new(size~))
+    children.push(@core.ChildLayoutInfo::new(size~, direction~))
   }
   let layout_context = @core.CustomLayoutContext::{
     constraints: ctx.constraints,
     children,
-    layout_direction: ctx.environment.layout_direction,
+    layout_direction: direction,
     safe_area: @core.Insets::symmetric(),
     viewport: None,
   }
@@ -93,7 +94,7 @@ impl @core.ViewNode for CustomChildrenLayout with fn layout(self, ctx) {
     frame: absolute_frame,
     measured_size: size,
     children,
-    layout_direction: ctx.environment.layout_direction,
+    layout_direction: direction,
     safe_area: @core.Insets::symmetric(),
     viewport: None,
   }

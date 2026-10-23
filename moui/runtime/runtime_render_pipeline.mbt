@@ -76,6 +76,18 @@ fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
 }
 
 ///|
+/// The placed tree an input event is dispatched against. Layout is normally
+/// already settled by the previous frame; a key press or IME commit that needs
+/// geometry (a caret move in a multiline field measures the line it lands on)
+/// must not act on a stale tree, so settle it first when it is dirty.
+fn RuntimeState::layout_tree_for_input(self : RuntimeState) -> PlacedNode {
+  if self.dirty.needs_rebuild || self.dirty.needs_layout {
+    self.ensure_layout_tree()
+  }
+  self.layout_tree.root
+}
+
+///|
 fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
   self.stats.layout_pass_count = self.stats.layout_pass_count + 1
@@ -84,7 +96,6 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
-      layout_direction=self.environment.layout_direction,
     ),
   }
   self.anchor_registry.clear()
@@ -118,6 +129,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
     child_sizes: self.layout_tree.root.children.map(child => child.frame.size),
     anchor_frames: self.anchor_registry.snapshot(),
     state: self.element_tree.root.control.view_state,
+    layout_direction: self.environment.layout_direction,
   }
   let overrides : Array[(Int32, Array[(Int32, Rect)])] = []
   let spines : Array[ElementId] = []
@@ -148,7 +160,6 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
-      layout_direction=self.environment.layout_direction,
       overlay_overrides=self.overlay_overrides,
     ),
   }

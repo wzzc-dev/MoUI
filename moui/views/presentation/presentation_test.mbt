@@ -8,6 +8,7 @@ test "presentation placement falls back and clamps to viewport" {
     @core.Rect::new(x=42.0, y=4.0, width=20.0, height=10.0),
     @core.Rect::new(x=0.0, y=0.0, width=100.0, height=60.0),
     @core.Size::new(width=80.0, height=30.0),
+    direction=LeftToRight,
   )
   assert_true(resolved.origin.x >= 4.0)
   assert_true(resolved.origin.y >= 4.0)

@@ -14,7 +14,9 @@ pub(all) struct ChildLayoutInfo {
   /// child as baseline-less.
   first_baseline : Double?
   /// Alignment guides derived from the child size and baseline. Computed by
-  /// the runtime so authors do not have to reconstruct them per child.
+  /// the runtime so authors do not have to reconstruct them per child, and
+  /// resolved in reading order: `leading` is the edge the text starts at, so
+  /// it is the right edge under right-to-left layout.
   alignment_guides : AlignmentGuideSet
   /// Flex weight declared by the child. `0.0` means the child is not flex.
   flex_weight : Double
@@ -34,12 +36,17 @@ pub fn ChildLayoutInfo::new(
   size~ : Size,
   first_baseline~ : Double? = None,
   flex_weight~ : Double = 0.0,
+  direction~ : LayoutDirection = LeftToRight,
 ) -> ChildLayoutInfo {
   {
     size,
     first_baseline,
     flex_weight,
-    alignment_guides: AlignmentGuideSet::from_size(size, first_baseline~),
+    alignment_guides: AlignmentGuideSet::from_size(
+      size,
+      first_baseline~,
+      direction~,
+    ),
   }
 }
 
@@ -106,30 +113,27 @@ pub(all) struct CustomPlacementContext {
 pub fn AlignmentGuideSet::from_size(
   size : Size,
   first_baseline~ : Double? = None,
+  direction~ : LayoutDirection = LeftToRight,
 ) -> AlignmentGuideSet {
-  {
-    leading: 0.0,
-    center: size.width / 2.0,
-    trailing: size.width,
-    first_baseline,
+  // `leading` and `trailing` are reading-order words, so under right-to-left
+  // layout they sit on the opposite physical edge. `center` and the baseline
+  // are direction-free.
+  let (leading, trailing) = match direction {
+    LeftToRight => (0.0, size.width)
+    RightToLeft => (size.width, 0.0)
   }
+  { leading, center: size.width / 2.0, trailing, first_baseline, }
 }
 
 ///|
-/// Mirror an LTR x coordinate into the RTL frame. Layout authors should pass
-/// every child x through this helper so a single placement routine works in
-/// both reading directions.
+/// Mirror an x coordinate into the RTL frame. Layout authors should pass every
+/// child x through this helper so a single placement routine works in both
+/// reading directions; it is the delegate-facing spelling of
+/// `Rect::mirrored_x`, which is where the formula lives.
 pub fn CustomPlacementContext::mirror_x(
   self : CustomPlacementContext,
   x~ : Double,
   width~ : Double,
 ) -> Double {
-  match self.layout_direction {
-    LeftToRight => x
-    RightToLeft =>
-      self.frame.origin.x +
-      self.frame.size.width -
-      (x - self.frame.origin.x) -
-      width
-  }
+  self.frame.mirrored_x(x~, width~, direction=self.layout_direction)
 }

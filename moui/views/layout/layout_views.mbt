@@ -37,16 +37,19 @@ impl @core.ViewNode for PaddingLayout with fn child_constraints(
 
 ///|
 impl @core.ViewNode for PaddingLayout with fn layout(self, ctx) {
+  // Padding is authored as leading/trailing, so under RTL the child starts at
+  // the trailing inset. The available extent is unchanged either way.
+  let insets = self.insets.mirrored(ctx.environment.layout_direction)
   let child_size = first_child_size(ctx.child_sizes)
-  let size = ctx.constraints.constrain(child_size.inflate(self.insets))
+  let size = ctx.constraints.constrain(child_size.inflate(insets))
   // Clamp the child frame to the deflated available area so a greedy child
   // (e.g. web_view reporting max constraints) cannot overflow this node's
   // own frame in the place pass.
-  let available = ctx.constraints.deflate(self.insets)
+  let available = ctx.constraints.deflate(insets)
   @core.ViewLayoutResult::new(size~, child_frames=[
     @core.Rect::new(
-      x=self.insets.left,
-      y=self.insets.top,
+      x=insets.left,
+      y=insets.top,
       width=@common.view_min_double(
         @common.view_max_double(0.0, available.max.width),
         child_size.width,
@@ -358,13 +361,24 @@ impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
         self.row_spacing * @common.view_max_int(0, rows - 1).to_double(),
     ),
   )
+  let container = @core.Rect::new(
+    x=0.0,
+    y=0.0,
+    width=measured.width,
+    height=measured.height,
+  )
+  let direction = ctx.environment.layout_direction
   let frames : Array[@core.Rect] = []
   for index, _size in ctx.child_sizes {
     let row = index / columns
     let column = index % columns
     frames.push(
       @core.Rect::new(
-        x=column.to_double() * (cell_width + self.column_spacing),
+        x=container.mirrored_x(
+          x=column.to_double() * (cell_width + self.column_spacing),
+          width=cell_width,
+          direction~,
+        ),
         y=row.to_double() * (cell_height + self.row_spacing),
         width=cell_width,
         height=cell_height,

@@ -95,7 +95,6 @@ fn ElementNode::place_with_text_system(
   environment~ : Environment,
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
-  layout_direction~ : LayoutDirection = LeftToRight,
   overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
 ) -> PlacedNode {
   if !self.has_dirty_layout() &&
@@ -124,7 +123,6 @@ fn ElementNode::place_with_text_system(
     environment~,
     style~,
     text_system~,
-    layout_direction~,
     overlay_overrides~,
   )
   self.layout_cache.cached_place_frame = Some(bounds)
@@ -143,7 +141,6 @@ fn ElementNode::place_measured_with_text_system(
   environment~ : Environment,
   style~ : ViewStyle,
   text_system~ : TextSystem,
-  layout_direction~ : LayoutDirection,
   overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
   accumulated_clip~ : Rect? = None,
   fit_measured_sizes~ : Bool = false,
@@ -229,7 +226,6 @@ fn ElementNode::place_measured_with_text_system(
           environment=child_environment,
           style=child_style,
           text_system~,
-          layout_direction~,
           overlay_overrides~,
           // Hoisted popups escape ancestor clips by design.
           accumulated_clip=if is_overlay { None } else { child_clip },
