@@ -23,6 +23,7 @@ fn tap_with_frame_test_context(event : AppEvent) -> ViewEventContext {
       selection: None,
       text_selection_anchor: None,
       goal_column: None,
+      reveal: None,
       text_selection_origin: None,
       composition: None,
       composition_cursor: None,

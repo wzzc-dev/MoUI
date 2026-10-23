@@ -11,6 +11,7 @@ test "the text field editing overlay survives a caret-less text system" {
     selection: None,
     text_selection_anchor: None,
     goal_column: None,
+    reveal: None,
     text_selection_origin: None,
     composition: None,
     composition_cursor: None,

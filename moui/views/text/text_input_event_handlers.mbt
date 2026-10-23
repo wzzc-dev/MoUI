@@ -8,7 +8,7 @@ fn[Msg] handle_text_field_event(
   search_bar~ : Bool,
   on_clear~ : Msg?,
 ) -> @core.ViewEventResult[Msg] {
-  match ctx.event {
+  let result = match ctx.event {
     Pointer(event) =>
       handle_text_field_pointer(
         ctx,
@@ -24,6 +24,48 @@ fn[Msg] handle_text_field_event(
     TextInput(event) =>
       view_text_input_result(ctx, value~, on_input~, event, record_history=true)
     _ => @core.ViewEventResult::ignored()
+  }
+  text_field_reveal_caret(ctx, value~, font~, search_bar~, result)
+}
+
+///|
+/// Publish the caret's surface rect when the caret or the selection
+/// moved. A single-line field owns no viewport, so this is the only
+/// reveal path it has: the runtime scrolls the nearest `ScrollView`
+/// ancestor to it, which is what makes a long form usable on a phone.
+fn[Msg] text_field_reveal_caret(
+  ctx : @core.ViewEventContext,
+  value~ : String,
+  font~ : @core.FontSpec,
+  search_bar~ : Bool,
+  result : @core.ViewEventResult[Msg],
+) -> @core.ViewEventResult[Msg] {
+  let control = match result.text_control {
+    None => return result
+    Some(control) => control
+  }
+  if control.caret == ctx.text_control.caret &&
+    control.selection == ctx.text_control.selection {
+    return result
+  }
+  let display_text = text_with_composition(value, control, focused=true)
+  let text_frame = single_line_text_frame(ctx.frame, search_bar, value != "")
+  let layout = ctx.text_system.measure_text(
+    @core.TextLayoutInput::new(
+      text=display_text,
+      font~,
+      max_width=text_frame.size.width,
+    ),
+  )
+  let visual_caret = text_field_visual_caret(value, control, focused=true)
+  let cursor_x = text_frame.origin.x +
+    caret_offset(layout.caret_positions, visual_caret)
+  {
+    ..result,
+    text_control: Some({
+      ..control,
+      reveal: Some(text_editing_exact_cursor_rect(text_frame, cursor_x)),
+    }),
   }
 }
 
@@ -62,7 +104,12 @@ fn[Msg] handle_text_field_pointer(
     }
   }
   if event.phase == Down && ctx.frame.contains(event.position) {
-    let caret = single_line_text_caret_at_position(
+    let clicks = text_click_count_at_down(
+      ctx.state,
+      now_ms=ctx.now_ms,
+      position=event.position,
+    )
+    let hit = single_line_text_caret_at_position(
       text,
       ctx.frame,
       font,
@@ -70,11 +117,17 @@ fn[Msg] handle_text_field_pointer(
       search_bar,
       event.position,
     )
+    let selection = text_click_selection(text, hit, count=clicks.count)
+    let caret = match selection {
+      Some(range) => range.end
+      None => hit
+    }
     let next_control = {
       ..ctx.text_control,
       caret,
-      selection: None,
+      selection,
       text_selection_anchor: Some(caret),
+      text_selection_origin: Some(event.position),
       goal_column: None,
       composition: None,
       composition_cursor: None,
@@ -84,45 +137,60 @@ fn[Msg] handle_text_field_pointer(
       focused=true,
       captured=true,
       text_control=Some(next_control),
+      state=Some(ctx.state.with_slot(text_click_count_slot(), clicks)),
       dirty=ViewPaintDirty,
     )
   } else if event.phase == Move &&
     ctx.text_control.text_selection_anchor is Some(anchor) {
-    let caret = single_line_text_caret_at_position(
-      text,
-      ctx.frame,
-      font,
-      ctx.text_system,
-      search_bar,
-      event.position,
-    )
-    let selection = if caret == anchor {
-      None
-    } else {
-      Some(
-        @core.TextRange::new(
-          start=@core.min_int(anchor, caret),
-          end=@core.max_int(anchor, caret),
-        ),
-      )
-    }
-    if caret != ctx.text_control.caret ||
-      selection != ctx.text_control.selection {
+    if text_pointer_is_stationary(ctx.text_control, position=event.position) {
+      // The press's own sample stream: keep the gesture alive without
+      // pretending the pointer travelled.
       @common.view_event_result(
-        changed=true,
+        focused=true,
         captured=true,
-        text_control=Some({ ..ctx.text_control, caret, selection, }),
-        dirty=ViewPaintDirty,
+        text_control=Some(ctx.text_control),
       )
     } else {
-      @core.ViewEventResult::ignored()
+      let caret = single_line_text_caret_at_position(
+        text,
+        ctx.frame,
+        font,
+        ctx.text_system,
+        search_bar,
+        event.position,
+      )
+      let selection = if caret == anchor {
+        None
+      } else {
+        Some(
+          @core.TextRange::new(
+            start=@core.min_int(anchor, caret),
+            end=@core.max_int(anchor, caret),
+          ),
+        )
+      }
+      if caret != ctx.text_control.caret ||
+        selection != ctx.text_control.selection {
+        @common.view_event_result(
+          changed=true,
+          captured=true,
+          text_control=Some({ ..ctx.text_control, caret, selection, }),
+          dirty=ViewPaintDirty,
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
     }
   } else if event.phase == Up &&
     ctx.text_control.text_selection_anchor is Some(_) {
     @common.view_event_result(
       changed=true,
       captured=true,
-      text_control=Some({ ..ctx.text_control, text_selection_anchor: None, }),
+      text_control=Some({
+        ..ctx.text_control,
+        text_selection_anchor: None,
+        text_selection_origin: None,
+      }),
       dirty=ViewPaintDirty,
     )
   } else {
@@ -180,7 +248,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if event.key == "Backspace" {
-    match active_text_selection(ctx.text_control.selection) {
+    match @core.active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
         return view_text_input_result(
           ctx,
@@ -200,7 +268,7 @@ fn[Msg] handle_text_field_keyboard(
     }
   }
   if event.key == "Delete" {
-    match active_text_selection(ctx.text_control.selection) {
+    match @core.active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
         return view_text_input_result(
           ctx,

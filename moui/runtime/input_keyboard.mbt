@@ -3,6 +3,7 @@ fn ElementNode::dispatch_keyboard(
   self : ElementNode,
   target : ElementId,
   event : KeyboardEvent,
+  layout~ : PlacedNode,
   environment~ : Environment = Environment::neutral(),
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem = TextSystem::fallback(),
@@ -11,7 +12,9 @@ fn ElementNode::dispatch_keyboard(
     self.dispatch_view_event(
       self.view_node,
       Keyboard(event),
-      RenderNode::empty(),
+      layout
+      .event_render_node_for(self.id)
+      .unwrap_or_else(() => RenderNode::empty()),
       text_system,
       environment~,
       style~,
@@ -27,6 +30,7 @@ fn ElementNode::dispatch_keyboard(
       let result = child.dispatch_keyboard(
         target,
         event,
+        layout~,
         environment=child_environment,
         style=child_style,
         text_system~,

@@ -8,13 +8,14 @@ fn ShowcaseModel::interaction_lab_section(
   self.section_panel(
     theme,
     "Interaction Lab",
-    "Tooltip, file drop, focus, shortcuts, variants, and image lifecycle states.",
+    "Tooltip, file drop, focus, shortcuts, text selection, variants, and image lifecycle states.",
     grid(
       [
         self.tooltip_demo_card(theme, card_width),
         self.file_drop_card(theme, card_width, self.last_drop_label),
         self.focus_shortcut_card(theme, card_width),
         self.gesture_card(theme, card_width, self.gesture_label),
+        self.text_selection_card(theme, card_width, self.selection_text),
         self.popover_dropdown_card(theme, card_width),
         self.variant_gallery_card(theme, card_width),
         self.image_lifecycle_card(theme, card_width),
@@ -122,6 +123,69 @@ fn ShowcaseModel::gesture_card(
     ),
     width~,
     height=146.0,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+/// A fixed passage, so the Interaction Lab test can name the exact word and
+/// line a gesture must select, and so the lower lines only become readable
+/// once a gesture makes the scrolling ancestor reveal the caret.
+fn showcase_selection_passage_lines() -> Array[String] {
+  [
+    "Pointer parity starts with honest input.", "Scroll reveals what selection moves.",
+    "Double-click picks the word under you.", "Triple-click picks the whole line here.",
+    "Drag past the edge and the view follows.", "Every line above stays where it was.",
+    "Touch-era selection has no excuses.", "Fields must tell the truth about state.",
+  ]
+}
+
+///|
+fn showcase_selection_passage() -> String {
+  showcase_selection_passage_lines().join("\n")
+}
+
+///|
+fn ShowcaseModel::text_selection_card(
+  self : ShowcaseModel,
+  theme : @moui.Theme,
+  width : Double,
+  value : String,
+) -> @moui.View[ShowcaseMsg] {
+  ignore(self)
+  let inner_width = width - 32.0
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Text Selection", width=inner_width, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        text(
+          "Double-click a word, triple-click a line, drag to extend. The field is scrolled to keep the caret visible.",
+          width=inner_width,
+          height=40.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        scroll_view(
+          text_area(
+            value,
+            on_input=text => SelectionTextChanged(text),
+            lines=8,
+            line_height=22.0,
+            theme~,
+            width=inner_width,
+          ).semantic_id("showcase.text-selection"),
+          width=inner_width,
+          height=96.0,
+        ).semantic_id("showcase.text-selection-viewport"),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=Start,
+    ),
+    width~,
+    height=224.0,
     padding=theme.spacing_scale.md,
   )
 }

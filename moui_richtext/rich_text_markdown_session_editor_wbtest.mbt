@@ -30,6 +30,7 @@ fn session_editor_text_control(
     selection: None,
     text_selection_anchor: anchor,
     goal_column: None,
+    reveal: None,
     text_selection_origin: origin,
     composition: None,
     composition_cursor: None,

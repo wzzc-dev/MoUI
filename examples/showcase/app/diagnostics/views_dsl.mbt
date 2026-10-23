@@ -37,6 +37,7 @@ using @views {
   shortcut_button,
   stat_card,
   text,
+  text_area,
   text_field,
   toggle,
   tooltip,

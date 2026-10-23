@@ -686,6 +686,81 @@ test "runtime scrolls nearest scroll view to keyed descendant" {
 }
 
 ///|
+/// A scroll request is handed to the scroll view by a targeted dispatch, which
+/// does not unwind through the pointer path. Placement caches are keyed by
+/// frame, so every ancestor of the scrolled node has to be dropped as well:
+/// otherwise the next layout pass hands back the subtree captured before the
+/// offset changed, and the content paints at the old position while the
+/// control's own state says it scrolled. One ancestor (the column) is enough to
+/// show it, because the scroll view's own cache is already cleared by its
+/// layout hint.
+test "runtime re-places the ancestors of a scroll view driven by a targeted event" {
+  let content : @core.View[Unit] = @views.column(
+    [
+      @views.text("Before", width=100.0, height=240.0),
+      @views.text("Target", width=100.0, height=120.0).key("target"),
+    ],
+    spacing=0.0,
+    align=Start,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root=@views.column(
+      [@views.scroll_view(content, width=100.0, height=100.0)],
+      spacing=0.0,
+      align=Start,
+    ),
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  ignore(runtime.draw_frame())
+  let scroll_child = runtime.layout().children[0].children[0].children[0]
+  assert_true(scroll_child.frame.origin.y == 0.0)
+  assert_true(runtime.scroll_to_key("target", alignment=Start))
+  ignore(runtime.draw_frame())
+  let scrolled = runtime.layout().children[0].children[0].children[0]
+  assert_true(scrolled.frame.origin.y == -240.0)
+}
+
+///|
+/// Touch-era baseline: a caret that moves below the fold of an enclosing
+/// `ScrollView` must be scrolled back into view without the app wiring a
+/// key or a `ScrollRequest`. The text view publishes the caret's surface
+/// rect as a reveal request and the runtime consumes it against the
+/// placed tree, so this is the whole contract: click near the bottom
+/// edge, then the ancestor offset follows the caret.
+test "runtime scrolls a scrolling ancestor to reveal a moved caret" {
+  let content : @core.View[Unit] = @views.column(
+    [
+      @views.text("Above", width=100.0, height=90.0),
+      @views.text_field("Hello world", on_input=_value => (), width=100.0),
+    ],
+    spacing=0.0,
+    align=Start,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root=@views.scroll_view(content, width=100.0, height=100.0),
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  ignore(runtime.draw_frame())
+  assert_true(runtime.layout().children[0].frame.origin.y == 0.0)
+  // The visible band of the field is y 90..100; the click lands there but
+  // the caret it places paints below the viewport edge.
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=95.0),
+        phase=Down,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  assert_true(runtime.layout().children[0].frame.origin.y < 0.0)
+  let input = runtime.focused_text_input()
+  guard input.focused else { fail("expected the field to take the click") }
+  let caret_bottom = input.caret_rect.origin.y + input.caret_rect.size.height
+  assert_true(input.caret_rect.origin.y >= 0.0 && caret_bottom <= 100.0)
+}
+
+///|
 test "runtime propagates text style modifiers into draw commands" {
   let color = @core.Color::rgba(r=0.91, g=0.12, b=0.18)
   let font = @core.FontSpec::new(size=23.0, weight=700)

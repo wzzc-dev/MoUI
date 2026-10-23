@@ -33,6 +33,7 @@ priv struct ElementControlState {
   mut composition : String?
   mut composition_cursor : TextRange?
   mut goal_column : Double?
+  mut reveal : Rect?
   text_undo_stack : Array[@core.TextHistoryEntryContext]
   text_redo_stack : Array[@core.TextHistoryEntryContext]
 }
@@ -109,7 +110,18 @@ fn ElementControlState::text_context(
     undo_stack: self.text_undo_stack.copy(),
     redo_stack: self.text_redo_stack.copy(),
     goal_column: self.goal_column,
+    reveal: self.reveal,
   }
+}
+
+///|
+/// Consume a reveal request: the element reports the rect it wants made
+/// visible exactly once, and the frame that scrolls it into view clears
+/// the request. A view never has to reset the field itself.
+fn ElementControlState::take_reveal(self : ElementControlState) -> Rect? {
+  let reveal = self.reveal
+  self.reveal = None
+  reveal
 }
 
 ///|
@@ -124,6 +136,7 @@ fn ElementControlState::apply_text_context(
   self.composition = value.composition
   self.composition_cursor = value.composition_cursor
   self.goal_column = value.goal_column
+  self.reveal = value.reveal
   self.text_undo_stack.clear()
   self.text_undo_stack.append(value.undo_stack.copy())
   self.text_redo_stack.clear()
@@ -260,6 +273,7 @@ fn ElementControlState::new() -> ElementControlState {
     selection: None,
     text_selection_anchor: None,
     goal_column: None,
+    reveal: None,
     text_selection_origin: None,
     composition: None,
     composition_cursor: None,

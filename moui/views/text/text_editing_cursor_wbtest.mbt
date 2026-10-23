@@ -18,6 +18,7 @@ test "native range replacement and selection normalize grapheme boundaries" {
     selection: None,
     text_selection_anchor: None,
     goal_column: None,
+    reveal: None,
     text_selection_origin: None,
     composition: Some("pending"),
     composition_cursor: Some(@core.TextRange::collapsed(1)),

@@ -289,6 +289,17 @@ Linker/Consonant/Extend。下载官方 Unicode 17.0.0 UCD URL 中固定的 Unico
 Indic_Conjunct_Break linker 规则而不是早先手写的 virama 捷径，并使删除和 IME offsets 与完整默认字素断点
 fixture 保持一致。
 
+**词选择边界子集**
+
+双击选词使用 `@core.text_word_range_at(text, index)`，它是 UAX#29 词断界的**有界子集**，不是第二套完整
+Unicode 表。每个码点先走 ASCII 快路径，再落进固定码段清单：字母、数字与 `_` 连成词，空白永不连词，
+汉字、平假名、片假名、谚文音节与字母、CJK 与全角标点、通用标点、控制字符与 emoji 逐字成词——与
+Flutter 和 ICU 对 CJK 的口径一致。字素安全没有重新实现：解析出的范围仍走既有
+`normalize_grapheme_range_fast`，因此 ZWJ 家庭 emoji 会整体选中而不会在序列内部断开。该子集明确
+**不实现**希伯来与阿拉伯文字的连写词形，也**不**在 emoji ZWJ 序列内部细分；两者都记录为已知 gap，
+而不是声称覆盖。三击选中的是硬行（以 `\n` 分隔的源文本行），而不是重排后的视觉行，所以一次点击选中的
+就是 app 写入的内容。
+
 **原生 IME 运行时就绪性**
 
 原生 IME 运行时就绪性按平台划分：macOS 已记录匹配宿主 Markdown Editor/AppKit artifacts，覆盖候选 anchor、

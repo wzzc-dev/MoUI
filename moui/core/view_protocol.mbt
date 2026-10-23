@@ -274,6 +274,9 @@ pub(all) struct TextControlStateContext {
   /// 垂直移动的目标列（M6②，VS Code 口径）：ArrowUp/Down 播种并保持，
   /// 水平移动/点击/文本插入重置为 None。None = 尚无目标列。
   goal_column : Double?
+  /// 表面坐标下希望被最近滚动祖先露出的矩形（caret 或选区）。运行时在
+  /// 事件后的那一帧消费它并清回 None，所以视图只在 caret/选区变化时填写。
+  reveal : Rect?
 } derive(Eq, Debug, ToJson)
 
 ///|

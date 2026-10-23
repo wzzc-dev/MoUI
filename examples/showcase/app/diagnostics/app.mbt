@@ -33,6 +33,7 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
+  selection_text : String
   diagnostics_input : ShowcaseDiagnosticsInput
   diagnostics_panel_scroll : @geometry.Point
 }
@@ -91,6 +92,7 @@ pub(all) enum ShowcaseMsg {
   TodoRemove(Int32)
   RecordFileDrop(Array[String])
   RecordGesture(String)
+  SelectionTextChanged(String)
   ResizePanel(Double)
   DiagnosticsPanelScrolled(@geometry.Point)
 }
@@ -170,6 +172,7 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_draft: "",
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
+    selection_text: showcase_selection_passage(),
     diagnostics_input: ShowcaseDiagnosticsInput::fallback(),
     diagnostics_panel_scroll: @geometry.Point::new(x=0.0, y=0.0),
   }
@@ -378,6 +381,7 @@ pub fn ShowcaseModel::update(
     RecordFileDrop(paths) =>
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)", }
     RecordGesture(label) => { ..self, gesture_label: label, }
+    SelectionTextChanged(value) => { ..self, selection_text: value, }
     ResizePanel(size) => { ..self, slider_value: size / 520.0, }
     DiagnosticsPanelScrolled(point) =>
       { ..self, diagnostics_panel_scroll: point, }
