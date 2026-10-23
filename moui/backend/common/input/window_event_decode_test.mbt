@@ -259,6 +259,114 @@ test "host decodes pointer moved with the default primary button" {
 }
 
 ///|
+test "host decodes finger identity and pressure onto the pointer stream" {
+  // The per-finger `PointerEvent.id` is what lets the runtime key capture,
+  // press and hover per stream; flattened to one slot, a second touch would
+  // steal the target the first finger is dragging.
+  match
+    @input.window_event_to_host_with_modifiers(
+      PointerMoved(
+        None,
+        PhysicalPositionF64(12.0, 16.0),
+        false,
+        Touch(
+          @window_core.FingerId::from_raw(7),
+          Some(@window_core.Force::Normalized(0.4)),
+        ),
+      ),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+    ) {
+    Some(Pointer(pointer)) => {
+      assert_true(pointer.phase == Move)
+      assert_eq(pointer.id, 7)
+      assert_true(pointer.pressure == 0.4)
+    }
+    _ => fail("expected a pointer event for the second finger")
+  }
+  match
+    @input.window_event_to_host_with_modifiers(
+      PointerButton(
+        None,
+        Pressed,
+        PhysicalPositionF64(20.0, 28.0),
+        false,
+        Touch(
+          @window_core.FingerId::from_raw(3),
+          Some(@window_core.Force::Calibrated(6.0, 12.0)),
+        ),
+      ),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+      scale_factor=2.0,
+    ) {
+    Some(Pointer(pointer)) => {
+      assert_true(pointer.phase == Down && pointer.button == 0)
+      assert_eq(pointer.id, 3)
+      assert_true(pointer.pressure == 0.5)
+      assert_true(pointer.position == @core.Point::new(x=10.0, y=14.0))
+    }
+    _ => fail("expected a pointer event for the pressing finger")
+  }
+}
+
+///|
+test "streams without a force report a full press" {
+  // Mouse, pen and an unnamed source are the primary stream (id `0`) and carry
+  // no force, so `pressure` stays at the documented 1.0. `Calibrated` divides
+  // by the host's own range, so an over-range or degenerate report is clamped
+  // back into the range core promises rather than leaking past 1.0 or NaN.
+  let position = @core.Point::new(x=4.0, y=6.0)
+  let cases : Array[(@window_core.PointerSource, @core.PointerEvent)] = [
+    (Mouse, @core.PointerEvent::new(position~, phase=Move)),
+    (Unknown, @core.PointerEvent::new(position~, phase=Move)),
+    (
+      Touch(@window_core.FingerId::from_raw(0), None),
+      @core.PointerEvent::new(position~, phase=Move),
+    ),
+    (
+      TabletTool(
+        Pen,
+        @window_core.TabletToolData::TabletToolData(
+          Some(@window_core.Force::Calibrated(2.0, 8.0)),
+          None,
+          None,
+          None,
+          None,
+        ),
+      ),
+      @core.PointerEvent::new(position~, phase=Move, pressure=0.25),
+    ),
+    (
+      Touch(
+        @window_core.FingerId::from_raw(2),
+        Some(@window_core.Force::Calibrated(9.0, 2.0)),
+      ),
+      @core.PointerEvent::new(position~, phase=Move, id=2),
+    ),
+    (
+      Touch(
+        @window_core.FingerId::from_raw(2),
+        Some(@window_core.Force::Calibrated(0.0, 0.0)),
+      ),
+      @core.PointerEvent::new(position~, phase=Move, id=2),
+    ),
+  ]
+  for _index, case in cases {
+    let (source, expected) = case
+    match
+      @input.window_event_to_host_with_modifiers(
+        PointerMoved(None, PhysicalPositionF64(4.0, 6.0), false, source),
+        @core.Point::new(x=0.0, y=0.0),
+        @core.KeyModifiers::none(),
+      ) {
+      Some(Pointer(pointer)) => assert_true(pointer == expected)
+      _ => fail("expected a decoded pointer event")
+    }
+  }
+}
+
+///|
 test "surface host resizes through host event" {
   let surface = @input.SurfaceState::new(
     metrics=@core.SurfaceMetrics::from_logical(

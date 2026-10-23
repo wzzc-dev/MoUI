@@ -201,6 +201,55 @@ fn drag_drop_position_to_core(
 }
 
 ///|
+/// Core spells "the host gives no pressure signal" as `1.0`, so a missing or
+/// unusable force reports a full press. `Calibrated` divides by the host's
+/// maximum and can land outside `0..1` (a hard-pressed stylus, or a zero range
+/// producing NaN), so the result is clamped back into the documented range.
+fn force_to_pressure(
+  force : @window_core.Force?,
+  angle : @window_core.TabletToolAngle?,
+) -> Double {
+  match force {
+    None => 1.0
+    Some(force) => {
+      let normalized = force.normalized(angle)
+      if normalized.is_nan() || normalized >= 1.0 {
+        1.0
+      } else if normalized <= 0.0 {
+        0.0
+      } else {
+        normalized
+      }
+    }
+  }
+}
+
+///|
+/// Pointer identity for a move stream. Mouse, pen and trackpad share the
+/// primary id (`0`); a finger keeps the host's own id so simultaneous touches
+/// stay distinguishable downstream.
+fn pointer_source_to_identity(
+  source : @window_core.PointerSource,
+) -> (Int32, Double) {
+  match source {
+    Mouse | Unknown => (0, 1.0)
+    Touch(finger, force) => (finger.into_raw(), force_to_pressure(force, None))
+    TabletTool(_, data) => (0, force_to_pressure(data.force(), data.angle()))
+  }
+}
+
+///|
+fn button_source_to_identity(
+  source : @window_core.ButtonSource,
+) -> (Int32, Double) {
+  match source {
+    Mouse(_) | Unknown(_) => (0, 1.0)
+    Touch(finger, force) => (finger.into_raw(), force_to_pressure(force, None))
+    TabletTool(_, _, data) => (0, force_to_pressure(data.force(), data.angle()))
+  }
+}
+
+///|
 pub fn window_event_to_host_with_modifiers(
   event : @window_core.WindowEvent,
   last_pointer : @core.Point,
@@ -220,21 +269,26 @@ pub fn window_event_to_host_with_modifiers(
           ),
         ),
       )
-    PointerMoved(_, position, _, _) =>
+    PointerMoved(_, position, _, source) => {
+      let (id, pressure) = pointer_source_to_identity(source)
       Some(
         Pointer(
           @core.PointerEvent::new(
             position=physical_position_to_core(position, scale_factor~),
             phase=Move,
             modifiers~,
+            id~,
+            pressure~,
           ),
         ),
       )
+    }
     PointerButton(_, state, position, _, source) =>
       match source.mouse_button() {
         Some(button) =>
           match mouse_button_to_core(button) {
-            Some(button) =>
+            Some(button) => {
+              let (id, pressure) = button_source_to_identity(source)
               Some(
                 Pointer(
                   @core.PointerEvent::new(
@@ -242,9 +296,12 @@ pub fn window_event_to_host_with_modifiers(
                     phase=element_state_to_pointer_phase(state),
                     button~,
                     modifiers~,
+                    id~,
+                    pressure~,
                   ),
                 ),
               )
+            }
             None => None
           }
         None => None
@@ -336,6 +393,11 @@ pub fn window_event_to_host_with_modifiers(
       )
     ThemeChanged(theme) =>
       Some(ThemeChanged(window_theme_to_color_scheme(theme)))
+    // `PointerEntered`/`PointerLeft` are dropped on purpose: the runtime
+    // synthesises `Exit` from the `Move` stream, which keeps hover correct on
+    // hosts that never emit a leave event. `PinchGesture`, `RotationGesture`,
+    // `PanGesture`, `DoubleTapGesture` and `TouchpadPressure` have no host
+    // event type to land on yet; the pinch/rotation slice adds them.
     _ => None
   }
 }

@@ -1606,6 +1606,13 @@ text_input_paint.mbt`），长草稿的尾部字符会画出字段框、在卡�
   也插同一段——两边只差组合根别名（`@app` vs `@exported_app`）。**后果**：
   后端加一个宿主入口 = 先发布 `moui_cli`，Studio 独立 clone 才能编过
   （顺序见 `mooncakes-release-playbook.md`）。
+  **同一契约的另一半**：`web_abi_shim_mbt()` 生成的工程在 workspace 外，它按
+  `moon.mod` 从 registry 解析 `wzzc-dev/moui`，`web_wasm/index.html` 加载的是
+  `.mooncakes/wzzc-dev/moui/backend/web/browser_runtime.js`（已发布那份 JS），
+  所以模板参数表必须跟**已发布** ABI，不能跟 workspace。2026-10-23 实测：把
+  模板跟着 §4 升到 10 参数后，`services/compile_native` 的成功用例在 bundle 内
+  `moon build --target wasm-gc` 报「requires 8 arguments, but is given 10」。
+  workspace 内的 `examples/*/web_wasm` 等转发器才是跟 workspace 走的那一批。
   2026-10-16 实测教训：`0.2.3` 是从**未提交的中间态树**发布的（发布 18:24、
   最终提交 22:15），注册表内容缺 `app_alias`/`web_abi.mbt`，Studio 独立 CI
   全线红；版本号撞号后不可重发，只能 bump `0.2.4` 重 pin。**发布必须从

@@ -184,8 +184,8 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
   const imports = createWindowWebImports();
   const events = [];
   imports.set_dispatch_event(() => {});
-  imports.set_dispatch_pointer_input((rawId, kind, x, y, deltaX, deltaY, button, modifiers) => {
-    const event = { rawId, kind, x, y, deltaX, deltaY, button, modifiers };
+  imports.set_dispatch_pointer_input((rawId, kind, x, y, deltaX, deltaY, button, modifiers, pointerId, pressure) => {
+    const event = { rawId, kind, x, y, deltaX, deltaY, button, modifiers, pointerId, pressure };
     events.push(event);
     return typeof pointerFlags === "function" ? pointerFlags(event) : pointerFlags;
   });
@@ -257,7 +257,7 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
   assert(down.defaultPrevented && up.defaultPrevented, "handled pointer input must prevent browser defaults");
   assert(canvas.capturedPointerId === 42 && canvas.releasedPointerId === 42, "wasm flags must drive real pointer capture");
   assert(
-    JSON.stringify(events[0]) === JSON.stringify({ rawId: 7, kind: 23, x: 12.5, y: 18.25, deltaX: 0, deltaY: 0, button: 2, modifiers: 6 }),
+    JSON.stringify(events[0]) === JSON.stringify({ rawId: 7, kind: 23, x: 12.5, y: 18.25, deltaX: 0, deltaY: 0, button: 2, modifiers: 6, pointerId: 0, pressure: 1 }),
     "pointer ABI must contain only runtime-consumed fields",
   );
 }
@@ -342,6 +342,20 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
   canvas.dispatch("pointerup", { pointerType: "touch", pointerId: 3, clientX: 112, clientY: 160 });
   assert(events.map(event => event.kind).join(",") === "23,30,24", "touch drag must enter MoUI once per native pointer event");
   assert(events[1].deltaX === 8 && events[1].deltaY === 60 && move.defaultPrevented, "handled touch scroll must use direct physical deltas");
+  assert(
+    events.map(event => event.pointerId).join(",") === "3,3,3",
+    "a finger must keep its own pointer id so the runtime can key its capture slot",
+  );
+}
+
+{
+  const { canvas, events } = createRuntime();
+  canvas.dispatch("pointerdown", { pointerType: "pen", pointerId: 7, pressure: 0.25, clientX: 12, clientY: 14 });
+  canvas.dispatch("pointerdown", { pointerType: "mouse", pointerId: 1, pressure: 0.5, clientX: 12, clientY: 14 });
+  assert(
+    JSON.stringify(events.map(event => [event.pointerId, event.pressure])) === JSON.stringify([[0, 0.25], [0, 1]]),
+    "pen is the primary stream carrying its pressure; a mouse reports no pressure signal",
+  );
 }
 
 {

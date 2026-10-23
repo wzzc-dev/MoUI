@@ -204,7 +204,9 @@ pub fn linux_adjust_host_event_for_client_decorations(
                 phase=pointer.phase,
                 button=pointer.button,
                 wheel_delta=pointer.wheel_delta,
-                time_ms=pointer.time_ms,
+                modifiers=pointer.modifiers,
+                id=pointer.id,
+                pressure=pointer.pressure,
               ),
             ),
           )

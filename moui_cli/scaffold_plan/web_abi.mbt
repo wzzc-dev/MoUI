@@ -13,6 +13,12 @@ pub let web_abi_exports : ReadOnlyArray[String] = [
 ///|
 /// 与 `web_abi_exports` 逐条对应的机械转发（只含宿主入口，不含 `fn main`）。
 /// 前提：调用方的入口包以 `@web` 别名导入 `wzzc-dev/moui/backend/web`。
+///
+/// 参数表跟着**已发布**的那条 ABI 走，不跟工作区：生成的工程按 `moon.mod`
+/// 里的版本号从 registry 解析 `wzzc-dev/moui`，而它的 `browser_runtime.js`
+/// 也来自同一份 `.mooncakes`，两边必须同一批 arity。工作区里领先发布线的
+/// 入口改动只改 `examples/*/web_wasm/abi.mbt` 与 `website/web_wasm/main.mbt`
+/// （它们是 workspace 成员），发布线移动后再一起改这里。
 pub fn web_abi_shim_mbt() -> String {
   let shim =
     #|///|

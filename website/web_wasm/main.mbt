@@ -69,9 +69,12 @@ pub fn web_dispatch_pointer_input(
   delta_y_px : Double,
   button : Int32,
   modifiers : Int32,
+  pointer_id : Int32,
+  pressure : Double,
 ) -> Int32 {
   @web.web_dispatch_pointer_input(
-    raw_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,
+    raw_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers, pointer_id,
+    pressure,
   )
 }
 

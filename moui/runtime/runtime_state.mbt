@@ -214,7 +214,7 @@ fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.next_element_id = 1
   self.dirty.clear()
   self.animfocus.focused_element = None
-  self.animfocus.active_pointer_capture = None
+  self.animfocus.pointer_captures.clear()
   self.animfocus.active_focus_trap = None
   self.animfocus.saved_focus_key = None
   self.animfocus.saved_focus_semantic_id = None
@@ -590,7 +590,14 @@ priv struct AnimFocusState {
   mut active_animations : Bool
   mut focused_element : ElementId?
   mut semantic_focused : SemanticsNodeId?
-  mut active_pointer_capture : ElementId?
+  /// Pointer capture, keyed by `PointerEvent.id`. One slot per stream: a second
+  /// finger pressing elsewhere must neither steal the target the first finger
+  /// is dragging inside nor release it on its own `Up`.
+  pointer_captures : Map[Int32, ElementId]
+  /// Position of each pointer that is currently down, re-sampled on every frame
+  /// the subtree keeps animating so a recognizer that completes on elapsed time
+  /// can fire while a finger holds still. Absent key means not pressed.
+  pointer_presses : Map[Int32, Point]
   mut active_focus_trap : ElementId?
   mut saved_focus_key : String?
   mut saved_focus_semantic_id : SemanticId?
@@ -675,7 +682,8 @@ fn AnimFocusState::new() -> AnimFocusState {
     active_animations: false,
     focused_element: None,
     semantic_focused: None,
-    active_pointer_capture: None,
+    pointer_captures: Map([]),
+    pointer_presses: Map([]),
     active_focus_trap: None,
     saved_focus_key: None,
     saved_focus_semantic_id: None,

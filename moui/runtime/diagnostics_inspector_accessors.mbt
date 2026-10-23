@@ -160,6 +160,9 @@ pub fn RuntimeInspectorSnapshot::render_cache_miss_count(
 }
 
 ///|
+/// Hit path of the most recent pointer event, from whichever stream delivered
+/// it last. It is not keyed by `PointerEvent.id`, so a multi-pointer host
+/// interleaves the two fingers into this one readout.
 pub fn RuntimeInspectorSnapshot::last_event_hit_path(
   self : RuntimeInspectorSnapshot,
 ) -> Array[Int32] {

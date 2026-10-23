@@ -23,13 +23,23 @@ pub extend PointerPhase with Eq::{not_equal, equal}
 pub extend PointerPhase with ToJson::{to_json}
 
 ///|
+/// `id` distinguishes simultaneous pointers. `0` is the primary stream: mouse,
+/// pen, trackpad, and any host that does not report a finger identity. Secondary
+/// fingers carry the host's own finger id, so a view can tell a two-finger
+/// gesture apart from two independent one-finger drags.
+///
+/// `pressure` is normalized to `0.0..=1.0`. `1.0` means "the host gives no
+/// pressure signal", which is the value for mouse and touchpad input on every
+/// platform MoUI currently supports; views must treat it as a full press rather
+/// than checking for `> 0.0`.
 pub(all) struct PointerEvent {
   position : Point
   phase : PointerPhase
   button : Int32
   wheel_delta : Point
-  time_ms : Double
   modifiers : KeyModifiers
+  id : Int32
+  pressure : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -205,10 +215,11 @@ pub fn PointerEvent::new(
   phase~ : PointerPhase,
   button~ : Int32 = 0,
   wheel_delta~ : Point = Point::new(x=0.0, y=0.0),
-  time_ms~ : Double = 0.0,
   modifiers~ : KeyModifiers = KeyModifiers::none(),
+  id~ : Int32 = 0,
+  pressure~ : Double = 1.0,
 ) -> PointerEvent {
-  { position, phase, button, wheel_delta, time_ms, modifiers, }
+  { position, phase, button, wheel_delta, modifiers, id, pressure, }
 }
 
 ///|

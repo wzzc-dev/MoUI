@@ -84,6 +84,25 @@ export class CanvasInputRouter {
     return Number(event?.button) || 0;
   }
 
+  // MoUI keys pointer streams by `PointerEvent.id`, where 0 is the primary
+  // mouse/pen/trackpad stream. DOM pointer ids are implementation-defined (the
+  // mouse is usually 1), so only fingers get their own slot; wheel events carry
+  // no pointer identity at all.
+  dispatchPointerId(event) {
+    if (event?.pointerType !== "touch") return 0;
+    return Number(event?.pointerId) || 0;
+  }
+
+  // DOM reports 0.5/0 for a mouse depending on its button state, which is not a
+  // pressure signal; core spells "no signal" as 1.0. Pens and fingers carry a
+  // real 0..1 value.
+  dispatchPressure(event) {
+    const type = event?.pointerType;
+    if (type !== "pen" && type !== "touch") return 1;
+    const pressure = Number(event?.pressure);
+    return pressure > 0 && pressure < 1 ? pressure : 1;
+  }
+
   dispatch(kind, event, delta = { x: 0, y: 0 }, point = this.position(this.canvas, event)) {
     const pointerId = Number(event?.pointerId) || 1;
     const flags = Number(this.dispatchPointer(
@@ -94,6 +113,8 @@ export class CanvasInputRouter {
       Number(delta.y) || 0,
       this.dispatchButton(kind, event),
       this.modifiers(event),
+      this.dispatchPointerId(event),
+      this.dispatchPressure(event),
     )) || 0;
     if ((flags & WEB_INPUT_FLAGS.capturePointer) !== 0) {
       try {
@@ -789,6 +810,8 @@ export function createWindowWebImports(options = {}) {
     deltaYPx,
     button,
     modifiers,
+    pointerId,
+    pressure,
   ) => {
     if (!dispatchPointerInput) return 0;
     const flags = Number(dispatchPointerInput(
@@ -800,6 +823,8 @@ export function createWindowWebImports(options = {}) {
       deltaYPx,
       button,
       modifiers,
+      Number(pointerId) || 0,
+      Number(pressure) || 1,
     )) || 0;
     observeEvent({
       kind: kind | 0,
@@ -811,6 +836,8 @@ export function createWindowWebImports(options = {}) {
       deltaY: Number(deltaYPx) || 0,
       button: button | 0,
       modifiers: modifiers | 0,
+      pointerId: Number(pointerId) || 0,
+      pressure: Number(pressure) || 1,
       flags,
       at: Number(globalThis.performance?.now?.() ?? Date.now()),
     });
@@ -1929,6 +1956,8 @@ export function createWindowWebImports(options = {}) {
           deltaYPx,
           button,
           modifiers,
+          pointerId,
+          pressure,
         ) => emitPointerInput(
           rawId,
           kind,
@@ -1938,6 +1967,8 @@ export function createWindowWebImports(options = {}) {
           deltaYPx,
           button,
           modifiers,
+          pointerId,
+          pressure,
         ),
         lineHeight: () => {
           const lineHeight = Number.parseFloat(

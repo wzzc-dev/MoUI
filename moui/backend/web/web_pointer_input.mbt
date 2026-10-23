@@ -53,6 +53,8 @@ fn WebApp::dispatch_web_pointer_input(
   delta_y_px : Double,
   button : Int32,
   modifier_bits : Int32,
+  pointer_id : Int32,
+  pressure : Double,
 ) -> Int32 {
   match web_pointer_phase(kind) {
     Some(phase) => {
@@ -72,6 +74,8 @@ fn WebApp::dispatch_web_pointer_input(
           scale_factor~,
         ),
         modifiers=self.modifiers,
+        id=pointer_id,
+        pressure=web_pointer_pressure(pressure),
       )
       match self.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) => {
@@ -93,6 +97,21 @@ fn WebApp::dispatch_web_pointer_input(
 }
 
 ///|
+/// The browser glue normalises `PointerEvent.pressure` into `0..1` (with `1.0`
+/// meaning the device reports no pressure), but this ABI is a boundary a
+/// hand-written glue can reach: anything outside the range core promises,
+/// including NaN, reports as "no pressure signal".
+fn web_pointer_pressure(pressure : Double) -> Double {
+  if pressure.is_nan() || pressure >= 1.0 {
+    1.0
+  } else if pressure <= 0.0 {
+    0.0
+  } else {
+    pressure
+  }
+}
+
+///|
 pub fn web_dispatch_pointer_input(
   raw_id : Int32,
   kind : Int32,
@@ -102,6 +121,8 @@ pub fn web_dispatch_pointer_input(
   delta_y_px : Double,
   button : Int32,
   modifiers : Int32,
+  pointer_id : Int32,
+  pressure : Double,
 ) -> Int32 {
   match web_active_app.val {
     Some(app) =>
@@ -110,6 +131,7 @@ pub fn web_dispatch_pointer_input(
         Some(window_id) =>
           app.dispatch_web_pointer_input(
             window_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,
+            pointer_id, pressure,
           )
         None => 0
       }

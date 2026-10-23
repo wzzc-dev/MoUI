@@ -190,7 +190,7 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
           )
           observed_focus.val = state.animfocus.focused_element ==
             Some(state.element_tree.id())
-          observed_capture.val = state.animfocus.active_pointer_capture ==
+          observed_capture.val = state.animfocus.pointer_captures.get(0) ==
             Some(state.element_tree.id())
           observed_dirty.val = state.dirty.needs_paint
         }

@@ -1,4 +1,11 @@
 ///|
+/// The `PointerEvent.id` carried by the primary stream — mouse, pen, trackpad,
+/// the first finger on hosts that report one finger only, and every event the
+/// runtime synthesises. Hover and `Exit` belong to this stream; a secondary
+/// finger moving must not clear the hover or press that the primary pointer set.
+let primary_pointer_id : Int32 = 0
+
+///|
 fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
@@ -167,10 +174,18 @@ fn ElementNode::dispatch_pointer_to_children(
   // and the next Down hits a *different* control without a Move. Without Exit
   // on Down, the previous button keeps its hover/press tint (gray-white) until
   // some later full redraw. Include Down (and Cancel) in the stale-hover clear.
-  let clear_stale_hover = event.phase == Move ||
-    event.phase == Exit ||
-    event.phase == Down ||
-    event.phase == Cancel
+  //
+  // Only the primary stream may clear hover. Hover and press are per-element,
+  // not per-pointer, so a second finger dragging somewhere else would otherwise
+  // synthesise an Exit into the control the first finger is still holding —
+  // cancelling its press tint and its in-flight gesture.
+  let clear_stale_hover = event.id == primary_pointer_id &&
+    (
+      event.phase == Move ||
+      event.phase == Exit ||
+      event.phase == Down ||
+      event.phase == Cancel
+    )
   let mut delivered_main_event = false
   // Once a hoisted overlay surface covering the point has been dispatched,
   // in-flow siblings must not receive the same main event — even when the
@@ -474,7 +489,8 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
                   phase=Cancel,
                   button=event.button,
                   modifiers=event.modifiers,
-                  time_ms=event.time_ms,
+                  id=event.id,
+                  pressure=event.pressure,
                 )
               } else {
                 event
@@ -501,7 +517,8 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
                   phase=Cancel,
                   button=event.button,
                   modifiers=event.modifiers,
-                  time_ms=event.time_ms,
+                  id=event.id,
+                  pressure=event.pressure,
                 )
                 match
                   self.children[index].dispatch_pointer_to_target_with_scroll_ancestor(

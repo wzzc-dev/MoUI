@@ -20,6 +20,14 @@ pointer, keyboard, IME, drag, and modifier decoding belongs to the concrete
 platform backend; WeChat's direct Canvas2D callbacks remain a deliberately
 non-window-hosted exception.
 
+Pointer decoding preserves stream identity: `PointerEvent.id` carries the host
+finger id, with `0` reserved for the primary stream (mouse, pen, trackpad, and
+any host that reports no finger identity), and `PointerEvent.pressure` is
+normalized to `0.0..=1.0` where `1.0` means the host gave no pressure signal.
+Decoders must forward both fields when they rebase, replay, or synthesize an
+event, because the runtime keys pointer capture and the frame-tick re-sample by
+`PointerEvent.id` and treats hover and focus as owned by the primary stream.
+
 Root `backend` exposes the closure-based `WindowRequests` port;
 `backend/common` implements it with `WindowRequestQueue` so runtime or platform code can enqueue
 open, focus, close, resize, minimize, show, and primary-window requests without
