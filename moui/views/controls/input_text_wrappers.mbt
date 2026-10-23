@@ -49,17 +49,20 @@ pub fn[Msg] password_field(
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let display_value = if revealed { value } else { mask_text(value) }
+  // The declared value above is already masked, so the protected flag tracks
+  // what is on screen rather than what the field was built for.
+  let field = @text.text_field(
+    display_value,
+    on_input~,
+    placeholder~,
+    variant~,
+    theme=resolved_theme,
+    width=@common.view_max_double(80.0, width - 72.0),
+    height~,
+  ).semantics_state(password=!revealed)
   @layout.row(
     [
-      @text.text_field(
-        display_value,
-        on_input~,
-        placeholder~,
-        variant~,
-        theme=resolved_theme,
-        width=@common.view_max_double(80.0, width - 72.0),
-        height~,
-      ),
+      field,
       @button.button(
         if revealed {
           "Hide"

@@ -36,8 +36,13 @@ pub fn[Msg] form_field(
     },
     theme=resolved_theme,
   )
+  let control = child.frame(width=content_width).disabled(disabled~)
   let body_rows : Array[@core.View[Msg]] = [
-    child.frame(width=content_width).disabled(disabled~),
+    if resolved_status == ReadOnly {
+      control.semantics_state(read_only=true)
+    } else {
+      control
+    },
   ]
   match
     form_field_support_text(

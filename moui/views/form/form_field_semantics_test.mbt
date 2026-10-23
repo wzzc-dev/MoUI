@@ -113,3 +113,42 @@ test "form field without error stays valid when required" {
   }
   inspect(description, content="Visible name")
 }
+
+///|
+test "read-only form field marks the control it wraps" {
+  let field : @core.View[Unit] = @form.form_field(
+    label="Name",
+    child=@text.text_field("Ada", on_input=_text => ()),
+    read_only=true,
+  )
+  guard find_semantics_role(field, TextField) is Some(control) else {
+    fail("expected the wrapped text field in the semantics tree")
+  }
+  assert_true(control.read_only is Some(true))
+}
+
+///|
+test "ReadOnly status marks the control even without the flag" {
+  let field : @core.View[Unit] = @form.form_field(
+    label="Name",
+    child=@text.text_field("Ada", on_input=_text => ()),
+    status=ReadOnly,
+  )
+  guard find_semantics_role(field, TextField) is Some(control) else {
+    fail("expected the wrapped text field in the semantics tree")
+  }
+  assert_true(control.read_only is Some(true))
+}
+
+///|
+test "an ordinary form field leaves the control state undeclared" {
+  let field : @core.View[Unit] = @form.form_field(
+    label="Name",
+    child=@text.text_field("Ada", on_input=_text => ()),
+  )
+  guard find_semantics_role(field, TextField) is Some(control) else {
+    fail("expected the wrapped text field in the semantics tree")
+  }
+  assert_true(control.read_only is None)
+  assert_true(control.password is None)
+}
