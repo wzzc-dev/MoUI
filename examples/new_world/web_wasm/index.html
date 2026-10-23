@@ -511,6 +511,15 @@
       // world's assets are part of the folder read, not a separate concern.
       const PORTRAIT_FILE = /\.(png|jpe?g|webp)$/i;
 
+      function base64ToBytes(text) {
+        const binary = atob(text.replace(/\s+/g, ""));
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index++) {
+          bytes[index] = binary.charCodeAt(index);
+        }
+        return bytes;
+      }
+
       function bytesToBase64(bytes) {
         let binary = "";
         const chunk = 0x8000;
@@ -576,7 +585,15 @@
               create: true,
             });
             const writable = await file.createWritable();
-            await writable.write(content);
+            if (PORTRAIT_FILE.test(fileName)) {
+              // A portrait rides as base64 inside the world, but the folder
+              // holds a real image: writing the base64 text would leave a
+              // line of text where a picture belongs, and the next read would
+              // encode it a second time.
+              await writable.write(base64ToBytes(content));
+            } else {
+              await writable.write(content);
+            }
             await writable.close();
           }
         } else {
@@ -648,15 +665,24 @@
         } catch {
           return { ok: false, folder: "", files: [] };
         }
-        if (!bundle || bundle.format !== "moui.new-world/1" || !Array.isArray(bundle.files)) {
+        // v2 is the current format (six-block cards, memory files); v1 still
+        // decodes. A bundle in any other shape is refused whole.
+        if (
+          !bundle ||
+          (bundle.format !== "moui.new-world/2" &&
+            bundle.format !== "moui.new-world/1") ||
+          !Array.isArray(bundle.files)
+        ) {
           return { ok: false, folder: "", files: [] };
         }
-        // Same admission rule as the MoonBit decoder: world files only, no
-        // traversal. The page is a second lock on the same door.
+        // Same admission rule as the MoonBit decoder: world files and
+        // portraits only, no traversal. The page is a second lock on the same
+        // door. Portraits ride along so a world sent to a friend arrives with
+        // its faces.
         const files = bundle.files.filter(
           ([path]) =>
             typeof path === "string" &&
-            /\.(md|json)$/.test(path) &&
+            (/\.(md|json)$/.test(path) || PORTRAIT_FILE.test(path)) &&
             !path.includes(".."),
         );
         if (files.length === 0) return { ok: false, folder: "", files: [] };

@@ -108,6 +108,16 @@ pub fn update_creation(
                 voice: draft.voice,
                 goal: draft.goal,
                 secret: draft.secret,
+                principles: draft.principles,
+                examples: draft.examples,
+                portrait: draft.portrait,
+                portrait_prompt: draft.portrait_prompt,
+                user_identity: draft.user_identity,
+                user_name: draft.user_name,
+                boundary: draft.boundary,
+                setting: draft.setting,
+                opening: draft.opening,
+                memory_rules: draft.memory_rules,
               }
               let settled = { ..next, creator_draft: merged, }
               settled.push_log(
@@ -148,6 +158,7 @@ pub fn update_creation(
         locations=model.scenario.locations(),
         characters~,
         world_book=model.scenario.world_book(),
+        mood=model.scenario.mood(),
       )
       let next = {
         ..model.fork(),
@@ -277,6 +288,7 @@ pub fn update_creation(
                     locations=world.locations(),
                     characters=world.characters(),
                     world_book=world.world_book(),
+                    mood=world.mood(),
                   )
                   let settled = {
                     ..next.fork(),

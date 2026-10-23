@@ -14,13 +14,18 @@ fn sample_world() -> Scenario {
 ///|
 fn sample_files() -> WorldFiles {
   {
-    world_md: "# 雨夜酒馆\n\n夜雨敲窗，炉火正暖。\n\n雨点打在青石街上。\n\n## 地点\n\n- 吧台: x=40 y=300 w=180 h=80：柜台后的高脚凳\n- 雅座: x=260 y=280 w=160 h=90\n",
+    world_md: "# 雨夜酒馆\n\n夜雨敲窗，炉火正暖。\n\n雨点打在青石街上。\n\n## 版本\n\n- 卡档: v2\n\n## 地点\n\n- 吧台: x=40 y=300 w=180 h=80：柜台后的高脚凳\n- 雅座: x=260 y=280 w=160 h=90\n",
     book_md: "# 世界书\n\n- 酒 | 花雕: 后堂埋着一坛三十年的女儿红。\n- 当铺：镇东的当铺十年前关了门。\n",
     character_files: [
       (
-        "characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n酒馆掌柜，话不多。\n\n## 说话方式\n\n简短、沉稳\n\n## 目标\n\n把这壶酒卖出去\n\n## 秘密\n\n后堂藏着一坛老酒\n\n## 位置\n\nx=320 y=210\n",
+        "characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n酒馆掌柜，话不多。\n\n## 行为原则\n\n不问不说；先算账后说话。\n\n## 说话方式\n\n简短、沉稳\n\n## 示例台词\n\n嗯，酒烫好了。\n（把账本推过来）自己看。\n\n## 与用户的关系\n\n- 玩家身份: 过街老鼠\n- 玩家称呼: 小兄弟\n- 边界: 不过问身世\n\n## 当前情境\n\n夜雨，店里只剩一位客人。\n\n## 开场白\n\n（抬头看了你一眼）……坐吧，今儿雨大。\n\n## 记忆规则\n\n答应过的事必须记得。\n\n## 目标\n\n把这壶酒卖出去\n\n## 秘密\n\n后堂藏着一坛老酒\n\n## 位置\n\nx=320 y=210\n",
       ),
       ("characters/无名.md", "没有H1的文件"),
+    ],
+    memory_files: [
+      (
+        "characters/林掌柜.memory.md", "# 记忆\n\n- 他赊过一壶酒，说发工钱就还\n- [固定] 答应过教小兄弟认酒坛\n- [来源:AI] 他说想看海——那是他娘亲的故乡\n",
+      ),
     ],
     conversations_json: "",
     conversation_files: [],
@@ -39,6 +44,10 @@ test "the sample world parses with a warning for the damaged card" {
       assert_eq(parsed.scenario.world_book().length(), 2)
       assert_eq(parsed.warnings.length(), 1)
       assert_true(parsed.warnings[0].contains("无名.md"))
+      // The v2 marker keeps the loader quiet about the six new blocks.
+      assert_false(parsed.warnings[0].contains("旧版"))
+      // The format marker never leaks into the background the model reads.
+      assert_false(parsed.scenario.background().contains("卡档"))
     }
     None => fail("sample world must parse")
   }
@@ -55,8 +64,36 @@ test "the parsed card carries every section and its spot" {
       assert_eq(card.secret(), "后堂藏着一坛老酒")
       assert_eq(card.point().x, 320.0)
       assert_eq(card.point().y, 210.0)
+      // v2 blocks.
+      assert_eq(card.principles(), "不问不说；先算账后说话。")
+      assert_eq(card.examples(), ["嗯，酒烫好了。", "（把账本推过来）自己看。"])
+      assert_eq(card.relationship().user_identity(), "过街老鼠")
+      assert_eq(card.relationship().user_name(), "小兄弟")
+      assert_eq(card.relationship().boundary(), "不过问身世")
+      assert_eq(card.setting(), "夜雨，店里只剩一位客人。")
+      assert_eq(card.opening(), "（抬头看了你一眼）……坐吧，今儿雨大。")
+      assert_eq(card.memory_rules(), "答应过的事必须记得。")
     }
     None => assert_true(false)
+  }
+}
+
+///|
+test "the sample world's memories parse with pins and provenance" {
+  match parse_world_files(sample_files()) {
+    Some(parsed) => {
+      let memories = parsed.memories.for_character("林掌柜")
+      let entries = memories.entries()
+      assert_eq(entries.length(), 3)
+      assert_eq(entries[0].content(), "他赊过一壶酒，说发工钱就还")
+      assert_false(entries[0].pinned())
+      assert_true(entries[0].source() is Authored)
+      assert_eq(entries[1].content(), "答应过教小兄弟认酒坛")
+      assert_true(entries[1].pinned())
+      assert_eq(entries[2].content(), "他说想看海——那是他娘亲的故乡")
+      assert_true(entries[2].source() is Adopted)
+    }
+    None => fail("sample world must parse")
   }
 }
 
@@ -75,6 +112,7 @@ test "save → load is lossless for the fields the model owns" {
     world_md: pair_for(files, "world.md"),
     book_md: pair_for(files, "world_book.md"),
     character_files: files.filter(pair => pair.0.has_prefix("characters/")),
+    memory_files: sample_files().memory_files,
     conversations_json: "",
     conversation_files: [],
     portraits: [],
@@ -88,11 +126,127 @@ test "save → load is lossless for the fields the model owns" {
       assert_eq(loaded.characters().length(), scenario.characters().length())
       assert_eq(loaded.world_book().length(), scenario.world_book().length())
       match loaded.character("林掌柜") {
-        Some(card) => assert_eq(card.secret(), "后堂藏着一坛老酒")
+        Some(card) => {
+          assert_eq(card.secret(), "后堂藏着一坛老酒")
+          // v2 fields survive the round trip too.
+          assert_eq(card.principles(), "不问不说；先算账后说话。")
+          assert_eq(
+            card.examples(),
+            ["嗯，酒烫好了。", "（把账本推过来）自己看。"],
+          )
+          assert_eq(card.relationship().user_name(), "小兄弟")
+          assert_eq(card.opening(), "（抬头看了你一眼）……坐吧，今儿雨大。")
+        }
         None => assert_true(false)
       }
+      // Memories ride beside the cards and round-trip through their own file.
+      let entries = parsed.memories.for_character("林掌柜").entries()
+      assert_eq(entries.length(), 3)
+      assert_true(entries[1].pinned())
     }
     None => assert_true(false)
+  }
+}
+
+///|
+test "an unmarked (v1) world loads blank six-block fields with one warning" {
+  // A world written by an older build: no `## 版本` marker, no v2 sections.
+  let legacy = {
+    world_md: "# 老酒馆\n\n打烊三年的酒馆。\n",
+    book_md: "",
+    character_files: [
+      ("characters/老掌柜.md", "# 老掌柜\n\n## 人设\n\n老掌柜。\n\n## 目标\n\n守着铺子\n"),
+    ],
+    memory_files: [],
+    conversations_json: "",
+    conversation_files: [],
+    portraits: [],
+    events_json: "",
+  }
+  match parse_world_files(legacy) {
+    Some(parsed) => {
+      match parsed.scenario.character("老掌柜") {
+        Some(card) => {
+          // The v1 sections still load; the v2 blocks come back blank.
+          assert_eq(card.persona(), "老掌柜。")
+          assert_eq(card.goal(), "守着铺子")
+          assert_eq(card.principles(), "")
+          assert_eq(card.examples(), [])
+          assert_true(card.relationship().is_empty())
+          assert_eq(card.opening(), "")
+          assert_eq(card.memory_rules(), "")
+        }
+        None => fail("the legacy card must load")
+      }
+      // One warning, naming the fix.
+      assert_eq(parsed.warnings.length(), 1)
+      assert_true(parsed.warnings[0].contains("旧版世界"))
+      // And the legacy background is intact.
+      assert_eq(parsed.scenario.background(), "打烊三年的酒馆。")
+    }
+    None => fail("a legacy world must still parse")
+  }
+}
+
+///|
+test "a de-duplicated card keeps every field" {
+  // Two files with the same H1: the second is renamed `林掌柜 (2)` and must
+  // carry the full v2 card, not a stripped one (the rename_card trap).
+  let files = {
+    world_md: "# 雨夜酒馆\n\n夜雨。\n\n## 版本\n\n- 卡档: v2\n",
+    book_md: "",
+    character_files: [
+      (
+        "characters/a.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n\n## 行为原则\n\n先算账。\n\n## 示例台词\n\n嗯。\n\n## 开场白\n\n坐吧。\n",
+      ),
+      (
+        "characters/b.md", "# 林掌柜\n\n## 人设\n\n还是掌柜。\n\n## 行为原则\n\n后算账。\n\n## 示例台词\n\n再说。\n\n## 开场白\n\n来吧。\n",
+      ),
+    ],
+    memory_files: [],
+    conversations_json: "",
+    conversation_files: [],
+    portraits: [],
+    events_json: "",
+  }
+  match parse_world_files(files) {
+    Some(parsed) => {
+      assert_eq(parsed.scenario.characters().length(), 2)
+      match parsed.scenario.character("林掌柜 (2)") {
+        Some(card) => {
+          assert_eq(card.persona(), "还是掌柜。")
+          assert_eq(card.principles(), "后算账。")
+          assert_eq(card.examples(), ["再说。"])
+          assert_eq(card.opening(), "来吧。")
+        }
+        None => fail("the de-duplicated card must exist")
+      }
+    }
+    None => fail("the world must parse")
+  }
+}
+
+///|
+test "an orphan memory file degrades to a warning alone" {
+  let files = {
+    world_md: "# 雨夜酒馆\n\n夜雨。\n\n## 版本\n\n- 卡档: v2\n",
+    book_md: "",
+    character_files: [],
+    memory_files: [
+      ("characters/已离开.memory.md", "# 记忆\n\n- 他说过会回来\n"),
+    ],
+    conversations_json: "",
+    conversation_files: [],
+    portraits: [],
+    events_json: "",
+  }
+  match parse_world_files(files) {
+    Some(parsed) => {
+      assert_eq(parsed.memories.entries.length(), 0)
+      assert_eq(parsed.warnings.length(), 1)
+      assert_true(parsed.warnings[0].contains("记忆文件"))
+    }
+    None => fail("the world itself must still parse")
   }
 }
 
@@ -132,6 +286,7 @@ test "a world without a useful name is not a world" {
     world_md: "只有正文\n",
     book_md: "",
     character_files: [],
+    memory_files: [],
     conversations_json: "",
     conversation_files: [],
     portraits: [],
@@ -150,6 +305,7 @@ test "blank worlds get a helpful background stub" {
     world_md: pair_for(world.world_files(), "world.md"),
     book_md: pair_for(world.world_files(), "world_book.md"),
     character_files: [],
+    memory_files: [],
     conversations_json: "",
     conversation_files: [],
     portraits: [],
@@ -176,11 +332,12 @@ fn journal_files_with(
   events_json~ : String,
 ) -> WorldFiles {
   {
-    world_md: "# 雨夜酒馆\n\n夜雨敲窗。\n",
+    world_md: "# 雨夜酒馆\n\n夜雨敲窗。\n\n## 版本\n\n- 卡档: v2\n",
     book_md: "",
     character_files: [
       ("characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n"),
     ],
+    memory_files: [],
     conversations_json,
     conversation_files: [],
     portraits: [],
@@ -287,6 +444,7 @@ test "a folder carrying the journal restores history and events on open" {
     world_md: sample.world_md,
     book_md: sample.book_md,
     character_files: [sample.character_files[0]],
+    memory_files: [],
     conversations_json: book.to_json_text(),
     conversation_files: [],
     portraits: [],

@@ -58,7 +58,141 @@ pub fn ScenarioLocation::rect(self : ScenarioLocation) -> @geometry.Rect {
 }
 
 ///|
+/// The bond between a character and the player.
+///
+/// SillyTavern keeps this in prose; the app models the three pieces because
+/// the creator form, the Markdown card, and the prompt each need them
+/// separately: who the player *is* in the story, what the character *calls*
+/// them, and the line the relationship does not cross.
+pub struct Relationship {
+  /// Who the player is in the story (e.g. 徒弟 / 过街老鼠).
+  user_identity : String
+  /// How the character addresses the player (e.g. 小兄弟).
+  user_name : String
+  /// The line the relationship does not cross (e.g. 不过问身世).
+  boundary : String
+} derive(Eq, Debug)
+
+///|
+pub extend Relationship with Debug::{to_repr}
+
+///|
+pub extend Relationship with Eq::{not_equal, equal}
+
+///|
+pub fn Relationship::empty() -> Relationship {
+  { user_identity: "", user_name: "", boundary: "", }
+}
+
+///|
+pub fn Relationship::is_empty(self : Relationship) -> Bool {
+  self.user_identity.trim() == "" &&
+  self.user_name.trim() == "" &&
+  self.boundary.trim() == ""
+}
+
+///|
+pub fn Relationship::user_identity(self : Relationship) -> String {
+  self.user_identity
+}
+
+///|
+pub fn Relationship::user_name(self : Relationship) -> String {
+  self.user_name
+}
+
+///|
+pub fn Relationship::boundary(self : Relationship) -> String {
+  self.boundary
+}
+
+///|
+/// The flavour of a scene's atmosphere: it picks the accent colour of the
+/// scene header and tints the ambient map. It never changes the text.
+pub(all) enum MoodVariant {
+  Calm
+  Tense
+  Warm
+  Cold
+  Mysterious
+} derive(Eq, Debug)
+
+///|
+pub extend MoodVariant with Debug::{to_repr}
+
+///|
+pub extend MoodVariant with Eq::{not_equal, equal}
+
+///|
+/// The stable string a mood serializes to (JSON and Markdown).
+pub fn MoodVariant::wire(self : MoodVariant) -> String {
+  match self {
+    Calm => "calm"
+    Tense => "tense"
+    Warm => "warm"
+    Cold => "cold"
+    Mysterious => "mysterious"
+  }
+}
+
+///|
+pub fn mood_from_wire(text : String) -> MoodVariant {
+  match text.trim().to_lower() {
+    "tense" => Tense
+    "warm" => Warm
+    "cold" => Cold
+    "mysterious" => Mysterious
+    _ => Calm
+  }
+}
+
+///|
+/// Where and when a conversation happens: the scene title the player reads
+/// ("清虚洞府 · 夜深"), its time label, and the mood that tints the UI.
+///
+/// The world carries a default; each conversation may override it (a night
+/// that turns into dawn). The title is the *visible* half of the atmosphere
+/// contract — the prompt gets the same string the header shows.
+pub struct SceneMood {
+  title : String
+  time_label : String
+  variant : MoodVariant
+} derive(Eq, Debug)
+
+///|
+pub extend SceneMood with Debug::{to_repr}
+
+///|
+pub extend SceneMood with Eq::{not_equal, equal}
+
+///|
+pub fn SceneMood::empty() -> SceneMood {
+  { title: "", time_label: "", variant: Calm, }
+}
+
+///|
+pub fn SceneMood::title(self : SceneMood) -> String {
+  self.title
+}
+
+///|
+pub fn SceneMood::time_label(self : SceneMood) -> String {
+  self.time_label
+}
+
+///|
+pub fn SceneMood::variant(self : SceneMood) -> MoodVariant {
+  self.variant
+}
+
+///|
 /// One character card.
+///
+/// v2 is organised as the six blocks the creator form edits: ① identity &
+/// background (persona, appearance, portrait), ② personality & principles,
+/// ③ voice & example lines, ④ the relationship with the player, ⑤ the
+/// current situation & opening, ⑥ hidden info & memory rules. `goal` and
+/// `secret` ride along; `location`/`point`/`color` serve the ambient map.
 pub struct CharacterCard {
   id : String
   name : String
@@ -76,12 +210,33 @@ pub struct CharacterCard {
   /// take it to whatever tool they like and drop the resulting PNG into
   /// `characters/`. Empty for hand-written cards.
   portrait_prompt : String
-  /// What they will not volunteer; a good reason for the player to ask twice.
-  secret : String
-  /// What they want right now.
-  goal : String
+  /// How they judge and act — behaviour rules, not adjectives. "不问不说；
+  /// 先算账后说话" tells the model what to *do*; "冷静自持" only tells it
+  /// what to seem.
+  principles : String
   /// How they talk: speech pattern, verbal tics, register.
   voice : String
+  /// ③ Example lines in the character's own voice, one per entry. A handful
+  /// of real sentences stabilises the voice far better than adjectives.
+  examples : Array[String]
+  /// ④ The bond with the player: who the player is, what they are called,
+  /// and the boundary the relationship keeps.
+  relationship : Relationship
+  /// ⑤ The situation the character is in right now (the scene the opening
+  /// assumes).
+  setting : String
+  /// ⑤ The opening line: stored as a real first `ChatLine` on first select,
+  /// with no provider call. Empty means "say something first".
+  opening : String
+  /// What they want right now.
+  goal : String
+  /// What they will not volunteer; a good reason for the player to ask twice.
+  secret : String
+  /// ⑥ What the character should remember across sessions (promises kept,
+  /// names never forgotten). Long-term interaction memories live in the
+  /// per-character memory file, not here: this is the *rule*, that is the
+  /// *record*.
+  memory_rules : String
   /// Where they stand on the map.
   location : String
   point : @geometry.Point
@@ -103,9 +258,15 @@ pub fn CharacterCard::new(
   appearance? : String,
   portrait? : String,
   portrait_prompt? : String,
+  principles? : String,
+  voice? : String,
+  examples? : Array[String],
+  relationship? : Relationship,
+  setting? : String,
+  opening? : String,
   secret? : String,
   goal? : String,
-  voice? : String,
+  memory_rules? : String,
   location? : String,
   point? : @geometry.Point,
   color? : @graphics.Color,
@@ -117,9 +278,15 @@ pub fn CharacterCard::new(
     appearance: appearance.unwrap_or(""),
     portrait: portrait.unwrap_or(""),
     portrait_prompt: portrait_prompt.unwrap_or(""),
+    principles: principles.unwrap_or(""),
+    voice: voice.unwrap_or(""),
+    examples: examples.unwrap_or([]),
+    relationship: relationship.unwrap_or(Relationship::empty()),
+    setting: setting.unwrap_or(""),
+    opening: opening.unwrap_or(""),
     secret: secret.unwrap_or(""),
     goal: goal.unwrap_or(""),
-    voice: voice.unwrap_or(""),
+    memory_rules: memory_rules.unwrap_or(""),
     location: location.unwrap_or(""),
     point: point.unwrap_or(@geometry.Point::new(x=0.0, y=0.0)),
     color: color.unwrap_or(@graphics.Color::rgba(r=0.78, g=0.62, b=0.36)),
@@ -159,6 +326,36 @@ pub fn CharacterCard::portrait(self : CharacterCard) -> String {
 ///|
 pub fn CharacterCard::secret(self : CharacterCard) -> String {
   self.secret
+}
+
+///|
+pub fn CharacterCard::principles(self : CharacterCard) -> String {
+  self.principles
+}
+
+///|
+pub fn CharacterCard::examples(self : CharacterCard) -> Array[String] {
+  self.examples
+}
+
+///|
+pub fn CharacterCard::relationship(self : CharacterCard) -> Relationship {
+  self.relationship
+}
+
+///|
+pub fn CharacterCard::setting(self : CharacterCard) -> String {
+  self.setting
+}
+
+///|
+pub fn CharacterCard::opening(self : CharacterCard) -> String {
+  self.opening
+}
+
+///|
+pub fn CharacterCard::memory_rules(self : CharacterCard) -> String {
+  self.memory_rules
 }
 
 ///|
@@ -295,6 +492,9 @@ pub struct Scenario {
   locations : Array[ScenarioLocation]
   characters : Array[CharacterCard]
   world_book : Array[WorldEntry]
+  /// The world's default scene atmosphere (title, time, mood). A
+  /// conversation may override it; the header always shows one.
+  mood : SceneMood
 } derive(Eq, Debug)
 
 ///|
@@ -313,6 +513,7 @@ pub fn Scenario::new(
   locations? : Array[ScenarioLocation],
   characters? : Array[CharacterCard],
   world_book? : Array[WorldEntry],
+  mood? : SceneMood,
 ) -> Scenario {
   {
     id,
@@ -323,6 +524,7 @@ pub fn Scenario::new(
     locations: locations.unwrap_or([]),
     characters: characters.unwrap_or([]),
     world_book: world_book.unwrap_or([]),
+    mood: mood.unwrap_or(SceneMood::empty()),
   }
 }
 
@@ -364,6 +566,18 @@ pub fn Scenario::characters(self : Scenario) -> Array[CharacterCard] {
 ///|
 pub fn Scenario::world_book(self : Scenario) -> Array[WorldEntry] {
   self.world_book
+}
+
+///|
+pub fn Scenario::mood(self : Scenario) -> SceneMood {
+  self.mood
+}
+
+///|
+/// The world with one atmosphere field changed (the mood switcher in the
+/// atmosphere view flips the variant; the title and time stay).
+pub fn Scenario::with_mood(self : Scenario, mood : SceneMood) -> Scenario {
+  { ..self, mood, }
 }
 
 ///|

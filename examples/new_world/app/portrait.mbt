@@ -49,6 +49,33 @@ pub fn base64_encode(bytes : Bytes) -> String {
 }
 
 ///|
+/// Does this text look like base64 (and therefore like a portrait a host
+/// wrote as text rather than as bytes)?
+///
+/// A world folder holds portraits two ways: a real image dropped in by hand,
+/// and the base64 text a host without a byte writer leaves behind. The reader
+/// has to tell them apart, and the only reliable signal is the alphabet: a
+/// base64 payload is made of `A-Z a-z 0-9 + / =` and whitespace, while real
+/// image bytes almost never are.
+pub fn is_base64_text(text : String) -> Bool {
+  let trimmed = text.trim()
+  if trimmed.is_empty() {
+    return false
+  }
+  for ch in trimmed {
+    let ok = (ch >= 'A' && ch <= 'Z') ||
+      (ch >= 'a' && ch <= 'z') ||
+      (ch >= '0' && ch <= '9') ||
+      ch == '+' || ch == '/' || ch == '=' ||
+      ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t'
+    if !ok {
+      return false
+    }
+  }
+  true
+}
+
+///|
 /// Decode standard base64 back to bytes. `None` means the text is not base64
 /// (damaged or hand-edited), which callers treat as "no portrait" rather than
 /// rendering noise.

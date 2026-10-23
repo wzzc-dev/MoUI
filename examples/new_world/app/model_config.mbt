@@ -24,6 +24,10 @@ pub struct ModelConfig {
   /// (see `from_json`) so an older config.json without this field still loads
   /// every other field instead of falling back wholesale to defaults.
   context_preset : String
+  /// Appearance: "paper" (light, 宣纸) or "ink" (dark, 墨蓝). Hand-decoded
+  /// like `context_preset`: an absent field defaults to paper, never wipes
+  /// the rest of the configuration.
+  appearance : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -49,6 +53,31 @@ pub let config_context_standard : String = "standard"
 
 ///|
 pub let config_context_roomy : String = "roomy"
+
+///|
+/// Appearance presets: the two hand-tuned palettes of `themes.mbt`. Unknown
+/// stored values snap back to paper.
+pub let config_appearance_paper : String = "paper"
+
+///|
+pub let config_appearance_ink : String = "ink"
+
+///|
+pub fn ModelConfig::appearance(self : ModelConfig) -> String {
+  self.appearance
+}
+
+///|
+pub fn ModelConfig::with_appearance(
+  self : ModelConfig,
+  appearance : String,
+) -> ModelConfig {
+  let safe = match appearance {
+    "paper" | "ink" => appearance
+    _ => config_appearance_paper
+  }
+  { ..self, appearance: safe, }
+}
 
 ///|
 pub fn ModelConfig::context_preset(self : ModelConfig) -> String {
@@ -85,6 +114,7 @@ pub fn ModelConfig::new() -> ModelConfig {
     api_key: "",
     temperature: 0.7,
     context_preset: config_context_standard,
+    appearance: config_appearance_paper,
   }
 }
 
@@ -165,6 +195,7 @@ pub fn ModelConfig::to_json(self : ModelConfig) -> String {
     "api_key": Json::string(self.api_key),
     "temperature": Json::number(self.temperature),
     "context_preset": Json::string(self.context_preset),
+    "appearance": Json::string(self.appearance),
   }
   Json::object(root).stringify()
 }
@@ -206,5 +237,9 @@ pub fn ModelConfig::from_json(text : String) -> ModelConfig {
       temperature
     },
     context_preset: text_at("context_preset", config_context_standard),
+    appearance: match text_at("appearance", config_appearance_paper) {
+      "paper" | "ink" as value => value
+      _ => config_appearance_paper
+    },
   }
 }

@@ -11,6 +11,9 @@
 pub struct WorldModel {
   scenario : Scenario
   conversations : ConversationBook
+  /// Per-character interaction memories (the shared history), kept apart
+  /// from the cards. Saved as `characters/<名>.memory.md` beside them.
+  memories : MemoryBook
   config : ModelConfig
   /// The character the player is currently talking to.
   selected : String?
@@ -20,6 +23,15 @@ pub struct WorldModel {
   say_draft : String
   do_draft : String
   story_draft : String
+  /// The composer's active intent: the single input field writes into the
+  /// matching draft, and the collapsed composer sends that intent only.
+  composer_mode : InputIntent
+  /// Whether the composer is expanded into the three-field (combined) form.
+  /// Collapsed is the default: one field, one intent, one line at the foot of
+  /// the stage.
+  composer_expanded : Bool
+  /// Whether the composer's intent menu is open.
+  composer_menu : Bool
   /// Newest-first log of provider/host events, so a failed turn is diagnosable.
   log : Array[String]
   /// World folders discovered in the library.
@@ -38,10 +50,29 @@ pub struct WorldModel {
   generating : Bool
   /// Which top-level page is on stage.
   page : Page
-  /// Which panel the medium/compact shell shows (the wide layout ignores it).
-  /// Session UI state: a rotation or a resize picks a sensible default instead
-  /// of restoring a tab the new width cannot show.
-  shell_tab : CompactTab
+  /// Which side drawer is open (`None` = none). Session UI state: the drawer
+  /// is a way of *looking* at the world, never a way of changing it silently.
+  drawer : DrawerKind?
+  /// Which history line's "more" menu is open (`None` = none). Session UI
+  /// state, like the drawer.
+  message_menu : Int32?
+  /// Whether the character rail is visible on medium/compact layouts, where
+  /// it cannot sit beside the stage permanently.
+  rail_open : Bool
+  /// Whether the full-screen atmosphere view (the scenario map as backdrop)
+  /// is on stage.
+  atmosphere : Bool
+  /// Whether the low-interference map backdrop paints behind the transcript.
+  backdrop : Bool
+  /// The six-block character editor. `editor_target` is the card being
+  /// edited (`None` = closed); the draft and the example-lines buffer are
+  /// the editor's own working copy — nothing reaches the card without
+  /// `SaveCharacter`.
+  editor_open : Bool
+  editor_target : String?
+  editor_draft : CharacterDraft
+  editor_tab : Int32
+  editor_examples : String
   /// The library config.json applied at least once (so the one-time read
   /// rides on the library listing arriving, past the boot race).
   config_file_loaded : Bool
@@ -58,6 +89,9 @@ pub struct WorldModel {
   edit_buffer : String
   /// The one-line character idea in the creation wizard.
   character_idea : String
+  /// The "要记住的事" input in the memory drawer. Session UI state: an
+  /// uncommitted line costs nothing.
+  memory_input : String
   /// Portrait assets of the current world: `(file name, base64)` as read from
   /// the folder. Cached in the model because rendering must not do IO.
   portraits : Array[(String, String)]
@@ -80,11 +114,15 @@ pub fn WorldModel::new() -> WorldModel {
   {
     scenario: blank_world("新世界"),
     conversations: ConversationBook::new(),
+    memories: MemoryBook::new(),
     config: ModelConfig::new(),
     selected: None,
     say_draft: "",
     do_draft: "",
     story_draft: "",
+    composer_mode: Say,
+    composer_expanded: false,
+    composer_menu: false,
     log: [],
     worlds: [],
     current: None,
@@ -95,13 +133,23 @@ pub fn WorldModel::new() -> WorldModel {
     idea: "",
     generating: false,
     page: Main,
-    shell_tab: Chat,
+    drawer: None,
+    message_menu: None,
+    rail_open: false,
+    atmosphere: false,
+    backdrop: false,
+    editor_open: false,
+    editor_target: None,
+    editor_draft: CharacterDraft::new(),
+    editor_tab: 0,
+    editor_examples: "",
     config_file_loaded: false,
     memory_drafts: [],
     api_key_revealed: false,
     editing_line: None,
     edit_buffer: "",
     character_idea: "",
+    memory_input: "",
     portraits: [],
     scene_location: None,
   }
@@ -258,6 +306,24 @@ pub fn WorldModel::composer_ready(self : WorldModel) -> Bool {
 }
 
 ///|
+/// The composer's active intent (the collapsed form's one field).
+pub fn WorldModel::composer_mode(self : WorldModel) -> InputIntent {
+  self.composer_mode
+}
+
+///|
+/// Whether the composer is in the three-field (combined) form.
+pub fn WorldModel::composer_expanded(self : WorldModel) -> Bool {
+  self.composer_expanded
+}
+
+///|
+/// Whether the composer's intent menu is open.
+pub fn WorldModel::composer_menu(self : WorldModel) -> Bool {
+  self.composer_menu
+}
+
+///|
 /// The history line being edited, if any.
 pub fn WorldModel::editing_line(self : WorldModel) -> Int32? {
   self.editing_line
@@ -322,9 +388,69 @@ pub fn WorldModel::page(self : WorldModel) -> Page {
 }
 
 ///|
-/// Which panel the narrow shell is showing.
-pub fn WorldModel::shell_tab(self : WorldModel) -> CompactTab {
-  self.shell_tab
+/// Which side drawer is open, if any.
+pub fn WorldModel::drawer(self : WorldModel) -> DrawerKind? {
+  self.drawer
+}
+
+///|
+/// Which history line's "more" menu is open, if any.
+pub fn WorldModel::message_menu(self : WorldModel) -> Int32? {
+  self.message_menu
+}
+
+///|
+/// Whether the character rail is visible (medium/compact only).
+pub fn WorldModel::rail_open(self : WorldModel) -> Bool {
+  self.rail_open
+}
+
+///|
+/// Whether the full-screen atmosphere view is on stage.
+pub fn WorldModel::atmosphere(self : WorldModel) -> Bool {
+  self.atmosphere
+}
+
+///|
+/// Whether the map backdrop paints behind the transcript.
+pub fn WorldModel::backdrop(self : WorldModel) -> Bool {
+  self.backdrop
+}
+
+///|
+/// Whether the character editor is open.
+pub fn WorldModel::editor_open(self : WorldModel) -> Bool {
+  self.editor_open
+}
+
+///|
+/// Which card the editor is working on (`None` = closed).
+pub fn WorldModel::editor_target(self : WorldModel) -> String? {
+  self.editor_target
+}
+
+///|
+/// The editor's working draft.
+pub fn WorldModel::editor_draft(self : WorldModel) -> CharacterDraft {
+  self.editor_draft
+}
+
+///|
+/// Which block of the editor is visible.
+pub fn WorldModel::editor_tab(self : WorldModel) -> Int32 {
+  self.editor_tab
+}
+
+///|
+/// The example-lines buffer (one line per example).
+pub fn WorldModel::editor_examples(self : WorldModel) -> String {
+  self.editor_examples
+}
+
+///|
+/// The memory drawer's input line.
+pub fn WorldModel::memory_input(self : WorldModel) -> String {
+  self.memory_input
 }
 
 ///|
@@ -404,6 +530,7 @@ pub fn WorldModel::fork(self : WorldModel) -> WorldModel {
     memory_drafts: self.memory_drafts.copy(),
     portraits: self.portraits.copy(),
     conversations: self.conversations.clone(),
+    memories: self.memories.clone(),
   }
 }
 
@@ -474,6 +601,7 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
   let mut conversations_json = ""
   let mut events_json = ""
   let cards : Array[(String, String)] = []
+  let memories : Array[(String, String)] = []
   let conversations : Array[(String, String)] = []
   let portraits : Array[(String, String)] = []
   for pair in files {
@@ -486,6 +614,10 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
       // Portraits live beside their cards (`characters/<名>.png`), so the prefix
       // alone cannot tell them apart. See `is_card_or_portrait_path`.
       portraits.push(pair)
+    } else if is_card_or_portrait_path(path) is Memory {
+      // `characters/<名>.memory.md`: the interaction memories, parsed into
+      // the memory book by `parse_world_files`.
+      memories.push(pair)
     } else if path.has_prefix("characters/") {
       cards.push(pair)
     } else if is_portrait_file_name(path) {
@@ -513,6 +645,7 @@ fn world_files_from_paths(files : Array[(String, String)]) -> WorldFiles {
     world_md,
     book_md,
     character_files: cards,
+    memory_files: memories,
     conversations_json,
     conversation_files: conversations,
     events_json,
@@ -541,13 +674,43 @@ pub fn update(
   match msg {
     Select(id) => {
       // Re-selecting the same character (a map tap on the selected marker, a
-      // drag that ends in a click) must not discard a half-written line.
-      let next = if model.selected == id {
-        model
+      // drag that ends in a click) must not discard a half-written line, and
+      // must not re-insert the opening either.
+      // A selection made from the atmosphere view also leaves it: tapping a
+      // face means "I want to talk to them", not "keep looking at the map".
+      if model.selected == id {
+        (model, @moui.Effect::none())
       } else {
-        { ..model, selected: id, say_draft: "", do_draft: "", story_draft: "", }
+        let next = {
+          ..model.fork(),
+          selected: id,
+          atmosphere: false,
+          say_draft: "",
+          do_draft: "",
+          story_draft: "",
+        }
+        // The opening: a card's first line lands as a real message the first
+        // time the player selects the character — no provider call, nothing
+        // invented. Idempotent: once stored it is an ordinary first message
+        // and never re-inserted, on reselect or after a reload.
+        let opening : @moui.Effect[Msg] = match id {
+          Some(new_id) =>
+            match next.scenario.character(new_id) {
+              Some(card) if card.opening() != "" => {
+                let conversation = next.conversations.for_character(new_id)
+                if conversation.lines().is_empty() {
+                  append_reply(next, new_id, card.opening())
+                  commit_effect(next, host, Conversation(new_id))
+                } else {
+                  @moui.Effect::none()
+                }
+              }
+              _ => @moui.Effect::none()
+            }
+          None => @moui.Effect::none()
+        }
+        (next, opening)
       }
-      (next, @moui.Effect::none())
     }
     EnterScene(location) =>
       if model.scenario.location(location) is None {
@@ -562,6 +725,7 @@ pub fn update(
           let next = {
             ..model.fork(),
             scene_location: Some(location),
+            atmosphere: false,
             say_draft: "",
             do_draft: "",
             story_draft: "",
@@ -591,6 +755,12 @@ pub fn update(
       ({ ..model, do_draft: value, }, @moui.Effect::none())
     StoryDraftChanged(value) =>
       ({ ..model, story_draft: value, }, @moui.Effect::none())
+    ComposerModeChanged(intent) =>
+      update_composer(model, ComposerModeChanged(intent), runner, host)
+    ComposerMenuChanged(open) =>
+      update_composer(model, ComposerMenuChanged(open), runner, host)
+    ToggleComposerExpanded =>
+      update_composer(model, ToggleComposerExpanded, runner, host)
     Send(text) => update_composer(model, Send(text), runner, host)
     SendComposer => update_composer(model, SendComposer, runner, host)
     SceneReply(key, respondent_id, text) =>
@@ -714,8 +884,39 @@ pub fn update(
     ApiKeyChanged(value) => update_settings(model, ApiKeyChanged(value), host)
     TemperatureChanged(value) =>
       update_settings(model, TemperatureChanged(value), host)
+    SetAppearance(value) => update_settings(model, SetAppearance(value), host)
     SaveConfig => update_settings(model, SaveConfig, host)
-    ShellTabChanged(code) => update_settings(model, ShellTabChanged(code), host)
+    OpenDrawer(kind) => update_ui(model, OpenDrawer(kind))
+    CloseDrawer => update_ui(model, CloseDrawer)
+    OpenMessageMenu(index) => update_ui(model, OpenMessageMenu(index))
+    CloseMessageMenu => update_ui(model, CloseMessageMenu)
+    ToggleRail => update_ui(model, ToggleRail)
+    ToggleAtmosphere => update_ui(model, ToggleAtmosphere)
+    SetBackdrop(on) => update_ui(model, SetBackdrop(on))
+    SetMood(variant) => {
+      // The world's default mood flips variant; title and time stay. This is
+      // world state (the mood rides in world.md), so it commits the world.
+      let mood = { ..model.scenario.mood(), variant, }
+      let scenario = model.scenario.with_mood(mood)
+      let next = { ..model.fork(), scenario }
+      next.push_log("氛围已切换：\{variant.wire()}")
+      match (next.current, host) {
+        (Some(folder), Some(h)) =>
+          (next, commit_world_effect(h, folder, commit_files(next, World)))
+        _ => (next, @moui.Effect::none())
+      }
+    }
+    EditCharacter(id) => update_editor(model, EditCharacter(id), host)
+    CloseEditor => update_editor(model, CloseEditor, host)
+    EditorTabChanged(code) => update_editor(model, EditorTabChanged(code), host)
+    EditorChanged(draft) => update_editor(model, EditorChanged(draft), host)
+    EditorExamplesChanged(text) =>
+      update_editor(model, EditorExamplesChanged(text), host)
+    SaveCharacter => update_editor(model, SaveCharacter, host)
+    MemoryDraftChanged(text) => update_memory(model, MemoryDraftChanged(text), host)
+    AddMemory => update_memory(model, AddMemory, host)
+    ToggleMemoryPin(index) => update_memory(model, ToggleMemoryPin(index), host)
+    DeleteMemory(index) => update_memory(model, DeleteMemory(index), host)
     OpenSettings =>
       match host {
         Some(h) => ({ ..model, page: Settings, }, read_config_effect(h))
@@ -766,6 +967,11 @@ pub fn update(
     NewWorld => update_library(model, NewWorld, host)
     WorldCommitted(folder, ok) =>
       update_library(model, WorldCommitted(folder, ok), host)
+    WorldPortraitsRefreshed(portraits) =>
+      (
+        { ..model, portraits: portraits, },
+        @moui.Effect::none(),
+      )
     // ---- character creation ----
     // Creation and generation: one cohesive feature (compose a character,
     // generate a world), implemented in `creation.mbt`. Each arm keeps its own
@@ -817,10 +1023,19 @@ pub fn update(
         None => (model, @moui.Effect::none())
         Some(text) => {
           let next = model.fork()
+          let known : Array[String] = []
+          match model.selected {
+            Some(id) =>
+              for entry in model.memories.for_character(id).entries() {
+                known.push(entry.content())
+              }
+            None => ()
+          }
           let proposed = parse_memory_proposals(
             text,
             next.scenario.world_book(),
             next.memory_drafts,
+            known,
           )
           if proposed.is_empty() {
             next.push_log("AI 没有找到值得长期记忆的新事实")
@@ -836,40 +1051,8 @@ pub fn update(
           }
         }
       }
-    AcceptMemory(index) =>
-      match model.memory_drafts.get(index) {
-        None => (model, @moui.Effect::none())
-        Some(entry) => {
-          let book : Array[WorldEntry] = []
-          for existing in model.scenario.world_book() {
-            book.push(existing)
-          }
-          book.push(entry)
-          let scenario = Scenario::new(
-            id=model.scenario.id(),
-            name=model.scenario.name(),
-            background=model.scenario.background(),
-            map_width=model.scenario.map_width(),
-            map_height=model.scenario.map_height(),
-            locations=model.scenario.locations(),
-            characters=model.scenario.characters(),
-            world_book=book,
-          )
-          let drafts : Array[WorldEntry] = []
-          for i in 0..<model.memory_drafts.length() {
-            if i != index {
-              drafts.push(model.memory_drafts[i])
-            }
-          }
-          let next = { ..model.fork(), scenario, memory_drafts: drafts, }
-          next.push_log("已记住:「\{entry.content()}」")
-          match (next.current, host) {
-            (Some(folder), Some(h)) =>
-              (next, commit_world_effect(h, folder, commit_files(next, World)))
-            _ => (next, @moui.Effect::none())
-          }
-        }
-      }
+    AcceptMemory(index) => update_memory(model, AcceptMemory(index), host)
+    DiscardMemory(index) => update_memory(model, DiscardMemory(index), host)
     ToggleApiKeyReveal =>
       (
         { ..model, api_key_revealed: !model.api_key_revealed, },
@@ -975,7 +1158,7 @@ pub fn update(
       let next = model.fork()
       if ok {
         next.push_log(
-          "世界已导出为一个可分享的 .aiworld.json 文件",
+          "世界已导出为一个文件夹（Markdown 与图片，可直接分享）",
         )
       } else {
         next.push_log("导出取消或失败")
@@ -1008,9 +1191,13 @@ pub fn update(
             }
             let next = model.fork()
             next.conversations.clear()
+            next.memories.clear()
             next.log.clear()
             for conversation in parsed.conversations {
               next.conversations.set(conversation)
+            }
+            for memory in parsed.memories.entries {
+              next.memories.set(memory)
             }
             for event in parsed.events {
               next.log.push(event)
@@ -1022,12 +1209,14 @@ pub fn update(
               worlds: with_world(model.worlds, world_folder_name(name)),
               selected: None,
             }
-            settled.push_log(
-              "已导入世界「\{parsed.scenario.name()}」：\{parsed.scenario.characters().length()} 个角色，\{parsed.conversations.length()} 段对话",
-            )
+            // Warnings first, the summary last: the log is newest-first, so
+            // the "已导入" headline stays on top where the player looks.
             for warning in parsed.warnings {
               settled.push_log("导入提示：\{warning}")
             }
+            settled.push_log(
+              "已导入世界「\{parsed.scenario.name()}」：\{parsed.scenario.characters().length()} 个角色，\{parsed.conversations.length()} 段对话",
+            )
             // Persist immediately: an imported world that only lives in memory
             // would vanish on reload, which is exactly what "file database"
             // promises not to happen.
@@ -1053,17 +1242,6 @@ pub fn update(
           }
         }
       }
-    DiscardMemory(index) => {
-      let drafts : Array[WorldEntry] = []
-      for i in 0..<model.memory_drafts.length() {
-        if i != index {
-          drafts.push(model.memory_drafts[i])
-        }
-      }
-      let next = { ..model.fork(), memory_drafts: drafts, }
-      next.push_log("已忽略一条记忆提议")
-      (next, @moui.Effect::none())
-    }
   }
 }
 
@@ -1093,13 +1271,15 @@ fn pack_effects(effects : Array[@moui.Effect[Msg]]) -> @moui.Effect[Msg] {
 }
 
 ///|
-/// Parse `{"memories":[{"keys":[…],"content":"…"}]}` into entries. Duplicates
-/// of the curated book or of drafts already on the table are dropped; a
-/// malformed reply simply proposes nothing.
+/// Parse `{"memories":[…],"content":"…"}` replies into entries. Duplicates of
+/// the curated book, of drafts already on the table, or of the selected
+/// character's memory book are dropped; a malformed reply simply proposes
+/// nothing.
 fn parse_memory_proposals(
   text : String,
   book : Array[WorldEntry],
   drafts : Array[WorldEntry],
+  memories : Array[String],
 ) -> Array[WorldEntry] {
   let result : Array[WorldEntry] = []
   let payload = match extract_json_object(text) {
@@ -1146,6 +1326,11 @@ fn parse_memory_proposals(
     }
     for existing in drafts {
       if existing.content() == content {
+        duplicate = true
+      }
+    }
+    for known_content in memories {
+      if known_content == content {
         duplicate = true
       }
     }

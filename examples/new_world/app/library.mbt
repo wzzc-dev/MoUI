@@ -114,6 +114,7 @@ pub fn update_library(
             }
             if fresh {
               next.conversations.clear()
+              next.memories.clear()
               // The folder is the source of truth at open time: the world's
               // own journal replaces whatever is in memory.
               next.log.clear()
@@ -122,6 +123,9 @@ pub fn update_library(
               }
               for conversation in parsed.conversations {
                 next.conversations.set(conversation)
+              }
+              for memory in parsed.memories.entries {
+                next.memories.set(memory)
               }
             }
             // Load notices describe the act of opening the file, not something

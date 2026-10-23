@@ -15,23 +15,77 @@
 pub let context_char_budget : Int32 = 6000
 
 ///|
+/// How many example lines may ride in one prompt. A handful of real sentences
+/// stabilises a voice; twenty of them crowd out the actual conversation.
+pub let example_lines_limit : Int32 = 8
+
+///|
 /// Build the system prompt for a conversation with one character.
 ///
-/// The order is deliberate: who they are, then how they talk, then what they
-/// want, then what they are hiding, then the world. The card fields come before
-/// the world background because persona outranks setting when the two conflict.
-pub fn build_system_prompt(scenario : Scenario, card : CharacterCard) -> String {
+/// The order is the six blocks of the card, deliberately: ① who they are,
+/// ② how they judge and act, ③ how they talk (with real example lines — a
+/// handful of actual sentences stabilises a voice far better than adjectives),
+/// ④ the bond with the player, ⑤ the situation the opening assumes, then the
+/// hidden material (goal, secret, memory rules), and finally the world and
+/// scene. The card fields come before the world background because persona
+/// outranks setting when the two conflict.
+pub fn build_system_prompt(
+  scenario : Scenario,
+  card : CharacterCard,
+  mood~ : SceneMood? = None,
+) -> String {
   let sections : Array[String] = []
   sections.push(
     "你在扮演一个互动世界中的角色。用第一人称回应，始终留在角色中。",
   )
   sections.push("【世界】\n" + scenario.background())
   sections.push("【你是" + card.name() + "】\n" + card.persona())
+  if card.principles() != "" {
+    sections.push("【行为原则】" + card.principles())
+  }
   if card.appearance() != "" {
     sections.push("【外貌】" + card.appearance())
   }
   if card.voice() != "" {
     sections.push("【说话方式】" + card.voice())
+  }
+  // ③ Example lines: real sentences in the character's own voice, capped so a
+  // chatty author cannot spend the whole budget rehearsing.
+  if !card.examples().is_empty() {
+    let lines : Array[String] = []
+    let mut count = 0
+    for example in card.examples() {
+      if count >= example_lines_limit {
+        break
+      }
+      if example.trim() != "" {
+        lines.push(card.name() + "：" + example)
+        count += 1
+      }
+    }
+    if !lines.is_empty() {
+      sections.push("【示例台词】\n" + lines.join("\n"))
+    }
+  }
+  // ④ The relationship: who the player is, what they are called, the boundary.
+  let relationship = card.relationship()
+  let relationship_lines : Array[String] = []
+  if relationship.user_identity() != "" {
+    relationship_lines.push("玩家身份：" + relationship.user_identity())
+  }
+  if relationship.user_name() != "" {
+    relationship_lines.push(
+      "你称呼玩家：「" + relationship.user_name() + "」",
+    )
+  }
+  if relationship.boundary() != "" {
+    relationship_lines.push("关系边界：" + relationship.boundary())
+  }
+  if !relationship_lines.is_empty() {
+    sections.push("【与用户的关系】\n" + relationship_lines.join("\n"))
+  }
+  if card.setting() != "" {
+    sections.push("【当前情境】" + card.setting())
   }
   if card.goal() != "" {
     sections.push("【你想要的】" + card.goal())
@@ -46,7 +100,29 @@ pub fn build_system_prompt(scenario : Scenario, card : CharacterCard) -> String 
       "（除非玩家明确问起或你信任对方，不要主动说出）",
     )
   }
-  sections.push("【场景】" + scenario.name())
+  if card.memory_rules() != "" {
+    sections.push(
+      "【记忆规则】" +
+      card.memory_rules() +
+      "（这些是你在长期相处中必须守住的记忆。）",
+    )
+  }
+  // The scene line is the same string the header shows: the mood's title when
+  // the player set one, the world name otherwise, with the time label.
+  let resolved = match mood {
+    Some(value) => value
+    None => scenario.mood()
+  }
+  let scene_title = if resolved.title() != "" {
+    resolved.title()
+  } else {
+    scenario.name()
+  }
+  sections.push(
+    "【场景】" +
+    scene_title +
+    (if resolved.time_label() != "" { "（\{resolved.time_label()}）" } else { "" }),
+  )
   for place in scenario.locations() {
     sections.push("- " + place.name() + "：" + place.description())
   }
@@ -90,8 +166,9 @@ pub extend MessagePlan with Debug::{to_repr}
 pub extend MessagePlan with Eq::{not_equal, equal}
 
 ///|
-/// Build the wire messages for one request: system prompt, the rolling
-/// summary, the world-book block, and the history that fits the budget.
+/// Build the wire messages for one request: system prompt, the character's
+/// long-term memories, the rolling summary, the world-book block, and the
+/// history that fits the budget.
 ///
 /// The world-book block rides on the *player's* turn rather than the system
 /// prompt, so only the turn that mentions "当铺" pays for the pawnshop lore.
@@ -106,6 +183,8 @@ pub fn plan_messages(
   conversation : Conversation,
   player_text : String,
   budget~ : Int32 = context_char_budget,
+  memories~ : Array[MemoryEntry] = [],
+  mood~ : SceneMood? = None,
 ) -> MessagePlan {
   let messages : Array[(String, String)] = []
   // Position matters: `Before` entries are world rules and belong ahead of the
@@ -121,7 +200,23 @@ pub fn plan_messages(
   if before != "" {
     messages.push(("system", "【世界规则】\n" + before))
   }
-  messages.push(("system", build_system_prompt(scenario, card)))
+  messages.push(("system", build_system_prompt(scenario, card, mood~)))
+  // The shared history the player pinned or that matched this turn: what the
+  // character remembers about *them*, not about the world.
+  if !memories.is_empty() {
+    let lines : Array[String] = []
+    for entry in memories {
+      lines.push("- " + entry.content())
+    }
+    messages.push(
+      (
+        "system",
+        "【长久的记忆】\n" +
+        lines.join("\n") +
+        "\n（这些是你与玩家共同经历的事实，像记得自己的名字一样记得它们。）",
+      ),
+    )
+  }
   if conversation.summary() != "" {
     // The compressed memory of everything that fell out of the window. It
     // participates in the budget like any other message.

@@ -6,9 +6,15 @@ import {
   "wzzc-dev/moui",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/state",
   "wzzc-dev/moui/text",
   "wzzc-dev/moui_richtext",
 }
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+} for "test"
 
 supported_targets = "+native+wasm-gc"
 

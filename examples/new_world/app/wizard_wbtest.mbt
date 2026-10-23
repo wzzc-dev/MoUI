@@ -4,13 +4,20 @@
 ///|
 test "an archetype fills every field of a blank draft" {
   let archetypes = creator_archetypes()
-  assert_eq(archetypes.length(), 4)
+  assert_eq(archetypes.length(), 5)
   let seeded = CharacterDraft::new().with_archetype(archetypes[0])
   assert_eq(seeded.name, "掌柜")
   assert_true(seeded.persona != "")
   assert_true(seeded.voice != "")
   assert_true(seeded.goal != "")
   assert_true(seeded.secret != "")
+  // v2 blocks: an archetype is a complete card, not a name and a blurb.
+  assert_true(seeded.principles != "")
+  assert_true(seeded.examples.length() > 0)
+  assert_true(seeded.user_name != "")
+  assert_true(seeded.setting != "")
+  assert_true(seeded.opening != "")
+  assert_true(seeded.memory_rules != "")
 }
 
 ///|
@@ -31,8 +38,10 @@ test "an archetype never overwrites a name the player already typed" {
 test "UseArchetype fills the creator and ignores out-of-range indices" {
   let model = step(WorldModel::new(), ToggleCreator)
   let filled = step(model, UseArchetype(2))
-  assert_eq(filled.creator_draft().name, "官差")
+  assert_eq(filled.creator_draft().name, "师父")
   assert_true(filled.creator_draft().persona != "")
+  // The seeded relationship makes the player someone in the story.
+  assert_eq(filled.creator_draft().user_identity, "徒弟")
   // Out of range is inert rather than trapping.
   let unchanged = step(model, UseArchetype(99))
   assert_eq(unchanged.creator_draft().name, "")
@@ -179,5 +188,29 @@ test "the generated character parser is defensive" {
       assert_eq(draft.goal, "")
     }
     None => fail("a wrapped card should parse")
+  }
+}
+
+///|
+test "the generated character parser reads the v2 schema" {
+  let text = "{\"name\":\"温衍\",\"persona\":\"散仙。\",\"principles\":\"感情藏在细节里。\",\"voice\":\"舒缓克制\",\"examples\":[\"坐吧。\",\"既来了，便坐吧。\"],\"relationship\":{\"user_identity\":\"徒弟\",\"user_name\":\"狸奴\",\"boundary\":\"自己的事一概不提\"},\"setting\":\"夜深，洞府。\",\"opening\":\"搁下书卷，抬眸看你。\",\"memory_rules\":\"答应过的事必须记得。\"}"
+  match parse_generated_character(text) {
+    Some(draft) => {
+      assert_eq(draft.principles, "感情藏在细节里。")
+      assert_eq(draft.examples, ["坐吧。", "既来了，便坐吧。"])
+      assert_eq(draft.user_identity, "徒弟")
+      assert_eq(draft.user_name, "狸奴")
+      assert_eq(draft.boundary, "自己的事一概不提")
+      assert_eq(draft.setting, "夜深，洞府。")
+      assert_eq(draft.opening, "搁下书卷，抬眸看你。")
+      assert_eq(draft.memory_rules, "答应过的事必须记得。")
+      // And the draft is a complete card: v2 fields survive to the card.
+      let card = draft.to_card(point=@geometry.Point::new(x=1.0, y=2.0))
+      assert_eq(card.principles(), "感情藏在细节里。")
+      assert_eq(card.examples().length(), 2)
+      assert_eq(card.relationship().user_name(), "狸奴")
+      assert_eq(card.opening(), "搁下书卷，抬眸看你。")
+    }
+    None => fail("a v2 card should parse")
   }
 }

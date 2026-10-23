@@ -139,3 +139,48 @@ test "a scene conversation is capped by the same rule" {
   let last = conversation.lines()[conversation.lines().length() - 1]
   assert_eq(last.text(), "答 39")
 }
+
+///|
+test "a long conversation with memories still fits the budget" {
+  // The memory layer rides between the system prompt and the summary, so a
+  // chatty memory book must not push the request past the budget: the newest
+  // line is reserved, the rest is trimmed, and the total stays bounded.
+  let scenario = Scenario::new(id="t", name="t", background="b", characters=[
+    CharacterCard::new(id="lin", name="林", persona="p"),
+  ])
+  let card = scenario
+    .character("lin")
+    .unwrap_or(CharacterCard::new(id="", name="", persona=""))
+  let mut conversation = Conversation::new(character_id="lin")
+  let mut index = 0
+  while index < 60 {
+    conversation = conversation.append(
+      ChatLine::player(
+        "第 \{index} 句，一句相当长的话用来占满小小的预算，像真的聊了很久。",
+      ),
+    )
+    index += 1
+  }
+  let memories : Array[MemoryEntry] = []
+  let mut m = 0
+  while m < 12 {
+    memories.push(MemoryEntry::authored("第 \{m} 条记忆，一条不太短的事实。"))
+    m += 1
+  }
+  let plan = plan_messages(
+    scenario,
+    card,
+    conversation,
+    "你好",
+    budget=1200,
+    memories=select_memories(memories, "你好"),
+  )
+  let mut total = 0
+  for message in plan.messages {
+    total += message.0.length() + message.1.length()
+  }
+  assert_true(total <= 1200)
+  // The layered transcript bound: only the recent window renders Markdown,
+  // so the viewer count stays small even at the cap.
+  assert_true(markdown_recent_lines < chat_history_limit)
+}

@@ -364,7 +364,14 @@ test "every Msg variant is reachable from a construction site" {
   ignore(DoDraftChanged("推开门"))
   ignore(StoryDraftChanged("雨声更大了。"))
   ignore(SendComposer)
-  ignore(ShellTabChanged(0))
+  ignore(OpenDrawer(Profile))
+  ignore(CloseDrawer)
+  ignore(OpenMessageMenu(0))
+  ignore(CloseMessageMenu)
+  ignore(ToggleRail)
+  ignore(ToggleAtmosphere)
+  ignore(SetBackdrop(true))
+  ignore(SetAppearance("ink"))
 }
 
 ///|
@@ -1055,14 +1062,16 @@ test "memory proposals parse, deduplicate, and land only on accept" {
   // Re-proposing the same facts deduplicates against the table.
   let deduplicated = step(processing, MemoryProposalsArrived(Some(proposals)))
   assert_eq(deduplicated.memory_drafts().length(), 1)
-  // Accept writes the entry into the world book (and clears the draft).
+  // Accept writes the entry into the selected character's memory book (and
+  // clears the draft); the world book stays curated lore only.
   let (accepted, _commit) = update(deduplicated, AcceptMemory(0))
   assert_eq(accepted.memory_drafts().length(), 0)
-  assert_eq(accepted.scenario().world_book().length(), 2)
-  assert_true(
-    accepted.scenario().world_book()[1].content() ==
-    "林掌柜允许了赊账。",
-  )
+  assert_eq(accepted.scenario().world_book().length(), 1)
+  let adopted = accepted.memories.for_character("林掌柜").entries()
+  assert_eq(adopted.length(), 1)
+  assert_eq(adopted[0].content(), "林掌柜允许了赊账。")
+  assert_true(adopted[0].source() is Adopted)
+  assert_false(adopted[0].pinned())
   // Discard simply drops it.
   let (with_two, _e) = update(
     processing,

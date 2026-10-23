@@ -30,7 +30,7 @@ pub fn world_idea_prompt(idea : String) -> WorldIdeaPrompt {
     "只输出一个JSON对象，不要输出JSON以外的任何文字、解释或代码块标记。",
     "字段：id（世界英文名，小写字母）、name（世界中文短名）、background（约150字的背景叙述，给角色当记忆用）、",
     "locations（2-4个地点，每个含 id/name/description 和 rect{origin{x,y},size{width,height}}，坐标在 0,0 到 640,420 内）、",
-    "characters（1-3个角色，每个含 id/name/persona（约100字人设）/appearance（可选）/voice（说话方式）/goal（目标）/secret（不主动说出的秘密）/point{x,y}/portrait_prompt）、",
+    "characters（1-3个角色，每个含 id/name/persona（约100字人设）/appearance（可选）/principles（约40字行为原则）/voice（说话方式）/examples（1-2句示例台词数组）/relationship{user_identity,user_name,boundary}/setting（当前情境）/opening（约60字开场白）/goal（目标）/secret（不主动说出的秘密）/memory_rules（长久记忆规则）/point{x,y}/portrait_prompt）、",
     "portrait_prompt 是给图像模型用的中文立绘描述，写清年龄感、服饰、体型、姿态、光线与背景氛围，约40字，不要写名字、不要写画风参数、不要提\"立绘\"二字；它是给玩家自己拿去生成图片的，本程序不会调用图像接口。",
     "world_book（2-4个条目，每个含 keys（触发关键词数组）和 content）。",
     "所有文本用中文；角色要能构成关系与张力；rect 高宽不超过 220。",

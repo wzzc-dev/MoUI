@@ -56,13 +56,21 @@ fn send_scene_turn(
     next.conversations.set(conversation.with_pending(true))
     let system = build_scene_prompt(next.scenario, location, cast, responder)
     // Scene turns reuse the same budgeted history walk; only the system prompt
-    // and the lore scope differ.
+    // and the lore scope differ. The respondent's own memories ride along —
+    // a scene is still a conversation with *someone*.
+    let memories = select_memories(
+      next.memories.for_character(responder.id()).entries(),
+      trimmed,
+    )
+    let mood = conversation.mood().unwrap_or(next.scenario.mood())
     let plan = plan_messages(
       next.scenario,
       responder,
       conversation,
       trimmed,
       budget=next.config.context_budget(),
+      memories~,
+      mood=Some(mood),
     )
     let messages : Array[(String, String)] = [("system", system)]
     for index, message in plan.messages {
@@ -154,12 +162,21 @@ fn send_private_turn(
             // typed message, and the pending flag keeps the UI honest.
             let conversation = next.conversations.for_character(id)
             next.conversations.set(conversation.with_pending(true))
+            // What this character remembers about the player: pinned
+            // entries always, then what this very line touches.
+            let memories = select_memories(
+              next.memories.for_character(id).entries(),
+              trimmed,
+            )
+            let mood = conversation.mood().unwrap_or(next.scenario.mood())
             let plan = plan_messages(
               next.scenario,
               card,
               conversation,
               trimmed,
               budget=next.config.context_budget(),
+              memories~,
+              mood=Some(mood),
             )
             // The turn's parts frame the newest line for the model only; the
             // stored history keeps the raw text the player typed. The plan

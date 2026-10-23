@@ -5,12 +5,19 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
 pub let action_gap : Double
 
 pub fn advance_time_prompt(Scenario, String?, Array[CharacterCard]) -> (String, String)
+
+pub fn app_theme(Appearance) -> @core.Theme
+
+pub fn app_theme_for(String) -> @core.Theme
+
+pub fn appearance_from_wire(String) -> Appearance
 
 pub fn base64_decode(String) -> Bytes?
 
@@ -24,7 +31,7 @@ pub fn build_messages(Scenario, CharacterCard, Conversation, String) -> Array[(S
 
 pub fn build_scene_prompt(Scenario, String, Array[CharacterCard], CharacterCard) -> String
 
-pub fn build_system_prompt(Scenario, CharacterCard) -> String
+pub fn build_system_prompt(Scenario, CharacterCard, mood? : SceneMood?) -> String
 
 pub fn bundle_decode(String) -> WorldBundle?
 
@@ -52,7 +59,13 @@ pub fn character_idea_prompt(String, String) -> (String, String)
 
 pub let chat_history_limit : Int32
 
+pub fn chip_width(String) -> Double
+
 pub fn clip_chars(String, Int32) -> String
+
+pub fn compact_action_theme(@core.Theme) -> @core.Theme
+
+pub fn composer_active_parts(WorldModel) -> Array[ComposerPart]
 
 pub let composer_do_marker : String
 
@@ -66,6 +79,10 @@ pub fn composer_turn_text(Array[ComposerPart]) -> String
 
 pub fn compression_source(Conversation) -> Array[ChatLine]
 
+pub let config_appearance_ink : String
+
+pub let config_appearance_paper : String
+
 pub let config_context_compact : String
 
 pub let config_context_roomy : String
@@ -76,11 +93,7 @@ pub let config_default_endpoint : String
 
 pub let config_default_model : String
 
-pub let content_width : Double
-
 pub let context_char_budget : Int32
-
-pub let controls_width : Double
 
 pub let conversation_index_file : String
 
@@ -94,13 +107,19 @@ pub fn creator_archetypes() -> Array[CharacterArchetype]
 
 pub fn default_scenario() -> Scenario
 
-pub fn draw_scenario(@common.PaintContext, @core.Rect, Scenario, @core.Point, String?) -> Unit
+pub fn destructive_ghost_style(@core.Theme) -> @style.ButtonStyle
+
+pub fn draw_scenario(@common.PaintContext, @core.Rect, Scenario, @core.Point, String?, style? : MapStyle) -> Unit
 
 pub fn drop_late_reply(WorldModel, String) -> (WorldModel, @core.Effect[Msg])
+
+pub let editor_measure : Double
 
 pub let events_file : String
 
 pub fn events_json_text(Array[String]) -> String
+
+pub let example_lines_limit : Int32
 
 pub fn extract_json_object(String) -> String?
 
@@ -111,6 +130,8 @@ pub fn first_free_spot(Scenario) -> @core.Point
 pub fn frame_player_text(String, InputIntent) -> String
 
 pub fn frame_player_turn(String, InputIntent) -> String
+
+pub fn is_base64_text(String) -> Bool
 
 pub fn is_card_or_portrait_path(String) -> CharacterAssetKind
 
@@ -144,9 +165,21 @@ pub let lore_recursion_cap : Int32
 
 pub fn lore_summary(Array[LoreHit]) -> String
 
+pub let markdown_recent_lines : Int32
+
+pub let memory_inject_limit : Int32
+
+pub fn memory_md_text(Array[MemoryEntry]) -> String
+
+pub fn memory_path(String) -> String
+
 pub let memory_proposal_every : Int32
 
 pub let memory_proposal_recent_lines : Int32
+
+pub fn mood_accent(@core.Theme, MoodVariant) -> @core.Color
+
+pub fn mood_from_wire(String) -> MoodVariant
 
 pub fn needs_compression(Conversation, Int32) -> Bool
 
@@ -160,13 +193,15 @@ pub fn parse_events_json(String) -> EventsFile
 
 pub fn parse_generated_character(String) -> CharacterDraft?
 
+pub fn parse_memory_md(String) -> Array[MemoryEntry]
+
 pub fn parse_player_parts(String) -> Array[ComposerPart]
 
 pub fn parse_world_book_line(String) -> WorldEntry?
 
 pub fn parse_world_files(WorldFiles) -> WorldParse?
 
-pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int32) -> MessagePlan
+pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int32, memories? : Array[MemoryEntry], mood? : SceneMood?) -> MessagePlan
 
 pub fn portrait_data_uri(String, String) -> String
 
@@ -180,8 +215,6 @@ pub fn prompt_summary(Scenario, CharacterCard, Conversation, String) -> String
 
 pub fn propose_memory_prompt(character_name~ : String, lines~ : Array[ChatLine]) -> (String, String)
 
-pub let rail_width : Double
-
 pub fn reply_target_exists(WorldModel, String) -> Bool
 
 pub fn responder_for(Array[CharacterCard], String, Int32) -> CharacterCard?
@@ -192,9 +225,9 @@ pub fn scripted_reply(Scenario, CharacterCard, String) -> String
 
 pub fn select_lore(Scenario, String, String, Int32) -> Array[LoreHit]
 
-pub fn split_branch(String) -> (String, Int32)?
+pub fn select_memories(Array[MemoryEntry], String, limit? : Int32) -> Array[MemoryEntry]
 
-pub let stage_width : Double
+pub fn split_branch(String) -> (String, Int32)?
 
 pub fn summarize_prompt(character_name~ : String, prior_summary~ : String, source_lines~ : Array[ChatLine]) -> (String, String)
 
@@ -212,9 +245,15 @@ pub fn update_creation(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit,
 
 pub fn update_editing(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
+pub fn update_editor(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
 pub fn update_library(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
+pub fn update_memory(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
 pub fn update_settings(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_ui(WorldModel, Msg) -> (WorldModel, @core.Effect[Msg])
 
 pub fn view(WorldModel, @core.ViewEnvironment) -> @core.View[Msg]
 
@@ -239,6 +278,15 @@ pub fn world_nudge(Scenario) -> String
 // Errors
 
 // Types and methods
+pub(all) enum Appearance {
+  Paper
+  Ink
+} derive(Eq, @debug.Debug)
+pub fn Appearance::equal(Self, Self) -> Bool
+pub fn Appearance::not_equal(Self, Self) -> Bool
+pub fn Appearance::to_repr(Self) -> @debug.Repr
+pub fn Appearance::wire(Self) -> String
+
 pub(all) struct CharacterArchetype {
   label : String
   name : String
@@ -246,6 +294,14 @@ pub(all) struct CharacterArchetype {
   voice : String
   goal : String
   secret : String
+  principles : String
+  examples : Array[String]
+  user_identity : String
+  user_name : String
+  boundary : String
+  setting : String
+  opening : String
+  memory_rules : String
 } derive(Eq, @debug.Debug)
 pub fn CharacterArchetype::equal(Self, Self) -> Bool
 pub fn CharacterArchetype::not_equal(Self, Self) -> Bool
@@ -254,6 +310,7 @@ pub fn CharacterArchetype::to_repr(Self) -> @debug.Repr
 pub(all) enum CharacterAssetKind {
   Card
   Portrait
+  Memory
   Other
 }
 
@@ -264,9 +321,15 @@ pub struct CharacterCard {
   appearance : String
   portrait : String
   portrait_prompt : String
-  secret : String
-  goal : String
+  principles : String
   voice : String
+  examples : Array[String]
+  relationship : Relationship
+  setting : String
+  opening : String
+  goal : String
+  secret : String
+  memory_rules : String
   location : String
   point : @core.Point
   color : @core.Color
@@ -275,17 +338,23 @@ pub fn CharacterCard::appearance(Self) -> String
 pub fn CharacterCard::character_md_text(Self) -> String
 pub fn CharacterCard::color(Self) -> @core.Color
 pub fn CharacterCard::equal(Self, Self) -> Bool
+pub fn CharacterCard::examples(Self) -> Array[String]
 pub fn CharacterCard::goal(Self) -> String
 pub fn CharacterCard::id(Self) -> String
 pub fn CharacterCard::location(Self) -> String
+pub fn CharacterCard::memory_rules(Self) -> String
 pub fn CharacterCard::name(Self) -> String
-pub fn CharacterCard::new(id~ : String, name~ : String, persona~ : String, appearance? : String, portrait? : String, portrait_prompt? : String, secret? : String, goal? : String, voice? : String, location? : String, point? : @core.Point, color? : @core.Color) -> Self
+pub fn CharacterCard::new(id~ : String, name~ : String, persona~ : String, appearance? : String, portrait? : String, portrait_prompt? : String, principles? : String, voice? : String, examples? : Array[String], relationship? : Relationship, setting? : String, opening? : String, secret? : String, goal? : String, memory_rules? : String, location? : String, point? : @core.Point, color? : @core.Color) -> Self
 pub fn CharacterCard::not_equal(Self, Self) -> Bool
+pub fn CharacterCard::opening(Self) -> String
 pub fn CharacterCard::persona(Self) -> String
 pub fn CharacterCard::point(Self) -> @core.Point
 pub fn CharacterCard::portrait(Self) -> String
 pub fn CharacterCard::portrait_prompt(Self) -> String
+pub fn CharacterCard::principles(Self) -> String
+pub fn CharacterCard::relationship(Self) -> Relationship
 pub fn CharacterCard::secret(Self) -> String
+pub fn CharacterCard::setting(Self) -> String
 pub fn CharacterCard::to_repr(Self) -> @debug.Repr
 pub fn CharacterCard::voice(Self) -> String
 
@@ -296,19 +365,50 @@ pub(all) struct CharacterDraft {
   voice : String
   goal : String
   secret : String
+  principles : String
+  examples : Array[String]
+  portrait : String
+  portrait_prompt : String
+  user_identity : String
+  user_name : String
+  boundary : String
+  setting : String
+  opening : String
+  memory_rules : String
 } derive(Eq, @debug.Debug)
 pub fn CharacterDraft::equal(Self, Self) -> Bool
+pub fn CharacterDraft::from_card(CharacterCard) -> Self
 pub fn CharacterDraft::new() -> Self
 pub fn CharacterDraft::not_equal(Self, Self) -> Bool
 pub fn CharacterDraft::to_card(Self, point~ : @core.Point) -> CharacterCard
 pub fn CharacterDraft::to_repr(Self) -> @debug.Repr
 pub fn CharacterDraft::with_appearance(Self, String) -> Self
 pub fn CharacterDraft::with_archetype(Self, CharacterArchetype) -> Self
+pub fn CharacterDraft::with_boundary(Self, String) -> Self
+pub fn CharacterDraft::with_examples(Self, Array[String]) -> Self
 pub fn CharacterDraft::with_goal(Self, String) -> Self
+pub fn CharacterDraft::with_memory_rules(Self, String) -> Self
 pub fn CharacterDraft::with_name(Self, String) -> Self
+pub fn CharacterDraft::with_opening(Self, String) -> Self
 pub fn CharacterDraft::with_persona(Self, String) -> Self
+pub fn CharacterDraft::with_portrait(Self, String) -> Self
+pub fn CharacterDraft::with_portrait_prompt(Self, String) -> Self
+pub fn CharacterDraft::with_principles(Self, String) -> Self
 pub fn CharacterDraft::with_secret(Self, String) -> Self
+pub fn CharacterDraft::with_setting(Self, String) -> Self
+pub fn CharacterDraft::with_user_identity(Self, String) -> Self
+pub fn CharacterDraft::with_user_name(Self, String) -> Self
 pub fn CharacterDraft::with_voice(Self, String) -> Self
+
+pub struct CharacterMemories {
+  character_id : String
+  entries : Array[MemoryEntry]
+} derive(Eq, @debug.Debug)
+pub fn CharacterMemories::character_id(Self) -> String
+pub fn CharacterMemories::entries(Self) -> Array[MemoryEntry]
+pub fn CharacterMemories::equal(Self, Self) -> Bool
+pub fn CharacterMemories::not_equal(Self, Self) -> Bool
+pub fn CharacterMemories::to_repr(Self) -> @debug.Repr
 
 pub struct ChatLine {
   speaker : Speaker
@@ -335,19 +435,11 @@ pub fn ChatLine::with_text(Self, String) -> Self
 pub(all) enum CommitScope {
   World
   Conversation(String)
+  Memories(String)
 } derive(Eq, @debug.Debug)
 pub fn CommitScope::equal(Self, Self) -> Bool
 pub fn CommitScope::not_equal(Self, Self) -> Bool
 pub fn CommitScope::to_repr(Self) -> @debug.Repr
-
-pub(all) enum CompactTab {
-  Chat
-  Library
-  Controls
-} derive(Eq, @debug.Debug)
-pub fn CompactTab::equal(Self, Self) -> Bool
-pub fn CompactTab::not_equal(Self, Self) -> Bool
-pub fn CompactTab::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ComposerPart {
   intent : InputIntent
@@ -368,13 +460,15 @@ pub struct Conversation {
   summary : String
   summarized_upto : Int32
   appended : Int32
+  mood : SceneMood?
 } derive(Eq, @debug.Debug)
 pub fn Conversation::append(Self, ChatLine) -> Self
 pub fn Conversation::appended(Self) -> Int32
 pub fn Conversation::character_id(Self) -> String
 pub fn Conversation::equal(Self, Self) -> Bool
 pub fn Conversation::lines(Self) -> Array[ChatLine]
-pub fn Conversation::new(character_id~ : String) -> Self
+pub fn Conversation::mood(Self) -> SceneMood?
+pub fn Conversation::new(character_id~ : String, mood? : SceneMood) -> Self
 pub fn Conversation::not_equal(Self, Self) -> Bool
 pub fn Conversation::pending(Self) -> Bool
 pub fn Conversation::summarized_upto(Self) -> Int32
@@ -382,6 +476,7 @@ pub fn Conversation::summary(Self) -> String
 pub fn Conversation::to_json_text(Self) -> String
 pub fn Conversation::to_repr(Self) -> @debug.Repr
 pub fn Conversation::to_wire(Self) -> Array[(String, String)]
+pub fn Conversation::with_mood(Self, SceneMood?) -> Self
 pub fn Conversation::with_pending(Self, Bool) -> Self
 pub fn Conversation::with_summary(Self, String, Int32) -> Self
 
@@ -408,6 +503,16 @@ pub fn ConversationsFile::equal(Self, Self) -> Bool
 pub fn ConversationsFile::not_equal(Self, Self) -> Bool
 pub fn ConversationsFile::to_repr(Self) -> @debug.Repr
 
+pub(all) enum DrawerKind {
+  Profile
+  Memory
+  Model
+  Events
+} derive(Eq, @debug.Debug)
+pub fn DrawerKind::equal(Self, Self) -> Bool
+pub fn DrawerKind::not_equal(Self, Self) -> Bool
+pub fn DrawerKind::to_repr(Self) -> @debug.Repr
+
 pub(all) struct EventsFile {
   events : Array[String]
   valid : Bool
@@ -428,8 +533,7 @@ pub fn InputIntent::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Layout {
   rail_width : Double
-  stage_width : Double
-  controls_width : Double
+  stage_max : Double
   gutter : Double
 } derive(Eq, @debug.Debug)
 pub fn Layout::content_width(Self) -> Double
@@ -487,6 +591,51 @@ pub fn LorePosition::equal(Self, Self) -> Bool
 pub fn LorePosition::not_equal(Self, Self) -> Bool
 pub fn LorePosition::to_repr(Self) -> @debug.Repr
 
+pub(all) enum MapStyle {
+  Full
+  Ambient
+  Backdrop
+} derive(Eq, @debug.Debug)
+pub fn MapStyle::equal(Self, Self) -> Bool
+pub fn MapStyle::not_equal(Self, Self) -> Bool
+pub fn MapStyle::to_repr(Self) -> @debug.Repr
+
+pub struct MemoryBook {
+  entries : Array[CharacterMemories]
+} derive(Eq, @debug.Debug)
+pub fn MemoryBook::clear(Self) -> Unit
+pub fn MemoryBook::clone(Self) -> Self
+pub fn MemoryBook::equal(Self, Self) -> Bool
+pub fn MemoryBook::find(Self, String) -> CharacterMemories?
+pub fn MemoryBook::for_character(Self, String) -> CharacterMemories
+pub fn MemoryBook::new() -> Self
+pub fn MemoryBook::not_equal(Self, Self) -> Bool
+pub fn MemoryBook::set(Self, CharacterMemories) -> Unit
+pub fn MemoryBook::to_repr(Self) -> @debug.Repr
+
+pub struct MemoryEntry {
+  content : String
+  pinned : Bool
+  source : MemorySource
+} derive(Eq, @debug.Debug)
+pub fn MemoryEntry::authored(String) -> Self
+pub fn MemoryEntry::content(Self) -> String
+pub fn MemoryEntry::equal(Self, Self) -> Bool
+pub fn MemoryEntry::not_equal(Self, Self) -> Bool
+pub fn MemoryEntry::pinned(Self) -> Bool
+pub fn MemoryEntry::proposed(String) -> Self
+pub fn MemoryEntry::source(Self) -> MemorySource
+pub fn MemoryEntry::to_repr(Self) -> @debug.Repr
+pub fn MemoryEntry::with_pinned(Self, Bool) -> Self
+
+pub(all) enum MemorySource {
+  Authored
+  Adopted
+} derive(Eq, @debug.Debug)
+pub fn MemorySource::equal(Self, Self) -> Bool
+pub fn MemorySource::not_equal(Self, Self) -> Bool
+pub fn MemorySource::to_repr(Self) -> @debug.Repr
+
 pub(all) struct MessagePlan {
   messages : Array[(String, String)]
   evicted : Array[ChatLine]
@@ -501,8 +650,10 @@ pub struct ModelConfig {
   api_key : String
   temperature : Double
   context_preset : String
+  appearance : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ModelConfig::api_key(Self) -> String
+pub fn ModelConfig::appearance(Self) -> String
 pub fn ModelConfig::context_budget(Self) -> Int32
 pub fn ModelConfig::context_preset(Self) -> String
 pub fn ModelConfig::endpoint(Self) -> String
@@ -516,10 +667,23 @@ pub fn ModelConfig::temperature(Self) -> Double
 pub fn ModelConfig::to_json(Self) -> String
 pub fn ModelConfig::to_repr(Self) -> @debug.Repr
 pub fn ModelConfig::with_api_key(Self, String) -> Self
+pub fn ModelConfig::with_appearance(Self, String) -> Self
 pub fn ModelConfig::with_context_preset(Self, String) -> Self
 pub fn ModelConfig::with_endpoint(Self, String) -> Self
 pub fn ModelConfig::with_model(Self, String) -> Self
 pub fn ModelConfig::with_temperature(Self, Double) -> Self
+
+pub(all) enum MoodVariant {
+  Calm
+  Tense
+  Warm
+  Cold
+  Mysterious
+} derive(Eq, @debug.Debug)
+pub fn MoodVariant::equal(Self, Self) -> Bool
+pub fn MoodVariant::not_equal(Self, Self) -> Bool
+pub fn MoodVariant::to_repr(Self) -> @debug.Repr
+pub fn MoodVariant::wire(Self) -> String
 
 pub(all) enum Msg {
   Select(String?)
@@ -535,7 +699,28 @@ pub(all) enum Msg {
   SendComposer
   Reply(String, String?)
   SceneReply(String, String, String?)
-  ShellTabChanged(Int32)
+  OpenDrawer(DrawerKind)
+  CloseDrawer
+  OpenMessageMenu(Int32)
+  CloseMessageMenu
+  ToggleRail
+  ToggleAtmosphere
+  SetBackdrop(Bool)
+  SetMood(MoodVariant)
+  EditCharacter(String)
+  CloseEditor
+  EditorTabChanged(Int32)
+  EditorChanged(CharacterDraft)
+  EditorExamplesChanged(String)
+  SaveCharacter
+  WorldPortraitsRefreshed(Array[(String, String)])
+  ComposerModeChanged(InputIntent)
+  ComposerMenuChanged(Bool)
+  ToggleComposerExpanded
+  MemoryDraftChanged(String)
+  AddMemory
+  ToggleMemoryPin(Int32)
+  DeleteMemory(Int32)
   OpenSettings
   CloseSettings
   ConfigFileLoaded(String?)
@@ -564,6 +749,7 @@ pub(all) enum Msg {
   GenerateWorld
   WorldGenerated(String?)
   ContextChanged(String)
+  SetAppearance(String)
   SummaryArrived(String, Int32, String?)
   MemoryProposalsArrived(String?)
   AcceptMemory(Int32)
@@ -593,6 +779,20 @@ pub fn Page::equal(Self, Self) -> Bool
 pub fn Page::not_equal(Self, Self) -> Bool
 pub fn Page::to_repr(Self) -> @debug.Repr
 
+pub struct Relationship {
+  user_identity : String
+  user_name : String
+  boundary : String
+} derive(Eq, @debug.Debug)
+pub fn Relationship::boundary(Self) -> String
+pub fn Relationship::empty() -> Self
+pub fn Relationship::equal(Self, Self) -> Bool
+pub fn Relationship::is_empty(Self) -> Bool
+pub fn Relationship::not_equal(Self, Self) -> Bool
+pub fn Relationship::to_repr(Self) -> @debug.Repr
+pub fn Relationship::user_identity(Self) -> String
+pub fn Relationship::user_name(Self) -> String
+
 pub struct Scenario {
   id : String
   name : String
@@ -602,6 +802,7 @@ pub struct Scenario {
   locations : Array[ScenarioLocation]
   characters : Array[CharacterCard]
   world_book : Array[WorldEntry]
+  mood : SceneMood
 } derive(Eq, @debug.Debug)
 pub fn Scenario::background(Self) -> String
 pub fn Scenario::character(Self, String) -> CharacterCard?
@@ -614,12 +815,14 @@ pub fn Scenario::location(Self, String) -> ScenarioLocation?
 pub fn Scenario::locations(Self) -> Array[ScenarioLocation]
 pub fn Scenario::map_height(Self) -> Double
 pub fn Scenario::map_width(Self) -> Double
+pub fn Scenario::mood(Self) -> SceneMood
 pub fn Scenario::name(Self) -> String
-pub fn Scenario::new(id~ : String, name~ : String, background~ : String, map_width? : Double, map_height? : Double, locations? : Array[ScenarioLocation], characters? : Array[CharacterCard], world_book? : Array[WorldEntry]) -> Self
+pub fn Scenario::new(id~ : String, name~ : String, background~ : String, map_width? : Double, map_height? : Double, locations? : Array[ScenarioLocation], characters? : Array[CharacterCard], world_book? : Array[WorldEntry], mood? : SceneMood) -> Self
 pub fn Scenario::not_equal(Self, Self) -> Bool
 pub fn Scenario::to_json(Self) -> String
 pub fn Scenario::to_repr(Self) -> @debug.Repr
 pub fn Scenario::try_from_json(String) -> Self?
+pub fn Scenario::with_mood(Self, SceneMood) -> Self
 pub fn Scenario::world_book(Self) -> Array[WorldEntry]
 pub fn Scenario::world_files(Self) -> Array[(String, String)]
 
@@ -638,6 +841,19 @@ pub fn ScenarioLocation::not_equal(Self, Self) -> Bool
 pub fn ScenarioLocation::rect(Self) -> @core.Rect
 pub fn ScenarioLocation::to_repr(Self) -> @debug.Repr
 
+pub struct SceneMood {
+  title : String
+  time_label : String
+  variant : MoodVariant
+} derive(Eq, @debug.Debug)
+pub fn SceneMood::empty() -> Self
+pub fn SceneMood::equal(Self, Self) -> Bool
+pub fn SceneMood::not_equal(Self, Self) -> Bool
+pub fn SceneMood::time_label(Self) -> String
+pub fn SceneMood::title(Self) -> String
+pub fn SceneMood::to_repr(Self) -> @debug.Repr
+pub fn SceneMood::variant(Self) -> MoodVariant
+
 pub(all) struct Screen {
   width : Double
   height : Double
@@ -645,10 +861,9 @@ pub(all) struct Screen {
   layout : Layout
   stage : Double
   rail : Double
-  controls : Double
   page_padding : Double
-  map_width : Double
-  map_height : Double
+  header_height : Double
+  drawer_width : Double
   tight_controls : Bool
 } derive(Eq, @debug.Debug)
 pub fn Screen::equal(Self, Self) -> Bool
@@ -696,6 +911,7 @@ pub(all) struct WorldFiles {
   world_md : String
   book_md : String
   character_files : Array[(String, String)]
+  memory_files : Array[(String, String)]
   conversations_json : String
   conversation_files : Array[(String, String)]
   events_json : String
@@ -728,11 +944,15 @@ pub fn WorldIdeaPrompt::to_repr(Self) -> @debug.Repr
 pub struct WorldModel {
   scenario : Scenario
   conversations : ConversationBook
+  memories : MemoryBook
   config : ModelConfig
   selected : String?
   say_draft : String
   do_draft : String
   story_draft : String
+  composer_mode : InputIntent
+  composer_expanded : Bool
+  composer_menu : Bool
   log : Array[String]
   worlds : Array[String]
   current : String?
@@ -743,28 +963,49 @@ pub struct WorldModel {
   idea : String
   generating : Bool
   page : Page
-  shell_tab : CompactTab
+  drawer : DrawerKind?
+  message_menu : Int32?
+  rail_open : Bool
+  atmosphere : Bool
+  backdrop : Bool
+  editor_open : Bool
+  editor_target : String?
+  editor_draft : CharacterDraft
+  editor_tab : Int32
+  editor_examples : String
   config_file_loaded : Bool
   memory_drafts : Array[WorldEntry]
   api_key_revealed : Bool
   editing_line : Int32?
   edit_buffer : String
   character_idea : String
+  memory_input : String
   portraits : Array[(String, String)]
   scene_location : String?
 } derive(Eq, @debug.Debug)
 pub fn WorldModel::active_conversation_key(Self) -> String?
 pub fn WorldModel::api_key_revealed(Self) -> Bool
+pub fn WorldModel::atmosphere(Self) -> Bool
+pub fn WorldModel::backdrop(Self) -> Bool
 pub fn WorldModel::bundle_text(Self) -> String?
 pub fn WorldModel::character_idea(Self) -> String
+pub fn WorldModel::composer_expanded(Self) -> Bool
+pub fn WorldModel::composer_menu(Self) -> Bool
+pub fn WorldModel::composer_mode(Self) -> InputIntent
 pub fn WorldModel::composer_ready(Self) -> Bool
 pub fn WorldModel::config(Self) -> ModelConfig
 pub fn WorldModel::creator_draft(Self) -> CharacterDraft
 pub fn WorldModel::creator_open(Self) -> Bool
 pub fn WorldModel::current(Self) -> String?
 pub fn WorldModel::do_draft(Self) -> String
+pub fn WorldModel::drawer(Self) -> DrawerKind?
 pub fn WorldModel::edit_buffer(Self) -> String
 pub fn WorldModel::editing_line(Self) -> Int32?
+pub fn WorldModel::editor_draft(Self) -> CharacterDraft
+pub fn WorldModel::editor_examples(Self) -> String
+pub fn WorldModel::editor_open(Self) -> Bool
+pub fn WorldModel::editor_tab(Self) -> Int32
+pub fn WorldModel::editor_target(Self) -> String?
 pub fn WorldModel::equal(Self, Self) -> Bool
 pub fn WorldModel::fork(Self) -> Self
 pub fn WorldModel::generating(Self) -> Bool
@@ -773,18 +1014,20 @@ pub fn WorldModel::in_scene(Self) -> Bool
 pub fn WorldModel::library_missing(Self) -> Bool
 pub fn WorldModel::log(Self) -> Array[String]
 pub fn WorldModel::memory_drafts(Self) -> Array[WorldEntry]
+pub fn WorldModel::memory_input(Self) -> String
+pub fn WorldModel::message_menu(Self) -> Int32?
 pub fn WorldModel::new() -> Self
 pub fn WorldModel::not_equal(Self, Self) -> Bool
 pub fn WorldModel::page(Self) -> Page
 pub fn WorldModel::portrait_for(Self, CharacterCard) -> String
 pub fn WorldModel::portraits(Self) -> Array[(String, String)]
 pub fn WorldModel::push_log(Self, String) -> Unit
+pub fn WorldModel::rail_open(Self) -> Bool
 pub fn WorldModel::say_draft(Self) -> String
 pub fn WorldModel::scenario(Self) -> Scenario
 pub fn WorldModel::scene_cast(Self) -> Array[CharacterCard]
 pub fn WorldModel::scene_location(Self) -> String?
 pub fn WorldModel::selected(Self) -> String?
-pub fn WorldModel::shell_tab(Self) -> CompactTab
 pub fn WorldModel::story_draft(Self) -> String
 pub fn WorldModel::to_repr(Self) -> @debug.Repr
 pub fn WorldModel::world_name(Self) -> String
@@ -793,6 +1036,7 @@ pub fn WorldModel::worlds(Self) -> Array[String]
 pub struct WorldParse {
   scenario : Scenario
   conversations : Array[Conversation]
+  memories : MemoryBook
   events : Array[String]
   warnings : Array[String]
 } derive(Eq, @debug.Debug)

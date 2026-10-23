@@ -1,26 +1,25 @@
 ///|
-/// The responsive shell: header, tab strip, and where the panels go.
+/// The responsive shell: the product header, and where the two panels go.
 ///
-/// The panels themselves live in `view.mbt` and `conversation_view.mbt`; this
-/// file decides *where* they go for the current `Screen` (see `layout.mbt`).
+/// One product rule drives all three modes: **the conversation is the
+/// stage**. In wide mode it sits beside the character rail; in medium mode the
+/// stage takes the width and the rail is a toggleable column; in compact (a
+/// phone in portrait) the stage is a full-screen chat and the rail is a
+/// full-screen overlay. What used to be a permanent third column is now a
+/// drawer (`drawers.mbt`), so no mode has to budget for it.
 ///
-/// One product rule drives all three modes: **the conversation is the stage**.
-/// In wide mode it sits between the roster and the event log; in medium mode the
-/// stage stays put and the tab strip switches the side rail; in compact (a phone
-/// in portrait) the stage is the default tab and the tabs take over the body.
-///
-/// The library picker and AI world generation are *onboarding* controls. Once a
-/// world is open they move to the settings page, because a player with a world
-/// open is talking to characters, not managing folders. With no world open they
-/// own the main screen — otherwise there is nothing to do.
+/// The library picker and AI world generation are *onboarding* controls. Once
+/// a world is open they move to the settings page, because a player with a
+/// world open is talking to characters, not managing folders. With no world
+/// open they own the main screen — otherwise there is nothing to do.
 
 ///|
 /// Horizontal padding inside the onboarding card.
 let onboarding_card_padding : Double = 26.0
 
 ///|
-/// Header: which world is on stage, where replies come from, and the way into
-/// settings. It carries no library controls any more.
+/// Header: the product name, which world is on stage, where replies come
+/// from, and the way into settings. It carries no library controls.
 fn shell_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   let source = if model.config.llm_enabled() {
     "模型回复"
@@ -47,7 +46,7 @@ fn shell_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
           row(
             [
               text(
-                "New World",
+                "New World · 角色演绎",
                 role=Title,
                 width=width - 104.0,
                 height=32.0,
@@ -72,16 +71,16 @@ fn shell_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       row(
         [
           text(
-            "New World",
+            "New World · 角色演绎",
             role=Title,
-            width=180.0,
+            width=220.0,
             height=34.0,
             align=TextStart,
           ),
           text(
             caption,
             role=Caption,
-            width=header_width - 180.0 - 96.0 - action_gap * 2.0,
+            width=header_width - 220.0 - 96.0 - action_gap * 2.0,
             height=30.0,
             align=TextStart,
           ),
@@ -96,119 +95,103 @@ fn shell_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 }
 
 ///|
-/// The tab strip for the narrow layouts. The wide workbench has every panel on
-/// screen and needs no switcher.
-///
-/// Labels name what the tab *shows*: on a phone the conversation is the product,
-/// "人物" is the roster plus the way into the library, and "事件" is the log.
-fn shell_tabs(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  let width = match screen.mode {
-    Compact => screen.width - screen.page_padding * 2.0
-    _ => screen.rail
-  }
-  segmented_control(
-    [
-      choice_item("0", "对话"),
-      choice_item("1", "人物"),
-      choice_item("2", "事件"),
-    ],
-    selected=match model.shell_tab() {
-      Chat => "0"
-      Library => "1"
-      Controls => "2"
-    },
-    on_select=value => {
-      ShellTabChanged(
-        match value {
-          "1" => 1
-          "2" => 2
-          _ => 0
-        },
-      )
-    },
-    width~,
-    size=Compact,
-  )
-}
-
-///|
-/// The way into the settings page from a narrow layout, where the library list
-/// no longer has a permanent rail.
-fn settings_link(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  ignore(model)
-  button(
-    "世界库与设置…",
-    on_click=OpenSettings,
-    variant=Outline,
-    width=width - 4.0,
-    height=button_md_height,
-  )
-}
-
-///|
-/// Wide: roster rail, stage, controls rail. The header and the columns share the
-/// same total width, so the block reads as one centered workbench.
+/// Wide: character rail | stage, centered as one block.
 fn wide_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   row(
     [
-      world_rail(model, screen.rail),
-      conversation_stage(model, screen),
-      controls_rail(model, screen.controls),
+      characters_rail(model, screen.rail),
+      stage_view(model, screen),
     ],
-    spacing=20.0,
+    spacing=screen.layout.gutter,
     justify=Center,
   )
 }
 
 ///|
-/// Medium: the stage stays, the tab strip switches the side rail. The strip sits
-/// *above the rail*, not above the whole page: a page-wide strip looks like it
-/// switches the stage and makes the rail's own content read as unrelated.
+/// Medium: the stage takes the width; the rail is a toggleable 300px column
+/// opened from the scene header. Opening it narrows the stage rather than
+/// overlapping it — a reading surface should not be half-covered while the
+/// player is mid-sentence.
 fn medium_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  // Two tabs, because the stage never leaves in medium mode: the strip picks
-  // which *side rail* is visible, and labelling it "对话" would promise a
-  // switch that does not happen.
-  let on_controls = model.shell_tab() is Controls
-  let tabs = segmented_control(
-    [choice_item("1", "人物"), choice_item("2", "事件")],
-    selected=if on_controls { "2" } else { "1" },
-    on_select=value => ShellTabChanged(if value == "2" { 2 } else { 1 }),
-    width=screen.rail,
-    size=Compact,
-  )
-  let rail : @moui.View[Msg] = if on_controls {
-    scroll_view(controls_rail(model, screen.rail), width=screen.rail)
-  } else {
-    scroll_view(
-      column(
-        [world_rail(model, screen.rail), settings_link(model, screen.rail)],
-        spacing=12.0,
-      ),
-      width=screen.rail,
+  if model.rail_open() {
+    // The stage keeps its reading measure by shrinking, not by scrolling
+    // under the rail.
+    let narrowed = {
+      ..screen,
+      stage: (screen.stage - screen.rail - screen.layout.gutter).max(320.0),
+    }
+    row(
+      [
+        characters_rail(model, screen.rail),
+        stage_view(model, narrowed),
+      ],
+      spacing=screen.layout.gutter,
+      justify=Center,
     )
+  } else {
+    stage_view(model, screen)
   }
-  row(
-    [column([tabs, rail], spacing=10.0), conversation_stage(model, screen)],
-    spacing=20.0,
-    justify=Center,
-  )
 }
 
 ///|
-/// Compact: one full-width panel per tab.
+/// Compact: the stage is a full-screen chat. The rail is a full-screen
+/// overlay (a non-modal Dialog centered in the viewport), so a phone gets the
+/// whole screen for reading and the whole screen for choosing.
 fn compact_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  match model.shell_tab() {
-    Chat => conversation_stage(model, screen)
-    Library =>
-      scroll_view(
-        column(
-          [world_rail(model, screen.stage), settings_link(model, screen.stage)],
-          spacing=12.0,
+  if model.rail_open() {
+    overlay_host(
+      stage_view(model, screen),
+      [
+        @views.PresentationSpec::new(
+          id="new-world:roster",
+          kind=Dialog,
+          content=card(
+            column(
+              [
+                row(
+                  [
+                    text(
+                      "角色",
+                      role=Subtitle,
+                      width=screen.stage - 96.0,
+                      height=28.0,
+                      align=TextStart,
+                    ),
+                    button(
+                      "关闭",
+                      on_click=ToggleRail,
+                      variant=Ghost,
+                      width=64.0,
+                      height=button_sm_height,
+                    ),
+                  ],
+                  spacing=action_gap,
+                  align=Center,
+                ),
+                divider(),
+                scroll_view(
+                  characters_rail(model, screen.stage),
+                  width=screen.stage - 24.0,
+                  height=(screen.height - 160.0).max(200.0),
+                ),
+              ],
+              spacing=8.0,
+            ),
+            width=screen.stage,
+            padding=12.0,
+          ),
+          modality=NonModal,
+          dismiss=@views.PresentationDismissPolicy::new(
+            outside_tap=true,
+            escape=true,
+            message=Some(ToggleRail),
+          ),
+          presented=true,
         ),
-        width=screen.stage,
-      )
-    Controls =>
-      scroll_view(controls_rail(model, screen.stage), width=screen.stage)
+      ],
+    )
+  } else {
+    stage_view(model, screen)
   }
 }
 
@@ -231,14 +214,14 @@ fn onboarding_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
         column(
           [
             text(
-              "从一句话开始",
+              "从一位角色开始",
               role=Headline,
               width~,
               height=40.0,
               align=TextStart,
             ),
             wrapped_caption(
-              "世界就是一个文件夹：选一个世界库，新建或让 AI 生成一个世界，角色、对话与事件都保存在那个子文件夹里。",
+              "世界就是一个文件夹：选一个世界库，新建或让 AI 生成一个世界，角色、对话与记忆都保存在那个子文件夹里。",
               width~,
             ),
             library_panel(model, width),
@@ -258,23 +241,16 @@ fn onboarding_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 
 ///|
 /// The main page. The header is fixed; the body takes the remaining height so a
-/// short window shrinks the flexible map/transcript instead of clipping the
-/// composer off the bottom edge.
+/// short window shrinks the transcript instead of clipping the composer off
+/// the bottom edge.
 fn main_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   let body : @moui.View[Msg] = match screen.mode {
     Wide => wide_body(model, screen)
     Medium => medium_body(model, screen)
     Compact => compact_body(model, screen)
   }
-  let content : Array[@moui.View[Msg]] = [shell_header(model, screen)]
-  // Compact has one column, so the strip belongs under the header. Medium puts
-  // it above the rail (inside `medium_body`) and Wide has every panel visible.
-  if screen.mode is Compact {
-    content.push(shell_tabs(model, screen))
-  }
-  content.push(expanded(body, weight=1.0))
   padding_edges(
-    column(content, spacing=12.0),
+    column([shell_header(model, screen), expanded(body, weight=1.0)], spacing=12.0),
     top=screen.page_padding,
     right=screen.page_padding,
     bottom=screen.page_padding,

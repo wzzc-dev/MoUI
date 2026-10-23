@@ -251,6 +251,9 @@ pub struct Conversation {
   /// Monotonic count of appended lines, unaffected by the cap. Powers the
   /// compression trigger's "enough new lines" test.
   appended : Int32
+  /// This conversation's scene atmosphere, overriding the world default.
+  /// `None` = use `Scenario::mood`. Session-level and optional on disk.
+  mood : SceneMood?
 } derive(Eq, Debug)
 
 ///|
@@ -260,7 +263,7 @@ pub extend Conversation with Debug::{to_repr}
 pub extend Conversation with Eq::{not_equal, equal}
 
 ///|
-pub fn Conversation::new(character_id~ : String) -> Conversation {
+pub fn Conversation::new(character_id~ : String, mood? : SceneMood) -> Conversation {
   {
     character_id,
     lines: [],
@@ -268,6 +271,7 @@ pub fn Conversation::new(character_id~ : String) -> Conversation {
     summary: "",
     summarized_upto: 0,
     appended: 0,
+    mood,
   }
 }
 
@@ -335,6 +339,21 @@ pub fn Conversation::with_summary(
   marker : Int32,
 ) -> Conversation {
   { ..self, summary, summarized_upto: marker, }
+}
+
+///|
+/// This conversation's scene atmosphere, overriding the world default.
+pub fn Conversation::mood(self : Conversation) -> SceneMood? {
+  self.mood
+}
+
+///|
+/// Override (or clear, with `None`) the scene atmosphere of this conversation.
+pub fn Conversation::with_mood(
+  self : Conversation,
+  mood : SceneMood?,
+) -> Conversation {
+  { ..self, mood, }
 }
 
 ///|

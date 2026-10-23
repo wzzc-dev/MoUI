@@ -221,6 +221,25 @@ pub fn frame_player_turn(text : String, fallback : InputIntent) -> String {
 }
 
 ///|
+/// The collapsed composer's one part: the active intent's line, if any.
+///
+/// The intent's marker rides along for 做 / 旁白, so a single action still
+/// reaches the model as an action (and the journal as one marked line).
+pub fn composer_active_parts(model : WorldModel) -> Array[ComposerPart] {
+  let text = match model.composer_mode {
+    Say => model.say_draft
+    Do => model.do_draft
+    Story => model.story_draft
+  }
+  let trimmed = text.trim().to_owned()
+  if trimmed == "" {
+    []
+  } else {
+    [ComposerPart::new(model.composer_mode, trimmed)]
+  }
+}
+
+///|
 /// Dispatch the composer arms.
 ///
 /// Split out of `update.mbt` because `update.mbt` is at the repository's
@@ -240,6 +259,25 @@ pub fn update_composer(
       ({ ..model, do_draft: value, }, @moui.Effect::none())
     StoryDraftChanged(value) =>
       ({ ..model, story_draft: value, }, @moui.Effect::none())
+    // The intent switch: the collapsed composer writes into the matching
+    // draft, and every intent keeps its own text, so switching 说 → 做 → 说
+    // never loses a line.
+    ComposerModeChanged(intent) =>
+      (
+        { ..model, composer_mode: intent, composer_menu: false, },
+        @moui.Effect::none(),
+      )
+    ComposerMenuChanged(open) =>
+      ({ ..model, composer_menu: open, }, @moui.Effect::none())
+    ToggleComposerExpanded =>
+      (
+        {
+          ..model,
+          composer_expanded: !model.composer_expanded,
+          composer_menu: false,
+        },
+        @moui.Effect::none(),
+      )
     Send(text) =>
       // A scene turn and a private turn differ only in how the prompt is built
       // and which conversation key it lands in; everything after that (pending
@@ -249,24 +287,61 @@ pub fn update_composer(
         None => send_private_turn(model, text, runner, host)
       }
     SendComposer => {
-      // One turn: the non-empty fields in 说 → 做 → 旁白 order. The turn reaches
+      // The collapsed composer sends **one** intent — the active mode's line —
+      // because only that line is on screen. The expanded composer sends the
+      // non-empty fields in 说 → 做 → 旁白 order. Either way the turn reaches
       // the journal as one player line (see `composer_turn_text`), so the
       // conversation model is unchanged.
-      let parts = composer_field_parts(
-        model.say_draft,
-        model.do_draft,
-        model.story_draft,
-      )
+      let parts = if model.composer_expanded {
+        composer_field_parts(
+          model.say_draft,
+          model.do_draft,
+          model.story_draft,
+        )
+      } else {
+        composer_active_parts(model)
+      }
       let text = composer_turn_text(parts)
       if text == "" {
         (model, @moui.Effect::none())
       } else {
-        let cleared = { ..model, say_draft: "", do_draft: "", story_draft: "", }
-        match cleared.scene_location {
-          Some(location) =>
-            send_scene_turn(cleared, location, text, runner, host)
+        // Only the sent parts are cleared: the other intents keep the text
+        // the player wrote and switched away from.
+        let kept_say = if model.composer_expanded || model.composer_mode is Say {
+          ""
+        } else {
+          model.say_draft
+        }
+        let kept_do = if model.composer_expanded || model.composer_mode is Do {
+          ""
+        } else {
+          model.do_draft
+        }
+        let kept_story = if model.composer_expanded ||
+          model.composer_mode is Story {
+          ""
+        } else {
+          model.story_draft
+        }
+        let cleared = {
+          ..model,
+          say_draft: kept_say,
+          do_draft: kept_do,
+          story_draft: kept_story,
+        }
+        let (sent, effect) = match cleared.scene_location {
+          Some(location) => send_scene_turn(cleared, location, text, runner, host)
           None => send_private_turn(cleared, text, runner, host)
         }
+        // The send helpers clear every draft; the intents that were not part
+        // of this turn get their text back.
+        let next = {
+          ..sent,
+          say_draft: kept_say,
+          do_draft: kept_do,
+          story_draft: kept_story,
+        }
+        (next, effect)
       }
     }
     _ => (model, @moui.Effect::none())

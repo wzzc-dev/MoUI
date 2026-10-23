@@ -1,21 +1,22 @@
 ///|
-/// The views: the library, the stage, and the controls.
+/// The views: the root, the shared primitives, and the pages that are not the
+/// stage.
 ///
-/// Three panels, one product: the **roster** (who lives in this world), the
-/// **stage** (the world and the conversation — the main surface), and the
-/// **controls** (memory drafts and the event log). Every panel takes the width it
-/// is given instead of a package constant, so the same tree fills a desktop
-/// workbench, a phone in portrait, and a Studio plugin panel (see `shell.mbt`
-/// for the arrangement and `layout.mbt` for the breakpoints).
+/// The product's center lives in `stage_view.mbt` (the character on stage),
+/// `characters_rail.mbt` (who to talk to), `drawers.mbt` and
+/// `message_menu.mbt` (the on-demand surfaces). This file owns what is left:
+/// the view root — where the theme wraps the tree once and the app-level
+/// overlays are declared — plus the small shared primitives (avatar, body
+/// text, section headers) and the settings / onboarding pages.
 ///
 /// All state comes from the model; the view only declares controls and maps
 /// their typed messages. Panning is transient view state driven by a drag
 /// modifier, so scrolling never enters the model and never gets persisted.
-
-///|
-/// Package-wide `using` for the shared view/paint vocabulary. `render.mbt`,
-/// `shell.mbt`, `conversation_view.mbt`, and this file all compose controls, so
-/// the names are introduced once here instead of duplicated per file.
+///
+///| Package-wide `using` for the shared view/paint vocabulary. `render.mbt`,
+/// `shell.mbt`, `stage_view.mbt`, `transcript_view.mbt`, `drawers.mbt`, and
+/// this file all compose controls, so the names are introduced once here
+/// instead of being duplicated per file.
 using @views {
   type PaintContext,
   button,
@@ -25,19 +26,24 @@ using @views {
   choice_item,
   chip,
   column,
+  container,
+  empty,
   divider,
   draw_text,
   expanded,
   flexible,
+  overlay_host,
   padding_edges,
   fill_rounded_rect,
   image,
   pop_clip,
+  popup_host,
   push_clip,
   row,
   scroll_view,
   segmented_control,
   spacer,
+  stack,
   stroke_rounded_rect,
   text,
   text_area,
@@ -46,42 +52,7 @@ using @views {
 }
 
 ///|
-/// Pan offset kept out of the app model: it is transient view state driven by
-/// the drag modifier, so it cannot leak into persistence or replay.
-priv struct PanState {
-  origin : @geometry.Point
-}
-
-///|
-let pan_state : Ref[PanState] = Ref({
-  origin: @geometry.Point::new(x=0.0, y=0.0),
-})
-
-///|
-fn pan_origin() -> @geometry.Point {
-  pan_state.val.origin
-}
-
-///|
-/// Clamp panning so the map cannot be dragged entirely off-screen.
-///
-/// `width`/`height` are the current viewport, not package constants: a phone-sized
-/// map that clamped against the desktop viewport would either allow panning into
-/// empty space or refuse to pan at all.
-fn clamp_origin(
-  point : @geometry.Point,
-  model : WorldModel,
-  width~ : Double,
-  height~ : Double,
-) -> @geometry.Point {
-  let max_x = model.scenario.map_width() - width
-  let max_y = model.scenario.map_height() - height
-  let x = if max_x <= 0.0 { 0.0 } else { clamp(point.x, 0.0, max_x) }
-  let y = if max_y <= 0.0 { 0.0 } else { clamp(point.y, 0.0, max_y) }
-  @geometry.Point::new(x~, y~)
-}
-
-///|
+/// Clamp a value into `[low, high]`.
 fn clamp(value : Double, low : Double, high : Double) -> Double {
   if value < low {
     low
@@ -90,6 +61,20 @@ fn clamp(value : Double, low : Double, high : Double) -> Double {
   } else {
     value
   }
+}
+
+///|
+/// The portrait prompt a generated world left for this character, phrased as
+/// something the player can act on.
+///
+/// The app deliberately never calls an image API, so the value of generating
+/// a prompt is entirely in making it *visible and copyable*. Empty for
+/// hand-written cards and for characters that already have a portrait file.
+fn portrait_prompt_hint(card : CharacterCard) -> String {
+  if card.portrait() != "" || card.portrait_prompt() == "" {
+    return ""
+  }
+  "立绘提示词（拿去生图后存为 characters/\{card.name()}.png）：\{card.portrait_prompt()}"
 }
 
 ///|
@@ -109,7 +94,7 @@ fn wrapped_caption(content : String, width~ : Double) -> @moui.View[Msg] {
 ///|
 /// A character's avatar: the portrait when the world ships one, otherwise the
 /// deterministic colour block with the name's first character. Two shapes are
-/// all the product needs (a list avatar and a stage portrait), so the helper
+/// all the product needs (a rail avatar and a stage portrait), so the helper
 /// takes a size and a corner radius instead of a style enum.
 fn avatar(
   model : WorldModel,
@@ -120,7 +105,7 @@ fn avatar(
   let uri = model.portrait_for(card)
   if uri != "" {
     // `fit=Cover` keeps a tall portrait from letterboxing inside a square.
-    // A screen reader reaches the roster and the stage as a list of faces;
+    // A screen reader reaches the rail and the stage as a list of faces;
     // without a label the portrait is an unnameable image, so the character's
     // name is the only thing that survives.
     image(
@@ -153,6 +138,85 @@ fn avatar(
 }
 
 ///|
+/// The width a chip needs for its label.
+///
+/// A chip's label is centred in the chip, so a chip that spans the whole rail
+/// leaves the name floating in the middle of it. The chip takes the room its
+/// name needs instead: a CJK glyph is about as wide as the control font is
+/// tall, plus the chip's own padding on both sides.
+pub fn chip_width(label : String) -> Double {
+  label.length().to_double() * 13.0 + 30.0
+}
+
+///|
+/// The portrait frame: a stable, clean surface for a portrait image.
+///
+/// A portrait PNG usually has a transparent background. Painted straight onto
+/// the page it mixes with whatever sits behind it — the form's own text, the
+/// next field, the stage under a translucent overlay — and the picture reads
+/// as a hole rather than as a picture. The frame gives that transparency a
+/// place to live: its own tint, a hairline edge, rounded corners.
+///
+/// The frame is the same in the editor (large) and in the profile drawer
+/// (small), so the read-only view and the edit view show the character the
+/// same way. The drawing keeps its own ratio (`Contain`) inside the frame, so
+/// a tall portrait is letterboxed instead of cropped.
+fn portrait_frame(
+  model : WorldModel,
+  card : CharacterCard,
+  width : Double,
+  height : Double,
+  radius~ : Double = 12.0,
+) -> @moui.View[Msg] {
+  // The frame is the size the caller asked for and the picture *fills* it:
+  // `Cover` crops the part that does not fit, and the framework crops from
+  // the centre on both sides (a wide picture loses the same length on the
+  // left and on the right), so a face never ends up off in one corner.
+  let theme = app_theme_for(model.config.appearance())
+  let uri = model.portrait_for(card)
+  let content = if uri != "" {
+    image(
+      uri,
+      width=width,
+      height=height,
+      fit=Cover,
+      corner_radius=radius,
+      accessibility_label=card.name() + " 的立绘",
+    )
+  } else {
+    // No portrait file yet: the character's colour and first character, on the
+    // same surface — an empty frame never looks broken.
+    column(
+      [
+        text(
+          first_grapheme(card.name()),
+          role=Title,
+          width=width,
+          height=height,
+          align=TextCenter,
+        ),
+      ],
+      justify=Center,
+    )
+  }
+  // The hairline is a one-pixel ring of the border colour under the surface,
+  // which keeps the frame from needing the framework's border style.
+  container(
+    container(
+      content,
+      width=width,
+      height=height,
+      background=theme.palette.surface_variant,
+      corner_radius=radius,
+    ),
+    width=width + 2.0,
+    height=height + 2.0,
+    background=theme.palette.outline_variant,
+    corner_radius=radius + 1.0,
+  )
+}
+
+///|
 /// The first visible character of a name, for the no-portrait fallback.
 fn first_grapheme(name : String) -> String {
   for ch in name {
@@ -162,499 +226,9 @@ fn first_grapheme(name : String) -> String {
 }
 
 ///|
-/// The draggable scenario map, sized to the screen.
-fn scenario_map(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  let scenario = model.scenario
-  let width = screen.stage
-  // Fit the scenario's own aspect ratio, then cap: showing the whole map beats
-  // showing half of it and asking the player to pan before the scene makes
-  // sense.
-  let aspect = scenario.map_height() / scenario.map_width()
-  let height = clamp_screen(width * aspect, 120.0, screen.map_height)
-  let surface = canvas(
-    measure=fn(_constraints : @geometry.Constraints) -> @geometry.Size {
-      { width, height, }
-    },
-    draw=fn(ctx : PaintContext, frame : @geometry.Rect) -> Unit {
-      draw_scenario(ctx, frame, scenario, pan_origin(), model.selected)
-    },
-    semantics_label="Scenario map",
-  )
-  let dragged = surface.on_drag(event => {
-    let next = @geometry.Point::new(
-      x=pan_state.val.origin.x - event.delta.x,
-      y=pan_state.val.origin.y - event.delta.y,
-    )
-    pan_state.val = { origin: clamp_origin(next, model, width~, height~), }
-    // Panning is a repaint, not a selection change: dispatching `Select` here
-    // re-selected the same character on every drag frame (harmlessly after the
-    // id guard, but the intent was wrong and it used to clear the draft).
-    PanMap
-  })
-  dragged.on_tap_with_frame((position, frame) => {
-    let point = @geometry.Point::new(
-      x=position.x - frame.origin.x,
-      y=position.y - frame.origin.y,
-    )
-    // A tap on a person opens their private chat; a tap on a place enters that
-    // place's scene. That is what makes the map carry meaning instead of being
-    // decoration next to the roster.
-    match character_at(scenario, pan_origin(), point) {
-      Some(id) => Select(Some(id))
-      None =>
-        match location_at(scenario, pan_origin(), point) {
-          Some(location) => EnterScene(location)
-          None => PanMap
-        }
-    }
-  })
-}
-
-///|
-/// Left rail: the roster (or the creator form while it is open).
-///
-/// The library list no longer lives here. Once a world is open, choosing another
-/// one is a settings concern (`settings_view`); with no world open the
-/// onboarding screen owns the picker. This rail is about the people in *this*
-/// world.
-fn world_rail(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  if model.creator_open {
-    creator_form(model, width)
-  } else {
-    roster_section(model, width)
-  }
-}
-
-///|
-/// The roster, the branches under each character, and the scenes.
-fn roster_section(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let rows : Array[@moui.View[Msg]] = []
-  for card in model.scenario.characters() {
-    let selected = model.selected is Some(id) && id == card.id()
-    // The avatar is the only place a portrait shows in the roster: a 32px
-    // square reads at a glance and keeps the rail narrow.
-    rows.push(
-      row(
-        [
-          avatar(model, card, size=30.0, radius=15.0),
-          chip(
-            card.name(),
-            selected~,
-            on_click=Some(Select(Some(card.id()))),
-            width=width - 56.0,
-            height=34.0,
-          ),
-        ],
-        spacing=8.0,
-        align=Center,
-      ),
-    )
-    // Branches of this character, indented under it. Without this list a
-    // branch is a dead end: the conversation exists on disk but the player has
-    // no way back to it after selecting something else.
-    let branches : Array[(Int32, Int32)] = []
-    for conversation in model.conversations.entries {
-      match split_branch(conversation.character_id()) {
-        Some((base, number)) =>
-          if base == card.id() {
-            branches.push((number, conversation.lines().length()))
-          }
-        None => ()
-      }
-    }
-    // Numeric order, independent of insertion order.
-    branches.sort_by((left, right) => left.0 - right.0)
-    for pair in branches {
-      let number = pair.0
-      let count = pair.1
-      let key = branched_key(card.id(), number)
-      rows.push(
-        chip(
-          "↳ 分支 " +
-          number.to_string() +
-          "（" +
-          count.to_string() +
-          " 条）",
-          selected=model.selected is Some(id) && id == key,
-          on_click=Some(Select(Some(key))),
-          width=width - 32.0,
-          height=30.0,
-        ),
-      )
-    }
-  }
-  let roster : @moui.View[Msg] = if rows.is_empty() {
-    wrapped_caption(
-      "这个世界还没有人。点「+ 设定人物」，让第一个角色进入世界。",
-      width~,
-    )
-  } else {
-    scroll_view(
-      column(rows, spacing=6.0),
-      width=width - 8.0,
-      height=(rows.length().to_double() * 42.0).min(220.0),
-    )
-  }
-  // Places with people in them become scenes: the map is the spatial view,
-  // this is the list view of the same idea.
-  let scenes : Array[@moui.View[Msg]] = []
-  for place in model.scenario.locations() {
-    let cast = cast_at(model.scenario, place.id())
-    if cast.length() >= 2 {
-      scenes.push(
-        chip(
-          "场景 · " +
-          place.name() +
-          "（" +
-          cast.length().to_string() +
-          "）",
-          selected=match model.scene_location() {
-            Some(current) => current == place.id()
-            None => false
-          },
-          on_click=Some(EnterScene(place.id())),
-          width=width - 12.0,
-          height=30.0,
-        ),
-      )
-    }
-  }
-  column(
-    [
-      section_header(
-        "人物",
-        width~,
-        action=button(
-          "+ 设定人物",
-          on_click=ToggleCreator,
-          variant=Tonal,
-          width=112.0,
-          height=button_md_height,
-        ),
-      ),
-      roster,
-      if scenes.is_empty() {
-        wrapped_caption(
-          "同一个地点有 2 个以上角色时会在这里出现「场景」，点进去就能让多人同场对话。",
-          width~,
-        )
-      } else {
-        column(scenes, spacing=6.0)
-      },
-    ],
-    spacing=8.0,
-  )
-}
-
-///|
-/// The character creator form. Only 人设 is required to make a card talk.
-fn creator_form(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let draft = model.creator_draft()
-  let wide = width - 4.0
-  // The wizard has two on-ramps, because there are two kinds of stuck:
-  // "I don't know what to make" (archetypes) and "I know, but writing six
-  // fields is tedious" (one-line idea → drafted card).
-  let archetype_buttons : Array[@moui.View[Msg]] = []
-  for index, archetype in creator_archetypes() {
-    archetype_buttons.push(
-      button(
-        archetype.label,
-        on_click=UseArchetype(index),
-        variant=Tonal,
-        width=76.0,
-        height=button_sm_height,
-      ),
-    )
-  }
-  column(
-    [
-      section_header(
-        "设定人物",
-        width~,
-        action=button(
-          "关闭",
-          on_click=ToggleCreator,
-          variant=Ghost,
-          width=64.0,
-          height=button_sm_height,
-        ),
-      ),
-      wrapped_caption("从模板开始：", width=wide),
-      row(archetype_buttons, spacing=6.0),
-      row(
-        [
-          text_field(
-            model.character_idea(),
-            on_input=value => CharacterIdeaChanged(value),
-            placeholder="或一句话描述…",
-            width=wide - 88.0,
-            height=button_md_height,
-          ),
-          button(
-            "起草",
-            on_click=DraftCharacter,
-            variant=Tonal,
-            width=80.0,
-            height=button_md_height,
-          ),
-        ],
-        spacing=6.0,
-      ),
-      text_field(
-        draft.name,
-        on_input=value => CreatorChanged(draft.with_name(value)),
-        placeholder="名字（例如：当铺掌柜）",
-        width=wide,
-      ),
-      text_area(
-        draft.persona,
-        on_input=value => CreatorChanged(draft.with_persona(value)),
-        placeholder="人设：TA是谁？（必填）",
-        lines=3,
-        width=wide,
-      ),
-      text_field(
-        draft.voice,
-        on_input=value => CreatorChanged(draft.with_voice(value)),
-        placeholder="说话方式（例如：简短、爱用反问）",
-        width=wide,
-      ),
-      text_field(
-        draft.appearance,
-        on_input=value => CreatorChanged(draft.with_appearance(value)),
-        placeholder="外貌（可选）",
-        width=wide,
-      ),
-      text_field(
-        draft.goal,
-        on_input=value => CreatorChanged(draft.with_goal(value)),
-        placeholder="目标（可选）",
-        width=wide,
-      ),
-      text_field(
-        draft.secret,
-        on_input=value => CreatorChanged(draft.with_secret(value)),
-        placeholder="秘密（可选，模型不会主动说出）",
-        width=wide,
-      ),
-      row(
-        [
-          button(
-            "创建角色",
-            on_click=CharacterCreated,
-            width=120.0,
-            height=button_md_height,
-          ),
-          button(
-            "取消",
-            on_click=ToggleCreator,
-            variant=Tonal,
-            width=80.0,
-            height=button_md_height,
-          ),
-        ],
-        spacing=8.0,
-      ),
-    ],
-    spacing=8.0,
-  )
-}
-
-///|
-/// The stage: world description, map, and the conversation. The map and the
-/// transcript are flexible so a short window shrinks them instead of clipping
-/// the composer off the bottom edge.
-fn conversation_stage(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  let width = screen.stage
-  column(
-    [
-      row(
-        [
-          text(
-            model.scenario.name(),
-            role=Body,
-            width=width - 56.0,
-            height=28.0,
-            align=TextStart,
-          ),
-          // The selected character's portrait on stage: the conversation is
-          // with *someone*, and a face makes that concrete.
-          match model.selected {
-            Some(id) =>
-              match model.scenario.character(id) {
-                Some(card) => avatar(model, card, size=36.0, radius=18.0)
-                None => text("", width=36.0, height=28.0)
-              }
-            None => text("", width=36.0, height=28.0)
-          },
-        ],
-        spacing=8.0,
-        align=Center,
-      ),
-      text(
-        // The portrait prompt of the character on stage rides here: it is
-        // only useful if the player can see and copy it.
-        {
-          let hint = match model.selected {
-            Some(id) =>
-              match model.scenario.character(id) {
-                Some(card) => portrait_prompt_hint(card)
-                None => ""
-              }
-            None => ""
-          }
-          if hint != "" {
-            hint
-          } else {
-            scenario_blurb(model)
-          }
-        },
-        role=Caption,
-        width~,
-        height=30.0,
-        align=TextStart,
-        wrap=true,
-      ),
-      // The map keeps its designed height and the transcript takes the rest.
-      // Making both flexible split the stage 50/50, which on a phone left the
-      // conversation a few rows tall while the map owned half the screen.
-      scenario_map(model, screen),
-      flexible(conversation_panel(model, screen), weight=1.0),
-    ],
-    spacing=8.0,
-  )
-}
-
-///|
-/// The portrait prompt a generated world left for this character, phrased as
-/// something the player can act on.
-///
-/// The app deliberately never calls an image API, so the value of generating a
-/// prompt is entirely in making it *visible and copyable*. Empty for
-/// hand-written cards and for characters that already have a portrait file.
-fn portrait_prompt_hint(card : CharacterCard) -> String {
-  if card.portrait() != "" || card.portrait_prompt() == "" {
-    return ""
-  }
-  "立绘提示词（拿去生图后存为 characters/\{card.name()}.png）：\{card.portrait_prompt()}"
-}
-
-///|
-fn scenario_blurb(model : WorldModel) -> String {
-  let nudge = world_nudge(model.scenario)
-  if nudge != "" {
-    nudge
-  } else {
-    "拖动平移 · 点选角色 · \{model.scenario.characters().length()} 个角色，\{model.scenario.world_book().length()} 条世界设定"
-  }
-}
-
-///|
-/// A one-line note about the world-book entries the player's last turn pulled
-/// in, or `""` when nothing matched. This is the visible half of the injection
-/// contract that `context.mbt` implements: the prompt already carries the lore,
-/// so the UI has to say so rather than letting a character "just know".
-fn lore_hint(scenario : Scenario, conversation : Conversation) -> String {
-  let lines = conversation.lines()
-  if lines.is_empty() {
-    return ""
-  }
-  // The freshest player line is the one whose lore is still relevant.
-  let mut player_text = ""
-  let mut index = lines.length()
-  while index > 0 {
-    index -= 1
-    match lines[index].speaker() {
-      Player => {
-        player_text = lines[index].text()
-        break
-      }
-      Character(_) => ()
-    }
-  }
-  if player_text == "" {
-    return ""
-  }
-  // Same selector the prompt uses, so the panel cannot disagree with what the
-  // model was actually given.
-  lore_summary(select_lore(scenario, player_text, "", lines.length()))
-}
-
-///|
-/// Right rail: memory drafts and the event log.
-///
-/// AI world generation used to live here too; it is now a settings/onboarding
-/// concern, so the rail answers "what happened?" and "what should I remember?".
-fn controls_rail(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let sections : Array[@moui.View[Msg]] = []
-  if !model.memory_drafts().is_empty() {
-    sections.push(memory_panel(model, width))
-  }
-  sections.push(
-    column(
-      [
-        section_header(
-          "事件",
-          width~,
-          action=button(
-            "推进时间",
-            on_click=AdvanceTime,
-            variant=Tonal,
-            width=96.0,
-            height=button_md_height,
-          ),
-        ),
-        log_panel(model, width),
-      ],
-      spacing=8.0,
-    ),
-  )
-  column(sections, spacing=16.0)
-}
-
-///|
-/// Provider-proposed long-term memories, awaiting the player's decision.
-/// Nothing reaches the world book without an explicit accept.
-fn memory_panel(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let rows : Array[@moui.View[Msg]] = []
-  for index, entry in model.memory_drafts() {
-    rows.push(
-      column(
-        [
-          wrapped_caption(
-            "- \{entry.keys().join(" | ")}: \{entry.content()}",
-            width=width - 8.0,
-          ),
-          row(
-            [
-              button(
-                "采纳",
-                on_click=AcceptMemory(index),
-                width=72.0,
-                height=button_sm_height,
-              ),
-              button(
-                "忽略",
-                on_click=DiscardMemory(index),
-                variant=Tonal,
-                width=72.0,
-                height=button_sm_height,
-              ),
-            ],
-            spacing=6.0,
-          ),
-        ],
-        spacing=4.0,
-      ),
-    )
-  }
-  column([section_header("记忆草稿", width~)] + rows, spacing=8.0)
-}
-
-///|
 /// The world library: current folder, refresh, picker, new-world composer, and
 /// portability. Shown on the onboarding screen and on the settings page — never
-/// on the workbench, where a world is already open.
+/// on the stage, where a character is already talking.
 fn library_panel(model : WorldModel, width : Double) -> @moui.View[Msg] {
   let entries : Array[@moui.View[Msg]] = []
   for name in model.worlds() {
@@ -813,29 +387,6 @@ fn generation_panel(model : WorldModel, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
-/// The event log, newest first.
-fn log_panel(model : WorldModel, width : Double) -> @moui.View[Msg] {
-  let lines : Array[@moui.View[Msg]] = []
-  if model.log().is_empty() {
-    lines.push(
-      text(
-        "还没有事件。",
-        role=Caption,
-        width=width - 8.0,
-        height=20.0,
-        align=TextStart,
-      ),
-    )
-  }
-  for entry in model.log() {
-    // Full wrap: the log already lives in a fixed-height scroll_view, so a
-    // long entry scrolls instead of needing a truncated estimate.
-    lines.push(wrapped_caption(entry, width=width - 8.0))
-  }
-  scroll_view(column(lines, spacing=2.0), width=width - 8.0, height=200.0)
-}
-
-///|
 /// The entrypoint the runtime calls: view plus the viewport it was given.
 pub fn view(
   model : WorldModel,
@@ -849,8 +400,28 @@ pub fn view(
 ///|
 /// The view for an explicit screen. Exposed for tests and the plugin frame: both
 /// hand over a rectangle rather than a runtime environment.
+///
+/// Three things happen here, in this order:
+///
+/// 1. **the window background** — the runtime clears to white, so the
+///    appearance's surface is painted by the app itself; otherwise 墨蓝 would
+///    show a white window;
+/// 2. **the theme** — one `View::theme` re-skins the whole product (panels,
+///    drawers, sheets) the frame the appearance field changes. A theme
+///    modifier changes colours only; it must not resize the tree, so the
+///    framework keeps the subtree's constraints intact;
+/// 3. **the app-level overlays** — the side drawer, the full-screen
+///    atmosphere view and the character editor are declared as presentations
+///    over the app.
+///
+/// The presentations live in a *sibling* overlay host rather than wrapping
+/// the app: an overlay host relaxes its base child's constraints, and the app
+/// shell needs those minimums — the shell column hands the rest of the window
+/// to its weighted body (the stage), and without a minimum that body
+/// measures to zero height and the whole stage collapses.
 pub fn view_for(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  match model.page() {
+  let theme = app_theme_for(model.config.appearance())
+  let body : @moui.View[Msg] = match model.page() {
     Settings => settings_view(model, screen)
     Main =>
       if model.current is None && !model.creator_open() {
@@ -872,6 +443,30 @@ pub fn view_for(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
         main_view(model, screen)
       }
   }
+  // The background covers the window: it is a stack sibling painted first,
+  // sized to the viewport the app was given. (A container would have been the
+  // obvious choice, but a container relaxes its child's minimums — and the
+  // shell column needs them to hand its height to the stage.)
+  let background = container(
+    text("", width=screen.width, height=screen.height),
+    width=screen.width,
+    height=screen.height,
+    background=theme.palette.background,
+  )
+  let specs : Array[@views.PresentationSpec[Msg]] = []
+  for spec in drawer_specs(model, screen) {
+    specs.push(spec)
+  }
+  if model.atmosphere() {
+    specs.push(atmosphere_spec(model, screen))
+  }
+  if model.editor_open() {
+    specs.push(character_editor_spec(model, screen))
+  }
+  // The overlay host's base child is a zero-size placeholder: the host itself
+  // fills the viewport and hosts the presentations on top of it.
+  let hosted = overlay_host(empty(), specs)
+  stack([background, body.theme(theme), hosted])
 }
 
 ///|
@@ -883,18 +478,16 @@ pub fn view_default(model : WorldModel) -> @moui.View[Msg] {
 }
 
 ///|
-/// The settings page: model configuration plus the world-library manager and AI
-/// generation, which moved here once a world is open.
-///
-/// The card is taller than a short window, so it scrolls rather than clipping
-/// the save / back buttons off the bottom edge (the main view handles the same
-/// problem by making the map and transcript flexible).
-
-///|
 /// Horizontal padding inside the settings card.
 let settings_card_padding : Double = 26.0
 
 ///|
+/// The settings page: model configuration plus the world-library manager and AI
+/// generation, which moved here once a world is open.
+///
+/// The card is taller than a short window, so it scrolls rather than clipping
+/// the save / back buttons off the bottom edge (the stage handles the same
+/// problem by making the transcript flexible).
 fn settings_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   let config = model.config
   // The card's padding is part of the width budget: sizing the inner column to
@@ -1058,6 +651,25 @@ fn settings_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
             ),
             wrapped_caption(
               "紧凑≈3000字 · 标准≈6000字 · 宽裕≈12000字；影响历史保留量与记忆压缩频率。",
+              width=wide,
+            ),
+            divider(),
+            section_header("外观", width=wide),
+            // The two hand-tuned appearances: 宣纸 (light) and 墨蓝 (dark).
+            // The choice persists with the rest of the configuration, so the
+            // product reopens on the surface the player left it on.
+            segmented_control(
+              [
+                choice_item("paper", "宣纸"),
+                choice_item("ink", "墨蓝"),
+              ],
+              selected=config.appearance(),
+              on_select=value => SetAppearance(value),
+              width=wide,
+              size=Compact,
+            ),
+            wrapped_caption(
+              "宣纸：月白底、墨灰字，白天长读不刺眼。墨蓝：夜深式的墨蓝底，适合长时间演绎。",
               width=wide,
             ),
             row(

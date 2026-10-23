@@ -25,6 +25,7 @@ pub fn Scenario::to_json(self : Scenario) -> String {
     "world_book": Json::array(
       self.world_book.map(entry => world_entry_json(entry)),
     ),
+    "mood": mood_json(self.mood()),
   }
   @json.to_json(Json::object(root)).stringify()
 }
@@ -63,7 +64,34 @@ fn decode_scenario(payload : Json) -> Scenario raise {
     locations=locations.map(value => decode_location(value)),
     characters=characters.map(value => decode_character(value)),
     world_book=world_book.map(value => decode_world_entry(value)),
+    mood=match fields.get("mood") {
+      Some(value) => decode_mood(value)
+      None => SceneMood::empty()
+    },
   )
+}
+
+///|
+/// Decode a scene mood. Every field is optional; a malformed object yields
+/// the empty mood rather than rejecting the scenario.
+fn decode_mood(payload : Json) -> SceneMood {
+  let fields = match payload {
+    Object(values) => values
+    _ => return SceneMood::empty()
+  }
+  let title = match fields.get("title") {
+    Some(Json::String(text)) => text
+    _ => ""
+  }
+  let time_label = match fields.get("time_label") {
+    Some(Json::String(text)) => text
+    _ => ""
+  }
+  let variant = match fields.get("variant") {
+    Some(Json::String(text)) => mood_from_wire(text)
+    _ => Calm
+  }
+  { title, time_label, variant, }
 }
 
 ///|
@@ -93,13 +121,63 @@ fn decode_character(payload : Json) -> CharacterCard raise {
     appearance=json_optional_string(fields.get("appearance")),
     portrait=json_optional_string(fields.get("portrait")),
     portrait_prompt=json_optional_string(fields.get("portrait_prompt")),
+    principles=json_optional_string(fields.get("principles")),
+    voice=json_optional_string(fields.get("voice")),
+    examples=decode_string_array(fields.get("examples")),
+    relationship=match fields.get("relationship") {
+      Some(value) => decode_relationship(value)
+      None => Relationship::empty()
+    },
+    setting=json_optional_string(fields.get("setting")),
+    opening=json_optional_string(fields.get("opening")),
     secret=json_optional_string(fields.get("secret")),
     goal=json_optional_string(fields.get("goal")),
-    voice=json_optional_string(fields.get("voice")),
+    memory_rules=json_optional_string(fields.get("memory_rules")),
     location=json_optional_string(fields.get("location")),
     point=json_point(fields.get("point")),
     color=json_color(fields.get("color")),
   )
+}
+
+///|
+/// Decode a relationship object. Absent or wrongly-typed fields stay empty,
+/// so a v1 character JSON still loads.
+fn decode_relationship(payload : Json) -> Relationship {
+  let fields = match payload {
+    Object(values) => values
+    _ => return Relationship::empty()
+  }
+  {
+    user_identity: match fields.get("user_identity") {
+      Some(Json::String(text)) => text
+      _ => ""
+    },
+    user_name: match fields.get("user_name") {
+      Some(Json::String(text)) => text
+      _ => ""
+    },
+    boundary: match fields.get("boundary") {
+      Some(Json::String(text)) => text
+      _ => ""
+    },
+  }
+}
+
+///|
+/// Decode a JSON array of strings, dropping anything that is not one.
+fn decode_string_array(value : Json?) -> Array[String] {
+  let items : Array[String] = []
+  match value {
+    Some(Json::Array(values)) =>
+      for entry in values {
+        match entry {
+          Json::String(text) => items.push(text)
+          _ => ()
+        }
+      }
+    _ => ()
+  }
+  items
 }
 
 ///|
@@ -182,6 +260,12 @@ fn character_json(card : CharacterCard) -> Json {
     "b": Json::number(color.b),
     "a": Json::number(color.a),
   }
+  let relationship = card.relationship()
+  let relationship_json : Map[String, Json] = {
+    "user_identity": Json::string(relationship.user_identity()),
+    "user_name": Json::string(relationship.user_name()),
+    "boundary": Json::string(relationship.boundary()),
+  }
   let root : Map[String, Json] = {
     "id": Json::string(card.id()),
     "name": Json::string(card.name()),
@@ -189,9 +273,15 @@ fn character_json(card : CharacterCard) -> Json {
     "appearance": Json::string(card.appearance()),
     "portrait": Json::string(card.portrait()),
     "portrait_prompt": Json::string(card.portrait_prompt()),
+    "principles": Json::string(card.principles()),
+    "voice": Json::string(card.voice()),
+    "examples": Json::array(card.examples().map(line => Json::string(line))),
+    "relationship": Json::object(relationship_json),
+    "setting": Json::string(card.setting()),
+    "opening": Json::string(card.opening()),
     "secret": Json::string(card.secret()),
     "goal": Json::string(card.goal()),
-    "voice": Json::string(card.voice()),
+    "memory_rules": Json::string(card.memory_rules()),
     "location": Json::string(card.location()),
     "point": Json::object(point_json),
     "color": Json::object(color_json),

@@ -22,7 +22,16 @@ fn model_fingerprint(model : WorldModel) -> String {
   parts.push(model.do_draft())
   parts.push(model.story_draft())
   parts.push(model.scene_location().unwrap_or("-"))
-  parts.push(model.shell_tab().to_repr().to_string())
+  parts.push(
+    match model.drawer() {
+      Some(kind) => kind.to_repr().to_string()
+      None => "-"
+    },
+  )
+  parts.push(model.message_menu().unwrap_or(-1).to_string())
+  parts.push(model.rail_open().to_string())
+  parts.push(model.atmosphere().to_string())
+  parts.push(model.backdrop().to_string())
   parts.push(model.creator_open().to_string())
   parts.push(model.creator_draft().name)
   parts.push(model.character_idea())
@@ -87,7 +96,14 @@ test "no branch writes through the model it was given" {
     ("DoDraftChanged", base, DoDraftChanged("推开门")),
     ("StoryDraftChanged", base, StoryDraftChanged("雨声更大了。")),
     ("SendComposer", base, SendComposer),
-    ("ShellTabChanged", base, ShellTabChanged(2)),
+    ("OpenDrawer", base, OpenDrawer(Profile)),
+    ("CloseDrawer", step(base, OpenDrawer(Profile)), CloseDrawer),
+    ("OpenMessageMenu", talking_model, OpenMessageMenu(0)),
+    ("CloseMessageMenu", talking_model, CloseMessageMenu),
+    ("ToggleRail", base, ToggleRail),
+    ("ToggleAtmosphere", base, ToggleAtmosphere),
+    ("SetBackdrop", base, SetBackdrop(true)),
+    ("SetAppearance", base, SetAppearance("ink")),
     ("PanMap", base, PanMap),
     ("Send", step(base, Select(Some("林掌柜"))), Send("温一壶酒")),
     ("Reply", talking_model, Reply("林掌柜", Some("回一句。"))),

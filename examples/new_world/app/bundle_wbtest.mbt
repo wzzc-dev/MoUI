@@ -189,3 +189,55 @@ test "a bundle carries portrait assets" {
     None => fail("a bundle with a portrait must decode")
   }
 }
+
+///|
+test "a bundle carries a portrait, and the card resolves it" {
+  // A world sent to a friend must arrive with its faces: the portrait rides
+  // as base64 beside the card, and the card names it in its 立绘 section.
+  // A one-pixel PNG is enough to prove the plumbing.
+  let png =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+  let card = "# 温衍\n\n## 人设\n\n清心寡欲的散仙。\n\n## 立绘\n\n温衍.png\n"
+  // The app's own encoder writes the bundle, so the escaping is the app's.
+  let text = bundle_encode("WenYan", [
+    ("world.md", "# WenYan\n\n风雪不停。\n"),
+    ("characters/温衍.md", card),
+    ("characters/温衍.png", png),
+  ])
+  match bundle_decode(text) {
+    Some(bundle) => {
+      assert_eq(bundle.name, "WenYan")
+      assert_eq(bundle.files.length(), 3)
+      // The card parses, and it points at the portrait.
+      let card_text = pair_for(bundle.files, "characters/温衍.md")
+      match parse_character_md(card_text) {
+        Some(parsed) => {
+          assert_eq(parsed.name(), "温衍")
+          assert_eq(parsed.portrait(), "温衍.png")
+          // And the portrait resolves to a data URI the image view can render.
+          let portraits : Array[(String, String)] = []
+          for pair in bundle.files {
+            if is_portrait_file_name(pair.0) {
+              portraits.push(pair)
+            }
+          }
+          let uri = portrait_uri(parsed, portraits)
+          assert_true(uri.has_prefix("data:image/png;base64,"))
+        }
+        None => fail("the card must parse")
+      }
+    }
+    None => fail("a v2 bundle with a portrait must decode")
+  }
+}
+
+///|
+test "a base64-looking portrait file is recognised as encoded, not as bytes" {
+  // A host without a byte writer leaves the encoded form in the folder; the
+  // reader must not encode it a second time.
+  assert_true(is_base64_text("aGVsbG8="))
+  assert_true(is_base64_text("aGVsbG8=\n"))
+  assert_false(is_base64_text(""))
+  // Real image bytes are not base64 text.
+  assert_false(is_base64_text("\u{FF}\u{D8}\u{FF}"))
+}

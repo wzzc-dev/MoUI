@@ -123,8 +123,50 @@ pub fn build_scene_prompt(
       "【你是" + responder.name() + "】\n" + responder.persona(),
     )
   }
+  if responder.principles() != "" {
+    sections.push("【行为原则】" + responder.principles())
+  }
   if responder.voice() != "" {
     sections.push("【说话方式】" + responder.voice())
+  }
+  if !responder.examples().is_empty() {
+    let lines : Array[String] = []
+    let mut count = 0
+    for example in responder.examples() {
+      if count >= example_lines_limit {
+        break
+      }
+      if example.trim() != "" {
+        lines.push(responder.name() + "：" + example)
+        count += 1
+      }
+    }
+    if !lines.is_empty() {
+      sections.push("【示例台词】\n" + lines.join("\n"))
+    }
+  }
+  let relationship = responder.relationship()
+  let relationship_lines : Array[String] = []
+  if relationship.user_identity() != "" {
+    relationship_lines.push("玩家身份：" + relationship.user_identity())
+  }
+  if relationship.user_name() != "" {
+    relationship_lines.push(
+      "你称呼玩家：「" + relationship.user_name() + "」",
+    )
+  }
+  if relationship.boundary() != "" {
+    relationship_lines.push("关系边界：" + relationship.boundary())
+  }
+  if !relationship_lines.is_empty() {
+    sections.push("【与用户的关系】\n" + relationship_lines.join("\n"))
+  }
+  if responder.memory_rules() != "" {
+    sections.push(
+      "【记忆规则】" +
+      responder.memory_rules() +
+      "（这些是你在长期相处中必须守住的记忆。）",
+    )
   }
   if responder.secret() != "" {
     sections.push(

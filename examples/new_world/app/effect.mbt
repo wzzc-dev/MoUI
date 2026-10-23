@@ -73,9 +73,45 @@ fn commit_world_effect(
     run=dispatch => {
       (host.write_world)(folder, files, ok => {
         dispatch(WorldCommitted(folder, ok))
+        // A world-scope commit can bring a new picture into the folder: the
+        // editor's 立绘 field points at a file the player just dropped in
+        // beside the card. The model caches the world's portraits, so it has
+        // to re-read them — otherwise the picture would only show up after a
+        // restart of the app.
+        if ok && files_hold_a_world_file(files) {
+          (host.read_world)(folder, (read_ok, read_files) => {
+            if read_ok {
+              dispatch(WorldPortraitsRefreshed(portraits_of(read_files)))
+            }
+          })
+        }
       })
     },
   )
+}
+
+///|
+/// Does this commit rewrite the world's description (rather than only the
+/// journal)? Only such a commit can change the world's portraits.
+fn files_hold_a_world_file(files : Array[(String, String)]) -> Bool {
+  for pair in files {
+    if is_world_file_name(pair.0) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// The portrait assets among a folder's files: `(path, base64)`.
+fn portraits_of(files : Array[(String, String)]) -> Array[(String, String)] {
+  let portraits : Array[(String, String)] = []
+  for pair in files {
+    if is_portrait_file_name(pair.0) {
+      portraits.push(pair)
+    }
+  }
+  portraits
 }
 
 ///|
@@ -92,6 +128,9 @@ pub(all) enum CommitScope {
   World
   /// Exactly one character's conversation file, plus the event log.
   Conversation(String)
+  /// Exactly one character's memory file, plus the event log. A memory edit
+  /// is rarer than a turn but hotter than a world rewrite.
+  Memories(String)
 } derive(Eq, Debug)
 
 ///|
@@ -129,6 +168,9 @@ fn journal_files(
       let conversation = model.conversations.for_character(id)
       files.push((conversation_path(id), conversation.to_json_text()))
     }
+    // A memory edit carries no journal beyond the event log the notice rode
+    // in on; the memory file itself is written by `commit_files`.
+    Memories(_) => ()
   }
   files.push((events_file, events_json_text(model.log)))
   files
@@ -155,10 +197,31 @@ fn commit_files(
         // card could resolve it. Portraits also live only under `characters/`.
         world.push((portrait_world_path(pair.0), pair.1))
       }
+      // The interaction memories ride beside the cards, one file per
+      // character — the same "readable folder" promise, and the reason a
+      // memory edit survives a world-scope commit.
+      for record in model.memories.entries {
+        if !record.entries().is_empty() {
+          world.push(
+            (
+              memory_path(record.character_id()),
+              memory_md_text(record.entries()),
+            ),
+          )
+        }
+      }
       world
     }
     // A conversation turn does not touch the world description or the cards.
     Conversation(_) => []
+    // A memory edit rewrites exactly one memory file; the card beside it is
+    // untouched.
+    Memories(id) => {
+      let record = model.memories.for_character(id)
+      [
+        (memory_path(id), memory_md_text(record.entries())),
+      ]
+    }
   }
   let journal = journal_files(model, scope)
   for file in journal {

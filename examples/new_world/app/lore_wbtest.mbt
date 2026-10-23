@@ -322,8 +322,14 @@ test "intents frame the wire; the journal keeps the marked player line" {
     WorldFilesArrived("tavern", true, tavern_files()),
   )
   let selected = step(model, Select(Some("林掌柜")))
+  // The collapsed composer writes into the active intent's field, so an
+  // action is typed after switching the mode to 做.
+  let acting = step(
+    step(selected, ComposerModeChanged(Do)),
+    DoDraftChanged("推开门"),
+  )
   let (sent, _e) = update(
-    step(selected, DoDraftChanged("推开门")),
+    acting,
     SendComposer,
     world_host={
       list_worlds: _done => (),
@@ -370,7 +376,12 @@ test "a Do turn sends the framed action on the wire" {
     ApiKeyChanged("sk-test"),
   )
   let selected = step(keyed, Select(Some("林掌柜")))
-  let acting = step(selected, DoDraftChanged("推开门"))
+  // The action goes through the 做 intent: the mode switcher first, then the
+  // field.
+  let acting = step(
+    step(selected, ComposerModeChanged(Do)),
+    DoDraftChanged("推开门"),
+  )
   let (_sent, effect) = update(acting, SendComposer, turn_runner=runner)
   @moui.Effect::runtime_visit(
     effect,

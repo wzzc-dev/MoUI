@@ -44,6 +44,14 @@ pub fn update_settings(
         },
         @moui.Effect::none(),
       )
+    SetAppearance(value) =>
+      // Like every other settings edit: the model re-skins immediately (the
+      // root theme wrap reads the config each frame), and the choice reaches
+      // config.json with the next 保存设置 — or at once below.
+      (
+        { ..model, config: model.config.with_appearance(value), },
+        @moui.Effect::none(),
+      )
     SaveConfig =>
       // The configuration persists as JSON at the library root, next to the
       // world folders — the player's own data folder, not a project file and not
@@ -58,18 +66,6 @@ pub fn update_settings(
           (next, @moui.Effect::none())
         }
       }
-    ShellTabChanged(code) =>
-      (
-        {
-          ..model,
-          shell_tab: match code {
-            1 => Library
-            2 => Controls
-            _ => Chat
-          },
-        },
-        @moui.Effect::none(),
-      )
     _ => (model, @moui.Effect::none())
   }
 }

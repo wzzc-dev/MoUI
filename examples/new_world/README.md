@@ -2,10 +2,16 @@
 
 <img src="../../resource/screenshots/new_world.png" width="720" alt="New World screenshot"/>
 
-一个以文字对话为核心的 **New World引擎**：整个数据库就是你硬盘上的一个
+一个以**角色演绎**为核心的沉浸式对话产品：整个数据库就是你硬盘上的一个
 **文件夹**，每个世界是库里的一个子文件夹、由几个 Markdown 文件组成。
-你可以在界面里新建世界、设定人物、和角色以文字对话；配上一个
-OpenAI 兼容的模型端点后，还能让 AI 从一句话生成整个世界的图文设定。
+你创建一个有完整人设和说话风格的角色（六区块角色卡），然后长期与 TA
+相处——界面中心永远是那个角色与你们的故事，而不是地图、任务或功能面板。
+配上一个 OpenAI 兼容的模型端点后，还能让 AI 从一句话生成整个世界的图文设定。
+
+界面是「角色中心」的：左侧是最近角色与会话，中间是小说式连续排版的演绎
+区（角色正文不装气泡，玩家消息用轻气泡），角色档案 / 长久记忆 / 模型状态 /
+事件都收进按需打开的抽屉；地图降级为全屏「氛围视图」与可选的低干扰背景。
+另有宣纸（浅色）/ 墨蓝（深色）双主题，一键切换。
 
 Web 是主演示面（wasm-gc + WebGPU）；macOS Skia 是原生路线。
 
@@ -103,15 +109,22 @@ Canvas2D 渲染）。macOS 原生：`moon run examples/new_world/macos_skia --ta
 | 宿主 effect（库列表/读世界/增量提交/config 读写/导入导出） | `app/effect.mbt` |
 | 无 key 本地剧本回复 | `app/local_reply.mbt` |
 | 上下文预算/记忆压缩/长期记忆提议 | `app/context.mbt`（plan_messages·压缩触发·提议提示词）、`app/update.mbt`（SummaryArrived/MemoryProposals/Accept） |
-| 面板（人物/舞台/事件）与自适应断点 | `app/view.mbt`、`app/conversation_view.mbt`、`app/layout.mbt`、`app/shell.mbt` |
+| 角色 rail / 舞台 / 小说式转录 | `app/characters_rail.mbt`、`app/stage_view.mbt`、`app/transcript_view.mbt` |
+| 按需抽屉（档案/记忆/模型/事件） | `app/drawers.mbt`（presentation `Popover`） |
+| 每条消息的「更多」菜单（重生成/候选/改/删/分叉） | `app/message_menu.mbt`（presentation `ContextMenu`） |
+| 六区块角色编辑器（分区 + 预览 + 保存） | `app/character_editor.mbt`、`app/update_editor.mbt` |
+| 角色记忆（`characters/<名>.memory.md` + 选取注入） | `app/memory.mbt`、`app/update_memory.mbt` |
+| 全屏氛围视图（地图 + 氛围切换） | `app/ambient_view.mbt`、`app/render.mbt`（`MapStyle`） |
+| 双主题（宣纸/墨蓝色板 + 氛围强调色） | `app/themes.mbt` |
+| 自适应断点与两栏外壳 | `app/layout.mbt`、`app/shell.mbt`、`app/view.mbt` |
 | 分段输入（说/做/旁白合成一轮） | `app/composer.mbt` |
 | 控件尺寸与小组件 | `app/widgets.mbt` |
 | 候选切换 / 编辑 / 删除 / 清空（swipe 模型） | `app/conversation.mbt`（`ChatLine`）、`app/update.mbt` |
 | 立绘资产（base64 编解码、`data:` URI 解析） | `app/portrait.mbt`、`app/world_store.mbt`（`portrait_uri`） |
 | 场景（在场判定、回应者、场景提示词）与时间推进 | `app/scene.mbt`、`app/update.mbt`、`app/render.mbt`（`location_at`） |
 | Lorebook 选取（优先级/位置/递归/概率） | `app/lore.mbt`、`app/world_book.mbt`、`app/world_store.mbt`（修饰符解析） |
-| 创建向导（模板 + AI 起草） | `app/character_creator.mbt`、`app/update.mbt` |
-| 分支对话（同级文件 + 名单可达） | `app/journal.mbt`（`branched_key`/`split_branch`）、`app/update.mbt`、`app/view.mbt` |
+| 创建向导（模板 + AI 起草，含六区块草稿） | `app/character_creator.mbt`、`app/update.mbt` |
+| 分支对话（同级文件 + 名单可达） | `app/journal.mbt`（`branched_key`/`split_branch`）、`app/update.mbt`、`app/characters_rail.mbt` |
 | Web 传输与文件桥（wasm-gc） | `llm_web/bridge.mbt` + `web_wasm/index.html` 内联 `new_world_host` |
 | 原生传输与文件 worker | `llm_native/worker.mbt` + `macos_skia/main.mbt` |
 
@@ -140,6 +153,48 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
   名产出整张卡。没有 key 时会退回模板并说明，不会假装生成。
 - 起草只补空缺：你已经填的字段保留，模型返回的不是角色卡就整段忽略并提示。
 
+## 角色档案与编辑器
+
+从舞台右上角「档案」打开角色档案（只读），再点「编辑角色」进入编辑器（可写）：
+
+- **编辑器是一整页，不是一张浮层**：它自己带不透明底色，铺满窗口，舞台、
+  角色栏和输入框都不会透出来。
+- **七个分区一次只看一个**：身份与背景 / 性格与行为原则 / 说话风格与示例台词 /
+  与用户的关系 / 当前情境与开场白 / 隐藏信息与记忆规则 / 外貌与立绘。分区用
+  一排 chip，窄屏自动换行。
+- **立绘在框里**：立绘 PNG 通常是透明底，直接放在页面上会和下面的文字混成
+  一团。编辑器与档案里的立绘都坐在同一个「框」里（自己的底色 + 一像素描边 +
+  圆角），图片按原比例 `Contain` 放置、不裁切；没有立绘时框里是角色色与首字，
+  不会显得缺了一块。编辑页里立绘在左、字段在右，不把表单挤下去。
+- **一个测量宽度**：表单内容列上限 720px 并居中，宽窗口不会把一行字拉穿。
+- 底部固定「保存 / 取消」，并注明「关闭不会保存」。
+- 分区切换是一排 chip（带「分区」标签），窄屏自动换行；一次只看一个分区。
+
+## 立绘（图片怎么进世界）
+
+立绘 PNG 通常是透明底，直接放在页面上会和文字混在一起，所以立绘一律坐在
+**框**里（自己的底色 + 一像素描边 + 圆角），图片按原比例 `Contain` 放置。
+
+立绘的存放约定（世界文件夹里）：
+
+- 图片放在角色卡片旁边：`characters/<角色名>.jpg`（png / webp 同样）；
+- 卡片里用 `## 立绘` 一段写**文件名**（如 `温衍.jpg`）。
+
+怎么把图片放进去：**把 jpg 放进世界文件夹的 `characters/` 旁边，卡片里用
+`## 立绘` 写文件名**——就这样，文件夹里就是一张真正的图片（不是 base64 文本），
+可以直接打开、拖走、放进 git。
+
+分享世界也**分享文件夹**（原生端「导出世界 / 导入世界」现在选的是目录，
+不再是 .aiworld.json）：导出的就是 `world.md` + `characters/`，对方拿到文件夹
+导入即可。
+
+现成的示例（温衍 + 立绘，真实 jpg）：
+
+- `examples/new_world/WenYan-with-portrait/` —— **文件夹**，原生端直接「导入世界」
+  选它即可；
+- `examples/new_world/WenYan-with-portrait.aiworld.json` —— 同样的内容打包成
+  一个文件，给浏览器端用（「导入世界」选它）。
+
 ## 分支对话
 
 每条历史右侧有「分叉」：保留到这一条为止的历史，**开一段新的同级对话**，
@@ -151,9 +206,10 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
   再点角色名回到主对话。
 - 分支可以和主对话一样重生成、编辑、删除、清空。
 
-## 输入意图：说 / 做 / 旁白（可以混着用）
+## 输入意图：说 / 做 / 旁白（一个输入框 + 模式切换）
 
-输入框上方有三个意图（借自 AI Dungeon），并且**一轮里可以混用**：
+舞台底部**只有一个输入框**：左侧的「说 ▾」是模式切换，右侧的「组合」展开成
+多段合成。其余是动作行（发送 / 重新生成 / 换一个角色 / 清空对话）。
 
 | 意图 | 送给模型的形式 | 用来做什么 |
 |---|---|---|
@@ -161,9 +217,11 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
 | **做** | `*动作*（请回应它的后果，不要当成对白）` | 描述一个动作，让世界反应 |
 | **旁白** | `（旁白）…（请接着往下写）` | 你来叙述，模型续写而不是回话 |
 
-- 分段合成一轮：选好意图 → 写一句 → 点「加成一段」，输入框清空，可以
-  继续用别的意图写下一段；最后「发送」把这一轮**按顺序**一次交给模型。
-  例如先「做：推开门」，再「说：掌柜的，还有酒吗？」，两个意图一起生效。
+- **默认（折叠态）**：一个输入框 + 一个意图。输入框写入当前意图的草稿，发送
+  只发这一句；三个意图各自保留自己的文字，来回切换不会丢字。
+- **组合态**：点「组合」展开说【】/ 做【】/ 旁白【】 三个输入框，发送时把
+  非空的按 说 → 做 → 旁白 顺序合成**一轮**交给模型。例如先「做：推开门」，
+  再「说：掌柜的，还有酒吗？」，两个意图一起生效。
 - 存储仍然是一条玩家历史：多段会写成可读的行
   （`（动作）推开门` / `掌柜的，还有酒吗？` / `（旁白）雨声更大了。`），
   所以世界还是可读的 Markdown/JSON 文件夹，老存档（没有标记）照常读成「说」。
@@ -176,9 +234,11 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
 
 | 宽度 | 模式 | 形态 |
 |---|---|---|
-| ≥ 1080 | Wide | 三栏工作台：人物 / 舞台 / 事件 |
-| ≥ 760 | Medium | 舞台 + 一条侧栏，顶部标签切换侧栏内容 |
-| 更窄（手机竖屏） | Compact | 单栏 + 底部标签（对话 / 人物 / 事件），控件行自动换行 |
+| ≥ 1080 | Wide | 两栏：角色 rail ｜ 舞台（上限 760px 的阅读列宽，居中） |
+| ≥ 760 | Medium | 舞台拿满宽度；角色 rail 由场景头「角色」按钮开合 |
+| 更窄（手机竖屏） | Compact | 全屏聊天；「角色」打开全屏名单浮层，控件行自动换行 |
+
+没有常驻的事件栏：事件、档案、记忆、模型状态都在右侧抽屉里，按需打开。
 
 - 尺寸来自运行时的 `ViewEnvironment::viewport_size`，旋转或缩放窗口会在
   下一帧重新取布局；布局是**视口的纯函数**，不写进模型。
@@ -258,7 +318,7 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
 ## 测试
 
 ```sh
-moon test examples/new_world/app --target native    # 247 项：codec 往返、容错、
+moon test examples/new_world/app --target native    # 280+ 项：codec 往返、容错、
                                                    # 创建/回复两路、设置入库、
                                                    # 日志 JSON 落盘与恢复、AI 生成容错、
                                                    # 记忆压缩与长期记忆提议、
@@ -290,5 +350,9 @@ moon build examples/new_world/web_wasm --target wasm-gc
 见 `docs/plans/active/new-world-product.md`。已完成：文件夹数据库、人物创建、
 双回复路径、Web 优先运行、AI 生成世界、对话/事件日志落盘、跨刷新授权、
 增量写入、世界导入导出、对话编辑（重生成/候选切换/编辑/删除/清空）、
-世界书命中可见、Markdown 回复渲染、人物立绘、场景多角色同场、显式时间推进。
-下一步：毕业为独立仓库（submodule）。
+世界书命中可见、Markdown 回复渲染、人物立绘、场景多角色同场、显式时间推进，
+以及本轮的**角色中心重构**：六区块角色卡 v2（行为原则/示例台词/与用户的
+关系/当前情境/开场白/记忆规则）、分区式角色编辑器、按需抽屉、消息「更多」
+菜单、角色记忆簿（可固定/删除、模型提议需人工采纳）、全屏氛围视图与
+低干扰背景、宣纸/墨蓝双主题。
+下一步：毕业为独立仓库（submodule）；角色记忆按相关性注入的调优。

@@ -28,6 +28,25 @@ pub extend Page with Debug::{to_repr}
 pub extend Page with Eq::{not_equal, equal}
 
 ///|
+/// Which side drawer is open (`None` = none).
+///
+/// The drawer is where everything the old permanent right rail used to show
+/// now lives on demand: the character profile, the memory manager, the model
+/// status, and the event log. The stage keeps its full width for reading.
+pub(all) enum DrawerKind {
+  Profile
+  Memory
+  Model
+  Events
+} derive(Eq, Debug)
+
+///|
+pub extend DrawerKind with Debug::{to_repr}
+
+///|
+pub extend DrawerKind with Eq::{not_equal, equal}
+
+///|
 pub(all) enum Msg {
   /// Select the character the player is talking to. Selecting the already
   /// selected character keeps the composer draft; switching characters does
@@ -67,8 +86,68 @@ pub(all) enum Msg {
   Reply(String, String?)
   /// A scene reply arrived: `(scene key, respondent id, reply)`.
   SceneReply(String, String, String?)
-  /// Switch the single visible panel in medium/compact layouts.
-  ShellTabChanged(Int32)
+  /// Open a side drawer: the character profile, the memory manager, the model
+  /// status, or the event log — everything the old permanent right rail used
+  /// to show, now on demand.
+  OpenDrawer(DrawerKind)
+  /// Close the open drawer (button, outside tap, or Escape).
+  CloseDrawer
+  /// Open one history line's "more" menu (`⋯`): regenerate, swipe candidates,
+  /// edit, delete, branch. Replaces the always-visible per-line action row.
+  OpenMessageMenu(Int32)
+  /// Close the message menu (item chosen, outside tap, or Escape).
+  CloseMessageMenu
+  /// Show / hide the character rail on medium and compact layouts, where it
+  /// cannot sit beside the stage permanently.
+  ToggleRail
+  /// Enter / leave the full-screen atmosphere view: the scenario map as an
+  /// immersive backdrop, with the mood switcher.
+  ToggleAtmosphere
+  /// Show / hide the low-interference map backdrop behind the transcript.
+  SetBackdrop(Bool)
+  /// Switch the world's scene mood (the atmosphere view's palette chips).
+  /// The accent colour and the map tint follow; the text never does.
+  SetMood(MoodVariant)
+  // ---- character editor ----
+  /// Open the six-block editor on an existing character (the profile
+  /// drawer's 编辑角色 button).
+  EditCharacter(String)
+  /// Close the editor without saving.
+  CloseEditor
+  /// Switch the editor's visible block.
+  EditorTabChanged(Int32)
+  /// A field in the editor changed; the draft is the whole buffer.
+  EditorChanged(CharacterDraft)
+  /// The example-lines buffer changed (one line per example).
+  EditorExamplesChanged(String)
+  /// Write the editor's draft back into the card and close.
+  SaveCharacter
+  /// The world's portrait assets, re-read from the folder after a commit.
+  ///
+  /// The model caches the portraits so rendering never does IO. A commit can
+  /// bring a new picture into the folder (the editor's 立绘 field points at a
+  /// file the player just dropped in), and the cache has to learn about it —
+  /// otherwise the picture only appears after a restart.
+  WorldPortraitsRefreshed(Array[(String, String)])
+  // ---- composer ----
+  /// Switch the composer's active intent (说 / 做 / 旁白). The single field
+  /// writes into the matching draft, and each intent keeps its own text.
+  ComposerModeChanged(InputIntent)
+  /// Open or close the composer's intent menu.
+  ComposerMenuChanged(Bool)
+  /// Expand the composer into the three-field (combined) form, or collapse it
+  /// back to the single field.
+  ToggleComposerExpanded
+  // ---- character memory ----
+  /// The "要记住的事" input in the memory drawer changed.
+  MemoryDraftChanged(String)
+  /// Record what the player typed as an authored memory of the selected
+  /// character.
+  AddMemory
+  /// Pin / unpin a memory (pinned entries always ride in the prompt).
+  ToggleMemoryPin(Int32)
+  /// Delete a memory the player no longer wants kept.
+  DeleteMemory(Int32)
   /// Open the settings page (re-reads `config.json` from the library).
   OpenSettings
   /// Back to the main layout.
@@ -122,6 +201,9 @@ pub(all) enum Msg {
   // ---- context & memory ----
   /// The context-budget preset changed from the settings page.
   ContextChanged(String)
+  /// The appearance changed ("paper" / "ink"): the whole product re-skins
+  /// through the root theme wrap, and the choice persists with the config.
+  SetAppearance(String)
   /// A memory-compression reply arrived; `None` = failure (retry later).
   SummaryArrived(String, Int32, String?)
   /// A memory-extraction reply arrived; `None` = failure.

@@ -8,7 +8,7 @@
 ///
 /// The format is intentionally boring:
 ///
-///     {"format":"moui.new-world/1","name":"<world>","files":[["world.md","…"], …]}
+///     {"format":"moui.new-world/2","name":"<world>","files":[["world.md","…"], …]}
 ///
 /// Every decode is defensive, matching the folder codec: a damaged bundle is
 /// rejected whole (there is nothing sensible to salvage from a truncated
@@ -17,8 +17,14 @@
 
 ///|
 /// Marker so a future format change can be detected and refused instead of
-/// silently mis-parsed.
-pub let bundle_format : String = "moui.new-world/1"
+/// silently mis-parsed. v2 added the six-block character cards and the
+/// per-character memory files; v1 bundles still decode (their cards load
+/// through the legacy tolerance path).
+pub let bundle_format : String = "moui.new-world/2"
+
+///|
+/// The previous format, still readable.
+let bundle_format_v1 : String = "moui.new-world/1"
 
 ///|
 /// File extension a host should offer in its save/open dialog.
@@ -64,7 +70,10 @@ pub fn bundle_decode(text : String) -> WorldBundle? {
     _ => return None
   }
   match fields.get("format") {
-    Some(String(format)) => if format != bundle_format { return None }
+    Some(String(format)) =>
+      if format != bundle_format && format != bundle_format_v1 {
+        return None
+      }
     _ => return None
   }
   let files : Array[(String, String)] = []

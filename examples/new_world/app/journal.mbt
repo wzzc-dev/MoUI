@@ -204,7 +204,47 @@ fn Conversation::to_json(self : Conversation) -> Json {
     // summary silently stood in for lines that were never summarised.
     "summarized_upto": Json::number(self.summarized_upto().to_double()),
   }
+  // The scene atmosphere is per-conversation state: only written when the
+  // player set one, so an ordinary conversation keeps its plain shape.
+  match self.mood() {
+    Some(mood) => entry_fields["mood"] = mood_json(mood)
+    None => ()
+  }
   Json::object(entry_fields)
+}
+
+///|
+/// The JSON object for one scene mood.
+fn mood_json(mood : SceneMood) -> Json {
+  let root : Map[String, Json] = {
+    "title": Json::string(mood.title()),
+    "time_label": Json::string(mood.time_label()),
+    "variant": Json::string(mood.variant().wire()),
+  }
+  Json::object(root)
+}
+
+///|
+/// Read one scene mood, or `None` when absent or malformed (the world
+/// default then applies).
+fn parse_mood(value : Json?) -> SceneMood? {
+  let fields = match value {
+    Some(Json::Object(values)) => values
+    _ => return None
+  }
+  let title = match json_string_of(fields.get("title")) {
+    Some(text) => text
+    None => return None
+  }
+  let time_label = match json_string_of(fields.get("time_label")) {
+    Some(text) => text
+    None => return None
+  }
+  let variant = match json_string_of(fields.get("variant")) {
+    Some(text) => mood_from_wire(text)
+    None => Calm
+  }
+  Some({ title, time_label, variant, })
 }
 
 ///|
@@ -290,6 +330,7 @@ pub fn parse_conversations_json(text : String) -> ConversationsFile {
         summary,
         summarized_upto: covered,
         appended: conversation.lines().length(),
+        mood: parse_mood(fields.get("mood")),
       }
       result.push(conversation)
     }
