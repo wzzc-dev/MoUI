@@ -293,7 +293,7 @@ fn append_text_field_selection_commands(
   selection : @core.TextRange?,
   theme : @core.Theme,
 ) -> Unit {
-  match active_text_selection(selection) {
+  match @core.active_text_selection(selection) {
     Some(selection) => {
       let selection = @core.normalize_grapheme_range(
         @core.TextGraphemeBoundaries::new(text~),
@@ -348,7 +348,7 @@ fn append_text_field_composition_underline(
     Some(composition) =>
       if composition != "" {
         let start = clamp_int(
-          composition_start_index(text, control.caret, control.selection),
+          @core.composition_start_index(text, control.caret, control.selection),
           0,
           max_int(0, layout.caret_positions.length() - 1),
         )

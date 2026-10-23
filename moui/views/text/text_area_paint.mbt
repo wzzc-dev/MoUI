@@ -97,7 +97,7 @@ fn append_text_area_commands(
     overlay_commands.push(PushClip(text_frame))
     if control.composition is None {
       let selection_color = theme.palette.primary.with_alpha(0.18)
-      match active_text_selection(control.selection) {
+      match @core.active_text_selection(control.selection) {
         Some(sel) => {
           let rects = text_area_selection_slot_rects(
             paragraph, text_system, font, sel, content_frame, line_height,
@@ -112,7 +112,7 @@ fn append_text_area_commands(
       match control.composition {
         Some(composition) =>
           if composition != "" {
-            let comp_start = composition_start_index(
+            let comp_start = @core.composition_start_index(
               text,
               control.caret,
               control.selection,

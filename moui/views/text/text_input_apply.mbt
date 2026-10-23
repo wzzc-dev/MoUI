@@ -197,7 +197,12 @@ fn apply_text_input(
       apply_text_edit(control, text, edit, record_history~)
     }
     DeleteSurrounding(before, after) => {
-      let range = surrounding_delete_range(text, control.caret, before, after)
+      let range = @core.surrounding_delete_range(
+        text,
+        control.caret,
+        before,
+        after,
+      )
       let edit = replace_text_range(text, range, "")
       apply_text_edit(control, text, edit, record_history~)
     }
@@ -259,12 +264,14 @@ fn[Msg] handle_text_field_command(
     Copy =>
       @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(
-          clipboard_text=Some(selected_text(text, ctx.text_control.selection)),
+          clipboard_text=Some(
+            @core.selected_text(text, ctx.text_control.selection),
+          ),
         ),
       )
     Cut => {
-      let copied = selected_text(text, ctx.text_control.selection)
-      match active_text_selection(ctx.text_control.selection) {
+      let copied = @core.selected_text(text, ctx.text_control.selection)
+      match @core.active_text_selection(ctx.text_control.selection) {
         Some(selection) => {
           let result = apply_text_input(
             ctx.text_control,

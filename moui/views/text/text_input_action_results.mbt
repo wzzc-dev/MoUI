@@ -2,10 +2,10 @@
 fn[Msg] view_caret_move_result(
   ctx : @core.ViewEventContext,
   text : String,
-  direction : TextCaretDirection,
+  direction : @core.TextCaretDirection,
   extend_selection : Bool,
 ) -> @core.ViewEventResult[Msg] {
-  let caret_move = move_text_caret(
+  let caret_move = @core.move_text_caret(
     text,
     ctx.text_control.caret,
     ctx.text_control.selection,
@@ -59,6 +59,7 @@ fn[Msg] text_semantics_set_text(
     composition_cursor: None,
     text_selection_anchor: None,
     goal_column: None,
+    reveal: None,
     text_selection_origin: None,
     undo_stack,
     redo_stack: [],
