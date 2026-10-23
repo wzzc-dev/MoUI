@@ -181,6 +181,30 @@ fn text_area_line_index_for_slot_y(
 }
 
 ///|
+/// Caret offset nearest to a paragraph-space x on one known line. The
+/// pointer resolves its row first, the keyboard steps by row index, and
+/// both then hand the engine a point inside that row's own vertical
+/// band — so a vertical move can never skip a row by using the
+/// widget's `line_height` as if it were the engine's line advance.
+fn text_area_hit_offset_at_line(
+  paragraph : @core.TextParagraphLayoutResult,
+  line_index : Int32,
+  x : Double,
+) -> Int32 {
+  if paragraph.lines.is_empty() {
+    0
+  } else {
+    let line = paragraph.lines[line_index.clamp(
+        min=0,
+        max=paragraph.lines.length() - 1,
+      )]
+    paragraph.hit_test(
+      @core.Point::new(x~, y=line.origin.y + line.size.height / 2.0),
+    ).offset
+  }
+}
+
+///|
 /// Resolve a slot-space pointer point to a caret offset: pick the drawn
 /// row, then let the engine resolve x within that row's vertical band.
 fn text_area_hit_offset_at_slot(
@@ -188,17 +212,10 @@ fn text_area_hit_offset_at_slot(
   slot_point : @core.Point,
   line_height : Double,
 ) -> Int32 {
-  if paragraph.lines.is_empty() {
-    0
-  } else {
-    let row = text_area_line_index_for_slot_y(
-      paragraph.lines.length(),
-      slot_point.y,
-      line_height,
-    )
-    let line = paragraph.lines[row]
-    paragraph.hit_test(
-      @core.Point::new(x=slot_point.x, y=line.origin.y + line.size.height / 2.0),
-    ).offset
-  }
+  let row = text_area_line_index_for_slot_y(
+    paragraph.lines.length(),
+    slot_point.y,
+    line_height,
+  )
+  text_area_hit_offset_at_line(paragraph, row, slot_point.x)
 }

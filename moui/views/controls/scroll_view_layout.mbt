@@ -118,11 +118,18 @@ fn scroll_runtime_state(
 /// Transient pointer state for touch/mouse dragging over the scroll surface.
 /// The runtime owns this value so it survives the rebuild triggered by a
 /// scroll-state update without leaking platform pointer state into controls.
+///
+/// `raw_offset` is the offset the pointer has pulled the surface to *before*
+/// clamping. The authoritative offset stays hard-clamped — layout, hit-testing
+/// and `on_scroll` all report that value — while `raw_offset` retains the
+/// overshoot so the paint pass can draw a bounded rubber band and release can
+/// settle it back.
 priv struct ScrollDragState {
   active : Bool
   dragging : Bool
   origin : @core.Point
   last_position : @core.Point
+  raw_offset : @core.Point
 }
 
 ///|
@@ -132,13 +139,15 @@ impl @core.ViewStateValue for ScrollDragState with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for ScrollDragState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=34)
+  let output = Buffer(size_hint=50)
   output.write_byte(if self.active { 1 } else { 0 })
   output.write_byte(if self.dragging { 1 } else { 0 })
   output.write_double_be(self.origin.x)
   output.write_double_be(self.origin.y)
   output.write_double_be(self.last_position.x)
   output.write_double_be(self.last_position.y)
+  output.write_double_be(self.raw_offset.x)
+  output.write_double_be(self.raw_offset.y)
   output.to_bytes()
 }
 
@@ -147,74 +156,36 @@ impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
   _self,
   bytes,
 ) {
-  if bytes.length() == 17 {
-    // Accept the pre-slop state encoding so a saved pointer state can be
-    // discarded cleanly when upgrading an already-mounted view.
-    let active = match bytes[0] {
-      0 => Some(false)
-      1 => Some(true)
-      _ => None
-    }
-    let x = @core.ViewStateValue::decode_view_state(0.0, bytes[1:9].to_owned())
-    let y = @core.ViewStateValue::decode_view_state(0.0, bytes[9:17].to_owned())
-    match (active, x, y) {
-      (Some(active), Some(x), Some(y)) => {
-        let position = @core.Point::new(x~, y~)
-        Some({
-          active,
-          dragging: false,
-          origin: position,
-          last_position: position,
-        })
-      }
-      _ => None
-    }
-  } else if bytes.length() == 34 {
-    let active = match bytes[0] {
-      0 => Some(false)
-      1 => Some(true)
-      _ => None
-    }
-    let dragging = match bytes[1] {
-      0 => Some(false)
-      1 => Some(true)
-      _ => None
-    }
-    let origin_x = @core.ViewStateValue::decode_view_state(
-      0.0,
-      bytes[2:10].to_owned(),
+  if bytes.length() != 50 {
+    // A rejected decode falls back to the slot's initial value, i.e. no drag
+    // in progress. The pre-overscroll encodings are rejected rather than
+    // folded into this shape: a fabricated `raw_offset` would pull the surface
+    // to the head of the content on the next `Move`.
+    None
+  } else {
+    let flags = (
+      match bytes[0] {
+        0 => Some(false)
+        1 => Some(true)
+        _ => None
+      },
+      match bytes[1] {
+        0 => Some(false)
+        1 => Some(true)
+        _ => None
+      },
     )
-    let origin_y = @core.ViewStateValue::decode_view_state(
-      0.0,
-      bytes[10:18].to_owned(),
-    )
-    let last_x = @core.ViewStateValue::decode_view_state(
-      0.0,
-      bytes[18:26].to_owned(),
-    )
-    let last_y = @core.ViewStateValue::decode_view_state(
-      0.0,
-      bytes[26:34].to_owned(),
-    )
-    match (active, dragging, origin_x, origin_y, last_x, last_y) {
-      (
-        Some(active),
-        Some(dragging),
-        Some(origin_x),
-        Some(origin_y),
-        Some(last_x),
-        Some(last_y),
-      ) =>
+    match (flags, @common.view_decode_doubles(bytes, from=2, count=6)) {
+      ((Some(active), Some(dragging)), Some(values)) =>
         Some({
           active,
           dragging,
-          origin: @core.Point::new(x=origin_x, y=origin_y),
-          last_position: @core.Point::new(x=last_x, y=last_y),
+          origin: @core.Point::new(x=values[0], y=values[1]),
+          last_position: @core.Point::new(x=values[2], y=values[3]),
+          raw_offset: @core.Point::new(x=values[4], y=values[5]),
         })
       _ => None
     }
-  } else {
-    None
   }
 }
 
@@ -227,6 +198,7 @@ fn scroll_drag_state_slot() -> @core.ViewStateSlot[ScrollDragState] {
       dragging: false,
       origin: @core.Point::new(x=0.0, y=0.0),
       last_position: @core.Point::new(x=0.0, y=0.0),
+      raw_offset: @core.Point::new(x=0.0, y=0.0),
     },
   )
 }
@@ -313,6 +285,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
         offset~,
         viewport=viewport_size,
         child_size=measured,
+        direction=ctx.environment.layout_direction,
       ),
     ],
     clips_children=true,
@@ -322,31 +295,55 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
 ///|
 impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
   let viewport_size = self.viewport.unwrap_or(ctx.frame.size)
-  let offset = scroll_runtime_state(self, ctx.state).offset
-  {
-    commands: [
-      PushClip(
-        @core.Rect::new(
-          x=ctx.frame.origin.x,
-          y=ctx.frame.origin.y,
-          width=ctx.frame.size.width,
-          height=ctx.frame.size.height,
-        ),
+  let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+  let runtime_state = scroll_runtime_state(self, ctx.state)
+  let drag = ctx.state.read_slot(scroll_drag_state_slot())
+  let motion = ctx.state.read_slot(scroll_motion_state_slot())
+  // Geometry stays at the authoritative clamped offset; only the painted
+  // surface moves, by the overshoot a held drag is carrying or a released band
+  // is still settling.
+  let surface_offset = scroll_visible_offset(
+    drag,
+    motion,
+    runtime_state.offset,
+    viewport=viewport_size,
+    child_size~,
+    now_ms=ctx.now_ms,
+  )
+  let shift = @core.Point::new(
+    x=runtime_state.offset.x - surface_offset.x,
+    y=runtime_state.offset.y - surface_offset.y,
+  )
+  let commands : Array[@core.DrawCommand] = [
+    PushClip(
+      @core.Rect::new(
+        x=ctx.frame.origin.x,
+        y=ctx.frame.origin.y,
+        width=ctx.frame.size.width,
+        height=ctx.frame.size.height,
       ),
-    ],
+    ),
+  ]
+  let post_commands : Array[@core.DrawCommand] = []
+  if shift.x != 0.0 || shift.y != 0.0 {
+    commands.push(
+      PushTransform(@core.Transform2D::translation(dx=shift.x, dy=shift.y)),
+    )
+    post_commands.push(PopTransform)
+  }
+  post_commands.push(PopClip)
+  {
+    commands,
     child_layers: [],
-    post_commands: [PopClip],
+    post_commands,
     overlay_commands: if self.shows_indicator {
-      scroll_indicator_commands(
-        ctx.frame,
-        first_child_frame_size(ctx.child_frames, viewport_size),
-        offset,
-      )
+      scroll_indicator_commands(ctx.frame, child_size, surface_offset)
     } else {
       []
     },
     repaint_boundary: false,
-    animating: false,
+    animating: !drag.active &&
+    scroll_motion_is_animating(motion, runtime_state.offset, now_ms=ctx.now_ms),
   }
 }
 
@@ -383,19 +380,30 @@ fn[Msg] scroll_container_event(
           event.wheel_delta,
           viewport_size,
           child_size,
+          direction=ctx.environment.layout_direction,
         )
-        if next_offset == current.offset {
+        let settling = scroll_motion_is_animating(
+          ctx.state.read_slot(scroll_motion_state_slot()),
+          current.offset,
+          now_ms=ctx.now_ms,
+        )
+        let moved = next_offset != current.offset
+        if !moved && !settling {
           @core.ViewEventResult::ignored()
         } else {
           let next = { ..current, offset: next_offset, }
           @common.view_event_result(
             changed=true,
-            activated=on_scroll is Some(_),
+            activated=moved && on_scroll is Some(_),
             captured=true,
-            state=Some(ctx.state.with_slot(scroll_runtime_state_slot(), next)),
-            dirty=ViewLayoutDirty,
+            state=Some(
+              ctx.state
+              .without_slot(scroll_motion_state_slot())
+              .with_slot(scroll_runtime_state_slot(), next),
+            ),
+            dirty=if moved { ViewLayoutDirty } else { ViewPaintDirty },
             messages=match on_scroll {
-              Some(handler) => [handler(next_offset)]
+              Some(handler) => if moved { [handler(next_offset)] } else { [] }
               None => []
             },
           )
@@ -434,22 +442,56 @@ fn[Msg] scroll_container_drag_event(
 ) -> @core.ViewEventResult[Msg] {
   let slot = scroll_drag_state_slot()
   let drag = ctx.state.read_slot(slot)
+  let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
+  let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+  let current = scroll_runtime_state(node, ctx.state)
   match event.phase {
     Down => {
+      // Grabbing a band that is still settling keeps the surface painted where
+      // it looks: the band is inverted back through the pull damping to the
+      // unclamped offset the drag continues from, then dropped.
+      let motion = ctx.state.read_slot(scroll_motion_state_slot())
+      let band = scroll_motion_band(motion, current.offset, now_ms=ctx.now_ms)
+      let carried = band.x != 0.0 || band.y != 0.0
+      let raw_offset = if carried {
+        @core.Point::new(
+          x=current.offset.x +
+            scroll_overscroll_raw(
+              band.x,
+              extent=scroll_overscroll_extent(viewport_size.width),
+            ),
+          y=current.offset.y +
+            scroll_overscroll_raw(
+              band.y,
+              extent=scroll_overscroll_extent(viewport_size.height),
+            ),
+        )
+      } else {
+        current.offset
+      }
       let next = ScrollDragState::{
         active: true,
         dragging: false,
         origin: event.position,
         last_position: event.position,
+        raw_offset,
       }
       {
-        changed: false,
+        changed: carried,
         activated: false,
         focused: false,
         captured: true,
-        state: Some(ctx.state.with_slot(slot, next)),
+        state: Some(
+          ctx.state
+          .without_slot(scroll_motion_state_slot())
+          .with_slot(slot, next),
+        ),
         text_control: None,
-        dirty: ViewClean,
+        dirty: if carried {
+          ViewPaintDirty
+        } else {
+          ViewClean
+        },
         messages: [],
       }
     }
@@ -467,10 +509,22 @@ fn[Msg] scroll_container_drag_event(
         distance_x * distance_x + distance_y * distance_y >=
         scroll_drag_slop() * scroll_drag_slop()
       let is_dragging = drag.dragging || starts_dragging
+      // Pointer travel inside the slop is click jitter and stays out of the
+      // surface offset, exactly as the clamped path treated it.
+      let raw_offset = if is_dragging {
+        @core.Point::new(
+          x=drag.raw_offset.x -
+            scroll_leading_x_delta(delta.x, ctx.environment.layout_direction),
+          y=drag.raw_offset.y - delta.y,
+        )
+      } else {
+        drag.raw_offset
+      }
       let next_drag = {
         ..drag,
         dragging: is_dragging,
         last_position: event.position,
+        raw_offset,
       }
       let next_context = ctx.state.with_slot(slot, next_drag)
       if !is_dragging {
@@ -487,16 +541,19 @@ fn[Msg] scroll_container_drag_event(
           messages: [],
         }
       }
-      let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
-      let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
-      let current = scroll_runtime_state(node, ctx.state)
-      let next = scroll_offset_after_wheel(
-        current.offset,
-        delta,
-        viewport_size,
-        child_size,
+      let next = scroll_clamp_offset(raw_offset, viewport_size, child_size)
+      let band = scroll_drag_band(
+        raw_offset,
+        viewport=viewport_size,
+        child_size~,
+      )
+      let previous_band = scroll_drag_band(
+        drag.raw_offset,
+        viewport=viewport_size,
+        child_size~,
       )
       let moved = next != current.offset
+      let band_changed = band != previous_band
       let dispatch = moved && (node.offset is None || on_scroll is Some(_))
       let state_context = if moved {
         next_context.with_slot(scroll_runtime_state_slot(), {
@@ -507,7 +564,7 @@ fn[Msg] scroll_container_drag_event(
         next_context
       }
       {
-        changed: moved,
+        changed: moved || band_changed,
         activated: dispatch && on_scroll is Some(_),
         focused: false,
         captured: true,
@@ -515,6 +572,10 @@ fn[Msg] scroll_container_drag_event(
         text_control: None,
         dirty: if moved {
           ViewLayoutDirty
+        } else if band_changed {
+          // Only the painted band moved, so the surface needs a repaint but the
+          // authoritative geometry it is measured against does not.
+          ViewPaintDirty
         } else {
           ViewClean
         },
@@ -528,14 +589,50 @@ fn[Msg] scroll_container_drag_event(
       if !drag.active {
         return @core.ViewEventResult::ignored()
       }
+      // A release past the clamp animates back to it. The authoritative offset
+      // is already that clamp, so only the bounded band settles and no geometry
+      // has to move under a windowed child. Without an advancing animation
+      // clock a band could never decay and would keep asking the host for
+      // frames, so a frozen clock gets the plain release instead.
+      let band = if drag.dragging && ctx.now_ms > 0.0 {
+        scroll_drag_band(drag.raw_offset, viewport=viewport_size, child_size~)
+      } else {
+        @core.Point::new(x=0.0, y=0.0)
+      }
+      let settling = band.x != 0.0 || band.y != 0.0
+      let state_context = if settling {
+        ctx.state
+        .without_slot(slot)
+        .with_slot(scroll_motion_state_slot(), {
+          anchor: current.offset,
+          start_time_ms: ctx.now_ms,
+          duration: @core.Point::new(
+            x=scroll_rebound_axis_duration(
+              overscroll=band.x,
+              extent=scroll_overscroll_extent(viewport_size.width),
+            ),
+            y=scroll_rebound_axis_duration(
+              overscroll=band.y,
+              extent=scroll_overscroll_extent(viewport_size.height),
+            ),
+          ),
+          band,
+        })
+      } else {
+        ctx.state.without_slot(slot)
+      }
       {
-        changed: false,
+        changed: settling,
         activated: false,
         focused: false,
         captured: true,
-        state: Some(ctx.state.without_slot(slot)),
+        state: Some(state_context),
         text_control: None,
-        dirty: ViewClean,
+        dirty: if settling {
+          ViewPaintDirty
+        } else {
+          ViewClean
+        },
         messages: [],
       }
     }
@@ -576,6 +673,7 @@ fn[Msg] scroll_container_semantics_action(
     delta,
     viewport,
     child_size,
+    direction=ctx.environment.layout_direction,
   )
   let messages = match on_scroll {
     Some(handler) => [handler(next)]
@@ -586,13 +684,47 @@ fn[Msg] scroll_container_semantics_action(
   }
   @core.ViewSemanticsActionResult::accepted(
     state=Some(
-      ctx.state.with_slot(scroll_runtime_state_slot(), {
-        ..current,
-        offset: next,
-      }),
+      ctx.state
+      .without_slot(scroll_motion_state_slot())
+      .with_slot(scroll_runtime_state_slot(), { ..current, offset: next, }),
     ),
     dirty=ViewLayoutDirty,
     messages~,
+  )
+}
+
+///|
+/// A vertical scrollbar rides the trailing cross-axis edge of the viewport.
+/// Both the thumb and its hit region derive from here, so they cannot drift
+/// apart and mirroring the bar for a right-to-left surface is one change.
+fn scroll_indicator_track_x(frame : @core.Rect) -> Double {
+  frame.origin.x +
+  frame.size.width -
+  scroll_indicator_edge_inset() -
+  scroll_indicator_thumb_width()
+}
+
+///|
+fn scroll_indicator_thumb_width() -> Double {
+  3.0
+}
+
+///|
+fn scroll_indicator_edge_inset() -> Double {
+  4.0
+}
+
+///|
+/// Extra grab room beside the thumb, on top of its own width.
+fn scroll_indicator_hit_inset() -> Double {
+  9.0
+}
+
+///|
+fn scroll_indicator_track_height(viewport_axis : Double) -> Double {
+  @common.view_max_double(
+    1.0,
+    viewport_axis - 2.0 * scroll_indicator_edge_inset(),
   )
 }
 
@@ -606,8 +738,8 @@ fn scroll_indicator_thumb(
   if viewport_height <= 0.0 || child_size.height <= viewport_height {
     return None
   }
-  let track_top = frame.origin.y + 4.0
-  let track_height = @common.view_max_double(1.0, viewport_height - 8.0)
+  let track_top = frame.origin.y + scroll_indicator_edge_inset()
+  let track_height = scroll_indicator_track_height(viewport_height)
   let thumb_height = @common.view_max_double(
     28.0,
     track_height * viewport_height / child_size.height,
@@ -620,9 +752,9 @@ fn scroll_indicator_thumb(
   let clamped = scroll_clamp_offset(offset, frame.size, child_size)
   Some(
     @core.Rect::new(
-      x=frame.origin.x + frame.size.width - 7.0,
+      x=scroll_indicator_track_x(frame),
       y=track_top + travel * clamped.y / max_offset,
-      width=3.0,
+      width=scroll_indicator_thumb_width(),
       height=thumb_height,
     ),
   )
@@ -654,7 +786,8 @@ fn scroll_indicator_handles_event(
   ctx.state.read_slot(scroll_indicator_drag_slot()) ||
   (
     ctx.frame.contains(event.position) &&
-    event.position.x >= ctx.frame.origin.x + ctx.frame.size.width - 16.0 &&
+    event.position.x >=
+    scroll_indicator_track_x(ctx.frame) - scroll_indicator_hit_inset() &&
     event.phase == Down
   )
 }
@@ -691,7 +824,7 @@ fn[Msg] scroll_indicator_event_result(
   }
   let should_move = event.phase == Down || event.phase == Move
   let next_y = if should_move {
-    let track_height = @common.view_max_double(1.0, viewport_size.height - 8.0)
+    let track_height = scroll_indicator_track_height(viewport_size.height)
     let thumb_height = @common.view_max_double(
       28.0,
       track_height *
@@ -700,7 +833,12 @@ fn[Msg] scroll_indicator_event_result(
     )
     let travel = @common.view_max_double(1.0, track_height - thumb_height)
     let ratio = @common.clamp_view_double(
-      (event.position.y - ctx.frame.origin.y - 4.0 - thumb_height / 2.0) /
+      (
+        event.position.y -
+        ctx.frame.origin.y -
+        scroll_indicator_edge_inset() -
+        thumb_height / 2.0
+      ) /
       travel,
       0.0,
       1.0,
@@ -711,10 +849,12 @@ fn[Msg] scroll_indicator_event_result(
     current.y
   }
   let next_offset = @core.Point::new(x=current.x, y=next_y)
-  let next_state = next_state.with_slot(scroll_runtime_state_slot(), {
-    ..runtime_state,
-    offset: next_offset,
-  })
+  let next_state = next_state
+    .without_slot(scroll_motion_state_slot())
+    .with_slot(scroll_runtime_state_slot(), {
+      ..runtime_state,
+      offset: next_offset,
+    })
   {
     changed: should_move || next_state != ctx.state,
     activated: should_move && on_scroll is Some(_),
@@ -731,19 +871,46 @@ fn[Msg] scroll_indicator_event_result(
 }
 
 ///|
+/// `offset.x` is a *leading-edge* distance — how far the content has scrolled
+/// away from the edge reading starts at. Left-to-right content therefore hangs
+/// off the left edge of the viewport, right-to-left content off the right one,
+/// and `d = 0` is always flush with the leading edge. This is placement against
+/// a scroll distance, not a reflection of a child box, so it deliberately does
+/// not go through `Rect::mirrored_x`.
 fn scroll_child_frame(
   frame~ : @core.Rect,
   offset~ : @core.Point,
   viewport~ : @core.Size,
   child_size~ : @core.Size,
+  direction~ : @core.LayoutDirection,
 ) -> @core.Rect {
   let clamped = scroll_clamp_offset(offset, viewport, child_size)
+  let max_x = @common.view_max_double(0.0, child_size.width - viewport.width)
+  let leading = match direction {
+    LeftToRight => clamped.x
+    RightToLeft => max_x - clamped.x
+  }
   @core.Rect::new(
-    x=frame.origin.x - clamped.x,
+    x=frame.origin.x - leading,
     y=frame.origin.y - clamped.y,
     width=@common.view_max_double(viewport.width, child_size.width),
     height=@common.view_max_double(viewport.height, child_size.height),
   )
+}
+
+///|
+/// Re-express a physical x movement vector (wheel delta, finger travel) as the
+/// change it produces in a leading-edge distance. Both stay physical at the
+/// event boundary — a swipe right always moves content right — and only the
+/// sign applied to the mirrored offset space changes.
+fn scroll_leading_x_delta(
+  delta_x : Double,
+  direction : @core.LayoutDirection,
+) -> Double {
+  match direction {
+    LeftToRight => delta_x
+    RightToLeft => 0.0 - delta_x
+  }
 }
 
 ///|
@@ -763,10 +930,14 @@ fn scroll_offset_after_wheel(
   delta : @core.Point,
   viewport : @core.Size,
   child_size : @core.Size,
+  direction~ : @core.LayoutDirection,
 ) -> @core.Point {
   let clamped = scroll_clamp_offset(current, viewport, child_size)
   scroll_clamp_offset(
-    @core.Point::new(x=clamped.x - delta.x, y=clamped.y - delta.y),
+    @core.Point::new(
+      x=clamped.x - scroll_leading_x_delta(delta.x, direction),
+      y=clamped.y - delta.y,
+    ),
     viewport,
     child_size,
   )
