@@ -44,6 +44,32 @@ repeat:
 Both read theming from `ControlThemeSet` (never the legacy `XStyle::default`
 constructors), so a theme change lives in exactly one place.
 
+## Implementing a `ViewNode`
+
+`@core.ViewNode` is 15 methods, and it is deliberately one trait. Only
+`identity` and `layout` must be implemented; the other 13 default to inert
+values (`paint` → empty plan, `semantics` → generic info, `focusable` →
+`false`, `focus_trap` → `false`, `keyboard_policy` → `Passthrough`,
+`flex_weight` → `0.0`, `place_overlays` → `None`, `platform_views` → `[]`,
+`text_input_state` → `None`, `declaration` → uncacheable, and the three
+`child_*` pass-throughs), so a control overrides the channels it participates
+in instead of stubbing the rest.
+
+`declaration()` is the third contract in practice: it hand-builds the
+`DeclarationKey` records the reconciler uses to decide which channel is dirty,
+and 57 of the 63 node types implement it. Its default marks every channel
+uncacheable — correct but slow. Invariant P17 (`docs/invariants.md`,
+`docs/decisions/0034-viewnode-declaration-coverage-gate.md`) fails the PR
+profile when a stored field appears in neither the `declaration()`/`identity()`
+bodies nor an explicit `// declaration-exempt: <reason>` marker.
+
+Do not split the trait into `LayoutNode`/`PaintNode`/`SemanticsNode`/`FocusNode`.
+That plan is not simply waiting on blanket impls; the debt note
+`docs/plans/debt/viewnode-trait-decomposition.md` records the three MoonBit
+limits that block it (no impl target may be a bare type variable, a trait
+inherits one parent only, and a `&ViewNode` trait object cannot be narrowed back
+to a capability trait).
+
 ## API Style
 
 - Constructors use MoonBit labeled and optional parameters for common options.

@@ -70,11 +70,6 @@ impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn declaration(_self) {
-  @core.ViewDeclaration::uncacheable()
-}
-
-///|
 impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn layout(
   _self,
   context,

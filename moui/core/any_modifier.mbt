@@ -87,5 +87,13 @@ pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
 ///   OnTapModifier      → Event + Semantics + Focus
 ///   DisabledModifier   → Environment + Paint + Semantics
 ///
-/// When MoonBit supports blanket trait implementations, the vtable can be
-/// replaced with proper trait dispatch and generic `ModifierViewNode`.
+/// This vtable is not a language workaround. MoonBit allows an impl target to
+/// be a generic type constructor, so
+/// `impl[Msg, M : Modifier[Msg]] ViewNode for ModifierViewNode[Msg, M]` is
+/// writable today (only a bare `for T` is rejected, E4053). The closures stay
+/// because they keep one monomorphic node type instead of one instantiation per
+/// (Msg, modifier) pair, and keep modifier contributions as data rather than
+/// calls. Adding a channel costs trait method + trait default + vtable slot +
+/// noop value + node forwarding; because all 47 `to_any_modifier` conversions
+/// spread `{ ..noop_modifier() }`, none of those 47 sites are touched, so there
+/// is no drift surface left for blanket impls to remove.

@@ -46,11 +46,6 @@ impl @core.ViewNode for TerminalSelectionNode with fn layout(_self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for TerminalSelectionNode with fn focusable(_self) {
-  false
-}
-
-///|
 /// 事件坐标 → 屏幕单元格(全局行 + 列),越界收敛。
 pub fn TerminalSelectionNode::cell_at(
   self : TerminalSelectionNode,

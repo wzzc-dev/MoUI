@@ -16,18 +16,6 @@ pub fn clamp_view_double(Double, Double, Double) -> Double
 
 pub fn clear(PaintContext, @core.Color) -> Unit
 
-pub fn declaration_border(@core.BorderStyle) -> @core.DeclarationKey
-
-pub fn declaration_brush(@core.Brush) -> @core.DeclarationKey
-
-pub fn declaration_color(@core.Color) -> @core.DeclarationKey
-
-pub fn declaration_font(@core.FontSpec) -> @core.DeclarationKey
-
-pub fn declaration_option_double(Double?) -> @core.DeclarationKey
-
-pub fn declaration_shadow(@core.ShadowStyle) -> @core.DeclarationKey
-
 pub fn draw_image(PaintContext, @core.ImageRun) -> Unit
 
 pub fn draw_path(PaintContext, @core.PathSpec) -> Unit

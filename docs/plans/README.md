@@ -97,7 +97,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Debt note | Summary |
 |-----------|---------|
-| [viewnode-trait-decomposition](debt/viewnode-trait-decomposition.md) | Split the fat 14-method `ViewNode` trait once MoonBit supports blanket impls |
+| [viewnode-trait-decomposition](debt/viewnode-trait-decomposition.md) | Fat 15-method `ViewNode` split stays parked behind three MoonBit limits (no bare-`T` impl target, single parent trait, no trait-object narrowing), not blanket impls alone |
 | [view-state-slot-storage](debt/view-state-slot-storage.md) | Replace copy-on-write `Map[DeclarationKey, Bytes]` slot storage if event-path profiles demand it |
 | [renderer-session-closure-style](debt/renderer-session-closure-style.md) | Revisit `RendererSession` closure record vs trait when renderer duplication or capability mistakes justify an RFC |
 

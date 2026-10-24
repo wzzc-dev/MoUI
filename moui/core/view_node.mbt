@@ -35,6 +35,11 @@ pub(all) struct OverlayPlacementContext {
 ///|
 /// Message-independent behavior for a low-level custom view node.
 ///
+/// One trait on purpose: only `identity` and `layout` are compiler-required,
+/// the other 13 methods carry inert defaults, so a node opts into the work it
+/// actually performs instead of stubbing the rest. `declaration()` is the third
+/// contract in practice — enforced by invariant P17, not by the compiler.
+///
 /// The trait is open so downstream packages can define renderer-neutral
 /// controls. Typed children and messages are attached with `View::from_node`.
 /// `identity` controls element reuse: equal identities preserve transient
@@ -68,11 +73,24 @@ pub(open) trait ViewNode {
   fn flex_weight(Self) -> Double = _
 }
 
-// Future: when MoonBit supports blanket trait impls, decompose ViewNode into
-// finer-grained traits: LayoutNode (identity, declaration, child_constraints,
-// child_environment, child_style, layout, flex_weight), PaintNode (paint),
-// SemanticsViewNode (semantics), FocusNode (focusable). This lets new controls
-// implement only what they need. For now, all 14 methods live on ViewNode.
+// Design note: one fat trait is deliberate. Only `identity` and `layout` are
+// compiler-required; the other 13 methods default to inert values, so a node
+// overrides the channels it participates in. `declaration` is a third contract
+// in practice (57 of the 63 node types hand-build its cache keys anyway), policed
+// by invariant P17 rather than the compiler — so the defaults are not what makes
+// authoring cheap, and removing them would buy nothing.
+//
+// Decomposing into LayoutNode/PaintNode/SemanticsNode/FocusNode is blocked by
+// three separate MoonBit limits, not by blanket impls alone (verified with moon
+// 0.1.20261016):
+// - `impl[T : Bound] Agg for T` is rejected — E4053 requires the impl target to
+//   be a type constructor, so the aggregate cannot be derived from sub-traits;
+// - `trait Agg : LayoutNode` inherits one parent only, and each level still
+//   needs its own impl — more boilerplate than the current single impl;
+// - a `&ViewNode` trait object upcasts but cannot be narrowed back to a
+//   capability trait (E4018), so "what can this node do" must stay encoded as
+//   data (ViewDeclaration channels, Option-returning hooks above).
+// Tracked as debt: docs/plans/debt/viewnode-trait-decomposition.md.
 
 ///|
 impl ViewNode with fn declaration(_self) {
