@@ -148,9 +148,9 @@ async fn run_new_world() -> Unit {
       match response {
         @backend.HostServiceResponse::FileDialogSelection([path, ..]) =>
           ignore(
-            fs_owner.queue.try_put(
-              FsJob::{ kind: ExportFolder(path, world_name, files, done), },
-            ) catch {
+            fs_owner.queue.try_put(FsJob::{
+              kind: ExportFolder(path, world_name, files, done),
+            }) catch {
               _ => false
             },
           )
@@ -332,6 +332,7 @@ async fn unique_world_folder(base : String) -> String {
 /// Read every file of one world folder, two levels deep. The file filter is
 /// the app's `is_world_file_name`, so the native host and the web host agree
 /// on what belongs to a world (Markdown plus the JSON journal).
+
 ///|
 /// The base64 of a portrait file, tolerating both shapes a file can take on
 /// disk: a real photo (bytes) and the base64 text this host writes back (its
@@ -443,7 +444,7 @@ async fn write_world_files_to(
     }
     let path = "\{root}/\{folder}/\{pair.0}}"
     if @app.is_portrait_file_name(pair.0) {
-      if !(write_picture(path, pair.1)) {
+      if !write_picture(path, pair.1) {
         ok = false
       }
     } else {
@@ -454,7 +455,6 @@ async fn write_world_files_to(
   }
   ok
 }
-
 
 ///|
 /// Write one picture file as bytes: the base64 the world carries is decoded
@@ -480,15 +480,16 @@ fn safe_folder_name(name : String) -> String {
   if trimmed == "" {
     return "world"
   }
-  let out = trimmed.replace_all(old="/", new="_")
-  .replace_all(old="\\", new="_")
-  .replace_all(old=":", new="_")
-  .replace_all(old="*", new="_")
-  .replace_all(old="?", new="_")
-  .replace_all(old="\"", new="_")
-  .replace_all(old="<", new="_")
-  .replace_all(old=">", new="_")
-  .replace_all(old="|", new="_")
+  let out = trimmed
+    .replace_all(old="/", new="_")
+    .replace_all(old="\\", new="_")
+    .replace_all(old=":", new="_")
+    .replace_all(old="*", new="_")
+    .replace_all(old="?", new="_")
+    .replace_all(old="\"", new="_")
+    .replace_all(old="<", new="_")
+    .replace_all(old=">", new="_")
+    .replace_all(old="|", new="_")
   out
 }
 

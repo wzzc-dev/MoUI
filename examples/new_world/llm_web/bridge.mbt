@@ -195,9 +195,7 @@ pub fn WebGateway::llm_delta(
   delta_text_id : Int32,
 ) -> Unit {
   match self.llm_pending.get(request_id) {
-    Some((_on_result, on_delta)) => {
-      on_delta(host_string(delta_text_id))
-    }
+    Some((_on_result, on_delta)) => on_delta(host_string(delta_text_id))
     None => ()
   }
 }

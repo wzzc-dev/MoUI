@@ -122,15 +122,11 @@ async fn llm_fetch(job : LlmJob) -> Unit {
     let (host, path) = llm_split_url(url)
     // The client is opened on the host root; the request carries the path.
     let client = @http.Client::Client(host + "/")
-    client.request(
-      @http.RequestMethod::Post,
-      path,
-      extra_headers={
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + job.api_key,
-        "Accept": "text/event-stream",
-      },
-    )
+    client.request(@http.RequestMethod::Post, path, extra_headers={
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + job.api_key,
+      "Accept": "text/event-stream",
+    })
     client.write(body)
     let response = client.end_request()
     if response.code < 200 || response.code >= 300 {
@@ -172,7 +168,9 @@ async fn llm_fetch(job : LlmJob) -> Unit {
 /// The core json package has no boolean constructor, and the body is JSON:
 /// the literal is parsed once, when the body is built.
 fn json_true() -> Json {
-  @json.parse("true") catch { _ => Json::string("") }
+  @json.parse("true") catch {
+    _ => Json::string("")
+  }
 }
 
 ///|
