@@ -38,6 +38,11 @@ pub(all) enum DrawerKind {
   Memory
   Model
   Events
+  /// The prompt as it is really sent: the system prompt, the world rules, the
+  /// memories and the history, verbatim.
+  Prompt
+  /// The world book: the world's own keyword-triggered lore, editable here.
+  WorldBook
 } derive(Eq, Debug)
 
 ///|
@@ -74,10 +79,39 @@ pub(all) enum Msg {
   DoDraftChanged(String)
   /// Player typed into the composer's 旁白【】 field.
   StoryDraftChanged(String)
+  /// Player typed into the composer's 这一幕【】 field: the note of what
+  /// happens next in the scene.
+  BeatDraftChanged(String)
+  /// The Tavern card the player pasted in, waiting to be read.
+  CardImportTextChanged(String)
+  /// Copy the edited character as a Tavern v2 card.
+  CopyCharacterCard
+  /// Read the pasted Tavern card into the editor's draft.
+  ImportCharacterCard
+  /// The world book was opened for editing: the working copy is loaded.
+  WorldBookOpened
+  /// Open one world-book entry in the editor.
+  WorldBookEdit(Int32)
+  /// The edited entry's trigger keywords (comma separated).
+  WorldBookKeysChanged(String)
+  /// The edited entry's content.
+  WorldBookContentChanged(String)
+  /// Add an empty entry to the world book.
+  WorldBookAdd
+  /// Remove one entry from the world book.
+  WorldBookDelete(Int32)
+  /// Write the world book back into the world.
+  WorldBookSave
+  /// Reveal `step` more lines of the transcript.
+  ExtendTranscript(Int32)
   /// Player typed a line and submitted it.
   Send(String)
   /// Send the three composer fields (说 / 做 / 旁白) as one turn.
   SendComposer
+  /// A piece of a reply arrived while the provider is still writing.
+  ReplyDelta(String, String)
+  /// A piece of a scene reply arrived.
+  SceneReplyDelta(String, String, String)
   /// A provider reply arrived; `None` text means the call failed.
   ///
   /// The key is the conversation the turn belonged to: a character id for a
@@ -141,6 +175,12 @@ pub(all) enum Msg {
   // ---- character memory ----
   /// The "要记住的事" input in the memory drawer changed.
   MemoryDraftChanged(String)
+  /// The progression topic of the memory being written ("" = a plain fact).
+  MemoryTopicDraftChanged(String)
+  /// Keep a memory out of the prompt (or let it back in).
+  ToggleMemoryHidden(Int32)
+  /// Copy the prompt preview to the clipboard.
+  CopyPromptPreview
   /// Record what the player typed as an authored memory of the selected
   /// character.
   AddMemory

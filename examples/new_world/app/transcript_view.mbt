@@ -19,21 +19,47 @@
 /// content, so a new reply lands in view without fighting a manual drag.
 
 ///|
+/// How many lines the transcript shows at once.
+///
+/// A long run is the point of this app, so the transcript must not cost more
+/// the longer it gets: only the newest lines are built, and the older ones are
+/// one click away. A three-hundred-line conversation therefore lays out the
+/// same handful of rows a ten-line one does.
+pub let transcript_window_default : Int32 = 40
+
+///|
+/// How many more lines one 「更早的对话」 click reveals.
+pub let transcript_window_step : Int32 = 40
+
+///|
 /// Scroll the transcript to its newest line.
 ///
-/// `scroll_view` keeps its own offset and never follows new content, while the
-/// transcript grows *downward* from the top of its viewport, so with a long
+/// `scroll_view` keeps its own offset and never follows new content, while
+/// the transcript grows *downward* from the top of its viewport, so with a long
 /// history the newest reply paints below the clip rect. A request with an id
 /// that changes with the content scrolls to the tail, and an unchanged id
 /// leaves a manual drag alone.
-fn follow_tail_request(rows : Array[@moui.View[Msg]]) -> @moui.ScrollRequest {
+///
+/// The id is the newest line's own text, not the row count: revealing older
+/// lines must not yank the reader back to the bottom.
+fn follow_tail_request(newest : String) -> @moui.ScrollRequest {
   // Ask for "past the end" rather than estimating the content height:
   // `ScrollContainer` clamps the offset to `content - viewport` when it places
   // the child, so a large request lands exactly on the newest row.
   @moui.ScrollRequest::new(
-    id=rows.length(),
+    id=text_hash(newest),
     offset=@geometry.Point::new(x=0.0, y=1.0e6),
   )
+}
+
+///|
+/// A small, stable hash of a text, for the scroll request's id.
+fn text_hash(text : String) -> Int32 {
+  let mut hash = 5381
+  for ch in text {
+    hash = (hash * 33 + ch.to_int()) % 1000003
+  }
+  hash
 }
 
 ///|
@@ -118,6 +144,15 @@ fn transcript_view(
   let theme = app_theme_for(model.config.appearance())
   let lines = conversation.lines()
   let rows : Array[@moui.View[Msg]] = []
+  // The window: only the newest lines are built, so a long run costs the
+  // same as a short one. The older ones are one click away.
+  let total = lines.length()
+  let window = if model.transcript_window() <= 0 {
+    transcript_window_default
+  } else {
+    model.transcript_window()
+  }
+  let start = if total > window { total - window } else { 0 }
   if lines.is_empty() {
     rows.push(
       wrapped_caption(
@@ -142,7 +177,19 @@ fn transcript_view(
       ),
     )
   }
-  for index, line in lines {
+  if start > 0 {
+    rows.push(
+      button(
+        "更早的对话（还有 \{start} 条）",
+        on_click=ExtendTranscript(transcript_window_step),
+        variant=Ghost,
+        width=(width - 24.0).max(120.0),
+        height=button_sm_height,
+      ),
+    )
+  }
+  for index in start..<total {
+    let line = lines[index]
     let recent = index >= lines.length() - markdown_recent_lines
     let previous = if index == 0 {
       None
@@ -241,22 +288,57 @@ fn transcript_view(
     }
   }
   if conversation.pending() {
-    rows.push(
-      text(
-        if is_scene_key(conversation.character_id()) {
-          "有人正在斟酌…"
-        } else {
-          match model.selected {
-            Some(id) => "\{character_label(model, id)} 正在斟酌…"
-            None => "有人正在斟酌…"
-          }
-        },
-        role=Caption,
-        width~,
-        height=20.0,
-        align=TextStart,
-      ),
-    )
+    // The reply as it streams in: the words land on the stage while the
+    // provider is still writing them.
+    let streaming = conversation.streaming()
+    if streaming != "" {
+      rows.push(
+        column(
+          [
+            wrapped_caption(
+              if is_scene_key(conversation.character_id()) {
+                "有人正在写…"
+              } else {
+                match model.selected {
+                  Some(id) => "\{character_label(model, id)} 正在写…"
+                  None => "有人正在写…"
+                }
+              },
+              width~,
+            ),
+            player_or_reply(
+              ChatLine::character(
+                match model.selected {
+                  Some(id) => id
+                  None => ""
+                },
+                streaming,
+              ),
+              width~,
+              recent=true,
+            ),
+          ],
+          spacing=2.0,
+        ),
+      )
+    } else {
+      rows.push(
+        text(
+          if is_scene_key(conversation.character_id()) {
+            "有人正在斟酌…"
+          } else {
+            match model.selected {
+              Some(id) => "\{character_label(model, id)} 正在斟酌…"
+              None => "有人正在斟酌…"
+            }
+          },
+          role=Caption,
+          width~,
+          height=20.0,
+          align=TextStart,
+        ),
+      )
+    }
   }
   // Which lore the last player turn pulled in. Without this the injection is
   // invisible: the character "just knows" about the pawnshop and the player
@@ -265,11 +347,16 @@ fn transcript_view(
   if lore_note != "" {
     rows.push(wrapped_caption(lore_note, width~))
   }
+  let newest = if total > 0 {
+    lines[total - 1].text
+  } else {
+    ""
+  }
   flexible(
     scroll_view(
       column(rows, spacing=10.0),
       width~,
-      request=follow_tail_request(rows),
+      request=follow_tail_request(newest),
     ),
     weight=1.0,
   )

@@ -26,6 +26,9 @@ extern "wasm" fn host_llm_submit(
 ) -> Unit = "new_world_host" "llm_submit"
 
 ///|
+extern "wasm" fn host_fs_copy_text(text_id : Int32) -> Unit = "new_world_host" "fs_copy_text"
+
+///|
 extern "wasm" fn host_fs_pick(request_id : Int32) -> Unit = "new_world_host" "fs_pick"
 
 ///|
@@ -123,7 +126,9 @@ pub(all) enum FsJob {
 /// program starts and shared by the ABI callbacks.
 pub struct WebGateway {
   next_id : Ref[Int32]
-  llm_pending : Map[Int32, (String?) -> Unit]
+  /// The pending provider request: the final reply callback and the
+  /// per-delta callback.
+  llm_pending : Map[Int32, ((String?) -> Unit, (String) -> Unit)]
   fs_pending : Map[Int32, FsJob]
 }
 
@@ -149,9 +154,10 @@ pub fn WebGateway::llm_turn(
   api_key : String,
   body : String,
   on_result : (String?) -> Unit,
+  on_delta : (String) -> Unit,
 ) -> Unit {
   let id = allocate(self)
-  self.llm_pending[id] = on_result
+  self.llm_pending[id] = (on_result, on_delta)
   host_llm_submit(
     id,
     host_string_id(endpoint),
@@ -169,7 +175,7 @@ pub fn WebGateway::llm_complete(
   body_text_id : Int32,
 ) -> Unit {
   match self.llm_pending.get(request_id) {
-    Some(on_result) => {
+    Some((on_result, _on_delta)) => {
       self.llm_pending.remove(request_id)
       if ok {
         on_result(Some(host_string(body_text_id)))
@@ -179,6 +185,27 @@ pub fn WebGateway::llm_complete(
     }
     None => ()
   }
+}
+
+///|
+/// The exported callback for one streamed piece of a reply.
+pub fn WebGateway::llm_delta(
+  self : WebGateway,
+  request_id : Int32,
+  delta_text_id : Int32,
+) -> Unit {
+  match self.llm_pending.get(request_id) {
+    Some((_on_result, on_delta)) => {
+      on_delta(host_string(delta_text_id))
+    }
+    None => ()
+  }
+}
+
+///|
+/// Put text on the clipboard (the page's `navigator.clipboard`).
+pub fn WebGateway::copy_to_clipboard(_self : WebGateway, text : String) -> Unit {
+  host_fs_copy_text(host_string_id(text))
 }
 
 ///|

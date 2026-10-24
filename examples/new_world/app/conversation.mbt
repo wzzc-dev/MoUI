@@ -79,6 +79,11 @@ pub(all) enum InputIntent {
   /// Narration by the player: `（旁白）…`, which the model continues instead
   /// of replying to.
   Story
+  /// A beat of the scene: `（这一幕）…`, the player's note of what happens
+  /// next. The model stages it — the room, the people, the reaction — instead
+  /// of answering it. This is the writer's seat: you say what the beat is,
+  /// the model plays it out in your characters' voices.
+  Beat
 } derive(Eq, Debug)
 
 ///|
@@ -94,6 +99,7 @@ pub fn InputIntent::label(self : InputIntent) -> String {
     Say => "说"
     Do => "做"
     Story => "旁白"
+    Beat => "这一幕"
   }
 }
 
@@ -242,6 +248,9 @@ pub struct Conversation {
   /// Set while a reply is in flight, so the UI can show a pending state and a
   /// second request is not issued on top of the first.
   pending : Bool
+  /// The text of the reply that is streaming in, piece by piece. The stage
+  /// shows it as it lands; the finished reply replaces it.
+  streaming : String
   /// The compressed memory of everything that fell out of `lines` (the
   /// 60-line cap plus request-time budget trimming). Empty when none.
   summary : String
@@ -268,11 +277,27 @@ pub fn Conversation::new(character_id~ : String, mood? : SceneMood) -> Conversat
     character_id,
     lines: [],
     pending: false,
+    streaming: "",
     summary: "",
     summarized_upto: 0,
     appended: 0,
     mood,
   }
+}
+
+///|
+/// The text of the reply that is streaming in, piece by piece.
+pub fn Conversation::streaming(self : Conversation) -> String {
+  self.streaming
+}
+
+///|
+/// Remember what has streamed in so far.
+pub fn Conversation::with_streaming(
+  self : Conversation,
+  streaming : String,
+) -> Conversation {
+  { ..self, streaming, }
 }
 
 ///|

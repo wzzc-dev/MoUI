@@ -307,3 +307,66 @@ test "memory edits never write through the model they were given" {
   copied.set({ character_id: "林掌柜", entries: [], })
   assert_eq(added.memories.for_character("林掌柜").entries().length(), 1)
 }
+
+///|
+test "a memory can be kept out of the prompt" {
+  // The player writes it for themselves; the model never reads it. The entry
+  // stays in the file and in the drawer.
+  let entries = parse_memory_md(
+    "- 狸奴怕打雷\n- [不进上下文] 她不让我提她娘\n",
+  )
+  assert_eq(entries.length(), 2)
+  assert_false(entries[0].hidden())
+  assert_true(entries[1].hidden())
+  assert_eq(entries[1].content(), "她不让我提她娘")
+  // A hidden entry is never injected, not even when it is pinned.
+  let pinned = entries[1].with_pinned(true)
+  let picked = select_memories([pinned], "她娘")
+  assert_eq(picked.length(), 0)
+  // A visible one still is.
+  let visible = select_memories([entries[0]], "打雷")
+  assert_eq(visible.length(), 1)
+}
+
+///|
+test "a progression topic keeps only the newest state" {
+  // The same fact changes: the character must answer as the world is now.
+  let entries = parse_memory_md(
+    "- [进展:住处] 住在城南的旧宅\n" +
+    "- [进展:住处] 搬去了城北的院子\n" +
+    "- [进展:伤势] 左臂有旧伤\n" +
+    "- 她叫狸奴\n",
+  )
+  assert_eq(entries.length(), 4)
+  assert_eq(entries[0].topic(), "住处")
+  assert_eq(entries[1].topic(), "住处")
+  // The latest of each topic is the current one.
+  let current = latest_per_topic(entries)
+  assert_eq(current.length(), 2)
+  assert_eq(current[0].content(), "搬去了城北的院子")
+  assert_eq(current[1].content(), "左臂有旧伤")
+  // Only the current state of a topic rides in the prompt; the plain memory
+  // is unaffected.
+  let picked = select_memories(entries, "院子")
+  let texts : Array[String] = []
+  for entry in picked {
+    texts.push(entry.content())
+  }
+  assert_true(texts.contains("搬去了城北的院子"))
+  assert_false(texts.contains("住在城南的旧宅"))
+}
+
+///|
+test "the memory markers survive a round trip through the file" {
+  let entries = [
+    MemoryEntry::authored("住在城南的旧宅").with_topic("住处"),
+    MemoryEntry::proposed("她不让我提她娘").with_hidden(true),
+  ]
+  let text = memory_md_text(entries)
+  let parsed = parse_memory_md(text)
+  assert_eq(parsed.length(), 2)
+  assert_eq(parsed[0].topic(), "住处")
+  assert_eq(parsed[0].content(), "住在城南的旧宅")
+  assert_true(parsed[1].hidden())
+  assert_eq(parsed[1].content(), "她不让我提她娘")
+}

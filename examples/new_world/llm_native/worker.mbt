@@ -28,6 +28,8 @@ pub struct LlmJob {
   /// native transport history-aware.
   messages : Array[(String, String)]
   on_result : (String?) -> Unit
+  /// Called with each piece of the reply as it lands.
+  on_delta : (String) -> Unit
 }
 
 ///|
@@ -51,6 +53,7 @@ pub fn llm_submit(
   temperature : Double,
   messages : Array[(String, String)],
   on_result : (String?) -> Unit,
+  on_delta : (String) -> Unit,
 ) -> Unit {
   let job = LlmJob::{
     endpoint,
@@ -59,6 +62,7 @@ pub fn llm_submit(
     temperature,
     messages,
     on_result,
+    on_delta,
   }
   // The queue is unbounded, so a full queue is not a failure mode here.
   ignore(owner.queue.try_put(job) catch { _ => false })
@@ -67,7 +71,7 @@ pub fn llm_submit(
 ///|
 /// Build the OpenAI-compatible chat/completions body from the planned
 /// messages, in order.
-fn llm_request_body(job : LlmJob) -> String {
+fn llm_request_body(job : LlmJob, stream~ : Bool = false) -> String {
   let messages : Array[Json] = []
   for message in job.messages {
     let fields : Map[String, Json] = {
@@ -80,6 +84,10 @@ fn llm_request_body(job : LlmJob) -> String {
     "model": Json::string(job.model),
     "messages": Json::array(messages),
     "temperature": Json::number(job.temperature),
+  }
+  if stream {
+    // Server-Sent Events: the reply arrives in pieces.
+    root["stream"] = json_true()
   }
   @json.to_json(Json::object(root)).stringify()
 }
@@ -102,23 +110,132 @@ fn llm_completion_url(endpoint : String) -> String {
 
 ///|
 /// Perform one request and hand the completion text (or `None`) back.
+///
+/// The reply is streamed: the provider sends Server-Sent Events, and every
+/// `data:` line is handed to the app as it lands, so the stage shows the
+/// words while they are still being written. The whole text is also
+/// returned at the end, so a provider that ignores `stream` still works.
 async fn llm_fetch(job : LlmJob) -> Unit {
   let url = llm_completion_url(job.endpoint)
-  let body = llm_request_body(job)
+  let body = llm_request_body(job, stream=true)
   let result = try {
-    let (response, data) = @http.post(url, body, headers={
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + job.api_key,
-    })
-    if response.code >= 200 && response.code < 300 {
-      llm_parse_completion(data.text())
-    } else {
+    let (host, path) = llm_split_url(url)
+    // The client is opened on the host root; the request carries the path.
+    let client = @http.Client::Client(host + "/")
+    client.request(
+      @http.RequestMethod::Post,
+      path,
+      extra_headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + job.api_key,
+        "Accept": "text/event-stream",
+      },
+    )
+    client.write(body)
+    let response = client.end_request()
+    if response.code < 200 || response.code >= 300 {
       None
+    } else {
+      let mut text = ""
+      while true {
+        match client.read_until("\n") {
+          Some(line) =>
+            match llm_parse_delta(line) {
+              Some(delta) => {
+                text += delta
+                (job.on_delta)(delta)
+              }
+              None => ()
+            }
+          None => break
+        }
+      }
+      if text != "" {
+        Some(text)
+      } else {
+        // A provider that ignored `stream` sent one JSON document instead
+        // of events: read what is left and parse it the plain way, so the
+        // reply is never lost to a capability the provider does not have.
+        let whole = client.read_all().text()
+        llm_parse_completion(whole)
+      }
     }
   } catch {
     _ => None
   }
   (job.on_result)(result)
+}
+
+///|
+/// A JSON `true`.
+///
+/// The core json package has no boolean constructor, and the body is JSON:
+/// the literal is parsed once, when the body is built.
+fn json_true() -> Json {
+  @json.parse("true") catch { _ => Json::string("") }
+}
+
+///|
+/// Split a URL into the host root and the path.
+///
+/// `https://api.openai.com/v1/chat/completions` becomes
+/// (`https://api.openai.com`, `/v1/chat/completions`).
+fn llm_split_url(url : String) -> (String, String) {
+  let scheme_end = url.find("://")
+  let rest = match scheme_end {
+    Some(at) => url[at + 3:].to_owned()
+    None => url
+  }
+  let slash = rest.find("/")
+  match slash {
+    Some(at) => {
+      let host = url[0:scheme_end.unwrap_or(0) + 3 + at].to_owned()
+      let path = rest[at:].to_owned()
+      (host, path)
+    }
+    None => (url, "/")
+  }
+}
+
+///|
+/// The text of one streamed delta, or `None` when the line carries none.
+///
+/// The OpenAI-compatible streaming format is Server-Sent Events: lines of
+/// `data: {json}`, where the json carries `choices[0].delta.content`. The
+/// final line is `data: [DONE]`, which carries no text.
+fn llm_parse_delta(line : String) -> String? {
+  let trimmed = line.trim().to_owned()
+  if !trimmed.has_prefix("data:") {
+    return None
+  }
+  let payload = trimmed[5:].trim().to_owned()
+  if payload == "[DONE]" || payload == "" {
+    return None
+  }
+  let json = @json.parse(payload) catch { _ => return None }
+  let fields = match json {
+    Object(values) => values
+    _ => return None
+  }
+  let choices = match fields.get("choices") {
+    Some(Array(values)) => values
+    _ => return None
+  }
+  if choices.is_empty() {
+    return None
+  }
+  match choices[0] {
+    Object(first) =>
+      match first.get("delta") {
+        Some(Object(delta)) =>
+          match delta.get("content") {
+            Some(String(content)) => Some(content)
+            _ => None
+          }
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|

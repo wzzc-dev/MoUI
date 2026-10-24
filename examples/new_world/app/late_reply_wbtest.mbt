@@ -9,7 +9,7 @@
 test "a reply lands in its own conversation after the player switches away" {
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let with_lin = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(with_lin, Send("问林掌柜"), turn_runner=never)
   // The player switches to someone else while the request is in flight.
   let switched = step(asked, Select(Some("周跛子")))
@@ -40,7 +40,7 @@ test "a reply for a character that no longer exists is dropped, not crashed" {
   // resurrect a ghost or write an orphan file.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("嗨"), turn_runner=never)
   let (late, _l) = update(
     asked,
@@ -61,7 +61,7 @@ test "a scene reply and a private reply can both be in flight" {
   // or vice versa, or one of the two composites would unlock early.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (private_pending, _p) = update(
     selected,
     Send("私聊"),

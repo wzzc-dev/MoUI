@@ -180,24 +180,75 @@
         const url = endpoint.includes("/chat/completions")
           ? endpoint
           : `${endpoint.replace(/\/+$/, "")}/chat/completions`;
+        // The request asks for a stream; the body already carries
+        // `"stream": true`.
         try {
           const response = await fetch(url, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
+              Accept: "text/event-stream",
             },
             body,
           });
-          const text = await response.text();
+          if (!response.ok || !response.body) {
+            const text = await response.text();
+            const textId = nextStringId++;
+            stringStore.set(textId, text);
+            callExport("ai_llm_complete", requestId, response.ok, textId);
+            releaseString(textId);
+            return;
+          }
+          // Server-Sent Events: every `data:` line is handed over as it
+          // lands, so the stage shows the words while they are written.
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let whole = "";
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            let at = buffer.indexOf("\n");
+            while (at >= 0) {
+              const line = buffer.slice(0, at);
+              buffer = buffer.slice(at + 1);
+              const delta = sseDelta(line);
+              if (delta !== null) {
+                whole += delta;
+                const deltaId = nextStringId++;
+                stringStore.set(deltaId, delta);
+                callExport("ai_llm_delta", requestId, deltaId);
+                releaseString(deltaId);
+              }
+              at = buffer.indexOf("\n");
+            }
+          }
           const textId = nextStringId++;
-          stringStore.set(textId, text);
-          const ok = response.ok;
-          callExport("ai_llm_complete", requestId, ok, textId);
+          stringStore.set(textId, whole);
+          callExport("ai_llm_complete", requestId, true, textId);
           releaseString(textId);
         } catch (error) {
           setStatus(`Provider request failed: ${error}`);
           callExport("ai_llm_complete", requestId, false, 0);
+        }
+      }
+
+      // The text of one streamed SSE line, or null when the line carries none.
+      function sseDelta(line) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) return null;
+        const payload = trimmed.slice(5).trim();
+        if (payload === "" || payload === "[DONE]") return null;
+        try {
+          const parsed = JSON.parse(payload);
+          const choice = parsed.choices && parsed.choices[0];
+          const content = choice && choice.delta && choice.delta.content;
+          return typeof content === "string" ? content : null;
+        } catch (error) {
+          return null;
         }
       }
 
@@ -811,6 +862,13 @@
         },
         fs_pick: requestId => {
           runFs(requestId, "选择世界库", pickRoot);
+        },
+        fs_copy_text: textId => {
+          // The prompt preview travels with the player.
+          const text = takeString(textId);
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).catch(() => {});
+          }
         },
         fs_list: requestId => {
           runFs(requestId, "读取世界库", async () => {

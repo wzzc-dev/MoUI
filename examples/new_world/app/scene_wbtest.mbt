@@ -93,6 +93,7 @@ test "a scene turn lands in the scene transcript, not a private chat" {
         write_config: (_content, _done) => (),
         export_world: (_folder, _files, _done) => (),
         import_world: _done => (),
+        copy_to_clipboard: _text => (),
       } : WorldHost),
   )
   ignore(effect)
@@ -142,6 +143,7 @@ test "a scene reply is appended with the respondent as speaker" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   })
   let (replied, _e) = update(
     with_player,
@@ -155,6 +157,7 @@ test "a scene reply is appended with the respondent as speaker" {
       write_config: (_content, _done) => (),
       export_world: (_folder, _files, _done) => (),
       import_world: _done => (),
+      copy_to_clipboard: _text => (),
     },
   )
   let lines = replied.conversations.for_character(key).lines()
@@ -222,7 +225,7 @@ test "advancing time offline still writes an event" {
 test "advancing time with a key asks the provider and logs the narration" {
   let keyed = step(crowded_world(), ApiKeyChanged("sk-test"))
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
   let (asked, effect) = update(keyed, AdvanceTime, turn_runner=runner)
   assert_true(is_run_effect(effect))
   @moui.Effect::runtime_visit(
@@ -284,7 +287,7 @@ test "scene speakers alternate across turns" {
   let keyed = step(crowded_world(), ApiKeyChanged("sk-test"))
   let entered = step(keyed, EnterScene("吧台"))
   let key = scene_key("吧台")
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let mut current = entered
   let responders : Array[String] = []
   for round in 0..<4 {

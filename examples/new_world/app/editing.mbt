@@ -86,7 +86,7 @@ pub fn update_editing(
                   kind="provider",
                   label="Regenerate reply",
                   run=dispatch => {
-                    runner(request, reply => dispatch(Regenerated(reply)))
+                    runner(request, reply => dispatch(Regenerated(reply)), _delta => ())
                   },
                 ),
               )

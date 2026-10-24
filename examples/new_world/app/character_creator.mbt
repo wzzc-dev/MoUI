@@ -220,6 +220,33 @@ pub fn CharacterDraft::from_card(card : CharacterCard) -> CharacterDraft {
 /// Turn the draft into a live card: identity is the card name (the folder
 /// database stores one file per name), the marker colour is derived from that
 /// name, and `point` comes from the free-spot helper.
+///|
+/// Does the draft still differ from the card it was opened on?
+///
+/// The editor is a working copy: the player may type, change their mind and
+/// type again. The page says so, and the close button becomes an explicit
+/// "discard" rather than a quiet loss.
+pub fn CharacterDraft::differs_from(
+  self : CharacterDraft,
+  card : CharacterCard,
+) -> Bool {
+  self.persona != card.persona() ||
+  self.appearance != card.appearance() ||
+  self.voice != card.voice() ||
+  self.goal != card.goal() ||
+  self.secret != card.secret() ||
+  self.principles != card.principles() ||
+  self.setting != card.setting() ||
+  self.opening != card.opening() ||
+  self.memory_rules != card.memory_rules() ||
+  self.portrait != card.portrait() ||
+  self.portrait_prompt != card.portrait_prompt() ||
+  self.user_identity != card.relationship().user_identity() ||
+  self.user_name != card.relationship().user_name() ||
+  self.boundary != card.relationship().boundary() ||
+  self.examples != card.examples()
+}
+
 pub fn CharacterDraft::to_card(
   self : CharacterDraft,
   point~ : @geometry.Point,

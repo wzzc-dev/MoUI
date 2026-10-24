@@ -224,7 +224,7 @@ test "property: world edits survive a round trip" {
 test "property: alternatives and their selection survive a round trip" {
   let base = step(crowded_world(), Select(Some("林掌柜")))
   let talking_model = step(base, Send("温一壶酒"))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(talking_model, RegenerateReply, turn_runner=never)
   let (two, _e2) = update(
     asked,

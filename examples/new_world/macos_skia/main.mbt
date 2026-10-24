@@ -60,7 +60,7 @@ async fn run_new_world() -> Unit {
   // The macOS backend's FileDialog service wraps an NSOpenPanel. Dispatching
   // a PickDirectory request opens a real folder dialog on the main thread.
   let service_bridge = @macos.macos_service_bridge()
-  let turn_runner : @app.TurnRunner = (request, on_reply) => {
+  let turn_runner : @app.TurnRunner = (request, on_reply, on_delta) => {
     @llm_native.llm_submit(
       llm_owner,
       request.endpoint(),
@@ -69,6 +69,7 @@ async fn run_new_world() -> Unit {
       request.temperature(),
       request.messages(),
       on_reply,
+      on_delta,
     )
   }
   let world_host : @app.WorldHost = {
@@ -156,6 +157,17 @@ async fn run_new_world() -> Unit {
         // Cancelled: report it rather than pretending an export happened.
         _ => done(false)
       }
+    },
+    copy_to_clipboard: text => {
+      // The prompt preview travels with the player: the macOS pasteboard
+      // through the host's clipboard service.
+      ignore(
+        service_bridge.dispatch(
+          @backend.HostServiceRequest::Clipboard(
+            @backend.HostClipboardRequest::WriteText(text),
+          ),
+        ),
+      )
     },
     import_world: done => {
       // A world is imported as a folder: the player points at the exported

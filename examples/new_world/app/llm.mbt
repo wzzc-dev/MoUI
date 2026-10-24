@@ -126,7 +126,10 @@ pub fn LlmRequest::user(self : LlmRequest) -> String {
 /// Every planned message rides along in order: system prompts first (persona,
 /// rolling summary, world-book hits), then the history, then the player's turn
 /// last so the model always answers the thing just said.
-pub fn llm_request_body(request : LlmRequest) -> Json {
+pub fn llm_request_body(
+  request : LlmRequest,
+  stream~ : Bool = false,
+) -> Json {
   let messages : Array[Json] = []
   for message in request.messages {
     messages.push(json_message(message.0, message.1))
@@ -136,7 +139,63 @@ pub fn llm_request_body(request : LlmRequest) -> Json {
     "messages": Json::array(messages),
     "temperature": Json::number(request.temperature),
   }
+  if stream {
+    // Server-Sent Events: the reply arrives in pieces, and the stage shows
+    // them as they land instead of freezing for five seconds.
+    //
+    root["stream"] = json_true()
+  }
   Json::object(root)
+}
+
+///|
+/// A JSON `true`.
+///
+/// The core json package has no boolean constructor, and the request body is
+/// JSON: the literal is parsed once, when the body is built.
+fn json_true() -> Json {
+  @json.parse("true") catch { _ => Json::string("") }
+}
+
+///|
+/// The text of one streamed delta, or `None` when the line carries none.
+///
+/// The OpenAI-compatible streaming format is Server-Sent Events: lines of
+/// `data: {json}`, where the json carries `choices[0].delta.content`. The
+/// final line is `data: [DONE]`, which carries no text.
+pub fn llm_parse_delta(line : String) -> String? {
+  let trimmed = line.trim().to_owned()
+  if !trimmed.has_prefix("data:") {
+    return None
+  }
+  let payload = trimmed[5:].trim().to_owned()
+  if payload == "[DONE]" || payload == "" {
+    return None
+  }
+  let json = @json.parse(payload) catch { _ => return None }
+  let fields = match json {
+    Object(values) => values
+    _ => return None
+  }
+  let choices = match fields.get("choices") {
+    Some(Array(values)) => values
+    _ => return None
+  }
+  if choices.is_empty() {
+    return None
+  }
+  match choices[0] {
+    Object(first) =>
+      match first.get("delta") {
+        Some(Object(delta)) =>
+          match delta.get("content") {
+            Some(String(content)) => Some(content)
+            _ => None
+          }
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|

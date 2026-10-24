@@ -67,9 +67,11 @@ pub fn compact_action_theme(@core.Theme) -> @core.Theme
 
 pub fn composer_active_parts(WorldModel) -> Array[ComposerPart]
 
+pub let composer_beat_marker : String
+
 pub let composer_do_marker : String
 
-pub fn composer_field_parts(String, String, String) -> Array[ComposerPart]
+pub fn composer_field_parts(String, String, String, String) -> Array[ComposerPart]
 
 pub fn composer_has_content(String, String, String) -> Bool
 
@@ -143,6 +145,8 @@ pub fn is_transient_log_line(String) -> Bool
 
 pub fn is_world_file_name(String) -> Bool
 
+pub fn latest_per_topic(Array[MemoryEntry]) -> Array[MemoryEntry]
+
 pub let layout_compact_controls_min : Double
 
 pub let layout_medium_min : Double
@@ -151,9 +155,11 @@ pub let layout_wide_min : Double
 
 pub fn llm_clean_reply(String, String) -> String
 
+pub fn llm_parse_delta(String) -> String?
+
 pub fn llm_parse_reply(String) -> String?
 
-pub fn llm_request_body(LlmRequest) -> Json
+pub fn llm_request_body(LlmRequest, stream? : Bool) -> Json
 
 pub fn location_at(Scenario, @core.Point, @core.Point) -> String?
 
@@ -203,13 +209,21 @@ pub fn parse_world_files(WorldFiles) -> WorldParse?
 
 pub fn plan_messages(Scenario, CharacterCard, Conversation, String, budget? : Int32, memories? : Array[MemoryEntry], mood? : SceneMood?) -> MessagePlan
 
+pub fn png_text_chunk(Bytes, String) -> String?
+
 pub fn portrait_data_uri(String, String) -> String
 
 pub fn portrait_uri(CharacterCard, Array[(String, String)]) -> String
 
 pub fn portrait_world_path(String) -> String
 
-pub fn program(turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> @core.Program[WorldModel, Msg]
+pub fn program(turn_runner? : (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, world_host? : WorldHost) -> @core.Program[WorldModel, Msg]
+
+pub fn prompt_preview_messages(WorldModel, String) -> Array[(String, String)]
+
+pub fn prompt_preview_text(WorldModel, String) -> String
+
+pub fn prompt_role_label(String) -> String
 
 pub fn prompt_summary(Scenario, CharacterCard, Conversation, String) -> String
 
@@ -235,15 +249,27 @@ pub let summary_keep_recent : Int32
 
 pub let summary_min_new_lines : Int32
 
+pub let tavern_card_chunk : String
+
+pub fn tavern_card_from_json(String) -> CharacterCard?
+
+pub fn tavern_card_from_png(Bytes) -> CharacterCard?
+
+pub fn tavern_v2_json(CharacterCard) -> String
+
 pub fn time_advanced_event(String) -> String
 
-pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
+pub let transcript_window_default : Int32
 
-pub fn update_composer(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+pub let transcript_window_step : Int32
 
-pub fn update_creation(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
 
-pub fn update_editing(WorldModel, Msg, (LlmRequest, (String?) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+pub fn update_composer(WorldModel, Msg, (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_creation(WorldModel, Msg, (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_editing(WorldModel, Msg, (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
 pub fn update_editor(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
@@ -254,6 +280,8 @@ pub fn update_memory(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[M
 pub fn update_settings(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
 pub fn update_ui(WorldModel, Msg) -> (WorldModel, @core.Effect[Msg])
+
+pub fn update_world_book(WorldModel, Msg, WorldHost?) -> (WorldModel, @core.Effect[Msg])
 
 pub fn view(WorldModel, @core.ViewEnvironment) -> @core.View[Msg]
 
@@ -376,6 +404,7 @@ pub(all) struct CharacterDraft {
   opening : String
   memory_rules : String
 } derive(Eq, @debug.Debug)
+pub fn CharacterDraft::differs_from(Self, CharacterCard) -> Bool
 pub fn CharacterDraft::equal(Self, Self) -> Bool
 pub fn CharacterDraft::from_card(CharacterCard) -> Self
 pub fn CharacterDraft::new() -> Self
@@ -457,6 +486,7 @@ pub struct Conversation {
   character_id : String
   lines : Array[ChatLine]
   pending : Bool
+  streaming : String
   summary : String
   summarized_upto : Int32
   appended : Int32
@@ -471,6 +501,7 @@ pub fn Conversation::mood(Self) -> SceneMood?
 pub fn Conversation::new(character_id~ : String, mood? : SceneMood) -> Self
 pub fn Conversation::not_equal(Self, Self) -> Bool
 pub fn Conversation::pending(Self) -> Bool
+pub fn Conversation::streaming(Self) -> String
 pub fn Conversation::summarized_upto(Self) -> Int32
 pub fn Conversation::summary(Self) -> String
 pub fn Conversation::to_json_text(Self) -> String
@@ -478,6 +509,7 @@ pub fn Conversation::to_repr(Self) -> @debug.Repr
 pub fn Conversation::to_wire(Self) -> Array[(String, String)]
 pub fn Conversation::with_mood(Self, SceneMood?) -> Self
 pub fn Conversation::with_pending(Self, Bool) -> Self
+pub fn Conversation::with_streaming(Self, String) -> Self
 pub fn Conversation::with_summary(Self, String, Int32) -> Self
 
 pub struct ConversationBook {
@@ -508,6 +540,8 @@ pub(all) enum DrawerKind {
   Memory
   Model
   Events
+  Prompt
+  WorldBook
 } derive(Eq, @debug.Debug)
 pub fn DrawerKind::equal(Self, Self) -> Bool
 pub fn DrawerKind::not_equal(Self, Self) -> Bool
@@ -525,6 +559,7 @@ pub(all) enum InputIntent {
   Say
   Do
   Story
+  Beat
 } derive(Eq, @debug.Debug)
 pub fn InputIntent::equal(Self, Self) -> Bool
 pub fn InputIntent::label(Self) -> String
@@ -617,16 +652,22 @@ pub struct MemoryEntry {
   content : String
   pinned : Bool
   source : MemorySource
+  hidden : Bool
+  topic : String
 } derive(Eq, @debug.Debug)
 pub fn MemoryEntry::authored(String) -> Self
 pub fn MemoryEntry::content(Self) -> String
 pub fn MemoryEntry::equal(Self, Self) -> Bool
+pub fn MemoryEntry::hidden(Self) -> Bool
 pub fn MemoryEntry::not_equal(Self, Self) -> Bool
 pub fn MemoryEntry::pinned(Self) -> Bool
 pub fn MemoryEntry::proposed(String) -> Self
 pub fn MemoryEntry::source(Self) -> MemorySource
 pub fn MemoryEntry::to_repr(Self) -> @debug.Repr
+pub fn MemoryEntry::topic(Self) -> String
+pub fn MemoryEntry::with_hidden(Self, Bool) -> Self
 pub fn MemoryEntry::with_pinned(Self, Bool) -> Self
+pub fn MemoryEntry::with_topic(Self, String) -> Self
 
 pub(all) enum MemorySource {
   Authored
@@ -695,8 +736,22 @@ pub(all) enum Msg {
   SayDraftChanged(String)
   DoDraftChanged(String)
   StoryDraftChanged(String)
+  BeatDraftChanged(String)
+  CardImportTextChanged(String)
+  CopyCharacterCard
+  ImportCharacterCard
+  WorldBookOpened
+  WorldBookEdit(Int32)
+  WorldBookKeysChanged(String)
+  WorldBookContentChanged(String)
+  WorldBookAdd
+  WorldBookDelete(Int32)
+  WorldBookSave
+  ExtendTranscript(Int32)
   Send(String)
   SendComposer
+  ReplyDelta(String, String)
+  SceneReplyDelta(String, String, String)
   Reply(String, String?)
   SceneReply(String, String, String?)
   OpenDrawer(DrawerKind)
@@ -718,6 +773,9 @@ pub(all) enum Msg {
   ComposerMenuChanged(Bool)
   ToggleComposerExpanded
   MemoryDraftChanged(String)
+  MemoryTopicDraftChanged(String)
+  ToggleMemoryHidden(Int32)
+  CopyPromptPreview
   AddMemory
   ToggleMemoryPin(Int32)
   DeleteMemory(Int32)
@@ -823,6 +881,7 @@ pub fn Scenario::to_json(Self) -> String
 pub fn Scenario::to_repr(Self) -> @debug.Repr
 pub fn Scenario::try_from_json(String) -> Self?
 pub fn Scenario::with_mood(Self, SceneMood) -> Self
+pub fn Scenario::with_world_book(Self, Array[WorldEntry]) -> Self
 pub fn Scenario::world_book(Self) -> Array[WorldEntry]
 pub fn Scenario::world_files(Self) -> Array[(String, String)]
 
@@ -906,6 +965,9 @@ pub fn WorldEntry::priority(Self) -> Int32
 pub fn WorldEntry::probability(Self) -> Int32
 pub fn WorldEntry::recursion(Self) -> Int32
 pub fn WorldEntry::to_repr(Self) -> @debug.Repr
+pub fn WorldEntry::with_content(Self, String) -> Self
+pub fn WorldEntry::with_keys(Self, Array[String]) -> Self
+pub fn WorldEntry::with_priority(Self, Int32) -> Self
 
 pub(all) struct WorldFiles {
   world_md : String
@@ -930,6 +992,7 @@ pub(all) struct WorldHost {
   write_config : (String, (Bool) -> Unit) -> Unit
   export_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
   import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
+  copy_to_clipboard : (String) -> Unit
 } derive(@debug.Debug)
 pub fn WorldHost::to_repr(Self) -> @debug.Repr
 
@@ -950,6 +1013,11 @@ pub struct WorldModel {
   say_draft : String
   do_draft : String
   story_draft : String
+  beat_draft : String
+  card_import_text : String
+  world_book_draft : Array[WorldEntry]
+  world_book_edit : Int32
+  transcript_window : Int32
   composer_mode : InputIntent
   composer_expanded : Bool
   composer_menu : Bool
@@ -980,6 +1048,7 @@ pub struct WorldModel {
   edit_buffer : String
   character_idea : String
   memory_input : String
+  memory_topic_input : String
   portraits : Array[(String, String)]
   scene_location : String?
 } derive(Eq, @debug.Debug)
@@ -987,7 +1056,9 @@ pub fn WorldModel::active_conversation_key(Self) -> String?
 pub fn WorldModel::api_key_revealed(Self) -> Bool
 pub fn WorldModel::atmosphere(Self) -> Bool
 pub fn WorldModel::backdrop(Self) -> Bool
+pub fn WorldModel::beat_draft(Self) -> String
 pub fn WorldModel::bundle_text(Self) -> String?
+pub fn WorldModel::card_import_text(Self) -> String
 pub fn WorldModel::character_idea(Self) -> String
 pub fn WorldModel::composer_expanded(Self) -> Bool
 pub fn WorldModel::composer_menu(Self) -> Bool
@@ -1001,6 +1072,7 @@ pub fn WorldModel::do_draft(Self) -> String
 pub fn WorldModel::drawer(Self) -> DrawerKind?
 pub fn WorldModel::edit_buffer(Self) -> String
 pub fn WorldModel::editing_line(Self) -> Int32?
+pub fn WorldModel::editor_dirty(Self) -> Bool
 pub fn WorldModel::editor_draft(Self) -> CharacterDraft
 pub fn WorldModel::editor_examples(Self) -> String
 pub fn WorldModel::editor_open(Self) -> Bool
@@ -1015,6 +1087,7 @@ pub fn WorldModel::library_missing(Self) -> Bool
 pub fn WorldModel::log(Self) -> Array[String]
 pub fn WorldModel::memory_drafts(Self) -> Array[WorldEntry]
 pub fn WorldModel::memory_input(Self) -> String
+pub fn WorldModel::memory_topic_input(Self) -> String
 pub fn WorldModel::message_menu(Self) -> Int32?
 pub fn WorldModel::new() -> Self
 pub fn WorldModel::not_equal(Self, Self) -> Bool
@@ -1030,6 +1103,9 @@ pub fn WorldModel::scene_location(Self) -> String?
 pub fn WorldModel::selected(Self) -> String?
 pub fn WorldModel::story_draft(Self) -> String
 pub fn WorldModel::to_repr(Self) -> @debug.Repr
+pub fn WorldModel::transcript_window(Self) -> Int32
+pub fn WorldModel::world_book_draft(Self) -> Array[WorldEntry]
+pub fn WorldModel::world_book_edit(Self) -> Int32
 pub fn WorldModel::world_name(Self) -> String
 pub fn WorldModel::worlds(Self) -> Array[String]
 
@@ -1045,6 +1121,6 @@ pub fn WorldParse::not_equal(Self, Self) -> Bool
 pub fn WorldParse::to_repr(Self) -> @debug.Repr
 
 // Type aliases
-pub type TurnRunner = (LlmRequest, (String?) -> Unit) -> Unit
+pub type TurnRunner = (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit
 
 // Traits

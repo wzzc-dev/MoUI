@@ -10,7 +10,7 @@
 test "a failed turn clears the wait and keeps the player's line" {
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(
     selected,
     Send("这句话不能丢"),
@@ -41,7 +41,7 @@ test "a failed turn clears the wait and keeps the player's line" {
 test "a failed turn can be retried immediately" {
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("再来一次"), turn_runner=never)
   let (failed, _f) = update(asked, Reply("林掌柜", None), turn_runner=never)
   // Sending again must be allowed; a stuck pending flag would silently drop this.
@@ -58,7 +58,7 @@ test "a failed regenerate leaves the existing reply intact" {
   // attempt fails: the player would lose a good answer to a transient error.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("嗨"), turn_runner=never)
   let (answered, _a) = update(
     asked,
@@ -80,7 +80,7 @@ test "an empty reply is treated as no reply, not as an empty message" {
   // blank bubble in the transcript that the player can never edit away.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("说点什么"), turn_runner=never)
   let (replied, _r) = update(
     asked,

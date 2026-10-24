@@ -23,6 +23,21 @@ pub struct WorldModel {
   say_draft : String
   do_draft : String
   story_draft : String
+  /// The composer's beat field: the note of what happens next in the scene.
+  beat_draft : String
+  /// A Tavern character card the player pasted in, waiting to be read.
+  card_import_text : String
+  /// The world book's working copy: the entries the player is editing.
+  ///
+  /// The world book is a file of its own (`world_book.md`), and until the
+  /// player saves, the edits live here and nowhere else.
+  world_book_draft : Array[WorldEntry]
+  /// Which entry of the world book is open in the editor (-1 = none).
+  world_book_edit : Int32
+  /// How many transcript lines the stage shows at once. The transcript is
+  /// windowed so a long run costs the same as a short one; the player reveals
+  /// older lines when they want them.
+  transcript_window : Int32
   /// The composer's active intent: the single input field writes into the
   /// matching draft, and the collapsed composer sends that intent only.
   composer_mode : InputIntent
@@ -92,6 +107,11 @@ pub struct WorldModel {
   /// The "要记住的事" input in the memory drawer. Session UI state: an
   /// uncommitted line costs nothing.
   memory_input : String
+  /// The progression topic of the memory being written ("" = a plain fact).
+  ///
+  /// Two memories with the same topic are two states of the same thing; only
+  /// the newer one reaches the prompt, so a fact can change over time.
+  memory_topic_input : String
   /// Portrait assets of the current world: `(file name, base64)` as read from
   /// the folder. Cached in the model because rendering must not do IO.
   portraits : Array[(String, String)]
@@ -120,6 +140,11 @@ pub fn WorldModel::new() -> WorldModel {
     say_draft: "",
     do_draft: "",
     story_draft: "",
+    beat_draft: "",
+    transcript_window: transcript_window_default,
+    card_import_text: "",
+    world_book_draft: [],
+    world_book_edit: -1,
     composer_mode: Say,
     composer_expanded: false,
     composer_menu: false,
@@ -150,6 +175,7 @@ pub fn WorldModel::new() -> WorldModel {
     edit_buffer: "",
     character_idea: "",
     memory_input: "",
+    memory_topic_input: "",
     portraits: [],
     scene_location: None,
   }
@@ -297,6 +323,18 @@ pub fn WorldModel::do_draft(self : WorldModel) -> String {
 /// The composer's 旁白【】 field.
 pub fn WorldModel::story_draft(self : WorldModel) -> String {
   self.story_draft
+}
+
+///|
+/// The composer's beat field (the note of what happens next in the scene).
+pub fn WorldModel::beat_draft(self : WorldModel) -> String {
+  self.beat_draft
+}
+
+///|
+/// How many transcript lines the stage shows at once.
+pub fn WorldModel::transcript_window(self : WorldModel) -> Int32 {
+  self.transcript_window
 }
 
 ///|
@@ -449,6 +487,44 @@ pub fn WorldModel::editor_examples(self : WorldModel) -> String {
 
 ///|
 /// The memory drawer's input line.
+///|
+/// Does the editor's draft still differ from the card it was opened on?
+pub fn WorldModel::editor_dirty(self : WorldModel) -> Bool {
+  match self.editor_target {
+    None => false
+    Some(id) =>
+      match self.scenario.character(id) {
+        None => false
+        Some(card) => self.editor_draft.differs_from(card)
+      }
+  }
+}
+
+///|
+/// A Tavern character card the player pasted in, waiting to be read.
+pub fn WorldModel::card_import_text(self : WorldModel) -> String {
+  self.card_import_text
+}
+
+///|
+/// The world book's working copy: the entries being edited.
+pub fn WorldModel::world_book_draft(self : WorldModel) -> Array[WorldEntry] {
+  self.world_book_draft
+}
+
+///|
+/// Which world-book entry is open in the editor (-1 = none).
+pub fn WorldModel::world_book_edit(self : WorldModel) -> Int32 {
+  self.world_book_edit
+}
+
+///|
+/// The progression topic of the memory being written ("" = a plain fact).
+pub fn WorldModel::memory_topic_input(self : WorldModel) -> String {
+  self.memory_topic_input
+}
+
+///|
 pub fn WorldModel::memory_input(self : WorldModel) -> String {
   self.memory_input
 }
@@ -458,7 +534,11 @@ pub fn WorldModel::memory_input(self : WorldModel) -> String {
 ///
 /// The platform entrypoint injects the native/web worker here. Without one, no
 /// turn is ever started, which is exactly the behaviour a test build needs.
-pub type TurnRunner = (LlmRequest, (String?) -> Unit) -> Unit
+pub type TurnRunner = (
+  LlmRequest,
+  (String?) -> Unit,
+  (String) -> Unit,
+) -> Unit
 
 ///|
 /// Host capability for the folder database (the player's library). Same
@@ -493,6 +573,9 @@ pub(all) struct WorldHost {
   /// the file, unpacks it, and returns `(ok, folder, files)` so the app can go
   /// on stage immediately.
   import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
+  /// Put text on the clipboard, so the prompt preview can be carried to
+  /// another tool.
+  copy_to_clipboard : (String) -> Unit
 } derive(Debug)
 
 ///|
@@ -556,7 +639,9 @@ fn append_reply(
   model.conversations.set(
     conversation
     .append(ChatLine::character(character_id, text))
-    .with_pending(false),
+    .with_pending(false)
+    // The finished line replaces the streamed text.
+    .with_streaming(""),
   )
 }
 
@@ -575,7 +660,8 @@ fn append_scene_reply(
   model.conversations.set(
     conversation
     .append(ChatLine::character(respondent_id, text))
-    .with_pending(false),
+    .with_pending(false)
+    .with_streaming(""),
   )
 }
 
@@ -668,7 +754,7 @@ pub fn update(
 ) -> (WorldModel, @moui.Effect[Msg]) {
   let runner = match turn_runner {
     Some(runner) => runner
-    None => (_request, _on_reply) => ()
+    None => (_request, _on_reply, _on_delta) => ()
   }
   let host : WorldHost? = world_host
   match msg {
@@ -755,6 +841,35 @@ pub fn update(
       ({ ..model, do_draft: value, }, @moui.Effect::none())
     StoryDraftChanged(value) =>
       ({ ..model, story_draft: value, }, @moui.Effect::none())
+    BeatDraftChanged(value) =>
+      ({ ..model, beat_draft: value, }, @moui.Effect::none())
+    // Tavern cards: in and out of the editor.
+    CardImportTextChanged(text) =>
+      ({ ..model, card_import_text: text, }, @moui.Effect::none())
+    CopyCharacterCard =>
+      update_editor(model, CopyCharacterCard, host)
+    ImportCharacterCard =>
+      update_editor(model, ImportCharacterCard, host)
+    // The world book: the world's own lore, edited in the app.
+    WorldBookOpened =>
+      update_world_book(model, WorldBookOpened, host)
+    WorldBookEdit(index) =>
+      update_world_book(model, WorldBookEdit(index), host)
+    WorldBookKeysChanged(text) =>
+      update_world_book(model, WorldBookKeysChanged(text), host)
+    WorldBookContentChanged(text) =>
+      update_world_book(model, WorldBookContentChanged(text), host)
+    WorldBookAdd => update_world_book(model, WorldBookAdd, host)
+    WorldBookDelete(index) =>
+      update_world_book(model, WorldBookDelete(index), host)
+    WorldBookSave => update_world_book(model, WorldBookSave, host)
+    // Reveal more of the transcript: the window grows, the reader stays where
+    // they are.
+    ExtendTranscript(step) =>
+      ({
+        ..model,
+        transcript_window: model.transcript_window() + step,
+      }, @moui.Effect::none())
     ComposerModeChanged(intent) =>
       update_composer(model, ComposerModeChanged(intent), runner, host)
     ComposerMenuChanged(open) =>
@@ -800,6 +915,22 @@ pub fn update(
           (next, @moui.Effect::none())
         }
       }
+    // A piece of the reply, while the provider is still writing: the stage
+    // shows the text as it lands instead of waiting for the whole thing.
+    ReplyDelta(character_id, delta) => {
+      let conversation = model.conversations.for_character(character_id)
+      model.conversations.set(
+        conversation.with_streaming(conversation.streaming() + delta),
+      )
+      (model, @moui.Effect::none())
+    }
+    SceneReplyDelta(key, _speaker, delta) => {
+      let conversation = model.conversations.for_character(key)
+      model.conversations.set(
+        conversation.with_streaming(conversation.streaming() + delta),
+      )
+      (model, @moui.Effect::none())
+    }
     Reply(character_id, text) =>
       match text {
         Some(_reply) if !reply_target_exists(model, character_id) =>
@@ -854,9 +985,13 @@ pub fn update(
                 kind="provider",
                 label="Extract memories",
                 run=dispatch => {
-                  runner(propose_request, reply => {
+                  runner(
+                    propose_request,
+                    reply => {
                     dispatch(MemoryProposalsArrived(reply))
-                  })
+                  },
+                    _delta => (),
+                  )
                 },
               ),
             )
@@ -886,7 +1021,19 @@ pub fn update(
       update_settings(model, TemperatureChanged(value), host)
     SetAppearance(value) => update_settings(model, SetAppearance(value), host)
     SaveConfig => update_settings(model, SaveConfig, host)
-    OpenDrawer(kind) => update_ui(model, OpenDrawer(kind))
+    OpenDrawer(kind) =>
+      // Opening the world book loads its working copy, so the panel shows
+      // the world's own entries and the edits land on them.
+      match kind {
+        WorldBook => {
+          let (next, effect) = update_ui(model, OpenDrawer(kind))
+          let (loaded, loaded_effect) = update_world_book(
+            next, WorldBookOpened, host,
+          )
+          (loaded, pack_effects([effect, loaded_effect]))
+        }
+        _ => update_ui(model, OpenDrawer(kind))
+      }
     CloseDrawer => update_ui(model, CloseDrawer)
     OpenMessageMenu(index) => update_ui(model, OpenMessageMenu(index))
     CloseMessageMenu => update_ui(model, CloseMessageMenu)
@@ -914,6 +1061,24 @@ pub fn update(
       update_editor(model, EditorExamplesChanged(text), host)
     SaveCharacter => update_editor(model, SaveCharacter, host)
     MemoryDraftChanged(text) => update_memory(model, MemoryDraftChanged(text), host)
+    MemoryTopicDraftChanged(text) =>
+      update_memory(model, MemoryTopicDraftChanged(text), host)
+    ToggleMemoryHidden(index) =>
+      update_memory(model, ToggleMemoryHidden(index), host)
+    // Copy the prompt preview: the player takes what the app would send and
+    // carries it to another tool.
+    CopyPromptPreview =>
+      match host {
+        Some(h) =>
+          (
+            model,
+            copy_prompt_effect(
+              h,
+              prompt_preview_text(model, model.say_draft()),
+            ),
+          )
+        None => (model, @moui.Effect::none())
+      }
     AddMemory => update_memory(model, AddMemory, host)
     ToggleMemoryPin(index) => update_memory(model, ToggleMemoryPin(index), host)
     DeleteMemory(index) => update_memory(model, DeleteMemory(index), host)
@@ -1100,7 +1265,7 @@ pub fn update(
           kind="provider",
           label="Advance time",
           run=dispatch => {
-            runner(request, reply => dispatch(TimeAdvanced(reply)))
+            runner(request, reply => dispatch(TimeAdvanced(reply)), _delta => ())
           },
         ),
       )

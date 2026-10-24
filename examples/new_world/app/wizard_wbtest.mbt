@@ -68,7 +68,7 @@ test "drafting without a key seeds an archetype instead of pretending" {
 ///|
 test "drafting with a key sends the idea and the world name" {
   let seen : Array[String] = []
-  let runner : TurnRunner = (request, _on_reply) => {
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
     seen.push(request.system())
     seen.push(request.user())
   }

@@ -41,6 +41,17 @@ pub struct MemoryEntry {
   /// in by keyword relevance (`select_memories`).
   pinned : Bool
   source : MemorySource
+  /// A hidden entry stays in the file and in the drawer but never reaches the
+  /// model. The player writes it for themselves (or withholds it on purpose);
+  /// the prompt is not the only place a memory may live.
+  hidden : Bool
+  /// The progression topic of this entry ("" = not a progression).
+  ///
+  /// A topic groups a fact that changes over time — where the apprentice
+  /// lives, how badly the arm is hurt, who the character trusts now. Only the
+  /// latest entry of a topic reaches the prompt; the earlier ones stay in the
+  /// file as history.
+  topic : String
 } derive(Eq, Debug)
 
 ///|
@@ -51,12 +62,12 @@ pub extend MemoryEntry with Eq::{not_equal, equal}
 
 ///|
 pub fn MemoryEntry::authored(content : String) -> MemoryEntry {
-  { content, pinned: false, source: Authored, }
+  { content, pinned: false, source: Authored, hidden: false, topic: "", }
 }
 
 ///|
 pub fn MemoryEntry::proposed(content : String) -> MemoryEntry {
-  { content, pinned: false, source: Adopted, }
+  { content, pinned: false, source: Adopted, hidden: false, topic: "", }
 }
 
 ///|
@@ -80,6 +91,33 @@ pub fn MemoryEntry::with_pinned(
   pinned : Bool,
 ) -> MemoryEntry {
   { ..self, pinned, }
+}
+
+///|
+/// Does this entry stay out of the prompt?
+pub fn MemoryEntry::hidden(self : MemoryEntry) -> Bool {
+  self.hidden
+}
+
+///|
+/// Keep this entry out of the prompt (or let it back in).
+pub fn MemoryEntry::with_hidden(
+  self : MemoryEntry,
+  hidden : Bool,
+) -> MemoryEntry {
+  { ..self, hidden, }
+}
+
+///|
+/// The progression topic of this entry ("" = not a progression).
+pub fn MemoryEntry::topic(self : MemoryEntry) -> String {
+  self.topic
+}
+
+///|
+/// Give this entry a progression topic.
+pub fn MemoryEntry::with_topic(self : MemoryEntry, topic : String) -> MemoryEntry {
+  { ..self, topic, }
 }
 
 ///|
@@ -206,8 +244,15 @@ pub fn select_memories(
   limit~ : Int32 = memory_inject_limit,
 ) -> Array[MemoryEntry] {
   let said = player_text.trim().to_owned()
+  // A progression topic keeps only its latest state: the character must
+  // answer as the world is now, not as it was. The older entries stay in the
+  // file (and in the drawer) as history.
+  let current = latest_per_topic(all)
   let picked : Array[MemoryEntry] = []
   for entry in all {
+    if entry.hidden() {
+      continue
+    }
     if entry.pinned() {
       picked.push(entry)
     }
@@ -217,7 +262,10 @@ pub fn select_memories(
   }
   let mut matched = 0
   for entry in all {
-    if entry.pinned() {
+    if entry.pinned() || entry.hidden() {
+      continue
+    }
+    if entry.topic() != "" && !current.contains(entry) {
       continue
     }
     if matched >= limit {
@@ -229,6 +277,39 @@ pub fn select_memories(
     }
   }
   picked
+}
+
+///|
+/// The latest entry of every progression topic (the file is time-ordered, so
+/// the last one wins).
+pub fn latest_per_topic(all : Array[MemoryEntry]) -> Array[MemoryEntry] {
+  let latest : Array[MemoryEntry] = []
+  for entry in all {
+    if entry.topic() == "" {
+      continue
+    }
+    let mut replaced = false
+    for candidate in latest {
+      if candidate.topic() == entry.topic() {
+        replaced = true
+      }
+    }
+    if replaced {
+      // The newer entry of this topic wins: drop the older one.
+      let kept : Array[MemoryEntry] = []
+      for candidate in latest {
+        if candidate.topic() != entry.topic() {
+          kept.push(candidate)
+        }
+      }
+      latest.clear()
+      for candidate in kept {
+        latest.push(candidate)
+      }
+    }
+    latest.push(entry)
+  }
+  latest
 }
 
 ///|
@@ -297,6 +378,12 @@ pub fn memory_md_text(entries : Array[MemoryEntry]) -> String {
     if entry.source() is Adopted {
       line += "[来源:AI] "
     }
+    if entry.hidden() {
+      line += "[不进上下文] "
+    }
+    if entry.topic() != "" {
+      line += "[进展:" + entry.topic() + "] "
+    }
     line += entry.content()
     out.push(line)
   }
@@ -321,6 +408,8 @@ pub fn parse_memory_md(content : String) -> Array[MemoryEntry] {
     let mut body : String = trimmed[2:].trim().to_owned()
     let mut pinned = false
     let mut source = Authored
+    let mut hidden = false
+    let mut topic = ""
     // Markers may stack in either order; each is stripped once.
     let mut scanning = true
     while scanning {
@@ -330,12 +419,28 @@ pub fn parse_memory_md(content : String) -> Array[MemoryEntry] {
       } else if body.has_prefix("[来源:AI]") {
         source = Adopted
         body = body[7:].trim().to_owned()
+      } else if body.has_prefix("[不进上下文]") {
+        hidden = true
+        body = body[7:].trim().to_owned()
+      } else if body.has_prefix("[进展:") {
+        // The topic runs to the closing bracket: `[进展:住处]`.
+        let rest = body[4:].trim_start().to_owned()
+        match rest.find("]") {
+          Some(at) => {
+            topic = rest[0:at].trim().to_owned()
+            body = rest[at + 1:].trim().to_owned()
+          }
+          None => {
+            // A broken marker stays literal text rather than eating the line.
+            scanning = false
+          }
+        }
       } else {
         scanning = false
       }
     }
     if body != "" {
-      entries.push({ content: body, pinned, source, })
+      entries.push({ content: body, pinned, source, hidden, topic, })
     }
   }
   entries

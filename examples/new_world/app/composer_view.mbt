@@ -69,6 +69,15 @@ fn composer(
         can_send~,
       ),
     )
+    rows.push(
+      intent_field(
+        "这一幕",
+        model.beat_draft(),
+        value => BeatDraftChanged(value),
+        width~,
+        can_send~,
+      ),
+    )
   } else {
     // The default form: one field, one intent.
     rows.push(collapsed_row(model, screen, enabled, waiting, can_send))
@@ -102,17 +111,20 @@ fn collapsed_row(
       Say => "说点什么…"
       Do => "写下你的动作…"
       Story => "写一段旁白…"
+      Beat => "写下这一幕要发生什么…"
     }
   }
   let value = match model.composer_mode() {
     Say => model.say_draft()
     Do => model.do_draft()
     Story => model.story_draft()
+    Beat => model.beat_draft()
   }
   let on_input = match model.composer_mode() {
     Say => (text : String) => SayDraftChanged(text)
     Do => (text : String) => DoDraftChanged(text)
     Story => (text : String) => StoryDraftChanged(text)
+    Beat => (text : String) => BeatDraftChanged(text)
   }
   // The switcher and the combined-form button are the fixed ends of the row;
   // the field takes the rest.
@@ -178,6 +190,7 @@ fn composer_mode_label(intent : InputIntent) -> String {
     Say => "说 ▾"
     Do => "做 ▾"
     Story => "旁白 ▾"
+    Beat => "这一幕 ▾"
   }
 }
 
@@ -234,7 +247,7 @@ fn composer_mode_spec(
 }
 
 ///|
-/// The intent menu: three rows, the active one marked.
+/// The intent menu: one row per intent, the active one marked.
 fn composer_mode_content(model : WorldModel) -> @moui.View[Msg] {
   let theme = app_theme_for(model.config.appearance())
   let rows : Array[@moui.View[Msg]] = []
@@ -242,6 +255,7 @@ fn composer_mode_content(model : WorldModel) -> @moui.View[Msg] {
     ("说", Say),
     ("做", Do),
     ("旁白", Story),
+    ("这一幕", Beat),
   ]
   for entry in intents {
     let name = entry.0

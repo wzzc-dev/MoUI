@@ -9,7 +9,7 @@
 
 ///|
 test "a plain send stores exactly what the player typed" {
-  let parts = composer_field_parts("  温一壶酒  ", "", "")
+  let parts = composer_field_parts("  温一壶酒  ", "", "", "")
   assert_eq(parts.length(), 1)
   assert_eq(parts[0].intent(), Say)
   // The turn text is the trimmed draft, with no marker: a plain message keeps
@@ -20,30 +20,46 @@ test "a plain send stores exactly what the player typed" {
 ///|
 test "the three fields keep their intents and are stored with markers" {
   let parts = composer_field_parts(
-    "掌柜的，还有酒吗？", "推开门", "雨声更大了。",
+    "掌柜的，还有酒吗？", "推开门", "雨声更大了。", "灯忽然灭了。",
   )
-  assert_eq(parts.length(), 3)
+  assert_eq(parts.length(), 4)
   assert_eq(parts[0].intent(), Say)
   assert_eq(parts[1].intent(), Do)
   assert_eq(parts[2].intent(), Story)
+  assert_eq(parts[3].intent(), Beat)
   let text = composer_turn_text(parts)
   assert_eq(
-    text, "掌柜的，还有酒吗？\n（动作）推开门\n（旁白）雨声更大了。",
+    text,
+    "掌柜的，还有酒吗？\n（动作）推开门\n（旁白）雨声更大了。\n（这一幕）灯忽然灭了。",
   )
-  // Parsing it back yields the same three parts, in order.
+  // Parsing it back yields the same parts, in order.
   let parsed = parse_player_parts(text)
-  assert_eq(parsed.length(), 3)
+  assert_eq(parsed.length(), 4)
   assert_eq(parsed[0].intent(), Say)
   assert_eq(parsed[0].text(), "掌柜的，还有酒吗？")
   assert_eq(parsed[1].intent(), Do)
   assert_eq(parsed[1].text(), "推开门")
   assert_eq(parsed[2].intent(), Story)
   assert_eq(parsed[2].text(), "雨声更大了。")
+  assert_eq(parsed[3].intent(), Beat)
+  assert_eq(parsed[3].text(), "灯忽然灭了。")
+}
+
+///|
+test "a beat is framed as a scene to stage, not as dialogue" {
+  // The beat is the writer's seat: the model plays it out instead of
+  // answering it.
+  let framed = frame_player_text("灯忽然灭了", Beat)
+  assert_true(framed.contains("这一幕"))
+  assert_true(framed.contains("请把它演出来"))
+  assert_true(framed.contains("不要以角色身份回话"))
+  // And the intent has a label of its own.
+  assert_eq(Beat.label(), "这一幕")
 }
 
 ///|
 test "a single action field keeps its marker so the file knows it was an action" {
-  let parts = composer_field_parts("", "推开门", "")
+  let parts = composer_field_parts("", "推开门", "", "")
   assert_eq(composer_turn_text(parts), "（动作）推开门")
   let parsed = parse_player_parts("（动作）推开门")
   assert_eq(parsed.length(), 1)
@@ -69,8 +85,8 @@ test "empty and whitespace-only fields are dropped" {
   assert_false(composer_has_content("", "", ""))
   assert_false(composer_has_content("", "  ", ""))
   assert_true(composer_has_content("温一壶酒", "", ""))
-  assert_eq(composer_field_parts("  ", "", "").length(), 0)
-  let parts = composer_field_parts("", "推开门", "  ")
+  assert_eq(composer_field_parts("  ", "", "", "").length(), 0)
+  let parts = composer_field_parts("", "推开门", "  ", "")
   assert_eq(parts.length(), 1)
   assert_eq(composer_turn_text(parts), "（动作）推开门")
 }
@@ -162,6 +178,7 @@ test "the collapsed composer sends one intent; the expanded one sends them all" 
     expanded.say_draft(),
     expanded.do_draft(),
     expanded.story_draft(),
+    expanded.beat_draft(),
   )
   assert_eq(all.length(), 3)
   assert_eq(

@@ -10,7 +10,7 @@
 test "the history stays capped however many turns are played" {
   let mut model = step(crowded_world(), ApiKeyChanged("sk-test"))
   model = step(model, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   for turn in 0..<40 {
     let (asked, _e) = update(model, Send("第 \{turn} 句"), turn_runner=never)
     let (replied, _r) = update(
@@ -124,7 +124,7 @@ test "a scene conversation is capped by the same rule" {
   // otherwise a long scene grows without bound while private chats do not.
   let mut model = step(crowded_world(), ApiKeyChanged("sk-test"))
   model = step(model, EnterScene("吧台"))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   for turn in 0..<40 {
     let (asked, _e) = update(model, Send("说 \{turn}"), turn_runner=never)
     let (replied, _r) = update(
@@ -183,4 +183,50 @@ test "a long conversation with memories still fits the budget" {
   // The layered transcript bound: only the recent window renders Markdown,
   // so the viewer count stays small even at the cap.
   assert_true(markdown_recent_lines < chat_history_limit)
+}
+
+///|
+test "a three-hundred-line conversation only builds the window" {
+  // The transcript is windowed: a long run must cost the same as a short one,
+  // or the app slowly becomes unusable exactly when the player is most
+  // invested. The older lines stay one click away.
+  let mut conversation = Conversation::new(character_id="林掌柜")
+  for index in 0..<300 {
+    conversation = conversation.append(
+      ChatLine::player("第 \{index} 句"),
+    )
+    conversation = conversation.append(
+      ChatLine::character("林掌柜", "回 \{index}"),
+    )
+  }
+  let model = step(crowded_world(), Select(Some("林掌柜")))
+  let with_history = {
+    ..model,
+    conversations: {
+      entries: [
+        {
+          ..conversation,
+        },
+      ],
+    },
+  }
+  // Three hundred turns do not accumulate: the conversation keeps its capped
+  // window of raw lines (the rest lives in the rolling summary), and the
+  // transcript shows only part of that.
+  assert_true(conversation.lines().length() <= chat_history_limit)
+  let screen = Screen::for_viewport(1600.0, 900.0)
+  let view = view_for(with_history, screen)
+  // The window is on screen: the lines before it are not built, and the reader
+  // is told how many there are.
+  let older = conversation.lines().length() - transcript_window_default
+  assert_true(older > 0)
+  assert_true(
+    tree_has_text(view, "更早的对话（还有 " + older.to_string() + " 条）"),
+  )
+  assert_false(tree_has_text(view, "第 0 句"))
+  // The newest lines are.
+  assert_true(tree_has_text(view, "第 299 句"))
+  // And revealing more grows the window instead of rebuilding everything.
+  let wider = step(with_history, ExtendTranscript(transcript_window_step))
+  assert_true(wider.transcript_window() > with_history.transcript_window())
 }

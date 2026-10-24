@@ -340,6 +340,7 @@ test "intents frame the wire; the journal keeps the marked player line" {
       write_config: (_content, _done) => (),
       export_world: (_folder, _files, _done) => (),
       import_world: _done => (),
+      copy_to_clipboard: _text => (),
     },
   )
   assert_eq(
@@ -363,7 +364,7 @@ test "the composer fields start empty and the intent labels stay stable" {
 ///|
 test "a Do turn sends the framed action on the wire" {
   let captured : Array[String] = []
-  let runner : TurnRunner = (request, _on_reply) => {
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
     // Capture the wire text: the assertion is about what the model is sent.
     let wire : Array[String] = []
     for message in request.messages() {

@@ -300,3 +300,58 @@ test "the opening lands as the first real message, once" {
   let again = step(step(selected, Select(None)), Select(Some("lin")))
   assert_eq(again.conversations.for_character("lin").lines().length(), 1)
 }
+
+///|
+test "the prompt preview shows what the model really receives" {
+  // The preview is the send path's own assembly: the system prompt, the
+  // memories, the history and the player's line.
+  // The model carries the world; the preview reads it like the send path.
+  let model = {
+    ..step(WorldModel::new(), Select(Some("lin"))),
+    scenario: default_scenario(),
+  }
+  let messages = prompt_preview_messages(model, "温一壶酒")
+  assert_true(messages.length() >= 2)
+  // The first message is the system prompt, with the persona in it.
+  assert_eq(messages[0].0, "system")
+  assert_true(messages[0].1.contains("林掌柜"))
+  // The pending line is the last message: what 发送 would send.
+  let last = messages[messages.length() - 1]
+  assert_eq(last.0, "user")
+  assert_true(last.1.contains("温一壶酒"))
+  // The plain-text form carries the role labels, which is what the clipboard
+  // receives.
+  let text = prompt_preview_text(model, "温一壶酒")
+  assert_true(text.contains("=== system ==="))
+  assert_true(text.contains("林掌柜"))
+  // The role labels are readable.
+  assert_eq(prompt_role_label("system"), "系统 / 上下文")
+  assert_eq(prompt_role_label("user"), "玩家")
+  assert_eq(prompt_role_label("assistant"), "角色")
+}
+
+///|
+test "a hidden memory never shows up in the prompt preview" {
+  // The preview and the request share one assembly, so what the player hides
+  // is invisible in both.
+  let model = {
+    ..step(WorldModel::new(), Select(Some("lin"))),
+    scenario: default_scenario(),
+  }
+  let hidden = MemoryEntry::authored("她不让我提她娘").with_hidden(true)
+  let with_hidden = {
+    ..model,
+    memories: {
+      entries: [
+        {
+          character_id: "lin",
+          entries: [hidden],
+        },
+      ],
+    },
+  }
+  let messages = prompt_preview_messages(with_hidden, "她娘")
+  for message in messages {
+    assert_false(message.1.contains("她不让我提她娘"))
+  }
+}

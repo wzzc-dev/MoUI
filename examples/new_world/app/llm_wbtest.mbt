@@ -133,3 +133,37 @@ test "a content-block reply is parsed, not discarded" {
   assert_true(llm_parse_reply("{\"error\":{\"message\":\"bad key\"}}") is None)
   assert_true(llm_parse_reply("{\"choices\":[]}") is None)
 }
+
+///|
+test "a streamed line yields its text" {
+  // The OpenAI-compatible streaming format is Server-Sent Events.
+  assert_eq(
+    llm_parse_delta(
+      "data: {\"choices\":[{\"delta\":{\"content\":\"掌柜的\"}}]}",
+    ),
+    Some("掌柜的"),
+  )
+  // The end marker carries no text.
+  assert_eq(llm_parse_delta("data: [DONE]"), None)
+  // Neither do the other lines of the stream.
+  assert_eq(llm_parse_delta(""), None)
+  assert_eq(llm_parse_delta(": keep-alive"), None)
+  assert_eq(llm_parse_delta("data: {\"choices\":[]}"), None)
+}
+
+///|
+test "the request asks for a stream" {
+  let request = LlmRequest::new(
+    character_id="林掌柜",
+    endpoint="https://api.example.com/v1",
+    api_key="sk-test",
+    model="gpt-test",
+    temperature=0.7,
+    messages=[("user", "温一壶酒")],
+  )
+  let body = llm_request_body(request, stream=true).stringify()
+  assert_true(body.contains("\"stream\":true"))
+  // Without the flag the body stays as it was.
+  let plain = llm_request_body(request).stringify()
+  assert_false(plain.contains("stream"))
+}

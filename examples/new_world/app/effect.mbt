@@ -115,6 +115,22 @@ fn portraits_of(files : Array[(String, String)]) -> Array[(String, String)] {
 }
 
 ///|
+/// Effect: put the prompt preview on the clipboard.
+fn copy_prompt_effect(
+  host : WorldHost,
+  text : String,
+) -> @moui.Effect[Msg] {
+  @moui.Effect::run(
+    key="new-world:copy-prompt",
+    kind="clipboard",
+    label="Copy prompt",
+    run=_dispatch => {
+      (host.copy_to_clipboard)(text)
+    },
+  )
+}
+
+///|
 /// What part of a world folder a commit has to rewrite.
 ///
 /// Writing the whole folder on every turn is correct but wasteful: a world with

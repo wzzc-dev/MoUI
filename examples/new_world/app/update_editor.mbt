@@ -55,6 +55,43 @@ pub fn update_editor(
       ({ ..model, editor_draft: draft, }, @moui.Effect::none())
     EditorExamplesChanged(text) =>
       ({ ..model, editor_examples: text, }, @moui.Effect::none())
+    // Copy the character as a Tavern v2 card: the format the rest of the
+    // roleplay world reads, so a character is not locked inside this app.
+    CopyCharacterCard =>
+      match model.editor_target {
+        None => (model, @moui.Effect::none())
+        Some(id) =>
+          match model.scenario.character(id) {
+            None => (model, @moui.Effect::none())
+            Some(card) =>
+              match host {
+                Some(h) =>
+                  (
+                    model,
+                    copy_prompt_effect(h, tavern_v2_json(card)),
+                  )
+                None => (model, @moui.Effect::none())
+              }
+          }
+      }
+    // Read a pasted Tavern card into the editor's draft.
+    ImportCharacterCard =>
+      match tavern_card_from_json(model.card_import_text()) {
+        None => {
+          let next = model.fork()
+          next.push_log("这段不是一张能读的角色卡")
+          (next, @moui.Effect::none())
+        }
+        Some(card) => {
+          let next = {
+            ..model.fork(),
+            editor_draft: CharacterDraft::from_card(card),
+            card_import_text: "",
+          }
+          next.push_log("已读入角色卡：" + card.name())
+          (next, @moui.Effect::none())
+        }
+      }
     SaveCharacter => save_character(model, host)
     _ => (model, @moui.Effect::none())
   }

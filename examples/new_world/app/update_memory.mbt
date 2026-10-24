@@ -19,6 +19,17 @@ pub fn update_memory(
   match msg {
     MemoryDraftChanged(text) =>
       ({ ..model, memory_input: text, }, @moui.Effect::none())
+    MemoryTopicDraftChanged(text) =>
+      ({ ..model, memory_topic_input: text, }, @moui.Effect::none())
+    // A memory the player keeps for themselves: it stays in the file and in
+    // the drawer, but the model never reads it.
+    ToggleMemoryHidden(index) =>
+      edit_entry(
+        model,
+        index,
+        host,
+        entry => Some(entry.with_hidden(!entry.hidden())),
+      )
     AddMemory => add_memory(model, host)
     ToggleMemoryPin(index) =>
       edit_entry(model, index, host, entry => Some(entry.with_pinned(!entry.pinned())))
@@ -93,10 +104,23 @@ fn add_memory(
         for existing in model.memories.for_character(id).entries() {
           entries.push(existing)
         }
-        entries.push(MemoryEntry::authored(text))
+        // A topic makes this memory a *state* of a thing that changes: the
+        // newest entry of a topic is the one the model reads.
+        let topic = model.memory_topic_input.trim().to_owned()
+        let entry = if topic == "" {
+          MemoryEntry::authored(text)
+        } else {
+          MemoryEntry::authored(text).with_topic(topic)
+        }
+        entries.push(entry)
         let memories = model.memories.clone()
         memories.set({ character_id: id, entries, })
-        let next = { ..model.fork(), memories, memory_input: "" }
+        let next = {
+          ..model.fork(),
+          memories,
+          memory_input: "",
+          memory_topic_input: "",
+        }
         next.push_log("已记住：「\{text}」")
         commit_memories(next, host, id)
       }

@@ -49,6 +49,7 @@ test "the request body is an OpenAI-shaped chat payload" {
     temperature: 0.7,
     messages: [("system", "你是掌柜。"), ("user", "温一壶酒")],
     on_result: _reply => (),
+    on_delta: _delta => (),
   }
   let body = llm_request_body(job)
   // The model and every planned message must reach the wire: sending only the

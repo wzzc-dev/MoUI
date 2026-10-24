@@ -130,6 +130,138 @@ pub fn build_system_prompt(
 }
 
 ///|
+/// The messages the next request would carry, verbatim.
+///
+/// This is the *same* assembly the send path uses — `plan_messages`, the same
+/// scene prompt swap, the same memory selection — so the preview cannot
+/// drift from what is really sent. A power user can read what the model
+/// sees, and carry it to another tool.
+pub fn prompt_preview_messages(
+  model : WorldModel,
+  draft : String,
+) -> Array[(String, String)] {
+  let player_text = draft.trim().to_owned()
+  match model.scene_location() {
+    Some(location) => {
+      let cast = cast_at(model.scenario, location)
+      let conversation = model.conversations.for_character(scene_key(location))
+      let turn_index = match
+        conversation.lines().filter(line => line.speaker() is Player) {
+        players => players.length()
+      }
+      match responder_for(cast, player_text, turn_index) {
+        None => []
+        Some(responder) => {
+          let memories = select_memories(
+            model.memories.for_character(responder.id()).entries(),
+            player_text,
+          )
+          let mood = conversation.mood().unwrap_or(model.scenario.mood())
+          let plan = plan_messages(
+            model.scenario,
+            responder,
+            conversation,
+            player_text,
+            budget=model.config.context_budget(),
+            memories~,
+            mood=Some(mood),
+          )
+          // A scene turn swaps the persona prompt for the scene prompt; the
+          // rest of the plan rides along unchanged.
+          let messages : Array[(String, String)] = [
+            (
+              "system",
+              build_scene_prompt(
+                model.scenario,
+                location,
+                cast,
+                responder,
+              ),
+            ),
+          ]
+          for index, message in plan.messages {
+            if index > 0 {
+              messages.push(message)
+            }
+          }
+          messages
+        }
+      }
+    }
+    None =>
+      match model.selected {
+        None => []
+        Some(id) =>
+          match model.scenario.character(id) {
+            None => []
+            Some(card) => {
+              let stored = model.conversations.for_character(id)
+              // The pending line rides in the preview: the player reads what
+              // pressing 发送 would actually send.
+              let conversation = if player_text == "" {
+                stored
+              } else {
+                stored.append(ChatLine::player(player_text))
+              }
+              let memories = select_memories(
+                model.memories.for_character(id).entries(),
+                player_text,
+              )
+              let mood = conversation.mood().unwrap_or(model.scenario.mood())
+              let plan = plan_messages(
+                model.scenario,
+                card,
+                conversation,
+                player_text,
+                budget=model.config.context_budget(),
+                memories~,
+                mood=Some(mood),
+              )
+              // The newest line is framed for the model only — the same
+              // framing the send path applies, so the preview shows the text
+              // the model really reads.
+              let wire : Array[(String, String)] = []
+              for index, message in plan.messages {
+                if index == plan.messages.length() - 1 {
+                  wire.push((message.0, frame_player_turn(message.1, Say)))
+                } else {
+                  wire.push(message)
+                }
+              }
+              wire
+            }
+          }
+      }
+  }
+}
+
+///|
+/// The prompt preview as plain text (what the clipboard carries).
+pub fn prompt_preview_text(model : WorldModel, draft : String) -> String {
+  let messages = prompt_preview_messages(model, draft)
+  let lines : Array[String] = []
+  for message in messages {
+    let (role, text) = message
+    lines.push("=== " + role + " ===")
+    lines.push(text)
+    lines.push("")
+  }
+  lines.join("\n")
+}
+
+///|
+/// The label of a wire role, the way the preview shows it.
+pub fn prompt_role_label(role : String) -> String {
+  match role {
+    "system" => "系统 / 上下文"
+    "user" => "玩家"
+    "assistant" => "角色"
+    _ => role
+  }
+}
+
+///|
+///|
 /// Frame the player's line according to its intent, so the model knows whether
 /// it is being spoken to, shown an action, or handed narration to continue.
 ///
@@ -147,6 +279,10 @@ pub fn frame_player_text(text : String, intent : InputIntent) -> String {
       "（旁白）" +
       text +
       "（这是玩家在叙述，请接着往下写，不要以角色身份回话）"
+    Beat =>
+      "（这一幕）" +
+      text +
+      "（这是玩家给出的一拍：请把它演出来——写场景、在场的人与他们的反应，不要以角色身份回话）"
   }
 }
 

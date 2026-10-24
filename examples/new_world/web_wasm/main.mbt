@@ -19,15 +19,24 @@ let gateway : @llm_web_gateway.WebGateway = @llm_web_gateway.WebGateway::new()
 fn turn_runner(
   request : @world_app.LlmRequest,
   on_reply : (String?) -> Unit,
+  on_delta : (String) -> Unit,
 ) -> Unit {
   // The body is shared with the native runner: same wire format, same parser.
-  let body = @world_app.llm_request_body(request).stringify()
-  gateway.llm_turn(request.endpoint(), request.api_key(), body, raw => {
-    match raw {
-      Some(text) => on_reply(@world_app.llm_parse_reply(text))
-      None => on_reply(None)
-    }
-  })
+  // The provider is asked for a stream: the reply arrives in pieces, and
+  // each piece is shown on the stage while it is still being written.
+  let body = @world_app.llm_request_body(request, stream=true).stringify()
+  gateway.llm_turn(
+    request.endpoint(),
+    request.api_key(),
+    body,
+    raw => {
+      match raw {
+        Some(text) => on_reply(@world_app.llm_parse_reply(text))
+        None => on_reply(None)
+      }
+    },
+    delta => on_delta(delta),
+  )
 }
 
 ///|
@@ -42,6 +51,7 @@ let world_host : @world_app.WorldHost = {
     gateway.fs_export_world(folder, files, done)
   },
   import_world: done => gateway.fs_import_world(done),
+  copy_to_clipboard: text => gateway.copy_to_clipboard(text),
 }
 
 ///|

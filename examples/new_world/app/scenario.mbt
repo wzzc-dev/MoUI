@@ -450,6 +450,33 @@ pub fn WorldEntry::new(
 }
 
 ///|
+///|
+/// The entry with new trigger keywords.
+pub fn WorldEntry::with_keys(
+  self : WorldEntry,
+  keys : Array[String],
+) -> WorldEntry {
+  { ..self, keys, }
+}
+
+///|
+/// The entry with new content.
+pub fn WorldEntry::with_content(
+  self : WorldEntry,
+  content : String,
+) -> WorldEntry {
+  { ..self, content, }
+}
+
+///|
+/// The entry with a new priority.
+pub fn WorldEntry::with_priority(
+  self : WorldEntry,
+  priority : Int32,
+) -> WorldEntry {
+  { ..self, priority, }
+}
+
 pub fn WorldEntry::priority(self : WorldEntry) -> Int32 {
   self.priority
 }
@@ -564,6 +591,15 @@ pub fn Scenario::characters(self : Scenario) -> Array[CharacterCard] {
 }
 
 ///|
+///|
+/// The world book with a new set of entries.
+pub fn Scenario::with_world_book(
+  self : Scenario,
+  entries : Array[WorldEntry],
+) -> Scenario {
+  { ..self, world_book: entries, }
+}
+
 pub fn Scenario::world_book(self : Scenario) -> Array[WorldEntry] {
   self.world_book
 }

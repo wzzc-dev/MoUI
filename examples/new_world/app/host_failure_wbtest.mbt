@@ -47,7 +47,7 @@ test "a commit failure is reported and the conversation still advances" {
   // their message vanish.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(
     selected,
     Send("写不进去也要留着"),
@@ -88,7 +88,7 @@ test "the composer is usable after a host failure" {
   // by a stuck `pending` or a disabled composer.
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
-  let never : TurnRunner = (_request, _on_reply) => ()
+  let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("一"), turn_runner=never)
   let (stuck, _s) = update(
     asked,

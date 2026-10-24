@@ -90,18 +90,12 @@ test "a branched conversation survives a save and reload" {
 test "swipe candidates survive a save and reload" {
   let model = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(model, Select(Some("林掌柜")))
-  let (sent, _e) = update(selected, Send("温一壶酒"), turn_runner=(
-    _request,
-    _on_reply,
-  ) => ())
+  let (sent, _e) = update(selected, Send("温一壶酒"), turn_runner=(_request, _on_reply, _on_delta) => ())
   let (replied, _r) = update(
     sent,
     Reply("林掌柜", Some("客官里边坐。")),
   )
-  let (again, _g) = update(replied, RegenerateReply, turn_runner=(
-    _request,
-    _on_reply,
-  ) => ())
+  let (again, _g) = update(replied, RegenerateReply, turn_runner=(_request, _on_reply, _on_delta) => ())
   let (twice, _t) = update(again, Regenerated(Some("后堂请。")))
   let conversation = twice.conversations.for_character("林掌柜")
   assert_eq(conversation.lines()[1].candidate_count(), 2)

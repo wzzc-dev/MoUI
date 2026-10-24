@@ -94,9 +94,15 @@ fn send_scene_turn(
         kind="provider",
         label="Scene turn",
         run=dispatch => {
-          runner(request, reply => {
-            dispatch(SceneReply(key, responder.id(), reply))
-          })
+          runner(
+            request,
+            reply => {
+              dispatch(SceneReply(key, responder.id(), reply))
+            },
+            delta => {
+              dispatch(SceneReplyDelta(key, responder.id(), delta))
+            },
+          )
         },
       ),
       commit_effect(next, host, Conversation(key)),
@@ -211,7 +217,11 @@ fn send_private_turn(
                 kind="provider",
                 label="Provider turn",
                 run=dispatch => {
-                  runner(request, reply => dispatch(Reply(id, reply)))
+                  runner(
+                    request,
+                    reply => dispatch(Reply(id, reply)),
+                    delta => dispatch(ReplyDelta(id, delta)),
+                  )
                 },
               ),
             ]
@@ -245,9 +255,13 @@ fn send_private_turn(
                   kind="provider",
                   label="Compress memory",
                   run=dispatch => {
-                    runner(summary_request, reply => {
+                    runner(
+                      summary_request,
+                      reply => {
                       dispatch(SummaryArrived(id, marker, reply))
-                    })
+                    },
+                      _delta => (),
+                    )
                   },
                 ),
               )

@@ -58,12 +58,17 @@ pub let composer_do_marker : String = "（动作）"
 pub let composer_story_marker : String = "（旁白）"
 
 ///|
+/// The canonical marker a stored line uses for a scene beat.
+pub let composer_beat_marker : String = "（这一幕）"
+
+///|
 /// How a part is written into the stored line (and shown in the transcript).
 pub fn ComposerPart::to_line_text(self : ComposerPart) -> String {
   match self.intent {
     Say => self.text
     Do => composer_do_marker + self.text
     Story => composer_story_marker + self.text
+    Beat => composer_beat_marker + self.text
   }
 }
 
@@ -137,6 +142,13 @@ pub fn parse_player_parts(text : String) -> Array[ComposerPart] {
           trimmed[composer_story_marker.length():].to_owned(),
         ),
       )
+    } else if trimmed.has_prefix(composer_beat_marker) {
+      parts.push(
+        ComposerPart::new(
+          Beat,
+          trimmed[composer_beat_marker.length():].to_owned(),
+        ),
+      )
     } else {
       parts.push(ComposerPart::new(Say, trimmed))
     }
@@ -154,6 +166,7 @@ pub fn composer_field_parts(
   say : String,
   do_text : String,
   story : String,
+  beat : String,
 ) -> Array[ComposerPart] {
   let parts : Array[ComposerPart] = []
   let said = say.trim().to_owned()
@@ -167,6 +180,10 @@ pub fn composer_field_parts(
   let narrated = story.trim().to_owned()
   if narrated != "" {
     parts.push(ComposerPart::new(Story, narrated))
+  }
+  let staged = beat.trim().to_owned()
+  if staged != "" {
+    parts.push(ComposerPart::new(Beat, staged))
   }
   parts
 }
@@ -230,6 +247,7 @@ pub fn composer_active_parts(model : WorldModel) -> Array[ComposerPart] {
     Say => model.say_draft
     Do => model.do_draft
     Story => model.story_draft
+    Beat => model.beat_draft
   }
   let trimmed = text.trim().to_owned()
   if trimmed == "" {
@@ -259,6 +277,8 @@ pub fn update_composer(
       ({ ..model, do_draft: value, }, @moui.Effect::none())
     StoryDraftChanged(value) =>
       ({ ..model, story_draft: value, }, @moui.Effect::none())
+    BeatDraftChanged(value) =>
+      ({ ..model, beat_draft: value, }, @moui.Effect::none())
     // The intent switch: the collapsed composer writes into the matching
     // draft, and every intent keeps its own text, so switching 说 → 做 → 说
     // never loses a line.
@@ -297,6 +317,7 @@ pub fn update_composer(
           model.say_draft,
           model.do_draft,
           model.story_draft,
+          model.beat_draft,
         )
       } else {
         composer_active_parts(model)
@@ -323,11 +344,18 @@ pub fn update_composer(
         } else {
           model.story_draft
         }
+        let kept_beat = if model.composer_expanded ||
+          model.composer_mode is Beat {
+          ""
+        } else {
+          model.beat_draft
+        }
         let cleared = {
           ..model,
           say_draft: kept_say,
           do_draft: kept_do,
           story_draft: kept_story,
+          beat_draft: kept_beat,
         }
         let (sent, effect) = match cleared.scene_location {
           Some(location) => send_scene_turn(cleared, location, text, runner, host)
@@ -340,6 +368,7 @@ pub fn update_composer(
           say_draft: kept_say,
           do_draft: kept_do,
           story_draft: kept_story,
+          beat_draft: kept_beat,
         }
         (next, effect)
       }

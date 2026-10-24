@@ -82,6 +82,12 @@ pub fn ai_llm_complete(
 }
 
 ///|
+/// The page calls this for every piece of a streamed reply.
+pub fn ai_llm_delta(request_id : Int32, delta_text_id : Int32) -> Unit {
+  gateway.llm_delta(request_id, delta_text_id)
+}
+
+///|
 /// The page calls this when a library/file operation settles.
 pub fn ai_fs_complete(
   request_id : Int32,

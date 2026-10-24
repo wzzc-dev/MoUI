@@ -222,6 +222,7 @@ test "saving a card refreshes the world's portraits" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   let opened = step(editor_world(), EditCharacter("温衍"))
   let typed = step(
@@ -270,4 +271,52 @@ test "the refreshed portraits reach the model" {
   assert_eq(card.portrait(), "温衍.jpg")
   // The picture's own type decides the data URI's mime: a .jpg is a jpeg.
   assert_true(portrait_uri(card, model.portraits).has_prefix("data:image/jpeg;base64,"))
+}
+
+
+///|
+test "the drawer offers every panel" {
+  // The memory book, the model status, the event log and the prompt preview
+  // used to have no door: only the character profile could be opened, so the
+  // other panels (and everything in them) were unreachable.
+  let screen = Screen::for_viewport(1600.0, 900.0)
+  let model = step(editor_world(), OpenDrawer(Profile))
+  let view = view_for(model, screen)
+  assert_true(tree_has_text(view, "角色档案"))
+  assert_true(tree_has_text(view, "长久记忆"))
+  assert_true(tree_has_text(view, "模型状态"))
+  assert_true(tree_has_text(view, "事件"))
+  assert_true(tree_has_text(view, "提示词"))
+}
+
+///|
+test "the editor says when the draft is unsaved" {
+  // A working copy that silently differs from the card is a trap: the player
+  // types, closes, and the edit is gone. The page says so instead.
+  let model = step(editor_world(), EditCharacter("温衍"))
+  assert_false(model.editor_dirty())
+  let typed = step(
+    model,
+    EditorChanged(model.editor_draft().with_voice("换了一种说法")),
+  )
+  assert_true(typed.editor_dirty())
+  // And the page shows it.
+  let screen = Screen::for_viewport(1600.0, 900.0)
+  let view = view_for(typed, screen)
+  assert_true(tree_has_text(view, "编辑角色（未保存）"))
+  assert_true(tree_has_text(view, "还有未保存的修改"))
+  // Closing the editor is then an explicit discard.
+  assert_true(tree_has_text(view, "放弃修改并关闭"))
+}
+
+///|
+test "an empty persona is called out before the save" {
+  let model = step(editor_world(), EditCharacter("温衍"))
+  let cleared = step(
+    model,
+    EditorChanged(model.editor_draft().with_persona("")),
+  )
+  let screen = Screen::for_viewport(1600.0, 900.0)
+  let view = view_for(cleared, screen)
+  assert_true(tree_has_text(view, "「人设」不能为空"))
 }

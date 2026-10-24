@@ -14,6 +14,7 @@ let editing_host : WorldHost = {
   write_config: (_content, _done) => (),
   export_world: (_folder, _files, _done) => (),
   import_world: _done => (),
+  copy_to_clipboard: _text => (),
 }
 
 ///|

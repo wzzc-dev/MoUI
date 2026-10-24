@@ -38,10 +38,7 @@ test "update never mutates the model it was given" {
   let log_before = before.log().length()
   assert_eq(before.conversations.active_count(), 0)
   // A turn appends a line, logs, and commits: all the containers mutate.
-  let (after, _effect) = update(selected, Send("温一壶酒"), turn_runner=(
-    _r,
-    _c,
-  ) => ())
+  let (after, _effect) = update(selected, Send("温一壶酒"), turn_runner=(_r, _c, _d) => ())
   assert_eq(selected.log().length(), log_before)
   assert_eq(
     selected.conversations.for_character("林掌柜").lines().length(),
@@ -79,19 +76,16 @@ test "re-selecting the same character keeps the draft" {
 ///|
 test "a second send is refused while the first is in flight" {
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
-  let (sent, _first) = update(selected, Send("温一壶酒"), turn_runner=(
-    _r,
-    _c,
-  ) => ())
+  let (sent, _first) = update(selected, Send("温一壶酒"), turn_runner=(_r, _c, _d) => ())
   assert_true(sent.conversations.for_character("林掌柜").pending())
   let lines = sent.conversations.for_character("林掌柜").lines().length()
   // The player hits send again before the provider answers: no second line,
   // no second request, and no duplicate log entry.
-  let (_, effect) = update(sent, Send("再来一壶"), turn_runner=(_r, _c) => {
+  let (_, effect) = update(sent, Send("再来一壶"), turn_runner=(_r, _c, _d) => {
     ()
   })
   assert_true(is_no_effect(effect))
-  let (after, again) = update(sent, Send("再来一壶"), turn_runner=(_r, _c) => {
+  let (after, again) = update(sent, Send("再来一壶"), turn_runner=(_r, _c, _d) => {
     ()
   })
   assert_true(is_no_effect(again))
@@ -102,7 +96,7 @@ test "a second send is refused while the first is in flight" {
   // Once the reply lands, sending works again.
   let answered = step(sent, Reply("林掌柜", Some("嗯。")))
   assert_false(answered.conversations.for_character("林掌柜").pending())
-  let (_, third) = update(answered, Send("再来一壶"), turn_runner=(_r, _c) => {
+  let (_, third) = update(answered, Send("再来一壶"), turn_runner=(_r, _c, _d) => {
     ()
   })
   assert_true(is_run_effect(third))
@@ -123,6 +117,7 @@ test "a world name with path syntax is sanitized before it reaches the host" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   let typed = step(WorldModel::new(), WorldNameChanged("../../etc/passwd"))
   let (created, effect) = update(typed, NewWorld, world_host=host)
@@ -406,10 +401,7 @@ test "opening a world parses its folder and goes on stage" {
   assert_eq(model.scenario().world_book().length(), 1)
   // The loaded card works as a conversation partner:
   let talking = step(model, Select(Some("林掌柜")))
-  let (sent, effect) = update(talking, Send("这酒怎么卖？"), turn_runner=(
-    _r,
-    _c,
-  ) => ())
+  let (sent, effect) = update(talking, Send("这酒怎么卖？"), turn_runner=(_r, _c, _d) => ())
   assert_eq(sent.conversations.for_character("林掌柜").lines().length(), 2)
   assert_true(is_no_effect(effect))
 }
@@ -450,6 +442,7 @@ test "creating a world stages it, dedups names, and commits the folder" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   let named = step(WorldModel::new(), WorldNameChanged("新大陆"))
   let (created, effect) = update(named, NewWorld, world_host=host)
@@ -496,6 +489,7 @@ test "a created character joins the world, selects itself, and is committed" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   let based = step(
     WorldModel::new(),
@@ -558,6 +552,7 @@ test "AI generation without a key builds a local world immediately" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   let idea = step(
     WorldModel::new(),
@@ -588,6 +583,7 @@ test "AI generation with a key emits one provider request" {
   let (generating, effect) = update(selected, GenerateWorld, turn_runner=(
     request : LlmRequest,
     _on_reply : (String?) -> Unit,
+    _on_delta : (String) -> Unit,
   ) => seen.push(request))
   assert_true(is_run_effect(effect))
   assert_true(generating.generating())
@@ -639,6 +635,7 @@ let test_host : WorldHost = {
   write_config: (_content, _done) => (),
   export_world: (_folder, _files, _done) => (),
   import_world: _done => (),
+  copy_to_clipboard: _text => (),
 }
 
 ///|
@@ -724,6 +721,7 @@ test "settings open, file load, and save write to the world library" {
     },
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   // Opening the settings page reads the file and restores the config.
   let (opened, effect) = update(
@@ -783,7 +781,7 @@ test "a provider turn carries the whole plan, including earlier turns" {
   // last message only, so the model never saw history, the rolling summary, or
   // the world-book block. Each turn was silently stateless.
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let (sent, effect) = update(
     selected,
@@ -839,7 +837,7 @@ test "a provider turn carries the whole plan, including earlier turns" {
 ///|
 test "the rolling summary rides on later turns" {
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   selected.conversations.set(
     selected.conversations
@@ -885,6 +883,7 @@ test "sending commits the journal and a fresh open restores it" {
     write_config: (_content, _done) => (),
     export_world: (_folder, _files, _done) => (),
     import_world: _done => (),
+    copy_to_clipboard: _text => (),
   }
   // Fresh open of the tavern folder (no journal on file yet).
   let opened = step(
@@ -954,7 +953,7 @@ test "sending commits the journal and a fresh open restores it" {
 ///|
 test "an overflowing send fires the compressor exactly once per threshold" {
   let captured : Array[String] = []
-  let runner : TurnRunner = (request, _on_reply) => {
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
     captured.push(request.system())
   }
   let model = tavern_with_key()
@@ -1033,7 +1032,7 @@ test "memory proposals parse, deduplicate, and land only on accept" {
     index += 1
   }
   let captured : Array[String] = []
-  let runner : TurnRunner = (request, _on_reply) => {
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
     captured.push(request.character_id)
   }
   let (replied, effect) = update(

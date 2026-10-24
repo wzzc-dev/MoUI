@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn llm_submit(LlmOwner, String, String, String, Double, Array[(String, String)], (String?) -> Unit) -> Unit
+pub fn llm_submit(LlmOwner, String, String, String, Double, Array[(String, String)], (String?) -> Unit, (String) -> Unit) -> Unit
 
 pub async fn llm_worker_loop(LlmOwner) -> Unit
 
@@ -20,6 +20,7 @@ pub struct LlmJob {
   temperature : Double
   messages : Array[(String, String)]
   on_result : (String?) -> Unit
+  on_delta : (String) -> Unit
 }
 
 pub struct LlmOwner {

@@ -65,6 +65,7 @@ fn editor_tabs() -> Array[String] {
     "当前情境与开场白",
     "隐藏信息与记忆规则",
     "外貌与立绘",
+    "角色卡",
   ]
 }
 
@@ -78,7 +79,7 @@ fn editor_content(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       editor_header(model, screen),
       editor_tab_chips(model, screen),
       editor_scroller(model, screen),
-      editor_footer(),
+      editor_footer(model),
     ],
     spacing=10.0,
   )
@@ -109,7 +110,11 @@ fn editor_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       column(
         [
           text(
-            "编辑角色",
+            if model.editor_dirty() {
+              "编辑角色（未保存）"
+            } else {
+              "编辑角色"
+            },
             role=Title,
             width=width - 200.0,
             height=30.0,
@@ -222,7 +227,12 @@ fn editor_scroller(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 
 ///|
 /// The footer: the two ways out of the page.
-fn editor_footer() -> @moui.View[Msg] {
+fn editor_footer(model : WorldModel) -> @moui.View[Msg] {
+  // A form that cannot be valid yet says so instead of failing silently: the
+  // save is inert, and the reason sits next to it.
+  let can_save = model.editor_draft.persona.trim() != ""
+  let dirty = model.editor_dirty()
+
   row(
     [
       button(
@@ -232,17 +242,23 @@ fn editor_footer() -> @moui.View[Msg] {
         height=button_md_height,
       ),
       button(
-        "取消",
+        if dirty { "放弃修改并关闭" } else { "取消" },
         on_click=CloseEditor,
         variant=Tonal,
-        width=88.0,
+        width=if dirty { 140.0 } else { 88.0 },
         height=button_md_height,
       ),
       spacer(weight=1.0),
       text(
-        "关闭不会保存",
+        if !can_save {
+          "「人设」不能为空"
+        } else if dirty {
+          "还有未保存的修改"
+        } else {
+          "关闭不会保存"
+        },
         role=Caption,
-        width=160.0,
+        width=180.0,
         height=button_md_height,
         align=TextEnd,
       ),
@@ -351,6 +367,45 @@ fn editor_block(
         draft.memory_rules,
         3,
         (d, v) => d.with_memory_rules(v),
+      ),
+    ]
+    // ⑧ 角色卡互操作：把角色带进带出这个应用
+    7 => [
+      column(
+        [
+          wrapped_caption(
+            "「复制为角色卡」把这个角色导出成 Tavern v2（SillyTavern 等工具都读这个格式），粘到别的工具里就能用；反过来，把那边的角色卡粘进下面的框，再点「读入角色卡」。",
+            width~,
+          ),
+          button(
+            "复制为角色卡（Tavern v2）",
+            on_click=CopyCharacterCard,
+            variant=Tonal,
+            width=200.0,
+            height=button_md_height,
+          ),
+          text(
+            "或从别处粘贴一张角色卡",
+            role=Caption,
+            width=width,
+            height=18.0,
+            align=TextStart,
+          ),
+          text_area(
+            model.card_import_text(),
+            on_input=value => CardImportTextChanged(value),
+            lines=5,
+            width~,
+          ),
+          button(
+            "读入角色卡",
+            on_click=ImportCharacterCard,
+            variant=Ghost,
+            width=136.0,
+            height=button_md_height,
+          ),
+        ],
+        spacing=8.0,
       ),
     ]
     // ⑦ 外貌与立绘
