@@ -78,7 +78,10 @@ fn book_world() -> WorldModel {
       WorldEntry::new(keys=["当铺"], content="当铺在巷子尽头。"),
     ],
   )
-  step(WorldModel::new(), WorldFilesArrived("tavern", true, world_files_of(scenario)))
+  step(
+    WorldModel::new(),
+    WorldFilesArrived("tavern", true, world_files_of(scenario)),
+  )
 }
 
 ///|
@@ -102,7 +105,10 @@ test "editing an entry changes the working copy, not the world" {
   assert_eq(editing.world_book_edit(), 0)
   let rekeyed = step(editing, WorldBookKeysChanged("当铺，典当"))
   assert_eq(rekeyed.world_book_draft()[0].keys().length(), 2)
-  let reworded = step(rekeyed, WorldBookContentChanged("当铺在巷子最深处，夜里不点灯。"))
+  let reworded = step(
+    rekeyed,
+    WorldBookContentChanged("当铺在巷子最深处，夜里不点灯。"),
+  )
   assert_eq(
     reworded.world_book_draft()[0].content(),
     "当铺在巷子最深处，夜里不点灯。",

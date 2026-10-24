@@ -98,7 +98,9 @@ test "mood accents pick distinct roles, not one flat colour" {
   assert_true(tense != warm && tense != cold && warm != cold)
   // Mysterious is a deepened 雾蓝: darker than Cold, still blue-leaning.
   assert_true(mysterious.b > mysterious.r)
-  assert_true(mysterious.r + mysterious.g + mysterious.b < cold.r + cold.g + cold.b)
+  assert_true(
+    mysterious.r + mysterious.g + mysterious.b < cold.r + cold.g + cold.b,
+  )
   // Dark scheme keeps the same mapping with its own lifted roles.
   let night = app_theme(Ink)
   assert_true(mood_accent(night, Calm) != calm)

@@ -96,12 +96,8 @@ fn send_scene_turn(
         run=dispatch => {
           runner(
             request,
-            reply => {
-              dispatch(SceneReply(key, responder.id(), reply))
-            },
-            delta => {
-              dispatch(SceneReplyDelta(key, responder.id(), delta))
-            },
+            reply => dispatch(SceneReply(key, responder.id(), reply)),
+            delta => dispatch(SceneReplyDelta(key, responder.id(), delta)),
           )
         },
       ),
@@ -217,11 +213,9 @@ fn send_private_turn(
                 kind="provider",
                 label="Provider turn",
                 run=dispatch => {
-                  runner(
-                    request,
-                    reply => dispatch(Reply(id, reply)),
-                    delta => dispatch(ReplyDelta(id, delta)),
-                  )
+                  runner(request, reply => dispatch(Reply(id, reply)), delta => {
+                    dispatch(ReplyDelta(id, delta))
+                  })
                 },
               ),
             ]
@@ -257,9 +251,7 @@ fn send_private_turn(
                   run=dispatch => {
                     runner(
                       summary_request,
-                      reply => {
-                      dispatch(SummaryArrived(id, marker, reply))
-                    },
+                      reply => dispatch(SummaryArrived(id, marker, reply)),
                       _delta => (),
                     )
                   },

@@ -21,47 +21,55 @@ pub fn update_world_book(
 ) -> (WorldModel, @moui.Effect[Msg]) {
   match msg {
     // Opening the panel loads the working copy from the world.
-    WorldBookOpened => ({
-      ..model,
-      world_book_draft: model.scenario.world_book(),
-      world_book_edit: -1,
-    }, @moui.Effect::none())
+    WorldBookOpened =>
+      (
+        {
+          ..model,
+          world_book_draft: model.scenario.world_book(),
+          world_book_edit: -1,
+        },
+        @moui.Effect::none(),
+      )
     WorldBookEdit(index) =>
       ({ ..model, world_book_edit: index, }, @moui.Effect::none())
     WorldBookKeysChanged(text) =>
-      ({
-        ..model,
-        world_book_draft: replace_entry(
-          model.world_book_draft,
-          model.world_book_edit,
-          entry => Some(entry.with_keys(split_keys(text))),
-        ),
-      }, @moui.Effect::none())
+      (
+        {
+          ..model,
+          world_book_draft: replace_entry(
+            model.world_book_draft,
+            model.world_book_edit,
+            entry => Some(entry.with_keys(split_keys(text))),
+          ),
+        },
+        @moui.Effect::none(),
+      )
     WorldBookContentChanged(text) =>
-      ({
-        ..model,
-        world_book_draft: replace_entry(
-          model.world_book_draft,
-          model.world_book_edit,
-          entry => Some(entry.with_content(text)),
-        ),
-      }, @moui.Effect::none())
+      (
+        {
+          ..model,
+          world_book_draft: replace_entry(
+            model.world_book_draft,
+            model.world_book_edit,
+            entry => Some(entry.with_content(text)),
+          ),
+        },
+        @moui.Effect::none(),
+      )
     WorldBookAdd => {
       let draft : Array[WorldEntry] = []
       for entry in model.world_book_draft {
         draft.push(entry)
       }
-      draft.push(
-        WorldEntry::new(
-          keys=["新关键词"],
-          content="",
-        ),
+      draft.push(WorldEntry::new(keys=["新关键词"], content=""))
+      (
+        {
+          ..model,
+          world_book_draft: draft,
+          world_book_edit: draft.length() - 1,
+        },
+        @moui.Effect::none(),
       )
-      ({
-        ..model,
-        world_book_draft: draft,
-        world_book_edit: draft.length() - 1,
-      }, @moui.Effect::none())
     }
     WorldBookDelete(index) => {
       let draft : Array[WorldEntry] = []
@@ -72,11 +80,10 @@ pub fn update_world_book(
         }
         at += 1
       }
-      ({
-        ..model,
-        world_book_draft: draft,
-        world_book_edit: -1,
-      }, @moui.Effect::none())
+      (
+        { ..model, world_book_draft: draft, world_book_edit: -1, },
+        @moui.Effect::none(),
+      )
     }
     // Saving writes the book into the world and commits the world folder.
     WorldBookSave => {

@@ -168,9 +168,11 @@ fn transcript_view(
                   } else {
                     "和\{card.name()}说点什么吧。TA 记得这个世界的背景，也可能藏着秘密。"
                   }
-                None => "这个角色已不在当前世界里。重新选一个角色吧。"
+                None =>
+                  "这个角色已不在当前世界里。重新选一个角色吧。"
               }
-            None => "在左侧选一个角色，开始一段属于你们的演绎。"
+            None =>
+              "在左侧选一个角色，开始一段属于你们的演绎。"
           }
         },
         width~,
@@ -347,11 +349,7 @@ fn transcript_view(
   if lore_note != "" {
     rows.push(wrapped_caption(lore_note, width~))
   }
-  let newest = if total > 0 {
-    lines[total - 1].text
-  } else {
-    ""
-  }
+  let newest = if total > 0 { lines[total - 1].text } else { "" }
   flexible(
     scroll_view(
       column(rows, spacing=10.0),

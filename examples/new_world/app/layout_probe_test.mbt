@@ -19,10 +19,7 @@
 
 ///|
 /// Every frame in the laid-out tree.
-fn collect_frames(
-  node : @core.LayoutResult,
-  into : Array[@core.Rect],
-) -> Unit {
+fn collect_frames(node : @core.LayoutResult, into : Array[@core.Rect]) -> Unit {
   into.push(node.frame)
   for child in node.children {
     collect_frames(child, into)
@@ -66,12 +63,10 @@ fn laid_out(
 fn probe_world() -> @app.WorldModel {
   let files : Array[(String, String)] = [
     (
-      "world.md",
-      "# 雨夜酒馆\n\n夜雨敲窗。\n\n## 地点\n\n- 吧台: x=20 y=20 w=240 h=150\n",
+      "world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n\n## 地点\n\n- 吧台: x=20 y=20 w=240 h=150\n",
     ),
     (
-      "characters/林掌柜.md",
-      "# 林掌柜\n\n## 人设\n\n掌柜。话不多。\n\n## 开场白\n\n（抬头看了你一眼）……坐吧。\n",
+      "characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。话不多。\n\n## 开场白\n\n（抬头看了你一眼）……坐吧。\n",
     ),
   ]
   let (model, _effect) = @app.update(
@@ -84,7 +79,10 @@ fn probe_world() -> @app.WorldModel {
 ///|
 /// A world with a character selected (the stage is showing).
 fn probe_talking() -> @app.WorldModel {
-  let (model, _effect) = @app.update(probe_world(), @app.Select(Some("林掌柜")))
+  let (model, _effect) = @app.update(
+    probe_world(),
+    @app.Select(Some("林掌柜")),
+  )
   model
 }
 
@@ -96,12 +94,11 @@ test "the wide layout gives the stage a real height" {
   // The stage column: ~768 wide *and* tall. Matching the width alone would
   // also catch the stage's own header row, which shares the width but is one
   // line high.
-  let stage = find_in(
-    frames,
-    frame =>
-      frame.size.width > 700.0 && frame.size.width < 800.0 &&
-      frame.size.height > 400.0,
-  )
+  let stage = find_in(frames, frame => {
+    frame.size.width > 700.0 &&
+    frame.size.width < 800.0 &&
+    frame.size.height > 400.0
+  })
   match stage {
     Some(frame) => {
       assert_true(frame.size.height > 400.0)
@@ -115,12 +112,11 @@ test "the wide layout gives the stage a real height" {
     None => fail("the wide layout must have a stage column")
   }
   // The rail: ~300 wide, and tall enough for a roster.
-  let rail = find_in(
-    frames,
-    frame =>
-      frame.size.width > 280.0 && frame.size.width < 320.0 &&
-      frame.size.height > 400.0,
-  )
+  let rail = find_in(frames, frame => {
+    frame.size.width > 280.0 &&
+    frame.size.width < 320.0 &&
+    frame.size.height > 400.0
+  })
   match rail {
     Some(frame) => assert_true(frame.size.height > 100.0)
     None => fail("the wide layout must have a character rail")
@@ -132,11 +128,7 @@ test "the app fills the window in every layout" {
   // The regression in one line: whatever the mode, the app measures tall
   // enough to hold a stage instead of collapsing to its header.
   let model = probe_talking()
-  let viewports = [
-    (1200.0, 800.0),
-    (900.0, 700.0),
-    (390.0, 844.0),
-  ]
+  let viewports = [(1200.0, 800.0), (900.0, 700.0), (390.0, 844.0)]
   for entry in viewports {
     let (width, height) = entry
     let frames = laid_out(model, width, height)
@@ -169,12 +161,11 @@ test "the composer sits at the bottom of the stage with room" {
   // The composer is the last thing in the stage column: if the column had
   // no height, the input row would be the only thing visible — or nothing.
   let frames = laid_out(probe_talking(), 1200.0, 800.0)
-  let composer = find_in(
-    frames,
-    frame =>
-      frame.size.height >= 30.0 && frame.size.height <= 44.0 &&
-      frame.max_y() > 700.0,
-  )
+  let composer = find_in(frames, frame => {
+    frame.size.height >= 30.0 &&
+    frame.size.height <= 44.0 &&
+    frame.max_y() > 700.0
+  })
   assert_true(composer is Some(_))
 }
 
@@ -198,7 +189,8 @@ test "the stage's text is queued for painting" {
     match command {
       DrawText(run) => {
         all_texts += 1
-        if run.frame.origin.x > 300.0 && run.frame.origin.y > 60.0 &&
+        if run.frame.origin.x > 300.0 &&
+          run.frame.origin.y > 60.0 &&
           run.frame.size.height > 0.0 {
           stage_texts += 1
         }
@@ -219,20 +211,12 @@ test "the editor page covers the window and paints an opaque surface" {
   let screen = @app.Screen::for_viewport(1200.0, 800.0)
   let (model, _effect) = @app.update(
     @app.WorldModel::new(),
-    @app.WorldFilesArrived(
-      "tavern",
-      true,
-      [
-        (
-          "world.md",
-          "# 雨夜酒馆\n\n夜雨敲窗。\n",
-        ),
-        (
-          "characters/林掌柜.md",
-          "# 林掌柜\n\n## 人设\n\n掌柜。话不多。\n",
-        ),
-      ],
-    ),
+    @app.WorldFilesArrived("tavern", true, [
+      ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n"),
+      (
+        "characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。话不多。\n",
+      ),
+    ]),
   )
   let (opened, _e2) = @app.update(model, @app.EditCharacter("林掌柜"))
   let runtime = @runtime.AppRuntime::new_view(
@@ -243,10 +227,9 @@ test "the editor page covers the window and paints an opaque surface" {
   // The page's frame: the whole viewport.
   let frames : Array[@core.Rect] = []
   collect_frames(runtime.layout(), frames)
-  let page = find_in(
-    frames,
-    frame => frame.size.width > 1100.0 && frame.size.height > 700.0,
-  )
+  let page = find_in(frames, frame => {
+    frame.size.width > 1100.0 && frame.size.height > 700.0
+  })
   assert_true(page is Some(_))
   // And the paint plan carries a surface that covers it: a filled rectangle
   // (rounded or not) over most of the window. A transparent editor would
@@ -279,14 +262,10 @@ test "the mood hairline is a hairline" {
   // tall, so the line came out as a 44px band of colour.
   let (model, _e) = @app.update(
     @app.WorldModel::new(),
-    @app.WorldFilesArrived(
-      "tavern",
-      true,
-      [
-        ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n"),
-        ("characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n"),
-      ],
-    ),
+    @app.WorldFilesArrived("tavern", true, [
+      ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n"),
+      ("characters/林掌柜.md", "# 林掌柜\n\n## 人设\n\n掌柜。\n"),
+    ]),
   )
   let (opened, _e2) = @app.update(model, @app.Select(Some("林掌柜")))
   let screen = @app.Screen::for_viewport(1200.0, 800.0)
@@ -298,10 +277,9 @@ test "the mood hairline is a hairline" {
   let frames : Array[@core.Rect] = []
   collect_frames(runtime.layout(), frames)
   // A wide, hairline-thin rule under the header.
-  let hairline = find_in(
-    frames,
-    frame => frame.size.width > 600.0 && frame.size.height <= 3.0,
-  )
+  let hairline = find_in(frames, frame => {
+    frame.size.width > 600.0 && frame.size.height <= 3.0
+  })
   assert_true(hairline is Some(_))
   // The band of colour *was* the rule: with a fat rule there is no hairline
   // to find, so the assertion above is the whole guard.

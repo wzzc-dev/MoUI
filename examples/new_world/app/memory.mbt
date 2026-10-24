@@ -116,7 +116,10 @@ pub fn MemoryEntry::topic(self : MemoryEntry) -> String {
 
 ///|
 /// Give this entry a progression topic.
-pub fn MemoryEntry::with_topic(self : MemoryEntry, topic : String) -> MemoryEntry {
+pub fn MemoryEntry::with_topic(
+  self : MemoryEntry,
+  topic : String,
+) -> MemoryEntry {
   { ..self, topic, }
 }
 
@@ -164,10 +167,7 @@ pub fn MemoryBook::for_character(
 }
 
 ///|
-pub fn MemoryBook::find(
-  self : MemoryBook,
-  id : String,
-) -> CharacterMemories? {
+pub fn MemoryBook::find(self : MemoryBook, id : String) -> CharacterMemories? {
   for entry in self.entries {
     if entry.character_id == id {
       return Some(entry)
@@ -210,14 +210,14 @@ pub fn MemoryBook::clear(self : MemoryBook) -> Unit {
 
 ///|
 /// The entries of one character's memories.
-pub fn CharacterMemories::entries(self : CharacterMemories) -> Array[MemoryEntry] {
+pub fn CharacterMemories::entries(
+  self : CharacterMemories,
+) -> Array[MemoryEntry] {
   self.entries
 }
 
 ///|
-pub fn CharacterMemories::character_id(
-  self : CharacterMemories,
-) -> String {
+pub fn CharacterMemories::character_id(self : CharacterMemories) -> String {
   self.character_id
 }
 
@@ -368,7 +368,9 @@ pub fn memory_md_text(entries : Array[MemoryEntry]) -> String {
   out.push("# 记忆")
   out.push("")
   if entries.is_empty() {
-    out.push("<!-- 一行一条：- 内容；[固定] 表示常驻上下文 -->")
+    out.push(
+      "<!-- 一行一条：- 内容；[固定] 表示常驻上下文 -->",
+    )
   }
   for entry in entries {
     let mut line = "- "
@@ -430,10 +432,9 @@ pub fn parse_memory_md(content : String) -> Array[MemoryEntry] {
             topic = rest[0:at].trim().to_owned()
             body = rest[at + 1:].trim().to_owned()
           }
-          None => {
+          None =>
             // A broken marker stays literal text rather than eating the line.
             scanning = false
-          }
         }
       } else {
         scanning = false

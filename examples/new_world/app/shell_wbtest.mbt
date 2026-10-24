@@ -130,7 +130,10 @@ test "a drawer opens over the stage and closes again" {
   let events = view_for(step(base, OpenDrawer(Events)), screen)
   assert_true(tree_has_text(events, "推进时间"))
   // And closing removes it.
-  let closed = view_for(step(step(base, OpenDrawer(Profile)), CloseDrawer), screen)
+  let closed = view_for(
+    step(step(base, OpenDrawer(Profile)), CloseDrawer),
+    screen,
+  )
   assert_false(tree_has_text(closed, "角色档案"))
 }
 
@@ -142,10 +145,7 @@ test "a history line's more menu carries the retired action row" {
     step(opened_world(), Select(Some("林掌柜"))),
     Send("温一壶酒"),
   )
-  let replied = step(
-    talking,
-    Reply("林掌柜", Some("客官里边坐。")),
-  )
+  let replied = step(talking, Reply("林掌柜", Some("客官里边坐。")))
   // Closed: the menu's items are not in the tree.
   assert_false(tree_has_text(view_for(replied, screen), "从此分叉"))
   // Open on line 1 (the character's reply): regenerate, edit, delete, branch.

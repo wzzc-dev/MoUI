@@ -65,11 +65,7 @@ pub fn update_editor(
             None => (model, @moui.Effect::none())
             Some(card) =>
               match host {
-                Some(h) =>
-                  (
-                    model,
-                    copy_prompt_effect(h, tavern_v2_json(card)),
-                  )
+                Some(h) => (model, copy_prompt_effect(h, tavern_v2_json(card)))
                 None => (model, @moui.Effect::none())
               }
           }
@@ -185,7 +181,8 @@ fn save_character(
   match model.current {
     Some(folder) =>
       match host {
-        Some(h) => (next, commit_world_effect(h, folder, commit_files(next, World)))
+        Some(h) =>
+          (next, commit_world_effect(h, folder, commit_files(next, World)))
         None => (next, @moui.Effect::none())
       }
     None => (next, @moui.Effect::none())

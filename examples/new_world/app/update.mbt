@@ -487,6 +487,7 @@ pub fn WorldModel::editor_examples(self : WorldModel) -> String {
 
 ///|
 /// The memory drawer's input line.
+
 ///|
 /// Does the editor's draft still differ from the card it was opened on?
 pub fn WorldModel::editor_dirty(self : WorldModel) -> Bool {
@@ -534,11 +535,7 @@ pub fn WorldModel::memory_input(self : WorldModel) -> String {
 ///
 /// The platform entrypoint injects the native/web worker here. Without one, no
 /// turn is ever started, which is exactly the behaviour a test build needs.
-pub type TurnRunner = (
-  LlmRequest,
-  (String?) -> Unit,
-  (String) -> Unit,
-) -> Unit
+pub type TurnRunner = (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit
 
 ///|
 /// Host capability for the folder database (the player's library). Same
@@ -758,7 +755,7 @@ pub fn update(
   }
   let host : WorldHost? = world_host
   match msg {
-    Select(id) => {
+    Select(id) =>
       // Re-selecting the same character (a map tap on the selected marker, a
       // drag that ends in a click) must not discard a half-written line, and
       // must not re-insert the opening either.
@@ -797,7 +794,6 @@ pub fn update(
         }
         (next, opening)
       }
-    }
     EnterScene(location) =>
       if model.scenario.location(location) is None {
         (model, @moui.Effect::none())
@@ -846,15 +842,11 @@ pub fn update(
     // Tavern cards: in and out of the editor.
     CardImportTextChanged(text) =>
       ({ ..model, card_import_text: text, }, @moui.Effect::none())
-    CopyCharacterCard =>
-      update_editor(model, CopyCharacterCard, host)
-    ImportCharacterCard =>
-      update_editor(model, ImportCharacterCard, host)
+    CopyCharacterCard => update_editor(model, CopyCharacterCard, host)
+    ImportCharacterCard => update_editor(model, ImportCharacterCard, host)
     // The world book: the world's own lore, edited in the app.
-    WorldBookOpened =>
-      update_world_book(model, WorldBookOpened, host)
-    WorldBookEdit(index) =>
-      update_world_book(model, WorldBookEdit(index), host)
+    WorldBookOpened => update_world_book(model, WorldBookOpened, host)
+    WorldBookEdit(index) => update_world_book(model, WorldBookEdit(index), host)
     WorldBookKeysChanged(text) =>
       update_world_book(model, WorldBookKeysChanged(text), host)
     WorldBookContentChanged(text) =>
@@ -866,10 +858,10 @@ pub fn update(
     // Reveal more of the transcript: the window grows, the reader stays where
     // they are.
     ExtendTranscript(step) =>
-      ({
-        ..model,
-        transcript_window: model.transcript_window() + step,
-      }, @moui.Effect::none())
+      (
+        { ..model, transcript_window: model.transcript_window() + step, },
+        @moui.Effect::none(),
+      )
     ComposerModeChanged(intent) =>
       update_composer(model, ComposerModeChanged(intent), runner, host)
     ComposerMenuChanged(open) =>
@@ -987,9 +979,7 @@ pub fn update(
                 run=dispatch => {
                   runner(
                     propose_request,
-                    reply => {
-                    dispatch(MemoryProposalsArrived(reply))
-                  },
+                    reply => dispatch(MemoryProposalsArrived(reply)),
                     _delta => (),
                   )
                 },
@@ -1028,7 +1018,9 @@ pub fn update(
         WorldBook => {
           let (next, effect) = update_ui(model, OpenDrawer(kind))
           let (loaded, loaded_effect) = update_world_book(
-            next, WorldBookOpened, host,
+            next,
+            WorldBookOpened,
+            host,
           )
           (loaded, pack_effects([effect, loaded_effect]))
         }
@@ -1045,7 +1037,7 @@ pub fn update(
       // world state (the mood rides in world.md), so it commits the world.
       let mood = { ..model.scenario.mood(), variant, }
       let scenario = model.scenario.with_mood(mood)
-      let next = { ..model.fork(), scenario }
+      let next = { ..model.fork(), scenario, }
       next.push_log("氛围已切换：\{variant.wire()}")
       match (next.current, host) {
         (Some(folder), Some(h)) =>
@@ -1060,7 +1052,8 @@ pub fn update(
     EditorExamplesChanged(text) =>
       update_editor(model, EditorExamplesChanged(text), host)
     SaveCharacter => update_editor(model, SaveCharacter, host)
-    MemoryDraftChanged(text) => update_memory(model, MemoryDraftChanged(text), host)
+    MemoryDraftChanged(text) =>
+      update_memory(model, MemoryDraftChanged(text), host)
     MemoryTopicDraftChanged(text) =>
       update_memory(model, MemoryTopicDraftChanged(text), host)
     ToggleMemoryHidden(index) =>
@@ -1072,10 +1065,7 @@ pub fn update(
         Some(h) =>
           (
             model,
-            copy_prompt_effect(
-              h,
-              prompt_preview_text(model, model.say_draft()),
-            ),
+            copy_prompt_effect(h, prompt_preview_text(model, model.say_draft())),
           )
         None => (model, @moui.Effect::none())
       }
@@ -1133,10 +1123,7 @@ pub fn update(
     WorldCommitted(folder, ok) =>
       update_library(model, WorldCommitted(folder, ok), host)
     WorldPortraitsRefreshed(portraits) =>
-      (
-        { ..model, portraits: portraits, },
-        @moui.Effect::none(),
-      )
+      ({ ..model, portraits, }, @moui.Effect::none())
     // ---- character creation ----
     // Creation and generation: one cohesive feature (compose a character,
     // generate a world), implemented in `creation.mbt`. Each arm keeps its own

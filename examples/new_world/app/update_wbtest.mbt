@@ -38,7 +38,11 @@ test "update never mutates the model it was given" {
   let log_before = before.log().length()
   assert_eq(before.conversations.active_count(), 0)
   // A turn appends a line, logs, and commits: all the containers mutate.
-  let (after, _effect) = update(selected, Send("温一壶酒"), turn_runner=(_r, _c, _d) => ())
+  let (after, _effect) = update(selected, Send("温一壶酒"), turn_runner=(
+    _r,
+    _c,
+    _d,
+  ) => ())
   assert_eq(selected.log().length(), log_before)
   assert_eq(
     selected.conversations.for_character("林掌柜").lines().length(),
@@ -76,7 +80,11 @@ test "re-selecting the same character keeps the draft" {
 ///|
 test "a second send is refused while the first is in flight" {
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
-  let (sent, _first) = update(selected, Send("温一壶酒"), turn_runner=(_r, _c, _d) => ())
+  let (sent, _first) = update(selected, Send("温一壶酒"), turn_runner=(
+    _r,
+    _c,
+    _d,
+  ) => ())
   assert_true(sent.conversations.for_character("林掌柜").pending())
   let lines = sent.conversations.for_character("林掌柜").lines().length()
   // The player hits send again before the provider answers: no second line,
@@ -85,9 +93,11 @@ test "a second send is refused while the first is in flight" {
     ()
   })
   assert_true(is_no_effect(effect))
-  let (after, again) = update(sent, Send("再来一壶"), turn_runner=(_r, _c, _d) => {
-    ()
-  })
+  let (after, again) = update(sent, Send("再来一壶"), turn_runner=(
+    _r,
+    _c,
+    _d,
+  ) => ())
   assert_true(is_no_effect(again))
   assert_eq(
     after.conversations.for_character("林掌柜").lines().length(),
@@ -96,9 +106,11 @@ test "a second send is refused while the first is in flight" {
   // Once the reply lands, sending works again.
   let answered = step(sent, Reply("林掌柜", Some("嗯。")))
   assert_false(answered.conversations.for_character("林掌柜").pending())
-  let (_, third) = update(answered, Send("再来一壶"), turn_runner=(_r, _c, _d) => {
-    ()
-  })
+  let (_, third) = update(answered, Send("再来一壶"), turn_runner=(
+    _r,
+    _c,
+    _d,
+  ) => ())
   assert_true(is_run_effect(third))
 }
 
@@ -401,7 +413,11 @@ test "opening a world parses its folder and goes on stage" {
   assert_eq(model.scenario().world_book().length(), 1)
   // The loaded card works as a conversation partner:
   let talking = step(model, Select(Some("林掌柜")))
-  let (sent, effect) = update(talking, Send("这酒怎么卖？"), turn_runner=(_r, _c, _d) => ())
+  let (sent, effect) = update(talking, Send("这酒怎么卖？"), turn_runner=(
+    _r,
+    _c,
+    _d,
+  ) => ())
   assert_eq(sent.conversations.for_character("林掌柜").lines().length(), 2)
   assert_true(is_no_effect(effect))
 }
@@ -781,7 +797,9 @@ test "a provider turn carries the whole plan, including earlier turns" {
   // last message only, so the model never saw history, the rolling summary, or
   // the world-book block. Each turn was silently stateless.
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
+    seen.push(request)
+  }
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   let (sent, effect) = update(
     selected,
@@ -837,7 +855,9 @@ test "a provider turn carries the whole plan, including earlier turns" {
 ///|
 test "the rolling summary rides on later turns" {
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
+    seen.push(request)
+  }
   let selected = step(tavern_with_key(), Select(Some("林掌柜")))
   selected.conversations.set(
     selected.conversations

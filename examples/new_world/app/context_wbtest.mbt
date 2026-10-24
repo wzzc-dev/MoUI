@@ -201,7 +201,11 @@ test "the mood override re-titles the scene line" {
   let card = scenario
     .character("lin")
     .unwrap_or(CharacterCard::new(id="", name="", persona=""))
-  let dawn : SceneMood = { title: "官道晨光", time_label: "拂晓", variant: Calm }
+  let dawn : SceneMood = {
+    title: "官道晨光",
+    time_label: "拂晓",
+    variant: Calm,
+  }
   let prompt = build_system_prompt(scenario, card, mood=Some(dawn))
   assert_true(prompt.contains("官道晨光"))
   assert_true(prompt.contains("拂晓"))
@@ -234,12 +238,12 @@ test "memories ride between the system prompt and the summary" {
   ]
   // A line that hits no lore, so only system / memories / summary are sent.
   let messages = plan_messages(
-    scenario,
-    card,
-    conversation,
-    "今天风很大",
-    memories~,
-  ).messages
+      scenario,
+      card,
+      conversation,
+      "今天风很大",
+      memories~,
+    ).messages
   // system prompt, memories, summary.
   assert_eq(messages.length(), 3)
   assert_true(messages[1].1.contains("【长久的记忆】"))
@@ -266,10 +270,7 @@ test "the opening lands as the first real message, once" {
   let model0 = opened_world_for_memory()
   // The fixture card has no opening yet — give it one through the editor.
   let opened = step(model0, Select(Some("林掌柜")))
-  assert_eq(
-    opened.conversations.for_character("林掌柜").lines().length(),
-    0,
-  )
+  assert_eq(opened.conversations.for_character("林掌柜").lines().length(), 0)
   // A card with an opening: its first line lands on first select…
   let scenario = default_scenario()
   let with_opening = CharacterCard::new(
@@ -287,10 +288,7 @@ test "the opening lands as the first real message, once" {
     world_book=scenario.world_book(),
     mood=scenario.mood(),
   )
-  let based = {
-    ..opened_world_for_memory().fork(),
-    scenario: world,
-  }
+  let based = { ..opened_world_for_memory().fork(), scenario: world, }
   let selected = step(based, Select(Some("lin")))
   let lines = selected.conversations.for_character("lin").lines()
   assert_eq(lines.length(), 1)
@@ -341,14 +339,7 @@ test "a hidden memory never shows up in the prompt preview" {
   let hidden = MemoryEntry::authored("她不让我提她娘").with_hidden(true)
   let with_hidden = {
     ..model,
-    memories: {
-      entries: [
-        {
-          character_id: "lin",
-          entries: [hidden],
-        },
-      ],
-    },
+    memories: { entries: [{ character_id: "lin", entries: [hidden], }], },
   }
   let messages = prompt_preview_messages(with_hidden, "她娘")
   for message in messages {

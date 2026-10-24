@@ -25,10 +25,7 @@ pub let markdown_recent_lines : Int32 = 12
 /// simply opens that line's menu instead. The host (and its menu content) is
 /// only built while the menu is open, so a closed menu costs nothing and
 /// never appears in the tree.
-fn more_button(
-  model : WorldModel,
-  index : Int32,
-) -> @moui.View[Msg] {
+fn more_button(model : WorldModel, index : Int32) -> @moui.View[Msg] {
   let trigger = button(
     "⋯",
     on_click=OpenMessageMenu(index),
@@ -78,10 +75,7 @@ fn message_menu_spec(
 /// the newest character line (the only one a regeneration can replace), the
 /// swipe pair only when candidates exist, and every item closes the menu on
 /// the way out.
-fn message_menu_content(
-  model : WorldModel,
-  index : Int32,
-) -> @moui.View[Msg] {
+fn message_menu_content(model : WorldModel, index : Int32) -> @moui.View[Msg] {
   let theme = app_theme_for(model.config.appearance())
   let conversation = model.conversations.for_character(
     match model.scene_location() {

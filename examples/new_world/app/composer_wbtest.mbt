@@ -29,8 +29,7 @@ test "the three fields keep their intents and are stored with markers" {
   assert_eq(parts[3].intent(), Beat)
   let text = composer_turn_text(parts)
   assert_eq(
-    text,
-    "掌柜的，还有酒吗？\n（动作）推开门\n（旁白）雨声更大了。\n（这一幕）灯忽然灭了。",
+    text, "掌柜的，还有酒吗？\n（动作）推开门\n（旁白）雨声更大了。\n（这一幕）灯忽然灭了。",
   )
   // Parsing it back yields the same parts, in order.
   let parsed = parse_player_parts(text)

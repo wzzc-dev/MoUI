@@ -182,9 +182,7 @@ pub fn parse_world_files(files : WorldFiles) -> WorldParse? {
     if owner == "" {
       warnings.push("记忆文件指向已不存在的角色：\{stem}")
     } else {
-      memories.set(
-        { character_id: owner, entries: parse_memory_md(pair.1), },
-      )
+      memories.set({ character_id: owner, entries: parse_memory_md(pair.1), })
     }
   }
   let entries : Array[WorldEntry] = []
@@ -332,8 +330,7 @@ fn memory_file_stem(path : String) -> String? {
   if !path.has_prefix(prefix) || !path.has_suffix(suffix) {
     return None
   }
-  let inner : String = path[prefix.length():path.length() - suffix.length()]
-    .to_owned()
+  let inner : String = path[prefix.length():path.length() - suffix.length()].to_owned()
   if inner == "" {
     None
   } else {

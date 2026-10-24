@@ -225,7 +225,9 @@ test "advancing time offline still writes an event" {
 test "advancing time with a key asks the provider and logs the narration" {
   let keyed = step(crowded_world(), ApiKeyChanged("sk-test"))
   let seen : Array[LlmRequest] = []
-  let runner : TurnRunner = (request, _on_reply, _on_delta) => seen.push(request)
+  let runner : TurnRunner = (request, _on_reply, _on_delta) => {
+    seen.push(request)
+  }
   let (asked, effect) = update(keyed, AdvanceTime, turn_runner=runner)
   assert_true(is_run_effect(effect))
   @moui.Effect::runtime_visit(

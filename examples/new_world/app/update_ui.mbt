@@ -10,7 +10,10 @@
 
 ///|
 /// Dispatch the shell-state arms.
-pub fn update_ui(model : WorldModel, msg : Msg) -> (WorldModel, @moui.Effect[Msg]) {
+pub fn update_ui(
+  model : WorldModel,
+  msg : Msg,
+) -> (WorldModel, @moui.Effect[Msg]) {
   match msg {
     OpenDrawer(kind) =>
       // Opening a drawer closes the message menu: two overlays at once is one
@@ -29,15 +32,9 @@ pub fn update_ui(model : WorldModel, msg : Msg) -> (WorldModel, @moui.Effect[Msg
     ToggleRail =>
       // The rail is a medium/compact affordance; on wide it is always beside
       // the stage, and the toggle is a no-op there rather than a hidden state.
-      (
-        { ..model, rail_open: !model.rail_open, },
-        @moui.Effect::none(),
-      )
+      ({ ..model, rail_open: !model.rail_open, }, @moui.Effect::none())
     ToggleAtmosphere =>
-      (
-        { ..model, atmosphere: !model.atmosphere, },
-        @moui.Effect::none(),
-      )
+      ({ ..model, atmosphere: !model.atmosphere, }, @moui.Effect::none())
     SetBackdrop(on) => ({ ..model, backdrop: on, }, @moui.Effect::none())
     _ => (model, @moui.Effect::none())
   }

@@ -208,7 +208,7 @@ fn composer_mode_button(
     label,
     on_click=ComposerMenuChanged(!model.composer_menu()),
     variant=Tonal,
-    width=width,
+    width~,
     height=button_md_height,
   )
   if model.composer_menu() {
@@ -220,9 +220,7 @@ fn composer_mode_button(
 
 ///|
 /// The intent menu's presentation declaration.
-fn composer_mode_spec(
-  model : WorldModel,
-) -> @views.PresentationSpec[Msg] {
+fn composer_mode_spec(model : WorldModel) -> @views.PresentationSpec[Msg] {
   @views.PresentationSpec::new(
     id="new-world:composer-mode",
     kind=ContextMenu,

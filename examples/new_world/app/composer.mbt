@@ -358,7 +358,8 @@ pub fn update_composer(
           beat_draft: kept_beat,
         }
         let (sent, effect) = match cleared.scene_location {
-          Some(location) => send_scene_turn(cleared, location, text, runner, host)
+          Some(location) =>
+            send_scene_turn(cleared, location, text, runner, host)
           None => send_private_turn(cleared, text, runner, host)
         }
         // The send helpers clear every draft; the intents that were not part

@@ -58,13 +58,8 @@ fn character_editor_spec(
 /// The editor names, in block order. The tab codes are their indexes.
 fn editor_tabs() -> Array[String] {
   [
-    "身份与背景",
-    "性格与行为原则",
-    "说话风格与示例台词",
-    "与用户的关系",
-    "当前情境与开场白",
-    "隐藏信息与记忆规则",
-    "外貌与立绘",
+    "身份与背景", "性格与行为原则", "说话风格与示例台词", "与用户的关系",
+    "当前情境与开场白", "隐藏信息与记忆规则", "外貌与立绘",
     "角色卡",
   ]
 }
@@ -163,7 +158,7 @@ fn editor_tab_chips(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
         label,
         selected=index == model.editor_tab,
         on_click=Some(EditorTabChanged(index)),
-        theme=theme,
+        theme~,
         width=editor_chip_width(label),
         height=button_sm_height,
       ),
@@ -221,7 +216,7 @@ fn editor_scroller(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       width=screen.width,
     ),
     width=screen.width,
-    height=height,
+    height~,
   )
 }
 
@@ -242,7 +237,11 @@ fn editor_footer(model : WorldModel) -> @moui.View[Msg] {
         height=button_md_height,
       ),
       button(
-        if dirty { "放弃修改并关闭" } else { "取消" },
+        if dirty {
+          "放弃修改并关闭"
+        } else {
+          "取消"
+        },
         on_click=CloseEditor,
         variant=Tonal,
         width=if dirty { 140.0 } else { 88.0 },
@@ -288,19 +287,19 @@ fn editor_block(
   ) -> @moui.View[Msg] {
     column(
       [
-        text(label, role=Caption, width=width, height=18.0, align=TextStart),
+        text(label, role=Caption, width~, height=18.0, align=TextStart),
         if lines_ > 1 {
           text_area(
             value,
             on_input=text => change(draft => update(draft, text)),
             lines=lines_,
-            width=width,
+            width~,
           )
         } else {
           text_field(
             value,
             on_input=text => change(draft => update(draft, text)),
-            width=width,
+            width~,
           )
         },
       ],
@@ -309,135 +308,148 @@ fn editor_block(
   }
   let rows : Array[@moui.View[Msg]] = match tab {
     // ① 身份与背景
-    0 => [
-      field(
-        "TA是谁（必填）",
-        draft.persona,
-        4,
-        (d, v) => d.with_persona(v),
-      ),
-      field(
-        "TA想要什么（可选）",
-        draft.goal,
-        2,
-        (d, v) => d.with_goal(v),
-      ),
-    ]
+    0 =>
+      [
+        field("TA是谁（必填）", draft.persona, 4, (d, v) => {
+          d.with_persona(v)
+        }),
+        field("TA想要什么（可选）", draft.goal, 2, (d, v) => {
+          d.with_goal(v)
+        }),
+      ]
     // ② 性格与行为原则
-    1 => [
-      field(
-        "行为原则：TA如何判断、如何行动（行为规则比形容词更能稳住人物）",
-        draft.principles,
-        5,
-        (d, v) => d.with_principles(v),
-      ),
-    ]
+    1 =>
+      [
+        field(
+          "行为原则：TA如何判断、如何行动（行为规则比形容词更能稳住人物）",
+          draft.principles,
+          5,
+          (d, v) => d.with_principles(v),
+        ),
+      ]
     // ③ 说话风格与示例台词
-    2 => [
-      field("说话方式", draft.voice, 2, (d, v) => d.with_voice(v)),
-      wrapped_caption("示例台词（一行一句，像 TA 本人说出口的话）", width~),
-      text_area(
-        model.editor_examples,
-        on_input=text => EditorExamplesChanged(text),
-        lines=5,
-        width~,
-      ),
-    ]
+    2 =>
+      [
+        field("说话方式", draft.voice, 2, (d, v) => d.with_voice(v)),
+        wrapped_caption(
+          "示例台词（一行一句，像 TA 本人说出口的话）",
+          width~,
+        ),
+        text_area(
+          model.editor_examples,
+          on_input=text => EditorExamplesChanged(text),
+          lines=5,
+          width~,
+        ),
+      ]
     // ④ 与用户的关系
-    3 => [
-      field("玩家是谁", draft.user_identity, 1, (d, v) => d.with_user_identity(v)),
-      field("TA怎么称呼玩家", draft.user_name, 1, (d, v) => d.with_user_name(v)),
-      field("关系边界", draft.boundary, 2, (d, v) => d.with_boundary(v)),
-    ]
+    3 =>
+      [
+        field("玩家是谁", draft.user_identity, 1, (d, v) => {
+          d.with_user_identity(v)
+        }),
+        field("TA怎么称呼玩家", draft.user_name, 1, (d, v) => {
+          d.with_user_name(v)
+        }),
+        field("关系边界", draft.boundary, 2, (d, v) => d.with_boundary(v)),
+      ]
     // ⑤ 当前情境与开场白
-    4 => [
-      field("当前情境", draft.setting, 3, (d, v) => d.with_setting(v)),
-      field(
-        "开场白：第一句话，或第一段演绎",
-        draft.opening,
-        4,
-        (d, v) => d.with_opening(v),
-      ),
-    ]
+    4 =>
+      [
+        field("当前情境", draft.setting, 3, (d, v) => d.with_setting(v)),
+        field(
+          "开场白：第一句话，或第一段演绎",
+          draft.opening,
+          4,
+          (d, v) => d.with_opening(v),
+        ),
+      ]
     // ⑥ 隐藏信息与记忆规则
-    5 => [
-      field("秘密（不会主动说出）", draft.secret, 3, (d, v) => d.with_secret(v)),
-      field(
-        "记忆规则：长久互动中必须记住什么",
-        draft.memory_rules,
-        3,
-        (d, v) => d.with_memory_rules(v),
-      ),
-    ]
+    5 =>
+      [
+        field("秘密（不会主动说出）", draft.secret, 3, (d, v) => {
+          d.with_secret(v)
+        }),
+        field(
+          "记忆规则：长久互动中必须记住什么",
+          draft.memory_rules,
+          3,
+          (d, v) => d.with_memory_rules(v),
+        ),
+      ]
     // ⑧ 角色卡互操作：把角色带进带出这个应用
-    7 => [
-      column(
-        [
-          wrapped_caption(
-            "「复制为角色卡」把这个角色导出成 Tavern v2（SillyTavern 等工具都读这个格式），粘到别的工具里就能用；反过来，把那边的角色卡粘进下面的框，再点「读入角色卡」。",
-            width~,
-          ),
-          button(
-            "复制为角色卡（Tavern v2）",
-            on_click=CopyCharacterCard,
-            variant=Tonal,
-            width=200.0,
-            height=button_md_height,
-          ),
-          text(
-            "或从别处粘贴一张角色卡",
-            role=Caption,
-            width=width,
-            height=18.0,
-            align=TextStart,
-          ),
-          text_area(
-            model.card_import_text(),
-            on_input=value => CardImportTextChanged(value),
-            lines=5,
-            width~,
-          ),
-          button(
-            "读入角色卡",
-            on_click=ImportCharacterCard,
-            variant=Ghost,
-            width=136.0,
-            height=button_md_height,
-          ),
-        ],
-        spacing=8.0,
-      ),
-    ]
+    7 =>
+      [
+        column(
+          [
+            wrapped_caption(
+              "「复制为角色卡」把这个角色导出成 Tavern v2（SillyTavern 等工具都读这个格式），粘到别的工具里就能用；反过来，把那边的角色卡粘进下面的框，再点「读入角色卡」。",
+              width~,
+            ),
+            button(
+              "复制为角色卡（Tavern v2）",
+              on_click=CopyCharacterCard,
+              variant=Tonal,
+              width=200.0,
+              height=button_md_height,
+            ),
+            text(
+              "或从别处粘贴一张角色卡",
+              role=Caption,
+              width~,
+              height=18.0,
+              align=TextStart,
+            ),
+            text_area(
+              model.card_import_text(),
+              on_input=value => CardImportTextChanged(value),
+              lines=5,
+              width~,
+            ),
+            button(
+              "读入角色卡",
+              on_click=ImportCharacterCard,
+              variant=Ghost,
+              width=136.0,
+              height=button_md_height,
+            ),
+          ],
+          spacing=8.0,
+        ),
+      ]
     // ⑦ 外貌与立绘
-    _ => [
-      row(
-        [
-          // The portrait frame, beside the fields rather than above them, so
-          // the picture never pushes the form down.
-          editor_portrait(model),
-          column(
-            [
-              field("外貌", draft.appearance, 3, (d, v) => d.with_appearance(v)),
-              field(
-                "立绘文件名（characters/ 下的图片名，空 = 无）",
-                draft.portrait,
-                1,
-                (d, v) => d.with_portrait(v),
-              ),
-              field(
-                "立绘提示词（拿去生图用）",
-                draft.portrait_prompt,
-                3,
-                (d, v) => d.with_portrait_prompt(v),
-              ),
-            ],
-            spacing=10.0,
-          ),
-        ],
-        spacing=16.0,
-        align=Start,
-      ),
-    ]
+    _ =>
+      [
+        row(
+          [
+            // The portrait frame, beside the fields rather than above them, so
+            // the picture never pushes the form down.
+            editor_portrait(model),
+            column(
+              [
+                field("外貌", draft.appearance, 3, (d, v) => {
+                  d.with_appearance(v)
+                }),
+                field(
+                  "立绘文件名（characters/ 下的图片名，空 = 无）",
+                  draft.portrait,
+                  1,
+                  (d, v) => d.with_portrait(v),
+                ),
+                field(
+                  "立绘提示词（拿去生图用）",
+                  draft.portrait_prompt,
+                  3,
+                  (d, v) => d.with_portrait_prompt(v),
+                ),
+              ],
+              spacing=10.0,
+            ),
+          ],
+          spacing=16.0,
+          align=Start,
+        ),
+      ]
   }
   column(rows, spacing=10.0)
 }
@@ -514,16 +526,20 @@ fn editor_preview(model : WorldModel, width~ : Double) -> @moui.View[Msg] {
       text(
         "预览（提示词将按此组装）",
         role=Caption,
-        width=width,
+        width~,
         height=18.0,
         align=TextStart,
       ),
       container(
         wrapped_body(
-          if blocks.is_empty() { "（还没有内容）" } else { blocks.join("\n") },
+          if blocks.is_empty() {
+            "（还没有内容）"
+          } else {
+            blocks.join("\n")
+          },
           width=width - 32.0,
         ),
-        width=width,
+        width~,
         background=theme.palette.surface_variant,
         corner_radius=12.0,
         padding=16.0,

@@ -83,7 +83,14 @@ fn backdrop_canvas(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       { width, height, }
     },
     draw=fn(ctx : PaintContext, frame : @geometry.Rect) -> Unit {
-      draw_scenario(ctx, frame, scenario, pan_origin(), model.selected, style=Backdrop)
+      draw_scenario(
+        ctx,
+        frame,
+        scenario,
+        pan_origin(),
+        model.selected,
+        style=Backdrop,
+      )
     },
     semantics_label="Scenario backdrop",
   )
@@ -218,11 +225,7 @@ fn scene_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       match model.scenario.location(location) {
         Some(place) => {
           let cast = model.scene_cast()
-          let first = if cast.is_empty() {
-            None
-          } else {
-            Some(cast[0])
-          }
+          let first = if cast.is_empty() { None } else { Some(cast[0]) }
           (
             place.name(),
             "\{cast.length()} 人在场",
@@ -238,14 +241,20 @@ fn scene_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       match model.selected {
         Some(id) =>
           match model.scenario.character(id) {
-            Some(card) => (
-              card.name(),
-              identity_line(card),
-              avatar(model, card, size=40.0, radius=20.0),
-            )
+            Some(card) =>
+              (
+                card.name(),
+                identity_line(card),
+                avatar(model, card, size=40.0, radius=20.0),
+              )
             None => ("角色", "", text("", width=40.0, height=40.0))
           }
-        None => (" New World ", "选一个角色开始", text("", width=40.0, height=40.0))
+        None =>
+          (
+            " New World ",
+            "选一个角色开始",
+            text("", width=40.0, height=40.0),
+          )
       }
   }
   // The scene line names the *scene*, not the world: the world's own title
@@ -258,15 +267,27 @@ fn scene_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
     ("氛围", 64.0, ToggleAtmosphere),
     ("档案", 64.0, OpenDrawer(Profile)),
     (
-      if model.backdrop() { "背景✓" } else { "背景" },
+      if model.backdrop() {
+        "背景✓"
+      } else {
+        "背景"
+      },
       72.0,
       SetBackdrop(!model.backdrop()),
     ),
     (
-      if model.config.appearance() == "paper" { "入夜" } else { "白天" },
+      if model.config.appearance() == "paper" {
+        "入夜"
+      } else {
+        "白天"
+      },
       64.0,
       SetAppearance(
-        if model.config.appearance() == "paper" { "ink" } else { "paper" },
+        if model.config.appearance() == "paper" {
+          "ink"
+        } else {
+          "paper"
+        },
       ),
     ),
   ]
@@ -275,7 +296,9 @@ fn scene_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   let head_specs : Array[(String, Double, Msg)] = if screen.mode is Wide {
     action_specs
   } else {
-    let with_rail : Array[(String, Double, Msg)] = [("角色", 64.0, ToggleRail)]
+    let with_rail : Array[(String, Double, Msg)] = [
+      ("角色", 64.0, ToggleRail),
+    ]
     for spec in action_specs {
       with_rail.push(spec)
     }
@@ -344,7 +367,7 @@ fn scene_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
     column(
       [
         row([face, identity_column], spacing=8.0, align=Center),
-        wrap(actions, width=width, spacing=4.0),
+        wrap(actions, width~, spacing=4.0),
       ],
       spacing=6.0,
     )

@@ -220,6 +220,7 @@ pub fn CharacterDraft::from_card(card : CharacterCard) -> CharacterDraft {
 /// Turn the draft into a live card: identity is the card name (the folder
 /// database stores one file per name), the marker colour is derived from that
 /// name, and `point` comes from the free-spot helper.
+
 ///|
 /// Does the draft still differ from the card it was opened on?
 ///
@@ -247,6 +248,7 @@ pub fn CharacterDraft::differs_from(
   self.examples != card.examples()
 }
 
+///|
 pub fn CharacterDraft::to_card(
   self : CharacterDraft,
   point~ : @geometry.Point,
@@ -351,7 +353,9 @@ pub fn creator_archetypes() -> Array[CharacterArchetype] {
       goal: "找到某个人，或者某个答案。",
       secret: "他不是第一次来这里。",
       principles: "认路不问路；不欠人情；天黑前找到住处。",
-      examples: ["我走了三十天，就为问一句话。", "（笑了）你们这儿的风都是咸的。"],
+      examples: [
+        "我走了三十天，就为问一句话。", "（笑了）你们这儿的风都是咸的。",
+      ],
       user_identity: "同路的人",
       user_name: "朋友",
       boundary: "不喝酒，不谈钱。",
@@ -386,7 +390,9 @@ pub fn creator_archetypes() -> Array[CharacterArchetype] {
       goal: "把差事办完，回去交差。",
       secret: "这桩差事，他自己也心虚。",
       principles: "先问后判；没有证据不动手。",
-      examples: ["姓名。", "（翻开簿子）昨夜亥时，你在何处？"],
+      examples: [
+        "姓名。", "（翻开簿子）昨夜亥时，你在何处？",
+      ],
       user_identity: "当事一方的证人",
       user_name: "你",
       boundary: "规矩之外的事，一律不说。",
@@ -509,24 +515,22 @@ pub fn parse_generated_character(text : String) -> CharacterDraft? {
       _ => ""
     }
   }
-  Some(
-    CharacterDraft::{
-      name,
-      persona,
-      appearance: read("appearance"),
-      voice: read("voice"),
-      goal: read("goal"),
-      secret: read("secret"),
-      principles: read("principles"),
-      examples,
-      portrait: read("portrait"),
-      portrait_prompt: read("portrait_prompt"),
-      user_identity: rel_at("user_identity"),
-      user_name: rel_at("user_name"),
-      boundary: rel_at("boundary"),
-      setting: read("setting"),
-      opening: read("opening"),
-      memory_rules: read("memory_rules"),
-    },
-  )
+  Some(CharacterDraft::{
+    name,
+    persona,
+    appearance: read("appearance"),
+    voice: read("voice"),
+    goal: read("goal"),
+    secret: read("secret"),
+    principles: read("principles"),
+    examples,
+    portrait: read("portrait"),
+    portrait_prompt: read("portrait_prompt"),
+    user_identity: rel_at("user_identity"),
+    user_name: rel_at("user_name"),
+    boundary: rel_at("boundary"),
+    setting: read("setting"),
+    opening: read("opening"),
+    memory_rules: read("memory_rules"),
+  })
 }

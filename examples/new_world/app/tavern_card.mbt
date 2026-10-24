@@ -106,7 +106,7 @@ pub fn tavern_card_from_json(text : String) -> CharacterCard? {
   Some(
     CharacterCard::new(
       id=name,
-      name=name,
+      name~,
       persona=json_text(data, "description"),
       principles=json_text(data, "personality"),
       setting=json_text(data, "scenario"),
@@ -181,34 +181,35 @@ pub fn png_text_chunk(bytes : Bytes, name : String) -> String? {
 
 ///|
 /// A 32-bit big-endian number in a PNG chunk header.
-fn png_u32(bytes : Bytes, at : Int) -> Int {
-  (bytes[at].to_int() << 24) + (bytes[at + 1].to_int() << 16) +
-  (bytes[at + 2].to_int() << 8) + bytes[at + 3].to_int()
+fn png_u32(bytes : Bytes, at : Int32) -> Int32 {
+  (bytes[at].to_int() << 24) +
+  (bytes[at + 1].to_int() << 16) +
+  (bytes[at + 2].to_int() << 8) +
+  bytes[at + 3].to_int()
 }
 
 ///|
 /// A PNG chunk's four-character type.
-fn png_chunk_type(bytes : Bytes, at : Int) -> String {
-  let mut out = ""
+fn png_chunk_type(bytes : Bytes, at : Int32) -> String {
+  let chars : Array[Char] = []
   for index in 0..<4 {
-    out += bytes[at + index].to_int().to_char().to_string()
+    chars.push(bytes[at + index].to_char())
   }
-  out
+  String::from_array(chars)
 }
 
 ///|
 /// A piece of a PNG chunk as text (the keyword and the payload are ASCII).
-fn png_text(bytes : Bytes, from : Int, to : Int) -> String {
-  let mut out = ""
+fn png_text(bytes : Bytes, from : Int32, to : Int32) -> String {
+  let chars : Array[Char] = []
   let mut at = from
   while at < to {
-    let code = bytes[at].to_int()
-    if code < 128 {
-      out += code.to_char().to_string()
+    if bytes[at].to_int() < 128 {
+      chars.push(bytes[at].to_char())
     }
     at += 1
   }
-  out
+  String::from_array(chars)
 }
 
 ///|

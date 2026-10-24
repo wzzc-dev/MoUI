@@ -121,7 +121,11 @@ pub fn build_system_prompt(
   sections.push(
     "【场景】" +
     scene_title +
-    (if resolved.time_label() != "" { "（\{resolved.time_label()}）" } else { "" }),
+    (if resolved.time_label() != "" {
+      "（\{resolved.time_label()}）"
+    } else {
+      ""
+    }),
   )
   for place in scenario.locations() {
     sections.push("- " + place.name() + "：" + place.description())
@@ -171,12 +175,7 @@ pub fn prompt_preview_messages(
           let messages : Array[(String, String)] = [
             (
               "system",
-              build_scene_prompt(
-                model.scenario,
-                location,
-                cast,
-                responder,
-              ),
+              build_scene_prompt(model.scenario, location, cast, responder),
             ),
           ]
           for index, message in plan.messages {
@@ -261,6 +260,7 @@ pub fn prompt_role_label(role : String) -> String {
 }
 
 ///|
+
 ///|
 /// Frame the player's line according to its intent, so the model knows whether
 /// it is being spoken to, shown an action, or handed narration to continue.

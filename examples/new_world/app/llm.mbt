@@ -126,10 +126,7 @@ pub fn LlmRequest::user(self : LlmRequest) -> String {
 /// Every planned message rides along in order: system prompts first (persona,
 /// rolling summary, world-book hits), then the history, then the player's turn
 /// last so the model always answers the thing just said.
-pub fn llm_request_body(
-  request : LlmRequest,
-  stream~ : Bool = false,
-) -> Json {
+pub fn llm_request_body(request : LlmRequest, stream~ : Bool = false) -> Json {
   let messages : Array[Json] = []
   for message in request.messages {
     messages.push(json_message(message.0, message.1))
@@ -154,7 +151,9 @@ pub fn llm_request_body(
 /// The core json package has no boolean constructor, and the request body is
 /// JSON: the literal is parsed once, when the body is built.
 fn json_true() -> Json {
-  @json.parse("true") catch { _ => Json::string("") }
+  @json.parse("true") catch {
+    _ => Json::string("")
+  }
 }
 
 ///|

@@ -165,7 +165,10 @@ pub fn app_theme_for(appearance : String) -> @moui.Theme {
 /// The accent colour a scene mood paints with: the scene header's hairline,
 /// the ambient map's tint, the pinned-memory pin. 金/朱红 stay rare — warm
 /// and tense are the only moods that may spend them, and only as accents.
-pub fn mood_accent(theme : @moui.Theme, variant : MoodVariant) -> @graphics.Color {
+pub fn mood_accent(
+  theme : @moui.Theme,
+  variant : MoodVariant,
+) -> @graphics.Color {
   match variant {
     Calm => theme.palette.secondary
     Tense => theme.palette.danger
@@ -195,9 +198,7 @@ pub fn compact_action_theme(theme : @moui.Theme) -> @moui.Theme {
 /// A `ButtonStyle` cannot read the environment theme at paint time, so the
 /// colour is chosen here, from the caller's palette: a red *label* stays
 /// legible in both schemes, where a hardcoded red *fill* would not.
-pub fn destructive_ghost_style(
-  theme : @moui.Theme,
-) -> @views.ButtonStyle {
+pub fn destructive_ghost_style(theme : @moui.Theme) -> @views.ButtonStyle {
   let danger = theme.palette.danger
   let transparent = @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   let border = @graphics.BorderStyle::new(

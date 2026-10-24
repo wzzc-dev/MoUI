@@ -195,8 +195,7 @@ test "a bundle carries a portrait, and the card resolves it" {
   // A world sent to a friend must arrive with its faces: the portrait rides
   // as base64 beside the card, and the card names it in its 立绘 section.
   // A one-pixel PNG is enough to prove the plumbing.
-  let png =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+  let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
   let card = "# 温衍\n\n## 人设\n\n清心寡欲的散仙。\n\n## 立绘\n\n温衍.png\n"
   // The app's own encoder writes the bundle, so the escaping is the app's.
   let text = bundle_encode("WenYan", [

@@ -24,17 +24,15 @@ pub fn update_memory(
     // A memory the player keeps for themselves: it stays in the file and in
     // the drawer, but the model never reads it.
     ToggleMemoryHidden(index) =>
-      edit_entry(
-        model,
-        index,
-        host,
-        entry => Some(entry.with_hidden(!entry.hidden())),
-      )
+      edit_entry(model, index, host, entry => {
+        Some(entry.with_hidden(!entry.hidden()))
+      })
     AddMemory => add_memory(model, host)
     ToggleMemoryPin(index) =>
-      edit_entry(model, index, host, entry => Some(entry.with_pinned(!entry.pinned())))
-    DeleteMemory(index) =>
-      edit_entry(model, index, host, _entry => None)
+      edit_entry(model, index, host, entry => {
+        Some(entry.with_pinned(!entry.pinned()))
+      })
+    DeleteMemory(index) => edit_entry(model, index, host, _entry => None)
     // A proposal the player adopted: into the memory book of the character on
     // stage, never into the world book.
     AcceptMemory(index) =>
@@ -46,7 +44,10 @@ pub fn update_memory(
               // Nowhere to put it: keep the draft and say so, rather than
               // silently dropping the model's suggestion.
               (
-                log_line(model.fork(), "先在舞台上选一个角色，这段记忆才有归属"),
+                log_line(
+                  model.fork(),
+                  "先在舞台上选一个角色，这段记忆才有归属",
+                ),
                 @moui.Effect::none(),
               )
             Some(id) => {
@@ -62,7 +63,9 @@ pub fn update_memory(
                 memories,
                 memory_drafts: drop_draft(model.memory_drafts, index),
               }
-              next.push_log("已记住：「\{entry.content()}」——见长久记忆")
+              next.push_log(
+                "已记住：「\{entry.content()}」——见长久记忆",
+              )
               commit_memories(next, host, id)
             }
           }
@@ -157,7 +160,7 @@ fn edit_entry(
       }
       let memories = model.memories.clone()
       memories.set({ character_id: id, entries: kept, })
-      let next = { ..model.fork(), memories }
+      let next = { ..model.fork(), memories, }
       commit_memories(next, host, id)
     }
   }
@@ -165,10 +168,7 @@ fn edit_entry(
 
 ///|
 /// Drop one draft by index, keeping the rest in order.
-fn drop_draft(
-  drafts : Array[WorldEntry],
-  index : Int32,
-) -> Array[WorldEntry] {
+fn drop_draft(drafts : Array[WorldEntry], index : Int32) -> Array[WorldEntry] {
   let kept : Array[WorldEntry] = []
   for i in 0..<drafts.length() {
     if i != index {

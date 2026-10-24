@@ -328,21 +328,17 @@ test "intents frame the wire; the journal keeps the marked player line" {
     step(selected, ComposerModeChanged(Do)),
     DoDraftChanged("推开门"),
   )
-  let (sent, _e) = update(
-    acting,
-    SendComposer,
-    world_host={
-      list_worlds: _done => (),
-      pick_root: _done => (),
-      read_world: (_folder, _done) => (),
-      write_world: (_folder, _files, _done) => (),
-      read_config: _done => (),
-      write_config: (_content, _done) => (),
-      export_world: (_folder, _files, _done) => (),
-      import_world: _done => (),
-      copy_to_clipboard: _text => (),
-    },
-  )
+  let (sent, _e) = update(acting, SendComposer, world_host={
+    list_worlds: _done => (),
+    pick_root: _done => (),
+    read_world: (_folder, _done) => (),
+    write_world: (_folder, _files, _done) => (),
+    read_config: _done => (),
+    write_config: (_content, _done) => (),
+    export_world: (_folder, _files, _done) => (),
+    import_world: _done => (),
+    copy_to_clipboard: _text => (),
+  })
   assert_eq(
     sent.conversations.for_character("林掌柜").lines()[0].text(),
     "（动作）推开门",

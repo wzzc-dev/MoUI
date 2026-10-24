@@ -127,22 +127,24 @@ test "the memory book stores, replaces, and clears per character" {
   let book = MemoryBook::new()
   // An unseen character reads as an empty record.
   assert_eq(book.for_character("温衍").entries().length(), 0)
-  book.set(
-    { character_id: "温衍", entries: [MemoryEntry::authored("他赊过一壶酒")], },
-  )
-  book.set(
-    {
-      character_id: "温衍",
-      entries: [
-        MemoryEntry::authored("他赊过一壶酒"),
-        MemoryEntry::proposed("答应过教她御剑"),
-      ],
-    },
-  )
+  book.set({
+    character_id: "温衍",
+    entries: [MemoryEntry::authored("他赊过一壶酒")],
+  })
+  book.set({
+    character_id: "温衍",
+    entries: [
+      MemoryEntry::authored("他赊过一壶酒"),
+      MemoryEntry::proposed("答应过教她御剑"),
+    ],
+  })
   // The second set replaces the record for the same id, not appends.
   assert_eq(book.entries.length(), 1)
   assert_eq(book.for_character("温衍").entries().length(), 2)
-  book.set({ character_id: "狸奴", entries: [MemoryEntry::authored("怕打雷")], })
+  book.set({
+    character_id: "狸奴",
+    entries: [MemoryEntry::authored("怕打雷")],
+  })
   assert_eq(book.entries.length(), 2)
   book.clear()
   assert_eq(book.entries.length(), 0)
@@ -211,11 +213,16 @@ test "the memory file path sits beside the card it belongs to" {
 
 ///|
 test "a conversation mood round-trips through the journal codec" {
-  let mood : SceneMood = { title: "清虚洞府", time_label: "夜深", variant: Cold }
+  let mood : SceneMood = {
+    title: "清虚洞府",
+    time_label: "夜深",
+    variant: Cold,
+  }
   let book = ConversationBook::new()
   book.set(
-    Conversation::new(character_id="温衍", mood=mood)
-    .append(ChatLine::player("师父睡了么")),
+    Conversation::new(character_id="温衍", mood~).append(
+      ChatLine::player("师父睡了么"),
+    ),
   )
   let parsed = parse_conversations_json(book.to_json_text())
   assert_true(parsed.valid)
@@ -249,7 +256,9 @@ test "the appearance field decodes per-field and snaps bad values" {
   assert_eq(restored.endpoint(), "https://example.invalid/v1")
   assert_eq(restored.appearance(), "paper")
   // And the writer carries it.
-  assert_true(ModelConfig::new().with_appearance("ink").to_json().contains("ink"))
+  assert_true(
+    ModelConfig::new().with_appearance("ink").to_json().contains("ink"),
+  )
 }
 
 ///|
@@ -267,7 +276,10 @@ fn opened_world_for_memory() -> WorldModel {
 test "the memory drawer's CRUD lands in the book and persists" {
   let model = step(opened_world_for_memory(), Select(Some("林掌柜")))
   // Add: the input becomes an authored entry and the input clears.
-  let typed = step(model, MemoryDraftChanged("他赊过一壶酒，说发工钱就还"))
+  let typed = step(
+    model,
+    MemoryDraftChanged("他赊过一壶酒，说发工钱就还"),
+  )
   let (added, _commit) = update(typed, AddMemory)
   let entries = added.memories.for_character("林掌柜").entries()
   assert_eq(entries.length(), 1)
@@ -280,7 +292,9 @@ test "the memory drawer's CRUD lands in the book and persists" {
   assert_true(pinned.memories.for_character("林掌柜").entries()[0].pinned())
   // Unpin again.
   let unpinned = step(pinned, ToggleMemoryPin(0))
-  assert_false(unpinned.memories.for_character("林掌柜").entries()[0].pinned())
+  assert_false(
+    unpinned.memories.for_character("林掌柜").entries()[0].pinned(),
+  )
   // Delete: the entry is gone.
   let deleted = step(unpinned, DeleteMemory(0))
   assert_eq(deleted.memories.for_character("林掌柜").entries().length(), 0)

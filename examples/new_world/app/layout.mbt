@@ -145,7 +145,8 @@ pub extend Screen with Eq::{not_equal, equal}
 /// budget (the transcript shrinks, the composer stays pinned) but never moves
 /// controls to another column, which would make a short window look like a
 /// different product.
-pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {  let safe_width = if width.is_nan() || width <= 0.0 { 1200.0 } else { width }
+pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {
+  let safe_width = if width.is_nan() || width <= 0.0 { 1200.0 } else { width }
   let safe_height = if height.is_nan() || height <= 0.0 {
     800.0
   } else {
@@ -194,7 +195,9 @@ pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {  let sa
         width: safe_width,
         height: safe_height,
         mode,
-        layout: Layout::for_width(safe_width.min(Layout::default().content_width())),
+        layout: Layout::for_width(
+          safe_width.min(Layout::default().content_width()),
+        ),
         stage,
         rail,
         page_padding,
@@ -210,7 +213,9 @@ pub fn Screen::for_viewport(width : Double, height : Double) -> Screen {  let sa
         width: safe_width,
         height: safe_height,
         mode,
-        layout: Layout::for_width(safe_width.min(Layout::default().content_width())),
+        layout: Layout::for_width(
+          safe_width.min(Layout::default().content_width()),
+        ),
         stage,
         rail: 0.0,
         page_padding,

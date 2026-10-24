@@ -80,7 +80,9 @@ pub fn update_creation(
           kind="provider",
           label="Draft character",
           run=dispatch => {
-            runner(request, reply => dispatch(CharacterDrafted(reply)), _delta => ())
+            runner(request, reply => dispatch(CharacterDrafted(reply)), _delta => {
+              ()
+            })
           },
         ),
       )
@@ -213,7 +215,9 @@ pub fn update_creation(
             kind="provider",
             label="Generate world",
             run=dispatch => {
-              runner(request, reply => dispatch(WorldGenerated(reply)), _delta => ())
+              runner(request, reply => dispatch(WorldGenerated(reply)), _delta => {
+                ()
+              })
             },
           ),
         )

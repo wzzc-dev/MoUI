@@ -66,12 +66,17 @@ test "the parsed card carries every section and its spot" {
       assert_eq(card.point().y, 210.0)
       // v2 blocks.
       assert_eq(card.principles(), "不问不说；先算账后说话。")
-      assert_eq(card.examples(), ["嗯，酒烫好了。", "（把账本推过来）自己看。"])
+      assert_eq(card.examples(), [
+        "嗯，酒烫好了。", "（把账本推过来）自己看。",
+      ])
       assert_eq(card.relationship().user_identity(), "过街老鼠")
       assert_eq(card.relationship().user_name(), "小兄弟")
       assert_eq(card.relationship().boundary(), "不过问身世")
       assert_eq(card.setting(), "夜雨，店里只剩一位客人。")
-      assert_eq(card.opening(), "（抬头看了你一眼）……坐吧，今儿雨大。")
+      assert_eq(
+        card.opening(),
+        "（抬头看了你一眼）……坐吧，今儿雨大。",
+      )
       assert_eq(card.memory_rules(), "答应过的事必须记得。")
     }
     None => assert_true(false)
@@ -90,7 +95,10 @@ test "the sample world's memories parse with pins and provenance" {
       assert_true(entries[0].source() is Authored)
       assert_eq(entries[1].content(), "答应过教小兄弟认酒坛")
       assert_true(entries[1].pinned())
-      assert_eq(entries[2].content(), "他说想看海——那是他娘亲的故乡")
+      assert_eq(
+        entries[2].content(),
+        "他说想看海——那是他娘亲的故乡",
+      )
       assert_true(entries[2].source() is Adopted)
     }
     None => fail("sample world must parse")
@@ -130,12 +138,14 @@ test "save → load is lossless for the fields the model owns" {
           assert_eq(card.secret(), "后堂藏着一坛老酒")
           // v2 fields survive the round trip too.
           assert_eq(card.principles(), "不问不说；先算账后说话。")
-          assert_eq(
-            card.examples(),
-            ["嗯，酒烫好了。", "（把账本推过来）自己看。"],
-          )
+          assert_eq(card.examples(), [
+            "嗯，酒烫好了。", "（把账本推过来）自己看。",
+          ])
           assert_eq(card.relationship().user_name(), "小兄弟")
-          assert_eq(card.opening(), "（抬头看了你一眼）……坐吧，今儿雨大。")
+          assert_eq(
+            card.opening(),
+            "（抬头看了你一眼）……坐吧，今儿雨大。",
+          )
         }
         None => assert_true(false)
       }
@@ -155,7 +165,9 @@ test "an unmarked (v1) world loads blank six-block fields with one warning" {
     world_md: "# 老酒馆\n\n打烊三年的酒馆。\n",
     book_md: "",
     character_files: [
-      ("characters/老掌柜.md", "# 老掌柜\n\n## 人设\n\n老掌柜。\n\n## 目标\n\n守着铺子\n"),
+      (
+        "characters/老掌柜.md", "# 老掌柜\n\n## 人设\n\n老掌柜。\n\n## 目标\n\n守着铺子\n",
+      ),
     ],
     memory_files: [],
     conversations_json: "",

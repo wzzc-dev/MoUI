@@ -272,7 +272,10 @@ pub extend Conversation with Debug::{to_repr}
 pub extend Conversation with Eq::{not_equal, equal}
 
 ///|
-pub fn Conversation::new(character_id~ : String, mood? : SceneMood) -> Conversation {
+pub fn Conversation::new(
+  character_id~ : String,
+  mood? : SceneMood,
+) -> Conversation {
   {
     character_id,
     lines: [],

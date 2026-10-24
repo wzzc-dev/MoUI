@@ -98,10 +98,7 @@ fn shell_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 /// Wide: character rail | stage, centered as one block.
 fn wide_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   row(
-    [
-      characters_rail(model, screen.rail),
-      stage_view(model, screen),
-    ],
+    [characters_rail(model, screen.rail), stage_view(model, screen)],
     spacing=screen.layout.gutter,
     justify=Center,
   )
@@ -121,10 +118,7 @@ fn medium_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
       stage: (screen.stage - screen.rail - screen.layout.gutter).max(320.0),
     }
     row(
-      [
-        characters_rail(model, screen.rail),
-        stage_view(model, narrowed),
-      ],
+      [characters_rail(model, screen.rail), stage_view(model, narrowed)],
       spacing=screen.layout.gutter,
       justify=Center,
     )
@@ -139,57 +133,54 @@ fn medium_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 /// whole screen for reading and the whole screen for choosing.
 fn compact_body(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   if model.rail_open() {
-    overlay_host(
-      stage_view(model, screen),
-      [
-        @views.PresentationSpec::new(
-          id="new-world:roster",
-          kind=Dialog,
-          content=card(
-            column(
-              [
-                row(
-                  [
-                    text(
-                      "角色",
-                      role=Subtitle,
-                      width=screen.stage - 96.0,
-                      height=28.0,
-                      align=TextStart,
-                    ),
-                    button(
-                      "关闭",
-                      on_click=ToggleRail,
-                      variant=Ghost,
-                      width=64.0,
-                      height=button_sm_height,
-                    ),
-                  ],
-                  spacing=action_gap,
-                  align=Center,
-                ),
-                divider(),
-                scroll_view(
-                  characters_rail(model, screen.stage),
-                  width=screen.stage - 24.0,
-                  height=(screen.height - 160.0).max(200.0),
-                ),
-              ],
-              spacing=8.0,
-            ),
-            width=screen.stage,
-            padding=12.0,
+    overlay_host(stage_view(model, screen), [
+      @views.PresentationSpec::new(
+        id="new-world:roster",
+        kind=Dialog,
+        content=card(
+          column(
+            [
+              row(
+                [
+                  text(
+                    "角色",
+                    role=Subtitle,
+                    width=screen.stage - 96.0,
+                    height=28.0,
+                    align=TextStart,
+                  ),
+                  button(
+                    "关闭",
+                    on_click=ToggleRail,
+                    variant=Ghost,
+                    width=64.0,
+                    height=button_sm_height,
+                  ),
+                ],
+                spacing=action_gap,
+                align=Center,
+              ),
+              divider(),
+              scroll_view(
+                characters_rail(model, screen.stage),
+                width=screen.stage - 24.0,
+                height=(screen.height - 160.0).max(200.0),
+              ),
+            ],
+            spacing=8.0,
           ),
-          modality=NonModal,
-          dismiss=@views.PresentationDismissPolicy::new(
-            outside_tap=true,
-            escape=true,
-            message=Some(ToggleRail),
-          ),
-          presented=true,
+          width=screen.stage,
+          padding=12.0,
         ),
-      ],
-    )
+        modality=NonModal,
+        dismiss=@views.PresentationDismissPolicy::new(
+          outside_tap=true,
+          escape=true,
+          message=Some(ToggleRail),
+        ),
+        presented=true,
+      ),
+    ])
   } else {
     stage_view(model, screen)
   }
@@ -250,7 +241,10 @@ fn main_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
     Compact => compact_body(model, screen)
   }
   padding_edges(
-    column([shell_header(model, screen), expanded(body, weight=1.0)], spacing=12.0),
+    column(
+      [shell_header(model, screen), expanded(body, weight=1.0)],
+      spacing=12.0,
+    ),
     top=screen.page_padding,
     right=screen.page_padding,
     bottom=screen.page_padding,

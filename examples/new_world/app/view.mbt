@@ -13,7 +13,9 @@
 /// their typed messages. Panning is transient view state driven by a drag
 /// modifier, so scrolling never enters the model and never gets persisted.
 ///
-///| Package-wide `using` for the shared view/paint vocabulary. `render.mbt`,
+
+///|
+/// Package-wide `using` for the shared view/paint vocabulary. `render.mbt`,
 /// `shell.mbt`, `stage_view.mbt`, `transcript_view.mbt`, `drawers.mbt`, and
 /// this file all compose controls, so the names are introduced once here
 /// instead of being duplicated per file.
@@ -177,8 +179,8 @@ fn portrait_frame(
   let content = if uri != "" {
     image(
       uri,
-      width=width,
-      height=height,
+      width~,
+      height~,
       fit=Cover,
       corner_radius=radius,
       accessibility_label=card.name() + " 的立绘",
@@ -191,8 +193,8 @@ fn portrait_frame(
         text(
           first_grapheme(card.name()),
           role=Title,
-          width=width,
-          height=height,
+          width~,
+          height~,
           align=TextCenter,
         ),
       ],
@@ -204,8 +206,8 @@ fn portrait_frame(
   container(
     container(
       content,
-      width=width,
-      height=height,
+      width~,
+      height~,
       background=theme.palette.surface_variant,
       corner_radius=radius,
     ),
@@ -660,10 +662,7 @@ fn settings_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
             // The choice persists with the rest of the configuration, so the
             // product reopens on the surface the player left it on.
             segmented_control(
-              [
-                choice_item("paper", "宣纸"),
-                choice_item("ink", "墨蓝"),
-              ],
+              [choice_item("paper", "宣纸"), choice_item("ink", "墨蓝")],
               selected=config.appearance(),
               on_select=value => SetAppearance(value),
               width=wide,

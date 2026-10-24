@@ -72,10 +72,7 @@ fn mood_switcher(mood : SceneMood) -> @moui.View[Msg] {
 ///|
 /// The full-screen map with its own top bar: the scene title on the left, the
 /// mood chips and the 退出 button on the right.
-fn atmosphere_content(
-  model : WorldModel,
-  screen : Screen,
-) -> @moui.View[Msg] {
+fn atmosphere_content(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
   let width = screen.width - screen.page_padding * 2.0
   let mood = scene_mood_of(model)
   let title = if mood.title() != "" {
@@ -88,7 +85,12 @@ fn atmosphere_content(
       row(
         [
           text(
-            title + (if mood.time_label() != "" { " · \{mood.time_label()}" } else { "" }),
+            title +
+            (if mood.time_label() != "" {
+              " · \{mood.time_label()}"
+            } else {
+              ""
+            }),
             role=Subtitle,
             width=width - 104.0,
             height=32.0,

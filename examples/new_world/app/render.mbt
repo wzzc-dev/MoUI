@@ -110,7 +110,8 @@ pub fn draw_scenario(
     ),
   )
   for place in scenario.locations() {
-    let highlighted = style.ring() && selected_place_for(selected, scenario, place.id())
+    let highlighted = style.ring() &&
+      selected_place_for(selected, scenario, place.id())
     draw_location(ctx, place, base, highlighted, style~)
   }
   for card in scenario.characters() {

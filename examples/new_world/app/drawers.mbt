@@ -19,31 +19,32 @@ fn drawer_specs(
 ) -> Array[@views.PresentationSpec[Msg]] {
   match model.drawer {
     None => []
-    Some(kind) => [
-      @views.PresentationSpec::new(
-        id="new-world:drawer",
-        kind=Popover,
-        // Each presentation carries the theme: the overlay host is a sibling
-        // of the app now, so the environment does not reach it on its own.
-        content=drawer_content(model, screen, kind).theme(
-          app_theme_for(model.config.appearance()),
-        ),
-        anchor=Viewport(@geometry.Point::new(x=screen.width, y=0.0)),
-        placement=Some(
-          @views.PresentationPlacement::new(
-            candidates=[RightStart],
-            viewport_insets=@geometry.Insets::all(10.0),
+    Some(kind) =>
+      [
+        @views.PresentationSpec::new(
+          id="new-world:drawer",
+          kind=Popover,
+          // Each presentation carries the theme: the overlay host is a sibling
+          // of the app now, so the environment does not reach it on its own.
+          content=drawer_content(model, screen, kind).theme(
+            app_theme_for(model.config.appearance()),
           ),
+          anchor=Viewport(@geometry.Point::new(x=screen.width, y=0.0)),
+          placement=Some(
+            @views.PresentationPlacement::new(
+              candidates=[RightStart],
+              viewport_insets=@geometry.Insets::all(10.0),
+            ),
+          ),
+          modality=NonModal,
+          dismiss=@views.PresentationDismissPolicy::new(
+            outside_tap=true,
+            escape=true,
+            message=Some(CloseDrawer),
+          ),
+          presented=true,
         ),
-        modality=NonModal,
-        dismiss=@views.PresentationDismissPolicy::new(
-          outside_tap=true,
-          escape=true,
-          message=Some(CloseDrawer),
-        ),
-        presented=true,
-      ),
-    ]
+      ]
   }
 }
 
@@ -76,7 +77,13 @@ fn drawer_content(
       [
         row(
           [
-            text(title, role=Subtitle, width=width - 96.0, height=28.0, align=TextStart),
+            text(
+              title,
+              role=Subtitle,
+              width=width - 96.0,
+              height=28.0,
+              align=TextStart,
+            ),
             button(
               "关闭",
               on_click=CloseDrawer,
@@ -93,7 +100,11 @@ fn drawer_content(
         // preview are all one click away.
         drawer_switcher(model, kind, width),
         divider(),
-        scroll_view(body, width=width - 24.0, height=(screen.height - 190.0).max(200.0)),
+        scroll_view(
+          body,
+          width=width - 24.0,
+          height=(screen.height - 190.0).max(200.0),
+        ),
       ],
       spacing=8.0,
     ),
@@ -126,7 +137,7 @@ fn drawer_switcher(
         label,
         selected=kind == current,
         on_click=Some(OpenDrawer(kind)),
-        theme=theme,
+        theme~,
         width=chip_width(label),
         height=button_sm_height,
       ),
@@ -152,7 +163,10 @@ fn world_book_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
   )
   if entries.is_empty() {
     rows.push(
-      wrapped_caption("还没有条目。加一条，世界的细节就有了自己的位置。", width~),
+      wrapped_caption(
+        "还没有条目。加一条，世界的细节就有了自己的位置。",
+        width~,
+      ),
     )
   }
   let editing = model.world_book_edit()
@@ -179,7 +193,7 @@ fn world_book_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
                 text(
                   "关键词（用逗号分隔）",
                   role=Caption,
-                  width=width,
+                  width~,
                   height=18.0,
                   align=TextStart,
                 ),
@@ -192,7 +206,7 @@ fn world_book_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
                 text(
                   "内容",
                   role=Caption,
-                  width=width,
+                  width~,
                   height=18.0,
                   align=TextStart,
                 ),
@@ -246,6 +260,7 @@ fn world_book_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
+
 ///|
 /// The prompt preview: what the model will actually receive, message by
 /// message.
@@ -276,7 +291,7 @@ fn prompt_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
         text(
           prompt_role_label(role),
           role=Caption,
-          width=width,
+          width~,
           height=18.0,
           align=TextStart,
         ),
@@ -296,6 +311,7 @@ fn prompt_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
+
 ///|
 /// The profile drawer: the whole card, block by block, in the same six-block
 /// order the editor edits. Read-only here — the editor is the write path.
@@ -304,11 +320,17 @@ fn profile_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
   match model.selected {
     None =>
       rows.push(
-        wrapped_caption("先在舞台上选一个角色。这里会是 TA 的完整档案。", width~),
+        wrapped_caption(
+          "先在舞台上选一个角色。这里会是 TA 的完整档案。",
+          width~,
+        ),
       )
     Some(id) =>
       match model.scenario.character(id) {
-        None => rows.push(wrapped_caption("这个角色已不在当前世界里。", width~))
+        None =>
+          rows.push(
+            wrapped_caption("这个角色已不在当前世界里。", width~),
+          )
         Some(card) => {
           // The drawer's primary action comes first: the player opens a
           // dossier to change something, not to scroll to the bottom.
@@ -349,7 +371,9 @@ fn profile_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
             ),
           )
           rows.push(profile_row("身份与背景", card.persona(), width~))
-          rows.push(profile_row("性格与行为原则", card.principles(), width~))
+          rows.push(
+            profile_row("性格与行为原则", card.principles(), width~),
+          )
           rows.push(profile_row("说话风格", card.voice(), width~))
           if !card.examples().is_empty() {
             rows.push(
@@ -358,27 +382,33 @@ fn profile_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
           }
           let relationship = card.relationship()
           let relationship_text = [
-            if relationship.user_identity() != "" {
-              "玩家身份：\{relationship.user_identity()}"
-            } else {
-              ""
-            },
-            if relationship.user_name() != "" {
-              "玩家称呼：\{relationship.user_name()}"
-            } else {
-              ""
-            },
-            if relationship.boundary() != "" {
-              "边界：\{relationship.boundary()}"
-            } else {
-              ""
-            },
-          ].filter(line => line != "").join("\n")
-          rows.push(profile_row("与用户的关系", relationship_text, width~))
+              if relationship.user_identity() != "" {
+                "玩家身份：\{relationship.user_identity()}"
+              } else {
+                ""
+              },
+              if relationship.user_name() != "" {
+                "玩家称呼：\{relationship.user_name()}"
+              } else {
+                ""
+              },
+              if relationship.boundary() != "" {
+                "边界：\{relationship.boundary()}"
+              } else {
+                ""
+              },
+            ]
+            .filter(line => line != "")
+            .join("\n")
+          rows.push(
+            profile_row("与用户的关系", relationship_text, width~),
+          )
           rows.push(profile_row("当前情境", card.setting(), width~))
           rows.push(profile_row("开场白", card.opening(), width~))
           rows.push(profile_row("TA想要的", card.goal(), width~))
-          rows.push(profile_row("秘密（不会主动说出）", card.secret(), width~))
+          rows.push(
+            profile_row("秘密（不会主动说出）", card.secret(), width~),
+          )
           rows.push(profile_row("记忆规则", card.memory_rules(), width~))
           let hint = portrait_prompt_hint(card)
           if hint != "" {
@@ -392,15 +422,16 @@ fn profile_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
 
 ///|
 /// One profile block: a small caption and the prose under it.
-fn profile_row(title : String, body : String, width~ : Double) -> @moui.View[Msg] {
+fn profile_row(
+  title : String,
+  body : String,
+  width~ : Double,
+) -> @moui.View[Msg] {
   if body == "" {
     return empty()
   }
   column(
-    [
-      wrapped_caption(title, width~),
-      wrapped_body(body, width~),
-    ],
+    [wrapped_caption(title, width~), wrapped_body(body, width~)],
     spacing=2.0,
   )
 }
@@ -415,7 +446,10 @@ fn memory_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
   match model.selected {
     None =>
       rows.push(
-        wrapped_caption("选一个角色，这里会是 TA 与你的共同记忆。", width~),
+        wrapped_caption(
+          "选一个角色，这里会是 TA 与你的共同记忆。",
+          width~,
+        ),
       )
     Some(id) => {
       let entries = model.memories.for_character(id).entries()
@@ -451,7 +485,11 @@ fn memory_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
                 wrapped_caption(
                   "进展 · " +
                   entry.topic() +
-                  (if superseded { "（已被更新）" } else { "（当前状态）" }),
+                  (if superseded {
+                    "（已被更新）"
+                  } else {
+                    "（当前状态）"
+                  }),
                   width~,
                 )
               } else {
@@ -619,7 +657,13 @@ fn events_body(model : WorldModel, width : Double) -> @moui.View[Msg] {
     [
       row(
         [
-          text("事件", role=Body, width=width - 104.0, height=28.0, align=TextStart),
+          text(
+            "事件",
+            role=Body,
+            width=width - 104.0,
+            height=28.0,
+            align=TextStart,
+          ),
           button(
             "推进时间",
             on_click=AdvanceTime,

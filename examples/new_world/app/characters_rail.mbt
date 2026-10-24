@@ -173,7 +173,7 @@ fn roster_section(model : WorldModel, width : Double) -> @moui.View[Msg] {
     column(rows, spacing=6.0),
     // The rows and the scroll share one width: a narrower scroll clipped the
     // row that carries the 「＋ 设定人物」 button.
-    width=width,
+    width~,
     height=(rows.length().to_double() * 42.0).min(420.0),
   )
 }

@@ -66,8 +66,13 @@ pub fn is_base64_text(text : String) -> Bool {
     let ok = (ch >= 'A' && ch <= 'Z') ||
       (ch >= 'a' && ch <= 'z') ||
       (ch >= '0' && ch <= '9') ||
-      ch == '+' || ch == '/' || ch == '=' ||
-      ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t'
+      ch == '+' ||
+      ch == '/' ||
+      ch == '=' ||
+      ch == ' ' ||
+      ch == '\n' ||
+      ch == '\r' ||
+      ch == '\t'
     if !ok {
       return false
     }

@@ -164,7 +164,9 @@ test "a long conversation with memories still fits the budget" {
   let memories : Array[MemoryEntry] = []
   let mut m = 0
   while m < 12 {
-    memories.push(MemoryEntry::authored("第 \{m} 条记忆，一条不太短的事实。"))
+    memories.push(
+      MemoryEntry::authored("第 \{m} 条记忆，一条不太短的事实。"),
+    )
     m += 1
   }
   let plan = plan_messages(
@@ -192,9 +194,7 @@ test "a three-hundred-line conversation only builds the window" {
   // invested. The older lines stay one click away.
   let mut conversation = Conversation::new(character_id="林掌柜")
   for index in 0..<300 {
-    conversation = conversation.append(
-      ChatLine::player("第 \{index} 句"),
-    )
+    conversation = conversation.append(ChatLine::player("第 \{index} 句"))
     conversation = conversation.append(
       ChatLine::character("林掌柜", "回 \{index}"),
     )
@@ -202,13 +202,7 @@ test "a three-hundred-line conversation only builds the window" {
   let model = step(crowded_world(), Select(Some("林掌柜")))
   let with_history = {
     ..model,
-    conversations: {
-      entries: [
-        {
-          ..conversation,
-        },
-      ],
-    },
+    conversations: { entries: [{ ..conversation, }], },
   }
   // Three hundred turns do not accumulate: the conversation keeps its capped
   // window of raw lines (the rest lives in the rolling summary), and the
@@ -221,7 +215,10 @@ test "a three-hundred-line conversation only builds the window" {
   let older = conversation.lines().length() - transcript_window_default
   assert_true(older > 0)
   assert_true(
-    tree_has_text(view, "更早的对话（还有 " + older.to_string() + " 条）"),
+    tree_has_text(
+      view,
+      "更早的对话（还有 " + older.to_string() + " 条）",
+    ),
   )
   assert_false(tree_has_text(view, "第 0 句"))
   // The newest lines are.

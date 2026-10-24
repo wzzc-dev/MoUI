@@ -6,7 +6,9 @@
 /// A world with one fully-filled v2 card, opened through the real parser.
 fn editor_world() -> WorldModel {
   let files : Array[(String, String)] = [
-    ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n\n## 版本\n\n- 卡档: v2\n"),
+    (
+      "world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n\n## 版本\n\n- 卡档: v2\n",
+    ),
     (
       "characters/温衍.md", "# 温衍\n\n## 人设\n\n清心寡欲的散仙。\n\n## 行为原则\n\n感情藏在细节里。\n\n## 说话方式\n\n舒缓克制\n\n## 示例台词\n\n坐吧。\n既来了，便坐吧。\n\n## 与用户的关系\n\n- 玩家身份: 徒弟\n- 玩家称呼: 狸奴\n- 边界: 自己的事一概不提\n\n## 当前情境\n\n夜深，洞府。\n\n## 开场白\n\n（搁下书卷）这么晚了，还不歇息？\n\n## 目标\n\n护徒弟走完这一关\n\n## 秘密\n\n他早已算出自己命里有一劫\n\n## 记忆规则\n\n答应过的事必须记得。\n",
     ),
@@ -62,7 +64,9 @@ test "saving writes the six blocks back and keeps the card's identity" {
   let screen_model = step(editor_world(), EditCharacter("温衍"))
   let edited = step(
     screen_model,
-    EditorChanged(screen_model.editor_draft().with_principles("先看出口再坐下")),
+    EditorChanged(
+      screen_model.editor_draft().with_principles("先看出口再坐下"),
+    ),
   )
   let (saved, effect) = update(edited, SaveCharacter)
   assert_false(saved.editor_open())
@@ -71,7 +75,10 @@ test "saving writes the six blocks back and keeps the card's identity" {
       assert_eq(card.principles(), "先看出口再坐下")
       // The rest of the card survived the round trip.
       assert_eq(card.persona(), "清心寡欲的散仙。")
-      assert_eq(card.opening(), "（搁下书卷）这么晚了，还不歇息？")
+      assert_eq(
+        card.opening(),
+        "（搁下书卷）这么晚了，还不歇息？",
+      )
       assert_eq(card.relationship().user_name(), "狸奴")
       assert_eq(card.examples().length(), 2)
       // Identity is not editable here: id, name, marker colour stay.
@@ -113,12 +120,16 @@ test "the example buffer splits on save, dropping blank lines" {
   let screen_model = step(editor_world(), EditCharacter("温衍"))
   let typed = step(
     screen_model,
-    EditorExamplesChanged("嗯。\n\n（把茶推过来）喝吧。\n  \n再说。"),
+    EditorExamplesChanged(
+      "嗯。\n\n（把茶推过来）喝吧。\n  \n再说。",
+    ),
   )
   let (saved, _effect) = update(typed, SaveCharacter)
   match saved.scenario().character("温衍") {
     Some(card) =>
-      assert_eq(card.examples(), ["嗯。", "（把茶推过来）喝吧。", "再说。"])
+      assert_eq(card.examples(), [
+        "嗯。", "（把茶推过来）喝吧。", "再说。",
+      ])
     None => fail("the card must exist")
   }
 }
@@ -152,16 +163,21 @@ test "the editor shows the portrait in a frame, beside the fields" {
   // The portrait block is one of the seven, and its preview names the frame.
   assert_true(tree_has_text(open_view, "外貌与立绘"))
   let portrait_view = view_for(
-    step(
-      step(editor_world(), EditCharacter("温衍")),
-      EditorTabChanged(6),
-    ),
+    step(step(editor_world(), EditCharacter("温衍")), EditorTabChanged(6)),
     screen,
   )
-  assert_true(tree_has_text(portrait_view, "立绘预览（透明底已垫好）"))
+  assert_true(
+    tree_has_text(portrait_view, "立绘预览（透明底已垫好）"),
+  )
   // The fields sit next to the picture, not under it.
-  assert_true(tree_has_text(portrait_view, "立绘文件名（characters/ 下的图片名，空 = 无）"))
-  assert_true(tree_has_text(portrait_view, "立绘提示词（拿去生图用）"))
+  assert_true(
+    tree_has_text(
+      portrait_view, "立绘文件名（characters/ 下的图片名，空 = 无）",
+    ),
+  )
+  assert_true(
+    tree_has_text(portrait_view, "立绘提示词（拿去生图用）"),
+  )
 }
 
 ///|
@@ -198,21 +214,17 @@ test "saving a card refreshes the world's portraits" {
   // can bring a new picture into the folder (the editor's 立绘 field points
   // at a file the player just dropped in beside the card), and the cache has
   // to learn about it — otherwise the picture only shows up after a restart.
-  let png =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+  let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
   let mut written : Array[(String, String)] = []
   let host : WorldHost = {
     list_worlds: _done => (),
     pick_root: _done => (),
     read_world: (_folder, done) => {
       // The folder now carries the picture the card points at.
-      done(
-        true,
-        [
-          ("world.md", "# 雨夜酒馆\n"),
-          ("characters/温衍.jpg", png),
-        ],
-      )
+      done(true, [
+        ("world.md", "# 雨夜酒馆\n"),
+        ("characters/温衍.jpg", png),
+      ])
     },
     write_world: (_folder, files, done) => {
       written = files
@@ -237,11 +249,7 @@ test "saving a card refreshes the world's portraits" {
     effect,
     _m => (),
     _d => (),
-    (_descriptor, run) => {
-      run(_m => {
-        read_again = true
-      })
-    },
+    (_descriptor, run) => run(_m => read_again = true),
     (_descriptor, _task) => (),
   )
   assert_true(read_again)
@@ -259,20 +267,26 @@ test "saving a card refreshes the world's portraits" {
 test "the refreshed portraits reach the model" {
   // The message the refresh carries is the model's cache: the picture is
   // there right after the save, without a restart.
-  let png =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-  let model = step(editor_world(), WorldPortraitsRefreshed([("characters/温衍.jpg", png)]))
+  let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+  let model = step(
+    editor_world(),
+    WorldPortraitsRefreshed([("characters/温衍.jpg", png)]),
+  )
   assert_eq(model.portraits.length(), 1)
   // A card that names the picture finds it in the refreshed cache.
-  let card = match parse_character_md("# 温衍\n\n## 人设\n\n散仙。\n\n## 立绘\n\n温衍.jpg\n") {
+  let card = match
+    parse_character_md(
+      "# 温衍\n\n## 人设\n\n散仙。\n\n## 立绘\n\n温衍.jpg\n",
+    ) {
     Some(c) => c
     None => fail("the card must parse")
   }
   assert_eq(card.portrait(), "温衍.jpg")
   // The picture's own type decides the data URI's mime: a .jpg is a jpeg.
-  assert_true(portrait_uri(card, model.portraits).has_prefix("data:image/jpeg;base64,"))
+  assert_true(
+    portrait_uri(card, model.portraits).has_prefix("data:image/jpeg;base64,"),
+  )
 }
-
 
 ///|
 test "the drawer offers every panel" {
