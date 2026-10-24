@@ -226,6 +226,37 @@ bar carries read-only panels only (audit / console / problems / search /
 terminal), and the AI workbench mode (PsAi) keeps its own centre composer.
 `RightView` collapses to `RvContext` / `RvWorkspace` / `RvHidden`.
 
+## Editor-first workbench (2026-10)
+
+Studio is organised as an editor with pluggable surfaces (ADR 0042), mirroring
+the skeleton of VS Code / IntelliJ / Zed at MoonBit-static scale. The
+`moui_studio/workbench` package owns the editor core; `app` only composes and
+sets policy:
+
+- **Documents** (`DocumentStore`): every open file is a document with a
+  `TextBuffer` (draft, saved text, caret, selection, markdown session) and a
+  dirty flag, plus one pinned, unclosable Studio document. Explorer, tab strip,
+  and editors all read the same store — there is no second writable copy.
+- **Editor providers** (`EditorProvider` + `resolve_provider`): the visual
+  canvas, design workbench, blocks workbench, MoonBit code editor, markdown
+  renderer, and mono fallback are providers with priorities and an
+  `accepts(document)` claim. Resolution order: preferred provider → highest
+  priority → first registered. Disabling the markdown plugin makes `.md`
+  documents fall back to the mono editor automatically.
+- **Editor area** (`editor_area`): one tab strip over the provider-rendered
+  body. The centre surface no longer switches on perspective directly —
+  visual/design/blocks/code/preview are what the active document resolves to.
+- **Panel registry** (`PanelContribution`): the bottom bar's tab headers,
+  badges, selected state, and bodies derive from a static contribution table;
+  a plugin's absence (terminal) means the panel is not registered. Left/right
+  columns are not yet registry-driven (line-budget ratchet; see ADR 0042).
+- **Command registry** (`CommandContribution`): the command palette (40
+  visible entries) and the executor (`run_studio_command`) share one table of
+  43 contributions — entries with an empty `label_key` stay internal (old
+  `ws.visual` / `ws.code` / `right.context` ids). `Apply` routes through the
+  pure update, `Dispatch` through the effect loop to services; an unknown id
+  is a no-op, so the table and the executor can no longer drift.
+
 ## Dual-track differential gate
 
 `services/diff` is a hard gate, not a report. It runs the four built-in samples

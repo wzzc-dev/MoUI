@@ -219,7 +219,7 @@ fn file_budgets() -> Array[FileBudget] {
     // （with_pending_roll_call 助手），净增 12 行。
     // 2026-10-12 (AI 提案修复): 补忙碌占位卡/真实回执回归 + 部分字段
     // update 合并用例；按先例结算到当前实测值。
-    { path: "moui_studio/app/app_test.mbt", max_lines: 2181, },
+    { path: "moui_studio/app/app_test.mbt", max_lines: 2178, },
     // G2/G4/G7 (2026-10-07): 工作区导入/多标签/搜索/插件管理/聊天路由
     // 汇聚在组合根 update;按仓库先例登记行数预算。
     // VS Code 资源管理器切片 (2026-10-09): 就地新建文件夹（@x/fs 直接 I/O,
@@ -241,9 +241,9 @@ fn file_budgets() -> Array[FileBudget] {
     // 2026-10-13 (右栏 VS Code 侧栏分页): 禁用插件的归一化抽成共享
     // `normalize_disabled_plugins`（TogglePlugin 与 boot 恢复共用），两个臂
     // 各改走它，净 +3 折行;按先例结算到当前实测值。
-    // 2026-10-16: 2672 -> 2690(program 增 canvas_frame 注入参数与
-    // 调色板拖拽两个视口上报臂,换算需要该闭包独有的锚点回调)。
-    { path: "moui_studio/app/app.mbt", max_lines: 2690, },
+    // 2026-10-16: 2672 -> 2690(canvas_frame 注入 + 调色板视口臂)。
+    // 2026-10-24 (ADR 0042): 2690 -> 2682(文档/窗格状态臂迁 workbench)。
+    { path: "moui_studio/app/app.mbt", max_lines: 2682, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },

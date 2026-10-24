@@ -57,5 +57,6 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0039 | [Studio shell completion line and budget ratchet](0039-studio-shell-completion-line.md) | 2026-10-12 | Accepted |
 | 0040 | [Studio shell completion stages (amends 0039)](0040-studio-shell-completion-stages.md) | 2026-10-12 | Accepted |
 | 0041 | [Studio shell Msg structural floor (amends 0040 A-tier metrics)](0041-studio-shell-variant-structural-floor.md) | 2026-10-13 | Accepted |
+| 0042 | [Studio editor-first workbench (workbench package and narrow extension points)](0042-studio-editor-first-workbench.md) | 2026-10-24 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

@@ -31,8 +31,6 @@ This file is generated from repository manifests and validator reports.
 | ./moui_devtools |
 | ./moui_agent |
 | ./moui_agent_mcp |
-| ./window/modules/window |
-| ./window/modules/windowing |
 | ./examples/agent_counter |
 | ./tools |
 | ./tools_product |
@@ -57,7 +55,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/mo_workbench |
 | ./examples/code_editor |
 | ./examples/webview_demo |
-| ./examples/momark |
 | ./examples/terminal |
 | ./examples/tui_layers |
 | ./examples/new_world |
@@ -118,7 +115,6 @@ This file is generated from repository manifests and validator reports.
 | Mo Workbench | examples/mo_workbench | yes |
 | Code Editor | examples/code_editor | no |
 | WebView Demo | examples/webview_demo | no |
-| MoMark | examples/momark | no |
 | Terminal | examples/terminal | yes |
 | TUI Layers | examples/tui_layers | no |
 | New World | examples/new_world | yes |

@@ -150,7 +150,12 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // (palette_pointer_to_chain / update_palette_drag_pointer /
       // update_palette_drop_at / palette_expression_drop_at)+blocks_pane
       // 的行手势相位映射;SHELLDBG 调试残留同步移除(负抵扣)→ 27,750。
-      max_count: 27750,
+      // 编辑器优先工作台(2026-10-24,ADR 0042):M0-M6 收敛——窗格状态入
+      // workbench.WorkbenchState、文档态入 DocumentStore、编辑区统一
+      // editor_area(EditorProvider 解析)、底栏页签与命令面板改由贡献表
+      // 派生(run_studio_command 收缩为查表执行)、内核死贡献类型删除
+      // → 27,374 / 39 文件。
+      max_count: 27374,
     },
     {
       kind: "studio shell files",
@@ -199,7 +204,9 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // 补全开关 5 个字段并入 CodeUiState,壳持单一 code_ui 字段(净 −4)→ 114。
       // S5i 运行域切片(2026-10-13):编译输出展开 + 预览档位 2 字段并入
       // RunUiState(壳持单一 run_ui 字段,净 −1)→ 113。
-      max_count: 113,
+      // 编辑器优先工作台(2026-10-24,ADR 0042):窗格开合/分割比 3 字段并入
+      // WorkbenchState(壳持单一 workbench 字段,净 −2)→ 111。
+      max_count: 111,
     },
     {
       kind: "studio msg variants",
@@ -239,7 +246,9 @@ fn studio_shell_budgets() -> Array[CountBudget] {
       // (组合根注入的锚点回调),只有 update_with_provider 的闭包拿得到,
       // 所以这两臂必须留壳、不能并入 BlocksUiMsg(切片 update 无 Model)
       // → 242。
-      max_count: 242,
+      // 编辑器优先工作台(2026-10-24,ADR 0042):窗格与文档臂并入
+      // WorkbenchMsg(壳持单一 WorkbenchOp 委托臂),净 −4 → 238。
+      max_count: 238,
     },
   ]
 }
