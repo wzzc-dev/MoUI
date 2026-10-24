@@ -508,7 +508,11 @@ fn settings_view(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
                 text(
                   "设置",
                   role=Title,
-                  width=wide - 104.0,
+                  // The title gives up the action gap too: at `wide - 104`
+                  // the row measured `wide + action_gap`, and that overflow
+                  // became real horizontal drag range on the settings
+                  // scroller.
+                  width=wide - 104.0 - action_gap,
                   height=38.0,
                   align=TextStart,
                 ),

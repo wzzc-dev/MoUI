@@ -475,13 +475,21 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             // gesture; ancestors receive a synthetic Cancel in that case so
             // they can release pending drag/tap state without activating a
             // second command.
+            //
+            // A captured *Move* is deduplicated to the first scroll view: two
+            // live scrollers would both recognize one gesture and scroll
+            // together. A release is different — every scroll container that
+            // armed on the Down must see the matching Up/Cancel, or an outer
+            // scroller keeps a stale drag state past the release and starts
+            // scrolling on ordinary button-less mouse movement.
+            let release = event.phase == Up || event.phase == Cancel
             let should_bubble = bubble_scroll &&
               event.phase != Down &&
-              // A nested scroll view has already observed this stream when
-              // `bubbled` is true. Keep walking so non-scroll gesture
-              // ancestors can still clean up, but avoid feeding a second
-              // scroll container the same captured event.
-              (!bubbled || !self.is_scroll_view_node())
+              (
+                !bubbled ||
+                !self.is_scroll_view_node() ||
+                release
+              )
             if should_bubble {
               let ancestor_event = if result.activated && event.phase == Up {
                 PointerEvent::new(

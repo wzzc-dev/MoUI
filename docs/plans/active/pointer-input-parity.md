@@ -375,6 +375,24 @@ as a vertical scroller, so its rebound is intended even while a short list
 happens to have no range. The slop test still reads the physical pointer, so a
 drag that starts on the surface cancels a child control exactly as before.
 
+## §3 follow-up: a release reaches every armed scroll ancestor (2026-10-24)
+
+Capture routes `Up` to the pressed control, and the unwind delivered the
+release to only the *innermost* scroll view — an outer scroller that armed on
+the same `Down` kept `drag.active` forever, and because the drag `Move` path
+never checks whether a button is still pressed, ordinary button-less mouse
+hover past the slop started scrolling it. The visible symptom was new_world's
+settings page scrolling under the pointer after clicking a world entry
+(nested scrollers: page + world list). Releases (`Up`/`Cancel`) now bypass the
+scroll dedup in `dispatch_pointer_to_target_with_scroll_ancestor` and reach
+every scroll-view ancestor; captured `Move` stays deduplicated to the first
+scroller so one gesture is still recognized by exactly one container. The
+other half of the symptom was app-side: the settings title row measured
+`wide + action_gap` (fixed widths + spacing overflow), and that overflow became
+real horizontal drag range — pinned by a layout probe in
+`examples/new_world/app/layout_probe_test.mbt` and by
+`moui/runtime/nested_scroll_release_test.mbt`.
+
 ## Debt and known gaps
 
 - **Run-internal text direction is still LTR.** §9 mirrors where a text block

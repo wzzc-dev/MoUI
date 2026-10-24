@@ -256,6 +256,37 @@ test "the editor page covers the window and paints an opaque surface" {
 }
 
 ///|
+test "设置页内容不横向溢出滚动视口" {
+  // 设置页只应纵向滚动。卡片内容预算是 `wide`，卡片本身是
+  // `wide + 2 * 26`（settings_card_padding）。任何宽度严格落在两者之间的
+  // 帧，都是某行的固定子项宽度加间距溢出了预算——而那几像素的溢出会成为
+  // 滚动器真实的水平拖拽区间（2026-10-24 设置页在指针下左右滑动；标题行
+  // 漏扣了 action_gap）。
+  let (settings, _effect) = @app.update(probe_talking(), @app.OpenSettings)
+  let width = 1200.0
+  let height = 800.0
+  let screen = @app.Screen::for_viewport(width, height)
+  let available = screen.width - screen.page_padding * 2.0
+  let content_budget = available - 52.0
+  let wide = if content_budget < 280.0 {
+    280.0
+  } else if content_budget > 520.0 {
+    520.0
+  } else {
+    content_budget
+  }
+  let card_width = wide + 52.0
+  for frame in laid_out(settings, width, height) {
+    let in_band = frame.size.width > wide + 0.5 &&
+      frame.size.width < card_width - 0.5
+    assert_false(
+      in_band,
+      msg="帧宽度 \{frame.size.width} 落在溢出区间内（内容应 ≤ \{wide}）",
+    )
+  }
+}
+
+///|
 test "the mood hairline is a hairline" {
   // The scene's accent under the stage header is one pixel. It used to be a
   // container around an empty text — and a text box is at least one line
