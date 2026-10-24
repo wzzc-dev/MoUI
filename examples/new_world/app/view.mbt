@@ -273,6 +273,7 @@ fn library_panel(model : WorldModel, width : Double) -> @moui.View[Msg] {
           width=72.0,
           height=button_sm_height,
         ),
+        action_width=72.0,
       ),
       button(
         "选择世界库…",

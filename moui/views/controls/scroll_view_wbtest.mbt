@@ -404,6 +404,96 @@ test "scroll drag past a clamp edge holds a bounded paint band" {
 }
 
 ///|
+test "a horizontal pull on a vertical-only scroller pulls no band" {
+  let view : @core.View[Unit] = scroll_container(
+    child=scroll_test_rect(width=100.0, height=500.0),
+    viewport=Some(@core.Size::new(width=100.0, height=100.0)),
+  )
+  let layout = view.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=100.0, height=500.0),
+    ),
+  )
+  let after_down = view.event(
+    scroll_test_event_context(
+      event=scroll_test_pointer(x=50.0, y=80.0, phase=Down),
+      child_frames=layout.child_frames,
+      now_ms=100.0,
+    ),
+  ).state.unwrap()
+  let pulled = view.event(
+    scroll_test_event_context(
+      event=scroll_test_pointer(x=450.0, y=80.0, phase=Move),
+      child_frames=layout.child_frames,
+      state=after_down,
+      now_ms=120.0,
+    ),
+  )
+  // 400px of travel along an axis the content never overflowed moves nothing, so
+  // there is no repaint and no `on_scroll` message.
+  assert_false(pulled.changed)
+  assert_true(pulled.dirty is ViewClean)
+  let after_pull = pulled.state.unwrap()
+  // The drag still started, which is what cancels a child control under the
+  // pointer: the gate removes the surface motion, not the gesture.
+  assert_true(after_pull.read_slot(scroll_drag_state_slot()).dragging)
+  assert_true(
+    after_pull.read_slot(scroll_drag_state_slot()).raw_offset ==
+    scroll_test_band_point(y=0.0),
+  )
+  let paint = view.paint(
+    scroll_test_paint_context(
+      child_frames=layout.child_frames,
+      state=after_pull,
+      now_ms=120.0,
+    ),
+  )
+  assert_true(scroll_test_painted_shift(paint) is None)
+}
+
+///|
+test "a horizontal pull past a horizontal clamp edge holds a band" {
+  let view : @core.View[Unit] = scroll_container(
+    child=scroll_test_rect(width=500.0, height=100.0),
+    viewport=Some(@core.Size::new(width=100.0, height=100.0)),
+  )
+  let layout = view.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=500.0, height=100.0),
+    ),
+  )
+  let after_down = view.event(
+    scroll_test_event_context(
+      event=scroll_test_pointer(x=50.0, y=50.0, phase=Down),
+      child_frames=layout.child_frames,
+      now_ms=100.0,
+    ),
+  ).state.unwrap()
+  let after_pull = view.event(
+    scroll_test_event_context(
+      event=scroll_test_pointer(x=450.0, y=50.0, phase=Move),
+      child_frames=layout.child_frames,
+      state=after_down,
+      now_ms=120.0,
+    ),
+  ).state.unwrap()
+  assert_true(
+    after_pull.read_slot(scroll_drag_state_slot()).raw_offset ==
+    scroll_test_band_point(x=0.0 - 400.0, y=0.0),
+  )
+  let paint = view.paint(
+    scroll_test_paint_context(
+      child_frames=layout.child_frames,
+      state=after_pull,
+      now_ms=120.0,
+    ),
+  )
+  let shift = scroll_test_painted_shift(paint).unwrap()
+  assert_true(scroll_test_close(left=shift.x, right=23.529411764705884))
+  assert_true(shift.y == 0.0)
+}
+
+///|
 test "a released band settles over frames and then stops" {
   let view : @core.View[Unit] = scroll_container(
     child=scroll_test_rect(width=100.0, height=500.0),

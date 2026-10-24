@@ -81,7 +81,7 @@ These constrain every slice and are cheap to re-check, expensive to rediscover:
 | §0 doc references | `docs/view-catalog.md`, `docs/zh-Hans/view-catalog.md` | done |
 | §1 gesture state persistence | `moui/core` private slots + codecs, `ctx.now_ms` as the single clock | done |
 | §2 timed wake on hold | runtime paint latch + synthetic `Move` from `FrameTick`, zero new public API | done |
-| §3 scroll rebound | `moui/views/controls`: bounded rubber band, animated rebound, derived indicator geometry (band/motion code split into `scroll_view_motion.mbt`) | done; inertia approved 2026-10-23, pending |
+| §3 scroll rebound | `moui/views/controls`: bounded rubber band, animated rebound, derived indicator geometry (band/motion code split into `scroll_view_motion.mbt`); horizontal axis gated on a real scroll range 2026-10-24 | done; inertia approved 2026-10-23, pending |
 | §8 single edit engine | delete the duplicated caret/selection helpers in `moui/views/text` | done |
 | §5 touch-era selection | click count, `text_word_range_at` (bounded subset), caret drag, goal column, `reveal`, Showcase evidence | done |
 | §4 multi-pointer | `PointerEvent.id`/`pressure`, decode `FingerId`/`Force`, per-id capture, Web ABI | done |
@@ -359,6 +359,21 @@ is a facade, every subpackage has to be named explicitly in the test run.
   Removing them is a separate contraction: it edits the hit-test loop that §4
   does not otherwise touch, and doing it here would hide a behaviour change
   inside a transport slice.
+
+## §3 landing note: a rangeless axis pulls no band (2026-10-24)
+
+`scroll_container` pans on both axes, and the overscroll band was computed per
+axis from the viewport size alone — so a horizontal drag moved the painted
+surface even when the content never overflowed horizontally. The visible
+symptom was `examples/new_world`'s onboarding card sliding sideways under the
+pointer. `scroll_axis_has_range` now gates both the pointer's horizontal delta
+and the horizontal band on `child.width > viewport.width`, which is UIKit's
+`alwaysBounceHorizontal = NO` and Qt's `AutoFlickDirection`.
+
+The vertical axis stays ungated on purpose: a `scroll_view` is always declared
+as a vertical scroller, so its rebound is intended even while a short list
+happens to have no range. The slop test still reads the physical pointer, so a
+drag that starts on the surface cancels a child control exactly as before.
 
 ## Debt and known gaps
 

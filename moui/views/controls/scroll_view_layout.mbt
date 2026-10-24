@@ -499,8 +499,19 @@ fn[Msg] scroll_container_drag_event(
       if !drag.active {
         return @core.ViewEventResult::ignored()
       }
+      // A rangeless axis carries no scroll input (see `scroll_axis_has_range`).
+      // The slop test below still reads the physical pointer, so a drag that
+      // starts on this surface cancels a child control either way.
+      let delta_x = if scroll_axis_has_range(
+          viewport_axis=viewport_size.width,
+          child_axis=child_size.width,
+        ) {
+        event.position.x - drag.last_position.x
+      } else {
+        0.0
+      }
       let delta = @core.Point::new(
-        x=event.position.x - drag.last_position.x,
+        x=delta_x,
         y=event.position.y - drag.last_position.y,
       )
       let distance_x = event.position.x - drag.origin.x

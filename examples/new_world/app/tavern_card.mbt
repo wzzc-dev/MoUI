@@ -98,7 +98,6 @@ pub fn tavern_card_from_json(text : String) -> CharacterCard? {
     Some(Object(values)) => values
     _ => Map([])
   }
-  let relationship = Relationship::empty()
   let relationship = {
     user_identity: json_text(extensions, "user_identity"),
     user_name: json_text(extensions, "user_name"),

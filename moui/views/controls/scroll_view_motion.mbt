@@ -138,6 +138,21 @@ fn scroll_overscroll_raw(band : Double, extent~ : Double) -> Double {
 }
 
 ///|
+/// Whether an axis has any scroll range at all: the content is bigger than the
+/// viewport along it. Travel along a rangeless axis is not scroll input, so it
+/// pulls no band — there is nothing on that axis to reveal, and a surface that
+/// slides sideways under the pointer is only ever hiding a child that measured
+/// wider than the viewport it was given.
+///
+/// Only the horizontal axis is gated at its two call sites. A `scroll_view` is
+/// always declared as a vertical scroller, so a vertical range is intended even
+/// when a short list has none right now; a horizontal range is never declared
+/// and only ever appears as an overflow.
+fn scroll_axis_has_range(viewport_axis~ : Double, child_axis~ : Double) -> Bool {
+  child_axis > viewport_axis
+}
+
+///|
 /// Overshoot a surface offset is holding past its clamp, per axis. Measured
 /// against the clamp rather than against the authoritative offset, so a
 /// controlled container whose app never adopts the reported offset still shifts
@@ -148,11 +163,16 @@ fn scroll_drag_band(
   child_size~ : @core.Size,
 ) -> @core.Point {
   let clamped = scroll_clamp_offset(raw, viewport, child_size)
+  let x_extent = if scroll_axis_has_range(
+      viewport_axis=viewport.width,
+      child_axis=child_size.width,
+    ) {
+    scroll_overscroll_extent(viewport.width)
+  } else {
+    0.0
+  }
   @core.Point::new(
-    x=scroll_overscroll_damped(
-      raw.x - clamped.x,
-      extent=scroll_overscroll_extent(viewport.width),
-    ),
+    x=scroll_overscroll_damped(raw.x - clamped.x, extent=x_extent),
     y=scroll_overscroll_damped(
       raw.y - clamped.y,
       extent=scroll_overscroll_extent(viewport.height),

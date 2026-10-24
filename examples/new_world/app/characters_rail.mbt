@@ -210,6 +210,7 @@ fn creator_form(model : WorldModel, width : Double) -> @moui.View[Msg] {
           width=64.0,
           height=button_sm_height,
         ),
+        action_width=64.0,
       ),
       wrapped_caption("从模板开始：", width=wide),
       wrap(archetype_buttons, width~, spacing=6.0, row_spacing=4.0),
