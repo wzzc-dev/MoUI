@@ -228,7 +228,7 @@ test "property: alternatives and their selection survive a round trip" {
   let (asked, _e) = update(talking_model, RegenerateReply, turn_runner=never)
   let (two, _e2) = update(
     asked,
-    Regenerated(Some("第二个版本。")),
+    Regenerated("林掌柜", Some("第二个版本。")),
     turn_runner=never,
   )
   assert_roundtrip("two candidates", two)

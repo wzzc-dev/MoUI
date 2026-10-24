@@ -86,9 +86,12 @@ pub fn update_editing(
                   kind="provider",
                   label="Regenerate reply",
                   run=dispatch => {
-                    runner(request, reply => dispatch(Regenerated(reply)), _delta => {
-                      ()
-                    })
+                    let epoch = next.world_epoch()
+                    runner(
+                      request,
+                      reply => dispatch(InWorld(epoch, Regenerated(id, reply))),
+                      _delta => (),
+                    )
                   },
                 ),
               )
@@ -96,42 +99,43 @@ pub fn update_editing(
           }
         }
       }
-    Regenerated(reply) =>
-      match model.selected {
-        None => (model, @moui.Effect::none())
-        Some(id) => {
-          let conversation = model.conversations.for_character(id)
-          let next = model.fork()
-          match (reply, last_reply_index(conversation)) {
-            (Some(text), Some(index)) => {
-              let cleaned = llm_clean_reply(
-                text,
-                character_name(model.scenario, id),
-              )
-              let lines : Array[ChatLine] = []
-              for line_index, line in conversation.lines() {
-                if line_index == index {
-                  lines.push(line.with_alternative(cleaned))
-                } else {
-                  lines.push(line)
-                }
+    Regenerated(id, reply) =>
+      // The reply belongs to the conversation that asked for it, not to
+      // whatever character happens to be selected when it lands.
+      if !reply_target_exists(model, id) {
+        drop_late_reply(model, "这个角色已经不在世界里了，这条回复被丢弃。")
+      } else {
+        let conversation = model.conversations.for_character(id)
+        let next = model.fork()
+        match (reply, last_reply_index(conversation)) {
+          (Some(text), Some(index)) => {
+            let cleaned = llm_clean_reply(
+              text,
+              character_name(model.scenario, id),
+            )
+            let lines : Array[ChatLine] = []
+            for line_index, line in conversation.lines() {
+              if line_index == index {
+                lines.push(line.with_alternative(cleaned))
+              } else {
+                lines.push(line)
               }
-              set_lines(next, id, lines)
-              next.conversations.set(
-                next.conversations.for_character(id).with_pending(false),
-              )
-              next.push_log(
-                "已换一版回复（共 \{conversation.lines()[index].candidate_count() + 1} 版）",
-              )
             }
-            (None, Some(_)) => {
-              next.conversations.set(conversation.with_pending(false))
-              next.push_log("重新生成失败——保留原来的回复")
-            }
-            _ => ()
+            set_lines(next, id, lines)
+            next.conversations.set(
+              next.conversations.for_character(id).with_pending(false),
+            )
+            next.push_log(
+              "已换一版回复（共 \{conversation.lines()[index].candidate_count() + 1} 版）",
+            )
           }
-          (next, commit_effect(next, host, Conversation(id)))
+          (None, Some(_)) => {
+            next.conversations.set(conversation.with_pending(false))
+            next.push_log("重新生成失败——保留原来的回复")
+          }
+          _ => ()
         }
+        (next, commit_effect(next, host, Conversation(id)))
       }
     SwipeReply(line_index, direction) =>
       match model.selected {

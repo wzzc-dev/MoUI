@@ -94,10 +94,15 @@ fn send_scene_turn(
         kind="provider",
         label="Scene turn",
         run=dispatch => {
+          let epoch = next.world_epoch()
           runner(
             request,
-            reply => dispatch(SceneReply(key, responder.id(), reply)),
-            delta => dispatch(SceneReplyDelta(key, responder.id(), delta)),
+            reply => dispatch(
+              InWorld(epoch, SceneReply(key, responder.id(), reply)),
+            ),
+            delta => dispatch(
+              InWorld(epoch, SceneReplyDelta(key, responder.id(), delta)),
+            ),
           )
         },
       ),
@@ -213,9 +218,12 @@ fn send_private_turn(
                 kind="provider",
                 label="Provider turn",
                 run=dispatch => {
-                  runner(request, reply => dispatch(Reply(id, reply)), delta => {
-                    dispatch(ReplyDelta(id, delta))
-                  })
+                  let epoch = next.world_epoch()
+                  runner(
+                    request,
+                    reply => dispatch(InWorld(epoch, Reply(id, reply))),
+                    delta => dispatch(InWorld(epoch, ReplyDelta(id, delta))),
+                  )
                 },
               ),
             ]
@@ -249,9 +257,12 @@ fn send_private_turn(
                   kind="provider",
                   label="Compress memory",
                   run=dispatch => {
+                    let epoch = next.world_epoch()
                     runner(
                       summary_request,
-                      reply => dispatch(SummaryArrived(id, marker, reply)),
+                      reply => dispatch(
+                        InWorld(epoch, SummaryArrived(id, marker, reply)),
+                      ),
                       _delta => (),
                     )
                   },

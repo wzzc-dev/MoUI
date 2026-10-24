@@ -152,6 +152,44 @@ test "a streamed line yields its text" {
 }
 
 ///|
+test "a completed body yields its reply in either wire shape" {
+  // A provider that honors `stream: true` answers with SSE; one that ignores
+  // it answers with the canonical object. Both are the same body field to the
+  // host, so the app parser has to decide.
+  assert_eq(
+    llm_reply_from_body(
+      "{\"choices\":[{\"message\":{\"content\":\"酒温好了。\"}}]}",
+    ),
+    Some("酒温好了。"),
+  )
+  let stream = "data: {\"choices\":[{\"delta\":{\"content\":\"酒\"}}]}\n\n" +
+    "data: {\"choices\":[{\"delta\":{\"content\":\"温\"}}]}\n\n" +
+    "data: {\"choices\":[{\"delta\":{\"content\":\"好了。\"}}]}\n\n" +
+    "data: [DONE]\n\n"
+  assert_eq(llm_reply_from_body(stream), Some("酒温好了。"))
+  // CRLF streams and keep-alive comments are part of the format.
+  let crlf = ": keep-alive\r\n" +
+    "data: {\"choices\":[{\"delta\":{\"content\":\"掌柜的\"}}]}\r\n\r\n" +
+    "data: [DONE]\r\n"
+  assert_eq(llm_reply_from_body(crlf), Some("掌柜的"))
+  // An empty delta must not create an empty piece.
+  let empty_first = "data: {\"choices\":[{\"delta\":{\"content\":\"\"}}]}\n" +
+    "data: {\"choices\":[{\"delta\":{\"content\":\"嗯。\"}}]}\n"
+  assert_eq(llm_reply_from_body(empty_first), Some("嗯。"))
+  // A stream with no text at all is a failure, not an empty reply.
+  assert_true(llm_reply_from_body("data: [DONE]\n") is None)
+  assert_true(llm_reply_from_body("") is None)
+  assert_true(llm_reply_from_body("not a reply") is None)
+  // The canonical shape wins even when its content looks like SSE.
+  assert_eq(
+    llm_reply_from_body(
+      "{\"choices\":[{\"message\":{\"content\":\"data: 不是流\"}}]}",
+    ),
+    Some("data: 不是流"),
+  )
+}
+
+///|
 test "the request asks for a stream" {
   let request = LlmRequest::new(
     character_id="林掌柜",

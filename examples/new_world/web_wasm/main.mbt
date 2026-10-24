@@ -30,8 +30,10 @@ fn turn_runner(
     request.api_key(),
     body,
     raw => {
+      // The host passes the raw HTTP body, not a pre-folded reply: the app
+      // parser knows both the canonical and the streamed shape.
       match raw {
-        Some(text) => on_reply(@world_app.llm_parse_reply(text))
+        Some(text) => on_reply(@world_app.llm_reply_from_body(text))
         None => on_reply(None)
       }
     },
@@ -47,8 +49,8 @@ let world_host : @world_app.WorldHost = {
   write_world: (folder, files, done) => gateway.fs_write(folder, files, done),
   read_config: done => gateway.config_read(done),
   write_config: (content, done) => gateway.config_write(content, done),
-  export_world: (folder, files, done) => {
-    gateway.fs_export_world(folder, files, done)
+  export_world: (file_name, bundle_text, done) => {
+    gateway.fs_export_world(file_name, bundle_text, done)
   },
   import_world: done => gateway.fs_import_world(done),
   copy_to_clipboard: text => gateway.copy_to_clipboard(text),

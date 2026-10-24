@@ -51,7 +51,10 @@ test "the request body is an OpenAI-shaped chat payload" {
     on_result: _reply => (),
     on_delta: _delta => (),
   }
-  let body = llm_request_body(job)
+  // The native host builds the body through the app's request type, so the
+  // wire format is the same one the web host sends.
+  let body = @app.llm_request_body(llm_request_of_job(job), stream=true).stringify()
+  assert_true(body.contains("\"stream\":true"))
   // The model and every planned message must reach the wire: sending only the
   // first and last is the bug this guards against.
   assert_true(body.contains("gpt-test"))

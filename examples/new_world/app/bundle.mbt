@@ -113,6 +113,24 @@ pub fn bundle_decode(text : String) -> WorldBundle? {
 }
 
 ///|
+/// A folder name not already present in `taken`: the bundle's name, then
+/// `名字 (2)`, `名字 (3)`, … Import must never merge into an existing world,
+/// which would silently mix two histories.
+pub fn unique_world_name(name : String, taken : Array[String]) -> String {
+  let base = world_folder_name(name)
+  if !taken.contains(base) {
+    return base
+  }
+  let mut index = 2
+  let mut candidate = "\{base} (\{index})"
+  while taken.contains(candidate) {
+    index += 1
+    candidate = "\{base} (\{index})"
+  }
+  candidate
+}
+
+///|
 /// The bundle body for one world on stage, or `None` when nothing is open.
 ///
 /// Uses the same payload as a world-scope commit: the Markdown files, every

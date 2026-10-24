@@ -21,6 +21,7 @@ options(
         "web_complete_async_clipboard_read",
         "web_complete_async_file_dialog",
         "ai_llm_complete",
+        "ai_llm_delta",
         "ai_fs_complete",
       ],
     },

@@ -53,6 +53,11 @@ pub struct WorldModel {
   worlds : Array[String]
   /// The world folder currently on stage.
   current : String?
+  /// Which generation of the world is on stage. Every provider request
+  /// captures the value it was issued under; a completion from an older world
+  /// is dropped instead of landing in the new one (character ids and scene
+  /// keys are only meaningful within one generation).
+  world_epoch : Int32
   /// The host told us there is no library yet (no folder picked).
   library_missing : Bool
   /// The new-world name being typed.
@@ -151,6 +156,7 @@ pub fn WorldModel::new() -> WorldModel {
     log: [],
     worlds: [],
     current: None,
+    world_epoch: 0,
     library_missing: false,
     world_name: "",
     creator_open: false,
@@ -214,6 +220,13 @@ pub fn WorldModel::worlds(self : WorldModel) -> Array[String] {
 /// The world folder currently on stage.
 pub fn WorldModel::current(self : WorldModel) -> String? {
   self.current
+}
+
+///|
+/// Which generation of the world is on stage. Bumped every time the stage is
+/// replaced (open, create, import, regenerate the whole world).
+pub fn WorldModel::world_epoch(self : WorldModel) -> Int32 {
+  self.world_epoch
 }
 
 ///|
@@ -562,14 +575,14 @@ pub(all) struct WorldHost {
   /// Write a file at the library root.
   write_config : (String, (Bool) -> Unit) -> Unit
   /// Export one world as a single self-contained bundle file the player picks
-  /// a home for. The app hands over the exact folder contents (Markdown,
-  /// journal, and — later — portraits), so the bundle is the world.
+  /// a home for. `(suggested file name, bundle text)`: the app owns the
+  /// format, the host only chooses a path and writes the text.
   /// `false` means the player cancelled or the write failed.
-  export_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
-  /// Import a bundle into the library as a new world folder. The host picks
-  /// the file, unpacks it, and returns `(ok, folder, files)` so the app can go
-  /// on stage immediately.
-  import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
+  export_world : (String, String, (Bool) -> Unit) -> Unit
+  /// Ask the player for a bundle file and hand back its raw text. Decoding is
+  /// the app's job, so every host reads the same format; extracting and
+  /// writing the world's files reuses `write_world`.
+  import_world : ((Bool, String) -> Unit) -> Unit
   /// Put text on the clipboard, so the prompt preview can be carried to
   /// another tool.
   copy_to_clipboard : (String) -> Unit
@@ -660,6 +673,40 @@ fn append_scene_reply(
     .with_pending(false)
     .with_streaming(""),
   )
+}
+
+///|
+/// Fold one streamed piece into a conversation that is still waiting for it.
+///
+/// Deltas are provider callbacks: by the time one lands the turn may have
+/// finished (the full reply arrived first), the character may be gone, or the
+/// world may have been replaced. None of those may create a conversation or
+/// edit the model the caller still holds, so the guard runs before `fork()`.
+fn append_reply_delta(
+  model : WorldModel,
+  key : String,
+  delta : String,
+  scene~ : Bool,
+) -> (WorldModel, @moui.Effect[Msg]) {
+  // The private and scene channels stay separate: a delta addressed to a
+  // character id must not land in a scene transcript, or vice versa.
+  if is_scene_key(key) != scene {
+    return (model, @moui.Effect::none())
+  }
+  let waiting = match model.conversations.find(key) {
+    Some(conversation) =>
+      conversation.pending() && reply_target_exists(model, key)
+    None => false
+  }
+  if !waiting {
+    return (model, @moui.Effect::none())
+  }
+  let conversation = model.conversations.for_character(key)
+  let next = model.fork()
+  next.conversations.set(
+    conversation.with_streaming(conversation.streaming() + delta),
+  )
+  (next, @moui.Effect::none())
 }
 
 ///|
@@ -755,6 +802,16 @@ pub fn update(
   }
   let host : WorldHost? = world_host
   match msg {
+    InWorld(epoch, inner) =>
+      if epoch == model.world_epoch {
+        update(model, inner, turn_runner=runner, world_host?=host)
+      } else {
+        // The request was issued in a world that has since been replaced. Its
+        // ids mean something else here (or nothing), so the completion is
+        // dropped whole — no log line, because the stale world's notices would
+        // be noise in the world the player is actually in.
+        (model, @moui.Effect::none())
+      }
     Select(id) =>
       // Re-selecting the same character (a map tap on the selected marker, a
       // drag that ends in a click) must not discard a half-written line, and
@@ -909,20 +966,10 @@ pub fn update(
       }
     // A piece of the reply, while the provider is still writing: the stage
     // shows the text as it lands instead of waiting for the whole thing.
-    ReplyDelta(character_id, delta) => {
-      let conversation = model.conversations.for_character(character_id)
-      model.conversations.set(
-        conversation.with_streaming(conversation.streaming() + delta),
-      )
-      (model, @moui.Effect::none())
-    }
-    SceneReplyDelta(key, _speaker, delta) => {
-      let conversation = model.conversations.for_character(key)
-      model.conversations.set(
-        conversation.with_streaming(conversation.streaming() + delta),
-      )
-      (model, @moui.Effect::none())
-    }
+    ReplyDelta(character_id, delta) =>
+      append_reply_delta(model, character_id, delta, scene=false)
+    SceneReplyDelta(key, _speaker, delta) =>
+      append_reply_delta(model, key, delta, scene=true)
     Reply(character_id, text) =>
       match text {
         Some(_reply) if !reply_target_exists(model, character_id) =>
@@ -971,6 +1018,7 @@ pub fn update(
               system=propose_system,
               user=propose_user,
             )
+            let epoch = next.world_epoch()
             effects.push(
               @moui.Effect::run(
                 key="new-world:memory",
@@ -979,7 +1027,7 @@ pub fn update(
                 run=dispatch => {
                   runner(
                     propose_request,
-                    reply => dispatch(MemoryProposalsArrived(reply)),
+                    reply => dispatch(InWorld(epoch, MemoryProposalsArrived(reply))),
                     _delta => (),
                   )
                 },
@@ -1245,6 +1293,7 @@ pub fn update(
         user~,
       )
       next.push_log("正在推进时间线…")
+      let epoch = next.world_epoch()
       (
         next,
         @moui.Effect::run(
@@ -1252,7 +1301,11 @@ pub fn update(
           kind="provider",
           label="Advance time",
           run=dispatch => {
-            runner(request, reply => dispatch(TimeAdvanced(reply)), _delta => ())
+            runner(
+              request,
+              reply => dispatch(InWorld(epoch, TimeAdvanced(reply))),
+              _delta => (),
+            )
           },
         ),
       )
@@ -1274,8 +1327,8 @@ pub fn update(
     }
     // ---- portability ----
     RegenerateReply => update_editing(model, RegenerateReply, runner, host)
-    Regenerated(reply) =>
-      update_editing(model, Regenerated(reply), runner, host)
+    Regenerated(id, reply) =>
+      update_editing(model, Regenerated(id, reply), runner, host)
     SwipeReply(line_index, direction) =>
       update_editing(model, SwipeReply(line_index, direction), runner, host)
     EditLine(line_index) =>
@@ -1294,7 +1347,14 @@ pub fn update(
       match (host, model.current) {
         (Some(h), Some(folder)) => {
           next.push_log("正在导出世界「\{folder}」…")
-          (next, export_world_effect(h, folder, commit_files(model, World)))
+          (
+            next,
+            export_world_effect(
+              h,
+              folder,
+              bundle_encode(folder, commit_files(model, World)),
+            ),
+          )
         }
         (None, _) => {
           next.push_log("（未接入世界库）无法导出")
@@ -1310,7 +1370,7 @@ pub fn update(
       let next = model.fork()
       if ok {
         next.push_log(
-          "世界已导出为一个文件夹（Markdown 与图片，可直接分享）",
+          "世界已导出为一个 .aiworld.json 包（Markdown、对话、图片与事件，可直接分享）",
         )
       } else {
         next.push_log("导出取消或失败")
@@ -1319,7 +1379,7 @@ pub fn update(
     }
     ImportWorld =>
       match host {
-        Some(h) => (model, import_world_effect(h))
+        Some(h) => (model, import_world_effect(h, model.worlds))
         None => {
           let next = model.fork()
           next.push_log("（未接入世界库）无法导入")
@@ -1329,7 +1389,7 @@ pub fn update(
     WorldImported(ok, folder, files) =>
       if !ok {
         let next = model.fork()
-        next.push_log("导入取消或文件无法读取")
+        next.push_log("导入取消，或所选文件不是有效的世界包")
         (next, @moui.Effect::none())
       } else {
         // The bundle carries the world's own file set, so the import goes
@@ -1358,6 +1418,7 @@ pub fn update(
               ..next,
               scenario: parsed.scenario,
               current: Some(world_folder_name(name)),
+              world_epoch: model.world_epoch + 1,
               worlds: with_world(model.worlds, world_folder_name(name)),
               selected: None,
             }

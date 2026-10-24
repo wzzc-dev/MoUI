@@ -69,27 +69,18 @@ pub fn llm_submit(
 }
 
 ///|
-/// Build the OpenAI-compatible chat/completions body from the planned
-/// messages, in order.
-fn llm_request_body(job : LlmJob, stream~ : Bool = false) -> String {
-  let messages : Array[Json] = []
-  for message in job.messages {
-    let fields : Map[String, Json] = {
-      "role": Json::string(message.0),
-      "content": Json::string(message.1),
-    }
-    messages.push(Json::object(fields))
-  }
-  let root : Map[String, Json] = {
-    "model": Json::string(job.model),
-    "messages": Json::array(messages),
-    "temperature": Json::number(job.temperature),
-  }
-  if stream {
-    // Server-Sent Events: the reply arrives in pieces.
-    root["stream"] = json_true()
-  }
-  @json.to_json(Json::object(root)).stringify()
+/// The wire request for one job. Built through the app's request type so the
+/// native and web transports cannot drift on model, temperature, or message
+/// order.
+fn llm_request_of_job(job : LlmJob) -> @app.LlmRequest {
+  @app.LlmRequest::new(
+    character_id="native-host",
+    endpoint=job.endpoint,
+    api_key=job.api_key,
+    model=job.model,
+    temperature=job.temperature,
+    messages=job.messages,
+  )
 }
 
 ///|
@@ -117,7 +108,7 @@ fn llm_completion_url(endpoint : String) -> String {
 /// returned at the end, so a provider that ignores `stream` still works.
 async fn llm_fetch(job : LlmJob) -> Unit {
   let url = llm_completion_url(job.endpoint)
-  let body = llm_request_body(job, stream=true)
+  let body = @app.llm_request_body(llm_request_of_job(job), stream=true).stringify()
   let result = try {
     let (host, path) = llm_split_url(url)
     // The client is opened on the host root; the request carries the path.
@@ -132,45 +123,32 @@ async fn llm_fetch(job : LlmJob) -> Unit {
     if response.code < 200 || response.code >= 300 {
       None
     } else {
-      let mut text = ""
+      // Stream each `data:` line to the stage, and keep the raw body. The
+      // final reply is parsed from that body once, by the same function the
+      // web host uses — so a provider that ignored `stream` and sent one
+      // JSON document works, even though `read_until` already consumed it.
+      let raw : Array[String] = []
       while true {
         match client.read_until("\n") {
-          Some(line) =>
-            match llm_parse_delta(line) {
-              Some(delta) => {
-                text += delta
-                (job.on_delta)(delta)
-              }
+          Some(line) => {
+            match @app.llm_parse_delta(line) {
+              Some(delta) =>
+                if delta != "" {
+                  (job.on_delta)(delta)
+                }
               None => ()
             }
+            raw.push(line)
+          }
           None => break
         }
       }
-      if text != "" {
-        Some(text)
-      } else {
-        // A provider that ignored `stream` sent one JSON document instead
-        // of events: read what is left and parse it the plain way, so the
-        // reply is never lost to a capability the provider does not have.
-        let whole = client.read_all().text()
-        llm_parse_completion(whole)
-      }
+      @app.llm_reply_from_body(raw.join("\n"))
     }
   } catch {
     _ => None
   }
   (job.on_result)(result)
-}
-
-///|
-/// A JSON `true`.
-///
-/// The core json package has no boolean constructor, and the body is JSON:
-/// the literal is parsed once, when the body is built.
-fn json_true() -> Json {
-  @json.parse("true") catch {
-    _ => Json::string("")
-  }
 }
 
 ///|
@@ -192,80 +170,6 @@ fn llm_split_url(url : String) -> (String, String) {
       (host, path)
     }
     None => (url, "/")
-  }
-}
-
-///|
-/// The text of one streamed delta, or `None` when the line carries none.
-///
-/// The OpenAI-compatible streaming format is Server-Sent Events: lines of
-/// `data: {json}`, where the json carries `choices[0].delta.content`. The
-/// final line is `data: [DONE]`, which carries no text.
-fn llm_parse_delta(line : String) -> String? {
-  let trimmed = line.trim().to_owned()
-  if !trimmed.has_prefix("data:") {
-    return None
-  }
-  let payload = trimmed[5:].trim().to_owned()
-  if payload == "[DONE]" || payload == "" {
-    return None
-  }
-  let json = @json.parse(payload) catch { _ => return None }
-  let fields = match json {
-    Object(values) => values
-    _ => return None
-  }
-  let choices = match fields.get("choices") {
-    Some(Array(values)) => values
-    _ => return None
-  }
-  if choices.is_empty() {
-    return None
-  }
-  match choices[0] {
-    Object(first) =>
-      match first.get("delta") {
-        Some(Object(delta)) =>
-          match delta.get("content") {
-            Some(String(content)) => Some(content)
-            _ => None
-          }
-        _ => None
-      }
-    _ => None
-  }
-}
-
-///|
-/// Extract the first choice's text from an OpenAI-compatible response.
-///
-/// Every malformed shape yields `None`: the caller falls back to the
-/// deterministic brain, so a provider quirk degrades behaviour instead of
-/// crashing the world.
-fn llm_parse_completion(text : String) -> String? {
-  let payload = @json.parse(text) catch { _ => return None }
-  let fields = match payload {
-    Object(values) => values
-    _ => return None
-  }
-  let choices = match fields.get("choices") {
-    Some(Array(values)) => values
-    _ => return None
-  }
-  if choices.is_empty() {
-    return None
-  }
-  match choices[0] {
-    Object(first) =>
-      match first.get("message") {
-        Some(Object(message)) =>
-          match message.get("content") {
-            Some(String(content)) => Some(content)
-            _ => return None
-          }
-        _ => return None
-      }
-    _ => return None
   }
 }
 

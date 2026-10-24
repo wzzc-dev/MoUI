@@ -73,6 +73,7 @@ pub fn update_creation(
       )
       let next = model.fork()
       next.push_log("正在起草角色…")
+      let epoch = next.world_epoch()
       (
         next,
         @moui.Effect::run(
@@ -80,9 +81,11 @@ pub fn update_creation(
           kind="provider",
           label="Draft character",
           run=dispatch => {
-            runner(request, reply => dispatch(CharacterDrafted(reply)), _delta => {
-              ()
-            })
+            runner(
+              request,
+              reply => dispatch(InWorld(epoch, CharacterDrafted(reply))),
+              _delta => (),
+            )
           },
         ),
       )
@@ -198,6 +201,7 @@ pub fn update_creation(
         (model, @moui.Effect::none())
       } else if model.config.llm_enabled() {
         let next = { ..model, generating: true, }
+        let epoch = next.world_epoch()
         let prompt = world_idea_prompt(idea)
         let request = LlmRequest::single_shot(
           character_id="!world",
@@ -215,9 +219,11 @@ pub fn update_creation(
             kind="provider",
             label="Generate world",
             run=dispatch => {
-              runner(request, reply => dispatch(WorldGenerated(reply)), _delta => {
-                ()
-              })
+              runner(
+                request,
+                reply => dispatch(InWorld(epoch, WorldGenerated(reply))),
+                _delta => (),
+              )
             },
           ),
         )
@@ -231,6 +237,7 @@ pub fn update_creation(
           ..model.fork(),
           scenario: world,
           current: Some(folder),
+          world_epoch: model.world_epoch + 1,
           idea: "",
           generating: false,
           worlds: with_world(model.worlds, folder),
@@ -298,6 +305,10 @@ pub fn update_creation(
                     ..next.fork(),
                     scenario: named,
                     current: Some(folder),
+                    // The generated world replaces the cast and clears every
+                    // conversation, so requests issued before it are stale even
+                    // though the folder name may be unchanged.
+                    world_epoch: next.world_epoch + 1,
                     idea: "",
                     worlds: with_world(next.worlds, folder),
                     selected: None,

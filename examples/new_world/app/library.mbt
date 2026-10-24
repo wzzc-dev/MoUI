@@ -110,6 +110,12 @@ pub fn update_library(
               ..model.fork(),
               scenario: parsed.scenario,
               current: Some(folder),
+              // A different world retires every request the old one issued.
+              world_epoch: if fresh {
+                model.world_epoch + 1
+              } else {
+                model.world_epoch
+              },
               portraits: files.filter(pair => is_portrait_file_name(pair.0)),
             }
             if fresh {
@@ -190,6 +196,7 @@ pub fn update_library(
         ..model.fork(),
         scenario: blank_world(name),
         current: Some(name),
+        world_epoch: model.world_epoch + 1,
         worlds: with_world(model.worlds, name),
         world_name: "",
         selected: None,

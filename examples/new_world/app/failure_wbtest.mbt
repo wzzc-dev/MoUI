@@ -66,7 +66,11 @@ test "a failed regenerate leaves the existing reply intact" {
     turn_runner=never,
   )
   let (regenerating, _g) = update(answered, RegenerateReply, turn_runner=never)
-  let (failed, _f) = update(regenerating, Regenerated(None), turn_runner=never)
+  let (failed, _f) = update(
+    regenerating,
+    Regenerated("林掌柜", None),
+    turn_runner=never,
+  )
   let conversation = failed.conversations.for_character("林掌柜")
   let lines = conversation.lines()
   assert_eq(lines[lines.length() - 1].text(), "原来的好回复")

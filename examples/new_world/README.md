@@ -1,6 +1,6 @@
 # New World
 
-<img src="../../resource/screenshots/new_world.png" width="720" alt="New World screenshot"/>
+<img src="../../resource/screenshots/ai_world.png" width="720" alt="New World screenshot"/>
 
 一个以**角色演绎**为核心的沉浸式对话产品：整个数据库就是你硬盘上的一个
 **文件夹**，每个世界是库里的一个子文件夹、由几个 Markdown 文件组成。
@@ -84,8 +84,8 @@ Canvas2D 渲染）。macOS 原生：`moon run examples/new_world/macos_skia --ta
   `scene:<地点 id>`，分支是 `<角色>~N`。老版本写的单个 `conversations.json`
   仍然会被整份读入以兼容，混合状态可以直接升级——但它已不再被写入。
 - **导出 / 导入**：一个世界可以导出成单个 `.aiworld.json`（Markdown + 对话
-  + 事件；不含 `config.json`），在另一台机器导入即恢复整个世界。导入永远
-  建新文件夹（`名字 (2)`），不会覆盖已有世界。
+  + 事件 + 立绘；不含 `config.json`），在另一台机器导入即恢复整个世界。导入
+  永远建新文件夹（`名字 (2)`），不会覆盖已有世界。
 - **世界库根目录只放配置**：`config.json` 与各世界子文件夹同级。分享一个
   世界只需要拷走那个子文件夹，不需要也不应该连根目录一起给。
 - `world.md` 的 H1 是世界名，文件夹名是库里的条目名。地点行格式为
@@ -184,16 +184,13 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
 `## 立绘` 写文件名**——就这样，文件夹里就是一张真正的图片（不是 base64 文本），
 可以直接打开、拖走、放进 git。
 
-分享世界也**分享文件夹**（原生端「导出世界 / 导入世界」现在选的是目录，
-不再是 .aiworld.json）：导出的就是 `world.md` + `characters/`，对方拿到文件夹
-导入即可。
+分享世界**分享一个文件**：Web 与原生「导出世界 / 导入世界」都只认
+`.aiworld.json`——世界 Markdown、对话、事件与立绘打包成一个 JSON，对方选这个
+文件导入即可。导入端只按 app 的 bundle 解码，永远建新文件夹，不会覆盖已有世界；
+立绘在包里是 base64，导入后重新落成 `characters/<角色名>.png`。
 
-现成的示例（温衍 + 立绘，真实 jpg）：
-
-- `examples/new_world/WenYan-with-portrait/` —— **文件夹**，原生端直接「导入世界」
-  选它即可；
-- `examples/new_world/WenYan-with-portrait.aiworld.json` —— 同样的内容打包成
-  一个文件，给浏览器端用（「导入世界」选它）。
+现成的示例：`examples/new_world/WenYan-with-portrait.aiworld.json`（温衍 +
+立绘），两端的「导入世界」选它即可。
 
 ## 分支对话
 
@@ -392,7 +389,7 @@ boot 期间到达的完成回调会先入队、字符串 id 延迟到队列重�
 ## 测试
 
 ```sh
-moon test examples/new_world/app --target native    # 280+ 项：codec 往返、容错、
+moon test examples/new_world/app --target native    # 320+ 项：codec 往返、容错、
                                                    # 创建/回复两路、设置入库、
                                                    # 日志 JSON 落盘与恢复、AI 生成容错、
                                                    # 记忆压缩与长期记忆提议、
@@ -421,7 +418,7 @@ moon build examples/new_world/web_wasm --target wasm-gc
 
 ## 路线
 
-见 `docs/plans/active/new-world-product.md`。已完成：文件夹数据库、人物创建、
+见 `docs/plans/active/ai-world-product.md`。已完成：文件夹数据库、人物创建、
 双回复路径、Web 优先运行、AI 生成世界、对话/事件日志落盘、跨刷新授权、
 增量写入、世界导入导出、对话编辑（重生成/候选切换/编辑/删除/清空）、
 世界书命中可见、Markdown 回复渲染、人物立绘、场景多角色同场、显式时间推进，

@@ -104,7 +104,10 @@ test "swipe candidates survive a save and reload" {
     _on_reply,
     _on_delta,
   ) => ())
-  let (twice, _t) = update(again, Regenerated(Some("后堂请。")))
+  let (twice, _t) = update(
+    again,
+    Regenerated("林掌柜", Some("后堂请。")),
+  )
   let conversation = twice.conversations.for_character("林掌柜")
   assert_eq(conversation.lines()[1].candidate_count(), 2)
   let reloaded = reload(twice)

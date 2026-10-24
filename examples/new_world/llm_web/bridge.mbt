@@ -118,7 +118,8 @@ pub(all) enum FsJob {
   ConfigRead((String?) -> Unit)
   ConfigWrite((Bool) -> Unit)
   ExportDone((Bool) -> Unit)
-  ImportDone((Bool, String, Array[(String, String)]) -> Unit)
+  /// The page returns the bundle file's raw text; the app decodes it.
+  ImportDone((Bool, String) -> Unit)
 }
 
 ///|
@@ -278,27 +279,27 @@ pub fn WebGateway::config_write(
 }
 
 ///|
-/// Write one world out as a shareable bundle.
+/// Write one already-encoded world bundle to the file the player picks.
 pub fn WebGateway::fs_export_world(
   self : WebGateway,
-  folder : String,
-  files : Array[(String, String)],
+  file_name : String,
+  bundle_text : String,
   on_done : (Bool) -> Unit,
 ) -> Unit {
   let id = allocate(self)
   self.fs_pending[id] = ExportDone(on_done)
   host_fs_export_world(
     id,
-    host_string_id(folder),
-    host_string_id(files_json(files)),
+    host_string_id(file_name),
+    host_string_id(bundle_text),
   )
 }
 
 ///|
-/// Pick a bundle and unpack it into a new world folder.
+/// Pick a bundle file and hand its raw text back to the app.
 pub fn WebGateway::fs_import_world(
   self : WebGateway,
-  on_done : (Bool, String, Array[(String, String)]) -> Unit,
+  on_done : (Bool, String) -> Unit,
 ) -> Unit {
   let id = allocate(self)
   self.fs_pending[id] = ImportDone(on_done)
@@ -352,14 +353,15 @@ pub fn WebGateway::fs_complete(
     Some(ImportDone(on_done)) => {
       self.fs_pending.remove(request_id)
       if ok {
-        // The page answers with `{folder, files}`; a damaged payload is a
-        // failed import rather than a half-built world.
-        match parse_imported(payload) {
-          Some(imported) => on_done(true, imported.0, parse_files(imported.1))
-          None => on_done(false, "", [])
+        // The page answers with `{text}`; a damaged payload is a failed
+        // import rather than a half-built world. Decoding the bundle itself
+        // is the app's job.
+        match parse_bundle_text(payload) {
+          Some(text) => on_done(true, text)
+          None => on_done(false, "")
         }
       } else {
-        on_done(false, "", [])
+        on_done(false, "")
       }
     }
     None => ()
@@ -412,25 +414,14 @@ fn parse_names(payload : String) -> Array[String] {
 }
 
 ///|
-/// Decode `{"folder": "...", "files": [[path, content], ...]}` from the JS
-/// host. Returns the folder plus the raw `files` JSON array text so the
-/// existing row decoder can be reused.
-fn parse_imported(payload : String) -> (String, String)? {
+/// Decode `{"text": "..."}`, the bundle body the page read from the chosen
+/// file.
+fn parse_bundle_text(payload : String) -> String? {
   let parsed = @json.parse(payload) catch { _ => return None }
   match parsed {
     Object(fields) =>
-      match fields.get("folder") {
-        Some(String(folder)) =>
-          match fields.get("files") {
-            Some(Array(_)) =>
-              Some(
-                (
-                  folder,
-                  Json::object({ "files": fields.get("files").unwrap() }).stringify(),
-                ),
-              )
-            _ => None
-          }
+      match fields.get("text") {
+        Some(String(text)) => Some(text)
         _ => None
       }
     _ => None

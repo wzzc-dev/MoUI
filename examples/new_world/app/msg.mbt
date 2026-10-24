@@ -108,6 +108,13 @@ pub(all) enum Msg {
   Send(String)
   /// Send the three composer fields (说 / 做 / 旁白) as one turn.
   SendComposer
+  /// Wrap a provider completion with the world generation that issued it.
+  ///
+  /// A request can outlive the world that started it. When it does, its
+  /// character ids and scene keys describe a stage that is no longer there, so
+  /// `update` drops the whole message instead of writing into whatever world
+  /// happens to be open now.
+  InWorld(Int32, Msg)
   /// A piece of a reply arrived while the provider is still writing.
   ReplyDelta(String, String)
   /// A piece of a scene reply arrived.
@@ -258,8 +265,9 @@ pub(all) enum Msg {
   /// Regenerate the last reply of the selected conversation (the previous one
   /// becomes a swipe candidate).
   RegenerateReply
-  /// A regeneration request settled; `None` = failure (keep the old reply).
-  Regenerated(String?)
+  /// A regeneration request settled: `(conversation key, reply)`; `None` is a
+  /// failure that keeps the old reply.
+  Regenerated(String, String?)
   /// Move within a reply's candidates. `(line index, direction)`.
   SwipeReply(Int32, Int32)
   /// Start editing one history line.

@@ -99,8 +99,15 @@
       const deferredReleases = new Set();
       function callExport(name, ...args) {
         if (booted) {
+          const fn = booted.exports?.[name];
+          if (typeof fn !== "function") {
+            // A missing export used to be silently skipped, so a broken wasm
+            // link surfaced as a world where only some callbacks ever fire.
+            console.warn(`wasm export missing: ${name}`);
+            return;
+          }
           try {
-            booted.exports?.[name]?.(...args);
+            fn(...args);
           } catch (error) {
             setStatus(`export ${name} failed: ${error?.message ?? error}`);
           }
@@ -201,39 +208,52 @@
             return;
           }
           // Server-Sent Events: every `data:` line is handed over as it
-          // lands, so the stage shows the words while they are written.
+          // lands, so the stage shows the words while they are written. The
+          // *raw body* is what completes the request — the app parser folds
+          // the deltas itself, and also understands a provider that ignored
+          // `stream: true` and answered with one canonical JSON object.
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let buffer = "";
-          let whole = "";
+          let raw = "";
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
             const chunk = decoder.decode(value, { stream: true });
             buffer += chunk;
+            raw += chunk;
             let at = buffer.indexOf("\n");
             while (at >= 0) {
               const line = buffer.slice(0, at);
               buffer = buffer.slice(at + 1);
-              const delta = sseDelta(line);
-              if (delta !== null) {
-                whole += delta;
-                const deltaId = nextStringId++;
-                stringStore.set(deltaId, delta);
-                callExport("ai_llm_delta", requestId, deltaId);
-                releaseString(deltaId);
-              }
+              emitDelta(requestId, sseDelta(line));
               at = buffer.indexOf("\n");
             }
           }
+          // Flush the decoder and the last line, which may lack a newline.
+          const tail = decoder.decode();
+          raw += tail;
+          buffer += tail;
+          if (buffer !== "") emitDelta(requestId, sseDelta(buffer));
           const textId = nextStringId++;
-          stringStore.set(textId, whole);
+          stringStore.set(textId, raw);
           callExport("ai_llm_complete", requestId, true, textId);
           releaseString(textId);
         } catch (error) {
           setStatus(`Provider request failed: ${error}`);
           callExport("ai_llm_complete", requestId, false, 0);
         }
+      }
+
+      // Hand one streamed piece to the UI. The final reply does not depend on
+      // these callbacks: it is derived from the raw body, so a dropped delta
+      // only shortens the live preview, never the saved turn.
+      function emitDelta(requestId, delta) {
+        if (delta === null) return;
+        const deltaId = nextStringId++;
+        stringStore.set(deltaId, delta);
+        callExport("ai_llm_delta", requestId, deltaId);
+        releaseString(deltaId);
       }
 
       // The text of one streamed SSE line, or null when the line carries none.
@@ -662,24 +682,19 @@
       // ---- world bundles -------------------------------------------------
       //
       // A world is portable by design, so export/import is a first-class
-      // operation, not a debug tool. The MoonBit side hands over the exact
-      // file set (Markdown + journal) and builds the bundle body; the page only
-      // owns the file dialog and the write. Import unpacks into a *new* folder
-      // and returns that folder's files so the app can go on stage.
+      // operation, not a debug tool. The MoonBit side owns the bundle format:
+      // it hands over the encoded text on export, and decodes the text this
+      // page reads back on import. The page only owns the file dialog and the
+      // file read/write, so there is exactly one bundle implementation.
 
-      async function exportBundle(folder, files) {
-        const payload = JSON.stringify({
-          format: "moui.new-world/1",
-          name: folder,
-          files: files.map(([path, content]) => [path, content]),
-        });
-        const blob = new Blob([payload], { type: "application/json" });
+      async function saveBundle(fileName, text) {
+        const blob = new Blob([text], { type: "application/json" });
         // Show the save picker where available: the player chooses where the
         // world lands, which is the point of a portable world.
         if (window.showSaveFilePicker) {
           try {
             const handle = await window.showSaveFilePicker({
-              suggestedName: `${folder}.aiworld.json`,
+              suggestedName: fileName,
               types: [
                 {
                   description: "New World bundle",
@@ -699,7 +714,7 @@
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
         anchor.href = url;
-        anchor.download = `${folder}.aiworld.json`;
+        anchor.download = fileName;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
@@ -709,38 +724,8 @@
 
       async function importBundle() {
         const text = await pickBundleText();
-        if (text == null) return { ok: false, folder: "", files: [] };
-        let bundle = null;
-        try {
-          bundle = JSON.parse(text);
-        } catch {
-          return { ok: false, folder: "", files: [] };
-        }
-        // v2 is the current format (six-block cards, memory files); v1 still
-        // decodes. A bundle in any other shape is refused whole.
-        if (
-          !bundle ||
-          (bundle.format !== "moui.new-world/2" &&
-            bundle.format !== "moui.new-world/1") ||
-          !Array.isArray(bundle.files)
-        ) {
-          return { ok: false, folder: "", files: [] };
-        }
-        // Same admission rule as the MoonBit decoder: world files and
-        // portraits only, no traversal. The page is a second lock on the same
-        // door. Portraits ride along so a world sent to a friend arrives with
-        // its faces.
-        const files = bundle.files.filter(
-          ([path]) =>
-            typeof path === "string" &&
-            (/\.(md|json)$/.test(path) || PORTRAIT_FILE.test(path)) &&
-            !path.includes(".."),
-        );
-        if (files.length === 0) return { ok: false, folder: "", files: [] };
-        const base = String(bundle.name ?? "导入的世界").replace(/[\\/:*?"<>|]/g, "_").trim();
-        const folder = await uniqueWorldName(base || "导入的世界");
-        await writeWorld(folder, files);
-        return { ok: true, folder, files };
+        if (text == null) return { ok: false, text: "" };
+        return { ok: true, text };
       }
 
       function pickBundleText() {
@@ -772,15 +757,6 @@
           };
           input.click();
         });
-      }
-
-      // Never overwrite an existing world on import: pick `名字 (2)`, `(3)`, …
-      async function uniqueWorldName(base) {
-        const taken = new Set(await listWorldNames());
-        if (!taken.has(base)) return base;
-        let index = 2;
-        while (taken.has(`${base} (${index})`)) index += 1;
-        return `${base} (${index})`;
       }
 
       const CONFIG_KEY = "new_world_config_v1";
@@ -832,8 +808,10 @@
       async function runFs(requestId, dirName, operation) {
         try {
           const payload = await operation();
+          // A cancelled dialog resolves with `{ok: false}`; reporting it as a
+          // success made the app log an export/import that never happened.
+          const ok = payload?.ok !== false;
           const textId = finishCreateStringFor(JSON.stringify(payload));
-          const ok = true;
           callExport("ai_fs_complete", requestId, ok, textId);
           releaseString(textId);
         } catch (error) {
@@ -906,16 +884,12 @@
           const content = takeString(contentId);
           runFs(requestId, "保存设置", () => writeConfig(content));
         },
-        fs_export_world: (requestId, folderId, manifestId) => {
-          const folder = takeString(folderId);
-          let files = [];
-          try {
-            const manifest = JSON.parse(takeString(manifestId));
-            files = manifest.files ?? [];
-          } catch {
-            files = [];
-          }
-          runFs(requestId, `导出 ${folder}`, () => exportBundle(folder, files));
+        fs_export_world: (requestId, fileNameId, bundleId) => {
+          // The bundle body is already encoded by the app; the page only asks
+          // where to put it and writes the text.
+          const fileName = takeString(fileNameId);
+          const bundle = takeString(bundleId);
+          runFs(requestId, `导出 ${fileName}`, () => saveBundle(fileName, bundle));
         },
         fs_import_world: requestId => {
           runFs(requestId, "导入世界", importBundle);

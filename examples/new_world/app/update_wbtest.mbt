@@ -379,6 +379,9 @@ test "every Msg variant is reachable from a construction site" {
   ignore(ToggleAtmosphere)
   ignore(SetBackdrop(true))
   ignore(SetAppearance("ink"))
+  ignore(InWorld(model.world_epoch(), Select(None)))
+  ignore(RegenerateReply)
+  ignore(Regenerated("林掌柜", None))
 }
 
 ///|

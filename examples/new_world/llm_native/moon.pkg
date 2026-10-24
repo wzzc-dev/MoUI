@@ -1,7 +1,7 @@
 import {
+  "examples/new_world/app",
   "moonbitlang/async",
   "moonbitlang/async/http",
-  "moonbitlang/core/json",
 }
 
 supported_targets = "native"

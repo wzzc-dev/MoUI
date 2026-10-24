@@ -159,6 +159,8 @@ pub fn llm_parse_delta(String) -> String?
 
 pub fn llm_parse_reply(String) -> String?
 
+pub fn llm_reply_from_body(String) -> String?
+
 pub fn llm_request_body(LlmRequest, stream? : Bool) -> Json
 
 pub fn location_at(Scenario, @core.Point, @core.Point) -> String?
@@ -262,6 +264,8 @@ pub fn time_advanced_event(String) -> String
 pub let transcript_window_default : Int32
 
 pub let transcript_window_step : Int32
+
+pub fn unique_world_name(String, Array[String]) -> String
 
 pub fn update(WorldModel, Msg, turn_runner? : (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit, world_host? : WorldHost) -> (WorldModel, @core.Effect[Msg])
 
@@ -750,6 +754,7 @@ pub(all) enum Msg {
   ExtendTranscript(Int32)
   Send(String)
   SendComposer
+  InWorld(Int32, Msg)
   ReplyDelta(String, String)
   SceneReplyDelta(String, String, String)
   Reply(String, String?)
@@ -814,7 +819,7 @@ pub(all) enum Msg {
   DiscardMemory(Int32)
   ToggleApiKeyReveal
   RegenerateReply
-  Regenerated(String?)
+  Regenerated(String, String?)
   SwipeReply(Int32, Int32)
   EditLine(Int32)
   EditLineChanged(String)
@@ -990,8 +995,8 @@ pub(all) struct WorldHost {
   write_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
   read_config : ((String?) -> Unit) -> Unit
   write_config : (String, (Bool) -> Unit) -> Unit
-  export_world : (String, Array[(String, String)], (Bool) -> Unit) -> Unit
-  import_world : ((Bool, String, Array[(String, String)]) -> Unit) -> Unit
+  export_world : (String, String, (Bool) -> Unit) -> Unit
+  import_world : ((Bool, String) -> Unit) -> Unit
   copy_to_clipboard : (String) -> Unit
 } derive(@debug.Debug)
 pub fn WorldHost::to_repr(Self) -> @debug.Repr
@@ -1024,6 +1029,7 @@ pub struct WorldModel {
   log : Array[String]
   worlds : Array[String]
   current : String?
+  world_epoch : Int32
   library_missing : Bool
   world_name : String
   creator_open : Bool
@@ -1106,6 +1112,7 @@ pub fn WorldModel::to_repr(Self) -> @debug.Repr
 pub fn WorldModel::transcript_window(Self) -> Int32
 pub fn WorldModel::world_book_draft(Self) -> Array[WorldEntry]
 pub fn WorldModel::world_book_edit(Self) -> Int32
+pub fn WorldModel::world_epoch(Self) -> Int32
 pub fn WorldModel::world_name(Self) -> String
 pub fn WorldModel::worlds(Self) -> Array[String]
 

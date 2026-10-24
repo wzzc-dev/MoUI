@@ -269,6 +269,38 @@ fn text_from_blocks(blocks : Array[Json]) -> String? {
 }
 
 ///|
+/// The reply carried by a completed HTTP body.
+///
+/// A provider answers one of two ways: a canonical completion object
+/// (`choices[0].message.content`) when it ignores `stream: true`, or a
+/// Server-Sent Events stream of `data:` lines when it honors it. Both hosts
+/// hand over the raw body, so this is the one place that decides — running
+/// `llm_parse_reply` on text already folded from deltas was the bug that made
+/// every streamed reply look like a provider failure.
+pub fn llm_reply_from_body(body : String) -> String? {
+  match llm_parse_reply(body) {
+    Some(text) => return Some(text)
+    None => ()
+  }
+  let pieces : Array[String] = []
+  for line in body.split("\n") {
+    match llm_parse_delta(line.to_owned()) {
+      Some(delta) => {
+        if delta != "" {
+          pieces.push(delta)
+        }
+      }
+      None => ()
+    }
+  }
+  if pieces.is_empty() {
+    None
+  } else {
+    Some(pieces.join(""))
+  }
+}
+
+///|
 /// Strip the framing some models add around a reply.
 ///
 /// Models frequently wrap their answer in `「…」` or prefix it with the

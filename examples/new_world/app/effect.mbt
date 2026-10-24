@@ -279,36 +279,54 @@ fn commit_effect(
 ///|
 /// Effect: write the current world out as a shareable bundle.
 ///
-/// The payload is the same file set a world-scope commit writes, so the bundle
-/// is the world folder — importing it elsewhere reproduces the world exactly,
-/// including the journal. It deliberately excludes `config.json`: that file
-/// holds the player's provider endpoint and belongs to the library, not to a
-/// world.
+/// The body is built here from the same file set a world-scope commit writes,
+/// so the bundle is the world folder — importing it elsewhere reproduces the
+/// world exactly, including the journal. It deliberately excludes
+/// `config.json`: that file holds the player's provider endpoint and belongs
+/// to the library, not to a world.
 fn export_world_effect(
   host : WorldHost,
   folder : String,
-  files : Array[(String, String)],
+  bundle_text : String,
 ) -> @moui.Effect[Msg] {
   @moui.Effect::run(
     key="new-world:export",
     kind="filesystem",
     label="Export world \{folder}",
     run=dispatch => {
-      (host.export_world)(folder, files, ok => dispatch(WorldExported(ok)))
+      let file_name = folder + bundle_extension
+      (host.export_world)(file_name, bundle_text, ok => dispatch(WorldExported(ok)))
     },
   )
 }
 
 ///|
-/// Effect: pick a bundle and add it to the library.
-fn import_world_effect(host : WorldHost) -> @moui.Effect[Msg] {
+/// Effect: pick a bundle file, decode it here, and write it into the library
+/// under a fresh folder. Every host supplies only the raw text, so the bundle
+/// format and its admission rules exist once, in `bundle.mbt`.
+fn import_world_effect(
+  host : WorldHost,
+  worlds : Array[String],
+) -> @moui.Effect[Msg] {
   @moui.Effect::run(
     key="new-world:import",
     kind="filesystem",
     label="Import world",
     run=dispatch => {
-      (host.import_world)((ok, folder, files) => {
-        dispatch(WorldImported(ok, folder, files))
+      (host.import_world)((ok, text) => {
+        if !ok {
+          dispatch(WorldImported(false, "", []))
+        } else {
+          match bundle_decode(text) {
+            None => dispatch(WorldImported(false, "", []))
+            Some(bundle) => {
+              let folder = unique_world_name(bundle.name, worlds)
+              (host.write_world)(folder, bundle.files, wrote => {
+                dispatch(WorldImported(wrote, folder, bundle.files))
+              })
+            }
+          }
+        }
       })
     },
   )

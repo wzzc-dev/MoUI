@@ -240,3 +240,119 @@ test "a base64-looking portrait file is recognised as encoded, not as bytes" {
   // Real image bytes are not base64 text.
   assert_false(is_base64_text("\u{FF}\u{D8}\u{FF}"))
 }
+
+///|
+test "an imported bundle never merges into an existing world" {
+  assert_eq(unique_world_name("雨夜酒馆", []), "雨夜酒馆")
+  assert_eq(unique_world_name("雨夜酒馆", ["雨夜酒馆"]), "雨夜酒馆 (2)")
+  assert_eq(
+    unique_world_name("雨夜酒馆", ["雨夜酒馆", "雨夜酒馆 (2)"]),
+    "雨夜酒馆 (3)",
+  )
+  // The bundle's own name is sanitised before it becomes a folder.
+  assert_eq(unique_world_name("../坏名", []), "_.._坏名")
+}
+
+///|
+test "export hands the host one encoded bundle, not a file list" {
+  let sent : Array[(String, String)] = []
+  let host : WorldHost = {
+    list_worlds: _done => (),
+    pick_root: _done => (),
+    read_world: (_folder, _done) => (),
+    write_world: (_folder, _files, done) => done(true),
+    read_config: _done => (),
+    write_config: (_content, _done) => (),
+    export_world: (file_name, text, done) => {
+      sent.push((file_name, text))
+      done(true)
+    },
+    import_world: done => done(false, ""),
+    copy_to_clipboard: _text => (),
+  }
+  let (model, effect) = update(tavern(), ExportWorld, world_host=host)
+  let messages : Array[Msg] = []
+  @moui.Effect::runtime_visit(
+    effect,
+    message => messages.push(message),
+    _dispatch => (),
+    (_descriptor, run) => run(message => messages.push(message)),
+    (_descriptor, _start) => (),
+  )
+  assert_eq(sent.length(), 1)
+  assert_eq(sent[0].0, "tavern.aiworld.json")
+  // One format, encoded by the app: what the host writes is a v2 bundle the
+  // app's own decoder accepts.
+  match bundle_decode(sent[0].1) {
+    Some(bundle) => {
+      assert_eq(bundle.name, "tavern")
+      assert_true(bundle.files.length() > 0)
+    }
+    None => fail("the exported text must be the app's own bundle format")
+  }
+  let mut exported = false
+  for message in messages {
+    match message {
+      WorldExported(ok) => exported = ok
+      _ => ()
+    }
+  }
+  assert_true(exported)
+  ignore(model)
+}
+
+///|
+test "import decodes in the app and writes a fresh folder" {
+  let text = bundle_encode("雨夜酒馆", [
+    ("world.md", "# 雨夜酒馆\n\n夜雨敲窗。\n"),
+    ("world_book.md", "# 世界书\n\n- 酒: 后堂老酒。\n"),
+  ])
+  let written : Array[(String, Array[(String, String)])] = []
+  let host : WorldHost = {
+    list_worlds: _done => (),
+    pick_root: _done => (),
+    read_world: (_folder, _done) => (),
+    write_world: (folder, files, done) => {
+      written.push((folder, files))
+      done(true)
+    },
+    read_config: _done => (),
+    write_config: (_content, _done) => (),
+    export_world: (_file_name, _text, done) => done(false),
+    import_world: done => done(true, text),
+    copy_to_clipboard: _text => (),
+  }
+  // The library already holds a world with this name.
+  let base = step(WorldModel::new(), WorldListArrived(["雨夜酒馆"]))
+  let (_model, effect) = update(base, ImportWorld, world_host=host)
+  let messages : Array[Msg] = []
+  @moui.Effect::runtime_visit(
+    effect,
+    message => messages.push(message),
+    _dispatch => (),
+    (_descriptor, run) => run(message => messages.push(message)),
+    (_descriptor, _start) => (),
+  )
+  assert_eq(written.length(), 1)
+  assert_eq(written[0].0, "雨夜酒馆 (2)")
+  assert_eq(written[0].1.length(), 2)
+  // The app — not the host — decided where the world goes, so the message it
+  // emits carries that folder to the model.
+  let mut landed = base
+  for message in messages {
+    landed = step_with_host(landed, message, host)
+  }
+  assert_eq(landed.current(), Some("雨夜酒馆 (2)"))
+  assert_eq(landed.scenario().name(), "雨夜酒馆")
+}
+
+///|
+/// Apply one message with a concrete host (the plain `step` helper uses none).
+fn step_with_host(
+  model : WorldModel,
+  msg : Msg,
+  host : WorldHost,
+) -> WorldModel {
+  let (next, _effect) = update(model, msg, world_host=host)
+  next
+}

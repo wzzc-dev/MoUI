@@ -54,6 +54,7 @@ fn model_fingerprint(model : WorldModel) -> String {
     parts.push(conversation.summary())
     parts.push(conversation.summarized_upto().to_string())
     parts.push(conversation.pending().to_string())
+    parts.push(conversation.streaming())
     for line in conversation.lines() {
       parts.push(line.text())
       parts.push(line.selected().to_string())
@@ -107,17 +108,35 @@ test "no branch writes through the model it was given" {
     ("PanMap", base, PanMap),
     ("Send", step(base, Select(Some("林掌柜"))), Send("温一壶酒")),
     ("Reply", talking_model, Reply("林掌柜", Some("回一句。"))),
+    ("ReplyDelta", talking_model, ReplyDelta("林掌柜", "回")),
+    (
+      "InWorld",
+      talking_model,
+      InWorld(
+        talking_model.world_epoch(),
+        ReplyDelta("林掌柜", "回"),
+      ),
+    ),
     (
       "SceneReply",
       scene_turn,
       SceneReply(scene_key("吧台"), "林掌柜", Some("嗯。")),
+    ),
+    (
+      "SceneReplyDelta",
+      scene_turn,
+      SceneReplyDelta(scene_key("吧台"), "林掌柜", "嗯"),
     ),
     ("EnterScene", base, EnterScene("吧台")),
     ("LeaveScene", in_scene, LeaveScene),
     ("AdvanceTime", base, AdvanceTime),
     ("TimeAdvanced", base, TimeAdvanced(Some("发生了一件事。"))),
     ("RegenerateReply", talking_model, RegenerateReply),
-    ("Regenerated", talking_model, Regenerated(Some("另一个版本。"))),
+    (
+      "Regenerated",
+      talking_model,
+      Regenerated("林掌柜", Some("另一个版本。")),
+    ),
     ("SwipeReply", branched, SwipeReply(0, 1)),
     ("EditLine", talking_model, EditLine(0)),
     (

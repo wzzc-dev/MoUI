@@ -40,12 +40,12 @@ priv enum FsKind {
   Write(String, Array[(String, String)], (Bool) -> Unit)
   ConfigRead((String?) -> Unit)
   ConfigWrite(String, (Bool) -> Unit)
-  /// Write a world's files into an already-chosen folder. The dialog runs on
-  /// the main thread in the host closure; only the file writes are queued.
-  ExportFolder(String, String, Array[(String, String)], (Bool) -> Unit)
-  /// Read a world folder from a chosen path, copy it into the library as a
-  /// fresh world, and report `(ok, folder, files)`.
-  ImportFolder(String, (Bool, String, Array[(String, String)]) -> Unit)
+  /// Write an already-encoded bundle to the path the player chose. The dialog
+  /// runs on the main thread in the host closure; only the write is queued.
+  ExportBundle(String, String, (Bool) -> Unit)
+  /// Read the bundle file the player chose and hand its raw text back; the app
+  /// decodes it and writes the world through `write_world`.
+  ImportBundle(String, (Bool, String) -> Unit)
 }
 
 ///|
@@ -132,16 +132,18 @@ async fn run_new_world() -> Unit {
         },
       )
     },
-    export_world: (world_name, files, done) => {
-      // The directory dialog must run on the main thread, exactly like
-      // `pick_root`: this closure executes inside the app's effect pass on the
-      // window task. A world is shared as a *folder* — the same readable
-      // Markdown and pictures the library holds — not as a packed archive.
+    export_world: (file_name, bundle_text, done) => {
+      // The save dialog must run on the main thread, exactly like `pick_root`:
+      // this closure executes inside the app's effect pass on the window task.
+      // The bundle body is already encoded, so the host only chooses the path
+      // and writes the text.
       let response = service_bridge.dispatch(
         @backend.HostServiceRequest::FileDialog(
           @backend.HostFileDialogOptions::new(
-            kind=@backend.HostFileDialogKind::PickDirectory,
-            title="导出世界到文件夹",
+            kind=@backend.HostFileDialogKind::SaveFile,
+            title="导出世界",
+            filters=["json"],
+            default_name=Some(file_name),
           ),
         ),
       )
@@ -149,7 +151,7 @@ async fn run_new_world() -> Unit {
         @backend.HostServiceResponse::FileDialogSelection([path, ..]) =>
           ignore(
             fs_owner.queue.try_put(FsJob::{
-              kind: ExportFolder(path, world_name, files, done),
+              kind: ExportBundle(path, bundle_text, done),
             }) catch {
               _ => false
             },
@@ -170,24 +172,25 @@ async fn run_new_world() -> Unit {
       )
     },
     import_world: done => {
-      // A world is imported as a folder: the player points at the exported
-      // world (Markdown files and pictures) and it is copied into the library.
+      // The player picks a bundle file; the text is read here and decoded by
+      // the app, so this host never re-implements the bundle format.
       let response = service_bridge.dispatch(
         @backend.HostServiceRequest::FileDialog(
           @backend.HostFileDialogOptions::new(
-            kind=@backend.HostFileDialogKind::PickDirectory,
-            title="导入世界文件夹",
+            kind=@backend.HostFileDialogKind::OpenFile,
+            title="导入世界包",
+            filters=["json"],
           ),
         ),
       )
       match response {
         @backend.HostServiceResponse::FileDialogSelection([path, ..]) =>
           ignore(
-            fs_owner.queue.try_put(FsJob::{ kind: ImportFolder(path, done), }) catch {
+            fs_owner.queue.try_put(FsJob::{ kind: ImportBundle(path, done), }) catch {
               _ => false
             },
           )
-        _ => done(false, "", [])
+        _ => done(false, "")
       }
     },
   }
@@ -276,56 +279,25 @@ async fn run_fs_job(job : FsJob) -> Unit {
       }
       done(ok)
     }
-    ExportFolder(path, name, files, done) => {
-      // The world leaves as the folder the library holds: Markdown files and
-      // real pictures, readable and copyable by hand. It gets its own folder
-      // inside the place the player picked, named after the world.
-      let folder = safe_folder_name(name)
-      done(write_world_files_to(path, folder, files))
+    ExportBundle(path, text, done) => {
+      // The bundle is a single JSON file; `write_file` creates or truncates,
+      // so re-exporting over an older bundle never leaves stale bytes.
+      let mut ok = true
+      @fs.write_file(path, text) catch {
+        _ => ok = false
+      }
+      done(ok)
     }
-    ImportFolder(path, done) => {
-      // The picked folder is a world: it must carry a world.md to be one.
-      let probe = @fs.kind("\{path}/world.md") catch {
-        _ => @fs.FileKind::Unknown
+    ImportBundle(path, done) => {
+      let text = @fs.read_file(path).text() catch {
+        _ => {
+          done(false, "")
+          return
+        }
       }
-      if !(probe is @fs.FileKind::Regular) {
-        done(false, "", [])
-        return
-      }
-      let files = read_folder_files(path, path)
-      let name = world_name_of(path, files)
-      // Never overwrite an existing world: `名字`, `名字 (2)`, …
-      let folder = unique_world_folder(name)
-      let ok = write_world_files(folder, files)
-      if ok {
-        done(true, folder, files)
-      } else {
-        done(false, "", [])
-      }
+      done(true, text)
     }
   }
-}
-
-///|
-/// A world folder name that is not taken yet. Import must never merge into an
-/// existing world — that would silently mix two histories.
-async fn unique_world_folder(base : String) -> String {
-  let taken : Array[String] = @fs.readdir(
-    library_root.val,
-    include_hidden=false,
-  ) catch {
-    _ => []
-  }
-  if !taken.contains(base) {
-    return base
-  }
-  let mut index = 2
-  let mut candidate = "\{base} (\{index})"
-  while taken.contains(candidate) {
-    index += 1
-    candidate = "\{base} (\{index})"
-  }
-  candidate
 }
 
 ///|
@@ -442,7 +414,7 @@ async fn write_world_files_to(
         }
       }
     }
-    let path = "\{root}/\{folder}/\{pair.0}}"
+    let path = world_file_path(root, folder, pair.0)
     if @app.is_portrait_file_name(pair.0) {
       if !write_picture(path, pair.1) {
         ok = false
@@ -457,57 +429,27 @@ async fn write_world_files_to(
 }
 
 ///|
+/// The path of one world file. Split out from the write loop so the join can be
+/// tested: a stray character here makes every write land beside the folder that
+/// `list_worlds` scans, and the world silently never persists.
+fn world_file_path(root : String, folder : String, relative : String) -> String {
+  "\{root}/\{folder}/\{relative}"
+}
+
+///|
 /// Write one picture file as bytes: the base64 the world carries is decoded
 /// back into the image it was.
 async fn write_picture(path : String, base64 : String) -> Bool {
   match @app.base64_decode(base64) {
     Some(bytes) => {
-      let file = @fs.open(path, mode=@fs.Mode::WriteOnly) catch {
-        _ => return false
+      // `write_file` creates and truncates; `open(WriteOnly)` alone refuses a
+      // new file and leaves stale bytes behind a shorter one.
+      let mut ok = true
+      @fs.write_file(path, bytes) catch {
+        _ => ok = false
       }
-      ignore(file.write_once(bytes, offset=0, len=bytes.length()))
-      true
+      ok
     }
     None => false
   }
-}
-
-///|
-/// A folder name a file system will accept: the world's name with the
-/// characters macOS and Windows refuse replaced.
-fn safe_folder_name(name : String) -> String {
-  let trimmed = name.trim().to_owned()
-  if trimmed == "" {
-    return "world"
-  }
-  let out = trimmed
-    .replace_all(old="/", new="_")
-    .replace_all(old="\\", new="_")
-    .replace_all(old=":", new="_")
-    .replace_all(old="*", new="_")
-    .replace_all(old="?", new="_")
-    .replace_all(old="\"", new="_")
-    .replace_all(old="<", new="_")
-    .replace_all(old=">", new="_")
-    .replace_all(old="|", new="_")
-  out
-}
-
-///|
-/// The name of a world: the title in its `world.md`, else the folder's name.
-fn world_name_of(folder : String, files : Array[(String, String)]) -> String {
-  for pair in files {
-    if pair.0 == "world.md" || pair.0.has_suffix("/world.md") {
-      for line in pair.1.split("\n") {
-        let trimmed = line.trim().to_owned()
-        if trimmed.has_prefix("# ") && !trimmed.has_prefix("## ") {
-          let title = trimmed[2:].trim().to_owned()
-          if title != "" {
-            return title
-          }
-        }
-      }
-    }
-  }
-  folder
 }
