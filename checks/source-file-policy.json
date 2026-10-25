@@ -95,8 +95,8 @@
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1704,
-      "reason": "Existing end-to-end renderer smoke harness. Raised 1698->1704 2026-10-25 for src_rect atlas extraction pixel assertions."
+      "maxLines": 1725,
+      "reason": "Existing end-to-end renderer smoke harness. Raised 1698->1704 2026-10-25 for src_rect atlas extraction pixel assertions; quantized 1704->1725 to the 25-line budget step in the same day so the ceiling sits on the quantum while still covering the file's 1704 lines."
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
@@ -290,13 +290,13 @@
     },
     {
       "path": "examples/new_world/app/update.mbt",
-      "maxLines": 1591,
-      "reason": "Existing New World update logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
+      "maxLines": 1600,
+      "reason": "Existing New World update logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet. Quantized 1591->1600 to the 25-line budget step 2026-10-25."
     },
     {
       "path": "examples/new_world/app/world_store.mbt",
-      "maxLines": 1330,
-      "reason": "Existing New World folder-store logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
+      "maxLines": 1350,
+      "reason": "Existing New World folder-store logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet. Quantized 1330->1350 to the 25-line budget step 2026-10-25."
     }
   ],
   "data": [
