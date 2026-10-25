@@ -608,20 +608,50 @@ fn RendererHandle::prepare_native_image_plan(
 }
 
 ///|
+/// An explicit source window — one cell of a sprite or tile atlas — wins over
+/// `fit`, which only describes how the full image maps into the frame. The
+/// window is already in image pixels, so it maps straight onto `frame` as uv
+/// fractions of the decoded texture. `None` means the window samples nothing
+/// and the run must not be drawn.
+fn calculate_native_run_placement(
+  run : NativeImageRun,
+  image_size : @core.Size,
+) -> NativeImagePlacement? {
+  match run.src_rect {
+    Some(src_rect) =>
+      match @render_common.image_src_window(src_rect, image_size) {
+        Some(window) =>
+          Some({
+            frame: run.frame,
+            u0: window.origin.x / image_size.width,
+            v0: window.origin.y / image_size.height,
+            u1: window.max_x() / image_size.width,
+            v1: window.max_y() / image_size.height,
+          })
+        None => None
+      }
+    None => Some(calculate_image_placement(run.frame, image_size, run.fit))
+  }
+}
+
+///|
 fn append_prepared_image_vertices(
   vertices : Array[ImageVertex],
   run : NativeImageRun,
   resource : NativeImageResource,
   screen_size : @core.Size,
 ) -> Unit {
-  let placement = calculate_image_placement(
-    run.frame,
-    @core.Size::new(
-      width=resource.width.to_double(),
-      height=resource.height.to_double(),
-    ),
-    run.fit,
-  )
+  let placement = match
+    calculate_native_run_placement(
+      run,
+      @core.Size::new(
+        width=resource.width.to_double(),
+        height=resource.height.to_double(),
+      ),
+    ) {
+    Some(placement) => placement
+    None => return
+  }
   for
     vertex in generate_image_vertices(
       placement.frame,

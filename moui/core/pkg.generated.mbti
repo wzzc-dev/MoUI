@@ -827,8 +827,10 @@ pub(all) struct ImageRun {
   frame : Rect
   opacity : Double
   fit : ImageFit
+  src_rect : Rect?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ImageRun::equal(Self, Self) -> Bool
+pub fn ImageRun::new(String, Rect, src_rect? : Rect?, opacity? : Double, fit? : ImageFit) -> Self
 pub fn ImageRun::not_equal(Self, Self) -> Bool
 pub fn ImageRun::to_json(Self) -> Json
 pub fn ImageRun::to_repr(Self) -> @debug.Repr

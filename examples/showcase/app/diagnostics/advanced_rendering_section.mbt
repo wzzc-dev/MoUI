@@ -303,6 +303,7 @@ fn advanced_rendering_canvas(
             frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
             opacity: 0.95,
             fit: Cover,
+            src_rect: None,
           })
           draw_text(
             ctx,
@@ -353,6 +354,7 @@ fn advanced_rendering_canvas(
             ),
             opacity: 1.0,
             fit: Cover,
+            src_rect: None,
           })
           draw_text(
             ctx,

@@ -62,6 +62,8 @@ pub fn image_source_provider_read(String) -> Bytes?
 
 pub fn image_source_provider_register(prefix~ : String, read~ : (String) -> Bytes?) -> Unit
 
+pub fn image_src_window(@core.Rect, @core.Size) -> @core.Rect?
+
 pub fn import_svg(String) -> SvgImportResult
 
 pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan

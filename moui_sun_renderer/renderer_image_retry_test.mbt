@@ -70,6 +70,7 @@ test "sun renderer accepts host bytes after an earlier source read failure" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 

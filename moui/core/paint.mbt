@@ -226,7 +226,26 @@ pub(all) struct ImageRun {
   frame : Rect
   opacity : Double
   fit : ImageFit
+  src_rect : Rect?
 } derive(Eq, Debug, ToJson)
+
+///|
+/// Draw a sub-rectangle of the source image.
+///
+/// `frame` is always the destination rect in logical coordinates. When
+/// `src_rect` is set it is read in *source pixel* coordinates, clamped to the
+/// decoded image, and mapped onto `frame` as-is (`fit` does not apply) — this
+/// is how one cell of a sprite or tile atlas is blitted. When it is `None` the
+/// whole source image is placed according to `fit`.
+pub fn ImageRun::new(
+  source : String,
+  frame : Rect,
+  src_rect~ : Rect? = None,
+  opacity~ : Double = 1.0,
+  fit~ : ImageFit = Contain,
+) -> ImageRun {
+  { source, frame, opacity, fit, src_rect, }
+}
 
 ///|
 pub extend ImageRun with Debug::{to_repr}

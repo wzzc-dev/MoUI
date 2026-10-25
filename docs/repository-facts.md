@@ -40,6 +40,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_sun |
 | ./moui_tui |
 | ./examples/counter |
+| ./examples/marpg_demo |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
 | ./examples/button_freeze_probe |
@@ -75,11 +76,11 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 890 | 596 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2518 | 1113 | 141 |
+| core (moui/core/pkg.generated.mbti) | 2520 | 1114 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 606 | 279 | 31 |
-| render common (moui/render/common/pkg.generated.mbti) | 430 | 166 | 13 |
+| render common (moui/render/common/pkg.generated.mbti) | 432 | 167 | 13 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 279 | 165 | 7 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 272 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 183 | 92 | 2 |
@@ -100,6 +101,7 @@ This file is generated from repository manifests and validator reports.
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
+| MarPG Demo | examples/marpg_demo | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |
 | Button Freeze Probe | examples/button_freeze_probe | no |

@@ -6,30 +6,33 @@ fn SkiaRasterRenderer::draw_image(
 ) -> Unit {
   match self.skia_image_for_source(run.source) {
     Some(image) => {
-      let placement = skia_image_placement(
-        run.frame,
+      let placement = skia_run_placement(
+        run,
         @core.Size::new(
           width=image.width().to_double(),
           height=image.height().to_double(),
         ),
-        run.fit,
       )
-      canvas.draw_image_rect(
-        image,
-        @moui_skia.Rect::from_xywh(
-          Float::from_double(placement.u0 * image.width().to_double()),
-          Float::from_double(placement.v0 * image.height().to_double()),
-          Float::from_double(
-            (placement.u1 - placement.u0) * image.width().to_double(),
-          ),
-          Float::from_double(
-            (placement.v1 - placement.v0) * image.height().to_double(),
-          ),
-        ),
-        skia_rect(placement.frame),
-        skia_opacity_paint(run.opacity),
-        sampling=@moui_skia.SamplingOptions::linear(),
-      )
+      match placement {
+        Some(placement) =>
+          canvas.draw_image_rect(
+            image,
+            @moui_skia.Rect::from_xywh(
+              Float::from_double(placement.u0 * image.width().to_double()),
+              Float::from_double(placement.v0 * image.height().to_double()),
+              Float::from_double(
+                (placement.u1 - placement.u0) * image.width().to_double(),
+              ),
+              Float::from_double(
+                (placement.v1 - placement.v0) * image.height().to_double(),
+              ),
+            ),
+            skia_rect(placement.frame),
+            skia_opacity_paint(run.opacity),
+            sampling=@moui_skia.SamplingOptions::linear(),
+          )
+        None => ()
+      }
     }
     None => self.draw_image_placeholder(canvas, run)
   }
@@ -494,6 +497,43 @@ priv struct SkiaImagePlacement {
   v0 : Double
   u1 : Double
   v1 : Double
+}
+
+///|
+/// Placement for a whole run. An explicit source window — one cell of a sprite
+/// or tile atlas — wins over `fit`, which only describes how the full image
+/// maps into the frame. `None` means the run samples nothing and must not be
+/// drawn.
+fn skia_run_placement(
+  run : @core.ImageRun,
+  image_size : @core.Size,
+) -> SkiaImagePlacement? {
+  match run.src_rect {
+    Some(src) =>
+      match @render_common.image_src_window(src, image_size) {
+        Some(window) =>
+          Some(skia_src_window_placement(run.frame, image_size, window))
+        None => None
+      }
+    None => Some(skia_image_placement(run.frame, image_size, run.fit))
+  }
+}
+
+///|
+/// The caller's window is already in source pixels, so normalizing it against
+/// the decoded size is all the crop needs.
+fn skia_src_window_placement(
+  frame : @core.Rect,
+  image_size : @core.Size,
+  window : @core.Rect,
+) -> SkiaImagePlacement {
+  {
+    frame,
+    u0: window.origin.x / image_size.width,
+    v0: window.origin.y / image_size.height,
+    u1: window.max_x() / image_size.width,
+    v1: window.max_y() / image_size.height,
+  }
 }
 
 ///|

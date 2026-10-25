@@ -295,7 +295,9 @@ fn export_world_effect(
     label="Export world \{folder}",
     run=dispatch => {
       let file_name = folder + bundle_extension
-      (host.export_world)(file_name, bundle_text, ok => dispatch(WorldExported(ok)))
+      (host.export_world)(file_name, bundle_text, ok => {
+        dispatch(WorldExported(ok))
+      })
     },
   )
 }

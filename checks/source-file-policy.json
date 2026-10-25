@@ -84,8 +84,8 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1710,
-      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted)."
+      "maxLines": 1720,
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted). Raised 1710->1720 2026-10-25 for the ImageRun.src_rect atlas extraction surface (+1 pub field, app-facing sprite/tile blits)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
@@ -94,8 +94,8 @@
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1698,
-      "reason": "Existing end-to-end renderer smoke harness."
+      "maxLines": 1704,
+      "reason": "Existing end-to-end renderer smoke harness. Raised 1698->1704 2026-10-25 for src_rect atlas extraction pixel assertions."
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
@@ -109,8 +109,8 @@
     },
     {
       "path": "moui_sun_renderer/renderer_test.mbt",
-      "maxLines": 1703,
-      "reason": "Existing Sun renderer integration test."
+      "maxLines": 1708,
+      "reason": "Existing Sun renderer integration test. Raised 1703->1708 2026-10-25 for src_rect atlas extraction coverage."
     },
     {
       "path": "moui_skia/native/skia_stub_canvas.cpp",
@@ -224,8 +224,8 @@
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
-      "maxLines": 1243,
-      "reason": "Existing native WGPU diagnostic smoke."
+      "maxLines": 1244,
+      "reason": "Existing native WGPU diagnostic smoke. Raised 1243->1244 2026-10-25 for the src_rect field in the image run path."
     },
     {
       "path": "moui_sun/renderer/renderer_image_sampling_cache.mbt",
@@ -286,6 +286,16 @@
       "path": "examples/mo_desktop/app/model.mbt",
       "maxLines": 1247,
       "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
+    },
+    {
+      "path": "examples/new_world/app/update.mbt",
+      "maxLines": 1591,
+      "reason": "Existing New World update logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
+    },
+    {
+      "path": "examples/new_world/app/world_store.mbt",
+      "maxLines": 1330,
+      "reason": "Existing New World folder-store logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
     }
   ],
   "data": [

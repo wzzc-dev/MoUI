@@ -71,6 +71,7 @@ test "lower_draw_commands mirrors every variant" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     DrawPath(
       @core.PathSpec::new(

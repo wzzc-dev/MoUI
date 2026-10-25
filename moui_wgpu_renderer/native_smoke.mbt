@@ -516,6 +516,7 @@ fn native_smoke_commands(async_source : String) -> Array[@core.DrawCommand] {
       frame: @core.Rect::new(x=136.0, y=88.0, width=10.0, height=10.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 }

@@ -22,10 +22,7 @@ test "world files are joined inside the world folder" {
 }
 
 ///|
-fn file_content(
-  entries : Array[(String, String)],
-  name : String,
-) -> String? {
+fn file_content(entries : Array[(String, String)], name : String) -> String? {
   for pair in entries {
     if pair.0 == name {
       return Some(pair.1)
@@ -55,10 +52,7 @@ async test "a written world reads back unchanged" {
   let readback = read_folder_files(root, "雨夜酒馆")
   assert_eq(file_content(readback, "world.md"), Some(files[0].1))
   assert_eq(file_content(readback, "world_book.md"), Some(files[1].1))
-  assert_eq(
-    file_content(readback, "characters/林掌柜.md"),
-    Some(files[2].1),
-  )
+  assert_eq(file_content(readback, "characters/林掌柜.md"), Some(files[2].1))
   // The picture goes to disk as bytes and comes back as the same base64.
   assert_eq(
     file_content(readback, "characters/林掌柜.png"),

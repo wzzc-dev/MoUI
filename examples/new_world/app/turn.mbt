@@ -97,12 +97,14 @@ fn send_scene_turn(
           let epoch = next.world_epoch()
           runner(
             request,
-            reply => dispatch(
-              InWorld(epoch, SceneReply(key, responder.id(), reply)),
-            ),
-            delta => dispatch(
-              InWorld(epoch, SceneReplyDelta(key, responder.id(), delta)),
-            ),
+            reply => {
+              dispatch(InWorld(epoch, SceneReply(key, responder.id(), reply)))
+            },
+            delta => {
+              dispatch(
+                InWorld(epoch, SceneReplyDelta(key, responder.id(), delta)),
+              )
+            },
           )
         },
       ),
@@ -260,9 +262,11 @@ fn send_private_turn(
                     let epoch = next.world_epoch()
                     runner(
                       summary_request,
-                      reply => dispatch(
-                        InWorld(epoch, SummaryArrived(id, marker, reply)),
-                      ),
+                      reply => {
+                        dispatch(
+                          InWorld(epoch, SummaryArrived(id, marker, reply)),
+                        )
+                      },
                       _delta => (),
                     )
                   },

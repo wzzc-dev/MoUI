@@ -138,6 +138,12 @@
       "path": "examples/new_world",
       "title": "New World",
       "featured": true
+    },
+    {
+      "id": "marpg_demo",
+      "path": "examples/marpg_demo",
+      "title": "MarPG Demo",
+      "featured": false
     }
   ]
 }

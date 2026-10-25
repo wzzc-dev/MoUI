@@ -247,6 +247,7 @@ test "skia renderer dispose clears cached image resources and records disposal" 
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err => fail("expected Skia image render: \{err.message()}")
@@ -285,6 +286,7 @@ test "skia renderer owns image lifecycle for ready and disposed resources" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err => fail("expected Skia image render: \{err.message()}")
@@ -299,6 +301,7 @@ test "skia renderer owns image lifecycle for ready and disposed resources" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err => fail("expected cached Skia image render: \{err.message()}")
@@ -386,6 +389,7 @@ test "skia renderer retained layer refreshes after async image completion" {
       frame: @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Stretch,
+      src_rect: None,
     }),
     EndRetainedLayer(spec.key),
   ]
@@ -454,6 +458,7 @@ test "skia renderer async image loading waits for explicit decoded completion be
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
   renderer.render(commands) catch {
@@ -504,6 +509,7 @@ test "skia renderer caches decoded async image completion without source decode"
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
   renderer.render(commands) catch {
@@ -561,6 +567,7 @@ test "skia renderer records failed image resources and reuses failed cache" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err =>
@@ -609,6 +616,7 @@ test "skia renderer keeps unchanged failed image cache stable" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err =>
@@ -624,6 +632,7 @@ test "skia renderer keeps unchanged failed image cache stable" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err =>
@@ -658,6 +667,7 @@ test "skia renderer retries local image failures when the file appears" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err => fail("expected Skia placeholder render: \{err.message()}")
@@ -902,6 +912,7 @@ test "skia renderer image placeholder is a neutral card with a border and glyph"
       frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=48.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]) catch {
     err => fail("expected Skia placeholder render: \{err.message()}")
@@ -949,6 +960,7 @@ test "skia renderer image placeholder draws firmer once the load has failed" {
     frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
     opacity: 1.0,
     fit: Contain,
+    src_rect: None,
   }
   let pending = skia_image_placeholder_alpha(
     skia_image_placeholder_border(run, false),
@@ -966,4 +978,72 @@ fn skia_image_placeholder_alpha(brush : @core.Brush) -> Double {
     Solid(color) => color.a
     _ => -1.0
   }
+}
+
+///|
+test "skia image placement maps an atlas source window over the fit geometry" {
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=32.0, height=32.0)
+  let atlas = @core.Size::new(width=64.0, height=64.0)
+
+  let cell = skia_run_placement(
+    @core.ImageRun::new(
+      "atlas.png",
+      frame,
+      src_rect=Some(@core.Rect::new(x=16.0, y=32.0, width=16.0, height=16.0)),
+      fit=Cover,
+    ),
+    atlas,
+  )
+  guard cell is Some(cell) else { fail("expected an atlas cell placement") }
+  inspect(cell.frame.origin.x, content="10")
+  inspect(cell.frame.origin.y, content="20")
+  inspect(cell.frame.size.width, content="32")
+  inspect(cell.frame.size.height, content="32")
+  inspect(cell.u0, content="0.25")
+  inspect(cell.v0, content="0.5")
+  inspect(cell.u1, content="0.5")
+  inspect(cell.v1, content="0.75")
+
+  let clamped = skia_run_placement(
+    @core.ImageRun::new(
+      "atlas.png",
+      frame,
+      src_rect=Some(@core.Rect::new(x=-4.0, y=0.0, width=20.0, height=16.0)),
+    ),
+    atlas,
+  )
+  guard clamped is Some(clamped) else { fail("expected a clamped atlas cell") }
+  inspect(clamped.u0, content="0")
+  inspect(clamped.v0, content="0")
+  inspect(clamped.u1, content="0.25")
+  inspect(clamped.v1, content="0.25")
+
+  for
+    outside in [
+      @core.Rect::new(x=64.0, y=0.0, width=16.0, height=16.0),
+      @core.Rect::new(x=0.0, y=0.0, width=0.0, height=16.0),
+    ] {
+    guard skia_run_placement(
+        @core.ImageRun::new("atlas.png", frame, src_rect=Some(outside)),
+        atlas,
+      )
+      is None else {
+      fail("expected a source window with no image overlap to skip the draw")
+    }
+  }
+
+  let fit_fallback = skia_run_placement(
+    @core.ImageRun::new(
+      "wide.png",
+      @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0),
+    ),
+    @core.Size::new(width=200.0, height=100.0),
+  )
+  guard fit_fallback is Some(fit_fallback) else {
+    fail("expected a fit placement without a source window")
+  }
+  inspect(fit_fallback.frame.origin.y, content="45")
+  inspect(fit_fallback.frame.size.height, content="50")
+  inspect(fit_fallback.u0, content="0")
+  inspect(fit_fallback.v1, content="1")
 }

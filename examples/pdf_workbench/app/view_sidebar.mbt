@@ -152,6 +152,7 @@ fn pdf_workbench_page_thumbnail(
             frame: page_rect,
             opacity: 1.0,
             fit: Contain,
+            src_rect: None,
           })
         None => ()
       }

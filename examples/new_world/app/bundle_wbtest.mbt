@@ -244,7 +244,10 @@ test "a base64-looking portrait file is recognised as encoded, not as bytes" {
 ///|
 test "an imported bundle never merges into an existing world" {
   assert_eq(unique_world_name("雨夜酒馆", []), "雨夜酒馆")
-  assert_eq(unique_world_name("雨夜酒馆", ["雨夜酒馆"]), "雨夜酒馆 (2)")
+  assert_eq(
+    unique_world_name("雨夜酒馆", ["雨夜酒馆"]),
+    "雨夜酒馆 (2)",
+  )
   assert_eq(
     unique_world_name("雨夜酒馆", ["雨夜酒馆", "雨夜酒馆 (2)"]),
     "雨夜酒馆 (3)",

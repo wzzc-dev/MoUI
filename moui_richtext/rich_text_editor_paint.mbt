@@ -576,6 +576,7 @@ fn append_rich_text_run_segment(
           frame: run_frame,
           opacity: 1.0,
           fit: run.image_fit,
+          src_rect: None,
         }),
       )
     None =>

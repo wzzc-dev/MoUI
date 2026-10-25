@@ -99,6 +99,7 @@ fn append_image_item(
       frame: run.frame,
       opacity: clamp_opacity(run.opacity) * state.opacity,
       fit: run.fit,
+      src_rect: run.src_rect,
       transform: state.transform,
     }),
   )

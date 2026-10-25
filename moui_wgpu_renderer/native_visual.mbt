@@ -39,6 +39,7 @@ priv struct NativeImageRun {
   frame : @core.Rect
   opacity : Double
   fit : @core.ImageFit
+  src_rect : @core.Rect?
   transform : @core.Transform2D
 }
 

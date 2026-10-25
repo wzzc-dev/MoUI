@@ -43,6 +43,7 @@ fn pdf_workbench_preview_canvas(
             frame: page_rect,
             opacity: 1.0,
             fit: Contain,
+            src_rect: None,
           })
         None => {
           draw_text(

@@ -75,6 +75,7 @@ fn sun_codec_test_image_command(source : String) -> @core.DrawCommand {
     frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
     opacity: 1.0,
     fit: Contain,
+    src_rect: None,
   })
 }
 

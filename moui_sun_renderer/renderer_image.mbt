@@ -141,14 +141,17 @@ fn SunRasterRenderer::draw_image_pixmap(
   pixmap : @sun_graphics.Pixmap,
   opacity : Double,
 ) -> Unit {
-  let placement = sun_image_placement(
-    image.frame,
-    @core.Size::new(
-      width=pixmap.get_width().to_double(),
-      height=pixmap.get_height().to_double(),
-    ),
-    image.fit,
-  )
+  let placement = match
+    sun_run_placement(
+      image,
+      @core.Size::new(
+        width=pixmap.get_width().to_double(),
+        height=pixmap.get_height().to_double(),
+      ),
+    ) {
+    Some(placement) => placement
+    None => return
+  }
   let paint = @sun_graphics.Paint::new().set_opacity(image.opacity * opacity)
   let dst_x = sun_dim_to_int(placement.frame.origin.x)
   let dst_y = sun_dim_to_int(placement.frame.origin.y)
@@ -720,6 +723,46 @@ fn sun_image_format_for_bytes(data : Bytes) -> SunImageFormat? {
   } else {
     None
   }
+}
+
+///|
+/// Placement for a whole run. An explicit source window — one cell of a sprite
+/// or tile atlas — wins over `fit`, which only describes how the full image
+/// maps into the frame. `None` means the run samples nothing and must not be
+/// drawn.
+fn sun_run_placement(
+  run : @core.ImageRun,
+  image_size : @core.Size,
+) -> SunImagePlacement? {
+  match run.src_rect {
+    Some(src) => {
+      let window = @render_common.image_src_window(src, image_size)
+      match window {
+        Some(window) => sun_src_window_placement(run.frame, window)
+        None => None
+      }
+    }
+    None => Some(sun_image_placement(run.frame, image_size, run.fit))
+  }
+}
+
+///|
+/// An explicit source window is already in image pixels, so only the edges
+/// need rounding. Rounding `max_x`/`max_y` separately from the origin keeps a
+/// grid of equal cells the same width across the atlas.
+fn sun_src_window_placement(
+  frame : @core.Rect,
+  window : @core.Rect,
+) -> SunImagePlacement? {
+  let x = window.origin.x.round().to_int()
+  let y = window.origin.y.round().to_int()
+  let width = window.max_x().round().to_int() - x
+  let height = window.max_y().round().to_int() - y
+  guard width > 0 && height > 0 else { return None }
+  Some({
+    frame,
+    src_rect: Some(@sun_graphics.PixelRect::new(x~, y~, width~, height~)),
+  })
 }
 
 ///|

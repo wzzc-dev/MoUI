@@ -132,10 +132,7 @@ async fn llm_fetch(job : LlmJob) -> Unit {
         match client.read_until("\n") {
           Some(line) => {
             match @app.llm_parse_delta(line) {
-              Some(delta) =>
-                if delta != "" {
-                  (job.on_delta)(delta)
-                }
+              Some(delta) => if delta != "" { (job.on_delta)(delta) }
               None => ()
             }
             raw.push(line)
