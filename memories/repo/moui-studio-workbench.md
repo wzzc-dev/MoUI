@@ -24,7 +24,11 @@ editor area; `moui_studio/app` is only the composition root and policy layer.
   `PluginDescriptor`) are deleted; the workbench types are the extension
   surface. Kernel keeps event bus / services / PTY / provider contracts.
 
-Budget ratchet lives in
-`tools/moui/validate_maintenance_baseline/studio_shell_budgets.mbt`
-(27,374 lines / 39 files / 111 fields / 238 variants); app source files may
-not grow (`*wbtest.mbt` files are exempt from the count).
+Budget ratchet (27,374 lines / 39 files / 111 fields / 238 variants, measured at
+the pinned subrepo commit `ef2a56f12`) left this repository on 2026-10-25. Its
+carrier was `tools/moui/validate_maintenance_baseline/studio_shell_budgets.mbt`,
+but `moui_studio` is a separate git repository, so the main-repo gate was
+accounting for a directory no git tracks here. Rebuild the gate inside
+`moui_studio`; the counting rules and the "no B/C-stage claims before rebuild"
+rule are in `docs/plans/active/moui-studio-shell-completion.md` plus ADR 0040.
+App source files may not grow (`*wbtest.mbt` files are exempt from the count).

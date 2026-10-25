@@ -44,6 +44,37 @@ repeat:
 Both read theming from `ControlThemeSet` (never the legacy `XStyle::default`
 constructors), so a theme change lives in exactly one place.
 
+### Declaration-key encoders (2026-10-25 migration)
+
+Six `declaration_*` encoders were removed from
+`moui/views/common/declaration_helpers.mbt` (`declaration_option_double`,
+`declaration_color`, `declaration_font`, `declaration_brush`,
+`declaration_border`, `declaration_shadow`). They keyed less than the value they
+took — `declaration_font` skipped `families`/`style`, `declaration_brush` skipped
+gradient endpoints and radial center/radius — so a control using one could publish
+a declaration key that misses a real theme change. Key through the `view_*_key`
+helpers in `moui/views/common/view_control_helpers.mbt` instead:
+
+```mbt
+impl @core.ViewNode for MyControl with fn declaration(self) {
+  @common.view_declaration_auto(
+    "MyControl",
+    self.theme,
+    [("label", @core.DeclarationKey::string(self.label))],
+    [
+      ("font", @common.view_font_option_key(self.font)),
+      ("border", @common.view_border_option_key(self.border)),
+    ],
+    [("role", @common.view_semantics_role_key(self.role))],
+  )
+}
+```
+
+`view_color_key`, `view_double_option_key`, `view_brush_option_key`, and
+`view_shadow_option_key` cover the remaining shapes; the full old-to-new mapping
+and the compatibility note are in
+`docs/decisions/0034-viewnode-declaration-coverage-gate.md`.
+
 ## Implementing a `ViewNode`
 
 `@core.ViewNode` is 15 methods, and it is deliberately one trait. Only

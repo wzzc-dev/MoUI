@@ -172,6 +172,20 @@
           ]
         },
         {
+          "name": "core theme no control surface",
+          "argv": [
+            "node",
+            "scripts/validate-core-theme-no-control-surface.mjs"
+          ]
+        },
+        {
+          "name": "host import baseline",
+          "argv": [
+            "node",
+            "scripts/validate-host-import-baseline.mjs"
+          ]
+        },
+        {
           "name": "window host boundary",
           "argv": [
             "node",

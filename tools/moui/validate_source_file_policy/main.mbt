@@ -20,6 +20,7 @@ struct SourcePolicy {
   extensions : Array[String]
   review_lines : Int32
   hard_limit_lines : Int32
+  budget_step_lines : Int32
   entries : Array[PolicyEntry]
 }
 
@@ -174,6 +175,10 @@ fn load_policy(repo_root : String) -> SourcePolicy raise SourcePolicyError {
       logic.get("hardLimitLines"),
       path + ".logic.hardLimitLines",
     ),
+    budget_step_lines: json_int(
+      logic.get("budgetStepLines"),
+      path + ".logic.budgetStepLines",
+    ),
     entries,
   }
 }
@@ -309,6 +314,9 @@ fn validate_policy(repo_root : String, policy : SourcePolicy) -> PolicyResult {
       failures.push("invalid source policy extension: " + extension)
     }
   }
+  if policy.budget_step_lines <= 0 {
+    failures.push("source policy logic.budgetStepLines must be positive")
+  }
   for index, entry in policy.entries {
     if policy.entries[:index].any(previous => previous.path == entry.path) {
       failures.push("duplicate source policy entry: " + entry.path)
@@ -330,6 +338,14 @@ fn validate_policy(repo_root : String, policy : SourcePolicy) -> PolicyResult {
       entry.max_lines <= policy.hard_limit_lines {
       failures.push(
         entry.path + ": logic ratchets are only valid above hardLimitLines",
+      )
+    }
+    if entry.classification == "logic" &&
+      entry.max_lines % policy.budget_step_lines != 0 {
+      failures.push(
+        entry.path +
+        ": logic ratchet ceiling \{entry.max_lines} must sit on the " +
+        "\{policy.budget_step_lines}-line quantum",
       )
     }
     if entry.classification != "generated" && entry.reason == "" {
@@ -387,12 +403,6 @@ fn validate_policy(repo_root : String, policy : SourcePolicy) -> PolicyResult {
           failures.push(
             path +
             ": \{entry.classification} lines=\{lines} exceeds registered budget \{entry.max_lines}",
-          )
-        }
-        if entry.classification == "logic" && lines < entry.max_lines {
-          failures.push(
-            path +
-            ": logic ratchet can lower from \{entry.max_lines} to \{lines}",
           )
         }
         if entry.classification == "generated" && !text.contains(entry.header) {

@@ -83,6 +83,49 @@ violations; Option A is the prerequisite that makes it safe.
   somewhere in the declaration body, which is the same convention the current
   controls already follow.
 
+## Amendment (2026-10-25): views-side duplicate encoders removed
+
+`moui/views/common/declaration_helpers.mbt` lost six `pub fn` encoders in
+`d73524c12`: `declaration_option_double`, `declaration_color`,
+`declaration_font`, `declaration_brush`, `declaration_border`, and
+`declaration_shadow`. Zero call sites is not the reason they went. They were the
+silently-stale kind this gate exists to catch: `declaration_font` keyed only
+`size` and `weight` (dropping `families` and `style`) and `declaration_brush`
+dropped gradient start/end points and radial center/radius, while the private
+same-named encoders in `moui/core/view_modifier_labels.mbt` key the whole value.
+Because `moui/core` cannot import `moui/views`, the views-side copies could never
+win — a control reaching for one produced a declaration key that
+under-distinguishes a real theme change, and P17 cannot see that failure because
+the field *is* named somewhere in the body.
+
+Replacement mapping, all live and all under `moui/views/common/`:
+
+| removed | use |
+|---|---|
+| `declaration_option_double` | `view_double_option_key` (`view_control_helpers.mbt:11`) |
+| `declaration_color` | `view_color_key` (`declaration_helpers.mbt:105`) |
+| `declaration_font` | `view_font_key` (`view_control_helpers.mbt:61`) |
+| `declaration_brush` | `view_brush_key` (`view_control_helpers.mbt:136`) |
+| `declaration_border` | `view_border_key` (`view_control_helpers.mbt:163`) |
+| `declaration_shadow` | `view_shadow_key` (`view_control_helpers.mbt:178`) |
+
+Compatibility: a breaking removal from the published `moui/views` surface, shipped
+in the `0.2.x` line. `docs/compatibility-policy.md` allows a `0.x` minor to break
+provided the same release carries an upgrade note and a migration example — this
+section plus the example in `docs/view-catalog.md` ("Authoring new controls") is
+that note. No deprecated alias was left behind, following the ADR 0015 precedent
+("breaking change ... no migration shim"): an alias would keep the
+under-distinguishing encoder alive, which is the bug being removed.
+
+Option B stays deferred, now with a measured reason rather than a hunch. Reading
+every `declaration()` override on 2026-10-24 found a helper gap, not a generation
+gap: `view_declaration_auto` (`declaration_helpers.mbt:30`) does not yet cover a
+few key shapes some nodes hand-build, and `moui/views/canvas/canvas.mbt` repeats
+the identical seven-line block three times (`Canvas:29`, `AnimatedCanvas:81`,
+`MeasuredCanvas:161`). Neither blocks a control, so a generator is not the next
+step; widening `view_declaration_auto` is, and only when a third control copies a
+hand-built block.
+
 ## Agent Notes
 
 - **Session context**: source-level audit of MoUI implementation details

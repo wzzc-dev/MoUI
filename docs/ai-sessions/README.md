@@ -34,6 +34,7 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-10-25: Governance tax — studio budgets exit, ratchet quanta](2026-10-25-governance-tax-studio-budget-exit.md)
 - [2026-10-23: Pointer/input parity §0–§6, §8, §9](2026-10-23-pointer-input-parity-s0-s6-s8-s9.md)
 - [2026-10-16: TUI hardening H1–H5](2026-10-16-tui-hardening.md)
 - [2026-10-15: TUI output path (S0–S7)](2026-10-15-tui-output-path.md)

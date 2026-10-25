@@ -34,257 +34,258 @@
   ],
   "logic": {
     "reviewLines": 1000,
-    "hardLimitLines": 1200
+    "hardLimitLines": 1200,
+    "budgetStepLines": 25
   },
   "ratchets": [
     {
       "path": "moui_sun/text/text_system_test.mbt",
-      "maxLines": 3515,
+      "maxLines": 3525,
       "reason": "Existing comprehensive text-system logic test."
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3521,
+      "maxLines": 3525,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
       "path": "moui_sun/graphics/render_frame_test.mbt",
-      "maxLines": 3328,
+      "maxLines": 3350,
       "reason": "Existing comprehensive render-frame logic test."
     },
     {
       "path": "moui_sun/graphics/layer_tree_test.mbt",
-      "maxLines": 3166,
+      "maxLines": 3175,
       "reason": "Existing comprehensive layer-tree logic test."
     },
     {
       "path": "moui_sun/graphics/canvas_shape_test.mbt",
-      "maxLines": 3364,
+      "maxLines": 3375,
       "reason": "Existing comprehensive canvas shape logic test."
     },
     {
       "path": "moui_skia/native/skia_native_test.mbt",
-      "maxLines": 2862,
+      "maxLines": 2875,
       "reason": "Existing native binding integration test."
     },
     {
       "path": "moui_skia/native/canvas_native.mbt",
-      "maxLines": 2558,
+      "maxLines": 2575,
       "reason": "Existing native canvas binding implementation."
     },
     {
       "path": "moui_skia/native/skia_stub_gpu_worker.cpp",
-      "maxLines": 2528,
+      "maxLines": 2550,
       "reason": "Existing GPU worker bridge implementation."
     },
     {
       "path": "moui_sun/renderer/render_pipeline_resource_replay.mbt",
-      "maxLines": 2169,
+      "maxLines": 2175,
       "reason": "Existing renderer resource replay pipeline."
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1710,
+      "maxLines": 1725,
       "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
-      "maxLines": 1956,
+      "maxLines": 1975,
       "reason": "Existing path model and algorithms."
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1698,
+      "maxLines": 1700,
       "reason": "Existing end-to-end renderer smoke harness."
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
-      "maxLines": 1904,
+      "maxLines": 1925,
       "reason": "Existing pixmap implementation and codecs."
     },
     {
       "path": "examples/excel/sheet/sheet.mbt",
-      "maxLines": 1871,
+      "maxLines": 1875,
       "reason": "Existing spreadsheet domain implementation."
     },
     {
       "path": "moui_sun_renderer/renderer_test.mbt",
-      "maxLines": 1703,
+      "maxLines": 1725,
       "reason": "Existing Sun renderer integration test."
     },
     {
       "path": "moui_skia/native/skia_stub_canvas.cpp",
-      "maxLines": 1733,
+      "maxLines": 1750,
       "reason": "Existing native canvas bridge implementation."
     },
     {
       "path": "moui_skia/native/skia_stub_common.cpp",
-      "maxLines": 1713,
+      "maxLines": 1725,
       "reason": "Existing shared native Skia bridge implementation."
     },
     {
       "path": "moui_sun/graphics/surface_test.mbt",
-      "maxLines": 1777,
+      "maxLines": 1800,
       "reason": "Existing comprehensive surface logic test."
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 3031,
+      "maxLines": 3050,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1847,
+      "maxLines": 1850,
       "reason": "Existing diagnostic WGPU renderer implementation."
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 2192,
+      "maxLines": 2200,
       "reason": "Existing caret and hit-testing algorithms. Raised 2182->2192: caret-hit coverage/formatting drift from the markdown slices."
     },
     {
       "path": "moui_skia/native/skia_stub_text_font.cpp",
-      "maxLines": 1715,
+      "maxLines": 1725,
       "reason": "Existing native text and font bridge implementation."
     },
     {
       "path": "moui_sun/graphics/canvas_image_test.mbt",
-      "maxLines": 1593,
+      "maxLines": 1600,
       "reason": "Existing comprehensive canvas image logic test."
     },
     {
       "path": "moui_skia/native/surface_image_data_native.mbt",
-      "maxLines": 1515,
+      "maxLines": 1525,
       "reason": "Existing native surface/image bindings."
     },
     {
       "path": "moui_sun/graphics/surface.mbt",
-      "maxLines": 1454,
+      "maxLines": 1475,
       "reason": "Existing surface implementation."
     },
     {
       "path": "moui_sun/text/rasterizer.mbt",
-      "maxLines": 1457,
+      "maxLines": 1475,
       "reason": "Existing text rasterizer implementation."
     },
     {
       "path": "moui_sun/graphics/path_test.mbt",
-      "maxLines": 1453,
+      "maxLines": 1475,
       "reason": "Existing comprehensive path logic test."
     },
     {
       "path": "examples/mo_workbench/app/workbench_wbtest.mbt",
-      "maxLines": 1515,
+      "maxLines": 1525,
       "reason": "Existing workbench integration test with declaration invalidation coverage. Raised 1520->1521: wbtest coverage growth. Raised 1514->1515 2026-10-23: the fixture enumerates every TextControlStateContext field, and pointer-input-parity added reveal."
     },
     {
       "path": "moui_skia_renderer/skia_renderer_text_wbtest.mbt",
-      "maxLines": 1390,
+      "maxLines": 1400,
       "reason": "Existing Skia text integration test."
     },
     {
       "path": "tools/moui/validate_web_runtime_presentation_manifest/main.mbt",
-      "maxLines": 1359,
+      "maxLines": 1375,
       "reason": "Existing structured Web runtime evidence validator."
     },
     {
       "path": "moui_skia/moui_skia_render_test.mbt",
-      "maxLines": 1342,
+      "maxLines": 1350,
       "reason": "Existing Skia binding render integration test."
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 4243,
+      "maxLines": 4250,
       "reason": "Existing rich-text editor session state machine."
     },
     {
       "path": "scripts/record-web-runtime-presentation.mjs",
-      "maxLines": 1368,
+      "maxLines": 1375,
       "reason": "Existing browser presentation evidence orchestrator; grew by the drag-probe sequences and handled-move assertion (web drag regression evidence)."
     },
     {
       "path": "moui/runtime/semantics.mbt",
-      "maxLines": 1372,
+      "maxLines": 1375,
       "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation."
     },
     {
       "path": "moui/runtime/semantics_runtime_test.mbt",
-      "maxLines": 1384,
+      "maxLines": 1400,
       "reason": "Existing runtime semantics contract and modal, focus, delta, announcement, and stale-action regression suite."
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",
-      "maxLines": 1441,
+      "maxLines": 1450,
       "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration. Raised 1366->1441 2026-10-23 for pointer-input-parity evidence: long-press timed wake, caret reveal resolved against the placed tree, and the targeted-dispatch ancestor re-place regression."
     },
     {
       "path": "moui_sun/text/parser_test.mbt",
-      "maxLines": 1273,
+      "maxLines": 1275,
       "reason": "Existing comprehensive text parser test."
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
-      "maxLines": 1243,
+      "maxLines": 1250,
       "reason": "Existing native WGPU diagnostic smoke."
     },
     {
       "path": "moui_sun/renderer/renderer_image_sampling_cache.mbt",
-      "maxLines": 1241,
+      "maxLines": 1250,
       "reason": "Existing renderer image sampling cache."
     },
     {
       "path": "moui_sun/text/parser.mbt",
-      "maxLines": 1212,
+      "maxLines": 1225,
       "reason": "Existing text parser implementation."
     },
     {
       "path": "moui_sun/renderer/render_pipeline_image_diff_test.mbt",
-      "maxLines": 1226,
+      "maxLines": 1250,
       "reason": "Existing renderer image diff integration test."
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1690,
+      "maxLines": 1700,
       "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders. Raised 1689->1690: formatting/comment drift from the markdown-editor slices."
     },
     {
       "path": "moui_richtext/markdown_html_image_gallery.mbt",
-      "maxLines": 1293,
+      "maxLines": 1300,
       "reason": "Existing HTML container image gallery projection."
     },
     {
       "path": "moui_richtext/rich_text_markdown_session_editor.mbt",
-      "maxLines": 1315,
+      "maxLines": 1325,
       "reason": "Existing rich-text markdown session editor state and rendering. Raised 1313->1316: session-editor growth from the markdown slices. Lowered 1316->1315 2026-10-22: the gesture clock now comes from ViewEventContext.now_ms instead of a per-event timestamp field."
     },
     {
       "path": "moui_richtext/editor_selection.mbt",
-      "maxLines": 1240,
+      "maxLines": 1250,
       "reason": "Existing selection, hit-test, and block-context helpers."
     },
     {
       "path": "moui_sun/graphics/shader_test.mbt",
-      "maxLines": 1360,
+      "maxLines": 1375,
       "reason": "MoonBit toolchain upgrade required cross-package qualification in black-box tests, which wraps long lines under moon fmt."
     },
     {
       "path": "moui_richtext/markdown_model.mbt",
-      "maxLines": 1277,
+      "maxLines": 1300,
       "reason": "Existing committed file re-registered at current measured logic lines during 2026-09-26 freeze regression."
     },
     {
       "path": "moui_richtext/markdown_model_inline.mbt",
-      "maxLines": 1301,
+      "maxLines": 1325,
       "reason": "Existing committed file re-registered at current measured logic lines during 2026-09-26 freeze regression."
     },
     {
       "path": "moui_skia/geometry.mbt",
-      "maxLines": 1273,
+      "maxLines": 1275,
       "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
     },
     {
       "path": "examples/mo_desktop/app/model.mbt",
-      "maxLines": 1247,
+      "maxLines": 1250,
       "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
     }
   ],

@@ -53,6 +53,12 @@ that wrapper directly when splitting files, shrinking `pub(all)`, or reducing
 root facade forwards, then ratchet the relevant budget downward in the same
 change.
 
+MoUI Studio shell budgets are not part of this guard. `moui_studio` is a separate
+repository, so its four shell counters (app source lines, app source files,
+`Model` fields, `Msg` variants) belong to that repository's own gate; the
+main-repo carrier was removed on 2026-10-25 (ADR 0040 Amendment, and the
+handoff rules in `docs/plans/active/moui-studio-shell-completion.md`).
+
 The guard tracks three budgets:
 
 - oversized file ratchets for current hotspots such as `moui/core/unicode/grapheme_data.mbt`,

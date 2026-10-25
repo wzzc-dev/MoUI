@@ -43,9 +43,9 @@ app 包 = 壳 + 组合根（口径：`moui_studio/app/*.mbt`，排除 `*_test.mb
 | **B 稳态纪律线** | ≤ 22,000 | ≤ 32 | ≤ 80 | ≤ 100 | run 域状态切片（Effect 形态定型后）+ 组装件继续宽参数化 |
 | **C 原完成线（北极星）** | ≤ 18,000 | ≤ 30 | ≤ 55 | ≤ 90 | 需超出 S4–S7 的新工作：壳边界重界定或壳级视图再拆分 |
 
-分档规则（ADR 0040）：棘轮上限与分档目标分离——`studio_shell_budgets` 的
-`max_count` 始终是**当前实测值**（每次提取完成即降并写 reason），不是上表的
-目标值；A 档达成即可宣称本计划完成；进 B 档前必须先做一次壳边界重界定评审。
+分档规则（ADR 0040）：棘轮上限与分档目标分离——棘轮的 `max_count` 始终是
+**当前实测值**（每次提取完成即降并写 reason），不是上表的目标值；A 档达成即可
+宣称本计划完成；进 B 档前必须先做一次壳边界重界定评审。
 
 结构性标准（与预算同时验收）：
 
@@ -55,19 +55,35 @@ app 包 = 壳 + 组合根（口径：`moui_studio/app/*.mbt`，排除 `*_test.mb
    `side_target`、当前会话指针）root 持有，插件只读投影。
 3. 跨域协作只走 EventBus 事件 + `StudioServices` + root 委托臂；插件互不
    import；插件包禁 import app（组合根是唯一反向边）。
-4. 棘轮四预算在 pr profile 常驻。
+4. 棘轮四预算常驻 pr profile（载体见下节；2026-10-25 起在 `moui_studio` 子仓库）。
 
 ## 棘轮机制（S0 落地，先于一切切片）
 
-- 载体：扩展现有 MoonBit 校验器 `tools/moui/validate_maintenance_baseline`
-  （它已在静态三件套与 pr profile 中，扩展即全链生效，零新 CI 步骤；
-  仓库策略优先 MoonBit-backed 校验器，不写 Node 脚本）。
+- 载体：MoonBit 校验器，四个计数器 + `CountBudget` 同形态的预算目录，预算数字带
+  reason 注释；上调预算 = 改目录 + 写 reason，即审计记录。
 - 新增四个计数器：app 源码行、app 源文件数、`Model` 字段数
   （`pub(all) struct Model {` 块内字段行）、`Msg` 变体数
   （`pub(all) enum Msg {` 块内变体行）。
-- 预算数字带 reason 注释记录在 MoonBit 预算目录（`CountBudget` 同形态）；
-  上调预算 = 改目录 + 写 reason，即审计记录。
-- 破断验证：故意超线一次确认会红，再复位。
+- 口径：只数 `moui_studio/app` 下的 `.mbt`，排除 `*_test.mbt`、`*wbtest.mbt`、
+  `i18n_catalog_generated.mbt`（测试与生成物不占源码预算）。载荷可跨行的 `Msg`
+  变体只数声明行。
+- 只降不升：`max_count` 绑当前实测值；破断验证 = 故意超线一次确认会红，再复位。
+
+### 交接（2026-10-25，ADR 0040 Amendment）
+
+原载体 `tools/moui/validate_maintenance_baseline/studio_shell_budgets.mbt` 已从
+主仓删除：`moui_studio` 是独立仓库（主仓 HEAD 只有 gitlink），主仓的门在扫另一个
+仓库的目录，登记值与子仓库内容之间没有同步机制，本地失败也无法在主仓修复。删除前
+最后一次实测（= gitlink `ef2a56f12` 的实测值）：**27,374 行 / 39 文件 / 111 字段 /
+238 变体**。
+
+待办（在 `moui_studio` 仓库内完成，主仓无法代做）：
+
+1. 在子仓库 `tools/` 下按上面的口径重建四计数器门，接进其 CI（目前
+   `.github/workflows/ci.yml` 只有 “Workspace baseline (check + fmt)”）。
+2. 起点上限取上面四个实测值，之后只降不升。
+3. 门重建之前，B/C 档进展不得宣称「已治理」；主仓 pr/daily 的 studio 测试步骤
+   保留，它们是行为覆盖率证据而不是预算。
 
 ## 切片
 

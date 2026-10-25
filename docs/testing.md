@@ -38,6 +38,13 @@ files and ratchets are deliberately absent from
 `checks/source-file-policy.json` and a studio submodule bump never
 re-baselines the main repo's budgets (2026-10-16 owner decision).
 
+`checks/source-file-policy.json` ceilings are quantum values, not snapshots: every
+`ratchets[].maxLines` must be a multiple of `logic.budgetStepLines` (25 lines).
+Growing a registered file inside its quantum needs no registry edit, and shrinking
+one leaves the ceiling alone instead of demanding a bookkeeping commit. New files
+over `logic.hardLimitLines` (1200 lines) still require a human to classify or
+register them; that friction is deliberate.
+
 The daily gate is sourced from `checks/profiles.json` and can be inspected with
 `node scripts/check.mjs --profile daily --list`. Representative command tokens
 that should stay synchronized with the catalog include:

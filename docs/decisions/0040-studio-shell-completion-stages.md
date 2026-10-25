@@ -83,6 +83,33 @@ committed target 混成了一个**。ADR 0039 的 Consequences 已经写了「ap
 - 进入 B 档前必须先做壳边界重界定评审（新工作项，不在 S4–S7 内）。
 - 不影响 `services/export` 与 domain 包（0039 已排除）。
 
+### Amendment (2026-10-25): 预算棘轮迁出主仓
+
+主仓不再持有 studio 壳的四项计数器。`moui_studio` 自 `80317ec80`
+（2026-10-09）拆成独立子仓库后，本仓 HEAD 只保留 gitlink；但
+`tools/moui/validate_maintenance_baseline/studio_shell_budgets.mbt` 是拆仓
+**之后**（`1189408e9`，2026-10-12）在主仓建的，此后被改 17 次——主仓一直在为
+另一个仓库的账本改文件，而两个账本之间没有任何同步机制。实测（2026-10-25）：
+
+| 计数 | 钉住提交 ef2a56f12 实测 | 本 checkout 遗留副本 | 登记上限 |
+|---|---|---|---|
+| app 源码行 | 27,374 | 27,531 | 27,374 |
+| Model 字段 | 111 | 113 | 111 |
+| Msg 变体 | 238 | 242 | 238 |
+
+登记值与钉住提交逐字相等，所以 CI（`submodules: recursive` 检出 gitlink）是绿
+的；而本地那份不被任何 git 跟踪的 `moui_studio/` 目录把 `pr` profile 的门长期弄
+红，且这个红在主仓里无法修——修它要提交到另一个仓库。同一条仓库边界规则其实早已
+写在 `docs/testing.md`（source-file policy 只扫主仓 roots，studio 的 ratchet 刻意
+不进主仓表，2026-10-16 owner decision），maintenance baseline 是它的漏网之鱼。
+删除的是**记账载体**，不是完成线：A/B/C 三档目标与「A 档已达成」的判定全部保持不变。
+
+- 交接规格（四个计数器的口径、排除规则、只降不升 + reason 即审计记录）写在
+  `docs/plans/active/moui-studio-shell-completion.md` 的「棘轮机制」一节，由子
+  仓库在自己的 CI 里重建等价的门。
+- 子仓库重建门之前，任何 B/C 档进展都不得宣称「已治理」。
+- 主仓 `pr`/`daily` 里的 studio 测试步骤保留：它们是行为覆盖率证据，不是预算。
+
 ## Agent Notes
 
 - **Session context**: MoUI Studio 分析报告的后续整改轮；本 ADR 是该轮
@@ -98,4 +125,5 @@ committed target 混成了一个**。ADR 0039 的 Consequences 已经写了「ap
 
 - `docs/plans/active/moui-studio-shell-completion.md`
 - `tools/moui/validate_maintenance_baseline/studio_shell_budgets.mbt`
+  （本 ADR 的 Amendment 2026-10-25 已将其从主仓删除）
 - `docs/decisions/0039-studio-shell-completion-line.md`
