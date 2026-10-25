@@ -62,14 +62,24 @@ test "a streamed delta only lands while its own turn is waiting" {
   let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
   let (asked, _e) = update(selected, Send("温一壶酒"), turn_runner=never)
   // Pieces accumulate while the request is in flight.
-  let (first, _f) = update(asked, ReplyDelta("林掌柜", "酒温"), turn_runner=never)
-  assert_eq(first.conversations.for_character("林掌柜").streaming(), "酒温")
+  let (first, _f) = update(
+    asked,
+    ReplyDelta("林掌柜", "酒温"),
+    turn_runner=never,
+  )
+  assert_eq(
+    first.conversations.for_character("林掌柜").streaming(),
+    "酒温",
+  )
   let (second, _s) = update(
     first,
     ReplyDelta("林掌柜", "好了。"),
     turn_runner=never,
   )
-  assert_eq(second.conversations.for_character("林掌柜").streaming(), "酒温好了。")
+  assert_eq(
+    second.conversations.for_character("林掌柜").streaming(),
+    "酒温好了。",
+  )
   // The finished reply replaces the preview.
   let (done, _d) = update(
     second,
@@ -121,7 +131,10 @@ test "a delta cannot create a conversation or cross channels" {
     ReplyDelta(scene_key("吧台"), "错"),
     turn_runner=never,
   )
-  assert_eq(crossed.conversations.for_character(scene_key("吧台")).streaming(), "")
+  assert_eq(
+    crossed.conversations.for_character(scene_key("吧台")).streaming(),
+    "",
+  )
   let (crossed_back, _cb) = update(
     crossed,
     SceneReplyDelta("林掌柜", "林掌柜", "错"),
@@ -160,12 +173,13 @@ test "a completion from a replaced world never lands in the new one" {
   let base = step(crowded_world(), ApiKeyChanged("sk-test"))
   let selected = step(base, Select(Some("林掌柜")))
   let never : TurnRunner = (_request, _on_reply, _on_delta) => ()
-  let (asked, _e) = update(selected, Send("旧世界的问题"), turn_runner=never)
-  let old_epoch = asked.world_epoch()
-  let switched = step(
-    asked,
-    WorldFilesArrived("别处", true, tavern_files()),
+  let (asked, _e) = update(
+    selected,
+    Send("旧世界的问题"),
+    turn_runner=never,
   )
+  let old_epoch = asked.world_epoch()
+  let switched = step(asked, WorldFilesArrived("别处", true, tavern_files()))
   assert_true(switched.world_epoch() != old_epoch)
   let new_epoch = switched.world_epoch()
   let reselected = step(switched, Select(Some("林掌柜")))
@@ -203,7 +217,10 @@ test "a completion from a replaced world never lands in the new one" {
   )
   let answered = fresh.conversations.for_character("林掌柜")
   let answered_lines = answered.lines()
-  assert_eq(answered_lines[answered_lines.length() - 1].text(), "新世界的回复")
+  assert_eq(
+    answered_lines[answered_lines.length() - 1].text(),
+    "新世界的回复",
+  )
   assert_false(answered.pending())
 }
 

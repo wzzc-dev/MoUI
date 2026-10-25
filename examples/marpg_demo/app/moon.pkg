@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/text",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/geometry",
+} for "wbtest"
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

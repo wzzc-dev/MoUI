@@ -1,0 +1,11 @@
+name = "examples/marpg_demo"
+
+version = "0.1.0"
+
+preferred_target = "native"
+
+import {
+  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/window@0.5.4-0.2.1",
+  "wzzc-dev/moui_skia_renderer@0.2.2",
+}

@@ -1,0 +1,685 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/marpg_demo/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views/common",
+}
+
+// Values
+pub const BANK_GROUND_URI : String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABACAIAAABqVuVZAAAFN0lEQVR42u1bPWtVQRC9P8lCUlgoWFgkIJjawiKFhYSAEoyFWFhahSBWkkqwskljfoKFP8Hf4sjAeYczs3M/Xqx2l+Gyd++++96ed86Z2fuS6fDdQ4/nl4foS/ClByf35Shz4mTu2FXrW/g0dBAfTx5LnB4f+PHzm6cWGPGQl8sHi4v68+vq9+0HO95+O/O+n3oHp3bVwvqTfEp+A6yBUZCZ/CF4ZgQlvYm8qY37sgGEdzACjLxvE+yFV1efLM7Pz/xuOPWOv6OfWt/W7CsHKH7qHaC2AyhlgYxghZER9WsBvdyHeeSBcSYIM4VB4RF7FRbv6AAaHsRp5AgAktgxiL/YVGg8yLSStQFErJxnpphGKkVcQBmghhEwyF/O0ER0nGIGTVRWlBgwmuTztWQiQsCIeAofBSmGoyU6SCwSh0FhsHAThqaQm68fOpJO1N2UUoY9KMonelNLmCkxWVkyaB0XkXgN8ygFiKEp5Gbv4spKZcU8Al6TyKdY9iw6Ytvgo1i7qE/cLSYvRkc8SEzaO36rVG4W7MSiLLGkxKRZLHXGqfFiY4p3aKUC7whx2LDRZ1cSLGq5uQcxRuJEAtkuzRfWI96RsqxIamkRIFbF93FxiTEzfVKTbrkylAWkxGIid6BBB2tKq7WWrAoNsr5iVQUvl1pBikbOYjGjSwoDg2pXZorBpBkO51TKoH9ZLAqq9fVGOnBejxhFAxLupKcCBwwbliQYcZqviyALu7+jEItDdm6f44NT9M7UXCIKTL1IkOLl4tCi39ZWgzmVbjVmiyAHKK0GBRQuJqfZzVdrm9Pa76TFN58Ka+QtkOZjRo/eFNP8rNwYl2jJMetPsx+6kEmxJ0xL8DhN8iZnsbhTTfN96sp2n1RunubZidMiiEvHqVUoLwQrXXAqQ7mziJr3YkVEEon11HLjzarUO3G3sQOIHSTuGGYxqmvLtEQUgxeTlqI5FkRcFsWaM/ojf5I0zUdccDodXdzcf/GV49Gr7zLCc569//nk9Q+OesS+zA1xff0FxzouXz68Pj+048I4P74nqyvCJk8GB9YPaKwjMGEOr//o7U2NkU3YgA6kYQCJv8RLsn4Dy+POAGqxphWMi8CUjuwDkOSmJQAxUtLxvq15VUysLIeJj1F9gkUB02aAmDgtgBALlQWYbM2r9Dgt5w4zKIWDB72/p8QiQBG79GsHU5gyLr29AIrciRZe23ME7j9JjBnUMh0flEvbJdZCREZWpbA7BCjVnQ0uTGHbJbZQWaAVONIyHWHTf8piyz0omvRGgAru7NC5uJnlDgNnI9vqoCVVEuqgVbGvxAo/SiU2y6ZUOHFHgmiacWCQz1liz3J1C4Na9GGYfCSljwHUGonoxF9QeKOwKovZ6QYG7eVBsYaWS7XvpAxKH56nT4scoG11UHTr1L9XS0y4kwLEZrR8L+a6a6HTet4EICJZfASdVQzaK4vVu9NiL7Yk2cvPUrMPAERK6KQe5ACt3azeZSUdCTVrz1JPi+/EH1EErLVpfq1ktmxWeRM//+hjrvyRqJUVc1kzWzWkN1v7yOlqgPwplL09jjyCPk6n3pqv//T4gDHCaYzuAOKfdFvBjzt7ZJAEuANlMZt6BMgF5TRx5+OOYNcpg2A6NUBDYjumpMbUI4MABPIXw4EiDZe6A6iVzj1YaC7DTiWWkiXN9P16kLiy/GVF12leABJXkn6/aZ4lFjmFirHfrYbkLwao981qUf7Ef5voOs3zLixFrcdKerTRRhtttNFGG2200UYbbbTRRhtttK7aX6Ohs+n/+W/SAAAAAElFTkSuQmCC"
+
+pub const BANK_OBJECT_URI : String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABACAIAAABqVuVZAAACtUlEQVR42u2avUoDQRSF8xiCsRBBUgS1SBFEggixsFMQRCxSKKQMIiGkyBNYhbBlavEhrFJbWFimsPIxHBgYh/m5M3c2s7uzuYfDsjvmZ+bz3Mssm0Yjt7qj7uFdm5mdNGovvk6xYHb0eYv/i9MWX6Q4ihNPOjUPkQxFMbBsVOKybK47veLimBR70kklROObE/SIXF9iqSJTzvacVicKAaT0HaXK/Ok4QzSbTYVjLP43e4fRoGxtt8q5T3t2hkhGEwkTo/PzPYEZBSbIyCiMji1EYYC+7gf+3Y2h4Y4CSOm7NjpAewZCNBw+AQb2EAyQz5Q8SywvIKbBRUs4mI7+Dw8AJPdEeQuCbUPy5XzYY2aL5yfCtpEQQJ50lJUEJ4h9lFxlzkJT2pCxK0VMkD8dJUTBCdJDlCdBRZSY7S3Ol6HoKIDkfWw5+6AKAtK3+JXYZcYDpGNK4BbsLZui/NJuRTV2PljrIbD5H9Dnx1K3bTzrdaIaOx/suADkrAkCFAdQASVWOUAoF5AgYVt3ME7scjCRrYzoPagOJcZm2T9uKmaDxnnCgPQEjccjwGmUWFRAW5cguDMAgBaLV+H0epARUP4epKMxYtreEosIqMQSW68mGwTUGSwBJwkIThBqH4QDFPVe7PZgH+XgHoS6F4MZFVpixg8BXFiCfAE9P16jHBuQ/F02QNg5y9a3PFY0YYDO95ooVx9Q2Q95wR297sa2iQA5ZNuMeW3SkpbymE0xAfIFVJMS6x/tOq0DOmvtGI8EqLgSO33sGJ+U2f6UXoI2AuhhflUyIMRzosg9iC1exsEosMvyAa1XE6edv2vbyD5IAcQv+YggwgfLTBAnAifIExC2xAiQFyDBCAZU3C9qA3pQ1BIjQKkByv97pJqXWHVuVrcOEIlEIpFIJBKJRCKRSCQSqVL6A6omvPaCWErsAAAAAElFTkSuQmCC"
+
+pub const BG_BATTLE_URI : String = "data:image/png;base64,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"
+
+pub const BG_TITLE_URI : String = "data:image/png;base64,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"
+
+pub const CARTRIDGE_B64 : String = "DP0gmSWpFKoBTSQrdzTsCZYG7gUEAAAB/wAaABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAQABAAAAAgAAAAAAAQABAAAAAAAAAAEAAQACAAAAAAABAAEAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAABAAEAAQABAAEAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAQABAAEAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAADAAEAAQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAwABAAEAAQAAAAAAAAAAAAAAAAAAAAMAAAAAAAAABAABAAMAAwADAAMAAwADAAMAAwADAAQAAQABAAEAAwADAAMAAwADAAMAAwADAAQAAAAAAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAAQAEAAQABAAEAAQABAAEAAQABAAEAAQAAAAAAAAAAQABAAEAAQABAAEAAgAAAAQABAAEAAQABAAEAAEAAgABAAEAAQABAAEAAQAAAAAAAAAAAAEAAQAAAAEAAAAAAAEAAAAEAAQABAAEAAQABAAAAAAAAQABAAAAAQABAAAAAAAAAAAAAAABAAAAAAAAAAEAAQABAAEABAAEAAQABAAEAAQAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAQABAAEAAQABAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAEAAQABAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAABAAEAAQAAAAAAAAAAAAAAAAABAAEAAAAAAAAAAAAAAAEAAQABAAEAAQABAAEAAQAAAAEAAAABAAEAAQABAAAAAQABAAEAAQABAAEAAQABAAAAAAABAAEAAAABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAAAAAAAAAAAAAAAgABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AAMAAwAD//8AA////////////////wADAAMAA///AAP///////////////////////8AA////////wAD//8AA///////////AAP///////8AA///AAP/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AAP//wAD//8AA///////////////////AAP//wAD//8AA/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAD/////////////AAD//////////////////wAA/////////////////////wABAAD//wAA/////wAFAAUABQAFAAUABf//////////////////AAUABQAFAAUABQAF//8AAQAA/////////////wAFAAcABwAHAAgABwAIAAX///////8ABQAHAAcABwAIAAcACAAF////////////////AAUABwAKAAoACQAHAAgAB///////////AAcACgAKAAkABwAIAAcABf///////////////wAFAAYABgAGAAYABgAGAAb//////////wAGAAYABgAGAAYABgAG////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AAP//////////////////////////////////////////////////////////wAD/////wAA/////wAL////////////////////////////////////////AAv/////AAD/////////////AAUABQAF/////////////////////////////////////wAFAAUABf///////////////wAFAAcACQAHAAgABwAI////////////////AAcACQAHAAgABwAIAAX///////////////8ABQAGAAYABgAGAAYABv///////////////wAGAAYABgAGAAYABgAF//////////8AA///AAUABQAFAAUABQAFAAUABf///////wAFAAUABQAFAAUABf////8ABQAD/////////////////////////////wAP//8AD///////////AA////////////////////////8AAP////8ADf//////////////////////////////////////////////////AAEAAP//AAD/////////////////////////////////////////////////////////////AAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAD/////////////AAD//////////////////wAA/////////////////////wAAAAD//wAA/////wAAAAAAAAAAAAAAAP//////////////////AAAAAAAAAAAAAAAA//8AAAAA/////////////wAAAAAAAAAAAAAAAAAAAAD///////8AAAAAAAAAAAAAAAAAAAAA////////////////AAAAAAAAAAAAAAAAAAAAAP//////////AAAAAAAAAAAAAAAAAAAAAP///////////////wAAAAAAAAAAAAAAAAAAAAD//////////wAAAAAAAAAAAAAAAAAA/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wAA/////wAA////////////////////////////////////////AAD/////AAD/////////////AAAAAAAA/////////////////////////////////////wAAAAAAAP///////////////wAAAAAAAAAAAAAAAAAA////////////////AAAAAAAAAAAAAAAAAAD///////////////8AAAAAAAAAAAAAAAAAAP///////////////wAAAAAAAAAAAAAAAAAA////////////////AAAAAAAAAAAAAAAAAAAAAP///////wAAAAAAAAAAAAAAAP////8AAP////////////////////////////////////////////////////////////////////////////8AAP////8AAP//////////////////////////////////////////////////AAAAAP//AAD/////////////////////////////////////////////////////////////AAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKiAAqIAACAiAICIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIiAAIiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQFAAFAQAAAIgAAiAAAoIACggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAUAAAIgAAIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAB/wAhABAACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAAACAAIAAAAAAABAAEAAAAAAAEAAQABAAEAAQABAAEAAQABAAEAAAAAAAEAAQABAAEAAQABAAEAAAAAAAgACAAIAAAACAAAAAEAAQABAAEAAQABAAEAAAABAAEAAQABAAEAAQABAAAAAQABAAEAAQABAAEAAQABAAEAAQABAAAAAQAIAAAACAABAAEAAAAAAAIAAQABAAEAAQABAAEAAQAEAAQABAAEAAQABAAEAAQAAQABAAEAAQABAAEAAQACAAEAAAABAAgAAAAAAAEAAQABAAEAAQABAAQABAAEAAQAAQABAAEAAQABAAEAAQABAAEAAQAEAAQABAAEAAQABAABAAEAAQAAAAAAAAAAAAEAAQABAAEABAAEAAQAAQABAAEAAAAGAAYABgAGAAYABgAAAAEAAQABAAEAAAAAAAAABAAEAAQAAQABAAAAAAAAAAEAAQAEAAQABAABAAEAAQAAAAYABgAGAAYABgAGAAYABgAGAAAAAQABAAEAAAAAAAAAAQAEAAQAAQABAAAAAAABAAEAAQAEAAQAAQABAAEAAQAGAAYABgAGAAsACwAGAAYABgAGAAYABgABAAEAAQABAAEAAQAEAAEAAQAAAAAAAAABAAEAAQABAAEAAQABAAEABgAGAAYACwALAAsACwALAAYABgAGAAYAAQABAAEAAQABAAEAAQABAAEAAQAAAAAAAAAAAAEAAQABAAEAAQABAAEABgAGAAYABgALAAsABgAGAAYABgAGAAYABgABAAEAAQABAAEAAQABAAAAAQAAAAAAAAAAAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAAAAAAAAAAAIAAEAAQABAAEAAQAAAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEACAAAAAAACAAIAAEAAQABAAEAAQABAAEAAAABAAEAAQABAAEAAQABAAAAAQABAAEAAQABAAEAAQAAAAEAAQABAAEACAAIAAAACAAIAAgAAAABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAAACAAIAAgACAAIAAgACAAAAAAAAQABAAEADAABAAEAAQABAAwAAQABAAEAAQABAAEAAQAMAAEAAQABAAEAAAAAAAgACAAIAAgACAAIAAgACAAIAAEAAQAAAAAAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAAAAAAEAAQAIAAgACAAIAAj///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAQAB//////////////////////////8AAAAA//////////////////////////////////////////////////////////8AD///////////////////AAD///////////////////////////////////////////////8ABQAF/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wAD//////////////////////////////////////////////////////////////////////////////////////////8AAP//////////////////AAD//////////////////wAD//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAA//////////8AAAAA//////////////////////////8AAAAA////////////////////////AAAAAAAA//8AAP//////////////////////////////////////////AAD//////////////////////////////////wAA//8AAP////8AAAAA////////////////////////////////////////////////////////////////////////AAD//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wAAAAAAAAAAAAAAAP//////////////////////////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAA/////////////////////////////////////////////////////////////wAAAAAAAAAA/////wAAAAAAAAAAAAAAAP////////////////////////////////////////////////////8AAAAAAAD/////////////AAAAAAAAAAD///////////////////////////////////////////////////////8AAAAAAAAAAP////8AAAAAAAAAAAAAAAAAAP///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wAA//////////////////////////////////////////////////////////////////////////8AAP////8AAAAA//////////////////8AAP//////////////////AAD///////////////////////////////8AAAAA//8AAAAAAAD///////////////////////////////////////////////////////////////////////8AAAAAAAAAAAAAAAAAAP//////////////////////////////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAA/////////////////////////////////////////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAB/wASABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAAAAAAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAAAAAAJAAkAAQABAAEAAQABAAEAAQABAAEAAQABAAkABQAJAAAAAAAJAAkAAQABAAkACQAJAAkACQAJAAEAAQABAAkABQAJAAAAAAAJAAkAAQABAAkAAQABAAEAAQAJAAEAAQABAAkABQAJAAAAAAAJAAkAAQABAAkAAQAJAAkACQAJAAEAAQABAAkABQAJAAAAAAAJAAkAAQABAAkAAQABAAEAAQABAAEAAQAJAAkABQAJAAAAAAAJAAkAAQABAAkACQAJAAkACQAJAAkACQABAAEACQAJAAAAAAAJAAkAAQABAAEAAQABAAEAAQABAAEAAQAJAAEACQAJAAAAAAAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAEACQAJAAAAAAAJAAEAAQABAAkAAQABAAEAAQABAAEAAQAJAAEACQAJAAAAAAAJAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEACQAJAAAAAAAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAAAAAAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8ABgAGAAYABgAGAAYABgAGAAYABgAGAAYABgAGAAYABgAGAAYABgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////wAM/////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgAC/////////////////////////////////////wACAAYABgACAA7//////////////////////////////////wACAAYABgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAYABgAGAAYABgAGAAYABgAGAAYABgAGAAYABgAGAAYABgAGAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAA/////////////////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAHAQEBAQEBAQEBAQAAAAAAAQACAAMABAAFAAYABQAGAAcACAAJAAoACwAuACYAPAAeACwAFgBgABQAIgAKAAAAAAAAAAAADwAMABIADQALABEAFQAJAAcADgAGAA8ABAAMAAsADgAHAA0ABgAQAAoABgAJAAMACAACAAwABQAAAAAAAAAOABMAEQBQAAAAAAAAABYAHgAaAJYAAAACAgICAQEBAwMDAwAHAAYBAQEBAAAAAAAAAQACAAMABAAFAAwADQAOAA8AEAARAAAABgAEAAUADAAIABYAIgASAB4AOgAoAAACAQEACAIAAAAUAAABAQIAAAQABAEBAAEAAAABAAIAAwASABMAFAAVAAECAwAeABQAMgAAAAYAAwEBAQEBAAAAAAEAAgAWABcAGAADAAQABgADAAUABf//AAMABQIDAwALAAgAAAAAAAAAAAEBAAAAAAEBAgIAAAECAwQFBgcAAAABAQIBAgEBAQICAQIBAQEBAwMBAwEJEgUOFgoJDAkMDQgMBQwHAwEAAgACAAIAGQAaABsAHAAdAB4AHwAgAAP/////AAAAAQACAAL//wEAAAEBAQIAAAYABwAAAAAAAAAAAQEBAgIXFgABDggJBwcHBwAODgEBAAACAQEAABYWCA4OBwcHBw0BAQA+ABEAFAAJAAwADAAJAAkACQAMAAkACQAOAAwACQAJAAkACQAMAAkACQAJAAYADAAMAAwADAAMAAwABgAJAA8ADgAJACsAHAAtABYABgAMAB4AJwAuACQAGwArACUALgAZACMAGQASAA8AKwAGAA8AHgAJAAYABgAGACgAJOmXruaDhcK35rWu55Sf5b2V5oyJIOehruiupOmUriDlvIDlp4vpnZLmuqrplYfkupHlpJblsI/lvoTotaTnnrPmtJ7nqp/msojpnZLnpr7mn7PlpoLng5/nn7PmlaLlvZPmtqfovrnlppbni7zlsqnnlLLonKXng5vlvbHprYXmtJ7kuLvCt+i1pOees+mdkuemvuWJkeazleWHnemcnOivgOaKpOi6q+WSkui/mOmtguiNiemVv+atjOW8leijguefs+aAkuaWqemHkeeWruiNr+WHneelnuWiqOe7reWRveS4uemTnOmSpeWPjOeLvOaLpui3r+icpemtheWQjOW3oua0nuS4u+acrOWwiumVh+S4nOiAgeiAheWuiOahpemdkuW5tOaLvuaftOWtqeerpeWmlueLvOeDm+W9semtheeUn+mUiOeahOacqOWMo+a0nuS4u8K36LWk556z54Wn5b2x6ZWc5L2g6YaS5LqG44CC6ZWH5aSW55qE54GvLOS4gOWknOWFqOeBreS6huOAguiAgeiAhSzmiJHov5nlsLHljrvmn6XnnIvjgILlvoDkuJzmmK/kupHlpJblsI/lvoTjgILlpJzph4zliKvotbDnn7PmoaXjgILopoHkuI3opoHmraTliLvlsLHljrs/5bCx5Y675YWI5aSH5Lqb6I2v5aW944CC6L+Z6aKX6ZOc6ZKl5L2g5bim5LiK44CC6YKj5L2g5YWI5Y675aSH6I2v44CC6ZOc6ZKl55WZ57uZ5oiR44CC5a6I5qGl5Lq66K+0OuahpemCo+WktOaciee7v+ecvOedm+eahOS4nOilv+OAguWtqeerpTrmiJHmjaHliLDkuIDmnprpk5zpkrEs57uZ5L2gIeS9oOiOt+W+l+S6hiAxIOaemumTnOmSseOAgumVnOmdouS4iua1ruWHuuS4gOihjOWwj+WtlzrmtJ7kuLvnlY/lhYnjgILnn7Plo4HliLvnnYA65oyB6ZKl6ICF5pa55Y+v5byA5Yyj44CC5pyo5Yyj5bey56m6LOmHjOmdouWPquacieS4gOW8oOa5v+mAj+eahOe6uOOAguS9oOW+l+WIsOS6hiDnu63lkb3kuLnjgILmtJ7kuLvCt+i1pOees+iHqumYtOW9seS4rei1t+i6q+OAguiDnOWIqSHlppbmsJTmlaPljrvkuobjgILkvaDlgJLkuIvkuobigKbigKblrZjmoaPlrozmiJDjgILor7vmoaPlrozmiJAs5Zue5Yiw5a+56K+d5LmL5ZCO55qE5pe26L6w44CC5oiY5paX6YCD6LeR5aSx6LSl44CC5p+z5aaC54Of5Li65L2g5oqk5L2P5b+D6ISJ44CC5rKI6Z2S56a+5L2T5Yqb54G15Yqb56a76Zif5L2g5oyJ5L2P5YmR5p+ELOetieiAgee/geaKiuivneivtOWujOOAgumdkua6qumVh+eahOWknOaZmuWuiemdmeW+l+WPjeW4uOOAggAK/////wAAAAEAAgAFAAcAAwAEAAYEAAEBAQEBAgICAAABAQEBAQAAAAADAAIAFAAFAAcACwALAAgACAAPABgAAwAEAEIAAgAAAAcABwADABAAAAADACgAQgBCAEcAFQAPAAMAQgABAA8ABwABAAIABwAMAA4ADAACAAcARABCAA0ACQAGAAIAAABCAAMAKABCAEEABgAPAEIAAQACACYAAAAAAEIAAQAHAC4ADwBCAAEAAgAVAAAASAADAA8AFwABAAIAFQAAAEgAAwAPABcAAQACAAcAFQAAAEIASAADAC4AAAAYAAEADwBCABcAAQACAREAAAAAAAAABgAAAAAAAAAAAAsADQACAD0AAAAAAAAAAAABAAEAAAAAAAAAAAAAAAEAAAAAACEAAAAZAAAAAAAAACIAAQAFAAEABgAAAAEAAAACACQAAgAlACb///////8AAQACAAAAAAAAAAAAAAADAAYAAAABAAAAAAAAACcAAQAAAAAAAAA8AAAAAAAAAAAAAQAAAAAAAQABAAMABgAAAAAAAAAoAAAAAAAAAAAAAQAAAAAAIwAAABkAAgABAAAAKQACABoAAf//AAEAAQAUAAH//wAAAAEAAwACAAAAKgADABsAAwABACsAAAAAAAAAAAACAAMAMAAQAAIAAgAAAAEAAwAAAAAAAAABAAAALgAAAAAAAAAAAAQABgAAAAEAAAAFAAEALwABAAAAAAAAAAAAAQAFAAAALQAAAAAAAAAAAB8AAgAIAAEACAAAAAIAAAAeAAAAAQABAAAAAAAAAAEAAAAsAAEAAAAAAAAAAAAAAAAANwABAAUALAAAAAAAAAAAAAAAAQAAAAEABQAAAAAAAAAAAAAAAwABAAMADAAGAAAAAQAAAAEAAQAAAAEABQAAAAAAAAAAAAAABAABAAQADQAGAAAAAQAAAAUAAgAAADAAAAAfAAIAAQABAAEABQAAAAAAAAAAAAAAMQABAAAAAAAAAAYAAQAGAA4ABgAAAAEAAAABAAQAAAAAAAAAAQAAAAQAAQAyAAEAAAAAAAABAAwAAAAAABAAGAAAABAAEAAYAAAAIAAQABgAGAAAABAAGAAYABAAEAAYABgAIAAQABgAMAAAABAAGAAwABAAEAAYADAAIAAQABgASAAAABAAGABIABAAEAAYAEgAIAAQABgMAgEBAgEBAgEBAgEBAAkAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAMAAAAAAAAACQAAAAAAAAAKAAD//wAAAAsAAAAAAAAABgAAAAAAAAAHAAD//wAAAAgAAAAAAAAAAAAAAAAAAAABAAD//wAAAAIAAAAAAAAAAwAAAAAAAAAEAAD//wAAAAUAAAAAAAAIAQEBAQMDAwMJBgADCQoLBgcIAAECAwQFAQEBAQYGBgYGBgYGBgYGBgAAAAAAAAAAAAAA/wAAAAAA/wAAAAAA/wAAAAAA/wAAAgAMAAAAAAAQABgAAAAQABAAGAAAACAAEAAYABgAAAAQABgAGAAQABAAGAAYACAAEAAYADAAAAAQABgAMAAQABAAGAAwACAAEAAYAEgAAAAQABgASAAQABAAGABIACAAEAAYDAIBAQIBAQIBAQIBAQAJAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAkAAAAAAAAACgAA//8AAAALAAAAAAAAAAYAAAAAAAAABwAA//8AAAAIAAAAAAAAAAAAAAAAAAAAAQAA//8AAAACAAAAAAAAAAMAAAAAAAAABAAA//8AAAAFAAAAAAAACAEBAQEDAwMDCQYAAwkKCwYHCAABAgMEBQEBAQEGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAP8AAAAAAP8AAAAAAP8AAAAAAP8AAAMAAgAAAAAAIAAgAAAAIAAgACACBAQAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAABAICAgIAAQABAAEAAQoKCgoKCgoKAAAAAAAAAAAAAAAAAAAAAP8="
+
+pub const SHEET_HERO_URI : String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAABgCAIAAADU7mYnAAABCklEQVR42u2awQ3CIBSGmcSD8Wg8e3CGxkGcwjiGEziEJ0dwgk4iCYkxfYBtKPAIX/MOpP0pXyFp+BKM0Xzttxtv1crrAxqfd2/VymsFsnM4adTKs2Tx/PF8szVcHpNy90vnHWmog/yO3HmAWgV6v67eCg2QL8+S/QVS9x/SCPTbTbZr5VMHOB12tkJh97QnIDnAUqB4foUB1p1RIx/PAUrxnPQ34GV4GV6Gl3XhZd/t3MwOufMAtQoUkiZXJfP6ZggNwsvwMrwML8PL8DK8DC/Dy9L3Q/JTcucBag8o7k2yQ+58a0uGBuFleBlehpfhZQABhNt37mUc+QKIc4ycY8TL8DK8DC8r5WUf9zi8zat5aEsAAAAASUVORK5CYII="
+
+pub const SHEET_MONSTER_URI : String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAIAAAAt/+nTAAAAvklEQVR42u2XwQ2AIAxFmcKjZ8+O4cEZHMApHNEZHERPxlQE2vIRTX8aL5T/+kNMwDmTyWSqT2M/ka+mrbQ/2TYPS6AEDO+WgD+hMBQe/Vqa00ZR0n01GVAUrq8sA4oi8+VmQFE0vukZgJRvByBN2zqddbcIrCZOL/Z/pFiAygKAfgMgxQK8HeC4LWWp6GUOSEFPD6d4u7um9VauACz/OEUTgPWmEQdAHbHg3QekoKcvQUFPX4iCG708xWT6oXYa97T22ArVAwAAAABJRU5ErkJggg=="
+
+pub const SHEET_NPC_URI : String = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAABgCAIAAADU7mYnAAABCklEQVR42u2awQ3CIBSGmcSD8WSME/TYMRzAOTw5hLN46ghO4CQlITGmD7CGAo/wNe9A2p/yFZKGL8EYzddpv/NWrbw+oPfz4a1aea1Adg4XjVp5liyev45HW/fLsCh3v3TekYY6yO/InQeoVaDXdPNWaIB8eZbsJ5C6/5BGoO9usl0rnzrAcD7YCoXd056A5AD/AsXzGwyw7Ywa+XgNUIrnpL8BL8PL8DK8rAsv+2znVnbInQeoVaCQNLkqmdc3Q2gQXoaX4WV4GV6Gl+FleBlelr4fkp+SOw9Qe0Bxb5IdcudbWzI0CC/Dy/AyvAwvAwgg3L5zL+PIF0CcY+QcI16Gl+FleFkpL5sBdoScLjXEmA8AAAAASUVORK5CYII="
+
+pub let action_count : Int32
+
+pub fn anim_decode(Cursor) -> Array[AnimRecord] raise FormatError
+
+pub let atb_multiplier : Int32
+
+pub let atk_attack : Int32
+
+pub let atk_item : Int32
+
+pub let atk_skill : Int32
+
+pub fn atlas_src(Int32) -> @core.Rect
+
+pub fn bank_source(Int32) -> String
+
+pub let battle_loss : Int32
+
+pub let battle_win : Int32
+
+pub let bs_actor : Int32
+
+pub let bs_line : Int32
+
+pub let bs_menu : Int32
+
+pub let bs_none : Int32
+
+pub let bs_over : Int32
+
+pub let bs_slot : Int32
+
+pub let bs_target : Int32
+
+pub let c_agl : Int32
+
+pub let c_anim : Int32
+
+pub let c_atk : Int32
+
+pub let c_def : Int32
+
+pub let c_exp : Int32
+
+pub let c_gold : Int32
+
+pub let c_hp : Int32
+
+pub let c_id : Int32
+
+pub let c_mp : Int32
+
+pub let c_name : Int32
+
+pub let c_sheet : Int32
+
+pub let c_spd : Int32
+
+pub let cartridge_entries : Array[String]
+
+pub let cmp_eq : Int32
+
+pub let cmp_ge : Int32
+
+pub let cmp_gt : Int32
+
+pub let cmp_le : Int32
+
+pub let cmp_lt : Int32
+
+pub let cmp_ne : Int32
+
+pub let col_i16 : Int32
+
+pub let col_i32 : Int32
+
+pub let col_i8 : Int32
+
+pub fn compare_values(Int32, Int32, Int32) -> Int32
+
+pub let contact_pad : Int32
+
+pub fn decode_base64(String) -> Bytes raise FormatError
+
+pub fn dir_offset(Int32) -> (Int32, Int32)
+
+pub let engine_dirs : Int32
+
+pub fn exp_needed(Int32) -> Int32
+
+pub let hero_slot : Int32
+
+pub let i_kind : Int32
+
+pub let i_potency : Int32
+
+pub let item_hp : Int32
+
+pub let item_key : Int32
+
+pub let item_mp : Int32
+
+pub let item_revive : Int32
+
+pub let key_anywhere : Int32
+
+pub let key_back : Int32
+
+pub let key_confirm : Int32
+
+pub let kind_const : Int32
+
+pub let kind_event : Int32
+
+pub let kind_monster : Int32
+
+pub let kind_npc : Int32
+
+pub let kind_rand : Int32
+
+pub let kind_var : Int32
+
+pub let level_cap : Int32
+
+pub fn load_cartridge() -> Cartridge raise FormatError
+
+pub fn map_decode(Cursor) -> GameMap raise FormatError
+
+pub let opcode_arity : Array[Int32]
+
+pub fn opcode_of_code(Int32) -> Opcode?
+
+pub fn opcode_string_slots(Opcode) -> Array[Int32]
+
+pub let ov_battle : Int32
+
+pub let ov_choice : Int32
+
+pub let ov_dialog : Int32
+
+pub let ov_game_over : Int32
+
+pub let ov_idle : Int32
+
+pub let ov_message : Int32
+
+pub let ov_title : Int32
+
+pub fn paint_screen(@common.PaintContext, @core.Rect, Model) -> Unit
+
+pub fn pak_unpack(Bytes) -> Array[Cursor] raise FormatError
+
+pub fn park_threads(Vm) -> Unit
+
+pub fn program(environment? : @services.AppEnvironment) -> @core.Program[Model, Msg] raise
+
+pub fn program_commands(Model) -> Array[@core.ProgramCommand[Msg]]
+
+pub fn rects_overlap(Int32, Int32, Int32, Int32, Int32, Int32, Int32, Int32) -> Bool
+
+pub fn resolve_operand(Rng, Int32, Int32, Int32, Array[Int32]) -> Int32
+
+pub fn restore_snapshot(Vm, String) -> Bool
+
+pub let s_crit : Int32
+
+pub let s_kind : Int32
+
+pub let s_mp : Int32
+
+pub let s_power : Int32
+
+pub let s_target : Int32
+
+pub let save_key : String
+
+pub let save_version : Int32
+
+pub fn script_decode(Cursor, Array[Int32]) -> ScriptSet raise FormatError
+
+pub fn sheet_source(Int32) -> String
+
+pub let side_enemy : Int32
+
+pub let side_party : Int32
+
+pub let skill_heal : Int32
+
+pub let skill_hit : Int32
+
+pub let skill_revive : Int32
+
+pub fn snapshot_text(Vm) -> String
+
+pub let step_px : Int32
+
+pub let string_pool : Array[String]
+
+pub fn strings_verify(Cursor, Array[String]) -> Unit raise FormatError
+
+pub fn table_decode(Cursor) -> NumTable raise FormatError
+
+pub fn target_candidates(Model) -> Array[Int32]
+
+pub fn text_at(Int32) -> String
+
+pub fn text_units(String) -> Int32
+
+pub let thread_auto_talk : Int32
+
+pub let thread_boot : Int32
+
+pub let thread_plain : Int32
+
+pub let thread_proximity : Int32
+
+pub let tile_size : Int32
+
+pub fn tile_transform(Int32, Double, Double) -> @core.Transform2D
+
+pub let timer_slots : Int32
+
+pub let trans_none : Int32
+
+pub let trans_rot180 : Int32
+
+pub let trans_rot90_ccw : Int32
+
+pub let trans_rot90_cw : Int32
+
+pub fn update(Model, Msg, environment? : @services.AppEnvironment) -> (Model, @core.Effect[Msg])
+
+pub let v_battle_result : Int32
+
+pub let v_chest_open : Int32
+
+pub let v_chief_down : Int32
+
+pub let v_choice : Int32
+
+pub let v_elder_met : Int32
+
+pub let v_hp : Int32
+
+pub let v_key_flag : Int32
+
+pub let v_key_taken : Int32
+
+pub let v_money : Int32
+
+pub let v_scene : Int32
+
+pub let v_wisp_down : Int32
+
+pub let v_wolf_down : Int32
+
+pub let var_add : Int32
+
+pub let var_div : Int32
+
+pub let var_mod : Int32
+
+pub let var_mul : Int32
+
+pub let var_pool_size : Int32
+
+pub let var_set : Int32
+
+pub let var_sub : Int32
+
+pub fn view(Model) -> @core.View[Msg]
+
+pub let view_h : Int32
+
+pub let view_w : Int32
+
+pub fn wrap_lines(String, Int32) -> Array[String]
+
+pub let ws_dialog : Int32
+
+pub let ws_key : Int32
+
+pub let ws_parked : Int32
+
+pub let ws_run : Int32
+
+pub let ws_sprite_field : Int32
+
+pub let ws_timer : Int32
+
+pub let ws_trigger : Int32
+
+pub let ws_watch : Int32
+
+// Errors
+pub suberror FormatError {
+  Truncated
+  BadBase64
+  BadShape(String)
+}
+
+// Types and methods
+pub struct AnimRecord {
+  id : Int32
+  frames : Int32
+  rects : Array[Int32]
+  t : Array[Int32]
+  steps : Array[Int32]
+  v : Array[Int32]
+  rect_of_step : Array[Int32]
+  hold_of_step : Array[Int32]
+  deltas : Array[Int32]
+}
+pub fn AnimRecord::entry(Self, Int32, Int32) -> WalkEntry
+pub fn AnimRecord::rect(Self, Int32) -> (Int32, Int32, Int32, Int32)
+pub fn AnimRecord::state_count(Self) -> Int32
+
+pub struct Battle {
+  cart : Cartridge
+  rng : Rng
+  party_size : Int32
+  units : Array[Fighter]
+  mut over : Bool
+  mut result : Int32
+  mut gold : Int32
+  mut exp_total : Int32
+  mut rounds : Int32
+}
+pub fn Battle::alive_count(Self, Int32) -> Int32
+pub fn Battle::alive_of(Self, Int32) -> Array[Int32]
+pub fn Battle::basic_attack(Self, Int32, Int32) -> Bool
+pub fn Battle::begin(Cartridge, Rng, Int32, Array[Fighter]) -> Self
+pub fn Battle::check_end(Self) -> Unit
+pub fn Battle::enemy_step(Self, Int32) -> Unit
+pub fn Battle::next_actor(Self) -> Int32
+pub fn Battle::report(Self, Int32) -> Unit
+pub fn Battle::settle(Self) -> Unit
+pub fn Battle::side(Self, Int32) -> Int32
+pub fn Battle::unit(Self, Int32) -> Fighter
+pub fn Battle::unit_count(Self) -> Int32
+pub fn Battle::use_item(Self, Int32, Int32, Int32) -> Bool
+pub fn Battle::use_skill(Self, Int32, Int32, Int32) -> Bool
+
+pub struct Cartridge {
+  maps : Array[GameMap]
+  combatant : NumTable
+  skill : NumTable
+  item : NumTable
+  group : NumTable
+  place : NumTable
+  warp : NumTable
+  scripts : ScriptSet
+  anims : Array[AnimRecord]
+}
+pub fn Cartridge::anim(Self, Int32) -> AnimRecord?
+
+pub struct Cursor {
+  data : Bytes
+  mut pos : Int32
+  limit : Int32
+}
+pub fn Cursor::child(Self, Int32) -> Self raise FormatError
+pub fn Cursor::eof(Self) -> Bool
+pub fn Cursor::i16(Self) -> Int32 raise FormatError
+pub fn Cursor::i16_all(Self, Int32) -> Array[Int32] raise FormatError
+pub fn Cursor::i32(Self) -> Int32 raise FormatError
+pub fn Cursor::i32_all(Self, Int32) -> Array[Int32] raise FormatError
+pub fn Cursor::i8(Self) -> Int32 raise FormatError
+pub fn Cursor::i8_all(Self, Int32) -> Array[Int32] raise FormatError
+pub fn Cursor::leb128(Self) -> Int32 raise FormatError
+pub fn Cursor::new(Bytes) -> Self
+pub fn Cursor::remaining(Self) -> Int32
+pub fn Cursor::u16(Self) -> Int32 raise FormatError
+pub fn Cursor::u16_all(Self, Int32) -> Array[Int32] raise FormatError
+pub fn Cursor::u8(Self) -> Int32 raise FormatError
+pub fn Cursor::u8_all(Self, Int32) -> Array[Int32] raise FormatError
+
+pub enum Entry {
+  Village
+  Wildpath
+  Cave
+  Combatant
+  Skill
+  Item
+  Group
+  Place
+  Warp
+  Strings
+  Scripts
+  Anim
+} derive(Eq, @debug.Debug)
+pub fn Entry::index(Self) -> Int32
+
+pub struct Fighter {
+  row : Int32
+  side : Int32
+  mut hp : Int32
+  mut hp_max : Int32
+  mut mp : Int32
+  mut mp_max : Int32
+  mut atk : Int32
+  mut def : Int32
+  mut spd : Int32
+  mut agl : Int32
+  mut level : Int32
+  mut exp : Int32
+  mut exp_next : Int32
+  mut gauge : Int32
+} derive(Eq, @debug.Debug)
+pub fn Fighter::from_row(Cartridge, Int32, Int32) -> Self
+pub fn Fighter::is_alive(Self) -> Bool
+pub fn Fighter::restore(Self) -> Unit
+pub fn Fighter::stat(Self, Int32) -> Int32
+
+pub struct GameMap {
+  tilesets : Array[Int32]
+  width : Int32
+  height : Int32
+  tiles : Array[Array[Int32]]
+  flags : Array[Array[Int32]]
+}
+pub fn GameMap::cell_solid(Self, Int32, Int32) -> Bool
+
+pub struct Insn {
+  opcode : Int32
+  operands : Array[Int32]
+}
+
+pub struct Model {
+  mut vm : Vm
+  mut panel : Panel
+  mut accum : Double
+  mut steps : Int32
+  mut notice : String
+  mut notice_left : Int32
+  mut last_map : Int32
+}
+pub fn Model::boot() -> Self raise
+pub fn Model::from_vm(Vm) -> Self
+
+pub(all) enum Msg {
+  Frame(Double)
+  Walk(Int32)
+  Turn(Int32)
+  Confirm
+  Back
+  Save
+  Saved(@services.ServiceTaskResult[Unit])
+  Load
+  Loaded(@services.ServiceTaskResult[String?])
+  Restart
+} derive(Eq, @debug.Debug)
+
+pub struct NumTable {
+  kinds : Array[Int32]
+  rows : Int32
+  columns : Array[Array[Int32]]
+}
+pub fn NumTable::cell(Self, Int32, Int32) -> Int32
+pub fn NumTable::row(Self, Int32) -> Array[Int32]
+
+pub enum Opcode {
+  If
+  Endif
+  Kill
+  Var
+  Scene
+  Show
+  Dialog
+  WaitSprite
+  Anim
+  Walk
+  TimerWait
+  Else
+  Choice
+  Battle
+  GameOver
+  Title
+  StatToVar
+  Give
+  Restore
+  Unlock
+  Message
+  Money
+  KeyWait
+  Join
+} derive(Eq, @debug.Debug)
+pub fn Opcode::code(Self) -> Int32
+
+pub struct Panel {
+  mut stage : Int32
+  mut actor : Int32
+  mut cursor : Int32
+  mut action : Int32
+  mut slot : Int32
+  mut target : Int32
+  mut log : String
+  mut hold : Int32
+} derive(Eq, @debug.Debug)
+pub fn Panel::new() -> Self
+
+pub struct Rng {
+  mut state : Int32
+} derive(Eq, @debug.Debug)
+pub fn Rng::range(Self, Int32, Int32) -> Int32
+pub fn Rng::seed(Int32) -> Self
+
+pub struct ScriptSet {
+  threads : Array[Thread]
+}
+
+pub struct Sprite {
+  slot : Int32
+  mut map : Int32
+  kind : Int32
+  sheet : Int32
+  anim : Int32
+  mut x : Int32
+  mut y : Int32
+  mut dir : Int32
+  mut mode : Int32
+  mut auto_talk : Bool
+  mut live : Bool
+  label : Int32
+  reward_thing : Int32
+  mut reward_count : Int32
+  mut remaining : Int32
+  mut speed : Int32
+  mut tick : Int32
+  mut anim_group : Int32
+  mut raw_state : Int32
+} derive(Eq, @debug.Debug)
+pub fn Sprite::body(Self) -> (Int32, Int32)
+pub fn Sprite::col(Self) -> Int32
+pub fn Sprite::row(Self) -> Int32
+pub fn Sprite::state(Self, AnimRecord) -> Int32
+
+pub struct Thread {
+  binding : Int32
+  class : Int32
+  mark : Int32
+  insns : Array[Insn]
+}
+
+pub struct ThreadState {
+  mut pc : Int32
+  mut state : Int32
+  mut wait_a : Int32
+  mut wait_b : Int32
+  mut wait_c : Int32
+} derive(Eq, @debug.Debug)
+
+pub struct Timer {
+  mut reserved : Bool
+  mut value : Int32
+  mut counting : Bool
+} derive(Eq, @debug.Debug)
+pub fn Timer::seed(Self, Int32) -> Unit
+
+pub struct Ui {
+  mut kind : Int32
+  mut active : Bool
+  mut body : Int32
+  mut name : Int32
+  mut portrait : Int32
+  mut pose : Int32
+  mut layout_a : Int32
+  mut layout_b : Int32
+  mut text_x : Int32
+  mut text_y : Int32
+  mut bold : Bool
+  mut options : Array[Int32]
+  mut option_count : Int32
+  mut choice_var : Int32
+  mut battle_group : Int32
+  mut battle_flag_a : Int32
+  mut battle_flag_b : Int32
+}
+pub fn Ui::new() -> Self
+
+pub struct Vm {
+  world : World
+  threads : Array[ThreadState]
+  ui : Ui
+  flags : Array[Bool]
+  inventory : Array[Int32]
+  money : Array[Int32]
+  party : Array[Fighter]
+  mut battle : Battle?
+  rng : Rng
+  mut modal_owner : Int32
+  mut talk_slot : Int32
+  key_edges : Array[Bool]
+  mut unknown_opcodes : Int32
+  mut frame : Int32
+}
+pub fn Vm::cart(Self) -> Cartridge
+pub fn Vm::clear_keys(Self) -> Unit
+pub fn Vm::close_overlay(Self) -> Unit
+pub fn Vm::finish_battle(Self, Int32) -> Unit
+pub fn Vm::get_var(Self, Int32) -> Int32
+pub fn Vm::is_unlocked(Self, Int32) -> Bool
+pub fn Vm::item_count(Self, Int32) -> Int32
+pub fn Vm::money_at(Self, Int32) -> Int32
+pub fn Vm::new(Cartridge) -> Self
+pub fn Vm::overlay(Self) -> Ui
+pub fn Vm::party_stat(Self, Int32, Int32) -> Int32
+pub fn Vm::pick_option(Self, Int32) -> Unit
+pub fn Vm::press_key(Self, Int32) -> Unit
+pub fn Vm::pressed(Self, Int32) -> Bool
+pub fn Vm::set_var(Self, Int32, Int32) -> Unit
+pub fn Vm::spend_item(Self, Int32) -> Bool
+pub fn Vm::tick(Self) -> Unit
+
+pub struct WalkEntry {
+  rect_index : Int32
+  hold : Int32
+  dx : Int32
+  dy : Int32
+} derive(Eq, @debug.Debug)
+
+pub struct World {
+  cart : Cartridge
+  mut map : Int32
+  hero : Sprite
+  sprites : Array[Sprite]
+  vars : Array[Int32]
+  timers : Array[Timer]
+}
+pub fn World::begin_slide(Self, Int32, Int32, Int32, Int32) -> Unit
+pub fn World::camera(Self) -> (Int32, Int32)
+pub fn World::get_var(Self, Int32) -> Int32
+pub fn World::hero_begin_step(Self, Int32) -> Bool
+pub fn World::in_contact(Self, Sprite, Bool) -> Bool
+pub fn World::index_of(Self, Int32) -> Int32?
+pub fn World::map_of(Self) -> GameMap
+pub fn World::new(Cartridge) -> Self
+pub fn World::place_hero(Self, Int32, Int32, Int32) -> Unit
+pub fn World::place_sprite(Self, Int32, Int32) -> Unit
+pub fn World::present(Self) -> Array[Sprite]
+pub fn World::release_timer(Self, Int32) -> Unit
+pub fn World::remove_sprite(Self, Int32) -> Unit
+pub fn World::reserve_timer(Self, Int32) -> Int32
+pub fn World::set_auto_talk(Self, Int32, Bool) -> Unit
+pub fn World::set_pose(Self, Int32, Int32, Bool) -> Unit
+pub fn World::set_raw_pose(Self, Int32, Int32, Bool) -> Unit
+pub fn World::set_var(Self, Int32, Int32) -> Unit
+pub fn World::sprite(Self, Int32) -> Sprite?
+pub fn World::step(Self) -> Unit
+pub fn World::tick_timers(Self) -> Unit
+pub fn World::timer_expired(Self, Int32) -> Bool
+pub fn World::triggerable(Self, Sprite) -> Bool
+pub fn World::walkable(Self, Int32, Int32) -> Bool
+pub fn World::warp_at(Self, Int32, Int32) -> (Int32, Int32, Int32)?
+
+// Type aliases
+
+// Traits

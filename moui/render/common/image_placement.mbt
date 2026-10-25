@@ -66,6 +66,24 @@ pub fn image_placement(
 }
 
 ///|
+/// Clamp a caller-supplied source sub-rectangle to a decoded image. Both are
+/// in source pixel coordinates; `None` means the window samples nothing and
+/// the draw must be skipped rather than fall back to the whole image.
+pub fn image_src_window(
+  src_rect : @core.Rect,
+  image_size : @core.Size,
+) -> @core.Rect? {
+  src_rect.clamp_to(
+    @core.Rect::new(
+      x=0.0,
+      y=0.0,
+      width=image_size.width,
+      height=image_size.height,
+    ),
+  )
+}
+
+///|
 fn image_fit_width_placement(
   frame : @core.Rect,
   image_ratio : Double,

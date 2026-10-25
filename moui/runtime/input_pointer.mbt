@@ -485,11 +485,7 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             let release = event.phase == Up || event.phase == Cancel
             let should_bubble = bubble_scroll &&
               event.phase != Down &&
-              (
-                !bubbled ||
-                !self.is_scroll_view_node() ||
-                release
-              )
+              (!bubbled || !self.is_scroll_view_node() || release)
             if should_bubble {
               let ancestor_event = if result.activated && event.phase == Up {
                 PointerEvent::new(

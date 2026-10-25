@@ -479,6 +479,7 @@ test "native renderer plans image clip transform and opacity commands" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 0.8,
       fit: Contain,
+      src_rect: None,
     }),
     PopTransform,
     PopClip,
@@ -517,6 +518,7 @@ test "native renderer records image lifecycle diagnostics while planning" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   match renderer.image_lifecycle.lookup("logo.png") {
@@ -530,6 +532,7 @@ test "native renderer records image lifecycle diagnostics while planning" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   match renderer.image_lifecycle.lookup("missing.png") {
@@ -861,4 +864,52 @@ test "advanced layer shader keeps transparent blend samples neutral" {
     shader.contains("source_rgb * source_alpha + vec3<f32>(1.0 - source_alpha)"),
   )
   assert_true(shader.contains("return vec4<f32>(source_rgb * source_alpha"))
+}
+
+///|
+test "native image placement maps an atlas source window to uv fractions" {
+  let run : NativeImageRun = {
+    source: "atlas.png",
+    frame: @core.Rect::new(x=10.0, y=20.0, width=32.0, height=32.0),
+    opacity: 1.0,
+    fit: Cover,
+    src_rect: Some(@core.Rect::new(x=16.0, y=32.0, width=16.0, height=16.0)),
+    transform: @core.Transform2D::identity(),
+  }
+  let cell = match
+    calculate_native_run_placement(
+      run,
+      @core.Size::new(width=64.0, height=64.0),
+    ) {
+    Some(cell) => cell
+    None => fail("expected an atlas cell placement")
+  }
+  inspect(cell.frame.origin.x, content="10")
+  inspect(cell.frame.size.height, content="32")
+  inspect(cell.u0, content="0.25")
+  inspect(cell.v0, content="0.5")
+  inspect(cell.u1, content="0.5")
+  inspect(cell.v1, content="0.75")
+
+  guard calculate_native_run_placement(
+      {
+        ..run,
+        src_rect: Some(@core.Rect::new(x=64.0, y=0.0, width=16.0, height=16.0)),
+      },
+      @core.Size::new(width=64.0, height=64.0),
+    )
+    is None else {
+    fail("expected a source window with no image overlap to skip the draw")
+  }
+
+  let fit_fallback = match
+    calculate_native_run_placement(
+      { ..run, src_rect: None, },
+      @core.Size::new(width=200.0, height=100.0),
+    ) {
+    Some(fit_fallback) => fit_fallback
+    None => fail("expected a fit placement without a source window")
+  }
+  inspect(fit_fallback.u0, content="0.25")
+  inspect(fit_fallback.v1, content="1")
 }

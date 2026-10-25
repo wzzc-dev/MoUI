@@ -112,10 +112,7 @@ test "no branch writes through the model it was given" {
     (
       "InWorld",
       talking_model,
-      InWorld(
-        talking_model.world_epoch(),
-        ReplyDelta("林掌柜", "回"),
-      ),
+      InWorld(talking_model.world_epoch(), ReplyDelta("林掌柜", "回")),
     ),
     (
       "SceneReply",

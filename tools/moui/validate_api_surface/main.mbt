@@ -370,8 +370,14 @@ fn package_budgets() -> Array[PackageBudget] {
       // duplicated; `direction` labels on `AlignmentGuideSet::from_size` and
       // `ChildLayoutInfo::new` and `OverlayPlacementContext.layout_direction`
       // are existing surfaces widened, not new ones.
-      max_lines: 2518,
-      max_pub_lines: 1113,
+      // Atlas source window adds +2 lines, +1 pub: `ImageRun.src_rect` is a
+      // field of an existing `pub(all)` struct, defaulted to `None` in
+      // `ImageRun::new` so no call site changes semantics. Without it a sprite
+      // or tile atlas cell cannot be named at all — `fit` derives the source
+      // crop from the whole image, so the only workaround was clip plus a
+      // negative frame offset, which breaks hit testing and damage bounds.
+      max_lines: 2520,
+      max_pub_lines: 1114,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -507,8 +513,12 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "render common",
       path: "moui/render/common/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/common\"",
-      max_lines: 430,
-      max_pub_lines: 166,
+      // `image_src_window` adds +2 lines, +1 pub: the clamp that turns a
+      // caller-supplied atlas window into a drawable one, shared so every
+      // raster renderer agrees that a window with no image overlap skips the
+      // draw instead of falling back to the whole image.
+      max_lines: 432,
+      max_pub_lines: 167,
       max_pub_all_lines: 15,
       required_tokens: [
         "pub struct ImageResourceLifecycle", "pub fn resolve_renderer", "pub fn renderer_feature_capability",

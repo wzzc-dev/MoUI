@@ -1,0 +1,20 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "examples/marpg_demo/app" @marpg,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  "native-stub": [ "write_file.c" ],
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

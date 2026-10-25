@@ -187,6 +187,7 @@ test "sun renderer dispose clears cached image resources and records disposal" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   assert_true(renderer.resources.get_image_cache().get(source) is Some(_))
@@ -207,4 +208,97 @@ test "sun renderer dispose clears cached image resources and records disposal" {
 fn sun_image_placement_wbtest_png_data_uri() -> String {
   "data:image/png;base64," +
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+}
+
+///|
+test "sun image placement maps an atlas source window to a pixel rect" {
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=32.0, height=32.0)
+  let atlas = @core.Size::new(width=64.0, height=64.0)
+
+  let cell = sun_run_placement(
+    @core.ImageRun::new(
+      "atlas.png",
+      frame,
+      src_rect=Some(@core.Rect::new(x=16.0, y=32.0, width=16.0, height=16.0)),
+      fit=Cover,
+    ),
+    atlas,
+  )
+  guard cell is Some(cell) else { fail("expected an atlas cell placement") }
+  inspect(cell.frame.origin.x, content="10")
+  inspect(cell.frame.size.width, content="32")
+  guard cell.src_rect is Some(cell_src) else {
+    fail("expected an atlas source rect")
+  }
+  assert_true(
+    cell_src == @sun_graphics.PixelRect::new(x=16, y=32, width=16, height=16),
+  )
+
+  let half_offset = sun_run_placement(
+    @core.ImageRun::new(
+      "atlas.png",
+      frame,
+      src_rect=Some(@core.Rect::new(x=16.5, y=32.5, width=16.0, height=16.0)),
+    ),
+    atlas,
+  )
+  guard half_offset is Some(half_offset) else {
+    fail("expected a half-pixel atlas cell")
+  }
+  guard half_offset.src_rect is Some(half_offset_src) else {
+    fail("expected a half-pixel source rect")
+  }
+  assert_true(
+    half_offset_src ==
+    @sun_graphics.PixelRect::new(x=17, y=33, width=16, height=16),
+  )
+
+  let overflow = sun_run_placement(
+    @core.ImageRun::new(
+      "atlas.png",
+      frame,
+      src_rect=Some(@core.Rect::new(x=48.0, y=48.0, width=32.0, height=32.0)),
+    ),
+    atlas,
+  )
+  guard overflow is Some(overflow) else {
+    fail("expected a clamped atlas cell")
+  }
+  guard overflow.src_rect is Some(overflow_src) else {
+    fail("expected a clamped source rect")
+  }
+  assert_true(
+    overflow_src ==
+    @sun_graphics.PixelRect::new(x=48, y=48, width=16, height=16),
+  )
+
+  for
+    outside in [
+      @core.Rect::new(x=64.0, y=0.0, width=16.0, height=16.0),
+      @core.Rect::new(x=0.0, y=0.0, width=0.0, height=16.0),
+    ] {
+    guard sun_run_placement(
+        @core.ImageRun::new("atlas.png", frame, src_rect=Some(outside)),
+        atlas,
+      )
+      is None else {
+      fail("expected a source window with no image overlap to skip the draw")
+    }
+  }
+
+  let fit_fallback = sun_run_placement(
+    @core.ImageRun::new(
+      "wide.png",
+      @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0),
+    ),
+    @core.Size::new(width=200.0, height=100.0),
+  )
+  guard fit_fallback is Some(fit_fallback) else {
+    fail("expected a fit placement without a source window")
+  }
+  inspect(fit_fallback.frame.origin.y, content="45")
+  inspect(fit_fallback.frame.size.height, content="50")
+  guard fit_fallback.src_rect is None else {
+    fail("expected contain to sample full source")
+  }
 }

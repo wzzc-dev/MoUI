@@ -103,7 +103,9 @@ pub fn update_editing(
       // The reply belongs to the conversation that asked for it, not to
       // whatever character happens to be selected when it lands.
       if !reply_target_exists(model, id) {
-        drop_late_reply(model, "这个角色已经不在世界里了，这条回复被丢弃。")
+        drop_late_reply(
+          model, "这个角色已经不在世界里了，这条回复被丢弃。",
+        )
       } else {
         let conversation = model.conversations.for_character(id)
         let next = model.fork()

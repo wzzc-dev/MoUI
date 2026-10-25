@@ -285,11 +285,7 @@ pub fn llm_reply_from_body(body : String) -> String? {
   let pieces : Array[String] = []
   for line in body.split("\n") {
     match llm_parse_delta(line.to_owned()) {
-      Some(delta) => {
-        if delta != "" {
-          pieces.push(delta)
-        }
-      }
+      Some(delta) => if delta != "" { pieces.push(delta) }
       None => ()
     }
   }

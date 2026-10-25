@@ -384,6 +384,7 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 
@@ -417,6 +418,7 @@ test "sun renderer records failed image lifecycle once for repeated decode error
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 
@@ -455,6 +457,7 @@ test "sun renderer async image loading waits for explicit completion" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 
@@ -900,6 +903,7 @@ test "sun renderer records disposed image resources after ready lifecycle" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   renderer.dispose()
@@ -931,6 +935,7 @@ test "sun renderer exposes stale image load completion apply port" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   let stale_failed = renderer.apply_image_resource_load_completion(

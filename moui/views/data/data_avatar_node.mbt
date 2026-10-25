@@ -39,6 +39,7 @@ impl @core.ViewNode for AvatarImage with fn paint(self, context) {
       frame: context.frame,
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
 }

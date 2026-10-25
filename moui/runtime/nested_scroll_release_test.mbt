@@ -110,12 +110,7 @@ test "对照：单层滚动视图内点击按钮后，悬停移动不滚动" {
     root=@views.scroll_view(
       @views.column(
         [
-          @views.button(
-            "WorldA",
-            on_click="open-a",
-            width=288.0,
-            height=34.0,
-          ),
+          @views.button("WorldA", on_click="open-a", width=288.0, height=34.0),
           @views.text("填充", width=300.0, height=300.0),
         ],
         spacing=10.0,
@@ -166,11 +161,7 @@ test "嵌套滚动：从内层控件起手的拖拽归内层，释放后悬停�
   pointer_dispatch(runtime, start, Down)
   pointer_dispatch(runtime, @core.Point::new(x=start.x, y=start.y - 20.0), Move)
   pointer_dispatch(runtime, @core.Point::new(x=start.x, y=start.y - 40.0), Move)
-  pointer_dispatch(
-    runtime,
-    @core.Point::new(x=start.x, y=start.y - 40.0),
-    Up,
-  )
+  pointer_dispatch(runtime, @core.Point::new(x=start.x, y=start.y - 40.0), Up)
   assert_false(received.contains("open-b"), msg="拖拽不应激活点击")
   assert_true(
     inner_y.length() >= 2,

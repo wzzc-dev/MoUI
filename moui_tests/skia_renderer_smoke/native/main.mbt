@@ -563,12 +563,14 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
       frame: @core.Rect::new(x=76.0, y=42.0, width=12.0, height=12.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     DrawImage({
       source: local_png_path,
       frame: @core.Rect::new(x=90.0, y=42.0, width=5.0, height=5.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     StrokeRoundedRectBrush(
       @core.RoundedRect::new(
@@ -740,6 +742,7 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
       frame: @core.Rect::new(x=164.0, y=88.0, width=14.0, height=8.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     DrawShaderEffect(
       @core.ShaderEffectSpec::new(
@@ -885,6 +888,7 @@ fn renderer_diagnostic_pixel_commands() -> Array[@core.DrawCommand] {
       frame: @core.Rect::new(x=2.0, y=26.0, width=8.0, height=8.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     DrawText(
       @core.TextRun::new(
@@ -1071,12 +1075,14 @@ fn async_image_smoke_commands(
       frame: @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
     DrawImage({
       source: local_png_path,
       frame: @core.Rect::new(x=12.0, y=2.0, width=6.0, height=6.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ]
 }

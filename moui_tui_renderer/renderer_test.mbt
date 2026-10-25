@@ -242,6 +242,7 @@ test "pixel-only commands are named in diagnostics, never silently dropped" {
       frame: rect(0.0, 0.0, 80.0, 16.0),
       opacity: 1.0,
       fit: @core.ImageFit::Contain,
+      src_rect: None,
     }),
     @core.DrawCommand::DrawPath(
       @core.PathSpec::new(verbs=[@core.PathVerb::Close, @core.PathVerb::Close]),

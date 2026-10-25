@@ -95,8 +95,8 @@
     },
     {
       "path": "moui_tests/skia_renderer_smoke/native/main.mbt",
-      "maxLines": 1700,
-      "reason": "Existing end-to-end renderer smoke harness."
+      "maxLines": 1704,
+      "reason": "Existing end-to-end renderer smoke harness. Raised 1698->1704 2026-10-25 for src_rect atlas extraction pixel assertions."
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
@@ -287,6 +287,16 @@
       "path": "examples/mo_desktop/app/model.mbt",
       "maxLines": 1250,
       "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
+    },
+    {
+      "path": "examples/new_world/app/update.mbt",
+      "maxLines": 1591,
+      "reason": "Existing New World update logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
+    },
+    {
+      "path": "examples/new_world/app/world_store.mbt",
+      "maxLines": 1330,
+      "reason": "Existing New World folder-store logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet."
     }
   ],
   "data": [

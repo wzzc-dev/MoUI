@@ -94,6 +94,7 @@ impl @core.ViewNode for Image with fn paint(self, context) {
       frame,
       opacity: self.opacity,
       fit: self.fit,
+      src_rect: None,
     }),
   )
   if self.corner_radius > 0.0 {

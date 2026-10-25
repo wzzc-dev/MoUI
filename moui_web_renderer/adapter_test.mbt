@@ -298,6 +298,7 @@ test "wgpu web command bridge covers image command in host ABI" {
         frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
         opacity: 1.0,
         fit: Contain,
+        src_rect: None,
       }),
     ],
     @core.Size::new(width=100.0, height=50.0),
@@ -425,6 +426,7 @@ test "wgpu web renderer exposes submitted image lifecycle diagnostics" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 0.75,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   let resources = renderer.image_resources()
@@ -448,6 +450,7 @@ test "wgpu web renderer refreshes ready image lifecycle from host" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   let resources = renderer.image_resources()
@@ -479,6 +482,7 @@ test "wgpu web renderer refreshes failed image lifecycle from host" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   let resources = renderer.image_resources()
@@ -501,6 +505,7 @@ test "wgpu web renderer applies image load completions" {
       frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
       opacity: 1.0,
       fit: Contain,
+      src_rect: None,
     }),
   ])
   let ready = renderer.apply_image_resource_load_completion(
@@ -565,6 +570,7 @@ test "wgpu web command bridge preserves full draw command parity order" {
         frame: rect,
         opacity: 0.75,
         fit: Contain,
+        src_rect: None,
       }),
       PushClip(rect),
       PushRoundedClip(rounded),

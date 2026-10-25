@@ -515,7 +515,9 @@ pub fn update(
                 run=dispatch => {
                   runner(
                     propose_request,
-                    reply => dispatch(InWorld(epoch, MemoryProposalsArrived(reply))),
+                    reply => {
+                      dispatch(InWorld(epoch, MemoryProposalsArrived(reply)))
+                    },
                     _delta => (),
                   )
                 },
