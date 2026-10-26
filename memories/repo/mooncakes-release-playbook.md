@@ -55,6 +55,29 @@ renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序
   发布前先 `git status` 确认无未提交改动,并抽查 tarball
   (`moon publish --dry-run` 后解包 `_build/publish/*.zip`)与工作区一致。
 
+## 主线加字段 = 发布线必须追（2026-10-26 实测）
+
+`moui_studio` 是子仓库、**独立 CI 按自身 `moon.mod` 从 registry 解析
+`wzzc-dev/moui`**，而它在母仓库里又是 workspace 成员（按主线源码编译）。
+两边对同一个文件的要求因此会分叉，改主线 API 时判定顺序是：
+
+1. 先问「这个东西下游子仓库会写吗」。会写就得发布，不是改子仓库能解决的。
+2. 典型受害者是**结构性变化**：函数加参数（`web_dispatch_pointer_input`
+   8→10）、`pub(all) struct` 加字段（`ImageRun.src_rect`）。子仓库照主线
+   写完，独立 CI 必然 `requires 8 arguments` / `Record fields src_rect are
+   undefined`。
+3. 只发 base 不够：**中间 addon 也要跟着重发**。本次 `moui@0.2.5` 发完后
+   Studio 仍红，因为 `moui_richtext@0.2.2` 自己也构造 `ImageRun` 字面量、
+   缺 `src_rect`；补发 `moui_richtext@0.2.3` 才通。判断方法：在 workspace
+   里 grep 该结构的构造点（`ImageRun::{`、`DrawImage({`），按发布模块分组。
+4. 发布前用**干净 clone + 自身 pin** 实测，而不是 workspace：
+   `git clone <subrepo> && moon update && moon check && moon build web_wasm
+   --target wasm-gc`。workspace 里永远绿，掩盖问题。
+
+本次提交链：`moui@0.2.5` → `moui_richtext@0.2.3` → `moui_studio@aec8746`
+（pin 双升）→ 母仓库子模块指针。`moon publish` 在 workspace 成员目录里
+**不能只发一个模块就完事**，被 pin 的中间层要一起走。
+
 ## 文档 token 同步面
 
 window 的混合版本号 `0.5.4-0.<moUI 序号>` 出现在:各 moon.mod pin、
