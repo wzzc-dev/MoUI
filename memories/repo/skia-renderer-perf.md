@@ -40,3 +40,11 @@
   for cache design and ADR
   `docs/decisions/0009-draw-frame-clear-and-skia-damage-clip.md` for the
   corrected frame/damage contract.
+- Performance-budget p99 is not the maximum: below 100 samples the validator
+  (`tools/moui/validate_performance_budgets`) reads the second-highest sample,
+  because nearest-rank p99 would otherwise equal the worst frame and one
+  scheduler hiccup on shared CI runners fails the gate (2026-10-26 run
+  40276592135: single 127ms excel paint frame vs 49.6ms second-highest). When
+  a budget gate trips, compare the second-highest sample against the limit
+  before considering a re-baseline — a lone outlier is noise, a shifted tail
+  is real.
