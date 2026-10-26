@@ -7,7 +7,7 @@ version = "0.2.2"
 license = "Apache-2.0"
 
 import {
-  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/moui@0.2.5",
 }
 
 description = "MoUI agent protocol layer: observable/controllable runtime surface for external agents"

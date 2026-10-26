@@ -4,7 +4,7 @@ version = "0.2.2"
 
 import {
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/moui@0.2.5",
   "wzzc-dev/moui_tools@0.2.2",
   "wzzc-dev/moui_skia_renderer@0.2.2",
   "wzzc-dev/moui_sun_renderer@0.2.2",

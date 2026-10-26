@@ -7,7 +7,7 @@ preferred_target = "native"
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/moui@0.2.5",
   "wzzc-dev/moui_skia@0.2.2",
   "moonbitlang/x@0.5.6",
 }

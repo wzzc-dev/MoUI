@@ -11,7 +11,7 @@ license = "Apache-2.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/moui@0.2.5",
   "wzzc-dev/window@0.5.4-0.2.1",
 }
 

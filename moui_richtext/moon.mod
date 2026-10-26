@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_richtext"
 version = "0.2.2"
 
 import {
-  "wzzc-dev/moui@0.2.4",
+  "wzzc-dev/moui@0.2.5",
   "mizchi/markdown@0.8.4",
 }
 
