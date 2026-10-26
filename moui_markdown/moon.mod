@@ -6,7 +6,7 @@ preferred_target = "native"
 
 import {
   "wzzc-dev/moui@0.2.5",
-  "wzzc-dev/moui_richtext@0.2.2",
+  "wzzc-dev/moui_richtext@0.2.3",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_richtext"
 
-version = "0.2.2"
+version = "0.2.3"
 
 import {
   "wzzc-dev/moui@0.2.5",
