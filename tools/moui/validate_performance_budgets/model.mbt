@@ -111,6 +111,23 @@ fn performance_nearest_rank(
 }
 
 ///|
+/// Nearest-rank p99 equals the maximum sample whenever a run has fewer than
+/// 100 samples, which turns the tail gate into a worst-frame gate. Shared CI
+/// runners emit one-off scheduler hiccups far above the stable tail, so below
+/// that sample count the p99 reads the second-highest sample instead of the
+/// worst one.
+fn performance_p99_nearest_rank(samples : Array[Double]) -> Double {
+  let rank = ((samples.length() * 99 + 99) / 100).max(1)
+  if samples.length() >= 2 && rank >= samples.length() {
+    let sorted = samples.copy()
+    sorted.sort()
+    sorted[samples.length() - 2]
+  } else {
+    performance_nearest_rank(samples, 99)
+  }
+}
+
+///|
 fn performance_limit(baseline : Double, regression_percent : Double) -> Double {
   baseline * (1.0 + regression_percent / 100.0)
 }

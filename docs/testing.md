@@ -414,8 +414,11 @@ node scripts/run-performance-budgets.mjs
 ```
 
 The runner records build/layout/paint/present/frame samples plus peak RSS, live
-allocation blocks, cache hit rate, startup time, and executable size. Initial
-catalog values are reviewed guardrails rather than machine-portable claims.
+allocation blocks, cache hit rate, startup time, and executable size. The
+validator's p99 excludes the single worst sample when a run has fewer than 100
+samples: nearest-rank p99 would otherwise equal the maximum frame and let one
+scheduler hiccup on a shared runner fail the tail gate. Initial catalog values
+are reviewed guardrails rather than machine-portable claims.
 Change them only with a matching `native-skia-raster` artifact, runner identity,
 and the approval/reason required by `checks/performance-budgets.json`.
 

@@ -7,6 +7,18 @@ test "nearest-rank percentiles are deterministic" {
 }
 
 ///|
+test "p99 ignores the single worst sample below 100-sample runs" {
+  let values = [1.0, 10.0, 2.0, 9.0, 3.0, 8.0, 4.0, 7.0, 5.0, 200.0]
+  inspect(performance_p99_nearest_rank(values), content="10")
+  let long : Array[Double] = []
+  for index in 0..<102 {
+    long.push(index.to_double() + 1.0)
+  }
+  long.push(1000.0)
+  inspect(performance_p99_nearest_rank(long), content="102")
+}
+
+///|
 test "catalog and results enforce percentile regressions" {
   let timing =
     #|{"p50":10,"p95":20,"p99":30,"maxRegressionPercent":10}

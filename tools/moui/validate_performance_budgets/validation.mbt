@@ -237,7 +237,7 @@ fn performance_validate_timing_samples(
     let observed = [
       ("p50", performance_nearest_rank(values, 50), metric_budget.p50),
       ("p95", performance_nearest_rank(values, 95), metric_budget.p95),
-      ("p99", performance_nearest_rank(values, 99), metric_budget.p99),
+      ("p99", performance_p99_nearest_rank(values), metric_budget.p99),
     ]
     for entry in observed {
       let (name, actual, baseline) = entry
