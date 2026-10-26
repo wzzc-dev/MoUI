@@ -40,7 +40,6 @@ This file is generated from repository manifests and validator reports.
 | ./moui_sun |
 | ./moui_tui |
 | ./examples/counter |
-| ./examples/marpg_demo |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
 | ./examples/button_freeze_probe |
@@ -101,7 +100,6 @@ This file is generated from repository manifests and validator reports.
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
-| MarPG Demo | examples/marpg_demo | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |
 | Button Freeze Probe | examples/button_freeze_probe | no |

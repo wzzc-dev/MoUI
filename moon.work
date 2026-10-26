@@ -31,7 +31,6 @@ members = [
   "./moui_sun",
   "./moui_tui",
   "./examples/counter",
-  "./examples/marpg_demo",
   "./examples/multi_window",
   "./examples/harmonyos_demo",
   "./examples/button_freeze_probe",
