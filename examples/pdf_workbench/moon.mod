@@ -9,7 +9,7 @@ import {
   "moonbitlang/pdflite@0.4.0",
   "moonbitlang/async@0.22.5",
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui_skia_renderer@0.2.2",
+  "wzzc-dev/moui_skia_renderer@0.2.5",
 }
 
 options(

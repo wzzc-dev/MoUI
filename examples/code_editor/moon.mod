@@ -7,5 +7,5 @@ preferred_target = "native"
 import {
   "wzzc-dev/moui@0.2.5",
   "wzzc-dev/moui_richtext@0.2.3",
-  "wzzc-dev/moui_skia_renderer@0.2.2",
+  "wzzc-dev/moui_skia_renderer@0.2.5",
 }
