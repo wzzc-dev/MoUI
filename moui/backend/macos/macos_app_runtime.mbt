@@ -315,6 +315,7 @@ fn create_macos_app(
     promotion_automatic_fallback: false,
     promotion_recovered_within_vsyncs: 0,
     promotion_recovery_count_before: 0,
+    promotion_recovery_count_after: 0,
     promotion_fallback_count: 0,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())

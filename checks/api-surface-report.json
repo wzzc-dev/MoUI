@@ -74,7 +74,7 @@
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 606,
+      "lines": 608,
       "public_declarations": 279,
       "pub_all_declarations": 31
     },
@@ -84,6 +84,13 @@
       "lines": 432,
       "public_declarations": 167,
       "pub_all_declarations": 13
+    },
+    {
+      "label": "native text model",
+      "path": "moui/render/native_text/pkg.generated.mbti",
+      "lines": 94,
+      "public_declarations": 46,
+      "pub_all_declarations": 1
     },
     {
       "label": "skia renderer",
@@ -109,13 +116,20 @@
     {
       "label": "native wgpu renderer",
       "path": "moui_wgpu_renderer/pkg.generated.mbti",
-      "lines": 154,
-      "public_declarations": 77,
-      "pub_all_declarations": 3
+      "lines": 116,
+      "public_declarations": 55,
+      "pub_all_declarations": 2
+    },
+    {
+      "label": "native metal renderer",
+      "path": "moui_metal_renderer/pkg.generated.mbti",
+      "lines": 57,
+      "public_declarations": 13,
+      "pub_all_declarations": 0
     },
     {
       "label": "native text protocol",
-      "path": "moui_wgpu_renderer/text_protocol/pkg.generated.mbti",
+      "path": "moui_text_providers/text_protocol/pkg.generated.mbti",
       "lines": 58,
       "public_declarations": 23,
       "pub_all_declarations": 0

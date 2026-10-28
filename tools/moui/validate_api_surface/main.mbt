@@ -494,7 +494,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // per-window RendererSession at the composition boundary.
       // +2 lines: RendererBackendKind::TerminalAnsiNative and
       // RendererFamily::Terminal, the protocol names the cell projector needs.
-      max_lines: 606,
+      // +2 lines again: RendererBackendKind::NativeDirectGpu and
+      // RendererFamily::Metal, the identity a no-Skia host GPU surface needs.
+      max_lines: 608,
       max_pub_lines: 279,
       max_pub_all_lines: 31,
       required_tokens: [
@@ -525,6 +527,26 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub struct GpuRenderWorker",
       ],
       forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
+    },
+    {
+      label: "native text model",
+      path: "moui/render/native_text/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/native_text\"",
+      // Extracted from `moui_wgpu_renderer` so platform text providers
+      // (CoreText / DirectWrite / fontconfig / cosmic) and any future
+      // renderer share one model instead of importing the diagnostic wgpu
+      // renderer package. Budget = current surface exactly: growth here is a
+      // cross-renderer protocol change, not a renderer-local convenience.
+      max_lines: 94,
+      max_pub_lines: 46,
+      max_pub_all_lines: 1,
+      required_tokens: [
+        "pub struct NativePlatformTextProvider", "pub struct NativeTextCache", "pub fn native_text_system_with_engine",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui_wgpu_renderer\"", "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer",
+        "WgpuRenderer", "RendererHandle", "HostWgpuSurface",
+      ],
     },
     {
       label: "skia renderer",
@@ -570,18 +592,51 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "native wgpu renderer",
       path: "moui_wgpu_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_wgpu_renderer\"",
-      max_lines: 154,
-      max_pub_lines: 77,
-      max_pub_all_lines: 3,
+      // 154/77/3 -> 116/55/2: the native text model moved to
+      // `moui/render/native_text`; what remains here is the re-export block
+      // that keeps host entrypoints naming the engine through this renderer.
+      max_lines: 116,
+      max_pub_lines: 55,
+      max_pub_all_lines: 2,
       required_tokens: [
         "NativeTextEngine", "HostWgpuSurface", "NativeTextLayout",
       ],
       forbidden_tokens: ["\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer"],
     },
     {
+      label: "native metal renderer",
+      path: "moui_metal_renderer/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_metal_renderer\"",
+      // 34/9/0, then 48/13/0 with L2: the provider factory, its descriptor and
+      // capability self-report, the offscreen pixel proof, the real-provider text
+      // smoke, and `metal_frame_report` (the L2 "not silent" channel: a host can
+      // ask what a command stream would cost on any host, since `RendererEvent`
+      // has no diagnostics sink and an unread event variant would be decoration).
+      // 53 with L2b/L2c, all of it inside the one report struct: image decode
+      // counters, then the layer, blend, filter, retained-layer and shader-effect
+      // counters. The renderer itself, its geometry, glyph atlas, image cache and
+      // frame types stay package-private.
+      // 56 with the retained-layer cache: three more fields of that same
+      // `MetalFrameReport` (`retained_layers_cached` / `_updated` / `_evicted`) so
+      // a host can tell a hit from a rebuild from an eviction. No new declaration,
+      // type or function leaves the package — `metal_retained.mbt` is
+      // package-private, and the cache is reachable only through the counters.
+      // 57 with the decoded-image budget: one more `MetalFrameReport` field
+      // (`image_textures_released`); no other public declaration changed.
+      max_lines: 57,
+      max_pub_lines: 13,
+      max_pub_all_lines: 0,
+      required_tokens: [
+        "NativeTextEngine", "metal_proof_pixels", "metal_text_smoke",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend\"", "SkiaRasterRenderer", "WgpuRenderer",
+      ],
+    },
+    {
       label: "native text protocol",
-      path: "moui_wgpu_renderer/text_protocol/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui_wgpu_renderer/text_protocol\"",
+      path: "moui_text_providers/text_protocol/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui_text_providers/text_protocol\"",
       max_lines: 60,
       max_pub_lines: 23,
       max_pub_all_lines: 0,

@@ -1,0 +1,21 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common" @render_common,
+  "wzzc-dev/moui/render/native_text",
+}
+
+import {
+  "moonbitlang/core/encoding/base64",
+} for "wbtest"
+
+supported_targets = "native"
+
+// Apple framework link flags travel through `build.js` `link_configs`: a
+// package's own `cc-link-flags` do not reach the executable link, and declaring
+// them in both places makes the linker report duplicate libraries.
+
+options(
+  "native-stub": [ "metal_renderer.mm", "metal_present_smoke.mm" ],
+  targets: { },
+)

@@ -60,8 +60,8 @@ fn provider_rules() -> Array[ProviderRule] {
       path: "moui/backend/" + platform + "/moon.pkg",
       forbidden: [
         "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_wgpu_renderer",
-        "wzzc-dev/moui_web_renderer/canvas2d", "wzzc-dev/moui_web_renderer", "Milky2018/wgpu_mbt",
-        "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
+        "wzzc-dev/moui_metal_renderer", "wzzc-dev/moui_web_renderer/canvas2d", "wzzc-dev/moui_web_renderer",
+        "Milky2018/wgpu_mbt", "wzzc-dev/moui_skia", "wzzc-dev/moui_sun", "wzzc-dev/moui_text_providers",
       ],
     })
   }
@@ -93,6 +93,7 @@ fn provider_rules() -> Array[ProviderRule] {
       "skia" => "moui_skia_renderer/moon.pkg"
       "sun" => "moui_sun_renderer/moon.pkg"
       "wgpu" => "moui_wgpu_renderer/moon.pkg"
+      "metal" => "moui_metal_renderer/moon.pkg"
       "canvas2d" => "moui_web_renderer/canvas2d/moon.pkg"
       "webgpu_adapter" => "moui_web_renderer/moon.pkg"
       _ => ""

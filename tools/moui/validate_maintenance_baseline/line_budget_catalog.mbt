@@ -209,17 +209,15 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui_sun_renderer/renderer_text_diagnostic_values.mbt",
       max_lines: 638,
     },
-    { path: "moui_wgpu_renderer/native_text_glyph_atlas.mbt", max_lines: 132, },
-    {
-      path: "moui_wgpu_renderer/native_text_layout_validation.mbt",
-      max_lines: 75,
-    },
-    { path: "moui_wgpu_renderer/native_text_model.mbt", max_lines: 500, },
-    {
-      path: "moui_wgpu_renderer/native_text_provider_engine.mbt",
-      max_lines: 300,
-    },
-    { path: "moui_wgpu_renderer/native_text_rendering.mbt", max_lines: 301, },
+    // The 500 + 300 budgets for the old `native_text_model.mbt` and
+    // `native_text_provider_engine.mbt` moved with the code to
+    // `moui/render/native_text`; the renderer keeps only the atlas/vertex model.
+    { path: "moui/render/native_text/layout_validation.mbt", max_lines: 75, },
+    { path: "moui/render/native_text/text_model.mbt", max_lines: 280, },
+    { path: "moui/render/native_text/text_cache.mbt", max_lines: 260, },
+    { path: "moui_wgpu_renderer/native_text_glyph_atlas.mbt", max_lines: 140, },
+    { path: "moui_wgpu_renderer/native_text_model.mbt", max_lines: 120, },
+    { path: "moui_wgpu_renderer/native_text_rendering.mbt", max_lines: 320, },
     { path: "moui/views/style/control_style.mbt", max_lines: 624, },
     { path: "moui/views/style/control_style_text.mbt", max_lines: 40, },
     { path: "moui/views/style/control_style_surface.mbt", max_lines: 105, },

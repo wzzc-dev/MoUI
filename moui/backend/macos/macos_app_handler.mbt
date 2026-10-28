@@ -539,7 +539,8 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
               1,
             )
           }
-          self.promotion_context_loss_done = self.promotion_context_loss_injected
+          self.promotion_context_loss_done = recovery_now -
+            self.promotion_recovery_count_before
         }
         if renderer.gpu_fallback_active() {
           self.promotion_fallback_count = self.promotion_fallback_count + 1
@@ -552,13 +553,12 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
           self.request_platform_redraw(window_id)
           return false
         }
-        if self.promotion_recovered_within_vsyncs == 0 {
-          // Still count a completed observation if we got presents after inject.
-          self.promotion_recovered_within_vsyncs = self.promotion_wait_presents.max(
-            1,
-          )
-          self.promotion_context_loss_done = self.promotion_context_loss_injected
-        }
+        // A renderer that does not instrument recovery leaves both counts at
+        // zero. The run still finishes — `context_loss_injected` says what was
+        // attempted and `recovered_within_vsyncs=0` says nothing was evidenced,
+        // which is the pair a reader needs; counting the injections as
+        // recoveries reported a rebuild that never happened.
+        self.promotion_recovery_count_after = recovery_now
         // package-level mailbox tests already prove never-dropped controls;
         // matching-host inject + ordered recovery path marks mailboxOk true.
         self.promotion_mailbox_ok = true
@@ -580,7 +580,7 @@ fn MacosNativeHostBackend::emit_promotion_lifecycle_summary(
   self : MacosNativeHostBackend,
 ) -> Unit {
   println(
-    "MoUI macOS GPU promotion lifecycle completed surface_cycles=\{self.promotion_surface_cycles_done} fg_bg_cycles=\{self.promotion_fg_bg_cycles_done} context_loss_done=\{self.promotion_context_loss_done} recovered_within_vsyncs=\{self.promotion_recovered_within_vsyncs} recovery_count_before=\{self.promotion_recovery_count_before} fallback_count=\{self.promotion_fallback_count} automatic_fallback=\{self.promotion_automatic_fallback} mailbox_ok=\{self.promotion_mailbox_ok} readback_eliminated=\{self.promotion_readback_eliminated} runtime_preserved=\{self.promotion_runtime_preserved}",
+    "MoUI macOS GPU promotion lifecycle completed surface_cycles=\{self.promotion_surface_cycles_done} fg_bg_cycles=\{self.promotion_fg_bg_cycles_done} context_loss_injected=\{self.promotion_context_loss_injected} context_loss_done=\{self.promotion_context_loss_done} recovered_within_vsyncs=\{self.promotion_recovered_within_vsyncs} recovery_count_before=\{self.promotion_recovery_count_before} recovery_count_after=\{self.promotion_recovery_count_after} fallback_count=\{self.promotion_fallback_count} automatic_fallback=\{self.promotion_automatic_fallback} mailbox_ok=\{self.promotion_mailbox_ok} readback_eliminated=\{self.promotion_readback_eliminated} runtime_preserved=\{self.promotion_runtime_preserved}",
   )
 }
 

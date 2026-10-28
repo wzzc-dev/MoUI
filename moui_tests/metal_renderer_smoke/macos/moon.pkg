@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui_metal_renderer" @metal_renderer,
+  "wzzc-dev/moui_text_providers/coretext" @text_coretext,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

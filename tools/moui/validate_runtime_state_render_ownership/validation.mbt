@@ -220,8 +220,8 @@ fn validate_repository(repo_root : String) -> Array[String] {
   let global_files : Array[String] = []
   for
     root in [
-      "moui", "moui_skia_renderer", "moui_web_renderer", "moui_wgpu_renderer", "moui_sun_renderer",
-      "moui_tests",
+      "moui", "moui_skia_renderer", "moui_web_renderer", "moui_wgpu_renderer", "moui_metal_renderer",
+      "moui_sun_renderer", "moui_text_providers", "moui_tests",
     ] {
     collect_files(repo_root, root, global_files)
   }

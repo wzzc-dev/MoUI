@@ -151,6 +151,7 @@ struct MacosNativeHostBackend {
   mut promotion_automatic_fallback : Bool
   mut promotion_recovered_within_vsyncs : Int32
   mut promotion_recovery_count_before : Int32
+  mut promotion_recovery_count_after : Int32
   mut promotion_fallback_count : Int32
 }
 

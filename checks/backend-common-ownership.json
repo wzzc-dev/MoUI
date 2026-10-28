@@ -20,6 +20,7 @@
         "wzzc-dev/moui_skia_renderer",
         "wzzc-dev/moui_web_renderer",
         "wzzc-dev/moui_wgpu_renderer",
+        "wzzc-dev/moui_metal_renderer",
         "wzzc-dev/moui_sun_renderer"
       ]
     },
@@ -34,6 +35,7 @@
         "wzzc-dev/moui_skia_renderer",
         "wzzc-dev/moui_web_renderer",
         "wzzc-dev/moui_wgpu_renderer",
+        "wzzc-dev/moui_metal_renderer",
         "wzzc-dev/moui_sun_renderer"
       ]
     },
@@ -261,6 +263,7 @@
     "moui_web_renderer",
     "moui_wgpu_renderer",
     "moui_sun_renderer",
+    "moui_text_providers",
     "moui_tests"
   ],
   "rootRenderForbiddenTokens": [
@@ -278,6 +281,7 @@
     {"name": "wzzc-dev/moui_skia_renderer", "path": "moui_skia_renderer"},
     {"name": "wzzc-dev/moui_web_renderer", "path": "moui_web_renderer"},
     {"name": "wzzc-dev/moui_wgpu_renderer", "path": "moui_wgpu_renderer"},
+    {"name": "wzzc-dev/moui_metal_renderer", "path": "moui_metal_renderer"},
     {"name": "wzzc-dev/moui_sun_renderer", "path": "moui_sun_renderer"}
   ]
 }

@@ -489,6 +489,16 @@
           ]
         },
         {
+          "name": "native text model tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui/render/native_text",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "host backend tests",
           "argv": [
             "moon",
@@ -930,6 +940,47 @@
             "moon",
             "check",
             "examples/showcase/macos_skia",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "Metal renderer tests",
+          "host": "darwin",
+          "argv": [
+            "moon",
+            "test",
+            "moui_metal_renderer",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "Metal text smoke",
+          "host": "darwin",
+          "argv": [
+            "moon",
+            "run",
+            "moui_tests/metal_renderer_smoke/macos",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "Metal first-frame presentation",
+          "host": "darwin",
+          "argv": [
+            "sh",
+            "scripts/macos-metal-presentation-smoke.sh"
+          ]
+        },
+        {
+          "name": "CoreText provider tests",
+          "host": "darwin",
+          "argv": [
+            "moon",
+            "test",
+            "moui_text_providers/coretext",
             "--target",
             "native"
           ]

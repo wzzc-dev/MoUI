@@ -305,12 +305,12 @@ owning-package boundaries clear.
   (PNG/BMP data URIs), shadows, layers, filters, and shader effects.
   TextShaping, EmojiText, and AsyncImage remain tracked as gaps; new
   capabilities are exceptions requiring an ADR note.
-- `moui_wgpu_renderer/cosmic_text`: standalone Moon Cosmic provider.
-- `moui_wgpu_renderer/coretext`: macOS CoreText provider.
-- `moui_wgpu_renderer/directwrite`: Windows DirectWrite scaffold.
-- `moui_wgpu_renderer/fontconfig`: Linux fontconfig/FreeType provider boundary with
+- `moui_text_providers/cosmic_text`: standalone Moon Cosmic provider.
+- `moui_text_providers/coretext`: macOS CoreText provider.
+- `moui_text_providers/directwrite`: Windows DirectWrite scaffold.
+- `moui_text_providers/fontconfig`: Linux fontconfig/FreeType provider boundary with
   a narrow native color-emoji path and Cosmic fallback for general text.
-- `moui_wgpu_renderer/text_protocol`: shared native text provider payload protocol.
+- `moui_text_providers/text_protocol`: shared native text provider payload protocol.
 - `moui_web_renderer`: wasm-gc bridge to browser WebGPU host imports, with
   Canvas2D/WeChat under `moui_web_renderer/canvas2d`.
 - `moui_tests/skia_renderer_smoke/native`: opt-in real Skia renderer smoke that

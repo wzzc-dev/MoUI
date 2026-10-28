@@ -37,6 +37,13 @@
       "releaseStage": "base-bindings"
     },
     {
+      "name": "wzzc-dev/moui_text_providers",
+      "directory": "moui_text_providers",
+      "publication": "public",
+      "role": "binding",
+      "releaseStage": "base-bindings"
+    },
+    {
       "name": "wzzc-dev/moui_skia_renderer",
       "directory": "moui_skia_renderer",
       "publication": "public",
@@ -53,6 +60,13 @@
     {
       "name": "wzzc-dev/moui_wgpu_renderer",
       "directory": "moui_wgpu_renderer",
+      "publication": "public",
+      "role": "renderer",
+      "releaseStage": "renderers"
+    },
+    {
+      "name": "wzzc-dev/moui_metal_renderer",
+      "directory": "moui_metal_renderer",
       "publication": "public",
       "role": "renderer",
       "releaseStage": "renderers"

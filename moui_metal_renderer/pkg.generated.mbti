@@ -1,0 +1,57 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_metal_renderer"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/native_text",
+}
+
+// Values
+pub fn metal(text_engine~ : @native_text.NativeTextEngine) -> @render.RendererProvider
+
+pub fn metal_feature_capabilities() -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn metal_frame_report(commands~ : Array[@core.DrawCommand], width~ : Double, height~ : Double, scale_factor? : Double, text_engine? : @native_text.NativeTextEngine) -> MetalFrameReport
+
+pub fn metal_proof_pixels(width~ : Int32, height~ : Int32, commands~ : Array[@core.DrawCommand], clear~ : @core.Color, text_engine? : @native_text.NativeTextEngine, image_source? : @render.HostImageSource, scale_factor? : Double) -> Bytes?
+
+pub fn metal_renderer_descriptor(Array[@render.RendererBackendFeatureCapability]) -> @render.RendererDescriptor
+
+pub fn metal_text_smoke(text_engine~ : @native_text.NativeTextEngine) -> Unit
+
+pub fn native_noop_text_engine() -> @native_text.NativeTextEngine
+
+pub fn native_platform_text_engine(@native_text.NativePlatformTextProvider) -> @native_text.NativeTextEngine
+
+pub fn native_platform_text_engine_with_fallback(@native_text.NativePlatformTextProvider, fallback~ : @native_text.NativeTextEngine) -> @native_text.NativeTextEngine
+
+// Errors
+
+// Types and methods
+pub struct MetalFrameReport {
+  items : Int32
+  vertices : Int32
+  approximated_clips : Int32
+  clipped_away : Int32
+  text_dropped_glyphs : Int32
+  text_runs_dropped : Int32
+  image_textures_released : Int32
+  image_ops_unresolved : Int32
+  layers : Int32
+  blend_modes_unsupported : Int32
+  blend_modes_approximated : Int32
+  filter_approximations : Int32
+  retained_layers_rebuilt : Int32
+  retained_layers_cached : Int32
+  retained_layers_updated : Int32
+  retained_layers_evicted : Int32
+  shader_effects_fallback_painted : Int32
+}
+pub fn MetalFrameReport::draws_anything(Self) -> Bool
+pub fn MetalFrameReport::refused_count(Self) -> Int32
+
+// Type aliases
+pub using @native_text {type NativeTextEngine}
+
+// Traits
