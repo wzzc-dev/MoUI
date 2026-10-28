@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Initial reviewed MoUI performance guardrails for the canonical native Skia Raster runner. Timings are milliseconds; byte and allocation metrics are per scenario process.",
+  "description": "Initial reviewed MoUI performance guardrails for the canonical native Skia Raster runner. Timings are milliseconds; byte and allocation metrics are per scenario process. drawMs/totalMs baselines are grounded in the 2026-10-27 native-skia-raster artifact (40 frames) with 2.4-3.8x headroom; the older five entries are unreviewed placeholder ceilings.",
   "runner": "native-skia-raster",
   "updatePolicy": {
     "owner": "runtime-maintainers",
@@ -15,8 +15,10 @@
         "buildMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
         "layoutMs": { "p50": 8, "p95": 20, "p99": 30, "maxRegressionPercent": 25 },
         "paintMs": { "p50": 10, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
+        "drawMs": { "p50": 0.05, "p95": 0.12, "p99": 0.18, "maxRegressionPercent": 25 },
         "presentMs": { "p50": 12, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
-        "frameMs": { "p50": 25, "p95": 50, "p99": 75, "maxRegressionPercent": 20 }
+        "frameMs": { "p50": 25, "p95": 50, "p99": 75, "maxRegressionPercent": 20 },
+        "totalMs": { "p50": 0.2, "p95": 3.5, "p99": 4.0, "maxRegressionPercent": 25 }
       },
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },
@@ -32,8 +34,10 @@
         "buildMs": { "p50": 10, "p95": 22, "p99": 33, "maxRegressionPercent": 25 },
         "layoutMs": { "p50": 14, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
         "paintMs": { "p50": 32, "p95": 44, "p99": 80, "maxRegressionPercent": 25 },
+        "drawMs": { "p50": 0.5, "p95": 1.2, "p99": 1.5, "maxRegressionPercent": 25 },
         "presentMs": { "p50": 16, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
-        "frameMs": { "p50": 36, "p95": 72, "p99": 108, "maxRegressionPercent": 20 }
+        "frameMs": { "p50": 36, "p95": 72, "p99": 108, "maxRegressionPercent": 20 },
+        "totalMs": { "p50": 30, "p95": 38, "p99": 42, "maxRegressionPercent": 25 }
       },
       "resources": {
         "peakRssBytes": { "baseline": 805306368, "maxRegressionPercent": 20, "higherIsBetter": false },
@@ -49,8 +53,10 @@
         "buildMs": { "p50": 6, "p95": 14, "p99": 21, "maxRegressionPercent": 20 },
         "layoutMs": { "p50": 8, "p95": 18, "p99": 27, "maxRegressionPercent": 20 },
         "paintMs": { "p50": 8, "p95": 18, "p99": 27, "maxRegressionPercent": 20 },
+        "drawMs": { "p50": 0.01, "p95": 0.02, "p99": 0.03, "maxRegressionPercent": 20 },
         "presentMs": { "p50": 10, "p95": 22, "p99": 33, "maxRegressionPercent": 20 },
-        "frameMs": { "p50": 24, "p95": 48, "p99": 72, "maxRegressionPercent": 15 }
+        "frameMs": { "p50": 24, "p95": 48, "p99": 72, "maxRegressionPercent": 15 },
+        "totalMs": { "p50": 0.7, "p95": 1.2, "p99": 1.5, "maxRegressionPercent": 20 }
       },
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 15, "higherIsBetter": false },
@@ -66,8 +72,10 @@
         "buildMs": { "p50": 20, "p95": 42, "p99": 63, "maxRegressionPercent": 25 },
         "layoutMs": { "p50": 24, "p95": 52, "p99": 78, "maxRegressionPercent": 25 },
         "paintMs": { "p50": 28, "p95": 60, "p99": 90, "maxRegressionPercent": 25 },
+        "drawMs": { "p50": 0.01, "p95": 0.02, "p99": 0.03, "maxRegressionPercent": 25 },
         "presentMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 25 },
-        "frameMs": { "p50": 72, "p95": 144, "p99": 216, "maxRegressionPercent": 20 }
+        "frameMs": { "p50": 72, "p95": 144, "p99": 216, "maxRegressionPercent": 20 },
+        "totalMs": { "p50": 1.3, "p95": 2.2, "p99": 2.4, "maxRegressionPercent": 25 }
       },
       "resources": {
         "peakRssBytes": { "baseline": 1073741824, "maxRegressionPercent": 20, "higherIsBetter": false },
@@ -83,8 +91,10 @@
         "buildMs": { "p50": 16, "p95": 32, "p99": 48, "maxRegressionPercent": 25 },
         "layoutMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
         "paintMs": { "p50": 12, "p95": 24, "p99": 36, "maxRegressionPercent": 25 },
+        "drawMs": { "p50": 0.07, "p95": 0.15, "p99": 0.18, "maxRegressionPercent": 25 },
         "presentMs": { "p50": 8, "p95": 16, "p99": 24, "maxRegressionPercent": 25 },
-        "frameMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 20 }
+        "frameMs": { "p50": 32, "p95": 64, "p99": 96, "maxRegressionPercent": 20 },
+        "totalMs": { "p50": 12, "p95": 16, "p99": 18, "maxRegressionPercent": 25 }
       },
       "resources": {
         "peakRssBytes": { "baseline": 536870912, "maxRegressionPercent": 20, "higherIsBetter": false },

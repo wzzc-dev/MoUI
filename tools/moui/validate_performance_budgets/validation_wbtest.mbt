@@ -26,13 +26,13 @@ test "catalog and results enforce percentile regressions" {
     #|{"baseline":100,"maxRegressionPercent":10,"higherIsBetter":false}
   let resource_high =
     #|{"baseline":0.8,"maxRegressionPercent":10,"higherIsBetter":true}
-  let scenario = "{\"minimumSamples\":5,\"timings\":{\"buildMs\":\{timing},\"layoutMs\":\{timing},\"paintMs\":\{timing},\"presentMs\":\{timing},\"frameMs\":\{timing}},\"resources\":{\"peakRssBytes\":\{resource_low},\"allocationCount\":\{resource_low},\"cacheHitRate\":\{resource_high},\"startupMs\":\{resource_low},\"packageBytes\":\{resource_low}}}"
+  let scenario = "{\"minimumSamples\":5,\"timings\":{\"buildMs\":\{timing},\"layoutMs\":\{timing},\"paintMs\":\{timing},\"drawMs\":\{timing},\"presentMs\":\{timing},\"frameMs\":\{timing},\"totalMs\":\{timing}},\"resources\":{\"peakRssBytes\":\{resource_low},\"allocationCount\":\{resource_low},\"cacheHitRate\":\{resource_high},\"startupMs\":\{resource_low},\"packageBytes\":\{resource_low}}}"
   let catalog = "{\"schemaVersion\":1,\"runner\":\"native-skia-raster\",\"updatePolicy\":{\"owner\":\"runtime\",\"requiredApprovals\":1,\"reasonRequired\":true},\"scenarios\":{\"showcase-runtime-scroll\":\{scenario},\"excel-grid-navigation\":\{scenario},\"virtual-list-100k\":\{scenario},\"multi-window-4\":\{scenario},\"deep-tree-env-toggle\":\{scenario}}}"
   guard performance_parse_catalog(catalog) is Ok(budgets) else {
     fail("expected catalog to parse")
   }
   let samples =
-    #|{"buildMs":[1,2,3,4,5],"layoutMs":[1,2,3,4,5],"paintMs":[1,2,3,4,5],"presentMs":[1,2,3,4,5],"frameMs":[1,2,3,4,40]}
+    #|{"buildMs":[1,2,3,4,5],"layoutMs":[1,2,3,4,5],"paintMs":[1,2,3,4,5],"drawMs":[1,2,3,4,5],"presentMs":[1,2,3,4,5],"frameMs":[1,2,3,4,40],"totalMs":[1,2,3,4,5]}
   let resources =
     #|{"peakRssBytes":10,"allocationCount":10,"cacheHitRate":0.8,"startupMs":10,"packageBytes":10}
   let result = "{\"samples\":\{samples},\"resources\":\{resources}}"

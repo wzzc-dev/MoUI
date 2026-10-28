@@ -104,8 +104,7 @@ fn performance_parse_scenario_budget(
   if !performance_has_exact_keys(timing_fields, required_timing_metrics) {
     performance_push(
       failures,
-      label +
-      ".timings must contain exactly buildMs, layoutMs, paintMs, presentMs, and frameMs",
+      label + ".timings must contain exactly " + required_timing_metric_label,
     )
   }
   let resource_fields = performance_json_object(fields.get("resources")).unwrap_or(
@@ -256,7 +255,7 @@ fn performance_validate_timing_samples(
   if !performance_has_exact_keys(samples, required_timing_metrics) {
     performance_push(
       failures,
-      scenario + ".samples must contain exactly the five timing metrics",
+      scenario + ".samples must contain exactly " + required_timing_metric_label,
     )
   }
 }

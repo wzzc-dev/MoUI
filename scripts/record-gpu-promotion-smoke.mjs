@@ -161,6 +161,7 @@ const fullPlan = ({ platform, durationSeconds, outDir }) => ({
       },
       contextLoss: {
         recoveredWithinVsyncs: 0,
+        contextLossInjected: 0,
         rasterFallbackPreservedAppRuntime: false,
       },
       rasterFallback: {

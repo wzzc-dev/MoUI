@@ -30,9 +30,16 @@ let required_scenarios : Array[String] = [
 let required_performance_runner = "native-skia-raster"
 
 ///|
+/// The gated runner must emit every stage the framework and renderer own.
+/// `drawMs` is `build_draw_frame` (command-stream encoding) and `totalMs` is the
+/// wall time of the runtime-owned phases, so the framework slice stays separable
+/// from the renderer slice (`presentMs`) instead of hiding inside a sum.
 let required_timing_metrics : Array[String] = [
-  "buildMs", "layoutMs", "paintMs", "presentMs", "frameMs",
+  "buildMs", "layoutMs", "paintMs", "drawMs", "presentMs", "frameMs", "totalMs",
 ]
+
+///|
+let required_timing_metric_label = "buildMs, layoutMs, paintMs, drawMs, presentMs, frameMs and totalMs"
 
 ///|
 let required_resource_metrics : Array[String] = [

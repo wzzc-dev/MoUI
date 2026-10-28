@@ -6,6 +6,8 @@ package "benchmarks/performance_budget/native"
 // Errors
 
 // Types and methods
+type PerfFramePump
+
 type ResourceSamples
 
 type RuntimeCacheCounters

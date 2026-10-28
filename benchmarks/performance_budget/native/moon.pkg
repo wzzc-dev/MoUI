@@ -3,9 +3,13 @@ import {
   "examples/excel/app" @excel,
   "examples/showcase/app" @showcase,
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui_skia",
+  "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui_skia_renderer" @skia_renderer,
+  "wzzc-dev/moui_sun_renderer" @render_sun,
 }
 
 supported_targets = "native"

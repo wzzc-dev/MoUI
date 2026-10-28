@@ -73,6 +73,17 @@ export function parsePerformanceSmokeSummary(logText) {
           surfaceCycles: numFrom(lifePairs, "surface_cycles", 0),
           fgBgCycles: numFrom(lifePairs, "fg_bg_cycles", 0),
           contextLossDone: numFrom(lifePairs, "context_loss_done", 0),
+          contextLossInjected: numFrom(
+            lifePairs,
+            "context_loss_injected",
+            0,
+          ),
+          recoveryCountAfter: numFrom(lifePairs, "recovery_count_after", 0),
+          recoveryCountBefore: numFrom(
+            lifePairs,
+            "recovery_count_before",
+            0,
+          ),
           recoveredWithinVsyncs: numFrom(
             lifePairs,
             "recovered_within_vsyncs",
@@ -151,6 +162,7 @@ export function buildPerformanceMetricsOverlay(summary, { notes = "" } = {}) {
       },
       contextLoss: {
         recoveredWithinVsyncs,
+        contextLossInjected: life?.contextLossInjected ?? 0,
         rasterFallbackPreservedAppRuntime: runtimePreserved,
       },
       rasterFallback: {
