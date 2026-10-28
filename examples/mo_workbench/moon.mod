@@ -7,6 +7,6 @@ preferred_target = "native"
 import {
   "moonbitlang/async@0.22.5",
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui@0.2.5",
-  "wzzc-dev/moui_skia_renderer@0.2.5",
+  "wzzc-dev/moui@0.2.6",
+  "wzzc-dev/moui_skia_renderer@0.2.6",
 }

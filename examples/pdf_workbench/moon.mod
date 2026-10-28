@@ -5,11 +5,11 @@ version = "0.1.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.2.5",
+  "wzzc-dev/moui@0.2.6",
   "moonbitlang/pdflite@0.4.0",
   "moonbitlang/async@0.22.5",
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui_skia_renderer@0.2.5",
+  "wzzc-dev/moui_skia_renderer@0.2.6",
 }
 
 options(

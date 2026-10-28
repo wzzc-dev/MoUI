@@ -1,5 +1,5 @@
 import {
-  "Milky2018/windowing",
+  "wzzc-dev/windowing",
   "moonbitlang/core/env",
   "wzzc-dev/moui_skia" @skia,
   "wzzc-dev/moui_skia/native",

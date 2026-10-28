@@ -1,9 +1,9 @@
 name = "wzzc-dev/moui_skia"
 
-version = "0.2.5"
+version = "0.2.6"
 
 import {
-  "Milky2018/windowing@0.1.2",
+  "wzzc-dev/windowing@0.1.2",
   "wzzc-dev/window@0.5.4-0.2.3",
 }
 
