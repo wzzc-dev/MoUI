@@ -1,13 +1,13 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui_wgpu_renderer/cosmic_text"
+package "wzzc-dev/moui_text_providers/cosmic_text"
 
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui_wgpu_renderer",
+  "wzzc-dev/moui/render/native_text",
 }
 
 // Values
-pub fn cosmic_text_engine() -> @moui_wgpu_renderer.NativeTextEngine
+pub fn cosmic_text_engine() -> @native_text.NativeTextEngine
 
 pub fn cosmic_text_fallback_font_paths_for_spec(@core.FontSpec) -> Array[String]
 

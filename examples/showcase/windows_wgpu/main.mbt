@@ -9,8 +9,8 @@ fn main {
     @render_wgpu.native(
       platform=Windows,
       text_engine=@render_wgpu.native_platform_text_engine_with_fallback(
-        @wgpu_directwrite.directwrite_text_provider(),
-        fallback=@wgpu_cosmic.cosmic_text_engine(),
+        @text_directwrite.directwrite_text_provider(),
+        fallback=@text_cosmic.cosmic_text_engine(),
       ),
     ),
   )

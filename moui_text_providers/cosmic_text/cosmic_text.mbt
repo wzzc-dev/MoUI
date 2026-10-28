@@ -25,10 +25,10 @@ priv struct RasterGlyphPixel {
 }
 
 ///|
-pub fn cosmic_text_engine() -> @wgpu_renderer.NativeTextEngine {
+pub fn cosmic_text_engine() -> @native_text.NativeTextEngine {
   let cache = CosmicTextCache::new()
-  @wgpu_renderer.native_platform_text_engine(
-    @wgpu_renderer.NativePlatformTextProvider::new(
+  @native_text.native_platform_text_engine(
+    @native_text.NativePlatformTextProvider::new(
       id="native-wgpu-cosmic-fallback",
       measure=input => cache.measure(input),
       layout_run=(run, scale_factor) => cache.layout_for_run(run, scale_factor),
@@ -454,7 +454,7 @@ fn build_cosmic_text_input_buffer(
 fn CosmicTextCache::measure(
   self : CosmicTextCache,
   input : @core.TextLayoutInput,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   let buffer = build_cosmic_text_input_buffer(self, input)
   if !self.has_loaded_fonts() {
     return None
@@ -468,7 +468,7 @@ fn CosmicTextCache::measure(
     None => raw
   }
   Some(
-    @wgpu_renderer.NativeTextLayout::new(
+    @native_text.NativeTextLayout::new(
       size=result.size,
       baseline=result.baseline,
       caret_positions=result.caret_positions,
@@ -704,7 +704,7 @@ fn CosmicTextCache::layout_for_run(
   self : CosmicTextCache,
   run : @core.TextRun,
   scale_factor : Double,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   let runs = cosmic_text_layout_runs(self, run)
   if runs.is_empty() || !self.has_loaded_fonts() {
     return None
@@ -719,7 +719,7 @@ fn CosmicTextCache::layout_for_run(
     runs,
   )
   let scale = cosmic_text_scale(scale_factor)
-  let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+  let glyphs : Array[@native_text.NativeGlyphPlacement] = []
   let baseline = result.baseline
   for layout_run in runs {
     let offset = (
@@ -745,7 +745,7 @@ fn CosmicTextCache::layout_for_run(
         }
         let key = self.native_glyph_key(cache_key)
         glyphs.push(
-          @wgpu_renderer.NativeGlyphPlacement::new(
+          @native_text.NativeGlyphPlacement::new(
             key~,
             x=physical.x.to_double() / scale,
             y=physical.y.to_double() / scale - baseline,
@@ -755,7 +755,7 @@ fn CosmicTextCache::layout_for_run(
     }
   }
   Some(
-    @wgpu_renderer.NativeTextLayout::new(
+    @native_text.NativeTextLayout::new(
       size=result.size,
       baseline~,
       caret_positions=result.caret_positions,
@@ -821,10 +821,10 @@ fn cosmic_text_glyph_is_whitespace(
 fn CosmicTextCache::native_glyph_key(
   self : CosmicTextCache,
   key : @moon_cosmic.CacheKey,
-) -> @wgpu_renderer.NativeGlyphKey {
+) -> @native_text.NativeGlyphKey {
   let cache_key = cosmic_glyph_cache_key(key)
   self.glyph_keys[cache_key] = key
-  @wgpu_renderer.native_platform_glyph_key(
+  @native_text.native_platform_glyph_key(
     cache_key~,
     payload=Bytes::from_array([]),
   )
@@ -1068,7 +1068,7 @@ fn cosmic_text_scale(scale_factor : Double) -> Double {
 fn CosmicTextCache::raster_glyph(
   self : CosmicTextCache,
   cache_key : String,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   match self.glyph_keys.get(cache_key) {
     Some(key) => self.raster_cosmic_glyph(key)
     None => None
@@ -1079,7 +1079,7 @@ fn CosmicTextCache::raster_glyph(
 fn CosmicTextCache::raster_cosmic_glyph(
   self : CosmicTextCache,
   cache_key : @moon_cosmic.CacheKey,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   let pixels : Array[RasterGlyphPixel] = []
   let color_glyph = self.cosmic_glyph_uses_color_bitmap(cache_key)
   self.swash_cache.with_pixels(
@@ -1104,7 +1104,7 @@ fn CosmicTextCache::raster_cosmic_glyph(
     let width = max_x - min_x + 1
     let height = max_y - min_y + 1
     let format = if color_glyph {
-      @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba
+      @native_text.NativeRasterGlyphFormat::ColorRgba
     } else {
       AlphaMask
     }
@@ -1124,7 +1124,7 @@ fn CosmicTextCache::raster_cosmic_glyph(
       }
     }
     Some(
-      @wgpu_renderer.NativeRasterGlyph::new(
+      @native_text.NativeRasterGlyph::new(
         width~,
         height~,
         bearing_x=min_x,

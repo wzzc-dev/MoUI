@@ -1,11 +1,11 @@
 ///|
-pub fn directwrite_text_engine() -> @wgpu_renderer.NativeTextEngine {
-  @wgpu_renderer.native_platform_text_engine(directwrite_text_provider())
+pub fn directwrite_text_engine() -> @native_text.NativeTextEngine {
+  @native_text.native_platform_text_engine(directwrite_text_provider())
 }
 
 ///|
-pub fn directwrite_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
-  @wgpu_renderer.NativePlatformTextProvider::new(
+pub fn directwrite_text_provider() -> @native_text.NativePlatformTextProvider {
+  @native_text.NativePlatformTextProvider::new(
     id="native-wgpu-directwrite-planned",
     measure=directwrite_measure_layout,
     layout_run=directwrite_layout_run,
@@ -34,7 +34,7 @@ fn directwrite_register_font_data(
 fn directwrite_raster_glyph(
   _cache_key : String,
   payload : Bytes,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   @text_protocol.native_raster_glyph_from_bytes(
     windows_directwrite_raster_glyph(payload),
   )
@@ -44,7 +44,7 @@ fn directwrite_raster_glyph(
 fn directwrite_layout_run(
   run : @core.TextRun,
   scale_factor : Double,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   @text_protocol.native_run_layout_from_bytes(
     windows_directwrite_layout_run_utf32(
       @text_protocol.native_utf32_bytes(run.text),
@@ -58,7 +58,7 @@ fn directwrite_layout_run(
 ///|
 fn directwrite_measure_layout(
   input : @core.TextLayoutInput,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   @text_protocol.native_measure_layout_from_bytes(
     input,
     windows_directwrite_measure_utf32(

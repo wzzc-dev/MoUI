@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
+  "wzzc-dev/moui/render/native_text",
   "Milky2018/moon_cosmic",
   "Milky2018/moon_swash",
   "moonbitlang/core/env",

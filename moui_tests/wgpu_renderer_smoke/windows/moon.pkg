@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
-  "wzzc-dev/moui_wgpu_renderer/directwrite" @wgpu_directwrite,
+  "wzzc-dev/moui_text_providers/directwrite" @text_directwrite,
 }
 
 supported_targets = "native"

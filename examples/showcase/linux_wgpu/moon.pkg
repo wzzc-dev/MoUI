@@ -2,8 +2,8 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
-  "wzzc-dev/moui_wgpu_renderer/fontconfig" @wgpu_fontconfig,
-  "wzzc-dev/moui_wgpu_renderer/cosmic_text" @wgpu_cosmic,
+  "wzzc-dev/moui_text_providers/fontconfig" @text_fontconfig,
+  "wzzc-dev/moui_text_providers/cosmic_text" @text_cosmic,
   "examples/showcase",
 }
 

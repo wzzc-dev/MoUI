@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui_wgpu_renderer/text_protocol"
+package "wzzc-dev/moui_text_providers/text_protocol"
 
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui_wgpu_renderer",
+  "wzzc-dev/moui/render/native_text",
 }
 
 // Values
@@ -21,15 +21,15 @@ pub let native_font_spec_protocol_version : Int32
 
 pub fn native_font_style_code(@core.FontStyle) -> Int32
 
-pub fn native_measure_layout_from_bytes(@core.TextLayoutInput, Bytes) -> @moui_wgpu_renderer.NativeTextLayout?
+pub fn native_measure_layout_from_bytes(@core.TextLayoutInput, Bytes) -> @native_text.NativeTextLayout?
 
 pub let native_measure_layout_protocol_version : Int32
 
-pub fn native_raster_glyph_from_bytes(Bytes) -> @moui_wgpu_renderer.NativeRasterGlyph?
+pub fn native_raster_glyph_from_bytes(Bytes) -> @native_text.NativeRasterGlyph?
 
 pub let native_raster_glyph_protocol_version : Int32
 
-pub fn native_run_layout_from_bytes(Bytes) -> @moui_wgpu_renderer.NativeTextLayout?
+pub fn native_run_layout_from_bytes(Bytes) -> @native_text.NativeTextLayout?
 
 pub let native_run_layout_protocol_version : Int32
 

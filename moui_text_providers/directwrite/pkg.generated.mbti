@@ -1,14 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui_wgpu_renderer/directwrite"
+package "wzzc-dev/moui_text_providers/directwrite"
 
 import {
-  "wzzc-dev/moui_wgpu_renderer",
+  "wzzc-dev/moui/render/native_text",
 }
 
 // Values
-pub fn directwrite_text_engine() -> @moui_wgpu_renderer.NativeTextEngine
+pub fn directwrite_text_engine() -> @native_text.NativeTextEngine
 
-pub fn directwrite_text_provider() -> @moui_wgpu_renderer.NativePlatformTextProvider
+pub fn directwrite_text_provider() -> @native_text.NativePlatformTextProvider
 
 // Errors
 

@@ -918,6 +918,12 @@ function platformFlags(config, values) {
     }
   }
 
+  if (["macos", "ios", "iosSim"].includes(platform)) {
+    // ld64: drop unreferenced atoms and local symbols (-19.5% on the macOS release
+    // app); MoonBit backtraces keep working, `atos` loses local frames.
+    linkFlags = appendFlags(linkFlags, "-Wl,-dead_strip -Wl,-x");
+  }
+
   const combinedLinkFlags = appendFlags(linkFlags, extraLinkFlags);
   return {
     stubCcFlags: appendFlags(stubCcFlags, extraCcFlags),

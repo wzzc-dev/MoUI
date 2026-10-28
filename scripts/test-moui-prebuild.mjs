@@ -2,6 +2,7 @@
 
 import {
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -15,7 +16,8 @@ const temporaryRoot = mkdtempSync(join(tmpdir(), "moui-prebuild-"));
 const moduleRoots = {
   base: join(temporaryRoot, "moui"),
   skia: join(temporaryRoot, "moui_skia_renderer"),
-  wgpu: join(temporaryRoot, "moui_wgpu_renderer"),
+  textProviders: join(temporaryRoot, "moui_text_providers"),
+  metalRenderer: join(temporaryRoot, "moui_metal_renderer"),
   skiaBinding: join(temporaryRoot, "moui_skia"),
   realSkiaBinding: join(temporaryRoot, "real_moui_skia"),
 };
@@ -25,7 +27,11 @@ for (const root of Object.values(moduleRoots)) {
 }
 cpSync("moui/build.js", join(moduleRoots.base, "build.js"));
 cpSync("moui_skia_renderer/build.js", join(moduleRoots.skia, "build.js"));
-cpSync("moui_wgpu_renderer/build.js", join(moduleRoots.wgpu, "build.js"));
+cpSync(
+  "moui_text_providers/build.js",
+  join(moduleRoots.textProviders, "build.js"),
+);
+cpSync("moui_metal_renderer/build.js", join(moduleRoots.metalRenderer, "build.js"));
 cpSync("moui_skia/build.js", join(moduleRoots.realSkiaBinding, "build.js"));
 
 writeFileSync(
@@ -103,7 +109,7 @@ try {
   const base = runPrebuild(moduleRoots.base);
   const basePackages = linkPackages(base);
   if (basePackages.has("wzzc-dev/moui_skia_renderer") ||
-      basePackages.has("wzzc-dev/moui_wgpu_renderer/fontconfig")) {
+      basePackages.has("wzzc-dev/moui_text_providers/fontconfig")) {
     throw new Error("base prebuild must not own renderer link configs");
   }
   if (!basePackages.has("wzzc-dev/moui/backend/linux")) {
@@ -150,11 +156,20 @@ try {
     MOUI_SKIA_ENABLE_SKPARAGRAPH: "1",
     MOUI_SKIA_EXTRA_LINK_FLAGS: "-framework Metal -framework AppKit",
   });
-  if ((realSkiaBinding.link_configs || []).length !== 0) {
-    throw new Error("Skia binding prebuild must leave link ownership to moon.pkg");
+  // `af9bafa6c` deliberately restored the native `link_configs` entry here, because a
+  // package's cc-link-flags never reach an is-main link — `link_configs` is the only
+  // carrier that does. The assertion this replaces demanded zero entries, which had
+  // been false since then: the real risk is not that the binding carries link flags,
+  // it is that the same archive reaches the linker twice.
+  const realSkiaLinkConfigs = realSkiaBinding.link_configs || [];
+  if (realSkiaLinkConfigs.length !== 1 ||
+      realSkiaLinkConfigs[0].package !== "wzzc-dev/moui_skia/native") {
+    throw new Error(
+      "Skia binding prebuild must carry its native link flags through exactly one " +
+        "link_configs entry for wzzc-dev/moui_skia/native",
+    );
   }
-  const realSkiaFlags = String(realSkiaBinding.vars.MOUI_SKIA_CC_LINK_FLAGS || "");
-  for (const name of [
+  const realSkiaArchives = [
     "skia",
     "skia_ganesh_ext",
     "skparagraph",
@@ -163,8 +178,19 @@ try {
     "skunicode_core",
     "harfbuzz",
     "icu",
-  ]) {
-    const archive = join(fakeSkiaLibDir, `lib${name}.a`);
+  ].map(name => join(fakeSkiaLibDir, `lib${name}.a`));
+  const realSkiaLinkConfigFlags = String(
+    realSkiaLinkConfigs[0].link_flags || "",
+  );
+  for (const archive of realSkiaArchives) {
+    if (tokenCount(realSkiaLinkConfigFlags, archive) !== 1) {
+      throw new Error(
+        `Skia binding link_configs must contain ${archive} once`,
+      );
+    }
+  }
+  const realSkiaFlags = String(realSkiaBinding.vars.MOUI_SKIA_CC_LINK_FLAGS || "");
+  for (const archive of realSkiaArchives) {
     if (tokenCount(realSkiaFlags, archive) !== 1) {
       throw new Error(`Skia binding link config must contain ${archive} once`);
     }
@@ -189,19 +215,50 @@ try {
     }
   }
 
-  const wgpu = runPrebuild(moduleRoots.wgpu);
-  const wgpuPackages = linkPackages(wgpu);
-  if (!wgpuPackages.has("wzzc-dev/moui_wgpu_renderer/directwrite")) {
-    throw new Error("WGPU prebuild must own the DirectWrite link config");
+  const textProviders = runPrebuild(moduleRoots.textProviders);
+  const textProviderPackages = linkPackages(textProviders);
+  if (!textProviderPackages.has("wzzc-dev/moui_text_providers/directwrite")) {
+    throw new Error("text provider prebuild must own the DirectWrite link config");
   }
   if (process.platform === "linux") {
-    if (!wgpuPackages.has("wzzc-dev/moui_wgpu_renderer/fontconfig") ||
-        !flagsFor(wgpu, "wzzc-dev/moui_wgpu_renderer/fontconfig")
+    if (!textProviderPackages.has("wzzc-dev/moui_text_providers/fontconfig") ||
+        !flagsFor(textProviders, "wzzc-dev/moui_text_providers/fontconfig")
           .includes("fontconfig")) {
-      throw new Error("WGPU prebuild must own Linux Fontconfig link flags");
+      throw new Error("text provider prebuild must own Linux Fontconfig link flags");
     }
-  } else if (wgpuPackages.has("wzzc-dev/moui_wgpu_renderer/fontconfig")) {
-    throw new Error("WGPU prebuild must omit Fontconfig off Linux");
+  } else if (textProviderPackages.has("wzzc-dev/moui_text_providers/fontconfig")) {
+    throw new Error("text provider prebuild must omit Fontconfig off Linux");
+  }
+  const metalRenderer = runPrebuild(moduleRoots.metalRenderer);
+  const metalPackages = linkPackages(metalRenderer);
+  if (process.platform === "darwin") {
+    if (!metalPackages.has("wzzc-dev/moui_metal_renderer")) {
+      throw new Error("metal renderer prebuild must own its Apple framework link config");
+    }
+    if (!flagsFor(metalRenderer, "wzzc-dev/moui_metal_renderer").includes("-framework Metal")) {
+      throw new Error("metal renderer link config must name the Metal framework");
+    }
+    const textProviderFlags = flagsFor(
+      textProviders,
+      "wzzc-dev/moui_text_providers/coretext",
+    );
+    if (!textProviderFlags.includes("-framework CoreText")) {
+      throw new Error(
+        "coretext must ship its own framework link config: a package's cc-link-flags " +
+          "never reach an is-main link, so the symbols only resolve when a platform " +
+          "backend happens to link the ApplicationServices umbrella",
+      );
+    }
+  } else if (metalPackages.has("wzzc-dev/moui_metal_renderer")) {
+    throw new Error("metal renderer prebuild must omit Apple frameworks off darwin");
+  } else if (textProviderPackages.has("wzzc-dev/moui_text_providers/coretext")) {
+    throw new Error("text provider prebuild must omit CoreText off darwin");
+  }
+
+  if (existsSync("moui_wgpu_renderer/build.js")) {
+    throw new Error(
+      "renderer modules must not own platform text link configs",
+    );
   }
 
   console.log("split module prebuild tests: ok");

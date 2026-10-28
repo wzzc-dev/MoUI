@@ -447,9 +447,7 @@ fn cosmic_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
 
 ///|
 fn assert_cosmic_text_contract_sample(text : String) -> Unit raise {
-  let system = @wgpu_renderer.native_text_system_with_engine(
-    cosmic_text_engine(),
-  )
+  let system = @native_text.native_text_system_with_engine(cosmic_text_engine())
   let font = @core.FontSpec::new(size=16.0, weight=500)
   let measured = system.measure_text(@core.TextLayoutInput::new(text~, font~))
   inspect(measured.size.width > 0.0, content="true")

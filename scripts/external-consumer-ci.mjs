@@ -140,19 +140,26 @@ const assertPackageTreeClosure = (tree, profile) => {
   const forbiddenByProfile = {
     base: [
       "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_sun_renderer",
+      "wzzc-dev/moui_metal_renderer",
       "wzzc-dev/moui_web_renderer", "wzzc-dev/moui_wgpu_renderer",
+      "wzzc-dev/moui_metal_renderer",
+      "wzzc-dev/moui_text_providers",
       "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
       "Milky2018/wgpu_mbt", "Milky2018/moon_cosmic", "Milky2018/moon_swash",
       "mizchi/image", "moonbitlang/quickcheck", "mizchi/pixelmatch",
     ],
     skia: [
       "wzzc-dev/moui_web_renderer", "wzzc-dev/moui_wgpu_renderer",
-      "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_sun", "Milky2018/wgpu_mbt",
+      "wzzc-dev/moui_metal_renderer",
+      "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_sun", "wzzc-dev/moui_text_providers",
+      "Milky2018/wgpu_mbt",
       "Milky2018/moon_cosmic", "Milky2018/moon_swash", "mizchi/image",
     ],
     web: [
       "wzzc-dev/moui_skia_renderer", "wzzc-dev/moui_wgpu_renderer",
+      "wzzc-dev/moui_metal_renderer",
       "wzzc-dev/moui_sun_renderer", "wzzc-dev/moui_skia", "wzzc-dev/moui_sun",
+      "wzzc-dev/moui_text_providers",
       "Milky2018/wgpu_mbt", "Milky2018/moon_cosmic", "Milky2018/moon_swash",
       "mizchi/image",
     ],

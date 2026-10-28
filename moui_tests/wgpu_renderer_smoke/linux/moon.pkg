@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
-  "wzzc-dev/moui_wgpu_renderer/fontconfig" @wgpu_fontconfig,
+  "wzzc-dev/moui_text_providers/fontconfig" @text_fontconfig,
 }
 
 supported_targets = "native"

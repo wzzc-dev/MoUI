@@ -56,7 +56,7 @@ fn bytes_has_nonzero(bytes : Bytes) -> Bool {
 
 ///|
 fn glyph_nonzero_row_bounds(
-  glyph : @wgpu_renderer.NativeRasterGlyph,
+  glyph : @native_text.NativeRasterGlyph,
 ) -> (Int32, Int32)? {
   let mut min_y = glyph.height()
   let mut max_y = -1
@@ -82,7 +82,7 @@ fn test_raster_system_glyph(
   weight~ : Int32,
   style~ : @core.FontStyle,
   scale_factor~ : Double,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   let glyph_id = macos_coretext_glyph_id_for_codepoint(
     codepoint,
     size,
@@ -536,7 +536,7 @@ test "coretext parses registered font payload shape" {
 
 ///|
 test "coretext text engine exposes platform engine id" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     coretext_text_engine(),
   )
   inspect(system.id(), content="native-wgpu-coretext-system")
@@ -593,4 +593,140 @@ test "coretext raster glyph rows follow top-left baseline convention" {
       }
     None => inspect("missing", content="available")
   }
+}
+
+///|
+fn coretext_raster_carries_colour(
+  raster : @native_text.NativeRasterGlyph,
+) -> Bool {
+  // The provider un-premultiplies colour payloads, so a channel difference at a
+  // covered pixel is the glyph's own colour rather than a blend artefact.
+  let pixels = raster.pixels()
+  let width = raster.width()
+  let height = raster.height()
+  for row in 0..<height {
+    for column in 0..<width {
+      let offset = (row * width + column) * 4
+      if offset + 3 >= pixels.length() {
+        return false
+      }
+      let red = pixels[offset].to_int()
+      let green = pixels[offset + 1].to_int()
+      let blue = pixels[offset + 2].to_int()
+      if pixels[offset + 3].to_int() > 20 &&
+        (red - green).abs() + (green - blue).abs() > 30 {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
+test "coretext hands back colour pixels for the emoji the cascade picks" {
+  // The system cascade resolves an emoji to the colour face whose PostScript
+  // name starts with a dot, so a raster format keyed on "AppleColorEmoji"
+  // reported a coverage mask here and every non-Skia route drew monochrome.
+  let run = @core.TextRun::new(
+    text="\u{1F641}",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
+    font=@core.FontSpec::new(size=32.0),
+    color=@core.Color::white(),
+    align=@core.TextStart,
+  )
+  let cache = @native_text.NativeTextCache::new_with_engine(
+    coretext_text_engine(),
+  )
+  match cache.layout_run(run, 1.0) {
+    None => inspect("missing", content="available")
+    Some(layout) =>
+      match layout.glyphs() {
+        [] => inspect("empty", content="one glyph")
+        glyphs =>
+          match cache.raster_glyph(glyphs[0].key()) {
+            None => inspect("missing", content="available")
+            Some(raster) => {
+              inspect(
+                raster.format() ==
+                @native_text.NativeRasterGlyphFormat::ColorRgba,
+                content="true",
+              )
+              inspect(coretext_raster_carries_colour(raster), content="true")
+            }
+          }
+      }
+  }
+}
+
+///|
+test "coretext keeps ordinary text as a coverage mask" {
+  let run = @core.TextRun::new(
+    text="a",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
+    font=@core.FontSpec::new(size=32.0),
+    color=@core.Color::white(),
+    align=@core.TextStart,
+  )
+  let cache = @native_text.NativeTextCache::new_with_engine(
+    coretext_text_engine(),
+  )
+  match cache.layout_run(run, 1.0) {
+    None => inspect("missing", content="available")
+    Some(layout) =>
+      match layout.glyphs() {
+        [] => inspect("empty", content="one glyph")
+        glyphs =>
+          match cache.raster_glyph(glyphs[0].key()) {
+            None => inspect("missing", content="available")
+            Some(raster) =>
+              inspect(
+                raster.format() ==
+                @native_text.NativeRasterGlyphFormat::AlphaMask,
+                content="true",
+              )
+          }
+      }
+  }
+}
+
+///|
+/// The wrapped-paragraph path this provider actually serves on the routes that
+/// install it: `native_text_system_with_engine` hands `moui/core` no
+/// `paragraph_layout` hook, so every `Text`, `TextArea` and `TextField` on the
+/// Metal and wgpu routes breaks lines through core's per-line fallback **measured
+/// by CoreText**. The contract itself is pinned engine-independently in
+/// `moui_tests/text_conformance/native`; what this package owes is that CoreText's
+/// own widths keep it, because a second line placed by metrics the paint pass
+/// disagrees with is a caret that lands on the wrong word.
+test "coretext engine-backed system wraps a paragraph and hit-tests its lines" {
+  let system = @native_text.native_text_system_with_engine(
+    coretext_text_engine(),
+  )
+  let font = @core.FontSpec::new(size=18.0, weight=500)
+  let sample = "alpha beta gamma delta epsilon"
+  let max_width = 72.0
+  let paragraph = system.layout_paragraph(
+    @core.TextLayoutInput::new(text=sample, font~, max_width~),
+  )
+  assert_true(paragraph.metadata.paragraph_layout_available)
+  assert_true(paragraph.metadata.hit_test_available)
+  assert_false(paragraph.metadata.native_paragraph_ready)
+  assert_true(paragraph.line_count() >= 2)
+  inspect(
+    paragraph.caret_rects.length(),
+    content="\{sample.to_array().length() + 1}",
+  )
+  for line in paragraph.lines {
+    assert_true(line.size.width > 0.0)
+    assert_true(line.size.height > 0.0)
+    assert_true(line.baseline > line.origin.y)
+    assert_true(line.size.width <= max_width + 0.01)
+  }
+  let second = paragraph.lines[1]
+  let hit = paragraph.hit_test(
+    @core.Point::new(x=max_width + 100.0, y=second.origin.y + 1.0),
+  )
+  inspect(hit.line_index, content="1")
+  assert_true(hit.offset >= second.text_range.start)
+  assert_true(hit.offset <= second.text_range.end)
 }

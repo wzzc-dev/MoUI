@@ -1,6 +1,6 @@
 ///|
 test "cosmic text engine is exposed as standalone provider package" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     @cosmic_text.cosmic_text_engine(),
   )
   inspect(system.id(), content="native-wgpu-cosmic-fallback")
@@ -8,7 +8,7 @@ test "cosmic text engine is exposed as standalone provider package" {
 
 ///|
 test "cosmic text engine measures through provider callback" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     @cosmic_text.cosmic_text_engine(),
   )
   let measured = system.measure_text(
@@ -36,7 +36,7 @@ fn cosmic_text_carets_are_monotonic(carets : Array[Double]) -> Bool {
 
 ///|
 test "cosmic text engine conforms for mixed cjk emoji and bidi text" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     @cosmic_text.cosmic_text_engine(),
   )
   let text = "a你🙂 אבג"

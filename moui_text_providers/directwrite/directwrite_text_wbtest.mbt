@@ -1,6 +1,6 @@
 ///|
 test "directwrite provider is an explicit fallback scaffold" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     directwrite_text_engine(),
   )
   inspect(system.id(), content="native-wgpu-directwrite-planned")

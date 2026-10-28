@@ -224,7 +224,7 @@ pub fn native_font_registration_from_bytes(
 pub fn native_measure_layout_from_bytes(
   input : @core.TextLayoutInput,
   bytes : Bytes,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   if bytes.length() < 24 {
     return None
   }
@@ -261,7 +261,7 @@ pub fn native_measure_layout_from_bytes(
     None => ()
   }
   Some(
-    @wgpu_renderer.NativeTextLayout::new(
+    @native_text.NativeTextLayout::new(
       size=@core.Size::new(width=final_width, height~),
       baseline~,
       caret_positions=carets,
@@ -272,7 +272,7 @@ pub fn native_measure_layout_from_bytes(
 ///|
 pub fn native_run_layout_from_bytes(
   bytes : Bytes,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   if bytes.length() < 32 {
     return None
   }
@@ -288,7 +288,7 @@ pub fn native_run_layout_from_bytes(
     baseline < 0.0 {
     return None
   }
-  let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+  let glyphs : Array[@native_text.NativeGlyphPlacement] = []
   let mut offset = 32
   for index in 0..<glyph_count {
     let _ = index
@@ -315,8 +315,8 @@ pub fn native_run_layout_from_bytes(
     }
     let payload = Bytes::from_array(payload_bytes)
     glyphs.push(
-      @wgpu_renderer.NativeGlyphPlacement::new(
-        key=@wgpu_renderer.native_platform_glyph_key(cache_key~, payload~),
+      @native_text.NativeGlyphPlacement::new(
+        key=@native_text.native_platform_glyph_key(cache_key~, payload~),
         x=double_le(bytes, offset),
         y=double_le(bytes, offset + 8),
       ),
@@ -327,7 +327,7 @@ pub fn native_run_layout_from_bytes(
     return None
   }
   Some(
-    @wgpu_renderer.NativeTextLayout::new(
+    @native_text.NativeTextLayout::new(
       size=@core.Size::new(width~, height~),
       baseline~,
       glyphs~,
@@ -338,7 +338,7 @@ pub fn native_run_layout_from_bytes(
 ///|
 pub fn native_raster_glyph_from_bytes(
   bytes : Bytes,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   if bytes.length() < 32 {
     return None
   }
@@ -363,12 +363,12 @@ pub fn native_raster_glyph_from_bytes(
     pixels.push(bytes[32 + index])
   }
   let format = match format_code {
-    0 => @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask
+    0 => @native_text.NativeRasterGlyphFormat::AlphaMask
     1 => ColorRgba
     _ => return None
   }
   Some(
-    @wgpu_renderer.NativeRasterGlyph::new(
+    @native_text.NativeRasterGlyph::new(
       width~,
       height~,
       bearing_x=i32_le(bytes, 8),

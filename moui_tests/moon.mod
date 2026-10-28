@@ -9,6 +9,8 @@ import {
   "wzzc-dev/moui_skia_renderer@0.2.5",
   "wzzc-dev/moui_web_renderer@0.2.3",
   "wzzc-dev/moui_wgpu_renderer@0.2.2",
+  "wzzc-dev/moui_metal_renderer@0.2.2",
+  "wzzc-dev/moui_text_providers@0.2.2",
   "wzzc-dev/moui_skia@0.2.5",
   "Milky2018/wgpu_mbt@0.16.2",
   "mizchi/pixelmatch@0.6.2",

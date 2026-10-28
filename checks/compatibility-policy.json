@@ -17,7 +17,12 @@
   "apiTiers": {
     "stable": ["moui", "moui/views", "moui/geometry", "moui/graphics", "moui/animation", "moui/text", "moui/state"],
     "integration": ["moui/backend", "moui/render", "moui/runtime"],
-    "diagnostic": ["moui_wgpu_renderer", "moui_sun_renderer", "moui_theme"]
+    "diagnostic": [
+      "moui_wgpu_renderer",
+      "moui_metal_renderer",
+      "moui_sun_renderer",
+      "moui_theme"
+    ]
   },
   "consumerGate": {
     "command": "node scripts/external-consumer-ci.mjs --source package --profile base",

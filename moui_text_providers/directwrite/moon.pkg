@@ -1,8 +1,8 @@
 import {
   "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
-  "wzzc-dev/moui_wgpu_renderer/text_protocol",
+  "wzzc-dev/moui/render/native_text",
+  "wzzc-dev/moui_text_providers/text_protocol",
 }
 
 supported_targets = "native"

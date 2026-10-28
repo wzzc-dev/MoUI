@@ -1,6 +1,6 @@
 ///|
 test "fontconfig provider exposes a native text boundary" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
+  let system = @native_text.native_text_system_with_engine(
     fontconfig_text_engine(),
   )
   inspect(system.id(), content="native-wgpu-fontconfig-freetype")

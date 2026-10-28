@@ -1,14 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui_wgpu_renderer/coretext"
+package "wzzc-dev/moui_text_providers/coretext"
 
 import {
-  "wzzc-dev/moui_wgpu_renderer",
+  "wzzc-dev/moui/render/native_text",
 }
 
 // Values
-pub fn coretext_text_engine() -> @moui_wgpu_renderer.NativeTextEngine
+pub fn coretext_text_engine() -> @native_text.NativeTextEngine
 
-pub fn coretext_text_provider() -> @moui_wgpu_renderer.NativePlatformTextProvider
+pub fn coretext_text_provider() -> @native_text.NativePlatformTextProvider
 
 // Errors
 

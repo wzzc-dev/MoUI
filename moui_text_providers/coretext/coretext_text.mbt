@@ -23,13 +23,13 @@ priv struct CoreTextGlyphRecord {
 }
 
 ///|
-pub fn coretext_text_engine() -> @wgpu_renderer.NativeTextEngine {
-  @wgpu_renderer.native_platform_text_engine(coretext_text_provider())
+pub fn coretext_text_engine() -> @native_text.NativeTextEngine {
+  @native_text.native_platform_text_engine(coretext_text_provider())
 }
 
 ///|
-pub fn coretext_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
-  @wgpu_renderer.NativePlatformTextProvider::new(
+pub fn coretext_text_provider() -> @native_text.NativePlatformTextProvider {
+  @native_text.NativePlatformTextProvider::new(
     id="native-wgpu-coretext-system",
     measure=coretext_measure_layout,
     layout_run=coretext_layout_for_run,
@@ -147,8 +147,8 @@ fn coretext_font_cache_key(font_name : Bytes) -> String {
 ///|
 fn coretext_native_glyph_key(
   key : CoreTextGlyphKey,
-) -> @wgpu_renderer.NativeGlyphKey {
-  @wgpu_renderer.native_platform_glyph_key(
+) -> @native_text.NativeGlyphKey {
+  @native_text.native_platform_glyph_key(
     cache_key=coretext_glyph_cache_key(key),
     payload=coretext_glyph_payload(key),
   )
@@ -157,7 +157,7 @@ fn coretext_native_glyph_key(
 ///|
 fn coretext_measure_layout(
   input : @core.TextLayoutInput,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   match
     @text_protocol.native_measure_layout_from_bytes(
       input,
@@ -174,11 +174,11 @@ fn coretext_measure_layout(
 ///|
 fn coretext_folded_zwj_layout(
   text : String,
-  layout : @wgpu_renderer.NativeTextLayout,
-) -> @wgpu_renderer.NativeTextLayout {
+  layout : @native_text.NativeTextLayout,
+) -> @native_text.NativeTextLayout {
   let carets = layout.caret_positions().copy()
   coretext_fold_zwj_caret_positions(text, carets)
-  @wgpu_renderer.NativeTextLayout::new(
+  @native_text.NativeTextLayout::new(
     size=layout.size(),
     baseline=layout.baseline(),
     caret_positions=carets,
@@ -223,7 +223,7 @@ fn coretext_fold_zwj_caret_positions(
 fn coretext_layout_for_run(
   run : @core.TextRun,
   scale_factor : Double,
-) -> @wgpu_renderer.NativeTextLayout? {
+) -> @native_text.NativeTextLayout? {
   match
     coretext_measure_layout(
       @core.TextLayoutInput::new(
@@ -236,7 +236,7 @@ fn coretext_layout_for_run(
       match coretext_layout_glyphs_for_run(run, scale_factor) {
         Some(glyphs) =>
           Some(
-            @wgpu_renderer.NativeTextLayout::new(
+            @native_text.NativeTextLayout::new(
               size=layout.size(),
               baseline=layout.baseline(),
               caret_positions=layout.caret_positions(),
@@ -253,7 +253,7 @@ fn coretext_layout_for_run(
 fn coretext_layout_glyphs_for_run(
   run : @core.TextRun,
   scale_factor : Double,
-) -> Array[@wgpu_renderer.NativeGlyphPlacement]? {
+) -> Array[@native_text.NativeGlyphPlacement]? {
   match coretext_layout_glyph_records_for_run(run, scale_factor) {
     Some(records) => Some(coretext_glyph_placements_from_records(records))
     None => None
@@ -275,11 +275,11 @@ fn coretext_layout_glyph_records_for_run(
 ///|
 fn coretext_glyph_placements_from_records(
   records : Array[CoreTextGlyphRecord],
-) -> Array[@wgpu_renderer.NativeGlyphPlacement] {
-  let glyphs : Array[@wgpu_renderer.NativeGlyphPlacement] = []
+) -> Array[@native_text.NativeGlyphPlacement] {
+  let glyphs : Array[@native_text.NativeGlyphPlacement] = []
   for record in records {
     glyphs.push(
-      @wgpu_renderer.NativeGlyphPlacement::new(
+      @native_text.NativeGlyphPlacement::new(
         key=coretext_native_glyph_key(record.key),
         x=record.x,
         y=record.y,
@@ -370,7 +370,7 @@ fn coretext_layout_glyph_records_from_bytes(
 ///|
 fn coretext_raster_glyph(
   key : CoreTextGlyphKey,
-) -> @wgpu_renderer.NativeRasterGlyph? {
+) -> @native_text.NativeRasterGlyph? {
   @text_protocol.native_raster_glyph_from_bytes(
     macos_coretext_raster_glyph(
       key.glyph_id,

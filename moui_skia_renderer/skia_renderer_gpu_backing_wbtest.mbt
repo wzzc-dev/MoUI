@@ -161,5 +161,14 @@ test "Metal host GPU backing rotates drawables without CPU readback" {
   assert_true(second.presented)
   assert_true(renderer.last_frame() is None)
   assert_eq(presented.val, 2)
+  // Rotation must keep the stable backing alive. A `copy_from` that fails on the
+  // replacement drawable is an optimization failure only, and the renderer falls
+  // back to a direct full redraw — so asserting the backing here is what proves
+  // these frames went through the blit path rather than around it.
+  match renderer.gpu_backing {
+    Some(_) => ()
+    None =>
+      fail("expected the GPU backing surface to stay engaged across rotation")
+  }
   renderer.dispose()
 }

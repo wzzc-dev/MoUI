@@ -505,23 +505,11 @@ static moonbit_bytes_t moui_coretext_font_name_bytes(CTFontRef font) {
   return out;
 }
 
-static int32_t moui_coretext_font_postscript_name_equals(CTFontRef font, const char *candidate) {
-  if (font == NULL || candidate == NULL) {
+static int32_t moui_coretext_font_has_color_glyphs(CTFontRef font) {
+  if (font == NULL) {
     return 0;
   }
-  CFStringRef name = CTFontCopyPostScriptName(font);
-  if (name == NULL) {
-    return 0;
-  }
-  CFStringRef expected = CFStringCreateWithCString(NULL, candidate, kCFStringEncodingUTF8);
-  if (expected == NULL) {
-    CFRelease(name);
-    return 0;
-  }
-  Boolean equal = CFStringCompare(name, expected, 0) == kCFCompareEqualTo;
-  CFRelease(expected);
-  CFRelease(name);
-  return equal ? 1 : 0;
+  return (CTFontGetSymbolicTraits(font) & kCTFontColorGlyphsTrait) ? 1 : 0;
 }
 
 static CTFontRef moui_create_font_from_name_bytes(moonbit_bytes_t font_name, double size, int32_t weight, int32_t style) {
@@ -866,7 +854,7 @@ int32_t moui_macos_coretext_debug_raster_format_for_font_name(moonbit_bytes_t fo
   if (font == NULL) {
     return -1;
   }
-  int32_t format = moui_coretext_font_postscript_name_equals(font, "AppleColorEmoji") ? 1 : 0;
+  int32_t format = moui_coretext_font_has_color_glyphs(font) ? 1 : 0;
   CFRelease(font);
   return format;
 }
@@ -928,7 +916,11 @@ moonbit_bytes_t moui_macos_coretext_raster_glyph(uint32_t glyph_id, uint32_t cod
     CFRelease(font);
     return empty;
   }
-  int32_t format = moui_coretext_font_postscript_name_equals(font, "AppleColorEmoji") ? 1 : 0;
+  // The colour face is the trait, not a PostScript name: the system cascade
+  // resolves an emoji to ".AppleColorEmojiUI", which draws colour and carries
+  // kCTFontColorGlyphsTrait, while a name equality check against
+  // "AppleColorEmoji" handed it back as a monochrome coverage mask.
+  int32_t format = moui_coretext_font_has_color_glyphs(font) ? 1 : 0;
   int32_t bytes_per_pixel = format == 1 ? 4 : 1;
   int32_t header = 32;
   moonbit_bytes_t out = moonbit_make_bytes(header + width * height * bytes_per_pixel, 0);

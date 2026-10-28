@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui_wgpu_renderer" @wgpu_renderer,
-  "wzzc-dev/moui_wgpu_renderer/coretext" @wgpu_coretext,
+  "wzzc-dev/moui_text_providers/coretext" @text_coretext,
 }
 
 supported_targets = "native"
