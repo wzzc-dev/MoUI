@@ -38,6 +38,13 @@ files and ratchets are deliberately absent from
 `checks/source-file-policy.json` and a studio submodule bump never
 re-baselines the main repo's budgets (2026-10-16 owner decision).
 
+The workspace test sweep follows the same split: the baseline job runs
+`node scripts/run-workspace-tests.mjs`, which derives every member from
+`moon.work` and skips `moui_studio`. Studio package tests — including the
+wasm-plugin E2E that needs the Rust-built fixture — run in
+`wzzc-dev/moui_studio` CI, so a fresh main-repo checkout never needs a Rust
+toolchain to pass the baseline.
+
 `checks/source-file-policy.json` ceilings are quantum values, not snapshots: every
 `ratchets[].maxLines` must be a multiple of `logic.budgetStepLines` (25 lines).
 Growing a registered file inside its quantum needs no registry edit, and shrinking
@@ -406,8 +413,10 @@ The PR profile validates the checked-in performance budget catalog and its
 MoonBit validator without downloading a renderer. The macOS `benchmark-scaffold`
 job is the canonical measured producer: it runs the native Skia Raster workloads
 for Showcase, Excel, a 100k-row virtual list, and four runtime
-windows, then uploads `artifacts/performance/result.json`. Run the same gate
-locally when the locked real Skia provider is available:
+windows, then uploads `artifacts/performance/result.json`. It is report-only:
+shared `macos-14` runs drift 1.3-1.5x on p50 for identical code, so a budget
+line that goes red here is reviewed by hand instead of blocking the PR. Run the
+same gate locally when the locked real Skia provider is available:
 
 ```sh
 node scripts/validate-performance-budgets.mjs

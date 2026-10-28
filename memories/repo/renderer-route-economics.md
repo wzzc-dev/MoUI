@@ -163,6 +163,14 @@ Durable facts for deciding between rendering routes. Full record: ADR 0043
   frame time. Same for size: no gate
   enforces the MB band above (the `packageBytes` limits are 70/80/100 MB
   placeholders).
+- **The macOS CI budget step is report-only as of 2026-10-28.** Two macos-14 runs
+  of identical code drifted 1.3–1.5× on p50 (deep-tree `drawMs` 0.051→0.072 ms,
+  `totalMs` 8.8→13.3 ms), and deep-tree `drawMs` p95 0.248 ms broke the 0.1875 ms
+  limit. The `drawMs`/`totalMs` baselines were grounded in a local 2026-10-27
+  artifact where `drawMs` ran ~3× faster than on CI (0.019 vs 0.051–0.072 ms).
+  `benchmark-scaffold` still builds, measures and uploads the artifact; the budget
+  step uses `continue-on-error`, so review a red line by hand — it is not a merge
+  gate. Re-tighten only on a quiet dedicated runner.
 - **MoonBit's own native size floor is not the problem.** A one-line `println`
   release binary (`moon run --release --target native`) links 266,600 B
   (`__text` 151,508) against `libSystem` only — probe kept at
