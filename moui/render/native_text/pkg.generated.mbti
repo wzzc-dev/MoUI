@@ -1,0 +1,94 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/native_text"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn native_noop_text_engine() -> NativeTextEngine
+
+pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
+
+pub fn native_platform_text_engine(NativePlatformTextProvider) -> NativeTextEngine
+
+pub fn native_platform_text_engine_with_fallback(NativePlatformTextProvider, fallback~ : NativeTextEngine) -> NativeTextEngine
+
+pub fn native_text_system() -> @core.TextSystem
+
+pub fn native_text_system_with_cache(NativeTextCache) -> @core.TextSystem
+
+pub fn native_text_system_with_engine(NativeTextEngine) -> @core.TextSystem
+
+// Errors
+
+// Types and methods
+pub struct NativeGlyphKey {
+  // private fields
+}
+pub fn NativeGlyphKey::cache_key(Self) -> String
+
+pub struct NativeGlyphPlacement {
+  // private fields
+}
+pub fn NativeGlyphPlacement::key(Self) -> NativeGlyphKey
+pub fn NativeGlyphPlacement::new(key~ : NativeGlyphKey, x~ : Double, y? : Double) -> Self
+pub fn NativeGlyphPlacement::x(Self) -> Double
+pub fn NativeGlyphPlacement::y(Self) -> Double
+
+pub struct NativePlatformTextProvider {
+  // private fields
+}
+pub fn NativePlatformTextProvider::new(id~ : String, measure~ : (@core.TextLayoutInput) -> NativeTextLayout?, layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?, raster_glyph~ : (String, Bytes) -> NativeRasterGlyph?, register_font_data? : (@core.FontFamily, Bytes) -> Unit) -> Self
+
+pub struct NativeRasterGlyph {
+  // private fields
+}
+pub fn NativeRasterGlyph::bearing_x(Self) -> Int32
+pub fn NativeRasterGlyph::bearing_y(Self) -> Int32
+pub fn NativeRasterGlyph::format(Self) -> NativeRasterGlyphFormat
+pub fn NativeRasterGlyph::height(Self) -> Int32
+pub fn NativeRasterGlyph::new(width~ : Int32, height~ : Int32, bearing_x~ : Int32, bearing_y~ : Int32, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
+pub fn NativeRasterGlyph::pixels(Self) -> Bytes
+pub fn NativeRasterGlyph::width(Self) -> Int32
+
+pub(all) enum NativeRasterGlyphFormat {
+  AlphaMask
+  ColorRgba
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRasterGlyphFormat::equal(Self, Self) -> Bool
+pub fn NativeRasterGlyphFormat::not_equal(Self, Self) -> Bool
+pub fn NativeRasterGlyphFormat::to_json(Self) -> Json
+pub fn NativeRasterGlyphFormat::to_repr(Self) -> @debug.Repr
+
+pub struct NativeTextCache {
+  // private fields
+}
+pub fn NativeTextCache::engine(Self) -> NativeTextEngine
+pub fn NativeTextCache::fallback_layout_run(Self, @core.TextRun, Double) -> NativeTextLayout?
+pub fn NativeTextCache::layout_run(Self, @core.TextRun, Double) -> NativeTextLayout?
+pub fn NativeTextCache::measure(Self, @core.TextLayoutInput) -> @core.TextLayoutResult
+pub fn NativeTextCache::new() -> Self
+pub fn NativeTextCache::new_with_engine(NativeTextEngine) -> Self
+pub fn NativeTextCache::raster_glyph(Self, NativeGlyphKey) -> NativeRasterGlyph?
+pub fn NativeTextCache::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
+
+pub struct NativeTextEngine {
+  // private fields
+}
+pub fn NativeTextEngine::fallback_provider_id(Self) -> String
+pub fn NativeTextEngine::provider_id(Self) -> String
+
+pub struct NativeTextLayout {
+  // private fields
+}
+pub fn NativeTextLayout::baseline(Self) -> Double
+pub fn NativeTextLayout::caret_positions(Self) -> Array[Double]
+pub fn NativeTextLayout::glyphs(Self) -> Array[NativeGlyphPlacement]
+pub fn NativeTextLayout::new(size~ : @core.Size, baseline~ : Double, caret_positions? : Array[Double], glyphs? : Array[NativeGlyphPlacement]) -> Self
+pub fn NativeTextLayout::size(Self) -> @core.Size
+
+// Type aliases
+
+// Traits

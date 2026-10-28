@@ -53,7 +53,7 @@ struct RendererHandle {
   decoded_image_cache : Map[String, NativeDecodedImage]
   failed_images : Map[String, Bool]
   image_lifecycle : @render_common.ImageResourceLifecycle
-  font_cache : NativeFontCache
+  font_cache : NativeTextCache
   glyph_atlas : GlyphAtlas
   mut visual_vertices : Array[VisualVertex]
   mut text_vertices : Array[TextVertex]
@@ -436,7 +436,7 @@ fn create_with_surface(
     decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
-    font_cache: NativeFontCache::new_with_engine(text_engine),
+    font_cache: NativeTextCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
     text_vertices: [],

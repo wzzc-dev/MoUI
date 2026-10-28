@@ -143,3 +143,12 @@ test "renderer session disposes renderer and native surface exactly once" {
   }
   inspect(message, content="renderer session is disposed")
 }
+
+///|
+test "a session with no recovery path refuses rather than claiming success" {
+  let session = provider_test_session()
+  guard session.recover("device lost") is RecoveryFailed(message) else {
+    fail("expected an uninstrumented session to refuse recovery")
+  }
+  inspect(message, content="renderer session was built without a recovery path")
+}

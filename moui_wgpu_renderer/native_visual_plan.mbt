@@ -1,6 +1,6 @@
 ///|
 fn build_native_draw_plan(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   commands : Array[@render_common.PlanOp],
   size : @core.Size,
@@ -27,7 +27,7 @@ priv struct NativeDrawPlanRangeResult {
 
 ///|
 fn build_native_draw_plan_range(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   commands : Array[@render_common.PlanOp],
   start_index~ : Int32,

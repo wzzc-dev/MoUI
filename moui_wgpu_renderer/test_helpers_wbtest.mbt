@@ -134,7 +134,7 @@ fn new_test_renderer_handle_with_text_engine(
     decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
-    font_cache: NativeFontCache::new_with_engine(text_engine),
+    font_cache: NativeTextCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
     text_vertices: [],

@@ -27,6 +27,7 @@ pub(all) enum RendererBackendKind {
   SunRasterNative
   Canvas2DWasm
   TerminalAnsiNative
+  NativeDirectGpu
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -61,6 +62,7 @@ pub(all) enum RendererFamily {
   Sun
   Canvas2D
   Terminal
+  DirectGpu
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -311,6 +313,7 @@ pub fn RendererBackendKind::label(self : RendererBackendKind) -> String {
     SunRasterNative => "sun-raster-native"
     Canvas2DWasm => "canvas2d-wasm"
     TerminalAnsiNative => "terminal-ansi-native"
+    NativeDirectGpu => "native-direct-gpu"
   }
 }
 
@@ -324,6 +327,7 @@ pub fn RendererBackendKind::short_label(self : RendererBackendKind) -> String {
     SunRasterNative => "sun"
     Canvas2DWasm => "canvas2d"
     TerminalAnsiNative => "tui"
+    NativeDirectGpu => "direct-gpu"
   }
 }
 
@@ -336,6 +340,7 @@ pub fn RendererFamily::label(self : RendererFamily) -> String {
     Sun => "sun"
     Canvas2D => "canvas2d"
     Terminal => "terminal"
+    DirectGpu => "direct-gpu"
   }
 }
 
@@ -384,6 +389,7 @@ pub fn RendererBackendKind::family(
     SunRasterNative => Sun
     Canvas2DWasm => Canvas2D
     TerminalAnsiNative => Terminal
+    NativeDirectGpu => DirectGpu
   }
 }
 

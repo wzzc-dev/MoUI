@@ -13,8 +13,21 @@ fn text_align_extra(
 }
 
 ///|
+fn native_text_vertical_extra(
+  frame : @core.Rect,
+  layout : NativeTextLayout,
+) -> Double {
+  let extra = frame.size.height - layout.size().height
+  if extra > 0.0 {
+    extra / 2.0
+  } else {
+    0.0
+  }
+}
+
+///|
 fn build_native_text_run(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
   state : NativePaintState,
@@ -30,7 +43,7 @@ fn build_native_text_run(
 
 ///|
 fn append_text_run_vertices(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
   state : NativePaintState,
@@ -38,7 +51,7 @@ fn append_text_run_vertices(
   scale_factor : Double,
   vertices : Array[TextVertex],
 ) -> Bool {
-  match cache.text_engine.layout_run(cache, run, scale_factor) {
+  match cache.layout_run(run, scale_factor) {
     Some(layout) =>
       append_text_layout_or_fallback(
         cache, atlas, run, state, size, scale_factor, layout, vertices,
@@ -49,7 +62,7 @@ fn append_text_run_vertices(
 
 ///|
 fn append_text_layout_or_fallback(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
   state : NativePaintState,
@@ -68,7 +81,7 @@ fn append_text_layout_or_fallback(
       atlas_full
     }
     TextRunAppendNeedsFallback =>
-      match cache.text_engine.fallback_layout_run(run, scale_factor) {
+      match cache.fallback_layout_run(run, scale_factor) {
         None => false
         Some(fallback_layout) => {
           let fallback_vertices : Array[TextVertex] = []
@@ -89,7 +102,7 @@ fn append_text_layout_or_fallback(
 
 ///|
 fn append_text_layout_vertices(
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   atlas : GlyphAtlas,
   run : @core.TextRun,
   state : NativePaintState,
@@ -101,13 +114,13 @@ fn append_text_layout_vertices(
   let start_extra = text_align_extra(
     run.align,
     run.frame.size.width,
-    layout.size.width,
+    layout.size().width,
   )
   let vertical_extra = native_text_vertical_extra(run.frame, layout)
   let scale = native_text_scale(scale_factor)
   let mut appended_count = 0
-  for glyph in layout.glyphs {
-    match atlas.ensure_glyph(cache, glyph.key) {
+  for glyph in layout.glyphs() {
+    match atlas.ensure_glyph(cache, glyph.key()) {
       GlyphReady(entry) =>
         if entry.width > 0 && entry.height > 0 {
           appended_count = appended_count + 1
@@ -115,12 +128,12 @@ fn append_text_layout_vertices(
             vertices,
             run.frame.origin.x +
             start_extra +
-            glyph.x +
+            glyph.x() +
             entry.bearing_x.to_double() / scale,
             run.frame.origin.y +
             vertical_extra +
-            layout.baseline +
-            glyph.y +
+            layout.baseline() +
+            glyph.y() +
             entry.bearing_y.to_double() / scale,
             entry,
             atlas,

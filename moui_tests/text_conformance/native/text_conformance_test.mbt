@@ -180,7 +180,7 @@ test "diagnostic native core fallback engine matrix conforms" {
 ///|
 test "diagnostic native cosmic engine matrix conforms" {
   assert_diagnostic_native_text_matrix(
-    @wgpu_renderer.native_text_system_with_engine(
+    @native_text.native_text_system_with_engine(
       @cosmic_text.cosmic_text_engine(),
     ),
   )
@@ -216,34 +216,38 @@ test "diagnostic native skia bidi sample keeps logical carets and marks reorderi
 }
 
 ///|
-test "diagnostic native skia paragraph layout exposes line metrics and gates readiness" {
-  guard @skia_renderer.skia_available() else { return }
-  let system = @skia_renderer.skia_text_system()
+/// The paragraph contract every text system owes the text widgets, whether or not
+/// a native shaper produced it. `moui_metal_renderer` (and the wgpu route beside
+/// it) build their system with `TextSystem::new(id, measure, register_font_data)`
+/// and no `paragraph_layout` hook, so `moui/core/text_layout.mbt:155` gives them
+/// the shared per-line fallback — and every `Text`, `TextArea` and `TextField` on
+/// those routes wraps, paints carets and answers hit-tests through *this* path.
+/// Before it was asserted with a real measuring engine behind it, only Skia's own
+/// native paragraph had ever been held to it.
+
+///|
+fn assert_diagnostic_native_paragraph_contract(
+  system : @core.TextSystem,
+) -> @core.TextParagraphLayoutResult raise {
   let sample = "alpha beta gamma delta epsilon"
   let font = diagnostic_native_text_font()
+  let max_width = 72.0
   let unbounded = system.measure_text(
     @core.TextLayoutInput::new(text=sample, font~),
   )
-  let max_width = 72.0
   let clamped = system.measure_text(
     @core.TextLayoutInput::new(text=sample, font~, max_width~),
   )
   assert_true(unbounded.size.width > max_width)
   assert_true(clamped.size.width <= max_width)
-  assert_true(clamped.size.height == unbounded.size.height)
-  assert_true(clamped.baseline == unbounded.baseline)
   inspect(
     clamped.caret_positions.length(),
     content="\{sample.to_array().length() + 1}",
   )
   assert_true(diagnostic_native_carets_are_monotonic(clamped.caret_positions))
-  assert_true(
-    clamped.caret_positions[clamped.caret_positions.length() - 1] == max_width,
-  )
   for caret in clamped.caret_positions {
     assert_true(caret <= max_width)
   }
-
   let paragraph = system.layout_paragraph(
     @core.TextLayoutInput::new(text=sample, font~, max_width~),
   )
@@ -251,12 +255,6 @@ test "diagnostic native skia paragraph layout exposes line metrics and gates rea
   assert_true(paragraph.metadata.line_metrics_available)
   assert_true(paragraph.metadata.selection_rects_available)
   assert_true(paragraph.metadata.hit_test_available)
-  if @skia_native.skia_paragraph_available() {
-    assert_true(paragraph.metadata.native_paragraph_ready)
-  } else {
-    assert_false(paragraph.metadata.native_paragraph_ready)
-    assert_false(paragraph.metadata.bidi_visual_order_ready)
-  }
   assert_true(paragraph.line_count() >= 2)
   assert_true(paragraph.size.height > clamped.size.height)
   inspect(
@@ -279,6 +277,49 @@ test "diagnostic native skia paragraph layout exposes line metrics and gates rea
   inspect(hit.line_index, content="1")
   assert_true(hit.offset >= paragraph.lines[1].text_range.start)
   assert_true(hit.offset <= paragraph.lines[1].text_range.end)
+  paragraph
+}
+
+///|
+test "diagnostic native engine-backed paragraph layout keeps the shared contract" {
+  // The system the Metal and wgpu routes actually install: a provider doing the
+  // measuring, `moui/core` doing the line breaking. `native_paragraph_ready` and
+  // `bidi_visual_order_ready` must stay false here — claiming them would let a
+  // widget trust line breaks the font never produced.
+  let system = @native_text.native_text_system_with_engine(
+    @cosmic_text.cosmic_text_engine(),
+  )
+  let paragraph = assert_diagnostic_native_paragraph_contract(system)
+  assert_false(paragraph.metadata.native_paragraph_ready)
+  assert_false(paragraph.metadata.bidi_visual_order_ready)
+  assert_true(paragraph.metadata.text_system_id.contains("cosmic"))
+}
+
+///|
+test "diagnostic native skia paragraph layout exposes line metrics and gates readiness" {
+  guard @skia_renderer.skia_available() else { return }
+  let system = @skia_renderer.skia_text_system()
+  let sample = "alpha beta gamma delta epsilon"
+  let font = diagnostic_native_text_font()
+  let max_width = 72.0
+  let unbounded = system.measure_text(
+    @core.TextLayoutInput::new(text=sample, font~),
+  )
+  let clamped = system.measure_text(
+    @core.TextLayoutInput::new(text=sample, font~, max_width~),
+  )
+  assert_true(clamped.size.height == unbounded.size.height)
+  assert_true(clamped.baseline == unbounded.baseline)
+  let paragraph = assert_diagnostic_native_paragraph_contract(system)
+  assert_true(
+    clamped.caret_positions[clamped.caret_positions.length() - 1] == max_width,
+  )
+  if @skia_native.skia_paragraph_available() {
+    assert_true(paragraph.metadata.native_paragraph_ready)
+  } else {
+    assert_false(paragraph.metadata.native_paragraph_ready)
+    assert_false(paragraph.metadata.bidi_visual_order_ready)
+  }
   if !@skia_native.skia_paragraph_available() {
     assert_diagnostic_native_skia_maturity_ready(
       "bidi and paragraph line breaking ready",
@@ -361,8 +402,8 @@ test "diagnostic native skia text system drives runtime text field geometry" {
 ///|
 test "diagnostic native directwrite scaffold matrix uses cosmic fallback" {
   assert_diagnostic_native_text_matrix(
-    @wgpu_renderer.native_text_system_with_engine(
-      @wgpu_renderer.native_platform_text_engine_with_fallback(
+    @native_text.native_text_system_with_engine(
+      @native_text.native_platform_text_engine_with_fallback(
         @directwrite.directwrite_text_provider(),
         fallback=@cosmic_text.cosmic_text_engine(),
       ),
@@ -373,8 +414,8 @@ test "diagnostic native directwrite scaffold matrix uses cosmic fallback" {
 ///|
 test "diagnostic native fontconfig scaffold matrix uses cosmic fallback" {
   assert_diagnostic_native_text_matrix(
-    @wgpu_renderer.native_text_system_with_engine(
-      @wgpu_renderer.native_platform_text_engine_with_fallback(
+    @native_text.native_text_system_with_engine(
+      @native_text.native_platform_text_engine_with_fallback(
         @fontconfig.fontconfig_text_provider(),
         fallback=@cosmic_text.cosmic_text_engine(),
       ),
@@ -384,13 +425,13 @@ test "diagnostic native fontconfig scaffold matrix uses cosmic fallback" {
 
 ///|
 test "diagnostic native composed fallback keeps malformed providers safe" {
-  let system = @wgpu_renderer.native_text_system_with_engine(
-    @wgpu_renderer.native_platform_text_engine_with_fallback(
-      @wgpu_renderer.NativePlatformTextProvider::new(
+  let system = @native_text.native_text_system_with_engine(
+    @native_text.native_platform_text_engine_with_fallback(
+      @native_text.NativePlatformTextProvider::new(
         id="diagnostic-bad-provider",
         measure=_input => {
           Some(
-            @wgpu_renderer.NativeTextLayout::new(
+            @native_text.NativeTextLayout::new(
               size=@core.Size::new(width=50.0, height=20.0),
               baseline=12.0,
               caret_positions=[0.0, 32.0, 16.0],

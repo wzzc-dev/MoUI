@@ -285,6 +285,7 @@ pub(all) enum RendererBackendKind {
   SunRasterNative
   Canvas2DWasm
   TerminalAnsiNative
+  NativeDirectGpu
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererBackendKind::equal(Self, Self) -> Bool
 pub fn RendererBackendKind::family(Self) -> RendererFamily
@@ -383,6 +384,7 @@ pub(all) enum RendererFamily {
   Sun
   Canvas2D
   Terminal
+  DirectGpu
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFamily::equal(Self, Self) -> Bool
 pub fn RendererFamily::label(Self) -> String

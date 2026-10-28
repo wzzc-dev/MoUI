@@ -267,7 +267,7 @@ fn create_headless_proof_renderer(
     decoded_image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
-    font_cache: NativeFontCache::new_with_engine(text_engine),
+    font_cache: NativeTextCache::new_with_engine(text_engine),
     glyph_atlas: GlyphAtlas::new(width=atlas_width, height=atlas_height),
     visual_vertices: [],
     text_vertices: [],
@@ -616,12 +616,11 @@ fn assert_native_smoke_text_diagnostic(
       "native WGPU smoke platform text provider is still planned; fallback glyphs cannot prove native provider text/emoji readiness",
     )
   }
-  assert_native_smoke_color_emoji(renderer, text_engine)
+  assert_native_smoke_color_emoji(renderer)
 
   let emoji_text = "\u{1F469}\u{200D}\u{1F4BB}"
   let emoji_run = native_smoke_emoji_run(emoji_text)
-  let measured = text_engine.measure(
-    renderer.font_cache,
+  let measured = renderer.font_cache.measure(
     @core.TextLayoutInput::new(text=emoji_text, font=emoji_run.font),
   )
   if measured.caret_positions.length() < emoji_text.to_array().length() + 1 ||
@@ -639,9 +638,9 @@ fn assert_native_smoke_text_diagnostic(
     color=@core.Color::black(),
     align=TextStart,
   )
-  match text_engine.layout_run(renderer.font_cache, bidi, 1.0) {
+  match renderer.font_cache.layout_run(bidi, 1.0) {
     Some(layout) =>
-      if !glyph_positions_show_visual_order(layout.glyphs) {
+      if !glyph_positions_show_visual_order(layout.glyphs()) {
         native_smoke_fail(
           "native WGPU smoke bidi visual order was not observable",
         )
@@ -650,8 +649,7 @@ fn assert_native_smoke_text_diagnostic(
   }
   println("native WGPU smoke bidi visual-order glyph positions recorded")
 
-  let paragraph = text_engine.measure(
-    renderer.font_cache,
+  let paragraph = renderer.font_cache.measure(
     @core.TextLayoutInput::new(
       text="wrap one wrap two wrap three",
       font=@core.FontSpec::new(size=10.0, weight=500),
@@ -682,29 +680,26 @@ fn native_smoke_emoji_run(text : String) -> @core.TextRun {
 }
 
 ///|
-fn assert_native_smoke_color_emoji(
-  renderer : RendererHandle,
-  text_engine : NativeTextEngine,
-) -> Unit {
+fn assert_native_smoke_color_emoji(renderer : RendererHandle) -> Unit {
   let samples = ["\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F4BB}"]
   let mut total_color_glyphs = 0
   let mut total_high_saturation_pixels = 0
   for sample in samples {
     let run = native_smoke_emoji_run(sample)
-    match text_engine.layout_run(renderer.font_cache, run, 1.0) {
+    match renderer.font_cache.layout_run(run, 1.0) {
       Some(layout) => {
-        if layout.glyphs.length() < 1 {
+        if layout.glyphs().length() < 1 {
           continue
         }
         let mut color_glyphs = 0
         let mut high_saturation_pixels = 0
-        for glyph in layout.glyphs {
-          match text_engine.raster_glyph(renderer.font_cache, glyph.key) {
+        for glyph in layout.glyphs() {
+          match renderer.font_cache.raster_glyph(glyph.key()) {
             Some(raster) =>
-              if raster.format == ColorRgba {
+              if raster.format() == ColorRgba {
                 color_glyphs = color_glyphs + 1
                 high_saturation_pixels += count_high_saturation_rgba(
-                  raster.pixels,
+                  raster.pixels(),
                 )
               }
             None => ()
@@ -1236,7 +1231,7 @@ fn glyph_positions_show_visual_order(
   }
   let mut saw_decrease = false
   for index in 1..<glyphs.length() {
-    if glyphs[index].x < glyphs[index - 1].x {
+    if glyphs[index].x() < glyphs[index - 1].x() {
       saw_decrease = true
     }
   }

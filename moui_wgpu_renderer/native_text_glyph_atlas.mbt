@@ -31,29 +31,29 @@ fn GlyphAtlas::to_bytes(self : GlyphAtlas) -> Bytes {
 ///|
 fn GlyphAtlas::ensure_glyph(
   self : GlyphAtlas,
-  cache : NativeFontCache,
+  cache : NativeTextCache,
   key : NativeGlyphKey,
 ) -> GlyphLookup {
-  match self.entries.get(key.cache_key) {
+  match self.entries.get(key.cache_key()) {
     Some(entry) => GlyphReady(entry)
     None =>
-      match cache.text_engine.raster_glyph(cache, key) {
+      match cache.raster_glyph(key) {
         None => GlyphMissing
         Some(raster) =>
-          match self.place_glyph(raster.width, raster.height) {
+          match self.place_glyph(raster.width(), raster.height()) {
             None => GlyphAtlasFull
             Some((x, y)) => {
               self.blit_glyph(x, y, raster)
               let entry = {
                 x,
                 y,
-                width: raster.width,
-                height: raster.height,
-                bearing_x: raster.bearing_x,
-                bearing_y: raster.bearing_y,
-                format: raster.format,
+                width: raster.width(),
+                height: raster.height(),
+                bearing_x: raster.bearing_x(),
+                bearing_y: raster.bearing_y(),
+                format: raster.format(),
               }
-              self.entries[key.cache_key] = entry
+              self.entries[key.cache_key()] = entry
               self.dirty = true
               GlyphReady(entry)
             }
@@ -98,11 +98,14 @@ fn GlyphAtlas::blit_glyph(
   dst_y : Int32,
   raster : NativeRasterGlyph,
 ) -> Unit {
-  match raster.format {
+  let width = raster.width()
+  let height = raster.height()
+  let pixels = raster.pixels()
+  match raster.format() {
     AlphaMask =>
-      for y in 0..<raster.height {
-        for x in 0..<raster.width {
-          let alpha = raster.pixels[y * raster.width + x]
+      for y in 0..<height {
+        for x in 0..<width {
+          let alpha = pixels[y * width + x]
           if alpha != b'\x00' {
             let dst = ((dst_y + y) * self.width + dst_x + x) * 4
             self.pixels[dst] = b'\xff'
@@ -113,15 +116,15 @@ fn GlyphAtlas::blit_glyph(
         }
       }
     ColorRgba =>
-      for y in 0..<raster.height {
-        for x in 0..<raster.width {
-          let src = (y * raster.width + x) * 4
-          let alpha = raster.pixels[src + 3]
+      for y in 0..<height {
+        for x in 0..<width {
+          let src = (y * width + x) * 4
+          let alpha = pixels[src + 3]
           if alpha != b'\x00' {
             let dst = ((dst_y + y) * self.width + dst_x + x) * 4
-            self.pixels[dst] = raster.pixels[src]
-            self.pixels[dst + 1] = raster.pixels[src + 1]
-            self.pixels[dst + 2] = raster.pixels[src + 2]
+            self.pixels[dst] = pixels[src]
+            self.pixels[dst + 1] = pixels[src + 1]
+            self.pixels[dst + 2] = pixels[src + 2]
             self.pixels[dst + 3] = alpha
           }
         }

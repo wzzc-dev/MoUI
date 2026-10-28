@@ -84,7 +84,11 @@ pub fn RendererSession::new(
   drain_events~ : (() -> Array[RendererEvent])? = None,
   text_system~ : () -> @core.TextSystem,
   present_count~ : () -> Int32 = () => 0,
-  recover~ : (String) -> RecoveryResult = _ => RecoverySucceeded,
+  // Not handed a recovery path is not the same as recovering: the old
+  // `RecoverySucceeded` default reported a rebuild no renderer had performed.
+  recover~ : (String) -> RecoveryResult = _ => {
+    RecoveryFailed("renderer session was built without a recovery path")
+  },
   dispose~ : () -> Unit = () => (),
   image_records~ : () -> Array[ImageResourceRecord] = () => [],
   apply_image_load_completion~ : (ImageResourceLoadCompletion) -> Bool = _ => {
