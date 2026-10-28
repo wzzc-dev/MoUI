@@ -122,6 +122,7 @@ struct ReportRow {
   wgpu : String
   sun : String
   tui : String
+  metal : String
 }
 
 ///|
@@ -139,7 +140,7 @@ fn parse_table(text : String) -> (Int32, Array[ReportRow]) {
     }
     if header_line > 0 && line.trim().has_prefix("|") {
       let cells = split_cells(line.to_owned())
-      if cells.length() >= 6 && cells[0] != "---" {
+      if cells.length() >= 7 && cells[0] != "---" {
         rows.push({
           line_no,
           feature_name: cells[0],
@@ -147,6 +148,7 @@ fn parse_table(text : String) -> (Int32, Array[ReportRow]) {
           wgpu: cells[3],
           sun: cells[4],
           tui: cells[5],
+          metal: cells[6],
         })
       }
     }
@@ -193,6 +195,7 @@ fn code_statuses() -> Array[ColumnRule] {
   )
   let sun_caps = @render_sun.sun_feature_capabilities()
   let tui_caps = @render_tui.tui_feature_capabilities()
+  let metal_caps = @render_metal.metal_feature_capabilities()
   [
     {
       column_label: "Skia raster native",
@@ -214,6 +217,11 @@ fn code_statuses() -> Array[ColumnRule] {
       provider_id: "tui-ansi",
       status_of: status_by_feature(tui_caps),
     },
+    {
+      column_label: "Native direct GPU",
+      provider_id: "metal-direct",
+      status_of: status_by_feature(metal_caps),
+    },
   ]
 }
 
@@ -225,6 +233,7 @@ fn report_cell(row : ReportRow, label : String) -> String {
     "Native wgpu diagnostic" => row.wgpu
     "Sun CPU raster" => row.sun
     "Terminal cell ANSI" => row.tui
+    "Native direct GPU" => row.metal
     _ => row.skia
   }
 }

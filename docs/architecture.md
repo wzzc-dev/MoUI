@@ -44,9 +44,11 @@ ViewDeclaration -> ElementTree
 | `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |
 | `moui/render/` | Renderer-neutral frame/image/descriptor DTOs, opaque `HostSurface`/`NativeSurface` capabilities, and the two renderer lifecycle contracts `RendererProvider`/`RendererSession`. It contains no platform or graphics-API surface tag. |
 | `moui/render/common/` | Provider selection, fallback planning, mailbox/GPU worker, renderer-neutral image event helpers, retained-layer algorithms, and shared drawing algorithms. |
+| `moui/render/native_text/` | Renderer-neutral native text model: the platform provider callback bundle, glyph key/placement/layout/raster values, provider validation, the fallback chain, and the measure/layout caches. Platform text providers and concrete renderers both depend on this instead of on each other. |
 | `moui_skia_renderer/` | Native Skia renderer facade over `moui_skia`. |
 | `moui_web_renderer/` | Browser WebGPU host-import adapter for `wasm-gc`. |
 | `moui_wgpu_renderer/` | Experimental native WGPU renderer and native text providers. |
+| `moui_metal_renderer/` | Experimental direct host-GPU renderer: draws straight to the `CAMetalLayer` the platform backend owns with no Skia and no wgpu in the link (ADR 0044, ADR 0045). Text coverage comes from the engine the composition root injects, so this module depends on no text provider. |
 | `moui_sun_renderer/` | Experimental Sun CPU raster renderer over the repo-local `moui_sun` workspace (ADR 0023: capability freeze by default, not on default composition roots). |
 | `moui_sun/` | Experimental MoonBit-native CPU raster graphics/text/softbuffer workspace (ADR 0023). |
 | `moui_richtext/` | Markdown/rich-text document, editor, command, input, paste, table, and source-mapping logic used by rich editing apps. |
@@ -306,16 +308,18 @@ moui/backend/web/             canonical browser lifecycle/canvas-surface host on
 moui/backend/wechat/          WeChat lifecycle and neutral canvas-surface host
 moui/render/                  opaque HostSurface/NativeSurface, RendererProvider/RendererSession, image/frame DTOs
 moui/render/common/           provider selection, fallback, workers, image lifecycle, shared draw helpers
+moui/render/native_text/      neutral native text provider protocol, glyph/layout/raster model, measure/layout cache
 moui_skia_renderer/             native Skia CPU/GPU providers, platform policy, and implementation over moui_skia
+moui_metal_renderer/          experimental direct host-GPU renderer (no Skia, no wgpu)
 moui_sun_renderer/              experimental native Sun CPU raster provider and implementation
 moui_web_renderer/canvas2d/     WeChat Canvas2D provider and implementation
 moui_web_renderer/              browser WebGPU/Canvas2D providers, adapter, and JS renderer runtime
 moui_wgpu_renderer/             experimental native wgpu renderer
-moui_wgpu_renderer/cosmic_text/ Moon Cosmic provider for native wgpu text
-moui_wgpu_renderer/coretext/    macOS CoreText provider for native wgpu text
-moui_wgpu_renderer/text_protocol/ shared native measure/run/raster/register bytes protocol
-moui_wgpu_renderer/directwrite/ Windows DirectWrite provider scaffold
-moui_wgpu_renderer/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
+moui_text_providers/cosmic_text/  Moon Cosmic provider for renderer-neutral native text
+moui_text_providers/coretext/     macOS CoreText provider for renderer-neutral native text
+moui_text_providers/text_protocol/ shared native measure/run/raster/register bytes protocol
+moui_text_providers/directwrite/  Windows DirectWrite provider scaffold
+moui_text_providers/fontconfig/   Linux fontconfig/HarfBuzz/FreeType provider scaffold
 moui_tests/tooling/           quickcheck and pixelmatch integration tests
 moui_tests/text_conformance/  opt-in native/Web text diagnostic matrix
 moui_tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke

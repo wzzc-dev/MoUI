@@ -105,7 +105,7 @@ Linux runtime requirements are intentionally native:
 - zlib / pthread / fontconfig system libraries for the final native link.
   `moui/build.js` owns the `backend/linux` zlib entry,
   `moui_skia/build.js` owns the Skia binding's pthread/fontconfig stack, and
-  `moui_wgpu_renderer/build.js` owns `moui_wgpu_renderer/fontconfig`. Linux example entrypoints
+  `moui_text_providers/build.js` owns `moui_text_providers/fontconfig`. Linux example entrypoints
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`
@@ -222,7 +222,7 @@ be corrupted by cross-host reuse.
 
 ## WGPU Diagnostics
 
-The WGPU diagnostic factory composes the Linux `moui_wgpu_renderer/fontconfig`
+The WGPU diagnostic factory composes the Linux `moui_text_providers/fontconfig`
 provider with the shared Moon Cosmic fallback.
 The fontconfig provider includes real fontconfig family resolution, FreeType
 rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,

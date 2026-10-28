@@ -63,7 +63,7 @@
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 230 | 138 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 143 | 60 | 2 |
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 136 | 65 | 2 |
-| native text protocol (moui_wgpu_renderer/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
+| native text protocol (moui_text_providers/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 
 ## 工作区示例
 

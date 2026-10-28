@@ -29,7 +29,7 @@ Showcase Windows Skia 路线是交互式应用入口。匹配宿主的首帧 smo
 
 ## 链接标志
 
-Windows Skia/Ganesh 链接标志由 `moui_skia/build.js` 生成（来自 `MOUI_SKIA_CC_LINK_FLAGS`）：`moui_skia/native/moon.pkg` 用于 binding 自测，`moui_skia_renderer/build.js` 为最终应用只注册一个 `link_configs` 条目。窗口宿主的 Win32 系统库来自 `window/windows` prebuild `link_configs`。DirectWrite WGPU 文本使用 `moui_wgpu_renderer/directwrite` link_configs（`-lz`）。
+Windows Skia/Ganesh 链接标志由 `moui_skia/build.js` 生成（来自 `MOUI_SKIA_CC_LINK_FLAGS`）：`moui_skia/native/moon.pkg` 用于 binding 自测，`moui_skia_renderer/build.js` 为最终应用只注册一个 `link_configs` 条目。窗口宿主的 Win32 系统库来自 `window/windows` prebuild `link_configs`。DirectWrite WGPU 文本使用 `moui_text_providers/directwrite` link_configs（`-lz`）。
 
 示例 `windows_skia` / `windows_wgpu` 入口点不应重复 Skia 或 Win32 链接标志。它们只需要一个空的 `cc-link-flags` 覆盖，让 Moon 在需要时禁用 `tcc -run`：
 
@@ -45,7 +45,7 @@ Windows 宿主遵循与 macOS 相同的 `Event` 和 `HostRuntimeDriver` 路径�
 原生应用入口点在创建宿主 driver 之前把报告的主题应用到运行时环境，与 macOS 启动路径匹配。本地 window 后端发出 Windows theme-change 事件时，它们使用共享 `Event::ThemeChanged` 运行时路径。
 右键上下文菜单请求使用同一 `TrackPopupMenu` 路径，并通过 `HostRuntimeDriver` 分派选中的 `ActionCommand`。
 本地 `window/windows` 后端发出的文件拖放事件会通过 `Event::DragDrop` 归一化，并分派给 `View::on_file_drop` 目标，与 macOS 宿主路径匹配。
-`@render_wgpu.native(...)` 是 WGPU 诊断路径，并通过与 macOS CoreText 相同的渲染器/运行时边界安装同级 `moui_wgpu_renderer/directwrite` provider，将其与 `moui_wgpu_renderer/cosmic_text` 组合为 fallback。该 provider 目前是显式脚手架；通过 factory 的 `text_engine` 参数选择 `MoonCosmic`。
+`@render_wgpu.native(...)` 是 WGPU 诊断路径，并通过与 macOS CoreText 相同的渲染器/运行时边界安装 `moui_text_providers/directwrite` provider，将其与 `moui_text_providers/cosmic_text` 组合为 fallback。该 provider 目前是显式脚手架；通过 factory 的 `text_engine` 参数选择 `MoonCosmic`。
 `examples/showcase/windows_wgpu` 是唯一 Windows WGPU 诊断入口，使用 DirectWrite provider，并把 Cosmic 作为内部 fallback。`examples/showcase/windows_skia` 通过 `@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Windows)` 和 `@windows.entry()` 组合主线 Skia 路线。
 
 ## Skia Renderer

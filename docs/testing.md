@@ -90,6 +90,7 @@ moon test moui_agent_mcp --target native
 moon test examples/agent_counter --target native
 moon test moui/render --target native
 moon test moui_skia_renderer --target native
+moon test moui_metal_renderer --target native   # macOS host only
 moon test moui_sun_renderer --target native
 moon test moui/backend --target native
 moon test moui_tests/tester --target native
@@ -222,6 +223,7 @@ before broader profiles:
 moon test moui/render --target native
 moon test moui_skia_renderer --target native
 moon test moui_wgpu_renderer --target native
+moon test moui_metal_renderer --target native   # macOS host only
 moon test moui_sun_renderer --target native
 moon test moui_web_renderer --target wasm-gc
 moon check moui_web_renderer/canvas2d --target wasm-gc
@@ -421,6 +423,15 @@ scheduler hiccup on a shared runner fail the tail gate. Initial catalog values
 are reviewed guardrails rather than machine-portable claims.
 Change them only with a matching `native-skia-raster` artifact, runner identity,
 and the approval/reason required by `checks/performance-budgets.json`.
+
+`--provider skia-neutral|sun` re-runs the same five scenarios through the
+renderer-neutral `RendererProvider` contract instead of the concrete Skia
+renderer, and emits its own runner identity (`native-skia-raster-via-provider`,
+`native-sun-raster`). Those are control runs: the script writes
+`artifacts/performance/result-<provider>-<route>.json` and skips budget
+validation, because only `--provider skia --surface-route raster` produces the
+runner the committed budgets were reviewed against. Never quote a control-run
+number as a budget result.
 
 Capture scaffolds write local manifests under ignored `artifacts/` paths for
 screenshot or benchmark handoff. They are not checked-in capability

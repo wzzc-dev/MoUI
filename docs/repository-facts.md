@@ -20,6 +20,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_skia_renderer |
 | ./moui_web_renderer |
 | ./moui_wgpu_renderer |
+| ./moui_metal_renderer |
 | ./moui_sun_renderer |
 | ./moui_tui_renderer |
 | ./moui_terminal_host |
@@ -39,6 +40,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_theme |
 | ./moui_sun |
 | ./moui_tui |
+| ./moui_text_providers |
 | ./examples/counter |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
@@ -78,13 +80,15 @@ This file is generated from repository manifests and validator reports.
 | core (moui/core/pkg.generated.mbti) | 2520 | 1114 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
-| render protocols (moui/render/pkg.generated.mbti) | 606 | 279 | 31 |
+| render protocols (moui/render/pkg.generated.mbti) | 608 | 279 | 31 |
 | render common (moui/render/common/pkg.generated.mbti) | 432 | 167 | 13 |
+| native text model (moui/render/native_text/pkg.generated.mbti) | 94 | 46 | 1 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 279 | 165 | 7 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 272 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 183 | 92 | 2 |
-| native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 154 | 77 | 3 |
-| native text protocol (moui_wgpu_renderer/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
+| native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 116 | 55 | 2 |
+| native metal renderer (moui_metal_renderer/pkg.generated.mbti) | 57 | 13 | 0 |
+| native text protocol (moui_text_providers/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 | backend common (moui/backend/common/pkg.generated.mbti) | 54 | 16 | 0 |
 | backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 297 | 170 | 7 |
 | backend common frame owner (moui/backend/common/frame/pkg.generated.mbti) | 57 | 22 | 0 |

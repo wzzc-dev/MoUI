@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_sun_renderer" @render_sun,
   "wzzc-dev/moui_tui_renderer" @render_tui,
+  "wzzc-dev/moui_metal_renderer" @render_metal,
   "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
 }
 

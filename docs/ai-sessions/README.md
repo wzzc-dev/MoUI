@@ -34,6 +34,9 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-10-27: L1 — a Metal renderer with no Skia and no wgpu](2026-10-27-direct-host-gpu-renderer-l1.md)
+- [2026-10-27: L0.5 — move the text providers out of the wgpu module](2026-10-27-text-provider-module-relocation.md)
+- [2026-10-27: ADR 0044 L0 — instrument the renderer route, then stop it](2026-10-27-adr0044-l0-renderer-route-instrument.md)
 - [2026-10-25: Governance tax — studio budgets exit, ratchet quanta](2026-10-25-governance-tax-studio-budget-exit.md)
 - [2026-10-23: Pointer/input parity §0–§6, §8, §9](2026-10-23-pointer-input-parity-s0-s6-s8-s9.md)
 - [2026-10-16: TUI hardening H1–H5](2026-10-16-tui-hardening.md)

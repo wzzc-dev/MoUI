@@ -405,6 +405,7 @@ node scripts/validate-package-manifest.mjs \
 ```sh
 moon test moui_wgpu_renderer --target native
 moon test moui_skia_renderer --target native
+moon test moui_metal_renderer --target native   # 仅 macOS 宿主
 moon test moui_sun_renderer --target native
 moon test moui_skia --target native
 sh scripts/check.sh --profile theme

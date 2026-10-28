@@ -704,6 +704,7 @@ Useful focused commands:
 ```sh
 moon test moui_wgpu_renderer --target native
 moon test moui_skia_renderer --target native
+moon test moui_metal_renderer --target native   # macOS host only
 moon test moui_sun_renderer --target native
 moon test moui_skia --target native
 sh scripts/check.sh --profile theme

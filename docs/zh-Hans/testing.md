@@ -41,6 +41,7 @@ moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
 moon test moui_skia_renderer --target native
+moon test moui_metal_renderer --target native   # 仅 macOS 宿主
 moon test moui_sun_renderer --target native
 moon test moui/backend --target native
 moon test moui_tests/tester --target native

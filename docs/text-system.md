@@ -122,33 +122,46 @@ smoothness still require the matching-host smoke evidence described below.
 
 ## Native WGPU
 
-`moui_wgpu_renderer` owns the native provider protocol, provider response validation,
-fallback composition, glyph atlas upload, and renderer-side cache keys. It does
-not depend on the standalone Cosmic provider package.
+`moui/render/native_text` owns the neutral native text model: the provider
+callback bundle platform engines implement, provider response validation, the
+fallback chain, the measure/layout caches, and the `TextSystem` construction
+over them. `moui_wgpu_renderer` keeps only what is renderer-specific — glyph
+atlas upload, text vertex building, and the WGSL shader — and re-exports the
+model types so host entrypoints can keep naming the engine through the
+renderer they compose with. Neither package depends on the standalone Cosmic
+provider package.
 
-Provider packages are intentionally separate:
+Provider packages are intentionally separate, and live in their own
+`wzzc-dev/moui_text_providers` module rather than inside a renderer module, so
+any renderer can inject one without importing another renderer:
 
-- `moui_wgpu_renderer/cosmic_text/`: Moon Cosmic provider used directly by examples
+- `moui/render/native_text/`: the model every provider and renderer shares —
+  `NativePlatformTextProvider`, `NativeTextEngine`, `NativeTextCache`,
+  `NativeTextLayout`, `NativeRasterGlyph`, `NativeGlyphKey`.
+- `moui_text_providers/cosmic_text/`: Moon Cosmic provider used directly by examples
   that select `MoonCosmic`, and as the fallback provider for platform defaults.
-- `moui_wgpu_renderer/coretext/`: macOS CoreText/CoreGraphics provider. macOS defaults
+- `moui_text_providers/coretext/`: macOS CoreText/CoreGraphics provider. macOS defaults
   to this provider composed with Cosmic fallback.
-- `moui_wgpu_renderer/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
+- `moui_text_providers/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
   this scaffold composed with Cosmic fallback until the real DirectWrite engine
   returns platform layout and raster data.
-- `moui_wgpu_renderer/fontconfig/`: Linux fontconfig/FreeType provider boundary.
+- `moui_text_providers/fontconfig/`: Linux fontconfig/FreeType provider boundary.
   Linux defaults to this provider composed with Cosmic fallback. The provider
   can return native color-emoji glyphs from Noto Color Emoji for explicit emoji
   family runs when FreeType and the font are available; broader shaping,
   measurement, and non-emoji raster data still fall back to Cosmic until the
   full fontconfig/HarfBuzz path is implemented.
-- `moui_wgpu_renderer/text_protocol/`: shared native-stub payload protocol for UTF-32
+- `moui_text_providers/text_protocol/`: shared native-stub payload protocol for UTF-32
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
 
 Native WGPU text-engine selection belongs to the WGPU renderer provider, not to
 the platform host core. Entrypoints call
-`@wgpu_renderer.native(text_engine=@wgpu_<platform>.<engine>())` and combine it
-with the platform `entry()`. Each canonical WGPU route composes its platform
+`@wgpu_renderer.native(text_engine=@text_<platform>.<engine>())` or
+`@metal_renderer.metal(text_engine=@text_<platform>.<engine>())`, and combine it
+with the platform `entry()`. The direct-GPU renderer is what that separation buys
+measured: it reaches a CoreText glyph run while depending on no text provider and
+no other renderer module. Each canonical WGPU route composes its platform
 text provider with Cosmic as an internal fallback; provider-specific duplicate
 composition roots are not part of the platform matrix. Showcase Skia routes
 select `moui_skia_renderer` providers, not WGPU text-provider variants. By default,
@@ -396,6 +409,10 @@ Native IME runtime readiness is platform-scoped: macOS has recorded matching-hos
 
 Native WGPU can preserve RGBA color glyph payloads through the provider protocol and glyph atlas path, with Cosmic platform emoji fallback candidate loading, Cosmic color swash preservation, provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and diagnostic tests assert caret counts, monotonicity, clamping, editor selection behavior, IME anchor geometry, core fallback cluster stabilization and movement, CRLF/control segmentation, emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and provider fallback safety across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage through the safe-mapped layout path. Skia renderer tests cover the same representative emoji caret coverage, shaped-run and fallback caret stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark, Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only emoji font retry boundary, and fallback-safe descriptor resource plans for text measurement and shaping. Native diagnostic conformance also injects the Skia text system into a text field runtime to validate composition caret geometry and selection highlight drawing.
 
+**Direct-GPU (Metal) Text Status**
+
+The direct-GPU route keeps its own glyph atlas because P14 forbids importing another renderer's. The injected engine rasterizes coverage and `moui_metal_renderer/metal_text.mbt` shelf-packs it into 1024x1024 RGBA8 pages; the item word that already named a texture now names the page to bind, so a run whose glyphs no longer fit one page becomes one draw per page while the vertex format and the text shader stay unaware of paging. Page 0 exists from construction and later pages only when a frame needs one, capped at four; past the cap a full atlas clears and rebuilds the frame once, which is what lets a document longer than the atlas keep scrolling instead of losing its text for the session. The ceiling is measured through the real CoreText provider at 14pt and device scale 2.0 — about 818 distinct ideographs per page, and a 1,600-distinct-ideograph frame builds as two text items with zero dropped glyphs where the same frame pinned at one page drops 782. A colour glyph keeps its own pixels because a non-coverage placement is given a white vertex colour, so the run colour cannot repaint it; see the `EmojiText` row of the capability report for the evidence and its remaining halves.
+
 **Platform Text Provider Status**
 
 Linux native Skia is the Preview Ready text/render route and continues to use the Skia text system described above. The Linux native WGPU fontconfig/FreeType provider remains diagnostic, with explicit FreeType color-emoji handling and composed Cosmic fallback for general text. Windows DirectWrite remains a diagnostic provider route with Cosmic fallback.
@@ -425,7 +442,7 @@ Text changes that affect renderer feature status must update `render/capabilitie
 Text conformance is split into two layers:
 
 - Stable tests run inside normal package checks and cover `core`,
-  `moui_wgpu_renderer`, `moui_wgpu_renderer/cosmic_text`, `moui_web_renderer`, and
+  `moui_wgpu_renderer`, `moui_text_providers/cosmic_text`, `moui_web_renderer`, and
   `backend/web`.
 - Diagnostic matrix tests live under `moui_tests/text_conformance/` and are opt-in.
   They compare core fallback, Cosmic, platform-default composed fallback,
@@ -441,7 +458,7 @@ sh scripts/check.sh --profile full
 moon test moui_tests/text_conformance/native --target native
 moon test moui/core --target native
 moon test moui_wgpu_renderer --target native
-moon test moui_wgpu_renderer/cosmic_text --target native
+moon test moui_text_providers/cosmic_text --target native
 moon test moui_skia_renderer --target native
 moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc

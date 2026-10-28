@@ -106,6 +106,7 @@ Manual / real presentation smoke (path-triggered, not default):
 ```sh
 scripts/macos-skia-renderer-smoke.sh
 sh scripts/ci-web-runtime-presentation.sh
+scripts/macos-metal-presentation-smoke.sh
 scripts/run-window-package-smoke.sh <macos|web|windows|linux> --run
 ```
 

@@ -78,7 +78,7 @@ fn generate_boundary_fixture(
   input +
   "\n\n///|\nfn " +
   helper_name +
-  "(\n  text : String,\n  expected : Array[Int],\n  label : String,\n) -> Unit raise {\n  let actual = TextGraphemeBoundaries::new(text~).boundaries()\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    inspect(actual[index], content=\"\\{expected[index]}\")\n  }\n}\n\n///|\ntest \"" +
+  "(\n  text : String,\n  expected : Array[Int32],\n  label : String,\n) -> Unit raise {\n  let actual = TextGraphemeBoundaries::new(text~).boundaries()\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    inspect(actual[index], content=\"\\{expected[index]}\")\n  }\n}\n\n///|\ntest \"" +
   test_name +
   "\" {\n" +
   calls +
@@ -102,11 +102,11 @@ fn generate_skia_cluster_fixture(
   input +
   "\n\n///|\nfn " +
   helper_name +
-  "_expected_floor(index : Int, expected : Array[Int]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
+  "_expected_floor(index : Int, expected : Array[Int32]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_ceil(index : Int, expected : Array[Int]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
+  "_expected_ceil(index : Int, expected : Array[Int32]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_nearest(index : Int, expected : Array[Int]) -> Int {\n  let floor = " +
+  "_expected_nearest(index : Int, expected : Array[Int32]) -> Int {\n  let floor = " +
   helper_name +
   "_expected_floor(index, expected)\n  let ceil = " +
   helper_name +
@@ -114,7 +114,7 @@ fn generate_skia_cluster_fixture(
   helper_name +
   "_utf8_offset(text : String, boundary : Int) -> Int {\n  let chars = text.to_array()\n  @utf8.encode(String::from_array(chars[:boundary])[:], bom=false).length()\n}\n\n///|\nfn " +
   helper_name +
-  "(\n  text : String,\n  expected : Array[Int],\n  label : String,\n) -> Unit raise {\n  let actual = [0]\n  let mut cursor = 0\n  for cluster in skia_grapheme_cluster_texts(text) {\n    cursor += cluster.to_array().length()\n    actual.push(cursor)\n  }\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    inspect(actual[index], content=\"\\{expected[index]}\")\n  }\n  let boundaries = @core.TextGraphemeBoundaries::new(text~)\n  let length = text.to_array().length()\n  for index in 0..<(length + 1) {\n    let nearest = " +
+  "(\n  text : String,\n  expected : Array[Int32],\n  label : String,\n) -> Unit raise {\n  let actual = [0]\n  let mut cursor = 0\n  for cluster in skia_grapheme_cluster_texts(text) {\n    cursor += cluster.to_array().length()\n    actual.push(cursor)\n  }\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    inspect(actual[index], content=\"\\{expected[index]}\")\n  }\n  let boundaries = @core.TextGraphemeBoundaries::new(text~)\n  let length = text.to_array().length()\n  for index in 0..<(length + 1) {\n    let nearest = " +
   helper_name +
   "_expected_nearest(index, actual)\n    inspect(boundaries.nearest_boundary(index), content=\"\\{nearest}\")\n    inspect(\n      boundaries.nearest_boundary_utf8_offset(index),\n      content=\"\\{" +
   helper_name +
@@ -142,19 +142,19 @@ fn generate_editing_fixture(
   input +
   "\n\n///|\nfn " +
   helper_name +
-  "_expected_floor(index : Int, expected : Array[Int]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
+  "_expected_floor(index : Int, expected : Array[Int32]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_ceil(index : Int, expected : Array[Int]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
+  "_expected_ceil(index : Int, expected : Array[Int32]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_nearest(index : Int, expected : Array[Int]) -> Int {\n  let floor = " +
+  "_expected_nearest(index : Int, expected : Array[Int32]) -> Int {\n  let floor = " +
   helper_name +
   "_expected_floor(index, expected)\n  let ceil = " +
   helper_name +
   "_expected_ceil(index, expected)\n  if index - floor <= ceil - index {\n    floor\n  } else {\n    ceil\n  }\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_boundary_index(\n  boundary : Int,\n  expected : Array[Int],\n  label : String,\n) -> Int raise {\n  for index in 0..<expected.length() {\n    if expected[index] == boundary {\n      return index\n    }\n  }\n  fail(\"\\{label}: expected nearest boundary \\{boundary} to be in fixture\")\n}\n\n///|\nfn " +
+  "_expected_boundary_index(\n  boundary : Int,\n  expected : Array[Int32],\n  label : String,\n) -> Int raise {\n  for index in 0..<expected.length() {\n    if expected[index] == boundary {\n      return index\n    }\n  }\n  fail(\"\\{label}: expected nearest boundary \\{boundary} to be in fixture\")\n}\n\n///|\nfn " +
   helper_name +
-  "(\n  text : String,\n  expected : Array[Int],\n  expected_utf8_offsets : Array[Int],\n  label : String,\n) -> Unit raise {\n  if expected.length() != expected_utf8_offsets.length() {\n    fail(\"\\{label}: expected boundary and UTF-8 fixture lengths to match\")\n  }\n  let boundaries = TextGraphemeBoundaries::new(text~)\n  let actual = boundaries.boundaries()\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    let boundary = expected[index]\n    inspect(actual[index], content=\"\\{boundary}\")\n    inspect(boundaries.utf8_offset(boundary), content=\"\\{expected_utf8_offsets[index]}\")\n    inspect(boundaries.is_boundary(boundary), content=\"true\")\n  }\n  let length = boundaries.length()\n  for index in 0..<(length + 1) {\n    let floor = " +
+  "(\n  text : String,\n  expected : Array[Int32],\n  expected_utf8_offsets : Array[Int32],\n  label : String,\n) -> Unit raise {\n  if expected.length() != expected_utf8_offsets.length() {\n    fail(\"\\{label}: expected boundary and UTF-8 fixture lengths to match\")\n  }\n  let boundaries = TextGraphemeBoundaries::new(text~)\n  let actual = boundaries.boundaries()\n  if actual.length() != expected.length() {\n    fail(\n      \"\\{label}: expected \\{expected.length()} grapheme boundaries, got \\{actual.length()}\",\n    )\n  }\n  for index in 0..<expected.length() {\n    let boundary = expected[index]\n    inspect(actual[index], content=\"\\{boundary}\")\n    inspect(boundaries.utf8_offset(boundary), content=\"\\{expected_utf8_offsets[index]}\")\n    inspect(boundaries.is_boundary(boundary), content=\"true\")\n  }\n  let length = boundaries.length()\n  for index in 0..<(length + 1) {\n    let floor = " +
   helper_name +
   "_expected_floor(index, expected)\n    let ceil = " +
   helper_name +
@@ -188,11 +188,11 @@ fn generate_layout_fixture(
   input +
   "\n\n///|\nfn " +
   helper_name +
-  "_expected_floor(index : Int, expected : Array[Int]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
+  "_expected_floor(index : Int, expected : Array[Int32]) -> Int {\n  let mut floor = 0\n  for boundary in expected {\n    if boundary > index {\n      return floor\n    }\n    floor = boundary\n  }\n  floor\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_ceil(index : Int, expected : Array[Int]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
+  "_expected_ceil(index : Int, expected : Array[Int32]) -> Int {\n  for boundary in expected {\n    if boundary >= index {\n      return boundary\n    }\n  }\n  match expected.last() {\n    Some(length) => length\n    None => 0\n  }\n}\n\n///|\nfn " +
   helper_name +
-  "_expected_nearest(index : Int, expected : Array[Int]) -> Int {\n  let floor = " +
+  "_expected_nearest(index : Int, expected : Array[Int32]) -> Int {\n  let floor = " +
   helper_name +
   "_expected_floor(index, expected)\n  let ceil = " +
   helper_name +
@@ -200,7 +200,7 @@ fn generate_layout_fixture(
   helper_name +
   "_assert_same_rect(actual : Rect, expected : Rect) -> Unit raise {\n  inspect(actual.origin.x, content=\"\\{expected.origin.x}\")\n  inspect(actual.origin.y, content=\"\\{expected.origin.y}\")\n  inspect(actual.size.width, content=\"\\{expected.size.width}\")\n  inspect(actual.size.height, content=\"\\{expected.size.height}\")\n}\n\n///|\nfn " +
   helper_name +
-  "(\n  text : String,\n  expected : Array[Int],\n  label : String,\n) -> Unit raise {\n  if expected.is_empty() {\n    fail(\"\\{label}: expected at least one grapheme boundary\")\n  }\n  let length = text.to_array().length()\n  let layout = TextSystem::fallback().layout_paragraph(\n    TextLayoutInput::new(\n      text~,\n      font=FontSpec::new(size=16.0, weight=400),\n    ),\n  )\n  assert_true(layout.metadata.selection_rects_available)\n  assert_true(layout.metadata.hit_test_available)\n  inspect(layout.caret_rects.length(), content=\"\\{length + 1}\")\n  for index in 0..<(length + 1) {\n    let nearest = " +
+  "(\n  text : String,\n  expected : Array[Int32],\n  label : String,\n) -> Unit raise {\n  if expected.is_empty() {\n    fail(\"\\{label}: expected at least one grapheme boundary\")\n  }\n  let length = text.to_array().length()\n  let layout = TextSystem::fallback().layout_paragraph(\n    TextLayoutInput::new(\n      text~,\n      font=FontSpec::new(size=16.0, weight=400),\n    ),\n  )\n  assert_true(layout.metadata.selection_rects_available)\n  assert_true(layout.metadata.hit_test_available)\n  inspect(layout.caret_rects.length(), content=\"\\{length + 1}\")\n  for index in 0..<(length + 1) {\n    let nearest = " +
   helper_name +
   "_expected_nearest(index, expected)\n    let expected_caret = layout.caret_rect_at(nearest)\n    " +
   helper_name +

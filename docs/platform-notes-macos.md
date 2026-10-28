@@ -5,8 +5,9 @@ events, services, text-input session synchronization, renderer resize calls, and
 redraw requests. It creates an opaque `HostSurface` with an `NSImageView` CPU
 presenter, opaque native surface/display handles, and a `HostImageSource`. The
 application supplies ordered providers from
-`moui_skia_renderer`, `moui_sun_renderer`, or `moui_wgpu_renderer`; `backend/macos` never imports or
-constructs those renderers.
+`moui_skia_renderer`, `moui_metal_renderer`, `moui_sun_renderer`, or
+`moui_wgpu_renderer`; `backend/macos` never imports or constructs those
+renderers.
 macOS native WebView support uses `WKWebView` as a host platform view attached
 to the window content view. `backend/macos` reports native WebView available
 when the WebKit-backed stub is linked, syncs placements from
@@ -56,8 +57,8 @@ Native WGPU diagnostics can use either the shared Moon Cosmic provider or a plat
 provider. `moui_wgpu_renderer` defaults to the CoreText/CoreGraphics provider
 for runtime measurement and glyph rasterization, explicitly composed with the
 Moon Cosmic provider as fallback; the Objective-C CoreText stub lives in
-`moui_wgpu_renderer/coretext`, while the selectable/composed Cosmic provider lives in
-`moui_wgpu_renderer/cosmic_text`. The CoreText provider consumes the shared native
+`moui_text_providers/coretext`, while the selectable/composed Cosmic provider lives in
+`moui_text_providers/cosmic_text`. The CoreText provider consumes the shared native
 `FontSpec` payload, attempts named families from the structured family stack,
 maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
 fonts, registers app-provided font bytes under their requested family alias when
@@ -102,6 +103,38 @@ dedicated `NSImageView`. macOS Skia options default to the same system `FontMgr`
 text path as the Windows and Linux Skia providers; tester-owned first-frame
 smoke entrypoints explicitly select `EmptyTypeface`. These paths are
 intentionally separate from the experimental `moui_wgpu_renderer` factory;
+
+The experimental **direct host-GPU route** (`moui_metal_renderer`, ADR 0045) is a
+third thing again: it is the only route that links **no Skia and no wgpu**. The
+paragraph above already calls the shipped Skia GPU path "the direct Metal GPU
+provider", so "direct Metal" does not distinguish the two — the phrase that does
+is "no Skia, no wgpu". `backend/macos` still owns the window and creates the
+`CAMetalLayer`; the renderer receives that layer handle through
+`HostSurface::native_surface()`, sets its own device, pixel format and
+pipelines, and presents drawables itself. Text coverage comes from the engine the
+composition root injects:
+
+```moonbit
+@runtime.run_app("MoUI Showcase", runtime)
+  .render(
+    @render_metal.metal(
+      text_engine=@render_metal.native_platform_text_engine(
+        @text_coretext.coretext_text_engine(),
+      ),
+    ),
+  )
+  .backend(@macos.entry())
+  .run()
+```
+
+Its evidence gates are `moon test moui_metal_renderer --target native` (pixel
+assertions through an offscreen Metal pass) and
+`moon run moui_tests/metal_renderer_smoke/macos --target native` (one real
+CoreText glyph run checked as read-back ink coverage), both `platform`-profile
+steps on a macOS host. The route is experimental at its L1 evidence frame:
+rounded-rect fills, strokes, shadows, images, gradients and layer/filter scopes
+are counted as dropped work rather than approximated, and there is no GPU
+recovery path yet.
 Skia is a renderer package, not a host-core `NativeRenderer` variant.
 For local real Skia configuration, direct `moon run`/`moon build` commands use
 the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to

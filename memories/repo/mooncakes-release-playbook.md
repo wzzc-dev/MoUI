@@ -88,3 +88,26 @@ examples/*/README.mbt.md、THIRD_PARTY.md。validate-guidance-consistency
 会按工作区清单核对这些 token(含 README.mbt.md),plans/done 的历史记录
 不改。website/web_wasm/docs 是生成物,改完 docs 跑
 `node scripts/generate-repo-docs.mjs --write` 同步。
+
+## 新增/搬移顶层模块时要登记的枚举位点(2026-10-27 L0.5 实测)
+
+门禁按「显式列出模块名」工作,漏登记不会报错,只会静默失去覆盖。分两类:
+
+- **会响亮失败**:`moon.work` 成员、`checks/release-modules.json` 行、
+  `docs/architecture-map.md` 归属行、消费者 moon.mod pin。
+- **静默失覆盖(必须逐条补)**:`checks/source-file-policy.json` `roots`(否则
+  新目录整体离开行数门)、`tools/moui/validate_maintenance_baseline/scan_scope.mbt`
+  的 `monitored_roots("full")`、`tools/moui/validate_runtime_state_render_ownership/validation.mbt`
+  全局扫描根、`checks/backend-common-ownership.json` `sourceRoots`(注意
+  `rendererModules` 只放渲染器)、
+  `tools/moui/validate_renderer_provider_manifests/main.mbt` 各平台后端禁用清单
+  (它原先靠 `wzzc-dev/moui_wgpu_renderer` 子串命中 provider)、
+  `scripts/external-consumer-ci.mjs` 各 profile 的禁用闭包、
+  `tools/moui/validate_api_surface/main.mbt` 里按路径 key 的 PackageBudget。
+
+反向清单(核实过**不该**加):`compatibility-policy.json` `apiTiers` 全文无读取者
+(repo 内只有自身定义 + 一条 session 记录提到);`backend-common-ownership.json`
+`packageRules.forbiddenImports` 的匹配是「带引号的完整包 token」
+(`validate_backend_common_boundary/validation.mbt:192-194`),所以既命不中子包
+导入,也命不中不存在根包的模块名 —— 加了就是死配置。
+

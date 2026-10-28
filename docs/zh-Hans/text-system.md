@@ -89,26 +89,31 @@ smoke 证据。
 
 ## 原生 WGPU
 
-`moui_wgpu_renderer` 拥有原生 provider 协议、provider 响应验证、fallback 组合、glyph atlas 上传
-和渲染器侧 cache keys。它不依赖独立的 Cosmic provider 包。
+`moui/render/native_text` 拥有中立的原生文本模型：平台引擎实现的 provider 回调束、provider
+响应验证、fallback 链、measure/layout cache 以及其上的 `TextSystem` 构造。`moui_wgpu_renderer`
+只保留渲染器专有部分——glyph atlas 上传、text vertex 构建和 WGSL shader——并重新导出模型类型，
+让宿主入口仍能通过自己组合的 renderer 命名 text engine。两者都不依赖独立的 Cosmic provider 包。
 
-Provider 包刻意保持分离：
+Provider 包刻意保持分离，并且住在独立的 `wzzc-dev/moui_text_providers` 模块里而不是某个
+renderer 模块内部，这样任何 renderer 都能注入一个 provider 而不必导入另一个 renderer：
 
-- `moui_wgpu_renderer/cosmic_text/`：Moon Cosmic provider，由选择 `MoonCosmic` 的示例直接使用，
+- `moui/render/native_text/`：所有 provider 与 renderer 共享的模型——`NativePlatformTextProvider`、
+  `NativeTextEngine`、`NativeTextCache`、`NativeTextLayout`、`NativeRasterGlyph`、`NativeGlyphKey`。
+- `moui_text_providers/cosmic_text/`：Moon Cosmic provider，由选择 `MoonCosmic` 的示例直接使用，
   也作为平台默认值的 fallback provider。
-- `moui_wgpu_renderer/coretext/`：macOS CoreText/CoreGraphics provider。macOS 默认使用该 provider
+- `moui_text_providers/coretext/`：macOS CoreText/CoreGraphics provider。macOS 默认使用该 provider
   与 Cosmic fallback 组合。
-- `moui_wgpu_renderer/directwrite/`：Windows DirectWrite scaffold。在真实 DirectWrite 引擎返回平台布局
+- `moui_text_providers/directwrite/`：Windows DirectWrite scaffold。在真实 DirectWrite 引擎返回平台布局
   和栅格数据之前，Windows 默认使用该 scaffold 与 Cosmic fallback 组合。
-- `moui_wgpu_renderer/fontconfig/`：Linux fontconfig/FreeType provider 边界。Linux 默认使用该 provider
+- `moui_text_providers/fontconfig/`：Linux fontconfig/FreeType provider 边界。Linux 默认使用该 provider
   与 Cosmic fallback 组合。当 FreeType 和字体可用时，该 provider 可以为显式 emoji family run
   返回来自 Noto Color Emoji 的原生彩色 emoji glyph；更广泛的 shaping、测量和非 emoji 栅格数据
   在完整 fontconfig/HarfBuzz 路径实现前仍回退到 Cosmic。
-- `moui_wgpu_renderer/text_protocol/`：用于 UTF-32 输入、版本化 `FontSpec` 编码、measure/run/raster
+- `moui_text_providers/text_protocol/`：用于 UTF-32 输入、版本化 `FontSpec` 编码、measure/run/raster
   信封和嵌入字体注册载荷的共享 native-stub 载荷协议。
 
 原生 WGPU 文本引擎选择属于 WGPU renderer provider，而不属于平台 host cores。入口调用
-`@wgpu_renderer.native(text_engine=...)` 并与平台 `entry()` 组合。平台默认引擎将原生 provider 与 Cosmic fallback
+`@wgpu_renderer.native(text_engine=...)` 或 `@metal_renderer.metal(text_engine=...)`，并与平台 `entry()` 组合。直连 GPU renderer 正是这次解耦的度量收益：它在依赖里既没有 text provider 也不导入任何其它 renderer 模块，却能画出一段 CoreText glyph run。平台默认引擎将原生 provider 与 Cosmic fallback
 组合；`MoonCosmic` 直接选择 Cosmic provider。Showcase 也有显式的 `macos_wgpu`、
 `windows_wgpu` 和 `linux_wgpu` 入口，用于比较这些路径。单独的 Showcase `*_skia` 入口选择 `moui_skia_renderer` provider，而不是 WGPU 文本 provider 变体。
 默认情况下，Skia 基本文本测量和绘制会通过 `moui_skia` 的 `FontMgr` 和 `Font`
@@ -328,6 +333,17 @@ shaped-run 与 fallback caret 稳定化，系统 FontMgr-only emoji 字体重试
 fallback-safe descriptor 资源计划。原生诊断一致性还把 Skia 文本系统注入文本字段运行时，以验证
 composition caret 几何和选择高亮绘制。
 
+**直连 GPU（Metal）文本状态**
+
+直连 GPU 路线自己持有 glyph atlas，因为 P14 禁止一个渲染器 import 另一个渲染器。注入的 engine 负责 rasterize
+coverage，`moui_metal_renderer/metal_text.mbt` 把它 shelf-pack 进 1024x1024 的 RGBA8 分页；item 里原本
+命名纹理的那个 word 现在命名要绑定的那一页，所以一个装不进单页的 run 会拆成每页一次 draw，而顶点格式和 text
+shader 都不感知分页。page 0 在构造时就存在，之后的页只由真正需要它的帧分配，上限 4 页；超过上限后整个 atlas
+会清空并重建该帧一次，这正是一篇比 atlas 更长的文档能继续滚动、而不是永久丢字的原因。上限是实测的：通过真实
+CoreText provider 在 14pt、device scale 2.0 下每页约 818 个不同汉字，1600 个不同汉字的帧生成 2 个 text item
+且 dropped 为 0，而同一帧钉成 1 页时会丢 782 个。彩色 glyph 保留自己的像素，因为非 coverage 的 placement 会拿到
+白色顶点颜色，run 颜色无法把它重新染掉；证据与仍未覆盖的部分见能力报告的 `EmojiText` 行。
+
 **平台文本 Provider 状态**
 
 Linux 原生 Skia 是 Preview Ready 的文本/渲染路线，并继续使用上文描述的 Skia 文本系统。Linux 原生 WGPU
@@ -356,7 +372,7 @@ Web 可以暴露浏览器 emoji 和字体 fallback 行为，而稳定 Web adapte
 
 文本一致性分为两层：
 
-- 稳定测试在普通包检查内运行，覆盖 `core`、`moui_wgpu_renderer`、`moui_wgpu_renderer/cosmic_text`、
+- 稳定测试在普通包检查内运行，覆盖 `core`、`moui_wgpu_renderer`、`moui_text_providers/cosmic_text`、
   `moui_web_renderer` 和 `backend/web`。
 - 诊断矩阵测试位于 `moui_tests/text_conformance/` 下，并且是 opt-in。它们会在当前宿主确实能覆盖时，
   比较 core fallback、Cosmic、platform-default 组合 fallback、malformed-provider fallback 和 Web 文本系统。
@@ -369,7 +385,7 @@ sh scripts/check.sh --profile full
 moon test moui_tests/text_conformance/native --target native
 moon test moui/core --target native
 moon test moui_wgpu_renderer --target native
-moon test moui_wgpu_renderer/cosmic_text --target native
+moon test moui_text_providers/cosmic_text --target native
 moon test moui_skia_renderer --target native
 moon test moui_web_renderer --target wasm-gc
 moon test moui/backend/web --target wasm-gc

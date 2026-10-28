@@ -64,6 +64,11 @@ moui_skia_renderer  moui_wgpu_renderer  moui_sun_renderer  moui_web_renderer  mo
                                                         fallback        (ANSI bytes)
 ```
 
+The direct-GPU route (`moui_metal_renderer`, ADR 0045) binds the same
+`RendererProvider` contract to the host `CAMetalLayer` and links no second-party
+graphics library; it is not drawn above because it adds no dependency edge — its
+only non-`moui` imports are Apple frameworks.
+
 Composition: an executable entrypoint builds an `AppBuilder` with
 `@runtime.run_app`, supplies ordered `RendererProvider` values with
 `.render`/`.render_all`, supplies a platform `PlatformEntry` with `.backend`,
@@ -154,7 +159,8 @@ renderers consume `DrawCommand` only.
 | Web host backend | `moui/backend/web` |
 | Opaque HostSurface/NativeSurface + RendererProvider/RendererSession/image protocols | `moui/render` |
 | Provider selection, fallback, workers, image lifecycle, shared drawing algorithms | `moui/render/common` |
-| Renderer implementations, providers, and platform policies | `moui_{skia,wgpu,sun,web,tui}_renderer` (`moui_web_renderer/canvas2d` for Canvas2D) |
+| Renderer implementations, providers, and platform policies | `moui_{skia,wgpu,metal,sun,web,tui}_renderer` (`moui_web_renderer/canvas2d` for Canvas2D) |
+| Renderer-neutral native text providers and their shared payload protocol | `moui_text_providers` (`coretext`, `directwrite`, `fontconfig`, `cosmic_text`, `text_protocol`) |
 | Cell buffer underneath the ANSI path (damage/revision, CJK double width) | `moui_tui` |
 | TTY raw mode, SGR mouse modes, input decode, cell→logical geometry, explicit `tui-ansi` composition | `moui_terminal_host` (experimental) |
 | Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
@@ -172,6 +178,7 @@ renderers consume `DrawCommand` only.
 |---|---|
 | Native Skia | **Mainline** |
 | Native WGPU | **Experimental** (engineering gate: `diagnostic` — runnable and testable, no product commitment) |
+| Native direct GPU (`moui_metal_renderer`) | **Experimental** (ADR 0045) — the no-Skia, no-wgpu route. All 26 `DrawCommand` variants carry a draw arm (a new variant is a compile error here, not a silent gap): rects, rounded rects and strokes, gradient brushes, shadows, tessellated paths, glyph runs through the injected platform text engine, decoded images with the async request/completion lifecycle, and layer, filter, retained-layer and shader-effect scopes. Text fidelity, Overlay blending, Gaussian-quality blur and retained-layer caching stay `Partial` in the capability report. No product commitment, not on default composition roots |
 | Sun CPU raster (`moui_sun_renderer` + `moui_sun`) | **Experimental** (ADR 0023) — no product commitment, not on default composition roots, capability freeze by default |
 | Terminal cell ANSI (`moui_tui_renderer` + `moui_tui` + `moui_terminal_host`) | **Experimental** (`ready=false`) — no pixel claim; semantics-only projection, non-projectable controls degrade to named placeholders; interaction proof is the PTY smoke gate, not a host-window route |
 | Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |

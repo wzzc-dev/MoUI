@@ -37,6 +37,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui_skia_renderer/` | 基于 `moui_skia` 的 Native Skia renderer facade。 |
 | `moui_web_renderer/` | `wasm-gc` 的 Browser WebGPU host-import adapter。 |
 | `moui_wgpu_renderer/` | 实验性 native WGPU renderer 和 native text providers。 |
+| `moui_metal_renderer/` | 实验性直连宿主 GPU renderer：直接画在平台后端自己创建的 `CAMetalLayer` 上，链接里既没有 Skia 也没有 wgpu（ADR 0044、ADR 0045）。文字覆盖由组合根注入的引擎提供，因此本模块不依赖任何 text provider。 |
 | `moui_sun_renderer/` | 实验性 Sun CPU raster renderer，基于仓库内 `moui_sun` workspace（ADR 0023：默认能力冻结，不在默认组合根）。 |
 | `moui_sun/` | 实验性 MoonBit 原生 CPU raster graphics/text/softbuffer workspace（ADR 0023）。 |
 | `moui_richtext/` | 富编辑应用使用的 Markdown/rich-text document、editor、command、input、paste、table 和 source-mapping 逻辑。 |
@@ -213,14 +214,16 @@ moui/backend/ios/             iOS 嵌入运行时后端，基于共享 host/runt
 moui/backend/harmonyos/       HarmonyOS 嵌入运行时后端，基于共享 host/runtime contracts
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
+moui/render/common/           provider selection, fallback, workers, image lifecycle, shared draw helpers
+moui/render/native_text/      neutral native text provider protocol, glyph/layout/raster model, measure/layout cache
 moui_skia_renderer/             native Skia raster renderer facade over moui_skia
 moui_web_renderer/   browser WebGPU host-import renderer for wasm-gc
 moui_wgpu_renderer/             experimental native wgpu renderer
-moui_wgpu_renderer/cosmic_text/ Moon Cosmic provider for native wgpu text
-moui_wgpu_renderer/coretext/    macOS CoreText provider for native wgpu text
-moui_wgpu_renderer/text_protocol/ shared native measure/run/raster/register bytes protocol
-moui_wgpu_renderer/directwrite/ Windows DirectWrite provider scaffold
-moui_wgpu_renderer/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
+moui_text_providers/cosmic_text/  Moon Cosmic provider for renderer-neutral native text
+moui_text_providers/coretext/     macOS CoreText provider for renderer-neutral native text
+moui_text_providers/text_protocol/ shared native measure/run/raster/register bytes protocol
+moui_text_providers/directwrite/  Windows DirectWrite provider scaffold
+moui_text_providers/fontconfig/   Linux fontconfig/HarfBuzz/FreeType provider scaffold
 moui_tests/tooling/           quickcheck and pixelmatch integration tests
 moui_tests/text_conformance/  opt-in native/Web text diagnostic matrix
 moui_tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke

@@ -54,7 +54,8 @@ thin wiring only                   ▼
 | 原生宿主后端 | `moui/backend/{macos,windows,linux}` |
 | 嵌入运行时后端 | `moui/backend/{android,ios,harmonyos}` |
 | 中立宿主 surface/presenter | `moui/backend/<platform>` |
-| Renderer factory 与实现 | `moui/render/{skia,wgpu,sun,canvas2d,webgpu_adapter}` |
+| Renderer factory 与实现 | `moui_{skia,wgpu,metal,sun,web,tui}_renderer`（Canvas2D 在 `moui_web_renderer/canvas2d`） |
+| 渲染器中立的原生文本 provider 与共享载荷协议 | `moui_text_providers`（`coretext`、`directwrite`、`fontconfig`、`cosmic_text`、`text_protocol`） |
 | 应用组合 | `@runtime.run_app(...)` 后调用 `.render(...)` 或 `.render_all(...)`，再调用 `.backend(...).run()` |
 | Skia FFI / native capability | `moui_skia` |
 | 嵌入运行时模板与事件循环 | `wzzc-dev/window/{android,ios,harmonyos}` |
@@ -69,6 +70,7 @@ thin wiring only                   ▼
 |---|---|
 | Native Skia | **主线** |
 | Native WGPU | **实验性**（工程门禁：`diagnostic` — 可运行、可测试，无产品承诺） |
+| 原生直连 GPU（`moui_metal_renderer`） | **实验性**（ADR 0045）— 不链接 Skia、不链接 wgpu 的路线。26 个 `DrawCommand` 变体全部有绘制分支（新增变体在此是编译错误，不是静默漏绘）：矩形、圆角矩形与描边、渐变 brush、阴影、剖分路径、经组合根注入引擎的 glyph run、带异步请求/完成生命周期的解码图像，以及 layer、filter、retained-layer 与 shader-effect 作用域。文本保真度、Overlay 混合、高斯质量 blur 与 retained-layer 缓存在能力报告中仍为 `Partial`。无产品承诺，不在默认组合根 |
 | Web `wasm-gc` + browser WebGPU imports | Web 主路径 |
 | 嵌入运行时后端路线 | `experimental` — 代码路径可编译；无匹配设备证据前不做可用性/产品承诺 |
 | Product `auto` renderer | 宿主 GPU surface 存在时优先 `SkiaGpuNative`；`SkiaRasterNative` 用于显式选择/恢复 |
