@@ -74,6 +74,7 @@ fn skipped_scan_directory(name : String) -> Bool {
   name == "node_modules" ||
   name == "output" ||
   name == ".kilo" ||
+  name == ".dsh" ||
   name == "window"
 }
 
