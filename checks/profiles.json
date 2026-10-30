@@ -810,6 +810,13 @@
           ]
         },
         {
+          "name": "Web runtime path-mesh bridge tests",
+          "argv": [
+            "node",
+            "scripts/test-webgpu-runtime-path-mesh.mjs"
+          ]
+        },
+        {
           "name": "Web browser route history tests",
           "argv": [
             "node",

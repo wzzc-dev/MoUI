@@ -392,8 +392,12 @@ errors into the page log so browser presentation observation fails on shader or
 pipeline validation errors instead of silently relying on a nonblank screenshot.
 Arbitrary paths share the same MoonBit tessellation contract as native. The
 wasm-gc adapter serializes the tessellated `DrawPath` mesh into a compact host
-payload, and the browser runtime submits those vertices through the WebGPU
-visual pipeline with the active transform, opacity, and clip state. Skipped
+payload once per distinct geometry, keeps the resulting host mesh behind a
+handle keyed by path structure, and replays it with a single scalar call while
+the browser runtime submits those vertices through the WebGPU visual pipeline
+with the active transform, opacity, and clip state. Repainting unchanged
+geometry therefore no longer re-crosses the wasm-gc boundary, which has no
+shared linear memory and transfers one import call per code point. Skipped
 advanced commands are retained in the renderer's last fallback plan for
 diagnostics when scopes are unbalanced, left open, or known modeled commands
 are not visibly executed yet. Emoji and complex text shaping rely on browser

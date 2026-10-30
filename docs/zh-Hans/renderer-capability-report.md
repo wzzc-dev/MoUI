@@ -323,9 +323,11 @@ explicit-LOD texture sampling，因此 Chrome 的 WGSL validator 会接受 comma
 input 变化的 filter 和 overlay paths；browser runtime 会将 WebGPU uncaptured/device-lost errors
 转发到 page log，使 browser presentation observation 在 shader 或 pipeline validation errors
 时失败，而不是静默依赖 nonblank screenshot。Arbitrary paths 与 native 共享同一个 MoonBit
-tessellation contract。wasm-gc adapter 将 tessellated `DrawPath` mesh 序列化成 compact host
-payload，browser runtime 通过 WebGPU visual pipeline 按 active transform、opacity 和 clip state
-提交这些 vertices。当 scopes unbalanced、left open，或已建模命令尚未可见执行时，skipped advanced
+tessellation contract。wasm-gc adapter 只在 geometry 变化时把 tessellated `DrawPath` mesh
+序列化成 compact host payload 上传一次，之后用按 path 结构为 key 的 host handle 以单次
+scalar call 重放；browser runtime 通过 WebGPU visual pipeline 按 active transform、opacity
+和 clip state 提交这些 vertices。重绘未变化的几何因此不再反复穿越 wasm-gc 边界——该边界
+没有 shared linear memory，每个 code point 都要一次 import call。当 scopes unbalanced、left open，或已建模命令尚未可见执行时，skipped advanced
 commands 会保留在 renderer 的 last fallback plan 中用于 diagnostics。Emoji 和 complex text shaping
 依赖 browser font behavior；diagnostic conformance 覆盖 representative emoji samples 的
 measurement 和 caret invariants，但不会让 browser rasterization 或 provider shaping 变成 deterministic。
