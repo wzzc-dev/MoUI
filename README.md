@@ -39,7 +39,7 @@ The current mainline is native Skia raster plus the Web `wasm-gc + window/web + 
 | Linux | **committed** | Product mainline (L0–L3 evidence) |
 | Android | **experimental** | Window-hosted path compiles; no usability/product commitment yet |
 | iOS | **experimental** | Same as Android |
-| HarmonyOS | **experimental** | Same; signed-device full smoke still open |
+| HarmonyOS | **committed** | Matching-device verified: `egl-direct` Skia present, pointer, keyboard/IME, resize, app viewport, clipboard read + write, ArkUI accessibility, detach/recreate, async image (ADR 0046) |
 
 Mobile is **not** "unwired glue only," and it is **not** product-committed. It is **experimental**: code compiles and host-sim tests pass, but no development/demonstration usability or product commitment is made without matching-device evidence. See [platform readiness declaration](docs/platform-readiness-declaration.md).
 

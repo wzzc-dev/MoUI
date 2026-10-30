@@ -161,7 +161,7 @@ fn create_skia_gpu_host_renderer(
       ),
     )
   }
-  let gpu_target = HostGpuPresentTarget::new(
+  let gpu_target = HostGpuPresentTarget::new_with_resize(
     description="Skia direct host GPU presenter",
     create_window_surface=(context, next_metrics) => {
       native_surface.resize(next_metrics)
@@ -169,6 +169,16 @@ fn create_skia_gpu_host_renderer(
         Some(context) =>
           skia_gpu_window_surface(
             context, platform, native_surface, next_metrics,
+          )
+        None => None
+      }
+    },
+    resize_window_surface=(context, surface, next_metrics) => {
+      native_surface.resize(next_metrics)
+      match context {
+        Some(context) =>
+          skia_gpu_resize_window_surface(
+            surface, context, platform, native_surface, next_metrics,
           )
         None => None
       }
@@ -444,6 +454,42 @@ fn skia_gpu_window_surface(
         native_surface.surface_handle(),
         surface,
       )
+  }
+}
+
+///|
+/// Live-resize counterpart of `skia_gpu_window_surface`. Backends whose
+/// drawable belongs to the native window (EGL on HarmonyOS) must re-wrap the
+/// existing surface; creating a second EGLSurface for the same native window
+/// leaves the previous one alive and makes the present fail, which drops the
+/// renderer to the CPU presenter and leaves stale pixels behind on resize.
+///
+/// Per-drawable backends (Metal, Direct3D, Vulkan) fall back to recreating the
+/// window surface, which is their existing correct behaviour.
+fn skia_gpu_resize_window_surface(
+  surface : @skia_native.Surface,
+  context : @skia_native.GpuContext,
+  platform : NativeGpuPlatform,
+  native_surface : @render.NativeSurface,
+  metrics : @core.SurfaceMetrics,
+) -> @skia_native.Surface? {
+  match platform {
+    HarmonyOS => {
+      let width = metrics.physical_size.width
+      let height = metrics.physical_size.height
+      if width <= 0.0 || height <= 0.0 {
+        None
+      } else {
+        @skia_native.Surface::egl_resize_window(
+          surface,
+          context,
+          native_surface.surface_handle(),
+          width=width.ceil().to_int(),
+          height=height.ceil().to_int(),
+        )
+      }
+    }
+    _ => skia_gpu_window_surface(context, platform, native_surface, metrics)
   }
 }
 

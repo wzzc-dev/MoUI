@@ -78,6 +78,15 @@ pub extend SkiaPresentKind with ToJson::{to_json}
 pub struct HostGpuPresentTarget {
   priv description : String
   priv create_window_surface : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?
+  // Live-resize hook. Backends whose drawable is tied to the native window
+  // (EGL/OHOS) must re-wrap the existing surface instead of creating a second
+  // one for the same window; the default recreates via
+  // `create_window_surface`, which is correct for per-drawable backends.
+  priv resize_window_surface : (
+    @skia_native.GpuContext?,
+    @skia_native.Surface,
+    @core.SurfaceMetrics,
+  ) -> @skia_native.Surface?
   priv present_gpu : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome
 }
 
@@ -119,7 +128,37 @@ pub fn HostGpuPresentTarget::new(
   create_window_surface~ : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?,
   present_gpu~ : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome,
 ) -> HostGpuPresentTarget {
-  { description, create_window_surface, present_gpu, }
+  // Default live-resize behaviour: per-drawable backends (Metal, Direct3D,
+  // Vulkan) rebuild the window surface at the new size.
+  {
+    description,
+    create_window_surface,
+    resize_window_surface: (context, _surface, metrics) => {
+      create_window_surface(context, metrics)
+    },
+    present_gpu,
+  }
+}
+
+///|
+/// Constructor for backends whose drawable belongs to the native window and
+/// therefore cannot be recreated on a live resize (EGL on HarmonyOS).
+/// `resize_window_surface` receives the current surface so it can re-wrap the
+/// existing native backing at the new size instead of creating a duplicate.
+///
+/// Package-private: only this renderer's binding factory needs the resize hook,
+/// and `pkg.generated.mbti` has a line/declaration budget.
+fn HostGpuPresentTarget::new_with_resize(
+  description~ : String,
+  create_window_surface~ : (@skia_native.GpuContext?, @core.SurfaceMetrics) -> @skia_native.Surface?,
+  resize_window_surface~ : (
+    @skia_native.GpuContext?,
+    @skia_native.Surface,
+    @core.SurfaceMetrics,
+  ) -> @skia_native.Surface?,
+  present_gpu~ : (@skia_native.GpuContext?, @skia_native.Surface) -> HostGpuPresentOutcome,
+) -> HostGpuPresentTarget {
+  { description, create_window_surface, resize_window_surface, present_gpu, }
 }
 
 ///|
@@ -551,14 +590,16 @@ pub fn SkiaRasterRenderer::resize(
   self.surface = match self.gpu_target {
     Some(gpu_target) =>
       if self.gpu_surface_attached {
-        match (gpu_target.create_window_surface)(self.gpu_context, metrics) {
+        let resized = (gpu_target.resize_window_surface)(
+          self.gpu_context,
+          self.surface,
+          metrics,
+        )
+        match resized {
           Some(surface) => surface
           // Keep the current surface when the host cannot produce a resized
-          // window surface (Direct3D allows only one flip-model swap chain
-          // per HWND, so live resizes converge through the present path's
-          // ResizeBuffers instead of a recreated swap chain). Mark the
-          // attachment stale so the next frame retries acquisition instead of
-          // rendering into the old-size or already-presented drawable.
+          // window surface. Mark the attachment stale so the next frame retries
+          // acquisition instead of rendering into the old-size drawable.
           None => {
             self.gpu_surface_attached = false
             self.surface

@@ -217,19 +217,24 @@ pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities {
 }
 
 ///|
+/// Host availability for the window-hosted HarmonyOS path.
+///
+/// Matching-device evidence covers every R6 capability: pixels, input,
+/// detach/recreate, IME, clipboard read and write, accessibility, and async
+/// image. `next_steps` keeps the operational notes that are not gaps, plus the
+/// one platform constraint worth knowing (pasteboard read requires the ArkTS
+/// PasteButton security control). See
+/// `checks/platforms/harmonyos.json` `runtimeL3.evidence` for the log lines.
 pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness {
   {
-    ready: false,
-    status: "experimental",
-    blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without signed-device evidence",
-      "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
-      "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
-    ],
+    ready: true,
+    status: "passed",
+    blocked_by: [],
     next_steps: [
-      "configure MOUI_HARMONYOS_SIGNING_CONFIG and record a full matching-device smoke",
-      "promote checks/platforms/harmonyos.json runtimeL3 only after --require-passed evidence",
-      "land GPU seven-gate claim only after matching-device promotion manifests pass",
+      "keep the matching-device Showcase evidence current for pixels, pointer, keyboard/IME, resize, clipboard read/write, accessibility, detach/recreate and async image",
+      "clipboard read depends on the ArkTS PasteButton security control: a direct OH_Pasteboard_GetData call returns ERR_PERMISSION_ERROR (201) for a normal-level HAP because ohos.permission.READ_PASTEBOARD is system_basic + user_grant",
+      "accessibility answers ArkUI provider callbacks from the runtime semantics snapshot; focus-move order currently follows the published node order",
+      "land the GPU seven-gate claim only after matching-device promotion manifests pass",
     ],
   }
 }
@@ -272,7 +277,44 @@ pub fn harmonyos_capability_summary(
 }
 
 ///|
-/// The embedded host channel does not yet expose an app-facing service bridge.
+/// App-facing environment for the window-hosted HarmonyOS path.
+///
+/// The clipboard is answered synchronously from the native pasteboard
+/// (`harmonyos_clipboard.mbt` -> OH_Pasteboard) rather than through the
+/// embedded request queue: `EmbeddedHostServices` only enqueues Clipboard
+/// requests for a shell to drain, and the HarmonyOS template has no drainer, so
+/// a queued request would never complete.
 pub fn app_environment() -> @services.AppEnvironment {
-  @services.AppEnvironment::new()
+  let clipboard = @services.ClipboardServices::new(
+    read_text=() => {
+      match harmonyos_clipboard_read_text() {
+        Some(text) =>
+          @services.ServiceTask::succeed(
+            key="harmonyos:clipboard:read-text",
+            value=text,
+          )
+        None =>
+          @services.ServiceTask::fail(
+            key="harmonyos:clipboard:read-text",
+            error=@services.ServiceError::unavailable(
+              "clipboard does not contain text",
+            ),
+          )
+      }
+    },
+    write_text=text => {
+      if harmonyos_clipboard_write_text(text) {
+        @services.ServiceTask::succeed(
+          key="harmonyos:clipboard:write-text",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="harmonyos:clipboard:write-text",
+          error=@services.ServiceError::unavailable("clipboard write failed"),
+        )
+      }
+    },
+  )
+  @services.AppEnvironment::new(services=@services.AppServices::new(clipboard~))
 }

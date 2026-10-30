@@ -103,6 +103,9 @@ pub fn HostedRuntimeSession::create(
   metrics~ : @core.SurfaceMetrics,
   binding~ : HostSurfaceBinding,
   surface_generation~ : Int32,
+  service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
+    None
+  },
 ) -> HostedRuntimeSession? {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
@@ -112,6 +115,7 @@ pub fn HostedRuntimeSession::create(
         renderer~,
         metrics~,
         surface_generation~,
+        service_handler~,
       )
       (binding.sync)(raw_handle, metrics)
       Some({ raw_handle, core, })
@@ -207,6 +211,37 @@ pub fn HostedRuntimeSession::resize(
   metrics : @core.SurfaceMetrics,
 ) -> @host.EventResult {
   self.core.resize(metrics)
+}
+
+///|
+pub fn HostedRuntimeSession::keyboard_command_intent(
+  self : HostedRuntimeSession,
+  event : @core.KeyboardEvent,
+) -> @core.CommandIntent? {
+  self.core.keyboard_command_intent(event)
+}
+
+///|
+pub fn HostedRuntimeSession::drain_pending_service_requests(
+  self : HostedRuntimeSession,
+) -> Array[@host.HostPendingServiceRequest] {
+  self.core.drain_pending_service_requests()
+}
+
+///|
+pub fn HostedRuntimeSession::complete_service_request(
+  self : HostedRuntimeSession,
+  id : @host.HostServiceRequestId,
+  response : @host.HostServiceResponse,
+) -> Bool {
+  self.core.complete_service_request(id, response)
+}
+
+///|
+pub fn HostedRuntimeSession::image_resource_records(
+  self : HostedRuntimeSession,
+) -> Array[@render.ImageResourceRecord] {
+  self.core.image_resource_records()
 }
 
 ///|
@@ -311,12 +346,18 @@ pub struct HostedWindowBackend {
   runtime_factory : (@core.SurfaceMetrics) -> @runtime.AppRuntime
   surface_binding_factory : () -> HostSurfaceBinding
   ime_sync : ((@runtime.AppRuntime?) -> Unit)?
+  /// Platform clipboard answer for synchronous host service requests.
+  service_handler : (@host.HostServiceRequest) -> @host.HostServiceResponse?
+  /// Monotonic milliseconds for frame timing. The runtime advances its animation
+  /// clock from this on every presented frame; without it every animation stays
+  /// latched in flight (a wheel settle never ends).
+  clock_ms : () -> Double
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
   mut session : HostedRuntimeSession?
   lifecycle : @window_lifecycle.EmbeddedLifecycle
   mut last_pointer : @core.Point
-  modifiers : @core.KeyModifiers
+  mut modifiers : @core.KeyModifiers
   mut frames_presented : Int32
   auto_exit_after_frames : Int32?
 }
@@ -327,6 +368,10 @@ pub fn HostedWindowBackend::new(
   runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
   surface_binding_factory~ : () -> HostSurfaceBinding,
   ime_sync~ : ((@runtime.AppRuntime?) -> Unit)? = None,
+  service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
+    None
+  },
+  clock_ms~ : () -> Double = () => 0.0,
   auto_exit_after_frames~ : Int32? = None,
 ) -> HostedWindowBackend {
   {
@@ -334,6 +379,8 @@ pub fn HostedWindowBackend::new(
     runtime_factory,
     surface_binding_factory,
     ime_sync,
+    service_handler,
+    clock_ms,
     window: None,
     runtime: None,
     session: None,
@@ -377,6 +424,129 @@ pub fn HostedWindowBackend::session_attached(
 ///|
 pub fn HostedWindowBackend::has_session(self : HostedWindowBackend) -> Bool {
   self.session is Some(_)
+}
+
+///|
+/// Runs `f` against the live session. Used by platform backends that need to
+/// reach the runtime for host-driven work (accessibility publishing) without
+/// exposing the session field itself.
+pub fn[T] HostedWindowBackend::with_session(
+  self : HostedWindowBackend,
+  f : (HostedRuntimeSession) -> T,
+  default~ : T,
+) -> T {
+  match self.session {
+    Some(session) => f(session)
+    None => default
+  }
+}
+
+///|
+/// Reads the current semantics for accessibility publishing, or `None` when no
+/// session is attached.
+pub fn HostedWindowBackend::read_semantics(
+  self : HostedWindowBackend,
+) -> @runtime.SemanticsRead? {
+  match self.session {
+    Some(session) =>
+      match session.runtime().read_semantics() {
+        Ok(read) => Some(read)
+        Err(_) => None
+      }
+    None => None
+  }
+}
+
+///|
+/// Current modifier state tracked from `ModifiersChanged`.
+pub fn HostedWindowBackend::modifiers(
+  self : HostedWindowBackend,
+) -> @core.KeyModifiers {
+  self.modifiers
+}
+
+///|
+/// Whether a text control currently owns focus. Clipboard shortcuts need a
+/// target; without one the runtime answers `ignored()` and nothing happens.
+pub fn HostedWindowBackend::has_focused_text_input(
+  self : HostedWindowBackend,
+) -> Bool {
+  match self.session {
+    Some(session) => session.runtime().focused_text_input().focused
+    None => false
+  }
+}
+
+///|
+/// The clipboard command a platform key event maps to, or `None`. Platform
+/// diagnostics use this before dispatch; decoding happens here so callers do not
+/// need the shared input package.
+pub fn HostedWindowBackend::keyboard_command_intent_event(
+  self : HostedWindowBackend,
+  event : @window_core.KeyEvent,
+) -> @core.CommandIntent? {
+  match self.session {
+    Some(session) =>
+      session.keyboard_command_intent(
+        @window_input.keyboard_event_to_core(event, self.modifiers),
+      )
+    None => None
+  }
+}
+
+///|
+/// Pending clipboard / platform-channel service requests from the attached
+/// session. A platform with its own clipboard implementation drains these and
+/// answers them, which is what makes Ctrl+C / Ctrl+V work on the embedded path.
+pub fn HostedWindowBackend::drain_pending_service_requests(
+  self : HostedWindowBackend,
+) -> Array[@host.HostPendingServiceRequest] {
+  match self.session {
+    Some(session) => session.drain_pending_service_requests()
+    None => []
+  }
+}
+
+///|
+/// Completes one pending service request with a platform answer.
+pub fn HostedWindowBackend::complete_service_request(
+  self : HostedWindowBackend,
+  id : @host.HostServiceRequestId,
+  response : @host.HostServiceResponse,
+) -> Bool {
+  match self.session {
+    Some(session) => session.complete_service_request(id, response)
+    None => false
+  }
+}
+
+///|
+/// Image resource records for the attached renderer. Empty when no session is
+/// attached.
+pub fn HostedWindowBackend::image_resource_records(
+  self : HostedWindowBackend,
+) -> Array[@render.ImageResourceRecord] {
+  match self.session {
+    Some(session) => session.image_resource_records()
+    None => []
+  }
+}
+
+///|
+/// Dispatches a semantics action coming from the platform accessibility bridge.
+/// Returns whether the runtime accepted it.
+pub fn HostedWindowBackend::perform_semantics_action(
+  self : HostedWindowBackend,
+  request : @runtime.PerformSemanticsActionRequest,
+) -> Bool {
+  match self.session {
+    Some(session) =>
+      match session.runtime().perform_semantics_action(request) {
+        Ok(_) => true
+        Err(_) => false
+      }
+    None => false
+  }
 }
 
 ///|
@@ -442,6 +612,7 @@ pub fn HostedWindowBackend::attach_session(
           metrics~,
           binding~,
           surface_generation~,
+          service_handler=self.service_handler,
         ) {
         Some(session) => {
           self.session = Some(session)
@@ -519,9 +690,36 @@ pub fn HostedWindowBackend::dispatch_host_event(
     RedrawRequested =>
       match self.session {
         Some(session) => {
+          // Advance the animation clock before rendering. Paint reads
+          // `environment.now_ms`, and a settle that never sees the clock move
+          // stays latched: the surface crawls a few pixels then freezes until the
+          // next event. Hosts that supply no clock keep the previous behaviour.
+          let now = (self.clock_ms)()
+          if now > 0.0 {
+            session.advance_time(now)
+          }
           let result = session.render_frame()
           if result.presented {
             self.frames_presented = self.frames_presented + 1
+          }
+          // Keep the animation clock moving. A control that reported
+          // `animating` asked for another frame from inside the paint (through
+          // `redraw_callback` -> transport), but that request only becomes a
+          // window redraw when something pumps it — and between input events
+          // nothing does. Without this the surface advances exactly one frame per
+          // input event, which is the "stutters, then jumps" motion.
+          //
+          // The request is made even when this frame could not be submitted
+          // (`result.queued` with `pending`): the previous frame is still in
+          // flight, and dropping the follow-up there is what produced a visible
+          // gap between animation steps.
+          if session.redraw_requested() ||
+            session.take_redraw_requested() ||
+            result.queued {
+            match self.window {
+              Some(window) => (window.request_redraw)()
+              None => ()
+            }
           }
         }
         None => ()
@@ -540,6 +738,67 @@ pub fn HostedWindowBackend::dispatch_host_event(
 }
 
 ///|
+/// Whether the runtime still owes a frame. The host loop uses this to keep
+/// polling tight while a frame is outstanding and to idle-sleep otherwise —
+/// without it a fixed sleep throttles every scroll glide to the sleep interval.
+pub fn HostedWindowBackend::needs_redraw(self : HostedWindowBackend) -> Bool {
+  match self.session {
+    Some(session) => session.redraw_requested()
+    None => false
+  }
+}
+
+///|
+/// Current window scale factor (physical pixels per logical pixel).
+pub fn HostedWindowBackend::scale_factor(self : HostedWindowBackend) -> Double {
+  match self.window {
+    Some(window) => {
+      let scale = (window.scale_factor)()
+      if scale > 0.0 {
+        scale
+      } else {
+        1.0
+      }
+    }
+    None => 1.0
+  }
+}
+
+///|
+/// Dispatches a wheel event together with the pointer position that produced it.
+///
+/// `window-core`'s `MouseWheel` carries no position, and the wheel decode reads
+/// `last_pointer`; without the position the scroll landed on whatever position
+/// the previous pointer event left behind (on HarmonyOS: the last click). Taking
+/// both in one call keeps the wheel path to a single dispatch instead of a
+/// synthetic `PointerMoved` + `MouseWheel` pair, which halved the per-notch work
+/// and removed the stutter.
+pub fn HostedWindowBackend::dispatch_wheel(
+  self : HostedWindowBackend,
+  position : @core.Point,
+  delta : @window_core.MouseScrollDelta,
+) -> Unit {
+  self.last_pointer = position
+  self.dispatch_window_event(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      delta,
+      @window_core.TouchPhase::Moved,
+    ),
+  )
+  // A wheel step changes what the scroll view paints, so a frame must be
+  // requested. `pump_redraw_requested` alone is not enough: it only asks when the
+  // transport already recorded a frame request, and a wheel dispatch updates the
+  // runtime's dirty flags without going through `dispatch_host_event` (whose tail
+  // pumps). Ask the window directly, which is what actually schedules the present.
+  match self.window {
+    Some(window) => (window.request_redraw)()
+    None => ()
+  }
+  self.pump_redraw_requested()
+}
+
+///|
 /// Convert a platform `WindowEvent` to a host event and dispatch it.
 /// Platform-specific event payloads are decoded by `@host` helpers.
 pub fn HostedWindowBackend::dispatch_window_event(
@@ -549,6 +808,18 @@ pub fn HostedWindowBackend::dispatch_window_event(
   let scale = match self.window {
     Some(window) => (window.scale_factor)()
     None => 1.0
+  }
+  // Modifier state must be recorded before decoding the event that carries it:
+  // `window_event_to_host_with_modifiers` reads `self.modifiers`, and shortcut
+  // predicates in `moui/core` (Ctrl+A / Ctrl+C / Ctrl+V) only fire when the
+  // decoded `KeyboardEvent.modifiers.control` is set. `ModifiersChanged` is
+  // classified as platform-specific by the transformer, so without this the
+  // stored state stayed `none()` for the whole session and every chord was
+  // decoded as an unmodified key.
+  match event {
+    @window_core.WindowEvent::ModifiersChanged(next) =>
+      self.modifiers = @window_input.modifiers_to_core(next)
+    _ => ()
   }
   match
     @window_input.window_event_to_host_with_modifiers(
@@ -601,6 +872,28 @@ pub fn HostedWindowBackend::handle_window_event(
       }
     }
     _ => self.dispatch_window_event(event)
+  }
+}
+
+///|
+/// Handles a window event that carries its own pointer position.
+///
+/// `handle_window_event` routes `MouseWheel` through `dispatch_window_event`,
+/// which reads `last_pointer`. Platforms whose wheel event carries the cursor
+/// position (HarmonyOS axis events) call this instead so the position is applied
+/// first, and only one dispatch happens per notch.
+pub fn HostedWindowBackend::handle_window_event_at(
+  self : HostedWindowBackend,
+  event : @window_core.WindowEvent,
+  position : @core.Point,
+  exit~ : () -> Unit,
+) -> Unit {
+  match event {
+    @window_core.WindowEvent::MouseWheel(_, delta, _) => {
+      self.last_pointer = position
+      self.dispatch_wheel(position, delta)
+    }
+    _ => self.handle_window_event(event, exit~)
   }
 }
 

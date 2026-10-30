@@ -10,10 +10,16 @@ test "harmonyos backend reports experimental readiness" {
   inspect(info.capabilities.accessibility, content="true")
   inspect(info.capabilities.async_image, content="true")
   inspect(info.services.clipboard, content="true")
-  inspect(info.readiness.ready, content="false")
-  inspect(info.readiness.status, content="experimental")
-  assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("experimental"))
+  // `ready` tracks host availability, not full L3 coverage: matching-device
+  // evidence covers build/install/launch, first frame, pointer, keyboard text,
+  // resize, app-visible viewport and clipboard write. Remaining gaps live in
+  // next_steps and checks/platforms/harmonyos.json runtimeL3.evidence.
+  // Every R6 capability now has matching-device evidence, so the runtime claim
+  // is `passed` rather than `partial`.
+  inspect(info.readiness.ready, content="true")
+  inspect(info.readiness.status, content="passed")
+  inspect(info.readiness.blocked_by.length(), content="0")
+  assert_true(info.readiness.next_steps.length() >= 1)
   let summary = @harmonyos.harmonyos_capability_summary()
   inspect(summary.label, content="HarmonyOS host")
   inspect(summary.window_lifecycle, content="true")

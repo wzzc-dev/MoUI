@@ -209,6 +209,18 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
 }
 
 ///|
+/// Reports the clipboard-shortcut decision for a keyboard event, so a platform
+/// can log whether Ctrl+C / Ctrl+V resolved to a command. Returns the intent the
+/// event maps to, or `None` for ordinary keys.
+pub fn HostRuntimeDriver::keyboard_command_intent(
+  self : HostRuntimeDriver,
+  event : @core.KeyboardEvent,
+) -> @core.CommandIntent? {
+  ignore(self)
+  keyboard_service_command_intent(event)
+}
+
+///|
 /// Route Escape and platform Back through the same top-most presentation
 /// dismissal path. Enter remains owned by the focused/default action.
 pub fn HostRuntimeDriver::dispatch_escape(

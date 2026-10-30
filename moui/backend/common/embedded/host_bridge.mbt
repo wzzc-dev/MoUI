@@ -1,8 +1,12 @@
 ///|
 pub fn EmbeddedRuntimeHostBridge::new(
   session_generation~ : Int32 = 1,
+  service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
+    None
+  },
 ) -> EmbeddedRuntimeHostBridge {
   {
+    service_handler,
     services: @host_services_embedded.EmbeddedHostServices::new(),
     session_generation: session_generation.max(1),
     updates: [],
@@ -38,10 +42,28 @@ pub fn EmbeddedRuntimeHostBridge::disposed(
 }
 
 ///|
+/// The embedded host service queue, exposed so a platform shell can drain and
+/// complete clipboard requests itself when it has no separate service runner.
+pub fn EmbeddedRuntimeHostBridge::services(
+  self : EmbeddedRuntimeHostBridge,
+) -> @host_services_embedded.EmbeddedHostServices {
+  self.services
+}
+
+///|
 pub fn EmbeddedRuntimeHostBridge::service_bridge(
   self : EmbeddedRuntimeHostBridge,
 ) -> HostServiceBridge {
-  self.services.bridge()
+  // Answer synchronously when the platform provided a handler: the runtime calls
+  // this from `dispatch_command_with_services` and expects `ClipboardText`
+  // immediately for Ctrl+V. The queued path only works when a shell drains and
+  // completes the request, which an embedded template does not have.
+  HostServiceBridge::new(capabilities=self.services.capabilities, handle=request => {
+    match (self.service_handler)(request) {
+      Some(response) => response
+      None => self.services.bridge().dispatch(request)
+    }
+  })
 }
 
 ///|

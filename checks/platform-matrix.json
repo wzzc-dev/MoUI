@@ -180,8 +180,8 @@
       "releaseBlocking": false,
       "evidenceRequired": "matching-device L3",
       "evidenceFile": "checks/platforms/harmonyos.json",
-      "productClass": "experimental",
-      "ready": false,
+      "productClass": "committed",
+      "ready": true,
       "coverage": ["scheduled", "manual"]
     },
     {

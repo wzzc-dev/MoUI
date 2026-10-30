@@ -18,6 +18,8 @@ pub struct EmbeddedRuntimeBackendCore {
   priv driver : @runtime.HostRuntimeDriver
   priv transport : @host_services_embedded.HostSessionTransport
   priv mut host_bridge : EmbeddedRuntimeHostBridge?
+  /// Platform clipboard answer used for synchronous host service requests.
+  priv service_handler : (@host.HostServiceRequest) -> @host.HostServiceResponse?
   priv mut frame : @window_frame.WindowFrameState?
   priv mut image : @window_image.WindowImageTasks?
   priv mut metrics : @core.SurfaceMetrics
@@ -30,6 +32,9 @@ pub fn EmbeddedRuntimeBackendCore::new(
   renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
   surface_generation~ : Int32,
+  service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
+    None
+  },
 ) -> EmbeddedRuntimeBackendCore {
   let transport = @host_services_embedded.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_generation(),
@@ -43,6 +48,7 @@ pub fn EmbeddedRuntimeBackendCore::new(
     driver,
     transport,
     host_bridge: None,
+    service_handler,
     frame: None,
     image: None,
     metrics,
@@ -64,6 +70,25 @@ pub fn EmbeddedRuntimeBackendCore::runtime(
   self : EmbeddedRuntimeBackendCore,
 ) -> @runtime.AppRuntime {
   self.runtime
+}
+
+///|
+/// Image resource records for the attached renderer, or an empty array when no
+/// surface is attached. Platforms use this for async image load evidence: the
+/// `ImageLoading -> ImageReady` transition happens off the frame path, so it is
+/// only observable through these records.
+pub fn EmbeddedRuntimeBackendCore::image_resource_records(
+  self : EmbeddedRuntimeBackendCore,
+) -> Array[@render.ImageResourceRecord] {
+  match self.frame {
+    Some(frame_state) =>
+      if self.disposed {
+        []
+      } else {
+        frame_state.renderer().image_diagnostics().records()
+      }
+    None => []
+  }
 }
 
 ///|
@@ -116,6 +141,7 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
   }
   let host_bridge = EmbeddedRuntimeHostBridge::new(
     session_generation=self.transport.session_generation(),
+    service_handler=self.service_handler,
   )
   let frame = @window_frame.WindowFrameState::new(
     renderer~,
@@ -188,7 +214,26 @@ pub fn EmbeddedRuntimeBackendCore::dispatch(
 ) -> @host.EventResult {
   match self.host_bridge {
     Some(channel) if !self.disposed => {
-      let result = self.driver.dispatch(event)
+      // Keyboard events go through the service-aware path: Ctrl+C / Ctrl+X /
+      // Ctrl+V must reach the clipboard service, and the plain `dispatch` only
+      // forwards them to the focused control as ordinary keys. Every other
+      // event keeps the plain path.
+      let result = match event {
+        Keyboard(keyboard_event) =>
+          match self.driver.keyboard_command_intent(keyboard_event) {
+            Some(intent) =>
+              self.driver.dispatch_command_with_services(
+                intent,
+                channel.service_bridge(),
+              )
+            None =>
+              self.driver.dispatch_keyboard_with_services(
+                keyboard_event,
+                channel.service_bridge(),
+              )
+          }
+        _ => self.driver.dispatch(event)
+      }
       ignore(channel.sync(self.runtime))
       result
     }
@@ -399,6 +444,42 @@ pub fn EmbeddedRuntimeBackendCore::dispatch_host_response_envelope(
       }
       handled
     }
+    _ => false
+  }
+}
+
+///|
+/// The clipboard command a keyboard event maps to, or `None` for ordinary keys.
+pub fn EmbeddedRuntimeBackendCore::keyboard_command_intent(
+  self : EmbeddedRuntimeBackendCore,
+  event : @core.KeyboardEvent,
+) -> @core.CommandIntent? {
+  self.driver.keyboard_command_intent(event)
+}
+
+///|
+/// Pending host service requests (clipboard / platform channel) waiting for the
+/// platform shell to answer them. The embedded runtime only enqueues these; a
+/// platform without a drainer leaves Ctrl+C / Ctrl+V unanswered.
+pub fn EmbeddedRuntimeBackendCore::drain_pending_service_requests(
+  self : EmbeddedRuntimeBackendCore,
+) -> Array[@host.HostPendingServiceRequest] {
+  match self.host_bridge {
+    Some(bridge) if !self.disposed => bridge.services().drain_pending()
+    _ => []
+  }
+}
+
+///|
+/// Completes a pending host service request with a platform-supplied response.
+/// Returns whether the request was still outstanding.
+pub fn EmbeddedRuntimeBackendCore::complete_service_request(
+  self : EmbeddedRuntimeBackendCore,
+  id : @host.HostServiceRequestId,
+  response : @host.HostServiceResponse,
+) -> Bool {
+  match self.host_bridge {
+    Some(bridge) if !self.disposed => bridge.services().complete(id, response)
     _ => false
   }
 }

@@ -2,24 +2,27 @@
   "schemaVersion": 1,
   "platform": "harmonyos",
   "sourceBuild": {
-    "status": "partial",
-    "windowHosted": "partial",
-    "verifiedOn": "2026-07-22",
-    "matrixCommand": "moui build harmonyos showcase --mobile-config examples/showcase/moui.mobile.json --prepare-only",
-    "evidence": "window-hosted template and CLI migration are checked; installable HAP evidence is pending"
+    "status": "passed",
+    "windowHosted": "passed",
+    "verifiedOn": "2026-10-30",
+    "matrixCommand": "moui build harmonyos showcase --mobile-config examples/showcase/moui.mobile.json --signing-config-file <signed-config>",
+    "evidence": "signed HAP built from HEAD, installed and launched on a matching device (HUAWEI MateBook Pro, HarmonyOS 7.0.0.107, API 26, arm64-v8a); artifacts/harmonyos/device-evidence/"
   },
   "rendererL2": {
-    "status": "partial",
+    "status": "passed",
     "presenterRoute": "egl-direct",
     "presenterEvidence": {
-      "status": "unverified",
-      "kind": "none",
-      "reference": "fresh canonical XComponent direct-present marker pending"
+      "status": "verified",
+      "kind": "matching-device-direct-present",
+      "reference": "MoUIHarmony: egl present ok=1 swap=1 w=2090 h=1324 in device hilog; real Skia linked (moonbit_skia_available returns 1 in the installed HAP); artifacts/harmonyos/device-evidence/"
     }
   },
-  "runtimeL3": { "status": "partial", "evidence": "window-hosted matching-device suite pending" },
+  "runtimeL3": {
+    "status": "passed",
+    "evidence": "All eight R6 capabilities observed on the matching device. Pixels: real Skia first frame through the egl-direct presenter (MoUIHarmony 'egl present ok=1 swap=1'), plus live resize across two distinct extents with content reflow and no stale-pixel ghosting once the EGL surface is recreated. Input: pointer presses increment the Showcase probe action count; keyboard text arrives through XComponent key events (the probe field changed from 'mobile-service-probe' to 'mobile-abc-probe'); mouse-wheel scrolling reaches the runtime as MouseWheel through the axis UI-input callback (content scrolled to reveal the probe image); Backspace/Delete arrive as named keys (two Backspace presses rewrote 'mobile-serviceab-probe' back to 'mobile-service-probe'); Ctrl+A resolves as a shortcut chord with the measured modifier mask (bit0=Ctrl) instead of inserting 'A'. IME: the same keyboard channel feeds Ime(Commit(...)), and pasteboard text is decoded to codepoints into it. Clipboard write: 'clipboard selftest wrote value=1' through OH_Pasteboard_SetData. Clipboard read: through the ArkTS PasteButton security control, 'clipboard read value=23' then 'clipboard granted read forwarded value=23' -- the platform permission (ohos.permission.READ_PASTEBOARD, system_basic + user_grant) makes a direct OH_Pasteboard_GetData call return ERR_PERMISSION_ERROR (201), so the security-control route is the supported one and is wired end to end. Accessibility: 'accessibility provider registered ok value=1' and 'accessibility published nodes value=87' through OH_NativeXComponent_GetNativeAccessibilityProvider + OH_ArkUI_AccessibilityProviderRegisterCallback, backed by the runtime semantics snapshot. Surface detach/recreate: 'surface destroyed width=2090 height=1324' on window close followed by a fresh process 'surface created width=2090 height=1324'. Async image: 'images ... ready=1x1' reporting the ImageLoading -> ImageReady transition from the renderer image diagnostics."
+  },
   "hostKind": "window-hosted-harmonyos",
   "deploymentFloor": "HarmonyOS API 20",
   "toolchainFloor": "HarmonyOS SDK API 21 / target API 21 / model 6.0.1",
-  "actualPresenterRoute": "unverified"
+  "actualPresenterRoute": "egl-direct"
 }

@@ -26,7 +26,7 @@ pub fn update(Model, Msg, services? : @services.AppServices) -> (Model, @core.Ef
 
 pub fn view(Model) -> @core.View[Msg]
 
-pub fn view_body(Model, width? : Double) -> @core.View[Msg]
+pub fn view_body(Model, width? : Double, viewport? : @core.Size?) -> @core.View[Msg]
 
 // Errors
 

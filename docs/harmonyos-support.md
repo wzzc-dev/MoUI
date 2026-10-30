@@ -1,11 +1,28 @@
 # HarmonyOS Support
 
-HarmonyOS uses the **embedded runtime backend** route and is currently
-**experimental** (product_class `experimental`, `ready=false`): the code paths
-compile and host-sim tests pass, but no development/demonstration usability or
-product commitment is made without signed-device evidence. `wzzc-dev/window/harmonyos` owns the Stage Ability,
-XComponent surface, lifecycle, and input queue; `moui/backend/harmonyos`
-adapts those callbacks into the MoUI runtime session.
+HarmonyOS uses the **embedded runtime backend** route and is **`committed`**
+(`ready=true`, `runtimeL3=passed`, see ADR 0046): `wzzc-dev/window/harmonyos`
+owns the Stage Ability, XComponent surface, lifecycle, and input queue;
+`moui/backend/harmonyos` adapts those callbacks into the MoUI runtime session.
+
+A signed HAP built from HEAD installs, launches, presents through `egl-direct`
+with real Skia, accepts pointer and keyboard text input, resizes without
+ghosting, exposes a real app viewport, reads and writes the system clipboard,
+publishes an accessibility tree to ArkUI, survives surface detach/recreate, and
+observes async image load completion on a matching device.
+
+### Host services on this route
+
+| Service | Implementation | Note |
+|---|---|---|
+| Clipboard write | `harmonyos_clipboard.cpp` via `OH_Pasteboard_SetData` | No permission needed |
+| Clipboard read | Same file, driven from the ArkTS `PasteButton` security control | `ohos.permission.READ_PASTEBOARD` is `system_basic` + `user_grant`, so a direct `OH_Pasteboard_GetData` call returns `ERR_PERMISSION_ERROR` (201) for a normal-level HAP |
+| Keyboard text | `OH_NativeXComponent_RegisterKeyEventCallback` + focusable `XComponent`, keycode map in `window_hosted_napi.cpp` | Character keys travel on the codepoint channel as `Ime(Commit)` |
+| Named keys | Same callback, `MBW_HARMONYOS_HOST_KEY` host event | Backspace/Delete/arrows/Enter/Tab/Escape/Home/End map to `KeyboardInput`; the codepoint channel cannot express deletion |
+| Scroll wheel | `OH_NativeXComponent_RegisterUIInputEventCallback` (axis events) | XComponent has no wheel callback and no wheel field on its mouse event |
+| Shortcuts | Key event + `ModifiersChanged` | Modifier mask is bit0=Ctrl, bit1=Shift, bit2=Alt (measured on device, not in a public header) |
+| Accessibility | `harmonyos_accessibility.cpp` via `OH_NativeXComponent_GetNativeAccessibilityProvider` | Answers ArkUI provider callbacks from the runtime semantics snapshot |
+| Async image | `filesystem_image_source` + renderer image lifecycle | Status transitions are reported to hilog as `images ... ready=<w>x<h>` |
 
 ## Entry Points
 

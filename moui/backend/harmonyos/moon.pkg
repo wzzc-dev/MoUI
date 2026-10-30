@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
@@ -22,6 +23,10 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "harmonyos_present.cpp" ],
+  "native-stub": [
+    "harmonyos_present.cpp",
+    "harmonyos_clipboard.cpp",
+    "harmonyos_accessibility_fallback.c",
+  ],
   targets: { },
 )

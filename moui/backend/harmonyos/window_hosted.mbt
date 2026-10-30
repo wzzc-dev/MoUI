@@ -6,6 +6,9 @@
 /// XComponent surface access and window creation stay here.
 pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded_runtime.HostedWindowBackend
+  // Last reported image status summary, so the per-frame pump only logs on a
+  // transition instead of every frame.
+  mut image_status_summary : String
 }
 
 ///|
@@ -49,9 +52,30 @@ pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry 
       renderer_providers=request.renderer_providers(),
       auto_exit_after_frames~,
     )
+    harmonyos_report_vsync_status()
     let event_loop = @window_harmonyos.EventLoop::new()
-    event_loop.run_app(app)
+    // Frame pacing: poll tight while a frame is owed (a scroll glide, an
+    // animation) and idle-sleep otherwise. A fixed 4 ms sleep made every scroll
+    // notch wait out the sleep before presenting, which read as stutter — macOS
+    // paces the same way, which is why it never showed this.
+    // Frame pacing: poll tight while a frame is owed (a scroll glide, an
+    // animation) and idle-sleep otherwise — the same scheme the macOS host uses.
+    // A fixed sleep made every scroll notch wait it out before presenting.
+    event_loop.run_app_with_frame_pacing(app, needs_redraw=fn() {
+      app.needs_redraw()
+    })
   })
+}
+
+///|
+/// Stable token for an image resource status, used in the device log.
+fn image_status_token(status : @render.ImageResourceStatus) -> String {
+  match status {
+    ImageLoading => "loading"
+    ImageReady => "ready"
+    ImageFailed => "failed"
+    ImageDisposed => "disposed"
+  }
 }
 
 ///|
@@ -65,11 +89,39 @@ fn new_harmonyos_embedded_runtime(
     backend: @embedded_runtime.HostedWindowBackend::new(
       title~,
       runtime_factory~,
+      // Frame timing: the runtime advances its animation clock from this on every
+      // presented frame. Without a clock a wheel settle stays latched in flight —
+      // the surface moves a few pixels, then freezes until the next input.
+      clock_ms=fn() { @window_harmonyos.host_monotonic_ms() },
+      // Answer clipboard requests synchronously from the native pasteboard so
+      // Ctrl+C / Ctrl+X / Ctrl+V work: the runtime expects `ClipboardText` on the
+      // spot, and the queued path only resolves when a shell drains it.
+      service_handler=request => {
+        // Device log evidence: a shortcut that reaches the clipboard shows up
+        // here. Without it Ctrl+C / Ctrl+V silently fell through to the queued
+        // path that nothing drains.
+        harmonyos_log_service_request(request)
+        match request {
+          Clipboard(ReadText) =>
+            match harmonyos_clipboard_read_text() {
+              Some(text) => Some(ClipboardText(text))
+              None => Some(Unavailable("clipboard does not contain text"))
+            }
+          Clipboard(WriteText(text)) =>
+            if harmonyos_clipboard_write_text(text) {
+              Some(ClipboardWritten)
+            } else {
+              Some(Unavailable("clipboard write failed"))
+            }
+          _ => None
+        }
+      },
       surface_binding_factory=() => {
         host_surface_binding_from_harmonyos(surface_binding_factory())
       },
       auto_exit_after_frames~,
     ),
+    image_status_summary: "",
   }
 }
 
@@ -166,7 +218,57 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
   _id,
   event,
 ) {
-  self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
+  // A wheel notch carries its cursor position separately (recorded by the host
+  // queue). Apply it with the wheel in one dispatch so the scroll targets the
+  // cursor instead of the last click, and so no synthetic pointer move (with its
+  // hover repaint) is dispatched per notch.
+  match event {
+    @window_core.WindowEvent::KeyboardInput(_, key_event, _) => {
+      // Log the raw chord plus the resolved intent and focus state, so a device
+      // capture shows exactly where a clipboard shortcut stops.
+      let intent = match self.backend.keyboard_command_intent_event(key_event) {
+        Some(intent) =>
+          match intent {
+            Copy => "copy"
+            Cut => "cut"
+            Paste => "paste"
+            SelectAll => "select-all"
+            _ => "other"
+          }
+        None => "none"
+      }
+      let focused = self.backend.has_focused_text_input()
+      harmonyos_log_image_status(
+        "keyboard key=\{key_event.logical_key()} ctrl=\{self.backend.modifiers().control} intent=\{intent} focused=\{focused}",
+      )
+    }
+    _ => ()
+  }
+  match event {
+    @window_core.WindowEvent::MouseWheel(_, delta, _) =>
+      match @window_harmonyos.host_take_scroll_cursor() {
+        Some((x, y)) => {
+          // The axis position is physical; `last_pointer` holds logical
+          // coordinates (touch events are divided by the scale factor before they
+          // reach it). Passing the raw physical value made the wheel test against
+          // a frame that was off by that factor, which is why scrolling only
+          // worked where the shifted point still landed inside the scroll area.
+          let scale = self.backend.scale_factor()
+          let logical = @core.Point::new(x=x / scale, y=y / scale)
+          let (dx, dy) = window_scroll_delta_pixels(delta)
+          harmonyos_log_image_status(
+            "scroll px dx=\{dx.to_int()} dy=\{dy.to_int()} logical=\{logical.x.to_int()},\{logical.y.to_int()} frames=\{self.backend.frames_presented()} clock=\{@window_harmonyos.host_monotonic_ms().to_int()}",
+          )
+          self.backend.dispatch_wheel(logical, delta)
+        }
+        None =>
+          self.backend.handle_window_event(event, exit=fn() {
+            event_loop.exit()
+          })
+      }
+    _ =>
+      self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
+  }
 }
 
 ///|
@@ -175,6 +277,106 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
   _event_loop,
 ) {
   self.backend.about_to_wait()
+  // Accessibility runs on the platform UI cadence: ArkUI reads whatever tree
+  // was published last, and any action it queued during the previous frame is
+  // dispatched here rather than from inside the ArkUI callback (which cannot
+  // re-enter the runtime).
+  self.pump_accessibility()
+}
+
+///|
+/// Logs whether vsync pacing initialised, so a device capture shows whether the
+/// loop is pacing on the display refresh or on the timed fallback.
+pub fn harmonyos_report_vsync_status() -> Unit {
+  let ok = @window_harmonyos.host_vsync_init()
+  harmonyos_log_image_status("vsync init ok=\{ok}")
+}
+
+///|
+/// Whether the runtime still owes a frame, used by the host loop for frame
+/// pacing.
+pub fn HarmonyOSEmbeddedRuntimeBackend::needs_redraw(
+  self : HarmonyOSEmbeddedRuntimeBackend,
+) -> Bool {
+  self.backend.needs_redraw()
+}
+
+///|
+/// Publishes the current semantics tree to the ArkUI accessibility provider and
+/// dispatches one queued accessibility action, if any.
+pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
+  self : HarmonyOSEmbeddedRuntimeBackend,
+) -> Unit {
+  match self.backend.read_semantics() {
+    Some(read) => {
+      // Only `Full` reads carry a tree; the projection returns an empty
+      // snapshot for deltas, which leaves ArkUI on the node ids it cached.
+      let projection = harmonyos_accessibility_project(read)
+      ignore(harmonyos_accessibility_publish(projection))
+    }
+    None => ()
+  }
+  // Async image load evidence: `ImageLoading -> ImageReady` happens off the
+  // frame path, so report every distinct state once.
+  let records = self.backend.image_resource_records()
+  if records.length() > 0 {
+    let summary = records
+      .map(record => {
+        "\{image_status_token(record.status)}=\{record.width}x\{record.height}"
+      })
+      .join(",")
+    if summary != self.image_status_summary {
+      self.image_status_summary = summary
+      harmonyos_log_image_status("moui harmonyos images: " + summary)
+    }
+  }
+  // Answer clipboard requests queued by Ctrl+C / Ctrl+V. The embedded runtime
+  // only enqueues them; with no shell drainer they would hang forever, which is
+  // why the shortcuts did nothing.
+  for pending in self.backend.drain_pending_service_requests() {
+    match pending.request {
+      Clipboard(request) =>
+        ignore(
+          self.backend.complete_service_request(
+            pending.id,
+            match request {
+              ReadText =>
+                match harmonyos_clipboard_read_text() {
+                  Some(text) => ClipboardText(text)
+                  None => Unavailable("clipboard does not contain text")
+                }
+              WriteText(text) =>
+                if harmonyos_clipboard_write_text(text) {
+                  ClipboardWritten
+                } else {
+                  Unavailable("clipboard write failed")
+                }
+              _ => Unavailable("clipboard request not supported")
+            },
+          ),
+        )
+      _ => ()
+    }
+  }
+  match harmonyos_accessibility_take_action() {
+    Some(pending) => {
+      let request : @runtime.PerformSemanticsActionRequest = {
+        target: @core.SemanticsTarget::ByNodeId(
+          @core.SemanticsNodeId::new(pending.element_id.reinterpret_as_uint64()),
+        ),
+        action: match pending.action {
+          1 => @core.SemanticsAction::Activate
+          2 => @core.SemanticsAction::Focus
+          _ => return
+        },
+        precondition: @runtime.Exact(
+          @core.SemanticsGeneration::new(pending.generation),
+        ),
+      }
+      ignore(self.backend.perform_semantics_action(request))
+    }
+    None => ()
+  }
 }
 
 ///|
@@ -203,4 +405,15 @@ pub fn harmonyos_window_hosted_pump_host_sim(
   @window_harmonyos.host_push(Stop)
   ignore(event_loop.pump_app_events(None, app))
   event_loop.drop()
+}
+
+///|
+/// Pixel form of a window-core scroll delta, for the device log.
+fn window_scroll_delta_pixels(
+  delta : @window_core.MouseScrollDelta,
+) -> (Double, Double) {
+  match delta {
+    LineDelta(x, y) => (x, y)
+    PixelDelta(position) => (position.x, position.y)
+  }
 }

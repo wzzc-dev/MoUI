@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/math",
   "wzzc-dev/moui",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/geometry",
   "wzzc-dev/moui/graphics",

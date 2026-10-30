@@ -366,6 +366,27 @@ extern "C" fn native_surface_egl_present_and_acquire_next(
 ) -> SurfaceHandle = "moonbit_skia_surface_egl_present_and_acquire_next"
 
 ///|
+/// Re-wrap the back buffer of an existing EGL window surface at a new size,
+/// reusing the EGLSurface instead of creating a second one for the same native
+/// window. Returns a null handle when the surface cannot be re-wrapped.
+///
+/// A live resize must go through this entry point: creating a duplicate
+/// EGLSurface leaves the previous one alive until its wrapper is collected, and
+/// OHOS rejects or under-runs the duplicate. The failed present then drops the
+/// renderer to its CPU presenter, which repaints only the frame rect and leaves
+/// stale pixels in the rest of the window.
+#borrow(surface)
+extern "C" fn native_surface_egl_resize_window(
+  surface : SurfaceHandle,
+  native_window_ptr : UInt64,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
+) -> SurfaceHandle = "moonbit_skia_surface_egl_resize_window"
+
+///|
 extern "C" fn native_surface_gpu_egl_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_egl_opt_in_enabled"
 
 ///|
@@ -1209,6 +1230,35 @@ pub fn Surface::egl_present_and_acquire_next(
       ),
       descriptor,
     )
+  }
+}
+
+///|
+/// Re-wrap the back buffer of an existing EGL window surface at `width` x
+/// `height`, reusing the EGLSurface rather than creating a second one for the
+/// same native window. Returns `None` when the surface cannot be re-wrapped, in
+/// which case the caller keeps its previous surface.
+pub fn Surface::egl_resize_window(
+  surface : Surface,
+  context : GpuContext,
+  native_window_ptr : UInt64,
+  width~ : Int32,
+  height~ : Int32,
+) -> Surface? {
+  if !context.is_available() || width <= 0 || height <= 0 {
+    None
+  } else {
+    let descriptor = surface.descriptor
+    let handle = native_surface_egl_resize_window(
+      surface.handle,
+      native_window_ptr,
+      width,
+      height,
+      native_surface_origin_ordinal(descriptor.origin),
+      descriptor.sample_count,
+      descriptor.stencil_bits,
+    )
+    Surface::from_handle(handle, descriptor)
   }
 }
 

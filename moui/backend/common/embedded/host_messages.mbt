@@ -228,6 +228,11 @@ pub fn embedded_accessibility_response(
 
 ///|
 pub struct EmbeddedRuntimeHostBridge {
+  /// Optional synchronous answer for host service requests. A platform with a
+  /// native clipboard (HarmonyOS, macOS) answers here so the runtime receives
+  /// `ClipboardText` / `ClipboardWritten` immediately; returning `None` falls
+  /// back to the queued async path used by shells that own the services.
+  service_handler : (@host.HostServiceRequest) -> @host.HostServiceResponse?
   services : @host_services_embedded.EmbeddedHostServices
   session_generation : Int32
   mut updates : Array[EmbeddedHostUpdate]
