@@ -8,6 +8,10 @@ import {
   "wzzc-dev/moui/views",
 } for "test"
 
+import {
+  "wzzc-dev/moui/views",
+} for "wbtest"
+
 supported_targets = "+native+wasm-gc+wasm"
 
 options(

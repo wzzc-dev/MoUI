@@ -52,6 +52,7 @@ fn RuntimeState::refresh_platform_tree(self : RuntimeState) -> Unit {
       RenderEnvironment::from_environment(self.environment).with_text_system(
         self.text_system,
       ),
+      environment_id=environment_identity(self.environment),
     ),
   }
   self.dirty.needs_platform = false
@@ -96,8 +97,12 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
+      environment_id=environment_identity(self.environment),
     ),
   }
+  // A fresh placed tree invalidates the previous overlay collect (C3): the
+  // next placement pass must re-resolve overrides against these anchors.
+  self.bump_overlay_input_generation()
   self.anchor_registry.clear()
   self.element_tree.root.collect_anchor_frames(
     self.layout_tree.root,
@@ -117,7 +122,21 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
 /// when a computed frame differs from the placed frame, re-places the tree
 /// with the overrides applied. The registry is position-snapshotted from the
 /// base tree, so the resolved frames are stable across subsequent cache hits.
+///
+/// C3: the pass is generation-gated and the re-place is localized. When no
+/// input that `place_overlays` could observe changed since the previous
+/// collect (no event, message, rebuild, layout pass, semantics action, or
+/// focus move), the previous overrides, dismissal layer stack, and surface
+/// lifecycle stay valid and the whole traversal is skipped — idle frames and
+/// the repeated `ensure_layout_tree` calls within one frame pay nothing. When
+/// it does run, only the spine from the root to each host (inclusive) is
+/// forced to re-place; unaffected sibling subtrees hit their per-node place
+/// caches and keep their previous `PlacedNode` verbatim, so an open dropdown
+/// no longer re-places the whole application on every layout frame.
 fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
+  if self.overlay_collected_at_generation == self.overlay_input_generation {
+    return
+  }
   let context : @core.OverlayPlacementContext = {
     viewport: Rect::new(
       x=0.0,
@@ -135,6 +154,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
   let spines : Array[ElementId] = []
   let layers : Array[ElementId] = []
   let active_surfaces : Array[ElementId] = []
+  self.stats.overlay_collect_count = self.stats.overlay_collect_count + 1
   collect_overlay_overrides(
     self.element_tree.root,
     self.layout_tree.root,
@@ -145,6 +165,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
     layers,
     active_surfaces,
   )
+  self.overlay_collected_at_generation = self.overlay_input_generation
   self.layer_stack = layers
   self.track_overlay_surface_lifecycle(active_surfaces)
   if overrides.is_empty() {
@@ -152,15 +173,21 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
     return
   }
   self.overlay_overrides = overrides
-  // Force a re-place that consumes the overrides; unchanged subtrees still
-  // reuse their measured caches, so only positioned frames are recomputed.
-  self.element_tree.root.layout_cache.clear()
+  // Force a re-place that consumes the overrides. Nodes on a host spine skip
+  // their place cache; every other subtree consults its per-node place cache
+  // and is reused verbatim when nothing touched it (C3).
+  let affected = DirtyIdSet::new()
+  for id in spines {
+    affected.push(id)
+  }
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
       environment=self.environment,
       text_system=self.text_system,
       overlay_overrides=self.overlay_overrides,
+      overlay_affected=Some(affected),
+      environment_id=environment_identity(self.environment),
     ),
   }
   // Ancestor render caches embed descendant paint bounds; the re-place moved
@@ -178,6 +205,10 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
 /// from its currently placed child frames. `spines` receives the ancestor
 /// element paths (including the host) of every host whose frames changed, so
 /// stale ancestor render caches can be cleared.
+///
+/// C3: `path` is one shared stack (push on entry, pop on exit) instead of a
+/// per-node copy, so the traversal allocates nothing for non-host nodes;
+/// host spines are still flattened into `spines` exactly as before.
 fn collect_overlay_overrides(
   element : ElementNode,
   placed : PlacedNode,
@@ -188,8 +219,7 @@ fn collect_overlay_overrides(
   layers : Array[ElementId],
   active_surfaces : Array[ElementId],
 ) -> Unit {
-  let child_path : Array[ElementId] = path.copy()
-  child_path.push(element.id)
+  path.push(element.id)
   match
     element.view_node.place_overlays({
       ..context,
@@ -209,7 +239,7 @@ fn collect_overlay_overrides(
         })
       if any_changed {
         out.push((element.id.value(), pairs))
-        for id in child_path {
+        for id in path {
           spines.push(id)
         }
       }
@@ -231,7 +261,7 @@ fn collect_overlay_overrides(
         child,
         placed.children[index],
         context,
-        child_path,
+        path,
         out,
         spines,
         layers,
@@ -239,6 +269,7 @@ fn collect_overlay_overrides(
       )
     }
   }
+  ignore(path.remove(path.length() - 1))
 }
 
 ///|

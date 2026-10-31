@@ -36,10 +36,18 @@ fn ElementNode::measure_with_text_system(
   environment~ : Environment,
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
+  environment_id~ : Int32 = 0,
 ) -> MeasuredNode {
+  // Identity of the passed environment (C1): callers that already resolved it
+  // pass the id; 0 means "resolve here" (intern scan over distinct envs).
+  let env_id = if environment_id == 0 {
+    environment_identity(environment)
+  } else {
+    environment_id
+  }
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_measure_constraints == Some(constraints) &&
-    self.layout_cache.cached_measure_environment == Some(environment) &&
+    self.layout_cache.cached_measure_environment_id == env_id &&
     self.layout_cache.cached_measure_style == Some(style) {
     match self.layout_cache.cached_measured {
       Some(measured) => {
@@ -52,6 +60,9 @@ fn ElementNode::measure_with_text_system(
   self.layout_cache.miss_count = self.layout_cache.miss_count + 1
   let child_constraints = self.view_node.child_constraints(constraints)
   let child_environment = self.view_node.child_environment(environment)
+  let child_environment_id = self.child_environment_identity(
+    child_environment, environment, env_id,
+  )
   let child_style = self.view_node.child_style(style)
   let children : Array[MeasuredNode] = []
   for child in self.children {
@@ -61,6 +72,7 @@ fn ElementNode::measure_with_text_system(
         environment=child_environment,
         style=child_style,
         text_system~,
+        environment_id=child_environment_id,
       ),
     )
   }
@@ -80,12 +92,39 @@ fn ElementNode::measure_with_text_system(
     children,
   }
   self.layout_cache.cached_measure_constraints = Some(constraints)
-  self.layout_cache.cached_measure_environment = Some(environment)
+  self.layout_cache.cached_measure_environment_id = env_id
   self.layout_cache.cached_measure_style = Some(style)
   self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
   self.refresh_descendant_dirty_flags()
   measured
+}
+
+///|
+/// Identity of this node's child environment (C1). Most nodes pass the
+/// environment through unchanged, so the parent's id forwards and the
+/// per-element cache check is an integer compare. Environment-scoping
+/// modifiers produce a new value whose id resolves through the intern table.
+/// Classification is node-kind-derived and memoized per element: a scoping
+/// modifier's output is never structurally equal to its input, and a
+/// passthrough closure's output always is — identity is content, so a
+/// structurally equal child environment shares the parent's id.
+fn ElementNode::child_environment_identity(
+  self : ElementNode,
+  child_environment : Environment,
+  environment : Environment,
+  environment_id : Int32,
+) -> Int32 {
+  if !self.layout_cache.child_environment_classified {
+    self.layout_cache.child_environment_classified = true
+    self.layout_cache.child_environment_passthrough = child_environment ==
+      environment
+  }
+  if self.layout_cache.child_environment_passthrough {
+    environment_id
+  } else {
+    environment_identity(child_environment)
+  }
 }
 
 ///|
@@ -96,10 +135,17 @@ fn ElementNode::place_with_text_system(
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
   overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
+  overlay_affected~ : DirtyIdSet? = None,
+  environment_id~ : Int32 = 0,
 ) -> PlacedNode {
+  let env_id = if environment_id == 0 {
+    environment_identity(environment)
+  } else {
+    environment_id
+  }
   if !self.has_dirty_layout() &&
     self.layout_cache.cached_place_frame == Some(bounds) &&
-    self.layout_cache.cached_place_environment == Some(environment) &&
+    self.layout_cache.cached_place_environment_id == env_id &&
     self.layout_cache.cached_place_style == Some(style) &&
     overlay_overrides.is_empty() {
     match self.layout_cache.cached_placed {
@@ -116,6 +162,7 @@ fn ElementNode::place_with_text_system(
     environment~,
     style~,
     text_system~,
+    environment_id=env_id,
   )
   let placed = self.place_measured_with_text_system(
     measured,
@@ -124,9 +171,11 @@ fn ElementNode::place_with_text_system(
     style~,
     text_system~,
     overlay_overrides~,
+    overlay_affected~,
+    environment_id=env_id,
   )
   self.layout_cache.cached_place_frame = Some(bounds)
-  self.layout_cache.cached_place_environment = Some(environment)
+  self.layout_cache.cached_place_environment_id = env_id
   self.layout_cache.cached_place_style = Some(style)
   self.layout_cache.cached_placed = Some(placed)
   self.refresh_descendant_dirty_flags()
@@ -142,9 +191,48 @@ fn ElementNode::place_measured_with_text_system(
   style~ : ViewStyle,
   text_system~ : TextSystem,
   overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
+  overlay_affected~ : DirtyIdSet? = None,
   accumulated_clip~ : Rect? = None,
   fit_measured_sizes~ : Bool = false,
+  environment_id~ : Int32 = 0,
 ) -> PlacedNode {
+  // C3: per-node place cache. The overlay re-place walks the tree with
+  // overrides applied; nodes outside the affected spines reuse their previous
+  // placed subtree instead of re-running `view_node.layout`, so an open
+  // dropdown no longer re-places the whole application every frame. The key
+  // must cover every input `view_node.layout` reads: the frame (tight
+  // constraints), the interned environment, the style, the accumulated clip
+  // (hit rects), the ADR 0035 fit flag, and the view-state revision (state
+  // flips change layout output without necessarily marking layout dirty).
+  // Nodes on an override spine — or carrying an override themselves — are
+  // forced to re-place so the overrides are always consumed.
+  let env_id = if environment_id == 0 {
+    environment_identity(environment)
+  } else {
+    environment_id
+  }
+  let forced = (match overlay_affected {
+      Some(affected) => affected.contains(self.id)
+      None => false
+    }) ||
+    overlay_overrides_for(overlay_overrides, self.id.value()) is Some(_)
+  if !forced &&
+    !self.has_dirty_layout() &&
+    self.layout_cache.cached_placed is Some(_) &&
+    self.layout_cache.cached_place_frame == Some(frame) &&
+    self.layout_cache.cached_place_environment_id == env_id &&
+    self.layout_cache.cached_place_style == Some(style) &&
+    self.layout_cache.cached_place_clip == accumulated_clip &&
+    self.layout_cache.cached_place_fit == fit_measured_sizes &&
+    self.layout_cache.cached_place_state_revision == self.control.state_revision {
+    match self.layout_cache.cached_placed {
+      Some(placed) => {
+        self.layout_cache.hit_count = self.layout_cache.hit_count + 1
+        return placed
+      }
+      None => ()
+    }
+  }
   // A tight-fit re-measure already settled this subtree under the final
   // frame's tight constraints, so its `measured` child sizes are the wrapped
   // sizes; feed them to `layout` instead of the unbounded intrinsic sizes so
@@ -178,6 +266,9 @@ fn ElementNode::place_measured_with_text_system(
   })
   let overrides = overlay_overrides_for(overlay_overrides, self.id.value())
   let child_environment = self.view_node.child_environment(environment)
+  let child_environment_id = self.child_environment_identity(
+    child_environment, environment, env_id,
+  )
   let child_style = self.view_node.child_style(style)
   // A clip container folds its own frame into the accumulated ancestor clip;
   // children inherit that, and their hit regions are the intersection.
@@ -215,6 +306,7 @@ fn ElementNode::place_measured_with_text_system(
           environment=child_environment,
           style=child_style,
           text_system~,
+          environment_id=child_environment_id,
         )
       } else {
         measured.children[index]
@@ -227,6 +319,8 @@ fn ElementNode::place_measured_with_text_system(
           style=child_style,
           text_system~,
           overlay_overrides~,
+          overlay_affected~,
+          environment_id=child_environment_id,
           // Hoisted popups escape ancestor clips by design.
           accumulated_clip=if is_overlay { None } else { child_clip },
           fit_measured_sizes=refits || fit_measured_sizes,
@@ -237,7 +331,7 @@ fn ElementNode::place_measured_with_text_system(
       }
     }
   }
-  {
+  let placed : PlacedNode = {
     element_id: self.id,
     frame,
     children,
@@ -251,6 +345,17 @@ fn ElementNode::place_measured_with_text_system(
       None => frame
     },
   }
+  // C3: store the per-node entry. `place_with_text_system` re-stores the
+  // frame/environment/style fields for its root call; storing them here as
+  // well keeps inner nodes' entries complete.
+  self.layout_cache.cached_place_frame = Some(frame)
+  self.layout_cache.cached_place_environment_id = env_id
+  self.layout_cache.cached_place_style = Some(style)
+  self.layout_cache.cached_place_clip = accumulated_clip
+  self.layout_cache.cached_place_fit = fit_measured_sizes
+  self.layout_cache.cached_place_state_revision = self.control.state_revision
+  self.layout_cache.cached_placed = Some(placed)
+  placed
 }
 
 ///|

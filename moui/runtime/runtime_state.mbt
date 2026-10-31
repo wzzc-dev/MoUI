@@ -37,6 +37,18 @@ priv struct RuntimeState {
   /// First-seen frame-clock time per active overlay surface id; drives enter
   /// fades.
   overlay_enter_times : Array[(ElementId, Double)]
+  /// Overlay placement input generation (C3). Bumped by every entry point
+  /// that can change what `place_overlays` observes: dispatched events,
+  /// delivered messages, rebuilds, layout passes, semantics actions, and
+  /// focus moves. A custom `ViewNode.place_overlays` may read arbitrary
+  /// declaration-captured state, so the placement pass never tries to
+  /// memoize per node — it re-collects whenever the generation moved and
+  /// skips entirely when it did not.
+  mut overlay_input_generation : Int32
+  /// The input generation the last overlay collect ran at. Equal values mean
+  /// nothing observable changed since then: the previous overrides, dismissal
+  /// layer stack, and surface lifecycle stay valid untouched.
+  mut overlay_collected_at_generation : Int32
   mut closed : Bool
   semantics : SemanticsSubsystem
 }
@@ -106,6 +118,8 @@ fn RuntimeState::new_runtime_view_node(
     exiting_overlays: [],
     active_surface_ids: [],
     overlay_enter_times: [],
+    overlay_input_generation: 0,
+    overlay_collected_at_generation: -1,
     closed: false,
     semantics: SemanticsSubsystem::new(),
   }
@@ -117,6 +131,16 @@ fn RuntimeState::new_runtime_view_node(
 ///|
 fn RuntimeState::environment(self : RuntimeState) -> Environment {
   self.environment
+}
+
+///|
+/// Record that an overlay placement input may have changed (C3): the next
+/// placement pass must re-collect overlay overrides instead of reusing the
+/// previous ones. Deliberately coarse — any event, message, rebuild, layout
+/// pass, semantics action, or focus move bumps it — because a custom
+/// `ViewNode.place_overlays` may read arbitrary declaration-captured state.
+fn RuntimeState::bump_overlay_input_generation(self : RuntimeState) -> Unit {
+  self.overlay_input_generation = self.overlay_input_generation + 1
 }
 
 ///|
@@ -445,6 +469,7 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
     match self.root_builder {
       Some(build) => {
         self.stats.rebuild_pass_count = self.stats.rebuild_pass_count + 1
+        self.bump_overlay_input_generation()
         self.capture_focus_restore_candidate_before_rebuild()
         let result = reconcile_element_for_runtime(
           self.element_tree.root,
@@ -515,6 +540,11 @@ fn DirtyIdSet::push(self : DirtyIdSet, id : ElementId) -> Unit {
     self.seen[key] = ()
     self.items.push(id)
   }
+}
+
+///|
+fn DirtyIdSet::contains(self : DirtyIdSet, id : ElementId) -> Bool {
+  self.seen.contains(id.value())
 }
 
 ///|
@@ -614,6 +644,10 @@ priv struct RenderStats {
   mut draw_command_build_count : Int32
   mut last_command_count : Int32
   mut last_damage_region : DamageRegion
+  /// Overlay placement collects actually run (C3). The generation gate makes
+  /// idle placement passes skip the traversal entirely; this counter observes
+  /// that skip.
+  mut overlay_collect_count : Int32
 }
 
 ///|
@@ -672,6 +706,7 @@ fn RenderStats::new() -> RenderStats {
     draw_command_build_count: 0,
     last_command_count: 0,
     last_damage_region: DamageRegion::empty(),
+    overlay_collect_count: 0,
   }
 }
 

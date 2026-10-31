@@ -73,11 +73,11 @@ fn clone_semantics_node_route(route : SemanticsNodeRoute) -> SemanticsNodeRoute 
 fn ElementSemanticsCache::matches(
   self : ElementSemanticsCache,
   frame : Rect,
-  environment : Environment,
+  environment_id : Int32,
   style : ViewStyle,
 ) -> Bool {
   self.frame == Some(frame) &&
-  self.environment == Some(environment) &&
+  self.environment_id == environment_id &&
   self.style == Some(style)
 }
 
@@ -86,10 +86,10 @@ fn ElementSemanticsCache::can_replay(
   self : ElementSemanticsCache,
   context : SemanticsBuildContext,
   frame : Rect,
-  environment : Environment,
+  environment_id : Int32,
   style : ViewStyle,
 ) -> Bool {
-  if !self.matches(frame, environment, style) {
+  if !self.matches(frame, environment_id, style) {
     return false
   }
   self.roots.all(root => context.nodes.contains(root))
@@ -107,11 +107,11 @@ fn ElementSemanticsCache::capture(
   self : ElementSemanticsCache,
   roots : Array[SemanticsNodeId],
   frame : Rect,
-  environment : Environment,
+  environment_id : Int32,
   style : ViewStyle,
 ) -> Unit {
   self.frame = Some(frame)
-  self.environment = Some(environment)
+  self.environment_id = environment_id
   self.style = Some(style)
   self.roots.clear()
   self.roots.append(roots)
@@ -564,14 +564,15 @@ fn RuntimeState::build_semantics_for_element(
   layout : PlacedNode,
   environment : Environment,
   style : ViewStyle,
+  environment_id~ : Int32 = 0,
 ) -> Array[SemanticsNodeId] {
+  let env_id = if environment_id == 0 {
+    environment_identity(environment)
+  } else {
+    environment_id
+  }
   if !element.has_dirty_semantics() &&
-    element.semantics_cache.can_replay(
-      context,
-      layout.frame,
-      environment,
-      style,
-    ) {
+    element.semantics_cache.can_replay(context, layout.frame, env_id, style) {
     return element.semantics_cache.replay()
   }
   self.stats.semantics_recompute_count = self.stats.semantics_recompute_count +
@@ -584,6 +585,9 @@ fn RuntimeState::build_semantics_for_element(
     []
   } else {
     let child_environment = element.view_node.child_environment(environment)
+    let child_environment_id = element.child_environment_identity(
+      child_environment, environment, env_id,
+    )
     let child_style = element.view_node.child_style(style)
     let child_roots : Array[SemanticsNodeId] = []
     for index, child in element.children {
@@ -595,6 +599,7 @@ fn RuntimeState::build_semantics_for_element(
             layout.children[index],
             child_environment,
             child_style,
+            environment_id=child_environment_id,
           ),
         )
       }
@@ -642,7 +647,7 @@ fn RuntimeState::build_semantics_for_element(
       }
     }
   }
-  element.semantics_cache.capture(roots, layout.frame, environment, style)
+  element.semantics_cache.capture(roots, layout.frame, env_id, style)
   element.dirty.needs_semantics = false
   element.refresh_descendant_dirty_flags()
   if info.composition == Hidden || info.composition == MergeDescendants {
@@ -902,6 +907,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
     self.layout_tree.root,
     self.environment,
     ViewStyle::empty(),
+    environment_id=environment_identity(self.environment),
   )
   if self.closed {
     self.semantics.semantics_commit_in_progress = false
@@ -1241,6 +1247,7 @@ fn RuntimeState::apply_semantics_action_outcome(
   element : ElementNode,
   outcome : RuntimeSemanticsActionOutcome,
 ) -> Unit {
+  self.bump_overlay_input_generation()
   match outcome.state {
     Some(state) => element.control.apply_view_context(state)
     None => ()

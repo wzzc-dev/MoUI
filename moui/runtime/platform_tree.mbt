@@ -6,10 +6,16 @@ fn ElementNode::platform_with_environment(
   self : ElementNode,
   placed : PlacedNode,
   environment : RenderEnvironment,
+  environment_id~ : Int32 = 0,
 ) -> PlatformNode {
+  let env_id = if environment_id == 0 {
+    environment_identity(environment.environment)
+  } else {
+    environment_id
+  }
   if !self.has_dirty_platform() &&
     self.platform_cache.frame == Some(placed.frame) &&
-    self.platform_cache.environment == Some(environment.environment) &&
+    self.platform_cache.environment_id == env_id &&
     self.platform_cache.style == Some(environment.style) {
     match self.platform_cache.node {
       Some(node) => return node
@@ -17,7 +23,7 @@ fn ElementNode::platform_with_environment(
     }
   }
   let cache_key_matches = self.platform_cache.frame == Some(placed.frame) &&
-    self.platform_cache.environment == Some(environment.environment) &&
+    self.platform_cache.environment_id == env_id &&
     self.platform_cache.style == Some(environment.style)
   let placements = if !self.dirty.needs_platform && cache_key_matches {
     match self.platform_cache.node {
@@ -40,12 +46,18 @@ fn ElementNode::platform_with_environment(
   }
   let children : Array[PlatformNode] = []
   let child_environment = environment.with_child_context(self.view_node)
+  let child_environment_id = self.child_environment_identity(
+    child_environment.environment,
+    environment.environment,
+    env_id,
+  )
   for index, child in self.children {
     if index < placed.children.length() {
       children.push(
         child.platform_with_environment(
           placed.children[index],
           child_environment,
+          environment_id=child_environment_id,
         ),
       )
     }
@@ -54,7 +66,7 @@ fn ElementNode::platform_with_environment(
   self.dirty.needs_platform = false
   self.refresh_descendant_dirty_flags()
   self.platform_cache.frame = Some(placed.frame)
-  self.platform_cache.environment = Some(environment.environment)
+  self.platform_cache.environment_id = env_id
   self.platform_cache.style = Some(environment.style)
   self.platform_cache.node = Some(node)
   node

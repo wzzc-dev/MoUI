@@ -26,6 +26,14 @@ priv struct LayoutTree {
 ///|
 priv struct ElementControlState {
   mut view_state : @core.ViewStateContext
+  /// Monotonic counter bumped by `apply_view_context` whenever the applied
+  /// context differs from the current one. Overlay placement probing and the
+  /// per-node place cache key on it: a view whose `layout`/`place_overlays`
+  /// output depends on view state (picker `expanded`, modal `selected`, ...)
+  /// must not be served from a cache computed under the previous state.
+  /// Over-bumping is safe (extra probes/re-places); under-bumping is not, so
+  /// the bump is guarded by a structural compare.
+  mut state_revision : Int32
   mut caret : Int32
   mut selection : TextRange?
   mut text_selection_anchor : Int32?
@@ -51,20 +59,40 @@ fn ElementControlState::apply_view_context(
   self : ElementControlState,
   value : @core.ViewStateContext,
 ) -> Unit {
-  self.view_state = value
+  if value != self.view_state {
+    self.view_state = value
+    self.state_revision = self.state_revision + 1
+  }
 }
 
 ///|
 priv struct ElementLayoutCache {
   mut cached_intrinsic_size : Size?
   mut cached_measure_constraints : Constraints?
-  mut cached_measure_environment : Environment?
+  /// Interned environment identity (C1) instead of the full `Environment`
+  /// value: 0 means "no environment cached yet".
+  mut cached_measure_environment_id : Int32
   mut cached_measure_style : ViewStyle?
   mut cached_measured : MeasuredNode?
   mut cached_place_frame : Rect?
-  mut cached_place_environment : Environment?
+  mut cached_place_environment_id : Int32
   mut cached_place_style : ViewStyle?
   mut cached_placed : PlacedNode?
+  /// Full per-node place cache key (C3). The place recursion consults this
+  /// entry for every element, not just the root, so an overlay re-place can
+  /// reuse unaffected sibling subtrees instead of re-placing the whole tree.
+  /// `cached_place_clip` is the accumulated ancestor clip (hit rects depend on
+  /// it), `cached_place_fit` the ADR 0035 tight-fit flag, and
+  /// `cached_place_state_revision` the element's view-state revision (views
+  /// whose layout reads state must not be served stale).
+  mut cached_place_clip : Rect?
+  mut cached_place_fit : Bool
+  mut cached_place_state_revision : Int32
+  /// Node-kind-derived classification of this node's `child_environment`
+  /// (passthrough vs. scope). Not cache content: it survives `clear()` and is
+  /// recomputed once per element after remount.
+  mut child_environment_classified : Bool
+  mut child_environment_passthrough : Bool
   mut hit_count : Int32
   mut miss_count : Int32
 }
@@ -83,7 +111,8 @@ priv struct ElementRenderCache {
 ///|
 priv struct ElementSemanticsCache {
   mut frame : Rect?
-  mut environment : Environment?
+  /// Interned environment identity (C1) instead of the full `Environment`.
+  mut environment_id : Int32
   mut style : ViewStyle?
   roots : Array[SemanticsNodeId]
 }
@@ -91,7 +120,8 @@ priv struct ElementSemanticsCache {
 ///|
 priv struct ElementPlatformCache {
   mut frame : Rect?
-  mut environment : Environment?
+  /// Interned environment identity (C1) instead of the full `Environment`.
+  mut environment_id : Int32
   mut style : ViewStyle?
   mut node : PlatformNode?
 }
@@ -269,6 +299,7 @@ fn ElementControlState::new() -> ElementControlState {
       disabled: false,
       slots: @core.ViewStateSlots::empty(),
     },
+    state_revision: 0,
     caret: 0,
     selection: None,
     text_selection_anchor: None,
@@ -287,13 +318,18 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
   {
     cached_intrinsic_size: None,
     cached_measure_constraints: None,
-    cached_measure_environment: None,
+    cached_measure_environment_id: 0,
     cached_measure_style: None,
     cached_measured: None,
     cached_place_frame: None,
-    cached_place_environment: None,
+    cached_place_environment_id: 0,
     cached_place_style: None,
     cached_placed: None,
+    cached_place_clip: None,
+    cached_place_fit: false,
+    cached_place_state_revision: -1,
+    child_environment_classified: false,
+    child_environment_passthrough: false,
     hit_count: 0,
     miss_count: 0,
   }
@@ -303,13 +339,16 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
 fn ElementLayoutCache::clear(self : ElementLayoutCache) -> Unit {
   self.cached_intrinsic_size = None
   self.cached_measure_constraints = None
-  self.cached_measure_environment = None
+  self.cached_measure_environment_id = 0
   self.cached_measure_style = None
   self.cached_measured = None
   self.cached_place_frame = None
-  self.cached_place_environment = None
+  self.cached_place_environment_id = 0
   self.cached_place_style = None
   self.cached_placed = None
+  self.cached_place_clip = None
+  self.cached_place_fit = false
+  self.cached_place_state_revision = -1
 }
 
 ///|
@@ -342,18 +381,18 @@ fn ElementRenderCache::invalidate_composition(
 
 ///|
 fn ElementSemanticsCache::empty() -> ElementSemanticsCache {
-  { frame: None, environment: None, style: None, roots: [], }
+  { frame: None, environment_id: 0, style: None, roots: [], }
 }
 
 ///|
 fn ElementSemanticsCache::clear(self : ElementSemanticsCache) -> Unit {
   self.frame = None
-  self.environment = None
+  self.environment_id = 0
   self.style = None
   self.roots.clear()
 }
 
 ///|
 fn ElementPlatformCache::empty() -> ElementPlatformCache {
-  { frame: None, environment: None, style: None, node: None, }
+  { frame: None, environment_id: 0, style: None, node: None, }
 }
