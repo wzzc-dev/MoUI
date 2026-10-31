@@ -124,7 +124,7 @@ has L1 package-test proof:
 
 | Gate | L1 proof |
 | --- | --- |
-| Renderer mailbox control queue (`moui/render/common/render_frame_mailbox.mbt`) | `moui/render/common` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
+| Renderer worker control queue (`moui/render/common/gpu_render_worker.mbt`) | `moui/render/common` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | focused native tests (independent thread, retained picture, detach acknowledgement, zero readback counter) |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
 | Window-hosted verification manifest | `moui_cli/verify.mbt` and `moui_cli/verify_wbtest.mbt` |

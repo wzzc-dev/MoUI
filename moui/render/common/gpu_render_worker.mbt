@@ -1,6 +1,9 @@
 ///|
 /// Renderer-worker protocol lifecycle. This value-level model exercises queue,
 /// generation, and recovery behavior; it does not prove a platform present.
+/// It is a same-thread model: submitted frames are held by reference and never
+/// mutated or consumed here, so no per-frame command copy is made (the real
+/// handoff copies happen in the platform worker, if any).
 pub(all) enum GpuRenderWorkerState {
   Idle
   Lost
@@ -165,11 +168,7 @@ pub fn GpuRenderWorker::submit(
       sequence=self.next_sequence,
     ),
   )
-  let frame = {
-    token: resolved_token,
-    submitted_at_ms,
-    input: { ..input, commands: input.commands.copy(), },
-  }
+  let frame = { token: resolved_token, submitted_at_ms, input, }
   self.next_sequence = self.next_sequence + 1
   self.submitted = self.submitted + 1
   match self.pending {

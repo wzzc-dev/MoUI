@@ -99,7 +99,7 @@ The Phase 2 promotion gate scaffolding has L1 package-test proof:
 
 | Gate | Source | L1 proof |
 | --- | --- | --- |
-| Renderer mailbox control queue | `moui/render/common/render_frame_mailbox.mbt` | `moui/render/common` whitebox tests (capacity-two latest-wins; control messages never dropped) |
+| Renderer mailbox control queue | `moui/render/common/gpu_render_worker.mbt` | `moui/render/common` whitebox tests (capacity-two latest-wins; control messages never dropped) |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | focused native worker tests (`SkPicture` retain, independent thread, detach acknowledgement, zero readback counter), macOS worker-owned Metal first-frame smoke, Android NDK GPU build, HarmonyOS native/HAP build, and iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster`) |
 | GPU promotion evidence | `docs/gpu-promotion-runbook.md` | matching-device evidence remains required before a promotion claim |

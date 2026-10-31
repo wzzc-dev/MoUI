@@ -707,7 +707,7 @@ fn build_gap_report(
     #|2. ≥ 100 surface recreation and ≥ 100 fg/bg cycles with bounded memory.
     #|3. Forced context-loss recovery within 3 VSyncs.
     #|4. Automatic raster fallback after repeated failure, AppRuntime preserved.
-    #|5. Mailbox control-message stress under frame flood.
+    #|5. Worker control-message stress under frame flood.
     #|6. Manifest with non-pending provenance and
     #|   `node scripts/validate-gpu-promotion-manifest.mjs <manifest> --require-passed`.
     #|7. Only then change `NativeGpuPlatform::gpu_promoted` for this platform.
