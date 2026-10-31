@@ -228,7 +228,12 @@ fn submit_host_calls(
       PushFilter(filter) => submit_push_filter(renderer, filter)
       PopFilter => raise_for_host_status(host_pop_filter(renderer))
       DrawShaderEffect(spec) => submit_draw_shader_effect(renderer, spec)
-      Present => raise_for_host_status(host_present(renderer))
+      Present => {
+        // Retained path meshes are reclaimed least recently used, so a frame
+        // boundary is what makes "used this frame" mean anything.
+        webgpu_path_mesh_cache.advance_frame()
+        raise_for_host_status(host_present(renderer))
+      }
     }
   }
 }
@@ -329,8 +334,45 @@ fn submit_draw_path(
   renderer : HostWebGpuRenderer,
   path : @core.PathSpec,
 ) -> Unit raise WebGpuHostError {
+  match webgpu_path_mesh_cache.find(path) {
+    Some(mesh) => {
+      let status = host_draw_path_mesh_cached(renderer, mesh)
+      if status == 0 {
+        ()
+      } else if status == host_status_invalid_resource {
+        // The host runtime that held this mesh is gone -- WebGPU recovery
+        // re-instantiates against a fresh provider -- so upload again instead of
+        // failing the frame.
+        webgpu_path_mesh_cache.forget(path)
+        submit_uploaded_path_mesh(renderer, path)
+      } else {
+        raise_for_host_status(status)
+      }
+    }
+    None => submit_uploaded_path_mesh(renderer, path)
+  }
+}
+
+///|
+/// Tessellate, hand the mesh to the host once, then draw it by handle. The
+/// transfer happens here and nowhere else for this path.
+fn submit_uploaded_path_mesh(
+  renderer : HostWebGpuRenderer,
+  path : @core.PathSpec,
+) -> Unit raise WebGpuHostError {
   let mesh = @render_common.tessellate_path(path)
-  raise_for_host_status(
-    host_draw_path_mesh(renderer, host_string(path_mesh_payload(mesh))),
+  let host_id = host_upload_path_mesh(
+    renderer,
+    host_string(path_mesh_payload(mesh)),
   )
+  if host_id <= 0 {
+    raise InvalidResource
+  }
+  match webgpu_path_mesh_cache.record(path, host_id) {
+    Some(retired) => {
+      let _ = host_release_path_mesh(retired)
+    }
+    None => ()
+  }
+  raise_for_host_status(host_draw_path_mesh_cached(renderer, host_id))
 }

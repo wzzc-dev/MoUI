@@ -448,3 +448,19 @@ priv struct WebGpuLayerCommandCapture {
 }
 
 ///|
+priv struct WebGpuPathMeshEntry {
+  mut path : @core.PathSpec
+  // Host mesh handle, 0 once the host has dropped the mesh. The slot stays in
+  // the cache so a re-upload of the same path reuses it instead of growing.
+  mut host_id : Int32
+  mut used_at : Int32
+}
+
+///|
+priv struct WebGpuPathMeshCache {
+  entries : Array[WebGpuPathMeshEntry]
+  mut frame : Int32
+  limit : Int32
+}
+
+///|

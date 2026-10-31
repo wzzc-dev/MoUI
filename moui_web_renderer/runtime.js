@@ -49,11 +49,13 @@ export function createWebGpuImports(options = {}) {
   const renderers = new Map();
   const threeDSurfaces = new Map();
   const threeDRenderers = new Map();
+  const pathMeshes = new Map();
   let nextStringHandle = 1;
   let nextSurfaceHandle = 1;
   let nextRendererHandle = 1;
   let nextThreeDSurfaceHandle = 1;
   let nextThreeDRendererHandle = 1;
+  let nextPathMeshHandle = 1;
   const measureCanvas = document.createElement("canvas");
   const measureContext = measureCanvas.getContext("2d");
   const notifyImageResourceChanged =
@@ -1284,10 +1286,23 @@ export function createWebGpuImports(options = {}) {
     pushRendererItem(renderer, { type: "visual", start: startIndex, count: 6 });
   };
 
-  const pushPathMesh = (renderer, payload) => {
-    const stride = 15;
+  const pathMeshStride = 15;
+
+  // Mesh values are kept in the renderer's own logical space: the transform
+  // and opacity are applied at push time, so one uploaded mesh can be replayed
+  // under any later state. A payload that does not decompose into whole
+  // triangles carries no geometry, so it uploads as an empty mesh and drawing
+  // it stays a silent no-op.
+  const parsePathMeshValues = payload => {
     const values = parseStrictDoubleList(payload);
-    if (!values || values.length < stride * 3 || values.length % (stride * 3) !== 0) return;
+    if (!values || values.length < pathMeshStride * 3) return [];
+    if (values.length % (pathMeshStride * 3) !== 0) return [];
+    return values;
+  };
+
+  const pushPathMeshValues = (renderer, values) => {
+    const stride = pathMeshStride;
+    if (values.length < stride * 3 || values.length % (stride * 3) !== 0) return;
     const scope = rendererScope(renderer);
     const startIndex = scope.visualVertices.length / VISUAL_STRIDE_FLOATS;
     const state = rendererState(renderer);
@@ -2672,10 +2687,25 @@ export function createWebGpuImports(options = {}) {
       }
       return ok();
     },
-    draw_path_mesh(rendererHandle, meshPayload) {
+    upload_path_mesh(rendererHandle, meshPayload) {
+      // Consume the payload before validating the renderer so a rejected
+      // upload still releases the one-use string handle.
+      const values = parsePathMeshValues(stringValue(meshPayload));
+      if (!renderers.has(rendererHandle)) return 0;
+      const mesh = nextPathMeshHandle++;
+      pathMeshes.set(mesh, values);
+      return mesh;
+    },
+    draw_path_mesh_cached(rendererHandle, mesh) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
-      pushPathMesh(renderer, stringValue(meshPayload));
+      const values = pathMeshes.get(mesh);
+      if (!values) return invalidResource();
+      pushPathMeshValues(renderer, values);
+      return ok();
+    },
+    release_path_mesh(mesh) {
+      pathMeshes.delete(mesh);
       return ok();
     },
     image_resource_status(rendererHandle, source) {

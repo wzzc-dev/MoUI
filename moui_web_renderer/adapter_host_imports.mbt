@@ -6,6 +6,12 @@ fn raise_for_host_status(code : Int32) -> Unit raise WebGpuHostError {
 }
 
 ///|
+/// The host reply for "this handle is not a resource I know". A retained path
+/// mesh answered with this means the page runtime was replaced, so the adapter
+/// uploads the mesh again instead of failing the frame.
+let host_status_invalid_resource : Int32 = 6
+
+///|
 fn host_status_to_error(code : Int32) -> WebGpuHostError {
   match code {
     1 => Unavailable
@@ -315,10 +321,19 @@ fn host_draw_image(
 ) -> Int32 = "webgpu" "draw_image"
 
 ///|
-fn host_draw_path_mesh(
+fn host_upload_path_mesh(
   renderer : HostWebGpuRenderer,
   mesh_payload : HostWebGpuString,
-) -> Int32 = "webgpu" "draw_path_mesh"
+) -> Int32 = "webgpu" "upload_path_mesh"
+
+///|
+fn host_draw_path_mesh_cached(
+  renderer : HostWebGpuRenderer,
+  mesh : Int32,
+) -> Int32 = "webgpu" "draw_path_mesh_cached"
+
+///|
+fn host_release_path_mesh(mesh : Int32) -> Int32 = "webgpu" "release_path_mesh"
 
 ///|
 fn host_image_resource_status(

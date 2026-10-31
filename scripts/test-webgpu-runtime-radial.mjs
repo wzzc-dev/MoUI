@@ -357,9 +357,14 @@ const radialPathPayload = [
   42, 10, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
   10, 42, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
 ].join(",");
+const radialPathMesh = imports.upload_path_mesh(
+  renderer,
+  stringHandle(radialPathPayload),
+);
+assert(radialPathMesh > 0, "upload_path_mesh radial payload failed");
 assert(
-  imports.draw_path_mesh(renderer, stringHandle(radialPathPayload)) === 0,
-  "draw_path_mesh radial payload failed",
+  imports.draw_path_mesh_cached(renderer, radialPathMesh) === 0,
+  "draw_path_mesh_cached radial mesh failed",
 );
 assert(imports.present(renderer) === 0, "present radial path failed");
 const pathVisual = uploadedBuffers.find(buffer => buffer.length === 3 * 22);
@@ -379,9 +384,17 @@ uploadedBuffers.length = 0;
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for malformed path failed");
 const malformedPathValues = radialPathPayload.split(",");
 malformedPathValues[17] = "NaN";
+const malformedPathMesh = imports.upload_path_mesh(
+  renderer,
+  stringHandle(malformedPathValues.join(",")),
+);
 assert(
-  imports.draw_path_mesh(renderer, stringHandle(malformedPathValues.join(","))) === 0,
-  "draw_path_mesh malformed payload should be ignored without failing",
+  malformedPathMesh > 0,
+  "upload_path_mesh malformed payload should still yield a drawable mesh",
+);
+assert(
+  imports.draw_path_mesh_cached(renderer, malformedPathMesh) === 0,
+  "draw_path_mesh_cached malformed payload should be ignored without failing",
 );
 assert(imports.present(renderer) === 0, "present malformed path failed");
 assert(
@@ -391,17 +404,19 @@ assert(
 
 uploadedBuffers.length = 0;
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for partial triangle path failed");
+const partialTrianglePathMesh = imports.upload_path_mesh(
+  renderer,
+  stringHandle([
+    radialPathPayload,
+    [
+      42, 42, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
+    ].join(","),
+  ].join(",")),
+);
+assert(partialTrianglePathMesh > 0, "upload_path_mesh partial triangle payload failed");
 assert(
-  imports.draw_path_mesh(
-    renderer,
-    stringHandle([
-      radialPathPayload,
-      [
-        42, 42, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
-      ].join(","),
-    ].join(",")),
-  ) === 0,
-  "draw_path_mesh partial triangle payload should be ignored without failing",
+  imports.draw_path_mesh_cached(renderer, partialTrianglePathMesh) === 0,
+  "draw_path_mesh_cached partial triangle payload should be ignored without failing",
 );
 assert(imports.present(renderer) === 0, "present partial triangle path failed");
 assert(
