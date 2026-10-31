@@ -436,6 +436,22 @@ pub fn Surface::egl_present_and_acquire_next(
 }
 
 ///|
+pub fn Surface::egl_resize_window(
+  surface : Surface,
+  context : GpuContext,
+  native_window_ptr : UInt64,
+  width~ : Int32,
+  height~ : Int32,
+) -> Surface? {
+  ignore(surface)
+  ignore(context)
+  ignore(native_window_ptr)
+  ignore(width)
+  ignore(height)
+  None
+}
+
+///|
 pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool {
   false
 }

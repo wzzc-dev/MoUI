@@ -614,6 +614,7 @@ pub fn Surface::egl_gpu_context_headers_available() -> Bool
 pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool
 pub fn Surface::egl_gpu_context_runtime_available() -> Bool
 pub fn Surface::egl_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::egl_resize_window(Self, GpuContext, UInt64, width~ : Int32, height~ : Int32) -> Self?
 pub fn Surface::egl_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::flush_and_submit(Self) -> Bool
 pub fn Surface::for_target(@moui_skia.SurfaceTargetDescriptor) -> Self?
