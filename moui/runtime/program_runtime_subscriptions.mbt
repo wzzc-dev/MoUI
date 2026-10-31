@@ -36,19 +36,25 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
 ) -> Unit {
   self.record_subscription_plan(subscription_plan_summary(subscription))
   let next : Array[ActiveProgramSubscription] = []
-  let seen_keys : Array[String] = []
+  // Map-backed key identity (D2): source keys are unique per plan and active
+  // keys are unique among actives, so both reuse lookups are O(1) instead of
+  // O(n) `.any` scans per source (O(n²) per storm).
+  let seen_keys : Map[String, Unit] = Map([])
+  let active_by_key : Map[String, ActiveProgramSubscription] = Map([])
   for active in self.active_subscriptions {
     active.reused = false
+    active_by_key[active.key] = active
   }
   for source in subscription.runtime_sources() {
-    if seen_keys.any(key => key == source.key()) {
+    let key = source.key()
+    if seen_keys.contains(key) {
       self.duplicate_subscription_key_count = self.duplicate_subscription_key_count +
         1
       continue
     }
-    seen_keys.push(source.key())
-    match self.reusable_subscription(source.key(), source.kind()) {
-      Some(active) => {
+    seen_keys[key] = ()
+    match active_by_key.get(key) {
+      Some(active) if active.kind == source.kind() => {
         active.reused = true
         active.kind = source.kind()
         active.label = source.label()
@@ -56,7 +62,7 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
         self.reused_subscription_count = self.reused_subscription_count + 1
         next.push(active)
       }
-      None => next.push(self.start_subscription(source, dispatch))
+      _ => next.push(self.start_subscription(source, dispatch))
     }
   }
   for active in self.active_subscriptions {
@@ -76,20 +82,6 @@ fn ProgramRuntimeDiagnostics::cancel_all_subscriptions(
     self.cancel_subscription(active, reason)
   }
   self.active_subscriptions = []
-}
-
-///|
-fn ProgramRuntimeDiagnostics::reusable_subscription(
-  self : ProgramRuntimeDiagnostics,
-  key : String,
-  kind : String,
-) -> ActiveProgramSubscription? {
-  for active in self.active_subscriptions {
-    if !active.reused && active.key == key && active.kind == kind {
-      return Some(active)
-    }
-  }
-  None
 }
 
 ///|

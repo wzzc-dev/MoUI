@@ -491,3 +491,127 @@ fn runtime_plan_max_int(a : Int32, b : Int32) -> Int32 {
     b
   }
 }
+
+///|
+/// Single-traversal effect plan accumulator (plan
+/// hot-path-invalidation-boilerplate-convergence D3). The per-message path
+/// previously walked the whole effect tree twice — once for this diagnostics
+/// summary, once for execution — so every message paid a full diagnostic walk
+/// regardless of whether diagnostics were read. `run` folds both into the one
+/// traversal execution already requires. The fold preserves
+/// `summarize_effect` semantics exactly: same counts, same `root_kind`, same
+/// max depth, same descriptor order.
+priv struct EffectPlanRunSummary {
+  mut root_kind : EffectPlanKind
+  mut root_kind_set : Bool
+  mut none_count : Int32
+  mut batch_count : Int32
+  mut send_count : Int32
+  mut dispatch_count : Int32
+  mut run_count : Int32
+  mut task_count : Int32
+  mut scheduled_count : Int32
+  mut max_depth : Int32
+  descriptors : Array[@core.EffectDescriptor]
+}
+
+///|
+fn EffectPlanRunSummary::new() -> EffectPlanRunSummary {
+  {
+    root_kind: EffectPlanNone,
+    root_kind_set: false,
+    none_count: 0,
+    batch_count: 0,
+    send_count: 0,
+    dispatch_count: 0,
+    run_count: 0,
+    task_count: 0,
+    scheduled_count: 0,
+    max_depth: 0,
+    descriptors: [],
+  }
+}
+
+///|
+fn[Msg] EffectPlanRunSummary::run(
+  self : EffectPlanRunSummary,
+  effect : @core.Effect[Msg],
+  depth : Int32,
+  dispatch : (Msg) -> Unit,
+  start_task : (@core.EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
+) -> Unit {
+  if depth > self.max_depth {
+    self.max_depth = depth
+  }
+  if !self.root_kind_set {
+    self.root_kind_set = true
+    self.root_kind = match effect {
+      NoEffect => EffectPlanNone
+      Batch(_) => EffectPlanBatch
+      Send(_) => EffectPlanSend
+      Dispatch(_) => EffectPlanDispatch
+      Run(_, _) => EffectPlanRun
+      Task(_, _) => EffectPlanTask
+    }
+  }
+  match effect {
+    NoEffect => self.none_count = self.none_count + 1
+    Batch(effects) => {
+      self.batch_count = self.batch_count + 1
+      for child in effects {
+        self.run(child, depth + 1, dispatch, start_task)
+      }
+    }
+    Send(message) => {
+      self.send_count = self.send_count + 1
+      self.scheduled_count = self.scheduled_count + 1
+      dispatch(message)
+    }
+    Dispatch(run) => {
+      self.dispatch_count = self.dispatch_count + 1
+      self.scheduled_count = self.scheduled_count + 1
+      run(dispatch)
+    }
+    Run(descriptor, run) => {
+      self.run_count = self.run_count + 1
+      self.scheduled_count = self.scheduled_count + 1
+      self.descriptors.push(descriptor)
+      run(dispatch)
+    }
+    Task(descriptor, start) => {
+      self.task_count = self.task_count + 1
+      self.scheduled_count = self.scheduled_count + 1
+      self.descriptors.push(descriptor)
+      start_task(descriptor, start)
+    }
+  }
+}
+
+///|
+fn EffectPlanRunSummary::executed_count(self : EffectPlanRunSummary) -> Int32 {
+  self.send_count + self.dispatch_count + self.run_count + self.task_count
+}
+
+///|
+fn EffectPlanRunSummary::finish(
+  self : EffectPlanRunSummary,
+) -> EffectPlanSummary {
+  {
+    root_kind: self.root_kind,
+    none_count: self.none_count,
+    batch_count: self.batch_count,
+    send_count: self.send_count,
+    dispatch_count: self.dispatch_count,
+    run_count: self.run_count,
+    task_count: self.task_count,
+    scheduled_count: self.scheduled_count,
+    max_depth: self.max_depth,
+    descriptors: self.descriptors,
+    duplicate_descriptor_key_count: duplicate_effect_descriptor_key_count(
+      self.descriptors,
+    ),
+    duplicate_descriptor_keys: duplicate_effect_descriptor_keys(
+      self.descriptors,
+    ),
+  }
+}

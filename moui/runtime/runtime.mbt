@@ -24,34 +24,6 @@ fn[Msg] compact_pending_program_messages(
 }
 
 ///|
-fn[Msg] run_effect(
-  effect : @core.Effect[Msg],
-  dispatch : (Msg) -> Unit,
-  start_task : (@core.EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
-) -> Int32 {
-  let mut count = 0
-  effect.runtime_visit(
-    message => {
-      dispatch(message)
-      count = count + 1
-    },
-    run => {
-      run(dispatch)
-      count = count + 1
-    },
-    (_descriptor, run) => {
-      run(dispatch)
-      count = count + 1
-    },
-    (descriptor, start) => {
-      start_task(descriptor, start)
-      count = count + 1
-    },
-  )
-  count
-}
-
-///|
 pub fn[Msg] AppRuntime::new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,
@@ -105,20 +77,15 @@ pub fn[Model, Msg] AppRuntime::new_program(
     )
     syncing_subscriptions.val = false
   }
+  let command_sync = Ref(ProgramCommandSync::new())
   let sync_commands = () => {
     match runtime_ref.val {
       Some(runtime) =>
-        runtime.state.set_action_commands(
-          ActionCommandMap::new(
-            bindings=program
-              .runtime_commands(model.val)
-              .map(program_command => {
-                @core.CommandBinding::new(command=program_command.command(), handle=() => {
-                  dispatch(program_command.message())
-                })
-              }),
-          ),
-        )
+        match
+          command_sync.val.sync(program.runtime_commands(model.val), dispatch) {
+          Some(map) => runtime.state.set_action_commands(map)
+          None => ()
+        }
       None => ()
     }
   }
@@ -153,11 +120,17 @@ pub fn[Model, Msg] AppRuntime::new_program(
           None => ()
         }
         sync_commands()
-        let effect_summary = effect_plan_summary(effect)
-        let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
+        // Single traversal for execution + diagnostics summary (D3): the
+        // separate per-message `effect_plan_summary` walk is folded into the
+        // run, so the hot path pays no extra diagnostic traversal.
+        let effect_run = EffectPlanRunSummary::new()
+        effect_run.run(effect, 1, dispatch, (descriptor, start) => {
           program_runtime.start_effect_task(descriptor, start, dispatch)
         })
-        program_runtime.record_effects(effect_summary, effect_count)
+        program_runtime.record_effects(
+          effect_run.finish(),
+          effect_run.executed_count(),
+        )
         sync_subscriptions()
         program_runtime.record_message_processed(pending_count())
       }
@@ -174,12 +147,14 @@ pub fn[Model, Msg] AppRuntime::new_program(
     }
   }
   process_ref.val = Some(process_messages)
-  let initial_effect_summary = effect_plan_summary(initial_effect)
-  let initial_effect_count = run_effect(initial_effect, dispatch, (
-    descriptor,
-    start,
-  ) => program_runtime.start_effect_task(descriptor, start, dispatch))
-  program_runtime.record_effects(initial_effect_summary, initial_effect_count)
+  let initial_effect_run = EffectPlanRunSummary::new()
+  initial_effect_run.run(initial_effect, 1, dispatch, (descriptor, start) => {
+    program_runtime.start_effect_task(descriptor, start, dispatch)
+  })
+  program_runtime.record_effects(
+    initial_effect_run.finish(),
+    initial_effect_run.executed_count(),
+  )
   sync_subscriptions()
   match process_ref.val {
     Some(process) => process()
