@@ -49,6 +49,8 @@ export function createWebGpuImports(options = {}) {
   const renderers = new Map();
   const threeDSurfaces = new Map();
   const threeDRenderers = new Map();
+  const threeDSkinMeshes = new Map();
+  let nextThreeDSkinMeshHandle = 1;
   const pathMeshes = new Map();
   let nextStringHandle = 1;
   let nextSurfaceHandle = 1;
@@ -56,6 +58,16 @@ export function createWebGpuImports(options = {}) {
   let nextThreeDSurfaceHandle = 1;
   let nextThreeDRendererHandle = 1;
   let nextPathMeshHandle = 1;
+  // Copy a row-major 4x4 (glTF/MoUI convention) into a Float32Array as
+  // column-major (WGSL convention).
+  const skinTransposeRowMajorInto = (out, source) => {
+    for (let c = 0; c < 4; c++) {
+      for (let r = 0; r < 4; r++) {
+        out[c * 4 + r] = source[r * 4 + c];
+      }
+    }
+    return out;
+  };
   const measureCanvas = document.createElement("canvas");
   const measureContext = measureCanvas.getContext("2d");
   const notifyImageResourceChanged =
@@ -2443,6 +2455,83 @@ export function createWebGpuImports(options = {}) {
         primitive: { topology: "triangle-list", cullMode: "back" },
         depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
       });
+        // GPU-skinned pipeline. Geometry is uploaded once and retained; each
+        // frame only ships a small packet (view-proj, per-item model/color and
+        // the bone palette), so an articulated character costs a few KB per
+        // frame instead of re-expanding every triangle. A failure here must
+        // not take the legacy clip-space path down, so it is built in its own
+        // guard and reported through the skin frame calls.
+        let skinShader;
+        let skinPipelineValid = typeof device.pushErrorScope === "function";
+        device.pushErrorScope?.("validation");
+        try {
+          skinShader = device.createShaderModule({ code: `
+        struct U {
+          view_proj : mat4x4<f32>,
+          model : mat4x4<f32>,
+          light : vec4<f32>,
+          color : vec4<f32>,
+        };
+        @group(0) @binding(0) var<uniform> u : U;
+        @group(0) @binding(1) var<storage, read> bones : array<mat4x4<f32>>;
+        struct VSIn {
+          @location(0) pos : vec4<f32>,
+          @location(1) nrm : vec3<f32>,
+          @location(2) jnt : vec4<f32>,
+          @location(3) wgt : vec4<f32>,
+        };
+        struct VSOut {
+          @builtin(position) clip : vec4<f32>,
+          @location(0) col : vec4<f32>,
+        };
+        @vertex
+        fn vs_main(i : VSIn) -> VSOut {
+          var o : VSOut;
+          var p = vec4<f32>(i.pos.xyz, 1.0);
+          var n = i.nrm;
+          if (i.pos.w > 0.5) {
+            let m =
+              bones[i32(i.jnt.x)] * i.wgt.x +
+              bones[i32(i.jnt.y)] * i.wgt.y +
+              bones[i32(i.jnt.z)] * i.wgt.z +
+              bones[i32(i.jnt.w)] * i.wgt.w;
+            p = m * p;
+            n = normalize((m * vec4<f32>(i.nrm, 0.0)).xyz);
+          }
+          o.clip = u.view_proj * u.model * p;
+          let l = normalize(u.light.xyz);
+          let d = max(dot(n, l), 0.0) * 0.85 + 0.3;
+          o.col = vec4<f32>(u.color.rgb * d, u.color.a);
+          return o;
+        }
+        @fragment
+        fn fs_main(in : VSOut) -> @location(0) vec4<f32> { return in.col; }
+      ` });
+        } catch (error) {
+          globalThis.console?.warn?.("MoUI 3D skin shader unavailable", error);
+          skinShader = undefined;
+        }
+        const skinPipeline = skinShader ? device.createRenderPipeline({
+          layout: "auto",
+          vertex: {
+            module: skinShader,
+            entryPoint: "vs_main",
+            buffers: [{ arrayStride: 60, attributes: [
+              { shaderLocation: 0, offset: 0, format: "float32x4" },
+              { shaderLocation: 1, offset: 16, format: "float32x3" },
+              { shaderLocation: 2, offset: 28, format: "float32x4" },
+              { shaderLocation: 3, offset: 44, format: "float32x4" },
+            ] }],
+          },
+          fragment: { module: skinShader, entryPoint: "fs_main", targets: [{ format }] },
+          primitive: { topology: "triangle-list", cullMode: "none" },
+          depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
+        }) : undefined;
+        if (typeof device.pushErrorScope === "function") {
+          device.popErrorScope(error => {
+            skinPipelineValid = !error && !!renderer.skinPipeline;
+          });
+        }
         const renderer = {
           surface,
           pipeline,
@@ -2453,6 +2542,21 @@ export function createWebGpuImports(options = {}) {
           vertexPayload: undefined,
           uploadCount: 0,
           frame: 0,
+          skinPipeline,
+          skinReady: () => skinPipelineValid,
+          skinMeshes: new Map(),
+          skinMeshIds: new Set(),
+          skinMaxBones: 256,
+          skinBones: new Float32Array(256 * 16),
+          skinBoneCount: 0,
+          skinBoneBuffer: undefined,
+          skinBoneCapacity: 0,
+          skinUniformBuffer: undefined,
+          skinUniformCapacity: 0,
+          skinBindGroups: [],
+          skinItems: [],
+          skinViewProj: new Float32Array(16),
+          skinLight: [0.35, 0.8, 0.5, 0],
         };
         const handle = nextThreeDRendererHandle++;
         threeDRenderers.set(handle, renderer);
@@ -2520,6 +2624,193 @@ export function createWebGpuImports(options = {}) {
         return invalidResource();
       }
     },
+    three_d_skin_mesh_begin(rendererHandle) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return 0;
+      const handle = nextThreeDSkinMeshHandle++;
+      threeDSkinMeshes.set(handle, { renderer, verts: [], buffer: undefined, vertexCount: 0 });
+      renderer.skinMeshIds.add(handle);
+      return handle;
+    },
+    three_d_skin_mesh_push(
+      meshHandle,
+      x, y, z, w,
+      nx, ny, nz,
+      j0, j1, j2, j3,
+      w0, w1, w2, w3,
+    ) {
+      const mesh = threeDSkinMeshes.get(meshHandle);
+      if (!mesh) return invalidResource();
+      mesh.verts.push(x, y, z, w, nx, ny, nz, j0, j1, j2, j3, w0, w1, w2, w3);
+      return ok();
+    },
+    three_d_skin_mesh_end(meshHandle) {
+      const mesh = threeDSkinMeshes.get(meshHandle);
+      if (!mesh) return invalidResource();
+      try {
+        const data = new Float32Array(mesh.verts);
+        mesh.buffer?.destroy?.();
+        mesh.buffer = device.createBuffer({
+          size: Math.max(4, data.byteLength),
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(mesh.buffer, 0, data);
+        mesh.vertexCount = data.length / 15;
+        mesh.verts = [];
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D skin mesh upload failed", error);
+        return invalidResource();
+      }
+    },
+    three_d_skin_mesh_release(meshHandle) {
+      const mesh = threeDSkinMeshes.get(meshHandle);
+      if (!mesh) return ok();
+      mesh.buffer?.destroy?.();
+      mesh.renderer.skinMeshIds.delete(meshHandle);
+      threeDSkinMeshes.delete(meshHandle);
+      return ok();
+    },
+    three_d_skin_available(rendererHandle) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      return !!renderer?.skinPipeline && renderer.skinReady();
+    },
+    three_d_skin_frame(rendererHandle, vp0, vp1, vp2, vp3, vp4, vp5, vp6, vp7, vp8, vp9, vp10, vp11, vp12, vp13, vp14, vp15, lx, ly, lz, lw) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer || !renderer.skinPipeline || !renderer.skinReady()) return invalidResource();
+      try {
+        renderer.skinViewProj = skinTransposeRowMajorInto(renderer.skinViewProj ?? new Float32Array(16), [vp0, vp1, vp2, vp3, vp4, vp5, vp6, vp7, vp8, vp9, vp10, vp11, vp12, vp13, vp14, vp15]);
+        renderer.skinLight = [lx, ly, lz, lw];
+        renderer.skinBoneCount = 0;
+        renderer.skinItems = [];
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D skin frame begin failed", error);
+        return invalidResource();
+      }
+    },
+    three_d_skin_bone(rendererHandle, index, m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const slot = Number(index) | 0;
+      if (slot < 0 || slot >= renderer.skinMaxBones) return invalidResource();
+      const arr = renderer.skinBones ?? new Float32Array(renderer.skinMaxBones * 16);
+      renderer.skinBones = arr;
+      skinTransposeRowMajorInto(arr.subarray(slot * 16, slot * 16 + 16), [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15]);
+      renderer.skinBoneCount = Math.max(renderer.skinBoneCount ?? 0, slot + 1);
+      return ok();
+    },
+    three_d_skin_item(rendererHandle, meshHandle, count, m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, r, g, b, a) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      const mesh = threeDSkinMeshes.get(meshHandle);
+      if (!mesh || !mesh.buffer) return invalidResource();
+      renderer.skinItems.push({
+        mesh,
+        count: Math.min(Number(count) | 0, mesh.vertexCount),
+        model: [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15],
+        color: [r, g, b, a],
+      });
+      return ok();
+    },
+    three_d_skin_present(rendererHandle) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      try {
+        const surface = renderer.surface;
+        if (!renderer.depthTexture || renderer.depthWidth !== surface.canvas.width || renderer.depthHeight !== surface.canvas.height) {
+          renderer.depthTexture?.destroy?.();
+          renderer.depthTexture = device.createTexture({ size: [surface.canvas.width, surface.canvas.height], format: "depth24plus", usage: GPUTextureUsage.RENDER_ATTACHMENT });
+          renderer.depthWidth = surface.canvas.width; renderer.depthHeight = surface.canvas.height;
+          renderer.skinBindGroups = [];
+        }
+        const boneCount = Math.max(1, renderer.skinBoneCount ?? 0);
+        const boneBytes = boneCount * 64;
+        if (!renderer.skinBoneBuffer || renderer.skinBoneCapacity < boneBytes) {
+          renderer.skinBoneBuffer?.destroy?.();
+          const capacity = Math.max(64 * 64, boneBytes);
+          renderer.skinBoneBuffer = device.createBuffer({ size: capacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+          renderer.skinBoneCapacity = capacity;
+          renderer.skinBindGroups = [];
+        }
+        device.queue.writeBuffer(renderer.skinBoneBuffer, 0, renderer.skinBones ?? new Float32Array(boneCount * 16), 0, boneCount * 16);
+        const items = renderer.skinItems ?? [];
+        const slotBytes = 256;
+        const uniformBytes = Math.max(1, items.length) * slotBytes;
+        if (!renderer.skinUniformBuffer || renderer.skinUniformCapacity < uniformBytes) {
+          renderer.skinUniformBuffer?.destroy?.();
+          renderer.skinUniformBuffer = device.createBuffer({ size: uniformBytes, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+          renderer.skinUniformCapacity = uniformBytes;
+          renderer.skinBindGroups = [];
+        }
+        const uni = new Float32Array(items.length * 64);
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          uni.set(renderer.skinViewProj, i * 64);
+          skinTransposeRowMajorInto(uni.subarray(i * 64 + 16, i * 64 + 32), item.model);
+          const light = renderer.skinLight ?? [0, 1, 0, 0];
+          uni[i * 64 + 32] = light[0]; uni[i * 64 + 33] = light[1]; uni[i * 64 + 34] = light[2]; uni[i * 64 + 35] = light[3];
+          uni[i * 64 + 36] = item.color[0]; uni[i * 64 + 37] = item.color[1]; uni[i * 64 + 38] = item.color[2]; uni[i * 64 + 39] = item.color[3];
+        }
+        if (items.length > 0) device.queue.writeBuffer(renderer.skinUniformBuffer, 0, uni);
+        renderer.skinBindGroups = renderer.skinBindGroups ?? [];
+        const texture = surface.context.getCurrentTexture();
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [{ view: texture.createView(), clearValue: { r: 0.035, g: 0.045, b: 0.07, a: 1 }, loadOp: "clear", storeOp: "store" }],
+          depthStencilAttachment: { view: renderer.depthTexture.createView(), depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
+        });
+        pass.setPipeline(renderer.skinPipeline);
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          let bindGroup = renderer.skinBindGroups[i];
+          if (!bindGroup) {
+            bindGroup = device.createBindGroup({
+              layout: renderer.skinPipeline.getBindGroupLayout(0),
+              entries: [
+                { binding: 0, resource: { buffer: renderer.skinUniformBuffer, offset: i * slotBytes, size: 160 } },
+                { binding: 1, resource: { buffer: renderer.skinBoneBuffer } },
+              ],
+            });
+            renderer.skinBindGroups[i] = bindGroup;
+          }
+          pass.setBindGroup(0, bindGroup);
+          pass.setVertexBuffer(0, item.mesh.buffer);
+          pass.draw(item.count, 1, 0, 0);
+        }
+        pass.end();
+        device.queue.submit([encoder.finish()]);
+        renderer.frame += 1;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D skin frame present failed", error);
+        return invalidResource();
+      }
+    },
+    three_d_update_resources(rendererHandle, payload) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      try {
+        const encoded = `${stringValue(payload) ?? ""}`;
+        const next = renderer.resourceResidency ?? new Map();
+        if (encoded.length > 0) {
+          for (const entry of encoded.split(";")) {
+            const [operation, kind, value] = entry.split(":");
+            if (!operation || !kind || value === undefined) return invalidResource();
+            const key = `${kind}:${value}`;
+            if (operation === "remove") next.delete(key);
+            else if (operation === "create" || operation === "update") next.set(key, operation);
+            else return invalidResource();
+          }
+        }
+        renderer.resourceResidency = next;
+        renderer.resourceRevision = (renderer.resourceRevision || 0) + 1;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D resource residency update failed", error);
+        return invalidResource();
+      }
+    },
     three_d_renderer_dispose(rendererHandle) {
       const renderer = threeDRenderers.get(rendererHandle);
       renderer?.depthTexture?.destroy?.();
@@ -2527,6 +2818,16 @@ export function createWebGpuImports(options = {}) {
       if (renderer) {
         renderer.vertexBuffer = undefined;
         renderer.vertexPayload = undefined;
+        for (const meshHandle of renderer.skinMeshIds ?? []) {
+          threeDSkinMeshes.get(meshHandle)?.buffer?.destroy?.();
+          threeDSkinMeshes.delete(meshHandle);
+        }
+        renderer.skinMeshIds = new Set();
+        renderer.skinBoneBuffer?.destroy?.();
+        renderer.skinUniformBuffer?.destroy?.();
+        renderer.skinBoneBuffer = undefined;
+        renderer.skinUniformBuffer = undefined;
+        renderer.skinBindGroups = [];
       }
       threeDRenderers.delete(rendererHandle);
     },
@@ -2801,30 +3102,6 @@ export function createWebGpuImports(options = {}) {
           height: Number(maskHeight) || 0,
           radius: Number(maskRadius) || 0,
         },
-    three_d_update_resources(rendererHandle, payload) {
-      const renderer = threeDRenderers.get(rendererHandle);
-      if (!renderer) return invalidResource();
-      try {
-        const encoded = `${stringValue(payload) ?? ""}`;
-        const next = renderer.resourceResidency ?? new Map();
-        if (encoded.length > 0) {
-          for (const entry of encoded.split(";")) {
-            const [operation, kind, value] = entry.split(":");
-            if (!operation || !kind || value === undefined) return invalidResource();
-            const key = `${kind}:${value}`;
-            if (operation === "remove") next.delete(key);
-            else if (operation === "create" || operation === "update") next.set(key, operation);
-            else return invalidResource();
-          }
-        }
-        renderer.resourceResidency = next;
-        renderer.resourceRevision = (renderer.resourceRevision || 0) + 1;
-        return ok();
-      } catch (error) {
-        globalThis.console?.error?.("MoUI 3D resource residency update failed", error);
-        return invalidResource();
-      }
-    },
         clip: rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
         filter: undefined,
         offscreen: !!offscreen,

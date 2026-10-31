@@ -181,6 +181,16 @@ pub fn OrbitCamera::zoom(self : OrbitCamera, amount : Double) -> OrbitCamera {
 }
 
 ///|
+/// Orbit around a new world-space target. Used by third-person character
+/// cameras that follow a moving actor without changing radius or angles.
+pub fn OrbitCamera::with_target(
+  self : OrbitCamera,
+  target : Vec3,
+) -> OrbitCamera {
+  { ..self, target, }
+}
+
+///|
 pub fn OrbitCamera::pan(self : OrbitCamera, delta : Vec2) -> OrbitCamera {
   let forward = self.target.sub(self.position()).normalized()
   let right = forward.cross(Vec3::new(x=0.0, y=1.0, z=0.0)).normalized()

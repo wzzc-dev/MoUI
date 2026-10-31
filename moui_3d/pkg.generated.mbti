@@ -369,6 +369,7 @@ pub fn OrbitCamera::to_json(Self) -> Json
 pub fn OrbitCamera::to_repr(Self) -> @debug.Repr
 pub fn OrbitCamera::view(Self) -> Mat4
 pub fn OrbitCamera::with_aspect(Self, Double) -> Self
+pub fn OrbitCamera::with_target(Self, Vec3) -> Self
 pub fn OrbitCamera::zoom(Self, Double) -> Self
 
 pub(all) struct PerspectiveCamera {
