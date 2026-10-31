@@ -63,6 +63,19 @@ priv trait RuntimeViewNode {
 priv struct RuntimeViewAdapter[Msg] {
   view : @core.View[Msg]
   emit : (Msg) -> Unit
+  /// F1: `View::identity()` is a construction-time snapshot (`from_node`
+  /// samples it once), so a given adapter value's identity never changes.
+  /// Reconcile reads it several times per node per pass (`have_same_identity`,
+  /// the element key refresh, keyed-child lookups); cache it once here and
+  /// serve every read from the field instead of re-dispatching through the
+  /// core view.
+  identity_snapshot : @core.ViewIdentity
+  /// F1: memoized children wrappers. The adapter's view value is immutable,
+  /// so the wrapped children are a pure function of the adapter; every
+  /// `children()` call on the same adapter returns wrappers for the same
+  /// child views and can share one computed array (copied on hand-out so a
+  /// caller mutating the returned array cannot corrupt the memo).
+  mut wrapped_children : Array[&RuntimeViewNode]?
 }
 
 ///|
@@ -70,12 +83,18 @@ fn[Msg] runtime_view_node(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
 ) -> &RuntimeViewNode {
-  RuntimeViewAdapter::{ view, emit, } as &RuntimeViewNode
+  let adapter : RuntimeViewAdapter[Msg] = {
+    view,
+    emit,
+    identity_snapshot: view.identity(),
+    wrapped_children: None,
+  }
+  adapter as &RuntimeViewNode
 }
 
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn identity(self) {
-  self.view.identity()
+  self.identity_snapshot
 }
 
 ///|
@@ -85,7 +104,24 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn declaration(self) 
 
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn children(self) {
-  self.view.children().map(child => runtime_view_node(child, self.emit))
+  // The memo lives on the adapter value itself, so it can only ever serve
+  // wrappers for this adapter's own (immutable) view value — it cannot serve
+  // a stale view across rebuilds, because each rebuild constructs fresh
+  // adapters (`root_builder` re-runs `program.runtime_view`). Cross-rebuild
+  // reuse keyed on identity alone is unsound: control declaration channels
+  // key presence flags (e.g. `has_on_click`), not message payloads, so an
+  // identity-equal view can carry a different model-captured event closure.
+  match self.wrapped_children {
+    Some(wrapped) => wrapped.copy()
+    None => {
+      let wrapped : Array[&RuntimeViewNode] = []
+      for child in self.view.children() {
+        wrapped.push(runtime_view_node(child, self.emit))
+      }
+      self.wrapped_children = Some(wrapped)
+      wrapped.copy()
+    }
+  }
 }
 
 ///|
@@ -241,6 +277,7 @@ fn RuntimeState::deliver_messages(
   self : RuntimeState,
   deliveries : Array[() -> Unit],
 ) -> Unit {
+  self.bump_overlay_input_generation()
   (self.begin_message_batch)()
   for deliver in deliveries {
     deliver()

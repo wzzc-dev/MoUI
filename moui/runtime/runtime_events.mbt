@@ -70,10 +70,38 @@ fn RuntimeState::dispatch_focused_text_command(
 }
 
 ///|
+/// Shared invalidation template for one dispatched input outcome (F2). Folds
+/// `changed`/`activated` into the frame dirty flags, enqueues the currently
+/// dirty elements, requests the activation rebuild, and delivers the
+/// outcome's messages. Every dispatch site below previously repeated these
+/// five statements; `request_activation` covers the two variants: dismissal
+/// layers never request the activation rebuild, and platform-view events
+/// request it whenever any of changed/activated/captured held.
+fn RuntimeState::apply_event_dispatch_outcome(
+  self : RuntimeState,
+  changed : Bool,
+  activated : Bool,
+  deliveries : Array[() -> Unit],
+  request_activation~ : Bool = false,
+) -> Unit {
+  self.dirty.needs_redraw = self.dirty.needs_redraw || changed
+  self.dirty.needs_rebuild = self.dirty.needs_rebuild || activated
+  self.dirty.needs_paint = self.dirty.needs_paint || changed
+  if changed || activated {
+    self.mark_current_dirty_elements()
+  }
+  if request_activation {
+    self.request_activation_rebuild()
+  }
+  self.deliver_messages(deliveries)
+}
+
+///|
 fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
   // Additive observation hook: broadcast every AppEvent before processing.
   // Defaults to a no-op; only active when an observer is installed (agent layer).
   (self.event_observer)(event)
+  self.bump_overlay_input_generation()
   match event {
     FrameTick(frame) => {
       // Advance the animation clock so controls can compute transition
@@ -132,15 +160,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         text_system=self.text_system,
       )
       if shortcut.changed || shortcut.activated {
-        self.dirty.needs_redraw = self.dirty.needs_redraw || shortcut.changed
-        self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
-          shortcut.activated
-        self.dirty.needs_paint = self.dirty.needs_paint || shortcut.changed
-        self.mark_current_dirty_elements()
-        if shortcut.activated {
-          self.request_activation_rebuild()
-        }
-        self.deliver_messages(shortcut.deliveries)
+        self.apply_event_dispatch_outcome(
+          shortcut.changed,
+          shortcut.activated,
+          shortcut.deliveries,
+          request_activation=shortcut.activated,
+        )
       } else if self.action_commands.dispatch_shortcut(event) is Some(_) {
         self.deliver_messages(shortcut.deliveries)
         self.request_activation_rebuild()
@@ -162,18 +187,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 environment=self.environment,
                 text_system=self.text_system,
               )
-              self.dirty.needs_redraw = self.dirty.needs_redraw ||
-                result.changed
-              self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
-                result.activated
-              self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-              if result.changed || result.activated {
-                self.mark_current_dirty_elements()
-              }
-              if result.activated {
-                self.request_activation_rebuild()
-              }
-              self.deliver_messages(result.deliveries)
+              self.apply_event_dispatch_outcome(
+                result.changed,
+                result.activated,
+                result.deliveries,
+                request_activation=result.activated,
+              )
             } else {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             }
@@ -191,17 +210,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               environment=self.environment,
               text_system=self.text_system,
             )
-            self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-            self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
-              result.activated
-            self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-            if result.changed || result.activated {
-              self.mark_current_dirty_elements()
-            }
-            if result.activated {
-              self.request_activation_rebuild()
-            }
-            self.deliver_messages(result.deliveries)
+            self.apply_event_dispatch_outcome(
+              result.changed,
+              result.activated,
+              result.deliveries,
+              request_activation=result.activated,
+            )
           }
           None => ()
         }
@@ -218,17 +232,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             environment=self.environment,
             text_system=self.text_system,
           )
-          self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-          self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
-            result.activated
-          self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-          if result.changed || result.activated {
-            self.mark_current_dirty_elements()
-          }
-          if result.activated {
-            self.request_activation_rebuild()
-          }
-          self.deliver_messages(result.deliveries)
+          self.apply_event_dispatch_outcome(
+            result.changed,
+            result.activated,
+            result.deliveries,
+            request_activation=result.activated,
+          )
         }
         None => ()
       }
@@ -237,16 +246,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         event,
         self.render_tree.root,
       )
-      self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-      self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
-      self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-      if result.changed || result.activated {
-        self.mark_current_dirty_elements()
-      }
-      if result.activated {
-        self.request_activation_rebuild()
-      }
-      self.deliver_messages(result.deliveries)
+      self.apply_event_dispatch_outcome(
+        result.changed,
+        result.activated,
+        result.deliveries,
+        request_activation=result.activated,
+      )
     }
     PlatformView(id, event) => {
       let result = self.element_tree.root.dispatch_web_view_event(
@@ -283,6 +288,7 @@ fn RuntimeState::commit_focus(self : RuntimeState, next : ElementId?) -> Bool {
     return false
   }
   self.animfocus.focused_element = next
+  self.bump_overlay_input_generation()
   match previous {
     Some(id) => {
       self.mark_dirty(id)
@@ -308,6 +314,7 @@ fn RuntimeState::dispatch_pointer_event(
   self : RuntimeState,
   event : PointerEvent,
 ) -> InputDispatchResult {
+  self.bump_overlay_input_generation()
   self.ensure_render_tree()
   self.last_event_hit_path = self.element_tree.root.inspector_hit_path(
     event.position,
@@ -427,15 +434,6 @@ fn RuntimeState::dispatch_pointer_event(
   } else if event.phase == Up || event.phase == Cancel {
     self.animfocus.pointer_captures.remove(event.id)
   }
-  self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-  self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
-  self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-  if result.changed || result.activated {
-    self.mark_current_dirty_elements()
-  }
-  if result.activated {
-    self.request_activation_rebuild()
-  }
   let dispatch_result = {
     // A wheel event is consumed only when a scroll target actually moved. In
     // particular, this keeps the browser default available at a scroll edge.
@@ -449,7 +447,15 @@ fn RuntimeState::dispatch_pointer_event(
     capture_pointer: event.phase == Down && result.captured,
     release_pointer,
   }
-  self.deliver_messages(result.deliveries)
+  // The shared outcome template (F2). `dispatch_result` above reads only
+  // locals captured before this call, so folding the dirty-flag updates and
+  // the delivery into one helper call here is behavior-preserving.
+  self.apply_event_dispatch_outcome(
+    result.changed,
+    result.activated,
+    result.deliveries,
+    request_activation=result.activated,
+  )
   dispatch_result
 }
 
@@ -524,11 +530,14 @@ fn RuntimeState::dispatch_dismissal_layers(
         text_system=self.text_system,
       )
       if result.changed || result.activated {
-        self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-        self.dirty.needs_paint = self.dirty.needs_paint || result.changed
-        self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
-        self.mark_current_dirty_elements()
-        self.deliver_messages(result.deliveries)
+        // Dismissal layers consume the event here, so the activation rebuild
+        // is not requested (the layer's own host rebuild covers it) — the
+        // shared template runs with the activation gate off (F2).
+        self.apply_event_dispatch_outcome(
+          result.changed,
+          result.activated,
+          result.deliveries,
+        )
         consumed = true
       }
     }

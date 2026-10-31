@@ -31,13 +31,29 @@ fn runtime_view_node_reconcile_dirty_kind(
   current : &RuntimeViewNode,
   next : &RuntimeViewNode,
 ) -> ReconcileDirtyKind {
-  let changes = next.declaration().changes_from(current.declaration())
+  let next_declaration = next.declaration()
+  let changes = next_declaration.changes_from(current.declaration())
+  // F1: the semantics channel's contract is "output changes exactly when its
+  // canonical key changes". When the next declaration's semantics channel is
+  // `Exact` and no effective change was detected (which for an `Exact` next
+  // channel means both sides carry the same key), the structural
+  // `ViewSemanticsInfo` comparison and the `semantics_action_kinds` rebuild
+  // (which allocates an array per call) are redundant re-derivations of the
+  // declared contract. Every other channel pair keeps the defensive
+  // comparison. A layout change already implies semantics, so only the
+  // no-change path reaches the comparison at all.
+  let semantics = if changes.semantics() {
+    true
+  } else if next_declaration.semantics() is Exact(_) {
+    false
+  } else {
+    current.semantics() != next.semantics() ||
+    current.semantics_action_kinds() != next.semantics_action_kinds()
+  }
   {
     layout: changes.layout(),
     paint: changes.paint(),
-    semantics: changes.semantics() ||
-    current.semantics() != next.semantics() ||
-    current.semantics_action_kinds() != next.semantics_action_kinds(),
+    semantics,
     platform: changes.platform(),
   }
 }
