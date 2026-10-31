@@ -678,6 +678,30 @@ pub fn is_select_all_shortcut(event : KeyboardEvent) -> Bool {
 }
 
 ///|
+pub fn is_copy_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "c" || event.key == "C") &&
+  !event.modifiers.shift &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
+pub fn is_cut_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "x" || event.key == "X") &&
+  !event.modifiers.shift &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
+pub fn is_paste_shortcut(event : KeyboardEvent) -> Bool {
+  event.pressed &&
+  (event.key == "v" || event.key == "V") &&
+  !event.modifiers.shift &&
+  (event.modifiers.meta || event.modifiers.control)
+}
+
+///|
 pub fn is_undo_shortcut(event : KeyboardEvent) -> Bool {
   event.pressed &&
   (event.key == "z" || event.key == "Z") &&

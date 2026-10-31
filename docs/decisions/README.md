@@ -61,5 +61,6 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0043 | [Metal-direct renderer is not adopted](0043-metal-direct-renderer-not-adopted.md) | 2026-10-26 | Superseded by 0044 |
 | 0044 | [A GPU route with no external graphics library is authorized (Apple-first, experimental)](0044-no-third-party-graphics-library-gpu-route.md) | 2026-10-27 | Accepted — L0 executed and parked at its kill gate; owner directed L0.5 + L1 on 2026-10-27 |
 | 0045 | [`moui_metal_renderer` is declared an experimental renderer at its L1 evidence frame](0045-direct-host-gpu-renderer-experimental.md) | 2026-10-27 | Accepted |
+| 0046 | [HarmonyOS product class raised to `committed`](0046-harmonyos-committed-with-gaps.md) | 2026-10-30 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

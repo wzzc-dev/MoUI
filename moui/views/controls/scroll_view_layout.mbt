@@ -310,9 +310,20 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
     child_size~,
     now_ms=ctx.now_ms,
   )
+  // A wheel step moves the authoritative offset instantly; easing the painted
+  // surface toward it keeps the motion continuous instead of jumping a whole step
+  // in one frame. Once the settle elapses this returns the authoritative value
+  // exactly, so drawing never disagrees with layout or hit testing.
+  // Wheel steps move the authoritative offset directly. An eased overlay was
+  // tried here and removed: the host presents one frame per input event on this
+  // platform, so the interpolation could never advance past its first sample and
+  // instead produced a stall-then-jump motion — worse than the plain step.
+  let painted_offset = runtime_state.offset
   let shift = @core.Point::new(
-    x=runtime_state.offset.x - surface_offset.x,
-    y=runtime_state.offset.y - surface_offset.y,
+    x=runtime_state.offset.x -
+      (surface_offset.x + (painted_offset.x - runtime_state.offset.x)),
+    y=runtime_state.offset.y -
+      (surface_offset.y + (painted_offset.y - runtime_state.offset.y)),
   )
   let commands : Array[@core.DrawCommand] = [
     PushClip(
@@ -342,8 +353,17 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
       []
     },
     repaint_boundary: false,
+    // Keep producing frames while either the rubber band is settling or a wheel
+    // step is easing; without this the surface freezes mid-interpolation.
     animating: !drag.active &&
-    scroll_motion_is_animating(motion, runtime_state.offset, now_ms=ctx.now_ms),
+    (
+      scroll_motion_is_animating(
+        motion,
+        runtime_state.offset,
+        now_ms=ctx.now_ms,
+      ) ||
+      false
+    ),
   }
 }
 

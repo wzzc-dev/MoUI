@@ -407,7 +407,18 @@ fn mobile_service_probe_image_source() -> String {
 }
 
 ///|
-fn mobile_service_probe_page(model : Model) -> @moui.View[Msg] {
+fn mobile_service_probe_page(
+  model : Model,
+  viewport~ : @core.Size? = None,
+) -> @moui.View[Msg] {
+  // The host resize reaches the runtime, but the Showcase model never received
+  // a WindowResized message, so `model.window_width`/`window_height` stayed 0
+  // and this card always read "Viewport: 0 x 0". Report the size the layout
+  // actually ran at instead.
+  let (viewport_width, viewport_height) = match viewport {
+    Some(size) => (size.width.to_int(), size.height.to_int())
+    None => (model.window_width.to_int(), model.window_height.to_int())
+  }
   column(
     [
       text("Mobile Service Probe").title(),
@@ -432,10 +443,8 @@ fn mobile_service_probe_page(model : Model) -> @moui.View[Msg] {
               "Service probe action count \{model.probe_action_count}",
             ),
             text("Submit count: \{model.probe_submit_count}"),
-            text(
-              "Viewport: \{model.window_width.to_int()} x \{model.window_height.to_int()}",
-            ).accessibility_label(
-              "Service probe viewport \{model.window_width.to_int()} by \{model.window_height.to_int()}",
+            text("Viewport: \{viewport_width} x \{viewport_height}").accessibility_label(
+              "Service probe viewport \{viewport_width} by \{viewport_height}",
             ),
             @views.image(
               mobile_service_probe_image_source(),
@@ -481,11 +490,15 @@ fn route_session_page(model : Model) -> @moui.View[Msg] {
 
 ///|
 /// Hosted body for the unified Showcase shell (no local chrome).
-pub fn view_body(model : Model, width~ : Double = 0.0) -> @moui.View[Msg] {
+pub fn view_body(
+  model : Model,
+  width~ : Double = 0.0,
+  viewport~ : @core.Size? = None,
+) -> @moui.View[Msg] {
   ignore(width)
   match model.route {
     "canvas" => canvas_page(model)
-    "mobile-service-probe" => mobile_service_probe_page(model)
+    "mobile-service-probe" => mobile_service_probe_page(model, viewport~)
     "route-session" => route_session_page(model)
     _ => host_services_page(model)
   }

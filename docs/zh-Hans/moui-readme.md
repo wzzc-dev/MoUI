@@ -16,7 +16,7 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | Linux | **committed** | 产品主线（L0-L3 证据） |
 | Android | **experimental** | window-hosted 路径可编译；尚无可用性/产品承诺 |
 | iOS | **experimental** | 同 Android |
-| HarmonyOS | **experimental** | 同上；签名设备完整 smoke 仍待完成 |
+| HarmonyOS | **committed** | 真机验证通过：`egl-direct` Skia 呈现、指针、键盘/IME、resize、应用视口、剪贴板读写、ArkUI 无障碍、detach/recreate、异步图片（ADR 0046） |
 
 Mobile **不是**“只有未接线的胶水层”，但也**尚未**做出产品承诺。它是
 **实验性**的：代码可编译且 host-sim tests 通过，但在匹配设备证据落地前，

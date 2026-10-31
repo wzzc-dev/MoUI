@@ -102,6 +102,7 @@ pub struct EmbeddedRuntimeBackendCore {
 }
 pub fn EmbeddedRuntimeBackendCore::advance_time(Self, Double) -> Unit
 pub fn EmbeddedRuntimeBackendCore::attach_surface(Self, renderer~ : @render.RendererSession, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int32) -> Bool
+pub fn EmbeddedRuntimeBackendCore::complete_service_request(Self, @backend.HostServiceRequestId, @backend.HostServiceResponse) -> Bool
 pub fn EmbeddedRuntimeBackendCore::detach_surface(Self) -> Bool
 pub fn EmbeddedRuntimeBackendCore::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn EmbeddedRuntimeBackendCore::dispatch_host_response(Self, EmbeddedHostResponse) -> Bool
@@ -112,9 +113,12 @@ pub fn EmbeddedRuntimeBackendCore::disposed(Self) -> Bool
 pub fn EmbeddedRuntimeBackendCore::drain_host_update_envelope_json(Self) -> String
 pub fn EmbeddedRuntimeBackendCore::drain_host_updates(Self) -> Array[EmbeddedHostUpdate]
 pub fn EmbeddedRuntimeBackendCore::drain_host_updates_json(Self) -> String
+pub fn EmbeddedRuntimeBackendCore::drain_pending_service_requests(Self) -> Array[@backend.HostPendingServiceRequest]
 pub fn EmbeddedRuntimeBackendCore::host_service_bridge(Self) -> @backend.HostServiceBridge
+pub fn EmbeddedRuntimeBackendCore::image_resource_records(Self) -> Array[@render.ImageResourceRecord]
+pub fn EmbeddedRuntimeBackendCore::keyboard_command_intent(Self, @wzzc-dev/moui/core.KeyboardEvent) -> @wzzc-dev/moui/core.CommandIntent?
 pub fn EmbeddedRuntimeBackendCore::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics
-pub fn EmbeddedRuntimeBackendCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @render.RendererSession, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int32) -> Self
+pub fn EmbeddedRuntimeBackendCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @render.RendererSession, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, surface_generation~ : Int32, service_handler? : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?) -> Self
 pub fn EmbeddedRuntimeBackendCore::present_count(Self) -> Int32
 pub fn EmbeddedRuntimeBackendCore::redraw_requested(Self) -> Bool
 pub fn EmbeddedRuntimeBackendCore::render_frame(Self) -> @render.RenderFrameResult
@@ -126,6 +130,7 @@ pub fn EmbeddedRuntimeBackendCore::surface_epoch(Self) -> Int32
 pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(Self) -> Bool
 
 pub struct EmbeddedRuntimeHostBridge {
+  service_handler : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?
   services : @wzzc-dev/moui/backend/common/services/embedded.EmbeddedHostServices
   session_generation : Int32
   mut updates : Array[EmbeddedHostUpdate]
@@ -145,9 +150,10 @@ pub fn EmbeddedRuntimeHostBridge::drain_update_envelope_json(Self) -> String
 pub fn EmbeddedRuntimeHostBridge::drain_updates(Self) -> Array[EmbeddedHostUpdate]
 pub fn EmbeddedRuntimeHostBridge::drain_updates_json(Self) -> String
 pub fn EmbeddedRuntimeHostBridge::flush_updates_to_shell(Self, @wzzc-dev/moui/backend/common/services/embedded.HostSessionTransport) -> Int32
-pub fn EmbeddedRuntimeHostBridge::new(session_generation? : Int32) -> Self
+pub fn EmbeddedRuntimeHostBridge::new(session_generation? : Int32, service_handler? : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?) -> Self
 pub fn EmbeddedRuntimeHostBridge::push_diagnostic(Self, String) -> Bool
 pub fn EmbeddedRuntimeHostBridge::service_bridge(Self) -> @backend.HostServiceBridge
+pub fn EmbeddedRuntimeHostBridge::services(Self) -> @wzzc-dev/moui/backend/common/services/embedded.EmbeddedHostServices
 pub fn EmbeddedRuntimeHostBridge::session_generation(Self) -> Int32
 pub fn EmbeddedRuntimeHostBridge::sync(Self, @runtime.AppRuntime) -> Int32
 pub fn EmbeddedRuntimeHostBridge::sync_platform_views(Self, Array[@wzzc-dev/moui/core.PlatformViewPlacement]) -> Bool
@@ -206,7 +212,8 @@ pub struct HostedRuntimeSession {
 }
 pub fn HostedRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn HostedRuntimeSession::attach(Self, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int32) -> Bool
-pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int32) -> Self?
+pub fn HostedRuntimeSession::complete_service_request(Self, @backend.HostServiceRequestId, @backend.HostServiceResponse) -> Bool
+pub fn HostedRuntimeSession::create(runtime~ : @runtime.AppRuntime, raw_handle~ : UInt64, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, binding~ : HostSurfaceBinding, surface_generation~ : Int32, service_handler? : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?) -> Self?
 pub fn HostedRuntimeSession::detach(Self) -> Bool
 pub fn HostedRuntimeSession::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn HostedRuntimeSession::dispatch_host_response(Self, EmbeddedHostResponse) -> Bool
@@ -217,7 +224,10 @@ pub fn HostedRuntimeSession::disposed(Self) -> Bool
 pub fn HostedRuntimeSession::drain_host_update_envelope_json(Self) -> String
 pub fn HostedRuntimeSession::drain_host_updates(Self) -> Array[EmbeddedHostUpdate]
 pub fn HostedRuntimeSession::drain_host_updates_json(Self) -> String
+pub fn HostedRuntimeSession::drain_pending_service_requests(Self) -> Array[@backend.HostPendingServiceRequest]
 pub fn HostedRuntimeSession::host_service_bridge(Self) -> @backend.HostServiceBridge
+pub fn HostedRuntimeSession::image_resource_records(Self) -> Array[@render.ImageResourceRecord]
+pub fn HostedRuntimeSession::keyboard_command_intent(Self, @wzzc-dev/moui/core.KeyboardEvent) -> @wzzc-dev/moui/core.CommandIntent?
 pub fn HostedRuntimeSession::metrics(Self) -> @wzzc-dev/moui/core.SurfaceMetrics
 pub fn HostedRuntimeSession::present_count(Self) -> Int32
 pub fn HostedRuntimeSession::raw_handle(Self) -> UInt64
@@ -243,33 +253,48 @@ pub struct HostedWindowBackend {
   runtime_factory : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime
   surface_binding_factory : () -> HostSurfaceBinding
   ime_sync : ((@runtime.AppRuntime?) -> Unit)?
+  service_handler : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?
+  clock_ms : () -> Double
   mut window : HostedWindow?
   mut runtime : @runtime.AppRuntime?
   mut session : HostedRuntimeSession?
   lifecycle : @lifecycle.EmbeddedLifecycle
   mut last_pointer : @wzzc-dev/moui/core.Point
-  modifiers : @wzzc-dev/moui/core.KeyModifiers
+  mut modifiers : @wzzc-dev/moui/core.KeyModifiers
   mut frames_presented : Int32
   auto_exit_after_frames : Int32?
 }
 pub fn HostedWindowBackend::about_to_wait(Self) -> Unit
 pub fn HostedWindowBackend::attach_session(Self, HostedWindow, raw_handle~ : UInt64) -> Bool
+pub fn HostedWindowBackend::complete_service_request(Self, @backend.HostServiceRequestId, @backend.HostServiceResponse) -> Bool
 pub fn HostedWindowBackend::destroy_surfaces(Self) -> Unit
 pub fn HostedWindowBackend::detach_session(Self) -> Unit
 pub fn HostedWindowBackend::dispatch_host_event(Self, @backend.Event) -> Unit
+pub fn HostedWindowBackend::dispatch_wheel(Self, @wzzc-dev/moui/core.Point, @wzzc-dev/window/core.MouseScrollDelta) -> Unit
 pub fn HostedWindowBackend::dispatch_window_event(Self, @wzzc-dev/window/core.WindowEvent) -> Unit
+pub fn HostedWindowBackend::drain_pending_service_requests(Self) -> Array[@backend.HostPendingServiceRequest]
 pub fn HostedWindowBackend::ensure_surface(Self, create~ : () -> (HostedWindow, UInt64)?) -> Bool
 pub fn HostedWindowBackend::force_redraw(Self) -> Unit
 pub fn HostedWindowBackend::frames_presented(Self) -> Int32
 pub fn HostedWindowBackend::handle_window_event(Self, @wzzc-dev/window/core.WindowEvent, exit~ : () -> Unit) -> Unit
+pub fn HostedWindowBackend::handle_window_event_at(Self, @wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point, exit~ : () -> Unit) -> Unit
+pub fn HostedWindowBackend::has_focused_text_input(Self) -> Bool
 pub fn HostedWindowBackend::has_session(Self) -> Bool
 pub fn HostedWindowBackend::has_window(Self) -> Bool
-pub fn HostedWindowBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, surface_binding_factory~ : () -> HostSurfaceBinding, ime_sync? : ((@runtime.AppRuntime?) -> Unit)?, auto_exit_after_frames? : Int32?) -> Self
+pub fn HostedWindowBackend::image_resource_records(Self) -> Array[@render.ImageResourceRecord]
+pub fn HostedWindowBackend::keyboard_command_intent_event(Self, @wzzc-dev/window/core.KeyEvent) -> @wzzc-dev/moui/core.CommandIntent?
+pub fn HostedWindowBackend::modifiers(Self) -> @wzzc-dev/moui/core.KeyModifiers
+pub fn HostedWindowBackend::needs_redraw(Self) -> Bool
+pub fn HostedWindowBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, surface_binding_factory~ : () -> HostSurfaceBinding, ime_sync? : ((@runtime.AppRuntime?) -> Unit)?, service_handler? : (@backend.HostServiceRequest) -> @backend.HostServiceResponse?, clock_ms? : () -> Double, auto_exit_after_frames? : Int32?) -> Self
+pub fn HostedWindowBackend::perform_semantics_action(Self, @runtime.PerformSemanticsActionRequest) -> Bool
+pub fn HostedWindowBackend::read_semantics(Self) -> @runtime.SemanticsRead?
 pub fn HostedWindowBackend::resumed(Self) -> Unit
+pub fn HostedWindowBackend::scale_factor(Self) -> Double
 pub fn HostedWindowBackend::session_attached(Self) -> Bool
 pub fn HostedWindowBackend::surface_generation(Self) -> Int32
 pub fn HostedWindowBackend::suspended(Self) -> Unit
 pub fn HostedWindowBackend::title(Self) -> String
+pub fn[T] HostedWindowBackend::with_session(Self, (HostedRuntimeSession) -> T, default~ : T) -> T
 
 // Type aliases
 

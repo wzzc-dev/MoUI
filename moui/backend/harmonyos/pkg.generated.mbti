@@ -17,13 +17,37 @@ pub fn backend_info() -> HarmonyOSBackendInfo
 
 pub fn entry(auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
 
+pub fn harmonyos_accessibility_handle_action(@runtime.HostRuntimeDriver, Int64, Int32, UInt64) -> Bool
+
+pub fn harmonyos_accessibility_project(@runtime.SemanticsRead) -> AccessibilityProjection
+
+pub fn harmonyos_accessibility_publish(AccessibilityProjection) -> Int32
+
+pub fn harmonyos_accessibility_register() -> Bool
+
+pub fn harmonyos_accessibility_status() -> Int32
+
+pub fn harmonyos_accessibility_take_action() -> PendingAccessibilityAction?
+
 pub fn harmonyos_capability_matrix() -> HarmonyOSBackendCapabilities
 
 pub fn harmonyos_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
+pub fn harmonyos_clipboard_read_text() -> String?
+
+pub fn harmonyos_clipboard_selftest() -> Bool
+
+pub fn harmonyos_clipboard_write_text(String) -> Bool
+
 pub fn harmonyos_input_capabilities() -> @backend.HostInputCapabilities
 
+pub fn harmonyos_log_image_status(String) -> Unit
+
+pub fn harmonyos_log_service_request(@backend.HostServiceRequest) -> Unit
+
 pub fn harmonyos_readiness() -> HarmonyOSBackendReadiness
+
+pub fn harmonyos_report_vsync_status() -> Unit
 
 pub fn harmonyos_service_capabilities() -> @backend.HostServiceCapabilities
 
@@ -36,6 +60,10 @@ pub fn host_surface_binding_from_harmonyos(HarmonyOSSurfaceBinding) -> @embedded
 // Errors
 
 // Types and methods
+pub struct AccessibilityProjection {
+  // private fields
+}
+
 pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -81,6 +109,7 @@ pub fn HarmonyOSBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
+  mut image_status_summary : String
 }
 pub fn HarmonyOSEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
@@ -89,9 +118,11 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::device_event(Self, @wzzc-dev/window/harm
 pub fn HarmonyOSEmbeddedRuntimeBackend::frames_presented(Self) -> Int32
 pub fn HarmonyOSEmbeddedRuntimeBackend::has_session(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::needs_redraw(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int32?) -> Self
 pub fn HarmonyOSEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
+pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(Self) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn HarmonyOSEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit
@@ -115,6 +146,18 @@ pub fn HarmonyOSSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn HarmonyOSSurfaceHandle::raw(Self) -> UInt64
 pub fn HarmonyOSSurfaceHandle::to_json(Self) -> Json
 pub fn HarmonyOSSurfaceHandle::to_repr(Self) -> @debug.Repr
+
+pub struct PendingAccessibilityAction {
+  element_id : Int64
+  action : Int32
+  generation : UInt64
+} derive(Eq, @debug.Debug)
+pub fn PendingAccessibilityAction::action(Self) -> Int32
+pub fn PendingAccessibilityAction::element_id(Self) -> Int64
+pub fn PendingAccessibilityAction::equal(Self, Self) -> Bool
+pub fn PendingAccessibilityAction::generation(Self) -> UInt64
+pub fn PendingAccessibilityAction::not_equal(Self, Self) -> Bool
+pub fn PendingAccessibilityAction::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

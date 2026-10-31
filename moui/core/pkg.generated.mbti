@@ -31,6 +31,12 @@ pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
 
 pub fn hit_test(LayoutResult, Point) -> Bool
 
+pub fn is_copy_shortcut(KeyboardEvent) -> Bool
+
+pub fn is_cut_shortcut(KeyboardEvent) -> Bool
+
+pub fn is_paste_shortcut(KeyboardEvent) -> Bool
+
 pub fn is_redo_shortcut(KeyboardEvent) -> Bool
 
 pub fn is_select_all_shortcut(KeyboardEvent) -> Bool

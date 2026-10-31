@@ -105,7 +105,10 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // makes draw frames carry the committed semantics tree. It sits with the
       // other AppRuntime host controls; the projection itself lives in the
       // terminal renderer.
-      max_count: 596,
+      // HostRuntimeDriver::keyboard_command_intent (+1): the platform-facing
+      // "does this chord resolve to a clipboard command" answer, logged by hosted
+      // backends before dispatch so Ctrl+C / Ctrl+V failures can be localized.
+      max_count: 597,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",

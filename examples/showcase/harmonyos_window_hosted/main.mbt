@@ -1,6 +1,10 @@
 ///|
 /// Window-hosted HarmonyOS Showcase entrypoint.
 fn main {
+  // Probe the pasteboard bridge once at startup so the device log alone proves
+  // the native clipboard round-trip, without navigating the Showcase UI.
+  let clipboard_ok = @harmonyos_host.harmonyos_clipboard_selftest()
+  println("moui-window-hosted harmonyos: clipboard selftest = \{clipboard_ok}")
   let runtime = @showcase.runtime(
     host_summary=@harmonyos_host.harmonyos_capability_summary(),
     environment=@harmonyos_host.app_environment(),

@@ -294,8 +294,12 @@ fn package_budgets() -> Array[PackageBudget] {
       // AppRuntime::set_semantics_frames_enabled (TUI output path decision B)
       // is the host's opt-in for semantics-carrying draw frames, so pixel hosts
       // never build a payload: +1 line, +1 pub.
-      max_lines: 890,
-      max_pub_lines: 596,
+      // HostRuntimeDriver::keyboard_command_intent is the platform-facing answer
+      // to "does this chord resolve to a clipboard command": a hosted backend
+      // logs it before dispatch so a shortcut failure can be localized without
+      // guessing. +1 line, +1 pub.
+      max_lines: 891,
+      max_pub_lines: 597,
       max_pub_all_lines: 28,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
@@ -376,8 +380,12 @@ fn package_budgets() -> Array[PackageBudget] {
       // or tile atlas cell cannot be named at all — `fit` derives the source
       // crop from the whole image, so the only workaround was clip plus a
       // negative frame offset, which breaks hit testing and damage bounds.
-      max_lines: 2520,
-      max_pub_lines: 1114,
+      // is_copy_shortcut / is_cut_shortcut / is_paste_shortcut complete the
+      // shortcut predicate set: select-all, undo and redo existed but the
+      // clipboard chords did not, so Ctrl+C / Ctrl+X / Ctrl+V had no matcher on
+      // any platform. +6 lines, +3 pub.
+      max_lines: 2526,
+      max_pub_lines: 1117,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

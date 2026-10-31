@@ -1110,6 +1110,12 @@ struct MoonbitSkiaEglWindow {
   EGLDisplay display;
   EGLContext context;
   EGLSurface surface;
+  // Retained so a live resize can recreate the window surface at a new size.
+  // An EGLSurface's back buffer is fixed at creation time, so resizing requires
+  // a fresh eglCreateWindowSurface; recreating needs the config and the
+  // native window the surface was built from.
+  EGLConfig config;
+  EGLNativeWindowType native_window;
 };
 
 void moonbit_skia_egl_release_context(void* object) {
@@ -3135,6 +3141,9 @@ moonbit_skia_surface_egl_window(
   egl_win->display = egl_context->display;
   egl_win->context = egl_context->context;
   egl_win->surface = egl_surface;
+  egl_win->config = egl_context->config;
+  egl_win->native_window =
+    reinterpret_cast<EGLNativeWindowType>(window);
   wrapper->host_present_handle = egl_win;
   return wrapper;
 #else
@@ -3269,6 +3278,143 @@ moonbit_skia_surface_egl_present_and_acquire_next(
   (void)native_window_ptr;
   (void)width;
   (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_egl_resize_window(
+  MoonbitSkiaSurface* wrapper,
+  uint64_t native_window_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->surface == nullptr ||
+    wrapper->host_present_handle == nullptr ||
+    wrapper->gpu_context_owner == nullptr ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  auto* egl_win = static_cast<MoonbitSkiaEglWindow*>(
+    wrapper->host_present_handle
+  );
+  GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+
+  // An EGLSurface's back buffer is fixed at creation time: updating
+  // SET_BUFFER_GEOMETRY on the native window is not enough, the Skia render
+  // target would still describe the old extent and the frame would be drawn
+  // into a differently-sized buffer (visible as clipped content).
+  //
+  // So a live resize destroys the old EGLSurface and creates a new one at the
+  // new size. The old EGLSurface must be released *before* the new one is
+  // created: leaving it alive makes OHOS reject or under-run the duplicate,
+  // present fails, and the renderer drops to its CPU presenter, which repaints
+  // only the frame rect and leaves stale pixels elsewhere (resize ghosting).
+  (void)native_window_ptr;
+  if (
+    egl_win->display == EGL_NO_DISPLAY ||
+    egl_win->config == nullptr
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+#if defined(__OHOS__)
+  auto* native_window = reinterpret_cast<OHNativeWindow*>(
+    static_cast<uintptr_t>(native_window_ptr)
+  );
+  if (native_window != nullptr) {
+    (void)OH_NativeWindow_NativeWindowHandleOpt(
+      native_window, SET_BUFFER_GEOMETRY, width, height
+    );
+  }
+#endif
+  // Detach the old buffer from the context, then drop the EGLSurface.
+  (void)eglMakeCurrent(
+    egl_win->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT
+  );
+  if (egl_win->surface != EGL_NO_SURFACE) {
+    (void)eglDestroySurface(egl_win->display, egl_win->surface);
+    egl_win->surface = EGL_NO_SURFACE;
+  }
+
+  const EGLint resize_surface_attribs[] = {
+    EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
+    EGL_NONE,
+  };
+  egl_win->surface = eglCreateWindowSurface(
+    egl_win->display,
+    egl_win->config,
+    egl_win->native_window,
+    resize_surface_attribs
+  );
+  if (egl_win->surface == EGL_NO_SURFACE) {
+    moonbit_skia_egl_release_window(egl_win);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  if (!eglMakeCurrent(
+        egl_win->display, egl_win->surface, egl_win->surface, egl_win->context
+      )) {
+    moonbit_skia_egl_release_window(egl_win);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  (void)eglSwapInterval(egl_win->display, 1);
+
+  wrapper->surface->unref();
+  wrapper->surface = nullptr;
+  wrapper->host_present_handle = nullptr;
+
+  GrGLFramebufferInfo fb_info;
+  fb_info.fFBOID = 0;
+  fb_info.fFormat = GL_RGBA8;
+
+  int32_t actual_samples = sample_count > 0 ? sample_count : 0;
+  int32_t actual_stencil = stencil_bits;
+  if (actual_stencil != 0 && actual_stencil != 8 && actual_stencil != 16) {
+    actual_stencil = 0;
+  }
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeGL(
+    width, height, actual_samples, actual_stencil, fb_info
+  );
+
+  const GrSurfaceOrigin wrap_origin = kBottomLeft_GrSurfaceOrigin;
+  (void)origin;
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendRenderTarget(
+    gpu_context,
+    backend_rt,
+    wrap_origin,
+    kRGBA_8888_SkColorType,
+    nullptr,
+    nullptr
+  );
+  if (!next_surface) {
+    moonbit_skia_egl_release_window(egl_win);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  (void)eglMakeCurrent(
+    egl_win->display, egl_win->surface, egl_win->surface, egl_win->context
+  );
+
+  MoonbitSkiaSurface* new_wrapper =
+    moonbit_skia_surface_wrapper_with_gpu_context(
+      next_surface.release(),
+      gpu_context
+    );
+  new_wrapper->host_present_handle = egl_win;
+  return new_wrapper;
+#else
+  (void)native_window_ptr;
   (void)origin;
   (void)sample_count;
   (void)stencil_bits;

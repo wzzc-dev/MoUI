@@ -415,7 +415,11 @@ fn feature_body(
         PatternsMsg(msg)
       })
     Platform =>
-      @platform.view_body(model.platform, width~).map(msg => PlatformMsg(msg))
+      @platform.view_body(
+        model.platform,
+        width~,
+        viewport=Some(env.viewport_size()),
+      ).map(msg => PlatformMsg(msg))
     Diagnostics =>
       model.diagnostics.view_body(env, width~).map(msg => DiagnosticsMsg(msg))
   }
