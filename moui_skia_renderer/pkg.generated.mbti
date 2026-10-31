@@ -215,8 +215,10 @@ pub(all) enum SkiaSurfaceRoute {
   VulkanGpuSurfaceRoute
   EglGpuSurfaceRoute
   Direct3DGpuSurfaceRoute
-} derive(Eq, ToJson, @debug.Debug)
+} derive(Eq, Hash, ToJson, @debug.Debug)
 pub fn SkiaSurfaceRoute::equal(Self, Self) -> Bool
+pub fn SkiaSurfaceRoute::hash(Self) -> Int32
+pub fn SkiaSurfaceRoute::hash_combine(Self, Hasher) -> Unit
 pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
 pub fn SkiaSurfaceRoute::is_implemented(Self) -> Bool
 pub fn SkiaSurfaceRoute::label(Self) -> String

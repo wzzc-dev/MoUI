@@ -19,19 +19,15 @@ priv struct SkiaTextRunSegment {
 }
 
 ///|
+/// A resolved layout is immutable once constructed: `segments` is populated
+/// only by the `skia_resolved_text_*` builders before the layout is returned
+/// (or stored in the shaping cache), and all consumers only read it. The
+/// shaping cache therefore hands out the cached layout by reference on hits
+/// instead of re-copying the segments array per draw.
 priv struct SkiaResolvedTextLayout {
   segments : Array[SkiaTextRunSegment]
   width : Double
   metrics : SkiaTextMetrics
-}
-
-///|
-/// Shallow defensive copy for cache replay: segments carry font handles and
-/// immutable glyph runs, so only the arrays are duplicated.
-fn SkiaResolvedTextLayout::copy_layout(
-  self : SkiaResolvedTextLayout,
-) -> SkiaResolvedTextLayout {
-  { segments: self.segments.copy(), width: self.width, metrics: self.metrics, }
 }
 
 ///|

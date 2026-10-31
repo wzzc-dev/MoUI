@@ -360,9 +360,13 @@ priv struct SkiaFallbackMemo {
 /// not `Hash`, and the obvious workaround — keying on `@debug.to_string` — cost
 /// more than the query it was caching: the printer walked the family chain and
 /// the BCP-47 byte arrays once per text segment and showed up as the top frame
-/// while a large document opened. The request count is small (one per script
-/// and style in play), so comparing against a bounded list is both correct and
-/// far cheaper.
+/// while a large document opened. The better fix for a hot stringified key is a
+/// package-local structural mirror key with `derive(Eq, Hash)` — the text
+/// shaping cache keys `FontSpec` exactly that way (see
+/// `renderer_text_shaping_cache.mbt`) — but it needs a local struct to derive
+/// on, and `FontFallbackRequest` lives in `moui_skia`, so this memo keeps the
+/// bounded scan. The request count is small (one per script and style in
+/// play), so comparing against a bounded list is both correct and far cheaper.
 let skia_fallback_memo : Ref[Map[Int32, Array[SkiaFallbackMemo]]] = Ref(Map([]))
 
 ///|

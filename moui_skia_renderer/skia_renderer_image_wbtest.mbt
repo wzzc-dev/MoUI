@@ -414,9 +414,10 @@ test "skia renderer retained layer refreshes after async image completion" {
   )
   // The completion can race with a scroll/sidebar damage rect that does not
   // overlap the editor layer. The frame contract fully overwrites the
-  // surface and the completion advanced the image generation baked into the
-  // retained-layer key, so the layer re-rasterizes with real pixels instead
-  // of replaying the placeholder from a cache hit.
+  // surface, and the completion dropped the cached layer whose recorded
+  // commands drew this source (targeted invalidation), so the layer
+  // re-rasterizes with real pixels instead of replaying the placeholder from
+  // a cache hit.
   let second = renderer.render_frame(
     @core.DrawFrame::new(
       commands~,
@@ -435,6 +436,95 @@ test "skia renderer retained layer refreshes after async image completion" {
       (r, g, b, a) => a > 0 && r > 220 && g < 40 && b < 40,
     ),
   )
+}
+
+///|
+/// C2: an image load completion must invalidate only the cached layers whose
+/// recorded command stream drew that source. A chrome layer that draws no
+/// image survives every completion, so a gallery completing several images
+/// back-to-back no longer drops unrelated retained layers.
+test "skia image completion invalidates only layers referencing the image" {
+  guard skia_available() else { return () }
+  let source = "moui-skia-targeted-image://red"
+  let unrelated = "moui-skia-targeted-image://unrelated"
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+    async_image_loading=true,
+  ) catch {
+    _ => fail("expected Skia renderer creation")
+  }
+  renderer.mark_image_loading(source)
+  let image_layer = @core.RetainedLayerSpec::new(
+    key="targeted-image-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
+    content_revision=1,
+  )
+  let chrome_layer = @core.RetainedLayerSpec::new(
+    key="targeted-chrome-layer",
+    frame=@core.Rect::new(x=8.0, y=8.0, width=4.0, height=4.0),
+    content_revision=1,
+  )
+  let commands = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    BeginRetainedLayer(image_layer),
+    DrawImage({
+      source,
+      frame: image_layer.frame,
+      opacity: 1.0,
+      fit: Stretch,
+      src_rect: None,
+    }),
+    EndRetainedLayer(image_layer.key),
+    BeginRetainedLayer(chrome_layer),
+    FillRect(chrome_layer.frame, @core.Color::black()),
+    EndRetainedLayer(chrome_layer.key),
+  ]
+  let first = renderer.render_frame(skia_test_draw_frame(commands))
+  inspect(first.cache_update_count, content="2")
+  inspect(first.cache_miss_count, content="2")
+  inspect(renderer.layer_cache.length(), content="2")
+  let pixels = Bytes::from_array([b'\xff', b'\x00', b'\x00', b'\xff'])
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+        source,
+        width=1,
+        height=1,
+        row_bytes=4,
+        pixels,
+      ),
+    ),
+  )
+  // Only the layer that drew `source` was dropped; the chrome layer survives.
+  inspect(renderer.layer_cache.length(), content="1")
+  // A completion for an unrelated source drops nothing.
+  renderer.mark_image_loading(unrelated)
+  ignore(
+    renderer.apply_image_resource_load_completion(
+      @render.ImageResourceLoadCompletion::ready(unrelated, width=2, height=2),
+    ),
+  )
+  inspect(renderer.layer_cache.length(), content="1")
+  let second = renderer.render_frame(skia_test_draw_frame(commands))
+  // The surviving chrome layer is a cache hit; the image layer rebuilds.
+  inspect(second.cache_hit_count, content="1")
+  inspect(second.cache_miss_count, content="1")
+  inspect(second.cache_update_count, content="1")
+  guard renderer.last_frame() is Some(redrawn) else {
+    fail("expected redrawn frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(redrawn, image_layer.frame, (r, g, b, a) => {
+      a > 0 && r > 220 && g < 40 && b < 40
+    }),
+  )
+  // The next frame replays both rebuilt layers from the cache.
+  let third = renderer.render_frame(skia_test_draw_frame(commands))
+  inspect(third.cache_hit_count, content="2")
+  inspect(third.cache_miss_count, content="0")
 }
 
 ///|

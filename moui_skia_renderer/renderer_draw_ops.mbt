@@ -12,28 +12,28 @@ fn SkiaRasterRenderer::record_unsupported_command(
 fn SkiaRasterRenderer::render_command(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  command : @render_common.PlanOp,
+  command : @core.DrawCommand,
   canvas_scopes : Array[@render_common.PlanScopeKind],
 ) -> Unit {
   match command {
     Clear(color) => canvas.clear(skia_color(color))
     FillRect(rect, color) =>
-      canvas.draw_rect(skia_rect(rect), skia_paint(color))
+      canvas.draw_rect(skia_rect(rect), self.skia_paint(color))
     StrokeRect(rect, color, width) =>
-      canvas.draw_rect(skia_rect(rect), skia_stroke_paint(color, width))
+      canvas.draw_rect(skia_rect(rect), self.skia_stroke_paint(color, width))
     FillRoundedRect(rounded, color) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
-        skia_paint(color),
+        self.skia_paint(color),
       )
     StrokeRoundedRect(rounded, color, width) =>
       canvas.draw_round_rect(
         skia_rect(rounded.rect),
         Float::from_double(rounded.radius),
         Float::from_double(rounded.radius),
-        skia_stroke_paint(color, width),
+        self.skia_stroke_paint(color, width),
       )
     FillRoundedRectBrush(rounded, brush) =>
       self.draw_brush_rounded_rect(canvas, rounded, brush, stroke_width=None)
@@ -66,7 +66,7 @@ fn SkiaRasterRenderer::render_command(
     }
     PopTransform => self.pop_canvas_scope(canvas, canvas_scopes, Transform)
     PushOpacity(opacity) => {
-      ignore(canvas.save_layer(paint=skia_opacity_paint(opacity)))
+      ignore(canvas.save_layer(paint=self.skia_opacity_paint(opacity)))
       canvas_scopes.push(Opacity)
     }
     PopOpacity => self.pop_canvas_scope(canvas, canvas_scopes, Opacity)
@@ -202,7 +202,7 @@ fn SkiaRasterRenderer::draw_shadow(
           skia_rect(expanded),
           Float::from_double(radius),
           Float::from_double(radius),
-          skia_paint(shadow.color),
+          self.skia_paint(shadow.color),
         )
         canvas.restore_to_count(saved)
       }
@@ -211,7 +211,7 @@ fn SkiaRasterRenderer::draw_shadow(
           skia_rect(expanded),
           Float::from_double(radius),
           Float::from_double(radius),
-          skia_paint(shadow.color),
+          self.skia_paint(shadow.color),
         )
         self.record_unsupported_command(
           "DrawShadow", "Skia mask filter unavailable; drew unblurred shadow",
@@ -224,7 +224,7 @@ fn SkiaRasterRenderer::draw_shadow(
     skia_rect(expanded),
     Float::from_double(radius),
     Float::from_double(radius),
-    skia_paint(shadow.color),
+    self.skia_paint(shadow.color),
   )
 }
 
@@ -255,14 +255,14 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
             skia_rect(rounded.rect),
             Float::from_double(rounded.radius),
             Float::from_double(rounded.radius),
-            skia_stroke_paint(color, width),
+            self.skia_stroke_paint(color, width),
           )
         None =>
           canvas.draw_round_rect(
             skia_rect(rounded.rect),
             Float::from_double(rounded.radius),
             Float::from_double(rounded.radius),
-            skia_paint(color),
+            self.skia_paint(color),
           )
       }
     _ =>
@@ -275,7 +275,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
                 Float::from_double(rounded.radius),
                 Float::from_double(rounded.radius),
                 shader,
-                skia_stroke_paint(brush.fallback_color(), width),
+                self.skia_stroke_paint(brush.fallback_color(), width),
               )
             None => {
               ignore(canvas.save())
@@ -283,7 +283,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
               canvas.draw_rect_shader(
                 skia_rect(rounded.rect),
                 shader,
-                @moui_skia.Paint::new(anti_alias=true),
+                skia_anti_alias_paint,
               )
               canvas.restore()
             }
@@ -293,7 +293,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
             skia_rect(rounded.rect),
             Float::from_double(rounded.radius),
             Float::from_double(rounded.radius),
-            skia_paint(brush.fallback_color()),
+            self.skia_paint(brush.fallback_color()),
           )
           self.record_unsupported_command(
             "FillRoundedRectBrush", "Skia brush shader unavailable; used fallback color",
@@ -309,9 +309,9 @@ fn SkiaRasterRenderer::push_layer(
   canvas : @skia_native.Canvas,
   layer : @core.LayerSpec,
 ) -> Unit {
-  let paint = skia_opacity_paint(layer.opacity).set_blend_mode(
-    skia_blend_mode(layer.blend_mode),
-  )
+  let paint = self
+    .skia_opacity_paint(layer.opacity)
+    .set_blend_mode(skia_blend_mode(layer.blend_mode))
   match layer.mask {
     NoMask => ignore(canvas.save_layer(paint~))
     RectMask(rect) => {
@@ -338,14 +338,17 @@ fn SkiaRasterRenderer::draw_path(
   match skia_path(spec) {
     Some(path) => {
       match spec.fill {
-        Some(Solid(color)) => canvas.draw_path(path, skia_paint(color))
+        Some(Solid(color)) => canvas.draw_path(path, self.skia_paint(color))
         Some(brush) =>
           self.draw_path_brush(canvas, path, brush, stroke_width=None)
         None => ()
       }
       match spec.stroke {
         Some(Solid(color)) =>
-          canvas.draw_path(path, skia_stroke_paint(color, spec.stroke_width))
+          canvas.draw_path(
+            path,
+            self.skia_stroke_paint(color, spec.stroke_width),
+          )
         Some(brush) =>
           self.draw_path_brush(
             canvas,
@@ -378,18 +381,14 @@ fn SkiaRasterRenderer::draw_path_brush(
           canvas.draw_path_shader(
             path,
             shader,
-            skia_stroke_paint(brush.fallback_color(), width),
+            self.skia_stroke_paint(brush.fallback_color(), width),
           )
         None =>
           match path.bounds() {
             Some(bounds) => {
               ignore(canvas.save())
               canvas.clip_path(path, anti_alias=true)
-              canvas.draw_rect_shader(
-                bounds,
-                shader,
-                @moui_skia.Paint::new(anti_alias=true),
-              )
+              canvas.draw_rect_shader(bounds, shader, skia_anti_alias_paint)
               canvas.restore()
             }
             None => ()
@@ -397,8 +396,8 @@ fn SkiaRasterRenderer::draw_path_brush(
       }
     None => {
       let paint = match stroke_width {
-        Some(width) => skia_stroke_paint(brush.fallback_color(), width)
-        None => skia_paint(brush.fallback_color())
+        Some(width) => self.skia_stroke_paint(brush.fallback_color(), width)
+        None => self.skia_paint(brush.fallback_color())
       }
       canvas.draw_path(path, paint)
       self.record_unsupported_command(
@@ -437,17 +436,20 @@ fn SkiaRasterRenderer::draw_brush_rect(
   brush : @core.Brush,
 ) -> Unit {
   match brush {
-    Solid(color) => canvas.draw_rect(skia_rect(frame), skia_paint(color))
+    Solid(color) => canvas.draw_rect(skia_rect(frame), self.skia_paint(color))
     _ =>
       match skia_brush_shader(brush) {
         Some(shader) =>
           canvas.draw_rect_shader(
             skia_rect(frame),
             shader,
-            @moui_skia.Paint::new(anti_alias=true),
+            skia_anti_alias_paint,
           )
         None => {
-          canvas.draw_rect(skia_rect(frame), skia_paint(brush.fallback_color()))
+          canvas.draw_rect(
+            skia_rect(frame),
+            self.skia_paint(brush.fallback_color()),
+          )
           self.record_unsupported_command(
             "FillRectBrush", "Skia brush shader unavailable; used fallback color",
           )
@@ -507,7 +509,7 @@ fn SkiaRasterRenderer::draw_checker_effect(
             height=cell.min(spec.frame.origin.y + spec.frame.size.height - y),
           ),
         ),
-        skia_paint(color),
+        self.skia_paint(color),
       )
     }
   }
@@ -559,7 +561,7 @@ fn SkiaRasterRenderer::draw_vignette_effect(
       canvas.draw_rect_shader(
         skia_rect(spec.frame),
         shader,
-        @moui_skia.Paint::new(anti_alias=true),
+        skia_anti_alias_paint,
       )
     None => {
       self.draw_brush_rect(canvas, spec.frame, spec.fallback)
@@ -599,23 +601,99 @@ fn color_component_byte(value : Double) -> Byte {
 }
 
 ///|
-fn skia_paint(color : @core.Color) -> @moui_skia.Paint {
-  @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
+/// The fixed `Paint::new(anti_alias=true)` parameter object shared by every
+/// shader-filled rect/path and every cached-layer blit. `Paint` is an
+/// immutable value struct (`moui_skia/paint.mbt`), so one shared value is
+/// safe across draws, canvases, and renderer sessions.
+let skia_anti_alias_paint : @moui_skia.Paint = @moui_skia.Paint::new(
+  anti_alias=true,
+)
+
+///|
+/// One renderer-session paint memo entry. Paints are immutable value structs,
+/// so a (color, style, width) hit hands the same paint to every draw instead
+/// of re-running the four color-component conversions and reallocating a
+/// fresh paint per op. A hit compares two scalars and four doubles; a miss
+/// builds the paint once and remembers it.
+priv struct SkiaPaintMemoEntry {
+  color : @core.Color
+  stroke : Bool
+  stroke_width : Double
+  paint : @moui_skia.Paint
 }
 
 ///|
-fn skia_opacity_paint(opacity : Double) -> @moui_skia.Paint {
-  @moui_skia.Paint::new(
-    color=@moui_skia.Color::white().with_alpha(color_component_byte(opacity)),
-    anti_alias=true,
+/// Distinct (color, style, width) combinations per session are the app
+/// palette crossed with stroke widths — small — so a bounded FIFO absorbs
+/// real UIs and caps adversarial churn without LRU bookkeeping. Overflow
+/// only costs rebuilding a paint later.
+let skia_paint_memo_capacity = 256
+
+///|
+fn SkiaRasterRenderer::cached_paint(
+  self : SkiaRasterRenderer,
+  color : @core.Color,
+  stroke~ : Bool,
+  stroke_width~ : Double,
+  build~ : () -> @moui_skia.Paint,
+) -> @moui_skia.Paint {
+  for entry in self.paint_memo {
+    if entry.stroke == stroke &&
+      entry.stroke_width == stroke_width &&
+      entry.color == color {
+      return entry.paint
+    }
+  }
+  let paint = build()
+  if self.paint_memo.length() >= skia_paint_memo_capacity {
+    ignore(self.paint_memo.remove(0))
+  }
+  self.paint_memo.push({ color, stroke, stroke_width, paint, })
+  paint
+}
+
+///|
+fn SkiaRasterRenderer::skia_paint(
+  self : SkiaRasterRenderer,
+  color : @core.Color,
+) -> @moui_skia.Paint {
+  self.cached_paint(color, stroke=false, stroke_width=0.0, build=() => {
+    @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
+  })
+}
+
+///|
+fn SkiaRasterRenderer::skia_opacity_paint(
+  self : SkiaRasterRenderer,
+  opacity : Double,
+) -> @moui_skia.Paint {
+  // Keyed on the logical color so only the alpha byte distinguishes entries.
+  self.cached_paint(
+    @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=opacity),
+    stroke=false,
+    stroke_width=0.0,
+    build=() => {
+      @moui_skia.Paint::new(
+        color=@moui_skia.Color::white().with_alpha(
+          color_component_byte(opacity),
+        ),
+        anti_alias=true,
+      )
+    },
   )
 }
 
 ///|
-fn skia_stroke_paint(color : @core.Color, width : Double) -> @moui_skia.Paint {
-  @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
-  .set_stroke(true)
-  .set_stroke_width(Float::from_double(width.max(0.0)))
+fn SkiaRasterRenderer::skia_stroke_paint(
+  self : SkiaRasterRenderer,
+  color : @core.Color,
+  width : Double,
+) -> @moui_skia.Paint {
+  self.cached_paint(color, stroke=true, stroke_width=width, build=() => {
+    @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
+    .set_stroke(true)
+    .set_stroke_width(Float::from_double(width.max(0.0)))
+  })
 }
 
 ///|

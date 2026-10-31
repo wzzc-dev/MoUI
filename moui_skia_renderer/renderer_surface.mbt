@@ -318,6 +318,7 @@ pub fn SkiaRasterRenderer::to_renderer_session(
     recover=_reason => FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),
+    image_records_generation=Some(() => self.image_lifecycle.generation()),
     apply_image_load_completion=completion => {
       self.apply_image_resource_load_completion(completion)
     },

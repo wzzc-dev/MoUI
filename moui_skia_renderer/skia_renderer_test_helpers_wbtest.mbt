@@ -107,6 +107,19 @@ fn skia_test_draw_frame(commands : Array[@core.DrawCommand]) -> @core.DrawFrame 
 }
 
 ///|
+/// Raster-route layer identity for cache tests that address admission
+/// records or cache keys directly.
+fn skia_test_layer_identity(runtime_key : String) -> SkiaLayerIdentity {
+  {
+    runtime_key,
+    route: RasterSurfaceRoute,
+    scale_factor: 1.0,
+    physical_width: 16,
+    physical_height: 16,
+  }
+}
+
+///|
 fn skia_test_draw_frame_with_damage(
   commands : Array[@core.DrawCommand],
   damage : @core.DamageRegion,

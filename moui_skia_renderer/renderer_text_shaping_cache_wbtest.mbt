@@ -97,6 +97,199 @@ test "skia shaping cache bounds entries with LRU eviction" {
 }
 
 ///|
+/// G1: the shaping cache key is a structural hash of the FontSpec fields —
+/// no JSON stringify, no string concatenation — so structurally equal specs
+/// hit regardless of which value instance arrives, and per-field differences
+/// never collide. Hits also share the cached layout by reference instead of
+/// deep-copying it.
+test "skia shaping cache keys are structural and hits share the layout" {
+  guard skia_available() else { return () }
+  let cache = SkiaTextShapingCache::new()
+  let base = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([Name("Test")]),
+    size=12.0,
+    weight=500,
+    style=Italic,
+    variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+  )
+  let mut shapes = 0
+  let shape = (text : String) => {
+    () => {
+      shapes += 1
+      skia_test_shaping_layout(text)
+    }
+  }
+  cache.begin_frame()
+  assert_true(cache.resolve(base, "A", SystemFontMgr, shape("A")) is Some(_))
+  inspect(cache.total_misses, content="1")
+  // A freshly built, structurally equal spec hits without reshaping.
+  let equal = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([Name("Test")]),
+    size=12.0,
+    weight=500,
+    style=Italic,
+    variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+  )
+  assert_true(cache.resolve(equal, "A", SystemFontMgr, shape("A")) is Some(_))
+  inspect(cache.total_hits, content="1")
+  inspect(shapes, content="1")
+  // Every spec field must split keys: resolution, size, weight, style,
+  // family, and variation axes/values.
+  let split_specs = [
+    ("resolution", cache.resolve(base, "A", EmptyTypeface, shape("A"))),
+    (
+      "size",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Test")]),
+          size=13.0,
+          weight=500,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "weight",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Test")]),
+          size=12.0,
+          weight=600,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "style",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Test")]),
+          size=12.0,
+          weight=500,
+          style=Normal,
+          variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "family",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Other")]),
+          size=12.0,
+          weight=500,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "named-vs-preset-family",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([SystemUi]),
+          size=12.0,
+          weight=500,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "variation-value",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Test")]),
+          size=12.0,
+          weight=500,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wght", value=600.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+    (
+      "variation-axis",
+      cache.resolve(
+        @core.FontSpec::new(
+          families=@core.FontFamilyStack::new([Name("Test")]),
+          size=12.0,
+          weight=500,
+          style=Italic,
+          variations=[@core.FontVariation::new(axis="wdth", value=500.0)],
+        ),
+        "A",
+        SystemFontMgr,
+        shape("A"),
+      ),
+    ),
+  ]
+  for (label, result) in split_specs {
+    guard result is Some(_) else { fail("expected shaped layout for \{label}") }
+  }
+  inspect(cache.total_misses, content="9")
+  inspect(shapes, content="9")
+  // 0.0 and -0.0 are equal under Eq, so they must share one cache slot (the
+  // key normalizes zeros; otherwise a bit-derived hash could disagree with
+  // the derived Eq and strand the entry).
+  let zero = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([Name("Test")]),
+    size=0.0,
+    weight=500,
+    style=Italic,
+    variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+  )
+  assert_true(cache.resolve(zero, "A", SystemFontMgr, shape("A")) is Some(_))
+  inspect(cache.total_misses, content="10")
+  let negative_zero = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([Name("Test")]),
+    size=-0.0,
+    weight=500,
+    style=Italic,
+    variations=[@core.FontVariation::new(axis="wght", value=500.0)],
+  )
+  assert_true(
+    cache.resolve(negative_zero, "A", SystemFontMgr, shape("A")) is Some(_),
+  )
+  inspect(cache.total_hits, content="2")
+  inspect(shapes, content="10")
+  // A hit hands back the cached layout itself (no deep copy): the segments
+  // array is the same storage the cache holds. Production consumers only
+  // read layouts, which is what makes the sharing safe — this mutation is
+  // the observable that pins the no-copy replay.
+  let shared = cache.resolve(base, "A", SystemFontMgr, shape("A"))
+  guard shared is Some(layout) else { fail("expected shared layout") }
+  inspect(layout.segments.length(), content="1")
+  layout.segments.push(layout.segments[0])
+  let after = cache.resolve(base, "A", SystemFontMgr, shape("A"))
+  guard after is Some(cached) else {
+    fail("expected cached layout after shared mutation")
+  }
+  inspect(cached.segments.length(), content="2")
+  inspect(cache.total_hits, content="4")
+  inspect(shapes, content="10")
+}
+
+///|
 test "skia render_frame reports shaping cache hits across identical frames" {
   guard skia_test_native_text_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

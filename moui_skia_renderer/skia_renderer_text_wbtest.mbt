@@ -422,7 +422,10 @@ test "skia text segment draws shaped glyph pixels and falls back visibly" {
   match skia_draw_text_payload_for_resolution(font_spec, text, SystemFontMgr) {
     None => fail("expected Skia draw text payload")
     Some((font, glyph_run)) => {
-      let paint = skia_paint(@core.Color::black())
+      let paint = @moui_skia.Paint::new(
+        color=skia_color(@core.Color::black()),
+        anti_alias=true,
+      )
       match
         @skia_native.Surface::raster_n32_premul(@moui_skia.ISize::new(240, 48)) {
         None => ()

@@ -1,14 +1,14 @@
 ///|
 priv struct SkiaCachedLayerPictureEntry {
-  identity_key : String
-  key : String
-  runtime_key : String
+  identity : SkiaLayerIdentity
+  key : SkiaLayerCacheKey
   picture : @skia_native.Picture
-  scale_factor : Double
-  content_revision : Int32
   byte_size : Int64
   mut hit_count : Int32
   mut last_used : Int32
+  /// Image sources rasterized into this picture, recorded at admission time
+  /// for targeted invalidation on image load completion.
+  image_sources : Array[String]
 }
 
 ///|
@@ -28,13 +28,12 @@ fn SkiaRasterRenderer::draw_frame_to_picture_canvas(
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let scopes : Array[@render_common.PlanScopeKind] = []
-  let plan = @render_common.lower_draw_commands(frame.commands)
   let stats = SkiaCachedLayerFrameStats::new()
   let complete = self.render_picture_command_range(
     canvas,
-    plan.ops,
+    frame.commands,
     start_index=0,
-    end_index=plan.ops.length(),
+    end_index=frame.commands.length(),
     scopes,
     stats,
   )
@@ -54,7 +53,7 @@ fn SkiaRasterRenderer::draw_frame_to_picture_canvas(
 fn SkiaRasterRenderer::render_picture_command_range(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start_index~ : Int32,
   end_index~ : Int32,
   scopes : Array[@render_common.PlanScopeKind],
@@ -105,7 +104,7 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start_index~ : Int32,
   end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
@@ -176,11 +175,12 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
           match recorder.finish() {
             None => false
             Some(picture) => {
-              let identity_key = self.skia_layer_cache_identity_key(
-                spec, physical_size,
-              )
-              let key = self.skia_layer_cache_key(spec, physical_size)
-              let admission = self.layer_cache_admission_record(identity_key)
+              let identity = self.skia_layer_identity(spec, physical_size)
+              let key = SkiaLayerCacheKey::{
+                identity,
+                content_revision: spec.content_revision,
+              }
+              let admission = self.layer_cache_admission_record(identity)
               admission.record_update(spec.content_revision)
               let byte_size = picture.approximate_bytes_used().max(1L)
               match
@@ -189,20 +189,20 @@ fn SkiaRasterRenderer::update_picture_cached_layer(
                 ) {
                 Some(reason) => {
                   admission.skip_reason = reason
-                  self.remove_picture_cached_layers_by_identity(identity_key)
+                  self.remove_picture_cached_layers_by_identity(identity)
                 }
                 None => {
                   admission.skip_reason = ""
                   self.store_picture_cached_layer({
-                    identity_key,
+                    identity,
                     key,
-                    runtime_key: spec.key,
                     picture,
-                    scale_factor: self.metrics.scale_factor,
-                    content_revision: spec.content_revision,
                     byte_size,
                     hit_count: admission.hit_count,
                     last_used: 0,
+                    image_sources: skia_layer_image_sources(
+                      commands, start_index, end_index,
+                    ),
                   })
                   stats.cache_update_count = stats.cache_update_count + 1
                   stats.cache_evict_count += self.evict_picture_cached_layers_if_needed()
@@ -223,7 +223,7 @@ fn SkiaRasterRenderer::render_uncached_picture_layer(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   spec : @core.RetainedLayerSpec,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start_index~ : Int32,
   end_index~ : Int32,
   stats : SkiaCachedLayerFrameStats,
@@ -264,14 +264,11 @@ fn SkiaRasterRenderer::draw_picture_cached_layer(
   match self.picture_layer_cache.get(key) {
     None => false
     Some(entry) => {
-      if entry.runtime_key != spec.key ||
-        entry.scale_factor != self.metrics.scale_factor ||
-        entry.content_revision != spec.content_revision {
-        return false
-      }
+      // The structural key covers runtime key, scale factor, physical size,
+      // and content revision, so the entry matches the spec by construction.
       entry.last_used = self.next_layer_cache_tick()
       entry.hit_count = entry.hit_count + 1
-      let admission = self.layer_cache_admission_record(entry.identity_key)
+      let admission = self.layer_cache_admission_record(entry.identity)
       admission.hit_count = admission.hit_count + 1
       stats.cache_hit_count = stats.cache_hit_count + 1
       self.draw_picture_at_frame(canvas, entry.picture, spec.frame)
@@ -304,27 +301,27 @@ fn SkiaRasterRenderer::store_picture_cached_layer(
   self : SkiaRasterRenderer,
   entry : SkiaCachedLayerPictureEntry,
 ) -> Unit {
-  self.remove_picture_cached_layers_by_identity(entry.identity_key)
+  self.remove_picture_cached_layers_by_identity(entry.identity)
   let tick = self.next_layer_cache_tick()
   let stored = { ..entry, last_used: tick, }
   self.picture_layer_cache[entry.key] = stored
-  self.picture_layer_cache_identity_index[entry.identity_key] = entry.key
+  self.picture_layer_cache_identity_index[entry.identity] = entry.key
   self.picture_layer_cache_total_bytes += entry.byte_size
 }
 
 ///|
 fn SkiaRasterRenderer::remove_picture_cached_layers_by_identity(
   self : SkiaRasterRenderer,
-  identity_key : String,
+  identity : SkiaLayerIdentity,
 ) -> Unit {
-  match self.picture_layer_cache_identity_index.get(identity_key) {
+  match self.picture_layer_cache_identity_index.get(identity) {
     Some(key) => {
       match self.picture_layer_cache.get(key) {
         Some(entry) => self.picture_layer_cache_total_bytes -= entry.byte_size
         None => ()
       }
       self.picture_layer_cache.remove(key)
-      self.picture_layer_cache_identity_index.remove(identity_key)
+      self.picture_layer_cache_identity_index.remove(identity)
     }
     None => ()
   }
@@ -337,7 +334,7 @@ fn SkiaRasterRenderer::evict_picture_cached_layers_if_needed(
   let budget = self.layer_cache_budget_bytes()
   let mut evicted = 0
   while budget >= 0L && self.picture_layer_cache_total_bytes > budget {
-    let mut oldest_key : String? = None
+    let mut oldest_key : SkiaLayerCacheKey? = None
     let mut oldest_tick = 2147483647
     for key, entry in self.picture_layer_cache {
       if entry.last_used < oldest_tick {
@@ -351,7 +348,7 @@ fn SkiaRasterRenderer::evict_picture_cached_layers_if_needed(
         match self.picture_layer_cache.get(key) {
           Some(entry) => {
             self.picture_layer_cache_total_bytes -= entry.byte_size
-            self.picture_layer_cache_identity_index.remove(entry.identity_key)
+            self.picture_layer_cache_identity_index.remove(entry.identity)
           }
           None => ()
         }

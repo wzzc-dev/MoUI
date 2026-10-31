@@ -92,26 +92,39 @@ pub struct SkiaRasterRenderer {
   priv failed_images : Map[String, String]
   priv image_lifecycle : @render_common.ImageResourceLifecycle
   // Renderer-owned image pixels can change without a runtime tree/content
-  // revision change (async decode completion).  Retained-layer keys include
-  // this generation so placeholders are never replayed after an image is
-  // ready.
-  priv mut image_cache_generation : Int32
+  // revision change (async decode completion). Load completions invalidate
+  // exactly the cached layers whose recorded command stream drew that image
+  // source (renderer_cached_layer.mbt), so placeholder pixels are never
+  // replayed after an image is ready and chrome layers survive.
   priv async_image_loading : Bool
   priv mut present_count : Int32
   priv mut unsupported_command_count : Int32
   priv unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   priv mut last_frame : SkiaPixelFrame?
-  priv layer_cache : Map[String, SkiaCachedLayerImageEntry]
-  priv layer_cache_identity_index : Map[String, String]
-  priv picture_layer_cache : Map[String, SkiaCachedLayerPictureEntry]
-  priv picture_layer_cache_identity_index : Map[String, String]
-  priv layer_cache_admissions : Map[String, SkiaCachedLayerAdmissionRecord]
+  priv layer_cache : Map[SkiaLayerCacheKey, SkiaCachedLayerImageEntry]
+  priv layer_cache_identity_index : Map[SkiaLayerIdentity, SkiaLayerCacheKey]
+  priv picture_layer_cache : Map[SkiaLayerCacheKey, SkiaCachedLayerPictureEntry]
+  priv picture_layer_cache_identity_index : Map[
+    SkiaLayerIdentity,
+    SkiaLayerCacheKey,
+  ]
+  priv layer_cache_admissions : Map[
+    SkiaLayerIdentity,
+    SkiaCachedLayerAdmissionRecord,
+  ]
   priv mut layer_cache_total_bytes : Int64
   priv mut picture_layer_cache_total_bytes : Int64
   priv mut layer_cache_tick : Int32
   priv mut platform_view_draw_fn : (() -> Unit)?
   priv mut platform_view_recording_canvas : @skia_native.Canvas?
   priv text_shaping_cache : SkiaTextShapingCache
+  // Per-frame parameter objects reused across frames: the frame stats record
+  // and the canvas scope stack are reset (never reallocated) at frame start
+  // by draw_frame_to_canvas. The paint memo caches immutable paints by
+  // (color, style, width) within this renderer session.
+  priv frame_stats : SkiaCachedLayerFrameStats
+  priv frame_canvas_scopes : Array[@render_common.PlanScopeKind]
+  priv paint_memo : Array[SkiaPaintMemoEntry]
 }
 
 ///|
@@ -237,7 +250,6 @@ pub fn create_with_present_target_and_route(
     image_cache: Map([]),
     failed_images: Map([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
-    image_cache_generation: 0,
     async_image_loading,
     present_count: 0,
     unsupported_command_count: 0,
@@ -254,6 +266,9 @@ pub fn create_with_present_target_and_route(
     platform_view_draw_fn: None,
     platform_view_recording_canvas: None,
     text_shaping_cache: SkiaTextShapingCache::new(),
+    frame_stats: SkiaCachedLayerFrameStats::new(),
+    frame_canvas_scopes: [],
+    paint_memo: [],
   }
 }
 
@@ -276,9 +291,11 @@ pub fn SkiaRasterRenderer::render(
       self.unsupported_command_count = 0
       self.unsupported_command_diagnostics.clear()
       let canvas_scopes : Array[@render_common.PlanScopeKind] = []
-      let plan = @render_common.lower_draw_commands(commands)
-      for op in plan.ops {
-        self.render_command(canvas, op, canvas_scopes)
+      // Renderers interpret `@core.DrawCommand` directly (ADR 0019 lowering
+      // retired): scope balance is validated in this same traversal via the
+      // canvas scope stack and the unclosed-scope report below.
+      for command in commands {
+        self.render_command(canvas, command, canvas_scopes)
       }
       if !canvas_scopes.is_empty() {
         for scope in canvas_scopes {
@@ -586,15 +603,24 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let stats = SkiaCachedLayerFrameStats::new()
+  // Reused per-frame parameter objects: reset (not reallocated) each frame.
+  // The same stats object is handed down through the layer update paths, so
+  // the reset at entry is the only bookkeeping needed. A fallback retry within
+  // one render_frame (GPU backing unavailable -> direct canvas) resets again,
+  // discarding only the aborted attempt's counts, exactly as separate locals
+  // did.
+  let stats = self.frame_stats
+  stats.reset()
   self.text_shaping_cache.begin_frame()
-  let canvas_scopes : Array[@render_common.PlanScopeKind] = []
-  let plan = @render_common.lower_draw_commands(frame.commands)
+  let canvas_scopes = self.frame_canvas_scopes
+  canvas_scopes.clear()
+  // The original command stream is rendered in place; scope balance is
+  // validated inside the traversal (canvas scope stack + unclosed report).
   let complete = self.render_cached_command_range(
     canvas,
-    plan.ops,
+    frame.commands,
     start_index=0,
-    end_index=plan.ops.length(),
+    end_index=frame.commands.length(),
     canvas_scopes,
     stats,
     damage=effective_damage,

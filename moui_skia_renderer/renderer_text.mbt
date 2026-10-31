@@ -25,7 +25,12 @@ fn SkiaRasterRenderer::draw_text(
       for segment in layout.segments {
         let origin = skia_text_segment_origin(placement, segment.x_offset)
         ignore(
-          skia_draw_text_segment(canvas, segment, origin, skia_paint(run.color)),
+          skia_draw_text_segment(
+            canvas,
+            segment,
+            origin,
+            self.skia_paint(run.color),
+          ),
         )
       }
       canvas.restore_to_count(saved)

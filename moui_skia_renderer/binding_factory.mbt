@@ -344,6 +344,13 @@ fn create_skia_gpu_host_renderer(
         _ => gpu_renderer.image_resources()
       }
     },
+    image_records_generation=Some(() => {
+      match fallback.val {
+        Some(renderer) if fallback_active.val =>
+          renderer.image_lifecycle.generation()
+        _ => gpu_renderer.image_lifecycle.generation()
+      }
+    }),
     apply_image_load_completion=completion => {
       match fallback.val {
         Some(renderer) if fallback_active.val =>

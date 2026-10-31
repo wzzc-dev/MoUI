@@ -838,7 +838,7 @@ test "skia cached layer admission records stay bounded" {
   }
   for index in 0..<(skia_layer_cache_admission_limit() + 48) {
     let record = renderer.layer_cache_admission_record(
-      "admission-layer-\{index}",
+      skia_test_layer_identity("admission-layer-\{index}"),
     )
     record.last_admitted_frame = index + 1
   }

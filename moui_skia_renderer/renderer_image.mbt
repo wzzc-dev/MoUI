@@ -28,7 +28,7 @@ fn SkiaRasterRenderer::draw_image(
               ),
             ),
             skia_rect(placement.frame),
-            skia_opacity_paint(run.opacity),
+            self.skia_opacity_paint(run.opacity),
             sampling=@moui_skia.SamplingOptions::linear(),
           )
         None => ()
@@ -583,15 +583,14 @@ pub fn SkiaRasterRenderer::apply_image_resource_load_completion(
   if changed {
     // Retained layers contain rasterized command output, including image
     // placeholders. Image completion changes renderer-owned pixels without
-    // changing the runtime render tree/content revision. Advance a renderer
-    // generation consumed by retained-layer keys so the next redraw rebuilds
-    // the affected pixels instead of replaying the placeholder.
-    self.image_cache_generation = self.image_cache_generation + 1
-    // Drop old raster/picture entries and admission streaks as well. A
-    // document gallery can complete several images back-to-back; retaining
-    // old generations would consume the layer budget and classify otherwise
-    // stable chrome as churn-without-hit.
-    self.clear_layer_cache()
+    // changing the runtime render tree/content revision, so layers that
+    // rasterized the pre-completion pixels must be rebuilt. The cached-layer
+    // entries record which image sources their command streams drew, so
+    // invalidate exactly those layers and leave unrelated (chrome) layers —
+    // and their admission streaks — untouched. A document gallery can
+    // complete several images back-to-back; the targeted clear keeps pure
+    // chrome layers cached across every completion.
+    self.invalidate_cached_layers_for_image_source(completion.source)
     match completion_to_apply.status {
       ImageLoadReady => {
         self.failed_images.remove(completion.source)

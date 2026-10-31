@@ -49,13 +49,16 @@ pub(all) enum SkiaSurfaceRoute {
   VulkanGpuSurfaceRoute
   EglGpuSurfaceRoute
   Direct3DGpuSurfaceRoute
-} derive(Eq, Debug, ToJson)
+} derive(Eq, Hash, Debug, ToJson)
 
 ///|
 pub extend SkiaSurfaceRoute with Debug::{to_repr}
 
 ///|
 pub extend SkiaSurfaceRoute with Eq::{not_equal, equal}
+
+///|
+pub extend SkiaSurfaceRoute with Hash::{hash, hash_combine}
 
 ///|
 pub extend SkiaSurfaceRoute with ToJson::{to_json}
