@@ -57,6 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [hot-path-invalidation-boilerplate-convergence](active/hot-path-invalidation-boilerplate-convergence.md) | Land the 2026-10-31 architecture analysis as ten workstreams: ambient theme landing (ADR 0036), cache-invalidation convergence (generation semantics replacing structural Eq and whole-cache clears), per-message sync throttling, render-pipeline subtraction (dead mailbox, redundant DTO copies), reconcile/event-path shortcuts, Skia hot-key de-stringification, declaration/derive codegen (ADR 0034 Option B), platform-backend dedup, and an RFC-gated intrinsic-sizing default |
 | [architecture-review-followups](active/architecture-review-followups.md) | Land the 2026-09 architecture review: renderer open-extension gates, runtime dirty-path optimization, overlay closure with macOS modal presenter, and backend close-order evidence |
 | [semantic-id-ergonomics-and-path-targeting](done/semantic-id-ergonomics-and-path-targeting.md) | Declare semantic ids inline and let agents walk the committed semantics hierarchy with a filtered `ByPath` target |
 | [native-accessibility](active/native-accessibility.md) | Complete native accessibility adapters and matching-host evidence for the Showcase Probe |
