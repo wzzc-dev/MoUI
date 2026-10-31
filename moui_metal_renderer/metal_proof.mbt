@@ -25,7 +25,7 @@ pub fn metal_proof_pixels(
   let atlas = new_metal_glyph_atlas()
   let images = new_metal_image_cache()
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands(commands),
+    commands,
     @core.SurfaceMetrics::new(
       logical_size=size,
       physical_size=@core.Size::new(

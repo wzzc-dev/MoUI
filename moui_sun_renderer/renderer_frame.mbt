@@ -21,17 +21,18 @@ fn SunRasterRenderer::render_frame_inner(
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
-  let plan = @render_common.lower_draw_commands(frame.commands)
   let canvas_scopes : Array[@render_common.PlanScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   let layer_spec_stack : Array[SunLayerScope] = []
   let rounded_clip_transform_stack : Array[@sun_graphics.Transform] = []
   let stats = SunCachedLayerFrameStats::new()
+  // The command stream is interpreted directly; scope balance is validated in
+  // this traversal (canvas scope stack + unclosed-scope report below).
   let complete = self.render_cached_command_range(
-    plan.ops,
+    frame.commands,
     0,
-    plan.ops.length(),
+    frame.commands.length(),
     canvas_scopes,
     opacity_stack,
     blend_mode_stack,

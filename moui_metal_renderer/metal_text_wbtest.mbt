@@ -85,7 +85,7 @@ test "a run the engine cannot lay out is counted, not painted" {
     }
   }
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands([metal_test_text_run()]),
+    [metal_test_text_run()],
     metal_test_metrics(),
     metal_noop_text(),
   )
@@ -107,7 +107,7 @@ test "a glyph the engine cannot rasterize is counted per glyph" {
   )
   let atlas = new_metal_glyph_atlas()
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands([metal_test_text_run()]),
+    [metal_test_text_run()],
     metal_test_metrics(),
     MetalFrameContext::{
       cache,
@@ -315,12 +315,12 @@ test "a frame denser than one page grows the atlas instead of dropping" {
   // frame.
   let atlas = new_metal_glyph_atlas()
   let first = build_metal_geometry(
-    @render_common.lower_draw_commands([
+    [
       metal_shelf_run("a"),
       metal_shelf_run("b"),
       metal_shelf_run("c"),
       metal_shelf_run("d"),
-    ]),
+    ],
     metal_shelf_metrics(),
     metal_shelf_frame(atlas),
   )
@@ -329,7 +329,7 @@ test "a frame denser than one page grows the atlas instead of dropping" {
   assert_eq(metal_glyph_atlas_page_count(atlas), 1)
   // A fifth glyph the atlas has no room for on its last page.
   let second = build_metal_geometry(
-    @render_common.lower_draw_commands([metal_shelf_run("e")]),
+    [metal_shelf_run("e")],
     metal_shelf_metrics(),
     metal_shelf_frame(atlas),
   )
@@ -357,17 +357,13 @@ test "a frame whose text outlives the atlas is repacked, not dropped" {
   for index in 0..<cap_boxes {
     runs.push(metal_shelf_run("fill-\{index}"))
   }
-  let filled = build_metal_geometry(
-    @render_common.lower_draw_commands(runs),
-    metal_shelf_metrics(),
-    frame,
-  )
+  let filled = build_metal_geometry(runs, metal_shelf_metrics(), frame)
   assert_eq(filled.item_count, cap_boxes)
   assert_eq(filled.text_dropped_glyphs, 0)
   assert_eq(metal_glyph_atlas_page_count(atlas), METAL_ATLAS_MAX_PAGES)
   assert_eq(atlas.resets, 0)
   let overflow = build_metal_geometry(
-    @render_common.lower_draw_commands([metal_shelf_run("overflow")]),
+    [metal_shelf_run("overflow")],
     metal_shelf_metrics(),
     frame,
   )
@@ -534,7 +530,7 @@ test "a glyph run that spills onto a second page draws both pages" {
   assert_true(metal_is_white(metal_proof_pixel(pixels, 700, 200, 1024)))
   let atlas = new_metal_glyph_atlas()
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands([metal_page_run()]),
+    [metal_page_run()],
     @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=1024.0, height=512.0),
       physical_size=@core.Size::new(width=1024.0, height=512.0),

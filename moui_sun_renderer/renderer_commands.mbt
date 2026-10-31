@@ -1,7 +1,7 @@
 ///|
 fn SunRasterRenderer::render_command(
   self : SunRasterRenderer,
-  command : @render_common.PlanOp,
+  command : @core.DrawCommand,
   canvas_scopes : Array[@render_common.PlanScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],

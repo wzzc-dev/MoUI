@@ -49,7 +49,7 @@ pub fn metal_frame_report(
 ) -> MetalFrameReport {
   let size = @core.Size::new(width~, height~)
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands(commands),
+    commands,
     @core.SurfaceMetrics::new(
       logical_size=size,
       physical_size=@core.Size::new(

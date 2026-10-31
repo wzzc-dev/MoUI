@@ -498,12 +498,14 @@ fn RendererHandle::render(
   commands : Array[@core.DrawCommand],
 ) -> Unit {
   self.last_batches = @render.collect_rect_batches(commands)
-  self.record_native_image_commands(commands)
-  let lowered = @render_common.lower_draw_commands(commands)
+  // One observation pass records image lifecycle state and the scope-balance
+  // diagnostic count together; the former dedicated full-stream fallback scan
+  // (`plan_renderer_command_fallbacks`) is gone.
+  self.record_frame_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,
-    lowered.ops,
+    commands,
     self.size,
     self.scale_factor,
   )
@@ -512,7 +514,6 @@ fn RendererHandle::render(
   self.image_vertices = plan.image_vertices
   self.draw_items = plan.items
   self.text_atlas_dirty = plan.atlas_dirty
-  self.unsupported_command_count = count_native_unsupported_commands(commands)
   self.render_wgpu(commands)
 }
 
@@ -740,10 +741,74 @@ fn RendererHandle::dispose(self : RendererHandle) -> Unit {
 }
 
 ///|
-fn count_native_unsupported_commands(
-  commands : Array[@core.DrawCommand],
-) -> Int32 {
-  @render_common.plan_renderer_command_fallbacks(commands).fallback_count()
+/// Scope-balance diagnostic counting folded into the frame observation
+/// traversal (`record_frame_commands`), never run as its own pass. Semantics
+/// match the retired `plan_renderer_command_fallbacks` scan: an unbalanced
+/// pop, or one open scope per kind left at the end of the stream.
+fn RendererHandle::count_frame_scope_imbalance(
+  self : RendererHandle,
+  command : @core.DrawCommand,
+  balance : NativeScopeBalance,
+) -> Unit {
+  let _ = self
+  match command {
+    PushClip(_) => balance.clip_depth += 1
+    PopClip =>
+      if balance.clip_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.clip_depth -= 1
+      }
+    PushRoundedClip(_) => balance.rounded_clip_depth += 1
+    PopRoundedClip =>
+      if balance.rounded_clip_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.rounded_clip_depth -= 1
+      }
+    PushTransform(_) => balance.transform_depth += 1
+    PopTransform =>
+      if balance.transform_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.transform_depth -= 1
+      }
+    PushOpacity(_) => balance.opacity_depth += 1
+    PopOpacity =>
+      if balance.opacity_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.opacity_depth -= 1
+      }
+    PushLayer(_) | BeginRetainedLayer(_) => balance.layer_depth += 1
+    PopLayer | EndRetainedLayer(_) =>
+      if balance.layer_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.layer_depth -= 1
+      }
+    PushFilter(_) => balance.filter_depth += 1
+    PopFilter =>
+      if balance.filter_depth <= 0 {
+        balance.unsupported += 1
+      } else {
+        balance.filter_depth -= 1
+      }
+    _ => ()
+  }
+}
+
+///|
+/// Per-kind scope depths shared by the frame observation traversal; the
+/// residual depths at the end of the stream are the unclosed-scope counts.
+priv struct NativeScopeBalance {
+  mut unsupported : Int32
+  mut clip_depth : Int32
+  mut rounded_clip_depth : Int32
+  mut transform_depth : Int32
+  mut opacity_depth : Int32
+  mut layer_depth : Int32
+  mut filter_depth : Int32
 }
 
 ///|

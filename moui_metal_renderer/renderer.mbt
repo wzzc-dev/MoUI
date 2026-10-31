@@ -71,7 +71,7 @@ fn MetalRenderer::render_frame(
     retained: self.retained,
   }
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands(frame.commands),
+    frame.commands,
     self.metrics,
     draw_context,
   )

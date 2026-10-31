@@ -158,7 +158,7 @@ test "metal clips geometry to the pushed rect" {
 ///|
 test "geometry counts what the L1 legs refuse to draw" {
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands([
+    [
       @core.StrokeRect(
         metal_rect(0.0, 0.0, 4.0, height=4.0),
         @core.Color::black(),
@@ -182,7 +182,7 @@ test "geometry counts what the L1 legs refuse to draw" {
           ),
         ),
       ),
-    ]),
+    ],
     @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=8.0, height=8.0),
       physical_size=@core.Size::new(width=8.0, height=8.0),
@@ -198,7 +198,7 @@ test "geometry counts what the L1 legs refuse to draw" {
 ///|
 test "every op in the stream is drawn or lands in a counter" {
   let geometry = build_metal_geometry(
-    @render_common.lower_draw_commands([
+    [
       @core.PushLayer(@core.LayerSpec::new()),
       @core.PopLayer,
       @core.PushFilter(@core.FilterEffect::blur(4.0)),
@@ -220,7 +220,7 @@ test "every op in the stream is drawn or lands in a counter" {
       @core.DrawImage(
         @core.ImageRun::new("missing.png", metal_rect(0.0, 0.0, 4.0)),
       ),
-    ]),
+    ],
     @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=8.0, height=8.0),
       physical_size=@core.Size::new(width=8.0, height=8.0),
@@ -228,7 +228,7 @@ test "every op in the stream is drawn or lands in a counter" {
     ),
     metal_noop_text(),
   )
-  // No `PlanOp` variant is left without an arm: the empty layer, filter and
+  // No `DrawCommand` variant is left without an arm: the empty layer, filter and
   // retained-layer scopes release their pass without drawing, the unknown shader
   // effect paints its declared fallback brush (the one item here), and the image
   // op is handled but unresolvable without a device.
@@ -240,10 +240,10 @@ test "every op in the stream is drawn or lands in a counter" {
 }
 
 ///|
-test "unbalanced scope ops surface as plan diagnostics" {
-  let plan = @render_common.lower_draw_commands([@core.PopClip])
+test "unbalanced scope ops surface as fallback diagnostics" {
+  let plan = @render_common.plan_renderer_command_fallbacks([@core.PopClip])
   let geometry = build_metal_geometry(
-    plan,
+    [@core.PopClip],
     @core.SurfaceMetrics::new(
       logical_size=@core.Size::new(width=8.0, height=8.0),
       physical_size=@core.Size::new(width=8.0, height=8.0),
@@ -251,7 +251,7 @@ test "unbalanced scope ops surface as plan diagnostics" {
     ),
     metal_noop_text(),
   )
-  assert_eq(plan.diagnostics.length(), 1)
+  assert_eq(plan.fallback_count(), 1)
   assert_eq(geometry.item_count, 0)
 }
 

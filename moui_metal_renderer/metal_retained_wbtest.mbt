@@ -50,7 +50,7 @@ fn metal_retained_build(
 ) -> MetalFrameGeometry {
   cache.begin_frame(context)
   build_metal_geometry(
-    @render_common.lower_draw_commands(commands),
+    commands,
     @core.SurfaceMetrics::new(
       logical_size=size,
       physical_size=size,
@@ -261,7 +261,7 @@ fn metal_retained_run(
   for commands in frames {
     cache.begin_frame(context)
     let geometry = build_metal_geometry(
-      @render_common.lower_draw_commands(commands),
+      commands,
       @core.SurfaceMetrics::new(
         logical_size=size,
         physical_size=size,

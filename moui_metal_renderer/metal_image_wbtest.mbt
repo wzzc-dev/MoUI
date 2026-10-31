@@ -211,11 +211,7 @@ test "the frame after an async completion paints the image pixels" {
     retained: new_metal_retained_cache(),
   }
   // Frame one: the load is only requested, so nothing of the image paints.
-  let first = build_metal_geometry(
-    @render_common.lower_draw_commands([run]),
-    metrics,
-    frame_context,
-  )
+  let first = build_metal_geometry([run], metrics, frame_context)
   assert_eq(first.item_count, 0)
   assert_eq(first.image_ops_pending, 1)
   ignore(
@@ -227,11 +223,7 @@ test "the frame after an async completion paints the image pixels" {
   )
   // Frame two: the same command now resolves, and the pixels are the fixture's
   // own red/blue halves.
-  let second = build_metal_geometry(
-    @render_common.lower_draw_commands([run]),
-    metrics,
-    frame_context,
-  )
+  let second = build_metal_geometry([run], metrics, frame_context)
   assert_eq(second.item_count, 1)
   let vertices = second.vertex_bytes()
   let items = second.item_bytes()
@@ -309,11 +301,7 @@ test "an evicted image is requested again while the resident one keeps painting"
     })
   }
   fn build(source : String) -> MetalFrameGeometry {
-    build_metal_geometry(
-      @render_common.lower_draw_commands([run_for(source)]),
-      metrics,
-      frame_context,
-    )
+    build_metal_geometry([run_for(source)], metrics, frame_context)
   }
   fn completes(source : String) -> Unit {
     ignore(

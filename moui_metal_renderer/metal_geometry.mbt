@@ -1,15 +1,17 @@
 ///|
-/// CPU-side geometry for one Metal frame: the walk that turns the shared
-/// lowering's ops (`lower_draw_commands`, ADR 0019) into the frame's buffers.
-/// This file never re-interprets `@core.DrawCommand`; it consumes the neutral
-/// plan.
+/// CPU-side geometry for one Metal frame: the walk that turns the
+/// `@core.DrawCommand` stream into the frame's buffers. Renderers interpret the
+/// command stream directly (the ADR 0019 neutral `PlanOp` lowering was
+/// retired); scope balance is validated by the shared
+/// `plan_renderer_command_fallbacks` and each route's own execution stacks.
 ///
-/// The match in `build_metal_range` carries no catch-all, so a new `PlanOp`
-/// variant is a compile error here rather than a frame that quietly stops
-/// drawing it — the same guarantee `moui_wgpu_renderer/native_visual_plan.mbt`
-/// relies on. What *is* left counted is degradation: an approximation a host can
-/// see in `MetalFrameReport` (blend modes, filters, rebuilt retained layers,
-/// fallback-painted shader effects) rather than a silently wrong pixel.
+/// The match in `build_metal_range` carries no catch-all, so a new
+/// `@core.DrawCommand` variant is a compile error here rather than a frame that
+/// quietly stops drawing it — the same guarantee
+/// `moui_wgpu_renderer/native_visual_plan.mbt` relies on. What *is* left counted
+/// is degradation: an approximation a host can see in `MetalFrameReport` (blend
+/// modes, filters, rebuilt retained layers, fallback-painted shader effects)
+/// rather than a silently wrong pixel.
 ///
 /// Two siblings hold the rest of what this walk needs: `metal_geometry_wire.mbt`
 /// (the byte layout and the code values MSL interprets) and
@@ -172,11 +174,11 @@ let metal_owner_discarded : Int32 = -2
 
 ///|
 fn build_metal_geometry(
-  plan : @render_common.DrawPlan,
+  commands : Array[@core.DrawCommand],
   metrics : @core.SurfaceMetrics,
   frame : MetalFrameContext,
 ) -> MetalFrameGeometry {
-  let first = build_metal_frame(plan, metrics, frame)
+  let first = build_metal_frame(commands, metrics, frame)
   if !first.atlas_overflowed {
     return first
   }
@@ -187,15 +189,16 @@ fn build_metal_geometry(
   // set, rebuilding again would only repeat the same shortfall,
   // and the surviving `text_dropped_glyphs` is what a host sees.
   // `moui_wgpu_renderer/native_visual_plan.mbt` applies the same policy to the
-  // same op, which is the reason it is a retry rather than an eviction scheme.
+  // same command, which is the reason it is a retry rather than an eviction
+  // scheme.
   clear_metal_glyph_atlas(frame.atlas)
   frame.atlas.resets = frame.atlas.resets + 1
-  build_metal_frame(plan, metrics, frame)
+  build_metal_frame(commands, metrics, frame)
 }
 
 ///|
 fn build_metal_frame(
-  plan : @render_common.DrawPlan,
+  commands : Array[@core.DrawCommand],
   metrics : @core.SurfaceMetrics,
   frame : MetalFrameContext,
 ) -> MetalFrameGeometry {
@@ -212,7 +215,7 @@ fn build_metal_frame(
     build_metal_range(
       geometry,
       frame,
-      plan.ops,
+      commands,
       start_index=0,
       stop_at_layer=false,
       stop_at_filter=false,
@@ -226,21 +229,22 @@ fn build_metal_frame(
 }
 
 ///|
-/// Walk `ops` from `start_index`, drawing into whichever pass is currently open,
-/// and stop at the first unmatched `PopLayer` / `PopFilter` when asked. The
-/// nesting contract is the one `moui_wgpu_renderer` implements: a layer claims a
-/// pass slot, its child stream is built with the parent transform, the layer
-/// clip and opacity 1.0 (so overlapping children group instead of double-blend),
-/// and the layer's own opacity is applied once when the slot is composited.
-/// Returns the index of the terminator, or `ops.length()` for a full walk.
+/// Walk `commands` from `start_index`, drawing into whichever pass is currently
+/// open, and stop at the first unmatched `PopLayer` / `PopFilter` when asked.
+/// The nesting contract is the one `moui_wgpu_renderer` implements: a layer
+/// claims a pass slot, its child stream is built with the parent transform, the
+/// layer clip and opacity 1.0 (so overlapping children group instead of
+/// double-blend), and the layer's own opacity is applied once when the slot is
+/// composited. Returns the index of the terminator, or `commands.length()` for
+/// a full walk.
 ///
-/// The match carries no catch-all, so a new `PlanOp` variant is a compile error
-/// here rather than a frame that quietly stops drawing it — the same guarantee
-/// `moui_wgpu_renderer/native_visual_plan.mbt` relies on.
+/// The match carries no catch-all, so a new `@core.DrawCommand` variant is a
+/// compile error here rather than a frame that quietly stops drawing it — the
+/// same guarantee `moui_wgpu_renderer/native_visual_plan.mbt` relies on.
 fn build_metal_range(
   geometry : MetalFrameGeometry,
   frame : MetalFrameContext,
-  ops : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start_index~ : Int32,
   stop_at_layer~ : Bool,
   stop_at_filter~ : Bool,
@@ -252,11 +256,11 @@ fn build_metal_range(
   let opacity_stack : Array[Double] = []
   let clip_stack : Array[@core.Rect] = []
   let mut index = start_index
-  while index < ops.length() {
-    let op = ops[index]
-    match op {
-      @render_common.Clear(_) => ()
-      @render_common.FillRect(rect, color) =>
+  while index < commands.length() {
+    let command = commands[index]
+    match command {
+      @core.Clear(_) => ()
+      @core.FillRect(rect, color) =>
         append_metal_box(
           geometry,
           rect,
@@ -266,7 +270,7 @@ fn build_metal_range(
           0.0,
           state,
         )
-      @render_common.StrokeRect(rect, color, width) =>
+      @core.StrokeRect(rect, color, width) =>
         append_metal_box(
           geometry,
           rect,
@@ -276,7 +280,7 @@ fn build_metal_range(
           width,
           state,
         )
-      @render_common.FillRoundedRect(rounded, color) =>
+      @core.FillRoundedRect(rounded, color) =>
         append_metal_box(
           geometry,
           rounded.rect,
@@ -286,7 +290,7 @@ fn build_metal_range(
           0.0,
           state,
         )
-      @render_common.StrokeRoundedRect(rounded, color, width) =>
+      @core.StrokeRoundedRect(rounded, color, width) =>
         append_metal_box(
           geometry,
           rounded.rect,
@@ -296,7 +300,7 @@ fn build_metal_range(
           width,
           state,
         )
-      @render_common.FillRoundedRectBrush(rounded, brush) =>
+      @core.FillRoundedRectBrush(rounded, brush) =>
         append_metal_box(
           geometry,
           rounded.rect,
@@ -306,7 +310,7 @@ fn build_metal_range(
           0.0,
           state,
         )
-      @render_common.StrokeRoundedRectBrush(rounded, brush, width) =>
+      @core.StrokeRoundedRectBrush(rounded, brush, width) =>
         append_metal_box(
           geometry,
           rounded.rect,
@@ -316,19 +320,16 @@ fn build_metal_range(
           width,
           state,
         )
-      @render_common.DrawShadow(shadow) =>
-        append_metal_shadow(geometry, shadow, state)
-      @render_common.DrawPath(spec) => append_metal_path(geometry, spec, state)
-      @render_common.DrawText(run) =>
-        append_metal_text_run(geometry, frame, run, state)
-      @render_common.DrawImage(run) =>
-        append_metal_image(geometry, frame, run, state)
-      @render_common.PushClip(rect) => {
+      @core.DrawShadow(shadow) => append_metal_shadow(geometry, shadow, state)
+      @core.DrawPath(spec) => append_metal_path(geometry, spec, state)
+      @core.DrawText(run) => append_metal_text_run(geometry, frame, run, state)
+      @core.DrawImage(run) => append_metal_image(geometry, frame, run, state)
+      @core.PushClip(rect) => {
         clip_stack.push(state.clip)
         state = metal_state_with_clip(state, rect)
       }
-      @render_common.PopClip => state = metal_state_pop_clip(state, clip_stack)
-      @render_common.PushRoundedClip(rounded) =>
+      @core.PopClip => state = metal_state_pop_clip(state, clip_stack)
+      @core.PushRoundedClip(rounded) =>
         // A rounded clip whose arc the composite can still describe becomes an
         // offscreen pass rounded by the same SDF a `LayerMask::RoundedMask`
         // uses, so the corners get clipped instead of squared off. Where the
@@ -339,7 +340,7 @@ fn build_metal_range(
             index = append_metal_layer(
               geometry,
               frame,
-              ops,
+              commands,
               index,
               mask=@core.LayerMask::RoundedMask(exact),
               blend_mode=@core.BlendMode::SourceOver,
@@ -354,13 +355,13 @@ fn build_metal_range(
             state = metal_state_with_clip(state, rounded.rect)
           }
         }
-      @render_common.PopRoundedClip =>
+      @core.PopRoundedClip =>
         if stop_at_rounded_clip {
           return index
         } else {
           state = metal_state_pop_clip(state, clip_stack)
         }
-      @render_common.PushTransform(transform) => {
+      @core.PushTransform(transform) => {
         transform_stack.push(state.transform)
         state = MetalPaintState::{
           transform: multiply_metal_transform(state.transform, transform),
@@ -368,7 +369,7 @@ fn build_metal_range(
           clip: state.clip,
         }
       }
-      @render_common.PopTransform =>
+      @core.PopTransform =>
         match transform_stack.pop() {
           Some(previous) =>
             state = MetalPaintState::{
@@ -383,7 +384,7 @@ fn build_metal_range(
               clip: state.clip,
             }
         }
-      @render_common.PushOpacity(value) => {
+      @core.PushOpacity(value) => {
         opacity_stack.push(state.opacity)
         state = MetalPaintState::{
           transform: state.transform,
@@ -391,7 +392,7 @@ fn build_metal_range(
           clip: state.clip,
         }
       }
-      @render_common.PopOpacity =>
+      @core.PopOpacity =>
         match opacity_stack.pop() {
           Some(previous) =>
             state = MetalPaintState::{
@@ -406,11 +407,11 @@ fn build_metal_range(
               clip: state.clip,
             }
         }
-      @render_common.PushLayer(layer) =>
+      @core.PushLayer(layer) =>
         index = append_metal_layer(
           geometry,
           frame,
-          ops,
+          commands,
           index,
           mask=layer.mask,
           blend_mode=layer.blend_mode,
@@ -418,11 +419,11 @@ fn build_metal_range(
           filter=None,
           state,
         )
-      @render_common.PushFilter(filter) =>
+      @core.PushFilter(filter) =>
         index = append_metal_layer(
           geometry,
           frame,
-          ops,
+          commands,
           index,
           mask=@core.LayerMask::NoMask,
           blend_mode=@core.BlendMode::SourceOver,
@@ -430,9 +431,9 @@ fn build_metal_range(
           filter=Some(filter),
           state,
         )
-      @render_common.PopLayer => if stop_at_layer { return index }
-      @render_common.PopFilter => if stop_at_filter { return index }
-      @render_common.BeginRetainedLayer(spec) =>
+      @core.PopLayer => if stop_at_layer { return index }
+      @core.PopFilter => if stop_at_filter { return index }
+      @core.BeginRetainedLayer(spec) =>
         // A repaint boundary is a group the framework would rather keep across
         // frames, and `metal_retained.mbt` is what keeps it: the same boundary at
         // the same slot and rect in the frame after the one that painted it
@@ -446,7 +447,7 @@ fn build_metal_range(
         index = append_metal_layer(
           geometry,
           frame,
-          ops,
+          commands,
           index,
           mask=@core.LayerMask::RectMask(spec.frame),
           blend_mode=@core.BlendMode::SourceOver,
@@ -455,8 +456,8 @@ fn build_metal_range(
           retained=Some(spec),
           state,
         )
-      @render_common.EndRetainedLayer(_) => if stop_at_layer { return index }
-      @render_common.DrawShaderEffect(spec) => {
+      @core.EndRetainedLayer(_) => if stop_at_layer { return index }
+      @core.DrawShaderEffect(spec) => {
         // The four builtins `builtin_shader_names()` declares are evaluated per
         // fragment; a name outside that list has no formulation here, so it
         // paints the brush the spec carries as its fallback and shows up in

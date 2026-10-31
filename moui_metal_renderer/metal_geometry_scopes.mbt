@@ -79,23 +79,21 @@ fn metal_layer_record(
 /// terminator, and an unbalanced one is refused by the shared planner that built
 /// this stream.
 fn skip_metal_retained_scope(
-  ops : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   index : Int32,
 ) -> Int32 {
   let mut depth = 1
   let mut cursor = index + 1
-  while cursor < ops.length() && depth > 0 {
+  while cursor < commands.length() && depth > 0 {
     let mut opened = false
     let mut closed = false
-    match ops[cursor] {
-      @render_common.BeginRetainedLayer(_)
+    match commands[cursor] {
+      @core.BeginRetainedLayer(_)
       | PushLayer(_)
       | PushFilter(_)
       | PushRoundedClip(_) => opened = true
-      @render_common.EndRetainedLayer(_)
-      | PopLayer
-      | PopFilter
-      | PopRoundedClip => closed = true
+      @core.EndRetainedLayer(_) | PopLayer | PopFilter | PopRoundedClip =>
+        closed = true
       _ => ()
     }
     if opened {
@@ -119,7 +117,7 @@ fn skip_metal_retained_scope(
 fn append_metal_layer(
   geometry : MetalFrameGeometry,
   frame : MetalFrameContext,
-  ops : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   index : Int32,
   mask~ : @core.LayerMask,
   blend_mode~ : @core.BlendMode,
@@ -238,7 +236,7 @@ fn append_metal_layer(
           height,
         ),
       )
-      skip_metal_retained_scope(ops, index)
+      skip_metal_retained_scope(commands, index)
     }
     _ => {
       match retained {
@@ -251,7 +249,7 @@ fn append_metal_layer(
         build_metal_range(
           geometry,
           frame,
-          ops,
+          commands,
           start_index=index + 1,
           stop_at_layer=is_layer,
           stop_at_filter=is_filter,
@@ -267,7 +265,7 @@ fn append_metal_layer(
         let child_next = build_metal_range(
           geometry,
           frame,
-          ops,
+          commands,
           start_index=index + 1,
           stop_at_layer=is_layer,
           stop_at_filter=is_filter,

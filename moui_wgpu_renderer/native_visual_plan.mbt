@@ -2,7 +2,7 @@
 fn build_native_draw_plan(
   cache : NativeTextCache,
   atlas : GlyphAtlas,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   size : @core.Size,
   scale_factor : Double,
 ) -> NativeDrawPlan {
@@ -29,7 +29,7 @@ priv struct NativeDrawPlanRangeResult {
 fn build_native_draw_plan_range(
   cache : NativeTextCache,
   atlas : GlyphAtlas,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start_index~ : Int32,
   stop_at_layer~ : Bool,
   stop_at_filter~ : Bool,

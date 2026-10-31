@@ -457,10 +457,24 @@ fn native_image_source_is_pending(source : String) -> Bool {
 }
 
 ///|
-fn RendererHandle::record_native_image_commands(
+/// The one per-frame observation pass over the command stream: image lifecycle
+/// records plus the scope-balance diagnostic count, folded into a single loop.
+/// The scope count was formerly a second dedicated full-stream scan per frame
+/// (`plan_renderer_command_fallbacks`); folding it here removes that pass.
+/// Residual per-kind depths at the end of the stream count as unclosed scopes.
+fn RendererHandle::record_frame_commands(
   self : RendererHandle,
   commands : Array[@core.DrawCommand],
 ) -> Unit {
+  let balance : NativeScopeBalance = {
+    unsupported: 0,
+    clip_depth: 0,
+    rounded_clip_depth: 0,
+    transform_depth: 0,
+    opacity_depth: 0,
+    layer_depth: 0,
+    filter_depth: 0,
+  }
   for command in commands {
     match command {
       DrawImage(run) =>
@@ -487,7 +501,27 @@ fn RendererHandle::record_native_image_commands(
         }
       _ => ()
     }
+    self.count_frame_scope_imbalance(command, balance)
   }
+  if balance.clip_depth > 0 {
+    balance.unsupported += 1
+  }
+  if balance.rounded_clip_depth > 0 {
+    balance.unsupported += 1
+  }
+  if balance.transform_depth > 0 {
+    balance.unsupported += 1
+  }
+  if balance.opacity_depth > 0 {
+    balance.unsupported += 1
+  }
+  if balance.layer_depth > 0 {
+    balance.unsupported += 1
+  }
+  if balance.filter_depth > 0 {
+    balance.unsupported += 1
+  }
+  self.unsupported_command_count = balance.unsupported
 }
 
 ///|

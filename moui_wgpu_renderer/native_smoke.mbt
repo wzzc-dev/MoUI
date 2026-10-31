@@ -284,12 +284,11 @@ fn RendererHandle::render_offscreen_proof_frame(
   commands : Array[@core.DrawCommand],
 ) -> NativeRendererSmokeFrame {
   self.last_batches = @render.collect_rect_batches(commands)
-  self.record_native_image_commands(commands)
-  let lowered = @render_common.lower_draw_commands(commands)
+  self.record_frame_commands(commands)
   let plan = build_native_draw_plan(
     self.font_cache,
     self.glyph_atlas,
-    lowered.ops,
+    commands,
     self.size,
     self.scale_factor,
   )
@@ -298,7 +297,6 @@ fn RendererHandle::render_offscreen_proof_frame(
   self.image_vertices = plan.image_vertices
   self.draw_items = plan.items
   self.text_atlas_dirty = plan.atlas_dirty
-  self.unsupported_command_count = count_native_unsupported_commands(commands)
   guard (
       self.instance,
       self.device,

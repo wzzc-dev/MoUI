@@ -348,7 +348,7 @@ fn SunRasterRenderer::cached_layer_admission_skip_reason(
 
 ///|
 fn sun_find_cached_layer_end(
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start : Int32,
   key : String,
 ) -> Int32? {
@@ -375,7 +375,7 @@ fn sun_find_cached_layer_end(
 ///|
 fn SunRasterRenderer::render_cached_command_range(
   self : SunRasterRenderer,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   start : Int32,
   end : Int32,
   canvas_scopes : Array[@render_common.PlanScopeKind],
@@ -433,7 +433,7 @@ fn SunRasterRenderer::render_cached_command_range(
 fn SunRasterRenderer::render_or_draw_cached_layer(
   self : SunRasterRenderer,
   spec : @core.RetainedLayerSpec,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   child_start : Int32,
   child_end : Int32,
   opacity : Double,
@@ -468,7 +468,7 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
 fn SunRasterRenderer::update_cached_layer(
   self : SunRasterRenderer,
   spec : @core.RetainedLayerSpec,
-  commands : Array[@render_common.PlanOp],
+  commands : Array[@core.DrawCommand],
   child_start : Int32,
   child_end : Int32,
   opacity : Double,

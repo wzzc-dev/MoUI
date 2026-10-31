@@ -70,6 +70,7 @@ fn MetalRenderer::to_renderer_session(
     image_source=self.image_source,
     image_decoder=Some(metal_image_decoder()),
     image_records=() => self.images.lifecycle.snapshot(),
+    image_records_generation=Some(() => self.images.lifecycle.generation()),
     apply_image_load_completion=completion => {
       apply_metal_image_completion(
         self.images,
