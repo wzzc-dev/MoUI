@@ -1,4 +1,62 @@
 ///|
+/// The scope kinds tracked for scope-balance validation. This is the shared
+/// vocabulary renderers push/pop on their own execution state stacks while
+/// interpreting a `@core.DrawCommand` stream directly, and the same kinds
+/// `plan_renderer_command_fallbacks` validates on the stream itself.
+pub(all) enum PlanScopeKind {
+  Clip
+  RoundedClip
+  Transform
+  Opacity
+  Layer
+  Filter
+} derive(Eq)
+
+///|
+pub extend PlanScopeKind with Eq::{not_equal, equal}
+
+///|
+pub fn plan_scope_name(kind : PlanScopeKind) -> String {
+  match kind {
+    Clip => "clip"
+    RoundedClip => "rounded-clip"
+    Transform => "transform"
+    Opacity => "opacity"
+    Layer => "layer"
+    Filter => "filter"
+  }
+}
+
+///|
+pub fn plan_scope_push_command(kind : PlanScopeKind) -> String {
+  match kind {
+    Clip => "PushClip"
+    RoundedClip => "PushRoundedClip"
+    Transform => "PushTransform"
+    Opacity => "PushOpacity"
+    Layer => "PushLayer"
+    Filter => "PushFilter"
+  }
+}
+
+///|
+pub fn plan_scope_pop_command(kind : PlanScopeKind) -> String {
+  match kind {
+    Clip => "PopClip"
+    RoundedClip => "PopRoundedClip"
+    Transform => "PopTransform"
+    Opacity => "PopOpacity"
+    Layer => "PopLayer"
+    Filter => "PopFilter"
+  }
+}
+
+///|
+/// The single standalone scope-balance validation of a `@core.DrawCommand`
+/// stream, and the producer of the capability-report `RendererCommandPlan`.
+/// Renderers execute `@core.DrawCommand` directly (each maintaining its own
+/// execution state stacks); this check stays the one shared structural
+/// validation with per-command fallback records.
 pub fn plan_renderer_command_fallbacks(
   commands : Array[@core.DrawCommand],
 ) -> @render.RendererCommandPlan {
