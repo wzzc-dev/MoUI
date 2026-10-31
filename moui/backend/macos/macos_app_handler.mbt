@@ -17,9 +17,9 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
     self.platform_attributes
   }
   let base_attributes = @window_core.WindowAttributes::default()
-    .with_title(self.title)
+    .with_title(self.core.title)
     .with_surface_size(
-      @window_input.core_size_to_window_surface_size(self.runtime.size()),
+      @window_input.core_size_to_window_surface_size(self.core.runtime.size()),
     )
     .with_visible(!self.show_after_first_present)
     .with_platform_attributes(platform)
@@ -42,33 +42,36 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
-      let window_id = self.lifecycle
+      let window_id = self.core.lifecycle
         .window_registry()
-        .open(title=self.title, metrics~, primary=true)
+        .open(title=self.core.title, metrics~, primary=true)
       ignore(
-        self.lifecycle.bind_platform_window(platform_id=window.id(), window_id~),
+        self.core.lifecycle.bind_platform_window(
+          platform_id=window.id(),
+          window_id~,
+        ),
       )
       self.register_primary_runtime_slot(window_id)
-      self.driver.set_redraw_scheduler(() => {
+      self.core.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match (self.surface_binding.create_renderer)(window, metrics) {
+      match (self.core.surface_binding.create_renderer)(window, metrics) {
         Some(resolution) => {
           let renderer = resolution
           ignore(
             @window_host.attach_window_surface(
-              self.lifecycle,
-              self.frames,
-              self.images,
+              self.core.lifecycle,
+              self.core.frames,
+              self.core.images,
               window_id,
               renderer,
               self.macos_surface_actions(window, renderer),
             ),
           )
-          self.driver.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(Resized(metrics)))
+          self.core.driver.set_text_system(renderer.text_system())
+          ignore(self.core.driver.dispatch(Resized(metrics)))
           ignore(
-            self.platform_slots.insert(
+            self.core.platform_slots.insert(
               @window_lifecycle.WindowSlot::new(
                 host_id=window_id,
                 window~,
@@ -105,7 +108,9 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
   event_loop,
 ) {
   match
-    @window_host.platform_view_plugins_next_deadline(self.platform_view_plugins) {
+    @window_host.platform_view_plugins_next_deadline(
+      self.core.platform_view_plugins,
+    ) {
     Some(deadline) =>
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
@@ -122,10 +127,10 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn abo
 fn MacosNativeHostBackend::sync_accessibility_environment(
   self : MacosNativeHostBackend,
 ) -> Unit {
-  for slot in self.lifecycle.runtime_slots().open_slots() {
+  for slot in self.core.lifecycle.runtime_slots().open_slots() {
     let current = slot.driver.environment()
     let next = macos_environment_with_accessibility_settings(
-      self.services.bridge().environment_with_system_theme(current),
+      self.core.services.bridge().environment_with_system_theme(current),
     )
     if next != current {
       slot.driver.set_environment(next)
@@ -144,11 +149,11 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.lifecycle.lookup_window(platform_window_id) {
+  let window_id = match self.core.lifecycle.lookup_window(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
-  let surface_size = match self.platform_slots.lookup_host(window_id) {
+  let surface_size = match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => Some(slot.window.surface_size())
     None => None
   }
@@ -161,7 +166,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
     CloseRequested => {
       self.dispatch_host_event(window_id, CloseRequested)
       self.dispose_window(window_id)
-      if self.lifecycle.runtime_slots().is_empty() {
+      if self.core.lifecycle.runtime_slots().is_empty() {
         event_loop.exit()
       }
       return ()
@@ -171,9 +176,9 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
         Resized(metrics) =>
           ignore(
             @window_host.sync_observed_resize(
-              self.lifecycle,
-              self.input,
-              self.services,
+              self.core.lifecycle,
+              self.core.input,
+              self.core.services,
               window_id,
               metrics,
             ),
@@ -192,28 +197,28 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
   }
   match event {
     PointerMoved(_, position, _, _) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
     DragEntered(_, position) | DragMoved(position) | DragDropped(_, position) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     DragLeft(Some(position)) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -239,9 +244,9 @@ fn MacosNativeHostBackend::dispatch_pointer_or_context_menu(
     // driver falls back to the program's global context-menu commands.
     self.dispatch_window_event(window_id, event)
     if @window_input.window_event_is_context_menu_trigger(event) {
-      match self.lifecycle.runtime_slots().lookup(window_id) {
+      match self.core.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) =>
-          ignore(slot.driver.show_context_menu(self.services.bridge()))
+          ignore(slot.driver.show_context_menu(self.core.services.bridge()))
         None => ()
       }
       self.sync_text_input_session()
@@ -257,13 +262,13 @@ fn MacosNativeHostBackend::redraw_window(
   window_id : @host.WindowId,
 ) -> Bool {
   self.sync_accessibility_window(window_id)
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(platform_slot) =>
       @window_host.run_window_redraw(
-        self.lifecycle,
-        self.frames,
-        self.images,
-        self.input,
+        self.core.lifecycle,
+        self.core.frames,
+        self.core.images,
+        self.core.input,
         window_id,
         render=(renderer, _runtime_slot, submission) => {
           let frame = submission.frame()
@@ -276,7 +281,7 @@ fn MacosNativeHostBackend::redraw_window(
             match native_handle {
               Some(handle) =>
                 @runtime.sync_platform_view_plugins(
-                  self.platform_view_plugins,
+                  self.core.platform_view_plugins,
                   handle,
                   frame,
                 )
@@ -288,7 +293,7 @@ fn MacosNativeHostBackend::redraw_window(
             match native_handle {
               Some(handle) =>
                 @runtime.sync_platform_view_plugins(
-                  self.platform_view_plugins,
+                  self.core.platform_view_plugins,
                   handle,
                   frame,
                 )
@@ -324,9 +329,9 @@ fn MacosNativeHostBackend::finish_presented_window(
   } else if @runtime.finish_first_frame_smoke_auto_exit(
       platform_name="macOS",
       title=runtime_slot.record.title,
-      flag=self.first_frame_smoke_auto_exit,
+      flag=self.core.first_frame_smoke_auto_exit,
       finish=fn() {
-        self.first_frame_smoke_auto_exit = false
+        self.core.first_frame_smoke_auto_exit = false
         self.dispose_window(window_id)
       },
     ) {
@@ -351,7 +356,7 @@ fn MacosNativeHostBackend::show_primary_window_after_first_present(
   if !self.show_after_first_present {
     return ()
   }
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => {
       slot.window.set_visible(true)
       self.show_after_first_present = false
@@ -456,8 +461,8 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
   let _ = runtime_slot
   match
     (
-      self.platform_slots.lookup_host(window_id),
-      self.frames.renderer(window_id),
+      self.core.platform_slots.lookup_host(window_id),
+      self.core.frames.renderer(window_id),
     ) {
     (None, _) | (_, None) => {
       self.performance_smoke_active = false
@@ -681,7 +686,7 @@ fn MacosNativeHostBackend::dispatch_platform_view_event_from_plugin(
 ) -> Unit {
   match self.platform_view_host_id(window_ptr) {
     Some(window_id) => {
-      match self.lifecycle.runtime_slots().lookup(window_id) {
+      match self.core.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) => slot.driver.dispatch_platform_view(id, event)
         None => ()
       }
@@ -699,7 +704,7 @@ fn MacosNativeHostBackend::platform_view_host_id(
   self : MacosNativeHostBackend,
   raw_content_view_handle : UInt64,
 ) -> @host.WindowId? {
-  for slot in self.platform_slots.slots {
+  for slot in self.core.platform_slots.slots {
     match macos_native_view_handle(slot.window) {
       Some(handle) =>
         if handle == raw_content_view_handle {

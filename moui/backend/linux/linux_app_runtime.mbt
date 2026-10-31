@@ -141,30 +141,22 @@ fn create_linux_app(
     ),
   )
   let app = LinuxNativeHostBackend::{
-    title,
-    runtime,
-    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
-    lifecycle: @window_lifecycle.WindowLifecycle::new(
-      requests=window_requests,
+    core: @window_host.DesktopNativeHostBackendCore::new(
+      title~,
+      runtime~,
+      window_requests~,
+      surface_binding=binding,
+      services=@window_services.WindowServiceState::new(bridge=services),
       scene_resolver=options.scene_resolver,
-    ),
-    frames: @window_frame.WindowFrameStates::new(),
-    images: @window_image.WindowImageTaskStates::new(),
-    input: @window_input.WindowInputState::new(
       event_sources=options.event_sources,
+      platform_view_plugins=options.platform_view_plugins,
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
-    surface_binding: binding,
-    services: @window_services.WindowServiceState::new(bridge=services),
     atspi_state: LinuxAtspiHostState::new(),
-    platform_slots: @window_lifecycle.WindowSlotMap::new(),
-    platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
-    last_pointer: @core.Point::new(x=0.0, y=0.0),
-    modifiers: @core.KeyModifiers::none(),
-    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
-  app.driver.set_redraw_scheduler(() => app.request_redraw())
+  app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @runtime.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,

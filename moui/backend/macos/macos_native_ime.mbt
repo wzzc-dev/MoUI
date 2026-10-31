@@ -34,9 +34,9 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
   }
   match
     (
-      self.platform_slots.lookup_host(window_id),
-      self.lifecycle.runtime_slots().lookup(window_id),
-      self.frames.renderer(window_id),
+      self.core.platform_slots.lookup_host(window_id),
+      self.core.lifecycle.runtime_slots().lookup(window_id),
+      self.core.frames.renderer(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot), Some(renderer)) => {
       if renderer.present_count() == 0 {
@@ -332,7 +332,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
     scale_factor=platform_slot.window.scale_factor(),
   )
   ignore(runtime_slot.driver.dispatch(Resized(metrics)))
-  match self.frames.renderer(window_id) {
+  match self.core.frames.renderer(window_id) {
     Some(renderer) => renderer.resize(@window_host.to_render_metrics(metrics))
     None => ()
   }
@@ -461,7 +461,7 @@ fn MacosNativeHostBackend::native_ime_request_matches_window(
   platform_slot : @window_lifecycle.WindowSlot[@window_macos.Window, Unit],
   expected_text~ : String,
 ) -> Bool {
-  match self.input.last_diagnostics() {
+  match self.core.input.last_diagnostics() {
     Some(diagnostics) => {
       let position : @dpi.Position = @dpi.LogicalPosition::LogicalPosition(
         diagnostics.candidate_anchor.origin.x,
@@ -536,7 +536,7 @@ fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
     Some(text) => text.text().length()
     None => -1
   }
-  match self.input.last_diagnostics() {
+  match self.core.input.last_diagnostics() {
     Some(diagnostics) =>
       "focused=\{input.focused} text-length=\{input.text.length()} caret=\{input.caret} caret-height=\{input.caret_rect.size.height} ime-focused=\{diagnostics.focused} ime-surrounding=\{diagnostics.has_surrounding_text} ime-cursor-boundary=\{diagnostics.cursor_is_grapheme_boundary} ime-anchor-boundary=\{diagnostics.anchor_is_grapheme_boundary} window-ime=\{window_has_ime} window-surrounding-length=\{window_surrounding}"
     None =>
@@ -552,8 +552,8 @@ fn MacosNativeHostBackend::present_native_ime_smoke_frame(
 ) -> Bool {
   match
     (
-      self.platform_slots.lookup_host(window_id),
-      self.frames.renderer(window_id),
+      self.core.platform_slots.lookup_host(window_id),
+      self.core.frames.renderer(window_id),
     ) {
     (Some(platform_slot), Some(renderer)) => {
       let before = renderer.present_count()

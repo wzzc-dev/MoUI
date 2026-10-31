@@ -532,8 +532,8 @@ fn WindowsNativeHostBackend::sync_accessibility_window(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  guard self.platform_slots.lookup_host(window_id) is Some(platform_slot) &&
-    self.lifecycle.runtime_slots().lookup(window_id) is Some(runtime_slot) else {
+  guard self.core.platform_slots.lookup_host(window_id) is Some(platform_slot) &&
+    self.core.lifecycle.runtime_slots().lookup(window_id) is Some(runtime_slot) else {
     return
   }
   let hwnd = platform_slot.window.native_window_handle()
@@ -566,7 +566,7 @@ fn WindowsNativeHostBackend::sync_accessibility_window(
 fn WindowsNativeHostBackend::sync_accessibility_windows(
   self : WindowsNativeHostBackend,
 ) -> Unit {
-  for slot in self.lifecycle.runtime_slots().open_slots() {
+  for slot in self.core.lifecycle.runtime_slots().open_slots() {
     self.sync_accessibility_window(slot.id)
   }
 }
@@ -576,7 +576,7 @@ fn WindowsNativeHostBackend::dispose_accessibility_window(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) =>
       windows_accessibility_dispose_native(slot.window.native_window_handle())
     None => ()

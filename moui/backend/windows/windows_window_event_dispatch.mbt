@@ -11,15 +11,15 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.lifecycle.lookup_window(platform_window_id) {
+  let window_id = match self.core.lifecycle.lookup_window(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
-  let surface_size = match self.platform_slots.lookup_host(window_id) {
+  let surface_size = match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => Some(slot.window.surface_size())
     None => None
   }
-  let scale_factor = match self.platform_slots.lookup_host(window_id) {
+  let scale_factor = match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => slot.window.scale_factor()
     None => 1.0
   }
@@ -32,7 +32,7 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
     CloseRequested => {
       self.dispatch_host_event(window_id, CloseRequested)
       self.dispose_window(window_id)
-      if self.lifecycle.runtime_slots_empty() {
+      if self.core.lifecycle.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
@@ -42,9 +42,9 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
         Resized(metrics) => {
           ignore(
             @window_host.sync_observed_resize(
-              self.lifecycle,
-              self.input,
-              self.services,
+              self.core.lifecycle,
+              self.core.input,
+              self.core.services,
               window_id,
               metrics,
             ),
@@ -70,28 +70,28 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_eve
   }
   match event {
     PointerMoved(_, position, _, _) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor~,
       )
       self.dispatch_window_event(window_id, event)
     }
     PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor~,
       )
       self.dispatch_pointer_or_context_menu(window_id, event)
     }
     DragEntered(_, position) | DragMoved(position) | DragDropped(_, position) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor~,
       )
       self.dispatch_window_event(window_id, event)
     }
     DragLeft(Some(position)) => {
-      self.last_pointer = @window_input.normalize_pointer_position(
+      self.core.last_pointer = @window_input.normalize_pointer_position(
         position,
         scale_factor~,
       )

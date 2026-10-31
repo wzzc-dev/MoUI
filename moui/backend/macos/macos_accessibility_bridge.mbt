@@ -393,8 +393,8 @@ fn MacosNativeHostBackend::sync_accessibility_window(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  guard self.platform_slots.lookup_host(window_id) is Some(platform_slot) &&
-    self.lifecycle.runtime_slots().lookup(window_id) is Some(runtime_slot) &&
+  guard self.core.platform_slots.lookup_host(window_id) is Some(platform_slot) &&
+    self.core.lifecycle.runtime_slots().lookup(window_id) is Some(runtime_slot) &&
     macos_native_view_handle(platform_slot.window) is Some(raw_view) else {
     return
   }
@@ -427,7 +427,7 @@ fn MacosNativeHostBackend::sync_accessibility_window(
 fn MacosNativeHostBackend::sync_accessibility_windows(
   self : MacosNativeHostBackend,
 ) -> Unit {
-  for slot in self.lifecycle.runtime_slots().open_slots() {
+  for slot in self.core.lifecycle.runtime_slots().open_slots() {
     self.sync_accessibility_window(slot.id)
   }
 }
@@ -437,7 +437,7 @@ fn MacosNativeHostBackend::dispose_accessibility_window(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(platform_slot) =>
       match macos_native_view_handle(platform_slot.window) {
         Some(raw_view) => macos_accessibility_dispose_native(raw_view)

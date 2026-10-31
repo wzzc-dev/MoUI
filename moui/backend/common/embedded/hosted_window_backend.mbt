@@ -1,12 +1,23 @@
 ///|
 /// Shared window-hosted embedded backend skeleton.
 ///
-/// The mobile platform packages (android / ios / harmonyos) declare their
-/// `{P}EmbeddedRuntimeBackend` structs, `ApplicationHandler` trait impls and
-/// host-sim pumps as thin shells around this type. Native window creation,
-/// raw surface handle access and the trait impl declarations stay in the
-/// platform package; session lifecycle, event routing, redraw pumping and
-/// IME sync live here exactly once.
+/// Package role: this subpackage IS the mobile window-host runtime. It owns
+/// the embedder-host channel and transport (`host_bridge*`, `host_transport`),
+/// the hosted backend core (`EmbeddedRuntimeBackendCore`,
+/// `HostedRuntimeSession`, `HostSurfaceBinding`), the shared IME / semantics /
+/// platform-view bridges, and the shared window-hosted mobile capability
+/// defaults (`mobile_capabilities.mbt`). The android / ios / harmonyos
+/// packages declare their `{P}EmbeddedRuntimeBackend` structs,
+/// `ApplicationHandler` trait impls and host-sim pumps as thin shells around
+/// this type. Native window creation, raw surface handle access and the
+/// trait impl declarations stay in the platform package; session lifecycle,
+/// event routing, redraw pumping and IME sync live here exactly once.
+///
+/// Naming: the `embedded` directory name is kept deliberately. Renaming to a
+/// host-oriented subpackage (e.g. `embedded/host`) would touch four platform
+/// package manifests, `checks/backend-common-ownership.json`
+/// (`requiredImports` pins `moui/backend/common/embedded`), and platform
+/// guidance docs, for no behavioral gain — the role is declared here instead.
 
 ///|
 /// Platform window projection used by the shared backend. Windows are

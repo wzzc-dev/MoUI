@@ -178,41 +178,35 @@ pub fn host_surface_binding_from_android(
 }
 
 ///|
+/// Capability values are the shared window-hosted mobile defaults; Android
+/// declares no deviation beyond its `embedded_surface` matrix field name.
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities {
-  // Platform callbacks supply window-hosted services. Matching-device evidence
-  // remains partial (see readiness.status).
-  @host.HostServiceCapabilities::new(clipboard=true)
+  @embedded_runtime.mobile_service_capabilities()
 }
 
 ///|
 pub fn android_input_capabilities() -> @host.HostInputCapabilities {
-  @host.HostInputCapabilities::new(
-    pointer=true,
-    scroll=true,
-    keyboard=true,
-    focus=true,
-    text_input=true,
-    ime=true,
-    clipboard=true,
-    drag_drop=false,
-  )
+  @embedded_runtime.mobile_input_capabilities()
 }
 
 ///|
 pub fn android_capability_matrix() -> AndroidBackendCapabilities {
+  let defaults = @embedded_runtime.mobile_embedded_capabilities()
   {
-    embedded_surface: true,
-    external_event_loop: true,
-    surface_binding: true,
-    pointer: true,
-    scroll: true,
-    keyboard: true,
-    text_input: true,
-    ime: true,
-    clipboard: true,
-    system_theme: false,
-    accessibility: true,
-    async_image: true,
+    // Deviation declaration: Android publishes the shared `embedded_view`
+    // value under the `embedded_surface` field name.
+    embedded_surface: defaults.embedded_view,
+    external_event_loop: defaults.external_event_loop,
+    surface_binding: defaults.surface_binding,
+    pointer: defaults.pointer,
+    scroll: defaults.scroll,
+    keyboard: defaults.keyboard,
+    text_input: defaults.text_input,
+    ime: defaults.ime,
+    clipboard: defaults.clipboard,
+    system_theme: defaults.system_theme,
+    accessibility: defaults.accessibility,
+    async_image: defaults.async_image,
   }
 }
 

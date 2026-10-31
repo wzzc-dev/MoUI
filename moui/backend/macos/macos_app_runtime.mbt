@@ -212,7 +212,7 @@ async fn launch_macos_app_async_pump(
     // requests are serviced without waiting out the idle sleep. Idle frames
     // sleep the full interval so sibling async tasks (remote images, IO)
     // keep their turn.
-    if app.driver.runtime.needs_redraw() || macos_timer_sub_frame_active() {
+    if app.core.driver.runtime.needs_redraw() || macos_timer_sub_frame_active() {
       @async.sleep(1)
     } else {
       @async.sleep(frame_interval_ms)
@@ -237,27 +237,19 @@ fn create_macos_app(
     ),
   )
   let app = MacosNativeHostBackend::{
-    title,
-    runtime,
-    driver: @runtime.HostRuntimeDriver::new(
+    core: @window_host.DesktopNativeHostBackendCore::new(
+      title~,
       runtime~,
-      schedule_redraw=() => (),
-      frame_clock=options.frame_clock,
-    ),
-    lifecycle: @window_lifecycle.WindowLifecycle::new(
-      requests=window_requests,
+      window_requests~,
+      surface_binding=binding,
+      services=@window_services.WindowServiceState::new(bridge=services),
       scene_resolver=options.scene_resolver,
-    ),
-    frames: @window_frame.WindowFrameStates::new(),
-    images: @window_image.WindowImageTaskStates::new(),
-    input: @window_input.WindowInputState::new(
       event_sources=options.event_sources,
+      frame_clock=options.frame_clock,
+      platform_view_plugins=options.platform_view_plugins,
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
-    surface_binding: binding,
-    services: @window_services.WindowServiceState::new(bridge=services),
     accessibility_state: MacosAccessibilityState::new(),
-    platform_slots: @window_lifecycle.WindowSlotMap::new(),
-    platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     show_after_first_present: options.show_after_first_present,
     platform_attributes: options.platform_attributes,
@@ -278,9 +270,6 @@ fn create_macos_app(
     window_drag: options.window_drag,
     window_drag_applied: None,
     window_drag_window: None,
-    last_pointer: @core.Point::new(x=0.0, y=0.0),
-    modifiers: @core.KeyModifiers::none(),
-    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
     native_ime_runtime_smoke: smoke_options.native_ime_runtime_smoke,
     native_ime_runtime_smoke_done: false,
     native_ime_runtime_smoke_phase: 0,
@@ -318,7 +307,7 @@ fn create_macos_app(
     promotion_recovery_count_after: 0,
     promotion_fallback_count: 0,
   }
-  app.driver.set_redraw_scheduler(() => app.request_redraw())
+  app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @runtime.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,
@@ -340,7 +329,7 @@ fn run_app_until_first_present(
     }
     remaining = remaining - 1
   }
-  if app.first_frame_smoke_auto_exit {
+  if app.core.first_frame_smoke_auto_exit {
     println(
       "macOS renderer first-frame smoke did not present before pump limit",
     )
@@ -370,7 +359,7 @@ async fn run_async_pump_until_first_present(
     remaining = remaining - 1
     @async.sleep(frame_interval_ms)
   }
-  if app.first_frame_smoke_auto_exit {
+  if app.core.first_frame_smoke_auto_exit {
     println(
       "macOS renderer first-frame smoke did not present before pump limit",
     )

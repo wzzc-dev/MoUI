@@ -12,8 +12,6 @@ import {
   "wzzc-dev/moui/backend/accesskit" @accesskit_bridge,
   "wzzc-dev/moui/backend/common" @window_host,
   "wzzc-dev/moui/backend/common/lifecycle" @window_lifecycle,
-  "wzzc-dev/moui/backend/common/frame" @window_frame,
-  "wzzc-dev/moui/backend/common/image" @window_image,
   "wzzc-dev/moui/backend/common/input" @window_input,
   "wzzc-dev/moui/backend/common/services" @window_services,
   "wzzc-dev/moui/backend/common/image/native" @host_image_native,

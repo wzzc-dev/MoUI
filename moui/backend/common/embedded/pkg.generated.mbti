@@ -19,7 +19,13 @@ pub fn embedded_host_response_request_id(EmbeddedHostResponse) -> Int32?
 
 pub fn embedded_text_input_response(Int32, String, Int32, Int32) -> EmbeddedHostResponse?
 
+pub fn mobile_embedded_capabilities() -> MobileEmbeddedCapabilities
+
 pub fn mobile_host_surface_binding(Array[@render.RendererProvider], presenter_description~ : String, cpu_present~ : (UInt64, @render.PixelFrame) -> Bool, native_surface~ : (UInt64) -> @render.NativeSurface?, sync? : (UInt64, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> HostSurfaceBinding
+
+pub fn mobile_input_capabilities() -> @backend.HostInputCapabilities
+
+pub fn mobile_service_capabilities() -> @backend.HostServiceCapabilities
 
 // Errors
 
@@ -295,6 +301,21 @@ pub fn HostedWindowBackend::surface_generation(Self) -> Int32
 pub fn HostedWindowBackend::suspended(Self) -> Unit
 pub fn HostedWindowBackend::title(Self) -> String
 pub fn[T] HostedWindowBackend::with_session(Self, (HostedRuntimeSession) -> T, default~ : T) -> T
+
+pub struct MobileEmbeddedCapabilities {
+  embedded_view : Bool
+  external_event_loop : Bool
+  surface_binding : Bool
+  pointer : Bool
+  scroll : Bool
+  keyboard : Bool
+  text_input : Bool
+  ime : Bool
+  clipboard : Bool
+  system_theme : Bool
+  accessibility : Bool
+  async_image : Bool
+}
 
 // Type aliases
 

@@ -98,33 +98,20 @@ pub struct WindowsHostSmokeOptions {
 }
 
 ///|
-priv struct WindowsSurfaceBinding {
-  create_renderer : (@win.Window, @core.SurfaceMetrics) -> @render.RendererSession?
-  sync_surface : (@win.Window, @core.SurfaceMetrics) -> Unit
-}
+/// The Windows surface binding is the shared desktop binding specialized to
+/// the Win32 window type; see `@window_host.DesktopSurfaceBinding`.
+type WindowsSurfaceBinding = @window_host.DesktopSurfaceBinding[@win.Window]
 
 ///|
 /// Native host backend: owns the Windows host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
 /// Shared lifecycle, frame, image, input, and service state is held through
-/// its matching backend/common owner.
+/// `@window_host.DesktopNativeHostBackendCore`; only the Windows UIA
+/// accessibility state and the frame-presented hook stay platform-local.
 struct WindowsNativeHostBackend {
-  title : String
-  runtime : @runtime.AppRuntime
-  driver : @runtime.HostRuntimeDriver
-  lifecycle : @window_lifecycle.WindowLifecycle
-  frames : @window_frame.WindowFrameStates
-  images : @window_image.WindowImageTaskStates
-  input : @window_input.WindowInputState
-  surface_binding : WindowsSurfaceBinding
-  services : @window_services.WindowServiceState
+  core : @window_host.DesktopNativeHostBackendCore[@win.Window, Unit]
   accessibility_state : WindowsAccessibilityState
-  platform_slots : @window_lifecycle.WindowSlotMap[@win.Window, Unit]
-  platform_view_plugins : Array[@host.PlatformViewPlugin]
   on_frame_presented : (() -> Unit)?
-  mut last_pointer : @core.Point
-  mut modifiers : @core.KeyModifiers
-  mut first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -166,17 +153,6 @@ pub fn WindowsHostSmokeOptions::new(
   first_frame_smoke_auto_exit~ : Bool = false,
 ) -> WindowsHostSmokeOptions {
   { first_frame_smoke_auto_exit, }
-}
-
-///|
-fn WindowsSurfaceBinding::new(
-  create_renderer~ : (@win.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface~ : (@win.Window, @core.SurfaceMetrics) -> Unit = (
-    _window,
-    _metrics,
-  ) => (),
-) -> WindowsSurfaceBinding {
-  { create_renderer, sync_surface, }
 }
 
 ///|
@@ -332,33 +308,22 @@ fn create_windows_app(
     services.environment_with_system_theme(runtime.environment()),
   )
   let app = WindowsNativeHostBackend::{
-    title,
-    runtime,
-    driver: @runtime.HostRuntimeDriver::new(
+    core: @window_host.DesktopNativeHostBackendCore::new(
+      title~,
       runtime~,
-      schedule_redraw=() => (),
-      frame_clock=options.frame_clock,
-    ),
-    lifecycle: @window_lifecycle.WindowLifecycle::new(
-      requests=window_requests,
+      window_requests~,
+      surface_binding=binding,
+      services=@window_services.WindowServiceState::new(bridge=services),
       scene_resolver=options.scene_resolver,
-    ),
-    frames: @window_frame.WindowFrameStates::new(),
-    images: @window_image.WindowImageTaskStates::new(),
-    input: @window_input.WindowInputState::new(
       event_sources=options.event_sources,
+      frame_clock=options.frame_clock,
+      platform_view_plugins=options.platform_view_plugins,
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
-    surface_binding: binding,
-    services: @window_services.WindowServiceState::new(bridge=services),
     accessibility_state: WindowsAccessibilityState::new(),
-    platform_slots: @window_lifecycle.WindowSlotMap::new(),
-    platform_view_plugins: options.platform_view_plugins,
     on_frame_presented: options.on_frame_presented,
-    last_pointer: @core.Point::new(x=0.0, y=0.0),
-    modifiers: @core.KeyModifiers::none(),
-    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
-  app.driver.set_redraw_scheduler(() => app.request_redraw())
+  app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @runtime.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,
@@ -543,10 +508,10 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
   event_loop,
 ) {
   let initial_size = @window_input.core_size_to_window_surface_size(
-    self.runtime.size(),
+    self.core.runtime.size(),
   )
   let attributes = @window_core.WindowAttributes::default()
-    .with_title(self.title)
+    .with_title(self.core.title)
     .with_surface_size(initial_size)
   let window : @win.Window? = Some(event_loop.try_create_window(attributes)) catch {
     err => {
@@ -561,33 +526,36 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
-      let window_id = self.lifecycle
+      let window_id = self.core.lifecycle
         .window_registry()
-        .open(title=self.title, metrics~, primary=true)
+        .open(title=self.core.title, metrics~, primary=true)
       ignore(
-        self.lifecycle.bind_platform_window(platform_id=window.id(), window_id~),
+        self.core.lifecycle.bind_platform_window(
+          platform_id=window.id(),
+          window_id~,
+        ),
       )
       self.register_primary_runtime_slot(window_id)
-      self.driver.set_redraw_scheduler(() => {
+      self.core.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      match (self.surface_binding.create_renderer)(window, metrics) {
+      match (self.core.surface_binding.create_renderer)(window, metrics) {
         Some(resolution) => {
           let renderer = resolution
           ignore(
             @window_host.attach_window_surface(
-              self.lifecycle,
-              self.frames,
-              self.images,
+              self.core.lifecycle,
+              self.core.frames,
+              self.core.images,
               window_id,
               renderer,
               self.windows_surface_actions(window, renderer),
             ),
           )
-          self.driver.set_text_system(renderer.text_system())
-          ignore(self.driver.dispatch(Resized(metrics)))
+          self.core.driver.set_text_system(renderer.text_system())
+          ignore(self.core.driver.dispatch(Resized(metrics)))
           ignore(
-            self.platform_slots.insert(
+            self.core.platform_slots.insert(
               @window_lifecycle.WindowSlot::new(
                 host_id=window_id,
                 window~,
@@ -616,7 +584,9 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn about_to_w
   event_loop,
 ) {
   match
-    @window_host.platform_view_plugins_next_deadline(self.platform_view_plugins) {
+    @window_host.platform_view_plugins_next_deadline(
+      self.core.platform_view_plugins,
+    ) {
     Some(deadline) =>
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
@@ -638,7 +608,7 @@ fn WindowsNativeHostBackend::sync_accessibility_environment(
     Standard
   }
   let reduced_motion = windows_accessibility_reduce_motion() != 0
-  for slot in self.lifecycle.runtime_slots().open_slots() {
+  for slot in self.core.lifecycle.runtime_slots().open_slots() {
     let current = slot.driver.environment()
     let next = current
       .with_accessibility_contrast(contrast)
@@ -663,9 +633,9 @@ fn WindowsNativeHostBackend::dispatch_pointer_or_context_menu(
     // driver falls back to the program's global context-menu commands.
     self.dispatch_window_event(window_id, event)
     if @window_input.window_event_is_context_menu_trigger(event) {
-      match self.lifecycle.runtime_slots().lookup(window_id) {
+      match self.core.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) =>
-          ignore(slot.driver.show_context_menu(self.services.bridge()))
+          ignore(slot.driver.show_context_menu(self.core.services.bridge()))
         None => ()
       }
       self.sync_text_input_session()
@@ -680,20 +650,20 @@ fn WindowsNativeHostBackend::redraw_window(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Bool {
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(platform_slot) =>
       @window_host.run_window_redraw(
-        self.lifecycle,
-        self.frames,
-        self.images,
-        self.input,
+        self.core.lifecycle,
+        self.core.frames,
+        self.core.images,
+        self.core.input,
         window_id,
         render=(renderer, _runtime_slot, submission) => {
           let frame = submission.frame()
           platform_slot.window.pre_present_notify()
           let result = renderer.render_frame(submission)
           @runtime.sync_platform_view_plugins(
-            self.platform_view_plugins,
+            self.core.platform_view_plugins,
             platform_slot.window.native_window_handle(),
             frame,
           )
@@ -707,9 +677,9 @@ fn WindowsNativeHostBackend::redraw_window(
           @runtime.finish_first_frame_smoke_auto_exit(
             platform_name="Windows",
             title=runtime_slot.record.title,
-            flag=self.first_frame_smoke_auto_exit,
+            flag=self.core.first_frame_smoke_auto_exit,
             finish=fn() {
-              self.first_frame_smoke_auto_exit = false
+              self.core.first_frame_smoke_auto_exit = false
               self.dispose_window(window_id)
             },
           )
@@ -731,7 +701,7 @@ fn WindowsNativeHostBackend::dispatch_platform_view_event_from_plugin(
 ) -> Unit {
   match self.platform_view_host_id(window_ptr) {
     Some(window_id) => {
-      match self.lifecycle.runtime_slots().lookup(window_id) {
+      match self.core.lifecycle.runtime_slots().lookup(window_id) {
         Some(slot) => slot.driver.dispatch_platform_view(id, event)
         None => ()
       }
@@ -749,7 +719,7 @@ fn WindowsNativeHostBackend::platform_view_host_id(
   self : WindowsNativeHostBackend,
   native_window : UInt64,
 ) -> @host.WindowId? {
-  for slot in self.platform_slots.slots {
+  for slot in self.core.platform_slots.slots {
     if slot.window.native_window_handle() == native_window {
       return Some(slot.host_id)
     }
@@ -765,18 +735,18 @@ fn WindowsNativeHostBackend::dispatch_window_event(
 ) -> Unit {
   match event {
     ModifiersChanged(modifiers) =>
-      self.modifiers = @window_input.modifiers_to_core(modifiers)
+      self.core.modifiers = @window_input.modifiers_to_core(modifiers)
     _ => ()
   }
-  let scale_factor = match self.platform_slots.lookup_host(window_id) {
+  let scale_factor = match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => slot.window.scale_factor()
     None => 1.0
   }
   match
     windows_window_event_to_host(
       event,
-      self.last_pointer,
-      self.modifiers,
+      self.core.last_pointer,
+      self.core.modifiers,
       scale_factor~,
     ) {
     Some(host_event) => self.dispatch_host_event(window_id, host_event)
@@ -809,9 +779,9 @@ fn WindowsNativeHostBackend::dispatch_host_event(
   host_event : @host.Event,
 ) -> Unit {
   @window_host.dispatch_host_event(
-    self.lifecycle,
-    self.input,
-    self.services,
+    self.core.lifecycle,
+    self.core.input,
+    self.core.services,
     window_id,
     host_event,
     adjust=event => Some(event),
@@ -823,7 +793,7 @@ fn WindowsNativeHostBackend::drain_window_requests(
   self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
 ) -> Unit {
-  self.lifecycle.drain_window_requests(request => {
+  self.core.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
 }
@@ -835,9 +805,9 @@ fn WindowsNativeHostBackend::apply_window_request(
   request : @host.WindowRequest,
 ) -> @host.WindowRequestResult {
   @window_host.apply_window_request(
-    self.lifecycle,
-    self.input,
-    self.services,
+    self.core.lifecycle,
+    self.core.input,
+    self.core.services,
     request,
     open_window=open_request => self.open_window(event_loop, open_request),
     dispose_window=id => self.dispose_window(id),
@@ -851,7 +821,7 @@ fn WindowsNativeHostBackend::open_window(
   event_loop : @win.ActiveEventLoop,
   request : @host.WindowOpenRequest,
 ) -> @host.WindowRequestResult {
-  match self.lifecycle.open_resolution(request) {
+  match self.core.lifecycle.open_resolution(request) {
     OpenRejected(message) => WindowRejected(message)
     OpenResolved(resolved) => self.create_resolved_window(event_loop, resolved)
   }
@@ -893,16 +863,17 @@ fn WindowsNativeHostBackend::attach_resolved_window(
     window.surface_size(),
     scale_factor=window.scale_factor(),
   )
-  match (self.surface_binding.create_renderer)(window, metrics) {
+  match (self.core.surface_binding.create_renderer)(window, metrics) {
     Some(resolution) => {
       let renderer = resolution
-      ignore(self.lifecycle.window_registry().resize(resolved.id, metrics))
+      ignore(self.core.lifecycle.window_registry().resize(resolved.id, metrics))
       ignore(
-        self.lifecycle
+        self.core.lifecycle
         .runtime_slots()
-        .sync_open_from_registry(self.lifecycle.window_registry()),
+        .sync_open_from_registry(self.core.lifecycle.window_registry()),
       )
-      let record = match self.lifecycle.window_registry().lookup(resolved.id) {
+      let record = match
+        self.core.lifecycle.window_registry().lookup(resolved.id) {
         Some(record) => record
         None => resolved.record
       }
@@ -914,25 +885,25 @@ fn WindowsNativeHostBackend::attach_resolved_window(
         self.request_redraw_window_if_needed(resolved.id)
       })
       driver.set_environment(
-        self.services
+        self.core.services
         .bridge()
         .environment_with_system_theme(driver.environment()),
       )
       driver.set_text_system(renderer.text_system())
       ignore(driver.dispatch(Resized(metrics)))
       ignore(
-        self.lifecycle.register_runtime_slot(
+        self.core.lifecycle.register_runtime_slot(
           @window_lifecycle.WindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
-        self.lifecycle.bind_platform_window(
+        self.core.lifecycle.bind_platform_window(
           platform_id=window.id(),
           window_id=resolved.id,
         ),
       )
       ignore(
-        self.platform_slots.insert(
+        self.core.platform_slots.insert(
           @window_lifecycle.WindowSlot::new(
             host_id=resolved.id,
             window~,
@@ -942,9 +913,9 @@ fn WindowsNativeHostBackend::attach_resolved_window(
       )
       ignore(
         @window_host.attach_window_surface(
-          self.lifecycle,
-          self.frames,
-          self.images,
+          self.core.lifecycle,
+          self.core.frames,
+          self.core.images,
           resolved.id,
           renderer,
           self.windows_surface_actions(window, renderer),
@@ -967,14 +938,14 @@ fn WindowsNativeHostBackend::register_primary_runtime_slot(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  self.lifecycle.register_primary_runtime_slot(window_id, self.driver)
+  self.core.lifecycle.register_primary_runtime_slot(window_id, self.core.driver)
 }
 
 ///|
 fn WindowsNativeHostBackend::request_redraw(
   self : WindowsNativeHostBackend,
 ) -> Unit {
-  @window_host.request_redraw(self.lifecycle, self.images)
+  @window_host.request_redraw(self.core.lifecycle, self.core.images)
 }
 
 ///|
@@ -983,8 +954,8 @@ fn WindowsNativeHostBackend::request_redraw_window_if_needed(
   window_id : @host.WindowId,
 ) -> Unit {
   @window_host.request_redraw_window_if_needed(
-    self.lifecycle,
-    self.images,
+    self.core.lifecycle,
+    self.core.images,
     window_id,
   )
 }
@@ -994,7 +965,7 @@ fn WindowsNativeHostBackend::request_platform_redraw(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
+  match self.core.platform_slots.lookup_host(window_id) {
     Some(slot) => slot.window.request_redraw()
     None => ()
   }
@@ -1007,13 +978,13 @@ fn WindowsNativeHostBackend::dispose_window(
 ) -> Unit {
   self.dispose_accessibility_window(window_id)
   @window_host.dispose_window(
-    self.lifecycle,
-    self.frames,
-    self.images,
-    self.services,
+    self.core.lifecycle,
+    self.core.frames,
+    self.core.images,
+    self.core.services,
     window_id,
   )
-  ignore(self.platform_slots.remove_host(window_id))
+  ignore(self.core.platform_slots.remove_host(window_id))
 }
 
 ///|
@@ -1021,14 +992,14 @@ fn WindowsNativeHostBackend::rollback_window_record(
   self : WindowsNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  self.lifecycle.rollback_window_record(window_id)
+  self.core.lifecycle.rollback_window_record(window_id)
 }
 
 ///|
 fn WindowsNativeHostBackend::sync_text_input_session(
   self : WindowsNativeHostBackend,
 ) -> Unit {
-  @window_host.sync_text_input_session(self.lifecycle, self.input)
+  @window_host.sync_text_input_session(self.core.lifecycle, self.core.input)
 }
 
 ///|
@@ -1045,12 +1016,12 @@ fn WindowsNativeHostBackend::windows_surface_actions(
           @window_input.host_metrics_to_dpi_size(metrics),
         ),
       )
-      (self.surface_binding.sync_surface)(window, metrics)
+      (self.core.surface_binding.sync_surface)(window, metrics)
       renderer.resize(@window_host.to_render_metrics(metrics))
       metrics
     },
     sync_observed_resize=fn(metrics) {
-      (self.surface_binding.sync_surface)(window, metrics)
+      (self.core.surface_binding.sync_surface)(window, metrics)
       renderer.resize(@window_host.to_render_metrics(metrics))
       metrics
     },
@@ -1070,7 +1041,7 @@ fn WindowsNativeHostBackend::windows_surface_actions(
     native_view_handle=fn() { Some(window.native_window_handle()) },
     dispose_platform_views=fn() {
       let handle = window.native_window_handle()
-      for plugin in self.platform_view_plugins {
+      for plugin in self.core.platform_view_plugins {
         (plugin.dispose_platform_views)(handle)
       }
     },

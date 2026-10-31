@@ -92,10 +92,11 @@ pub struct LinuxHostSmokeOptions {
 }
 
 ///|
-priv struct LinuxSurfaceBinding {
-  create_renderer : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererSession?
-  sync_surface : (@window_linux.Window, @core.SurfaceMetrics) -> Unit
-}
+/// The Linux surface binding is the shared desktop binding specialized to
+/// the Linux window type; see `@window_host.DesktopSurfaceBinding`.
+type LinuxSurfaceBinding = @window_host.DesktopSurfaceBinding[
+  @window_linux.Window,
+]
 
 ///|
 pub(all) struct LinuxClientDecorationState {
@@ -118,26 +119,13 @@ pub extend LinuxClientDecorationState with ToJson::{to_json}
 /// Shared lifecycle, frame, image, input, and service state is held through
 /// its matching backend/common owner.
 struct LinuxNativeHostBackend {
-  title : String
-  runtime : @runtime.AppRuntime
-  driver : @runtime.HostRuntimeDriver
-  lifecycle : @window_lifecycle.WindowLifecycle
-  frames : @window_frame.WindowFrameStates
-  images : @window_image.WindowImageTaskStates
-  input : @window_input.WindowInputState
-  surface_binding : LinuxSurfaceBinding
-  services : @window_services.WindowServiceState
-  atspi_state : LinuxAtspiHostState
-  platform_slots : @window_lifecycle.WindowSlotMap[
+  core : @window_host.DesktopNativeHostBackendCore[
     @window_linux.Window,
     LinuxClientDecorationState,
   ]
-  platform_view_plugins : Array[@host.PlatformViewPlugin]
+  atspi_state : LinuxAtspiHostState
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
-  mut last_pointer : @core.Point
-  mut modifiers : @core.KeyModifiers
-  mut first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -177,17 +165,6 @@ pub fn LinuxHostSmokeOptions::new(
   first_frame_smoke_auto_exit~ : Bool = false,
 ) -> LinuxHostSmokeOptions {
   { first_frame_smoke_auto_exit, }
-}
-
-///|
-fn LinuxSurfaceBinding::new(
-  create_renderer~ : (@window_linux.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface~ : (@window_linux.Window, @core.SurfaceMetrics) -> Unit = (
-    _window,
-    _metrics,
-  ) => (),
-) -> LinuxSurfaceBinding {
-  { create_renderer, sync_surface, }
 }
 
 ///|

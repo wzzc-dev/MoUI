@@ -447,7 +447,8 @@ fn LinuxNativeHostBackend::sync_atspi_window(
   self : LinuxNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Unit {
-  guard self.lifecycle.runtime_slots().lookup(window_id) is Some(runtime_slot) else {
+  guard self.core.lifecycle.runtime_slots().lookup(window_id)
+    is Some(runtime_slot) else {
     return
   }
   let binding = self.atspi_state.binding(window_id)

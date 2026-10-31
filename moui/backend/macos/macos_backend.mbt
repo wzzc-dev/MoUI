@@ -81,29 +81,22 @@ pub struct MacosHostSmokeOptions {
 }
 
 ///|
-priv struct MacosSurfaceBinding {
-  create_renderer : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererSession?
-  sync_surface : (@window_macos.Window, @core.SurfaceMetrics) -> Unit
-}
+/// The macOS surface binding is the shared desktop binding specialized to
+/// the macOS window type; see `@window_host.DesktopSurfaceBinding`.
+type MacosSurfaceBinding = @window_host.DesktopSurfaceBinding[
+  @window_macos.Window,
+]
 
 ///|
 /// Native host backend: owns the macOS host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
 /// Shared lifecycle, frame, image, input, and service state is held through
-/// its matching backend/common owner.
+/// `@window_host.DesktopNativeHostBackendCore`; only macOS accessibility,
+/// chrome options, drag region, dock icon, and the IME/performance/promotion
+/// smoke harnesses stay platform-local.
 struct MacosNativeHostBackend {
-  title : String
-  runtime : @runtime.AppRuntime
-  driver : @runtime.HostRuntimeDriver
-  lifecycle : @window_lifecycle.WindowLifecycle
-  frames : @window_frame.WindowFrameStates
-  images : @window_image.WindowImageTaskStates
-  input : @window_input.WindowInputState
-  surface_binding : MacosSurfaceBinding
-  services : @window_services.WindowServiceState
+  core : @window_host.DesktopNativeHostBackendCore[@window_macos.Window, Unit]
   accessibility_state : MacosAccessibilityState
-  platform_slots : @window_lifecycle.WindowSlotMap[@window_macos.Window, Unit]
-  platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   mut show_after_first_present : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -117,9 +110,6 @@ struct MacosNativeHostBackend {
   /// a different target window must receive its own push even when the
   /// declared revision has not changed.
   mut window_drag_window : @host.WindowId?
-  mut last_pointer : @core.Point
-  mut modifiers : @core.KeyModifiers
-  mut first_frame_smoke_auto_exit : Bool
   native_ime_runtime_smoke : Bool
   mut native_ime_runtime_smoke_done : Bool
   mut native_ime_runtime_smoke_phase : Int32
@@ -263,15 +253,4 @@ pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
   Some(window.content_view_handle()) catch {
     _ => None
   }
-}
-
-///|
-fn MacosSurfaceBinding::new(
-  create_renderer~ : (@window_macos.Window, @core.SurfaceMetrics) -> @render.RendererSession?,
-  sync_surface~ : (@window_macos.Window, @core.SurfaceMetrics) -> Unit = (
-    _window,
-    _metrics,
-  ) => (),
-) -> MacosSurfaceBinding {
-  { create_renderer, sync_surface, }
 }

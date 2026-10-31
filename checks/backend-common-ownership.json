@@ -161,8 +161,6 @@
       "requiredImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/backend/common/lifecycle",
-        "wzzc-dev/moui/backend/common/frame",
-        "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
@@ -173,8 +171,6 @@
       "requiredImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/backend/common/lifecycle",
-        "wzzc-dev/moui/backend/common/frame",
-        "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
@@ -185,8 +181,6 @@
       "requiredImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/backend/common/lifecycle",
-        "wzzc-dev/moui/backend/common/frame",
-        "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
