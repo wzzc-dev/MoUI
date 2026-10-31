@@ -47,8 +47,8 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3525,
-      "reason": "Existing native Skia surface and image bridge implementation."
+      "maxLines": 3675,
+      "reason": "Existing native Skia surface and image bridge implementation. Raised 3525->3675 2026-10-31 (six 25-line quanta, measured 3667) for the Surface::egl_resize_window C stub (EGL window back-buffer re-wrap) landed with the HarmonyOS window-hosted route."
     },
     {
       "path": "moui_sun/graphics/render_frame_test.mbt",
@@ -87,8 +87,8 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 1775,
-      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted). Raised 1725->1750 2026-10-27 (one 25-line quantum) for the `moui/render/native_text` PackageBudget entry (+19 logic lines) that L0.2 extraction required, and the `moui_wgpu_renderer` ceiling retarget 154/77/3 -> 116/55/2 with its rationale comments. Raised 1750->1775 2026-10-27 (one 25-line quantum, measured 1764) for the `moui_metal_renderer` PackageBudget entry that ADR 0045 registering a new renderer requires, plus the `moui/render` 606->608 comment recording why the neutral `NativeDirectGpu`/`DirectGpu` identity replaced the literal `Metal` name the platform-surface guard rejected."
+      "maxLines": 1800,
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted). Raised 1725->1750 2026-10-27 (one 25-line quantum) for the `moui/render/native_text` PackageBudget entry (+19 logic lines) that L0.2 extraction required, and the `moui_wgpu_renderer` ceiling retarget 154/77/3 -> 116/55/2 with its rationale comments. Raised 1750->1775 2026-10-27 (one 25-line quantum, measured 1764) for the `moui_metal_renderer` PackageBudget entry that ADR 0045 registering a new renderer requires, plus the `moui/render` 606->608 comment recording why the neutral `NativeDirectGpu`/`DirectGpu` identity replaced the literal `Metal` name the platform-surface guard rejected. Raised 1775->1800 2026-10-31 (one 25-line quantum, measured 1783) for the harmonyos-pasteboard budget comments: runtime facade `HostRuntimeDriver::keyboard_command_intent` (+1 line, +1 pub) and core clipboard shortcut predicates `is_copy_shortcut`/`is_cut_shortcut`/`is_paste_shortcut` (+6 lines, +3 pub)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
@@ -157,8 +157,8 @@
     },
     {
       "path": "moui_skia/native/surface_image_data_native.mbt",
-      "maxLines": 1525,
-      "reason": "Existing native surface/image bindings."
+      "maxLines": 1575,
+      "reason": "Existing native surface/image bindings. Raised 1525->1575 2026-10-31 (two 25-line quanta, measured 1565) for the Surface::egl_resize_window binding (EGL window back-buffer re-wrap for the HarmonyOS window-hosted route) and its surface-image-data capability contract."
     },
     {
       "path": "moui_sun/graphics/surface.mbt",
