@@ -2253,6 +2253,7 @@ pub(all) struct ViewEventContext {
   style : ViewStyle
   now_ms : Double
 }
+pub fn ViewEventContext::effective_theme(Self, pinned? : Theme?) -> Theme
 
 pub(all) struct ViewEventResult[Msg] {
   changed : Bool
@@ -2287,6 +2288,7 @@ pub(all) struct ViewLayoutContext {
   environment : Environment
   style : ViewStyle
 }
+pub fn ViewLayoutContext::effective_theme(Self, pinned? : Theme?) -> Theme
 
 pub(all) struct ViewLayoutResult {
   size : Size
@@ -2311,6 +2313,7 @@ pub(all) struct ViewPaintContext {
   text_system : TextSystem
   now_ms : Double
 }
+pub fn ViewPaintContext::effective_theme(Self, pinned? : Theme?) -> Theme
 
 pub(all) struct ViewPaintLayer {
   frame : Rect

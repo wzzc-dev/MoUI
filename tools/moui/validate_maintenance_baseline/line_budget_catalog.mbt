@@ -183,12 +183,14 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470, },
     { path: "examples/excel/sheet/sheet.mbt", max_lines: 1871, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
-    { path: "moui/render/common/render_frame_mailbox.mbt", max_lines: 222, },
-    { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 205, },
+    // 205 -> 260: the shared PlanScopeKind scope vocabulary moved here from the
+    // deleted draw_plan.mbt lowering, so this file stays the single home of
+    // scope-balance validation (E2 plan slice, 2026-10-31).
+    { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 260, },
     { path: "moui/render/capabilities_feature_model.mbt", max_lines: 331, },
     { path: "moui/render/common/capabilities_report.mbt", max_lines: 47, },
     { path: "moui/render/common/image_lifecycle_state.mbt", max_lines: 60, },
-    { path: "moui/render/common/image_lifecycle_updates.mbt", max_lines: 75, },
+    { path: "moui/render/common/image_lifecycle_updates.mbt", max_lines: 76, },
     {
       path: "moui/render/common/image_lifecycle_completions.mbt",
       max_lines: 30,

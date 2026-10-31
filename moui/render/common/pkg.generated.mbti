@@ -66,8 +66,6 @@ pub fn image_src_window(@core.Rect, @core.Size) -> @core.Rect?
 
 pub fn import_svg(String) -> SvgImportResult
 
-pub fn lower_draw_commands(Array[@core.DrawCommand]) -> DrawPlan
-
 pub fn plan_renderer_command_fallbacks(Array[@core.DrawCommand]) -> @render.RendererCommandPlan
 
 pub fn plan_scope_name(PlanScopeKind) -> String
@@ -125,19 +123,6 @@ pub fn text_string_arrays_equal(Array[String], Array[String]) -> Bool
 // Errors
 
 // Types and methods
-pub(all) struct DrawPlan {
-  ops : Array[PlanOp]
-  diagnostics : Array[DrawPlanDiagnostic]
-}
-
-pub(all) struct DrawPlanDiagnostic {
-  command : String
-  reason : String
-} derive(Eq, @debug.Debug)
-pub fn DrawPlanDiagnostic::equal(Self, Self) -> Bool
-pub fn DrawPlanDiagnostic::not_equal(Self, Self) -> Bool
-pub fn DrawPlanDiagnostic::to_repr(Self) -> @debug.Repr
-
 pub struct GpuRenderWorker {
   mut state : GpuRenderWorkerState
   mut surface_generation : Int32
@@ -234,6 +219,7 @@ pub fn ImageResourceLifecycle::apply_load_completion(Self, @render.ImageResource
 pub fn ImageResourceLifecycle::dispose(Self, String) -> Bool
 pub fn ImageResourceLifecycle::equal(Self, Self) -> Bool
 pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int32
+pub fn ImageResourceLifecycle::generation(Self) -> Int64
 pub fn ImageResourceLifecycle::lookup(Self, String) -> @render.ImageResourceRecord?
 pub fn ImageResourceLifecycle::mark_failed(Self, String, diagnostic~ : String) -> Bool
 pub fn ImageResourceLifecycle::mark_loading(Self, String) -> Bool
@@ -262,39 +248,6 @@ pub fn PathVertex::not_equal(Self, Self) -> Bool
 pub fn PathVertex::to_json(Self) -> Json
 pub fn PathVertex::to_repr(Self) -> @debug.Repr
 
-pub(all) enum PlanOp {
-  Clear(@core.Color)
-  FillRect(@core.Rect, @core.Color)
-  StrokeRect(@core.Rect, @core.Color, Double)
-  FillRoundedRect(@core.RoundedRect, @core.Color)
-  StrokeRoundedRect(@core.RoundedRect, @core.Color, Double)
-  FillRoundedRectBrush(@core.RoundedRect, @core.Brush)
-  StrokeRoundedRectBrush(@core.RoundedRect, @core.Brush, Double)
-  DrawShadow(@core.ShadowSpec)
-  DrawText(@core.TextRun)
-  DrawImage(@core.ImageRun)
-  PushClip(@core.Rect)
-  PopClip
-  PushRoundedClip(@core.RoundedRect)
-  PopRoundedClip
-  PushTransform(@core.Transform2D)
-  PopTransform
-  PushOpacity(Double)
-  PopOpacity
-  PushLayer(@core.LayerSpec)
-  PopLayer
-  BeginRetainedLayer(@core.RetainedLayerSpec)
-  EndRetainedLayer(String)
-  PushFilter(@core.FilterEffect)
-  PopFilter
-  DrawPath(@core.PathSpec)
-  DrawShaderEffect(@core.ShaderEffectSpec)
-} derive(Eq, ToJson, @debug.Debug)
-pub fn PlanOp::equal(Self, Self) -> Bool
-pub fn PlanOp::not_equal(Self, Self) -> Bool
-pub fn PlanOp::to_json(Self) -> Json
-pub fn PlanOp::to_repr(Self) -> @debug.Repr
-
 pub(all) enum PlanScopeKind {
   Clip
   RoundedClip
@@ -305,60 +258,6 @@ pub(all) enum PlanScopeKind {
 } derive(Eq)
 pub fn PlanScopeKind::equal(Self, Self) -> Bool
 pub fn PlanScopeKind::not_equal(Self, Self) -> Bool
-
-pub struct RenderFrameMailbox {
-  mut surface_generation : Int32
-  mut next_sequence : Int32
-  mut in_flight : RenderFramePacket?
-  mut pending : RenderFramePacket?
-  mut submitted : Int32
-  mut started : Int32
-  mut completed : Int32
-  mut replaced_pending : Int32
-  mut rejected_generation : Int32
-  control_queue : Array[@render.RendererControlMessage]
-  mut control_submitted : Int32
-  mut control_drained : Int32
-}
-pub fn RenderFrameMailbox::begin_next(Self) -> RenderFramePacket?
-pub fn RenderFrameMailbox::complete(Self, Int32) -> Bool
-pub fn RenderFrameMailbox::control_pending(Self) -> Int32
-pub fn RenderFrameMailbox::diagnostics(Self) -> RenderFrameMailboxDiagnostics
-pub fn RenderFrameMailbox::drain_control(Self) -> Array[@render.RendererControlMessage]
-pub fn RenderFrameMailbox::has_control(Self) -> Bool
-pub fn RenderFrameMailbox::new(surface_generation? : Int32) -> Self
-pub fn RenderFrameMailbox::replace_surface_generation(Self, Int32) -> Unit
-pub fn RenderFrameMailbox::submit(Self, @render.RenderFrameInput) -> Int32
-pub fn RenderFrameMailbox::submit_control(Self, @render.RendererControlMessage) -> Int32
-
-pub(all) struct RenderFrameMailboxDiagnostics {
-  submitted : Int32
-  started : Int32
-  completed : Int32
-  replaced_pending : Int32
-  rejected_generation : Int32
-  surface_generation : Int32
-  in_flight : Bool
-  pending : Bool
-  control_pending : Int32
-  control_submitted : Int32
-  control_drained : Int32
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameMailboxDiagnostics::equal(Self, Self) -> Bool
-pub fn RenderFrameMailboxDiagnostics::not_equal(Self, Self) -> Bool
-pub fn RenderFrameMailboxDiagnostics::to_json(Self) -> Json
-pub fn RenderFrameMailboxDiagnostics::to_repr(Self) -> @debug.Repr
-
-pub(all) struct RenderFramePacket {
-  sequence : Int32
-  surface_generation : Int32
-  input : @render.RenderFrameInput
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFramePacket::equal(Self, Self) -> Bool
-pub fn RenderFramePacket::new(sequence~ : Int32, surface_generation~ : Int32, @render.RenderFrameInput) -> Self
-pub fn RenderFramePacket::not_equal(Self, Self) -> Bool
-pub fn RenderFramePacket::to_json(Self) -> Json
-pub fn RenderFramePacket::to_repr(Self) -> @debug.Repr
 
 pub struct RendererProviderRegistry {
   // private fields

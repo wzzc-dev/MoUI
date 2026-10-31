@@ -384,8 +384,13 @@ fn package_budgets() -> Array[PackageBudget] {
       // shortcut predicate set: select-all, undo and redo existed but the
       // clipboard chords did not, so Ctrl+C / Ctrl+X / Ctrl+V had no matcher on
       // any platform. +6 lines, +3 pub.
-      max_lines: 2526,
-      max_pub_lines: 1117,
+      // effective_theme on ViewLayoutContext / ViewPaintContext /
+      // ViewEventContext is the single ambient-theme resolution point
+      // (ADR 0036, plan hot-path-invalidation-boilerplate-convergence B1): the
+      // pinned-theme-wins fallback that 21 views call sites previously
+      // hand-wrote as `theme.unwrap_or(ctx.environment.theme)`. +3 lines, +3 pub.
+      max_lines: 2529,
+      max_pub_lines: 1120,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -560,8 +565,11 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "skia renderer",
       path: "moui_skia_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_skia_renderer\"",
-      max_lines: 279,
-      max_pub_lines: 165,
+      // SkiaSurfaceRoute derives Hash (hash/hash_combine) so renderer-side
+      // struct-key caches can key routes without string interpolation:
+      // +2 lines, +2 pub declarations.
+      max_lines: 281,
+      max_pub_lines: 167,
       max_pub_all_lines: 7,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",

@@ -5,9 +5,11 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       label: "backend common",
       path: "moui/backend/common/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common\"",
-      max_lines: 58,
+      // I1: DesktopSurfaceBinding[W] + DesktopNativeHostBackendCore[W, Extra]
+      // moved the desktop backends' shared struct/construction surface here.
+      max_lines: 78,
       max_pub_lines: 18,
-      max_pub_all_lines: 0,
+      max_pub_all_lines: 2,
       required_tokens: [
         "pub fn attach_window_surface", "pub fn dispatch_host_event", "pub fn run_window_redraw",
         "pub fn dispose_window",

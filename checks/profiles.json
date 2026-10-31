@@ -84,6 +84,42 @@
           ]
         },
         {
+          "name": "view declarations generation",
+          "argv": [
+            "node",
+            "scripts/generate-view-declarations.mjs",
+            "--check"
+          ]
+        },
+        {
+          "name": "view declarations generator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/generate_view_declarations",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "core derives generation",
+          "argv": [
+            "node",
+            "scripts/generate-core-derives.mjs",
+            "--check"
+          ]
+        },
+        {
+          "name": "core derives generator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/generate_core_derives",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "ViewNode declaration coverage",
           "argv": [
             "node",

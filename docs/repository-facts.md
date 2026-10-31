@@ -77,19 +77,19 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 891 | 597 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2526 | 1117 | 141 |
+| core (moui/core/pkg.generated.mbti) | 2529 | 1120 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 608 | 279 | 31 |
-| render common (moui/render/common/pkg.generated.mbti) | 432 | 167 | 13 |
+| render common (moui/render/common/pkg.generated.mbti) | 331 | 140 | 8 |
 | native text model (moui/render/native_text/pkg.generated.mbti) | 94 | 46 | 1 |
-| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 279 | 165 | 7 |
+| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 281 | 167 | 7 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 272 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 183 | 92 | 2 |
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 116 | 55 | 2 |
 | native metal renderer (moui_metal_renderer/pkg.generated.mbti) | 57 | 13 | 0 |
 | native text protocol (moui_text_providers/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
-| backend common (moui/backend/common/pkg.generated.mbti) | 54 | 16 | 0 |
+| backend common (moui/backend/common/pkg.generated.mbti) | 78 | 18 | 2 |
 | backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 297 | 170 | 7 |
 | backend common frame owner (moui/backend/common/frame/pkg.generated.mbti) | 57 | 22 | 0 |
 | backend common image owner (moui/backend/common/image/pkg.generated.mbti) | 50 | 22 | 0 |

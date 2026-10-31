@@ -88,7 +88,7 @@
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
       "maxLines": 1800,
-      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the §4 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the §9 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted). Raised 1725->1750 2026-10-27 (one 25-line quantum) for the `moui/render/native_text` PackageBudget entry (+19 logic lines) that L0.2 extraction required, and the `moui_wgpu_renderer` ceiling retarget 154/77/3 -> 116/55/2 with its rationale comments. Raised 1750->1775 2026-10-27 (one 25-line quantum, measured 1764) for the `moui_metal_renderer` PackageBudget entry that ADR 0045 registering a new renderer requires, plus the `moui/render` 606->608 comment recording why the neutral `NativeDirectGpu`/`DirectGpu` identity replaced the literal `Metal` name the platform-surface guard rejected. Raised 1775->1800 2026-10-31 (one 25-line quantum, measured 1783) for the harmonyos-pasteboard budget comments: runtime facade `HostRuntimeDriver::keyboard_command_intent` (+1 line, +1 pub) and core clipboard shortcut predicates `is_copy_shortcut`/`is_cut_shortcut`/`is_paste_shortcut` (+6 lines, +3 pub)."
+      "reason": "Existing API validator with explicit declaration and expanded neutral semantics contract audits. Raised 1664->1669 for View::on_secondary_tap_with_frame (the blocks context menu needs the pointer position, which the fixed-message on_secondary_tap cannot provide). Raised 1669->1680 2026-10-16 to settle the decision-B SemanticsFramePayload contract-audit entries (tui-output-path carrier; remedy chosen over splitting the audit into a sibling module, per tui-hardening owner decision). Raised 1680->1685 with the 2026-10-20 views-facade budget bump (flow/wrap layout primitives): the facade entry carries the bump justification comments. Raised 1685->1700 2026-10-23 for the pointer-input-parity core budget note (+2 lines, +1 pub: text_word_range_at, TextControlStateContext.reveal, PointerEvent.time_ms removed); 8 of those lines were drift already past 1685 before the change, so this registration also clears that standing finding. Raised 1700->1704 2026-10-23 for the \u00a74 multi-pointer transport note in the same budget comment (+2 lines, +0 pub: PointerEvent.id and pressure are defaulted fields of an existing pub(all) struct). Raised 1704->1710 2026-10-23 for the \u00a79 RTL budget note in the same comment (core +3 lines, +2 pub: Rect::mirrored_x and Insets::mirrored are the single mirror formula, layout_mirror_x deleted). Raised 1725->1750 2026-10-27 (one 25-line quantum) for the `moui/render/native_text` PackageBudget entry (+19 logic lines) that L0.2 extraction required, and the `moui_wgpu_renderer` ceiling retarget 154/77/3 -> 116/55/2 with its rationale comments. Raised 1750->1775 2026-10-27 (one 25-line quantum, measured 1764) for the `moui_metal_renderer` PackageBudget entry that ADR 0045 registering a new renderer requires, plus the `moui/render` 606->608 comment recording why the neutral `NativeDirectGpu`/`DirectGpu` identity replaced the literal `Metal` name the platform-surface guard rejected. Raised 1775->1800 2026-10-31 (one 25-line quantum, measured 1783) for the harmonyos-pasteboard budget comments: runtime facade `HostRuntimeDriver::keyboard_command_intent` (+1 line, +1 pub) and core clipboard shortcut predicates `is_copy_shortcut`/`is_cut_shortcut`/`is_paste_shortcut` (+6 lines, +3 pub)."
     },
     {
       "path": "moui_sun/graphics/path.mbt",
@@ -137,8 +137,8 @@
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
-      "maxLines": 1850,
-      "reason": "Existing diagnostic WGPU renderer implementation."
+      "maxLines": 1925,
+      "reason": "Existing diagnostic WGPU renderer implementation. Raised 1850->1925 for image-records generation wiring and layer-cache struct keys (plan hot-path C2/C5)."
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
@@ -207,8 +207,8 @@
     },
     {
       "path": "moui/runtime/semantics.mbt",
-      "maxLines": 1375,
-      "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation."
+      "maxLines": 1400,
+      "reason": "Existing committed semantics tree, relation, modal, delta, announcement, and exact-generation action implementation. Raised 1375->1400 for the environment-identity threading and overlay-collection gates (plan hot-path-invalidation C1/C3)."
     },
     {
       "path": "moui/runtime/semantics_runtime_test.mbt",
@@ -351,6 +351,153 @@
       "generator": "scripts/generate-i18n-catalogs.mjs",
       "checkCommand": "node scripts/generate-i18n-catalogs.mjs --check",
       "header": "Generated by scripts/generate-i18n-catalogs.mjs"
+    },
+    {
+      "path": "moui/core/derives.generated.mbt",
+      "maxLines": 620,
+      "generator": "scripts/generate-core-derives.mjs",
+      "checkCommand": "node scripts/generate-core-derives.mjs --check",
+      "header": "Generated by tools/moui/generate_core_derives"
+    },
+    {
+      "path": "moui/views/button/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/canvas/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/checkbox/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/common/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/container/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/controls/declarations.generated.mbt",
+      "maxLines": 200,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/data/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/divider/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/form/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/icon/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/image/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/layout/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/navigation/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/popover/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/presence_dot/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/presentation/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/progress/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/slider/declarations.generated.mbt",
+      "maxLines": 100,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
+    },
+    {
+      "path": "moui/views/text/declarations.generated.mbt",
+      "maxLines": 200,
+      "generator": "scripts/generate-view-declarations.mjs",
+      "checkCommand": "node scripts/generate-view-declarations.mjs --check",
+      "header": "Generated by tools/moui/generate_view_declarations"
     }
   ]
 }

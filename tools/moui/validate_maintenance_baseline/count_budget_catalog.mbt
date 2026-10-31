@@ -40,8 +40,11 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // AccessKit's backend-owned adapter plus application-menu placement add
       // two package-level protocol records while common owners replace the
       // former coordinator; +4 for the relocated window scene resolution
-      // family now owned by backend/common/lifecycle.
-      max_count: 108,
+      // family now owned by backend/common/lifecycle; +2 for the shared
+      // desktop host-core records (DesktopSurfaceBinding /
+      // DesktopNativeHostBackendCore, hot-path-invalidation I1) whose mut
+      // fields the three desktop backends drive.
+      max_count: 110,
     },
     {
       kind: "pub(all)",

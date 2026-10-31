@@ -53,8 +53,8 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2526,
-      "public_declarations": 1117,
+      "lines": 2529,
+      "public_declarations": 1120,
       "pub_all_declarations": 141
     },
     {
@@ -81,9 +81,9 @@
     {
       "label": "render common",
       "path": "moui/render/common/pkg.generated.mbti",
-      "lines": 432,
-      "public_declarations": 167,
-      "pub_all_declarations": 13
+      "lines": 331,
+      "public_declarations": 140,
+      "pub_all_declarations": 8
     },
     {
       "label": "native text model",
@@ -95,8 +95,8 @@
     {
       "label": "skia renderer",
       "path": "moui_skia_renderer/pkg.generated.mbti",
-      "lines": 279,
-      "public_declarations": 165,
+      "lines": 281,
+      "public_declarations": 167,
       "pub_all_declarations": 7
     },
     {
@@ -137,9 +137,9 @@
     {
       "label": "backend common",
       "path": "moui/backend/common/pkg.generated.mbti",
-      "lines": 54,
-      "public_declarations": 16,
-      "pub_all_declarations": 0
+      "lines": 78,
+      "public_declarations": 18,
+      "pub_all_declarations": 2
     },
     {
       "label": "backend common lifecycle owner",
