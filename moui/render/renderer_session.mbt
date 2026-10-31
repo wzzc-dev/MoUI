@@ -32,8 +32,9 @@ pub struct RendererSession {
   priv image_source : HostImageSource
   priv image_decoder : RendererImageDecoder?
   priv mut next_image_token : Int64
-  priv mut image_tokens : Array[RendererImageLoadToken]
-  priv mut image_sources : Array[String]
+  priv image_pending : Map[String, RendererImageLoadToken]
+  priv image_records_generation_fn : (() -> Int64)?
+  priv mut image_records_generation_seen : Int64?
   priv mut image_events : Array[RendererEvent]
   priv present_count_fn : () -> Int32
   priv recover_fn : (String) -> RecoveryResult
@@ -91,6 +92,12 @@ pub fn RendererSession::new(
   },
   dispose~ : () -> Unit = () => (),
   image_records~ : () -> Array[ImageResourceRecord] = () => [],
+  // Optional generation callback over the records provider's state (an
+  // `ImageResourceLifecycle::generation`, for example). While it returns
+  // the same value frame over frame, `render_frame`/`drain_events` skip
+  // the records pull and the pending dedup entirely. Unwired sessions
+  // keep the always-scan behavior with a map-indexed dedup.
+  image_records_generation~ : (() -> Int64)? = None,
   apply_image_load_completion~ : (ImageResourceLoadCompletion) -> Bool = _ => {
     false
   },
@@ -114,8 +121,9 @@ pub fn RendererSession::new(
     image_source,
     image_decoder,
     next_image_token: 1L,
-    image_tokens: [],
-    image_sources: [],
+    image_pending: Map([]),
+    image_records_generation_fn: image_records_generation,
+    image_records_generation_seen: None,
     image_events: [],
     present_count_fn: present_count,
     recover_fn: recover,
@@ -218,7 +226,7 @@ pub fn RendererSession::image_diagnostics(
 ) -> RendererImageDiagnostics {
   RendererImageDiagnostics::new(
     records=(self.image_records_fn)(),
-    pending_request_count=self.image_tokens.length(),
+    pending_request_count=self.image_pending.length(),
   )
 }
 
@@ -260,8 +268,8 @@ pub fn RendererSession::gpu_fallback_active(self : RendererSession) -> Bool {
 pub fn RendererSession::dispose(self : RendererSession) -> Unit {
   if !self.disposed {
     self.disposed = true
-    self.image_tokens = []
-    self.image_sources = []
+    self.image_pending.clear()
+    self.image_records_generation_seen = None
     self.image_events = []
     (self.dispose_fn)()
     match self.native_surface {
@@ -299,13 +307,36 @@ pub fn RendererSession::set_platform_view_draw_fn(
 ///|
 fn RendererSession::queue_image_requests(self : RendererSession) -> Unit {
   guard self.image_decoder is Some(decoder) else { return }
+  // Generation diff: when the records provider exposes a generation and
+  // it has not advanced since the last scan, no record can have changed,
+  // so the snapshot pull and the dedup scan are skipped entirely.
+  match self.image_records_generation_fn {
+    Some(generation_fn) => {
+      let generation = generation_fn()
+      if self.image_records_generation_seen == Some(generation) {
+        return
+      }
+      self.scan_image_records(decoder)
+      self.image_records_generation_seen = Some(generation)
+    }
+    None => self.scan_image_records(decoder)
+  }
+}
+
+///|
+/// One full pass over the records provider. The pending map makes the
+/// dedup a constant-time lookup per record instead of a linear scan of
+/// the pending requests.
+fn RendererSession::scan_image_records(
+  self : RendererSession,
+  decoder : RendererImageDecoder,
+) -> Unit {
   for record in (self.image_records_fn)() {
     if record.status == ImageLoading &&
-      !self.image_sources.any(source => source == record.source) {
+      !self.image_pending.contains(record.source) {
       let token = RendererImageLoadToken::new(self.next_image_token)
       self.next_image_token = self.next_image_token + 1L
-      self.image_tokens.push(token)
-      self.image_sources.push(record.source)
+      self.image_pending[record.source] = token
       self.image_events.push(
         ImageLoadRequested(
           RendererImageLoadRequest::new(
@@ -325,18 +356,22 @@ fn RendererSession::take_image_request(
   self : RendererSession,
   token : RendererImageLoadToken,
 ) -> String? {
-  let mut source = None
-  let tokens : Array[RendererImageLoadToken] = []
-  let sources : Array[String] = []
-  for index, current in self.image_tokens {
-    if source is None && current == token && index < self.image_sources.length() {
-      source = Some(self.image_sources[index])
-    } else if index < self.image_sources.length() {
-      tokens.push(current)
-      sources.push(self.image_sources[index])
+  let mut source : String? = None
+  for candidate, pending_token in self.image_pending {
+    if pending_token == token {
+      source = Some(candidate)
+      break
     }
   }
-  self.image_tokens = tokens
-  self.image_sources = sources
+  match source {
+    Some(source) => {
+      ignore(self.image_pending.remove(source))
+      // The record behind this token is leaving the pending set; drop
+      // the cached generation so the next scan re-reads the provider
+      // even if the renderer's apply path does not touch it.
+      self.image_records_generation_seen = None
+    }
+    None => ()
+  }
   source
 }

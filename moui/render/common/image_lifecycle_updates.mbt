@@ -42,12 +42,14 @@ fn ImageResourceLifecycle::store_record(
     Some(existing) =>
       if existing != record {
         self.records[record.source] = record
+        self.generation = self.generation + 1L
         true
       } else {
         false
       }
     None => {
       self.records[record.source] = record
+      self.generation = self.generation + 1L
       true
     }
   }
@@ -66,6 +68,9 @@ pub fn ImageResourceLifecycle::evict_disposed(
       kept[key] = record
     }
   }
-  self.records = kept
+  if removed > 0 {
+    self.records = kept
+    self.generation = self.generation + 1L
+  }
   removed
 }
