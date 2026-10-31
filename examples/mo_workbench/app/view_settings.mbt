@@ -38,7 +38,7 @@ fn settings_section_nav(
   @views.container(
     @views.column(
       [
-        @views.text("Preferences", role=Subtitle, theme~, width=content_width),
+        @views.text("Preferences", role=Subtitle, width=content_width),
         settings_nav_item("Providers", Api, active, theme, content_width),
         settings_nav_item("Agent", Agent, active, theme, content_width),
         settings_nav_item("Editor", Editor, active, theme, content_width),
@@ -69,7 +69,7 @@ fn settings_nav_item(
     @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   }
   @views.container(
-    @views.text(label, role=Label, theme~, width=width - 20.0),
+    @views.text(label, role=Label, width=width - 20.0),
     width~,
     height=36.0,
     background~,
@@ -129,7 +129,6 @@ fn settings_panel_header(
       @views.text(
         settings_section_title(model.active_section),
         role=Title,
-        theme~,
         width~,
       ),
       @views.text(
@@ -137,7 +136,6 @@ fn settings_panel_header(
         model.env_source +
         "。agent transport backend 选择 ACP。",
         role=Caption,
-        theme~,
         width~,
       ).foreground(theme.palette.muted),
     ],
@@ -176,7 +174,6 @@ fn settings_providers_panel(
       @views.text(
         "正在通过 v1/models 检测模型…",
         role=Caption,
-        theme~,
         width=field_w,
       ).foreground(theme.palette.muted),
     )
@@ -184,7 +181,7 @@ fn settings_providers_panel(
   match model.detect_error {
     Some(err) =>
       rows.push(
-        @views.text(err, role=Caption, theme~, width=field_w).foreground(
+        @views.text(err, role=Caption, width=field_w).foreground(
           theme.palette.danger,
         ),
       )
@@ -211,7 +208,6 @@ fn provider_selector_row(
       "+ 添加提供商",
       on_click=AddProvider,
       variant=Ghost,
-      theme~,
       width~,
       height=36.0,
     ),
@@ -230,7 +226,6 @@ fn provider_selector_item(
     @views.text(
       provider.name,
       role=Caption,
-      theme~,
       width=(width - 16.0).max(48.0),
       height=20.0,
     ).foreground(
@@ -275,7 +270,6 @@ fn provider_edit_form(
         on_submit=None,
         placeholder="DeepSeek",
         variant=Filled,
-        theme~,
         width=field_w,
         height=40.0,
       ),
@@ -293,7 +287,6 @@ fn provider_edit_form(
         on_submit=None,
         placeholder="https://api.deepseek.com/v1",
         variant=Filled,
-        theme~,
         width=field_w,
         height=40.0,
       ),
@@ -311,7 +304,6 @@ fn provider_edit_form(
         on_submit=None,
         placeholder="sk-...",
         variant=Filled,
-        theme~,
         width=field_w,
         height=40.0,
       ),
@@ -327,7 +319,6 @@ fn provider_edit_form(
     },
     on_click=SettingsMsg::DetectModels(p.id),
     variant=Primary,
-    theme~,
     width=field_w,
     height=40.0,
   ).disabled(disabled=model.detect_busy)
@@ -336,14 +327,13 @@ fn provider_edit_form(
     @views.text(
       "模型 (" + p.models.length().to_string() + ")",
       role=Label,
-      theme~,
       width=field_w,
     ).foreground(workbench_text(theme)),
   )
   for m in p.models {
     rows.push(
       @views.container(
-        @views.text(m, role=Label, theme~, width=field_w - 16.0, height=22.0).foreground(
+        @views.text(m, role=Label, width=field_w - 16.0, height=22.0).foreground(
           workbench_text(theme),
         ),
         width=field_w,
@@ -363,7 +353,6 @@ fn provider_edit_form(
           on_submit=Some(AddManualModel(p.id, model.new_model_id)),
           placeholder="手动添加模型 id",
           variant=Filled,
-          theme~,
           width=field_w - 92.0,
           height=40.0,
         ),
@@ -371,7 +360,6 @@ fn provider_edit_form(
           "添加",
           on_click=AddManualModel(p.id, model.new_model_id),
           variant=Ghost,
-          theme~,
           width=80.0,
           height=40.0,
         ),
@@ -386,7 +374,6 @@ fn provider_edit_form(
         "移除该供应商",
         on_click=RemoveProvider(p.id),
         variant=Ghost,
-        theme~,
         width=field_w,
         height=40.0,
       ),
@@ -407,7 +394,7 @@ fn settings_agent_panel(
       settings_field_row(
         "Backend",
         "Generic ACP stdio agent",
-        backend_segmented_control(model.agent_backend, theme, field_w),
+        backend_segmented_control(model.agent_backend, field_w),
         theme,
         field_w,
       ),
@@ -420,7 +407,6 @@ fn settings_agent_panel(
           on_submit=None,
           placeholder=".",
           variant=Filled,
-          theme~,
           width=field_w,
           height=40.0,
         ),
@@ -436,7 +422,6 @@ fn settings_agent_panel(
           on_submit=None,
           placeholder="./.mo_workbench/sessions",
           variant=Filled,
-          theme~,
           width=field_w,
           height=40.0,
         ),
@@ -452,7 +437,6 @@ fn settings_agent_panel(
           on_submit=None,
           placeholder="acp-agent",
           variant=Filled,
-          theme~,
           width=field_w,
           height=40.0,
         ),
@@ -468,7 +452,6 @@ fn settings_agent_panel(
           on_submit=None,
           placeholder="[\"--stdio\"]",
           variant=Filled,
-          theme~,
           width=field_w,
           height=40.0,
         ),
@@ -484,7 +467,6 @@ fn settings_agent_panel(
           on_submit=None,
           placeholder="",
           variant=Filled,
-          theme~,
           width=field_w,
           height=40.0,
         ),
@@ -494,14 +476,14 @@ fn settings_agent_panel(
       settings_field_row(
         "Approval",
         "When tool writes need confirmation",
-        approval_segmented_control(model.approval_policy, theme, field_w),
+        approval_segmented_control(model.approval_policy, field_w),
         theme,
         field_w,
       ),
       settings_field_row(
         "Sandbox",
         "Filesystem access for tools",
-        sandbox_segmented_control(model.sandbox_mode, theme, field_w),
+        sandbox_segmented_control(model.sandbox_mode, field_w),
         theme,
         field_w,
       ),
@@ -524,14 +506,14 @@ fn settings_editor_panel(
       settings_field_row(
         "Appearance",
         "Workbench color scheme",
-        appearance_segmented_control(appearance, theme, field_w),
+        appearance_segmented_control(appearance, field_w),
         theme,
         field_w,
       ),
       settings_field_row(
         "Font size",
         "Code surface typography (10–24 pt)",
-        font_size_stepper(model.font_size, theme, field_w),
+        font_size_stepper(model.font_size, field_w),
         theme,
         field_w,
       ),
@@ -551,10 +533,8 @@ fn settings_field_row(
 ) -> @moui.View[SettingsMsg] {
   @views.column(
     [
-      @views.text(title, role=Label, theme~, width~),
-      @views.text(hint, role=Caption, theme~, width~).foreground(
-        theme.palette.muted,
-      ),
+      @views.text(title, role=Label, width~),
+      @views.text(hint, role=Caption, width~).foreground(theme.palette.muted),
       control,
     ],
     spacing=6.0,
@@ -571,7 +551,7 @@ fn settings_save_row(
   let notice : Array[@moui.View[SettingsMsg]] = match model.save_notice {
     Some(text) =>
       [
-        @views.text(text, role=Caption, theme~, width=width - 120.0).foreground(
+        @views.text(text, role=Caption, width=width - 120.0).foreground(
           theme.palette.muted,
         ),
       ]
@@ -583,7 +563,6 @@ fn settings_save_row(
       "Save to .mo_workbench/settings.json",
       on_click=SaveToDisk,
       variant=Primary,
-      theme~,
       width=200.0,
       height=40.0,
     ),
@@ -594,7 +573,6 @@ fn settings_save_row(
 ///|
 fn backend_segmented_control(
   backend : AgentBackendKind,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -602,7 +580,6 @@ fn backend_segmented_control(
     selected=agent_backend_kind_id(backend),
     on_select=id => BackendChanged(agent_backend_kind_from_id(id)),
     size=Compact,
-    theme~,
     width~,
   )
 }
@@ -610,7 +587,6 @@ fn backend_segmented_control(
 ///|
 fn appearance_segmented_control(
   appearance : AppearanceMode,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -622,7 +598,6 @@ fn appearance_segmented_control(
     selected=appearance_mode_id(appearance),
     on_select=id => AppearanceChanged(appearance_mode_from_id(id)),
     size=Compact,
-    theme~,
     width~,
   )
 }
@@ -630,7 +605,6 @@ fn appearance_segmented_control(
 ///|
 fn approval_segmented_control(
   policy : ApprovalPolicy,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -642,7 +616,6 @@ fn approval_segmented_control(
     selected=approval_policy_id(policy),
     on_select=id => ApprovalChanged(approval_policy_from_id(id)),
     size=Compact,
-    theme~,
     width~,
   )
 }
@@ -650,7 +623,6 @@ fn approval_segmented_control(
 ///|
 fn sandbox_segmented_control(
   mode : SandboxMode,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -662,7 +634,6 @@ fn sandbox_segmented_control(
     selected=sandbox_mode_id(mode),
     on_select=id => SandboxChanged(sandbox_mode_from_id(id)),
     size=Compact,
-    theme~,
     width~,
   )
 }
@@ -670,7 +641,6 @@ fn sandbox_segmented_control(
 ///|
 fn font_size_stepper(
   font_size : Int32,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.row(
@@ -679,21 +649,14 @@ fn font_size_stepper(
         "-",
         on_click=FontSizeChanged(font_size - 1),
         variant=Ghost,
-        theme~,
         width=40.0,
         height=36.0,
       ),
-      @views.text(
-        font_size.to_string() + " pt",
-        role=Label,
-        theme~,
-        width=width - 96.0,
-      ),
+      @views.text(font_size.to_string() + " pt", role=Label, width=width - 96.0),
       @views.button(
         "+",
         on_click=FontSizeChanged(font_size + 1),
         variant=Ghost,
-        theme~,
         width=40.0,
         height=36.0,
       ),

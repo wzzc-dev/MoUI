@@ -18,7 +18,6 @@ fn build_grid(model : ExcelModel, theme : @moui.Theme) -> @moui.View[ExcelMsg] {
     width=grid_width,
     height=grid_height,
     background=theme.palette.outline_variant,
-    theme~,
     padding=0.0,
   )
 }
@@ -71,19 +70,12 @@ fn header_cell(
 ) -> @moui.View[ExcelMsg] {
   @views.container(
     @views.align(
-      @views.text(
-        label,
-        role=Caption,
-        theme~,
-        width=width - 4.0,
-        height=height - 4.0,
-      ),
+      @views.text(label, role=Caption, width=width - 4.0, height=height - 4.0),
       alignment=@geometry.Alignment::center(),
     ),
     width~,
     height~,
     background=theme.palette.surface_variant,
-    theme~,
     padding=2.0,
   )
 }
@@ -117,19 +109,17 @@ fn build_cell(
       on_input=fn(v) { ExcelMsg::CellRawChanged(row, col, v) },
       on_submit=Some(CellEditCommittedAndNavigate(1, 0)),
       variant=Plain,
-      theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
     ).key("excel-cell-input-" + @cell.make_key(row, col))
   } else {
-    cell_display_content(model, cell, row, col, theme)
+    cell_display_content(model, cell, row, col)
   }
   @views.container(
     content,
     width=cell_width,
     height=cell_height,
     background=bg,
-    theme~,
     padding=3.0,
   )
   .border(border)
@@ -143,7 +133,6 @@ fn cell_display_content(
   cell : @cell.Cell,
   row : Int32,
   col : Int32,
-  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let selected = model.workbook.cell_is_selected(row, col)
   if selected {
@@ -154,7 +143,6 @@ fn cell_display_content(
       },
       on_submit=Some(CellEditCommitted),
       variant=Plain,
-      theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
     ).key("excel-cell-input-" + @cell.make_key(row, col))
@@ -167,7 +155,6 @@ fn cell_display_content(
       },
       on_submit=Some(CellEditCommitted),
       variant=Plain,
-      theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
     ).key("excel-cell-input-" + @cell.make_key(row, col))

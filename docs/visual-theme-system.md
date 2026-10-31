@@ -37,8 +37,9 @@ adapters that produce the same `@core.Theme`:
   palette/surfaces/shadows, not just a scheme flag. The legacy
   `with_color_scheme` (which left the palette stale) is removed.
 - Controls resolve their styles **ambient-ly** at paint time: each control's
-  `theme?` parameter is optional (no `default_theme()` capture), and paint
-  closures read `theme.unwrap_or(ctx.environment.theme)` so a button/checkbox/
+  `theme?` parameter is optional (no `default_theme()` capture), and
+  layout/paint resolve through `ctx.effective_theme(pinned=self.theme)` — the
+  pinned theme wins, otherwise the environment's theme — so a button/checkbox/
   text field/progress/slider/picker/etc. tracks dark-mode / high-contrast /
   reduced-motion / palette changes via `set_environment` without the caller
   rebuilding the view tree. Leaf controls emit a `"context"` revision token so
@@ -46,6 +47,13 @@ adapters that produce the same `@core.Theme`:
   construction-time layout reads (spacing/shadow) through a shared
   `views_ambient_theme(theme)` helper (falling back to `Theme::neutral`) and
   pass the resolved theme to their leaf children.
+- **App-facing pattern:** theme the root subtree once
+  (`root.theme(app_theme)`), not per control. Controls under the scope resolve
+  the scoped theme ambient-ly; per-control `theme?` pins remain a one-off
+  override contract (ADR 0036 decision 4), and pinned-theme declaration
+  channels stay cacheable (`views_theme_channel` folds the pinned theme value
+  into the channel key instead of degrading to `Uncacheable`). Apps should
+  not thread `theme~` into every control call.
 - `ButtonVariant::style(control_set)` resolves a variant from
   `control_set.button` via `ButtonVariantToken`; controls default to this
   path and `style?` is a one-shot override. `ButtonVariant` covers
@@ -56,8 +64,10 @@ adapters that produce the same `@core.Theme`:
   and is shared by the token resolver and the view-layer style structs.
 - `View::theme(...)` and `View::environment(...)` cascade the theme/environment
   into child subtrees via the `child_environment` hook at layout/paint time;
-  their modifier revisions include a content fingerprint so reconcile detects
-  real theme changes.
+  their declarations are exact on the scoped value's canonical key
+  (`environment_scope_declaration`), so a changed scope invalidates the
+  subtree through the modifier node itself while an unchanged scope stays
+  cacheable.
 - `ChoiceControlTheme` carries `box_shape` (`Square`/`Circle`) and `check_style`
   (`Checkmark`/`Dot`) so checkboxes render as rounded squares with a "✓" glyph
   while radios render as circle rings with a filled inner dot (Fluent 2 style).

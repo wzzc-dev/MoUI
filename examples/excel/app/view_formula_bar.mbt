@@ -3,7 +3,7 @@ fn build_formula_bar(
   model : ExcelModel,
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
-  let suggestions = build_autocomplete(model, theme)
+  let suggestions = build_autocomplete(model)
   let preview = formula_preview(model)
   @views.container(
     @views.row(
@@ -13,11 +13,10 @@ fn build_formula_bar(
           on_input=fn(v) { ExcelMsg::CellRefChanged(v) },
           on_submit=Some(GoToCell(model.cell_ref_input)),
           variant=Plain,
-          theme~,
           width=72.0,
           height=32.0,
         ).key("excel-cell-ref-input"),
-        @views.text("fx", role=Label, theme~, width=24.0, height=32.0).foreground(
+        @views.text("fx", role=Label, width=24.0, height=32.0).foreground(
           theme.palette.muted,
         ),
         @views.column(
@@ -27,7 +26,6 @@ fn build_formula_bar(
               on_input=fn(v) { ExcelMsg::CellValueChanged(v) },
               on_submit=Some(CellEditCommittedAndNavigate(1, 0)),
               variant=Filled,
-              theme~,
               width=760.0,
               height=32.0,
             ).key("excel-formula-input"),
@@ -36,7 +34,7 @@ fn build_formula_bar(
           spacing=0.0,
           align=Start,
         ),
-        @views.text(preview, role=Mono, theme~, width=190.0, height=32.0).foreground(
+        @views.text(preview, role=Mono, width=190.0, height=32.0).foreground(
           theme.palette.primary,
         ),
       ],
@@ -45,16 +43,12 @@ fn build_formula_bar(
     ),
     width=shell_width,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.xs,
   )
 }
 
 ///|
-fn build_autocomplete(
-  model : ExcelModel,
-  theme : @moui.Theme,
-) -> @moui.View[ExcelMsg] {
+fn build_autocomplete(model : ExcelModel) -> @moui.View[ExcelMsg] {
   if model.autocomplete_suggestions.is_empty() {
     @views.empty()
   } else {
@@ -63,11 +57,10 @@ fn build_autocomplete(
       let selected = i == model.autocomplete_index
       items.push(
         @views.container(
-          @views.text(suggestion, role=Mono, theme~, width=220.0, height=26.0),
+          @views.text(suggestion, role=Mono, width=220.0, height=26.0),
           width=236.0,
           height=28.0,
           variant=if selected { Raised } else { Base },
-          theme~,
           padding=4.0,
         ).on_tap(AutocompleteSelect(i)),
       )
@@ -76,7 +69,6 @@ fn build_autocomplete(
       @views.column(items, spacing=0.0, align=Start),
       width=236.0,
       variant=Overlay,
-      theme~,
       padding=2.0,
     )
   }

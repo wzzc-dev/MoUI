@@ -108,14 +108,8 @@ pub fn view(model : Model) -> @moui.View[Msg] {
     container(
       column(
         [
-          text(
-            "Button Freeze Probe",
-            role=Title,
-            theme~,
-            width=432.0,
-            height=34.0,
-          ),
-          text(model.summary(), role=Caption, theme~, width=432.0, height=24.0).foreground(
+          text("Button Freeze Probe", role=Title, width=432.0, height=34.0),
+          text(model.summary(), role=Caption, width=432.0, height=24.0).foreground(
             theme.palette.muted,
           ),
           data_filter_bar(
@@ -144,7 +138,6 @@ pub fn view(model : Model) -> @moui.View[Msg] {
             result_count=model.result_count(),
             on_clear=Some(ClearFilters),
             placeholder="Search rows",
-            theme~,
             width=432.0,
           ),
           row(
@@ -153,7 +146,6 @@ pub fn view(model : Model) -> @moui.View[Msg] {
                 "Primary",
                 on_click=PrimaryPulse,
                 variant=Primary,
-                theme~,
                 width=120.0,
                 height=36.0,
               ),
@@ -161,7 +153,6 @@ pub fn view(model : Model) -> @moui.View[Msg] {
                 "Tonal",
                 on_click=TonalPulse,
                 variant=Tonal,
-                theme~,
                 width=120.0,
                 height=36.0,
               ),
@@ -172,7 +163,6 @@ pub fn view(model : Model) -> @moui.View[Msg] {
           text(
             "last=\{model.last_action}; previous=\{model.previous_action}",
             role=Mono,
-            theme~,
             width=432.0,
             height=26.0,
           ),
@@ -183,14 +173,12 @@ pub fn view(model : Model) -> @moui.View[Msg] {
       width=480.0,
       height=296.0,
       variant=Raised,
-      theme~,
       padding=theme.spacing_scale.md,
     ),
     width=560.0,
     height=360.0,
     background=theme.palette.background,
-    theme~,
-  )
+  ).theme(theme)
 }
 
 ///|

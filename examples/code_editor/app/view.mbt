@@ -6,7 +6,7 @@ pub fn view(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
     size=14.0,
   )
   let workspace : Array[@moui.View[CodeEditorMsg]] = [
-    activity_rail(model, theme),
+    activity_rail(model),
     expanded(editor_shell(model, theme, editor_font)),
   ]
   match model.active_panel {
@@ -16,6 +16,7 @@ pub fn view(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
   row(workspace, spacing=0.0, align=Stretch)
   .padding(0.0)
   .background(editor_chrome_background())
+  .theme(theme)
 }
 
 ///|
@@ -24,10 +25,7 @@ fn editor_theme() -> @moui.Theme {
 }
 
 ///|
-fn activity_rail(
-  model : CodeEditorModel,
-  theme : @moui.Theme,
-) -> @moui.View[CodeEditorMsg] {
+fn activity_rail(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
   container(
     column(
       [
@@ -35,16 +33,14 @@ fn activity_rail(
           "C",
           ToggleCapabilities,
           side_panel_matches(model.active_panel, CapabilitiesPanel),
-          theme,
         ),
         panel_button(
           "I",
           ToggleIntelliSense,
           side_panel_matches(model.active_panel, IntelliSensePanel),
-          theme,
         ),
-        panel_button("D", ToggleDiffEditor, model.mode == DiffEditor, theme),
-        panel_button("F", ToggleFind, model.find_visible, theme),
+        panel_button("D", ToggleDiffEditor, model.mode == DiffEditor),
+        panel_button("F", ToggleFind, model.find_visible),
       ],
       spacing=8.0,
       align=Center,
@@ -60,13 +56,11 @@ fn panel_button(
   label : String,
   message : CodeEditorMsg,
   active : Bool,
-  theme : @moui.Theme,
 ) -> @moui.View[CodeEditorMsg] {
   button(
     label,
     on_click=message,
     variant=if active { Primary } else { Tonal },
-    theme~,
     width=38.0,
     height=34.0,
   )
@@ -92,24 +86,21 @@ fn editor_shell(
 ) -> @moui.View[CodeEditorMsg] {
   column(
     [
-      editor_tab_bar(model, theme),
+      editor_tab_bar(model),
       expanded(
         match model.mode {
           DiffEditor => diff_editor_main(model, theme)
           _ => code_editor_surface(model, theme, editor_font)
         },
       ),
-      editor_status(model, theme),
+      editor_status(model),
     ],
     spacing=0.0,
   ).background(editor_panel_background())
 }
 
 ///|
-fn editor_tab_bar(
-  model : CodeEditorModel,
-  theme : @moui.Theme,
-) -> @moui.View[CodeEditorMsg] {
+fn editor_tab_bar(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
   container(
     row(
       [
@@ -117,7 +108,6 @@ fn editor_tab_bar(
           "main.mbt",
           on_click=SetMode(SourceEditor),
           variant=if model.mode == SourceEditor { Primary } else { Ghost },
-          theme~,
           width=116.0,
           height=34.0,
         ),
@@ -125,7 +115,6 @@ fn editor_tab_bar(
           "diff",
           on_click=ToggleDiffEditor,
           variant=if model.mode == DiffEditor { Primary } else { Ghost },
-          theme~,
           width=78.0,
           height=34.0,
         ),
@@ -134,7 +123,6 @@ fn editor_tab_bar(
           "Search",
           on_click=ToggleFind,
           variant=Ghost,
-          theme~,
           width=86.0,
           height=34.0,
         ),
@@ -142,7 +130,6 @@ fn editor_tab_bar(
           "Complete",
           on_click=TriggerCompletion,
           variant=Ghost,
-          theme~,
           width=96.0,
           height=34.0,
         ),
@@ -150,7 +137,6 @@ fn editor_tab_bar(
           "Problems",
           on_click=ToggleIntelliSense,
           variant=Ghost,
-          theme~,
           width=98.0,
           height=34.0,
         ),
@@ -158,7 +144,6 @@ fn editor_tab_bar(
           "Info",
           on_click=ToggleCapabilities,
           variant=Ghost,
-          theme~,
           width=70.0,
           height=34.0,
         ),
@@ -279,7 +264,6 @@ fn line_number_gutter(
         text(
           marker + " " + line.number.to_string(),
           role=Mono,
-          theme~,
           width=48.0,
           height=20.0,
         ).foreground(
@@ -315,7 +299,7 @@ fn completion_overlay(
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.completions.is_empty() {
-    rows.push(text("No completions", role=Caption, theme~, width=240.0))
+    rows.push(text("No completions", role=Caption, width=240.0))
   } else {
     for index in 0..<model.completions.length() {
       let item = model.completions[index]
@@ -324,7 +308,6 @@ fn completion_overlay(
           item.label,
           on_click=ApplyCompletion(index),
           variant=if index == 0 { Primary } else { Ghost },
-          theme~,
           width=240.0,
           height=30.0,
         ),
@@ -351,23 +334,21 @@ fn find_overlay(
   container(
     row(
       [
-        text("Find", role=Caption, theme~, width=38.0, height=30.0),
+        text("Find", role=Caption, width=38.0, height=30.0),
         text_field(
           model.find.query,
           on_input=value => SetFindQuery(value),
           placeholder="Find",
           variant=Outline,
-          theme~,
           width=150.0,
           height=32.0,
         ),
-        text("Replace", role=Caption, theme~, width=58.0, height=30.0),
+        text("Replace", role=Caption, width=58.0, height=30.0),
         text_field(
           model.find.replacement,
           on_input=value => SetReplaceText(value),
           placeholder="Replace",
           variant=Outline,
-          theme~,
           width=150.0,
           height=32.0,
         ),
@@ -375,7 +356,6 @@ fn find_overlay(
           "Next",
           on_click=FindNext,
           variant=Tonal,
-          theme~,
           width=68.0,
           height=32.0,
         ),
@@ -383,18 +363,10 @@ fn find_overlay(
           "All",
           on_click=ReplaceAll,
           variant=Outline,
-          theme~,
           width=62.0,
           height=32.0,
         ),
-        button(
-          "x",
-          on_click=CloseFind,
-          variant=Ghost,
-          theme~,
-          width=36.0,
-          height=32.0,
-        ),
+        button("x", on_click=CloseFind, variant=Ghost, width=36.0, height=32.0),
       ],
       spacing=6.0,
       align=Center,
@@ -409,10 +381,7 @@ fn find_overlay(
 }
 
 ///|
-fn editor_status(
-  model : CodeEditorModel,
-  theme : @moui.Theme,
-) -> @moui.View[CodeEditorMsg] {
+fn editor_status(model : CodeEditorModel) -> @moui.View[CodeEditorMsg] {
   let position = code_editor_caret_position(
     model.source,
     model.primary_offset(),
@@ -425,7 +394,6 @@ fn editor_status(
       "\{model.diagnostics.length()} diagnostic(s)",
       model.status,
     ],
-    theme~,
     width=1080.0,
     height=30.0,
   )
@@ -460,7 +428,7 @@ fn diff_column(
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = [
     container(
-      text(title, role=Control, theme~, width=420.0, height=28.0),
+      text(title, role=Control, width=420.0, height=28.0),
       background=editor_tab_background(),
       padding=4.0,
     ),
@@ -481,10 +449,10 @@ fn diff_column(
       container(
         row(
           [
-            text(label, role=Mono, theme~, width=42.0, height=22.0).foreground(
+            text(label, role=Mono, width=42.0, height=22.0).foreground(
               theme.palette.muted,
             ),
-            text(content, role=Mono, theme~, width=370.0, height=22.0).foreground(
+            text(content, role=Mono, width=370.0, height=22.0).foreground(
               diff_color(line.kind, theme),
             ),
           ],
@@ -605,14 +573,14 @@ fn capabilities_panel(
   theme : @moui.Theme,
 ) -> @moui.View[CodeEditorMsg] {
   let rows : Array[@moui.View[CodeEditorMsg]] = [
-    text("Capabilities", role=Control, theme~, width=232.0),
+    text("Capabilities", role=Control, width=232.0),
   ]
   for item in code_editor_features() {
     rows.push(
       column(
         [
-          text(item.label, role=Caption, theme~, width=232.0, height=22.0),
-          text(item.detail, role=Caption, theme~, width=232.0, height=30.0).foreground(
+          text(item.label, role=Caption, width=232.0, height=22.0),
+          text(item.detail, role=Caption, width=232.0, height=30.0).foreground(
             theme.palette.muted,
           ),
         ],
@@ -639,29 +607,27 @@ fn intellisense_panel(
   container(
     column(
       [
-        text("IntelliSense", role=Control, theme~, width=260.0),
-        text("Completion provider", role=Caption, theme~, width=260.0),
+        text("IntelliSense", role=Control, width=260.0),
+        text("Completion provider", role=Caption, width=260.0),
         completion_list(model, theme),
-        text("Diagnostics", role=Caption, theme~, width=260.0),
+        text("Diagnostics", role=Caption, width=260.0),
         diagnostic_list(model, theme),
-        text("Bracket Match", role=Caption, theme~, width=260.0),
+        text("Bracket Match", role=Caption, width=260.0),
         bracket_match_view(model, theme),
-        text("Hover", role=Caption, theme~, width=260.0),
+        text("Hover", role=Caption, width=260.0),
         hover_view(model, theme),
-        text("Definition", role=Caption, theme~, width=260.0),
+        text("Definition", role=Caption, width=260.0),
         definition_view(model, theme),
         button(
           "Go to Definition",
           on_click=GoToDefinition,
           variant=Tonal,
-          theme~,
           width=160.0,
         ),
         button(
           "Register Custom Language",
           on_click=RegisterSampleLanguage,
           variant=Outline,
-          theme~,
           width=220.0,
         ),
       ],
@@ -684,7 +650,7 @@ fn completion_list(
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.completions.is_empty() {
     rows.push(
-      text("No completions yet", role=Caption, theme~, width=252.0).foreground(
+      text("No completions yet", role=Caption, width=252.0).foreground(
         theme.palette.muted,
       ),
     )
@@ -694,7 +660,6 @@ fn completion_list(
         text(
           item.label + " - " + item.detail,
           role=Caption,
-          theme~,
           width=252.0,
           height=24.0,
         ),
@@ -712,7 +677,7 @@ fn diagnostic_list(
   let rows : Array[@moui.View[CodeEditorMsg]] = []
   if model.diagnostics.is_empty() {
     rows.push(
-      text("No diagnostics", role=Caption, theme~, width=252.0).foreground(
+      text("No diagnostics", role=Caption, width=252.0).foreground(
         theme.palette.muted,
       ),
     )
@@ -722,7 +687,6 @@ fn diagnostic_list(
         text(
           item.severity.label() + ": " + item.message,
           role=Caption,
-          theme~,
           width=252.0,
           height=28.0,
         ),
@@ -741,7 +705,7 @@ fn bracket_match_view(
     Some(value) => "open \{value.open}, close \{value.close}"
     None => "No active bracket pair"
   }
-  text(detail, role=Caption, theme~, width=252.0, height=28.0).foreground(
+  text(detail, role=Caption, width=252.0, height=28.0).foreground(
     if model.bracket_match is Some(_) {
       theme.palette.foreground
     } else {
@@ -759,7 +723,7 @@ fn hover_view(
     Some(value) => value.detail
     None => "No hover result"
   }
-  text(detail, role=Caption, theme~, width=252.0, height=38.0).foreground(
+  text(detail, role=Caption, width=252.0, height=38.0).foreground(
     if model.hover is Some(_) {
       theme.palette.foreground
     } else {
@@ -778,7 +742,7 @@ fn definition_view(
       value.symbol + " -> " + value.file + ":\{value.line}:\{value.column}"
     None => "No definition result"
   }
-  text(detail, role=Caption, theme~, width=252.0, height=38.0).foreground(
+  text(detail, role=Caption, width=252.0, height=38.0).foreground(
     if model.definition is Some(_) {
       theme.palette.foreground
     } else {

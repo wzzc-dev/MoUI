@@ -179,17 +179,10 @@ pub fn FileImporterModel::view(
         [
           column(
             [
-              text(
-                "File Importer",
-                role=Title,
-                theme~,
-                width=260.0,
-                height=34.0,
-              ),
+              text("File Importer", role=Title, width=260.0, height=34.0),
               text(
                 "Drop files or request a host file dialog.",
                 role=Caption,
-                theme~,
                 width=360.0,
                 height=24.0,
               ),
@@ -201,7 +194,6 @@ pub fn FileImporterModel::view(
             "Clear",
             on_click=ClearSelection,
             variant=Outline,
-            theme~,
             width=82.0,
             height=36.0,
           ),
@@ -219,7 +211,6 @@ pub fn FileImporterModel::view(
             title="Import Files",
             drop_title="Drop files here",
             empty_message="No files selected",
-            theme~,
             width=380.0,
           ),
           self.import_summary(theme),
@@ -227,8 +218,8 @@ pub fn FileImporterModel::view(
         spacing=theme.spacing_scale.md,
         align=Start,
       ),
-      self.platform_note(theme),
-      status_bar([self.last_event, self.status_label()], theme~, width=760.0),
+      self.platform_note(),
+      status_bar([self.last_event, self.status_label()], width=760.0),
     ],
     spacing=theme.spacing_scale.md,
     align=Stretch,
@@ -238,9 +229,8 @@ pub fn FileImporterModel::view(
     width=820.0,
     height=560.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -344,26 +334,18 @@ fn FileImporterModel::import_summary(
       self.files.length().to_string(),
       caption=self.status_label(),
       tone=Info,
-      theme~,
       width=340.0,
       height=116.0,
     ),
   ]
   if self.files.is_empty() {
     rows.push(
-      text(
-        "Selection list is empty",
-        role=Caption,
-        theme~,
-        width=340.0,
-        height=26.0,
-      ),
+      text("Selection list is empty", role=Caption, width=340.0, height=26.0),
     )
   } else {
     rows.push(
       description_list(
         self.files.map(file => description_item(file.source, file.path)),
-        theme~,
         width=340.0,
         term_width=72.0,
       ),
@@ -374,7 +356,6 @@ fn FileImporterModel::import_summary(
     width=372.0,
     height=292.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }
@@ -382,14 +363,12 @@ fn FileImporterModel::import_summary(
 ///|
 fn FileImporterModel::platform_note(
   self : FileImporterModel,
-  theme : @moui.Theme,
 ) -> @moui.View[FileImporterMsg] {
   ignore(self)
   banner(
     "Platform paths",
     "Web hosts normally expose file names while native hosts can expose paths.",
     tone=Info,
-    theme~,
     width=760.0,
   )
 }

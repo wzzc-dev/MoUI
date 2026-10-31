@@ -63,7 +63,7 @@ fn section_panel(
         column(header_rows, spacing=theme.spacing_scale.xs, align=Start),
         // A hairline separates the section header from its scrollable body so
         // the hierarchy reads even when the body is long and dense.
-        divider(theme~),
+        divider(),
         scroll_body,
       ],
       spacing=theme.spacing_scale.md,
@@ -72,7 +72,6 @@ fn section_panel(
     width=metrics.panel_width,
     height=metrics.panel_height,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
     background=header_bg,
   )
@@ -124,7 +123,7 @@ fn showcase_soft_card(
   height~ : Double,
   padding~ : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
-  container(child, width~, height~, variant=Raised, theme~, padding~).border(
+  container(child, width~, height~, variant=Raised, padding~).border(
     showcase_card_border(theme),
   )
 }
@@ -408,7 +407,6 @@ fn ShowcaseModel::theme_helpers(
         "Switch scheme",
         on_click=ToggleScheme,
         variant=Outline,
-        theme~,
         width=160.0,
       ),
       self.visual_correctness_card(theme, active, opacity),
@@ -609,7 +607,6 @@ fn example_preview(
     width~,
     height=190.0,
     variant=Raised,
-    theme~,
   ).border(showcase_card_border(theme))
 }
 
@@ -647,7 +644,6 @@ fn visual_card(
     width~,
     height=164.0,
     variant=Raised,
-    theme~,
     padding=12.0,
   ).border(showcase_card_border(theme))
 }

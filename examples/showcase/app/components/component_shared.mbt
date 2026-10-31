@@ -15,7 +15,6 @@ fn component_demo_section(
             text(
               title,
               role=Subtitle,
-              theme~,
               width=inner,
               height=28.0,
               align=TextStart,
@@ -23,7 +22,6 @@ fn component_demo_section(
             wrapped_text(
               detail,
               role=Caption,
-              theme~,
               width=inner,
               height=38.0,
               align=TextStart,
@@ -41,7 +39,6 @@ fn component_demo_section(
     variant=Raised,
     padding=16.0,
     corner_radius=8.0,
-    theme~,
   )
 }
 
@@ -72,7 +69,6 @@ fn component_tile(
         text(
           title,
           role=Control,
-          theme~,
           width=width - 24.0,
           height=24.0,
           align=TextStart,
@@ -80,7 +76,6 @@ fn component_tile(
         wrapped_text(
           detail,
           role=Caption,
-          theme~,
           width=width - 24.0,
           height=36.0,
           align=TextStart,
@@ -95,7 +90,6 @@ fn component_tile(
     background=theme.palette.surface_variant.multiply_alpha(0.45),
     padding=12.0,
     corner_radius=8.0,
-    theme~,
   )
 }
 
@@ -112,7 +106,6 @@ fn layout_tile(
         text(
           title,
           role=Caption,
-          theme~,
           width=width - 24.0,
           height=22.0,
           align=TextStart,
@@ -120,7 +113,6 @@ fn layout_tile(
         text(
           value,
           role=Subtitle,
-          theme~,
           width=width - 24.0,
           height=28.0,
           align=TextStart,
@@ -135,7 +127,6 @@ fn layout_tile(
     background=theme.palette.surface_variant.multiply_alpha(0.48),
     padding=12.0,
     corner_radius=8.0,
-    theme~,
   )
 }
 
@@ -149,16 +140,15 @@ fn action_counter_panel(
   let label = text(
     "Count: \{model.counter}",
     role=Subtitle,
-    theme~,
     width=if compact { width } else { (width - 220.0).max(180.0) },
     height=30.0,
     align=TextStart,
   )
   let controls = row(
     [
-      button("-", on_click=Decrement, variant=Outline, theme~, width=52.0),
-      button("Reset", on_click=Reset, variant=Tonal, theme~, width=92.0),
-      button("+", on_click=Increment, variant=Primary, theme~, width=52.0),
+      button("-", on_click=Decrement, variant=Outline, width=52.0),
+      button("Reset", on_click=Reset, variant=Tonal, width=92.0),
+      button("+", on_click=Increment, variant=Primary, width=52.0),
     ],
     spacing=theme.spacing_scale.sm,
     align=Center,
@@ -215,7 +205,6 @@ fn platform_chip(
         text(
           info.name,
           role=Control,
-          theme~,
           width=label_width,
           height=24.0,
           align=TextStart,
@@ -228,7 +217,6 @@ fn platform_chip(
             info.status
           },
           tone=if active { Accent } else { info.badge_tone },
-          theme~,
           width=badge_width,
         ),
       ],
@@ -240,7 +228,6 @@ fn platform_chip(
     background=theme.palette.surface_variant.multiply_alpha(0.45),
     padding~,
     corner_radius=8.0,
-    theme~,
   )
 }
 
@@ -268,7 +255,6 @@ fn platform_route_card(
         text(
           info.name,
           role=Subtitle,
-          theme~,
           width=inner,
           height=28.0,
           align=TextStart,
@@ -280,7 +266,6 @@ fn platform_route_card(
             info.status
           },
           tone=if active { Accent } else { info.badge_tone },
-          theme~,
           width=badge_width,
         ),
       ],
@@ -293,7 +278,6 @@ fn platform_route_card(
         text(
           info.name,
           role=Subtitle,
-          theme~,
           width=title_width,
           height=28.0,
           align=TextStart,
@@ -306,7 +290,6 @@ fn platform_route_card(
             info.status
           },
           tone=if active { Accent } else { info.badge_tone },
-          theme~,
           width=badge_width,
         ),
       ],
@@ -321,7 +304,6 @@ fn platform_route_card(
         wrapped_text(
           info.route,
           role=Caption,
-          theme~,
           width=inner,
           height=40.0,
           align=TextStart,
@@ -329,7 +311,6 @@ fn platform_route_card(
         wrapped_text(
           info.command,
           role=Mono,
-          theme~,
           width=inner,
           height=56.0,
           align=TextStart,
@@ -339,14 +320,12 @@ fn platform_route_card(
           value=info.progress,
           status=info.status,
           tone=info.tone,
-          theme~,
           width=inner,
         ),
         button(
           "Select",
           on_click=SelectPlatform(platform_id_to_string(info.id)),
           variant=if selected { Primary } else { Tonal },
-          theme~,
           width=if inner < 160.0 { inner } else { 112.0 },
         ),
       ],
@@ -357,7 +336,6 @@ fn platform_route_card(
     variant=Raised,
     padding~,
     corner_radius=8.0,
-    theme~,
   ).border(
     @graphics.BorderStyle::new(
       brush=@graphics.Brush::solid(border_color),

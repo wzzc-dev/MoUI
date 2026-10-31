@@ -90,13 +90,11 @@ fn session_runtime_panel(
           info.host,
           tone=Accent,
           detail=info.path,
-          theme~,
           width=if inner < 280.0 { inner } else { 180.0 },
         ),
         wrapped_text(
           note,
           role=Caption,
-          theme~,
           width=inner,
           height=48.0,
           align=TextStart,

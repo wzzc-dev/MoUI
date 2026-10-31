@@ -40,7 +40,6 @@ fn welcome_demo(
                   "\{catalog_items().length()}",
                   caption="focused entries",
                   tone=Info,
-                  theme~,
                   width=stat_width,
                 ),
                 stat_card(
@@ -48,7 +47,6 @@ fn welcome_demo(
                   "\{catalog_groups().length()}",
                   caption="browse sections",
                   tone=Success,
-                  theme~,
                   width=stat_width,
                 ),
                 stat_card(
@@ -56,7 +54,6 @@ fn welcome_demo(
                   "\{platform_runtime_infos().length()}",
                   caption="desktop/mobile/web",
                   tone=Warning,
-                  theme~,
                   width=stat_width,
                 ),
               ],
@@ -68,7 +65,6 @@ fn welcome_demo(
             wrapped_text(
               "Use the left Stories rail to open small component demos. Each demo is plain app code you can reuse in another MoUI example.",
               role=Body,
-              theme~,
               width=inner,
               height=56.0,
               align=TextStart,

@@ -36,12 +36,12 @@ fn ShowcaseModel::text_diagnostics_section(
               .foreground(theme.palette.foreground),
               showcase_markdown_editor(
                 self.draft,
+                theme,
                 on_input=value => DraftChanged(value),
                 placeholder="Markdown diagnostic",
                 width=card_width - 32.0,
                 height=76.0,
                 variant=Outline,
-                theme~,
               ),
               text(
                 "RichText doc spans: " +
@@ -136,7 +136,6 @@ fn text_frame_clip_card(
           height=42.0,
           background=theme.palette.background,
           corner_radius=theme.radius_scale.sm,
-          theme~,
           padding=8.0,
         ),
       ],

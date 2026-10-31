@@ -76,7 +76,6 @@ fn app_window(
   record : WindowRecord,
   body : @moui.View[Msg],
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -86,14 +85,7 @@ fn app_window(
   }
   let maximized = record.state == MaximizedWindow
   let metrics = window_metrics(record, viewport_width, viewport_height)
-  let titlebar = window_titlebar(
-      model,
-      record,
-      focused,
-      metrics.width,
-      palette,
-      theme,
-    )
+  let titlebar = window_titlebar(model, record, focused, metrics.width, palette)
     .on_drag(event => MoveWindowBy(event.delta.x, event.delta.y))
     // Double-clicking a macOS title bar zooms/restores that window.
     .on_double_tap(ToggleZoomAt(record.id))
@@ -223,7 +215,6 @@ fn window_titlebar(
   focused : Bool,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let id = record.id
   // macOS traffic lights: 12pt circles, 8pt apart, 20pt from the leading edge.
@@ -263,7 +254,6 @@ fn window_titlebar(
   let title_label = @views.text(
       window_title(model, record),
       role=Label,
-      theme~,
       width=(width * 0.42).max(140.0),
       height=22.0,
       align=TextCenter,

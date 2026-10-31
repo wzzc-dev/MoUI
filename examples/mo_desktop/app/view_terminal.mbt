@@ -7,7 +7,6 @@ fn terminal_body(
   model : DesktopModel,
   metrics : WindowMetrics,
   _palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let body_height = metrics.height - 40.0
   let input_height = 46.0
@@ -55,7 +54,6 @@ fn terminal_body(
         on_submit=Some(RunTerminalCommand),
         placeholder="type help",
         variant=Outline,
-        theme~,
         width=metrics.width - 220.0,
         height=32.0,
       ).accessibility_label("Terminal command input"),
@@ -63,7 +61,6 @@ fn terminal_body(
         "Run",
         on_click=RunTerminalCommand,
         variant=Tonal,
-        theme~,
         width=72.0,
         height=30.0,
       ),
@@ -72,7 +69,6 @@ fn terminal_body(
         on_click=ClearTerminal,
         icon=Some(Close),
         variant=Ghost,
-        theme~,
         width=76.0,
         height=30.0,
       ),

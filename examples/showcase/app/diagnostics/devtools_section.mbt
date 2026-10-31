@@ -43,7 +43,6 @@ fn ShowcaseModel::devtools_inspector_card(
           ),
           width=inner_width,
           height=244.0,
-          theme~,
         ),
         text(report.json_text, width=inner_width, height=44.0)
         .font(theme.typography.caption)

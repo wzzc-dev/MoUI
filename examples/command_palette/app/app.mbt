@@ -175,17 +175,10 @@ pub fn CommandPaletteModel::view(
         [
           column(
             [
-              text(
-                "Command Palette",
-                role=Title,
-                theme~,
-                width=300.0,
-                height=34.0,
-              ),
+              text("Command Palette", role=Title, width=300.0, height=34.0),
               text(
                 "Metadata, shortcuts, disabled rows, and context fallback.",
                 role=Caption,
-                theme~,
                 width=460.0,
                 height=24.0,
               ),
@@ -197,7 +190,6 @@ pub fn CommandPaletteModel::view(
             "Clear Log",
             on_click=ClearLog,
             variant=Outline,
-            theme~,
             width=96.0,
             height=36.0,
           ),
@@ -212,7 +204,6 @@ pub fn CommandPaletteModel::view(
             on_input=value => QueryChanged(value),
             placeholder="Filter commands",
             variant=Outline,
-            theme~,
             width=260.0,
             height=38.0,
           ),
@@ -220,7 +211,6 @@ pub fn CommandPaletteModel::view(
             "Context",
             on_click=ToggleContextMenu,
             variant=Tonal,
-            theme~,
             width=96.0,
             height=36.0,
           ),
@@ -228,7 +218,6 @@ pub fn CommandPaletteModel::view(
             "Native Menu",
             on_click=ShowNativeMenu,
             variant=Tonal,
-            theme~,
             width=118.0,
             height=36.0,
           ),
@@ -236,12 +225,10 @@ pub fn CommandPaletteModel::view(
             "Submit",
             on_click=CommandSelected(Submit),
             variant=Primary,
-            theme~,
             width=88.0,
             height=36.0,
           ),
         ],
-        theme~,
         width=700.0,
       ),
       row(
@@ -250,7 +237,6 @@ pub fn CommandPaletteModel::view(
             self.commands(),
             query=self.query,
             on_select=intent => CommandSelected(intent),
-            theme~,
             width=410.0,
             max_height=260.0,
           ),
@@ -262,7 +248,6 @@ pub fn CommandPaletteModel::view(
       self.command_log(theme),
       status_bar(
         [self.last_result, "Visible: \{self.filtered_commands().length()}"],
-        theme~,
         width=700.0,
       ),
     ],
@@ -274,9 +259,8 @@ pub fn CommandPaletteModel::view(
     width=760.0,
     height=620.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -326,17 +310,10 @@ fn CommandPaletteModel::context_region(
     child=container(
       column(
         [
-          text(
-            "Context menu fallback",
-            role=Control,
-            theme~,
-            width=230.0,
-            height=28.0,
-          ),
+          text("Context menu fallback", role=Control, width=230.0, height=28.0),
           text(
             "Use command menu rows when native menus are unavailable.",
             role=Caption,
-            theme~,
             width=230.0,
             height=42.0,
           ),
@@ -347,18 +324,15 @@ fn CommandPaletteModel::context_region(
       width=260.0,
       height=96.0,
       variant=Raised,
-      theme~,
       padding=theme.spacing_scale.md,
     ),
     menu=command_menu(
       command_sections(),
       on_select=intent => CommandSelected(intent),
-      theme~,
       width=280.0,
       max_height=178.0,
     ),
     visible=self.context_visible,
-    theme~,
   )
 }
 
@@ -368,15 +342,13 @@ fn CommandPaletteModel::command_log(
   theme : @moui.Theme,
 ) -> @moui.View[CommandPaletteMsg] {
   let rows : Array[@moui.View[CommandPaletteMsg]] = [
-    text("Dispatch Log", role=Control, theme~, width=680.0, height=26.0),
+    text("Dispatch Log", role=Control, width=680.0, height=26.0),
   ]
   if self.dispatched.is_empty() {
-    rows.push(
-      text("No commands yet", role=Caption, theme~, width=680.0, height=24.0),
-    )
+    rows.push(text("No commands yet", role=Caption, width=680.0, height=24.0))
   } else {
     for item in self.dispatched {
-      rows.push(text(item, role=Caption, theme~, width=680.0, height=24.0))
+      rows.push(text(item, role=Caption, width=680.0, height=24.0))
     }
   }
   container(
@@ -384,7 +356,6 @@ fn CommandPaletteModel::command_log(
     width=700.0,
     height=110.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }

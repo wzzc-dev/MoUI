@@ -547,7 +547,6 @@ fn[Msg] workbench_send_button(
       ),
       width=diameter,
       height=diameter,
-      theme~,
     ),
     width=diameter,
     height=diameter,

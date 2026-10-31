@@ -207,9 +207,8 @@ pub fn DesignSystemsModel::view(
     width=960.0,
     height=680.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -224,18 +223,16 @@ fn DesignSystemsModel::hero(
       [
         column(
           [
-            text("Design Systems", role=Title, theme~, width=360.0, height=36.0),
+            text("Design Systems", role=Title, width=360.0, height=36.0),
             text(
               "Source-mapped preview package for official token parity work.",
               role=Caption,
-              theme~,
               width=520.0,
               height=26.0,
             ).foreground(theme.palette.muted),
             text(
               report.manifest.official_name,
               role=Body,
-              theme~,
               width=520.0,
               height=28.0,
             ),
@@ -249,7 +246,6 @@ fn DesignSystemsModel::hero(
               design_status_label(report.status),
               tone=design_status_tone(report.status),
               detail=report.note,
-              theme~,
               width=138.0,
             ),
             status_badge(
@@ -263,7 +259,6 @@ fn DesignSystemsModel::hero(
               } else {
                 Warning
               },
-              theme~,
               width=138.0,
             ),
           ],
@@ -277,9 +272,8 @@ fn DesignSystemsModel::hero(
     width=920.0,
     height=132.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -293,15 +287,14 @@ fn DesignSystemsModel::sickle_hero(
       [
         column(
           [
-            text("Design Systems", role=Title, theme~, width=360.0, height=36.0),
+            text("Design Systems", role=Title, width=360.0, height=36.0),
             text(
               "First-party Smartisan-inspired theme addon preview.",
               role=Caption,
-              theme~,
               width=520.0,
               height=26.0,
             ).foreground(theme.palette.muted),
-            text("Sickle", role=Body, theme~, width=520.0, height=28.0),
+            text("Sickle", role=Body, width=520.0, height=28.0),
           ],
           spacing=theme.spacing_scale.xs,
           align=Start,
@@ -312,10 +305,9 @@ fn DesignSystemsModel::sickle_hero(
               "theme addon",
               tone=Accent,
               detail="Hybrid mode blends tactile depth with flat semantic controls.",
-              theme~,
               width=138.0,
             ),
-            status_badge("first-party", tone=Success, theme~, width=138.0),
+            status_badge("first-party", tone=Success, width=138.0),
           ],
           spacing=theme.spacing_scale.xs,
           align=Start,
@@ -327,9 +319,8 @@ fn DesignSystemsModel::sickle_hero(
     width=920.0,
     height=132.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -351,7 +342,6 @@ fn DesignSystemsModel::switcher_panel(
         ],
         selected=design_preset_id(self.preset),
         on_select=id => SelectPreset(id),
-        theme~,
         width=760.0,
       ),
       row(
@@ -360,7 +350,6 @@ fn DesignSystemsModel::switcher_panel(
             [choice_item("light", "Light"), choice_item("dark", "Dark")],
             selected=design_scheme_id(self.scheme),
             on_select=id => SelectScheme(id),
-            theme~,
             width=210.0,
           ),
           segmented_control(
@@ -372,7 +361,6 @@ fn DesignSystemsModel::switcher_panel(
             ],
             selected=design_variant_id(self.variant),
             on_select=id => SelectVariant(id),
-            theme~,
             width=360.0,
           ),
           segmented_control(
@@ -383,7 +371,6 @@ fn DesignSystemsModel::switcher_panel(
             ],
             selected=design_density_id(self.density),
             on_select=id => SelectDensity(id),
-            theme~,
             width=300.0,
           ),
         ],
@@ -453,17 +440,15 @@ fn DesignSystemsModel::typography_panel(
     theme,
     "Typography specimen",
     [
-      text("Title role", role=Title, theme~, width=390.0, height=34.0),
+      text("Title role", role=Title, width=390.0, height=34.0),
       text(
         "Body role: source value is resolved through neutral FontSpec.",
-        theme~,
         width=390.0,
         height=30.0,
       ),
       text(
         "Caption role / control role",
         role=Caption,
-        theme~,
         width=390.0,
         height=24.0,
       ),
@@ -540,7 +525,6 @@ fn DesignSystemsModel::component_matrix_panel(
       ],
       selected=self.selected_component,
       on_select=id => SelectComponent(id),
-      theme~,
       max_height=160.0,
     ).frame(width=240.0, height=40.0),
     // Primary + tonal + outline + ghost button variants. The button resolves
@@ -553,7 +537,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Primary",
           on_click=ToggleCustom,
           variant=Primary,
-          theme~,
           width=96.0,
           height=36.0,
         ),
@@ -561,7 +544,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Tonal",
           on_click=ToggleCustom,
           variant=Tonal,
-          theme~,
           width=88.0,
           height=36.0,
         ),
@@ -569,7 +551,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Outline",
           on_click=ToggleCustom,
           variant=Outline,
-          theme~,
           width=96.0,
           height=36.0,
         ),
@@ -577,7 +558,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Ghost",
           on_click=ToggleCustom,
           variant=Ghost,
-          theme~,
           width=80.0,
           height=36.0,
         ),
@@ -594,7 +574,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Subtle",
           on_click=ToggleCustom,
           variant=Subtle,
-          theme~,
           width=88.0,
           height=36.0,
         ),
@@ -602,7 +581,6 @@ fn DesignSystemsModel::component_matrix_panel(
           "Subtle brand",
           on_click=ToggleCustom,
           variant=SubtleBrand,
-          theme~,
           width=128.0,
           height=36.0,
         ),
@@ -610,7 +588,6 @@ fn DesignSystemsModel::component_matrix_panel(
           self.draft,
           on_input=value => DraftChanged(value),
           placeholder="Underline field",
-          theme~,
           style=styles.text_field.filled,
           width=200.0,
           height=36.0,

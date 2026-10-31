@@ -2,7 +2,6 @@
 fn menu_bar(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
   let compact = width < 760.0
@@ -10,14 +9,13 @@ fn menu_bar(
   let left = if compact {
     @views.row(
       [
-        apple_menu_button(SystemMenu, model, palette, theme, 28.0),
+        apple_menu_button(SystemMenu, model, palette, 28.0),
         menu_button(
           model.active_app_label(),
           88.0,
           AppMenu,
           model,
           palette,
-          theme,
           true,
         ),
       ],
@@ -27,14 +25,13 @@ fn menu_bar(
   } else {
     @views.row(
       [
-        apple_menu_button(SystemMenu, model, palette, theme, 24.0),
+        apple_menu_button(SystemMenu, model, palette, 24.0),
         menu_button(
           model.active_app_label(),
           70.0,
           AppMenu,
           model,
           palette,
-          theme,
           true,
         ),
         menu_button(
@@ -43,7 +40,6 @@ fn menu_bar(
           FileMenu,
           model,
           palette,
-          theme,
           false,
         ),
         menu_button(
@@ -52,7 +48,6 @@ fn menu_bar(
           EditMenu,
           model,
           palette,
-          theme,
           false,
         ),
         menu_button(
@@ -61,7 +56,6 @@ fn menu_bar(
           ViewMenu,
           model,
           palette,
-          theme,
           false,
         ),
         menu_button(
@@ -70,7 +64,6 @@ fn menu_bar(
           GoMenu,
           model,
           palette,
-          theme,
           false,
         ),
         menu_button(
@@ -79,7 +72,6 @@ fn menu_bar(
           WindowMenu,
           model,
           palette,
-          theme,
           false,
         ),
         menu_button(
@@ -88,7 +80,6 @@ fn menu_bar(
           HelpMenu,
           model,
           palette,
-          theme,
           false,
         ),
       ],
@@ -104,7 +95,7 @@ fn menu_bar(
     ]
   } else {
     [
-      spotlight_button(palette, theme),
+      spotlight_button(palette),
       menu_icon(Search, "Open app launcher", ToggleLauncher, palette),
       menu_icon(Link, "Wi-Fi connected", ToggleControlCenter, palette),
       menu_icon(Focus, "Sound controls", ToggleControlCenter, palette),
@@ -122,7 +113,6 @@ fn menu_bar(
             desktop_clock_menu_label(model.clock)
           },
           role=Label,
-          theme~,
           width=clock_width,
           height=20.0,
           align=TextEnd,
@@ -183,10 +173,9 @@ fn menu_text(
   label : String,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   strong : Bool,
 ) -> @moui.View[Msg] {
-  @views.text(label, role=Label, theme~, width~, height=20.0, align=TextCenter)
+  @views.text(label, role=Label, width~, height=20.0, align=TextCenter)
   .font(@text.FontSpec::new(size=13.0, weight=if strong { 620 } else { 430 }))
   .foreground(palette.foreground)
 }
@@ -198,7 +187,6 @@ fn menu_button(
   menu : DesktopMenu,
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   strong : Bool,
 ) -> @moui.View[Msg] {
   // macOS highlights the currently-open menu in the bar with a translucent
@@ -207,7 +195,7 @@ fn menu_button(
     MenuBarMenu(opened) => opened == menu
     _ => false
   }
-  let label_view = menu_text(label, width, palette, theme, strong)
+  let label_view = menu_text(label, width, palette, strong)
   if active {
     @views.container(
       label_view,
@@ -234,7 +222,6 @@ fn apple_menu_button(
   menu : DesktopMenu,
   model : DesktopModel,
   palette : DesktopPalette,
-  _theme : @moui.Theme,
   glyph_size : Double,
 ) -> @moui.View[Msg] {
   // The menu bar content area is 20px (28px bar − 4px padding × 2). Keep
@@ -552,12 +539,9 @@ fn dock_tile_shell(
 /// Labeled Spotlight trigger in the menu bar. Spotlight existed as an
 /// overlay but had no entry point before; a text control keeps it reachable
 /// for pointer and assistive-tech users alike.
-fn spotlight_button(
-  palette : DesktopPalette,
-  theme : @moui.Theme,
-) -> @moui.View[Msg] {
+fn spotlight_button(palette : DesktopPalette) -> @moui.View[Msg] {
   @views.container(
-    @views.text("Spotlight", role=Caption, theme~, width=58.0, height=18.0).foreground(
+    @views.text("Spotlight", role=Caption, width=58.0, height=18.0).foreground(
       palette.foreground,
     ),
     width=64.0,

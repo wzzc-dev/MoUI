@@ -585,7 +585,6 @@ pub fn ShowcaseModel::view_body(
           primary_action=Some(
             @views.StateViewAction::new(label="Close", message=HideDialog),
           ),
-          theme~,
         ),
         modality=Modal,
         presented=true,

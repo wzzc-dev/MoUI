@@ -10,7 +10,6 @@ fn menu_bar_popup(
   model : DesktopModel,
   menu : DesktopMenu,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -33,7 +32,7 @@ fn menu_bar_popup(
   let children : Array[@moui.View[Msg]] = []
   for index in 0..<items.length() {
     children.push(
-      menu_bar_item(items[index], width - 16.0, palette, theme, item_height),
+      menu_bar_item(items[index], width - 16.0, palette, item_height),
     )
     if index == separator_after {
       children.push(menu_separator(width - 32.0, palette))
@@ -256,25 +255,17 @@ fn menu_bar_item(
   item : MenuBarItem,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   item_height : Double,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.row(
       [
-        @views.text(
-          item.label,
-          role=Label,
-          theme~,
-          width=width - 54.0,
-          height=20.0,
-        )
+        @views.text(item.label, role=Label, width=width - 54.0, height=20.0)
         .font(@text.FontSpec::new(size=13.0, weight=460))
         .foreground(palette.foreground),
         @views.text(
           item.shortcut,
           role=Caption,
-          theme~,
           width=48.0,
           height=20.0,
           align=TextEnd,

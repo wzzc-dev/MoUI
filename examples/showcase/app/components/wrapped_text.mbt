@@ -2,7 +2,6 @@
 fn wrapped_text(
   value : String,
   role~ : @views.TextRole,
-  theme~ : @moui.Theme,
   width~ : Double,
   height~ : Double,
   align~ : @text.TextAlign,
@@ -12,7 +11,7 @@ fn wrapped_text(
   let lines = wrap_text_lines(value, role, width, max_lines)
   @views.column(
     lines.map(line => {
-      @views.text(line, role~, theme~, width~, height=line_height, align~)
+      @views.text(line, role~, width~, height=line_height, align~)
     }),
     spacing=0.0,
     align=Stretch,

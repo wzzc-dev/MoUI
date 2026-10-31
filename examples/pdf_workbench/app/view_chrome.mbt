@@ -7,17 +7,10 @@ fn pdf_workbench_toolbar(
     [
       @views.column(
         [
-          @views.text(
-            "PDF Workbench",
-            role=Title,
-            theme~,
-            width=220.0,
-            height=32.0,
-          ),
+          @views.text("PDF Workbench", role=Title, width=220.0, height=32.0),
           @views.text(
             "Native PDF reader with light editing",
             role=Caption,
-            theme~,
             width=300.0,
             height=22.0,
           ).foreground(theme.palette.muted),
@@ -26,18 +19,11 @@ fn pdf_workbench_toolbar(
         align=Start,
       ),
       @views.spacer(min_length=16.0, weight=1.0),
-      @views.button(
-        "Open",
-        on_click=OpenRequested,
-        theme~,
-        width=82.0,
-        height=36.0,
-      ),
+      @views.button("Open", on_click=OpenRequested, width=82.0, height=36.0),
       @views.button(
         "Save",
         on_click=SaveRequested,
         variant=Outline,
-        theme~,
         width=78.0,
         height=36.0,
       ),
@@ -45,7 +31,6 @@ fn pdf_workbench_toolbar(
         "Save As",
         on_click=SaveAsRequested,
         variant=Outline,
-        theme~,
         width=92.0,
         height=36.0,
       ),
@@ -54,14 +39,12 @@ fn pdf_workbench_toolbar(
         on_input=query => SearchChanged(query),
         placeholder="Search extracted text",
         variant=Outline,
-        theme~,
         width=156.0,
         height=36.0,
       ),
       @views.text(
         model.search_status_label(),
         role=Caption,
-        theme~,
         width=92.0,
         height=24.0,
       ).foreground(theme.palette.muted),
@@ -69,7 +52,6 @@ fn pdf_workbench_toolbar(
         "Prev Hit",
         on_click=SearchPrevious,
         variant=Outline,
-        theme~,
         width=78.0,
         height=36.0,
       ),
@@ -77,7 +59,6 @@ fn pdf_workbench_toolbar(
         "Next Hit",
         on_click=SearchNext,
         variant=Outline,
-        theme~,
         width=78.0,
         height=36.0,
       ),
@@ -106,7 +87,6 @@ fn pdf_workbench_failure_banner(
             "PDF Workbench needs attention",
             reason,
             tone=Danger,
-            theme~,
             width=(metrics.inner_width - 112.0 - theme.spacing_scale.sm).max(
               360.0,
             ),
@@ -115,7 +95,6 @@ fn pdf_workbench_failure_banner(
             "Dismiss",
             on_click=ClearFailure,
             variant=Outline,
-            theme~,
             width=88.0,
             height=36.0,
           ),
@@ -131,7 +110,6 @@ fn pdf_workbench_failure_banner(
 fn pdf_workbench_status(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
   let status = match model.status {
     Empty => "Empty"
@@ -153,7 +131,6 @@ fn pdf_workbench_status(
       pdf_workbench_raster_status_label(model.raster_status),
       model.last_event,
     ],
-    theme~,
     width=metrics.inner_width,
   )
 }

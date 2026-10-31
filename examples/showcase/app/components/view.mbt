@@ -45,7 +45,6 @@ pub fn view(
   model : ComponentGalleryModel,
   env : @moui.ViewEnvironment,
 ) -> @moui.View[ComponentGalleryMsg] {
-  let theme = @views.light_theme()
   let viewport = env.viewport_size()
   let page_width = responsive_page_width(model.active_platform, viewport.width)
   let page_height = viewport.height.max(1.0)
@@ -59,10 +58,10 @@ pub fn view(
     ),
     width=page_width,
     height=page_height,
-    background=theme.palette.background,
     padding=16.0,
-    theme~,
   )
+  // Ambient theme scope for the standalone components package program.
+  .theme(@views.light_theme())
 }
 
 ///|

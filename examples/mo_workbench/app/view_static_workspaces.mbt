@@ -182,11 +182,10 @@ fn work_tab_header(
     [
       @views.column(
         [
-          @views.text("Work", role=Title, theme~, width=width - 150.0),
+          @views.text("Work", role=Title, width=width - 150.0),
           @views.text(
             "任务概览、运行状态和最近会话 · Active \{summary.active}",
             role=Caption,
-            theme~,
             width=width - 150.0,
           ).foreground(workbench_text_muted(theme)),
         ],
@@ -198,7 +197,6 @@ fn work_tab_header(
         "新建任务",
         on_click=NewTask,
         variant=Tonal,
-        theme~,
         icon=Some(Plus),
         width=112.0,
         height=34.0,
@@ -263,10 +261,8 @@ fn work_metric_card(
   @views.container(
     @views.column(
       [
-        @views.text(value, role=Title, theme~, width=width - 24.0).foreground(
-          color,
-        ),
-        @views.text(label, role=Caption, theme~, width=width - 24.0).foreground(
+        @views.text(value, role=Title, width=width - 24.0).foreground(color),
+        @views.text(label, role=Caption, width=width - 24.0).foreground(
           workbench_text_muted(theme),
         ),
       ],
@@ -300,9 +296,9 @@ fn work_next_actions_section(
   let rows : Array[@moui.View[WorkbenchMsg]] = [
     @views.row(
       [
-        @views.text("Next actions", role=Label, theme~, width=width - 120.0),
+        @views.text("Next actions", role=Label, width=width - 120.0),
         @views.spacer(),
-        @views.badge(badge, theme~, width=104.0, height=24.0),
+        @views.badge(badge, width=104.0, height=24.0),
       ],
       spacing=12.0,
       align=Center,
@@ -343,19 +339,18 @@ fn work_action_card(
         @views.row(
           [
             @views.icon(action.icon, size=18.0, color=workbench_accent(theme)),
-            @views.text(action.title, role=Label, theme~, width=width - 54.0),
+            @views.text(action.title, role=Label, width=width - 54.0),
           ],
           spacing=8.0,
           align=Center,
         ),
-        @views.text(action.detail, role=Caption, theme~, width=width - 28.0).foreground(
+        @views.text(action.detail, role=Caption, width=width - 28.0).foreground(
           workbench_text_muted(theme),
         ),
         @views.button(
           action.label,
           on_click=action.action,
           variant=action.variant,
-          theme~,
           icon=Some(action.icon),
           width=(width - 28.0).min(132.0),
           height=32.0,
@@ -380,7 +375,7 @@ fn work_recent_tasks(
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let rows : Array[@moui.View[WorkbenchMsg]] = [
-    @views.text("Recent tasks", role=Label, theme~, width~),
+    @views.text("Recent tasks", role=Label, width~),
   ]
   if model.code.sessions.is_empty() {
     rows.push(work_empty_task_card(theme, width))
@@ -404,11 +399,10 @@ fn work_empty_task_card(
   @views.container(
     @views.column(
       [
-        @views.text("暂无任务", role=Label, theme~, width=width - 32.0),
+        @views.text("暂无任务", role=Label, width=width - 32.0),
         @views.text(
           "点击新建任务开始一次 agent 工作流",
           role=Caption,
-          theme~,
           width=width - 32.0,
         ).foreground(workbench_text_muted(theme)),
       ],
@@ -453,13 +447,11 @@ fn work_task_row(
             @views.text(
               truncate_text(title, 48),
               role=Label,
-              theme~,
               width=width - 160.0,
             ),
             @views.text(
               truncate_text(session.id, 28),
               role=Caption,
-              theme~,
               width=width - 160.0,
             ).foreground(workbench_text_muted(theme)),
           ],
@@ -467,7 +459,7 @@ fn work_task_row(
           align=Start,
         ),
         @views.spacer(),
-        @views.badge(task_status_label(status), theme~, width=78.0, height=24.0),
+        @views.badge(task_status_label(status), width=78.0, height=24.0),
       ],
       spacing=12.0,
       align=Center,
@@ -578,12 +570,11 @@ fn design_tab_header(
     [
       @views.column(
         [
-          @views.text("Design", role=Title, theme~, width=width - 150.0),
+          @views.text("Design", role=Title, width=width - 150.0),
           @views.text(
             "界面状态、控件样式和主题 token · " +
             summary.active_session,
             role=Caption,
-            theme~,
             width=width - 150.0,
           ).foreground(workbench_text_muted(theme)),
         ],
@@ -595,7 +586,6 @@ fn design_tab_header(
         "设置",
         on_click=ToggleSettings,
         variant=Ghost,
-        theme~,
         icon=Some(Settings),
         width=104.0,
         height=34.0,
@@ -672,10 +662,8 @@ fn design_fact_card(
   @views.container(
     @views.column(
       [
-        @views.text(value, role=Label, theme~, width=width - 28.0).foreground(
-          color,
-        ),
-        @views.text(label, role=Caption, theme~, width=width - 28.0).foreground(
+        @views.text(value, role=Label, width=width - 28.0).foreground(color),
+        @views.text(label, role=Caption, width=width - 28.0).foreground(
           workbench_text_muted(theme),
         ),
       ],
@@ -702,8 +690,8 @@ fn design_component_preview(
       [
         @views.row(
           [
-            @views.text("Controls", role=Label, theme~, width=width - 128.0),
-            @views.badge(summary.font_size, theme~, width=74.0, height=24.0),
+            @views.text("Controls", role=Label, width=width - 128.0),
+            @views.badge(summary.font_size, width=74.0, height=24.0),
           ],
           spacing=12.0,
           align=Center,
@@ -714,7 +702,6 @@ fn design_component_preview(
               "New task",
               on_click=NewTask,
               variant=Primary,
-              theme~,
               icon=Some(Plus),
               width=118.0,
               height=36.0,
@@ -723,7 +710,6 @@ fn design_component_preview(
               "Review",
               on_click=SwitchTab(Work),
               variant=Tonal,
-              theme~,
               width=98.0,
               height=36.0,
             ),
@@ -731,7 +717,6 @@ fn design_component_preview(
               "Code",
               on_click=SwitchTab(Code),
               variant=Ghost,
-              theme~,
               width=82.0,
               height=36.0,
             ),
@@ -745,13 +730,12 @@ fn design_component_preview(
             @views.chip(
               summary.sandbox,
               selected=true,
-              theme~,
               width=104.0,
               height=28.0,
             ),
-            @views.chip(summary.approval, theme~, width=96.0, height=28.0),
-            @views.badge("Ready", theme~, width=70.0, height=24.0),
-            @views.badge("Diff", theme~, width=58.0, height=24.0),
+            @views.chip(summary.approval, width=96.0, height=28.0),
+            @views.badge("Ready", width=70.0, height=24.0),
+            @views.badge("Diff", width=58.0, height=24.0),
             @views.spacer(),
           ],
           spacing=8.0,
@@ -777,7 +761,7 @@ fn design_palette_preview(
   let swatch_width = (width - 32.0) / 5.0
   @views.column(
     [
-      @views.text("Palette", role=Label, theme~, width~),
+      @views.text("Palette", role=Label, width~),
       @views.row(
         [
           design_swatch(
@@ -824,7 +808,7 @@ fn design_swatch(
           border=Some(hairline_border(theme)),
           padding=0.0,
         ),
-        @views.text(label, role=Caption, theme~, width=width - 28.0).foreground(
+        @views.text(label, role=Caption, width=width - 28.0).foreground(
           workbench_text_muted(theme),
         ),
       ],

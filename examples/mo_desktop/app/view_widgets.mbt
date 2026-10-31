@@ -2,7 +2,6 @@
 fn desktop_widgets(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[Msg] {
@@ -12,18 +11,16 @@ fn desktop_widgets(
         @views.text(
           desktop_month_year(model.clock),
           role=Title,
-          theme~,
           width=222.0,
           height=28.0,
         )
         .font(@text.FontSpec::new(size=18.0, weight=650))
         .foreground(rgba8(255, 69, 58)),
-        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette, theme),
-        calendar_month_grid(model.clock, palette, theme),
+        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette),
+        calendar_month_grid(model.clock, palette),
         @views.text(
           "Today  |  \{desktop_clock_lock_date(model.clock)}",
           role=Caption,
-          theme~,
           width=222.0,
           height=22.0,
         ).foreground(palette.muted),
@@ -44,17 +41,12 @@ fn desktop_widgets(
           [
             @views.column(
               [
-                @views.text(
-                  "Cupertino",
-                  role=Label,
-                  theme~,
-                  width=96.0,
-                  height=22.0,
-                ).foreground(palette.foreground),
+                @views.text("Cupertino", role=Label, width=96.0, height=22.0).foreground(
+                  palette.foreground,
+                ),
                 @views.text(
                   "Clear  |  H:83  L:56",
                   role=Caption,
-                  theme~,
                   width=110.0,
                   height=20.0,
                 ).foreground(palette.muted),
@@ -72,7 +64,6 @@ fn desktop_widgets(
             @views.text(
               "68",
               role=Display,
-              theme~,
               width=42.0,
               height=42.0,
               align=TextCenter,
@@ -88,11 +79,11 @@ fn desktop_widgets(
         // a tiny glyph and the expected high, like macOS's weather widget.
         @views.row(
           [
-            weather_hour_cell("Now", 68.0, palette, theme),
-            weather_hour_cell("1PM", 70.0, palette, theme),
-            weather_hour_cell("2PM", 72.0, palette, theme),
-            weather_hour_cell("3PM", 71.0, palette, theme),
-            weather_hour_cell("4PM", 68.0, palette, theme),
+            weather_hour_cell("Now", 68.0, palette),
+            weather_hour_cell("1PM", 70.0, palette),
+            weather_hour_cell("2PM", 72.0, palette),
+            weather_hour_cell("3PM", 71.0, palette),
+            weather_hour_cell("4PM", 68.0, palette),
           ],
           spacing=8.0,
           justify=Between,
@@ -111,14 +102,13 @@ fn desktop_widgets(
       [
         @views.row(
           [
-            @views.text("Today", role=Label, theme~, width=120.0, height=22.0).foreground(
+            @views.text("Today", role=Label, width=120.0, height=22.0).foreground(
               palette.foreground,
             ),
             @views.spacer(min_length=4.0),
             @views.badge(
               "\{model.remaining_tasks()} left",
               tone=Accent,
-              theme~,
               width=66.0,
               height=24.0,
             ),
@@ -126,14 +116,9 @@ fn desktop_widgets(
           spacing=4.0,
           align=Center,
         ),
-        task_preview(
-          "Review desktop polish",
-          model.first_task_done,
-          palette,
-          theme,
-        ),
-        task_preview("Reply to Maya", model.second_task_done, palette, theme),
-        task_preview("Plan Tahoe photos", model.third_task_done, palette, theme),
+        task_preview("Review desktop polish", model.first_task_done, palette),
+        task_preview("Reply to Maya", model.second_task_done, palette),
+        task_preview("Plan Tahoe photos", model.third_task_done, palette),
       ],
       spacing=4.0,
       align=Start,
@@ -157,7 +142,6 @@ fn desktop_widgets(
 fn calendar_month_grid(
   clock : DesktopClock,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // Approximate the weekday of day 1 by walking back from today's weekday.
   // weekday: Sunday=0..Saturday=6. Offset days back to day 1, mod 7.
@@ -186,7 +170,7 @@ fn calendar_month_grid(
     for col in 0..<7 {
       row_cells.push(cells[row_index * 7 + col])
     }
-    rows.push(calendar_row(row_cells, Some(clock.day), palette, theme))
+    rows.push(calendar_row(row_cells, Some(clock.day), palette))
   }
   @views.column(rows, spacing=4.0, align=Start)
 }
@@ -212,7 +196,6 @@ fn calendar_row(
   labels : Array[String],
   selected_day : Int32?,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.row(
     labels.map(label => {
@@ -225,7 +208,6 @@ fn calendar_row(
           @views.text(
             label,
             role=Caption,
-            theme~,
             width=22.0,
             height=16.0,
             align=TextCenter,
@@ -242,7 +224,6 @@ fn calendar_row(
         @views.text(
           label,
           role=Caption,
-          theme~,
           width=25.0,
           height=18.0,
           align=TextCenter,
@@ -301,18 +282,10 @@ fn weather_hour_cell(
   hour : String,
   temp : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text(
-        hour,
-        role=Caption,
-        theme~,
-        width=36.0,
-        height=14.0,
-        align=TextCenter,
-      )
+      @views.text(hour, role=Caption, width=36.0, height=14.0, align=TextCenter)
       .font(@text.FontSpec::new(size=10.0, weight=520))
       .foreground(palette.muted),
       @views.container(
@@ -324,7 +297,6 @@ fn weather_hour_cell(
       @views.text(
         "\{temp.to_int()}\u00B0",
         role=Caption,
-        theme~,
         width=36.0,
         height=16.0,
         align=TextCenter,
@@ -340,11 +312,7 @@ fn weather_hour_cell(
 ///|
 /// A macOS Reminders-style circular checkbox: empty ring when open, filled
 /// accent capsule with a check glyph when done.
-fn task_checkbox(
-  done : Bool,
-  palette : DesktopPalette,
-  theme : @moui.Theme,
-) -> @moui.View[Msg] {
+fn task_checkbox(done : Bool, palette : DesktopPalette) -> @moui.View[Msg] {
   let size = 18.0
   if done {
     @views.stack([
@@ -359,7 +327,6 @@ fn task_checkbox(
       @views.text(
         "✓",
         role=Caption,
-        theme~,
         width=size,
         height=size,
         align=TextCenter,
@@ -392,15 +359,14 @@ fn task_preview(
   label : String,
   done : Bool,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // macOS Reminders row: a leading circular checkbox, the task label inline,
   // muted when completed. The row still selects the same action so the widget
   // remains a glanceable preview rather than a live toggle surface.
   @views.row(
     [
-      task_checkbox(done, palette, theme),
-      @views.text(label, role=Body, theme~, width=196.0, height=18.0)
+      task_checkbox(done, palette),
+      @views.text(label, role=Body, width=196.0, height=18.0)
       .font(@text.FontSpec::new(size=13.0, weight=520))
       .foreground(if done { palette.muted } else { palette.foreground }),
     ],
@@ -413,7 +379,6 @@ fn task_preview(
 fn desktop_files(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
   // Each icon carries its persisted placement offset and a drag surface so
@@ -429,7 +394,6 @@ fn desktop_files(
         tahoe_offset.0,
         tahoe_offset.1,
         palette,
-        theme,
       ),
       desktop_file(
         "Welcome.txt",
@@ -438,7 +402,6 @@ fn desktop_files(
         welcome_offset.0,
         welcome_offset.1,
         palette,
-        theme,
       ),
     ],
     spacing=20.0,
@@ -458,7 +421,6 @@ fn desktop_file(
   offset_x : Double,
   offset_y : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // Folder: soft blue plate. Document: white paper glyph with TXT badge.
   let glyph = if is_folder {
@@ -510,7 +472,6 @@ fn desktop_file(
         @views.text(
           "TXT",
           role=Caption,
-          theme~,
           width=30.0,
           height=12.0,
           align=TextCenter,
@@ -533,7 +494,6 @@ fn desktop_file(
       @views.text(
         label,
         role=Caption,
-        theme~,
         width=104.0,
         height=30.0,
         align=TextCenter,

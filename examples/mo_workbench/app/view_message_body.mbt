@@ -11,7 +11,7 @@ fn chat_message_body(
   let font_size = chat_message_text_role_font(role, theme).size
   let lines = chat_message_display_lines(display, width, font_size)
   if lines.is_empty() {
-    return chat_message_text("(empty)", role=Caption, theme~, width~).foreground(
+    return chat_message_text("(empty)", role=Caption, width~).foreground(
       theme.palette.muted,
     )
   }
@@ -21,7 +21,6 @@ fn chat_message_body(
       chat_message_text(
         line,
         role~,
-        theme~,
         width~,
         height=chat_message_line_height(font_size),
       ),
@@ -34,11 +33,10 @@ fn chat_message_body(
 fn chat_message_text(
   text : String,
   role~ : @views.TextRole = Body,
-  theme~ : @moui.Theme,
   width~ : Double = 160.0,
   height~ : Double = 32.0,
 ) -> @moui.View[CodeMsg] {
-  @views.text(text, role~, theme~, width~, height~, align=TextStart)
+  @views.text(text, role~, width~, height~, align=TextStart)
 }
 
 ///|

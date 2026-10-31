@@ -269,7 +269,7 @@ fn acp_agent_controls(
   match code.session_modes {
     Some(modes) =>
       if !modes.available_modes.is_empty() {
-        rows.push(acp_mode_picker(modes, theme, width))
+        rows.push(acp_mode_picker(modes, width))
       }
     None => rows.push(code_compact_select_chip("ACP", theme, width.min(96.0)))
   }
@@ -282,7 +282,6 @@ fn acp_agent_controls(
 ///|
 fn acp_mode_picker(
   modes : AgentSessionModeState,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let items : Array[@views.ChoiceItem] = []
@@ -294,7 +293,6 @@ fn acp_mode_picker(
     selected=modes.current_mode_id,
     on_select=id => SetSessionMode(id),
     size=Compact,
-    theme~,
     width=width.min(260.0),
   )
 }
@@ -333,7 +331,7 @@ fn acp_config_control(
       if option.values.is_empty() {
         code_compact_select_chip(option.name, theme, width)
       } else {
-        acp_config_value_picker(option, theme, width)
+        acp_config_value_picker(option, width)
       }
   }
 }
@@ -341,7 +339,6 @@ fn acp_config_control(
 ///|
 fn acp_config_value_picker(
   option : AgentSessionConfigOption,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let items : Array[@views.ChoiceItem] = []
@@ -357,7 +354,6 @@ fn acp_config_value_picker(
     selected~,
     on_select=id => SetSessionConfigOption(option.id, ValueId(id)),
     size=Compact,
-    theme~,
     width~,
   )
 }
@@ -377,7 +373,7 @@ fn code_model_dropdown_panel(
   rows.push(provider_switcher_row(settings, theme, panel_width))
   rows.push(
     @views.container(
-      @views.text("模型", role=Caption, theme~, width=panel_width).foreground(
+      @views.text("模型", role=Caption, width=panel_width).foreground(
         theme.palette.muted,
       ),
       width=panel_width,
@@ -391,7 +387,6 @@ fn code_model_dropdown_panel(
           @views.text(
             "该供应商暂无模型。可在设置中自动检测或手动添加。",
             role=Caption,
-            theme~,
             width=panel_width,
           ).foreground(theme.palette.muted),
         )
@@ -462,7 +457,6 @@ fn provider_switcher_row(
         @views.text(
           p.name,
           role=Caption,
-          theme~,
           width=(chip_w - 12.0).max(40.0),
           height=18.0,
         ).foreground(
@@ -474,7 +468,6 @@ fn provider_switcher_row(
         ),
         width=chip_w,
         height=22.0,
-        theme~,
       ),
       width=chip_w,
       height=32.0,
@@ -506,7 +499,7 @@ fn model_option_row(
     @views.icon(Check, size=16.0, color=workbench_accent(theme))
   } else {
     @views.container(
-      @views.text("", role=Caption, theme~, width=16.0),
+      @views.text("", role=Caption, width=16.0),
       width=16.0,
       height=16.0,
     )
@@ -517,7 +510,6 @@ fn model_option_row(
         @views.text(
           model_id,
           role=Label,
-          theme~,
           width=(width - 36.0).max(80.0),
           height=22.0,
         ).foreground(workbench_text(theme)),
@@ -553,7 +545,6 @@ fn code_compact_select_chip(
           @views.text(
             label,
             role=Caption,
-            theme~,
             width=(content_width - 14.0).max(24.0),
             height=18.0,
           ).foreground(workbench_accent(theme)),
@@ -564,7 +555,6 @@ fn code_compact_select_chip(
       ),
       width=content_width,
       height=20.0,
-      theme~,
     ),
     width~,
     height=26.0,
@@ -596,7 +586,6 @@ fn code_context_bar(
             @views.text(
               label,
               role=Caption,
-              theme~,
               width=(chip_width - 52.0).max(60.0),
             ).foreground(workbench_text(theme)),
             @views.icon(
@@ -724,7 +713,7 @@ fn quick_chip(
     @views.row(
       [
         @views.icon(icon, size=14.0, color=workbench_accent(theme)),
-        @views.text(label, role=Caption, theme~, width=text_width, height=20.0).foreground(
+        @views.text(label, role=Caption, width=text_width, height=20.0).foreground(
           workbench_accent(theme),
         ),
       ],
@@ -986,7 +975,6 @@ fn code_streaming_steer_panel(
         @views.text(
           "AI " + truncate_text(code_activity_text(model), 32),
           role=Caption,
-          theme~,
           width=status_width - 30.0,
           height=22.0,
         ).foreground(workbench_text_muted(theme)),
@@ -996,7 +984,6 @@ fn code_streaming_steer_panel(
           on_submit=Some(SubmitSteer),
           placeholder="Steer the running turn...",
           variant=Filled,
-          theme~,
           width=steer_width,
           height=34.0,
         ),
@@ -1004,7 +991,6 @@ fn code_streaming_steer_panel(
           "Steer",
           on_click=SubmitSteer,
           variant=Ghost,
-          theme~,
           width=72.0,
           height=34.0,
         ),
@@ -1034,7 +1020,7 @@ fn code_composer(
   match model.error {
     Some(err) =>
       rows.push(
-        @views.text(err, role=Caption, theme~, width=inner_width).foreground(
+        @views.text(err, role=Caption, width=inner_width).foreground(
           theme.palette.danger,
         ),
       )
@@ -1078,7 +1064,6 @@ fn code_composer_input_card(
       },
       lines=prompt_lines,
       variant=Plain,
-      theme~,
       width~,
       line_height=code_composer_prompt_line_height(),
     )
@@ -1095,13 +1080,12 @@ fn code_composer_input_card(
             "Cancel",
             on_click=CancelTurn,
             variant=Ghost,
-            theme~,
             width=cancel_width,
             height=32.0,
           )
         } else {
           @views.container(
-            @views.text("", role=Caption, theme~, width=0.0),
+            @views.text("", role=Caption, width=0.0),
             width=0.0,
             height=0.0,
           )

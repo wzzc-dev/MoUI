@@ -26,9 +26,8 @@ fn PdfWorkbenchModel::view_for_viewport(
       width=metrics.viewport.width,
       height=metrics.viewport.height,
       variant=Base,
-      theme~,
       padding=theme.spacing_scale.sm,
-    )
+    ).theme(theme)
   }
   let header = pdf_workbench_toolbar(self, theme)
   let body_columns : Array[@moui.View[PdfWorkbenchMsg]] = []
@@ -46,15 +45,14 @@ fn PdfWorkbenchModel::view_for_viewport(
     _ => ()
   }
   rows.push(body)
-  rows.push(pdf_workbench_status(self, metrics, theme))
+  rows.push(pdf_workbench_status(self, metrics))
   container(
     column(rows, spacing=theme.spacing_scale.md, align=Stretch),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|

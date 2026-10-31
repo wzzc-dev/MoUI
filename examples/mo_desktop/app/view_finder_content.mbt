@@ -4,7 +4,6 @@ fn finder_content(
   width : Double,
   height : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let entries = visible_finder_entries(model)
   let inner_width = (width - 28.0).max(220.0)
@@ -14,7 +13,6 @@ fn finder_content(
         @views.text(
           "No files match \"\{model.finder_query}\"",
           role=Title,
-          theme~,
           width=inner_width,
           height=36.0,
           align=TextCenter,
@@ -23,7 +21,6 @@ fn finder_content(
           "Clear Search",
           on_click=FinderQueryChanged(""),
           variant=Tonal,
-          theme~,
           width=126.0,
           height=38.0,
         ),
@@ -35,7 +32,7 @@ fn finder_content(
     match model.finder_view_mode {
       IconView =>
         @views.responsive_grid(
-          entries.map(entry => file_icon(entry, model, palette, theme)),
+          entries.map(entry => file_icon(entry, model, palette)),
           width=inner_width,
           min_column_width=118.0,
           row_spacing=18.0,
@@ -44,10 +41,10 @@ fn finder_content(
       ListView =>
         @views.column(
           [
-            file_list_header(inner_width, palette, theme),
+            file_list_header(inner_width, palette),
             @views.column(
               entries.map(entry => {
-                file_list_row(entry, model, inner_width, palette, theme)
+                file_list_row(entry, model, inner_width, palette)
               }),
               spacing=2.0,
               align=Stretch,
@@ -76,7 +73,6 @@ fn finder_status(
   width : Double,
   height : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // macOS Finder bottom status bar: item count on the left, available space
   // on the right, separated by a hairline divider above.
@@ -100,7 +96,6 @@ fn finder_status(
           @views.text(
             left_label,
             role=Caption,
-            theme~,
             width=(width * 0.5).max(120.0),
             height=18.0,
           )
@@ -110,7 +105,6 @@ fn finder_status(
           @views.text(
             "214.3 GB available",
             role=Caption,
-            theme~,
             width=140.0,
             height=18.0,
             align=TextEnd,
@@ -249,7 +243,6 @@ fn file_icon(
   entry : FileEntry,
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let selected = model.selected_file == entry.name
   // Document-style white paper glyph with a small type badge — closer to
@@ -262,7 +255,6 @@ fn file_icon(
         @views.text(
           entry.name,
           role=Caption,
-          theme~,
           width=112.0,
           height=34.0,
           align=TextCenter,
@@ -383,7 +375,6 @@ fn file_type_badge(entry : FileEntry) -> String {
 fn file_list_header(
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // macOS Finder list-view header: small uppercase muted column labels with a
   // bottom rule. Column widths mirror `file_list_row` so labels align.
@@ -395,26 +386,19 @@ fn file_list_header(
     [
       @views.row(
         [
-          @views.text("Name", role=Caption, theme~, width=name_w, height=18.0)
+          @views.text("Name", role=Caption, width=name_w, height=18.0)
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
-          @views.text(
-            "Date Modified",
-            role=Caption,
-            theme~,
-            width=date_w,
-            height=18.0,
-          )
+          @views.text("Date Modified", role=Caption, width=date_w, height=18.0)
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
-          @views.text("Kind", role=Caption, theme~, width=kind_w, height=18.0)
+          @views.text("Kind", role=Caption, width=kind_w, height=18.0)
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.muted),
           @views.spacer(min_length=4.0, weight=1.0),
           @views.text(
             "Size",
             role=Caption,
-            theme~,
             width=size_w,
             height=18.0,
             align=TextEnd,
@@ -444,7 +428,6 @@ fn file_list_row(
   model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let selected = model.selected_file == entry.name
   @views.container(
@@ -461,21 +444,18 @@ fn file_list_row(
         @views.text(
           entry.name,
           role=Body,
-          theme~,
           width=(width * 0.40).max(120.0),
           height=30.0,
         ).foreground(palette.foreground),
         @views.text(
           entry.date,
           role=Caption,
-          theme~,
           width=(width * 0.22).max(96.0),
           height=30.0,
         ).foreground(palette.muted),
         @views.text(
           entry.kind,
           role=Caption,
-          theme~,
           width=(width * 0.20).max(72.0),
           height=30.0,
         ).foreground(palette.muted),
@@ -483,7 +463,6 @@ fn file_list_row(
         @views.text(
           entry.size,
           role=Caption,
-          theme~,
           width=66.0,
           height=30.0,
           align=TextEnd,

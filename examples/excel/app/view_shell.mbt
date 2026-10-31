@@ -5,13 +5,13 @@ fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
   let shell = @views.column(
     [
       build_toolbar(model, theme),
-      @views.divider(theme~),
+      @views.divider(),
       build_formula_bar(model, theme),
-      @views.divider(theme~),
+      @views.divider(),
       build_grid(model, theme),
-      @views.divider(theme~),
-      build_sheet_tabs(model, theme),
-      @views.divider(theme~),
+      @views.divider(),
+      build_sheet_tabs(model),
+      @views.divider(),
       build_status_bar(model, theme),
     ],
     spacing=0.0,
@@ -22,18 +22,18 @@ fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
     width=shell_width,
     height=shell_height,
     variant=Base,
-    theme~,
     padding=0.0,
   )
-  if model.context_menu_visible {
+  let root = if model.context_menu_visible {
     @views.stack([
       base,
       @views.align(
-        build_more_menu_overlay(theme),
+        build_more_menu_overlay(),
         alignment=@geometry.Alignment::new(x=1.0, y=0.0),
       ),
     ])
   } else {
     base
   }
+  root.theme(theme)
 }

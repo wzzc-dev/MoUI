@@ -163,8 +163,8 @@ fn workbench_view_test_text_control() -> @core.TextControlStateContext {
 
 ///|
 fn workbench_view_test_paint_context(
+  theme : @moui.Theme,
   frame~ : @geometry.Rect,
-  theme~ : @moui.Theme,
 ) -> @core.ViewPaintContext {
   {
     frame,
@@ -200,14 +200,13 @@ test "chat message text paints reply body left aligned" {
   let view = chat_message_text(
     "assistant reply",
     role=Body,
-    theme~,
     width=240.0,
     height=24.0,
   )
   let plan = view.paint(
     workbench_view_test_paint_context(
+      theme,
       frame=@geometry.Rect::new(x=0.0, y=0.0, width=240.0, height=24.0),
-      theme~,
     ),
   )
   guard plan.commands[0] is DrawText({ text, align, .. }) else {

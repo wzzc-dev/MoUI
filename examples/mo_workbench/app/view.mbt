@@ -57,7 +57,9 @@ fn workbench_view(
           background=workbench_sidebar_background(sidebar_theme),
           padding=0.0,
         ),
-        sidebar_view(model, sidebar_theme, left_width, main_height - 40.0),
+        sidebar_view(model, sidebar_theme, left_width, main_height - 40.0).theme(
+          sidebar_theme,
+        ),
       ],
       spacing=0.0,
       align=Stretch,
@@ -150,10 +152,10 @@ fn workbench_view(
         settings_theme,
         viewport.width,
         viewport.height,
-      ),
-    ])
+      ).theme(settings_theme),
+    ]).theme(theme)
   } else {
-    base
+    base.theme(theme)
   }
 }
 
@@ -177,7 +179,7 @@ fn center_shell(
       ],
       spacing=0.0,
       align=Stretch,
-    ),
+    ).theme(surface_theme),
     width=center_width,
     height=shell_height,
     background=workbench_canvas_background(theme),
@@ -201,11 +203,10 @@ fn topbar_view(
   let inner_width = (width - horizontal_pad * 2.0).max(160.0)
   let title_block = @views.column(
     [
-      @views.text(title, role=Label, theme~, width=inner_width, height=20.0),
+      @views.text(title, role=Label, width=inner_width, height=20.0),
       @views.text(
         tab_subtitle(model),
         role=Caption,
-        theme~,
         width=inner_width,
         height=16.0,
       ).foreground(theme.palette.muted),
@@ -215,7 +216,7 @@ fn topbar_view(
   )
   @views.container(
     @views.padding_edges(
-      @views.center(title_block, width=inner_width, height~, theme~),
+      @views.center(title_block, width=inner_width, height~),
       left=horizontal_pad,
       right=horizontal_pad,
       top=0.0,
@@ -273,7 +274,6 @@ fn workbench_tab_segment_button(
       label,
       on_click=SwitchTab(tab),
       variant=Ghost,
-      theme~,
       style=workbench_tab_selected_button_style(theme),
       width~,
       height=32.0,
@@ -283,7 +283,6 @@ fn workbench_tab_segment_button(
       label,
       on_click=SwitchTab(tab),
       variant=Ghost,
-      theme~,
       width~,
       height=32.0,
     )
@@ -351,11 +350,10 @@ fn new_task_section(
           "新建任务",
           on_click=NewTask,
           variant=Tonal,
-          theme=sidebar_control_theme(theme, size_delta=-0.5, weight=300),
           icon=Some(Plus),
           width=width - 32.0,
           height=36.0,
-        ),
+        ).font(sidebar_control_font(theme, size_delta=-0.5, weight=300)),
         @views.row(
           [
             sidebar_secondary_chip("技能", theme, 60.0, 24.0),
@@ -395,18 +393,6 @@ fn sidebar_control_font(
 }
 
 ///|
-fn sidebar_control_theme(
-  theme : @moui.Theme,
-  size_delta~ : Double = -0.5,
-  weight~ : Int32 = 300,
-) -> @moui.Theme {
-  theme.with_typography({
-    ..theme.typography,
-    control: sidebar_control_font(theme, size_delta~, weight~),
-  })
-}
-
-///|
 fn sidebar_secondary_chip(
   label : String,
   theme : @moui.Theme,
@@ -418,7 +404,6 @@ fn sidebar_secondary_chip(
       @views.text(
         label,
         role=Caption,
-        theme~,
         width=(width - 16.0).max(32.0),
         height=16.0,
       )
@@ -426,7 +411,6 @@ fn sidebar_secondary_chip(
       .foreground(workbench_text_muted(theme)),
       width=width - 8.0,
       height=height - 8.0,
-      theme~,
     ),
     width~,
     height~,
@@ -463,7 +447,6 @@ fn task_tree_view(
             @views.text(
               "任务列表",
               role=Caption,
-              theme~,
               width=title_width,
               height=20.0,
             )
@@ -697,13 +680,7 @@ fn task_folder_header(
           height=18.0,
           padding=0.0,
         ),
-        @views.text(
-          title,
-          role=Caption,
-          theme~,
-          width=width - 26.0,
-          height=18.0,
-        )
+        @views.text(title, role=Caption, width=width - 26.0, height=18.0)
         .font(sidebar_fine_font(theme, size_delta=-1.0, weight=300))
         .foreground(workbench_text_muted(theme)),
       ],
@@ -728,7 +705,6 @@ fn task_search_field(
     on_input=query => TaskSearchChanged(query),
     placeholder="搜索任务或 session",
     variant=Filled,
-    theme~,
     style=sidebar_search_field_style(theme),
     width~,
     height=30.0,
@@ -737,7 +713,7 @@ fn task_search_field(
 
 ///|
 fn sidebar_search_field_style(theme : @moui.Theme) -> @views.TextFieldStyle {
-  let base = @views.TextFieldStyle::filled(theme~)
+  let base = @views.TextFieldStyle::filled()
   base
   .with_font(font=sidebar_fine_font(theme, size_delta=-0.75, weight=280))
   .with_placeholder_color(placeholder_color=workbench_text_muted(theme))
@@ -751,7 +727,7 @@ fn task_filter_chip(
 ) -> @moui.View[WorkbenchMsg] {
   let label = task_filter_label(filter)
   @views.container(
-    @views.text(label, role=Caption, theme~, width=width - 6.0, height=15.0)
+    @views.text(label, role=Caption, width=width - 6.0, height=15.0)
     .font(sidebar_fine_font(theme, size_delta=-1.5, weight=300))
     .foreground(workbench_accent(theme)),
     width~,
@@ -808,7 +784,6 @@ fn task_row(
         @views.text(
           truncate_text(title, 22),
           role=Caption,
-          theme~,
           width=width - 24.0,
           height=18.0,
         )
@@ -836,7 +811,7 @@ fn sidebar_footer(
   @views.padding_xy(
     @views.column(
       [
-        @views.divider(theme~),
+        @views.divider(),
         @views.row(
           [
             @views.container(
@@ -855,13 +830,11 @@ fn sidebar_footer(
                   @views.text(
                     appearance_label(model.appearance),
                     role=Caption,
-                    theme~,
                     width=(appearance_width - 42.0).max(64.0),
                   ),
                   @views.text(
                     theme_label(theme),
                     role=Caption,
-                    theme~,
                     width=26.0,
                     align=TextCenter,
                   ),
@@ -938,7 +911,6 @@ fn settings_overlay_view(
                     @views.text(
                       "Settings",
                       role=Title,
-                      theme~,
                       width=card_inner_width - 48.0,
                     ),
                     @views.spacer(),
@@ -960,7 +932,7 @@ fn settings_overlay_view(
                 height=36.0,
                 padding=0.0,
               ),
-              @views.divider(theme~),
+              @views.divider(),
               settings_workspace_view(
                 model.settings,
                 model.appearance,
@@ -1018,9 +990,7 @@ fn[Msg] sidebar_caption(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
-  @views.text(text_, role=Caption, theme~, width~).foreground(
-    theme.palette.muted,
-  )
+  @views.text(text_, role=Caption, width~).foreground(theme.palette.muted)
 }
 
 // ---------------------------------------------------------------------------

@@ -28,28 +28,15 @@ fn finder_body(
     pathbar_height -
     status_height
   let toolbar = finder_toolbar(model, metrics, palette, theme, toolbar_height)
-  let pathbar = finder_pathbar(
-    model,
-    metrics.width,
-    pathbar_height,
-    palette,
-    theme,
-  )
+  let pathbar = finder_pathbar(model, metrics.width, pathbar_height, palette)
   let content = finder_main(
     model,
     metrics.width,
     content_height,
     metrics.compact,
     palette,
-    theme,
   )
-  let status = finder_status(
-    model,
-    metrics.width,
-    status_height,
-    palette,
-    theme,
-  )
+  let status = finder_status(model, metrics.width, status_height, palette)
   // macOS Finder stacks: toolbar → content → path bar (bottom) → status.
   // The path bar lives at the bottom of the content area, just above the
   // status strip, not under the toolbar.
@@ -64,7 +51,6 @@ fn finder_pathbar(
   width : Double,
   height : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let location = model.finder_location.label()
   @views.stack([
@@ -79,13 +65,7 @@ fn finder_pathbar(
       @views.row(
         [
           desktop_icon(FolderOpen, 13.0, palette.muted),
-          @views.text(
-            location,
-            role=Caption,
-            theme~,
-            width=width - 60.0,
-            height=18.0,
-          )
+          @views.text(location, role=Caption, width=width - 60.0, height=18.0)
           .font(@text.FontSpec::new(size=11.5, weight=520))
           .foreground(palette.foreground),
           desktop_icon(ChevronDown, 10.0, palette.muted),
@@ -125,7 +105,6 @@ fn finder_toolbar(
           model.finder_query,
           on_input=value => FinderQueryChanged(value),
           placeholder="Search",
-          theme~,
           width=search_width - 34.0,
           height=24.0,
         ),
@@ -168,7 +147,7 @@ fn finder_toolbar(
   let content = if metrics.compact {
     @views.column(
       [
-        finder_location_tabs(model, metrics.width - 24.0, theme),
+        finder_location_tabs(model, metrics.width - 24.0),
         @views.row(
           [mode, @views.spacer(min_length=6.0), search],
           spacing=8.0,
@@ -393,7 +372,6 @@ fn finder_view_mode_button(
 fn finder_location_tabs(
   model : DesktopModel,
   width : Double,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.segmented_control(
     [
@@ -413,7 +391,6 @@ fn finder_location_tabs(
         },
       )
     },
-    theme~,
     width~,
   )
 }
@@ -425,16 +402,15 @@ fn finder_main(
   height : Double,
   compact : Bool,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   if compact {
-    finder_content(model, width, height, palette, theme)
+    finder_content(model, width, height, palette)
   } else {
     let sidebar_width = 196.0
     @views.row(
       [
-        finder_sidebar(model, sidebar_width, palette, theme),
-        finder_content(model, width - sidebar_width, height, palette, theme),
+        finder_sidebar(model, sidebar_width, palette),
+        finder_content(model, width - sidebar_width, height, palette),
       ],
       spacing=0.0,
       align=Stretch,
@@ -447,12 +423,11 @@ fn finder_sidebar(
   model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let panel = @views.container(
     @views.column(
       [
-        sidebar_section_header("Favorites", width, palette, theme),
+        sidebar_section_header("Favorites", width, palette),
         finder_sidebar_button(
           "Documents",
           FileNew,
@@ -461,7 +436,6 @@ fn finder_sidebar(
           model,
           width - 24.0,
           palette,
-          theme,
         ),
         finder_sidebar_button(
           "Applications",
@@ -471,7 +445,6 @@ fn finder_sidebar(
           model,
           width - 24.0,
           palette,
-          theme,
         ),
         finder_sidebar_button(
           "Downloads",
@@ -481,16 +454,14 @@ fn finder_sidebar(
           model,
           width - 24.0,
           palette,
-          theme,
         ),
         @views.spacer(min_length=12.0, weight=0.0),
-        sidebar_section_header("Locations", width, palette, theme),
+        sidebar_section_header("Locations", width, palette),
         sidebar_static_row(
           "MacBook",
           FileNew,
           rgba8(116, 128, 142),
           palette,
-          theme,
           width - 24.0,
         ),
         sidebar_static_row(
@@ -498,7 +469,6 @@ fn finder_sidebar(
           Focus,
           rgba8(53, 143, 242),
           palette,
-          theme,
           width - 24.0,
         ),
         sidebar_static_row(
@@ -506,32 +476,13 @@ fn finder_sidebar(
           Link,
           rgba8(112, 132, 154),
           palette,
-          theme,
           width - 24.0,
         ),
         @views.spacer(min_length=12.0, weight=0.0),
-        sidebar_section_header("Tags", width, palette, theme),
-        sidebar_tag_row(
-          "Important",
-          rgba8(255, 95, 87),
-          width - 24.0,
-          palette,
-          theme,
-        ),
-        sidebar_tag_row(
-          "Work",
-          rgba8(255, 189, 46),
-          width - 24.0,
-          palette,
-          theme,
-        ),
-        sidebar_tag_row(
-          "Personal",
-          rgba8(40, 200, 64),
-          width - 24.0,
-          palette,
-          theme,
-        ),
+        sidebar_section_header("Tags", width, palette),
+        sidebar_tag_row("Important", rgba8(255, 95, 87), width - 24.0, palette),
+        sidebar_tag_row("Work", rgba8(255, 189, 46), width - 24.0, palette),
+        sidebar_tag_row("Personal", rgba8(40, 200, 64), width - 24.0, palette),
       ],
       spacing=2.0,
       align=Start,
@@ -557,9 +508,8 @@ fn sidebar_section_header(
   label : String,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.text(label, role=Caption, theme~, width=width - 28.0, height=18.0)
+  @views.text(label, role=Caption, width=width - 28.0, height=18.0)
   .font(@text.FontSpec::new(size=11.0, weight=700))
   .foreground(palette.muted)
 }
@@ -571,7 +521,6 @@ fn sidebar_tag_row(
   color : @graphics.Color,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.row(
     [
@@ -583,7 +532,7 @@ fn sidebar_tag_row(
         corner_radius=4.0,
         padding=0.0,
       ),
-      @views.text(label, role=Body, theme~, width=width - 32.0, height=22.0).foreground(
+      @views.text(label, role=Body, width=width - 32.0, height=22.0).foreground(
         palette.foreground,
       ),
     ],
@@ -610,7 +559,6 @@ fn finder_sidebar_button(
   model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let selected = model.finder_location == location
   // Soft blue selection chip instead of a heavy tonal button fill.
@@ -618,7 +566,7 @@ fn finder_sidebar_button(
     @views.row(
       [
         desktop_icon(icon, 15.0, icon_color),
-        @views.text(label, role=Body, theme~, width=width - 42.0, height=22.0)
+        @views.text(label, role=Body, width=width - 42.0, height=22.0)
         .font(
           @text.FontSpec::new(
             size=13.0,
@@ -650,13 +598,12 @@ fn sidebar_static_row(
   icon : @views.IconName,
   icon_color : @graphics.Color,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
   @views.row(
     [
       desktop_icon(icon, 15.0, icon_color),
-      @views.text(label, role=Body, theme~, width=width - 30.0, height=30.0).foreground(
+      @views.text(label, role=Body, width=width - 30.0, height=30.0).foreground(
         palette.foreground,
       ),
     ],

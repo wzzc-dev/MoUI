@@ -347,11 +347,10 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
         [
           column(
             [
-              text("Data Table", role=Title, theme~, width=260.0, height=34.0),
+              text("Data Table", role=Title, width=260.0, height=34.0),
               text(
                 "Filter bar, column visibility, row selection, pagination, and state panels.",
                 role=Caption,
-                theme~,
                 width=520.0,
                 height=24.0,
               ),
@@ -363,7 +362,6 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
             "Loading",
             on_click=SetLoading,
             variant=Outline,
-            theme~,
             width=96.0,
             height=36.0,
           ),
@@ -371,7 +369,6 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
             "Error",
             on_click=SetFailed("Import failed"),
             variant=Outline,
-            theme~,
             width=82.0,
             height=36.0,
           ),
@@ -379,7 +376,6 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
             "Ready",
             on_click=SetReady,
             variant=Primary,
-            theme~,
             width=82.0,
             height=36.0,
           ),
@@ -401,7 +397,6 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
           "Sort: " + self.sort_label(),
           self.last_action,
         ],
-        theme~,
         width=928.0,
       ),
     ],
@@ -413,9 +408,8 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
     width=980.0,
     height=700.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -446,7 +440,7 @@ fn DataTableModel::filter_tree(
   container(
     column(
       [
-        text("Teams", role=Control, theme~, width=190.0, height=26.0),
+        text("Teams", role=Control, width=190.0, height=26.0),
         tree_view(
           [
             tree_item(id="teams", label="All Teams", children=[
@@ -461,10 +455,9 @@ fn DataTableModel::filter_tree(
             TeamSelected(if id == "teams" { "all" } else { id })
           }),
           on_toggle=Some(id => ToggleTree(id)),
-          theme~,
           width=210.0,
         ),
-        self.selected_summary(theme),
+        self.selected_summary(),
       ],
       spacing=theme.spacing_scale.sm,
       align=Start,
@@ -472,7 +465,6 @@ fn DataTableModel::filter_tree(
     width=250.0,
     height=540.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }
@@ -495,7 +487,6 @@ fn DataTableModel::data_panel(
               result_count=self.filtered_records().length(),
               on_clear=Some(ClearFilters),
               placeholder="Search projects",
-              theme~,
               width=390.0,
             ),
             column_visibility_panel(
@@ -503,7 +494,6 @@ fn DataTableModel::data_panel(
               visible=self.visible_columns.visible(),
               locked=self.visible_columns.locked(),
               on_toggle=(id, visible) => ToggleColumnVisibility(id, visible),
-              theme~,
               width=238.0,
             ),
           ],
@@ -518,7 +508,6 @@ fn DataTableModel::data_panel(
             action_item(id="export", label="Export", message=ExportSelection),
           ],
           on_clear=Some(ClearSelection),
-          theme~,
           width=640.0,
         ),
         row(
@@ -527,7 +516,6 @@ fn DataTableModel::data_panel(
               "Widen Project",
               on_click=ResizeColumn("project", project_width + 24.0),
               variant=Outline,
-              theme~,
               width=136.0,
               height=34.0,
             ),
@@ -535,14 +523,12 @@ fn DataTableModel::data_panel(
               "Priority first",
               on_click=MoveColumnBefore("priority", "project"),
               variant=Outline,
-              theme~,
               width=128.0,
               height=34.0,
             ),
             text(
               "Project width \{project_width}",
               role=Caption,
-              theme~,
               width=170.0,
               height=28.0,
             ),
@@ -550,13 +536,12 @@ fn DataTableModel::data_panel(
           spacing=theme.spacing_scale.sm,
           align=Center,
         ),
-        self.state_or_table(theme),
+        self.state_or_table(),
         pagination(
           page=self.pagination_state().page(),
           page_count=self.page_count(),
           on_previous=PreviousPage,
           on_next=NextPage,
-          theme~,
           width=340.0,
         ),
       ],
@@ -566,7 +551,6 @@ fn DataTableModel::data_panel(
     width=660.0,
     height=540.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }
@@ -574,14 +558,12 @@ fn DataTableModel::data_panel(
 ///|
 fn DataTableModel::state_or_table(
   self : DataTableModel,
-  theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
   match self.status {
     Loading =>
       loading_state(
         title="Loading data",
         message="Fetching project rows.",
-        theme~,
         width=600.0,
       )
     Failed(message) =>
@@ -591,17 +573,15 @@ fn DataTableModel::state_or_table(
         action=Some(
           @views.StateViewAction::new(label="Retry", message=SetReady),
         ),
-        theme~,
         width=600.0,
       )
-    Ready => self.table_view(theme)
+    Ready => self.table_view()
   }
 }
 
 ///|
 fn DataTableModel::table_view(
   self : DataTableModel,
-  theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
   let records = self.visible_records()
   let columns = self.visible_table_columns()
@@ -617,9 +597,9 @@ fn DataTableModel::table_view(
     cell=Some((row_index, column, value) => {
       ignore(row_index)
       let base : @moui.View[DataTableMsg] = if column.id() == "status" {
-        badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
+        badge(value, tone=status_tone(value), width=82.0, height=24.0)
       } else {
-        text(value, role=Body, theme~, width=column.width() - 16.0, height=30.0)
+        text(value, role=Body, width=column.width() - 16.0, height=30.0)
       }
       base
     }),
@@ -627,18 +607,15 @@ fn DataTableModel::table_view(
       empty_state(
         "No rows",
         "Try clearing the filter or choosing all teams.",
-        theme~,
         width=600.0,
       ),
     ),
-    theme~,
   )
 }
 
 ///|
 fn DataTableModel::selected_summary(
   self : DataTableModel,
-  theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
   let items = match self.selected_record() {
     Some(record) =>
@@ -653,10 +630,7 @@ fn DataTableModel::selected_summary(
     "Selected",
     items,
     subtitle="Click a table row",
-    empty=Some(
-      text("No row selected", role=Caption, theme~, width=178.0, height=28.0),
-    ),
-    theme~,
+    empty=Some(text("No row selected", role=Caption, width=178.0, height=28.0)),
     width=210.0,
     height=188.0,
   )

@@ -149,7 +149,6 @@ fn editor_header(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
 /// sentences — seven of them would not fit in one control at phone width, and
 /// the chips wrap instead of squeezing.
 fn editor_tab_chips(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
-  let theme = app_theme_for(model.config.appearance())
   let tabs = editor_tabs()
   let chips : Array[@moui.View[Msg]] = []
   for index, label in tabs {
@@ -158,7 +157,6 @@ fn editor_tab_chips(model : WorldModel, screen : Screen) -> @moui.View[Msg] {
         label,
         selected=index == model.editor_tab,
         on_click=Some(EditorTabChanged(index)),
-        theme~,
         width=editor_chip_width(label),
         height=button_sm_height,
       ),

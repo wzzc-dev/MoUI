@@ -28,7 +28,6 @@ fn pdf_workbench_sidebar(
           document.page_count.to_string(),
           caption=if document.dirty { "Unsaved edits" } else { "Saved state" },
           tone=if document.dirty { Warning } else { Success },
-          theme~,
           width=item_width,
           height=104.0,
         ),
@@ -54,7 +53,6 @@ fn pdf_workbench_sidebar(
           "No PDF loaded",
           "Use Open to load PDF bytes through the host binary file service.",
           tone=Info,
-          theme~,
           width=item_width,
         ),
       )
@@ -70,7 +68,6 @@ fn pdf_workbench_sidebar(
     width=metrics.sidebar_width,
     height=metrics.body_height,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.sm,
   )
 }
@@ -94,7 +91,6 @@ fn pdf_workbench_page_nav_item(
             "Page " + summary.page_number.to_string(),
             on_click=SelectPage(summary.page_number),
             variant=if selected { Primary } else { Ghost },
-            theme~,
             width=control_width,
             height=32.0,
           ),
@@ -107,7 +103,6 @@ fn pdf_workbench_page_nav_item(
               ""
             },
             role=Caption,
-            theme~,
             width=control_width,
             height=18.0,
           ).foreground(theme.palette.muted),

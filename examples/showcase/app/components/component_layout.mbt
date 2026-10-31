@@ -20,17 +20,10 @@ fn surface_demo(
         container(
           column(
             [
-              text(
-                "Base",
-                role=Control,
-                theme~,
-                width=sample_width - 32.0,
-                height=24.0,
-              ),
+              text("Base", role=Control, width=sample_width - 32.0, height=24.0),
               wrapped_text(
                 "A quiet surface for grouped controls.",
                 role=Caption,
-                theme~,
                 width=sample_width - 32.0,
                 height=36.0,
                 align=TextStart,
@@ -44,22 +37,14 @@ fn surface_demo(
           variant=Base,
           padding=16.0,
           corner_radius=8.0,
-          theme~,
         ),
         card(
           column(
             [
-              text(
-                "Card",
-                role=Control,
-                theme~,
-                width=sample_width - 32.0,
-                height=24.0,
-              ),
+              text("Card", role=Control, width=sample_width - 32.0, height=24.0),
               wrapped_text(
                 "A raised surface for previews and repeated components.",
                 role=Caption,
-                theme~,
                 width=sample_width - 32.0,
                 height=36.0,
                 align=TextStart,
@@ -71,7 +56,6 @@ fn surface_demo(
           width=sample_width,
           height=112.0,
           padding=16.0,
-          theme~,
         ),
       ],
       width=inner,
@@ -101,9 +85,9 @@ fn row_column_demo(
         container(
           row(
             [
-              status_badge("one", tone=Accent, theme~, width=72.0),
-              status_badge("two", tone=Success, theme~, width=72.0),
-              status_badge("three", tone=Warning, theme~, width=82.0),
+              status_badge("one", tone=Accent, width=72.0),
+              status_badge("two", tone=Success, width=72.0),
+              status_badge("three", tone=Warning, width=82.0),
             ],
             spacing=theme.spacing_scale.xs,
             align=Center,
@@ -114,22 +98,16 @@ fn row_column_demo(
           background=theme.palette.surface_variant.multiply_alpha(0.45),
           padding=12.0,
           corner_radius=8.0,
-          theme~,
         ),
         container(
           column(
             [
-              text(
-                "Mode",
-                role=Caption,
-                theme~,
-                width=sample_width - 24.0,
-                height=22.0,
-              ).foreground(theme.palette.muted),
+              text("Mode", role=Caption, width=sample_width - 24.0, height=22.0).foreground(
+                theme.palette.muted,
+              ),
               text(
                 mode_label(model.selected_mode),
                 role=Subtitle,
-                theme~,
                 width=sample_width - 24.0,
                 height=28.0,
               ),
@@ -143,7 +121,6 @@ fn row_column_demo(
           background=theme.palette.surface_variant.multiply_alpha(0.45),
           padding=12.0,
           corner_radius=8.0,
-          theme~,
         ),
       ],
       width=inner,
@@ -241,7 +218,6 @@ fn scroll_view_demo(
       background=theme.palette.surface_variant.multiply_alpha(0.35),
       padding=12.0,
       corner_radius=8.0,
-      theme~,
     ),
     theme,
     width,

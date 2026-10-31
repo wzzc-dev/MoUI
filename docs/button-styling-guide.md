@@ -41,6 +41,11 @@ tokens at paint time via `@style.views_ambient_control_theme(theme)`. Do **not**
 fork a second computation inside an `XStyle::default` — that reintroduces the
 dual-source drift this unification removed. New controls should read
 `ControlThemeSet` directly (or be built with `themeable_control`).
+
+**App-facing rule:** theme the root subtree once (`root.theme(app_theme)`) and
+let buttons resolve the scoped theme ambient-ly; per-control `theme?` pins are
+a one-off override, not the way to theme an app (ADR 0036; see
+`visual-theme-system.md`).
    - `minimal_control_theme_set(theme)` builds the default `ControlThemeSet` from
      the palette. Each variant (`primary`/`tonal`/`outline`/`ghost`/`subtle`/`subtle_brand`)
      is a `ControlStateTokens` (foreground/background/border/border_width/radius).

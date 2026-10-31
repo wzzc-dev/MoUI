@@ -6,19 +6,17 @@ fn safari_body(
   model : DesktopModel,
   metrics : WindowMetrics,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let body_height = metrics.height - 48.0
   let toolbar_height = if metrics.compact { 94.0 } else { 98.0 }
   let content_height = body_height - toolbar_height
-  let toolbar = safari_toolbar(model, metrics, palette, theme, toolbar_height)
+  let toolbar = safari_toolbar(model, metrics, palette, toolbar_height)
   let content = safari_content(
     model,
     metrics.width,
     content_height,
     metrics.compact,
     palette,
-    theme,
   )
   @views.column([toolbar, content], spacing=0.0, align=Stretch)
 }
@@ -28,7 +26,6 @@ fn safari_toolbar(
   model : DesktopModel,
   metrics : WindowMetrics,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   height : Double,
 ) -> @moui.View[Msg] {
   let address_width = if metrics.compact {
@@ -47,7 +44,6 @@ fn safari_toolbar(
           on_input=value => BrowserQueryChanged(value),
           on_submit=Some(SubmitBrowserQuery),
           placeholder="Search or enter website name",
-          theme~,
           width=(address_width - 78.0).max(120.0),
           height=26.0,
         ),
@@ -102,7 +98,7 @@ fn safari_toolbar(
           // with a white card. A trailing + button creates a new tab.
           @views.row(
             [
-              safari_tab_bar(model, metrics, theme, palette),
+              safari_tab_bar(model, metrics, palette),
               toolbar_icon_button(
                 Plus,
                 "New browser tab",
@@ -178,7 +174,6 @@ fn safari_address_surface(palette : DesktopPalette) -> @graphics.Color {
 fn safari_tab_bar(
   model : DesktopModel,
   metrics : WindowMetrics,
-  theme : @moui.Theme,
   palette : DesktopPalette,
 ) -> @moui.View[Msg] {
   let tabs = model.browser_tab_titles
@@ -187,7 +182,7 @@ fn safari_tab_bar(
   let children : Array[@moui.View[Msg]] = []
   for index in 0..<tabs.length() {
     children.push(
-      safari_tab(index, tabs[index], active == index, tab_width, palette, theme),
+      safari_tab(index, tabs[index], active == index, tab_width, palette),
     )
   }
   @views.row(children, spacing=4.0, align=Center)
@@ -200,7 +195,6 @@ fn safari_tab(
   selected : Bool,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let close_width = 16.0
   let inner = @views.row(
@@ -208,7 +202,6 @@ fn safari_tab(
       @views.text(
         title,
         role=Caption,
-        theme~,
         width=width - close_width - 16.0,
         height=22.0,
       )
@@ -220,7 +213,6 @@ fn safari_tab(
         @views.text(
           "×",
           role=Caption,
-          theme~,
           width=close_width,
           height=22.0,
           align=TextCenter,
@@ -303,12 +295,11 @@ fn safari_content(
   height : Double,
   compact : Bool,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let child = match model.browser_page {
-    StartPage => safari_start_page(width, height, compact, palette, theme)
+    StartPage => safari_start_page(width, height, compact, palette)
     SearchResults(query) =>
-      safari_search_results(query, width, height, compact, palette, theme)
+      safari_search_results(query, width, height, compact, palette)
   }
   @views.container(
     child,
@@ -325,7 +316,6 @@ fn safari_start_page(
   height : Double,
   compact : Bool,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let inner_width = (width - (if compact { 28.0 } else { 48.0 })).max(220.0)
   let favorite_width = if compact { 104.0 } else { 128.0 }
@@ -338,7 +328,6 @@ fn safari_start_page(
         rgba8(39, 110, 241),
         favorite_width,
         palette,
-        theme,
       ),
       favorite_card(
         "MoonBit",
@@ -347,7 +336,6 @@ fn safari_start_page(
         rgba8(113, 82, 228),
         favorite_width,
         palette,
-        theme,
       ),
       favorite_card(
         "Docs",
@@ -356,7 +344,6 @@ fn safari_start_page(
         rgba8(24, 151, 132),
         favorite_width,
         palette,
-        theme,
       ),
       favorite_card(
         "Tahoe",
@@ -365,7 +352,6 @@ fn safari_start_page(
         rgba8(232, 132, 48),
         favorite_width,
         palette,
-        theme,
       ),
     ],
     width=inner_width,
@@ -380,7 +366,6 @@ fn safari_start_page(
       Focus,
       inner_width,
       palette,
-      theme,
     )
   } else {
     @views.row(
@@ -391,7 +376,6 @@ fn safari_start_page(
           Focus,
           (inner_width - 14.0) / 2.0,
           palette,
-          theme,
         ),
         browser_report_card(
           "Reading List",
@@ -399,7 +383,6 @@ fn safari_start_page(
           ListTask,
           (inner_width - 14.0) / 2.0,
           palette,
-          theme,
         ),
       ],
       spacing=14.0,
@@ -408,20 +391,13 @@ fn safari_start_page(
   }
   @views.column(
     [
-      @views.text(
-        "Favorites",
-        role=Title,
-        theme~,
-        width=inner_width,
-        height=34.0,
-      )
+      @views.text("Favorites", role=Title, width=inner_width, height=34.0)
       .font(@text.FontSpec::new(size=22.0, weight=650))
       .foreground(palette.foreground),
       favorites,
       @views.text(
         "Frequently Visited",
         role=Title,
-        theme~,
         width=inner_width,
         height=32.0,
       )
@@ -431,12 +407,12 @@ fn safari_start_page(
         [
           compact_site(
             "m", "https://wzzc-dev.github.io/MoUI", "https://wzzc-dev.github.io/MoUI",
-            palette, theme,
+            palette,
           ),
           compact_site(
-            "d", "docs", "docs.https://wzzc-dev.github.io/MoUI", palette, theme,
+            "d", "docs", "docs.https://wzzc-dev.github.io/MoUI", palette,
           ),
-          compact_site("g", "github", "github.com", palette, theme),
+          compact_site("g", "github", "github.com", palette),
         ],
         spacing=12.0,
         align=Start,
@@ -456,7 +432,6 @@ fn favorite_card(
   color : @graphics.Color,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.column(
     [
@@ -469,14 +444,9 @@ fn favorite_card(
         border=Some(safari_control_border(palette)),
         padding=18.0,
       ),
-      @views.text(
-        label,
-        role=Caption,
-        theme~,
-        width~,
-        height=20.0,
-        align=TextCenter,
-      ).foreground(palette.foreground),
+      @views.text(label, role=Caption, width~, height=20.0, align=TextCenter).foreground(
+        palette.foreground,
+      ),
     ],
     spacing=5.0,
     align=Center,
@@ -491,7 +461,6 @@ fn compact_site(
   label : String,
   query : String,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.column(
     [
@@ -499,7 +468,6 @@ fn compact_site(
         @views.text(
           initial,
           role=Title,
-          theme~,
           width=48.0,
           height=38.0,
           align=TextCenter,
@@ -514,7 +482,6 @@ fn compact_site(
       @views.text(
         label,
         role=Caption,
-        theme~,
         width=72.0,
         height=18.0,
         align=TextCenter,
@@ -534,7 +501,6 @@ fn browser_report_card(
   icon : @views.IconName,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   solid_panel(
     @views.column(
@@ -545,7 +511,6 @@ fn browser_report_card(
             @views.text(
               title,
               role=Label,
-              theme~,
               width=(width - 66.0).max(100.0),
               height=24.0,
             ).foreground(palette.foreground),
@@ -556,7 +521,6 @@ fn browser_report_card(
         @views.text(
           detail,
           role=Body,
-          theme~,
           width=(width - 32.0).max(100.0),
           height=42.0,
         ).foreground(palette.muted),
@@ -580,7 +544,6 @@ fn safari_search_results(
   height : Double,
   compact : Bool,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let inner_width = (width - (if compact { 28.0 } else { 64.0 })).max(220.0)
   @views.column(
@@ -592,7 +555,6 @@ fn safari_search_results(
               @views.text(
                 "Search results",
                 role=Title,
-                theme~,
                 width=(inner_width - 140.0).max(140.0),
                 height=32.0,
               )
@@ -601,7 +563,6 @@ fn safari_search_results(
               @views.text(
                 "Results for \"\{query}\"",
                 role=Caption,
-                theme~,
                 width=(inner_width - 140.0).max(140.0),
                 height=22.0,
               ).foreground(palette.muted),
@@ -614,7 +575,6 @@ fn safari_search_results(
             "Start Page",
             on_click=ShowBrowserStartPage,
             variant=Tonal,
-            theme~,
             width=112.0,
             height=36.0,
           ),
@@ -625,15 +585,15 @@ fn safari_search_results(
       browser_result(
         "MoUI desktop patterns", "https://wzzc-dev.github.io/MoUI/examples/mo-desktop",
         "Build platform-neutral desktop experiences with typed model, update, and view logic.",
-        inner_width, palette, theme,
+        inner_width, palette,
       ),
       browser_result(
         "MoonBit language guide", "moonbitlang.com/docs", "Explore the language, package model, tooling, and native/Web backends.",
-        inner_width, palette, theme,
+        inner_width, palette,
       ),
       browser_result(
         "Lake Tahoe field notes", "notes.local/tahoe", "A quiet collection of shoreline walks, weather, and photography plans.",
-        inner_width, palette, theme,
+        inner_width, palette,
       ),
     ],
     spacing=12.0,
@@ -648,18 +608,17 @@ fn browser_result(
   detail : String,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   solid_panel(
     @views.column(
       [
-        @views.text(title, role=Title, theme~, width=width - 32.0, height=28.0)
+        @views.text(title, role=Title, width=width - 32.0, height=28.0)
         .font(@text.FontSpec::new(size=17.0, weight=620))
         .foreground(palette.accent),
-        @views.text(url, role=Caption, theme~, width=width - 32.0, height=20.0).foreground(
+        @views.text(url, role=Caption, width=width - 32.0, height=20.0).foreground(
           safari_result_url_color(palette),
         ),
-        @views.text(detail, role=Body, theme~, width=width - 32.0, height=34.0).foreground(
+        @views.text(detail, role=Body, width=width - 32.0, height=34.0).foreground(
           palette.muted,
         ),
       ],

@@ -48,7 +48,6 @@ fn component_body(
         "Mobile Service Probe is the Platform workspace default (platform/mobile-service-probe).",
         tone=Info,
         width~,
-        theme~,
       )
     AccessibilityProbe => accessibility_probe(model, theme, width)
   }

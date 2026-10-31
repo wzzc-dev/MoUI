@@ -2,7 +2,6 @@
 fn notification_center(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -23,7 +22,6 @@ fn notification_center(
       @views.text(
         desktop_clock_time(model.clock),
         role=Display,
-        theme~,
         width=inner_width,
         height=60.0,
         align=TextStart,
@@ -33,7 +31,6 @@ fn notification_center(
       @views.text(
         desktop_clock_menu_label(model.clock),
         role=Caption,
-        theme~,
         width=inner_width,
         height=20.0,
         align=TextStart,
@@ -42,16 +39,15 @@ fn notification_center(
       .foreground(palette.muted),
       @views.spacer(min_length=8.0),
       // macOS Notification Center widgets: compact calendar + weather.
-      notification_widget_calendar(model, inner_width, palette, theme),
+      notification_widget_calendar(model, inner_width, palette),
       @views.spacer(min_length=6.0),
-      notification_widget_weather(inner_width, palette, theme),
+      notification_widget_weather(inner_width, palette),
       @views.spacer(min_length=8.0),
       @views.row(
         [
           @views.text(
             "Today",
             role=Title,
-            theme~,
             width=(inner_width - 24.0).max(140.0),
             height=28.0,
           )
@@ -84,7 +80,6 @@ fn notification_center(
         inner_width,
         rgba8(52, 148, 246),
         palette,
-        theme,
       ),
       notification_card(
         "Calendar",
@@ -94,15 +89,13 @@ fn notification_center(
         inner_width,
         rgba8(255, 149, 0),
         palette,
-        theme,
       ),
-      @views.divider(theme~, color=palette.outline.multiply_alpha(0.85)),
+      @views.divider(color=palette.outline.multiply_alpha(0.85)),
       @views.row(
         [
           @views.text(
             "Today's Tasks",
             role=Label,
-            theme~,
             width=(inner_width - 64.0).max(140.0),
             height=20.0,
           )
@@ -112,7 +105,6 @@ fn notification_center(
           @views.text(
             "Mark read",
             role=Caption,
-            theme~,
             width=48.0,
             height=20.0,
             align=TextEnd,
@@ -133,7 +125,6 @@ fn notification_center(
         ReviewDesktop,
         inner_width,
         palette,
-        theme,
       ),
       notification_task(
         "Reply to Maya",
@@ -141,7 +132,6 @@ fn notification_center(
         ReplyToMaya,
         inner_width,
         palette,
-        theme,
       ),
       notification_task(
         "Plan Tahoe photos",
@@ -149,7 +139,6 @@ fn notification_center(
         PlanTahoePhotos,
         inner_width,
         palette,
-        theme,
       ),
     ],
     spacing=10.0,
@@ -194,14 +183,12 @@ fn overlay_header(
   close_message : Msg,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.row(
     [
       @views.text(
         title,
         role=Title,
-        theme~,
         width=(width - 50.0).max(120.0),
         height=30.0,
       )
@@ -212,7 +199,6 @@ fn overlay_header(
         "x",
         on_click=close_message,
         variant=Ghost,
-        theme~,
         width=32.0,
         height=32.0,
       ).accessibility_label("Close " + title),
@@ -231,7 +217,6 @@ fn notification_card(
   width : Double,
   accent : @graphics.Color,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.column(
@@ -249,7 +234,6 @@ fn notification_card(
             @views.text(
               app,
               role=Caption,
-              theme~,
               width=(width - 100.0).max(80.0),
               height=18.0,
             )
@@ -259,7 +243,6 @@ fn notification_card(
             @views.text(
               time,
               role=Caption,
-              theme~,
               width=42.0,
               height=18.0,
               align=TextEnd,
@@ -270,16 +253,10 @@ fn notification_card(
           spacing=8.0,
           align=Center,
         ),
-        @views.text(title, role=Label, theme~, width=width - 24.0, height=20.0)
+        @views.text(title, role=Label, width=width - 24.0, height=20.0)
         .font(@text.FontSpec::new(size=14.0, weight=640))
         .foreground(palette.foreground),
-        @views.text(
-          detail,
-          role=Caption,
-          theme~,
-          width=width - 24.0,
-          height=28.0,
-        )
+        @views.text(detail, role=Caption, width=width - 24.0, height=28.0)
         .font(@text.FontSpec::new(size=12.0, weight=460))
         .foreground(palette.muted),
       ],
@@ -332,7 +309,6 @@ fn notification_task(
   task : DesktopTask,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let check = @views.container(
     if done {
@@ -365,7 +341,6 @@ fn notification_task(
         @views.text(
           label,
           role=Body,
-          theme~,
           width=(width - 54.0).max(140.0),
           height=22.0,
         )
@@ -393,7 +368,6 @@ fn notification_widget_calendar(
   model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.column(
@@ -401,18 +375,16 @@ fn notification_widget_calendar(
         @views.text(
           desktop_month_year(model.clock),
           role=Label,
-          theme~,
           width~,
           height=22.0,
         )
         .font(@text.FontSpec::new(size=14.0, weight=640))
         .foreground(palette.foreground),
-        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette, theme),
+        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette),
         calendar_row(
           notification_cal_window(model.clock.day),
           Some(model.clock.day),
           palette,
-          theme,
         ),
       ],
       spacing=4.0,
@@ -443,7 +415,6 @@ fn notification_cal_window(day : Int32) -> Array[String] {
 fn notification_widget_weather(
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.row(
@@ -453,14 +424,12 @@ fn notification_widget_weather(
             @views.text(
               "Cupertino",
               role=Caption,
-              theme~,
               width=(width - 80.0).max(80.0),
               height=18.0,
             ).foreground(palette.foreground),
             @views.text(
               "Clear  |  H:83  L:56",
               role=Caption,
-              theme~,
               width=(width - 80.0).max(80.0),
               height=18.0,
             ).foreground(palette.muted),
@@ -478,7 +447,6 @@ fn notification_widget_weather(
         @views.text(
           "68°",
           role=Display,
-          theme~,
           width=40.0,
           height=32.0,
           align=TextCenter,

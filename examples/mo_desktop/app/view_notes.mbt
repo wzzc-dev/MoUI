@@ -6,7 +6,6 @@ fn notes_body(
   model : DesktopModel,
   metrics : WindowMetrics,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let body_height = metrics.height - 40.0
   let toolbar_height = 46.0
@@ -23,7 +22,6 @@ fn notes_body(
         on_click=AddNote,
         icon=Some(Plus),
         variant=Tonal,
-        theme~,
         width=104.0,
         height=30.0,
       ),
@@ -33,7 +31,6 @@ fn notes_body(
           on_click=DeleteNote(model.active_note),
           icon=Some(Trash),
           variant=Ghost,
-          theme~,
           width=92.0,
           height=30.0,
         )
@@ -44,7 +41,6 @@ fn notes_body(
       @views.text(
         "\{model.notes.length()} notes",
         role=Caption,
-        theme~,
         width=64.0,
         height=22.0,
       ).foreground(palette.muted),
@@ -61,7 +57,6 @@ fn notes_body(
         @views.text(
           model.note_title(index),
           role=Body,
-          theme~,
           width=sidebar_width - 24.0,
           height=24.0,
         ).foreground(if selected { palette.foreground } else { palette.muted }),
@@ -93,7 +88,6 @@ fn notes_body(
     model.active_note_body(),
     on_input=value => NoteBodyChanged(value),
     placeholder="Start writing…",
-    theme~,
     width=editor_width,
     line_height=26.0,
     lines=(editor_height / 26.0).to_int(),

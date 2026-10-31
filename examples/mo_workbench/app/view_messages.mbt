@@ -289,7 +289,7 @@ fn tool_result_row(
   }
   let rows : Array[@moui.View[CodeMsg]] = [
     @views.row(
-      [@views.badge(tool_name, tone~, theme~, width=96.0), @views.spacer()],
+      [@views.badge(tool_name, tone~, width=96.0), @views.spacer()],
       align=Center,
     ),
   ]
@@ -351,7 +351,7 @@ fn permission_request_row(
   rows.push(
     @views.row(
       [
-        @views.badge("Permission", tone=Warning, theme~, width=96.0),
+        @views.badge("Permission", tone=Warning, width=96.0),
         @views.text(
           if request.title.is_empty() {
             request.tool_call_id
@@ -359,7 +359,6 @@ fn permission_request_row(
             request.title
           },
           role=Label,
-          theme~,
           width=card_width - 128.0,
         ),
       ],
@@ -382,7 +381,6 @@ fn permission_request_row(
         option.name,
         on_click=RespondPermission(request.request_id, Selected(option.id)),
         variant=permission_button_variant(option.kind),
-        theme~,
         width=button_width,
         height=34.0,
       ),
@@ -393,7 +391,6 @@ fn permission_request_row(
       "Cancel",
       on_click=RespondPermission(request.request_id, Cancelled),
       variant=Ghost,
-      theme~,
       width=button_width,
       height=34.0,
     ),
@@ -443,7 +440,7 @@ fn terminal_row(
   @views.container(
     @views.row(
       [
-        @views.badge(label, tone~, theme~, width=64.0),
+        @views.badge(label, tone~, width=64.0),
         chat_message_body(message, Caption, theme, width - 96.0).foreground(
           theme.palette.muted,
         ),

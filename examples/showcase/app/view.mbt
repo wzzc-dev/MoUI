@@ -50,9 +50,11 @@ pub fn ShowcaseModel::view(
     width~,
     height~,
     variant=Base,
-    background=theme.palette.background,
-    theme~,
   )
+  // Single ambient theme scope for the whole shell (ADR 0036): controls
+  // resolve `ctx.environment.theme` at layout/paint instead of receiving a
+  // pinned theme argument.
+  .theme(theme)
 }
 
 ///|
@@ -132,16 +134,16 @@ fn shell_top_bar(
 ) -> @moui.View[ShowcaseMsg] {
   row(
     [
-      text("MoUI Showcase", role=Title, theme~),
+      text("MoUI Showcase", role=Title),
       @views.spacer(weight=1.0),
       if !compact {
-        text(model.current_route_string(), role=Caption, theme~)
+        text(model.current_route_string(), role=Caption)
       } else {
         @views.spacer(min_length=0.0)
       },
-      button("Back", on_click=RouteBack, variant=Ghost, theme~),
+      button("Back", on_click=RouteBack, variant=Ghost),
       if !compact {
-        button("Forward", on_click=RouteForward, variant=Ghost, theme~)
+        button("Forward", on_click=RouteForward, variant=Ghost)
       } else {
         @views.spacer(min_length=0.0)
       },
@@ -157,7 +159,6 @@ fn shell_top_bar(
 /// whether rows carry a `.key`) are parameters; the loop body is written once.
 fn catalog_list_rows(
   model : ShowcaseModel,
-  theme : @moui.Theme,
   list_width : Double,
   row_height : Double,
   selected_variant~ : @views.ButtonVariant,
@@ -177,14 +178,13 @@ fn catalog_list_rows(
     if group_items.length() == 0 {
       continue
     }
-    rows.push(text(group.title, role=group_role, theme~, width=list_width))
+    rows.push(text(group.title, role=group_role, width=list_width))
     for item in group_items {
       let is_selected = item.route() == selected
       let btn = button(
         item.title,
         on_click=Navigate(item.route()),
         variant=if is_selected { selected_variant } else { unselected_variant },
-        theme~,
         width=list_width,
         height=row_height,
       )
@@ -193,9 +193,7 @@ fn catalog_list_rows(
     }
   }
   if items.length() == 0 {
-    rows.push(
-      text("No matching stories", role=Caption, theme~, width=list_width),
-    )
+    rows.push(text("No matching stories", role=Caption, width=list_width))
   }
   // Trailing inset so the last story is not clipped by the scroll clip edge.
   rows.push(spacer(min_length=shell_scroll_end_inset))
@@ -218,7 +216,6 @@ fn shell_sidebar(
   // large empty gaps under short sections like Start.
   let list_rows = catalog_list_rows(
     model,
-    theme,
     list_width,
     34.0,
     selected_variant=Primary,
@@ -231,12 +228,11 @@ fn shell_sidebar(
   let list_height = (height - header_block).max(120.0)
   column(
     [
-      text("Stories", role=Subtitle, theme~, width=rail_width, height=28.0),
+      text("Stories", role=Subtitle, width=rail_width, height=28.0),
       text_field(
         model.nav_query,
         on_input=value => NavQueryChanged(value),
         placeholder="Search stories…",
-        theme~,
         width=rail_width,
       ),
       scroll_view(
@@ -275,15 +271,7 @@ fn shell_detail(
   }
   let story_badge = match model.current_catalog_item() {
     Some(item) if item.badge != "" =>
-      Some(
-        @views.badge(
-          item.badge,
-          tone=item.tone,
-          theme~,
-          width=104.0,
-          height=22.0,
-        ),
-      )
+      Some(@views.badge(item.badge, tone=item.tone, width=104.0, height=22.0))
     _ => None
   }
   // Content is narrower than the scroll viewport so the overlay indicator sits
@@ -295,7 +283,6 @@ fn shell_detail(
         @views.route_header(
           title,
           subtitle=summary + " · " + badge,
-          theme~,
           width=content_width,
         ),
         match story_badge {
@@ -327,7 +314,6 @@ fn mobile_catalog_list(
   let list_width = (width - shell_scroll_indicator_gutter).max(200.0)
   let list_rows = catalog_list_rows(
     model,
-    theme,
     list_width,
     40.0,
     selected_variant=Primary,
@@ -344,7 +330,6 @@ fn mobile_catalog_list(
         model.nav_query,
         on_input=value => NavQueryChanged(value),
         placeholder="Search stories…",
-        theme~,
         width~,
       ),
       scroll_view(
@@ -381,10 +366,9 @@ fn mobile_detail(
           "All stories",
           on_click=ShowMobileCatalog,
           variant=Ghost,
-          theme~,
           width=content_width,
         ),
-        @views.route_header(title, theme~, width=content_width),
+        @views.route_header(title, width=content_width),
         feature_body(model, env, content_width),
         spacer(min_length=shell_scroll_end_inset),
       ],

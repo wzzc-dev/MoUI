@@ -12,27 +12,24 @@ fn badge_demo(
     "Use badges for short metadata and status labels.",
     responsive_grid(
       [
-        badge("neutral", tone=Neutral, theme~, width=badge_width),
-        badge("accent", tone=Accent, theme~, width=badge_width),
+        badge("neutral", tone=Neutral, width=badge_width),
+        badge("accent", tone=Accent, width=badge_width),
         status_badge(
           "success",
           tone=Success,
           detail="ready state",
-          theme~,
           width=badge_width,
         ),
         status_badge(
           "warning",
           tone=Warning,
           detail="review state",
-          theme~,
           width=badge_width,
         ),
         status_badge(
           "danger",
           tone=Danger,
           detail="blocked state",
-          theme~,
           width=badge_width,
         ),
       ],
@@ -68,7 +65,6 @@ fn progress_demo(
           },
           status=score_label(model),
           tone=feedback_tone(model),
-          theme~,
           width=inner,
         ),
         @views.slider(
@@ -109,7 +105,6 @@ fn stat_card_demo(
           "\{component_gallery_items().length()}",
           caption="catalog entries",
           tone=Info,
-          theme~,
           width=card_width,
         ),
         stat_card(
@@ -117,7 +112,6 @@ fn stat_card_demo(
           "6",
           caption="shared app routes",
           tone=Success,
-          theme~,
           width=card_width,
         ),
         stat_card(
@@ -125,7 +119,6 @@ fn stat_card_demo(
           "\{model.counter}",
           caption="update state",
           tone=Warning,
-          theme~,
           width=card_width,
         ),
       ],

@@ -40,9 +40,9 @@ pub fn view(
   )
   let base = @views.stack(background_layers)
   let content = match model.phase {
-    Boot => boot_screen(model.language, width, height, theme)
-    Locked => lock_screen(model, width, height, palette, theme)
-    Login => login_screen(model, width, height, palette, theme)
+    Boot => boot_screen(model.language, width, height)
+    Locked => lock_screen(model, width, height, palette)
+    Login => login_screen(model, width, height, palette)
     Unlocked => desktop_screen(model, width, height, palette, theme)
   }
   @views.stack([base, content]).frame(width~, height~).theme(theme).clip()
@@ -69,7 +69,6 @@ fn lock_screen(
   width : Double,
   height : Double,
   _palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   // macOS login: large thin clock high on the field, single avatar user below.
   // Keep the "Enter Mo Desktop" label for runtime unlock tests and keyboard.
@@ -81,7 +80,6 @@ fn lock_screen(
       @views.text(
         desktop_clock_lock_date(model.clock),
         role=Title,
-        theme~,
         width=320.0,
         height=30.0,
         align=TextCenter,
@@ -93,7 +91,6 @@ fn lock_screen(
       @views.text(
         desktop_clock_time(model.clock),
         role=Display,
-        theme~,
         width=460.0,
         height=clock_size + 10.0,
         align=TextCenter,
@@ -108,7 +105,6 @@ fn lock_screen(
     @views.text(
       "M",
       role=Display,
-      theme~,
       width=avatar_size - 8.0,
       height=avatar_size - 14.0,
       align=TextCenter,
@@ -138,14 +134,7 @@ fn lock_screen(
   let identity = @views.column(
     [
       avatar,
-      @views.text(
-        "mo",
-        role=Title,
-        theme~,
-        width=160.0,
-        height=24.0,
-        align=TextCenter,
-      )
+      @views.text("mo", role=Title, width=160.0, height=24.0, align=TextCenter)
       .font(@text.FontSpec::new(size=16.0, weight=500))
       .foreground(@graphics.Color::white()),
       // A visible glass button makes the sign-in route discoverable; Enter
@@ -154,7 +143,6 @@ fn lock_screen(
         model.language.text("lock.sign_in"),
         on_click=ShowLogin,
         variant=Ghost,
-        theme~,
         style=entry_style,
         width=184.0,
         height=38.0,
@@ -234,7 +222,6 @@ fn boot_screen(
   language : AppLanguage,
   width : Double,
   height : Double,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let t = language
   let logo_size = if width < 620.0 { 64.0 } else { 88.0 }
@@ -245,7 +232,6 @@ fn boot_screen(
         @views.text(
           "Mo",
           role=Display,
-          theme~,
           width=logo_size,
           height=logo_size - 14.0,
           align=TextCenter,
@@ -268,7 +254,6 @@ fn boot_screen(
       @views.text(
         t.text("boot.title"),
         role=Title,
-        theme~,
         width=280.0,
         height=30.0,
         align=TextCenter,
@@ -298,7 +283,6 @@ fn boot_screen(
       @views.text(
         t.text("boot.skip"),
         role=Caption,
-        theme~,
         width=220.0,
         height=20.0,
         align=TextCenter,
@@ -326,7 +310,6 @@ fn login_screen(
   width : Double,
   height : Double,
   _palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let compact = width < 620.0
   let avatar_size = if compact { 68.0 } else { 78.0 }
@@ -336,7 +319,6 @@ fn login_screen(
     @views.text(
       "M",
       role=Display,
-      theme~,
       width=avatar_size - 8.0,
       height=avatar_size - 14.0,
       align=TextCenter,
@@ -365,14 +347,7 @@ fn login_screen(
   let identity = @views.column(
     [
       avatar,
-      @views.text(
-        "mo",
-        role=Title,
-        theme~,
-        width=160.0,
-        height=24.0,
-        align=TextCenter,
-      )
+      @views.text("mo", role=Title, width=160.0, height=24.0, align=TextCenter)
       .font(@text.FontSpec::new(size=16.0, weight=500))
       .foreground(@graphics.Color::white()),
       @views.text_field(
@@ -381,7 +356,6 @@ fn login_screen(
         on_submit=Some(SubmitLogin(model.login_password)),
         placeholder=model.language.text("login.password"),
         variant=Outline,
-        theme~,
         width=field_width,
         height=38.0,
       ).accessibility_label("Login password"),
@@ -389,7 +363,6 @@ fn login_screen(
         model.language.text("login.unlock"),
         on_click=SubmitLogin(model.login_password),
         variant=Ghost,
-        theme~,
         style=entry_style,
         width=field_width,
         height=38.0,
@@ -397,7 +370,6 @@ fn login_screen(
       @views.text(
         model.language.text("login.hint"),
         role=Caption,
-        theme~,
         width=240.0,
         height=18.0,
         align=TextCenter,
@@ -432,8 +404,8 @@ fn desktop_screen(
   // beneath windows and chrome, then put transient overlays above everything.
   // Windows paint in z-order so the focused (highest z) window is last.
   if !compact && !desktop_cleared {
-    layers.push(desktop_widgets(model, palette, theme, width, height))
-    layers.push(desktop_files(model, palette, theme, width))
+    layers.push(desktop_widgets(model, palette, width, height))
+    layers.push(desktop_files(model, palette, width))
   }
   for record in model.visible_windows() {
     layers.push(
@@ -442,28 +414,26 @@ fn desktop_screen(
         record,
         window_body(model, record, width, height, palette, theme),
         palette,
-        theme,
         width,
         height,
       ),
     )
   }
   layers.push(dock(model, palette, width, height))
-  layers.push(menu_bar(model, palette, theme, width))
+  layers.push(menu_bar(model, palette, width))
   match model.overlay {
     OverlayNone => ()
     MenuBarMenu(menu) =>
-      layers.push(menu_bar_popup(model, menu, palette, theme, width, height))
-    Launcher => layers.push(app_launcher(model, palette, theme, width, height))
-    Spotlight => layers.push(spotlight(model, palette, theme, width, height))
-    ControlCenter =>
-      layers.push(control_center(model, palette, theme, width, height))
+      layers.push(menu_bar_popup(model, menu, palette, width, height))
+    Launcher => layers.push(app_launcher(model, palette, width, height))
+    Spotlight => layers.push(spotlight(model, palette, width, height))
+    ControlCenter => layers.push(control_center(model, palette, width, height))
     NotificationCenter =>
-      layers.push(notification_center(model, palette, theme, width, height))
-    AboutThisMac => layers.push(about_this_mac(palette, theme, width, height))
+      layers.push(notification_center(model, palette, width, height))
+    AboutThisMac => layers.push(about_this_mac(palette, width, height))
     SystemSettings =>
-      layers.push(system_settings(model, palette, theme, width, height))
-    AppStore => layers.push(app_store(palette, theme, width, height))
+      layers.push(system_settings(model, palette, width, height))
+    AppStore => layers.push(app_store(palette, width, height))
   }
   @views.stack(layers).frame(width~, height~)
 }
@@ -493,21 +463,18 @@ fn window_body(
         model,
         window_metrics(record, viewport_width, viewport_height),
         palette,
-        theme,
       )
     NotesApp =>
       notes_body(
         model,
         window_metrics(record, viewport_width, viewport_height),
         palette,
-        theme,
       )
     TerminalApp =>
       terminal_body(
         model,
         window_metrics(record, viewport_width, viewport_height),
         palette,
-        theme,
       )
   }
 }

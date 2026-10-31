@@ -175,8 +175,9 @@ fn shell_write(section : ShellSection, model : SettingsModel) -> SettingsModel {
 
 // ---------------------------------------------------------------------------
 // Section features: each is a standalone TEA unit (init/update/view) over
-// its own section model. Theme enters through the view closure because it
-// derives from the preferences section, which is a sibling, not an ancestor.
+// its own section model. Section views resolve colours from the ambient
+// theme established once at the root view, so no theme value is threaded
+// through the scope closures.
 // ---------------------------------------------------------------------------
 
 ///|
@@ -249,78 +250,68 @@ fn preferences_update(
 }
 
 ///|
-fn profile_feature(
-  theme : @moui.Theme,
-) -> @moui.Feature[ProfileSection, ProfileMsg] {
+fn profile_feature() -> @moui.Feature[ProfileSection, ProfileMsg] {
   @moui.Feature::new(
     init=() => (profile_section_default(), @moui.Effect::none()),
     update=profile_update,
-    view=model => profile_form(model, theme),
+    view=profile_form,
   )
 }
 
 ///|
-fn workspace_feature(
-  theme : @moui.Theme,
-) -> @moui.Feature[WorkspaceSection, WorkspaceMsg] {
+fn workspace_feature() -> @moui.Feature[WorkspaceSection, WorkspaceMsg] {
   @moui.Feature::new(
     init=() => (workspace_section_default(), @moui.Effect::none()),
     update=workspace_update,
-    view=model => workspace_form(model, theme),
+    view=workspace_form,
   )
 }
 
 ///|
-fn preferences_feature(
-  theme : @moui.Theme,
-) -> @moui.Feature[PreferencesSection, PreferencesMsg] {
+fn preferences_feature() -> @moui.Feature[PreferencesSection, PreferencesMsg] {
   @moui.Feature::new(
     init=() => (preferences_section_default(), @moui.Effect::none()),
     update=preferences_update,
-    view=model => preferences_form(model, theme),
+    view=preferences_form,
   )
 }
 
 ///|
-/// Mounted profile handle. The `update` path never evaluates the view, so
-/// the default theme argument is irrelevant there; the `view` path passes
-/// the model-resolved theme (`theme~`).
-fn profile_scope(
-  theme~ : @moui.Theme = @views.light_theme(),
-) -> @moui.ScopedFeature[SettingsModel, ProfileSection, ProfileMsg, SettingsMsg] {
-  profile_feature(theme).scope(read=profile_read, write=profile_write, wrap=message => {
+/// Mounted profile handle. Section views resolve presentation from the
+/// ambient theme scoped once at the root view.
+fn profile_scope() -> @moui.ScopedFeature[
+  SettingsModel,
+  ProfileSection,
+  ProfileMsg,
+  SettingsMsg,
+] {
+  profile_feature().scope(read=profile_read, write=profile_write, wrap=message => {
     Profile(message)
   })
 }
 
 ///|
-fn workspace_scope(
-  theme~ : @moui.Theme = @views.light_theme(),
-) -> @moui.ScopedFeature[
+fn workspace_scope() -> @moui.ScopedFeature[
   SettingsModel,
   WorkspaceSection,
   WorkspaceMsg,
   SettingsMsg,
 ] {
-  workspace_feature(theme).scope(read=workspace_read, write=workspace_write, wrap=message => {
+  workspace_feature().scope(read=workspace_read, write=workspace_write, wrap=message => {
     Workspace(message)
   })
 }
 
 ///|
-fn preferences_scope(
-  theme~ : @moui.Theme = @views.light_theme(),
-) -> @moui.ScopedFeature[
+fn preferences_scope() -> @moui.ScopedFeature[
   SettingsModel,
   PreferencesSection,
   PreferencesMsg,
   SettingsMsg,
 ] {
-  preferences_feature(theme).scope(
-    read=preferences_read,
-    write=preferences_write,
-    wrap=message => Preferences(message),
-  )
+  preferences_feature().scope(read=preferences_read, write=preferences_write, wrap=message => {
+    Preferences(message)
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -443,11 +434,10 @@ pub fn SettingsModel::view_with_environment(
         [
           column(
             [
-              text("Settings", role=Title, theme~, width=240.0, height=34.0),
+              text("Settings", role=Title, width=240.0, height=34.0),
               text(
                 "Form, sidebar, saveable state, and theme preferences.",
                 role=Caption,
-                theme~,
                 width=420.0,
                 height=24.0,
               ),
@@ -459,7 +449,6 @@ pub fn SettingsModel::view_with_environment(
             "Save Settings",
             on_click=SaveSettings,
             variant=Primary,
-            theme~,
             width=132.0,
             height=38.0,
           ),
@@ -467,7 +456,6 @@ pub fn SettingsModel::view_with_environment(
             "Reset",
             on_click=ResetSettings,
             variant=Outline,
-            theme~,
             width=86.0,
             height=38.0,
           ),
@@ -476,7 +464,7 @@ pub fn SettingsModel::view_with_environment(
         align=Center,
       ),
       split_view(
-        primary=self.settings_sidebar(theme),
+        primary=self.settings_sidebar(),
         detail=self.settings_detail(theme, environment),
         primary_width=210.0,
         detail_width=590.0,
@@ -489,7 +477,6 @@ pub fn SettingsModel::view_with_environment(
           "Section: " + self.section_label(),
           "Theme: " + self.theme_label(),
         ],
-        theme~,
         width=824.0,
       ),
     ],
@@ -501,9 +488,8 @@ pub fn SettingsModel::view_with_environment(
     width=880.0,
     height=560.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.lg,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -548,7 +534,6 @@ pub fn SettingsModel::program(
 ///|
 fn SettingsModel::settings_sidebar(
   self : SettingsModel,
-  theme : @moui.Theme,
 ) -> @moui.View[SettingsMsg] {
   sidebar(
     "Settings",
@@ -570,7 +555,6 @@ fn SettingsModel::settings_sidebar(
       ),
     ],
     selected=self.shell.selected_section,
-    theme~,
     width=210.0,
     height=420.0,
   )
@@ -585,16 +569,15 @@ fn SettingsModel::settings_detail(
   // The active section's scoped feature builds its view; messages lift
   // through the wrapper variant automatically.
   let detail = match self.shell.selected_section {
-    "workspace" => workspace_scope(theme~).view(self, environment)
-    "preferences" => preferences_scope(theme~).view(self, environment)
-    _ => profile_scope(theme~).view(self, environment)
+    "workspace" => workspace_scope().view(self, environment)
+    "preferences" => preferences_scope().view(self, environment)
+    _ => profile_scope().view(self, environment)
   }
   container(
     scroll_view(detail, width=558.0, height=388.0),
     width=590.0,
     height=420.0,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
   )
 }
@@ -604,10 +587,7 @@ fn SettingsModel::settings_detail(
 // ---------------------------------------------------------------------------
 
 ///|
-fn profile_form(
-  model : ProfileSection,
-  theme : @moui.Theme,
-) -> @moui.View[ProfileMsg] {
+fn profile_form(model : ProfileSection) -> @moui.View[ProfileMsg] {
   form(
     [
       form_section(
@@ -619,12 +599,10 @@ fn profile_form(
               on_input=value => Field("display_name", Text(value)),
               placeholder="Name shown in the app",
               variant=Outline,
-              theme~,
               width=440.0,
             ),
             helper="Used in menus, comments, and audit trails.",
             required=true,
-            theme~,
             width=500.0,
           ),
           form_field(
@@ -634,32 +612,25 @@ fn profile_form(
               on_input=value => Field("email", Text(value)),
               placeholder="name@example.com",
               variant=Outline,
-              theme~,
               width=440.0,
             ),
             helper="Receives account notifications.",
             error=email_error(model.email),
             required=true,
-            theme~,
             width=500.0,
           ),
         ],
         title="Profile",
         summary="Required account fields with app-owned validation.",
-        theme~,
         width=520.0,
       ),
     ],
-    theme~,
     width=540.0,
   )
 }
 
 ///|
-fn workspace_form(
-  model : WorkspaceSection,
-  theme : @moui.Theme,
-) -> @moui.View[WorkspaceMsg] {
+fn workspace_form(model : WorkspaceSection) -> @moui.View[WorkspaceMsg] {
   form(
     [
       form_section(
@@ -671,12 +642,10 @@ fn workspace_form(
               on_input=value => WorkspaceChanged(value),
               placeholder="Workspace name",
               variant=Outline,
-              theme~,
               width=440.0,
             ),
             helper="Shown in the sidebar and window title.",
             required=true,
-            theme~,
             width=500.0,
           ),
           form_field(
@@ -689,30 +658,22 @@ fn workspace_form(
               },
               model.notifications,
               on_change=value => NotificationsChanged(value),
-              foreground=theme.palette.foreground,
-              check_color=theme.palette.primary,
             ),
             helper="Controls product update and billing email.",
-            theme~,
             width=500.0,
           ),
         ],
         title="Workspace",
         summary="Team identity and notification defaults.",
-        theme~,
         width=520.0,
       ),
     ],
-    theme~,
     width=540.0,
   )
 }
 
 ///|
-fn preferences_form(
-  model : PreferencesSection,
-  theme : @moui.Theme,
-) -> @moui.View[PreferencesMsg] {
+fn preferences_form(model : PreferencesSection) -> @moui.View[PreferencesMsg] {
   form(
     [
       form_section(
@@ -727,11 +688,9 @@ fn preferences_form(
               ],
               selected=model.theme_mode,
               on_select=value => ThemeModeSelected(value),
-              theme~,
               width=420.0,
             ),
             helper="System keeps the app ready for host theme integration.",
-            theme~,
             width=500.0,
           ),
           form_field(
@@ -744,21 +703,16 @@ fn preferences_form(
               },
               model.telemetry,
               on_change=value => TelemetryChanged(value),
-              foreground=theme.palette.foreground,
-              check_color=theme.palette.primary,
             ),
             helper="Demo-only preference persisted through saveable state.",
-            theme~,
             width=500.0,
           ),
         ],
         title="Preferences",
         summary="Theme mode and local behavior toggles.",
-        theme~,
         width=520.0,
       ),
     ],
-    theme~,
     width=540.0,
   )
 }

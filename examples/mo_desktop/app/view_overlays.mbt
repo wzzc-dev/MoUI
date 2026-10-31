@@ -11,7 +11,6 @@ priv struct LauncherEntry {
 fn app_launcher(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -38,7 +37,6 @@ fn app_launcher(
         @views.text(
           "No apps or actions found",
           role=Title,
-          theme~,
           width=inner_width,
           height=34.0,
           align=TextCenter,
@@ -47,7 +45,6 @@ fn app_launcher(
           "Clear Search",
           on_click=LauncherQueryChanged(""),
           variant=Tonal,
-          theme~,
           width=126.0,
           height=38.0,
         ),
@@ -58,16 +55,7 @@ fn app_launcher(
   } else {
     @views.responsive_grid(
       entries.map(entry => {
-        launcher_tile(
-          entry,
-          if compact {
-            112.0
-          } else {
-            142.0
-          },
-          palette,
-          theme,
-        )
+        launcher_tile(entry, if compact { 112.0 } else { 142.0 }, palette)
       }),
       width=inner_width,
       min_column_width=if compact { 112.0 } else { 142.0 },
@@ -78,12 +66,11 @@ fn app_launcher(
   let panel = glass_panel(
     @views.column(
       [
-        overlay_header("Apps", DismissOverlay, inner_width, palette, theme),
+        overlay_header("Apps", DismissOverlay, inner_width, palette),
         @views.text_field(
           model.launcher_query,
           on_input=value => LauncherQueryChanged(value),
           placeholder="Search apps and actions",
-          theme~,
           width=inner_width,
           height=40.0,
         ),
@@ -96,7 +83,6 @@ fn app_launcher(
           on_select=value => {
             LauncherTabSelected(if value == "actions" { Actions } else { Apps })
           },
-          theme~,
           width=inner_width,
         ),
         results,
@@ -125,7 +111,6 @@ fn app_launcher(
 fn spotlight(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -139,7 +124,7 @@ fn spotlight(
   }
   let inner_width = width - 32.0
   let query = model.spotlight_query
-  let results = spotlight_results(model, query, inner_width, palette, theme)
+  let results = spotlight_results(model, query, inner_width, palette)
   let panel = glass_panel(
     @views.column(
       [
@@ -151,7 +136,6 @@ fn spotlight(
               on_input=value => SpotlightQueryChanged(value),
               on_submit=Some(SpotlightQueryChanged(query)),
               placeholder="Spotlight Search",
-              theme~,
               width=inner_width - 28.0,
               height=40.0,
             ),
@@ -159,7 +143,7 @@ fn spotlight(
           spacing=10.0,
           align=Center,
         ),
-        @views.divider(theme~, color=palette.outline.multiply_alpha(0.55)),
+        @views.divider(color=palette.outline.multiply_alpha(0.55)),
         results,
       ],
       spacing=12.0,
@@ -201,7 +185,6 @@ fn spotlight_results(
   query : String,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let entries = spotlight_entries().filter(entry => {
     query == "" || entry.title.contains(query) || entry.subtitle.contains(query)
@@ -212,7 +195,6 @@ fn spotlight_results(
         @views.text(
           "No results for \"\{query}\"",
           role=Body,
-          theme~,
           width~,
           height=28.0,
           align=TextCenter,
@@ -230,11 +212,9 @@ fn spotlight_results(
     for category in categories {
       let group = entries.filter(entry => entry.category == category)
       if !group.is_empty() {
-        children.push(
-          spotlight_category_header(category, width, palette, theme),
-        )
+        children.push(spotlight_category_header(category, width, palette))
         for entry in group {
-          children.push(spotlight_row(entry, width, palette, theme))
+          children.push(spotlight_row(entry, width, palette))
         }
       }
     }
@@ -249,9 +229,8 @@ fn spotlight_category_header(
   category : String,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.text(category, role=Caption, theme~, width~, height=16.0)
+  @views.text(category, role=Caption, width~, height=16.0)
   .font(@text.FontSpec::new(size=11.0, weight=700))
   .foreground(palette.muted)
 }
@@ -322,7 +301,6 @@ fn spotlight_row(
   entry : SpotlightResult,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.row(
@@ -340,7 +318,6 @@ fn spotlight_row(
             @views.text(
               entry.title,
               role=Body,
-              theme~,
               width=(width - 56.0).max(80.0),
               height=20.0,
             )
@@ -349,7 +326,6 @@ fn spotlight_row(
             @views.text(
               entry.subtitle,
               role=Caption,
-              theme~,
               width=(width - 56.0).max(80.0),
               height=16.0,
             ).foreground(palette.muted),
@@ -373,7 +349,6 @@ fn spotlight_row(
 ///|
 fn about_this_mac(
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -384,7 +359,6 @@ fn about_this_mac(
     Info,
     rgba8(48, 132, 255),
     palette,
-    theme,
     viewport_width,
     viewport_height,
   )
@@ -393,7 +367,6 @@ fn about_this_mac(
 ///|
 fn app_store(
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -404,7 +377,6 @@ fn app_store(
     Link,
     rgba8(40, 172, 224),
     palette,
-    theme,
     viewport_width,
     viewport_height,
   )
@@ -414,7 +386,6 @@ fn app_store(
 fn system_settings(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -422,20 +393,8 @@ fn system_settings(
   let panel = glass_panel(
     @views.column(
       [
-        overlay_header(
-          "System Settings",
-          DismissOverlay,
-          width - 32.0,
-          palette,
-          theme,
-        ),
-        @views.text(
-          "Appearance",
-          role=Title,
-          theme~,
-          width=width - 32.0,
-          height=28.0,
-        )
+        overlay_header("System Settings", DismissOverlay, width - 32.0, palette),
+        @views.text("Appearance", role=Title, width=width - 32.0, height=28.0)
         .font(@text.FontSpec::new(size=17.0, weight=620))
         .foreground(palette.foreground),
         @views.text(
@@ -445,7 +404,6 @@ fn system_settings(
             "Light appearance is active."
           },
           role=Body,
-          theme~,
           width=width - 32.0,
           height=22.0,
         ).foreground(palette.muted),
@@ -457,7 +415,6 @@ fn system_settings(
           },
           on_click=ToggleDarkMode,
           variant=Tonal,
-          theme~,
           width=width - 32.0,
           height=38.0,
         ),
@@ -465,7 +422,6 @@ fn system_settings(
           "Use System Appearance",
           on_click=UseSystemAppearance,
           variant=Ghost,
-          theme~,
           width=width - 32.0,
           height=34.0,
         ),
@@ -490,7 +446,6 @@ fn desktop_dialog(
   icon : @views.IconName,
   icon_color : @graphics.Color,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -498,7 +453,7 @@ fn desktop_dialog(
   let panel = glass_panel(
     @views.column(
       [
-        overlay_header(title, DismissOverlay, width - 32.0, palette, theme),
+        overlay_header(title, DismissOverlay, width - 32.0, palette),
         @views.container(
           desktop_icon(icon, 30.0, @graphics.Color::white()),
           width=56.0,
@@ -510,7 +465,6 @@ fn desktop_dialog(
         @views.text(
           heading,
           role=Title,
-          theme~,
           width=width - 32.0,
           height=28.0,
           align=TextCenter,
@@ -520,7 +474,6 @@ fn desktop_dialog(
         @views.text(
           detail,
           role=Body,
-          theme~,
           width=width - 32.0,
           height=40.0,
           align=TextCenter,
@@ -626,7 +579,6 @@ fn launcher_tile(
   entry : LauncherEntry,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.column(
@@ -643,7 +595,6 @@ fn launcher_tile(
         @views.text(
           entry.label,
           role=Label,
-          theme~,
           width=width - 12.0,
           height=24.0,
           align=TextCenter,
@@ -651,7 +602,6 @@ fn launcher_tile(
         @views.text(
           entry.detail,
           role=Caption,
-          theme~,
           width=width - 12.0,
           height=20.0,
           align=TextCenter,
@@ -675,7 +625,6 @@ fn launcher_tile(
 fn control_center(
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
@@ -703,7 +652,6 @@ fn control_center(
           WifiChanged(!model.wifi_enabled),
           inner_width,
           palette,
-          theme,
         ),
         connectivity_tile(
           "Bluetooth",
@@ -713,7 +661,6 @@ fn control_center(
           BluetoothChanged(!model.bluetooth_enabled),
           inner_width,
           palette,
-          theme,
         ),
       ],
       spacing=8.0,
@@ -730,7 +677,6 @@ fn control_center(
           WifiChanged(!model.wifi_enabled),
           tile_w,
           palette,
-          theme,
         ),
         connectivity_tile(
           "Bluetooth",
@@ -740,7 +686,6 @@ fn control_center(
           BluetoothChanged(!model.bluetooth_enabled),
           tile_w,
           palette,
-          theme,
         ),
       ],
       spacing=8.0,
@@ -768,7 +713,6 @@ fn control_center(
           ToggleDarkMode,
           tile_w,
           palette,
-          theme,
         ),
         control_action_tile(
           "Low Power",
@@ -777,7 +721,6 @@ fn control_center(
           LowPowerModeChanged(!model.low_power_mode),
           tile_w,
           palette,
-          theme,
         ),
       ],
       spacing=8.0,
@@ -797,7 +740,6 @@ fn control_center(
         value => BrightnessChanged(value),
         inner_width,
         palette,
-        theme,
       ),
       appearance,
       control_slider_section(
@@ -806,14 +748,12 @@ fn control_center(
         value => VolumeChanged(value),
         inner_width,
         palette,
-        theme,
       ),
-      control_system_status(model, inner_width, palette, theme),
+      control_system_status(model, inner_width, palette),
       @views.container(
         @views.text(
           "Lock Screen",
           role=Caption,
-          theme~,
           width=inner_width - 16.0,
           height=18.0,
           align=TextCenter,
@@ -899,7 +839,6 @@ fn connectivity_tile(
   message : Msg,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   let glyph_bg = if enabled { palette.accent } else { rgba8(150, 158, 170) }
   @views.container(
@@ -918,7 +857,6 @@ fn connectivity_tile(
             @views.text(
               label,
               role=Label,
-              theme~,
               width=(width - 58.0).max(70.0),
               height=18.0,
             )
@@ -931,7 +869,6 @@ fn connectivity_tile(
                 "Off"
               },
               role=Caption,
-              theme~,
               width=(width - 58.0).max(70.0),
               height=16.0,
             ).foreground(palette.muted),
@@ -962,7 +899,6 @@ fn control_action_tile(
   message : Msg,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.column(
@@ -990,7 +926,6 @@ fn control_action_tile(
         @views.text(
           label,
           role=Caption,
-          theme~,
           width=width - 20.0,
           height=18.0,
           align=TextCenter,
@@ -1017,7 +952,6 @@ fn control_system_status(
   model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.row(
@@ -1026,7 +960,6 @@ fn control_system_status(
           @views.text(
             desktop_clock_time(model.clock),
             role=Caption,
-            theme~,
             width=50.0,
             height=16.0,
             align=TextCenter,
@@ -1050,7 +983,6 @@ fn control_system_status(
             @views.text(
               "System status",
               role=Label,
-              theme~,
               width=(width - 88.0).max(100.0),
               height=18.0,
             )
@@ -1065,7 +997,6 @@ fn control_system_status(
                 "Manual light appearance"
               },
               role=Caption,
-              theme~,
               width=(width - 88.0).max(100.0),
               height=16.0,
             ).foreground(palette.muted),
@@ -1093,26 +1024,18 @@ fn control_slider_section(
   on_change : (Double) -> Msg,
   width : Double,
   palette : DesktopPalette,
-  theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.container(
     @views.column(
       [
         @views.row(
           [
-            @views.text(
-              label,
-              role=Label,
-              theme~,
-              width=width - 86.0,
-              height=20.0,
-            )
+            @views.text(label, role=Label, width=width - 86.0, height=20.0)
             .font(@text.FontSpec::new(size=12.5, weight=600))
             .foreground(palette.foreground),
             @views.text(
               "\{(value * 100.0).to_int()}%",
               role=Caption,
-              theme~,
               width=44.0,
               height=20.0,
               align=TextEnd,
@@ -1126,7 +1049,6 @@ fn control_slider_section(
           min=0.0,
           max=1.0,
           width=width - 24.0,
-          theme~,
           foreground=palette.accent,
           on_change=Some(on_change),
         ),

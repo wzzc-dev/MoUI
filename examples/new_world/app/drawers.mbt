@@ -98,7 +98,7 @@ fn drawer_content(
         // The drawer is one place with four panels: the switcher sits here so
         // the memory book, the model status, the event log and the prompt
         // preview are all one click away.
-        drawer_switcher(model, kind, width),
+        drawer_switcher(kind, width),
         divider(),
         scroll_view(
           body,
@@ -115,12 +115,7 @@ fn drawer_content(
 
 ///|
 /// The drawer's own switcher: the panels of the right-hand drawer, as chips.
-fn drawer_switcher(
-  model : WorldModel,
-  current : DrawerKind,
-  width : Double,
-) -> @moui.View[Msg] {
-  let theme = app_theme_for(model.config.appearance())
+fn drawer_switcher(current : DrawerKind, width : Double) -> @moui.View[Msg] {
   let panels : Array[(String, DrawerKind)] = [
     ("角色档案", Profile),
     ("长久记忆", Memory),
@@ -137,7 +132,6 @@ fn drawer_switcher(
         label,
         selected=kind == current,
         on_click=Some(OpenDrawer(kind)),
-        theme~,
         width=chip_width(label),
         height=button_sm_height,
       ),

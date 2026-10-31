@@ -39,17 +39,15 @@ fn DesignSystemsModel::sickle_typography_panel(
     theme,
     "Typography specimen",
     [
-      text("Title role", role=Title, theme~, width=390.0, height=34.0),
+      text("Title role", role=Title, width=390.0, height=34.0),
       text(
         "Body role: precision typography with compact control rhythm.",
-        theme~,
         width=390.0,
         height=30.0,
       ),
       text(
         "Caption role / control role",
         role=Caption,
-        theme~,
         width=390.0,
         height=24.0,
       ),
@@ -117,7 +115,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
         ],
         selected=self.selected_component,
         on_select=id => SelectComponent(id),
-        theme~,
         max_height=160.0,
       ).frame(width=240.0, height=40.0),
       row(
@@ -126,7 +123,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Primary",
             on_click=ToggleCustom,
             variant=Primary,
-            theme~,
             width=96.0,
             height=36.0,
           ),
@@ -134,7 +130,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Tonal",
             on_click=ToggleCustom,
             variant=Tonal,
-            theme~,
             width=88.0,
             height=36.0,
           ),
@@ -142,7 +137,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Outline",
             on_click=ToggleCustom,
             variant=Outline,
-            theme~,
             width=96.0,
             height=36.0,
           ),
@@ -150,7 +144,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Ghost",
             on_click=ToggleCustom,
             variant=Ghost,
-            theme~,
             width=80.0,
             height=36.0,
           ),
@@ -164,7 +157,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Subtle",
             on_click=ToggleCustom,
             variant=Subtle,
-            theme~,
             width=88.0,
             height=36.0,
           ),
@@ -172,7 +164,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             "Subtle brand",
             on_click=ToggleCustom,
             variant=SubtleBrand,
-            theme~,
             width=128.0,
             height=36.0,
           ),
@@ -180,7 +171,6 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
             self.draft,
             on_input=value => DraftChanged(value),
             placeholder="Layered field",
-            theme~,
             width=200.0,
             height=36.0,
           ),
@@ -218,12 +208,11 @@ fn DesignSystemsModel::customization_panel(
               custom_label,
               on_click=ToggleCustom,
               variant=if self.custom_enabled { Primary } else { Outline },
-              theme~,
               width=180.0,
               height=38.0,
             ),
-            status_badge("first-party theme", tone=Accent, theme~, width=152.0),
-            status_badge("not source-mapped", tone=Neutral, theme~, width=152.0),
+            status_badge("first-party theme", tone=Accent, width=152.0),
+            status_badge("not source-mapped", tone=Neutral, width=152.0),
           ],
           spacing=theme.spacing_scale.sm,
           align=Center,
@@ -246,22 +235,11 @@ fn DesignSystemsModel::customization_panel(
               custom_label,
               on_click=ToggleCustom,
               variant=if self.custom_enabled { Primary } else { Outline },
-              theme~,
               width=180.0,
               height=38.0,
             ),
-            status_badge(
-              "source-mapped preview",
-              tone=Warning,
-              theme~,
-              width=152.0,
-            ),
-            status_badge(
-              "not official complete",
-              tone=Neutral,
-              theme~,
-              width=152.0,
-            ),
+            status_badge("source-mapped preview", tone=Warning, width=152.0),
+            status_badge("not official complete", tone=Neutral, width=152.0),
           ],
           spacing=theme.spacing_scale.sm,
           align=Center,
@@ -304,7 +282,7 @@ fn design_panel(
   height~ : Double,
 ) -> @moui.View[DesignSystemsMsg] {
   let rows : Array[@moui.View[DesignSystemsMsg]] = [
-    text(title, role=Control, theme~, width=width - 32.0, height=28.0),
+    text(title, role=Control, width=width - 32.0, height=28.0),
   ]
   for child in children {
     rows.push(child)
@@ -314,9 +292,8 @@ fn design_panel(
     width~,
     height~,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.md,
-  )
+  ).theme(theme)
 }
 
 ///|
@@ -327,10 +304,10 @@ fn design_metric_row(
 ) -> @moui.View[DesignSystemsMsg] {
   row(
     [
-      text(label, role=Caption, theme~, width=170.0, height=24.0).foreground(
+      text(label, role=Caption, width=170.0, height=24.0).foreground(
         theme.palette.muted,
       ),
-      text(value, role=Caption, theme~, width=210.0, height=24.0),
+      text(value, role=Caption, width=210.0, height=24.0),
     ],
     spacing=theme.spacing_scale.sm,
     align=Center,
@@ -344,14 +321,13 @@ fn design_swatch(
   color : @graphics.Color,
 ) -> @moui.View[DesignSystemsMsg] {
   container(
-    text(label, role=Caption, theme~, width=76.0, height=24.0).foreground(
+    text(label, role=Caption, width=76.0, height=24.0).foreground(
       theme.palette.on_primary,
     ),
     width=88.0,
     height=48.0,
     background=color,
     corner_radius=theme.radius_scale.sm,
-    theme~,
     padding=theme.spacing_scale.xs,
   )
 }
@@ -365,8 +341,8 @@ fn spacing_tile(
   container(
     column(
       [
-        text(label, role=Caption, theme~, width=54.0, height=20.0),
-        text(value.to_string(), role=Caption, theme~, width=54.0, height=20.0),
+        text(label, role=Caption, width=54.0, height=20.0),
+        text(value.to_string(), role=Caption, width=54.0, height=20.0),
       ],
       spacing=0.0,
       align=Center,
@@ -375,7 +351,6 @@ fn spacing_tile(
     height=54.0,
     background=theme.palette.primary.multiply_alpha(0.18),
     corner_radius=theme.radius_scale.sm,
-    theme~,
     padding=theme.spacing_scale.xs,
   )
 }

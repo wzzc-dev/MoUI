@@ -46,7 +46,7 @@ fn ShowcaseModel::tooltip_demo_card(
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
         tooltip(
-          button("Hover target", variant=Tonal, theme~, width=140.0),
+          button("Hover target", variant=Tonal, width=140.0),
           "Tooltip: Meta+K",
           visible=true,
         ),
@@ -77,7 +77,6 @@ fn ShowcaseModel::file_drop_card(
       title="File Drop",
       drop_title="Drop files here",
       empty_message=drop_label,
-      theme~,
       width=width - 32.0,
     ),
     width~,
@@ -174,7 +173,6 @@ fn ShowcaseModel::text_selection_card(
             on_input=text => SelectionTextChanged(text),
             lines=8,
             line_height=22.0,
-            theme~,
             width=inner_width,
           ).semantic_id("showcase.text-selection"),
           width=inner_width,
@@ -226,7 +224,6 @@ fn ShowcaseModel::focus_shortcut_card(
             modifiers=@views.KeyModifiers::new(meta=true),
           ),
           variant=Outline,
-          theme~,
           width=260.0,
         ).focusable(),
         text("Keyboard shortcut: Meta+K", width=width - 32.0, height=24.0)
@@ -240,7 +237,6 @@ fn ShowcaseModel::focus_shortcut_card(
               .foreground(theme.palette.foreground),
               focused=true,
               label="Focus target: name",
-              theme~,
               width=126.0,
               height=38.0,
             ),
@@ -250,7 +246,6 @@ fn ShowcaseModel::focus_shortcut_card(
               .foreground(theme.palette.foreground),
               focused=false,
               label="Focus target: email",
-              theme~,
               width=126.0,
               height=38.0,
             ),
@@ -263,9 +258,9 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         row(
           [
-            button("Pressed", variant=Tonal, theme~, width=78.0, height=32.0).semantics_pressed(),
-            button("Selected", variant=Outline, theme~, width=82.0, height=32.0).semantics_selected(),
-            button("Disabled", variant=Ghost, theme~, width=82.0, height=32.0).disabled(),
+            button("Pressed", variant=Tonal, width=78.0, height=32.0).semantics_pressed(),
+            button("Selected", variant=Outline, width=82.0, height=32.0).semantics_selected(),
+            button("Disabled", variant=Ghost, width=82.0, height=32.0).disabled(),
           ],
           spacing=6.0,
           align=Center,
@@ -282,8 +277,8 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         row(
           [
-            button("Trap A", variant=Outline, theme~, width=82.0, height=32.0).focusable(),
-            button("Trap B", variant=Outline, theme~, width=82.0, height=32.0).focusable(),
+            button("Trap A", variant=Outline, width=82.0, height=32.0).focusable(),
+            button("Trap B", variant=Outline, width=82.0, height=32.0).focusable(),
           ],
           spacing=6.0,
           align=Center,
@@ -374,7 +369,6 @@ fn ShowcaseModel::popover_dropdown_card(
             selected=self.picker_value,
           ),
           on_toggle=ToggleActive,
-          theme~,
           width=width - 32.0,
           max_height=92.0,
         ),
@@ -385,7 +379,6 @@ fn ShowcaseModel::popover_dropdown_card(
           expanded=self.active,
           on_toggle=ToggleActive,
           placeholder="Combobox",
-          theme~,
           width=width - 32.0,
           max_height=82.0,
         ),
@@ -395,7 +388,6 @@ fn ShowcaseModel::popover_dropdown_card(
           items,
           expanded=true,
           placeholder="Autocomplete",
-          theme~,
           width=width - 32.0,
           max_height=82.0,
         ),
@@ -404,7 +396,6 @@ fn ShowcaseModel::popover_dropdown_card(
             "Inline popover",
             on_click=ToggleActive,
             variant=Tonal,
-            theme~,
             width=160.0,
           ),
           [
@@ -443,9 +434,9 @@ fn ShowcaseModel::variant_gallery_card(
         .foreground(theme.palette.foreground),
         row(
           [
-            button("Primary", variant=Primary, theme~, width=82.0, height=34.0),
-            button("Tonal", variant=Tonal, theme~, width=76.0, height=34.0),
-            button("Ghost", variant=Ghost, theme~, width=76.0, height=34.0),
+            button("Primary", variant=Primary, width=82.0, height=34.0),
+            button("Tonal", variant=Tonal, width=76.0, height=34.0),
+            button("Ghost", variant=Ghost, width=76.0, height=34.0),
           ],
           spacing=6.0,
           align=Center,
@@ -455,7 +446,6 @@ fn ShowcaseModel::variant_gallery_card(
           on_input=value => DraftChanged(value),
           placeholder="Outline",
           variant=Outline,
-          theme~,
           width=width - 32.0,
           height=36.0,
         ),
@@ -467,7 +457,6 @@ fn ShowcaseModel::variant_gallery_card(
           on_input=value => DraftChanged(value),
           placeholder="Plain",
           variant=Plain,
-          theme~,
           width=width - 32.0,
           height=32.0,
         ),
@@ -505,7 +494,6 @@ fn container_variant_tile(
     width=92.0,
     height=34.0,
     variant~,
-    theme~,
     padding=6.0,
   )
 }
@@ -590,7 +578,6 @@ fn ShowcaseModel::dialog_demo_card(
           primary_action=Some(
             @views.StateViewAction::new(label="Close", message=HideDialog),
           ),
-          theme~,
           width=440.0,
           height=240.0,
         ),

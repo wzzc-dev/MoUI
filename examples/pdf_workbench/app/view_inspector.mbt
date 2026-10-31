@@ -36,7 +36,6 @@ fn pdf_workbench_inspector(
           "Skia PDF note",
           "Skia's PDF sample is for PDF output generation, not existing-page rasterization.",
           tone=Info,
-          theme~,
           width=item_width,
         ),
       )
@@ -52,7 +51,6 @@ fn pdf_workbench_inspector(
     width=metrics.inspector_width,
     height=metrics.body_height,
     variant=Raised,
-    theme~,
     padding=theme.spacing_scale.sm,
   )
 }
@@ -88,21 +86,13 @@ fn pdf_workbench_inspector_summary(
               } else {
                 "No queued edits"
               },
-              theme~,
               width=78.0,
               height=24.0,
             ),
-            @views.badge(
-              zoom_label,
-              tone=Neutral,
-              theme~,
-              width=58.0,
-              height=24.0,
-            ),
+            @views.badge(zoom_label, tone=Neutral, width=58.0, height=24.0),
             @views.badge(
               pdf_workbench_search_badge_label(document, model.query),
               tone=if matches > 0 { Accent } else { Neutral },
-              theme~,
               width=64.0,
               height=24.0,
             ),
@@ -129,7 +119,6 @@ fn pdf_workbench_inspector_summary(
     height=72.0,
     background=theme.palette.surface_variant.multiply_alpha(0.72),
     corner_radius=theme.radius_scale.sm,
-    theme~,
     padding=theme.spacing_scale.sm,
   )
 }
@@ -149,7 +138,6 @@ fn pdf_workbench_inspector_page_group(
             "Rotate 90",
             on_click=RotateCurrentPage,
             variant=Outline,
-            theme~,
             width=button_width,
             height=34.0,
           ),
@@ -157,7 +145,6 @@ fn pdf_workbench_inspector_page_group(
             "Crop",
             on_click=CropCurrentPage,
             variant=Outline,
-            theme~,
             width=button_width,
             height=34.0,
           ),
@@ -169,7 +156,6 @@ fn pdf_workbench_inspector_page_group(
         "Stamp",
         on_click=StampCurrentPage,
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -194,7 +180,6 @@ fn pdf_workbench_inspector_document_group(
         on_input=value => MetadataTitleChanged(value),
         placeholder="Document title",
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -202,7 +187,6 @@ fn pdf_workbench_inspector_document_group(
         "Apply Title",
         on_click=ApplyMetadataTitle,
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -211,7 +195,6 @@ fn pdf_workbench_inspector_document_group(
         on_input=value => BookmarkTitleChanged(value),
         placeholder="Current page bookmark",
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -219,7 +202,6 @@ fn pdf_workbench_inspector_document_group(
         "Add Bookmark",
         on_click=AddBookmarkForCurrentPage,
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -228,7 +210,6 @@ fn pdf_workbench_inspector_document_group(
         on_input=value => AnnotationTextChanged(value),
         placeholder="Current page note",
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -236,7 +217,6 @@ fn pdf_workbench_inspector_document_group(
         "Add Note",
         on_click=AddAnnotationForCurrentPage,
         variant=Outline,
-        theme~,
         width~,
         height=34.0,
       ),
@@ -269,7 +249,6 @@ fn pdf_workbench_inspector_queue_group(
           "Undo Last",
           on_click=UndoLastEdit,
           variant=Ghost,
-          theme~,
           width=(width - theme.spacing_scale.sm) / 2.0,
           height=34.0,
         ),
@@ -277,7 +256,6 @@ fn pdf_workbench_inspector_queue_group(
           "Discard Edits",
           on_click=DiscardEdits,
           variant=Ghost,
-          theme~,
           width=(width - theme.spacing_scale.sm) / 2.0,
           height=34.0,
         ),
@@ -368,7 +346,7 @@ fn pdf_workbench_inspector_group(
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
   let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
-    @views.text(title, role=Control, theme~, width~, height=24.0),
+    @views.text(title, role=Control, width~, height=24.0),
   ]
   for child in children {
     rows.push(child)
@@ -378,7 +356,6 @@ fn pdf_workbench_inspector_group(
     width~,
     background=theme.palette.surface.multiply_alpha(0.96),
     corner_radius=theme.radius_scale.sm,
-    theme~,
     padding=theme.spacing_scale.sm,
   )
 }
@@ -390,7 +367,7 @@ fn pdf_workbench_inspector_caption(
   height : Double,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
-  @views.text(value, role=Caption, theme~, width~, height~).foreground(
+  @views.text(value, role=Caption, width~, height~).foreground(
     theme.palette.muted,
   )
 }
@@ -409,7 +386,6 @@ fn pdf_workbench_edit_queue_row(
     height=38.0,
     background=theme.palette.surface_variant.multiply_alpha(0.58),
     corner_radius=theme.radius_scale.sm,
-    theme~,
     padding=theme.spacing_scale.xs,
   )
 }

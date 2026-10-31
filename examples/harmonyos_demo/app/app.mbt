@@ -52,21 +52,17 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let content = column(
     [
       row(
-        [
-          badge("Experimental", theme~, width=104.0),
-          badge("HarmonyOS", theme~, width=92.0),
-        ],
+        [badge("Experimental", width=104.0), badge("HarmonyOS", width=92.0)],
         spacing=8.0,
         align=Center,
       ),
       text("MoUI HarmonyOS Demo").title(),
       text("Standalone embedded Skia route", role=Subtitle),
-      divider(theme~),
+      divider(),
       callout(
         "Runtime proof pending",
         "This demo validates the package and host glue shape. Device or emulator smoke must prove first frame, pointer input, resize, and lifecycle before support is marked passed.",
         tone=Warning,
-        theme~,
         width=body_width,
       ),
       row(
@@ -75,14 +71,12 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
             "Taps",
             model.tap_count.to_string(),
             caption="Button input routed through MoUI",
-            theme~,
             width=(body_width - 8.0) / 2.0,
           ),
           stat_card(
             "Viewport",
             "\{viewport.width.to_int()} x \{viewport.height.to_int()}",
             caption="Updated by host resize events",
-            theme~,
             width=(body_width - 8.0) / 2.0,
           ),
         ],
@@ -104,7 +98,7 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     height~,
     padding~,
     background=theme.palette.background,
-  )
+  ).theme(theme)
 }
 
 ///|

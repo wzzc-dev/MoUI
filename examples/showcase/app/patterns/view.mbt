@@ -26,7 +26,6 @@ pub fn view_body(
 
 ///|
 pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
-  let theme = @views.light_theme()
   let width = env.viewport_size().width.max(320.0)
   let height = env.viewport_size().height.max(320.0)
   @views.container(
@@ -40,9 +39,9 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     width~,
     height~,
     padding=16.0,
-    background=theme.palette.background,
-    theme~,
   )
+  // Ambient theme scope for the standalone pattern package program.
+  .theme(@views.light_theme())
 }
 
 ///|
@@ -50,11 +49,10 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   let card_width = (width - 8.0).max(220.0)
   @views.column(
     [
-      @views.text("Patterns", role=Headline, theme~, width=card_width),
+      @views.text("Patterns", role=Headline, width=card_width),
       @views.text(
         "These pages are small, complete app features — not single-widget demos. Open one from the left rail under Patterns, or jump below.",
         role=Body,
-        theme~,
         width=card_width,
       ),
       @views.callout(
@@ -62,9 +60,8 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
         "Copy a pattern package as a whole: model + messages + update + view. The Showcase shell only routes into the package.",
         tone=Info,
         width=card_width,
-        theme~,
       ),
-      @views.text("Jump to a pattern", role=Subtitle, theme~, width=card_width),
+      @views.text("Jump to a pattern", role=Subtitle, width=card_width),
       @views.column(
         [
           pattern_jump_row(
@@ -115,26 +112,20 @@ fn pattern_jump_row(
       [
         @views.row(
           [
-            @views.text(title, role=Subtitle, theme~),
+            @views.text(title, role=Subtitle),
             @views.spacer(weight=1.0),
-            @views.button(
-              "Open",
-              on_click=Navigate(route),
-              variant=Outline,
-              theme~,
-            ),
+            @views.button("Open", on_click=Navigate(route), variant=Outline),
           ],
           spacing=theme.spacing_scale.sm,
           align=Center,
         ),
-        @views.text(summary, role=Caption, theme~, width~),
+        @views.text(summary, role=Caption, width~),
       ],
       spacing=theme.spacing_scale.xs,
       align=Stretch,
     ),
     width~,
     padding=12.0,
-    theme~,
   )
 }
 
@@ -142,11 +133,11 @@ fn pattern_jump_row(
 fn counter_pattern(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Counter: \{model.counter}", role=Headline, theme~),
+      @views.text("Counter: \{model.counter}", role=Headline),
       @views.row(
         [
-          @views.button("-", on_click=Decrement, variant=Outline, theme~),
-          @views.button("+", on_click=Increment, theme~),
+          @views.button("-", on_click=Decrement, variant=Outline),
+          @views.button("+", on_click=Increment),
         ],
         spacing=theme.spacing_scale.sm,
       ),
@@ -162,7 +153,7 @@ fn todo_pattern(
   width : Double,
 ) -> @moui.View[Msg] {
   let rows : Array[@moui.View[Msg]] = [
-    @views.text("Todo", role=Headline, theme~),
+    @views.text("Todo", role=Headline),
     @views.row(
       [
         @views.text_field(
@@ -171,9 +162,8 @@ fn todo_pattern(
           on_submit=Some(TodoSubmit),
           placeholder="Add a task",
           width=(width - 110.0).max(160.0),
-          theme~,
         ),
-        @views.button("Add", on_click=TodoSubmit, theme~),
+        @views.button("Add", on_click=TodoSubmit),
       ],
       spacing=theme.spacing_scale.sm,
     ),
@@ -182,18 +172,10 @@ fn todo_pattern(
     rows.push(
       @views.row(
         [
-          @views.checkbox(
-            item.label,
-            checked=item.completed,
-            on_change=value => TodoToggled(item.id, value),
-            theme~,
-          ),
-          @views.button(
-            "Remove",
-            on_click=TodoRemoved(item.id),
-            variant=Ghost,
-            theme~,
-          ),
+          @views.checkbox(item.label, checked=item.completed, on_change=value => {
+            TodoToggled(item.id, value)
+          }),
+          @views.button("Remove", on_click=TodoRemoved(item.id), variant=Ghost),
         ],
         spacing=theme.spacing_scale.sm,
       ),
@@ -211,13 +193,12 @@ fn form_pattern(
   let valid = model.profile_name.length() >= 2
   @views.column(
     [
-      @views.text("Profile form", role=Headline, theme~),
+      @views.text("Profile form", role=Headline),
       @views.text_field(
         model.profile_name,
         on_input=value => ProfileNameChanged(value),
         placeholder="Display name",
         width~,
-        theme~,
       ),
       @views.text(
         if valid {
@@ -226,11 +207,11 @@ fn form_pattern(
           "Display name must be at least 2 characters"
         },
       ),
-      @views.button("Save profile", on_click=SaveProfile, theme~),
+      @views.button("Save profile", on_click=SaveProfile),
       if model.notice == "" {
         @views.text("")
       } else {
-        @views.banner("Saved", model.notice, tone=Success, width~, theme~)
+        @views.banner("Saved", model.notice, tone=Success, width~)
       },
     ],
     spacing=theme.spacing_scale.sm,
@@ -252,20 +233,18 @@ fn data_pattern(
   })
   @views.column(
     [
-      @views.text("Data collection", role=Headline, theme~),
+      @views.text("Data collection", role=Headline),
       @views.text_field(
         model.data_filter,
         on_input=value => DataFilterChanged(value),
         placeholder="Filter records",
         width~,
-        theme~,
       ),
       @views.stat_card(
         "Visible rows",
         visible.length().to_string(),
         caption="State-derived filtering",
         width~,
-        theme~,
       ),
       @views.column(
         visible.map(record => @views.text(record)),
@@ -285,13 +264,12 @@ fn navigation_pattern(
 ) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Feature-owned navigation", role=Headline, theme~),
+      @views.text("Feature-owned navigation", role=Headline),
       @views.callout(
         "Current child route",
         "patterns/\{model.route}",
         tone=Info,
         width~,
-        theme~,
       ),
       @views.text(
         "The root router selects a workspace; this package owns navigation inside the workspace.",
@@ -310,7 +288,7 @@ fn workflow_pattern(
   let labels = ["Profile", "Permissions", "Review"]
   @views.column(
     [
-      @views.text("Workflow", role=Headline, theme~),
+      @views.text("Workflow", role=Headline),
       @views.progress_status(
         labels[model.workflow_step],
         value=(model.workflow_step + 1).to_double() / 3.0,
@@ -318,12 +296,11 @@ fn workflow_pattern(
         status="in progress",
         tone=Info,
         width~,
-        theme~,
       ),
       @views.row(
         [
-          @views.button("Back", on_click=WorkflowBack, variant=Outline, theme~),
-          @views.button("Next", on_click=WorkflowNext, theme~),
+          @views.button("Back", on_click=WorkflowBack, variant=Outline),
+          @views.button("Next", on_click=WorkflowNext),
         ],
         spacing=theme.spacing_scale.sm,
       ),
@@ -336,7 +313,7 @@ fn workflow_pattern(
 fn text_media_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Text & Media", role=Headline, theme~),
+      @views.text("Text & Media", role=Headline),
       @views.text(
         "# Local Markdown\n\nA **bold** word and an image belong behind app-safe view APIs.",
       ),
@@ -344,7 +321,6 @@ fn text_media_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
         "Addon boundary",
         "Rich text can be added by this package without changing the root app or platform entrypoints.",
         width~,
-        theme~,
       ),
     ],
     spacing=theme.spacing_scale.md,

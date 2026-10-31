@@ -58,7 +58,6 @@ fn ShowcaseModel::theme_side_section(
           "Open Dialog",
           on_click=ShowDialog,
           variant=Primary,
-          theme~,
           width=body_width,
           height=36.0,
         ),

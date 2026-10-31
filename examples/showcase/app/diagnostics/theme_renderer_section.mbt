@@ -69,7 +69,6 @@ fn progress_preview(
     width~,
     height=42.0,
     variant=Base,
-    theme~,
     padding=12.0,
   ).border(showcase_card_border(theme))
 }
@@ -83,7 +82,6 @@ fn shortcut_preview(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
     width=220.0,
     height=50.0,
     variant=Base,
-    theme~,
     padding=theme.spacing_scale.md,
   ).border(showcase_card_border(theme))
 }
