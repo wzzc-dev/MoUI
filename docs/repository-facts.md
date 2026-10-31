@@ -76,8 +76,8 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 890 | 596 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2520 | 1114 | 141 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 891 | 597 | 24 |
+| core (moui/core/pkg.generated.mbti) | 2526 | 1117 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 608 | 279 | 31 |
@@ -128,7 +128,7 @@ This file is generated from repository manifests and validator reports.
 | Platform | Build/source | Renderer L2 | Runtime L3 | Host | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |
 |---|---|---|---|---|---|---|---|---|
 | android | partial | partial | partial | window-hosted-android | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | vulkan-direct | unverified |
-| harmonyos | partial | partial | partial | window-hosted-harmonyos | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | unverified |
+| harmonyos | passed | passed | passed | window-hosted-harmonyos | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | egl-direct |
 | ios | partial | partial | partial | window-hosted-ios | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
 | linux | passed | passed | passed | native-wayland | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
 | macos | passed | passed | passed | native-window | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
