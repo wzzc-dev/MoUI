@@ -19,6 +19,17 @@ pub(all) struct ViewLayoutContext {
 }
 
 ///|
+/// Ambient theme resolution for the layout pass (ADR 0036): the control's
+/// pinned theme wins; otherwise the environment's theme is the single
+/// resolution point so layout and paint cannot split onto different themes.
+pub fn ViewLayoutContext::effective_theme(
+  self : ViewLayoutContext,
+  pinned~ : Theme? = None,
+) -> Theme {
+  pinned.unwrap_or(self.environment.theme)
+}
+
+///|
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
@@ -93,6 +104,17 @@ pub(all) struct ViewPaintContext {
 }
 
 ///|
+/// Ambient theme resolution for the paint pass (ADR 0036): the control's
+/// pinned theme wins; otherwise the environment's theme. The layout and paint
+/// passes must resolve through the same contract.
+pub fn ViewPaintContext::effective_theme(
+  self : ViewPaintContext,
+  pinned~ : Theme? = None,
+) -> Theme {
+  pinned.unwrap_or(self.environment.theme)
+}
+
+///|
 /// Context for the platform-tree pass. Platform placements are produced
 /// independently from paint so native child views can update without creating
 /// draw commands or scheduling a renderer frame.
@@ -153,6 +175,16 @@ pub(all) struct ViewEventContext {
   /// Event handlers read this to timestamp state transitions (e.g. recording
   /// when a button entered hover) so the next paint can interpolate progress.
   now_ms : Double
+}
+
+///|
+/// Ambient theme resolution for the event pass (ADR 0036): the same contract
+/// as `ViewLayoutContext::effective_theme` / `ViewPaintContext::effective_theme`.
+pub fn ViewEventContext::effective_theme(
+  self : ViewEventContext,
+  pinned~ : Theme? = None,
+) -> Theme {
+  pinned.unwrap_or(self.environment.theme)
 }
 
 ///|

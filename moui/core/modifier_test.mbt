@@ -584,3 +584,34 @@ test "an explicit outer field wins over the wrapped view's field" {
     .accessibility_label("outer")
   assert_eq(view.semantics().label, Some("outer"))
 }
+
+///|
+/// Theme/Environment scopes must key their declaration on the scoped value:
+/// the scoped environment reaches children outside their own declaration
+/// keys, so a changed scope has to invalidate the subtree through the
+/// modifier node itself.
+test "theme and environment scopes declare exact keys on the scoped value" {
+  let scoped = test_leaf().theme(@core.Theme::neutral())
+  let self_changes = scoped.declaration().changes_from(scoped.declaration())
+  assert_false(self_changes.layout())
+  assert_false(self_changes.paint())
+
+  let base_theme = @core.Theme::neutral()
+  let raised = test_leaf().theme(
+    base_theme.with_spacing_scale({ ..base_theme.spacing_scale, lg: 48.0, }),
+  )
+  let swap = raised.declaration().changes_from(scoped.declaration())
+  // Layout change implies paint/semantics/platform changes downstream.
+  assert_true(swap.layout())
+  assert_true(swap.paint())
+
+  let scoped_env = test_leaf().environment(@core.Environment::neutral())
+  let env_self = scoped_env.declaration().changes_from(scoped_env.declaration())
+  assert_false(env_self.layout())
+  let scaled_env = test_leaf().environment(
+    @core.Environment::neutral().with_text_scale(1.5),
+  )
+  let env_swap = scaled_env.declaration().changes_from(scoped_env.declaration())
+  assert_true(env_swap.layout())
+  assert_true(env_swap.paint())
+}
