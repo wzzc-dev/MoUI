@@ -6,5 +6,5 @@ preferred_target = "native"
 
 import {
   "wzzc-dev/moui@0.2.6",
-  "wzzc-dev/window@0.5.4-0.2.3",
+  "wzzc-dev/window@0.5.4-0.2.4",
 }
