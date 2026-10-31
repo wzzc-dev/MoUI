@@ -7,13 +7,14 @@
 /// a hash collision can never return the wrong layout. Font
 /// registration bumps the generation, retiring every pre-registration
 /// entry. Total cached text is bounded by a byte budget and an entry
-/// cap; exceeding either drops every entry, mirroring the
-/// wholesale-clear pattern of the rich-text caches.
+/// cap; exceeding either evicts the least recently used entries one at
+/// a time, so a hot working set survives bursts of new layouts.
 priv struct TextParagraphCacheEntry {
   text_system_id : String
   font_generation : Int32
   input : TextLayoutInput
-  result : TextParagraphLayoutResult
+  mut result : TextParagraphLayoutResult
+  mut last_used : Int64
 }
 
 ///|
@@ -28,6 +29,12 @@ let text_paragraph_cache_text_bytes : Ref[Int32] = Ref(0)
 
 ///|
 let text_paragraph_cache_font_generation : Ref[Int32] = Ref(0)
+
+///|
+/// Monotonic recency clock: every hit refresh and every insert takes a
+/// fresh tick, so `last_used` values order the entries for LRU
+/// eviction. Int64 keeps the clock from wrapping.
+let text_paragraph_cache_tick : Ref[Int64] = Ref(0L)
 
 ///|
 let text_paragraph_cache_capacity : Ref[Int32] = Ref(4096)
@@ -146,6 +153,12 @@ fn text_paragraph_cache_clear() -> Unit {
 }
 
 ///|
+fn text_paragraph_cache_next_tick() -> Int64 {
+  text_paragraph_cache_tick.val = text_paragraph_cache_tick.val + 1L
+  text_paragraph_cache_tick.val
+}
+
+///|
 fn text_paragraph_cache_lookup(
   text_system_id : String,
   input : TextLayoutInput,
@@ -160,11 +173,48 @@ fn text_paragraph_cache_lookup(
       let mut found : TextParagraphLayoutResult? = None
       for entry in bucket {
         if text_paragraph_cache_entry_matches(entry, text_system_id, input) {
+          entry.last_used = text_paragraph_cache_next_tick()
           found = Some(entry.result)
           break
         }
       }
       found
+    }
+  }
+}
+
+///|
+/// Removes the single least recently used entry across all buckets.
+/// Returns false when the cache is already empty.
+fn text_paragraph_cache_evict_oldest() -> Bool {
+  let mut oldest_digest : UInt64? = None
+  let mut oldest_bucket : Array[TextParagraphCacheEntry]? = None
+  let mut oldest_index = 0
+  let mut oldest_used : Int64 = 0L
+  for digest, bucket in text_paragraph_cache_buckets {
+    for index, entry in bucket {
+      if oldest_bucket is None || entry.last_used < oldest_used {
+        oldest_digest = Some(digest)
+        oldest_bucket = Some(bucket)
+        oldest_index = index
+        oldest_used = entry.last_used
+      }
+    }
+  }
+  match oldest_bucket {
+    None => false
+    Some(bucket) => {
+      let evicted = bucket.remove(oldest_index)
+      if bucket.is_empty() {
+        match oldest_digest {
+          Some(digest) => ignore(text_paragraph_cache_buckets.remove(digest))
+          None => ()
+        }
+      }
+      text_paragraph_cache_count.val = text_paragraph_cache_count.val - 1
+      text_paragraph_cache_text_bytes.val = text_paragraph_cache_text_bytes.val -
+        evicted.input.text.length()
+      true
     }
   }
 }
@@ -179,32 +229,55 @@ fn text_paragraph_cache_store(
   if text_bytes > text_paragraph_cache_text_budget_bytes.val {
     return
   }
-  if text_paragraph_cache_count.val >= text_paragraph_cache_capacity.val ||
-    text_paragraph_cache_text_bytes.val + text_bytes >
-    text_paragraph_cache_text_budget_bytes.val {
-    text_paragraph_cache_clear()
+  let digest = text_paragraph_cache_input_digest(text_system_id, input)
+  match text_paragraph_cache_buckets.get(digest) {
+    Some(bucket) =>
+      // An identity match updates the entry in place — no bucket
+      // rebuild, no double-counted bytes, refreshed recency.
+      for entry in bucket {
+        if text_paragraph_cache_entry_matches(entry, text_system_id, input) {
+          entry.result = result
+          entry.last_used = text_paragraph_cache_next_tick()
+          return
+        }
+      }
+    None => ()
   }
-  let entry = {
+  // Evict least-recently-used entries one at a time until the new
+  // entry fits both bounds, instead of dropping the whole cache.
+  while text_paragraph_cache_count.val >= text_paragraph_cache_capacity.val ||
+        text_paragraph_cache_text_bytes.val + text_bytes >
+        text_paragraph_cache_text_budget_bytes.val {
+    if !text_paragraph_cache_evict_oldest() {
+      break
+    }
+  }
+  let entry : TextParagraphCacheEntry = {
     text_system_id,
     font_generation: text_paragraph_cache_font_generation.val,
     input,
     result,
+    last_used: text_paragraph_cache_next_tick(),
   }
-  let digest = text_paragraph_cache_input_digest(text_system_id, input)
-  let cached = text_paragraph_cache_buckets.get(digest)
-  let previous : Array[TextParagraphCacheEntry] = match cached {
-    None => []
-    Some(bucket) => bucket
+  match text_paragraph_cache_buckets.get(digest) {
+    Some(bucket) => bucket.push(entry)
+    None => text_paragraph_cache_buckets[digest] = [entry]
   }
-  let bucket = previous.filter(existing => {
-    !text_paragraph_cache_entry_matches(existing, text_system_id, input)
-  })
-  let removed = previous.length() - bucket.length()
-  bucket.push(entry)
-  text_paragraph_cache_buckets[digest] = bucket
-  text_paragraph_cache_count.val = text_paragraph_cache_count.val + 1 - removed
+  text_paragraph_cache_count.val = text_paragraph_cache_count.val + 1
   text_paragraph_cache_text_bytes.val = text_paragraph_cache_text_bytes.val +
     text_bytes
+}
+
+///|
+/// Font registration can change every measured width, so the generation
+/// is bumped and every pre-registration entry is retired immediately:
+/// the digest folds the generation in, so none of them can match a
+/// lookup again, and leaving them in place would spend the byte budget
+/// on layouts nobody can hit.
+fn text_paragraph_cache_bump_font_generation() -> Unit {
+  text_paragraph_cache_font_generation.val = text_paragraph_cache_font_generation.val +
+    1
+  text_paragraph_cache_clear()
 }
 
 ///|
@@ -414,4 +487,104 @@ test "oversized inputs bypass the paragraph cache" {
   assert_eq(layout_count[0], 2)
   assert_eq(text_paragraph_cache_count.val, cached)
   text_paragraph_cache_text_budget_bytes.val = budget
+}
+
+///|
+fn lru_paragraph_test_system(id : String) -> (TextSystem, Ref[Int32]) {
+  let layout_count = Ref(0)
+  let system = TextSystem::new(
+    id~,
+    measure=input => fallback_text_layout_result(input),
+    paragraph_layout=Some(input => {
+      layout_count.val = layout_count.val + 1
+      fallback_paragraph_layout_result(
+        input,
+        input => fallback_text_layout_result(input),
+        id,
+      )
+    }),
+  )
+  (system, layout_count)
+}
+
+///|
+test "capacity eviction drops the least recently used entry" {
+  let (system, layout_count) = lru_paragraph_test_system(
+    "lru-capacity-paragraph-test",
+  )
+  let capacity = text_paragraph_cache_capacity.val
+  text_paragraph_cache_capacity.val = 2
+  let input = (text : String) => {
+    TextLayoutInput::new(text~, font=FontSpec::new(size=14.0), max_width=80.0)
+  }
+  // Three consecutive stores on a two-entry cache: the first entry
+  // must be the one evicted, the two recent ones retained.
+  let _ = system.layout_paragraph(input("alpha"))
+  let _ = system.layout_paragraph(input("bravo"))
+  let _ = system.layout_paragraph(input("charlie"))
+  assert_eq(layout_count.val, 3)
+  let _ = system.layout_paragraph(input("bravo"))
+  let _ = system.layout_paragraph(input("charlie"))
+  assert_eq(layout_count.val, 3)
+  // Re-requesting the evicted entry recomputes it.
+  let _ = system.layout_paragraph(input("alpha"))
+  assert_eq(layout_count.val, 4)
+  text_paragraph_cache_capacity.val = capacity
+}
+
+///|
+test "hits refresh recency so touched entries survive eviction" {
+  let (system, layout_count) = lru_paragraph_test_system(
+    "lru-refresh-paragraph-test",
+  )
+  let capacity = text_paragraph_cache_capacity.val
+  text_paragraph_cache_capacity.val = 2
+  let input = (text : String) => {
+    TextLayoutInput::new(text~, font=FontSpec::new(size=14.0), max_width=80.0)
+  }
+  let _ = system.layout_paragraph(input("alpha"))
+  let _ = system.layout_paragraph(input("bravo"))
+  // The hit on "alpha" moves it out of eviction reach; the next store
+  // must drop "bravo" instead.
+  let _ = system.layout_paragraph(input("alpha"))
+  let _ = system.layout_paragraph(input("charlie"))
+  assert_eq(layout_count.val, 3)
+  let _ = system.layout_paragraph(input("alpha"))
+  assert_eq(layout_count.val, 3)
+  let _ = system.layout_paragraph(input("bravo"))
+  assert_eq(layout_count.val, 4)
+  text_paragraph_cache_capacity.val = capacity
+}
+
+///|
+test "storing an identity twice updates in place without growing" {
+  let input = TextLayoutInput::new(
+    text="in-place",
+    font=FontSpec::new(size=14.0),
+    max_width=80.0,
+  )
+  let result = fallback_paragraph_layout_result(
+    input,
+    input => fallback_text_layout_result(input),
+    "in-place-paragraph-test",
+  )
+  let count_before = text_paragraph_cache_count.val
+  let bytes_before = text_paragraph_cache_text_bytes.val
+  text_paragraph_cache_store("in-place-paragraph-test", input, result)
+  assert_eq(text_paragraph_cache_count.val, count_before + 1)
+  assert_eq(
+    text_paragraph_cache_text_bytes.val,
+    bytes_before + input.text.length(),
+  )
+  // The second store of the same identity must not duplicate the entry
+  // or double-count its bytes.
+  text_paragraph_cache_store("in-place-paragraph-test", input, result)
+  assert_eq(text_paragraph_cache_count.val, count_before + 1)
+  assert_eq(
+    text_paragraph_cache_text_bytes.val,
+    bytes_before + input.text.length(),
+  )
+  assert_true(
+    text_paragraph_cache_lookup("in-place-paragraph-test", input) is Some(_),
+  )
 }

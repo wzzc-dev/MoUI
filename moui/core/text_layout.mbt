@@ -202,8 +202,7 @@ pub fn TextSystem::register_font_data(
   (self.register_font_data)(family, data)
   // Measured widths (and therefore cached paragraph layouts) can change
   // whenever any font data is registered, for any backend.
-  text_paragraph_cache_font_generation.val = text_paragraph_cache_font_generation.val +
-    1
+  text_paragraph_cache_bump_font_generation()
 }
 
 ///|
