@@ -7,15 +7,6 @@ pub(all) enum ColorScheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend ColorScheme with Debug::{to_repr}
-
-///|
-pub extend ColorScheme with Eq::{not_equal, equal}
-
-///|
-pub extend ColorScheme with ToJson::{to_json}
-
-///|
 /// Full semantic color palette. Extended from the original 8-role palette to
 /// the complete on*/container matrix used by Material 3 / Fluent 2 so a
 /// branded design system can express primary/secondary/tertiary/error
@@ -77,15 +68,6 @@ pub(all) struct ColorPalette {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend ColorPalette with Debug::{to_repr}
-
-///|
-pub extend ColorPalette with Eq::{not_equal, equal}
-
-///|
-pub extend ColorPalette with ToJson::{to_json}
-
-///|
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
@@ -95,30 +77,12 @@ pub(all) struct SpacingScale {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend SpacingScale with Debug::{to_repr}
-
-///|
-pub extend SpacingScale with Eq::{not_equal, equal}
-
-///|
-pub extend SpacingScale with ToJson::{to_json}
-
-///|
 pub(all) struct RadiusScale {
   sm : Double
   md : Double
   lg : Double
   pill : Double
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend RadiusScale with Debug::{to_repr}
-
-///|
-pub extend RadiusScale with Eq::{not_equal, equal}
-
-///|
-pub extend RadiusScale with ToJson::{to_json}
 
 ///|
 pub(all) struct TypographyScale {
@@ -145,29 +109,11 @@ pub(all) struct TypographyScale {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend TypographyScale with Debug::{to_repr}
-
-///|
-pub extend TypographyScale with Eq::{not_equal, equal}
-
-///|
-pub extend TypographyScale with ToJson::{to_json}
-
-///|
 pub(all) struct ShadowScale {
   sm : ShadowStyle
   md : ShadowStyle
   lg : ShadowStyle
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend ShadowScale with Debug::{to_repr}
-
-///|
-pub extend ShadowScale with Eq::{not_equal, equal}
-
-///|
-pub extend ShadowScale with ToJson::{to_json}
 
 ///|
 pub(all) struct MotionScale {
@@ -178,29 +124,11 @@ pub(all) struct MotionScale {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend MotionScale with Debug::{to_repr}
-
-///|
-pub extend MotionScale with Eq::{not_equal, equal}
-
-///|
-pub extend MotionScale with ToJson::{to_json}
-
-///|
 pub(all) struct SurfaceScale {
   base : Brush
   raised : Brush
   overlay : Brush
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend SurfaceScale with Debug::{to_repr}
-
-///|
-pub extend SurfaceScale with Eq::{not_equal, equal}
-
-///|
-pub extend SurfaceScale with ToJson::{to_json}
 
 ///|
 pub(all) enum SurfaceLevel {
@@ -210,43 +138,16 @@ pub(all) enum SurfaceLevel {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend SurfaceLevel with Debug::{to_repr}
-
-///|
-pub extend SurfaceLevel with Eq::{not_equal, equal}
-
-///|
-pub extend SurfaceLevel with ToJson::{to_json}
-
-///|
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend LayoutDirection with Debug::{to_repr}
-
-///|
-pub extend LayoutDirection with Eq::{not_equal, equal}
-
-///|
-pub extend LayoutDirection with ToJson::{to_json}
-
-///|
 pub(all) enum AccessibilityContrast {
   Standard
   High
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend AccessibilityContrast with Debug::{to_repr}
-
-///|
-pub extend AccessibilityContrast with Eq::{not_equal, equal}
-
-///|
-pub extend AccessibilityContrast with ToJson::{to_json}
 
 ///|
 pub(all) enum ContentSizeCategory {
@@ -256,15 +157,6 @@ pub(all) enum ContentSizeCategory {
   ExtraLarge
   Accessibility
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend ContentSizeCategory with Debug::{to_repr}
-
-///|
-pub extend ContentSizeCategory with Eq::{not_equal, equal}
-
-///|
-pub extend ContentSizeCategory with ToJson::{to_json}
 
 ///|
 /// Resolved, drawable neutral theme. A `Theme` is the output of
@@ -287,15 +179,6 @@ pub(all) struct Theme {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub extend Theme with Debug::{to_repr}
-
-///|
-pub extend Theme with Eq::{not_equal, equal}
-
-///|
-pub extend Theme with ToJson::{to_json}
-
-///|
 /// Runtime environment snapshot. Carries the user's `theme_spec` (intent), the
 /// current `system_scheme` (host-reported), and the resolved `theme` derived
 /// from both. Changing `system_scheme` rebuilds the full theme via
@@ -314,15 +197,6 @@ pub(all) struct Environment {
   content_size_category : ContentSizeCategory
   enabled : Bool
 } derive(Eq, Debug, ToJson)
-
-///|
-pub extend Environment with Debug::{to_repr}
-
-///|
-pub extend Environment with Eq::{not_equal, equal}
-
-///|
-pub extend Environment with ToJson::{to_json}
 
 // ---------------------------------------------------------------------------
 // ColorPalette factories
