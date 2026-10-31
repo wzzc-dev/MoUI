@@ -85,7 +85,7 @@ fn[Msg] single_line_text_event(
   on_submit : Msg?,
   on_clear : Msg?,
 ) -> @core.ViewEventResult[Msg] {
-  let resolved_theme = node.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=node.theme)
   let resolved_style = match node.style {
     Some(value) => value
     None => node.variant.style(resolved_theme)

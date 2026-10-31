@@ -27,12 +27,21 @@ catalog rows.
 
 ## Authoring new controls (boilerplate reduction)
 
-Two helpers in `moui/views` cut the ~60% boilerplate every new control used to
-repeat:
+Three mechanisms cut the boilerplate every new control used to repeat:
 
+- **`checks/viewnode-declarations.json` + `tools/moui/generate_view_declarations`**
+  (ADR 0034 Option B) — the source of truth for every `ViewNode.declaration`
+  in `moui/views`. A new framework control describes its per-channel fields in
+  the manifest (see the encoder table below), runs
+  `node scripts/generate-view-declarations.mjs`, and the generated
+  `declarations.generated.mbt` carries the impl; hand-writing `declaration()`
+  inside `moui/views` fails the generation drift gate. The P17 coverage gate
+  reads the generated impls, so a struct field missing from the manifest fails
+  `validate-viewnode-declaration-coverage` at PR time.
 - **`view_declaration_auto`** (`moui/views/common/declaration_helpers.mbt`) —
   builds a `ViewDeclaration` from per-channel field lists, applying the
-  theme-override cache rule. Prefer it over hand-rolled `view_record_key` +
+  theme-override cache rule. For hand-written nodes outside `moui/views`
+  (examples, addons), prefer it over hand-rolled `view_record_key` +
   `view_declaration` plumbing inside a control's `declaration()` method.
 - **`themeable_control[Msg, Style]`** (`moui/views/controls/control_builder.mbt`)
   — a generic, theme-aware constructor that wires `identity`, theme resolution,
@@ -41,8 +50,8 @@ repeat:
   frame from `ControlThemeSet` (the single source of truth). This is the
   recommended path for standard themed controls.
 
-Both read theming from `ControlThemeSet` (never the legacy `XStyle::default`
-constructors), so a theme change lives in exactly one place.
+All of them read theming from `ControlThemeSet` (never the legacy
+`XStyle::default` constructors), so a theme change lives in exactly one place.
 
 ### Declaration-key encoders (2026-10-25 migration)
 
@@ -55,20 +64,41 @@ gradient endpoints and radial center/radius — so a control using one could pub
 a declaration key that misses a real theme change. Key through the `view_*_key`
 helpers in `moui/views/common/view_control_helpers.mbt` instead:
 
-```mbt
-impl @core.ViewNode for MyControl with fn declaration(self) {
-  @common.view_declaration_auto(
-    "MyControl",
-    self.theme,
-    [("label", @core.DeclarationKey::string(self.label))],
-    [
-      ("font", @common.view_font_option_key(self.font)),
-      ("border", @common.view_border_option_key(self.border)),
-    ],
-    [("role", @common.view_semantics_role_key(self.role))],
-  )
+```json
+{
+  "node": "MyControl",
+  "package": "moui/views/my_control",
+  "declaration": {
+    "layout": {
+      "kind": "theme_pinned",
+      "record": "MyControl.layout",
+      "fields": [{ "name": "label", "enc": "string", "path": "label" }]
+    },
+    "paint": {
+      "kind": "theme_pinned",
+      "record": "MyControl.paint",
+      "fields": [
+        { "name": "font", "enc": "font_option", "path": "font" },
+        { "name": "border", "enc": "border_option", "path": "border" }
+      ]
+    },
+    "semantics": {
+      "kind": "exact",
+      "record": "MyControl.semantics",
+      "fields": [
+        { "name": "role", "enc": "semantics_role", "path": "role" }
+      ]
+    }
+  }
 }
 ```
+
+The manifest encoders map one-to-one onto the same `view_*_key` helpers
+(`size` -> `view_size_key`, `font_option` -> `view_font_option_key`,
+`border_option` -> `view_border_option_key`, ...); `kind: "theme_pinned"`
+folds the pinned theme value into the channel key (what
+`view_declaration_auto` did for hand-written bodies), `kind: "exact"` keys the
+channel directly, and `custom` encoders call a package-local key function.
 
 `view_color_key`, `view_double_option_key`, `view_brush_option_key`, and
 `view_shadow_option_key` cover the remaining shapes; the full old-to-new mapping

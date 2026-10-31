@@ -38,35 +38,6 @@ impl @core.ViewNode for Image with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Image with fn declaration(self) {
-  let fit = @core.DeclarationKey::int(
-    match self.fit {
-      Contain => 0
-      Cover => 1
-      Stretch => 2
-      ScaleDown => 3
-      FitWidth => 4
-      FitHeight => 5
-    },
-  )
-  @common.view_declaration(
-    layout=@common.view_exact_channel(@common.view_size_option_key(self.size)),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("Image.paint", [
-        ("source", @core.DeclarationKey::string(self.source)),
-        ("size", @common.view_size_option_key(self.size)),
-        ("opacity", @core.DeclarationKey::double(self.opacity)),
-        ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
-        ("fit", fit),
-      ]),
-    ),
-    semantics=@common.view_exact_channel(
-      @core.DeclarationKey::string(self.accessibility_label),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Image with fn layout(self, context) {
   let measured = self.size.unwrap_or(@core.Size::new(width=0.0, height=0.0))
   @core.ViewLayoutResult::new(size=context.constraints.constrain(measured))

@@ -55,32 +55,6 @@ impl @core.ViewNode for SheetShell with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for SheetShell with fn declaration(self) {
-  let mode = @core.DeclarationKey::int(
-    match self.presentation_mode {
-      Modal => 0
-      BottomSheet => 1
-    },
-  )
-  let paint_key = @common.view_record_key("SheetShell.paint", [
-    ("background", @common.view_brush_option_key(self.background)),
-    ("corner_radius", @common.view_double_option_key(self.corner_radius)),
-    ("shadow", @common.view_shadow_option_key(self.shadow)),
-  ])
-  @common.view_declaration(
-    layout=@common.view_exact_channel(mode),
-    paint=if self.theme is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @core.DeclarationKey::bool(self.has_on_dismiss),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for SheetShell with fn child_constraints(self, constraints) {
   let content_constraints = constraints.deflate(sheet_content_insets())
   match self.presentation_mode {
@@ -113,7 +87,7 @@ impl @core.ViewNode for SheetShell with fn layout(self, ctx) {
 impl @core.ViewNode for SheetShell with fn paint(self, ctx) {
   // Resolve the sheet surface ambient-ly so it tracks palette changes without
   // requiring the caller to rebuild the view tree.
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_background = self.background.unwrap_or(
     @core.Brush::solid(resolved_theme.palette.surface),
   )

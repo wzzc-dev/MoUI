@@ -126,6 +126,36 @@ the identical seven-line block three times (`Canvas:29`, `AnimatedCanvas:81`,
 step; widening `view_declaration_auto` is, and only when a third control copies a
 hand-built block.
 
+## Amendment (2026-10-31): Option B landed; pairing is package-scoped
+
+The waiver baseline reached zero (`checks/viewnode-declaration-coverage.json`
+has an empty `waived` array), so the precondition this ADR set for the
+generator is met and `tools/moui/generate_view_declarations` landed with the
+hot-path-invalidation plan's H1 slice:
+
+- The declarative source of truth is `checks/viewnode-declarations.json`
+  (schema v1): per node, per channel, the fields that feed each
+  `DeclarationKey`, with a small encoder vocabulary (`string`/`enum`/
+  `record_option`/`custom`/...) and raw-expression escape hatches. The tool
+  emits one `declarations.generated.mbt` per `moui/views` package; the runner
+  shim `scripts/generate-view-declarations.mjs --check` moonfmt-formats fresh
+  output and byte-compares against the committed files (drift fails the pr
+  profile). All 41 `moui/views` `declaration()` overrides are generated;
+  `examples/` custom nodes stay hand-written.
+- Correcting a latent gate bug was required to make generated artifacts
+  actually covered: `validate_viewnode_declaration_coverage` paired structs
+  with impls per *file*, while its documentation promised per-*package*
+  aggregation — after migration the structs and their `declaration()` impls
+  live in different files, so the gate silently checked nothing
+  (`scanned_nodes: 0`). The validator now aggregates structs and impl bodies
+  per package before pairing (36 nodes with `declaration()` overrides scanned,
+  0 violations; an end-to-end drill — dropping a field from the manifest —
+  reproduces the `[P17]` violation, proving the generated code is covered).
+- What the gate still does not see (unchanged from the original decision): a
+  field named somewhere in a declaration body but keyed with a value that
+  under-distinguishes real changes (the ADR's "helper gap" class). The
+  manifest makes that reviewable in one place now.
+
 ## Agent Notes
 
 - **Session context**: source-level audit of MoUI implementation details

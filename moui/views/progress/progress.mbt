@@ -44,58 +44,6 @@ impl @core.ViewNode for Progress with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Progress with fn declaration(self) {
-  let paint_key = @common.view_record_key("Progress.paint", [
-    ("value", @core.DeclarationKey::double(self.value)),
-    (
-      "style",
-      @core.DeclarationKey::option(
-        self.style.map(style => {
-          @common.view_record_key("ProgressStyle", [
-            ("foreground", @common.view_color_key(style.foreground)),
-            ("background", @common.view_color_key(style.background)),
-            ("radius", @core.DeclarationKey::double(style.radius)),
-          ])
-        }),
-      ),
-    ),
-    (
-      "foreground",
-      @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
-    ),
-    (
-      "background",
-      @core.DeclarationKey::option(self.background.map(@common.view_color_key)),
-    ),
-  ])
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("Progress.layout", [
-        ("width", @core.DeclarationKey::double(self.width)),
-        ("height", @core.DeclarationKey::double(self.height)),
-      ]),
-    ),
-    paint=if self.theme is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("Progress.semantics", [
-        ("value", @core.DeclarationKey::double(self.value)),
-        ("label", @core.DeclarationKey::string(self.label)),
-        (
-          "value_text",
-          @core.DeclarationKey::option(
-            self.value_text.map(@core.DeclarationKey::string),
-          ),
-        ),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Progress with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
@@ -106,7 +54,7 @@ impl @core.ViewNode for Progress with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Progress with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => @style.ProgressStyle::default(theme=resolved_theme)

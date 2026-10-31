@@ -18,17 +18,6 @@ impl @core.ViewNode for Flow with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Flow with fn declaration(self) {
-  @common.view_layout_declaration(
-    @common.view_record_key("Flow", [
-      ("width", @core.DeclarationKey::double(self.width)),
-      ("spacing", @core.DeclarationKey::double(self.spacing)),
-      ("row_spacing", @core.DeclarationKey::double(self.row_spacing)),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for Flow with fn layout(self, ctx) {
   let sizes = ctx.child_sizes
   let available = available_width(self.width, ctx.constraints)

@@ -112,67 +112,8 @@ impl @core.ViewNode for Checkbox with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Checkbox with fn declaration(self) {
-  @common.view_declaration_auto(
-    "Checkbox",
-    self.theme,
-    [
-      ("label", @core.DeclarationKey::string(self.label)),
-      ("font", @common.view_font_option_key(self.font)),
-      ("box_size", @common.view_double_option_key(self.box_size)),
-      ("height", @core.DeclarationKey::double(self.height)),
-    ],
-    [
-      ("checked", @core.DeclarationKey::bool(self.checked)),
-      (
-        "foreground",
-        @core.DeclarationKey::option(
-          self.foreground.map(@common.view_color_key),
-        ),
-      ),
-      (
-        "check_color",
-        @core.DeclarationKey::option(
-          self.check_color.map(@common.view_color_key),
-        ),
-      ),
-      (
-        "box_shape",
-        @core.DeclarationKey::option(
-          self.box_shape.map(value => {
-            @core.DeclarationKey::int(
-              match value {
-                Square => 0
-                Circle => 1
-              },
-            )
-          }),
-        ),
-      ),
-      (
-        "check_style",
-        @core.DeclarationKey::option(
-          self.check_style.map(value => {
-            @core.DeclarationKey::int(
-              match value {
-                Checkmark => 0
-                Dot => 1
-              },
-            )
-          }),
-        ),
-      ),
-    ],
-    [
-      ("label", @core.DeclarationKey::string(self.label)),
-      ("checked", @core.DeclarationKey::bool(self.checked)),
-    ],
-  )
-}
-
-///|
 impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
   let resolved_box_size = resolve_control_double(self.box_size, cc.control_size)
@@ -198,7 +139,7 @@ impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
   let resolved_foreground = @common.resolve_control_color(

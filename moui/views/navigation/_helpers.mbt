@@ -23,16 +23,6 @@ impl @core.ViewNode for OverlayMarker with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for OverlayMarker with fn declaration(self) {
-  @common.view_paint_declaration(
-    @core.DeclarationKey::record(type_tag="OverlayMarker", fields=[
-      ("width", @core.DeclarationKey::double(self.width)),
-      ("height", @core.DeclarationKey::double(self.height)),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for OverlayMarker with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(

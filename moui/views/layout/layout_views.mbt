@@ -23,11 +23,6 @@ impl @core.ViewNode for PaddingLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for PaddingLayout with fn declaration(self) {
-  @common.view_layout_declaration(@common.view_insets_key(self.insets))
-}
-
-///|
 impl @core.ViewNode for PaddingLayout with fn child_constraints(
   self,
   constraints,
@@ -112,20 +107,6 @@ impl @core.ViewNode for FrameLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for FrameLayout with fn declaration(self) {
-  @common.view_layout_declaration(
-    @common.view_record_key("FrameLayout", [
-      ("width", @common.view_double_option_key(self.width)),
-      ("height", @common.view_double_option_key(self.height)),
-      ("min_width", @common.view_double_option_key(self.min_width)),
-      ("min_height", @common.view_double_option_key(self.min_height)),
-      ("max_width", @common.view_double_option_key(self.max_width)),
-      ("max_height", @common.view_double_option_key(self.max_height)),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for FrameLayout with fn child_constraints(self, constraints) {
   frame_constraints_for_measure(
     constraints,
@@ -204,32 +185,6 @@ priv struct ContainerBox {
 ///|
 impl @core.ViewNode for ContainerBox with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
-}
-
-///|
-impl @core.ViewNode for ContainerBox with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(@common.view_size_option_key(self.size)),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("ContainerBox.paint", [
-        ("background", @common.view_brush_option_key(self.background)),
-        ("border", @common.view_border_option_key(self.border)),
-        ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
-        ("shadow", @common.view_shadow_option_key(self.shadow)),
-        (
-          "ambient",
-          @core.DeclarationKey::string(
-            match self.ambient {
-              Some(Base) => "base"
-              Some(Raised) => "raised"
-              Some(Overlay) => "overlay"
-              None => "none"
-            },
-          ),
-        ),
-      ]),
-    ),
-  )
 }
 
 ///|
@@ -332,17 +287,6 @@ impl @core.ViewNode for GridLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for GridLayout with fn declaration(self) {
-  @common.view_layout_declaration(
-    @common.view_record_key("GridLayout", [
-      ("columns", @core.DeclarationKey::int(self.columns)),
-      ("row_spacing", @core.DeclarationKey::double(self.row_spacing)),
-      ("column_spacing", @core.DeclarationKey::double(self.column_spacing)),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
   let columns = @common.view_max_int(1, self.columns)
   let count = ctx.child_sizes.length()
@@ -420,11 +364,6 @@ priv struct ListLayout {
 ///|
 impl @core.ViewNode for ListLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
-}
-
-///|
-impl @core.ViewNode for ListLayout with fn declaration(self) {
-  @common.view_layout_declaration(@core.DeclarationKey::double(self.spacing))
 }
 
 ///|

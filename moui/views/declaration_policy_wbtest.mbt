@@ -54,14 +54,32 @@ test "controlled values are sampled into immutable node declarations" {
 }
 
 ///|
-test "aggregate themes and callback views declare uncacheable channels" {
+test "pinned themes declare exact theme-keyed channels" {
   let themed : @core.View[Unit] = text("Theme", theme=@core.Theme::neutral())
-  let themed_changes = themed.declaration().changes_from(themed.declaration())
-  assert_false(themed_changes.layout())
-  assert_true(themed_changes.paint())
-  assert_false(themed_changes.semantics())
-  assert_false(themed_changes.platform())
+  // The pinned theme value is folded into the paint key, so the declaration
+  // is stable against itself (cacheable) instead of Uncacheable.
+  let self_changes = themed.declaration().changes_from(themed.declaration())
+  assert_false(self_changes.layout())
+  assert_false(self_changes.paint())
+  assert_false(self_changes.semantics())
+  assert_false(self_changes.platform())
+  // A different pinned theme value invalidates paint (and layout, whose key
+  // folds the theme-derived font) but leaves semantics untouched.
+  let base_theme = @core.Theme::neutral()
+  let raised : @core.View[Unit] = text(
+    "Theme",
+    theme=base_theme.with_spacing_scale({
+      ..base_theme.spacing_scale,
+      lg: 48.0,
+    }),
+  )
+  let swapped = raised.declaration().changes_from(themed.declaration())
+  assert_true(swapped.paint())
+  assert_false(swapped.semantics())
+}
 
+///|
+test "callback views declare uncacheable channels" {
   let callback : @core.View[Unit] = canvas(
     measure=constraints => constraints.min,
     draw=(_context, _frame) => (),

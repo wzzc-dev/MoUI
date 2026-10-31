@@ -40,69 +40,8 @@ impl @core.ViewNode for Text with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Text with fn declaration(self) {
-  let role = @core.DeclarationKey::int(
-    match self.role {
-      Body => 0
-      Title => 1
-      Caption => 2
-      Control => 3
-      Mono => 4
-      Display => 5
-      Headline => 6
-      Subtitle => 7
-      Label => 8
-      Overline => 9
-    },
-  )
-  let align = @core.DeclarationKey::int(
-    match self.align {
-      TextStart => 0
-      TextCenter => 1
-      TextEnd => 2
-    },
-  )
-  let wrap = @core.DeclarationKey::int(if self.wrap { 1 } else { 0 })
-  @common.view_declaration(
-    // Layout measures the string, so the key must cover the text and the font
-    // used for that measurement, not just the requested box. An explicit theme
-    // pins that font (ambient theme changes go through the environment), so it
-    // is folded into the key rather than dropping the layout cache.
-    layout=@common.view_exact_channel(
-      @common.view_record_key("Text.layout", [
-        ("text", @core.DeclarationKey::string(self.text)),
-        ("role", role),
-        ("min_size", @common.view_size_key(self.size)),
-        ("wrap", wrap),
-        (
-          "font",
-          @core.DeclarationKey::option(
-            self.theme.map(theme => @common.view_font_key(self.role.font(theme))),
-          ),
-        ),
-      ]),
-    ),
-    paint=if self.theme is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(
-        @common.view_record_key("Text.paint", [
-          ("text", @core.DeclarationKey::string(self.text)),
-          ("role", role),
-          ("align", align),
-          ("wrap", wrap),
-        ]),
-      )
-    },
-    semantics=@common.view_exact_channel(
-      @core.DeclarationKey::string(self.text),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Text with fn layout(self, context) {
-  let resolved_theme = self.theme.unwrap_or(context.environment.theme)
+  let resolved_theme = context.effective_theme(pinned=self.theme)
   let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
   if self.wrap {
     // Multi-line mode: the requested width bounds the line box and the
@@ -145,7 +84,7 @@ impl @core.ViewNode for Text with fn layout(self, context) {
 
 ///|
 impl @core.ViewNode for Text with fn paint(self, context) {
-  let resolved_theme = self.theme.unwrap_or(context.environment.theme)
+  let resolved_theme = context.effective_theme(pinned=self.theme)
   let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
   let color = if context.environment.enabled {
     context.style.foreground.unwrap_or(self.role.color(resolved_theme))

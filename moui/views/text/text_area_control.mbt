@@ -81,7 +81,7 @@ fn[Msg] text_area_event(
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
 ) -> @core.ViewEventResult[Msg] {
-  let resolved_theme = node.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=node.theme)
   let resolved_style = match node.style {
     Some(value) => value
     None => node.variant.style(resolved_theme)

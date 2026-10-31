@@ -624,11 +624,6 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn identity(_self) {
 }
 
 ///|
-impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
-}
-
-///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
   self,
   constraints,
@@ -997,13 +992,6 @@ impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn identity(
 }
 
 ///|
-impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn declaration(
-  _self,
-) {
-  @core.ViewDeclaration::constant()
-}
-
-///|
 impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn layout(
   _self,
   ctx,
@@ -1058,11 +1046,6 @@ priv struct PresentationBarrier[Msg] {
 ///|
 impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn identity(self) {
   @core.ViewIdentity::new(kind="PresentationBarrier", key=Some(self.id))
-}
-
-///|
-impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
 }
 
 ///|

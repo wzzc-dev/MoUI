@@ -941,24 +941,6 @@ impl @core.ViewNode for Icon with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Icon with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(@core.DeclarationKey::double(self.size)),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("Icon.paint", [
-        ("label", @core.DeclarationKey::string(self.label)),
-        ("size", @core.DeclarationKey::double(self.size)),
-        ("color", @common.view_color_key(self.color)),
-        ("weight", @core.DeclarationKey::double(self.weight)),
-      ]),
-    ),
-    semantics=@common.view_exact_channel(
-      @core.DeclarationKey::string(self.label),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Icon with fn layout(self, context) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(

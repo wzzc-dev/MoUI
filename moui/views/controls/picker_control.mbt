@@ -86,30 +86,6 @@ impl @core.ViewNode for Picker with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Picker with fn declaration(self) {
-  let paint_key = @common.view_record_key("Picker.paint", [
-    ("items", picker_items_key(self.items)),
-    ("selected", @core.DeclarationKey::string(self.selected)),
-    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-    ("max_height", @core.DeclarationKey::double(self.max_height)),
-  ])
-  @common.view_declaration(
-    paint=if self.theme is Some(_) || self.style is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("Picker.semantics", [
-        ("items", picker_items_key(self.items)),
-        ("selected", @core.DeclarationKey::string(self.selected)),
-        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Picker with fn layout(_self, ctx) {
   let own = ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0))
   // The popup is a real child subtree. When collapsed it receives no frame at
@@ -170,7 +146,7 @@ impl @core.ViewNode for Picker with fn place_overlays(_self, context) {
 
 ///|
 impl @core.ViewNode for Picker with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => @style.PickerStyle::default(theme=resolved_theme)
@@ -507,22 +483,6 @@ impl @core.ViewNode for PickerRow with fn identity(self) {
 /// Rows keep a stable identity while their selection flips during wheel
 /// scrolling, so every channel must key on the mutable state; the resolved
 /// theme has no cheap key and keeps paint uncacheable (views convention).
-impl @core.ViewNode for PickerRow with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("PickerRow.layout", [
-        ("row_width", @core.DeclarationKey::double(self.width)),
-      ]),
-    ),
-    paint=Uncacheable,
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("PickerRow.semantics", [
-        ("label", @core.DeclarationKey::string(self.label)),
-        ("is_selected", @core.DeclarationKey::bool(self.is_selected)),
-      ]),
-    ),
-  )
-}
 
 ///|
 impl @core.ViewNode for PickerRow with fn layout(self, ctx) {

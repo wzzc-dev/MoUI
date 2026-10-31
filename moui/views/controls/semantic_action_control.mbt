@@ -24,36 +24,6 @@ impl @core.ViewNode for SemanticActionControl with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for SemanticActionControl with fn declaration(self) {
-  @common.view_semantics_declaration(
-    @common.view_record_key("SemanticActionControl", [
-      (
-        "action",
-        @core.DeclarationKey::int(
-          match self.action {
-            Expand => 0
-            Collapse => 1
-            Dismiss => 2
-          },
-        ),
-      ),
-      (
-        "expanded",
-        @core.DeclarationKey::option(
-          self.expanded.map(@core.DeclarationKey::bool),
-        ),
-      ),
-      (
-        "role",
-        @core.DeclarationKey::option(
-          self.role.map(@common.view_semantics_role_key),
-        ),
-      ),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for SemanticActionControl with fn child_constraints(
   _self,
   constraints,

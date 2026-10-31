@@ -55,7 +55,7 @@ pub fn[Msg, Style] themeable_control(
     key,
   }
   @core.View::from_node(node, event=(_node, ctx) => {
-    let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+    let resolved_theme = ctx.effective_theme(pinned=theme)
     let style = style_resolver(
       @style.views_ambient_control_theme(resolved_theme),
     )
@@ -88,7 +88,7 @@ impl[Style] @core.ViewNode for ThemedControl[Style] with fn layout(
   self,
   ctx : @core.ViewLayoutContext,
 ) -> @core.ViewLayoutResult {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let style = (self.style_resolver)(
     @style.views_ambient_control_theme(resolved_theme),
   )
@@ -100,7 +100,7 @@ impl[Style] @core.ViewNode for ThemedControl[Style] with fn paint(
   self,
   ctx : @core.ViewPaintContext,
 ) -> @core.ViewPaintPlan {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let style = (self.style_resolver)(
     @style.views_ambient_control_theme(resolved_theme),
   )

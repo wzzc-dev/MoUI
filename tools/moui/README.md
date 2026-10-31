@@ -7,6 +7,18 @@ Do not place `moui_skia` binding checks here; keep those under
 
 Current tools:
 
+- `generate_core_derives/` regenerates `moui/core/derives.generated.mbt` from
+  the `derive(...)` clauses and hand-written `pub impl` trait blocks in
+  `moui/core/{paint,semantics,theme}.mbt`; the generated file re-exports
+  derived trait methods across package boundaries with explicit `pub extend`
+  lines (MoonBit implicit method promotion is deprecated). Drift is checked by
+  `scripts/generate-core-derives.mjs --check` (pr profile).
+- `generate_view_declarations/` emits one `declarations.generated.mbt` per
+  `moui/views` package from the declarative manifest
+  `checks/viewnode-declarations.json` (ADR 0034 Option B): every
+  `ViewNode.declaration` impl in `moui/views` is generated, and the P17
+  coverage gate reads the generated impls like hand-written ones. Drift is
+  checked by `scripts/generate-view-declarations.mjs --check` (pr profile).
 - `validate_maintenance_baseline/` audits source-maintenance ratchets for
   oversized implementation/test files, source-level `pub(all)` counts, and root
   facade type-forwarding counts.

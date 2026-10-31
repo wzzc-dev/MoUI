@@ -1,0 +1,1555 @@
+{
+  "schemaVersion": 1,
+  "description": "Declarative source of truth for ViewNode declaration() bodies in moui/views (ADR 0034 Option B, plan hot-path-invalidation H1). tools/moui/generate_view_declarations emits one declarations.generated.mbt per package from this manifest; scripts/generate-view-declarations.mjs --check fails when the generated sources drift. Encoders map struct fields to DeclarationKey values; `expr` entries are raw key expressions for the shapes no shared encoder covers. Channel kinds: exact (Exact on the channel key), theme_pinned (theme value folded into the key, stays Exact), uncacheable, constant (omitted from view_declaration, the default).",
+  "nodes": [
+    {
+      "node": "Button",
+      "package": "moui/views/button",
+      "declaration": {
+        "layout": {
+          "kind": "theme_pinned",
+          "record": "Button.layout",
+          "fields": [
+            {
+              "name": "text",
+              "enc": "string",
+              "path": "text"
+            },
+            {
+              "name": "min_size",
+              "enc": "size",
+              "path": "min_size"
+            },
+            {
+              "name": "leading_icon",
+              "enc": "icon_label_option",
+              "path": "leading_icon"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "style_pins_uncacheable": true,
+          "record": "Button.paint",
+          "fields": [
+            {
+              "name": "label_align",
+              "enc": "enum",
+              "path": "label_align",
+              "arms": [
+                "TextStart",
+                "TextCenter",
+                "TextEnd"
+              ]
+            },
+            {
+              "name": "variant",
+              "enc": "enum",
+              "path": "variant",
+              "arms": [
+                "Primary",
+                "Tonal",
+                "Outline",
+                "Ghost",
+                "Subtle",
+                "SubtleBrand"
+              ]
+            },
+            {
+              "name": "leading_icon",
+              "enc": "icon_label_option",
+              "path": "leading_icon"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "Button.semantics",
+          "fields": [
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "text"
+            },
+            {
+              "name": "activate",
+              "enc": "bool",
+              "path": "has_on_click"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Checkbox",
+      "package": "moui/views/checkbox",
+      "declaration": {
+        "layout": {
+          "kind": "theme_pinned",
+          "record": "Checkbox.layout",
+          "fields": [
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "font",
+              "enc": "font_option",
+              "path": "font"
+            },
+            {
+              "name": "box_size",
+              "enc": "double_option",
+              "path": "box_size"
+            },
+            {
+              "name": "height",
+              "enc": "double",
+              "path": "height"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "record": "Checkbox.paint",
+          "fields": [
+            {
+              "name": "checked",
+              "enc": "bool",
+              "path": "checked"
+            },
+            {
+              "name": "foreground",
+              "enc": "color_option",
+              "path": "foreground"
+            },
+            {
+              "name": "check_color",
+              "enc": "color_option",
+              "path": "check_color"
+            },
+            {
+              "name": "box_shape",
+              "enc": "enum_option",
+              "path": "box_shape",
+              "arms": [
+                "Square",
+                "Circle"
+              ]
+            },
+            {
+              "name": "check_style",
+              "enc": "enum_option",
+              "path": "check_style",
+              "arms": [
+                "Checkmark",
+                "Dot"
+              ]
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "Checkbox.semantics",
+          "fields": [
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "checked",
+              "enc": "bool",
+              "path": "checked"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Text",
+      "package": "moui/views/text",
+      "bindings": [
+        {
+          "name": "role",
+          "expr": "@core.DeclarationKey::int(match self.role {\n      Body => 0\n      Title => 1\n      Caption => 2\n      Control => 3\n      Mono => 4\n      Display => 5\n      Headline => 6\n      Subtitle => 7\n      Label => 8\n      Overline => 9\n    })"
+        },
+        {
+          "name": "align",
+          "expr": "@core.DeclarationKey::int(match self.align {\n      TextStart => 0\n      TextCenter => 1\n      TextEnd => 2\n    })"
+        },
+        {
+          "name": "wrap",
+          "expr": "@core.DeclarationKey::int(if self.wrap { 1 } else { 0 })"
+        }
+      ],
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Text.layout",
+          "fields": [
+            {
+              "name": "text",
+              "enc": "string",
+              "path": "text"
+            },
+            {
+              "name": "role",
+              "expr": "role"
+            },
+            {
+              "name": "min_size",
+              "enc": "size",
+              "path": "size"
+            },
+            {
+              "name": "wrap",
+              "expr": "wrap"
+            },
+            {
+              "name": "font",
+              "expr": "@core.DeclarationKey::option(self.theme.map(theme => @common.view_font_key(self.role.font(theme))))"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "record": "Text.paint",
+          "fields": [
+            {
+              "name": "text",
+              "enc": "string",
+              "path": "text"
+            },
+            {
+              "name": "role",
+              "expr": "role"
+            },
+            {
+              "name": "align",
+              "expr": "align"
+            },
+            {
+              "name": "wrap",
+              "expr": "wrap"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "text"
+          }
+        }
+      }
+    },
+    {
+      "node": "SingleLineTextInput",
+      "package": "moui/views/text",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "size",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "style_pins_uncacheable": true,
+          "record": "SingleLineTextInput.paint",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "string",
+              "path": "value"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "variant",
+              "enc": "enum",
+              "path": "variant",
+              "arms": [
+                "Filled",
+                "Outline",
+                "Plain"
+              ]
+            },
+            {
+              "name": "search_bar",
+              "enc": "bool",
+              "path": "search_bar"
+            },
+            {
+              "name": "has_on_clear",
+              "enc": "bool",
+              "path": "has_on_clear"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "SingleLineTextInput.semantics",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "string",
+              "path": "value"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "submit",
+              "enc": "bool",
+              "path": "has_on_submit"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "TextArea",
+      "package": "moui/views/text",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "size",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "style_pins_uncacheable": true,
+          "record": "TextArea.paint",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "string",
+              "path": "value"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "variant",
+              "enc": "enum",
+              "path": "variant",
+              "arms": [
+                "Filled",
+                "Outline",
+                "Plain"
+              ]
+            },
+            {
+              "name": "lines",
+              "enc": "int",
+              "path": "lines"
+            },
+            {
+              "name": "line_height",
+              "enc": "double",
+              "path": "line_height"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "TextArea.semantics",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "string",
+              "path": "value"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "submit",
+              "enc": "bool",
+              "path": "has_on_submit"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Progress",
+      "package": "moui/views/progress",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Progress.layout",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double",
+              "path": "height"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "record": "Progress.paint",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "double",
+              "path": "value"
+            },
+            {
+              "name": "style",
+              "enc": "record_option",
+              "path": "style",
+              "record": "ProgressStyle",
+              "fields": [
+                {
+                  "name": "foreground",
+                  "enc": "color",
+                  "path": "foreground"
+                },
+                {
+                  "name": "background",
+                  "enc": "color",
+                  "path": "background"
+                },
+                {
+                  "name": "radius",
+                  "enc": "double",
+                  "path": "radius"
+                }
+              ]
+            },
+            {
+              "name": "foreground",
+              "enc": "color_option",
+              "path": "foreground"
+            },
+            {
+              "name": "background",
+              "enc": "color_option",
+              "path": "background"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "Progress.semantics",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "double",
+              "path": "value"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "value_text",
+              "enc": "string_option",
+              "path": "value_text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Slider",
+      "package": "moui/views/slider",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Slider.layout",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double",
+              "path": "height"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "record": "Slider.paint",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "double",
+              "path": "value"
+            },
+            {
+              "name": "min",
+              "enc": "double",
+              "path": "min"
+            },
+            {
+              "name": "max",
+              "enc": "double",
+              "path": "max"
+            },
+            {
+              "name": "step",
+              "enc": "double",
+              "path": "step"
+            },
+            {
+              "name": "style",
+              "enc": "record_option",
+              "path": "style",
+              "record": "SliderStyle",
+              "fields": [
+                {
+                  "name": "foreground",
+                  "enc": "color",
+                  "path": "foreground"
+                },
+                {
+                  "name": "background",
+                  "enc": "color",
+                  "path": "background"
+                },
+                {
+                  "name": "thumb_color",
+                  "enc": "color",
+                  "path": "thumb_color"
+                },
+                {
+                  "name": "track_height",
+                  "enc": "double",
+                  "path": "track_height"
+                },
+                {
+                  "name": "thumb_size",
+                  "enc": "double",
+                  "path": "thumb_size"
+                },
+                {
+                  "name": "radius",
+                  "enc": "double",
+                  "path": "radius"
+                }
+              ]
+            },
+            {
+              "name": "foreground",
+              "enc": "color_option",
+              "path": "foreground"
+            },
+            {
+              "name": "background",
+              "enc": "color_option",
+              "path": "background"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "Slider.semantics",
+          "fields": [
+            {
+              "name": "value",
+              "enc": "double",
+              "path": "value"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "scroll",
+              "enc": "bool",
+              "path": "has_on_change"
+            },
+            {
+              "name": "value_text",
+              "enc": "string_option",
+              "path": "value_text"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Image",
+      "package": "moui/views/image",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "size_option",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "Image.paint",
+          "fields": [
+            {
+              "name": "source",
+              "enc": "string",
+              "path": "source"
+            },
+            {
+              "name": "size",
+              "enc": "size_option",
+              "path": "size"
+            },
+            {
+              "name": "opacity",
+              "enc": "double",
+              "path": "opacity"
+            },
+            {
+              "name": "corner_radius",
+              "enc": "double",
+              "path": "corner_radius"
+            },
+            {
+              "name": "fit",
+              "enc": "enum",
+              "path": "fit",
+              "arms": [
+                "Contain",
+                "Cover",
+                "Stretch",
+                "ScaleDown",
+                "FitWidth",
+                "FitHeight"
+              ]
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "accessibility_label"
+          }
+        }
+      }
+    },
+    {
+      "node": "DatePicker",
+      "package": "moui/views/form",
+      "declaration": {
+        "paint": {
+          "kind": "theme_pinned",
+          "style_pins_uncacheable": true,
+          "record": "DatePicker.paint",
+          "fields": [
+            {
+              "name": "selected",
+              "enc": "custom",
+              "fn": "datepicker_value_key",
+              "path": "selected"
+            },
+            {
+              "name": "mode",
+              "enc": "custom",
+              "fn": "datepicker_mode_key",
+              "path": "mode"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "min_date",
+              "enc": "custom",
+              "fn": "datepicker_value_option_key",
+              "path": "min_date"
+            },
+            {
+              "name": "max_date",
+              "enc": "custom",
+              "fn": "datepicker_value_option_key",
+              "path": "max_date"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "DatePicker.semantics",
+          "fields": [
+            {
+              "name": "selected",
+              "enc": "custom",
+              "fn": "datepicker_value_key",
+              "path": "selected"
+            },
+            {
+              "name": "mode",
+              "enc": "custom",
+              "fn": "datepicker_mode_key",
+              "path": "mode"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "DatePickerPanel",
+      "package": "moui/views/form",
+      "generic": true,
+      "self": "_self",
+      "declaration": "uncacheable"
+    },
+    {
+      "node": "PresenceDot",
+      "package": "moui/views/presence_dot",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "PresenceDot.layout",
+          "fields": [
+            {
+              "name": "size",
+              "enc": "double",
+              "path": "size"
+            },
+            {
+              "name": "border_width",
+              "enc": "double",
+              "path": "border_width"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "PresenceDot.paint",
+          "fields": [
+            {
+              "name": "size",
+              "enc": "double",
+              "path": "size"
+            },
+            {
+              "name": "status_color",
+              "enc": "color",
+              "path": "status_color"
+            },
+            {
+              "name": "border_color",
+              "enc": "color",
+              "path": "border_color"
+            },
+            {
+              "name": "border_width",
+              "enc": "double",
+              "path": "border_width"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "PaddingLayout",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "insets",
+            "path": "insets"
+          }
+        }
+      }
+    },
+    {
+      "node": "FrameLayout",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "FrameLayout",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double_option",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double_option",
+              "path": "height"
+            },
+            {
+              "name": "min_width",
+              "enc": "double_option",
+              "path": "min_width"
+            },
+            {
+              "name": "min_height",
+              "enc": "double_option",
+              "path": "min_height"
+            },
+            {
+              "name": "max_width",
+              "enc": "double_option",
+              "path": "max_width"
+            },
+            {
+              "name": "max_height",
+              "enc": "double_option",
+              "path": "max_height"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "ContainerBox",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "size_option",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "ContainerBox.paint",
+          "fields": [
+            {
+              "name": "background",
+              "enc": "brush_option",
+              "path": "background"
+            },
+            {
+              "name": "border",
+              "enc": "border_option",
+              "path": "border"
+            },
+            {
+              "name": "corner_radius",
+              "enc": "double",
+              "path": "corner_radius"
+            },
+            {
+              "name": "shadow",
+              "enc": "shadow_option",
+              "path": "shadow"
+            },
+            {
+              "name": "ambient",
+              "expr": "@core.DeclarationKey::string(match self.ambient {\n      Some(Base) => \"base\"\n      Some(Raised) => \"raised\"\n      Some(Overlay) => \"overlay\"\n      None => \"none\"\n    })"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "GridLayout",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "GridLayout",
+          "fields": [
+            {
+              "name": "columns",
+              "enc": "int",
+              "path": "columns"
+            },
+            {
+              "name": "row_spacing",
+              "enc": "double",
+              "path": "row_spacing"
+            },
+            {
+              "name": "column_spacing",
+              "enc": "double",
+              "path": "column_spacing"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "ListLayout",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "double",
+            "path": "spacing"
+          }
+        }
+      }
+    },
+    {
+      "node": "Flow",
+      "package": "moui/views/layout",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Flow",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double",
+              "path": "width"
+            },
+            {
+              "name": "spacing",
+              "enc": "double",
+              "path": "spacing"
+            },
+            {
+              "name": "row_spacing",
+              "enc": "double",
+              "path": "row_spacing"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "OverlayMarker",
+      "package": "moui/views/navigation",
+      "declaration": {
+        "paint": {
+          "kind": "exact",
+          "record": "OverlayMarker",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double",
+              "path": "height"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Canvas",
+      "package": "moui/views/canvas",
+      "declaration": {
+        "layout": "uncacheable",
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "semantics_label"
+          }
+        }
+      }
+    },
+    {
+      "node": "AnimatedCanvas",
+      "package": "moui/views/canvas",
+      "declaration": {
+        "layout": "uncacheable",
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "semantics_label"
+          }
+        }
+      }
+    },
+    {
+      "node": "MeasuredCanvas",
+      "package": "moui/views/canvas",
+      "declaration": {
+        "layout": "uncacheable",
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "semantics_label"
+          }
+        }
+      }
+    },
+    {
+      "node": "SheetShell",
+      "package": "moui/views/popover",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "enum",
+            "path": "presentation_mode",
+            "arms": [
+              "Modal",
+              "BottomSheet"
+            ]
+          }
+        },
+        "paint": {
+          "kind": "theme_pinned",
+          "record": "SheetShell.paint",
+          "fields": [
+            {
+              "name": "background",
+              "enc": "brush_option",
+              "path": "background"
+            },
+            {
+              "name": "corner_radius",
+              "enc": "double_option",
+              "path": "corner_radius"
+            },
+            {
+              "name": "shadow",
+              "enc": "shadow_option",
+              "path": "shadow"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "bool",
+            "path": "has_on_dismiss"
+          }
+        }
+      }
+    },
+    {
+      "node": "ScrollContainer",
+      "package": "moui/views/controls",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "ScrollContainer.layout",
+          "fields": [
+            {
+              "name": "offset",
+              "enc": "point_option",
+              "path": "offset"
+            },
+            {
+              "name": "viewport",
+              "enc": "size_option",
+              "path": "viewport"
+            },
+            {
+              "name": "request",
+              "enc": "record_option",
+              "path": "request",
+              "record": "moui.core.ScrollRequest.v1",
+              "fields": [
+                {
+                  "name": "id",
+                  "enc": "int",
+                  "path": "id"
+                },
+                {
+                  "name": "offset",
+                  "enc": "point",
+                  "path": "offset"
+                }
+              ]
+            }
+          ]
+        },
+        "paint": {
+          "kind": "exact",
+          "bare": {
+            "enc": "bool",
+            "path": "shows_indicator"
+          }
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "bool",
+            "path": "scrollable"
+          }
+        }
+      }
+    },
+    {
+      "node": "SemanticActionControl",
+      "package": "moui/views/controls",
+      "declaration": {
+        "semantics": {
+          "kind": "exact",
+          "record": "SemanticActionControl",
+          "fields": [
+            {
+              "name": "action",
+              "enc": "enum",
+              "path": "action",
+              "arms": [
+                "Expand",
+                "Collapse",
+                "Dismiss"
+              ]
+            },
+            {
+              "name": "expanded",
+              "enc": "bool_option",
+              "path": "expanded"
+            },
+            {
+              "name": "role",
+              "enc": "semantics_role_option",
+              "path": "role"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "CustomLayout",
+      "package": "moui/views/controls",
+      "declaration": {
+        "layout": "uncacheable",
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "record": "CustomLayout.semantics",
+          "fields": [
+            {
+              "name": "role",
+              "enc": "semantics_role",
+              "path": "semantics_role"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "semantics_label"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Picker",
+      "package": "moui/views/controls",
+      "declaration": {
+        "paint": {
+          "kind": "theme_pinned",
+          "style_pins_uncacheable": true,
+          "record": "Picker.paint",
+          "fields": [
+            {
+              "name": "items",
+              "enc": "custom",
+              "fn": "picker_items_key",
+              "path": "items"
+            },
+            {
+              "name": "selected",
+              "enc": "string",
+              "path": "selected"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            },
+            {
+              "name": "max_height",
+              "enc": "double",
+              "path": "max_height"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "record": "Picker.semantics",
+          "fields": [
+            {
+              "name": "items",
+              "enc": "custom",
+              "fn": "picker_items_key",
+              "path": "items"
+            },
+            {
+              "name": "selected",
+              "enc": "string",
+              "path": "selected"
+            },
+            {
+              "name": "placeholder",
+              "enc": "string",
+              "path": "placeholder"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "PickerRow",
+      "package": "moui/views/controls",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "PickerRow.layout",
+          "fields": [
+            {
+              "name": "row_width",
+              "enc": "double",
+              "path": "width"
+            }
+          ]
+        },
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "record": "PickerRow.semantics",
+          "fields": [
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "is_selected",
+              "enc": "bool",
+              "path": "is_selected"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "CustomChildrenLayout",
+      "package": "moui/views/controls",
+      "declaration": {
+        "layout": "uncacheable",
+        "paint": "uncacheable",
+        "semantics": {
+          "kind": "exact",
+          "record": "CustomChildrenLayout.semantics",
+          "fields": [
+            {
+              "name": "role",
+              "enc": "semantics_role",
+              "path": "semantics_role"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "semantics_label"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "RoundedClip",
+      "package": "moui/views/controls",
+      "declaration": {
+        "paint": {
+          "kind": "exact",
+          "bare": {
+            "enc": "double",
+            "path": "radius"
+          }
+        }
+      }
+    },
+    {
+      "node": "Center",
+      "package": "moui/views/container",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Center",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double_option",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double_option",
+              "path": "height"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "EmptyControl",
+      "package": "moui/views/container",
+      "self": "_self",
+      "declaration": "constant"
+    },
+    {
+      "node": "SpacerViewNode",
+      "package": "moui/views/container",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Spacer",
+          "fields": [
+            {
+              "name": "min_length",
+              "enc": "double",
+              "path": "min_length"
+            },
+            {
+              "name": "weight",
+              "enc": "double",
+              "path": "weight"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "StackLayout",
+      "package": "moui/views/common",
+      "self": "_self",
+      "declaration": "constant"
+    },
+    {
+      "node": "FlexLayout",
+      "package": "moui/views/common",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "FlexLayout",
+          "fields": [
+            {
+              "name": "axis",
+              "enc": "enum",
+              "path": "axis",
+              "arms": [
+                "Horizontal",
+                "Vertical"
+              ]
+            },
+            {
+              "name": "spacing",
+              "enc": "double",
+              "path": "spacing"
+            },
+            {
+              "name": "main_axis_alignment",
+              "enc": "enum",
+              "path": "main_axis_alignment",
+              "arms": [
+                "MainStart",
+                "MainCenter",
+                "MainEnd",
+                "SpaceBetween",
+                "SpaceAround",
+                "SpaceEvenly"
+              ]
+            },
+            {
+              "name": "cross_axis_alignment",
+              "enc": "enum",
+              "path": "cross_axis_alignment",
+              "arms": [
+                "CrossStart",
+                "CrossCenter",
+                "CrossEnd",
+                "CrossStretch"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Divider",
+      "package": "moui/views/divider",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "Divider.layout",
+          "fields": [
+            {
+              "name": "axis",
+              "enc": "enum",
+              "path": "axis",
+              "arms": [
+                "Horizontal",
+                "Vertical"
+              ]
+            },
+            {
+              "name": "thickness",
+              "enc": "double",
+              "path": "thickness"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "Divider.paint",
+          "fields": [
+            {
+              "name": "axis",
+              "enc": "enum",
+              "path": "axis",
+              "arms": [
+                "Horizontal",
+                "Vertical"
+              ]
+            },
+            {
+              "name": "color",
+              "expr": "match self.color {\n        Some(value) => @common.view_color_key(value)\n        None => @core.DeclarationKey::string(\"ambient\")\n      }"
+            },
+            {
+              "name": "inset",
+              "enc": "double",
+              "path": "inset"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "Icon",
+      "package": "moui/views/icon",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "double",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "Icon.paint",
+          "fields": [
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "size",
+              "enc": "double",
+              "path": "size"
+            },
+            {
+              "name": "color",
+              "enc": "color",
+              "path": "color"
+            },
+            {
+              "name": "weight",
+              "enc": "double",
+              "path": "weight"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "label"
+          }
+        }
+      }
+    },
+    {
+      "node": "AvatarImage",
+      "package": "moui/views/data",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "double",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "AvatarImage.paint",
+          "fields": [
+            {
+              "name": "source",
+              "enc": "string",
+              "path": "source"
+            },
+            {
+              "name": "size",
+              "enc": "double",
+              "path": "size"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node": "StageNode",
+      "package": "moui/views",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "expr": "stage_layout_key(self.design_width, self.design_height, self.rects)"
+        }
+      }
+    },
+    {
+      "node": "OverlayHostNode",
+      "package": "moui/views/presentation",
+      "generic": true,
+      "self": "_self",
+      "declaration": "constant"
+    },
+    {
+      "node": "PresentationSurfaceGuard",
+      "package": "moui/views/presentation",
+      "generic": true,
+      "self": "_self",
+      "declaration": "constant"
+    },
+    {
+      "node": "PresentationBarrier",
+      "package": "moui/views/presentation",
+      "generic": true,
+      "self": "_self",
+      "declaration": "constant"
+    }
+  ]
+}

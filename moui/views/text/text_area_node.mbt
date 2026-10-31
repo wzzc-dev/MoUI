@@ -18,48 +18,13 @@ impl @core.ViewNode for TextArea with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for TextArea with fn declaration(self) {
-  let paint_key = @common.view_record_key("TextArea.paint", [
-    ("value", @core.DeclarationKey::string(self.value)),
-    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-    (
-      "variant",
-      @core.DeclarationKey::int(
-        match self.variant {
-          Filled => 0
-          Outline => 1
-          Plain => 2
-        },
-      ),
-    ),
-    ("lines", @core.DeclarationKey::int(self.lines)),
-    ("line_height", @core.DeclarationKey::double(self.line_height)),
-  ])
-  @common.view_declaration(
-    layout=@common.view_exact_channel(@common.view_size_key(self.size)),
-    paint=if self.theme is Some(_) || self.style is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("TextArea.semantics", [
-        ("value", @core.DeclarationKey::string(self.value)),
-        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-        ("submit", @core.DeclarationKey::bool(self.has_on_submit)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for TextArea with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(self.size))
 }
 
 ///|
 impl @core.ViewNode for TextArea with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => self.variant.style(resolved_theme)
@@ -101,7 +66,7 @@ impl @core.ViewNode for TextArea with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => self.variant.style(resolved_theme)

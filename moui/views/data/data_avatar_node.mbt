@@ -10,19 +10,6 @@ impl @core.ViewNode for AvatarImage with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for AvatarImage with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(@core.DeclarationKey::double(self.size)),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("AvatarImage.paint", [
-        ("source", @core.DeclarationKey::string(self.source)),
-        ("size", @core.DeclarationKey::double(self.size)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for AvatarImage with fn layout(self, context) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(

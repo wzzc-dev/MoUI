@@ -83,18 +83,6 @@ fn stage_layout_key(
 }
 
 ///|
-impl @core.ViewNode for StageNode with fn declaration(self) {
-  @core.ViewDeclaration::channels(
-    layout=Exact(
-      stage_layout_key(self.design_width, self.design_height, self.rects),
-    ),
-    paint=Constant,
-    semantics=Constant,
-    platform=Constant,
-  )
-}
-
-///|
 impl @core.ViewNode for StageNode with fn layout(self, ctx) {
   let avail_w = ctx.constraints.max.width
   let avail_h = ctx.constraints.max.height

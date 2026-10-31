@@ -41,11 +41,6 @@ impl @core.ViewNode for RoundedClip with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for RoundedClip with fn declaration(self) {
-  @common.view_paint_declaration(@core.DeclarationKey::double(self.radius))
-}
-
-///|
 impl @core.ViewNode for RoundedClip with fn child_constraints(
   _self,
   constraints,

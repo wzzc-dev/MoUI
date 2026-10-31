@@ -39,11 +39,6 @@ impl @core.ViewNode for StackLayout with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for StackLayout with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
-}
-
-///|
 impl @core.ViewNode for StackLayout with fn layout(_self, ctx) {
   let mut width = 0.0
   let mut height = 0.0

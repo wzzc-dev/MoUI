@@ -126,16 +126,6 @@ impl @core.ViewNode for Center with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Center with fn declaration(self) {
-  @common.view_layout_declaration(
-    @common.view_record_key("Center", [
-      ("width", @common.view_double_option_key(self.width)),
-      ("height", @common.view_double_option_key(self.height)),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for Center with fn layout(self, ctx) {
   let child_size = if ctx.child_sizes.length() > 0 {
     ctx.child_sizes[0]
@@ -192,11 +182,6 @@ impl @core.ViewNode for EmptyControl with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for EmptyControl with fn declaration(_self) {
-  @core.ViewDeclaration::constant()
-}
-
-///|
 impl @core.ViewNode for EmptyControl with fn layout(_self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
@@ -220,16 +205,6 @@ priv struct SpacerViewNode {
 ///|
 impl @core.ViewNode for SpacerViewNode with fn identity(_self) {
   @core.ViewIdentity::new(kind="Spacer")
-}
-
-///|
-impl @core.ViewNode for SpacerViewNode with fn declaration(self) {
-  @common.view_layout_declaration(
-    @common.view_record_key("Spacer", [
-      ("min_length", @core.DeclarationKey::double(self.min_length)),
-      ("weight", @core.DeclarationKey::double(self.weight)),
-    ]),
-  )
 }
 
 ///|

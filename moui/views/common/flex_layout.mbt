@@ -49,48 +49,6 @@ impl @core.ViewNode for FlexLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for FlexLayout with fn declaration(self) {
-  view_layout_declaration(
-    view_record_key("FlexLayout", [
-      (
-        "axis",
-        @core.DeclarationKey::int(
-          match self.axis {
-            Horizontal => 0
-            Vertical => 1
-          },
-        ),
-      ),
-      ("spacing", @core.DeclarationKey::double(self.spacing)),
-      (
-        "main_axis_alignment",
-        @core.DeclarationKey::int(
-          match self.main_axis_alignment {
-            MainStart => 0
-            MainCenter => 1
-            MainEnd => 2
-            SpaceBetween => 3
-            SpaceAround => 4
-            SpaceEvenly => 5
-          },
-        ),
-      ),
-      (
-        "cross_axis_alignment",
-        @core.DeclarationKey::int(
-          match self.cross_axis_alignment {
-            CrossStart => 0
-            CrossCenter => 1
-            CrossEnd => 2
-            CrossStretch => 3
-          },
-        ),
-      ),
-    ]),
-  )
-}
-
-///|
 impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
   let measured = flex_measured_size(
     self.axis,

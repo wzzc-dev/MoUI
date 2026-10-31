@@ -72,6 +72,7 @@ test "scan and coverage flag uncovered fields only" {
     #|}
   let (structs, impls) = scan_file_lines(
     "moui/views/demo",
+    "moui/views/demo/demo.mbt",
     split_lines(fixture),
   )
   let struct_def = structs.get("Demo").unwrap()
@@ -97,6 +98,7 @@ test "nodes without a declaration override are safe by default" {
     #|}
   let (structs, impls) = scan_file_lines(
     "moui/views/bare",
+    "moui/views/bare/bare.mbt",
     split_lines(fixture),
   )
   let struct_def = structs.get("Bare").unwrap()

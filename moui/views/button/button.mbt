@@ -88,75 +88,8 @@ impl @core.ViewNode for Button with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Button with fn declaration(self) {
-  let layout_key = @common.view_record_key("Button.layout", [
-    ("text", @core.DeclarationKey::string(self.text)),
-    ("min_size", @common.view_size_key(self.min_size)),
-    (
-      "leading_icon",
-      @core.DeclarationKey::option(
-        self.leading_icon.map(name => {
-          @core.DeclarationKey::string(@icon.icon_label(name))
-        }),
-      ),
-    ),
-  ])
-  let paint_key = @common.view_record_key("Button.paint", [
-    (
-      "label_align",
-      @core.DeclarationKey::int(
-        match self.label_align {
-          TextStart => 0
-          TextCenter => 1
-          TextEnd => 2
-        },
-      ),
-    ),
-    (
-      "variant",
-      @core.DeclarationKey::int(
-        match self.variant {
-          Primary => 0
-          Tonal => 1
-          Outline => 2
-          Ghost => 3
-          Subtle => 4
-          SubtleBrand => 5
-        },
-      ),
-    ),
-    (
-      "leading_icon",
-      @core.DeclarationKey::option(
-        self.leading_icon.map(name => {
-          @core.DeclarationKey::string(@icon.icon_label(name))
-        }),
-      ),
-    ),
-  ])
-  @common.view_declaration(
-    layout=if self.theme is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(layout_key)
-    },
-    paint=if self.theme is Some(_) || self.style is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("Button.semantics", [
-        ("label", @core.DeclarationKey::string(self.text)),
-        ("activate", @core.DeclarationKey::bool(self.has_on_click)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Button with fn layout(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let font = resolved_theme.typography.control
   let padding_horizontal = resolved_theme.spacing_scale.lg
   let padding_vertical = resolved_theme.spacing_scale.sm
@@ -186,7 +119,7 @@ impl @core.ViewNode for Button with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Button with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None =>

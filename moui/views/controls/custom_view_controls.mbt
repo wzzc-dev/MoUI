@@ -56,20 +56,6 @@ impl @core.ViewNode for CustomChildrenLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayout with fn declaration(self) {
-  @common.view_declaration(
-    layout=Uncacheable,
-    paint=Uncacheable,
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("CustomChildrenLayout.semantics", [
-        ("role", @common.view_semantics_role_key(self.semantics_role)),
-        ("label", @core.DeclarationKey::string(self.semantics_label)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for CustomChildrenLayout with fn layout(self, ctx) {
   let direction = ctx.environment.layout_direction
   let children : Array[@core.ChildLayoutInfo] = []

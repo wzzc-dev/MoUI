@@ -137,31 +137,6 @@ impl @core.ViewNode for DatePicker with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn declaration(self) {
-  let paint_key = @common.view_record_key("DatePicker.paint", [
-    ("selected", datepicker_value_key(self.selected)),
-    ("mode", datepicker_mode_key(self.mode)),
-    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-    ("min_date", datepicker_value_option_key(self.min_date)),
-    ("max_date", datepicker_value_option_key(self.max_date)),
-  ])
-  @common.view_declaration(
-    paint=if self.theme is Some(_) || self.style is Some(_) {
-      Uncacheable
-    } else {
-      @common.view_exact_channel(paint_key)
-    },
-    semantics=@common.view_exact_channel(
-      @common.view_record_key("DatePicker.semantics", [
-        ("selected", datepicker_value_key(self.selected)),
-        ("mode", datepicker_mode_key(self.mode)),
-        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for DatePicker with fn layout(_self, ctx) {
   let own = ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0))
   // The calendar panel is a real child subtree. Collapsed it receives no
@@ -228,7 +203,7 @@ impl @core.ViewNode for DatePicker with fn place_overlays(_self, context) {
 
 ///|
 impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => @style.PickerStyle::default(theme=resolved_theme)
@@ -788,11 +763,6 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn identity(_self) {
 }
 
 ///|
-impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn declaration(_self) {
-  @core.ViewDeclaration::uncacheable()
-}
-
-///|
 impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn child_constraints(
   _self,
   _constraints,
@@ -836,7 +806,7 @@ fn[Msg] datepicker_panel_event(
 
 ///|
 impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
     None => @style.PickerStyle::default(theme=resolved_theme)

@@ -217,41 +217,6 @@ impl @core.ViewNode for ScrollContainer with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for ScrollContainer with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("ScrollContainer.layout", [
-        (
-          "offset",
-          @core.DeclarationKey::option(self.offset.map(@common.view_point_key)),
-        ),
-        ("viewport", @common.view_size_option_key(self.viewport)),
-        (
-          "request",
-          @core.DeclarationKey::option(
-            self.request.map(request => {
-              @core.DeclarationKey::record(
-                type_tag="moui.core.ScrollRequest.v1",
-                fields=[
-                  ("id", @core.DeclarationKey::int(request.id)),
-                  ("offset", @common.view_point_key(request.offset)),
-                ],
-              )
-            }),
-          ),
-        ),
-      ]),
-    ),
-    paint=@common.view_exact_channel(
-      @core.DeclarationKey::bool(self.shows_indicator),
-    ),
-    semantics=@common.view_exact_channel(
-      @core.DeclarationKey::bool(self.scrollable),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for ScrollContainer with fn child_constraints(
   _self,
   _constraints,

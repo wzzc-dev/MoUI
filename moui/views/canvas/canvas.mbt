@@ -26,17 +26,6 @@ impl @core.ViewNode for Canvas with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Canvas with fn declaration(self) {
-  view_declaration(
-    layout=Uncacheable,
-    paint=Uncacheable,
-    semantics=view_exact_channel(
-      @core.DeclarationKey::string(self.semantics_label),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Canvas with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(size=(self.measure)(ctx.constraints))
 }
@@ -75,17 +64,6 @@ priv struct AnimatedCanvas {
 ///|
 impl @core.ViewNode for AnimatedCanvas with fn identity(_self) {
   @core.ViewIdentity::new(kind="AnimatedCanvas")
-}
-
-///|
-impl @core.ViewNode for AnimatedCanvas with fn declaration(self) {
-  view_declaration(
-    layout=Uncacheable,
-    paint=Uncacheable,
-    semantics=view_exact_channel(
-      @core.DeclarationKey::string(self.semantics_label),
-    ),
-  )
 }
 
 ///|
@@ -155,17 +133,6 @@ priv struct MeasuredCanvas {
 ///|
 impl @core.ViewNode for MeasuredCanvas with fn identity(_self) {
   @core.ViewIdentity::new(kind="MeasuredCanvas")
-}
-
-///|
-impl @core.ViewNode for MeasuredCanvas with fn declaration(self) {
-  view_declaration(
-    layout=Uncacheable,
-    paint=Uncacheable,
-    semantics=view_exact_channel(
-      @core.DeclarationKey::string(self.semantics_label),
-    ),
-  )
 }
 
 ///|

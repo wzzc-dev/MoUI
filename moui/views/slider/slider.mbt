@@ -184,63 +184,6 @@ impl @core.ViewNode for Slider with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Slider with fn declaration(self) {
-  @common.view_declaration_auto(
-    "Slider",
-    self.theme,
-    [
-      ("width", @core.DeclarationKey::double(self.width)),
-      ("height", @core.DeclarationKey::double(self.height)),
-    ],
-    [
-      ("value", @core.DeclarationKey::double(self.value)),
-      ("min", @core.DeclarationKey::double(self.min)),
-      ("max", @core.DeclarationKey::double(self.max)),
-      ("step", @core.DeclarationKey::double(self.step)),
-      (
-        "style",
-        @core.DeclarationKey::option(
-          self.style.map(style => {
-            @common.view_record_key("SliderStyle", [
-              ("foreground", @common.view_color_key(style.foreground)),
-              ("background", @common.view_color_key(style.background)),
-              ("thumb_color", @common.view_color_key(style.thumb_color)),
-              ("track_height", @core.DeclarationKey::double(style.track_height)),
-              ("thumb_size", @core.DeclarationKey::double(style.thumb_size)),
-              ("radius", @core.DeclarationKey::double(style.radius)),
-            ])
-          }),
-        ),
-      ),
-      (
-        "foreground",
-        @core.DeclarationKey::option(
-          self.foreground.map(@common.view_color_key),
-        ),
-      ),
-      (
-        "background",
-        @core.DeclarationKey::option(
-          self.background.map(@common.view_color_key),
-        ),
-      ),
-    ],
-    [
-      ("value", @core.DeclarationKey::double(self.value)),
-      ("label", @core.DeclarationKey::string(self.label)),
-      ("scroll", @core.DeclarationKey::bool(self.has_on_change)),
-      (
-        "value_text",
-        @core.DeclarationKey::option(
-          self.value_text.map(@core.DeclarationKey::string),
-        ),
-      ),
-    ],
-    layout_theme_dependent=false,
-  )
-}
-
-///|
 impl @core.ViewNode for Slider with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
@@ -251,7 +194,7 @@ impl @core.ViewNode for Slider with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Slider with fn paint(self, ctx) {
-  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let set = @style.views_ambient_control_theme(resolved_theme)
   let resolved_style = match self.style {
     Some(value) => value

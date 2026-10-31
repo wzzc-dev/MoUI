@@ -15,6 +15,7 @@ struct NodeField {
 ///|
 struct StructDef {
   name : String
+  file : String
   line : Int32
   fields : Array[NodeField]
 } derive(Eq, Debug)
@@ -353,6 +354,7 @@ fn block_body(lines : Array[String], start : Int32) -> (String, Int32) {
 /// of the same package (views/text splits node structs and method impls).
 fn scan_file_lines(
   pkg : String,
+  file : String,
   lines : Array[String],
 ) -> (Map[String, StructDef], Map[String, NodeImpl]) {
   let structs : Map[String, StructDef] = Map([])
@@ -365,7 +367,7 @@ fn scan_file_lines(
         if multi_line {
           let (fields, next) = struct_fields(lines, index + 1)
           if fields.length() > 0 && !structs.contains(name) {
-            structs[name] = { name, line: index + 1, fields, }
+            structs[name] = { name, file, line: index + 1, fields, }
           }
           index = next
         } else {
@@ -620,6 +622,10 @@ fn apply_waivers(
 
 ///|
 /// Scan framework packages and compare against the waiver baseline.
+/// Structs and ViewNode impl bodies are aggregated per package before the
+/// coverage pairing, so a node whose `declaration()` lives in a generated
+/// sibling file (`declarations.generated.mbt`, ADR 0034 Option B) is checked
+/// exactly like a hand-written one.
 fn scan_repo(repo_root : String) -> Result[Finding, String] {
   let baseline_path = @tools.resolve_path(
     repo_root, "checks/viewnode-declaration-coverage.json",
@@ -630,8 +636,8 @@ fn scan_repo(repo_root : String) -> Result[Finding, String] {
   }
   let files : Array[(String, String)] = []
   collect_mbt(repo_root, "moui", files)
-  let violations : Array[Violation] = []
-  let mut scanned_nodes = 0
+  let pkg_structs : Map[String, Map[String, StructDef]] = Map([])
+  let pkg_impls : Map[String, Map[String, NodeImpl]] = Map([])
   for item in files {
     let (relative, _name) = item
     let pkg = package_of(relative)
@@ -644,14 +650,57 @@ fn scan_repo(repo_root : String) -> Result[Finding, String] {
       Err(message) => return Err(message)
     }
     let lines = text.split("\n").map(v => v.to_owned()).collect()
-    let (structs, impls) = scan_file_lines(pkg, lines)
+    let (structs, impls) = scan_file_lines(pkg, relative, lines)
+    let struct_bucket = match pkg_structs.get(pkg) {
+      Some(bucket) => bucket
+      None => {
+        let fresh : Map[String, StructDef] = Map([])
+        pkg_structs[pkg] = fresh
+        fresh
+      }
+    }
+    for name, struct_def in structs {
+      if !struct_bucket.contains(name) {
+        struct_bucket[name] = struct_def
+      }
+    }
+    let impl_bucket = match pkg_impls.get(pkg) {
+      Some(bucket) => bucket
+      None => {
+        let fresh : Map[String, NodeImpl] = Map([])
+        pkg_impls[pkg] = fresh
+        fresh
+      }
+    }
+    for name, entry in impls {
+      match impl_bucket.get(name) {
+        Some(existing) =>
+          impl_bucket[name] = {
+            has_view_node: existing.has_view_node || entry.has_view_node,
+            has_declaration: existing.has_declaration || entry.has_declaration,
+            declaration_body: existing.declaration_body +
+            "\n" +
+            entry.declaration_body,
+            identity_body: existing.identity_body + "\n" + entry.identity_body,
+          }
+        None => impl_bucket[name] = entry
+      }
+    }
+  }
+  let violations : Array[Violation] = []
+  let mut scanned_nodes = 0
+  for pkg, structs in pkg_structs {
+    let impls = match pkg_impls.get(pkg) {
+      Some(bucket) => bucket
+      None => continue
+    }
     for name, struct_def in structs {
       match impls.get(pkg + "|" + name) {
         Some(entry) => {
           if entry.has_view_node && entry.has_declaration {
             scanned_nodes += 1
           }
-          for violation in struct_violations(relative, struct_def, entry) {
+          for violation in struct_violations(struct_def.file, struct_def, entry) {
             violations.push(violation)
           }
         }

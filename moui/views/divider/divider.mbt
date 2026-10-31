@@ -23,37 +23,6 @@ impl @core.ViewNode for Divider with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Divider with fn declaration(self) {
-  let axis = @core.DeclarationKey::int(
-    match self.axis {
-      Horizontal => 0
-      Vertical => 1
-    },
-  )
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("Divider.layout", [
-        ("axis", axis),
-        ("thickness", @core.DeclarationKey::double(self.thickness)),
-      ]),
-    ),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("Divider.paint", [
-        ("axis", axis),
-        (
-          "color",
-          match self.color {
-            Some(value) => @common.view_color_key(value)
-            None => @core.DeclarationKey::string("ambient")
-          },
-        ),
-        ("inset", @core.DeclarationKey::double(self.inset)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for Divider with fn layout(self, ctx) {
   let line_thickness = @common.max_view_double(1.0, self.thickness)
   let size = match self.axis {

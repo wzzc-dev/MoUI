@@ -48,26 +48,6 @@ impl @core.ViewNode for PresenceDot with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for PresenceDot with fn declaration(self) {
-  @common.view_declaration(
-    layout=@common.view_exact_channel(
-      @common.view_record_key("PresenceDot.layout", [
-        ("size", @core.DeclarationKey::double(self.size)),
-        ("border_width", @core.DeclarationKey::double(self.border_width)),
-      ]),
-    ),
-    paint=@common.view_exact_channel(
-      @common.view_record_key("PresenceDot.paint", [
-        ("size", @core.DeclarationKey::double(self.size)),
-        ("status_color", @common.view_color_key(self.status_color)),
-        ("border_color", @common.view_color_key(self.border_color)),
-        ("border_width", @core.DeclarationKey::double(self.border_width)),
-      ]),
-    ),
-  )
-}
-
-///|
 impl @core.ViewNode for PresenceDot with fn layout(self, ctx) {
   let total = self.size + self.border_width * 2.0
   @core.ViewLayoutResult::new(
