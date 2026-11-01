@@ -795,7 +795,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn keyboard_policy(_self)
 
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -1014,7 +1014,7 @@ impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn layout(
 impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn semantics(
   _self,
 ) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -1071,5 +1071,5 @@ impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn paint(_self, _ctx)
 
 ///|
 impl[Msg] @core.ViewNode for PresentationBarrier[Msg] with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Hidden)
+  @core.ViewSemanticsInfo::hidden()
 }

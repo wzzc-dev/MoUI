@@ -52,7 +52,7 @@ impl @core.ViewNode for Flow with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Flow with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|

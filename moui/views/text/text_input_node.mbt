@@ -115,14 +115,7 @@ impl @core.ViewNode for SingleLineTextInput with fn text_input_state(self, ctx) 
 impl @core.ViewNode for SingleLineTextInput with fn semantics(self) {
   // Only `multiline` is a structural fact here; whether the field is locked or
   // masked belongs to the wrapper that builds it.
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=TextField,
-    label=self.placeholder,
-    value=self.value,
-    multiline=false,
-    text=@core.SemanticsTextValue::new(editable=true),
-  )
+  @core.ViewSemanticsInfo::text_field(label=self.placeholder, value=self.value)
 }
 
 ///|

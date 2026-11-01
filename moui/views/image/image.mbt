@@ -77,12 +77,8 @@ impl @core.ViewNode for Image with fn paint(self, context) {
 ///|
 impl @core.ViewNode for Image with fn semantics(self) {
   if self.accessibility_label == "" {
-    @core.ViewSemanticsInfo::new(composition=Hidden)
+    @core.ViewSemanticsInfo::hidden()
   } else {
-    @core.ViewSemanticsInfo::new(
-      composition=Boundary,
-      role=Image,
-      label=self.accessibility_label,
-    )
+    @core.ViewSemanticsInfo::leaf(role=Image, label=self.accessibility_label)
   }
 }

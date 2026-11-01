@@ -25,7 +25,7 @@ impl @core.ViewNode for CustomLayout with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for CustomLayout with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
+  @core.ViewSemanticsInfo::container(
     composition=if self.semantics_label == "" && self.semantics_role == Group {
       Transparent
     } else {

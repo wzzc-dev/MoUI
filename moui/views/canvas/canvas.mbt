@@ -39,7 +39,7 @@ impl @core.ViewNode for Canvas with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Canvas with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
+  @core.ViewSemanticsInfo::container(
     composition=if self.semantics_label == "" { Transparent } else { Boundary },
     role=Group,
     label=self.semantics_label,
@@ -82,7 +82,7 @@ impl @core.ViewNode for AnimatedCanvas with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for AnimatedCanvas with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
+  @core.ViewSemanticsInfo::container(
     composition=if self.semantics_label == "" { Transparent } else { Boundary },
     role=Group,
     label=self.semantics_label,

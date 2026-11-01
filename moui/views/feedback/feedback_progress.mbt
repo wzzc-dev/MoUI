@@ -13,13 +13,17 @@ pub fn[Msg] progress_status(
   width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
-  let badge_style = resolve_badge_style(badge_style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
+  let badge_style = badge_style.unwrap_or_else(() => {
+    @style.BadgeStyle::default(theme=resolved_theme)
+  })
   let progress_style = match progress_style {
     Some(value) => value
     None => @style.ProgressStyle::default(theme=resolved_theme)
   }
-  let inner_width = @common.max_view_double(
+  let inner_width = @common.view_max_double(
     120.0,
     width - resolved_theme.spacing_scale.md * 2.0,
   )
@@ -28,11 +32,11 @@ pub fn[Msg] progress_status(
   } else {
     status
   }
-  let status_width = @common.max_view_double(
+  let status_width = @common.view_max_double(
     72.0,
     status_text.to_array().length().to_double() * 8.0 + 22.0,
   )
-  let title_width = @common.max_view_double(
+  let title_width = @common.view_max_double(
     80.0,
     inner_width - status_width - 10.0,
   )

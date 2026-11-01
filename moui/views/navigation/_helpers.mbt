@@ -49,5 +49,5 @@ impl @core.ViewNode for OverlayMarker with fn paint(_self, ctx) {
 
 ///|
 impl @core.ViewNode for OverlayMarker with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Hidden)
+  @core.ViewSemanticsInfo::hidden()
 }

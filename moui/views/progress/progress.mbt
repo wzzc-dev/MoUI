@@ -59,16 +59,10 @@ impl @core.ViewNode for Progress with fn paint(self, ctx) {
     Some(value) => value
     None => @style.ProgressStyle::default(theme=resolved_theme)
   }
-  let resolved_foreground = @common.resolve_control_color(
-    self.foreground,
-    resolved_style.foreground,
-  )
-  let resolved_background = @common.resolve_control_color(
-    self.background,
-    resolved_style.background,
-  )
+  let resolved_foreground = self.foreground.unwrap_or(resolved_style.foreground)
+  let resolved_background = self.background.unwrap_or(resolved_style.background)
   let frame = ctx.frame
-  let radius = @common.min_view_double(self.height / 2.0, resolved_style.radius)
+  let radius = @common.view_min_double(self.height / 2.0, resolved_style.radius)
   @core.ViewPaintPlan::commands([
     FillRoundedRectBrush(
       @core.RoundedRect::new(rect=frame, radius~),
@@ -91,8 +85,7 @@ impl @core.ViewNode for Progress with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Progress with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Progress,
     label=self.label,
     value="\{self.value}",

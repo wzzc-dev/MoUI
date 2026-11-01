@@ -150,12 +150,7 @@ impl @core.ViewNode for Text with fn paint(self, context) {
 
 ///|
 impl @core.ViewNode for Text with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=Text,
-    label=self.text,
-    value=self.text,
-  )
+  @core.ViewSemanticsInfo::leaf(role=Text, label=self.text, value=self.text)
 }
 
 ///|

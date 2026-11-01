@@ -2,16 +2,11 @@
 package "wzzc-dev/moui/views/common"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
 // Values
-pub fn button_state_with_transition(@core.ViewStateContext, @core.PressableState, @core.PressableState, Double) -> @core.ViewStateContext
-
-pub fn button_transition(@core.ViewStateContext) -> (@core.PressableState, Double)?
-
-pub fn button_transition_slot() -> @core.ViewStateSlot[ButtonTransitionState]
-
 pub fn clamp_view_double(Double, Double, Double) -> Double
 
 pub fn clear(PaintContext, @core.Color) -> Unit
@@ -38,10 +33,6 @@ pub fn first_child_size(Array[@core.Size]) -> @core.Size
 
 pub fn[Msg] flex_layout(children~ : Array[@core.View[Msg]], axis~ : @core.Axis, spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn max_view_double(Double, Double) -> Double
-
-pub fn min_view_double(Double, Double) -> Double
-
 pub fn pop_clip(PaintContext) -> Unit
 
 pub fn pop_filter(PaintContext) -> Unit
@@ -54,9 +45,17 @@ pub fn pop_rounded_clip(PaintContext) -> Unit
 
 pub fn pop_transform(PaintContext) -> Unit
 
+pub fn pressable_next_state(@core.PressableState, Bool, @core.PointerPhase) -> @core.PressableState
+
 pub fn pressable_state_brush(@core.PressableState, @core.Brush, @core.Brush, @core.Brush) -> @core.Brush
 
 pub fn pressable_state_color(@core.Brush) -> @core.Color
+
+pub fn pressable_state_with_transition(@core.ViewStateContext, @core.PressableState, @core.PressableState, Double, control~ : String) -> @core.ViewStateContext
+
+pub fn pressable_transition(@core.ViewStateContext, control~ : String) -> (@core.PressableState, Double)?
+
+pub fn pressable_transition_slot(String) -> @core.ViewStateSlot[PressableTransition]
 
 pub fn push_clip(PaintContext, @core.Rect) -> Unit
 
@@ -69,8 +68,6 @@ pub fn push_opacity(PaintContext, Double) -> Unit
 pub fn push_rounded_clip(PaintContext, @core.RoundedRect) -> Unit
 
 pub fn push_transform(PaintContext, @core.Transform2D) -> Unit
-
-pub fn resolve_control_color(@core.Color?, @core.Color) -> @core.Color
 
 pub fn[Msg] stack_layout(children~ : Array[@core.View[Msg]], kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -85,8 +82,6 @@ pub fn view_border_option_key(@core.BorderStyle?) -> @core.DeclarationKey
 pub fn view_brush_key(@core.Brush) -> @core.DeclarationKey
 
 pub fn view_brush_option_key(@core.Brush?) -> @core.DeclarationKey
-
-pub fn view_button_next_state(@core.PressableState, Bool, @core.PointerPhase) -> @core.PressableState
 
 pub fn view_color_key(@core.Color) -> @core.DeclarationKey
 
@@ -153,16 +148,19 @@ pub fn windowed_row_count(item_count~ : Int32, columns~ : Int32) -> Int32
 // Errors
 
 // Types and methods
-pub(all) enum ButtonTransitionState {
-  Idle
-  Active(@core.PressableState, Double)
-}
-
 pub(all) struct PaintContext {
   commands : Array[@core.DrawCommand]
 }
 pub fn PaintContext::finish(Self) -> Array[@core.DrawCommand]
 pub fn PaintContext::new() -> Self
+
+pub(all) enum PressableTransition {
+  Idle
+  Active(@core.PressableState, Double)
+} derive(Eq, @debug.Debug)
+pub fn PressableTransition::equal(Self, Self) -> Bool
+pub fn PressableTransition::not_equal(Self, Self) -> Bool
+pub fn PressableTransition::to_repr(Self) -> @debug.Repr
 
 pub struct WindowedRowRange {
   first_row : Int32

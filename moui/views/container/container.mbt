@@ -1,7 +1,6 @@
 ///|
 pub using @common {
   views_ambient_theme,
-  max_view_double,
   view_layout_declaration,
   view_record_key,
   view_double_option_key,
@@ -156,8 +155,8 @@ impl @core.ViewNode for Center with fn layout(self, ctx) {
   // Center the child inside the measured frame. We clamp the offsets at zero
   // so a child larger than the frame stays top-left aligned rather than
   // painting at negative coordinates.
-  let x = @common.max_view_double(0.0, (size.width - child_size.width) / 2.0)
-  let y = @common.max_view_double(0.0, (size.height - child_size.height) / 2.0)
+  let x = @common.view_max_double(0.0, (size.width - child_size.width) / 2.0)
+  let y = @common.view_max_double(0.0, (size.height - child_size.height) / 2.0)
   @core.ViewLayoutResult::new(size~, child_frames=[
     @core.Rect::new(x~, y~, width=child_size.width, height=child_size.height),
   ])
@@ -165,7 +164,7 @@ impl @core.ViewNode for Center with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for Center with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|

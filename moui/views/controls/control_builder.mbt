@@ -111,7 +111,7 @@ impl[Style] @core.ViewNode for ThemedControl[Style] with fn paint(
 impl[Style] @core.ViewNode for ThemedControl[Style] with fn semantics(self) -> @core.ViewSemanticsInfo {
   match self.semantics_fn {
     Some(handler) => handler()
-    None => @core.ViewSemanticsInfo::new()
+    None => @core.ViewSemanticsInfo::transparent()
   }
 }
 

@@ -86,13 +86,10 @@ impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
 
 ///|
 impl @core.ViewNode for TextArea with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=TextField,
+  @core.ViewSemanticsInfo::text_field(
     label=self.placeholder,
     value=self.value,
     multiline=true,
-    text=@core.SemanticsTextValue::new(editable=true),
   )
 }
 

@@ -233,7 +233,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/style/control_style_feedback.mbt", max_lines: 120, },
     { path: "moui/views/style/control_style_badge.mbt", max_lines: 120, },
     { path: "moui/views/style/control_style_form.mbt", max_lines: 90, },
-    { path: "moui/views/common/control_helpers.mbt", max_lines: 45, },
+    { path: "moui/views/common/control_helpers.mbt", max_lines: 15, },
     { path: "moui/views/views.mbt", max_lines: 440, },
     { path: "moui/views/controls/choice_state.mbt", max_lines: 25, },
     { path: "moui/views/controls/choice_groups.mbt", max_lines: 70, },

@@ -216,32 +216,23 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     0.0,
     1.0,
   )
-  let knob = @common.min_view_double(self.height, resolved_style.thumb_size)
-  let track_height = @common.min_view_double(
+  let knob = @common.view_min_double(self.height, resolved_style.thumb_size)
+  let track_height = @common.view_min_double(
     self.height,
     resolved_style.track_height,
   )
-  let track_radius = @common.min_view_double(
+  let track_radius = @common.view_min_double(
     track_height / 2.0,
     resolved_style.radius,
   )
   let thumb_shape = set.slider.thumb_shape
   let thumb_radius = match thumb_shape {
     Circle => knob / 2.0
-    Rounded => @common.min_view_double(knob / 2.0, resolved_style.radius)
+    Rounded => @common.view_min_double(knob / 2.0, resolved_style.radius)
   }
-  let foreground_color = @common.resolve_control_color(
-    self.foreground,
-    resolved_style.foreground,
-  )
-  let track_background = @common.resolve_control_color(
-    self.background,
-    resolved_style.background,
-  )
-  let thumb_color = @common.resolve_control_color(
-    self.foreground,
-    resolved_style.thumb_color,
-  )
+  let foreground_color = self.foreground.unwrap_or(resolved_style.foreground)
+  let track_background = self.background.unwrap_or(resolved_style.background)
+  let thumb_color = self.foreground.unwrap_or(resolved_style.thumb_color)
   let frame = ctx.frame
   let focused = ctx.focused
   let thumb_size = knob + (if focused { 3.0 } else { 0.0 })
@@ -257,7 +248,7 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     height=track_height,
   )
   let knob_x = frame.origin.x +
-    normalized * @common.max_view_double(0.0, frame.size.width - thumb_size)
+    normalized * @common.view_max_double(0.0, frame.size.width - thumb_size)
   let thumb_rect = @core.RoundedRect::new(
     rect=@core.Rect::new(
       x=knob_x,
@@ -300,8 +291,7 @@ impl @core.ViewNode for Slider with fn focusable(_self) {
 
 ///|
 impl @core.ViewNode for Slider with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Slider,
     label=self.label,
     value="\{self.value}",
@@ -323,7 +313,7 @@ fn slider_value_at(
   max : Double,
 ) -> Double {
   let range = if max <= min { 1.0 } else { max - min }
-  let track_width = @common.max_view_double(1.0, frame.size.width)
+  let track_width = @common.view_max_double(1.0, frame.size.width)
   let clamped = @common.clamp_view_double(local_x, 0.0, track_width)
   @common.clamp_view_double(min + clamped / track_width * range, min, max)
 }

@@ -27,7 +27,9 @@ pub fn[Msg] form_validation_summary(
       title~,
       action~,
       theme=resolved_theme,
-      style=resolve_form_validation_style(style, resolved_theme),
+      style=style.unwrap_or_else(() => {
+        @style.FormValidationStyle::default(theme=resolved_theme)
+      }),
       width~,
     )
   }

@@ -74,7 +74,7 @@ pub fn[Msg] combobox(
         placeholder~,
         variant=Outline,
         theme=resolved_theme,
-        width=@common.max_view_double(80.0, width - 70.0),
+        width=@common.view_max_double(80.0, width - 70.0),
       ),
       @button.button(
         "Open",

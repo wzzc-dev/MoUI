@@ -239,7 +239,7 @@ fn scroll_motion_band(
 /// The window opens at the release itself: the frame that reacts to `Up` paints
 /// in the same instant, so a predicate that required the clock to have already
 /// advanced past `start_time_ms` would find the band full, decline to latch and
-/// freeze the surface there. This is the boundary `button_transition` uses for
+/// freeze the surface there. This is the boundary `pressable_transition` uses for
 /// the same reason.
 fn scroll_motion_is_animating(
   motion : ScrollMotionState,

@@ -146,7 +146,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   } else {
     Normal
   }
-  let transition = @common.button_transition(ctx.state)
+  let transition = @common.pressable_transition(ctx.state, control="button")
   let (background_brush, animating) = match transition {
     Some((from_state, start_ms)) =>
       if ctx.environment.reduced_motion ||
@@ -286,11 +286,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Button with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=Button,
-    label=self.text,
-  )
+  @core.ViewSemanticsInfo::leaf(role=Button, label=self.text)
 }
 
 ///|
@@ -322,7 +318,7 @@ fn[Msg] button_event(
       let next = if exit_inside {
         current
       } else {
-        @common.view_button_next_state(current, inside, event.phase)
+        @common.pressable_next_state(current, inside, event.phase)
       }
       let activated = event.phase == Up && inside && current == Pressed
       let changed = next != current || activated
@@ -335,18 +331,20 @@ fn[Msg] button_event(
         !inside &&
         !exit_inside
       let next_state = if is_instant_clear {
-        @common.button_state_with_transition(
+        @common.pressable_state_with_transition(
           ctx.state,
           current,
           next,
           ctx.now_ms,
-        ).without_slot(@common.button_transition_slot())
+          control="button",
+        ).without_slot(@common.pressable_transition_slot("button"))
       } else if changed {
-        @common.button_state_with_transition(
+        @common.pressable_state_with_transition(
           ctx.state,
           current,
           next,
           ctx.now_ms,
+          control="button",
         )
       } else {
         ctx.state

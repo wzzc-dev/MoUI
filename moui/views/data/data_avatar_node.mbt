@@ -33,5 +33,5 @@ impl @core.ViewNode for AvatarImage with fn paint(self, context) {
 
 ///|
 impl @core.ViewNode for AvatarImage with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }

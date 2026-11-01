@@ -79,7 +79,7 @@ impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FlexLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|

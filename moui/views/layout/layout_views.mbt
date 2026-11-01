@@ -59,7 +59,7 @@ impl @core.ViewNode for PaddingLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for PaddingLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -135,7 +135,7 @@ impl @core.ViewNode for FrameLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FrameLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -254,7 +254,7 @@ impl @core.ViewNode for ContainerBox with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ContainerBox with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -334,7 +334,7 @@ impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for GridLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|
@@ -389,7 +389,7 @@ impl @core.ViewNode for ListLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for ListLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|

@@ -227,8 +227,7 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for DatePicker with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Menu,
     label=self.placeholder,
     value=datepicker_display_value(self.selected, self.mode),
@@ -951,9 +950,5 @@ impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn paint(self, ctx) {
 
 ///|
 impl[Msg] @core.ViewNode for DatePickerPanel[Msg] with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=Dialog,
-    label="Calendar",
-  )
+  @core.ViewSemanticsInfo::leaf(role=Dialog, label="Calendar")
 }

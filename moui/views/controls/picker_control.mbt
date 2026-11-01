@@ -170,8 +170,7 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Picker with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Menu,
     label=self.placeholder,
     value=picker_selected_label(self.items, self.selected, self.placeholder),
@@ -534,8 +533,7 @@ impl @core.ViewNode for PickerRow with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for PickerRow with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Option,
     label=self.label,
     selected=self.is_selected,

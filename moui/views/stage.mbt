@@ -125,7 +125,7 @@ impl @core.ViewNode for StageNode with fn layout(self, ctx) {
 impl @core.ViewNode for StageNode with fn semantics(_self) {
   // 透明组合:子控件的语义(按钮/输入框/文本…)直接对外暴露——
   // 预览点选层读到的就是舞台上的真实控件帧。
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }
 
 ///|

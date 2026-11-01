@@ -108,7 +108,7 @@ impl @core.ViewNode for SheetShell with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for SheetShell with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Boundary, role=Dialog)
+  @core.ViewSemanticsInfo::container(composition=Boundary, role=Dialog)
 }
 
 ///|

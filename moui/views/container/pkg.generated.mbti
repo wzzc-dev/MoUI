@@ -17,8 +17,6 @@ pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, backgr
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
-pub fn max_view_double(Double, Double) -> Double
-
 pub fn[Msg] padding_layout(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]

@@ -9,7 +9,9 @@ pub fn[Msg] banner(
   width~ : Double = 420.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   feedback_panel(
     message,
     tone~,
@@ -32,7 +34,9 @@ pub fn[Msg] callout(
   width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   feedback_panel(
     message,
     tone~,

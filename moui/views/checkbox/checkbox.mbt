@@ -27,25 +27,6 @@ pub fn[Msg] checkbox(
 }
 
 ///|
-fn resolve_choice_font(
-  font : @core.FontSpec?,
-  theme : @core.Theme,
-) -> @core.FontSpec {
-  match font {
-    Some(value) => value
-    None => theme.typography.control
-  }
-}
-
-///|
-fn resolve_control_double(value : Double?, fallback : Double) -> Double {
-  match value {
-    Some(resolved) => resolved
-    None => fallback
-  }
-}
-
-///|
 pub fn[Msg] checkbox_control(
   label~ : String,
   checked~ : @core.ControlledValue[Bool, Msg],
@@ -115,8 +96,8 @@ impl @core.ViewNode for Checkbox with fn identity(self) {
 impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
   let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
-  let resolved_font = resolve_choice_font(self.font, resolved_theme)
-  let resolved_box_size = resolve_control_double(self.box_size, cc.control_size)
+  let resolved_font = self.font.unwrap_or(resolved_theme.typography.control)
+  let resolved_box_size = self.box_size.unwrap_or(cc.control_size)
   let label_width = if self.label.length() == 0 {
     0.0
   } else {
@@ -141,16 +122,10 @@ impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
 impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
   let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
-  let resolved_font = resolve_choice_font(self.font, resolved_theme)
-  let resolved_foreground = @common.resolve_control_color(
-    self.foreground,
-    cc.foreground,
-  )
-  let resolved_check_color = @common.resolve_control_color(
-    self.check_color,
-    cc.selected_color,
-  )
-  let resolved_box_size = resolve_control_double(self.box_size, cc.control_size)
+  let resolved_font = self.font.unwrap_or(resolved_theme.typography.control)
+  let resolved_foreground = self.foreground.unwrap_or(cc.foreground)
+  let resolved_check_color = self.check_color.unwrap_or(cc.selected_color)
+  let resolved_box_size = self.box_size.unwrap_or(cc.control_size)
   let commands : Array[@core.DrawCommand] = []
   append_checkbox_commands(
     commands,
@@ -171,8 +146,7 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Checkbox with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
+  @core.ViewSemanticsInfo::leaf(
     role=Checkbox,
     label=self.label,
     value=if self.checked { "true" } else { "false" },

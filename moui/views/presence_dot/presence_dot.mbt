@@ -83,11 +83,7 @@ impl @core.ViewNode for PresenceDot with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for PresenceDot with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    composition=Boundary,
-    role=Group,
-    label="PresenceDot",
-  )
+  @core.ViewSemanticsInfo::leaf(role=Group, label="PresenceDot")
 }
 
 ///|
@@ -100,7 +96,7 @@ pub fn[Msg] presence_dot(
   let resolved_theme = @common.views_ambient_theme(theme)
   let status_color = presence_status_color(status, resolved_theme)
   let border_color = on_surface.unwrap_or(resolved_theme.palette.background)
-  let border_width = @common.max_view_double(1.5, size * 0.15)
+  let border_width = @common.view_max_double(1.5, size * 0.15)
   @core.View::from_node(PresenceDot::{
     size,
     status_color,

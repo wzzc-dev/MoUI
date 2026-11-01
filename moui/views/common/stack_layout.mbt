@@ -58,5 +58,5 @@ impl @core.ViewNode for StackLayout with fn layout(_self, ctx) {
 
 ///|
 impl @core.ViewNode for StackLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Transparent)
+  @core.ViewSemanticsInfo::transparent()
 }

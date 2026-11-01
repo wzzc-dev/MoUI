@@ -8,7 +8,9 @@ pub fn[Msg] badge(
   height~ : Double = 24.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_badge_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.BadgeStyle::default(theme=resolved_theme)
+  })
   @container.container(
     @text.text(
       label,
@@ -20,7 +22,7 @@ pub fn[Msg] badge(
     width~,
     height~,
     background=badge_background(tone, style),
-    corner_radius=@common.min_view_double(height / 2.0, style.radius),
+    corner_radius=@common.view_min_double(height / 2.0, style.radius),
     padding=style.padding,
   ).semantics_role(Text)
 }
@@ -58,7 +60,9 @@ pub fn[Msg] stat_card(
   height~ : Double = 116.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       label,
@@ -94,17 +98,6 @@ pub fn[Msg] stat_card(
     theme=resolved_theme,
     padding=resolved_theme.spacing_scale.md,
   )
-}
-
-///|
-fn resolve_badge_style(
-  style : @style.BadgeStyle?,
-  theme : @core.Theme,
-) -> @style.BadgeStyle {
-  match style {
-    Some(value) => value
-    None => @style.BadgeStyle::default(theme~)
-  }
 }
 
 ///|

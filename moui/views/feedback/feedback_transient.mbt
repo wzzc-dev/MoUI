@@ -8,7 +8,9 @@ pub fn[Msg] toast(
   width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   feedback_panel(
     message,
     tone~,
@@ -33,7 +35,9 @@ pub fn[Msg] toast_stack(
   if items.length() == 0 {
     @container.empty()
   } else {
-    let style = resolve_feedback_style(style, resolved_theme)
+    let style = style.unwrap_or_else(() => {
+      @style.FeedbackStyle::default(theme=resolved_theme)
+    })
     let rows : Array[@core.View[Msg]] = []
     for item in items {
       rows.push(
@@ -55,7 +59,9 @@ pub fn[Msg] snackbar(
   width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   feedback_panel(
     message,
     tone=Neutral,
@@ -87,7 +93,7 @@ fn[Msg] toast_stack_row(
             action=item.action,
             theme~,
             style~,
-            width=@common.max_view_double(
+            width=@common.view_max_double(
               120.0,
               width - dismiss_width - spacing,
             ),

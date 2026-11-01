@@ -24,7 +24,7 @@ impl @core.ViewNode for Divider with fn identity(_self) {
 
 ///|
 impl @core.ViewNode for Divider with fn layout(self, ctx) {
-  let line_thickness = @common.max_view_double(1.0, self.thickness)
+  let line_thickness = @common.view_max_double(1.0, self.thickness)
   let size = match self.axis {
     Horizontal =>
       @core.Size::new(
@@ -62,7 +62,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
         @core.Rect::new(
           x=frame.origin.x + self.inset,
           y=frame.origin.y,
-          width=@common.max_view_double(
+          width=@common.view_max_double(
             0.0,
             frame.size.width - self.inset * 2.0,
           ),
@@ -73,7 +73,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
           x=frame.origin.x,
           y=frame.origin.y + self.inset,
           width=frame.size.width,
-          height=@common.max_view_double(
+          height=@common.view_max_double(
             0.0,
             frame.size.height - self.inset * 2.0,
           ),
@@ -87,7 +87,7 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for Divider with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Boundary, role=Separator)
+  @core.ViewSemanticsInfo::container(composition=Boundary, role=Separator)
 }
 
 ///|

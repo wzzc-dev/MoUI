@@ -334,7 +334,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ScrollContainer with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(composition=Boundary, role=ScrollView)
+  @core.ViewSemanticsInfo::container(composition=Boundary, role=ScrollView)
 }
 
 ///|

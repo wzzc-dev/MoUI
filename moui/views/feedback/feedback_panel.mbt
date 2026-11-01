@@ -62,16 +62,5 @@ fn[Msg] feedback_panel(
   )
 }
 
-///|
-fn resolve_feedback_style(
-  style : @style.FeedbackStyle?,
-  theme : @core.Theme,
-) -> @style.FeedbackStyle {
-  match style {
-    Some(value) => value
-    None => @style.FeedbackStyle::default(theme~)
-  }
-}
-
 // feedback_accent, feedback_background, feedback_border, feedback_tone_style
 // moved to controls/ sub-package. Use @controls.feedback_* from here.

@@ -8,7 +8,9 @@ pub fn[Msg] empty_state(
   width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   state_panel(
     title,
     message,
@@ -29,7 +31,9 @@ pub fn[Msg] loading_state(
   width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   state_panel(
     title,
     message,
@@ -51,7 +55,9 @@ pub fn[Msg] error_state(
   width~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
   state_panel(
     title,
     message,
@@ -73,13 +79,17 @@ pub fn[Msg] inline_error(
   width~ : Double = 360.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let style = resolve_feedback_style(style, resolved_theme)
-  let badge_style = resolve_badge_style(badge_style, resolved_theme)
+  let style = style.unwrap_or_else(() => {
+    @style.FeedbackStyle::default(theme=resolved_theme)
+  })
+  let badge_style = badge_style.unwrap_or_else(() => {
+    @style.BadgeStyle::default(theme=resolved_theme)
+  })
   let action_width = match action {
     Some(_) => 86.0
     None => 0.0
   }
-  let message_width = @common.max_view_double(
+  let message_width = @common.view_max_double(
     96.0,
     width - 72.0 - action_width - resolved_theme.spacing_scale.sm,
   )
