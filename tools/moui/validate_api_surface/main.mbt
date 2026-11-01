@@ -389,8 +389,15 @@ fn package_budgets() -> Array[PackageBudget] {
       // (ADR 0036, plan hot-path-invalidation-boilerplate-convergence B1): the
       // pinned-theme-wins fallback that 21 views call sites previously
       // hand-wrote as `theme.unwrap_or(ctx.environment.theme)`. +3 lines, +3 pub.
-      max_lines: 2529,
-      max_pub_lines: 1120,
+      // Grouped `ViewSemanticsInfo` construction helpers (plan
+      // cohesion-governance-convergence B1) are pure additions over the flat
+      // 26-field struct and `new`: `hidden`/`transparent`/`leaf`/`container`/
+      // `text_field` encode the five construction shapes observed across the
+      // repo's 90+ `new()` call sites so controls stop restating
+      // `composition=` on every leaf. The struct and `new` are unchanged.
+      // +5 lines, +5 pub.
+      max_lines: 2534,
+      max_pub_lines: 1125,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

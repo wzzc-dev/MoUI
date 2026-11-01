@@ -205,3 +205,188 @@ test "SemanticsPathSegment: wire shape keeps exact filters and index" {
     content="false",
   )
 }
+
+///|
+test "ViewSemanticsInfo grouped helpers: hidden and transparent set only composition" {
+  inspect(
+    @core.ViewSemanticsInfo::hidden() ==
+    {
+      composition: Hidden,
+      semantic_id: None,
+      role: None,
+      level: None,
+      url: None,
+      label: None,
+      value: None,
+      description: None,
+      disabled: None,
+      selected: None,
+      pressed: None,
+      checked: None,
+      expanded: None,
+      invalid: None,
+      required: None,
+      read_only: None,
+      busy: None,
+      multiline: None,
+      password: None,
+      modal: None,
+      numeric: None,
+      text: None,
+      collection: None,
+      relations: None,
+      live: None,
+      live_atomic: None,
+    },
+    content="true",
+  )
+  inspect(
+    @core.ViewSemanticsInfo::transparent() == @core.ViewSemanticsInfo::new(),
+    content="true",
+  )
+}
+
+///|
+test "ViewSemanticsInfo grouped helpers: leaf equals the new() spelling" {
+  inspect(
+    @core.ViewSemanticsInfo::leaf(role=Button, label="Delete") ==
+    @core.ViewSemanticsInfo::new(
+      composition=Boundary,
+      role=Button,
+      label="Delete",
+    ),
+    content="true",
+  )
+  inspect(
+    @core.ViewSemanticsInfo::leaf(
+      role=Checkbox,
+      label="Subscribe",
+      value="true",
+      checked=Checked,
+    ) ==
+    @core.ViewSemanticsInfo::new(
+      composition=Boundary,
+      role=Checkbox,
+      label="Subscribe",
+      value="true",
+      checked=Checked,
+    ),
+    content="true",
+  )
+  inspect(
+    @core.ViewSemanticsInfo::leaf(
+      role=Slider,
+      label="Volume",
+      value="0.5",
+      numeric=@core.SemanticsNumericValue::new(current=0.5, min=0.0, max=1.0),
+    ) ==
+    @core.ViewSemanticsInfo::new(
+      composition=Boundary,
+      role=Slider,
+      label="Volume",
+      value="0.5",
+      numeric=@core.SemanticsNumericValue::new(current=0.5, min=0.0, max=1.0),
+    ),
+    content="true",
+  )
+  // Unnamed fields stay None even when siblings are set.
+  let info = @core.ViewSemanticsInfo::leaf(role=Group, label="Cluster")
+  inspect(info.selected is None, content="true")
+  inspect(info.checked is None, content="true")
+  inspect(info.numeric is None, content="true")
+  inspect(info.disabled is None, content="true")
+}
+
+///|
+test "ViewSemanticsInfo grouped helpers: container keeps explicit composition" {
+  let dynamic = if true { @core.Transparent } else { @core.Boundary }
+  inspect(
+    @core.ViewSemanticsInfo::container(
+      composition=dynamic,
+      role=Group,
+      label="Plot",
+      value="Plot",
+    ) ==
+    @core.ViewSemanticsInfo::new(
+      composition=Transparent,
+      role=Group,
+      label="Plot",
+      value="Plot",
+    ),
+    content="true",
+  )
+  inspect(
+    @core.ViewSemanticsInfo::container(composition=Boundary, role=Separator) ==
+    @core.ViewSemanticsInfo::new(composition=Boundary, role=Separator),
+    content="true",
+  )
+}
+
+///|
+test "ViewSemanticsInfo grouped helpers: text_field shape" {
+  inspect(
+    @core.ViewSemanticsInfo::text_field(
+      label="Search",
+      value="q",
+      multiline=true,
+    ) ==
+    @core.ViewSemanticsInfo::new(
+      composition=Boundary,
+      role=TextField,
+      label="Search",
+      value="q",
+      multiline=true,
+      text=@core.SemanticsTextValue::new(editable=true),
+    ),
+    content="true",
+  )
+  // Defaults: single line, editable.
+  inspect(
+    @core.ViewSemanticsInfo::text_field(label="Search") ==
+    @core.ViewSemanticsInfo::new(
+      composition=Boundary,
+      role=TextField,
+      label="Search",
+      multiline=false,
+      text=@core.SemanticsTextValue::new(editable=true),
+    ),
+    content="true",
+  )
+}
+
+///|
+test "ViewSemanticsInfo grouped helpers compose with overlaying" {
+  // A metadata-modifier-style partial info overlays a leaf exactly the same
+  // way it overlays the new() spelling: explicit fields win, unset pass
+  // through, composition and text stay the overlay's own.
+  let base_helper = @core.ViewSemanticsInfo::leaf(
+    role=TextField,
+    label="Search",
+    value="q",
+  )
+  let base_new = @core.ViewSemanticsInfo::new(
+    composition=Boundary,
+    role=TextField,
+    label="Search",
+    value="q",
+  )
+  let overlay = @core.ViewSemanticsInfo::new(invalid=true)
+  inspect(
+    overlay.overlaying(base_helper) == overlay.overlaying(base_new),
+    content="true",
+  )
+  inspect(overlay.overlaying(base_helper).invalid, content="Some(true)")
+  // The helper's own fields survive being the overlay target's base.
+  let wrapper = @core.ViewSemanticsInfo::new(label="Wrapper")
+  inspect(wrapper.overlaying(base_helper).label, content="Some(Wrapper)")
+  inspect(wrapper.overlaying(base_helper).value, content="Some(q)")
+  inspect(
+    wrapper.overlaying(base_helper).role == Some(TextField),
+    content="true",
+  )
+  // composition is never inherited from the base.
+  inspect(
+    wrapper.overlaying(base_helper).composition == Transparent,
+    content="true",
+  )
+}

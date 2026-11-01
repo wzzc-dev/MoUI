@@ -923,7 +923,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
         context,
         self.element_tree.root,
         self.layout_tree.root,
-        ViewSemanticsInfo::new(composition=Boundary),
+        ViewSemanticsInfo::container(composition=Boundary),
         roots,
         self.environment,
         ViewStyle::empty(),

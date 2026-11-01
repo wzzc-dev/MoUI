@@ -2419,12 +2419,17 @@ pub(all) struct ViewSemanticsInfo {
   live : SemanticsLive?
   live_atomic : Bool?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewSemanticsInfo::container(composition~ : SemanticsComposition, role? : SemanticsRole, label? : String, value? : String) -> Self
 pub fn ViewSemanticsInfo::equal(Self, Self) -> Bool
+pub fn ViewSemanticsInfo::hidden() -> Self
+pub fn ViewSemanticsInfo::leaf(role~ : SemanticsRole, label? : String, value? : String, selected? : Bool, checked? : SemanticsCheckedState, numeric? : SemanticsNumericValue) -> Self
 pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int32, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : SemanticsCheckedState, expanded? : Bool, invalid? : Bool, required? : Bool, read_only? : Bool, busy? : Bool, multiline? : Bool, password? : Bool, modal? : Bool, numeric? : SemanticsNumericValue, text? : SemanticsTextValue, collection? : SemanticsCollectionInfo, relations? : SemanticsRelationsDeclaration, live? : SemanticsLive, live_atomic? : Bool) -> Self
 pub fn ViewSemanticsInfo::not_equal(Self, Self) -> Bool
 pub fn ViewSemanticsInfo::overlaying(Self, Self) -> Self
+pub fn ViewSemanticsInfo::text_field(label? : String, value? : String, multiline? : Bool, editable? : Bool) -> Self
 pub fn ViewSemanticsInfo::to_json(Self) -> Json
 pub fn ViewSemanticsInfo::to_repr(Self) -> @debug.Repr
+pub fn ViewSemanticsInfo::transparent() -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool

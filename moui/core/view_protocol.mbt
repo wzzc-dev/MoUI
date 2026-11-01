@@ -489,6 +489,96 @@ pub fn ViewSemanticsInfo::new(
 }
 
 ///|
+/// Grouped construction helpers for `ViewSemanticsInfo`.
+///
+/// They are pure additions over `new` and the flat 26-field struct: each one
+/// encodes the composition decision plus the field shape observed at the
+/// repository's real construction sites, and every field the helper does not
+/// name stays `None` (via the all-default `new()`). The struct, `new`, and
+/// per-field metadata modifiers are unchanged; rarer fields and overlays keep
+/// composing through `new` + `overlaying`.
+
+///|
+/// A node excluded from the semantics tree entirely: decorative images,
+/// presentation barriers, overlay markers. No other field is set.
+pub fn ViewSemanticsInfo::hidden() -> ViewSemanticsInfo {
+  { ..ViewSemanticsInfo::new(), composition: Hidden, }
+}
+
+///|
+/// A node that contributes no semantics of its own (pure layout containers):
+/// its subtree passes through unchanged. Identical to the all-default
+/// `new()` but names the composition intent at the call site.
+pub fn ViewSemanticsInfo::transparent() -> ViewSemanticsInfo {
+  { ..ViewSemanticsInfo::new(), composition: Transparent, }
+}
+
+///|
+/// A leaf control that reports its own identity and optional state:
+/// `composition=Boundary` plus the field set observed across the control
+/// catalog (role, label, value, and at most one state field: `selected`,
+/// `checked`, or `numeric`). Interactive controls pass their state field;
+/// text/pictorial leaves omit it. Fields outside this shape (`disabled`,
+/// `expanded`, `level`, `url`, live rules, ...) still go through `new` or
+/// metadata modifiers.
+pub fn ViewSemanticsInfo::leaf(
+  role~ : SemanticsRole,
+  label? : String,
+  value? : String,
+  selected? : Bool,
+  checked? : SemanticsCheckedState,
+  numeric? : SemanticsNumericValue,
+) -> ViewSemanticsInfo {
+  {
+    ..ViewSemanticsInfo::new(),
+    composition: Boundary,
+    role: Some(role),
+    label,
+    value,
+    selected,
+    checked,
+    numeric,
+  }
+}
+
+///|
+/// A structural node whose composition is the decision being made: a boundary
+/// grouping (ScrollView, Dialog, Separator), a merge-descendants grouping, or
+/// a Transparent/Boundary choice computed at construction time (canvas-style
+/// nodes that become semantic only when labeled). Role/label/value stay
+/// optional.
+pub fn ViewSemanticsInfo::container(
+  composition~ : SemanticsComposition,
+  role? : SemanticsRole,
+  label? : String,
+  value? : String,
+) -> ViewSemanticsInfo {
+  { ..ViewSemanticsInfo::new(), composition, role, label, value, }
+}
+
+///|
+/// A text input leaf: `composition=Boundary`, `role=TextField`, and the
+/// editable-text value shape shared by single-line inputs and text areas.
+/// Read-only and password inputs keep composing `read_only`/`password`
+/// through metadata modifiers instead of widening this constructor.
+pub fn ViewSemanticsInfo::text_field(
+  label? : String,
+  value? : String,
+  multiline~ : Bool = false,
+  editable~ : Bool = true,
+) -> ViewSemanticsInfo {
+  {
+    ..ViewSemanticsInfo::new(),
+    composition: Boundary,
+    role: Some(TextField),
+    label,
+    value,
+    multiline: Some(multiline),
+    text: Some(SemanticsTextValue::new(editable~)),
+  }
+}
+
+///|
 pub struct View[Msg] {
   priv adapter : ViewAdapter[Msg]
 }
