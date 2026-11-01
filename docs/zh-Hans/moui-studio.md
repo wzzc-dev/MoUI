@@ -141,4 +141,4 @@ moon test moui_studio/app --target wasm-gc
 ```
 
 完整验证循环见 `moui_studio/README.md`，验收矩阵见
-`docs/plans/active/moui-studio.md`。
+`docs/plans/done/moui-studio.md`。

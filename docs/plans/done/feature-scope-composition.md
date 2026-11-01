@@ -1,6 +1,6 @@
 # Plan: Feature 组合子（TEA 单元 + scope 挂载）+ views/form 字段键控 API + settings/workbench 试点
 
-- **Status**: active
+- **Status**: done
 - **Goal**: 用「TEA 单元局部化」消解单状态循环的表达成本——在 `moui/core` 新增 `Feature[Model, Msg]`（与 `Program` 同构的五元组，可独立演化、独立测试）和 `Feature::scope`（镜头挂载 + 四路抬升的唯一入口），`Program` 保持 runtime 根不变并新增 `Program::from_feature` 桥接；在 `moui/views/form` 新增 `FieldAction` 字段键控 API；用 `examples/settings/app`（必选）和 `examples/mo_workbench/app` 的现成委托点（天然试验场）做行为等价试点；更新 tea-program-model / cookbook / architecture 文档。
 - **Non-goals**: `Feature::combine`（update 路由语义待试点后定）；单向/双向 `Feature::map`（见「类型修正」，留给 prism 版本）；`index` 动态镜头；分层 `ResourceSlot`、`Request[T]` 泛化、代码生成器；invariant 条文改动；RFC/ADR（治理决定：只写计划；P13 澄清进 doc comment + PR 描述）。
 

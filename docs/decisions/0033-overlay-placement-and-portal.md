@@ -3,7 +3,7 @@
 - **Date**: 2026-09-03
 - **Status**: Accepted
 - **Deciders**: Agent-assisted
-- **Related**: [ADR 0030](0030-overlay-presentation-host.md), [plan overlay-placement-portal-unification](../plans/active/overlay-placement-portal-unification.md)
+- **Related**: [ADR 0030](0030-overlay-presentation-host.md), [plan overlay-placement-portal-unification](../plans/done/overlay-placement-portal-unification.md)
 
 ## Context
 
@@ -108,7 +108,7 @@ vocabulary-neutral (ADR 0017) while geometry stays in `moui/views`.
 
 ## References
 
-- Plan: `docs/plans/active/overlay-placement-portal-unification.md`
+- Plan: `docs/plans/done/overlay-placement-portal-unification.md`
 - ADR 0030: `docs/decisions/0030-overlay-presentation-host.md`
 - Runtime evidence: `moui/runtime/runtime_render_pipeline.mbt`,
   `moui/runtime/layout.mbt`, `moui/views/presentation.mbt`

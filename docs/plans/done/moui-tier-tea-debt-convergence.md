@@ -1,6 +1,6 @@
 # Plan: MoUI tier, TEA, entrypoint, and documentation debt convergence
 
-- **Status**: active
+- **Status**: done
 - **RFC**: [0002](../../rfcs/0002-tiered-platform-tea-services.md)
 - **Goal**: Establish one platform-tier source of truth, restore strict TEA app
   boundaries, reduce composition-root count and size, and close stale guidance

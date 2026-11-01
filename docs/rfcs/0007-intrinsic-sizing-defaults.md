@@ -2,7 +2,7 @@
 
 Status: Draft (2026-11-01)
 
-Author: plan `docs/plans/active/hot-path-invalidation-boilerplate-convergence.md` (J1)
+Author: plan `docs/plans/done/hot-path-invalidation-boilerplate-convergence.md` (J1)
 
 ## Context
 

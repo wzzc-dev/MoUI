@@ -78,7 +78,7 @@ committed target 混成了一个**。ADR 0039 的 Consequences 已经写了「ap
 
 ## Consequences
 
-- 计划 `docs/plans/active/moui-studio.md` 式的「完成」宣称以 A 档为准。
+- 计划 `docs/plans/done/moui-studio.md` 式的「完成」宣称以 A 档为准。
 - 棘轮上限与分档目标分离，`studio_shell_budgets.mbt` 的注释要指向本 ADR。
 - 进入 B 档前必须先做壳边界重界定评审（新工作项，不在 S4–S7 内）。
 - 不影响 `services/export` 与 domain 包（0039 已排除）。

@@ -69,6 +69,16 @@ The guard tracks three budgets:
   mainline examples, Mo Workbench, PDF Workbench, and Website;
 - root facade `pub type` forwarding count in `moui/moui.mbt`.
 
+**Catalog review cadence.** The budget catalogs are ratchet-only by default:
+they move up with an inline reason in the same change, and never drift silently.
+That one-directional motion needs a counterweight — at every release review
+(and at least once per quarter), re-read `tools/moui/validate_maintenance_baseline`
+catalogs plus `checks/api-surface-report.json` and flag entries whose target
+path no longer exists, whose budget has not moved in three consecutive releases
+(a sign the hotspot was refactored away and the entry is dead weight), or whose
+inline reason references a plan already in `docs/plans/done/`. Remove or
+re-baseline flagged entries in a dedicated `chore:` change, not ad hoc.
+
 The API surface guard is separate from this maintenance baseline. It tracks
 generated public API size, forbidden boundary tokens, and semantic API
 classification budgets such as `app_constructor`, `advanced_core_protocol`,

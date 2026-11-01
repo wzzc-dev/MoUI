@@ -57,7 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| [hot-path-invalidation-boilerplate-convergence](active/hot-path-invalidation-boilerplate-convergence.md) | Land the 2026-10-31 architecture analysis as ten workstreams: ambient theme landing (ADR 0036), cache-invalidation convergence (generation semantics replacing structural Eq and whole-cache clears), per-message sync throttling, render-pipeline subtraction (dead mailbox, redundant DTO copies), reconcile/event-path shortcuts, Skia hot-key de-stringification, declaration/derive codegen (ADR 0034 Option B), platform-backend dedup, and an RFC-gated intrinsic-sizing default |
+| [cohesion-governance-convergence](active/cohesion-governance-convergence.md) | Second-round maintainability: oversized core file domain splits (gesture/text_editing), views helper dedup, shared pressable-transition slot, non-breaking grouped semantics constructors, plan archival + session knowledge deposit, budget-catalog review cadence, and pre-written structure triggers (core split threshold, backend/common runtime-import allowlist, MoonBit-blocker reopen checklist) |
 | [architecture-review-followups](active/architecture-review-followups.md) | Land the 2026-09 architecture review: renderer open-extension gates, runtime dirty-path optimization, overlay closure with macOS modal presenter, and backend close-order evidence |
 | [semantic-id-ergonomics-and-path-targeting](done/semantic-id-ergonomics-and-path-targeting.md) | Declare semantic ids inline and let agents walk the committed semantics hierarchy with a filtered `ByPath` target |
 | [native-accessibility](active/native-accessibility.md) | Complete native accessibility adapters and matching-host evidence for the Showcase Probe |
@@ -65,14 +65,11 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
 | [linux-x11-backend](active/linux-x11-backend.md) | Add an X11 (Xlib) windowing backend to the Linux package with runtime selection and UTM VM validation |
-| [ai-world-engine](active/ai-world-engine.md) | Grow `examples/ai_world` into a web-first AI world engine product: Markdown folder database, in-UI character setup, real provider conversation, AI-generated worlds |
 | [ai-world-product](active/ai-world-product.md) | 把 `examples/ai_world` 做成可用的本地优先 AI 叙事工具：跨刷新授权/增量写入/导出、对话编辑（swipe/编辑/重生成）、世界书命中可见、人物立绘、场景多角色同场、显式时间推进，最后毕业为 `wzzc-dev/ai_world` submodule |
 | [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
-| [runtime-state-render-ownership-convergence](active/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
-| [moui-studio](active/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
 | [moui-studio-shell-completion](active/moui-studio-shell-completion.md) | MoUI Studio 壳收敛（ADR 0039）：四项预算棘轮冻结 app 旧壳（37,279 行/53 文件/161 Model 字段/291 Msg 变体，只降不升），S1 chrome 出壳 + S2–S7 六域按 ai/terminal 先例提取为插件包，抵达完成线（≤18,000 行/≤30 文件/≤55 字段/≤90 变体） |
 | [moui-studio-right-panel-vscode-form](active/moui-studio-right-panel-vscode-form.md) | MoUI Studio 右栏改成 VS Code 侧面板（side panel）交互形态：面板头 + ghost 动作簇、扁平页签行、单一滚动区（快速操作/运行时监视改为分区）、底部常驻 AI composer；AI 输入面宿主唯一化（取消底栏 AI 页签与停靠切换钮）**（部分被 sidebar 方案推翻：输入面卡片化并移出检查器页）** |
 | [moui-studio-right-panel-vscode-sidebar](active/moui-studio-right-panel-vscode-sidebar.md) | MoUI Studio 右栏改成 VS Code **分页侧栏**：六页签合并为「检查器」页、AI 另起一页（页块切换器 + 按页分派的头部动作簇）、输入面卡片化（圆角 + 描边 + 抬起面，芯片行入卡内，卡下状态行）、对象身份下移到正文首段的对象条；含真机复查修掉的四个可见缺陷（转录宽与裁剪区不同源、diff 长行不截断、卡标题不吃徽标宽、恢复会话残留 in-flight 卡）与配色/默认宽调整 |
@@ -82,16 +79,12 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [window-cross-platform-parity](active/window-cross-platform-parity.md) | Align window (Windows/Linux/Web) with macOS reference in MoUI-ready semantics |
 | [view-node-trait-refactor](active/view-node-trait-refactor.md) | Complete the public ViewNode trait migration |
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
-| [moui-tier-tea-debt-convergence](active/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
 | [window-scene-family-relocation](done/window-scene-family-relocation.md) | Move the window scene resolution family from runtime to backend/common/lifecycle, the P10 neutral-lifecycle owner |
 | [moui-cli-desktop-commands](done/moui-cli-desktop-commands.md) | Extend moui build/run/package to all platforms with in-process MSVC env configuration and script-absorbed packaging |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
 | [richtext-markdown-domain-relocation](active/richtext-markdown-domain-relocation.md) | Move the Markdown editing domain model out of `moui_richtext` into `moui_markdown` to converge its public surface toward ~30 pub lines |
-| [moui-shared-markdown-components](active/moui-shared-markdown-components.md) | 提取 MoMark 的 Markdown chrome（查找/替换、大纲折叠、格式面板、文档信息、HTML 导出）为公共 addon `moui_markdown`，供 MoUI Studio 复用 |
 | [line-level-viewport-window](active/line-level-viewport-window.md) | Window the visible range at line granularity inside one oversized markdown block so open and scroll cost track the viewport instead of the document |
 | [overlay-system-redesign](done/overlay-system-redesign.md) | Ordered `OverlayHost + PresentationSpec` with runtime placement/input/focus and neutral host-modal transport |
-| [overlay-placement-portal-unification](active/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
-| [feature-scope-composition](active/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
 | [moui-studio-plugin-kernel](done/moui-studio-plugin-kernel.md) | MoUI Studio 插件化改造：静态插件内核（Plugin 契约/服务注册表/事件总线）+ 三模式工作台 + AI 满配（多会话/Markdown/流式/真终端）+ 编辑器完善 + 教学版 profile |
 | [no-third-party-gpu-route](active/no-third-party-gpu-route.md) | Apple-first Metal renderer that links no external graphics library (ADR 0044, supersedes 0043's conclusion). **Route parked at L0 (2026-10-27): the kill gate fired** — the shipped Skia-Metal route already holds `presentMs` at 0.10–0.76 ms p50 so there is no performance prize, and the license motive is struck; only size-versus-Skia + autonomy survive. L0.1 (provider-parametric harness) and L0.2 (neutral text-model extraction out of the wgpu-importing package) stay live as framework work |
 
@@ -107,6 +100,14 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [runtime-state-render-ownership-convergence](done/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
+| [overlay-placement-portal-unification](done/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
+| [moui-tier-tea-debt-convergence](done/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |
+| [moui-studio](done/moui-studio.md) | MoUI Studio：中英双语的积木/代码同源可视化编程环境，单一程序 IR 支撑设计/积木/双语代码三视图与结构化 AI 提案，取代 Mo易/MoBlocks 双 Studio |
+| [moui-shared-markdown-components](done/moui-shared-markdown-components.md) | 提取 MoMark 的 Markdown chrome（查找/替换、大纲折叠、格式面板、文档信息、HTML 导出）为公共 addon `moui_markdown`，供 MoUI Studio 复用 |
+| [hot-path-invalidation-boilerplate-convergence](done/hot-path-invalidation-boilerplate-convergence.md) | Land the 2026-10-31 architecture analysis as ten workstreams: ambient theme landing (ADR 0036), cache-invalidation convergence (generation semantics replacing structural Eq and whole-cache clears), per-message sync throttling, render-pipeline subtraction (dead mailbox, redundant DTO copies), reconcile/event-path shortcuts, Skia hot-key de-stringification, declaration/derive codegen (ADR 0034 Option B), platform-backend dedup, and an RFC-gated intrinsic-sizing default |
+| [feature-scope-composition](done/feature-scope-composition.md) | Add `Feature[Model, Msg]` + `Feature::scope` lens composition to core, `FieldAction` keyed forms, and settings/workbench pilots |
+| [ai-world-engine](done/ai-world-engine.md) | Grow `examples/ai_world` into a web-first AI world engine product: Markdown folder database, in-UI character setup, real provider conversation, AI-generated worlds |
 | [tui-hardening](done/tui-hardening.md) | TUI 路收尾与硬化：解红 pr 门并按模块提交 S0–S7 → 投影契约化（穷举 attrs_for / AGENTS.md 规则表 / 黄金帧）→ PTY 门确定性化并入 nightly → theme→ANSI palette（构造参数路线，不动 core）→ 示例收敛与 TerminalState 去全局化；H5 后 tui_layers 为唯一双栏门 |
 | [tui-output-path](done/tui-output-path.md) | 让现有 `@moui.View[Msg]` 应用不经像素渲染就能在真实终端里操作：S0 cell 投影探针 → S1 可发布 cell buffer → S2 纯 MoonBit `moui_tui_renderer`（决策 B：DrawFrame 携带语义载荷）→ S3 terminal backend 三通道输入 → S4 双栏分屏与动态树 → S5 交互验收 → S6 一致性接入；两个 owner 悬置项 2026-10-16 决议，S7 八项合一 demo 与 PTY 门后由 tui-hardening 接续，H3 确定性化进 nightly 后关单 |
 | [view-framework-remediation](done/view-framework-remediation.md) | 消除声明键覆盖、flex 紧约束重测、shaping 缓存、map 放大与 Effect 键防撞等实现不合理点 |

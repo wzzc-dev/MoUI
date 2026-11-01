@@ -1,10 +1,12 @@
 {
   "schemaVersion": 1,
-  "description": "Backend/common owner packages, allowed dependency direction, and renderer-neutral root surface invariants.",
+  "description": "Backend/common owner packages, allowed dependency direction, and renderer-neutral root surface invariants. The `wzzc-dev/moui/runtime` imports inside backend/common are allowlisted per package: requiredImports pin the current importers (common root, lifecycle, input, embedded), forbiddenImports fail any new one. Adding an entry is a structure trigger requiring the HostRuntimeDriver seam review — see docs/golden-principles.md (structure triggers).",
   "packageRules": [
     {
       "path": "moui/backend",
-      "requiredImports": ["wzzc-dev/moui/core"],
+      "requiredImports": [
+        "wzzc-dev/moui/core"
+      ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/runtime",
@@ -13,7 +15,9 @@
     },
     {
       "path": "moui/render",
-      "requiredImports": ["wzzc-dev/moui/core"],
+      "requiredImports": [
+        "wzzc-dev/moui/core"
+      ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend",
         "wzzc-dev/moui/render/common",
@@ -59,7 +63,10 @@
     },
     {
       "path": "moui/backend/common/frame",
-      "requiredSources": ["window_frame_state.mbt", "window_frame_states.mbt"],
+      "requiredSources": [
+        "window_frame_state.mbt",
+        "window_frame_states.mbt"
+      ],
       "requiredImports": [
         "wzzc-dev/moui/backend",
         "wzzc-dev/moui/render"
@@ -69,12 +76,16 @@
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
-        "wzzc-dev/moui/backend/common/services"
+        "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/runtime"
       ]
     },
     {
       "path": "moui/backend/common/image",
-      "requiredSources": ["window_image_tasks.mbt", "window_image_task_states.mbt"],
+      "requiredSources": [
+        "window_image_tasks.mbt",
+        "window_image_task_states.mbt"
+      ],
       "requiredImports": [
         "wzzc-dev/moui/backend",
         "wzzc-dev/moui/render"
@@ -84,7 +95,8 @@
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/input",
-        "wzzc-dev/moui/backend/common/services"
+        "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/runtime"
       ]
     },
     {
@@ -124,18 +136,22 @@
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/image",
-        "wzzc-dev/moui/backend/common/input"
+        "wzzc-dev/moui/backend/common/input",
+        "wzzc-dev/moui/runtime"
       ]
     },
     {
       "path": "moui/backend/common",
-      "requiredSources": ["window_host_workflows.mbt"],
+      "requiredSources": [
+        "window_host_workflows.mbt"
+      ],
       "requiredImports": [
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
-        "wzzc-dev/moui/backend/common/services"
+        "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/runtime"
       ],
       "forbiddenSourceTokens": [
         "struct WindowCoordinator",
@@ -151,10 +167,15 @@
         "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services/embedded",
-        "wzzc-dev/moui/backend/common/image/native"
+        "wzzc-dev/moui/backend/common/image/native",
+        "wzzc-dev/moui/runtime"
       ],
-      "forbiddenImports": ["wzzc-dev/moui/backend/common"],
-      "requiredSourceTokens": ["@window_input.transform_cross_platform_event"]
+      "forbiddenImports": [
+        "wzzc-dev/moui/backend/common"
+      ],
+      "requiredSourceTokens": [
+        "@window_input.transform_cross_platform_event"
+      ]
     },
     {
       "path": "moui/backend/macos",
@@ -164,7 +185,9 @@
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
-      "requiredSourceTokens": ["@window_input.transform_cross_platform_event"]
+      "requiredSourceTokens": [
+        "@window_input.transform_cross_platform_event"
+      ]
     },
     {
       "path": "moui/backend/windows",
@@ -174,7 +197,9 @@
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
-      "requiredSourceTokens": ["@window_input.transform_cross_platform_event"]
+      "requiredSourceTokens": [
+        "@window_input.transform_cross_platform_event"
+      ]
     },
     {
       "path": "moui/backend/linux",
@@ -184,7 +209,9 @@
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
-      "requiredSourceTokens": ["@window_input.transform_cross_platform_event"]
+      "requiredSourceTokens": [
+        "@window_input.transform_cross_platform_event"
+      ]
     },
     {
       "path": "moui/backend/web",
@@ -196,11 +223,15 @@
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
       ],
-      "requiredSourceTokens": ["@window_input.transform_cross_platform_event"]
+      "requiredSourceTokens": [
+        "@window_input.transform_cross_platform_event"
+      ]
     },
     {
       "path": "moui/backend/android",
-      "requiredImports": ["wzzc-dev/moui/backend/common/embedded"],
+      "requiredImports": [
+        "wzzc-dev/moui/backend/common/embedded"
+      ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
@@ -211,7 +242,9 @@
     },
     {
       "path": "moui/backend/ios",
-      "requiredImports": ["wzzc-dev/moui/backend/common/embedded"],
+      "requiredImports": [
+        "wzzc-dev/moui/backend/common/embedded"
+      ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
@@ -222,13 +255,45 @@
     },
     {
       "path": "moui/backend/harmonyos",
-      "requiredImports": ["wzzc-dev/moui/backend/common/embedded"],
+      "requiredImports": [
+        "wzzc-dev/moui/backend/common/embedded"
+      ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services"
+      ]
+    },
+    {
+      "path": "moui/backend/common/image/native",
+      "forbiddenImports": [
+        "wzzc-dev/moui/runtime"
+      ]
+    },
+    {
+      "path": "moui/backend/common/host_modal",
+      "forbiddenImports": [
+        "wzzc-dev/moui/runtime"
+      ]
+    },
+    {
+      "path": "moui/backend/common/services/desktop",
+      "forbiddenImports": [
+        "wzzc-dev/moui/runtime"
+      ]
+    },
+    {
+      "path": "moui/backend/common/services/embedded",
+      "forbiddenImports": [
+        "wzzc-dev/moui/runtime"
+      ]
+    },
+    {
+      "path": "moui/backend/common/services/native",
+      "forbiddenImports": [
+        "wzzc-dev/moui/runtime"
       ]
     }
   ],
@@ -272,10 +337,25 @@
     "Direct3D"
   ],
   "rendererModules": [
-    {"name": "wzzc-dev/moui_skia_renderer", "path": "moui_skia_renderer"},
-    {"name": "wzzc-dev/moui_web_renderer", "path": "moui_web_renderer"},
-    {"name": "wzzc-dev/moui_wgpu_renderer", "path": "moui_wgpu_renderer"},
-    {"name": "wzzc-dev/moui_metal_renderer", "path": "moui_metal_renderer"},
-    {"name": "wzzc-dev/moui_sun_renderer", "path": "moui_sun_renderer"}
+    {
+      "name": "wzzc-dev/moui_skia_renderer",
+      "path": "moui_skia_renderer"
+    },
+    {
+      "name": "wzzc-dev/moui_web_renderer",
+      "path": "moui_web_renderer"
+    },
+    {
+      "name": "wzzc-dev/moui_wgpu_renderer",
+      "path": "moui_wgpu_renderer"
+    },
+    {
+      "name": "wzzc-dev/moui_metal_renderer",
+      "path": "moui_metal_renderer"
+    },
+    {
+      "name": "wzzc-dev/moui_sun_renderer",
+      "path": "moui_sun_renderer"
+    }
   ]
 }

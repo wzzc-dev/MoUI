@@ -1,6 +1,6 @@
 # Plan: Overlay placement/portal/LayerStack 统一
 
-- **Status**: active
+- **Status**: done
 - **Goal**: 把锚定移出布局不动点循环（post-layout placement pass），新增 portal 原语让控件弹层触达根层，将 dropdown/combobox/autocomplete/tooltip/context-menu/picker/datepicker 弹出统一迁移到 overlay 宿主路径，`overlay_commands` 降级为纯装饰，并补齐 LayerStack、layout+clip 命中、进出场动画、macOS 原生模态参考实现与 toast 宿主。
 - **Non-goals**: 不做新平台 readiness 声明；不改 TEA 归属模型；不动 `command_palette`/`menu_bar` 的行布局 stack（非弹层）；不做机械化的 overlay_commands 内容 validator（无法可靠区分装饰与交互）。
 

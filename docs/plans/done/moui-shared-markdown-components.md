@@ -1,6 +1,6 @@
 # Plan: 提取共享 Markdown 组件（`moui_markdown`）——MoMark chrome → 公共组件
 
-- **Status**: active · 起始 2026-10-11 · 来源会话：用户直接需求
+- **Status**: done · 起始 2026-10-11 · 来源会话：用户直接需求
 - **Goal**: 把 MoMark（`examples/momark/app`）里与 Markdown 相关、且与具体 app
   状态无关的能力，提取为新的公共 addon 模块 `moui_markdown`：查找/替换引擎、
   大纲辅助与折叠、格式面板目录与 action→command 映射、文档信息统计、HTML

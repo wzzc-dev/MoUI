@@ -348,7 +348,7 @@ moon test moui_studio/app --target wasm-gc
 ```
 
 See `moui_studio/README.md` for the full verification loop and
-`docs/plans/active/moui-studio.md` for the acceptance matrix.
+`docs/plans/done/moui-studio.md` for the acceptance matrix.
 
 
 ## 插件化架构（M0–M7，2026-10-06）

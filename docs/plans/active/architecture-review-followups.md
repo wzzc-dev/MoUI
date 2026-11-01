@@ -49,7 +49,7 @@ Verified against HEAD `0e95d491d` (2026-09-05):
 | C2 | Reduced-motion at both fade sites | runtime/runtime_render_pipeline.mbt, runtime/paint_engine.mbt |
 | C3 | Duration/reduced-motion/focus/semantics behavior tests | moui/runtime/*_test.mbt |
 | C4 | macOS NSWindow modal presenter + HostModalSession wiring + matching-host smoke suite | backend/macos, backend/common/host_modal, runtime, smoke/gates.json, scripts/ |
-| C5 | DSH Desktop Cancel-click fix (sample since extracted); overlay plan acceptance checkboxes | docs/plans/active/overlay-placement-portal-unification.md |
+| C5 | DSH Desktop Cancel-click fix (sample since extracted); overlay plan acceptance checkboxes | docs/plans/done/overlay-placement-portal-unification.md |
 | D1 | Close-order sequence test (trace style) | moui/backend/common/*_test.mbt |
 | D2 | Ownership catalog gaps (if any) | checks/backend-common-ownership.json |
 

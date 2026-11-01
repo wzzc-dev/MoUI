@@ -14,7 +14,7 @@
 
 - **Status**: active（部分被 sidebar 方案推翻，见上方说明）
 - **Date**: 2026-10-13
-- **Related**: `docs/plans/active/moui-studio.md`（右栏/底栏/AI 落点的历次决策）、
+- **Related**: `docs/plans/done/moui-studio.md`（右栏/底栏/AI 落点的历次决策）、
   `docs/plans/done/moui-studio-ai-look.md`（上一轮 AI 面板形态）、
   `memories/repo/moui-studio.md`（右栏头两个 ✕ 的语义分工）、
   `docs/plans/active/moui-studio-shell-completion.md`（app 四项预算棘轮）

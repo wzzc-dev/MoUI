@@ -1,6 +1,6 @@
 # Plan: AI World Engine
 
-- **Status**: active
+- **Status**: done
 - **Goal**: Grow `examples/ai_world` into a complete, web-first AI world
   engine product centered on text dialogue: a local **folder database** (one
   subfolder per world, multiple Markdown files inside), create-new-world, in-UI

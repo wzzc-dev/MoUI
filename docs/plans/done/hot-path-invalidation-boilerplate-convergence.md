@@ -1,6 +1,6 @@
 # Plan: Hot-path, invalidation-semantics, and boilerplate convergence (2026-10 architecture analysis)
 
-- **Status**: active
+- **Status**: done
 - **Goal**: Land the actionable findings of the 2026-10-31 architecture analysis as ten
   independent workstreams: (A) measurement baseline, (B) ambient theme landing per ADR 0036,
   (C) cache-invalidation convergence (generation semantics replacing structural Eq and

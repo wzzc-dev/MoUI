@@ -3,7 +3,7 @@
 - **Date**: 2026-09-29
 - **Status**: Accepted
 - **Deciders**: Agent-assisted
-- **Related**: [ADR 0017](0017-theme-and-host-contract.md), [ADR 0034](0034-viewnode-declaration-coverage-gate.md), [plan moui-studio](../plans/active/moui-studio.md)
+- **Related**: [ADR 0017](0017-theme-and-host-contract.md), [ADR 0034](0034-viewnode-declaration-coverage-gate.md), [plan moui-studio](../plans/done/moui-studio.md)
 
 ## Context
 

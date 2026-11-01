@@ -1,6 +1,6 @@
 # Plan: Runtime neutrality, state ownership, and render-resource convergence
 
-- **Status**: active
+- **Status**: done
 - **RFC**: [0006](../../rfcs/0006-runtime-state-render-ownership-convergence.md)
 - **ADR**: [0028](../../decisions/0028-runtime-state-render-ownership-convergence.md)
 - **Baseline**: [backend-renderer-lifecycle-convergence](backend-renderer-lifecycle-convergence.md)

@@ -35,6 +35,33 @@ script. When it is still taste, keep it here and clear AI residue in small PRs.
 16. **No compatibility shims** for removed APIs unless explicitly requested.
 17. **Garbage-collect weekly patterns** — duplicated helpers, stale docs, forbidden imports: small automated or agent-driven PRs, not quarterly rewrites.
 
+## Structure triggers
+
+Pre-written review conditions: when a trigger fires, the named review happens
+before the growth lands — do not pre-pay the structure, do not sleep through
+the signal (plan `cohesion-governance-convergence`, D1/D2).
+
+18. **`moui/core` package split** — trigger: `pkg.generated.mbti` exceeds ~3.5k
+    lines or an eighth domain lands. Action: split by domain into `core/<domain>`
+    subpackages with the root facade re-exporting (`pub using`); consumers keep
+    `wzzc-dev/moui/core`. Until then file-level organization is the contract.
+19. **`HostRuntimeDriver` seam review** — trigger: a new `backend/common` package
+    needs `wzzc-dev/moui/runtime`, or desktop-core + embedded runtime-type usage
+    doubles. Mechanization: `checks/backend-common-ownership.json` pins the
+    current importer set (required) and fails any new importer (forbidden).
+    Action: ADR review of the seam (candidates: driver interface inversion,
+    host-runtime module split) before adding the import.
+20. **MoonBit toolchain upgrade checklist** — on every moon version bump, re-read
+    the reopen conditions in `docs/plans/debt/`: the three ViewNode-trait limits
+    (`viewnode-trait-decomposition.md` — bare-`T` impl target, single parent
+    trait, trait-object narrowing) and the manual `Eq+Hash` key structs
+    introduced where derives were missing (Skia shaping/layer caches). Upgrade
+    any workaround the new compiler retires; note it in the debt note.
+21. **New-renderer touchpoints** — adding a renderer module is catalog-driven:
+    `checks/release-modules.json` + capability report + composition root;
+    validators derive their closed sets from the catalog (no validator edits).
+    Checklist owner: `docs/renderer-capability-report.md`.
+
 ## Related
 
 - Constraints table: `docs/invariants.md`
