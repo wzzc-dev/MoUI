@@ -28,9 +28,10 @@ pub fn ThreeDSkinMeshKey::new(mesh~ : Int32, primitive~ : Int32) -> ThreeDSkinMe
 }
 
 ///|
-/// Bind-pose geometry for one primitive: 20 floats per expanded triangle
-/// vertex (position xyz + skinned flag, normal xyz, joint indices x4, joint
-/// weights x4). Joint indices already carry the skin's palette base offset.
+/// Bind-pose geometry for one primitive: 19 floats per expanded triangle
+/// vertex (position xyz + skinned flag, normal xyz, base color rgba, joint
+/// indices x4, joint weights x4). Joint indices carry the skin's palette
+/// base offset.
 pub(all) struct ThreeDSkinMesh {
   key : ThreeDSkinMeshKey
   vertices : Array[Double]
@@ -54,6 +55,8 @@ pub(all) struct ThreeDSkinItem {
   key : ThreeDSkinMeshKey
   model : @moui_3d.Mat4
   color : @moui_3d.Vec4
+  metallic : Double
+  roughness : Double
   vertex_count : Int32
 } derive(Debug)
 
@@ -76,6 +79,16 @@ pub fn ThreeDSkinItem::color(self : ThreeDSkinItem) -> @moui_3d.Vec4 {
 }
 
 ///|
+pub fn ThreeDSkinItem::metallic(self : ThreeDSkinItem) -> Double {
+  self.metallic
+}
+
+///|
+pub fn ThreeDSkinItem::roughness(self : ThreeDSkinItem) -> Double {
+  self.roughness
+}
+
+///|
 pub fn ThreeDSkinItem::vertex_count(self : ThreeDSkinItem) -> Int32 {
   self.vertex_count
 }
@@ -83,6 +96,7 @@ pub fn ThreeDSkinItem::vertex_count(self : ThreeDSkinItem) -> Int32 {
 ///|
 pub(all) struct ThreeDSkinPacket {
   view_projection : @moui_3d.Mat4
+  camera_position : @moui_3d.Vec3
   bones : Array[@moui_3d.Mat4]
   items : Array[ThreeDSkinItem]
   meshes : Array[ThreeDSkinMesh]
@@ -94,6 +108,11 @@ pub extend ThreeDSkinPacket with Debug::{to_repr}
 ///|
 pub fn ThreeDSkinPacket::view_projection(self : ThreeDSkinPacket) -> @moui_3d.Mat4 {
   self.view_projection
+}
+
+///|
+pub fn ThreeDSkinPacket::camera_position(self : ThreeDSkinPacket) -> @moui_3d.Vec3 {
+  self.camera_position
 }
 
 ///|
@@ -169,13 +188,13 @@ pub fn ThreeDSkinPacket::from_snapshot(
                 mesh=mesh_id.value(),
                 primitive=primitive_index,
               )
-              let color = match primitive.material() {
+              let material = match primitive.material() {
                 Some(id) =>
                   match scene.materials().get(id.value()) {
-                    Some(material) => material.base_color()
-                    None => @moui_3d.Material::pbr().base_color()
+                    Some(value) => value
+                    None => @moui_3d.Material::pbr()
                   }
-                None => @moui_3d.Material::pbr().base_color()
+                None => @moui_3d.Material::pbr()
               }
               let joint_base = match skin {
                 Some(index) if index >= 0 && index < skin_bases.length() =>
@@ -185,7 +204,9 @@ pub fn ThreeDSkinPacket::from_snapshot(
               items.push({
                 key,
                 model,
-                color,
+                color: @moui_3d.Vec4::new(x=1.0, y=1.0, z=1.0, w=1.0),
+                metallic: material.metallic(),
+                roughness: material.roughness(),
                 vertex_count: primitive.indices().length(),
               })
               if !uploaded_keys.contains(key) {
@@ -194,6 +215,7 @@ pub fn ThreeDSkinPacket::from_snapshot(
                     key,
                     vertices: expand_skin_vertices(
                       primitive,
+                      material.base_color(),
                       skinned=skin is Some(_),
                       joint_base,
                     ),
@@ -205,12 +227,13 @@ pub fn ThreeDSkinPacket::from_snapshot(
         }
     }
   }
-  { view_projection, bones, items, meshes, }
+  { view_projection, camera_position: camera.position(), bones, items, meshes, }
 }
 
 ///|
 fn expand_skin_vertices(
   primitive : @moui_3d.Primitive,
+  color : @moui_3d.Vec4,
   skinned~ : Bool,
   joint_base : Int32,
 ) -> Array[Double] {
@@ -231,6 +254,10 @@ fn expand_skin_vertices(
         out.push(normal.x())
         out.push(normal.y())
         out.push(normal.z())
+        out.push(color.x())
+        out.push(color.y())
+        out.push(color.z())
+        out.push(color.w())
         if skinned {
           out.push((j0 + joint_base).to_double())
           out.push((j1 + joint_base).to_double())

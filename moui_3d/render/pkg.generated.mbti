@@ -203,11 +203,15 @@ pub(all) struct ThreeDSkinItem {
   key : ThreeDSkinMeshKey
   model : @moui_3d.Mat4
   color : @moui_3d.Vec4
+  metallic : Double
+  roughness : Double
   vertex_count : Int32
 } derive(@debug.Debug)
 pub fn ThreeDSkinItem::color(Self) -> @moui_3d.Vec4
 pub fn ThreeDSkinItem::key(Self) -> ThreeDSkinMeshKey
+pub fn ThreeDSkinItem::metallic(Self) -> Double
 pub fn ThreeDSkinItem::model(Self) -> @moui_3d.Mat4
+pub fn ThreeDSkinItem::roughness(Self) -> Double
 pub fn ThreeDSkinItem::to_repr(Self) -> @debug.Repr
 pub fn ThreeDSkinItem::vertex_count(Self) -> Int32
 
@@ -232,12 +236,14 @@ pub fn ThreeDSkinMeshKey::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ThreeDSkinPacket {
   view_projection : @moui_3d.Mat4
+  camera_position : @moui_3d.Vec3
   bones : Array[@moui_3d.Mat4]
   items : Array[ThreeDSkinItem]
   meshes : Array[ThreeDSkinMesh]
 } derive(@debug.Debug)
 pub fn ThreeDSkinPacket::bone_count(Self) -> Int32
 pub fn ThreeDSkinPacket::bones(Self) -> Array[@moui_3d.Mat4]
+pub fn ThreeDSkinPacket::camera_position(Self) -> @moui_3d.Vec3
 pub fn ThreeDSkinPacket::from_snapshot(@moui_3d.ViewportSnapshot, size~ : ThreeDViewportSize, uploaded? : Array[ThreeDSkinMeshKey]) -> Self
 pub fn ThreeDSkinPacket::items(Self) -> Array[ThreeDSkinItem]
 pub fn ThreeDSkinPacket::meshes(Self) -> Array[ThreeDSkinMesh]

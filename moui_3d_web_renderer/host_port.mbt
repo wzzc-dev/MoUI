@@ -89,6 +89,10 @@ fn host_3d_skin_mesh_push(
   nx : Double,
   ny : Double,
   nz : Double,
+  cr : Double,
+  cg : Double,
+  cb : Double,
+  ca : Double,
   j0 : Double,
   j1 : Double,
   j2 : Double,
@@ -130,6 +134,10 @@ fn host_3d_skin_frame(
   ly : Double,
   lz : Double,
   lw : Double,
+  cx : Double,
+  cy : Double,
+  cz : Double,
+  cw : Double,
 ) -> Int32 = "webgpu" "three_d_skin_frame"
 
 ///|
@@ -179,6 +187,8 @@ fn host_3d_skin_item(
   g : Double,
   b : Double,
   a : Double,
+  metal : Double,
+  rough : Double,
 ) -> Int32 = "webgpu" "three_d_skin_item"
 
 ///|
@@ -211,6 +221,7 @@ fn render_skinned_frame(
     )
   }
   let vp = packet.view_projection().values()
+  let cam = packet.camera_position()
   let fail : (String, Map[@render.ThreeDSkinMeshKey, Int32]) -> (
     @render.ThreeDRenderResult,
     Map[@render.ThreeDSkinMeshKey, Int32],
@@ -237,6 +248,10 @@ fn render_skinned_frame(
     0.8,
     0.5,
     0.0,
+    cam.x(),
+    cam.y(),
+    cam.z(),
+    1.0,
   ) != 0 {
     return fail("WebGPU 3D skin frame begin failed", uploaded)
   }
@@ -272,10 +287,10 @@ fn render_skinned_frame(
     if handle == 0 {
       return fail("WebGPU 3D skin mesh begin failed", map)
     }
-    let vertex_count = vertices.length() / 15
+    let vertex_count = vertices.length() / 19
     let mut offset = 0
     while offset < vertex_count {
-      let base = offset * 15
+      let base = offset * 19
       let status = host_3d_skin_mesh_push(
         handle,
         vertices[base],
@@ -293,6 +308,10 @@ fn render_skinned_frame(
         vertices[base + 12],
         vertices[base + 13],
         vertices[base + 14],
+        vertices[base + 15],
+        vertices[base + 16],
+        vertices[base + 17],
+        vertices[base + 18],
       )
       if status != 0 {
         host_3d_skin_mesh_release(handle)
@@ -336,6 +355,8 @@ fn render_skinned_frame(
           color.y(),
           color.z(),
           color.w(),
+          item.metallic(),
+          item.roughness(),
         ) != 0 {
           return fail("WebGPU 3D skin item rejected", map)
         }

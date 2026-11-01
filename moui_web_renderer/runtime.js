@@ -2469,20 +2469,25 @@ export function createWebGpuImports(options = {}) {
         struct U {
           view_proj : mat4x4<f32>,
           model : mat4x4<f32>,
-          light : vec4<f32>,
+          light_dir : vec4<f32>,
+          cam_pos : vec4<f32>,
           color : vec4<f32>,
+          params : vec4<f32>,
         };
         @group(0) @binding(0) var<uniform> u : U;
         @group(0) @binding(1) var<storage, read> bones : array<mat4x4<f32>>;
         struct VSIn {
           @location(0) pos : vec4<f32>,
           @location(1) nrm : vec3<f32>,
-          @location(2) jnt : vec4<f32>,
-          @location(3) wgt : vec4<f32>,
+          @location(2) col : vec4<f32>,
+          @location(3) jnt : vec4<f32>,
+          @location(4) wgt : vec4<f32>,
         };
         struct VSOut {
           @builtin(position) clip : vec4<f32>,
-          @location(0) col : vec4<f32>,
+          @location(0) world : vec3<f32>,
+          @location(1) nrm : vec3<f32>,
+          @location(2) col : vec4<f32>,
         };
         @vertex
         fn vs_main(i : VSIn) -> VSOut {
@@ -2498,15 +2503,44 @@ export function createWebGpuImports(options = {}) {
             p = m * p;
             n = normalize((m * vec4<f32>(i.nrm, 0.0)).xyz);
           }
-          o.clip = u.view_proj * u.model * p;
-          let l = normalize(u.light.xyz);
-          let d = max(dot(n, l), 0.0) * 0.85 + 0.3;
-          o.col = vec4<f32>(u.color.rgb * d, u.color.a);
+          let world = (u.model * p).xyz;
+          o.world = world;
+          o.nrm = normalize((u.model * vec4<f32>(n, 0.0)).xyz);
+          o.col = i.col * u.color;
+          o.clip = u.view_proj * vec4<f32>(world, 1.0);
           return o;
         }
+        fn tonemap(x : vec3<f32>) -> vec3<f32> {
+          // Colors arrive authored in sRGB; only compress highlights, do not
+          // re-encode with gamma or the palette washes out to pastel.
+          let shoulder = x / (1.0 + max(vec3<f32>(0.0), x - vec3<f32>(0.85)) * 0.9);
+          return clamp(shoulder, vec3<f32>(0.0), vec3<f32>(1.0));
+        }
         @fragment
-        fn fs_main(in : VSOut) -> @location(0) vec4<f32> { return in.col; }
-      ` });
+        fn fs_main(in : VSOut) -> @location(0) vec4<f32> {
+          let n = normalize(in.nrm);
+          let v = normalize(u.cam_pos.xyz - in.world);
+          let metal = clamp(u.params.x, 0.0, 1.0);
+          let rough = clamp(u.params.y, 0.05, 1.0);
+          let albedo = in.col.rgb;
+          let l = normalize(u.light_dir.xyz);
+          let h = normalize(l + v);
+          let ndl = max(dot(n, l), 0.0);
+          let ndh = max(dot(n, h), 0.0);
+          let shininess = mix(8.0, 220.0, pow(1.0 - rough, 2.0));
+          let spec = pow(ndh, shininess) * mix(0.06, 1.0, metal);
+          let diff = ndl * (1.0 - metal * 0.72);
+          let hemi = n.y * 0.5 + 0.5;
+          let ambient = mix(vec3<f32>(0.13, 0.11, 0.1), vec3<f32>(0.26, 0.32, 0.42), hemi);
+          let bl = normalize(vec3<f32>(-0.45, 0.35, -0.8));
+          let back = max(dot(n, bl), 0.0) * 0.35;
+          let rim = pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.22;
+          let light_color = vec3<f32>(1.06, 0.96, 0.84);
+          var lit = albedo * (ambient + diff * light_color + back * vec3<f32>(0.55, 0.65, 0.9));
+          lit = lit + spec * light_color * (0.6 + 0.9 * ndl);
+          lit = lit + rim * mix(vec3<f32>(0.5, 0.6, 0.8), albedo, metal) * 0.9;
+          return vec4<f32>(tonemap(lit), in.col.a);
+        }      ` });
         } catch (error) {
           globalThis.console?.warn?.("MoUI 3D skin shader unavailable", error);
           skinShader = undefined;
@@ -2516,17 +2550,60 @@ export function createWebGpuImports(options = {}) {
           vertex: {
             module: skinShader,
             entryPoint: "vs_main",
-            buffers: [{ arrayStride: 60, attributes: [
+            buffers: [{ arrayStride: 76, attributes: [
               { shaderLocation: 0, offset: 0, format: "float32x4" },
               { shaderLocation: 1, offset: 16, format: "float32x3" },
               { shaderLocation: 2, offset: 28, format: "float32x4" },
               { shaderLocation: 3, offset: 44, format: "float32x4" },
+              { shaderLocation: 4, offset: 60, format: "float32x4" },
             ] }],
           },
           fragment: { module: skinShader, entryPoint: "fs_main", targets: [{ format }] },
           primitive: { topology: "triangle-list", cullMode: "none" },
           depthStencil: { format: "depth24plus", depthWriteEnabled: true, depthCompare: "less" },
         }) : undefined;
+        let skyPipeline;
+        try {
+          const skyShader = device.createShaderModule({ code: `
+        struct VSOut {
+          @builtin(position) clip : vec4<f32>,
+          @location(0) uv : vec2<f32>,
+        };
+        @vertex
+        fn vs_main(@builtin(vertex_index) vi : u32) -> VSOut {
+          var o : VSOut;
+          let x = f32(vi * 2u - 1u);
+          let y = mix(-1.0, 3.0, f32(vi == 2u));
+          o.clip = vec4<f32>(x, y, 1.0, 1.0);
+          o.uv = vec2<f32>(x * 0.5 + 0.5, y * 0.5 + 0.5);
+          return o;
+        }
+        @fragment
+        fn fs_main(in : VSOut) -> @location(0) vec4<f32> {
+          let t = clamp(in.uv.y, 0.0, 1.0);
+          let zenith = vec3<f32>(0.05, 0.06, 0.11);
+          let horizon = vec3<f32>(0.32, 0.22, 0.26);
+          let ground = vec3<f32>(0.05, 0.05, 0.08);
+          var col = mix(horizon, zenith, smoothstep(0.50, 0.95, t));
+          col = mix(ground, col, smoothstep(0.34, 0.50, t));
+          let glow = exp(-pow((t - 0.52) * 9.0, 2.0)) * 0.5;
+          col = col + glow * vec3<f32>(0.95, 0.45, 0.18);
+          return vec4<f32>(clamp(col, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
+        }
+      ` });
+          skyPipeline = device.createRenderPipeline({
+            layout: "auto",
+            vertex: { module: skyShader, entryPoint: "vs_main" },
+            fragment: { module: skyShader, entryPoint: "fs_main", targets: [{ format }] },
+            primitive: { topology: "triangle-list" },
+            depthStencil: {
+              format: "depth24plus", depthWriteEnabled: false, depthCompare: "always",
+            },
+          });
+        } catch (error) {
+          globalThis.console?.warn?.("MoUI 3D sky pipeline unavailable", error);
+          skyPipeline = undefined;
+        }
         if (typeof device.pushErrorScope === "function") {
           device.popErrorScope(error => {
             skinPipelineValid = !error && !!renderer.skinPipeline;
@@ -2543,6 +2620,7 @@ export function createWebGpuImports(options = {}) {
           uploadCount: 0,
           frame: 0,
           skinPipeline,
+          skyPipeline,
           skinReady: () => skinPipelineValid,
           skinMeshes: new Map(),
           skinMeshIds: new Set(),
@@ -2636,12 +2714,13 @@ export function createWebGpuImports(options = {}) {
       meshHandle,
       x, y, z, w,
       nx, ny, nz,
+      cr, cg, cb, ca,
       j0, j1, j2, j3,
       w0, w1, w2, w3,
     ) {
       const mesh = threeDSkinMeshes.get(meshHandle);
       if (!mesh) return invalidResource();
-      mesh.verts.push(x, y, z, w, nx, ny, nz, j0, j1, j2, j3, w0, w1, w2, w3);
+      mesh.verts.push(x, y, z, w, nx, ny, nz, cr, cg, cb, ca, j0, j1, j2, j3, w0, w1, w2, w3);
       return ok();
     },
     three_d_skin_mesh_end(meshHandle) {
@@ -2655,7 +2734,7 @@ export function createWebGpuImports(options = {}) {
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
         device.queue.writeBuffer(mesh.buffer, 0, data);
-        mesh.vertexCount = data.length / 15;
+        mesh.vertexCount = data.length / 19;
         mesh.verts = [];
         return ok();
       } catch (error) {
@@ -2675,12 +2754,13 @@ export function createWebGpuImports(options = {}) {
       const renderer = threeDRenderers.get(rendererHandle);
       return !!renderer?.skinPipeline && renderer.skinReady();
     },
-    three_d_skin_frame(rendererHandle, vp0, vp1, vp2, vp3, vp4, vp5, vp6, vp7, vp8, vp9, vp10, vp11, vp12, vp13, vp14, vp15, lx, ly, lz, lw) {
+    three_d_skin_frame(rendererHandle, vp0, vp1, vp2, vp3, vp4, vp5, vp6, vp7, vp8, vp9, vp10, vp11, vp12, vp13, vp14, vp15, lx, ly, lz, lw, cx, cy, cz, cw) {
       const renderer = threeDRenderers.get(rendererHandle);
       if (!renderer || !renderer.skinPipeline || !renderer.skinReady()) return invalidResource();
       try {
         renderer.skinViewProj = skinTransposeRowMajorInto(renderer.skinViewProj ?? new Float32Array(16), [vp0, vp1, vp2, vp3, vp4, vp5, vp6, vp7, vp8, vp9, vp10, vp11, vp12, vp13, vp14, vp15]);
         renderer.skinLight = [lx, ly, lz, lw];
+        renderer.skinCam = [cx, cy, cz, cw];
         renderer.skinBoneCount = 0;
         renderer.skinItems = [];
         return ok();
@@ -2700,7 +2780,7 @@ export function createWebGpuImports(options = {}) {
       renderer.skinBoneCount = Math.max(renderer.skinBoneCount ?? 0, slot + 1);
       return ok();
     },
-    three_d_skin_item(rendererHandle, meshHandle, count, m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, r, g, b, a) {
+    three_d_skin_item(rendererHandle, meshHandle, count, m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, r, g, b, a, metal, rough) {
       const renderer = threeDRenderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       const mesh = threeDSkinMeshes.get(meshHandle);
@@ -2710,6 +2790,7 @@ export function createWebGpuImports(options = {}) {
         count: Math.min(Number(count) | 0, mesh.vertexCount),
         model: [m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15],
         color: [r, g, b, a],
+        params: [metal, rough, 0, 0],
       });
       return ok();
     },
@@ -2744,13 +2825,17 @@ export function createWebGpuImports(options = {}) {
           renderer.skinBindGroups = [];
         }
         const uni = new Float32Array(items.length * 64);
+        const light = renderer.skinLight ?? [0.4, 0.8, 0.45, 0];
+        const cam = renderer.skinCam ?? [0, 2, 5, 1];
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           uni.set(renderer.skinViewProj, i * 64);
           skinTransposeRowMajorInto(uni.subarray(i * 64 + 16, i * 64 + 32), item.model);
-          const light = renderer.skinLight ?? [0, 1, 0, 0];
           uni[i * 64 + 32] = light[0]; uni[i * 64 + 33] = light[1]; uni[i * 64 + 34] = light[2]; uni[i * 64 + 35] = light[3];
-          uni[i * 64 + 36] = item.color[0]; uni[i * 64 + 37] = item.color[1]; uni[i * 64 + 38] = item.color[2]; uni[i * 64 + 39] = item.color[3];
+          uni[i * 64 + 36] = cam[0]; uni[i * 64 + 37] = cam[1]; uni[i * 64 + 38] = cam[2]; uni[i * 64 + 39] = cam[3];
+          uni[i * 64 + 40] = item.color[0]; uni[i * 64 + 41] = item.color[1]; uni[i * 64 + 42] = item.color[2]; uni[i * 64 + 43] = item.color[3];
+          const params = item.params ?? [0, 0.8, 0, 0];
+          uni[i * 64 + 44] = params[0]; uni[i * 64 + 45] = params[1]; uni[i * 64 + 46] = params[2]; uni[i * 64 + 47] = params[3];
         }
         if (items.length > 0) device.queue.writeBuffer(renderer.skinUniformBuffer, 0, uni);
         renderer.skinBindGroups = renderer.skinBindGroups ?? [];
@@ -2760,6 +2845,10 @@ export function createWebGpuImports(options = {}) {
           colorAttachments: [{ view: texture.createView(), clearValue: { r: 0.035, g: 0.045, b: 0.07, a: 1 }, loadOp: "clear", storeOp: "store" }],
           depthStencilAttachment: { view: renderer.depthTexture.createView(), depthClearValue: 1, depthLoadOp: "clear", depthStoreOp: "store" },
         });
+        if (renderer.skyPipeline) {
+          pass.setPipeline(renderer.skyPipeline);
+          pass.draw(3);
+        }
         pass.setPipeline(renderer.skinPipeline);
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
@@ -2768,7 +2857,7 @@ export function createWebGpuImports(options = {}) {
             bindGroup = device.createBindGroup({
               layout: renderer.skinPipeline.getBindGroupLayout(0),
               entries: [
-                { binding: 0, resource: { buffer: renderer.skinUniformBuffer, offset: i * slotBytes, size: 160 } },
+                { binding: 0, resource: { buffer: renderer.skinUniformBuffer, offset: i * slotBytes, size: 192 } },
                 { binding: 1, resource: { buffer: renderer.skinBoneBuffer } },
               ],
             });
