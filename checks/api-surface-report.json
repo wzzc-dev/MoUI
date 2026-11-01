@@ -53,8 +53,8 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2529,
-      "public_declarations": 1120,
+      "lines": 2534,
+      "public_declarations": 1125,
       "pub_all_declarations": 141
     },
     {
