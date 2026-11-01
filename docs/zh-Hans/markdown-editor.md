@@ -16,7 +16,7 @@ MoMark 仓库更新时执行 `git submodule update --remote examples/momark`。
   `controlled_markdown_session_editor`）。
 - `moui_richtext/rich_text_document.mbt` 加 `moui_richtext/rich_text_editor.mbt`：
   富文本文档模型、绘制、几何、选择和编辑逻辑。
-- `moui/core/text_editing.mbt` 加 `moui/core/text_layout.mbt`：平台中立的文本编辑
+- `moui/core/text_editing_composition.mbt` 加 `moui/core/text_layout.mbt`：平台中立的文本编辑
   原语、`TextSystem`，以及纯文本控件和富文本插件共享的段落布局契约。
 
 ## 共享 Markdown chrome（`moui_markdown`）

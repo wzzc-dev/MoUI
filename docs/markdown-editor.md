@@ -18,7 +18,7 @@ This repository keeps the framework-side pieces MoMark consumes:
   `controlled_markdown_session_editor`).
 - `moui_richtext/rich_text_document.mbt` plus `moui_richtext/rich_text_editor.mbt`:
   rich text document model, painting, geometry, selection, and editing logic.
-- `moui/core/text_editing.mbt` plus `moui/core/text_layout.mbt`: platform-neutral
+- `moui/core/text_editing_composition.mbt` plus `moui/core/text_layout.mbt`: platform-neutral
   text editing primitives, `TextSystem`, and paragraph layout contract shared by
   plain text controls and the rich text addon.
 
