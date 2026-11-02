@@ -181,8 +181,16 @@ pub fn ThreeDSkinPacket::from_snapshot(
         match scene.mesh(mesh_id) {
           None => ()
           Some(mesh) => {
-            let model = scene.world_transform(@moui_3d.NodeId::new(node_index))
             let skin = node.skin()
+            // Skinned vertices are already lifted to world space by the
+            // bone palette (joint world transforms include the character
+            // root), so applying the node's world matrix on top would
+            // double the root motion and shear the mesh away from static
+            // equipment nodes. Only unskinned geometry needs its model.
+            let model = match skin {
+              Some(_) => @moui_3d.Mat4::identity()
+              None => scene.world_transform(@moui_3d.NodeId::new(node_index))
+            }
             for primitive_index, primitive in mesh.primitives() {
               let key = ThreeDSkinMeshKey::new(
                 mesh=mesh_id.value(),
