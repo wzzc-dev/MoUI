@@ -6,7 +6,7 @@
   "appPackage": "examples/showcase/app",
   "android": {
     "applicationId": "dev.wzzc.moui.showcase",
-    "minSdk": 23
+    "minSdk": 24
   },
   "ios": {
     "bundleId": "dev.wzzc.moui.showcase",

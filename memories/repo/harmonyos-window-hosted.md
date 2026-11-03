@@ -1,5 +1,81 @@
 # HarmonyOS window-hosted facts (post ADR 0046)
 
+## Frame-cost measurement arc (2026-11-02, afternoon)
+
+- `hdc install -r` does NOT kill a running app; `aa start` then only
+  foregrounds the OLD process. Always `aa force-stop <bundle>` before
+  install when a session is live, or a whole rebuild "does nothing".
+- hilog flood control silently drops lines under load (595 of 716 survived).
+  A missing log line is NOT a missing execution; only trust counters carried
+  inside surviving lines.
+- The 19 fps lockstep: a vsync wait bound of 17 ms barely spans the 60 Hz
+  period, timed out every frame, and the fallback slept 17 ms more —
+  34 ms pure wait + ~19 ms work = 53 ms median across 39k frames, hourly
+  buckets identical. Fixed with `active_frame_ms=2` + 1 ms fallback in
+  `moui/backend/harmonyos/window_hosted.mbt` (loop free-runs at the frame-work
+  rate; the compositor coalesces out-of-phase presents).
+- With the loop out of the way, the phase timing (via `profile_draw_frame`,
+  now wired to the host clock through `EmbeddedRuntimeBackendCore` ->
+  `HostRuntimeDriver::new(frame_clock=...)`) measured the MoonBit pipeline at
+  **~0.6 ms/frame**. The whole remaining cost is the present path:
+  whole-`render_frame` wall time **p50 30.8 ms / p90 142.7 ms** — quantified
+  `docs/plans/debt/full-surface-redraw-per-frame.md` (full-surface Ganesh
+  raster of 2090x1324 + `eglSwapBuffers`).
+- Device dirty reasons rotate through "program model changed" (one program
+  update per wheel) and "dirty region covers most of the surface" (the
+  damage-area cutoff forcing FullSurface) — both flagged in the plan doc as
+  the next structural work, but cheap (~0.6 ms) next to the present path.
+- The showcase probe page keeps the runtime perpetually dirty (`needs=true`
+  forever, 19 fps with zero input for 30+ minutes). Finding WHAT reports
+  `animating` there is still open — check `dirty_state().damage_full_reason()`
+  in the pump heartbeat
+  (`pump needs=... reason=` lines, `moui/backend/harmonyos/window_hosted.mbt`).
+- Diagnostics left in place for the debt work: wheel-dispatch line,
+  unconditional `redraw frames=a->b needs=.. render=..ms build/layout/paint/
+  draw .. reason=..` line, throttled pump heartbeat, and the host-sim wheel
+  repro test in `window_hosted_wbtest.mbt`. Gate/remove them when the present
+  path lands its fix.
+
+## Frame pacing + a11y pump (2026-11-02)
+
+- The 2026-10-30 "vsync pacing adopted" claim was only nominal:
+  `run_app_with_frame_pacing` was called with the default `active_frame_ms=1`,
+  and `mbw_harmonyos_wait_for_vsync` bounds its cond-wait by that timeout —
+  a 1 ms bound times out before every 60 Hz boundary, so the loop free-ran.
+  Device proof: rubber-band settle presented 8 frames within 5 ms. Fixed at
+  the MoUI call site (`active_frame_ms=17` in
+  `moui/backend/harmonyos/window_hosted.mbt`); the window package is
+  unchanged, so no window-dev-mode is needed.
+- `mbw_harmonyos_accessibility_publish` replaces the snapshot pointer
+  unconditionally. Never publish the empty Delta/Unchanged projection: it
+  wipes the node table ArkUI is still reading. On `Unchanged`, skip the
+  publish entirely; on `Delta`, re-read `Full` (`since=None` always returns
+  `Full`) and publish that. `HarmonyOSEmbeddedRuntimeBackend` now carries
+  `mut accessibility_cursor` for exactly this.
+- The a11y pump ran on every loop iteration (`about_to_wait`) and projected
+  the full semantics tree each time (`read_semantics()` with no cursor →
+  always `Full`): O(nodes × pump-rate) allocation churn concentrated during
+  scroll. `HostedWindowBackend::read_semantics` now takes
+  `since~ : @core.SemanticsGeneration? = None` (source-compatible).
+- Queued ArkUI a11y actions are dispatched by
+  `harmonyos_accessibility_take_action()` inside `pump_accessibility`,
+  independently of publish — skipping an unchanged publish does not stall
+  actions.
+- Present failure is swallowed by `SkiaRasterRenderer::render_frame` into
+  `RenderFrameResult::new(presented=false)` with no log anywhere, so a
+  silently-failing present looks identical to "redraw never requested" in
+  the wheel log. New evidence line in `handle_window_event`: a
+  `RedrawRequested` whose `frames_presented` did not advance logs
+  `redraw presented=no frames=N needs=<bool>`; healthy frames stay silent.
+  Surfacing the renderer's internal `RenderFrame` error message is deferred
+  (see `docs/plans/active/harmonyos-scroll-frame-pacing.md`).
+- 2026-11-02 capture: ~30 wheel events over ~400 ms with `frames_presented`
+  frozen at 33 (EGL GPU route, `egl present ok=1`). Still unattributed
+  between silent present failure and missing redraw — the new
+  `presented=no` line discriminates on the next capture.
+
+
+
 - Product class is `committed` with `ready=true` and `runtimeL3=passed` (ADR
   0046). All R6 capabilities have matching-device evidence. `ready` still means
   "development/demonstration can rely on the template + session"; see

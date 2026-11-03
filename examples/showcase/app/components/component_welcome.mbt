@@ -1,5 +1,5 @@
 ///|
-using @views {animated_canvas, fill_rounded_rect, pop_opacity, push_opacity}
+using @views {animated_canvas, canvas, fill_rounded_rect, pop_opacity, push_opacity}
 
 ///|
 fn welcome_demo(
@@ -108,8 +108,21 @@ fn welcome_demo(
       ),
       component_demo_section(
         "Live Canvas",
-        "A bouncing orb on an animated_canvas. The paint clock drives motion; no host timer is required.",
-        welcome_bouncing_ball_canvas(theme, inner),
+        "A bouncing orb on an animated_canvas. The paint clock drives motion; no host timer is required. Paused by default: the loop keeps animating forever while mounted, which crowds out interaction frames on mobile hosts.",
+        column(
+          [
+            button(
+              if model.canvas_demo_running {
+                "Pause animation"
+              } else {
+                "Start animation"
+              },
+              on_click=ToggleCanvasDemo,
+            ),
+            welcome_bouncing_ball_canvas(model.canvas_demo_running, theme, inner),
+          ],
+          spacing=gap,
+        ),
         theme,
         width,
       ),
@@ -131,6 +144,7 @@ fn welcome_demo(
 /// canvas edges; motion is driven by the `animated_canvas` paint clock
 /// (`now_ms`), so it loops without a `TimerSource` subscription.
 fn welcome_bouncing_ball_canvas(
+  running : Bool,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ComponentGalleryMsg] {
@@ -138,11 +152,10 @@ fn welcome_bouncing_ball_canvas(
   let radius = 18.0
   let speed_x = 110.0
   let speed_y = 78.0
-  animated_canvas(
-    measure=constraints => {
-      constraints.constrain(@geometry.Size::new(width~, height=canvas_height))
-    },
-    draw=(ctx, frame, now_ms) => {
+  // One shared paint body; `now_ms` comes from the paint clock while running
+  // and from a fixed phase while paused, so the paused preview costs one
+  // static frame and reports no animation.
+  let paint_ball = (ctx : @views.PaintContext, frame : @geometry.Rect, now_ms : Double) => {
       // Background panel.
       fill_rounded_rect(
         ctx,
@@ -197,9 +210,26 @@ fn welcome_bouncing_ball_canvas(
         @graphics.RoundedRect::new(rect=ball, radius~),
         @graphics.Brush::solid(theme.palette.primary),
       )
-    },
-    semantics_label="Welcome bouncing ball canvas",
-  )
+  }
+  if running {
+    animated_canvas(
+      measure=constraints => {
+        constraints.constrain(@geometry.Size::new(width~, height=canvas_height))
+      },
+      draw=(ctx, frame, now_ms) => paint_ball(ctx, frame, now_ms),
+      semantics_label="Welcome bouncing ball canvas",
+    )
+  } else {
+    // Paused: one static frame at a fixed phase, reporting no animation, so
+    // the gallery page keeps its frame budget for interactions.
+    canvas(
+      measure=constraints => {
+        constraints.constrain(@geometry.Size::new(width~, height=canvas_height))
+      },
+      draw=(ctx, frame) => paint_ball(ctx, frame, 4000.0),
+      semantics_label="Welcome bouncing ball canvas",
+    )
+  }
 }
 
 ///|

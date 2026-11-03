@@ -110,6 +110,9 @@ pub fn HarmonyOSBackendReadiness::to_repr(Self) -> @debug.Repr
 pub struct HarmonyOSEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
   mut image_status_summary : String
+  mut accessibility_cursor : @wzzc-dev/moui/core.SemanticsGeneration?
+  mut pump_report_ms : Double
+  mut pointer_move_samples : Int32
 }
 pub fn HarmonyOSEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit
 pub fn HarmonyOSEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/harmonyos.ActiveEventLoop) -> Unit

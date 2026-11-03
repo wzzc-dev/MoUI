@@ -144,3 +144,36 @@ test "application close disposes the logical surface before physical exit" {
   assert_false(backend.has_window())
   assert_false(backend.session_attached())
 }
+
+///|
+test "read semantics since a published generation skips unchanged trees" {
+  let backend = HostedWindowBackend::new(
+    runtime_factory=metrics => {
+      @runtime.AppRuntime::new_view(
+        root=(@views.empty() : @core.View[Unit]),
+        size=metrics.logical_size,
+      )
+    },
+    surface_binding_factory=() => {
+      HostSurfaceBinding::new(
+        create_renderer=(_raw, _metrics) => {
+          Some(hosted_backend_test_renderer(Ref(0)))
+        },
+        sync=(_raw, _metrics) => (),
+      )
+    },
+  )
+  let create = () => Some((hosted_backend_test_window(Ref(0), Ref(0)), 71UL))
+  assert_true(backend.ensure_surface(create~))
+  let published = match backend.read_semantics() {
+    Some(Full(snapshot)) => snapshot.generation()
+    _ => fail("expected a full semantics read")
+  }
+  // The committed tree has not moved past the published generation, so the
+  // since-read reports `Unchanged` instead of rebuilding a full snapshot.
+  match backend.read_semantics(since=Some(published)) {
+    Some(Unchanged(cursor)) => assert_true(cursor == published)
+    _ => fail("expected an unchanged read for a committed tree")
+  }
+  backend.destroy_surfaces()
+}

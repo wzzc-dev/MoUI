@@ -1082,6 +1082,8 @@ void moonbit_skia_egl_release_window(void* object) { (void)object; }
 #endif
 #else
 #include <android/native_window.h>
+#include <android/log.h>
+#define MOUI_SKIA_EGL_HAS_LOGCAT 1
 #endif
 
 #if defined(__OHOS__)
@@ -3155,6 +3157,8 @@ moonbit_skia_surface_egl_window(
 #endif
 }
 
+static double s_last_submit_ms = 0.0;
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
 moonbit_skia_surface_egl_present_and_acquire_next(
   MoonbitSkiaSurface* wrapper,
@@ -3201,24 +3205,80 @@ moonbit_skia_surface_egl_present_and_acquire_next(
   // eglSwapBuffers swaps the back buffer to the window surface's front
   // buffer. The same EGLSurface is reused across frames; no need to acquire
   // a new one. Return a fresh SkSurface wrapper around the same back buffer.
-  EGLBoolean swapped = eglSwapBuffers(egl_win->display, egl_win->surface);
+  // Present-cost diagnostics for the frame-time investigation
+  // (docs/plans/active/harmonyos-scroll-frame-pacing.md): log the GL identity
+  // once, then sample swap wall time separately from the whole present call.
+  static int s_egl_identity_logged = 0;
+  if (s_egl_identity_logged == 0) {
+    s_egl_identity_logged = 1;
+    const char* renderer_name =
+      reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+    const char* version_name =
+      reinterpret_cast<const char*>(glGetString(GL_VERSION));
 #if defined(MOUI_SKIA_EGL_HAS_HILOG)
+    OH_LOG_Print(
+      LOG_APP,
+      LOG_INFO,
+      0x4D4F,
+      "MoUIHarmony",
+      "egl gl renderer=%{public}s version=%{public}s",
+      renderer_name == nullptr ? "unknown" : renderer_name,
+      version_name == nullptr ? "unknown" : version_name
+    );
+#elif defined(MOUI_SKIA_EGL_HAS_LOGCAT)
+    __android_log_print(
+      ANDROID_LOG_INFO,
+      "MoUIWindow",
+      "egl gl renderer=%s version=%s",
+      renderer_name == nullptr ? "unknown" : renderer_name,
+      version_name == nullptr ? "unknown" : version_name
+    );
+#endif
+  }
+  auto present_start = std::chrono::steady_clock::now();
+  EGLBoolean swapped = eglSwapBuffers(egl_win->display, egl_win->surface);
+  auto present_end = std::chrono::steady_clock::now();
+  const double swap_ms =
+    std::chrono::duration<double, std::milli>(present_end - present_start)
+      .count();
+  const double submit_ms = s_last_submit_ms;
+  s_last_submit_ms = 0.0;
+#if defined(MOUI_SKIA_EGL_HAS_HILOG) || defined(MOUI_SKIA_EGL_HAS_LOGCAT)
   // Distinguish true GPU direct present from CPU "present flushed native window".
   static int s_egl_present_log_count = 0;
-  if (s_egl_present_log_count < 4) {
-    s_egl_present_log_count += 1;
+  s_egl_present_log_count += 1;
+  if (s_egl_present_log_count <= 4 || s_egl_present_log_count % 60 == 0) {
+#if defined(MOUI_SKIA_EGL_HAS_HILOG)
     OH_LOG_Print(
       LOG_APP,
       swapped == EGL_TRUE ? LOG_INFO : LOG_WARN,
       0x4D4F,
       "MoUIHarmony",
-      "egl present ok=%{public}d swap=%{public}d w=%{public}d h=%{public}d",
+      "egl present ok=%{public}d swap=%{public}d swap_ms=%{public}.1f submit_ms=%{public}.1f w=%{public}d h=%{public}d",
       swapped == EGL_TRUE ? 1 : 0,
       static_cast<int>(swapped),
+      swap_ms,
+      submit_ms,
       width,
       height
     );
+#else
+    __android_log_print(
+      swapped == EGL_TRUE ? ANDROID_LOG_INFO : ANDROID_LOG_WARN,
+      "MoUIWindow",
+      "egl present ok=%d swap=%d swap_ms=%.1f w=%d h=%d",
+      swapped == EGL_TRUE ? 1 : 0,
+      static_cast<int>(swapped),
+      swap_ms,
+      submit_ms,
+      width,
+      height
+    );
+#endif
   }
+#else
+  (void)swap_ms;
+  (void)submit_ms;
 #endif
   if (swapped != EGL_TRUE) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
@@ -3452,7 +3512,12 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
     }
   }
 #endif
+  auto submit_start = std::chrono::steady_clock::now();
   wrapper->gpu_context_owner->flushAndSubmit(wrapper->surface);
+  auto submit_end = std::chrono::steady_clock::now();
+  s_last_submit_ms =
+    std::chrono::duration<double, std::milli>(submit_end - submit_start)
+      .count();
   return 1;
 #else
   return 0;

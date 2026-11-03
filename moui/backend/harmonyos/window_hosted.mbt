@@ -9,6 +9,14 @@ pub struct HarmonyOSEmbeddedRuntimeBackend {
   // Last reported image status summary, so the per-frame pump only logs on a
   // transition instead of every frame.
   mut image_status_summary : String
+  // Generation of the semantics snapshot last published to ArkUI, so the
+  // accessibility pump skips projection while the tree is unchanged.
+  mut accessibility_cursor : @core.SemanticsGeneration?
+  // Last clock the pump heartbeat reported at, so the diagnostic log bursts at
+  // most ~10/s while a frame is owed.
+  mut pump_report_ms : Double
+  // TEMP: pointer-move sample counter for the drag-tracking investigation.
+  mut pointer_move_samples : Int32
 }
 
 ///|
@@ -55,15 +63,19 @@ pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry 
     harmonyos_report_vsync_status()
     let event_loop = @window_harmonyos.EventLoop::new()
     // Frame pacing: poll tight while a frame is owed (a scroll glide, an
-    // animation) and idle-sleep otherwise. A fixed 4 ms sleep made every scroll
-    // notch wait out the sleep before presenting, which read as stutter — macOS
-    // paces the same way, which is why it never showed this.
-    // Frame pacing: poll tight while a frame is owed (a scroll glide, an
-    // animation) and idle-sleep otherwise — the same scheme the macOS host uses.
-    // A fixed sleep made every scroll notch wait it out before presenting.
-    event_loop.run_app_with_frame_pacing(app, needs_redraw=fn() {
-      app.needs_redraw()
-    })
+    // animation) and idle-sleep otherwise — the same scheme the macOS host
+    // uses. Measured on device (2026-11-02): a 17 ms wait bound barely spans
+    // the 60 Hz period, so the wait timed out every frame and the fallback
+    // slept another 17 ms — a 34 ms pure-wait floor plus ~19 ms of present
+    // work locked every frame to 53 ms (19 fps) across 39k frames. A small
+    // bound plus a 1 ms fallback lets the loop run at the frame-work rate
+    // (~20 ms on the Showcase images page); the compositor coalesces
+    // out-of-phase presents, and idle keeps the 4 ms poll.
+    event_loop.run_app_with_frame_pacing(
+      app,
+      needs_redraw=fn() { app.needs_redraw() },
+      active_frame_ms=2,
+    )
   })
 }
 
@@ -122,6 +134,9 @@ fn new_harmonyos_embedded_runtime(
       auto_exit_after_frames~,
     ),
     image_status_summary: "",
+    accessibility_cursor: None,
+    pump_report_ms: 0.0,
+    pointer_move_samples: 0,
   }
 }
 
@@ -212,6 +227,19 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
 }
 
 ///|
+// Frame-path diagnostics for the scroll jank investigation
+// (docs/plans/active/harmonyos-scroll-frame-pacing.md). These strings
+// allocate per frame and feed the GC churn under measurement; flip off
+// once the present-path work lands.
+let harmonyos_frame_diagnostics = true
+
+// TEMP: a11y pump toggle for the frame-cost attribution experiment
+// (docs/plans/active/harmonyos-scroll-frame-pacing.md).
+
+///|
+let harmonyos_a11y_pump_enabled = true
+
+///|
 pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBackend with fn window_event(
   self,
   event_loop,
@@ -260,12 +288,46 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
             "scroll px dx=\{dx.to_int()} dy=\{dy.to_int()} logical=\{logical.x.to_int()},\{logical.y.to_int()} frames=\{self.backend.frames_presented()} clock=\{@window_harmonyos.host_monotonic_ms().to_int()}",
           )
           self.backend.dispatch_wheel(logical, delta)
+          // Post-dispatch evidence: if `dispatch_wheel` aborts mid-way (the
+          // pre-dispatch render pipeline raises), this line is missing for
+          // that wheel while "scroll px" still printed. `needs` answers
+          // whether the runtime still owes a frame after the wheel landed.
+          if harmonyos_frame_diagnostics {
+            harmonyos_log_image_status(
+              "wheel dispatched needs=\{self.needs_redraw()} frames=\{self.backend.frames_presented()}",
+            )
+          }
         }
         None =>
           self.backend.handle_window_event(event, exit=fn() {
             event_loop.exit()
           })
       }
+    @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
+      // TEMP: pointer-move sampling for the drag-tracking investigation.
+      self.pointer_move_samples = self.pointer_move_samples + 1
+      if harmonyos_frame_diagnostics && self.pointer_move_samples % 5 == 0 {
+        harmonyos_log_image_status(
+          "pointer moved sample=\{self.pointer_move_samples} frames=\{self.backend.frames_presented()} pos=\{position.x.to_int()},\{position.y.to_int()}",
+        )
+      }
+      self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
+    }
+    @window_core.WindowEvent::RedrawRequested => {
+      // Frame-path evidence (docs/plans/active/harmonyos-scroll-frame-pacing.md):
+      // a RedrawRequested that presents nothing is the frozen-frames signature
+      // from the 2026-11-02 capture. Logged unconditionally while the render
+      // rate is under diagnosis; gate to the failure case once the loop keeps
+      // pace with the refresh.
+      let before_frames = self.backend.frames_presented()
+      let render_start = @window_harmonyos.host_monotonic_ms()
+      self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
+      if harmonyos_frame_diagnostics {
+        harmonyos_log_image_status(
+          "redraw frames=\{before_frames}->\{self.backend.frames_presented()} needs=\{self.needs_redraw()} render=\{(@window_harmonyos.host_monotonic_ms() - render_start)}ms \{self.backend.present_breakdown()} \{self.backend.last_frame_timing_summary()}",
+        )
+      }
+    }
     _ =>
       self.backend.handle_window_event(event, exit=fn() { event_loop.exit() })
   }
@@ -276,6 +338,19 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
   self,
   _event_loop,
 ) {
+  // Pump heartbeat while a frame is owed: dense lines mean the loop is
+  // pumping; gaps mean the loop itself is blocked between pumps. The dirty
+  // reason and phase timing ride along for the frame-cost investigation
+  // (docs/plans/active/harmonyos-scroll-frame-pacing.md).
+  let now = @window_harmonyos.host_monotonic_ms()
+  if harmonyos_frame_diagnostics &&
+    self.needs_redraw() &&
+    now - self.pump_report_ms >= 100.0 {
+    self.pump_report_ms = now
+    harmonyos_log_image_status(
+      "pump needs=true frames=\{self.backend.frames_presented()} clock=\{now.to_int()}",
+    )
+  }
   self.backend.about_to_wait()
   // Accessibility runs on the platform UI cadence: ArkUI reads whatever tree
   // was published last, and any action it queued during the previous frame is
@@ -307,13 +382,27 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::needs_redraw(
 pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
   self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Unit {
-  match self.backend.read_semantics() {
-    Some(read) => {
-      // Only `Full` reads carry a tree; the projection returns an empty
-      // snapshot for deltas, which leaves ArkUI on the node ids it cached.
-      let projection = harmonyos_accessibility_project(read)
-      ignore(harmonyos_accessibility_publish(projection))
-    }
+  if not(harmonyos_a11y_pump_enabled) {
+    // TEMP: disabled for the a11y-pump frame-cost attribution experiment.
+    return
+  }
+  match self.backend.read_semantics(since=self.accessibility_cursor) {
+    // The committed tree is exactly the snapshot already published: skip the
+    // projection and the publish. This pump runs every loop iteration, so an
+    // unconditional full-tree projection is O(nodes) allocation churn per
+    // pump — dominant during a scroll glide.
+    Some(Unchanged(_)) => ()
+    // First publish (no cursor yet) reads `Full` directly.
+    Some(Full(snapshot)) => self.publish_accessibility_snapshot(Full(snapshot))
+    // The tree moved past the published generation but read back as a delta
+    // chain: re-read the authoritative full snapshot. Do not publish the
+    // empty projection — the native publish replaces the snapshot pointer
+    // unconditionally, which would wipe the node table ArkUI is still reading.
+    Some(Delta(_)) =>
+      match self.backend.read_semantics() {
+        Some(read) => self.publish_accessibility_snapshot(read)
+        None => ()
+      }
     None => ()
   }
   // Async image load evidence: `ImageLoading -> ImageReady` happens off the
@@ -376,6 +465,26 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
       ignore(self.backend.perform_semantics_action(request))
     }
     None => ()
+  }
+}
+
+///|
+/// Publishes a semantics read to ArkUI and records its generation as the
+/// accessibility cursor. Only `Full` reads carry a tree; the native publish
+/// replaces the snapshot pointer unconditionally, so anything else must
+/// publish nothing rather than the empty projection.
+fn HarmonyOSEmbeddedRuntimeBackend::publish_accessibility_snapshot(
+  self : HarmonyOSEmbeddedRuntimeBackend,
+  read : @runtime.SemanticsRead,
+) -> Unit {
+  match read {
+    Full(snapshot) => {
+      ignore(
+        harmonyos_accessibility_publish(harmonyos_accessibility_project(read)),
+      )
+      self.accessibility_cursor = Some(snapshot.generation())
+    }
+    _ => ()
   }
 }
 

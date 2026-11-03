@@ -24,6 +24,10 @@ pub struct EmbeddedRuntimeBackendCore {
   priv mut image : @window_image.WindowImageTasks?
   priv mut metrics : @core.SurfaceMetrics
   priv mut disposed : Bool
+  /// Monotonic clock for driver pacing and render-phase timing.
+  priv frame_clock : () -> Double
+  /// Temporary render-phase breakdown for the frame-cost investigation.
+  priv mut present_breakdown : String
 }
 
 ///|
@@ -35,13 +39,16 @@ pub fn EmbeddedRuntimeBackendCore::new(
   service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
     None
   },
+  frame_clock~ : () -> Double = () => 0.0,
 ) -> EmbeddedRuntimeBackendCore {
   let transport = @host_services_embedded.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_generation(),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
-    transport.request_frame()
-  })
+  let driver = @runtime.HostRuntimeDriver::new(
+    runtime~,
+    schedule_redraw=() => transport.request_frame(),
+    frame_clock=Some(frame_clock),
+  )
   driver.set_text_system(@core.TextSystem::fallback())
   let core : EmbeddedRuntimeBackendCore = {
     runtime,
@@ -53,6 +60,8 @@ pub fn EmbeddedRuntimeBackendCore::new(
     image: None,
     metrics,
     disposed: false,
+    present_breakdown: "",
+    frame_clock,
   }
   ignore(core.attach_surface(renderer~, metrics~, surface_generation~))
   core
@@ -89,6 +98,15 @@ pub fn EmbeddedRuntimeBackendCore::image_resource_records(
       }
     None => []
   }
+}
+
+///|
+/// Render-phase breakdown of the most recent frame (runtime/skia/sync, ms).
+/// Temporary diagnostic for the frame-cost investigation.
+pub fn EmbeddedRuntimeBackendCore::present_breakdown(
+  self : EmbeddedRuntimeBackendCore,
+) -> String {
+  self.present_breakdown
 }
 
 ///|
@@ -234,7 +252,11 @@ pub fn EmbeddedRuntimeBackendCore::dispatch(
           }
         _ => self.driver.dispatch(event)
       }
-      ignore(channel.sync(self.runtime))
+      // NOTE: no `channel.sync` here. A scroll gesture coalesces many events
+      // into one pump, and sync runs the semantics commit — a full tree
+      // rebuild — per event, which measured ~20 ms each on device and
+      // starved rendering to one frame per gesture cluster. `render_frame`
+      // syncs once per presented frame, which keeps services/semantics fresh.
       result
     }
     _ => inactive_host_event_result()
@@ -293,17 +315,29 @@ pub fn EmbeddedRuntimeBackendCore::render_frame(
       queued=frame_state.pending(),
     )
   }
+  let phase_start = (self.frame_clock)()
   self.driver.begin_redraw()
+  let begin_ms = (self.frame_clock)() - phase_start
+  let draw_start = (self.frame_clock)()
   let draw_frame = self.driver.draw_frame()
+  let runtime_ms = (self.frame_clock)() - draw_start
+  let prepare_start = (self.frame_clock)()
   guard frame_state.prepare_submission(draw_frame) is Some(submission) else {
     self.driver.finish_redraw()
     return @render.RenderFrameResult::new(queued=true)
   }
+  let prepare_ms = (self.frame_clock)() - prepare_start
   ignore(host_bridge.sync_platform_views(draw_frame.platform_views))
+  let gpu_start = (self.frame_clock)()
   let result = renderer.render_frame(submission)
+  let gpu_ms = (self.frame_clock)() - gpu_start
+  let drain_start = (self.frame_clock)()
   let completions = drain_embedded_renderer_events(renderer, image_state)
+  let finish_start = (self.frame_clock)()
   ignore(frame_state.finish_submission(result, completions))
   self.driver.finish_redraw()
+  let finish_ms = (self.frame_clock)() - finish_start
+  let sync_start = (self.frame_clock)()
   let scheduled_count = image_state.take_scheduled_count()
   if scheduled_count > 0 {
     self.transport.request_frame()
@@ -316,6 +350,9 @@ pub fn EmbeddedRuntimeBackendCore::render_frame(
   ignore(host_bridge.sync(self.runtime))
   ignore(host_bridge.flush_updates_to_shell(self.transport))
   ignore(self.transport.finish_frame())
+  let sync_ms = (self.frame_clock)() - sync_start
+  let frame_ms = (self.frame_clock)() - phase_start
+  self.present_breakdown = "frame=\{frame_ms} runtime=\{runtime_ms} skia=\{gpu_ms} sync=\{sync_ms} begin=\{begin_ms} prep=\{prepare_ms} drain=\{finish_start - drain_start} finish=\{finish_ms}"
   result
 }
 

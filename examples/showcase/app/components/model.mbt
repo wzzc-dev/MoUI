@@ -113,6 +113,7 @@ pub(all) struct ComponentGalleryModel {
   probe_submit_count : Int32
   probe_dialog_open : Bool
   checkbox_group_selection : Array[String]
+  canvas_demo_running : Bool
 }
 
 ///|
@@ -139,6 +140,7 @@ pub(all) enum ComponentGalleryMsg {
   ProbeDialogClose
   ToggleCheckboxGroupItem(String)
   PageScrolled(@geometry.Point)
+  ToggleCanvasDemo
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -287,6 +289,11 @@ pub fn ComponentGalleryModel::new(
     probe_submit_count: 0,
     probe_dialog_open: false,
     checkbox_group_selection: ["desktop", "mobile"],
+    // The bouncing-ball canvas demo animates forever while mounted
+    // (`animated_canvas` reports animating unconditionally). Default it to
+    // paused so the gallery page keeps the full frame budget for
+    // interactions (slider drags, scroll) on mobile hosts.
+    canvas_demo_running: false,
   }
 }
 
@@ -366,6 +373,7 @@ pub fn update(
       { ..model, password_revealed: !model.password_revealed, }
     FeatureToggled(value) => { ..model, feature_enabled: value, }
     SliderChanged(value) => { ..model, slider_value: value, }
+    ToggleCanvasDemo => { ..model, canvas_demo_running: !model.canvas_demo_running, }
     Increment => { ..model, counter: model.counter + 1, }
     Decrement => { ..model, counter: model.counter - 1, }
     ProbeTextChanged(value) => { ..model, probe_text: value, }

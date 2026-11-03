@@ -117,6 +117,7 @@ pub fn HostedRuntimeSession::create(
   service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
     None
   },
+  frame_clock~ : () -> Double = () => 0.0,
 ) -> HostedRuntimeSession? {
   match (binding.create_renderer)(raw_handle, metrics) {
     Some(resolution) => {
@@ -127,6 +128,7 @@ pub fn HostedRuntimeSession::create(
         metrics~,
         surface_generation~,
         service_handler~,
+        frame_clock~,
       )
       (binding.sync)(raw_handle, metrics)
       Some({ raw_handle, core, })
@@ -454,16 +456,24 @@ pub fn[T] HostedWindowBackend::with_session(
 
 ///|
 /// Reads the current semantics for accessibility publishing, or `None` when no
-/// session is attached.
+/// session is attached. Pass `since` to read against a published generation:
+/// an unchanged tree reads back `Unchanged` instead of a fresh `Full`
+/// snapshot, so per-pump accessibility pumps can skip rebuilding it.
 pub fn HostedWindowBackend::read_semantics(
   self : HostedWindowBackend,
+  since~ : @core.SemanticsGeneration? = None,
 ) -> @runtime.SemanticsRead? {
   match self.session {
-    Some(session) =>
-      match session.runtime().read_semantics() {
+    Some(session) => {
+      let read = match since {
+        Some(cursor) => session.runtime().read_semantics(since=cursor)
+        None => session.runtime().read_semantics()
+      }
+      match read {
         Ok(read) => Some(read)
         Err(_) => None
       }
+    }
     None => None
   }
 }
@@ -624,6 +634,7 @@ pub fn HostedWindowBackend::attach_session(
           binding~,
           surface_generation~,
           service_handler=self.service_handler,
+          frame_clock=self.clock_ms,
         ) {
         Some(session) => {
           self.session = Some(session)
@@ -756,6 +767,62 @@ pub fn HostedWindowBackend::needs_redraw(self : HostedWindowBackend) -> Bool {
   match self.session {
     Some(session) => session.redraw_requested()
     None => false
+  }
+}
+
+///|
+/// Render-phase breakdown (runtime/skia/sync, ms) of the most recent frame.
+/// Temporary diagnostic for the frame-cost investigation.
+pub fn HostedRuntimeSession::present_breakdown(
+  self : HostedRuntimeSession,
+) -> String {
+  self.core.present_breakdown()
+}
+
+///|
+pub fn HostedWindowBackend::present_breakdown(
+  self : HostedWindowBackend,
+) -> String {
+  match self.session {
+    Some(session) => session.present_breakdown()
+    None => ""
+  }
+}
+
+///|
+/// Last frame's phase timing (build/layout/paint/draw in ms), for the device
+/// log. Temporary diagnostic for the scroll frame-cost investigation
+/// (docs/plans/active/harmonyos-scroll-frame-pacing.md).
+pub fn HostedWindowBackend::last_frame_timing_summary(
+  self : HostedWindowBackend,
+) -> String {
+  match self.session {
+    Some(session) => {
+      let full = session.runtime().inspector_snapshot()
+      let snapshot = full.runtime()
+      let timing = snapshot.last_frame_timing()
+      let state = snapshot.dirty_state()
+      let render = full.render()
+      let nodes = render.nodes()
+      let mut top1_el = 0
+      let mut top1_cmds = 0
+      let mut top2_el = 0
+      let mut top2_cmds = 0
+      for node in nodes {
+        let count = node.command_count()
+        if count > top1_cmds {
+          top2_el = top1_el
+          top2_cmds = top1_cmds
+          top1_el = node.element_id()
+          top1_cmds = count
+        } else if count > top2_cmds {
+          top2_el = node.element_id()
+          top2_cmds = count
+        }
+      }
+      "build=\{timing.build_ms()} layout=\{timing.layout_ms()} paint=\{timing.paint_ms()} draw=\{timing.draw_ms()} cmds=\{render.command_count()} imgs=\{render.image_count()} filt=\{render.filter_depth()} top=\{top1_el}:\{top1_cmds},\{top2_el}:\{top2_cmds} lhits=\{snapshot.layout_cache_hit_count()} lmiss=\{snapshot.layout_cache_miss_count()} dirty=\{snapshot.dirty_count()} reason=\{state.damage_full_reason()}"
+    }
+    None => "no-session"
   }
 }
 

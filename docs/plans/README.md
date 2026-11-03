@@ -69,6 +69,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [release-module-dependency-closures](done/release-module-dependency-closures.md) | Split concrete renderers and integration tests out of the base publication closure |
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
+| [harmonyos-scroll-frame-pacing](active/harmonyos-scroll-frame-pacing.md) | Make the HarmonyOS frame loop pace on vsync as intended, gate the a11y pump on a published-generation cursor, and instrument the frame path for the frozen-frames capture |
 | [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [moui-studio-shell-completion](active/moui-studio-shell-completion.md) | MoUI Studio 壳收敛（ADR 0039）：四项预算棘轮冻结 app 旧壳（37,279 行/53 文件/161 Model 字段/291 Msg 变体，只降不升），S1 chrome 出壳 + S2–S7 六域按 ai/terminal 先例提取为插件包，抵达完成线（≤18,000 行/≤30 文件/≤55 字段/≤90 变体） |
 | [moui-studio-right-panel-vscode-form](active/moui-studio-right-panel-vscode-form.md) | MoUI Studio 右栏改成 VS Code 侧面板（side panel）交互形态：面板头 + ghost 动作簇、扁平页签行、单一滚动区（快速操作/运行时监视改为分区）、底部常驻 AI composer；AI 输入面宿主唯一化（取消底栏 AI 页签与停靠切换钮）**（部分被 sidebar 方案推翻：输入面卡片化并移出检查器页）** |
