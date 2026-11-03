@@ -105,6 +105,16 @@ moonbit_skia_paragraph_layout_utf8(
   if (moonbit_skia_paragraph_has_family(family_name)) {
     family = moonbit_skia_bytes_to_string(family_name);
   }
+#if defined(__ANDROID__)
+  // The theme requests the CSS generic "system-ui" (FontFamily::SystemUi).
+  // It is not an Android family alias: an empty or unknown family makes the
+  // NDK font matcher pick an arbitrary display face, which rendered as
+  // small-caps-style headings. Map it to the platform sans-serif alias
+  // (resolved to Roboto via matchFamilyStyle - verified on emulator).
+  if (family.empty() || family == "system-ui") {
+    family = "sans-serif";
+  }
+#endif
   sk_sp<FontCollection> font_collection =
     moonbit_skia_paragraph_font_collection(family);
 
@@ -121,15 +131,7 @@ moonbit_skia_paragraph_layout_utf8(
 // resolves no family and lands on an arbitrary display face (rendered as
 // small-caps-style headings on device).
 #if !defined(__linux__) || defined(__ANDROID__)
-  if (moonbit_skia_paragraph_has_family(family_name)) {
-    std::string family = moonbit_skia_bytes_to_string(family_name);
-#if defined(__ANDROID__)
-    // CSS generic "system-ui" is not an Android family alias; the NDK font
-    // matcher resolves unknown families to an arbitrary display face.
-    if (family == "system-ui") {
-      family = "sans-serif";
-    }
-#endif
+  if (!family.empty()) {
     std::vector<SkString> families;
     families.emplace_back(family.data(), family.size());
     text_style.setFontFamilies(families);
