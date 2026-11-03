@@ -101,7 +101,7 @@ pub fn EmbeddedRuntimeBackendCore::image_resource_records(
 }
 
 ///|
-/// Render-phase breakdown of the most recent frame (runtime/skia/sync, ms).
+/// Render-phase breakdown of the most recent frame (runtime/renderer/sync, ms).
 /// Temporary diagnostic for the frame-cost investigation.
 pub fn EmbeddedRuntimeBackendCore::present_breakdown(
   self : EmbeddedRuntimeBackendCore,
@@ -352,7 +352,7 @@ pub fn EmbeddedRuntimeBackendCore::render_frame(
   ignore(self.transport.finish_frame())
   let sync_ms = (self.frame_clock)() - sync_start
   let frame_ms = (self.frame_clock)() - phase_start
-  self.present_breakdown = "frame=\{frame_ms} runtime=\{runtime_ms} skia=\{gpu_ms} sync=\{sync_ms} begin=\{begin_ms} prep=\{prepare_ms} drain=\{finish_start - drain_start} finish=\{finish_ms}"
+  self.present_breakdown = "frame=\{frame_ms} runtime=\{runtime_ms} renderer=\{gpu_ms} sync=\{sync_ms} begin=\{begin_ms} prep=\{prepare_ms} drain=\{finish_start - drain_start} finish=\{finish_ms}"
   result
 }
 

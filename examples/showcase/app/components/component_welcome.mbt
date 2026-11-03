@@ -1,5 +1,11 @@
 ///|
-using @views {animated_canvas, canvas, fill_rounded_rect, pop_opacity, push_opacity}
+using @views {
+  animated_canvas,
+  canvas,
+  fill_rounded_rect,
+  pop_opacity,
+  push_opacity,
+}
 
 ///|
 fn welcome_demo(
@@ -119,7 +125,11 @@ fn welcome_demo(
               },
               on_click=ToggleCanvasDemo,
             ),
-            welcome_bouncing_ball_canvas(model.canvas_demo_running, theme, inner),
+            welcome_bouncing_ball_canvas(
+              model.canvas_demo_running,
+              theme,
+              inner,
+            ),
           ],
           spacing=gap,
         ),
@@ -155,61 +165,57 @@ fn welcome_bouncing_ball_canvas(
   // One shared paint body; `now_ms` comes from the paint clock while running
   // and from a fixed phase while paused, so the paused preview costs one
   // static frame and reports no animation.
-  let paint_ball = (ctx : @views.PaintContext, frame : @geometry.Rect, now_ms : Double) => {
-      // Background panel.
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=frame, radius=12.0),
-        @graphics.Brush::solid(@graphics.Color::rgba(r=0.93, g=0.95, b=0.98)),
-      )
-      // Bouncing ball position from the paint clock.
-      let travel_x = (frame.size.width - 2.0 * radius).max(1.0)
-      let travel_y = (frame.size.height - 2.0 * radius).max(1.0)
-      let period_x = travel_x / speed_x
-      let period_y = travel_y / speed_y
-      let tx = now_ms / 1000.0 % period_x
-      let ty = now_ms / 1000.0 % period_y
-      let phase_x = tx / period_x
-      let phase_y = ty / period_y
-      // Triangle wave: 0 -> 1 -> 0 within one period.
-      let norm_x = if phase_x < 0.5 {
-        phase_x * 2.0
-      } else {
-        2.0 - phase_x * 2.0
-      }
-      let norm_y = if phase_y < 0.5 {
-        phase_y * 2.0
-      } else {
-        2.0 - phase_y * 2.0
-      }
-      let ball_x = frame.origin.x + radius + norm_x * travel_x
-      let ball_y = frame.origin.y + radius + norm_y * travel_y
-      let ball = @geometry.Rect::new(
-        x=ball_x - radius,
-        y=ball_y - radius,
-        width=2.0 * radius,
-        height=2.0 * radius,
-      )
-      // Soft trailing shadow under the ball.
-      push_opacity(ctx, 0.18)
-      let shadow = @geometry.Rect::new(
-        x=ball_x - radius * 0.9,
-        y=frame.origin.y + frame.size.height - radius * 0.6,
-        width=radius * 1.8,
-        height=radius * 0.5,
-      )
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=shadow, radius=radius * 0.25),
-        @graphics.Brush::solid(@graphics.Color::rgba(r=0.1, g=0.1, b=0.15)),
-      )
-      pop_opacity(ctx)
-      // The orb itself, using the theme primary color.
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=ball, radius~),
-        @graphics.Brush::solid(theme.palette.primary),
-      )
+  let paint_ball = (
+    ctx : @views.PaintContext,
+    frame : @geometry.Rect,
+    now_ms : Double,
+  ) => {
+    // Background panel.
+    fill_rounded_rect(
+      ctx,
+      @graphics.RoundedRect::new(rect=frame, radius=12.0),
+      @graphics.Brush::solid(@graphics.Color::rgba(r=0.93, g=0.95, b=0.98)),
+    )
+    // Bouncing ball position from the paint clock.
+    let travel_x = (frame.size.width - 2.0 * radius).max(1.0)
+    let travel_y = (frame.size.height - 2.0 * radius).max(1.0)
+    let period_x = travel_x / speed_x
+    let period_y = travel_y / speed_y
+    let tx = now_ms / 1000.0 % period_x
+    let ty = now_ms / 1000.0 % period_y
+    let phase_x = tx / period_x
+    let phase_y = ty / period_y
+    // Triangle wave: 0 -> 1 -> 0 within one period.
+    let norm_x = if phase_x < 0.5 { phase_x * 2.0 } else { 2.0 - phase_x * 2.0 }
+    let norm_y = if phase_y < 0.5 { phase_y * 2.0 } else { 2.0 - phase_y * 2.0 }
+    let ball_x = frame.origin.x + radius + norm_x * travel_x
+    let ball_y = frame.origin.y + radius + norm_y * travel_y
+    let ball = @geometry.Rect::new(
+      x=ball_x - radius,
+      y=ball_y - radius,
+      width=2.0 * radius,
+      height=2.0 * radius,
+    )
+    // Soft trailing shadow under the ball.
+    push_opacity(ctx, 0.18)
+    let shadow = @geometry.Rect::new(
+      x=ball_x - radius * 0.9,
+      y=frame.origin.y + frame.size.height - radius * 0.6,
+      width=radius * 1.8,
+      height=radius * 0.5,
+    )
+    fill_rounded_rect(
+      ctx,
+      @graphics.RoundedRect::new(rect=shadow, radius=radius * 0.25),
+      @graphics.Brush::solid(@graphics.Color::rgba(r=0.1, g=0.1, b=0.15)),
+    )
+    pop_opacity(ctx)
+    // The orb itself, using the theme primary color.
+    fill_rounded_rect(
+      ctx,
+      @graphics.RoundedRect::new(rect=ball, radius~),
+      @graphics.Brush::solid(theme.palette.primary),
+    )
   }
   if running {
     animated_canvas(

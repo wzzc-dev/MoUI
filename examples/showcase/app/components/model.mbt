@@ -373,7 +373,8 @@ pub fn update(
       { ..model, password_revealed: !model.password_revealed, }
     FeatureToggled(value) => { ..model, feature_enabled: value, }
     SliderChanged(value) => { ..model, slider_value: value, }
-    ToggleCanvasDemo => { ..model, canvas_demo_running: !model.canvas_demo_running, }
+    ToggleCanvasDemo =>
+      { ..model, canvas_demo_running: !model.canvas_demo_running, }
     Increment => { ..model, counter: model.counter + 1, }
     Decrement => { ..model, counter: model.counter - 1, }
     ProbeTextChanged(value) => { ..model, probe_text: value, }

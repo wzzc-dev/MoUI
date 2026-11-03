@@ -745,20 +745,6 @@ static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
       style
     );
     if (typeface) {
-      static int s_typeface_log_count = 0;
-      if (s_typeface_log_count < 24) {
-        s_typeface_log_count += 1;
-        SkString resolved_name;
-        typeface->getFamilyName(&resolved_name);
-        __android_log_print(
-          ANDROID_LOG_INFO,
-          "MoUIWindow",
-          "typeface requested=%{public}s resolved=%{public}s weight=%{public}d",
-          family_name,
-          resolved_name.c_str(),
-          style.weight()
-        );
-      }
       return typeface;
     }
   }
@@ -975,6 +961,25 @@ static sk_sp<SkTypeface> moonbit_skia_android_typeface_from_family(
       style
     );
     if (typeface) {
+#if defined(__ANDROID__)
+      // One-shot family-resolution diagnostics for the Android font bug
+      // class (arbitrary display faces). Plain %s: __android_log_print has
+      // no hilog %{public}s syntax.
+      static int s_typeface_log_count = 0;
+      if (s_typeface_log_count < 24) {
+        s_typeface_log_count += 1;
+        SkString resolved_name;
+        typeface->getFamilyName(&resolved_name);
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIWindow",
+          "typeface requested=%s resolved=%s weight=%d",
+          family_name,
+          resolved_name.c_str(),
+          style.weight()
+        );
+      }
+#endif
       return typeface;
     }
   }

@@ -771,7 +771,7 @@ pub fn HostedWindowBackend::needs_redraw(self : HostedWindowBackend) -> Bool {
 }
 
 ///|
-/// Render-phase breakdown (runtime/skia/sync, ms) of the most recent frame.
+/// Render-phase breakdown (runtime/renderer/sync, ms) of the most recent frame.
 /// Temporary diagnostic for the frame-cost investigation.
 pub fn HostedRuntimeSession::present_breakdown(
   self : HostedRuntimeSession,
