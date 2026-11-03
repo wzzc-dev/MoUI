@@ -1,5 +1,33 @@
 # HarmonyOS window-hosted facts (post ADR 0046)
 
+## Android font rendering: paragraph family macro bug (2026-11-03)
+
+- Symptom: every Android heading rendered small-caps-style
+  ("Showcase" -> full-size "S" + smaller "HOWCASE", letterspaced), while
+  HarmonyOS/macOS rendered mixed case.
+- Font manager was NEVER the problem: the NDK font manager is healthy
+  (220 families; `matchFamilyStyle("sans-serif")` -> Roboto). Diagnostic:
+  one-shot `font mgr=` / `typeface requested=/resolved=` logs in
+  `moui_skia/native/skia_stub_common.cpp`.
+- Root cause: `skia_stub_paragraph.cpp` guarded `setFontFamilies` with
+  `#if !defined(__linux__)` - Android's clang defines `__linux__`, so the
+  requested family never reached the paragraph, and SkParagraph resolved
+  no family onto an arbitrary display face. Fixed with
+  `!defined(__linux__) || defined(__ANDROID__)`.
+- Also map the CSS generic "system-ui" to the Android "sans-serif" alias:
+  the NDK font matcher resolves unknown family names to arbitrary faces.
+  The MoonBit core maps `FontFamily::SystemUi` -> the CSS string
+  "system-ui" (paint.mbt), which is correct for Web but needs the alias
+  translation on native Android.
+- hilog lesson: `%{public}s` is hilog format syntax - `__android_log_print`
+  needs plain `%s` (a mismatched format prints the literal and consumes
+  the wrong args).
+- Android route note: the Android window-hosted session presents through
+  the CPU raster presenter (`android_present.cpp`, no EGL-direct GPU
+  surface route yet) - SurfaceFlinger timestats measured 13-15 fps during
+  scroll on the emulator with the host GPU. An ANativeWindow+EGL direct
+  route (mirroring the HarmonyOS host binding) is the parallel fix.
+
 ## Frame-cost measurement arc (2026-11-02, afternoon)
 
 - `hdc install -r` does NOT kill a running app; `aa start` then only
