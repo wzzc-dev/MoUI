@@ -4,7 +4,7 @@ version = "0.2.6"
 
 import {
   "wzzc-dev/windowing@0.1.2",
-  "wzzc-dev/window@0.5.4-0.2.4",
+  "wzzc-dev/window@0.5.4-0.2.5",
 }
 
 readme = "README.mbt.md"
