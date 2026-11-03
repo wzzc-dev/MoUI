@@ -1,6 +1,9 @@
 #include "skia_stub_common.h"
 
 #include <cmath>
+#if defined(__ANDROID__)
+#include <android/log.h>
+#endif
 
 static uint32_t moonbit_skia_regular_object_header(
   uint32_t pointer_field_offset_words,
@@ -742,6 +745,20 @@ static sk_sp<SkTypeface> moonbit_skia_windows_typeface_from_family(
       style
     );
     if (typeface) {
+      static int s_typeface_log_count = 0;
+      if (s_typeface_log_count < 24) {
+        s_typeface_log_count += 1;
+        SkString resolved_name;
+        typeface->getFamilyName(&resolved_name);
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIWindow",
+          "typeface requested=%{public}s resolved=%{public}s weight=%{public}d",
+          family_name,
+          resolved_name.c_str(),
+          style.weight()
+        );
+      }
       return typeface;
     }
   }
@@ -861,8 +878,53 @@ static SkFontMgr* moonbit_skia_android_font_mgr(void) {
       SkFontScanner_Make_FreeType()
     );
     if (moonbit_skia_font_mgr_has_families(ndk_mgr)) {
+      __android_log_print(
+        ANDROID_LOG_INFO,
+        "MoUIWindow",
+        "font mgr=android-ndk families=%d",
+        ndk_mgr->countFamilies()
+      );
+      sk_sp<SkTypeface> generic = ndk_mgr->legacyMakeTypeface(
+        "sans-serif",
+        SkFontStyle::Normal()
+      );
+      sk_sp<SkTypeface> matched = ndk_mgr->matchFamilyStyle(
+        "sans-serif",
+        SkFontStyle::Normal()
+      );
+      if (matched) {
+        SkString matched_name;
+        matched->getFamilyName(&matched_name);
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIWindow",
+          "matchFamilyStyle sans-serif resolved=%s",
+          matched_name.c_str()
+        );
+      } else {
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIWindow",
+          "matchFamilyStyle sans-serif resolved=null"
+        );
+      }
+      if (generic) {
+        SkString resolved;
+        generic->getFamilyName(&resolved);
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIWindow",
+          "generic sans-serif resolved=%s",
+          resolved.c_str()
+        );
+      }
       return ndk_mgr;
     }
+    __android_log_print(
+      ANDROID_LOG_INFO,
+      "MoUIWindow",
+      "font mgr=android-ndk-empty"
+    );
 #endif
 #if defined(MOUI_SKIA_HAS_ANDROID_FONTMGR)
     sk_sp<SkFontMgr> legacy_mgr = SkFontMgr_New_Android(
@@ -870,8 +932,27 @@ static SkFontMgr* moonbit_skia_android_font_mgr(void) {
       SkFontScanner_Make_FreeType()
     );
     if (moonbit_skia_font_mgr_has_families(legacy_mgr)) {
+      __android_log_print(
+        ANDROID_LOG_INFO,
+        "MoUIWindow",
+        "font mgr=android-legacy families=%d",
+        legacy_mgr->countFamilies()
+      );
       return legacy_mgr;
     }
+    __android_log_print(
+      ANDROID_LOG_INFO,
+      "MoUIWindow",
+      "font mgr=android-legacy-empty"
+    );
+#endif
+#if !defined(MOUI_SKIA_HAS_ANDROID_NDK_FONTMGR) && \
+  !defined(MOUI_SKIA_HAS_ANDROID_FONTMGR)
+    __android_log_print(
+      ANDROID_LOG_INFO,
+      "MoUIWindow",
+      "font mgr=macros-undefined"
+    );
 #endif
     return SkFontMgr::RefEmpty();
   }();

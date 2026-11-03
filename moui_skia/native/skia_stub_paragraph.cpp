@@ -116,9 +116,20 @@ moonbit_skia_paragraph_layout_utf8(
     std::max(1, std::min(9, width)),
     moonbit_skia_paragraph_slant(slant)
   ));
-#if !defined(__linux__)
+// Android's clang defines __linux__ (bionic on the Linux kernel); the
+// family request must still reach the paragraph style there, or SkParagraph
+// resolves no family and lands on an arbitrary display face (rendered as
+// small-caps-style headings on device).
+#if !defined(__linux__) || defined(__ANDROID__)
   if (moonbit_skia_paragraph_has_family(family_name)) {
     std::string family = moonbit_skia_bytes_to_string(family_name);
+#if defined(__ANDROID__)
+    // CSS generic "system-ui" is not an Android family alias; the NDK font
+    // matcher resolves unknown families to an arbitrary display face.
+    if (family == "system-ui") {
+      family = "sans-serif";
+    }
+#endif
     std::vector<SkString> families;
     families.emplace_back(family.data(), family.size());
     text_style.setFontFamilies(families);
