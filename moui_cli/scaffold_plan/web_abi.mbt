@@ -19,6 +19,11 @@ pub let web_abi_exports : ReadOnlyArray[String] = [
 /// 也来自同一份 `.mooncakes`，两边必须同一批 arity。工作区里领先发布线的
 /// 入口改动只改 `examples/*/web_wasm/abi.mbt` 与 `website/web_wasm/main.mbt`
 /// （它们是 workspace 成员），发布线移动后再一起改这里。
+///
+/// 0.3.0 发布线：`wzzc-dev/moui@0.3.0` 的 `web_dispatch_pointer_input` 带
+/// `pointer_id` 与 `pressure`，共 10 参（0.2.4 及以前是 8 参）。默认工程版本
+/// 已随之移到 0.3.0，故这里的转发也补齐两参；`moui new --moui-version` 若
+/// 显式指定 0.2.4 及以前的线，需自行同步旧的 8 参转发。
 pub fn web_abi_shim_mbt() -> String {
   let shim =
     #|///|
@@ -43,6 +48,8 @@ pub fn web_abi_shim_mbt() -> String {
     #|  delta_y_px : Double,
     #|  button : Int,
     #|  modifiers : Int,
+    #|  pointer_id : Int,
+    #|  pressure : Double,
     #|) -> Int {
     #|  @web.web_dispatch_pointer_input(
     #|    raw_id,
@@ -53,6 +60,8 @@ pub fn web_abi_shim_mbt() -> String {
     #|    delta_y_px,
     #|    button,
     #|    modifiers,
+    #|    pointer_id,
+    #|    pressure,
     #|  )
     #|}
     #|
