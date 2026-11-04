@@ -206,9 +206,7 @@ test "default macOS project file plan is exact" {
   assert_true(web_main.contains("pointer_id : Int"))
   assert_true(web_main.contains("pressure : Double"))
   assert_true(
-    web_main.contains(
-      "button,\n    modifiers,\n    pointer_id,\n    pressure,",
-    ),
+    web_main.contains("button,\n    modifiers,\n    pointer_id,\n    pressure,"),
   )
   assert_false(web_main.contains("@web.run_app"))
   let html = test_planned_text(files, "web_wasm/index.html")
