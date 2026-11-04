@@ -43,7 +43,7 @@ ViewDeclaration -> ElementTree
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. They decode native input locally and route neutral lifecycle facts through `backend/common`. |
 | `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |
 | `moui/render/` | Renderer-neutral frame/image/descriptor DTOs, opaque `HostSurface`/`NativeSurface` capabilities, and the two renderer lifecycle contracts `RendererProvider`/`RendererSession`. It contains no platform or graphics-API surface tag. |
-| `moui/render/common/` | Provider selection, fallback planning, mailbox/GPU worker, renderer-neutral image event helpers, retained-layer algorithms, and shared drawing algorithms. |
+| `moui/render/common/` | Provider selection, fallback planning, GPU worker, renderer-neutral image event helpers, retained-layer algorithms, and shared drawing algorithms. |
 | `moui/render/native_text/` | Renderer-neutral native text model: the platform provider callback bundle, glyph key/placement/layout/raster values, provider validation, the fallback chain, and the measure/layout caches. Platform text providers and concrete renderers both depend on this instead of on each other. |
 | `moui_skia_renderer/` | Native Skia renderer facade over `moui_skia`. |
 | `moui_web_renderer/` | Browser WebGPU host-import adapter for `wasm-gc`. |

@@ -1,11 +1,11 @@
 name = "wzzc-dev/moui_devtools"
 
-version = "0.2.6"
+version = "0.3.0"
 
 license = "Apache-2.0"
 
 import {
-  "wzzc-dev/moui@0.2.6",
+  "wzzc-dev/moui@0.3.0",
 }
 
 description = "Repo-local MoUI inspector snapshot summaries and debug formatters"

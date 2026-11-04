@@ -88,7 +88,7 @@ Read only what the task needs:
   `RendererProvider` and `RendererSession`. Application entrypoints register
   ordered providers and one platform entry; root render has no platform or
   graphics-API surface tag. `RendererBackendKind` is diagnostic only.
-- `moui/render/common`: provider selection, fallback, mailbox/GPU worker,
+- `moui/render/common`: provider selection, fallback, GPU worker,
   image lifecycle/repaint, and shared drawing algorithms.
 - `moui_skia_renderer`: native Skia CPU/GPU providers, renderer, and
   renderer-local `NativeGpuPlatform`/`SkiaSurfaceRoute` policy over `moui_skia`.

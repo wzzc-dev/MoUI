@@ -55,7 +55,7 @@
 
 ## L3 跨平台一致性
 
-Mobile host-channel、IME replacement/selection、semantics action validation、renderer selection 和 mailbox behavior 具有 L1 package-test 证明。Mobile L3 是独立的，并且在每个平台的 window-hosted verification 于匹配设备或模拟器上通过之前保持 pending。它要求 presentation、actual detach、IME、text/image clipboard、accessibility tree/focus/action 和 async image observations。
+Mobile host-channel、IME replacement/selection、semantics action validation、renderer selection 和 render-worker queue behavior 具有 L1 package-test 证明。Mobile L3 是独立的，并且在每个平台的 window-hosted verification 于匹配设备或模拟器上通过之前保持 pending。它要求 presentation、actual detach、IME、text/image clipboard、accessibility tree/focus/action 和 async image observations。
 
 已注册 suite 覆盖 Android 和 iOS Counter/Showcase，以及 HarmonyOS Demo/Showcase。GPU promotion 不属于当前 L1/L2 渲染器证明；它需要 `../window-hosted-moui.md` 中的逐平台性能和恢复 evidence。
 
@@ -77,7 +77,7 @@ GPU readback elimination plan 的第 1 阶段已落地 window-surface GPU source
 
 | Gate | Source | L1 证明 |
 | --- | --- | --- |
-| Renderer mailbox control queue | `moui/render/common/gpu_render_worker.mbt` | `moui/render/common` whitebox tests（capacity-two latest-wins；control messages never dropped） |
+| Renderer worker control queue | `moui/render/common/gpu_render_worker.mbt` | `moui/render/common` whitebox tests（capacity-two latest-wins；control messages never dropped） |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | 聚焦 native worker tests（`SkPicture` retain、independent thread、detach acknowledgement、zero readback counter）、macOS worker-owned Metal first-frame smoke、Android NDK GPU build、HarmonyOS native/HAP build 和 iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；terminal `FallbackToRaster`） |
 | GPU promotion evidence | `docs/gpu-promotion-runbook.md` | promotion claim 前仍需要 matching-device evidence |

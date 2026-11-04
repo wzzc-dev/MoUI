@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_tui"
 
-version = "0.2.6"
+version = "0.3.0"
 
 preferred_target = "native"
 

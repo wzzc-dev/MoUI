@@ -33,7 +33,7 @@ HostRuntimeDriver        input/service protocols   protocols and DTOs
         └──────────┬───────────┘                        ▼
                    ▼                            moui/render/common
           moui/backend/common                  provider selection, fallback,
-          stateless host workflows             mailbox/GPU worker,
+          stateless host workflows                GPU worker,
                    │                            shared drawing algorithms
        ┌───────────┼───────────┬───────────┐           │
        ▼           ▼           ▼           ▼           │

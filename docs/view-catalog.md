@@ -105,6 +105,49 @@ channel directly, and `custom` encoders call a package-local key function.
 and the compatibility note are in
 `docs/decisions/0034-viewnode-declaration-coverage-gate.md`.
 
+### Pressable transitions and helper dedupe (2026-11-04 migration, `0.3.0`)
+
+The button-only pressed-transition infrastructure became the shared pressable
+facility in `moui/views/common/pressable_transition.mbt`, and duplicated
+fallback helpers were dropped from the published `moui/views/common` and
+`moui/views/container` surfaces. Each control now owns one transition slot
+under a namespaced key (`"moui.views.<control>.transition"`); `button` keeps
+its exact previous key and the `ViewStateValue` wire encoding is byte-
+compatible, so persisted view state decodes unchanged. The old-to-new mapping,
+including the renderer-side removals (`PlanOp`/`DrawPlan`/
+`lower_draw_commands`, `RenderFrameMailbox`), is
+`docs/decisions/0047-zero-three-renderer-views-api-retirements.md`.
+
+A pressable control's event body migrates by renaming and adding the `control~`
+label — the state machine and recording logic are unchanged (`moui/views/
+button/button.mbt` is the reference; it migrated at four call sites with
+byte-identical behavior):
+
+```moonbit
+// 0.2.x — button-only helpers
+let next = @common.view_button_next_state(current, inside, event.phase)
+let next_state = @common.button_state_with_transition(
+  ctx.state, current, next, ctx.now_ms,
+)
+// instant clear added `.without_slot(@common.button_transition_slot())`
+// paint-time read: @common.button_transition(ctx.state)
+
+// 0.3.0 — shared pressable facility
+let next = @common.pressable_next_state(current, inside, event.phase)
+let next_state = @common.pressable_state_with_transition(
+  ctx.state, current, next, ctx.now_ms, control="button",
+)
+// instant clear adds `.without_slot(@common.pressable_transition_slot("button"))`
+// paint-time read: @common.pressable_transition(ctx.state, control="button")
+```
+
+The remaining helper removals map onto surviving names or the stdlib:
+`ButtonTransitionState` → `PressableTransition`;
+`min_view_double`/`max_view_double` → `view_min_double`/`view_max_double`;
+`resolve_control_color(fallback, value)` → `value.unwrap_or(fallback)`.
+Standard controls (`@views.button(...)` and friends) need no app-level change;
+only packages that hand-wired the removed `views/common` helpers do.
+
 ## Implementing a `ViewNode`
 
 `@core.ViewNode` is 15 methods, and it is deliberately one trait. Only
