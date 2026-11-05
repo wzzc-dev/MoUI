@@ -30,26 +30,33 @@ fn ElementNode::platform_with_environment(
       Some(node) => node.placements.copy()
       None =>
         self.view_node.platform_views({
-          frame: placed.frame,
-          child_frames: placed.children.map(child => child.frame),
+          frame: platform_local_frame(placed),
+          child_frames: platform_local_child_frames(placed),
           environment: environment.environment,
           style: environment.style,
         })
     }
   } else {
     self.view_node.platform_views({
-      frame: placed.frame,
-      child_frames: placed.children.map(child => child.frame),
+      frame: platform_local_frame(placed),
+      child_frames: platform_local_child_frames(placed),
       environment: environment.environment,
       style: environment.style,
     })
   }
   let children : Array[PlatformNode] = []
-  let child_environment = environment.with_child_context(self.view_node)
+  let child_environment_value = self.view_node.child_environment(
+    environment.environment,
+  )
   let child_environment_id = self.child_environment_identity(
-    child_environment.environment,
+    child_environment_value,
     environment.environment,
     env_id,
+  )
+  let child_environment = environment.with_child_context(
+    child_environment_value,
+    self.view_node.child_style(environment.style),
+    child_environment_id,
   )
   for index, child in self.children {
     if index < placed.children.length() {
@@ -62,7 +69,13 @@ fn ElementNode::platform_with_environment(
       )
     }
   }
-  let node = PlatformNode::{ placements, children, }
+  let node = PlatformNode::{
+    placements,
+    frame: placed.frame,
+    child_transform: placed.child_transform,
+    overlay_child_indices: placed.overlay_child_indices.copy(),
+    children,
+  }
   self.dirty.needs_platform = false
   self.refresh_descendant_dirty_flags()
   self.platform_cache.frame = Some(placed.frame)
@@ -76,10 +89,35 @@ fn ElementNode::platform_with_environment(
 fn PlatformNode::collect_placements(
   self : PlatformNode,
   output : Array[PlatformViewPlacement],
+  node_to_screen : Transform2D,
 ) -> Unit {
-  output.append(self.placements)
-  for child in self.children {
-    child.collect_placements(output)
+  for placement in self.placements {
+    output.push({
+      ..placement,
+      frame: runtime_transform_rect(node_to_screen, placement.frame),
+      clip: match placement.clip {
+        Some(clip) => Some(runtime_transform_rect(node_to_screen, clip))
+        None => None
+      },
+    })
+  }
+  let child_content_to_screen = runtime_transform_compose(
+    node_to_screen,
+    self.child_transform,
+  )
+  for index, child in self.children {
+    let child_to_screen = if self.overlay_child_indices.contains(index) {
+      runtime_overlay_to_screen(child.frame)
+    } else {
+      runtime_transform_compose(
+        child_content_to_screen,
+        Transform2D::translation(
+          dx=child.frame.origin.x,
+          dy=child.frame.origin.y,
+        ),
+      )
+    }
+    child.collect_placements(output, child_to_screen)
   }
 }
 
@@ -88,6 +126,30 @@ fn PlatformTree::placements(
   self : PlatformTree,
 ) -> Array[PlatformViewPlacement] {
   let output : Array[PlatformViewPlacement] = []
-  self.root.collect_placements(output)
+  self.root.collect_placements(output, Transform2D::identity())
   output
+}
+
+///|
+fn platform_local_frame(placed : PlacedNode) -> Rect {
+  Rect::new(
+    x=0.0,
+    y=0.0,
+    width=placed.frame.size.width,
+    height=placed.frame.size.height,
+  )
+}
+
+///|
+fn platform_local_child_frames(placed : PlacedNode) -> Array[Rect] {
+  let frames : Array[Rect] = []
+  for index, child in placed.children {
+    let frame = if placed.overlay_child_indices.contains(index) {
+      child.frame
+    } else {
+      runtime_transform_rect(placed.child_transform, child.frame)
+    }
+    frames.push(frame)
+  }
+  frames
 }

@@ -103,6 +103,25 @@ test "renderer providers bind in order and rejection allocates no session" {
 }
 
 ///|
+test "renderer session surface damage capability defaults to full" {
+  let default_session = contract_session()
+  assert_true(
+    default_session.surface_damage_capability()
+    is @render.SurfaceDamageCapability::FullSurfaceOnly,
+  )
+  let subrect_session = @render.RendererSession::new(
+    resize=_ => (),
+    render_frame=_ => @render.RenderFrameResult::new(presented=true),
+    text_system=() => @core.TextSystem::fallback(),
+    surface_damage=@render.SurfaceDamageCapability::SubRect,
+  )
+  assert_true(
+    subrect_session.surface_damage_capability()
+    is @render.SurfaceDamageCapability::SubRect,
+  )
+}
+
+///|
 test "one provider creates independent renderer sessions per window" {
   let next_id = Ref(0)
   let first_disposals = Ref(0)

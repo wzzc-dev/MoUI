@@ -21,9 +21,50 @@ struct ScenarioBudget {
 }
 
 ///|
+struct PerformanceCatalog {
+  scenarios : Map[String, ScenarioBudget]
+  structural : StructuralBudget
+}
+
+///|
+struct LeafStructuralBudget {
+  nodes : Int32
+  map_layers : Int32
+  max_node_builds_per_frame : Double
+  min_builder_cache_hit_rate : Double
+  max_builder_cache_misses_per_frame : Double
+  min_render_cache_hit_rate : Double
+}
+
+///|
+struct ScrollStructuralBudget {
+  min_layout_cache_hit_rate : Double
+  max_layout_cache_misses_per_frame : Double
+  min_render_cache_hit_rate : Double
+  max_render_cache_misses_per_frame : Double
+}
+
+///|
+struct StructuralBudget {
+  minimum_frames : Int32
+  leaf_scenarios : Map[String, LeafStructuralBudget]
+  scroll_scenarios : Map[String, ScrollStructuralBudget]
+}
+
+///|
 let required_scenarios : Array[String] = [
   "showcase-runtime-scroll", "excel-grid-navigation", "virtual-list-100k", "multi-window-4",
   "deep-tree-env-toggle",
+]
+
+///|
+let required_structural_leaf_scenarios : Array[String] = [
+  "leaf-update-1k-builder-cache", "leaf-update-10k-builder-cache",
+]
+
+///|
+let required_structural_scroll_scenarios : Array[String] = [
+  "showcase-runtime-scroll",
 ]
 
 ///|

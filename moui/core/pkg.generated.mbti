@@ -679,7 +679,7 @@ pub fn[Model, Msg] Feature::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg
 pub fn[Model, Msg] Feature::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
 pub fn[Model, Msg] Feature::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
 pub fn[Model, Msg] Feature::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
-pub fn[Child, ChildMsg, Parent, ParentMsg] Feature::scope(Self[Child, ChildMsg], read~ : (Parent) -> Child, write~ : (Child, Parent) -> Parent, wrap~ : (ChildMsg) -> ParentMsg) -> ScopedFeature[Parent, Child, ChildMsg, ParentMsg]
+pub fn[Child, ChildMsg, Parent, ParentMsg] Feature::scope(Self[Child, ChildMsg], scope_id? : String, read~ : (Parent) -> Child, write~ : (Child, Parent) -> Parent, wrap~ : (ChildMsg) -> ParentMsg) -> ScopedFeature[Parent, Child, ChildMsg, ParentMsg]
 pub fn[Model, Msg] Feature::with_commands(Self[Model, Msg], commands~ : (Model) -> Array[ProgramCommand[Msg]]) -> Self[Model, Msg]
 
 pub(all) enum FilterEffect {
@@ -2206,6 +2206,26 @@ pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::traps_focus(Self[Msg]) -> Bool
 
+pub struct ViewBuilderCache[Msg] {
+  // private fields
+}
+pub fn[Msg] ViewBuilderCache::clear(Self[Msg]) -> Unit
+pub fn[Msg] ViewBuilderCache::new() -> Self[Msg]
+pub fn[Msg] ViewBuilderCache::remove(Self[Msg], DeclarationKey) -> Unit
+pub fn[Msg] ViewBuilderCache::stats(Self[Msg]) -> ViewBuilderCacheStats
+pub fn[Msg] ViewBuilderCache::view(Self[Msg], builder_key~ : DeclarationKey, content_key~ : DeclarationKey, build~ : () -> View[Msg]) -> View[Msg]
+
+pub struct ViewBuilderCacheStats {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn ViewBuilderCacheStats::build_count(Self) -> Int32
+pub fn ViewBuilderCacheStats::entry_count(Self) -> Int32
+pub fn ViewBuilderCacheStats::equal(Self, Self) -> Bool
+pub fn ViewBuilderCacheStats::hit_count(Self) -> Int32
+pub fn ViewBuilderCacheStats::miss_count(Self) -> Int32
+pub fn ViewBuilderCacheStats::not_equal(Self, Self) -> Bool
+pub fn ViewBuilderCacheStats::to_repr(Self) -> @debug.Repr
+
 pub struct ViewDeclaration {
   layout : DeclarationChannel
   paint : DeclarationChannel
@@ -2293,14 +2313,32 @@ pub fn ViewLayoutContext::effective_theme(Self, pinned? : Theme?) -> Theme
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
+  child_transform : Transform2D
   clips_children : Bool
   child_frames_tight : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewLayoutResult::equal(Self, Self) -> Bool
-pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], clips_children? : Bool, child_frames_tight? : Bool) -> Self
+pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect], child_transform? : Transform2D, clips_children? : Bool, child_frames_tight? : Bool) -> Self
 pub fn ViewLayoutResult::not_equal(Self, Self) -> Bool
 pub fn ViewLayoutResult::to_json(Self) -> Json
 pub fn ViewLayoutResult::to_repr(Self) -> @debug.Repr
+
+pub struct ViewMemo[Msg] {
+  // private fields
+}
+pub fn[Msg] ViewMemo::new() -> Self[Msg]
+pub fn[Msg] ViewMemo::stats(Self[Msg]) -> ViewMemoStats
+pub fn[Msg] ViewMemo::view(Self[Msg], key~ : DeclarationKey, build~ : () -> View[Msg]) -> View[Msg]
+
+pub struct ViewMemoStats {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn ViewMemoStats::build_count(Self) -> Int32
+pub fn ViewMemoStats::equal(Self, Self) -> Bool
+pub fn ViewMemoStats::hit_count(Self) -> Int32
+pub fn ViewMemoStats::miss_count(Self) -> Int32
+pub fn ViewMemoStats::not_equal(Self, Self) -> Bool
+pub fn ViewMemoStats::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ViewPaintContext {
   frame : Rect

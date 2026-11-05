@@ -1,7 +1,7 @@
 ///|
-/// Frame contract regression suite for the Skia route: every presented frame
-/// fully overwrites the surface. Damage rects from the runtime must never
-/// leave previous-frame pixels (e.g. a scrolled image ghost) behind.
+/// Frame contract regression suite for the Skia route. The default
+/// `FullSurfaceOnly` capability fully overwrites every presented surface;
+/// `SubRect` is an explicit opt-in whose output must match that reference.
 test "skia render_frame full damage clears entire surface" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -364,6 +364,258 @@ test "skia scope commands never rely on partial damage" {
     skia_test_region_has_dark_pixel(
       second_frame,
       @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+    ),
+  )
+}
+
+///|
+fn skia_test_pixel_frames_equal(
+  left : SkiaPixelFrame,
+  right : SkiaPixelFrame,
+) -> Bool {
+  if left.width() != right.width() ||
+    left.height() != right.height() ||
+    left.row_bytes() != right.row_bytes() ||
+    left.scale_factor() != right.scale_factor() ||
+    left.pixels().length() != right.pixels().length() {
+    return false
+  }
+  for index in 0..<left.pixels().length() {
+    if left.pixels()[index] != right.pixels()[index] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+test "skia subrect capability preserves pixels outside damage" {
+  guard skia_available() else { return }
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+    surface_damage=@render.SubRect,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  ignore(
+    renderer.render_frame(
+      skia_test_draw_frame_with_damage(
+        [
+          FillRect(
+            @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+            @core.Color::black(),
+          ),
+        ],
+        @core.DamageRegion::full("baseline black"),
+      ),
+    ),
+  )
+  let left = @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0)
+  let second = renderer.render_frame(
+    skia_test_draw_frame_with_damage(
+      [FillRect(left, @core.Color::white())],
+      Rects([left]),
+    ),
+  )
+  assert_true(second.presented)
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected subrect frame")
+  }
+  assert_false(skia_test_region_has_dark_pixel(frame, left))
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=8.0, y=0.0, width=8.0, height=16.0),
+    ),
+  )
+}
+
+///|
+test "skia subrect empty damage skips presentation" {
+  guard skia_available() else { return }
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+    surface_damage=@render.SubRect,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  ignore(
+    renderer.render_frame(
+      skia_test_draw_frame_with_damage(
+        [
+          FillRect(
+            @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+            @core.Color::black(),
+          ),
+        ],
+        @core.DamageRegion::full("baseline black"),
+      ),
+    ),
+  )
+  let second = renderer.render_frame(
+    skia_test_draw_frame_with_damage([], @core.DamageRegion::empty()),
+  )
+  assert_false(second.presented)
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected retained baseline frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+    ),
+  )
+}
+
+///|
+test "skia subrect scope commands fall back to full damage" {
+  guard skia_available() else { return }
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    SkiaPresentTarget::new(description="test", present=_ => true),
+    surface_damage=@render.SubRect,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  ignore(
+    renderer.render_frame(
+      skia_test_draw_frame_with_damage(
+        [
+          FillRect(
+            @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+            @core.Color::black(),
+          ),
+        ],
+        @core.DamageRegion::full("baseline black"),
+      ),
+    ),
+  )
+  let second = renderer.render_frame(
+    skia_test_draw_frame_with_damage(
+      [PushOpacity(1.0), PopOpacity],
+      Rects([@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0)]),
+    ),
+  )
+  assert_true(second.presented)
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected full fallback frame")
+  }
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+    ),
+  )
+}
+
+///|
+test "skia subrect damage union matches a hidpi full-surface reference" {
+  guard skia_available() else { return }
+  let metrics = @core.SurfaceMetrics::from_logical(
+    size=@core.Size::new(width=32.0, height=16.0),
+    scale_factor=2.0,
+  )
+  let full = create_with_present_target(
+    metrics,
+    SkiaPresentTarget::new(description="reference", present=_ => true),
+  ) catch {
+    err => fail("expected reference renderer creation: \{err.message()}")
+  }
+  let partial = create_with_present_target(
+    metrics,
+    SkiaPresentTarget::new(description="candidate", present=_ => true),
+    surface_damage=@render.SubRect,
+  ) catch {
+    err => fail("expected candidate renderer creation: \{err.message()}")
+  }
+  let left = @core.Rect::new(x=2.0, y=2.0, width=6.0, height=12.0)
+  let right = @core.Rect::new(x=20.0, y=2.0, width=6.0, height=12.0)
+  ignore(
+    full.render_frame(
+      @core.DrawFrame::new(
+        commands=[],
+        damage=@core.DamageRegion::full("reference baseline"),
+        clear_color=@core.Color::black(),
+      ),
+    ),
+  )
+  ignore(
+    partial.render_frame(
+      @core.DrawFrame::new(
+        commands=[],
+        damage=@core.DamageRegion::full("candidate baseline"),
+        clear_color=@core.Color::black(),
+      ),
+    ),
+  )
+  let changed_commands : Array[@core.DrawCommand] = [
+    FillRect(left, @core.Color::rgba(r=0.0, g=0.65, b=0.2, a=1.0)),
+    FillRect(right, @core.Color::rgba(r=0.0, g=0.0, b=1.0, a=1.0)),
+  ]
+  ignore(
+    full.render_frame(
+      @core.DrawFrame::new(
+        commands=changed_commands,
+        damage=@core.DamageRegion::full("reference changed"),
+        clear_color=@core.Color::black(),
+      ),
+    ),
+  )
+  let candidate = partial.render_frame(
+    @core.DrawFrame::new(
+      commands=changed_commands,
+      damage=Rects([left, right]),
+      clear_color=@core.Color::black(),
+    ),
+  )
+  assert_true(candidate.presented)
+  guard full.last_frame() is Some(reference) else {
+    fail("missing reference frame")
+  }
+  guard partial.last_frame() is Some(actual) else {
+    fail("missing candidate frame")
+  }
+  assert_true(skia_test_pixel_frames_equal(reference, actual))
+  // Logical damage [2,26] x [2,14] becomes physical [4,52] x [4,28].
+  // The margins outside that union retain the baseline instead of being
+  // cleared to a new color.
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      actual,
+      @core.Rect::new(x=0.0, y=0.0, width=64.0, height=4.0),
+    ),
+  )
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      actual,
+      @core.Rect::new(x=52.0, y=0.0, width=12.0, height=32.0),
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      actual,
+      @core.Rect::new(x=4.0, y=4.0, width=12.0, height=24.0),
+      (red, green, blue, alpha) => {
+        red < 40 && green > 120 && blue < 100 && alpha > 0
+      },
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      actual,
+      @core.Rect::new(x=40.0, y=4.0, width=12.0, height=24.0),
+      (red, green, blue, alpha) => {
+        red < 40 && green < 40 && blue > 200 && alpha > 0
+      },
     ),
   )
 }

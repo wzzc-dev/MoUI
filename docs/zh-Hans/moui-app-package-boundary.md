@@ -63,7 +63,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   button/text field/picker 等低层 custom view 实现。WebView constructor 和
   bridge type 属于 `moui_webview/views` 与 `moui_webview/host`。
 - runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
-  snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
+  snapshot、view/render diagnostics snapshot。
 - 平台服务进入 `moui/backend`：通用 host capability、host service contract。
   WebView command/event/policy/spec 属于独立的 `moui_webview` addon。
 - renderer/backend 实现仍在 `moui/render/*` 和 `moui/backend/*`。
@@ -108,12 +108,11 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `@moui_richtext.controlled_markdown_session_editor` 等 facade 使用。`core` 只保留
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
   text input state。`moui/views` 只保留 `text`/`text_field`/`text_area` 纯文本控件。
-- **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
-  component-facing kernel 类型保留在 `core`，因为 `View::from_node` /
-  `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
-  `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
-  普通 component API 不暴露散落的 runtime storage 参数，领域 facade 也不转发该
-  构造入口。
+- **持久 component state 保持 Feature-first**：普通控件接收不可变值和 typed
+  callback；可复用控件实现 `ViewNode`，并通过 `View::from_node` 构造。持久及
+  多实例状态由 parent model 拥有，`Feature::scope` 只命名 lifecycle key，
+  save/restore 使用 app-owned snapshot DTO（ADR 0053）。runtime 不提供 component
+  store 或隐藏的 context 对象。
 - **Date picker 控件语义已迁出**：`DateValue` 是中立数据模型，继续属于
   `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。低层 display
   mode representation 是 `views` 包内私有实现细节，转换由普通 constructor 完成。
@@ -318,10 +317,9 @@ ColorScheme  LayoutDirection  FocusScope  FocusScopeItem
   `@graphics.ImageFit`、`@graphics.LayerSpec`、`@graphics.Transform2D` 等。
 - 动画类型用 `@animation.TransitionSpec`、`@animation.TransitionStyle`、`@animation.Easing`。
 - focus / scheme 用 `@state.FocusScope`、`@state.FocusScopeItem`、`@state.ColorScheme`。
-- diagnostics/kernel-only 类型在需要时直连 `@core.SemanticsRole`、
-  `@core.ComponentContext`，并限定在 showcase/diagnostics/custom kernel 或测试场景。
-  element identity 是 runtime 私有实现，app 与 diagnostics package 都不会获得
-  `@core.ElementId`。
+- diagnostics/kernel-only 类型在需要时直连 `@core.SemanticsRole`，并限定在
+  showcase/diagnostics/custom kernel 或测试场景。element identity 是 runtime
+  私有实现，app 与 diagnostics package 都不会获得 `@core.ElementId`。
 
 ### 不设糖 / 仅测试或框架直连 `@core`
 
@@ -402,7 +400,8 @@ helper：
 
 第三方 addon 可以直接依赖 `wzzc-dev/moui/core`，为自己拥有的 concrete type
 实现 open `ViewNode` trait，并调用 `View::from_node`。它们不能为 MoUI 拥有的 node
-type 实现方法、访问 runtime tree，或绕过类型化 `View[Msg]` 消息传递。
+type 实现方法、访问 runtime tree，或绕过类型化 `View[Msg]` 消息传递。支持的包结构、
+declaration/identity 规则和一致性测试见[自定义控件 SDK](custom-control-sdk.md)。
 
 换句话说，Iced 的控件层同时是内置控件和自定义控件入口；
 MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 constructor，

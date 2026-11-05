@@ -2,8 +2,19 @@
 struct OwnershipPolicy {
   runtime_forbidden : Array[String]
   app_forbidden : Array[String]
+  control_allowed : Array[String]
   backend_forbidden : Array[String]
   global_forbidden : Array[String]
+}
+
+///|
+fn string_array_contains(values : Array[String], expected : String) -> Bool {
+  for value in values {
+    if value == expected {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -70,11 +81,32 @@ fn load_policy(repo_root : String) -> Result[OwnershipPolicy, Array[String]] {
         "checks/runtime-state-render-ownership.json.schemaVersion must be 1",
       )
   }
+  let runtime_forbidden = json_strings(
+    fields, "runtimeForbiddenTokens", failures,
+  )
+  let app_forbidden = json_strings(fields, "appForbiddenTokens", failures)
+  let control_allowed = json_strings(
+    fields, "controlPackageAllowedTokens", failures,
+  )
+  let backend_forbidden = json_strings(
+    fields, "backendForbiddenTokens", failures,
+  )
+  let global_forbidden = json_strings(fields, "globalForbiddenTokens", failures)
+  for token in control_allowed {
+    if !string_array_contains(app_forbidden, token) {
+      failures.push(
+        "checks/runtime-state-render-ownership.json.controlPackageAllowedTokens '" +
+        token +
+        "' must also appear in appForbiddenTokens",
+      )
+    }
+  }
   let policy = {
-    runtime_forbidden: json_strings(fields, "runtimeForbiddenTokens", failures),
-    app_forbidden: json_strings(fields, "appForbiddenTokens", failures),
-    backend_forbidden: json_strings(fields, "backendForbiddenTokens", failures),
-    global_forbidden: json_strings(fields, "globalForbiddenTokens", failures),
+    runtime_forbidden,
+    app_forbidden,
+    control_allowed,
+    backend_forbidden,
+    global_forbidden,
   }
   if failures.is_empty() {
     Ok(policy)
@@ -93,6 +125,25 @@ fn is_source_file(path : String) -> Bool {
 ///|
 fn is_test_file(path : String) -> Bool {
   path.has_suffix("_test.mbt") || path.has_suffix("_wbtest.mbt")
+}
+
+///|
+fn is_control_package_source(path : String) -> Bool {
+  path.has_prefix("examples/") && path.contains("/widgets/")
+}
+
+///|
+fn control_package_forbidden_tokens(
+  forbidden : Array[String],
+  allowed : Array[String],
+) -> Array[String] {
+  let result : Array[String] = []
+  for token in forbidden {
+    if !string_array_contains(allowed, token) {
+      result.push(token)
+    }
+  }
+  result
 }
 
 ///|
@@ -152,7 +203,7 @@ fn scan_files(
     for token in tokens {
       match first_token_offset(text, token) {
         Some(offset) => {
-          let line = text[:offset].split("\n").length()
+          let line = text[:offset].split("\n").count()
           failures.push(
             label +
             ": " +
@@ -197,11 +248,31 @@ fn validate_repository(repo_root : String) -> Array[String] {
   let app_files : Array[String] = []
   collect_files(repo_root, "examples", app_files)
   collect_files(repo_root, "website/playground/app", app_files)
+  let application_files : Array[String] = []
+  let control_package_files : Array[String] = []
+  for relative in app_files {
+    if is_control_package_source(relative) {
+      control_package_files.push(relative)
+    } else {
+      application_files.push(relative)
+    }
+  }
   scan_files(
     repo_root,
-    app_files,
+    application_files,
     policy.app_forbidden,
     "app state ownership",
+    true,
+    failures,
+  )
+  scan_files(
+    repo_root,
+    control_package_files,
+    control_package_forbidden_tokens(
+      policy.app_forbidden,
+      policy.control_allowed,
+    ),
+    "control package ownership",
     true,
     failures,
   )

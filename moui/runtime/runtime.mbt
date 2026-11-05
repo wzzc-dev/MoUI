@@ -332,6 +332,9 @@ pub fn AppRuntime::focus_key(self : AppRuntime, key : String) -> Bool {
 }
 
 ///|
+/// Legacy command-only stream with layout placements folded into screen-space
+/// geometry. Prefer `draw_frame()` for renderers: its commands keep the
+/// transform scopes needed to replay content without rebasing every node.
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[@core.DrawCommand] {
   self.state.build_draw_commands()
 }

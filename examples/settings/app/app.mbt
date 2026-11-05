@@ -285,9 +285,12 @@ fn profile_scope() -> @moui.ScopedFeature[
   ProfileMsg,
   SettingsMsg,
 ] {
-  profile_feature().scope(read=profile_read, write=profile_write, wrap=message => {
-    Profile(message)
-  })
+  profile_feature().scope(
+    scope_id="settings/profile",
+    read=profile_read,
+    write=profile_write,
+    wrap=message => Profile(message),
+  )
 }
 
 ///|
@@ -297,9 +300,12 @@ fn workspace_scope() -> @moui.ScopedFeature[
   WorkspaceMsg,
   SettingsMsg,
 ] {
-  workspace_feature().scope(read=workspace_read, write=workspace_write, wrap=message => {
-    Workspace(message)
-  })
+  workspace_feature().scope(
+    scope_id="settings/workspace",
+    read=workspace_read,
+    write=workspace_write,
+    wrap=message => Workspace(message),
+  )
 }
 
 ///|
@@ -309,9 +315,12 @@ fn preferences_scope() -> @moui.ScopedFeature[
   PreferencesMsg,
   SettingsMsg,
 ] {
-  preferences_feature().scope(read=preferences_read, write=preferences_write, wrap=message => {
-    Preferences(message)
-  })
+  preferences_feature().scope(
+    scope_id="settings/preferences",
+    read=preferences_read,
+    write=preferences_write,
+    wrap=message => Preferences(message),
+  )
 }
 
 // ---------------------------------------------------------------------------

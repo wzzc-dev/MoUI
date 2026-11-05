@@ -15,6 +15,30 @@
 Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `checks/platform-matrix.json`; actual observations remain in `checks/platforms/*.json`.
 <!-- END GENERATED PLATFORM TIER MATRIX -->
 
+## Route Portfolio And Ownership
+
+<!-- BEGIN GENERATED ROUTE READINESS STATUS -->
+| Route / variant | Intent | Product class | Ready | Owner | Reviewed | Evidence |
+|---|---|---|---|---|---|---|
+| `macos-skia` | product | `committed` | yes | `platform/macos` | 2026-11-05 | `checks/platforms/macos.json` |
+| `web-webgpu` | product | `committed` | yes | `platform/web` | 2026-11-05 | `checks/platforms/web.json` |
+| `windows-skia` | product | `committed` | yes | `platform/windows` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-skia` | product | `committed` | yes | `platform/linux` | 2026-11-05 | `checks/platforms/linux.json` |
+| `macos-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/macos.json` |
+| `windows-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/linux.json` |
+| `android-skia` | lab | `experimental` | no | `platform/android` | 2026-11-05 | `checks/platforms/android.json` |
+| `ios-skia` | lab | `experimental` | no | `platform/ios` | 2026-11-05 | `checks/platforms/ios.json` |
+| `harmonyos-skia` | product | `committed` | yes | `platform/harmonyos` | 2026-11-05 | `checks/platforms/harmonyos.json` |
+| `macos-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/macos.json` |
+| `windows-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/linux.json` |
+| `wechat-canvas2d` | lab | `experimental` | no | `platform/wechat` | 2026-11-05 | `checks/platforms/wechat.json` |
+| `linux-skia-riscv64` (architecture variant) | lab | `experimental` | no | `platform/linux-riscv64` | 2026-11-05 | `checks/architecture-evidence/linux-skia-riscv64.json` |
+
+Intent, owner, and review dates come from `checks/portfolio-governance.json`; product class, readiness, and evidence paths stay owned by `checks/platform-matrix.json`.
+<!-- END GENERATED ROUTE READINESS STATUS -->
+
 ## Product Commitment Matrix (`product_class`)
 
 This table is the single public source of truth for whether a platform can serve

@@ -26,6 +26,10 @@ struct ResourceSamples {
   peak_rss_bytes : Double
   allocation_count : Double
   cache_hit_rate : Double
+  layout_cache_hits : Int32
+  layout_cache_misses : Int32
+  render_cache_hits : Int32
+  render_cache_misses : Int32
   startup_ms : Double
   package_bytes : Double
 }
@@ -40,6 +44,79 @@ struct ScenarioResult {
 struct RuntimeCacheCounters {
   hits : Int32
   misses : Int32
+}
+
+///|
+struct LeafMemoCounters {
+  builds : Int32
+  hits : Int32
+  misses : Int32
+}
+
+///|
+priv enum LeafConstructionMode {
+  Direct
+  Memo
+  BuilderCache
+} derive(Eq)
+
+///|
+fn LeafConstructionMode::label(self : LeafConstructionMode) -> String {
+  match self {
+    Direct => "direct"
+    Memo => "memo"
+    BuilderCache => "builder-cache"
+  }
+}
+
+///|
+fn LeafConstructionMode::memoized(self : LeafConstructionMode) -> Bool {
+  match self {
+    Direct => false
+    Memo | BuilderCache => true
+  }
+}
+
+///|
+struct LeafUpdateModel {
+  value : Int32
+}
+
+///|
+struct LeafUpdateSamples {
+  update_ms : Array[Double]
+  runtime_ms : Array[Double]
+  present_ms : Array[Double]
+  frame_ms : Array[Double]
+}
+
+///|
+struct LeafUpdateResult {
+  nodes : Int32
+  frames : Int32
+  map_layers : Int32
+  construction_mode : LeafConstructionMode
+  root_builder_calls : Int32
+  node_builds : Int32
+  assembled_nodes : Int32
+  map_adapter_copies : Int32
+  memo_build_count : Int32
+  memo_hit_count : Int32
+  memo_miss_count : Int32
+  builder_cache_build_count : Int32
+  builder_cache_hit_count : Int32
+  builder_cache_miss_count : Int32
+  builder_cache_entry_count : Int32
+  rebuild_pass_count : Int32
+  layout_cache_hits : Int32
+  layout_cache_misses : Int32
+  render_cache_hits : Int32
+  render_cache_misses : Int32
+  damage_empty_frames : Int32
+  damage_rect_frames : Int32
+  damage_full_frames : Int32
+  damage_coverage : Double
+  samples : LeafUpdateSamples
 }
 
 ///|
@@ -647,6 +724,24 @@ fn perf_cache_counters(
 }
 
 ///|
+fn perf_detailed_cache_counters(
+  runtimes : Array[@runtime.AppRuntime],
+) -> CacheCounterSnapshot {
+  let mut layout_hits = 0
+  let mut layout_misses = 0
+  let mut render_hits = 0
+  let mut render_misses = 0
+  for runtime in runtimes {
+    let snapshot = runtime.inspector_snapshot().runtime()
+    layout_hits = layout_hits + snapshot.layout_cache_hit_count()
+    layout_misses = layout_misses + snapshot.layout_cache_miss_count()
+    render_hits = render_hits + snapshot.render_cache_hit_count()
+    render_misses = render_misses + snapshot.render_cache_miss_count()
+  }
+  { layout_hits, layout_misses, render_hits, render_misses, }
+}
+
+///|
 fn perf_cache_hit_rate(
   before : RuntimeCacheCounters,
   after : RuntimeCacheCounters,
@@ -658,6 +753,409 @@ fn perf_cache_hit_rate(
     1.0
   } else {
     hits.to_double() / total.to_double()
+  }
+}
+
+///|
+/// Inspector cache counters are stored per element. A structural remount can
+/// discard the counters of nodes that left the tree, so a measured delta is
+/// clamped at zero rather than reporting a negative hit/miss count. Scenarios
+/// that frequently replace their whole tree therefore use these counters as a
+/// lower bound; they still distinguish layout hits from render hits.
+fn perf_counter_delta(after : Int32, before : Int32) -> Int32 {
+  (after - before).max(0)
+}
+
+///|
+struct CacheCounterSnapshot {
+  layout_hits : Int32
+  layout_misses : Int32
+  render_hits : Int32
+  render_misses : Int32
+}
+
+///|
+fn perf_leaf_cache_counters(
+  runtime : @runtime.AppRuntime,
+) -> CacheCounterSnapshot {
+  let snapshot = runtime.inspector_snapshot().runtime()
+  {
+    layout_hits: snapshot.layout_cache_hit_count(),
+    layout_misses: snapshot.layout_cache_miss_count(),
+    render_hits: snapshot.render_cache_hit_count(),
+    render_misses: snapshot.render_cache_miss_count(),
+  }
+}
+
+///|
+fn perf_leaf_percentile(samples : Array[Double], percent : Double) -> Double {
+  if samples.is_empty() {
+    return 0.0
+  }
+  let sorted = samples.copy()
+  sorted.sort()
+  let rank = (percent / 100.0 * sorted.length().to_double()).ceil().to_int()
+  sorted[rank.clamp(min=1, max=sorted.length()) - 1]
+}
+
+///|
+fn perf_leaf_ratio(hits : Int32, misses : Int32) -> Double {
+  let total = hits + misses
+  if total == 0 {
+    1.0
+  } else {
+    hits.to_double() / total.to_double()
+  }
+}
+
+///|
+fn perf_leaf_empty_samples() -> LeafUpdateSamples {
+  { update_ms: [], runtime_ms: [], present_ms: [], frame_ms: [], }
+}
+
+///|
+fn perf_leaf_damage_coverage(
+  damage : @core.DamageRegion,
+  surface : @core.Rect,
+) -> Double {
+  match damage {
+    Empty => 0.0
+    FullSurface(_) => 1.0
+    Rects(rects) =>
+      if rects.is_empty() || surface.area() <= 0.0 {
+        0.0
+      } else {
+        let mut bounds = rects[0]
+        for index in 1..<rects.length() {
+          bounds = bounds.union(rects[index])
+        }
+        (bounds.area() / surface.area()).clamp(min=0.0, max=1.0)
+      }
+  }
+}
+
+///|
+fn perf_leaf_pointer_event(phase : @core.PointerPhase) -> @core.AppEvent {
+  Pointer(
+    @core.PointerEvent::new(position=@core.Point::new(x=10.0, y=10.0), phase~),
+  )
+}
+
+///|
+fn perf_leaf_memo_counters(
+  memos : Array[@core.ViewMemo[Int32]],
+) -> LeafMemoCounters {
+  let mut counters : LeafMemoCounters = { builds: 0, hits: 0, misses: 0, }
+  for memo in memos {
+    let stats = memo.stats()
+    counters = {
+      builds: counters.builds + stats.build_count(),
+      hits: counters.hits + stats.hit_count(),
+      misses: counters.misses + stats.miss_count(),
+    }
+  }
+  counters
+}
+
+///|
+fn perf_leaf_content_key(
+  leaf_index : Int32,
+  value : Int32,
+) -> @core.DeclarationKey {
+  if leaf_index == 0 {
+    @core.DeclarationKey::record(type_tag="leaf-update.content", fields=[
+      ("value", @core.DeclarationKey::int(value)),
+    ])
+  } else {
+    @core.DeclarationKey::string("leaf-update.static")
+  }
+}
+
+///|
+fn perf_leaf_update_scenario(
+  label : String,
+  leaf_count : Int32,
+  width : Double,
+  height : Double,
+  frames : Int32,
+  warmup : Int32,
+  construction_mode~ : LeafConstructionMode,
+  map_layers~ : Int32 = 1,
+) -> LeafUpdateResult {
+  let root_builder_calls = Ref(0)
+  let node_builds = Ref(0)
+  let assembled_nodes = Ref(0)
+  let memos : Array[@core.ViewMemo[Int32]] = []
+  if construction_mode == Memo {
+    for _index in 0..<leaf_count {
+      memos.push(@core.ViewMemo::new())
+    }
+  }
+  let builder_keys : Array[@core.DeclarationKey] = []
+  if construction_mode == BuilderCache {
+    for index in 0..<leaf_count {
+      builder_keys.push(
+        @core.DeclarationKey::record(type_tag="leaf-update.builder", fields=[
+          ("index", @core.DeclarationKey::int(index)),
+        ]),
+      )
+    }
+  }
+  let builder_cache : @core.ViewBuilderCache[Int32] = @core.ViewBuilderCache::new()
+  let program = @core.Program::simple(
+    init={ value: 0, },
+    update=fn(model, _message) { { value: model.value + 1, } },
+    view=fn(model) {
+      root_builder_calls.val = root_builder_calls.val + 1
+      let children : Array[@core.View[Int32]] = []
+      for index in 0..<leaf_count {
+        let leaf_index = index
+        let build_leaf = () => {
+          node_builds.val = node_builds.val + 1
+          if leaf_index == 0 {
+            @views.text(
+              "Leaf 0: \{model.value}",
+              width=width - 40.0,
+              height=20.0,
+            ).on_tap(1)
+          } else {
+            @views.text("Leaf \{leaf_index}", width=width - 40.0, height=20.0)
+          }
+        }
+        let child = match construction_mode {
+          Direct => build_leaf()
+          Memo => {
+            let content_key = perf_leaf_content_key(leaf_index, model.value)
+            memos[leaf_index].view(key=content_key, build=build_leaf)
+          }
+          BuilderCache => {
+            let content_key = perf_leaf_content_key(leaf_index, model.value)
+            builder_cache.view(
+              builder_key=builder_keys[leaf_index],
+              content_key~,
+              build=build_leaf,
+            )
+          }
+        }
+        assembled_nodes.val = assembled_nodes.val + 1
+        children.push(child)
+      }
+      let column = @views.column(children)
+      assembled_nodes.val = assembled_nodes.val + 1
+      node_builds.val = node_builds.val + 1
+      let mut view = column
+      for _layer in 0..<map_layers {
+        view = view.map(message => message)
+      }
+      view
+    },
+  )
+  let runtime = @runtime.AppRuntime::new_program(
+    program~,
+    size=@core.Size::new(width~, height~),
+  )
+  let pump = perf_pump(label, width, height)
+  for _index in 0..<warmup {
+    runtime.advance_time(16.0)
+    runtime.dispatch_event(perf_leaf_pointer_event(Down))
+    runtime.dispatch_event(perf_leaf_pointer_event(Up))
+    let frame = runtime.draw_frame()
+    if !(pump.render)(0, frame) {
+      perf_fail("\{label}: renderer did not present warmup frame")
+    }
+  }
+  let builders_before = root_builder_calls.val
+  let nodes_before = node_builds.val
+  let assembled_before = assembled_nodes.val
+  let cache_before = perf_leaf_cache_counters(runtime)
+  let memo_before = perf_leaf_memo_counters(memos)
+  let builder_cache_before = builder_cache.stats()
+  let rebuild_before = runtime
+    .inspector_snapshot()
+    .runtime()
+    .rebuild_pass_count()
+  let samples = perf_leaf_empty_samples()
+  let surface = @core.Rect::new(x=0.0, y=0.0, width~, height~)
+  let mut damage_empty_frames = 0
+  let mut damage_rect_frames = 0
+  let mut damage_full_frames = 0
+  let mut damage_coverage = 0.0
+  for index in 0..<frames {
+    let frame_start = perf_now_ms()
+    let update_start = perf_now_ms()
+    runtime.advance_time(16.0)
+    runtime.dispatch_event(perf_leaf_pointer_event(Down))
+    runtime.dispatch_event(perf_leaf_pointer_event(Up))
+    let update_ms = (perf_now_ms() - update_start).max(0.0)
+    let profiled = runtime.profile_draw_frame(perf_now_ms)
+    let timing = profiled.timing()
+    let present_start = perf_now_ms()
+    let presented = (pump.render)(warmup + index, profiled.frame())
+    let present_ms = (perf_now_ms() - present_start).max(0.0)
+    let frame_ms = (perf_now_ms() - frame_start).max(0.0)
+    if !presented {
+      perf_fail("\{label}: renderer did not present measured frame")
+    }
+    samples.update_ms.push(update_ms)
+    samples.runtime_ms.push(timing.total_ms())
+    samples.present_ms.push(present_ms)
+    samples.frame_ms.push(frame_ms)
+    match profiled.frame().damage {
+      Empty => damage_empty_frames = damage_empty_frames + 1
+      FullSurface(_) => damage_full_frames = damage_full_frames + 1
+      Rects(_) => damage_rect_frames = damage_rect_frames + 1
+    }
+    damage_coverage = damage_coverage +
+      perf_leaf_damage_coverage(profiled.frame().damage, surface)
+  }
+  (pump.assert_clean)(label, warmup + frames)
+  let cache_after = perf_leaf_cache_counters(runtime)
+  let memo_after = perf_leaf_memo_counters(memos)
+  let builder_cache_after = builder_cache.stats()
+  let rebuild_after = runtime
+    .inspector_snapshot()
+    .runtime()
+    .rebuild_pass_count()
+  let measured_node_builds = node_builds.val - nodes_before
+  let measured_assembled_nodes = assembled_nodes.val - assembled_before
+  let measured_builder_cache_builds = perf_counter_delta(
+    builder_cache_after.build_count(),
+    builder_cache_before.build_count(),
+  )
+  let measured_builder_cache_hits = perf_counter_delta(
+    builder_cache_after.hit_count(),
+    builder_cache_before.hit_count(),
+  )
+  let measured_builder_cache_misses = perf_counter_delta(
+    builder_cache_after.miss_count(),
+    builder_cache_before.miss_count(),
+  )
+  if construction_mode == BuilderCache {
+    if measured_node_builds != frames * 2 {
+      perf_fail(
+        "\{label}: expected the changed leaf plus container to be built (\{frames * 2}), measured \{measured_node_builds}",
+      )
+    }
+    if measured_builder_cache_builds != frames ||
+      measured_builder_cache_hits != frames * (leaf_count - 1) ||
+      measured_builder_cache_misses != frames ||
+      builder_cache_after.entry_count() != leaf_count {
+      perf_fail(
+        "\{label}: builder-cache structural counters do not match one changed leaf per frame",
+      )
+    }
+  }
+  {
+    nodes: leaf_count + 1,
+    frames,
+    map_layers,
+    construction_mode,
+    root_builder_calls: root_builder_calls.val - builders_before,
+    node_builds: measured_node_builds,
+    assembled_nodes: measured_assembled_nodes,
+    // Each leaf is one adapter; leaf zero also carries the OnTap modifier
+    // wrapper, and the column is one adapter. Recursive `ViewAdapter::map`
+    // copies that whole adapter tree once per map layer.
+    map_adapter_copies: (measured_assembled_nodes + frames) * map_layers,
+    memo_build_count: perf_counter_delta(memo_after.builds, memo_before.builds),
+    memo_hit_count: perf_counter_delta(memo_after.hits, memo_before.hits),
+    memo_miss_count: perf_counter_delta(memo_after.misses, memo_before.misses),
+    builder_cache_build_count: measured_builder_cache_builds,
+    builder_cache_hit_count: measured_builder_cache_hits,
+    builder_cache_miss_count: measured_builder_cache_misses,
+    builder_cache_entry_count: builder_cache_after.entry_count(),
+    rebuild_pass_count: rebuild_after - rebuild_before,
+    layout_cache_hits: perf_counter_delta(
+      cache_after.layout_hits,
+      cache_before.layout_hits,
+    ),
+    layout_cache_misses: perf_counter_delta(
+      cache_after.layout_misses,
+      cache_before.layout_misses,
+    ),
+    render_cache_hits: perf_counter_delta(
+      cache_after.render_hits,
+      cache_before.render_hits,
+    ),
+    render_cache_misses: perf_counter_delta(
+      cache_after.render_misses,
+      cache_before.render_misses,
+    ),
+    damage_empty_frames,
+    damage_rect_frames,
+    damage_full_frames,
+    damage_coverage: if frames > 0 {
+      damage_coverage / frames.to_double()
+    } else {
+      0.0
+    },
+    samples,
+  }
+}
+
+///|
+fn perf_leaf_timing_json(samples : Array[Double]) -> Json {
+  {
+    "p50": perf_leaf_percentile(samples, 50.0),
+    "p95": perf_leaf_percentile(samples, 95.0),
+  }
+}
+
+///|
+fn perf_leaf_update_json(result : LeafUpdateResult) -> Json {
+  {
+    "nodes": result.nodes,
+    "frames": result.frames,
+    "mapLayers": result.map_layers,
+    "constructionMode": result.construction_mode.label(),
+    "memoized": result.construction_mode.memoized(),
+    "build": {
+      "rootBuilderCalls": result.root_builder_calls,
+      "nodeBuilds": result.node_builds,
+      "assembledNodes": result.assembled_nodes,
+      "mapAdapterCopies": result.map_adapter_copies,
+    },
+    "memo": {
+      "buildCount": result.memo_build_count,
+      "hitCount": result.memo_hit_count,
+      "missCount": result.memo_miss_count,
+    },
+    "builderCache": {
+      "buildCount": result.builder_cache_build_count,
+      "hitCount": result.builder_cache_hit_count,
+      "missCount": result.builder_cache_miss_count,
+      "entryCount": result.builder_cache_entry_count,
+    },
+    "rebuildPassCount": result.rebuild_pass_count,
+    "cache": {
+      "layoutHits": result.layout_cache_hits,
+      "layoutMisses": result.layout_cache_misses,
+      "layoutHitRate": perf_leaf_ratio(
+        result.layout_cache_hits,
+        result.layout_cache_misses,
+      ),
+      "renderHits": result.render_cache_hits,
+      "renderMisses": result.render_cache_misses,
+      "renderHitRate": perf_leaf_ratio(
+        result.render_cache_hits,
+        result.render_cache_misses,
+      ),
+    },
+    "damage": {
+      "emptyFrames": result.damage_empty_frames,
+      "rectFrames": result.damage_rect_frames,
+      "fullFrames": result.damage_full_frames,
+      "averageCoverage": result.damage_coverage,
+    },
+    "timings": {
+      // Pointer delivery performs the synchronous TEA reconcile, so `updateMs`
+      // owns the build cost. `runtimeMs` is the remaining profile_draw_frame
+      // pipeline (normally layout/paint/draw after the message).
+      "updateMs": perf_leaf_timing_json(result.samples.update_ms),
+      "runtimeMs": perf_leaf_timing_json(result.samples.runtime_ms),
+      "presentMs": perf_leaf_timing_json(result.samples.present_ms),
+      "frameMs": perf_leaf_timing_json(result.samples.frame_ms),
+    },
   }
 }
 
@@ -736,6 +1234,7 @@ fn perf_run_scenario(
   }
   let startup_ms = perf_now_ms() - startup_start
   let before_cache = perf_cache_counters(runtimes)
+  let before_detailed_cache = perf_detailed_cache_counters(runtimes)
   let samples = perf_empty_samples()
   for index in 0..<frames {
     let sequence = warmup + index
@@ -743,6 +1242,7 @@ fn perf_run_scenario(
     perf_measure_iteration(runtimes, pumps, sequence, samples)
   }
   let after_cache = perf_cache_counters(runtimes)
+  let after_detailed_cache = perf_detailed_cache_counters(runtimes)
   let pumped = warmup + frames
   for pump in pumps {
     (pump.assert_clean)(label, pumped)
@@ -753,6 +1253,22 @@ fn perf_run_scenario(
       peak_rss_bytes: perf_peak_rss_bytes(),
       allocation_count: perf_allocation_count(),
       cache_hit_rate: perf_cache_hit_rate(before_cache, after_cache),
+      layout_cache_hits: perf_counter_delta(
+        after_detailed_cache.layout_hits,
+        before_detailed_cache.layout_hits,
+      ),
+      layout_cache_misses: perf_counter_delta(
+        after_detailed_cache.layout_misses,
+        before_detailed_cache.layout_misses,
+      ),
+      render_cache_hits: perf_counter_delta(
+        after_detailed_cache.render_hits,
+        before_detailed_cache.render_hits,
+      ),
+      render_cache_misses: perf_counter_delta(
+        after_detailed_cache.render_misses,
+        before_detailed_cache.render_misses,
+      ),
       startup_ms,
       package_bytes: perf_package_bytes(),
     },
@@ -770,6 +1286,20 @@ fn perf_scenario_json(result : ScenarioResult) -> Json {
       "presentMs": result.samples.present_ms,
       "frameMs": result.samples.frame_ms,
       "totalMs": result.samples.total_ms,
+    },
+    "cache": {
+      "layoutHits": result.resources.layout_cache_hits,
+      "layoutMisses": result.resources.layout_cache_misses,
+      "layoutHitRate": perf_leaf_ratio(
+        result.resources.layout_cache_hits,
+        result.resources.layout_cache_misses,
+      ),
+      "renderHits": result.resources.render_cache_hits,
+      "renderMisses": result.resources.render_cache_misses,
+      "renderHitRate": perf_leaf_ratio(
+        result.resources.render_cache_hits,
+        result.resources.render_cache_misses,
+      ),
     },
     "resources": {
       "peakRssBytes": result.resources.peak_rss_bytes,
@@ -797,6 +1327,8 @@ fn main {
   }
   let frames = perf_env_int("MOUI_PERFORMANCE_FRAMES", 60)
   let warmup = perf_env_int("MOUI_PERFORMANCE_WARMUP", 12)
+  let leaf_frames = perf_env_int("MOUI_PERFORMANCE_LEAF_FRAMES", 30)
+  let leaf_warmup = perf_env_int("MOUI_PERFORMANCE_LEAF_WARMUP", 6)
   let scenarios : Map[String, Json] = Map([])
   scenarios["showcase-runtime-scroll"] = perf_scenario_json(
     perf_run_scenario(
@@ -828,10 +1360,140 @@ fn main {
       perf_drive_deep_tree, frames, warmup,
     ),
   )
+  // W0.1 diagnostic block: one leaf changes per frame, on both sides of a
+  // 1k/10k-node scale boundary. This is intentionally outside the five
+  // budgeted scenarios until W0.3 ratifies a stable update budget.
+  let leaf_scenarios : Map[String, Json] = Map([])
+  leaf_scenarios["leaf-update-1k"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-1k",
+      1000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Direct,
+    ),
+  )
+  leaf_scenarios["leaf-update-10k"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-10k",
+      10000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Direct,
+    ),
+  )
+  leaf_scenarios["leaf-update-1k-memo"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-1k-memo",
+      1000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Memo,
+    ),
+  )
+  leaf_scenarios["leaf-update-10k-memo"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-10k-memo",
+      10000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Memo,
+    ),
+  )
+  leaf_scenarios["leaf-update-1k-builder-cache"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-1k-builder-cache",
+      1000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=BuilderCache,
+    ),
+  )
+  leaf_scenarios["leaf-update-10k-builder-cache"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-10k-builder-cache",
+      10000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=BuilderCache,
+    ),
+  )
+  // N2 structural comparison: the same construction modes with two map
+  // layers. Adapter-copy counts must scale with layers even when node builds
+  // are served by the builder cache.
+  leaf_scenarios["leaf-update-1k-map2"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-1k-map2",
+      1000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Direct,
+      map_layers=2,
+    ),
+  )
+  leaf_scenarios["leaf-update-1k-builder-cache-map2"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-1k-builder-cache-map2",
+      1000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=BuilderCache,
+      map_layers=2,
+    ),
+  )
+  leaf_scenarios["leaf-update-10k-map2"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-10k-map2",
+      10000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=Direct,
+      map_layers=2,
+    ),
+  )
+  leaf_scenarios["leaf-update-10k-builder-cache-map2"] = perf_leaf_update_json(
+    perf_leaf_update_scenario(
+      "leaf-update-10k-builder-cache-map2",
+      10000,
+      800.0,
+      600.0,
+      leaf_frames,
+      leaf_warmup,
+      construction_mode=BuilderCache,
+      map_layers=2,
+    ),
+  )
   let report : Json = {
     "schemaVersion": 1,
     "runner": perf_runner_label(provider, mode),
+    "config": {
+      "frames": frames,
+      "warmup": warmup,
+      "leafFrames": leaf_frames,
+      "leafWarmup": leaf_warmup,
+      "provider": provider,
+      "surfaceRoute": mode,
+    },
     "scenarios": scenarios,
+    "leafUpdate": { "schemaVersion": 2, "scenarios": leaf_scenarios },
   }
   println("MOUI_PERFORMANCE_RESULT=" + report.stringify(indent=0))
 }

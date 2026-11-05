@@ -31,6 +31,8 @@ Read only the smallest useful set:
 - `docs/testing.md` for focused app checks and manual smoke.
 - `docs/examples.md` when changing example coverage or commands.
 - `docs/canvas-and-custom-paint.md` for canvas / custom paint.
+- `docs/custom-control-sdk.md` before implementing a package-local `ViewNode`
+  control or changing `examples/custom_control`.
 
 Ordinary app and example work should use the published `wzzc-dev/window`
 dependency resolved from mooncakes.io. Do not add local `./window/modules/window*`

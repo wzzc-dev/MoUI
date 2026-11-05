@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Runtime neutrality, application state ownership, and renderer-resource ownership boundaries.",
+  "description": "Runtime neutrality, application state ownership, reusable-control protocol allowances, and renderer-resource ownership boundaries.",
   "runtimeForbiddenTokens": [
     "moon_accesskit",
     "AccessKit",
@@ -24,6 +24,9 @@
     "@views.component",
     "NavigationState",
     "FocusState"
+  ],
+  "controlPackageAllowedTokens": [
+    "TextControlStateContext"
   ],
   "backendForbiddenTokens": [
     "ImageResourceSnapshot",

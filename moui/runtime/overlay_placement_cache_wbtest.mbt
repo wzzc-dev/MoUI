@@ -49,15 +49,93 @@ fn c3_required_placed(placed : PlacedNode?, label : String) -> PlacedNode {
 }
 
 ///|
+fn c3_required_rect(rect : Rect?, label : String) -> Rect {
+  match rect {
+    Some(found) => found
+    None => abort(label)
+  }
+}
+
+///|
+fn c3_placed_screen_frame(
+  placed : PlacedNode,
+  id : ElementId,
+  node_to_screen : Transform2D,
+) -> Rect? {
+  if placed.element_id == id {
+    return Some(runtime_screen_frame(node_to_screen, placed.frame))
+  }
+  for index, child in placed.children {
+    let child_to_screen = if placed.overlay_child_indices.contains(index) {
+      runtime_overlay_to_screen(child.frame)
+    } else {
+      runtime_child_to_screen(
+        node_to_screen,
+        placed.child_transform,
+        child.frame,
+      )
+    }
+    match c3_placed_screen_frame(child, id, child_to_screen) {
+      Some(frame) => return Some(frame)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
 fn c3_text_frame(
   commands : Array[@core.DrawCommand],
   text : String,
 ) -> @core.Rect? {
+  let mut current = @core.Transform2D::identity()
+  let stack : Array[@core.Transform2D] = []
   for command in commands {
     match command {
+      PushTransform(transform) => {
+        stack.push(current)
+        current = {
+          a: current.a * transform.a + current.c * transform.b,
+          b: current.b * transform.a + current.d * transform.b,
+          c: current.a * transform.c + current.c * transform.d,
+          d: current.b * transform.c + current.d * transform.d,
+          tx: current.a * transform.tx + current.c * transform.ty + current.tx,
+          ty: current.b * transform.tx + current.d * transform.ty + current.ty,
+        }
+      }
+      PopTransform =>
+        match stack.pop() {
+          Some(transform) => current = transform
+          None => current = @core.Transform2D::identity()
+        }
       DrawText({ text: value, frame, .. }) =>
         if value == text {
-          return Some(frame)
+          let right = frame.origin.x + frame.size.width
+          let bottom = frame.origin.y + frame.size.height
+          let x0 = current.a * frame.origin.x +
+            current.c * frame.origin.y +
+            current.tx
+          let y0 = current.b * frame.origin.x +
+            current.d * frame.origin.y +
+            current.ty
+          let x1 = current.a * right + current.c * frame.origin.y + current.tx
+          let y1 = current.b * right + current.d * frame.origin.y + current.ty
+          let x2 = current.a * frame.origin.x + current.c * bottom + current.tx
+          let y2 = current.b * frame.origin.x + current.d * bottom + current.ty
+          let x3 = current.a * right + current.c * bottom + current.tx
+          let y3 = current.b * right + current.d * bottom + current.ty
+          let min_x = x0.min(x1).min(x2).min(x3)
+          let max_x = x0.max(x1).max(x2).max(x3)
+          let min_y = y0.min(y1).min(y2).min(y3)
+          let max_y = y0.max(y1).max(y2).max(y3)
+          return Some(
+            @core.Rect::new(
+              x=min_x,
+              y=min_y,
+              width=max_x - min_x,
+              height=max_y - min_y,
+            ),
+          )
         }
       _ => ()
     }
@@ -93,42 +171,56 @@ fn c3_wheel(runtime : AppRuntime, x : Double, y : Double, dy : Double) -> Unit {
 }
 
 ///|
+fn c3_text_count(commands : Array[@core.DrawCommand], text : String) -> Int32 {
+  let mut count = 0
+  for command in commands {
+    match command {
+      DrawText({ text: value, .. }) => if value == text { count = count + 1 }
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
 /// Build the C3 fixture: a scroll view whose content carries a picker (the
 /// overlay host) plus filler rows, and an unaffected sibling frame below the
 /// scroll view. Wheel scrolling moves the picker without touching the sibling.
-fn c3_overlay_fixture() -> AppRuntime {
+fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
   let items = [
     @views.picker_item("one", "One"),
     @views.picker_item("two", "Two"),
   ]
+  let content = @views.column(
+    [
+      @views.frame(@views.text("FillerA"), width=200.0, height=24.0),
+      @views.frame(@views.text("FillerB"), width=200.0, height=24.0),
+      @views.frame(@views.text("FillerC"), width=200.0, height=24.0),
+      @views.frame(
+        @views.picker(
+          items,
+          selected="",
+          on_select=_id => (),
+          placeholder="Pick",
+          max_height=160.0,
+        ),
+        width=200.0,
+        height=40.0,
+      ),
+      @views.frame(@views.text("FillerD"), width=200.0, height=24.0),
+      @views.frame(@views.text("FillerE"), width=200.0, height=24.0),
+    ],
+    spacing=0.0,
+  )
+  let scroll_content = if boundary {
+    content.repaint_boundary()
+  } else {
+    content
+  }
   AppRuntime::new_view(
     root=@views.column(
       [
-        @views.scroll_view(
-          @views.column(
-            [
-              @views.frame(@views.text("FillerA"), width=200.0, height=24.0),
-              @views.frame(@views.text("FillerB"), width=200.0, height=24.0),
-              @views.frame(@views.text("FillerC"), width=200.0, height=24.0),
-              @views.frame(
-                @views.picker(
-                  items,
-                  selected="",
-                  on_select=_id => (),
-                  placeholder="Pick",
-                  max_height=160.0,
-                ),
-                width=200.0,
-                height=40.0,
-              ),
-              @views.frame(@views.text("FillerD"), width=200.0, height=24.0),
-              @views.frame(@views.text("FillerE"), width=200.0, height=24.0),
-            ],
-            spacing=0.0,
-          ),
-          width=200.0,
-          height=120.0,
-        ),
+        @views.scroll_view(scroll_content, width=200.0, height=120.0),
         @views.frame(@views.text("Sibling"), width=200.0, height=24.0),
       ],
       spacing=0.0,
@@ -155,8 +247,8 @@ fn c3_open_picker_popup(runtime : AppRuntime) -> Unit {
 /// The core C3 assertion: with the popup open, every scroll frame re-places
 /// the host spine while the unaffected sibling subtree keeps hitting its
 /// per-node place cache in both the fresh place and the localized overlay
-/// re-place. The popup must follow the moved picker and keep escaping the
-/// scroll clip.
+/// re-place. The picker stays content-local while its hoisted popup follows
+/// the moved picker in screen space and keeps escaping the scroll clip.
 test "C3: overlay re-place reuses unaffected sibling place caches" {
   let runtime = c3_overlay_fixture()
   c3_open_picker_popup(runtime)
@@ -184,8 +276,8 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     msg="popup must not sit at the provisional sentinel",
   )
   assert_true(
-    popup_before.hit_rect == popup_before.frame,
-    msg="popup must escape ancestor clips",
+    picker_before.overlay_child_indices.contains(0),
+    msg="popup must be marked as a hoisted overlay child",
   )
   // Wheel-scroll under the open popup. Each wheel event scrolls 12px and
   // leaves layout dirt pending. Between wheels, run the two placement phases
@@ -213,7 +305,8 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
       msg="overlay re-place must not re-place the unaffected sibling (iteration \{index})",
     )
   }
-  // The host subtree did re-place: the picker moved and the popup followed.
+  // The host subtree did re-place for the popup, but the picker's own frame
+  // stays content-local. Only its accumulated screen position moved.
   let placed_root_after = runtime.state.cached_layout_tree_root()
   let picker_after = c3_required_placed(
     c3_find_placed(placed_root_after, picker.id),
@@ -223,22 +316,38 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     picker_after.children.get(0),
     "popup placed after scroll",
   )
+  let picker_before_screen = c3_required_rect(
+    c3_placed_screen_frame(placed_root, picker.id, Transform2D::identity()),
+    "picker screen frame",
+  )
+  let picker_after_screen = c3_required_rect(
+    c3_placed_screen_frame(
+      placed_root_after,
+      picker.id,
+      Transform2D::identity(),
+    ),
+    "picker screen frame after scroll",
+  )
   assert_true(
-    picker_after.frame.origin.y < picker_before.frame.origin.y,
-    msg="scrolling should have moved the picker",
+    picker_after.frame == picker_before.frame,
+    msg="scrolling must not rewrite the picker's content-local frame",
+  )
+  assert_true(
+    picker_after_screen.origin.y < picker_before_screen.origin.y,
+    msg="scrolling should move the picker in screen space",
   )
   assert_true(
     popup_after.frame != popup_before.frame,
     msg="popup should follow the moved picker",
   )
   assert_true(
-    popup_after.frame.origin.y - picker_after.frame.origin.y ==
-    popup_before.frame.origin.y - picker_before.frame.origin.y,
+    popup_after.frame.origin.y - picker_after_screen.origin.y ==
+    popup_before.frame.origin.y - picker_before_screen.origin.y,
     msg="popup must keep its anchored offset to the picker",
   )
   assert_true(
-    popup_after.hit_rect == popup_after.frame,
-    msg="popup must keep escaping ancestor clips after the localized re-place",
+    picker_after.overlay_child_indices.contains(0),
+    msg="popup must stay hoisted after the localized re-place",
   )
   let sibling_after = c3_required_placed(
     c3_find_placed(placed_root_after, sibling.id),
@@ -252,6 +361,24 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
   assert_true(
     c3_text_frame(runtime.draw_commands(), "Two") is Some(_),
     msg="popup must still render after localized re-places",
+  )
+}
+
+///|
+test "retained repaint boundaries never inline a hoisted overlay" {
+  let runtime = c3_overlay_fixture(boundary=true)
+  c3_open_picker_popup(runtime)
+  c3_wheel(runtime, 100.0, 60.0, -12.0)
+  ignore(runtime.draw_frame())
+  ignore(runtime.draw_frame())
+  assert_eq(
+    c3_text_count(runtime.draw_commands(), "Two"),
+    1,
+    msg="a cached repaint boundary must not replay its overlay twice",
+  )
+  assert_true(
+    c3_text_frame(runtime.draw_commands(), "Two") is Some(_),
+    msg="the hoisted overlay must survive retained-cache fallback",
   )
 }
 

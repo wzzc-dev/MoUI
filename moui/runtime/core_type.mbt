@@ -1,6 +1,5 @@
 ///|
 using @core {
-  type AccessibilityContrast,
   type ActionCommand,
   type ActionCommandMap,
   type AppEvent,
@@ -8,7 +7,6 @@ using @core {
   type Color,
   type CommandIntent,
   type Constraints,
-  type ContentSizeCategory,
   type DamageRegion,
   type DragDropEvent,
   type DrawCommand,
@@ -19,7 +17,6 @@ using @core {
   type Frame,
   type Key,
   type KeyboardEvent,
-  type LayoutDirection,
   type LayoutResult,
   type PlatformViewPlacement,
   type PointerEvent,
@@ -46,6 +43,7 @@ using @core {
   type TextInputState,
   type TextRange,
   type TextSystem,
+  type Transform2D,
   type ViewDirtyHint,
   type ViewPaintPlan,
   type ViewSemanticsInfo,

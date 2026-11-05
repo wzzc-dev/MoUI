@@ -43,6 +43,7 @@ pub struct RendererSession {
   priv mut disposed : Bool
   priv platform_view : RendererPlatformViewCapability
   priv gpu_recovery : RendererGpuRecoveryCapability
+  priv surface_damage : SurfaceDamageCapability
 }
 
 ///|
@@ -106,6 +107,7 @@ pub fn RendererSession::new(
   native_surface~ : NativeSurface? = None,
   platform_view~ : RendererPlatformViewCapability = RendererPlatformViewCapability::new(),
   gpu_recovery~ : RendererGpuRecoveryCapability = RendererGpuRecoveryCapability::new(),
+  surface_damage~ : SurfaceDamageCapability = FullSurfaceOnly,
 ) -> RendererSession {
   let drain_events_fn = match drain_events {
     Some(drain) => drain
@@ -132,6 +134,7 @@ pub fn RendererSession::new(
     disposed: false,
     platform_view,
     gpu_recovery,
+    surface_damage,
   }
 }
 
@@ -156,6 +159,13 @@ pub fn RendererSession::render_frame(
   let result = (self.render_frame_fn)(submission)
   self.queue_image_requests()
   result
+}
+
+///|
+pub fn RendererSession::surface_damage_capability(
+  self : RendererSession,
+) -> SurfaceDamageCapability {
+  self.surface_damage
 }
 
 ///|

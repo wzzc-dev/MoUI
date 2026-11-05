@@ -63,5 +63,16 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0045 | [`moui_metal_renderer` is declared an experimental renderer at its L1 evidence frame](0045-direct-host-gpu-renderer-experimental.md) | 2026-10-27 | Accepted |
 | 0046 | [HarmonyOS product class raised to `committed`](0046-harmonyos-committed-with-gaps.md) | 2026-10-30 | Accepted |
 | 0047 | [The 0.3.0 base release retires the lowering/mailbox and button-only helper surfaces](0047-zero-three-renderer-views-api-retirements.md) | 2026-11-04 | Accepted |
+| 0048 | [Render cache key excludes the animation clock](0048-render-cache-key-contract.md) | 2026-11-05 | Accepted |
+| 0049 | [View construction memoization uses explicit content keys](0049-explicit-view-memo.md) | 2026-11-05 | Accepted |
+| 0050 | [Damage classification precedes partial-surface presentation](0050-damage-classification-and-surface-capability.md) | 2026-11-05 | Accepted |
+| 0051 | [Scroll layout stays content-local behind a child transform](0051-content-coordinate-scroll-and-child-transforms.md) | 2026-11-05 | Accepted |
+| 0052 | [Feature scope identity namespaces lifecycle keys](0052-feature-scope-lifecycle-identity.md) | 2026-11-05 | Accepted |
+| 0053 | [Component state remains Feature-first](0053-feature-first-component-state-boundary.md) | 2026-11-05 | Accepted |
+| 0054 | [Pointer gesture arbitration stays in transient runtime state](0054-pointer-gesture-arena.md) | 2026-11-05 | Accepted |
+| 0055 | [The 0.3.x release line is synchronized](0055-synchronized-release-line.md) | 2026-11-05 | Accepted |
+| 0056 | [Devtools trace is caller-owned, sampled, and bounded](0056-bounded-read-only-devtools-trace.md) | 2026-11-05 | Accepted |
+| 0057 | [Multi-entry view construction uses explicit builder and content keys](0057-explicit-builder-cache.md) | 2026-11-05 | Accepted |
+| 0058 | [`View::map` keeps the recursive typed adapter](0058-recursive-view-map-boundary.md) | 2026-11-05 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

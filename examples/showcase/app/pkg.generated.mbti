@@ -59,8 +59,7 @@ pub(all) struct ShowcaseModel {
   route_history : @navigation.RouteHistoryState
   nav_query : String
   mobile_showing_detail : Bool
-  sidebar_scroll : @core.Point
-  detail_scroll : @core.Point
+  detail_scroll_request : @core.ScrollRequest?
   diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput
   components : @components.ComponentGalleryModel
   patterns : @patterns.Model
@@ -92,8 +91,6 @@ pub(all) enum ShowcaseMsg {
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
-  SidebarScrolled(@core.Point)
-  DetailScrolled(@core.Point)
   ComponentsMsg(@components.ComponentGalleryMsg)
   PatternsMsg(@patterns.Msg)
   PlatformMsg(@platform.Msg)

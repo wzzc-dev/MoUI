@@ -1,6 +1,9 @@
 # HarmonyOS 支持
 
-HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在签名设备证据落地前，不做任何开发/演示可用性或产品承诺。
+HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 **committed**（product_class
+`committed`，`ready=true`，`runtimeL3=passed`，ADR 0046）：签名真机已验证
+`egl-direct` Skia 首帧、输入/IME、resize、剪贴板读写、ArkUI 无障碍、
+surface detach/recreate 和异步图片。
 `wzzc-dev/window/harmonyos` 拥有 Stage Ability、XComponent Surface、生命周期与
 输入队列；`moui/backend/harmonyos` 将回调适配到 MoUI runtime session。
 
@@ -81,10 +84,12 @@ moon test moui/backend/harmonyos --target native
 ```
 
 设备或 HVD 结论需要首帧、输入、Surface detach/recreate、IME、剪贴板、无障碍和
-异步图片观察。签名设备证据到位前，`checks/platforms/harmonyos.json` 不得高于
-`partial`。
+异步图片观察。committed 结论由 `checks/platforms/harmonyos.json` 中的签名真机
+证据支撑；host、toolchain 或 runtime 变化后应重跑聚焦检查，并保持 GPU seven-gate
+质量结论独立。
 
 ## 状态
 
-源码路径与 host-sim 已可用，实际呈现和完整 service 证据仍待补齐。边界见
-`docs/platform-readiness-declaration.md` 与 `docs/window-hosted-moui.md`。
+源码路径、host-sim 与匹配真机 R6 证据均已可用；剩余质量缺口是独立的 GPU
+seven-gate 结论。边界见 `docs/platform-readiness-declaration.md` 与
+`docs/window-hosted-moui.md`。

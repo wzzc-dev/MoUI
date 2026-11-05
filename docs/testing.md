@@ -59,6 +59,8 @@ that should stay synchronized with the catalog include:
 ```sh
 node scripts/lint-scripts.mjs --profile pr
 node scripts/validate-check-profiles.mjs
+node scripts/validate-portfolio-governance.mjs
+moon test tools/moui/validate_portfolio_governance --target native
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-viewnode-declaration-coverage.mjs   # ViewNode struct fields are keyed or exempt (ADR 0034, P17)
@@ -413,14 +415,22 @@ The PR profile validates the checked-in performance budget catalog and its
 MoonBit validator without downloading a renderer. The macOS `benchmark-scaffold`
 job is the canonical measured producer: it runs the native Skia Raster workloads
 for Showcase, Excel, a 100k-row virtual list, and four runtime
-windows, then uploads `artifacts/performance/result.json`. It is report-only:
-shared `macos-14` runs drift 1.3-1.5x on p50 for identical code, so a budget
-line that goes red here is reviewed by hand instead of blocking the PR. Run the
-same gate locally when the locked real Skia provider is available:
+windows, then uploads `artifacts/performance/result.json`. Structural update and
+scroll-cache counters block that job. The Showcase scroll budget pairs cache
+hit-rate floors with absolute layout/render misses per frame, so a change that
+removes root rebuilds cannot lower the hit rate while increasing missed work.
+Wall-clock budgets remain report-only:
+shared `macos-14` runs drift 1.3-1.5x on p50 for identical code, so a timing
+line that goes red is reviewed by hand instead of blocking the PR. The
+renderer-free `moui/runtime` structural regression runs in the `pr` profile and
+blocks a whole-tree builder regression even when the macOS benchmark is
+unavailable. Run the same gates locally when the locked real Skia provider is
+available:
 
 ```sh
 node scripts/validate-performance-budgets.mjs
 moon test tools/moui/validate_performance_budgets --target native
+node scripts/run-performance-budgets.mjs --structural-only
 node scripts/run-performance-budgets.mjs
 ```
 
@@ -428,10 +438,31 @@ The runner records build/layout/paint/present/frame samples plus peak RSS, live
 allocation blocks, cache hit rate, startup time, and executable size. The
 validator's p99 excludes the single worst sample when a run has fewer than 100
 samples: nearest-rank p99 would otherwise equal the maximum frame and let one
-scheduler hiccup on a shared runner fail the tail gate. Initial catalog values
-are reviewed guardrails rather than machine-portable claims.
-Change them only with a matching `native-skia-raster` artifact, runner identity,
-and the approval/reason required by `checks/performance-budgets.json`.
+scheduler hiccup on a shared runner fail the tail gate. Timing values remain
+reviewed guardrails rather than machine-portable claims.
+
+`structural` in `checks/performance-budgets.json` is enforced whenever a result
+is validated: the 1k/10k builder-cache workloads must build only the changed
+leaf plus container, retain at least a 0.99 builder-cache hit rate with one
+miss per frame, and keep the leaf render cache above 0.99. The Showcase scroll
+workload has provisional structural cache floors. `--structural-only` applies
+those checks without making shared-runner timing a gate.
+
+For a timing ratchet, preserve at least two artifacts from the same
+`native-skia-raster` runner with distinct output paths, for example:
+
+```sh
+node scripts/run-performance-budgets.mjs --structural-only --output artifacts/performance/update-run1.json
+node scripts/run-performance-budgets.mjs --structural-only --output artifacts/performance/update-run2.json
+```
+
+Record the runner identity, commands, artifact paths, and review note. Ratchet
+timing only when a named dedicated benchmark runner exists and is the job that
+enforces the gate, and two artifacts from that same runner show at most 15%
+same-code p50 spread. Two shared-host or local artifacts remain report-only
+even when their spread is at most 15%; multiple output paths do not substitute
+for runner identity. Structural counters must match exactly. The
+approval/reason requirements live in `checks/performance-budgets.json`.
 
 `--provider skia-neutral|sun` re-runs the same five scenarios through the
 renderer-neutral `RendererProvider` contract instead of the concrete Skia

@@ -96,11 +96,13 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [viewnode-trait-decomposition](debt/viewnode-trait-decomposition.md) | Fat 15-method `ViewNode` split stays parked behind three MoonBit limits (no bare-`T` impl target, single parent trait, no trait-object narrowing), not blanket impls alone |
 | [view-state-slot-storage](debt/view-state-slot-storage.md) | Replace copy-on-write `Map[DeclarationKey, Bytes]` slot storage if event-path profiles demand it |
 | [renderer-session-closure-style](debt/renderer-session-closure-style.md) | Revisit `RendererSession` closure record vs trait when renderer duplication or capability mistakes justify an RFC |
+| [message-transform-chain](debt/message-transform-chain.md) | Remove recursive `View::map` adapter copies only if MoonBit gains safe existential/associated-source typing or profiles justify a larger runtime redesign |
 
 ## Done (recent)
 
 | Plan | Summary |
 |------|---------|
+| [architecture-priority-execution](done/architecture-priority-execution.md) | Completed the three 2026-11 architecture reviews as one evidence-gated program: cache/damage correctness, leaf-only memoization, content-coordinate scrolling, Feature-first component boundary, gesture/control extension, route/release/doc governance, and transient-scroll/damage localization (N5) |
 | [runtime-state-render-ownership-convergence](done/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [overlay-placement-portal-unification](done/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |
 | [moui-tier-tea-debt-convergence](done/moui-tier-tea-debt-convergence.md) | Converge platform tiers, strict TEA boundaries, entrypoints, and documentation debt |

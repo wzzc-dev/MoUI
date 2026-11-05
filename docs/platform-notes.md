@@ -175,7 +175,7 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   APK packaging, and matching-device evidence requirements.
 - [iOS](ios-support.md) (**experimental**) — window-hosted UIKit template,
   simulator packaging, and matching-device evidence requirements.
-- [HarmonyOS](harmonyos-support.md) (**experimental**) — window-hosted
+- [HarmonyOS](harmonyos-support.md) (**committed**) — window-hosted
   Stage Ability/XComponent template, HAP packaging, and signed-device evidence requirements.
 - [WeChat Mini Program](wechat-support.md) (**experimental**) — Skyline Canvas 2D + wasm-gc,
   window-hosted app, touch events, WeChat Mini Program project template.

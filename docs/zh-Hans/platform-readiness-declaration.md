@@ -19,7 +19,7 @@ OS 产品完成度。
 | **Linux** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Wayland 运行时 smoke + Showcase 首帧（`checks/platforms/linux.json` `runtimeL3=passed`，2026-08-30，ADR 0032） | — |
 | **Android** | **experimental** | `ready=false`：window-hosted template + session 可编译且 host-sim tests 通过，但不做任何开发/演示可用性或产品承诺；`status=experimental` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
 | **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
-| **HarmonyOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
+| **HarmonyOS** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；签名真机 HAP 的 `egl-direct` 呈现、输入/IME、resize、剪贴板读写、ArkUI 无障碍、surface detach/recreate 和异步图片证据（`checks/platforms/harmonyos.json` `runtimeL3=passed`，2026-10-30，ADR 0046） | GPU seven-gate claim |
 
 ### Linux RISC-V64 架构变体
 

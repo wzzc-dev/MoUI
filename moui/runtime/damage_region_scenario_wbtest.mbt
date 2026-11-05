@@ -64,9 +64,10 @@ test "damage: virtual-list wheel scroll (full-window viewport)" {
   assert_eq(first.damage.full_reason(), "initial frame")
   runtime.dispatch_event(damage_scenario_wheel(-120.0))
   let scrolled = runtime.draw_frame()
-  // Message-driven rebuild: the root rebuild requests full damage before the
-  // dirty-bounds path is consulted.
-  assert_eq(scrolled.damage.full_reason(), "program model changed")
+  // The pointer message activates the scroll control. Activation is a
+  // conservative full-surface class, and the scrolled layout movement would
+  // independently require full damage until content-coordinate scroll lands.
+  assert_eq(scrolled.damage.full_reason(), "activation rebuild")
 }
 
 ///|
@@ -109,16 +110,16 @@ test "damage: message-driven scroll pane (partial-window viewport)" {
     ),
   )
   let frame = runtime.draw_frame()
-  assert_eq(frame.damage.full_reason(), "program model changed")
+  assert_eq(frame.damage.full_reason(), "activation rebuild")
 }
 
 ///|
 test "damage: environment toggle forces full, no-op write does not repaint" {
   // deep-tree-env-toggle / multi-window-4 shape. Environment invalidation is
   // global by design (set_environment marks the whole subtree build+layout
-  // dirty), and a non-1.0 text_scale also disables the render cache key
-  // (`matches_default_cache_key`), so every node re-renders — FullSurface
-  // matches the actual repaint extent.
+  // dirty), and a non-1.0 text_scale resolves to a different interned
+  // environment id, so every render cache key changes and all nodes re-render
+  // — FullSurface matches the actual repaint extent.
   let program : @core.Program[Int32, Int32] = @core.Program::simple(
     init=0,
     update=fn(_model, msg) { msg },
@@ -141,10 +142,10 @@ test "damage: environment toggle forces full, no-op write does not repaint" {
 }
 
 ///|
-test "damage: keyed-cell selection click stays a requested-full rebuild" {
-  // excel-grid-navigation shape: the actual output change is two keyed
-  // cells, but the model message routes through a root rebuild whose
-  // full-damage request wins over the dirty-bounds path.
+test "damage: keyed-cell click keeps activation damage conservative" {
+  // excel-grid-navigation shape: the click activates the cell and emits a
+  // model message. Activation remains a conservative full-surface class even
+  // though a direct paint-only projection can now use precise dirty bounds.
   let program : @core.Program[(Int32, Int32), (Int32, Int32)] = @core.Program::simple(
     init=(-1, -1),
     update=fn(_model, cell) { cell },
@@ -225,5 +226,5 @@ test "damage: keyed-cell selection click stays a requested-full rebuild" {
     ),
   )
   let frame = runtime.draw_frame()
-  assert_eq(frame.damage.full_reason(), "program model changed")
+  assert_eq(frame.damage.full_reason(), "activation rebuild")
 }

@@ -1,19 +1,15 @@
 ///|
 priv struct RenderEnvironment {
   environment : Environment
+  /// Interned identity of `environment`. Paint caches compare this integer
+  /// instead of the full theme-bearing environment value.
+  environment_id : Int32
   style : ViewStyle
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
   text_system : TextSystem
-  enabled : Bool
-  scale_factor : Double
-  text_scale : Double
-  locale : String
-  layout_direction : LayoutDirection
-  accessibility_contrast : AccessibilityContrast
   reduced_motion : Bool
-  content_size_category : ContentSizeCategory
   /// Current animation clock time in ms. 0.0 means "no clock active" (e.g. the
   /// intrinsic-size layout path), which makes transition progress clamp to the
   /// terminal state so non-animated paint is unchanged. Non-zero only during a
@@ -27,19 +23,13 @@ fn RenderEnvironment::from_environment(
 ) -> RenderEnvironment {
   {
     environment,
+    environment_id: environment_identity(environment),
     style: ViewStyle::empty(),
     font: None,
     foreground: None,
     corner_radius: None,
     text_system: TextSystem::fallback(),
-    enabled: environment.enabled,
-    scale_factor: environment.scale_factor,
-    text_scale: environment.text_scale,
-    locale: environment.locale,
-    layout_direction: environment.layout_direction,
-    accessibility_contrast: environment.accessibility_contrast,
     reduced_motion: environment.reduced_motion,
-    content_size_category: environment.content_size_category,
     now_ms: 0.0,
   }
 }
@@ -55,22 +45,16 @@ fn RenderEnvironment::with_text_system(
 ///|
 fn RenderEnvironment::with_child_context(
   self : RenderEnvironment,
-  data : &RuntimeViewNode,
+  environment : Environment,
+  style : ViewStyle,
+  environment_id : Int32,
 ) -> RenderEnvironment {
-  let environment = data.child_environment(self.environment)
-  let style = data.child_style(self.style)
   {
     ..self,
     environment,
+    environment_id,
     style,
-    enabled: environment.enabled,
-    scale_factor: environment.scale_factor,
-    text_scale: environment.text_scale,
-    locale: environment.locale,
-    layout_direction: environment.layout_direction,
-    accessibility_contrast: environment.accessibility_contrast,
     reduced_motion: environment.reduced_motion,
-    content_size_category: environment.content_size_category,
   }
 }
 
@@ -80,27 +64,6 @@ fn RenderEnvironment::with_now_ms(
   now_ms : Double,
 ) -> RenderEnvironment {
   { ..self, now_ms, }
-}
-
-///|
-fn RenderEnvironment::matches_default_cache_key(
-  self : RenderEnvironment,
-) -> Bool {
-  self.environment == Environment::neutral() &&
-  self.style == ViewStyle::empty() &&
-  self.font is None &&
-  self.foreground is None &&
-  self.corner_radius is None &&
-  self.text_system.id() == TextSystem::fallback().id() &&
-  self.enabled &&
-  self.scale_factor == 1.0 &&
-  self.text_scale == 1.0 &&
-  self.locale == "en-US" &&
-  self.layout_direction == LeftToRight &&
-  self.accessibility_contrast == Standard &&
-  !self.reduced_motion &&
-  self.content_size_category == Medium &&
-  self.now_ms == 0.0
 }
 
 ///|

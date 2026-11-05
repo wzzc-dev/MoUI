@@ -133,7 +133,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     Resize(size) => {
       self.size = size
-      self.request_root_rebuild(reason="viewport resized")
+      self.request_root_rebuild(reason="viewport resized", damage=FullSurface)
       self.dirty.needs_redraw = true
       self.dirty.needs_layout = true
       self.dirty.needs_paint = true
@@ -357,50 +357,45 @@ fn RuntimeState::dispatch_pointer_event(
       ),
     )
   }
-  let result = match self.animfocus.pointer_captures.get(event.id) {
+  let arena_owner = if event.phase == Down {
+    None
+  } else {
+    self.animfocus.gesture_arena.owner(event.id)
+  }
+  let mut result = match arena_owner {
     Some(target) =>
-      if event.phase == Down {
-        self.element_tree.root.dispatch_pointer(
+      match
+        self.element_tree.root.dispatch_pointer_to_target(
+          target,
           event,
           self.render_tree.root,
           environment=self.environment,
           text_system=self.text_system,
-          capture_lookup=false,
           now_ms=self.animfocus.now_ms,
-        )
-      } else {
-        match
-          self.element_tree.root.dispatch_pointer_to_target(
-            target,
-            event,
-            self.render_tree.root,
-            environment=self.environment,
-            text_system=self.text_system,
-            now_ms=self.animfocus.now_ms,
-          ) {
-          Some(result) => result
-          None => {
-            self.animfocus.pointer_captures.remove(event.id)
-            self.element_tree.root.dispatch_pointer(
-              event,
-              self.render_tree.root,
-              environment=self.environment,
-              text_system=self.text_system,
-              capture_lookup=false,
-              now_ms=self.animfocus.now_ms,
-            )
-          }
+          target_only=true,
+        ) {
+        Some(result) => result
+        None => {
+          self.animfocus.gesture_arena.end(event.id)
+          self.dispatch_pointer_without_arena_owner(event)
         }
       }
-    None =>
-      self.element_tree.root.dispatch_pointer(
-        event,
-        self.render_tree.root,
-        environment=self.environment,
-        text_system=self.text_system,
-        capture_lookup=false,
-        now_ms=self.animfocus.now_ms,
-      )
+    None => self.dispatch_pointer_without_arena_owner(event)
+  }
+  if event.phase == Down {
+    self.animfocus.gesture_arena.begin(event.id, result.gesture.candidates)
+  } else if self.animfocus.gesture_arena.has_stream(event.id) {
+    match result.gesture.winner {
+      Some(winner) =>
+        if self.animfocus.gesture_arena.claim(event.id, winner) {
+          let cancelled = self.cancel_pointer_gesture_losers(event, winner)
+          result = merge_element_event_results(result, cancelled)
+        }
+      None => ()
+    }
+    if event.phase == Up || event.phase == Cancel {
+      self.animfocus.gesture_arena.end(event.id)
+    }
   }
   // Views can claim focus from the pointer handler (e.g. picker popup
   // interaction). Prefer that claim over the geometry-only hit from
@@ -460,6 +455,94 @@ fn RuntimeState::dispatch_pointer_event(
 }
 
 ///|
+fn RuntimeState::dispatch_pointer_without_arena_owner(
+  self : RuntimeState,
+  event : PointerEvent,
+) -> ElementEventResult {
+  match self.animfocus.pointer_captures.get(event.id) {
+    Some(target) =>
+      if event.phase == Down {
+        self.element_tree.root.dispatch_pointer(
+          event,
+          self.render_tree.root,
+          environment=self.environment,
+          text_system=self.text_system,
+          capture_lookup=false,
+          now_ms=self.animfocus.now_ms,
+        )
+      } else {
+        match
+          self.element_tree.root.dispatch_pointer_to_target(
+            target,
+            event,
+            self.render_tree.root,
+            environment=self.environment,
+            text_system=self.text_system,
+            now_ms=self.animfocus.now_ms,
+          ) {
+          Some(result) => result
+          None => {
+            self.animfocus.pointer_captures.remove(event.id)
+            self.element_tree.root.dispatch_pointer(
+              event,
+              self.render_tree.root,
+              environment=self.environment,
+              text_system=self.text_system,
+              capture_lookup=false,
+              now_ms=self.animfocus.now_ms,
+            )
+          }
+        }
+      }
+    None =>
+      self.element_tree.root.dispatch_pointer(
+        event,
+        self.render_tree.root,
+        environment=self.environment,
+        text_system=self.text_system,
+        capture_lookup=false,
+        now_ms=self.animfocus.now_ms,
+      )
+  }
+}
+
+///|
+fn RuntimeState::cancel_pointer_gesture_losers(
+  self : RuntimeState,
+  event : PointerEvent,
+  winner : ElementId,
+) -> ElementEventResult {
+  let cancel_event = PointerEvent::new(
+    position=event.position,
+    phase=Cancel,
+    button=event.button,
+    modifiers=event.modifiers,
+    id=event.id,
+    pressure=event.pressure,
+  )
+  let mut cancelled = ElementEventResult::empty()
+  for candidate in self.animfocus.gesture_arena.candidate_ids(event.id) {
+    if candidate != winner {
+      match
+        self.element_tree.root.dispatch_pointer_to_target(
+          candidate,
+          cancel_event,
+          self.render_tree.root,
+          environment=self.environment,
+          text_system=self.text_system,
+          now_ms=self.animfocus.now_ms,
+          target_only=true,
+        ) {
+        Some(result) =>
+          cancelled = merge_element_event_results(cancelled, result)
+        None => ()
+      }
+    }
+  }
+  cancelled
+}
+
+///|
 fn RuntimeState::move_focus(
   self : RuntimeState,
   reverse~ : Bool = false,
@@ -508,6 +591,9 @@ fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
       self.animfocus.pointer_captures.remove(id)
     }
   }
+  self.animfocus.gesture_arena.clear_missing(id => {
+    self.element_tree.root.contains_element_id(id)
+  })
 }
 
 ///|

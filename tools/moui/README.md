@@ -27,6 +27,12 @@ Current tools:
   return types.
 - `validate_check_profiles/` validates `checks/profiles.json`, the source
   catalog for `scripts/check.mjs` PR, daily, platform, theme, and full gates.
+- `validate_portfolio_governance/` layers owner, intent, review, graduation,
+  and retirement policy over the canonical route and release-module catalogs.
+  It also checks synchronized release coupling, evidence files, generated
+  status blocks, stale component API guidance, and HarmonyOS product-class
+  drift. Run `node scripts/validate-portfolio-governance.mjs --write-docs` to
+  refresh the generated blocks.
 - `validate_package_manifest/` validates schema version 1 packaging manifests
   emitted by macOS app-bundle and Windows portable-folder packaging helpers.
 - `validate_renderer_provider_manifests/` keeps native platform backend,

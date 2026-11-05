@@ -159,6 +159,19 @@ sh scripts/window-hosted-hostsim-smoke.sh
 
 当拆分超大的实现或测试文件、减少源码级 `pub(all)`、收缩根 facade，或修改 MoonBit-backed validator wrapper script 时，请运行 maintenance baseline guard，并在同一变更中下调相关预算。MoonBit-backed JS validator 应保持为 `scripts/lib/moonbit-tool-runner.mjs` 上的薄兼容 shim；避免在那里重新引入本地 process runner、直接 filesystem parsing 或 hard-coded native `_build` executable path。
 
+## 性能预算
+
+PR profile 会解析 `checks/performance-budgets.json` 并运行 MoonBit validator，但不会下载渲染器。macOS `benchmark-scaffold` job 是 canonical 实测 producer：它运行 native Skia Raster 场景，并上传忽略的 `artifacts/performance/result.json`。结构计数是机器无关的阻断门：1k/10k builder-cache 叶子更新只能构建变更叶子和容器，至少 99% 的 builder-cache 命中，每帧最多一次 miss；Showcase scroll 的 place/render cache 同时约束命中率下限与每帧 miss 绝对上限，避免移除 root rebuild 后以缩小的分母掩盖绝对工作量回退。`moui/runtime` 中无渲染器的结构回归随 `pr` profile 运行。
+
+墙钟预算仍是非阻断报告。共享 `macos-14` 的同代码 p50 曾漂移 1.3-1.5x。timing ratchet 需要一个具名、且实际执行门禁的专用 benchmark runner；该 runner 上两次同代码产物的 p50 spread 不超过 15% 才能作为依据。本地或共享宿主的两个产物即使 spread 不超过 15% 也只作报告，不因输出路径不同而变成可棘轮证据。结构计数必须每次都一致。需要本地复跑时使用：
+
+```sh
+node scripts/validate-performance-budgets.mjs
+moon test tools/moui/validate_performance_budgets --target native
+node scripts/run-performance-budgets.mjs --structural-only
+node scripts/run-performance-budgets.mjs
+```
+
 ## 脚本工具策略
 
 脚本变更遵循与框架代码相同的 clarity-first 规则。当工作是仓库验证、源码或 manifest 扫描、确定性生成，或可由 `moon check` 和 `moon test` 覆盖的 smoke catalog planning 时，优先使用 MoonBit `tools/...` 包。当 CI 或用户已依赖现有 `node scripts/*.mjs` 命令时，将其保留为稳定 wrapper。

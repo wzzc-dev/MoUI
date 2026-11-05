@@ -89,10 +89,13 @@ classification budgets such as `app_constructor`, `advanced_core_protocol`,
 Application performance guardrails are also separate from source-size and API
 ratchets. `checks/performance-budgets.json` owns the reviewed thresholds and
 update policy; `node scripts/validate-performance-budgets.mjs` validates the
-catalog in the PR profile, while the macOS benchmark job compares real Skia
-Raster samples and uploads the ignored result artifact. Do not weaken a
-threshold to accommodate an unexplained regression or compare artifacts from a
-different runner.
+catalog in the PR profile, and the macOS benchmark job blocks on structural
+build/cache counters while uploading the ignored Skia Raster artifact. Timing
+ratchets need two artifacts from the same runner with at most 15% same-code p50
+spread, plus the dedicated runner that will enforce the gate and the recorded
+review note. Local or shared-host artifacts remain corroborating evidence. Do
+not weaken a structural floor to accommodate an unexplained regression or
+compare artifacts from a different runner.
 
 Current `max` values intentionally match today's debt so unrelated changes do
 not need to solve the whole backlog. When a refactor splits a file, moves

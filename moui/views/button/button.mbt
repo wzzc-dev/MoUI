@@ -149,9 +149,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   let transition = @common.pressable_transition(ctx.state, control="button")
   let (background_brush, animating) = match transition {
     Some((from_state, start_ms)) =>
-      if ctx.environment.reduced_motion ||
-        transition_duration_ms <= 0.0 ||
-        ctx.now_ms <= 0.0 {
+      if ctx.environment.reduced_motion || transition_duration_ms <= 0.0 {
         (
           @common.pressable_state_brush(
             current_state,
@@ -160,6 +158,20 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
             pressed.background,
           ),
           false,
+        )
+      } else if ctx.now_ms <= 0.0 {
+        // The transition was recorded before the host clock started. Paint the
+        // from-state and keep the animation latched so the first real tick can
+        // advance it. Returning the terminal state here would either skip the
+        // transition or make it flash backwards on the next frame.
+        (
+          @common.pressable_state_brush(
+            from_state,
+            normal.background,
+            hovered.background,
+            pressed.background,
+          ),
+          true,
         )
       } else {
         let raw_progress = (ctx.now_ms - start_ms) / transition_duration_ms

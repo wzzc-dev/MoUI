@@ -181,8 +181,9 @@ test "controlled scroll emits the absolute clamped offset" {
   )
   assert_true(
     layout.child_frames[0] ==
-    @core.Rect::new(x=0.0, y=-400.0, width=100.0, height=500.0),
+    @core.Rect::new(x=0.0, y=0.0, width=100.0, height=500.0),
   )
+  assert_true(layout.child_transform.ty == -400.0)
   let result = view.event(
     scroll_test_event_context(
       event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=40.0),
@@ -259,7 +260,8 @@ test "scroll request ids are applied once per mounted slot" {
       state=initial,
     ),
   )
-  assert_true(requested_layout.child_frames[0].origin.y == -80.0)
+  assert_true(requested_layout.child_frames[0].origin.y == 0.0)
+  assert_true(requested_layout.child_transform.ty == -80.0)
   let scrolled = requested.event(
     scroll_test_event_context(
       event=scroll_test_pointer(x=50.0, y=50.0, phase=Move, wheel_y=-20.0),
@@ -274,7 +276,8 @@ test "scroll request ids are applied once per mounted slot" {
       state=scrolled,
     ),
   )
-  assert_true(repeated_layout.child_frames[0].origin.y == -100.0)
+  assert_true(repeated_layout.child_frames[0].origin.y == 0.0)
+  assert_true(repeated_layout.child_transform.ty == -100.0)
   let replaced : @core.View[Unit] = scroll_container(
     child~,
     viewport=Some(@core.Size::new(width=100.0, height=100.0)),
@@ -289,7 +292,8 @@ test "scroll request ids are applied once per mounted slot" {
       state=scrolled,
     ),
   )
-  assert_true(replaced_layout.child_frames[0].origin.y == -140.0)
+  assert_true(replaced_layout.child_frames[0].origin.y == 0.0)
+  assert_true(replaced_layout.child_transform.ty == -140.0)
 }
 
 ///|

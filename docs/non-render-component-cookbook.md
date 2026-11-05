@@ -315,6 +315,7 @@ fn profile_scope() -> @moui.ScopedFeature[
   SettingsMsg,
 ] {
   profile_feature().scope(
+    scope_id="settings/profile",
     read=model => model.profile,
     write=(section, model) => { ..model, profile: section },
     wrap=message => SettingsMsg::Profile(message),
@@ -338,6 +339,12 @@ Rules that keep this honest:
   `write(read(parent), parent) == parent`, and later writes win. `write` is a
   pure function, not a setter: application state still changes only inside
   `update` (invariant P13).
+- Give every reusable or multi-instance mount a stable `scope_id`. It
+  namespaces the child's Effect and Subscription keys so two instances can use
+  the same local key without superseding or deduplicating each other. Use a
+  model-derived id for keyed instances; changing it intentionally restarts
+  scoped resources. An empty id is the legacy/root namespace and does not
+  isolate two mounts.
 - There is deliberately no `Feature::map`: a one-way map cannot close over
   `update`'s input side. The parent match arm unwraps; `scope(wrap)` performs
   every lift.
@@ -347,6 +354,20 @@ Rules that keep this honest:
   scope `view` field aborts by design.
 - App roots stay `Program`; build the root as a `Feature` and bridge with
   `Program::from_feature` when that reads better.
+
+### Keyed instances and persistence
+
+For multiple instances of one feature, keep a keyed collection of child models
+in the parent model. Select an entry in the parent `update`, run the scoped
+feature against that child, and derive `scope_id` from the same stable instance
+key. The parent remains the owner of all persistent state.
+
+Save/restore is an explicit app-level snapshot codec. `examples/settings/app`
+flattens its model into `SettingsSnapshot` so the stored format stays stable
+across section refactors. There is no `SaveableStateStore`, hidden binding, or
+runtime-owned component store. `scope_id` isolates lifecycle identity; it never
+stores state. See
+[ADR 0053](decisions/0053-feature-first-component-state-boundary.md).
 
 Runnable shape: `examples/settings/app` (three section features with scoped
 views). Recommended checks:

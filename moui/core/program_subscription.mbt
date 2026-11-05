@@ -153,6 +153,29 @@ pub fn[Msg, NextMsg] Subscription::map(
 }
 
 ///|
+fn[Msg] Subscription::prefix_scope(
+  self : Subscription[Msg],
+  scope_prefix : String,
+) -> Subscription[Msg] {
+  match self.node {
+    SubscriptionNone => self
+    SubscriptionBatch(subscriptions) =>
+      Subscription::batch(
+        subscriptions.map(subscription => {
+          subscription.prefix_scope(scope_prefix)
+        }),
+      )
+    SubscriptionSource(source) =>
+      Subscription::listen(
+        key=scope_identity_key(scope_prefix, source.key),
+        kind=source.kind,
+        label=source.label,
+        start=source.start,
+      )
+  }
+}
+
+///|
 pub fn[Msg] Subscription::descriptors(
   self : Subscription[Msg],
 ) -> Array[SubscriptionDescriptor] {

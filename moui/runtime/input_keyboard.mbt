@@ -9,12 +9,14 @@ fn ElementNode::dispatch_keyboard(
   text_system~ : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
-    self.dispatch_view_event(
+    let (frame, child_frames) = layout
+      .event_geometry_for(target, Transform2D::identity())
+      .unwrap_or_else(() => (Rect::new(x=0.0, y=0.0, width=0.0, height=0.0), []))
+    self.dispatch_view_event_with_geometry(
       self.view_node,
       Keyboard(event),
-      layout
-      .event_render_node_for(self.id)
-      .unwrap_or_else(() => RenderNode::empty()),
+      frame,
+      child_frames,
       text_system,
       environment~,
       style~,
@@ -50,6 +52,7 @@ fn ElementNode::dispatch_keyboard(
       capture_target: None,
       focused: None,
       deliveries,
+      gesture: PointerGestureTrace::empty(),
     }
   }
 }
@@ -87,6 +90,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
       capture_target: None,
       focused: None,
       deliveries: [],
+      gesture: PointerGestureTrace::empty(),
     }
   }
   if owns_dismissal && own.changed {
@@ -127,6 +131,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
             capture_target: None,
             focused: None,
             deliveries: [],
+            gesture: PointerGestureTrace::empty(),
           }
         }
       }
@@ -174,6 +179,7 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
     capture_target: None,
     focused: None,
     deliveries,
+    gesture: PointerGestureTrace::empty(),
   }
 }
 
@@ -229,5 +235,6 @@ fn ElementNode::activate_first_child(
     capture_target: None,
     focused: None,
     deliveries: [],
+    gesture: PointerGestureTrace::empty(),
   }
 }

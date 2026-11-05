@@ -324,6 +324,7 @@ pub fn SkiaRasterRenderer::to_renderer_session(
     },
     image_source~,
     image_decoder~,
+    surface_damage=self.surface_damage,
     platform_view=@render.RendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,

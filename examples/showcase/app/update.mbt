@@ -32,10 +32,6 @@ fn ShowcaseModel::update_with_environment(
       ({ ..self, nav_query: query, }, @moui.Effect::none())
     ShowMobileCatalog =>
       ({ ..self, mobile_showing_detail: false, }, @moui.Effect::none())
-    SidebarScrolled(offset) =>
-      ({ ..self, sidebar_scroll: offset, }, @moui.Effect::none())
-    DetailScrolled(offset) =>
-      ({ ..self, detail_scroll: offset, }, @moui.Effect::none())
     RouteBack => {
       let history = self.route_history.back()
       let next = self
@@ -157,19 +153,19 @@ fn ShowcaseModel::navigate(
       source="showcase",
     )
   }
-  // Keep sidebar scroll; reset detail when opening a different story.
-  let detail_scroll = if self.current_route_string() != formatted {
-    @geometry.Point::new(x=0.0, y=0.0)
+  // The shell's scroll positions belong to their elements. Opening a different
+  // story only needs a one-shot request to reset the detail viewport.
+  let base = if self.current_route_string() != formatted {
+    self.with_detail_scroll_reset()
   } else {
-    self.detail_scroll
+    self
   }
   let next = {
-    ..self,
+    ..base,
     workspace: parsed.workspace,
     route_id: parsed.id,
     route_history: history,
     mobile_showing_detail: true,
-    detail_scroll,
   }.apply_route_to_children(parsed)
   let command = if push {
     if self.route_history.current_route() == formatted {
@@ -181,6 +177,22 @@ fn ShowcaseModel::navigate(
     ReplaceRoute(formatted)
   }
   (next, command.effect(route_host))
+}
+
+///|
+fn ShowcaseModel::with_detail_scroll_reset(
+  self : ShowcaseModel,
+) -> ShowcaseModel {
+  let id = match self.detail_scroll_request {
+    Some(request) => request.id + 1
+    None => 0
+  }
+  {
+    ..self,
+    detail_scroll_request: Some(
+      @moui.ScrollRequest::new(id~, offset=@geometry.Point::new(x=0.0, y=0.0)),
+    ),
+  }
 }
 
 ///|

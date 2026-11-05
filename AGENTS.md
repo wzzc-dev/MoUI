@@ -72,6 +72,7 @@ Pre-push static trio (every commit that touches guidance, API, or package layout
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-release-module-closures.mjs
+node scripts/validate-portfolio-governance.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-renderer-capability-consistency.mjs
 node scripts/validate-doc-references.mjs

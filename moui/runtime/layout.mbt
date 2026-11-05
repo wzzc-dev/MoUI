@@ -9,24 +9,56 @@ priv struct MeasuredNode {
 ///|
 priv struct PlacedNode {
   element_id : ElementId
+  /// Frame in the parent's child-coordinate space. Root and hoisted overlay
+  /// frames are already in screen coordinates.
   frame : Rect
+  /// Transform from this node's child-coordinate space into this node's local
+  /// coordinate space. Scroll containers use it to keep descendants
+  /// content-local while moving the viewport.
+  child_transform : Transform2D
+  /// Whether this node clips its children to its local frame.
+  clips_children : Bool
   children : Array[PlacedNode]
   /// Element child indices whose placed frames are overlay-positioned: their
   /// render subtrees are hoisted and painted after the whole tree so popup
   /// content escapes ancestor clip rects.
   overlay_child_indices : Array[Int32]
-  /// Hit region: the frame intersected with the accumulated ancestor clip.
-  /// Hit-testing uses this instead of paint bounds so clipped content never
-  /// wins hit-test over content painted below it.
-  hit_rect : Rect
 } derive(Eq, Debug, ToJson)
 
 ///|
-fn PlacedNode::to_layout_result(self : PlacedNode) -> LayoutResult {
-  {
-    frame: self.frame,
-    children: self.children.map(child => child.to_layout_result()),
+fn PlacedNode::to_layout_result(
+  self : PlacedNode,
+  node_to_screen : Transform2D,
+) -> LayoutResult {
+  let frame = runtime_transform_rect(
+    node_to_screen,
+    Rect::new(
+      x=0.0,
+      y=0.0,
+      width=self.frame.size.width,
+      height=self.frame.size.height,
+    ),
+  )
+  let child_content_to_screen = runtime_transform_compose(
+    node_to_screen,
+    self.child_transform,
+  )
+  let children : Array[LayoutResult] = []
+  for index, child in self.children {
+    let child_to_screen = if self.overlay_child_indices.contains(index) {
+      Transform2D::translation(dx=child.frame.origin.x, dy=child.frame.origin.y)
+    } else {
+      runtime_transform_compose(
+        child_content_to_screen,
+        Transform2D::translation(
+          dx=child.frame.origin.x,
+          dy=child.frame.origin.y,
+        ),
+      )
+    }
+    children.push(child.to_layout_result(child_to_screen))
   }
+  { frame, children, }
 }
 
 ///|
@@ -105,18 +137,20 @@ fn ElementNode::measure_with_text_system(
 /// environment through unchanged, so the parent's id forwards and the
 /// per-element cache check is an integer compare. Environment-scoping
 /// modifiers produce a new value whose id resolves through the intern table.
-/// Classification is node-kind-derived and memoized per element: a scoping
-/// modifier's output is never structurally equal to its input, and a
-/// passthrough closure's output always is — identity is content, so a
-/// structurally equal child environment shares the parent's id.
+/// Classification is safe to memoize only for the same view node and parent
+/// environment identity: a scope's output can equal one incoming environment
+/// and differ from another. Reconcile invalidates it when the view node is
+/// replaced.
 fn ElementNode::child_environment_identity(
   self : ElementNode,
   child_environment : Environment,
   environment : Environment,
   environment_id : Int32,
 ) -> Int32 {
-  if !self.layout_cache.child_environment_classified {
+  if !self.layout_cache.child_environment_classified ||
+    self.layout_cache.child_environment_input_id != environment_id {
     self.layout_cache.child_environment_classified = true
+    self.layout_cache.child_environment_input_id = environment_id
     self.layout_cache.child_environment_passthrough = child_environment ==
       environment
   }
@@ -192,7 +226,6 @@ fn ElementNode::place_measured_with_text_system(
   text_system~ : TextSystem,
   overlay_overrides~ : Array[(Int32, Array[(Int32, Rect)])] = [],
   overlay_affected~ : DirtyIdSet? = None,
-  accumulated_clip~ : Rect? = None,
   fit_measured_sizes~ : Bool = false,
   environment_id~ : Int32 = 0,
 ) -> PlacedNode {
@@ -201,9 +234,11 @@ fn ElementNode::place_measured_with_text_system(
   // placed subtree instead of re-running `view_node.layout`, so an open
   // dropdown no longer re-places the whole application every frame. The key
   // must cover every input `view_node.layout` reads: the frame (tight
-  // constraints), the interned environment, the style, the accumulated clip
-  // (hit rects), the ADR 0035 fit flag, and the view-state revision (state
-  // flips change layout output without necessarily marking layout dirty).
+  // constraints), the interned environment, the style, the ADR 0035 fit flag,
+  // and the view-state revision (state flips change layout output without
+  // necessarily marking layout dirty). Ancestor transforms and clips are not
+  // part of this key: the placed subtree is content-local and both are applied
+  // by boundary consumers.
   // Nodes on an override spine — or carrying an override themselves — are
   // forced to re-place so the overrides are always consumed.
   let env_id = if environment_id == 0 {
@@ -222,7 +257,6 @@ fn ElementNode::place_measured_with_text_system(
     self.layout_cache.cached_place_frame == Some(frame) &&
     self.layout_cache.cached_place_environment_id == env_id &&
     self.layout_cache.cached_place_style == Some(style) &&
-    self.layout_cache.cached_place_clip == accumulated_clip &&
     self.layout_cache.cached_place_fit == fit_measured_sizes &&
     self.layout_cache.cached_place_state_revision == self.control.state_revision {
     match self.layout_cache.cached_placed {
@@ -261,36 +295,24 @@ fn ElementNode::place_measured_with_text_system(
     environment,
     style,
   })
-  let child_frames = result.child_frames.map(child_frame => {
-    child_frame.offset(dx=frame.origin.x, dy=frame.origin.y)
-  })
   let overrides = overlay_overrides_for(overlay_overrides, self.id.value())
   let child_environment = self.view_node.child_environment(environment)
   let child_environment_id = self.child_environment_identity(
     child_environment, environment, env_id,
   )
   let child_style = self.view_node.child_style(style)
-  // A clip container folds its own frame into the accumulated ancestor clip;
-  // children inherit that, and their hit regions are the intersection.
-  let child_clip : Rect? = if result.clips_children {
-    match accumulated_clip {
-      Some(clip) => frame.intersection(clip)
-      None => Some(frame)
-    }
-  } else {
-    accumulated_clip
-  }
   let children : Array[PlacedNode] = []
   let overlay_child_indices : Array[Int32] = []
   for index, child in self.children {
-    if index < child_frames.length() && index < measured.children.length() {
+    if index < result.child_frames.length() &&
+      index < measured.children.length() {
       // Overlay-positioned children skip their parent-assigned provisional
-      // frame and are placed directly at the absolute rect computed by the
+      // frame and are placed directly at the screen rect computed by the
       // post-layout placement pass.
       let is_overlay = overlay_child_override(overrides, index) is Some(_)
       let child_frame = match overlay_child_override(overrides, index) {
         Some(override_frame) => override_frame
-        None => child_frames[index]
+        None => result.child_frames[index]
       }
       // Tight-fit parents (flex with weighted children) measure children
       // under looser constraints than the frame they finally place them in.
@@ -321,8 +343,6 @@ fn ElementNode::place_measured_with_text_system(
           overlay_overrides~,
           overlay_affected~,
           environment_id=child_environment_id,
-          // Hoisted popups escape ancestor clips by design.
-          accumulated_clip=if is_overlay { None } else { child_clip },
           fit_measured_sizes=refits || fit_measured_sizes,
         ),
       )
@@ -334,16 +354,10 @@ fn ElementNode::place_measured_with_text_system(
   let placed : PlacedNode = {
     element_id: self.id,
     frame,
+    child_transform: result.child_transform,
+    clips_children: result.clips_children,
     children,
     overlay_child_indices,
-    hit_rect: match accumulated_clip {
-      Some(clip) =>
-        match frame.intersection(clip) {
-          Some(hit) => hit
-          None => Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
-        }
-      None => frame
-    },
   }
   // C3: store the per-node entry. `place_with_text_system` re-stores the
   // frame/environment/style fields for its root call; storing them here as
@@ -351,10 +365,10 @@ fn ElementNode::place_measured_with_text_system(
   self.layout_cache.cached_place_frame = Some(frame)
   self.layout_cache.cached_place_environment_id = env_id
   self.layout_cache.cached_place_style = Some(style)
-  self.layout_cache.cached_place_clip = accumulated_clip
   self.layout_cache.cached_place_fit = fit_measured_sizes
   self.layout_cache.cached_place_state_revision = self.control.state_revision
   self.layout_cache.cached_placed = Some(placed)
+  self.layout_cache.place_revision = self.layout_cache.place_revision + 1
   placed
 }
 

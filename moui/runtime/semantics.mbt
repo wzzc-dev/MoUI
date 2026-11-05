@@ -55,7 +55,8 @@ fn clone_semantic_action_route(
   {
     kind: route.kind,
     element: route.element,
-    layout: route.layout,
+    frame: route.frame,
+    child_frames: route.child_frames.copy(),
     environment: route.environment,
     style: route.style,
   }
@@ -73,10 +74,12 @@ fn clone_semantics_node_route(route : SemanticsNodeRoute) -> SemanticsNodeRoute 
 fn ElementSemanticsCache::matches(
   self : ElementSemanticsCache,
   frame : Rect,
+  transform : Transform2D,
   environment_id : Int32,
   style : ViewStyle,
 ) -> Bool {
   self.frame == Some(frame) &&
+  self.transform == Some(transform) &&
   self.environment_id == environment_id &&
   self.style == Some(style)
 }
@@ -86,10 +89,11 @@ fn ElementSemanticsCache::can_replay(
   self : ElementSemanticsCache,
   context : SemanticsBuildContext,
   frame : Rect,
+  transform : Transform2D,
   environment_id : Int32,
   style : ViewStyle,
 ) -> Bool {
-  if !self.matches(frame, environment_id, style) {
+  if !self.matches(frame, transform, environment_id, style) {
     return false
   }
   self.roots.all(root => context.nodes.contains(root))
@@ -107,10 +111,12 @@ fn ElementSemanticsCache::capture(
   self : ElementSemanticsCache,
   roots : Array[SemanticsNodeId],
   frame : Rect,
+  transform : Transform2D,
   environment_id : Int32,
   style : ViewStyle,
 ) -> Unit {
   self.frame = Some(frame)
+  self.transform = Some(transform)
   self.environment_id = environment_id
   self.style = Some(style)
   self.roots.clear()
@@ -233,6 +239,7 @@ fn RuntimeState::route_for_element(
   context : SemanticsBuildContext,
   element : ElementNode,
   layout : PlacedNode,
+  node_to_screen : Transform2D,
   environment : Environment,
   style : ViewStyle,
 ) -> SemanticsNodeRoute {
@@ -240,7 +247,27 @@ fn RuntimeState::route_for_element(
   let actions : Array[SemanticActionRoute] = []
   for kind in kinds {
     if kind != Focus {
-      actions.push({ kind, element, layout, environment, style, })
+      let child_frames : Array[Rect] = []
+      for index, child in layout.children {
+        let child_to_screen = if layout.overlay_child_indices.contains(index) {
+          runtime_overlay_to_screen(child.frame)
+        } else {
+          runtime_child_to_screen(
+            node_to_screen,
+            layout.child_transform,
+            child.frame,
+          )
+        }
+        child_frames.push(runtime_screen_frame(child_to_screen, child.frame))
+      }
+      actions.push({
+        kind,
+        element,
+        frame: runtime_screen_frame(node_to_screen, layout.frame),
+        child_frames,
+        environment,
+        style,
+      })
     }
   }
   let focus_element = if kinds.contains(Focus) {
@@ -260,6 +287,7 @@ fn RuntimeState::boundary_node(
   context : SemanticsBuildContext,
   element : ElementNode,
   layout : PlacedNode,
+  node_to_screen : Transform2D,
   info : ViewSemanticsInfo,
   children : Array[SemanticsNodeId],
   environment : Environment,
@@ -267,7 +295,7 @@ fn RuntimeState::boundary_node(
 ) -> SemanticsNodeId {
   let id = self.semantics_node_id_for_element(element)
   let route = self.route_for_element(
-    context, element, layout, environment, style,
+    context, element, layout, node_to_screen, environment, style,
   )
   let focus_order = match route.focus_element {
     Some(_) => Some(context.next_focus_order - 1)
@@ -304,7 +332,7 @@ fn RuntimeState::boundary_node(
     live_atomic: info.live_atomic.unwrap_or(false),
     actions: element.view_node.semantics_action_kinds(),
     focus_order,
-    frame: layout.frame,
+    frame: runtime_screen_frame(node_to_screen, layout.frame),
     children,
   }
   context.put(node, route)
@@ -346,13 +374,14 @@ fn RuntimeState::apply_semantics_overlay(
   target : SemanticsNodeId,
   element : ElementNode,
   layout : PlacedNode,
+  node_to_screen : Transform2D,
   info : ViewSemanticsInfo,
   environment : Environment,
   style : ViewStyle,
 ) -> Unit {
   guard context.node(target) is Some(current) else { return }
   let overlay_route = self.route_for_element(
-    context, element, layout, environment, style,
+    context, element, layout, node_to_screen, environment, style,
   )
   let route = context.routes
     .get(target)
@@ -457,6 +486,7 @@ fn RuntimeState::merged_boundary_node(
   context : SemanticsBuildContext,
   element : ElementNode,
   layout : PlacedNode,
+  node_to_screen : Transform2D,
   info : ViewSemanticsInfo,
   descendant_roots : Array[SemanticsNodeId],
   environment : Environment,
@@ -466,6 +496,7 @@ fn RuntimeState::merged_boundary_node(
     context,
     element,
     layout,
+    node_to_screen,
     info,
     [],
     environment,
@@ -562,6 +593,7 @@ fn RuntimeState::build_semantics_for_element(
   context : SemanticsBuildContext,
   element : ElementNode,
   layout : PlacedNode,
+  node_to_screen : Transform2D,
   environment : Environment,
   style : ViewStyle,
   environment_id~ : Int32 = 0,
@@ -571,8 +603,11 @@ fn RuntimeState::build_semantics_for_element(
   } else {
     environment_id
   }
+  let screen_frame = runtime_screen_frame(node_to_screen, layout.frame)
   if !element.has_dirty_semantics() &&
-    element.semantics_cache.can_replay(context, layout.frame, env_id, style) {
+    element.semantics_cache.can_replay(
+      context, screen_frame, node_to_screen, env_id, style,
+    ) {
     return element.semantics_cache.replay()
   }
   self.stats.semantics_recompute_count = self.stats.semantics_recompute_count +
@@ -592,11 +627,22 @@ fn RuntimeState::build_semantics_for_element(
     let child_roots : Array[SemanticsNodeId] = []
     for index, child in element.children {
       if index < layout.children.length() {
+        let child_layout = layout.children[index]
+        let child_to_screen = if layout.overlay_child_indices.contains(index) {
+          runtime_overlay_to_screen(child_layout.frame)
+        } else {
+          runtime_child_to_screen(
+            node_to_screen,
+            layout.child_transform,
+            child_layout.frame,
+          )
+        }
         child_roots.append(
           self.build_semantics_for_element(
             context,
             child,
-            layout.children[index],
+            child_layout,
+            child_to_screen,
             child_environment,
             child_style,
             environment_id=child_environment_id,
@@ -609,12 +655,14 @@ fn RuntimeState::build_semantics_for_element(
       Boundary =>
         [
           self.boundary_node(
-            context, element, layout, info, child_roots, environment, style,
+            context, element, layout, node_to_screen, info, child_roots, environment,
+            style,
           ),
         ]
       MergeDescendants => {
         let merged = self.merged_boundary_node(
-          context, element, layout, info, child_roots, environment, style,
+          context, element, layout, node_to_screen, info, child_roots, environment,
+          style,
         )
         for child in element.children {
           child.invalidate_uncommitted_semantics()
@@ -632,6 +680,7 @@ fn RuntimeState::build_semantics_for_element(
             child_roots[0],
             element,
             layout,
+            node_to_screen,
             info,
             environment,
             style,
@@ -640,14 +689,17 @@ fn RuntimeState::build_semantics_for_element(
         } else {
           [
             self.boundary_node(
-              context, element, layout, info, child_roots, environment, style,
+              context, element, layout, node_to_screen, info, child_roots, environment,
+              style,
             ),
           ]
         }
       }
     }
   }
-  element.semantics_cache.capture(roots, layout.frame, env_id, style)
+  element.semantics_cache.capture(
+    roots, screen_frame, node_to_screen, env_id, style,
+  )
   element.dirty.needs_semantics = false
   element.refresh_descendant_dirty_flags()
   if info.composition == Hidden || info.composition == MergeDescendants {
@@ -905,6 +957,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
     context,
     self.element_tree.root,
     self.layout_tree.root,
+    @core.Transform2D::identity(),
     self.environment,
     ViewStyle::empty(),
     environment_id=environment_identity(self.environment),
@@ -923,6 +976,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
         context,
         self.element_tree.root,
         self.layout_tree.root,
+        @core.Transform2D::identity(),
         ViewSemanticsInfo::container(composition=Boundary),
         roots,
         self.environment,
@@ -1259,7 +1313,10 @@ fn RuntimeState::apply_semantics_action_outcome(
   match outcome.dirty {
     ViewBuildDirty => {
       self.mark_layout_dirty(element.id)
-      self.request_root_rebuild(reason="semantics action changed view state")
+      self.request_root_rebuild(
+        reason="semantics action changed view state",
+        damage=FullSurface,
+      )
     }
     ViewLayoutDirty => self.mark_layout_dirty(element.id)
     ViewPaintDirty => self.mark_dirty(element.id)
@@ -1333,8 +1390,8 @@ fn RuntimeState::perform_semantics_action(
       self.discard_semantics_destroy_request()
       let outcome = action_route.element.view_node.semantics_action(
         {
-          frame: action_route.layout.frame,
-          child_frames: action_route.layout.children.map(child => child.frame),
+          frame: action_route.frame,
+          child_frames: action_route.child_frames.copy(),
           focused: self.animfocus.focused_element ==
           Some(action_route.element.id),
           state: action_route.element.control.view_context(

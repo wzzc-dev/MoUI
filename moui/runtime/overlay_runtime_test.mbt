@@ -413,6 +413,79 @@ test "overlay exit ghost follows the theme motion duration" {
 }
 
 ///|
+fn overlay_text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawText(run) => if run.text == text { return Some(run.frame) }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+test "overlay exit ghost keeps its screen placement" {
+  let runtime = @runtime.AppRuntime::new_view(
+    root=@views.padding_edges(
+      @views.frame(
+        @views.picker(
+          [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+          selected="one",
+          on_select=id => id,
+          placeholder="Pick",
+          max_height=160.0,
+        ),
+        width=200.0,
+        height=40.0,
+      ),
+      top=80.0,
+      left=120.0,
+    ),
+    size=@core.Size::new(width=400.0, height=300.0),
+  )
+  ignore(runtime.draw_frame())
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=132.0, y=92.0),
+          phase=Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  let item = match overlay_text_frame(runtime.draw_commands(), "Two") {
+    Some(frame) => frame
+    None => abort("popup item was not painted")
+  }
+  assert_true(item.origin.x >= 120.0)
+  assert_true(item.origin.y > 0.0)
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(
+            x=item.origin.x + item.size.width / 2.0,
+            y=item.origin.y + item.size.height / 2.0,
+          ),
+          phase=Up,
+        ),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  let ghost = match overlay_text_frame(runtime.draw_commands(), "Two") {
+    Some(frame) => frame
+    None => abort("overlay exit ghost was not painted")
+  }
+  assert_eq(ghost, item)
+}
+
+///|
 test "reduced motion completes overlay exits immediately" {
   let received : Array[String] = []
   let runtime = @runtime.AppRuntime::new_view(

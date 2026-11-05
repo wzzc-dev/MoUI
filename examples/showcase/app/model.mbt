@@ -12,10 +12,9 @@ pub(all) struct ShowcaseModel {
   nav_query : String
   /// Mobile list/detail: false shows the catalog list for the workspace.
   mobile_showing_detail : Bool
-  /// Left-rail story list scroll (desktop) / mobile catalog scroll.
-  sidebar_scroll : @geometry.Point
-  /// Right-hand detail canvas scroll.
-  detail_scroll : @geometry.Point
+  /// One-shot request to reset the element-owned detail scroll when the
+  /// selected story changes. The live offset stays in `ScrollRuntimeState`.
+  detail_scroll_request : @moui.ScrollRequest?
   diagnostics_input : @diagnostics.ShowcaseDiagnosticsInput
   components : @components.ComponentGalleryModel
   patterns : @patterns.Model
@@ -33,8 +32,6 @@ pub(all) enum ShowcaseMsg {
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
-  SidebarScrolled(@geometry.Point)
-  DetailScrolled(@geometry.Point)
   ComponentsMsg(@components.ComponentGalleryMsg)
   PatternsMsg(@patterns.Msg)
   PlatformMsg(@platform.Msg)
@@ -125,8 +122,7 @@ pub fn ShowcaseModel::new(
     nav_query: "",
     // Deep links and mobile default land on detail; empty list is opt-in.
     mobile_showing_detail: true,
-    sidebar_scroll: @geometry.Point::new(x=0.0, y=0.0),
-    detail_scroll: @geometry.Point::new(x=0.0, y=0.0),
+    detail_scroll_request: None,
     diagnostics_input,
     components,
     patterns,

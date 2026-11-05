@@ -6,6 +6,20 @@ priv struct ElementEventResult {
   capture_target : ElementId?
   focused : ElementId?
   deliveries : Array[() -> Unit]
+  gesture : PointerGestureTrace
+}
+
+///|
+fn ElementEventResult::empty() -> ElementEventResult {
+  {
+    changed: false,
+    activated: false,
+    captured: false,
+    capture_target: None,
+    focused: None,
+    deliveries: [],
+    gesture: PointerGestureTrace::empty(),
+  }
 }
 
 ///|
@@ -106,15 +120,42 @@ fn ElementNode::inspector_hit_path(
   self : ElementNode,
   point : @core.Point,
   render : RenderNode,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
+  clip~ : Rect? = None,
 ) -> Array[Int32] {
   let path = [self.id.value()]
+  let own_screen_frame = render.screen_frame(node_to_screen)
+  let child_clip : Rect? = if render.clips_children {
+    Some(runtime_clip_intersection(clip, own_screen_frame))
+  } else {
+    clip
+  }
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() &&
-      render.children[index].hit_bounds().contains(point) {
-      path.append(
-        self.children[index].inspector_hit_path(point, render.children[index]),
-      )
+      ({
+        let child_to_screen = render.child_to_screen(
+          node_to_screen,
+          render.children[index],
+        )
+        if runtime_point_hits_frame(
+            point,
+            render.children[index].screen_frame(child_to_screen),
+            child_clip,
+          ) {
+          path.append(
+            self.children[index].inspector_hit_path(
+              point,
+              render.children[index],
+              node_to_screen=child_to_screen,
+              clip=child_clip,
+            ),
+          )
+          true
+        } else {
+          false
+        }
+      }) {
       return path
     }
     index = index - 1

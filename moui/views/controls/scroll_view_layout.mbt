@@ -240,19 +240,23 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(viewport_size),
     child_frames=[
-      scroll_child_frame(
+      scroll_content_frame(
         frame=@core.Rect::new(
           x=0.0,
           y=0.0,
           width=viewport_size.width,
           height=viewport_size.height,
         ),
-        offset~,
         viewport=viewport_size,
         child_size=measured,
-        direction=ctx.environment.layout_direction,
       ),
     ],
+    child_transform=scroll_child_transform(
+      offset~,
+      viewport=viewport_size,
+      child_size=measured,
+      direction=ctx.environment.layout_direction,
+    ),
     clips_children=true,
   )
 }
@@ -275,20 +279,14 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
     child_size~,
     now_ms=ctx.now_ms,
   )
-  // A wheel step moves the authoritative offset instantly; easing the painted
-  // surface toward it keeps the motion continuous instead of jumping a whole step
-  // in one frame. Once the settle elapses this returns the authoritative value
-  // exactly, so drawing never disagrees with layout or hit testing.
-  // Wheel steps move the authoritative offset directly. An eased overlay was
-  // tried here and removed: the host presents one frame per input event on this
-  // platform, so the interpolation could never advance past its first sample and
-  // instead produced a stall-then-jump motion — worse than the plain step.
-  let painted_offset = runtime_state.offset
-  let shift = @core.Point::new(
-    x=runtime_state.offset.x -
-      (surface_offset.x + (painted_offset.x - runtime_state.offset.x)),
-    y=runtime_state.offset.y -
-      (surface_offset.y + (painted_offset.y - runtime_state.offset.y)),
+  // Runtime paint already applies the authoritative content transform. Only
+  // the rubber-band overshoot remains as an additional local translation.
+  let shift = scroll_paint_shift(
+    runtime_state.offset,
+    surface_offset,
+    viewport_size,
+    child_size,
+    direction=ctx.environment.layout_direction,
   )
   let commands : Array[@core.DrawCommand] = [
     PushClip(
@@ -873,24 +871,74 @@ fn[Msg] scroll_indicator_event_result(
 /// and `d = 0` is always flush with the leading edge. This is placement against
 /// a scroll distance, not a reflection of a child box, so it deliberately does
 /// not go through `Rect::mirrored_x`.
-fn scroll_child_frame(
+fn scroll_content_frame(
   frame~ : @core.Rect,
+  viewport~ : @core.Size,
+  child_size~ : @core.Size,
+) -> @core.Rect {
+  @core.Rect::new(
+    x=frame.origin.x,
+    y=frame.origin.y,
+    width=@common.view_max_double(viewport.width, child_size.width),
+    height=@common.view_max_double(viewport.height, child_size.height),
+  )
+}
+
+///|
+/// The viewport translation is content-local state, not part of descendant
+/// frames. `offset.x` remains a leading-edge distance, so RTL presents the
+/// mirrored content translation while layout and caches keep the same frame.
+fn scroll_child_transform(
   offset~ : @core.Point,
   viewport~ : @core.Size,
   child_size~ : @core.Size,
   direction~ : @core.LayoutDirection,
-) -> @core.Rect {
+) -> @core.Transform2D {
   let clamped = scroll_clamp_offset(offset, viewport, child_size)
+  let leading = scroll_leading_point(clamped, viewport, child_size, direction)
+  @core.Transform2D::translation(dx=0.0 - leading.x, dy=0.0 - leading.y)
+}
+
+///|
+/// Map a scroll distance to the physical content edge it exposes. Unlike the
+/// child transform this does not clamp: the paint-only rubber band can sit
+/// outside the scroll range on either side of a clamp.
+fn scroll_leading_point(
+  offset : @core.Point,
+  viewport : @core.Size,
+  child_size : @core.Size,
+  direction : @core.LayoutDirection,
+) -> @core.Point {
   let max_x = @common.view_max_double(0.0, child_size.width - viewport.width)
-  let leading = match direction {
-    LeftToRight => clamped.x
-    RightToLeft => max_x - clamped.x
-  }
-  @core.Rect::new(
-    x=frame.origin.x - leading,
-    y=frame.origin.y - clamped.y,
-    width=@common.view_max_double(viewport.width, child_size.width),
-    height=@common.view_max_double(viewport.height, child_size.height),
+  @core.Point::new(
+    x=match direction {
+      LeftToRight => offset.x
+      RightToLeft => max_x - offset.x
+    },
+    y=offset.y,
+  )
+}
+
+///|
+fn scroll_paint_shift(
+  authoritative : @core.Point,
+  visible : @core.Point,
+  viewport : @core.Size,
+  child_size : @core.Size,
+  direction~ : @core.LayoutDirection,
+) -> @core.Point {
+  let authoritative_leading = scroll_leading_point(
+    scroll_clamp_offset(authoritative, viewport, child_size),
+    viewport,
+    child_size,
+    direction,
+  )
+  let visible_leading = scroll_leading_point(
+    visible, viewport, child_size, direction,
+  )
+  @core.Point::new(
+    x=authoritative_leading.x - visible_leading.x,
+    y=authoritative_leading.y - visible_leading.y,
   )
 }
 

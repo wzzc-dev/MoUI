@@ -125,6 +125,7 @@ pub struct SkiaRasterRenderer {
   priv frame_stats : SkiaCachedLayerFrameStats
   priv frame_canvas_scopes : Array[@render_common.PlanScopeKind]
   priv paint_memo : Array[SkiaPaintMemoEntry]
+  priv surface_damage : @render.SurfaceDamageCapability
 }
 
 ///|
@@ -204,6 +205,7 @@ pub fn create_with_present_target(
   target : SkiaPresentTarget,
   font_resolution~ : SkiaFontResolution = SystemFontMgr,
   async_image_loading~ : Bool = false,
+  surface_damage~ : @render.SurfaceDamageCapability = FullSurfaceOnly,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   create_with_present_target_and_route(
     metrics,
@@ -211,6 +213,7 @@ pub fn create_with_present_target(
     surface_route=RasterSurfaceRoute,
     font_resolution~,
     async_image_loading~,
+    surface_damage~,
   )
 }
 
@@ -222,6 +225,7 @@ pub fn create_with_present_target_and_route(
   gpu_target~ : HostGpuPresentTarget? = None,
   font_resolution~ : SkiaFontResolution = SystemFontMgr,
   async_image_loading~ : Bool = false,
+  surface_damage~ : @render.SurfaceDamageCapability = FullSurfaceOnly,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
     raise SkiaUnavailable
@@ -269,6 +273,7 @@ pub fn create_with_present_target_and_route(
     frame_stats: SkiaCachedLayerFrameStats::new(),
     frame_canvas_scopes: [],
     paint_memo: [],
+    surface_damage,
   }
 }
 
@@ -397,8 +402,8 @@ fn SkiaRasterRenderer::ensure_gpu_backing_surface(
 ///|
 /// Update the persistent backing and copy its complete pixels into the fresh
 /// host drawable. The drawable is treated as uninitialized, so the copy must
-/// cover it entirely; the frame contract already resolves damage to a
-/// full-surface overwrite.
+/// cover it entirely. Host GPU drawables always resolve damage to a
+/// full-surface overwrite because their back buffer is not preserved.
 fn SkiaRasterRenderer::render_to_gpu_backing(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
@@ -434,21 +439,68 @@ fn SkiaRasterRenderer::render_to_gpu_backing(
 }
 
 ///|
-/// Frame contract: every presented frame fully overwrites the target
-/// surface. Runtime damage still rides on the frame for other renderers and
-/// diagnostics, but this route never relies on pixels retained from an
-/// earlier frame. A partially cleared surface plus a clipped command stream
-/// is exactly how a scrolled image left the previous frame's pixels behind
-/// when damage under-covered its moved content (see the damage contract in
-/// `moui/runtime/runtime_render_pipeline.mbt`). Re-enabling partial damage
-/// here requires a pixel-comparison self-check gate for damage coverage.
+/// Resolve the frame contract from the explicitly negotiated capability.
+/// `FullSurfaceOnly` preserves the historical full overwrite. `SubRect` is
+/// valid only for a CPU raster surface that retains prior pixels; the command
+/// stream is clipped to the damage union and retained layers outside it keep
+/// their previous pixels. Scope commands still fall back to full because
+/// clip-scoped composition can affect pixels outside the dirty region. GPU
+/// drawables always fall back because their back buffer is not preserved.
+///
+/// The `SubRect` path is gated by a pixel-comparison test against a
+/// full-surface reference; unsupported hosts never receive the capability.
 fn SkiaRasterRenderer::resolve_effective_damage(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @core.DamageRegion {
-  let _ = self
-  let _ = frame
-  @core.DamageRegion::full("frame contract: full surface overwrite")
+  if self.surface_damage is FullSurfaceOnly {
+    return @core.DamageRegion::full("surface capability: full-surface-only")
+  }
+  // Host GPU drawables swap into a fresh back buffer. Even with a SubRect
+  // capability the old pixels are not retained, so every frame is full.
+  if self.gpu_target is Some(_) {
+    return @core.DamageRegion::full(
+      "host-gpu drawable has no preserved backbuffer",
+    )
+  }
+  match frame.damage {
+    Empty => Empty
+    FullSurface(reason) => FullSurface(reason)
+    Rects(rects) => {
+      let mut has_scope = false
+      for command in frame.commands {
+        match command {
+          PushOpacity(_) | PushLayer(_) | PushFilter(_) | PushTransform(_) => {
+            has_scope = true
+            break
+          }
+          _ => ()
+        }
+      }
+      if has_scope {
+        @core.DamageRegion::full("scope commands present with damage rects")
+      } else {
+        match skia_damage_rect_union(rects) {
+          Some(rect) => Rects([rect])
+          None => Empty
+        }
+      }
+    }
+  }
+}
+
+///|
+fn skia_damage_rect_union(rects : Array[@core.Rect]) -> @core.Rect? {
+  match rects {
+    [] => None
+    [first, .. rest] => {
+      let mut bounds = first
+      for rect in rest {
+        bounds = bounds.union(rect)
+      }
+      Some(bounds)
+    }
+  }
 }
 
 ///|
@@ -492,6 +544,11 @@ fn SkiaRasterRenderer::render_frame_inner(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult raise SkiaRendererError {
+  if self.surface_damage is SubRect &&
+    self.gpu_target is None &&
+    frame.damage is Empty {
+    return @render.RenderFrameResult::new(presented=false)
+  }
   self.ensure_gpu_window_surface()
   match self.gpu_target {
     Some(gpu_target) => {
@@ -596,9 +653,9 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   )
   // Damage bounds are logical coordinates. Keep every command, including
   // full-surface backgrounds and explicit compatibility Clears, inside the
-  // same damage clip so clip and clear stay coherent. The frame contract
-  // resolves damage to a full-surface overwrite, so this clip is a no-op
-  // for frames this route presents.
+  // same damage clip so clip and clear stay coherent. With FullSurfaceOnly
+  // this clip is a no-op; the SubRect capability relies on it to preserve
+  // every pixel outside the damage union.
   self.apply_damage_clip(canvas, effective_damage)
   self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
   self.unsupported_command_count = 0

@@ -2,7 +2,11 @@
 pub(all) struct PlatformViewPlacement {
   id : String
   kind : String
+  /// Screen-space rectangle in `DrawFrame.platform_views`. A view's
+  /// `platform_views` callback produces node-local rectangles; the runtime
+  /// applies the accumulated transform during collection.
   frame : Rect
+  /// Optional screen-space clip produced from the same accumulated transform.
   clip : Rect?
   properties : Array[PlatformViewProperty]
 } derive(Eq, Debug, ToJson)

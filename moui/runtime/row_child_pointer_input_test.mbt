@@ -17,9 +17,53 @@ fn pointer_frame_of(
   commands : Array[@core.DrawCommand],
   text : String,
 ) -> @core.Rect {
+  let mut current = @core.Transform2D::identity()
+  let stack : Array[@core.Transform2D] = []
   for command in commands {
     match command {
-      DrawText({ text: value, frame, .. }) => if value == text { return frame }
+      PushTransform(transform) => {
+        stack.push(current)
+        current = {
+          a: current.a * transform.a + current.c * transform.b,
+          b: current.b * transform.a + current.d * transform.b,
+          c: current.a * transform.c + current.c * transform.d,
+          d: current.b * transform.c + current.d * transform.d,
+          tx: current.a * transform.tx + current.c * transform.ty + current.tx,
+          ty: current.b * transform.tx + current.d * transform.ty + current.ty,
+        }
+      }
+      PopTransform =>
+        match stack.pop() {
+          Some(transform) => current = transform
+          None => current = @core.Transform2D::identity()
+        }
+      DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          let right = frame.origin.x + frame.size.width
+          let bottom = frame.origin.y + frame.size.height
+          let x0 = current.a * frame.origin.x +
+            current.c * frame.origin.y +
+            current.tx
+          let y0 = current.b * frame.origin.x +
+            current.d * frame.origin.y +
+            current.ty
+          let x1 = current.a * right + current.c * frame.origin.y + current.tx
+          let y1 = current.b * right + current.d * frame.origin.y + current.ty
+          let x2 = current.a * frame.origin.x + current.c * bottom + current.tx
+          let y2 = current.b * frame.origin.x + current.d * bottom + current.ty
+          let x3 = current.a * right + current.c * bottom + current.tx
+          let y3 = current.b * right + current.d * bottom + current.ty
+          let min_x = x0.min(x1).min(x2).min(x3)
+          let max_x = x0.max(x1).max(x2).max(x3)
+          let min_y = y0.min(y1).min(y2).min(y3)
+          let max_y = y0.max(y1).max(y2).max(y3)
+          return @core.Rect::new(
+            x=min_x,
+            y=min_y,
+            width=max_x - min_x,
+            height=max_y - min_y,
+          )
+        }
       _ => ()
     }
   }

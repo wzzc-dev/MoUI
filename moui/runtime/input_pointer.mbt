@@ -15,6 +15,8 @@ fn ElementNode::dispatch_pointer(
   text_system~ : TextSystem = TextSystem::fallback(),
   capture_lookup~ : Bool = true,
   now_ms~ : Double = 0.0,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
+  clip~ : Rect? = None,
 ) -> ElementEventResult {
   let child_result = self.dispatch_pointer_to_children(
     event,
@@ -24,6 +26,8 @@ fn ElementNode::dispatch_pointer(
     text_system~,
     capture_lookup~,
     now_ms~,
+    node_to_screen~,
+    clip~,
   )
   if child_result.activated {
     child_result
@@ -36,6 +40,7 @@ fn ElementNode::dispatch_pointer(
       environment~,
       style~,
       now_ms~,
+      node_to_screen~,
     )
     let deliveries = child_result.deliveries.copy()
     deliveries.append(own.deliveries)
@@ -52,6 +57,7 @@ fn ElementNode::dispatch_pointer(
         None => child_result.focused
       },
       deliveries,
+      gesture: child_result.gesture.merge(own.gesture),
     }
   }
 }
@@ -67,10 +73,37 @@ fn ElementNode::dispatch_view_event(
   style~ : ViewStyle = ViewStyle::empty(),
   now_ms~ : Double = 0.0,
   focused~ : Bool = false,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
+) -> ElementEventResult {
+  self.dispatch_view_event_with_geometry(
+    data,
+    event,
+    render.screen_frame(node_to_screen),
+    render.screen_child_frames(node_to_screen),
+    text_system,
+    environment~,
+    style~,
+    now_ms~,
+    focused~,
+  )
+}
+
+///|
+fn ElementNode::dispatch_view_event_with_geometry(
+  self : ElementNode,
+  data : &RuntimeViewNode,
+  event : AppEvent,
+  frame : Rect,
+  child_frames : Array[Rect],
+  text_system : TextSystem,
+  environment~ : Environment = Environment::neutral(),
+  style~ : ViewStyle = ViewStyle::empty(),
+  now_ms~ : Double = 0.0,
+  focused~ : Bool = false,
 ) -> ElementEventResult {
   let result = data.event({
-    frame: render.frame,
-    child_frames: render.children.map(child => child.frame),
+    frame,
+    child_frames,
     event,
     focused,
     state: self.control.view_context(focused),
@@ -80,6 +113,22 @@ fn ElementNode::dispatch_view_event(
     style,
     now_ms,
   })
+  let slots_changed = match result.state {
+    Some(next_state) => next_state.slots != self.control.view_state.slots
+    None => false
+  }
+  let text_control_changed = match result.text_control {
+    Some(next_control) => next_control != self.control.text_context()
+    None => false
+  }
+  let gesture = pointer_gesture_trace(
+    event,
+    self.id,
+    result,
+    slots_changed,
+    text_control_changed,
+    self.is_scroll_view_node(),
+  )
   match result.state {
     Some(next_state) => self.control.apply_view_context(next_state)
     None => ()
@@ -107,6 +156,7 @@ fn ElementNode::dispatch_view_event(
       None
     },
     deliveries: result.deliveries,
+    gesture,
   }
 }
 
@@ -148,6 +198,8 @@ fn ElementNode::dispatch_pointer_to_children(
   text_system~ : TextSystem,
   capture_lookup~ : Bool,
   now_ms~ : Double,
+  node_to_screen~ : Transform2D,
+  clip~ : Rect?,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -155,9 +207,16 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut capture_target : ElementId? = None
   let mut focused : ElementId? = None
   let deliveries : Array[() -> Unit] = []
+  let mut gesture = PointerGestureTrace::empty()
   let mut layout_changed = false
   let child_environment = self.view_node.child_environment(environment)
   let child_style = self.view_node.child_style(style)
+  let own_screen_frame = render.screen_frame(node_to_screen)
+  let child_clip : Rect? = if render.clips_children {
+    Some(runtime_clip_intersection(clip, own_screen_frame))
+  } else {
+    clip
+  }
   // On a `Move`, the pointer can only be over one element, so only one child
   // receives the event. Any *other* child that still holds hover (from a prior
   // move) has been left behind and must get a synthetic `Exit` to clear it —
@@ -209,11 +268,23 @@ fn ElementNode::dispatch_pointer_to_children(
   while overlay_search >= 0 {
     if overlay_search < self.children.length() &&
       render.children[overlay_search].is_overlay_child &&
-      render.children[overlay_search].hit_bounds().contains(event.position) {
+      runtime_point_hits_frame(
+        event.position,
+        render.children[overlay_search].screen_frame(
+          render.child_to_screen(
+            node_to_screen,
+            render.children[overlay_search],
+          ),
+        ),
+        None,
+      ) {
       dispatch_order.push(overlay_search)
       is_overlay_owner[overlay_search] = true
     } else if overlay_search < self.children.length() &&
-      render.children[overlay_search].subtree_overlay_contains(event.position) {
+      render.children[overlay_search].subtree_overlay_contains_in_screen(
+        event.position,
+        render.child_to_screen(node_to_screen, render.children[overlay_search]),
+      ) {
       dispatch_order.push(overlay_search)
       is_overlay_owner[overlay_search] = true
     }
@@ -238,13 +309,23 @@ fn ElementNode::dispatch_pointer_to_children(
     if index < render.children.length() {
       let child = self.children[index]
       let child_render = render.children[index]
+      let child_to_screen = render.child_to_screen(node_to_screen, child_render)
+      let child_hit_clip = if child_render.is_overlay_child {
+        None
+      } else {
+        child_clip
+      }
       let has_capture = capture_lookup &&
         child.has_active_pointer_capture(event.phase)
       // An overlay owner is dispatched for its hoisted popup even when the
       // point lies outside the owner's own (possibly clipped) frame.
       let hit = is_overlay_owner[index] ||
         has_capture ||
-        child_render.hit_bounds().contains(event.position)
+        runtime_point_hits_frame(
+          event.position,
+          child_render.screen_frame(child_to_screen),
+          child_hit_clip,
+        )
       // In-flow children are skipped while an overlay surface covering the
       // point has been dispatched (unless an active capture targets them).
       let blocked_by_overlay = overlay_covered &&
@@ -262,11 +343,14 @@ fn ElementNode::dispatch_pointer_to_children(
           text_system~,
           capture_lookup~,
           now_ms~,
+          node_to_screen=child_to_screen,
+          clip=child_hit_clip,
         )
         changed = changed || result.changed
         activated = activated || result.activated
         captured = captured || result.captured
         deliveries.append(result.deliveries)
+        gesture = gesture.merge(result.gesture)
         match (capture_target, result.capture_target) {
           (None, Some(target)) => capture_target = Some(target)
           _ => ()
@@ -305,10 +389,13 @@ fn ElementNode::dispatch_pointer_to_children(
           text_system~,
           capture_lookup=false,
           now_ms~,
+          node_to_screen=child_to_screen,
+          clip=child_hit_clip,
         )
         changed = changed || exit_result.changed
         captured = captured || exit_result.captured
         deliveries.append(exit_result.deliveries)
+        gesture = gesture.merge(exit_result.gesture)
         if exit_result.changed && child.has_dirty_layout() {
           layout_changed = true
         }
@@ -324,7 +411,15 @@ fn ElementNode::dispatch_pointer_to_children(
       self.mark_pointer_descendant_paint_dirty()
     }
   }
-  { changed, activated, captured, capture_target, focused, deliveries, }
+  {
+    changed,
+    activated,
+    captured,
+    capture_target,
+    focused,
+    deliveries,
+    gesture,
+  }
 }
 
 ///|
@@ -344,16 +439,6 @@ fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
   }
   false
 }
-
-///|
-fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
-  match self.hit_rect {
-    Some(hit) => hit
-    None => self.paint_bounds
-  }
-}
-
-///|
 
 ///|
 fn ElementNode::has_active_pointer_capture(
@@ -406,6 +491,8 @@ fn ElementNode::dispatch_pointer_to_target(
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
   now_ms~ : Double = 0.0,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
+  target_only~ : Bool = false,
 ) -> ElementEventResult? {
   let (result, _) = self.dispatch_pointer_to_target_with_scroll_ancestor(
     target,
@@ -415,6 +502,8 @@ fn ElementNode::dispatch_pointer_to_target(
     style~,
     text_system~,
     now_ms~,
+    node_to_screen~,
+    target_only~,
   )
   result
 }
@@ -434,28 +523,44 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
   text_system~ : TextSystem,
   now_ms~ : Double = 0.0,
   bubble_scroll~ : Bool = true,
+  node_to_screen~ : Transform2D,
+  target_only~ : Bool = false,
 ) -> (ElementEventResult?, Bool) {
   if self.id == target {
-    (
-      Some(
-        self.dispatch_pointer(
-          event,
-          render,
-          environment~,
-          style~,
-          text_system~,
-          capture_lookup=false,
-          now_ms~,
-        ),
-      ),
-      false,
-    )
+    let result = if target_only {
+      self.dispatch_view_event(
+        self.view_node,
+        Pointer(event),
+        render,
+        text_system,
+        environment~,
+        style~,
+        now_ms~,
+        node_to_screen~,
+      )
+    } else {
+      self.dispatch_pointer(
+        event,
+        render,
+        environment~,
+        style~,
+        text_system~,
+        capture_lookup=false,
+        now_ms~,
+        node_to_screen~,
+      )
+    }
+    (Some(result), false)
   } else {
     let child_environment = self.view_node.child_environment(environment)
     let child_style = self.view_node.child_style(style)
     let mut index = 0
     while index < self.children.length() {
       if index < render.children.length() {
+        let child_to_screen = render.child_to_screen(
+          node_to_screen,
+          render.children[index],
+        )
         match
           self.children[index].dispatch_pointer_to_target_with_scroll_ancestor(
             target,
@@ -466,8 +571,22 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             text_system~,
             now_ms~,
             bubble_scroll~,
+            node_to_screen=child_to_screen,
+            target_only~,
           ) {
           (Some(result), bubbled) => {
+            if target_only {
+              if result.changed {
+                if self.children[index].has_dirty_layout() {
+                  self.dirty.mark_layout_descendant()
+                  self.layout_cache.clear()
+                  self.render_cache.clear()
+                } else {
+                  self.mark_pointer_descendant_paint_dirty()
+                }
+              }
+              return (Some(result), false)
+            }
             // Pointer capture normally routes Move/Up/Cancel only to the
             // target. Gesture modifiers are often stacked, though (for
             // example a tap wrapped by a drag), so ancestors must observe the
@@ -485,6 +604,7 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
             let release = event.phase == Up || event.phase == Cancel
             let should_bubble = bubble_scroll &&
               event.phase != Down &&
+              !result.activated &&
               (!bubbled || !self.is_scroll_view_node() || release)
             if should_bubble {
               let ancestor_event = if result.activated && event.phase == Up {
@@ -507,6 +627,7 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
                 environment~,
                 style~,
                 now_ms~,
+                node_to_screen~,
               )
               let combined = merge_element_event_results(result, own)
               // Once an ancestor drag recognizes a Move, cancel the child
@@ -534,6 +655,8 @@ fn ElementNode::dispatch_pointer_to_target_with_scroll_ancestor(
                     text_system~,
                     now_ms~,
                     bubble_scroll=false,
+                    node_to_screen=child_to_screen,
+                    target_only~,
                   ) {
                   (Some(cancelled), _) =>
                     merge_element_event_results(combined, cancelled)
@@ -588,6 +711,7 @@ fn merge_element_event_results(
       None => first.focused
     },
     deliveries,
+    gesture: first.gesture.merge(second.gesture),
   }
 }
 

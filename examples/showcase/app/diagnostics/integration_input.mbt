@@ -109,7 +109,7 @@ pub fn ShowcaseDiagnosticsInput::fallback() -> ShowcaseDiagnosticsInput {
     },
     devtools: {
       summary_text: "320x240, dirty 0, commands 0",
-      report_text: "[view]\n[layout]\n[render]\n[semantics]",
+      report_text: "[view]\n[layout]\n[render]\n[semantics]\n[trace]",
       json_text: "{}",
     },
   }

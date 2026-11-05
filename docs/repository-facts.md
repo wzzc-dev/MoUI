@@ -42,6 +42,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_tui |
 | ./moui_text_providers |
 | ./examples/counter |
+| ./examples/custom_control |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
 | ./examples/button_freeze_probe |
@@ -77,10 +78,10 @@ This file is generated from repository manifests and validator reports.
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 891 | 597 | 24 |
-| core (moui/core/pkg.generated.mbti) | 2534 | 1125 | 141 |
+| core (moui/core/pkg.generated.mbti) | 2572 | 1150 | 141 |
 | views facade (moui/views/pkg.generated.mbti) | 688 | 328 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 654 | 268 | 44 |
-| render protocols (moui/render/pkg.generated.mbti) | 608 | 279 | 31 |
+| render protocols (moui/render/pkg.generated.mbti) | 619 | 285 | 32 |
 | render common (moui/render/common/pkg.generated.mbti) | 331 | 140 | 8 |
 | native text model (moui/render/native_text/pkg.generated.mbti) | 94 | 46 | 1 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 281 | 167 | 7 |
@@ -104,6 +105,7 @@ This file is generated from repository manifests and validator reports.
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
+| Custom Control | examples/custom_control | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |
 | Button Freeze Probe | examples/button_freeze_probe | no |
@@ -138,12 +140,12 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 50.
+Published documents: 51.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
-| Guides (guides) | 9 |
+| Guides (guides) | 10 |
 | Examples (examples) | 5 |
 | Platforms (platforms) | 16 |
 | Architecture & API (architecture-api) | 6 |

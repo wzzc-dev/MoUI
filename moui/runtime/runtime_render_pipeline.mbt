@@ -21,6 +21,16 @@ fn RuntimeState::mark_visual_work(self : RuntimeState) -> Unit {
 }
 
 ///|
+fn RuntimeState::ensure_full_surface_damage(
+  self : RuntimeState,
+  reason : String,
+) -> Unit {
+  if self.dirty.full_damage_reason is None {
+    self.dirty.full_damage_reason = Some(reason)
+  }
+}
+
+///|
 fn RuntimeState::settle_rebuild_wakeup(self : RuntimeState) -> Unit {
   if self.dirty.rebuild_wakeup_redraw &&
     !self.dirty.needs_rebuild &&
@@ -107,6 +117,7 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.element_tree.root.collect_anchor_frames(
     self.layout_tree.root,
     self.anchor_registry,
+    Transform2D::identity(),
   )
   self.dirty.needs_rebuild = false
   self.dirty.needs_layout = false
@@ -158,6 +169,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
   collect_overlay_overrides(
     self.element_tree.root,
     self.layout_tree.root,
+    Transform2D::identity(),
     context,
     [],
     overrides,
@@ -195,6 +207,10 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
   for id in spines {
     self.mark_dirty(id)
   }
+  // Re-placing an overlay moves clean in-flow pixels as well as the overlay
+  // itself. The dirty-id paint bounds do not describe the newly exposed
+  // strips, so keep the whole surface conservative until move tracking lands.
+  self.ensure_full_surface_damage("overlay placement changed")
   self.dirty.needs_paint = true
   self.dirty.needs_redraw = true
 }
@@ -212,6 +228,7 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
 fn collect_overlay_overrides(
   element : ElementNode,
   placed : PlacedNode,
+  node_to_screen : Transform2D,
   context : @core.OverlayPlacementContext,
   path : Array[ElementId],
   out : Array[(Int32, Array[(Int32, Rect)])],
@@ -223,7 +240,7 @@ fn collect_overlay_overrides(
   match
     element.view_node.place_overlays({
       ..context,
-      host_frame: placed.frame,
+      host_frame: runtime_screen_frame(node_to_screen, placed.frame),
       child_sizes: placed.children.map(child => child.frame.size),
       state: element.control.view_state,
     }) {
@@ -257,14 +274,18 @@ fn collect_overlay_overrides(
   }
   for index, child in element.children {
     if index < placed.children.length() {
+      let child_placed = placed.children[index]
+      let child_to_screen = if placed.overlay_child_indices.contains(index) {
+        runtime_overlay_to_screen(child_placed.frame)
+      } else {
+        runtime_child_to_screen(
+          node_to_screen,
+          placed.child_transform,
+          child_placed.frame,
+        )
+      }
       collect_overlay_overrides(
-        child,
-        placed.children[index],
-        context,
-        path,
-        out,
-        spines,
-        layers,
+        child, child_placed, child_to_screen, context, path, out, spines, layers,
         active_surfaces,
       )
     }
@@ -276,11 +297,17 @@ fn collect_overlay_overrides(
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
   let dirty_ids = self.dirty.dirty_paint_elements.to_array()
+  // Layout work can move clean subtrees. Until placement-level move tracking
+  // exists, the previous and current bounds of dirty paint ids do not cover
+  // those exposed strips, so layout frames stay full.
+  let layout_work = self.dirty.needs_layout
   let force_full_reason = match self.dirty.full_damage_reason {
     Some(reason) => Some(reason)
     None =>
       if previous_render.root.element_id.value() == 0 {
         Some("initial frame")
+      } else if layout_work {
+        Some("layout changed")
       } else {
         None
       }
@@ -513,7 +540,10 @@ fn RuntimeState::mark_platform_dirty(
 }
 
 ///|
-fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
+fn RuntimeState::mark_current_dirty_elements(
+  self : RuntimeState,
+  fallback~ : DirtyQueueFallback = FullSurface,
+) -> Unit {
   let ids = DirtyIdSet::new()
   let build_ids = DirtyIdSet::new()
   let layout_ids = DirtyIdSet::new()
@@ -524,7 +554,10 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
     ids, build_ids, layout_ids, paint_ids, semantics_ids, platform_ids,
   )
   if ids.is_empty() {
-    self.mark_dirty(self.element_tree.id())
+    match fallback {
+      NoFallback => ()
+      FullSurface => self.mark_dirty(self.element_tree.id())
+    }
   } else {
     for id in ids.items {
       self.queue_dirty_element(id)
@@ -560,6 +593,16 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
       self.dirty.needs_semantics = true
     }
   }
+}
+
+///|
+/// How to treat a dirty-queue collection that finds no element work. Event
+/// paths retain the historical conservative full-surface fallback; a
+/// successful reconciliation that reports no declaration or structure change
+/// is genuinely a no-op for pixels and must not manufacture a root repaint.
+priv enum DirtyQueueFallback {
+  NoFallback
+  FullSurface
 }
 
 ///|
@@ -609,14 +652,14 @@ fn RuntimeState::track_overlay_surface_lifecycle(
       match self.render_tree.root.find_render_node(id) {
         Some(node) => {
           let commands : Array[DrawCommand] = []
-          node.collect_draw_commands(commands)
+          node.collect_legacy_draw_commands_at(node.frame.origin, commands)
           if commands.length() > 0 {
             self.exiting_overlays.push({
               commands,
               started_ms: now_ms,
               duration_ms: self.overlay_transition_duration_ms(),
             })
-            self.dirty.full_damage_reason = Some("overlay exited")
+            self.ensure_full_surface_damage("overlay exited")
           }
         }
         None => ()

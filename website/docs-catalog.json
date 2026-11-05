@@ -127,6 +127,20 @@
     },
     {
       "group": "guides",
+      "slug": "custom-control-sdk",
+      "title": "Custom Control SDK",
+      "path": "docs/custom-control-sdk.md",
+      "summary": "Build reusable package-local ViewNode controls with explicit declarations, semantics, focus, IME, RTL, and golden fixtures.",
+      "keywords": [
+        "custom control",
+        "ViewNode",
+        "semantics",
+        "IME",
+        "RTL"
+      ]
+    },
+    {
+      "group": "guides",
       "slug": "button-styling-guide",
       "title": "Button Styling Guide",
       "path": "docs/button-styling-guide.md",
@@ -836,6 +850,20 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/view-catalog.md"
+        },
+        {
+          "group": "guides",
+          "slug": "custom-control-sdk",
+          "title": "自定义控件 SDK",
+          "summary": "使用显式声明、语义、焦点、IME、RTL 和 golden fixture 构建包内可复用 ViewNode 控件。",
+          "keywords": [
+            "自定义控件",
+            "ViewNode",
+            "语义",
+            "IME",
+            "RTL"
+          ],
+          "localizedPath": "docs/zh-Hans/custom-control-sdk.md"
         },
         {
           "group": "guides",

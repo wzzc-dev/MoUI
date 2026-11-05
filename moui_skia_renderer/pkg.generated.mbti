@@ -13,9 +13,9 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn create_hybrid_renderer(NativeGpuPlatform, NativeRendererMode, @core.SurfaceMetrics, SkiaPresentTarget, gpu_available~ : Bool, gpu_promoted~ : Bool, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaHybridRenderer raise SkiaRendererError
 
-pub fn create_with_present_target(@core.SurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaRasterRenderer raise SkiaRendererError
+pub fn create_with_present_target(@core.SurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, surface_damage? : @render.SurfaceDamageCapability) -> SkiaRasterRenderer raise SkiaRendererError
 
-pub fn create_with_present_target_and_route(@core.SurfaceMetrics, SkiaPresentTarget, surface_route? : SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaRasterRenderer raise SkiaRendererError
+pub fn create_with_present_target_and_route(@core.SurfaceMetrics, SkiaPresentTarget, surface_route? : SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, surface_damage? : @render.SurfaceDamageCapability) -> SkiaRasterRenderer raise SkiaRendererError
 
 pub fn from_env(platform~ : NativeGpuPlatform) -> Array[@render.RendererProvider]
 

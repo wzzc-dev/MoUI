@@ -339,7 +339,7 @@ moon run moui_studio/macos_skia --target native
 moon run moui_studio/linux_skia --target native
 moon run moui_studio/windows_skia --target native
 
-# HarmonyOS (window-hosted embedded runtime; experimental, ready=false)
+# HarmonyOS (window-hosted embedded runtime; committed, ready=true)
 moon run moui_studio/harmonyos_window_hosted --target native
 
 # Tests

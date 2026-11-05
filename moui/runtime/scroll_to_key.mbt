@@ -11,23 +11,37 @@ fn ElementNode::find_scroll_target(
   key : String,
   layout : PlacedNode,
   nearest_scroll : (ElementId, Rect)?,
+  node_to_screen : Transform2D,
 ) -> ScrollTarget? {
+  let screen_frame = runtime_screen_frame(node_to_screen, layout.frame)
   let nearest_scroll = if self.view_node.semantics().role == Some(ScrollView) {
-    Some((self.id, layout.frame))
+    Some((self.id, screen_frame))
   } else {
     nearest_scroll
   }
   if self.key == Some(Key::new(key)) {
     return match nearest_scroll {
       Some((scroll_id, viewport)) =>
-        Some({ scroll_id, viewport, target: layout.frame, })
+        Some({ scroll_id, viewport, target: screen_frame, })
       None => None
     }
   }
   for index, child in self.children {
     if index < layout.children.length() {
+      let child_layout = layout.children[index]
+      let child_to_screen = if layout.overlay_child_indices.contains(index) {
+        runtime_overlay_to_screen(child_layout.frame)
+      } else {
+        runtime_child_to_screen(
+          node_to_screen,
+          layout.child_transform,
+          child_layout.frame,
+        )
+      }
       match
-        child.find_scroll_target(key, layout.children[index], nearest_scroll) {
+        child.find_scroll_target(
+          key, child_layout, nearest_scroll, child_to_screen,
+        ) {
         Some(found) => return Some(found)
         None => ()
       }
@@ -47,9 +61,11 @@ fn ElementNode::find_text_reveal(
   self : ElementNode,
   layout : PlacedNode,
   nearest_scroll : (ElementId, Rect)?,
+  node_to_screen : Transform2D,
 ) -> ScrollTarget? {
+  let screen_frame = runtime_screen_frame(node_to_screen, layout.frame)
   let nearest_scroll = if self.view_node.semantics().role == Some(ScrollView) {
-    Some((self.id, layout.frame))
+    Some((self.id, screen_frame))
   } else {
     nearest_scroll
   }
@@ -63,7 +79,18 @@ fn ElementNode::find_text_reveal(
   }
   for index, child in self.children {
     if index < layout.children.length() {
-      match child.find_text_reveal(layout.children[index], nearest_scroll) {
+      let child_layout = layout.children[index]
+      let child_to_screen = if layout.overlay_child_indices.contains(index) {
+        runtime_overlay_to_screen(child_layout.frame)
+      } else {
+        runtime_child_to_screen(
+          node_to_screen,
+          layout.child_transform,
+          child_layout.frame,
+        )
+      }
+      match
+        child.find_text_reveal(child_layout, nearest_scroll, child_to_screen) {
         Some(found) => return Some(found)
         None => ()
       }
@@ -73,31 +100,39 @@ fn ElementNode::find_text_reveal(
 }
 
 ///|
-fn PlacedNode::event_render_node(self : PlacedNode) -> RenderNode {
-  {
-    ..RenderNode::empty(),
-    element_id: self.element_id,
-    frame: self.frame,
-    paint_bounds: self.frame,
-    children: self.children.map(child => child.event_render_node()),
-  }
-}
-
-///|
-/// The placed subtree of one element, so an event that arrives without a
-/// hit-test (a key press, an IME commit) is handed the same geometry the
-/// pointer path resolves. `None` means the element has no placed frame yet,
-/// and the caller keeps a frame-less dispatch.
-fn PlacedNode::event_render_node_for(
+fn PlacedNode::event_geometry_for(
   self : PlacedNode,
   id : ElementId,
-) -> RenderNode? {
+  node_to_screen : Transform2D,
+) -> (Rect, Array[Rect])? {
   if self.element_id == id {
-    Some(self.event_render_node())
+    let child_frames : Array[Rect] = []
+    for index, child in self.children {
+      let child_to_screen = if self.overlay_child_indices.contains(index) {
+        runtime_overlay_to_screen(child.frame)
+      } else {
+        runtime_child_to_screen(
+          node_to_screen,
+          self.child_transform,
+          child.frame,
+        )
+      }
+      child_frames.push(runtime_screen_frame(child_to_screen, child.frame))
+    }
+    Some((runtime_screen_frame(node_to_screen, self.frame), child_frames))
   } else {
-    for child in self.children {
-      match child.event_render_node_for(id) {
-        Some(node) => return Some(node)
+    for index, child in self.children {
+      let child_to_screen = if self.overlay_child_indices.contains(index) {
+        runtime_overlay_to_screen(child.frame)
+      } else {
+        runtime_child_to_screen(
+          node_to_screen,
+          self.child_transform,
+          child.frame,
+        )
+      }
+      match child.event_geometry_for(id, child_to_screen) {
+        Some(geometry) => return Some(geometry)
         None => ()
       }
     }
@@ -111,30 +146,47 @@ fn ElementNode::dispatch_event_to_target(
   target : ElementId,
   event : AppEvent,
   layout : PlacedNode,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
   environment~ : Environment,
   style~ : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
 ) -> ElementEventResult? {
   if self.id == target {
-    Some(
-      self.dispatch_view_event(
-        self.view_node,
-        event,
-        layout.event_render_node(),
-        text_system,
-        environment~,
-        style~,
-      ),
-    )
+    match layout.event_geometry_for(target, node_to_screen) {
+      Some((frame, child_frames)) =>
+        Some(
+          self.dispatch_view_event_with_geometry(
+            self.view_node,
+            event,
+            frame,
+            child_frames,
+            text_system,
+            environment~,
+            style~,
+          ),
+        )
+      None => None
+    }
   } else {
     let child_environment = self.view_node.child_environment(environment)
     let child_style = self.view_node.child_style(style)
     for index, child in self.children {
       if index < layout.children.length() {
+        let child_layout = layout.children[index]
+        let child_to_screen = if layout.overlay_child_indices.contains(index) {
+          runtime_overlay_to_screen(child_layout.frame)
+        } else {
+          runtime_child_to_screen(
+            node_to_screen,
+            layout.child_transform,
+            child_layout.frame,
+          )
+        }
         let child_result = child.dispatch_event_to_target(
           target,
           event,
-          layout.children[index],
+          child_layout,
+          node_to_screen=child_to_screen,
           environment=child_environment,
           style=child_style,
           text_system~,
@@ -281,6 +333,7 @@ fn RuntimeState::try_pending_scroll_from_current_layout(
           request.key,
           self.layout_tree.root,
           None,
+          Transform2D::identity(),
         ) {
         Some(found) => {
           self.pending_scroll_request = None
@@ -301,7 +354,12 @@ fn RuntimeState::try_pending_text_reveal_from_current_layout(
   self : RuntimeState,
 ) -> Unit {
   let layout = self.layout_tree_for_input()
-  match self.element_tree.root.find_text_reveal(layout, None) {
+  match
+    self.element_tree.root.find_text_reveal(
+      layout,
+      None,
+      Transform2D::identity(),
+    ) {
     Some(found) => self.scroll_target_into_view(found, Nearest)
     None => ()
   }

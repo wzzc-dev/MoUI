@@ -11,16 +11,36 @@ fn ElementNode::find_focusable_at(
   self : ElementNode,
   point : Point,
   render : RenderNode,
+  node_to_screen~ : Transform2D = Transform2D::identity(),
+  clip~ : Rect? = None,
 ) -> ElementId? {
+  let own_screen_frame = render.screen_frame(node_to_screen)
+  let child_clip : Rect? = if render.clips_children {
+    Some(runtime_clip_intersection(clip, own_screen_frame))
+  } else {
+    clip
+  }
   let search_order : Array[Int32] = []
   let mut overlay_search = render.children.length() - 1
   while overlay_search >= 0 {
     if overlay_search < self.children.length() &&
       render.children[overlay_search].is_overlay_child &&
-      render.children[overlay_search].hit_bounds().contains(point) {
+      runtime_point_hits_frame(
+        point,
+        render.children[overlay_search].screen_frame(
+          render.child_to_screen(
+            node_to_screen,
+            render.children[overlay_search],
+          ),
+        ),
+        None,
+      ) {
       search_order.push(overlay_search)
     } else if overlay_search < self.children.length() &&
-      render.children[overlay_search].subtree_overlay_contains(point) {
+      render.children[overlay_search].subtree_overlay_contains_in_screen(
+        point,
+        render.child_to_screen(node_to_screen, render.children[overlay_search]),
+      ) {
       search_order.push(overlay_search)
     }
     overlay_search = overlay_search - 1
@@ -46,25 +66,45 @@ fn ElementNode::find_focusable_at(
   for index in search_order {
     if index < render.children.length() {
       let child_render = render.children[index]
+      let child_to_screen = render.child_to_screen(node_to_screen, child_render)
       let is_overlay_owner = render.children[index].is_overlay_child ||
-        render.children[index].subtree_overlay_contains(point)
-      let hit = is_overlay_owner || child_render.hit_bounds().contains(point)
+        render.children[index].subtree_overlay_contains_in_screen(
+          point, child_to_screen,
+        )
+      let hit = is_overlay_owner ||
+        runtime_point_hits_frame(
+          point,
+          child_render.screen_frame(child_to_screen),
+          child_clip,
+        )
       if hit {
         if is_overlay_owner {
           // The point is inside a hoisted popup surface: the popup owns
           // focus pickup. If it has no focusable descendant, in-flow content
           // underneath must not receive focus either (a covered text field
           // would otherwise take the caret invisibly).
-          return self.children[index].find_focusable_at(point, child_render)
+          return self.children[index].find_focusable_at(
+            point,
+            child_render,
+            node_to_screen=child_to_screen,
+            clip=None,
+          )
         }
-        match self.children[index].find_focusable_at(point, child_render) {
+        match
+          self.children[index].find_focusable_at(
+            point,
+            child_render,
+            node_to_screen=child_to_screen,
+            clip=child_clip,
+          ) {
           Some(id) => return Some(id)
           None => ()
         }
       }
     }
   }
-  if self.view_node.focusable() && render.hit_bounds().contains(point) {
+  if self.view_node.focusable() &&
+    runtime_point_hits_frame(point, own_screen_frame, clip) {
     Some(self.id)
   } else {
     None
