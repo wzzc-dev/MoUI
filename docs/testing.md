@@ -422,7 +422,7 @@ scroll-cache counters block that job. The Showcase scroll budget pairs cache
 hit-rate floors with absolute layout/render misses per frame, so a change that
 removes root rebuilds cannot lower the hit rate while increasing missed work.
 Wall-clock budgets remain report-only:
-shared `macos-14` runs drift 1.3-1.5x on p50 for identical code, so a timing
+shared GitHub-hosted macOS runs drift 1.3-1.5x on p50 for identical code, so a timing
 line that goes red is reviewed by hand instead of blocking the PR. The
 renderer-free `moui/runtime` structural regression runs in the `pr` profile and
 blocks a whole-tree builder regression even when the macOS benchmark is
@@ -582,7 +582,7 @@ starvation cannot extend the confirmation window into a red.
 
 The gate runs unattended in CI: `.github/workflows/moui-runtime-gates.yml`
 executes `node scripts/smoke-gate.mjs --suite tui.pty-interaction-smoke --run`
-on the nightly schedule and on manual dispatch, on macos-14, and uploads the
+on the nightly schedule and on manual dispatch, on macos-latest, and uploads the
 raw-stream artifact on failure. The catalog command is `mode: run`; developers
 can still run `sh scripts/tui-pty-smoke.sh` directly for local reproduction.
 

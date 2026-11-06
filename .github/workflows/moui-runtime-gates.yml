@@ -29,7 +29,7 @@ on:
 jobs:
   catalog:
     name: Smoke gate catalog
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -50,7 +50,7 @@ jobs:
 
   web-runtime-presentation:
     name: Web runtime presentation smoke
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: catalog
     if: ${{ github.event_name == 'schedule' || inputs.run_web_runtime_presentation }}
     steps:
@@ -78,7 +78,7 @@ jobs:
 
   window-hosted-hostsim:
     name: Window-hosted host-sim smoke
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: catalog
     if: ${{ github.event_name == 'schedule' || inputs.run_window_hosted_hostsim }}
     steps:
@@ -105,7 +105,7 @@ jobs:
 
   macos-real-skia:
     name: macOS real Skia release smoke
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: catalog
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_macos_real_skia }}
     steps:
@@ -135,7 +135,7 @@ jobs:
 
   tui-pty-smoke:
     name: TUI real-PTY interaction smoke
-    runs-on: macos-14
+    runs-on: macos-latest
     needs: catalog
     if: ${{ github.event_name == 'schedule' || inputs.run_tui_pty_smoke }}
     steps:

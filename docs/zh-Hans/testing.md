@@ -163,7 +163,7 @@ sh scripts/window-hosted-hostsim-smoke.sh
 
 PR profile 会解析 `checks/performance-budgets.json` 并运行 MoonBit validator，但不会下载渲染器。macOS `benchmark-scaffold` job 是 canonical 实测 producer：它运行 native Skia Raster 场景，并上传忽略的 `artifacts/performance/result.json`。结构计数是机器无关的阻断门：1k/10k builder-cache 叶子更新只能构建变更叶子和容器，至少 99% 的 builder-cache 命中，每帧最多一次 miss；Showcase scroll 的 place/render cache 同时约束命中率下限与每帧 miss 绝对上限，避免移除 root rebuild 后以缩小的分母掩盖绝对工作量回退。`moui/runtime` 中无渲染器的结构回归随 `pr` profile 运行。
 
-墙钟预算仍是非阻断报告。共享 `macos-14` 的同代码 p50 曾漂移 1.3-1.5x。timing ratchet 需要一个具名、且实际执行门禁的专用 benchmark runner；该 runner 上两次同代码产物的 p50 spread 不超过 15% 才能作为依据。本地或共享宿主的两个产物即使 spread 不超过 15% 也只作报告，不因输出路径不同而变成可棘轮证据。结构计数必须每次都一致。需要本地复跑时使用：
+墙钟预算仍是非阻断报告。共享 GitHub-hosted macOS runner 的同代码 p50 曾漂移 1.3-1.5x。timing ratchet 需要一个具名、且实际执行门禁的专用 benchmark runner；该 runner 上两次同代码产物的 p50 spread 不超过 15% 才能作为依据。本地或共享宿主的两个产物即使 spread 不超过 15% 也只作报告，不因输出路径不同而变成可棘轮证据。结构计数必须每次都一致。需要本地复跑时使用：
 
 ```sh
 node scripts/validate-performance-budgets.mjs
