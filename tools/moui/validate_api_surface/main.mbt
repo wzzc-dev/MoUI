@@ -259,8 +259,10 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "animation sugar",
       path: "moui/animation/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/animation\"",
-      max_lines: 24,
-      max_pub_lines: 4,
+      // SpringSpec / SpringState re-exports: plan spring-animation forwards
+      // the spring value types next to the easing/transition sugars.
+      max_lines: 27,
+      max_pub_lines: 6,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_animation_tokens()),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -424,9 +426,14 @@ fn package_budgets() -> Array[PackageBudget] {
       // and save the model without an I/O dependency, while transports are
       // built at the composition root. Program::with_state_persistence and
       // the runtime_state_persistence accessor mirror the runtime_* pattern.
-      max_lines: 2751,
-      max_pub_lines: 1169,
-      max_pub_all_lines: 141,
+      // SpringSpec / SpringState / spring_progress (+32 lines, +19 pub, +2
+      // pub(all)): plan spring-animation — physical damping-ratio springs for
+      // TransitionSpec::with_spring plus the interruptible stateful solver
+      // (value + velocity accessors) for app-driven motion. Motion value
+      // types are core protocol surface like the rest of animation.mbt.
+      max_lines: 2783,
+      max_pub_lines: 1188,
+      max_pub_all_lines: 143,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

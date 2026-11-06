@@ -66,6 +66,8 @@ pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme
 
 pub fn selected_text(String, TextRange?) -> String
 
+pub fn spring_progress(SpringSpec, Double) -> Double
+
 pub fn surrounding_delete_range(String, Int32, Int32, Int32) -> TextRange
 
 pub fn text_history_delta(String, String) -> (Int32, String, String)
@@ -1797,6 +1799,34 @@ pub fn SpacingScale::not_equal(Self, Self) -> Bool
 pub fn SpacingScale::to_json(Self) -> @json.Json
 pub fn SpacingScale::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct SpringSpec {
+  damping_ratio : Double
+  duration_ms : Double
+}
+pub fn SpringSpec::bouncy() -> Self
+pub fn SpringSpec::equal(Self, Self) -> Bool
+pub fn SpringSpec::gentle() -> Self
+pub fn SpringSpec::new(damping_ratio? : Double, duration_ms? : Double) -> Self
+pub fn SpringSpec::not_equal(Self, Self) -> Bool
+pub fn SpringSpec::snappy() -> Self
+pub fn SpringSpec::to_json(Self) -> @json.Json
+pub fn SpringSpec::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct SpringState {
+  // private fields
+}
+pub fn SpringState::advance(Self, target~ : Double, frame~ : Frame, spec~ : SpringSpec) -> Self
+pub fn SpringState::equal(Self, Self) -> Bool
+pub fn SpringState::new(value? : Double) -> Self
+pub fn SpringState::not_equal(Self, Self) -> Bool
+pub fn SpringState::settled(Self, target~ : Double) -> Bool
+pub fn SpringState::to_json(Self) -> @json.Json
+pub fn SpringState::to_repr(Self) -> @debug.Repr
+pub fn SpringState::value(Self) -> Double
+pub fn SpringState::velocity(Self) -> Double
+
 pub struct Subscription[Msg] {
   // private fields
 }
@@ -2231,6 +2261,7 @@ pub struct TransitionSpec {
   to : TransitionStyle
   duration_ms : Double
   easing : Easing
+  spring : SpringSpec?
 }
 pub fn TransitionSpec::equal(Self, Self) -> Bool
 pub fn TransitionSpec::fade(from_opacity? : Double, to_opacity? : Double, duration_ms? : Double, easing? : Easing) -> Self
@@ -2243,6 +2274,7 @@ pub fn TransitionSpec::scale(from_scale? : Double, to_scale? : Double, duration_
 pub fn TransitionSpec::slide(from_offset~ : Point, to_offset? : Point, duration_ms? : Double, easing? : Easing) -> Self
 pub fn TransitionSpec::to_json(Self) -> @json.Json
 pub fn TransitionSpec::to_repr(Self) -> @debug.Repr
+pub fn TransitionSpec::with_spring(Self, spring~ : SpringSpec) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub struct TransitionStyle {

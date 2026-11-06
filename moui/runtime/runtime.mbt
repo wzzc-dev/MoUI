@@ -45,23 +45,8 @@ pub fn[Model, Msg] AppRuntime::new_program(
   state_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
-  // State-preserving dev restart: when the program declares persistence and
-  // the composition root supplies a transport, restore the model from the
-  // transport payload after init. Init effects still run; a missing or
-  // unreadable payload falls back to the init model.
   let model = Ref(
-    match (program.runtime_state_persistence(), state_transport) {
-      (Some(persistence), Some(transport)) =>
-        match transport.read() {
-          Some(payload) =>
-            match persistence.load(payload) {
-              Some(restored) => restored
-              None => initial_model
-            }
-          None => initial_model
-        }
-      _ => initial_model
-    },
+    program_restore_model(program, state_transport, initial_model),
   )
   let program_runtime = ProgramRuntimeDiagnostics::new()
   let pending_messages : Array[Msg] = []
@@ -133,11 +118,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let (next_model, effect) = program.runtime_update(model.val, message)
         program_runtime.record_update()
         model.val = next_model
-        match (program.runtime_state_persistence(), state_transport) {
-          (Some(persistence), Some(transport)) =>
-            transport.write(persistence.save(next_model))
-          _ => ()
-        }
+        program_save_model(program, state_transport, next_model)
         match runtime_ref.val {
           Some(runtime) => runtime.state.request_root_rebuild()
           None => ()

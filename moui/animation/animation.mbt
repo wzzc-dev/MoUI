@@ -13,3 +13,9 @@ pub using @core {type TransitionSpec}
 
 ///|
 pub using @core {type TransitionStyle}
+
+///|
+pub using @core {type SpringSpec}
+
+///|
+pub using @core {type SpringState}

@@ -81,6 +81,7 @@ pub struct TransitionSpec {
   to : TransitionStyle
   duration_ms : Double
   easing : Easing
+  spring : SpringSpec?
 }
 
 ///|
@@ -311,7 +312,19 @@ pub fn TransitionSpec::new(
   duration_ms~ : Double = 180.0,
   easing~ : Easing = EaseInOut,
 ) -> TransitionSpec {
-  { from, to, duration_ms: max_double(0.0, duration_ms), easing, }
+  { from, to, duration_ms: max_double(0.0, duration_ms), easing, spring: None, }
+}
+
+///|
+/// Drive the transition's progress with spring physics instead of the fixed
+/// duration + easing curve. `duration_ms` / `easing` stay as the fallback for
+/// progress-based callers; the spring's settle estimate governs
+/// `sample_elapsed` / `presence` timing.
+pub fn TransitionSpec::with_spring(
+  self : TransitionSpec,
+  spring~ : SpringSpec,
+) -> TransitionSpec {
+  { ..self, spring: Some(spring), }
 }
 
 ///|
@@ -387,7 +400,16 @@ pub fn TransitionSpec::sample_elapsed(
   elapsed_ms : Double,
   reduced_motion~ : Bool = false,
 ) -> TransitionSample {
-  self.sample(animation_progress(elapsed_ms, self.duration_ms), reduced_motion~)
+  let elapsed_progress = match self.spring {
+    Some(spring) =>
+      if reduced_motion {
+        1.0
+      } else {
+        spring_progress(spring, elapsed_ms)
+      }
+    None => animation_progress(elapsed_ms, self.duration_ms)
+  }
+  self.sample(elapsed_progress, reduced_motion~)
 }
 
 ///|
@@ -454,4 +476,169 @@ fn animation_progress(elapsed_ms : Double, duration_ms : Double) -> Double {
   } else {
     clamp_double(elapsed_ms / duration_ms, 0.0, 1.0)
   }
+}
+
+///|
+/// Physical spring parameterization: `damping_ratio` (ζ; below 1 bounces,
+/// 1 is critically damped, above 1 eases without overshoot) and `duration_ms`
+/// as the nominal settle estimate that fixes the natural frequency. Immutable;
+/// the closed-form curve and the stateful solver both read from it.
+#derive(Eq, Debug, ToJson)
+pub(all) struct SpringSpec {
+  damping_ratio : Double
+  duration_ms : Double
+}
+
+///|
+pub extend SpringSpec with Debug::{to_repr}
+
+///|
+pub extend SpringSpec with Eq::{not_equal, equal}
+
+///|
+pub extend SpringSpec with ToJson::{to_json}
+
+///|
+pub fn SpringSpec::new(
+  damping_ratio~ : Double = 1.0,
+  duration_ms~ : Double = 220.0,
+) -> SpringSpec {
+  {
+    damping_ratio: max_double(damping_ratio, 0.05),
+    duration_ms: max_double(duration_ms, 1.0),
+  }
+}
+
+///|
+/// Soft settle with a light bounce; good for presence and card motion.
+pub fn SpringSpec::gentle() -> SpringSpec {
+  SpringSpec::new(damping_ratio=0.85, duration_ms=260.0)
+}
+
+///|
+/// Critically damped and fast; no overshoot, quick settle.
+pub fn SpringSpec::snappy() -> SpringSpec {
+  SpringSpec::new(damping_ratio=1.0, duration_ms=200.0)
+}
+
+///|
+/// Playful underdamped motion with a visible overshoot.
+pub fn SpringSpec::bouncy() -> SpringSpec {
+  SpringSpec::new(damping_ratio=0.6, duration_ms=320.0)
+}
+
+///|
+/// Envelope settle factor: the reference spring is ~99.9% settled after
+/// `6.6 / ω` seconds, which fixes ω from the requested duration.
+fn spring_settle_factor() -> Double {
+  6.6
+}
+
+///|
+fn SpringSpec::omega(self : SpringSpec) -> Double {
+  spring_settle_factor() / max_double(self.duration_ms / 1000.0, 0.01)
+}
+
+///|
+/// Closed-form normalized unit-displacement spring from rest toward 1.
+/// ζ ≥ 1 curves are monotone; ζ < 1 overshoots past 1 and returns. Samples
+/// inside the settle threshold snap to exactly 1.0 so callers can stop
+/// requesting frames at a deterministic time.
+pub fn spring_progress(spec : SpringSpec, elapsed_ms : Double) -> Double {
+  let t = max_double(elapsed_ms, 0.0) / 1000.0
+  let omega = spec.omega()
+  let zeta = spec.damping_ratio
+  let value = if zeta < 1.0 {
+    let damped = omega * (1.0 - zeta * zeta).sqrt()
+    1.0 -
+    @math.exp(-zeta * omega * t) *
+    (@math.cos(damped * t) + zeta * omega / damped * @math.sin(damped * t))
+  } else if zeta == 1.0 {
+    1.0 - (1.0 + omega * t) * @math.exp(-omega * t)
+  } else {
+    let spread = (zeta * zeta - 1.0).sqrt()
+    let slow_root = -omega * (zeta - spread)
+    let fast_root = -omega * (zeta + spread)
+    1.0 -
+    (
+      fast_root * @math.exp(slow_root * t) -
+      slow_root * @math.exp(fast_root * t)
+    ) /
+    (fast_root - slow_root)
+  }
+  if (1.0 - value).abs() < 0.001 {
+    1.0
+  } else {
+    value
+  }
+}
+
+///|
+/// Stateful, interruptible spring for app-driven motion. `velocity` carries
+/// across `advance` calls, so retargeting mid-flight hands the current speed
+/// to the new approach instead of restarting from rest.
+#derive(Eq, Debug, ToJson)
+pub(all) struct SpringState {
+  priv value : Double
+  priv velocity : Double
+}
+
+///|
+pub extend SpringState with Debug::{to_repr}
+
+///|
+pub extend SpringState with Eq::{not_equal, equal}
+
+///|
+pub extend SpringState with ToJson::{to_json}
+
+///|
+pub fn SpringState::new(value~ : Double = 0.0) -> SpringState {
+  { value, velocity: 0.0, }
+}
+
+///|
+pub fn SpringState::value(self : SpringState) -> Double {
+  self.value
+}
+
+///|
+pub fn SpringState::velocity(self : SpringState) -> Double {
+  self.velocity
+}
+
+///|
+/// Advance one paint frame toward `target` with semi-implicit Euler, fixed
+/// 1/120 s sub-steps so a given delta integrates identically regardless of
+/// display refresh rate.
+pub fn SpringState::advance(
+  self : SpringState,
+  target~ : Double,
+  frame~ : Frame,
+  spec~ : SpringSpec,
+) -> SpringState {
+  let mut remaining = max_double(frame.delta_ms, 0.0) / 1000.0
+  let mut value = self.value
+  let mut velocity = self.velocity
+  let omega = spec.omega()
+  let zeta = spec.damping_ratio
+  let substep = 1.0 / 120.0
+  while remaining > 0.0 {
+    let dt = if remaining < substep { remaining } else { substep }
+    let acceleration = omega * omega * (target - value) -
+      2.0 * zeta * omega * velocity
+    velocity += acceleration * dt
+    value += velocity * dt
+    remaining -= dt
+  }
+  if (target - value).abs() < 0.001 && velocity.abs() < 0.01 {
+    { value: target, velocity: 0.0, }
+  } else {
+    { value, velocity, }
+  }
+}
+
+///|
+pub fn SpringState::settled(self : SpringState, target~ : Double) -> Bool {
+  (target - self.value).abs() < 0.001 && self.velocity.abs() < 0.01
 }

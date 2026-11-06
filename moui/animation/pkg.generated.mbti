@@ -14,6 +14,10 @@ import {
 // Type aliases
 pub using @core {type Easing}
 
+pub using @core {type SpringSpec}
+
+pub using @core {type SpringState}
+
 pub using @core {type TransitionSpec}
 
 pub using @core {type TransitionStyle}

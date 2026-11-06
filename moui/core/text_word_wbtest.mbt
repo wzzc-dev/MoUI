@@ -56,3 +56,21 @@ test "word lookup clamps out of range indices" {
   assert_eq(test_word_span("hi", -3), (0, 2))
   assert_eq(test_word_span("one two", 7), (4, 7))
 }
+
+///|
+test "arabic and hebrew words join on double-click" {
+  // Arabic: letters and combining marks form one run; the space splits words.
+  let arabic = "مرحبا بالعالم"
+  let first = text_word_range_at(arabic, 0)
+  inspect(first.end - first.start, content="5")
+  let second = text_word_range_at(arabic, 6)
+  inspect(second.end - second.start, content="7")
+  // Hebrew including gershayim and niqqud joins similarly.
+  let hebrew = "שָׁלוֹם עוֹלָם"
+  let hebrew_first = text_word_range_at(hebrew, 0)
+  inspect(hebrew_first.end > hebrew_first.start, content="true")
+  // Mixed Latin/Arabic: script change does not split a word run (both JoinWord).
+  let mixed = "abcمرحبا"
+  let mixed_range = text_word_range_at(mixed, 1)
+  inspect(mixed_range.end - mixed_range.start, content="8")
+}

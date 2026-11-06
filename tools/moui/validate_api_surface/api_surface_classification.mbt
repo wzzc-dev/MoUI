@@ -45,7 +45,10 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // handoff contract for state-preserving dev restarts (plan
       // dev-state-persistence) — closure records with the same shape as the
       // other cross-runtime protocol value types.
-      max_count: 1181,
+      // SpringSpec / SpringState / spring_progress (+19, including the
+      // Debug/Eq/ToJson extend lines): plan spring-animation — spring motion
+      // joins the cross-runtime animation protocol types.
+      max_count: 1200,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -217,7 +220,7 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantic",
     "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
-    "View", "VisualStyle", "TaskScope", "CancelToken",
+    "View", "VisualStyle", "TaskScope", "CancelToken", "Spring",
   ]
 }
 
@@ -229,7 +232,7 @@ fn core_api_surface_function_prefixes() -> Array[String] {
     "pub fn fallback_stabilize", "pub fn focus_scope_", "pub fn hit_test", "pub fn is_",
     "pub fn max_int", "pub fn min_int", "pub fn move_text", "pub fn normalize_",
     "pub fn optional_rect_union", "pub fn replace_text", "pub fn resolve_", "pub fn selected_text",
-    "pub fn surrounding_", "pub fn text_",
+    "pub fn surrounding_", "pub fn spring_", "pub fn text_",
   ]
 }
 

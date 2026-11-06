@@ -61,7 +61,13 @@ MoUI animation for apps is mostly **app-sampled**:
 
 - `View::transition` / `View::presence` sample a `TransitionSpec` into opacity /
   offset / scale / foreground modifiers.
-- `@moui/animation` re-exports easing and transition types.
+- `TransitionSpec::with_spring` drives the transition with spring physics
+  (`SpringSpec::gentle` / `snappy` / `bouncy` damping-ratio presets); springs
+  settle deterministically and respect reduced motion.
+- For app-driven values, `@core.SpringState::advance` integrates toward a
+  moving target with velocity handoff — retargeting mid-flight keeps the
+  current speed instead of restarting from rest.
+- `@moui/animation` re-exports easing, transition, and spring types.
 - `@views.animated_canvas` is for looping canvas motion: the draw callback
   receives `now_ms` from the runtime paint clock and the paint plan is marked
   animating so the host keeps requesting frames without a `TimerSource`.
