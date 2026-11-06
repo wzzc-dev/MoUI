@@ -51,12 +51,12 @@ test "settings runtime draws profile shell" {
     height=620.0,
   )
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Settings"))
-  assert_true(has_text(commands, "Profile"))
-  assert_true(has_text(commands, "Display name *"))
-  assert_true(has_text(commands, "Email *"))
-  assert_true(has_text(commands, "Save Settings"))
-  assert_true(has_text(commands, "Saved: Not saved"))
+  assert_true(@test_support.widget_has_text(commands, "Settings"))
+  assert_true(@test_support.widget_has_text(commands, "Profile"))
+  assert_true(@test_support.widget_has_text(commands, "Display name *"))
+  assert_true(@test_support.widget_has_text(commands, "Email *"))
+  assert_true(@test_support.widget_has_text(commands, "Save Settings"))
+  assert_true(@test_support.widget_has_text(commands, "Saved: Not saved"))
 }
 
 ///|
@@ -69,12 +69,12 @@ test "settings preferences section exposes theme controls" {
     height=620.0,
   )
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Preferences"))
-  assert_true(has_text(commands, "Theme"))
-  assert_true(has_text(commands, "Light"))
-  assert_true(has_text(commands, "Dark"))
-  assert_true(has_text(commands, "System"))
-  assert_true(has_text(commands, "Telemetry"))
+  assert_true(@test_support.widget_has_text(commands, "Preferences"))
+  assert_true(@test_support.widget_has_text(commands, "Theme"))
+  assert_true(@test_support.widget_has_text(commands, "Light"))
+  assert_true(@test_support.widget_has_text(commands, "Dark"))
+  assert_true(@test_support.widget_has_text(commands, "System"))
+  assert_true(@test_support.widget_has_text(commands, "Telemetry"))
 }
 
 ///|
@@ -84,48 +84,11 @@ test "settings runtime save button updates status" {
     width=920.0,
     height=620.0,
   )
-  assert_true(has_text(runtime.draw_commands(), "Saved: Not saved"))
-  click_text(runtime, "Save Settings")
-  assert_true(has_text(runtime.draw_commands(), "Saved: Profile"))
-}
-
-///|
-fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
-  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
-    fail("expected text frame for " + text)
-  }
-  let point = @geometry.Point::new(
-    x=frame.origin.x + frame.size.width / 2.0,
-    y=frame.origin.y + frame.size.height / 2.0,
+  assert_true(
+    @test_support.widget_has_text(runtime.draw_commands(), "Saved: Not saved"),
   )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
+  @test_support.widget_tap_text(runtime, "Save Settings")
+  assert_true(
+    @test_support.widget_has_text(runtime.draw_commands(), "Saved: Profile"),
   )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
-  )
-}
-
-///|
-fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
-  commands.any(command => {
-    command is DrawText({ text: value, .. }) && value == text
-  })
-}
-
-///|
-fn text_frame(
-  commands : Array[@core.DrawCommand],
-  text : String,
-) -> @core.Rect? {
-  for command in commands {
-    match command {
-      DrawText({ text: value, frame, .. }) =>
-        if value == text {
-          return Some(frame)
-        }
-      _ => ()
-    }
-  }
-  None
 }

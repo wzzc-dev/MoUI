@@ -6,8 +6,8 @@ import {
 }
 
 import {
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/runtime/test_support",
 } for "test"
 
 supported_targets = "+native+wasm-gc"

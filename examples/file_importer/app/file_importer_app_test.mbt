@@ -90,16 +90,23 @@ test "file importer runtime receives async file dialog completion" {
     width=860.0,
     height=620.0,
   )
-  click_text(runtime, "Browse")
-  assert_true(has_text(runtime.draw_commands(), "Waiting for file picker"))
+  @test_support.widget_tap_text(runtime, "Browse")
+  assert_true(
+    @test_support.widget_has_text(
+      runtime.draw_commands(),
+      "Waiting for file picker",
+    ),
+  )
   let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(
     queue.complete(pending[0].id, FileDialogSelection(["/tmp/later.txt"])),
   )
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "/tmp/later.txt"))
-  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+  assert_true(@test_support.widget_has_text(commands, "/tmp/later.txt"))
+  assert_true(
+    @test_support.widget_has_text(commands, "Imported 1 file(s) from Dialog"),
+  )
 }
 
 ///|
@@ -113,13 +120,15 @@ test "file importer runtime receives async file dialog rejection" {
     width=860.0,
     height=620.0,
   )
-  click_text(runtime, "Browse")
+  @test_support.widget_tap_text(runtime, "Browse")
   let pending = queue.drain_pending()
   inspect(pending.length(), content="1")
   assert_true(queue.reject(pending[0].id, "file picker canceled"))
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "File dialog unavailable"))
-  assert_true(has_text(commands, "file picker canceled"))
+  assert_true(
+    @test_support.widget_has_text(commands, "File dialog unavailable"),
+  )
+  assert_true(@test_support.widget_has_text(commands, "file picker canceled"))
 }
 
 ///|
@@ -132,10 +141,12 @@ test "file importer runtime runs host service effects" {
     width=860.0,
     height=620.0,
   )
-  click_text(runtime, "Browse")
+  @test_support.widget_tap_text(runtime, "Browse")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "/tmp/runtime.csv"))
-  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+  assert_true(@test_support.widget_has_text(commands, "/tmp/runtime.csv"))
+  assert_true(
+    @test_support.widget_has_text(commands, "Imported 1 file(s) from Dialog"),
+  )
 }
 
 ///|
@@ -146,11 +157,13 @@ test "file importer composes as effect-capable child program" {
     width=900.0,
     height=680.0,
   )
-  click_text(runtime, "Browse")
+  @test_support.widget_tap_text(runtime, "Browse")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Parent Shell"))
-  assert_true(has_text(commands, "/tmp/composed.csv"))
-  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+  assert_true(@test_support.widget_has_text(commands, "Parent Shell"))
+  assert_true(@test_support.widget_has_text(commands, "/tmp/composed.csv"))
+  assert_true(
+    @test_support.widget_has_text(commands, "Imported 1 file(s) from Dialog"),
+  )
 }
 
 ///|
@@ -162,8 +175,10 @@ test "file importer child effect maps pending completion into parent" {
     width=900.0,
     height=680.0,
   )
-  click_text(runtime, "Browse")
-  assert_true(has_text(runtime.draw_commands(), "Parent Shell"))
+  @test_support.widget_tap_text(runtime, "Browse")
+  assert_true(
+    @test_support.widget_has_text(runtime.draw_commands(), "Parent Shell"),
+  )
   let pending_snapshot = runtime.program_runtime_snapshot()
   inspect(
     pending_snapshot.last_scheduled_effect_summary().descriptors().length(),
@@ -188,9 +203,11 @@ test "file importer child effect maps pending completion into parent" {
     queue.complete(pending[0].id, FileDialogSelection(["/tmp/child-later.csv"])),
   )
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Parent Shell"))
-  assert_true(has_text(commands, "/tmp/child-later.csv"))
-  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+  assert_true(@test_support.widget_has_text(commands, "Parent Shell"))
+  assert_true(@test_support.widget_has_text(commands, "/tmp/child-later.csv"))
+  assert_true(
+    @test_support.widget_has_text(commands, "Imported 1 file(s) from Dialog"),
+  )
   let completed_snapshot = runtime.program_runtime_snapshot()
   inspect(completed_snapshot.active_effect_task_count(), content="0")
   inspect(completed_snapshot.completed_effect_task_count(), content="1")
@@ -199,12 +216,12 @@ test "file importer child effect maps pending completion into parent" {
 ///|
 test "file importer runtime draws panel labels" {
   let commands = test_runtime(@app.program(), width=860.0, height=620.0).draw_commands()
-  assert_true(has_text(commands, "File Importer"))
-  assert_true(has_text(commands, "Import Files"))
-  assert_true(has_text(commands, "Drop files here"))
-  assert_true(has_text(commands, "No files selected"))
-  assert_true(has_text(commands, "Selected files"))
-  assert_true(has_text(commands, "Platform paths"))
+  assert_true(@test_support.widget_has_text(commands, "File Importer"))
+  assert_true(@test_support.widget_has_text(commands, "Import Files"))
+  assert_true(@test_support.widget_has_text(commands, "Drop files here"))
+  assert_true(@test_support.widget_has_text(commands, "No files selected"))
+  assert_true(@test_support.widget_has_text(commands, "Selected files"))
+  assert_true(@test_support.widget_has_text(commands, "Platform paths"))
 }
 
 ///|
@@ -329,45 +346,4 @@ fn run_file_importer_effect(
     Task(_descriptor, start) => ignore(start(dispatch))
   }
   model.val
-}
-
-///|
-fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
-  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
-    fail("expected text frame for " + text)
-  }
-  let point = @geometry.Point::new(
-    x=frame.origin.x + frame.size.width / 2.0,
-    y=frame.origin.y + frame.size.height / 2.0,
-  )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
-  )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
-  )
-}
-
-///|
-fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
-  commands.any(command => {
-    command is DrawText({ text: value, .. }) && value == text
-  })
-}
-
-///|
-fn text_frame(
-  commands : Array[@core.DrawCommand],
-  text : String,
-) -> @core.Rect? {
-  for command in commands {
-    match command {
-      DrawText({ text: value, frame, .. }) =>
-        if value == text {
-          return Some(frame)
-        }
-      _ => ()
-    }
-  }
-  None
 }

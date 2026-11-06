@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/runtime/test_support"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn widget_has_text(Array[@core.DrawCommand], String) -> Bool
+
+pub fn widget_tap_at(@runtime.AppRuntime, x~ : Double, y~ : Double) -> Unit
+
+pub fn widget_tap_text(@runtime.AppRuntime, String) -> Unit raise
+
+pub fn widget_text_frame(Array[@core.DrawCommand], String) -> @core.Rect?
+
+// Errors
+
+// Types and methods
+pub struct WidgetHarness {
+  // private fields
+}
+pub fn WidgetHarness::commands(Self) -> Array[@core.DrawCommand]
+pub fn WidgetHarness::dispatch(Self, @core.AppEvent) -> Unit
+pub fn[Model, Msg] WidgetHarness::from_program(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double) -> Self
+pub fn WidgetHarness::has_text(Self, String) -> Bool
+pub fn WidgetHarness::runtime(Self) -> @runtime.AppRuntime
+pub fn WidgetHarness::size(Self) -> @core.Size
+pub fn WidgetHarness::tap_at(Self, x~ : Double, y~ : Double) -> Unit
+pub fn WidgetHarness::tap_text(Self, String) -> Unit raise
+pub fn WidgetHarness::text_frame(Self, String) -> @core.Rect?
+
+// Type aliases
+
+// Traits

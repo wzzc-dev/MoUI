@@ -431,16 +431,21 @@ test "desktop runtime unlocks into Finder at desktop size" {
     height=800.0,
   )
   // Boot splash shows the product name over the wallpaper.
-  assert_true(has_text(runtime.draw_commands(), "Starting Mo Desktop"))
+  assert_true(
+    @test_support.widget_has_text(
+      runtime.draw_commands(),
+      "Starting Mo Desktop",
+    ),
+  )
   assert_true(has_image(runtime.draw_commands(), "tahoe-day.jpg"))
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Documents"))
-  assert_true(has_text(commands, "Project Notes.txt"))
-  assert_true(has_text(commands, "Finder"))
-  assert_true(has_text(commands, "Sun Jul 19  09:41"))
+  assert_true(@test_support.widget_has_text(commands, "Documents"))
+  assert_true(@test_support.widget_has_text(commands, "Project Notes.txt"))
+  assert_true(@test_support.widget_has_text(commands, "Finder"))
+  assert_true(@test_support.widget_has_text(commands, "Sun Jul 19  09:41"))
 }
 
 ///|
@@ -454,8 +459,12 @@ test "desktop runtime reaches login with Enter from the lock screen" {
   // Enter on the lock screen opens the sign-in form.
   runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="Enter")))
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Unlock"))
-  assert_true(has_text(commands, "Demo account — any password works"))
+  assert_true(@test_support.widget_has_text(commands, "Unlock"))
+  assert_true(
+    @test_support.widget_has_text(
+      commands, "Demo account — any password works",
+    ),
+  )
 }
 
 ///|
@@ -599,18 +608,18 @@ test "desktop runtime shows new apps from the registry" {
     height=800.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   // Open Notes via Spotlight search.
-  click_text(runtime, "Spotlight")
+  @test_support.widget_tap_text(runtime, "Spotlight")
   runtime.dispatch_event(TextInput(InsertText("Notes")))
-  click_text(runtime, "Notes")
+  @test_support.widget_tap_text(runtime, "Notes")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Welcome to Mo Notes"))
-  assert_true(has_text(commands, "New Note"))
+  assert_true(@test_support.widget_has_text(commands, "Welcome to Mo Notes"))
+  assert_true(@test_support.widget_has_text(commands, "New Note"))
   // The Dock now carries registry glyphs for all four apps (dock tiles are
   // icon-only; the terminal glyph draws a ">_" mark).
-  assert_true(has_text(runtime.draw_commands(), ">_"))
+  assert_true(@test_support.widget_has_text(runtime.draw_commands(), ">_"))
 }
 
 ///|
@@ -724,18 +733,18 @@ test "desktop runtime switches language from the system menu" {
     height=800.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   // Open the system menu and switch to Chinese.
-  click_text(runtime, "Mo")
-  click_text(runtime, "中文")
+  @test_support.widget_tap_text(runtime, "Mo")
+  @test_support.widget_tap_text(runtime, "中文")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "文件"))
-  assert_true(has_text(commands, "编辑"))
+  assert_true(@test_support.widget_has_text(commands, "文件"))
+  assert_true(@test_support.widget_has_text(commands, "编辑"))
   // Switching back restores English labels.
-  click_text(runtime, "Mo")
-  click_text(runtime, "English")
-  assert_true(has_text(runtime.draw_commands(), "File"))
+  @test_support.widget_tap_text(runtime, "Mo")
+  @test_support.widget_tap_text(runtime, "English")
+  assert_true(@test_support.widget_has_text(runtime.draw_commands(), "File"))
 }
 
 ///|
@@ -912,11 +921,11 @@ test "desktop layout persists across program restarts" {
     height=800.0,
   )
   skip_boot(first)
-  click_text(first, "Sign In")
-  click_text(first, "Unlock")
+  @test_support.widget_tap_text(first, "Sign In")
+  @test_support.widget_tap_text(first, "Unlock")
   assert_false(store.contains(@app.SETTINGS_STORAGE_KEY))
-  click_text(first, "Window")
-  click_text(first, "Bring Safari Forward")
+  @test_support.widget_tap_text(first, "Window")
+  @test_support.widget_tap_text(first, "Bring Safari Forward")
   assert_true(store.contains(@app.SETTINGS_STORAGE_KEY))
   let stored = store.get(@app.SETTINGS_STORAGE_KEY).unwrap()
   let saved = @app.decode_desktop_snapshot(stored).unwrap()
@@ -932,11 +941,11 @@ test "desktop layout persists across program restarts" {
     height=800.0,
   )
   skip_boot(second)
-  click_text(second, "Sign In")
-  click_text(second, "Unlock")
+  @test_support.widget_tap_text(second, "Sign In")
+  @test_support.widget_tap_text(second, "Unlock")
   let commands = second.draw_commands()
-  assert_true(has_text(commands, "Documents"))
-  assert_true(has_text(commands, "Start Page"))
+  assert_true(@test_support.widget_has_text(commands, "Documents"))
+  assert_true(@test_support.widget_has_text(commands, "Start Page"))
 }
 
 ///|
@@ -947,19 +956,19 @@ test "desktop runtime renders simultaneous windows after menu open" {
     height=800.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   // Open Safari via the Window menu ("Bring Safari Forward"), so both
   // windows coexist on screen.
-  click_text(runtime, "Window")
-  click_text(runtime, "Bring Safari Forward")
+  @test_support.widget_tap_text(runtime, "Window")
+  @test_support.widget_tap_text(runtime, "Bring Safari Forward")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Documents"))
-  assert_true(has_text(commands, "Project Notes.txt"))
+  assert_true(@test_support.widget_has_text(commands, "Documents"))
+  assert_true(@test_support.widget_has_text(commands, "Project Notes.txt"))
   // The menu bar reflects the newly focused app while the Finder window
   // (title "Documents") stays alive underneath.
-  assert_true(has_text(commands, "Safari"))
-  assert_true(has_text(commands, "Start Page"))
+  assert_true(@test_support.widget_has_text(commands, "Safari"))
+  assert_true(@test_support.widget_has_text(commands, "Start Page"))
 }
 
 ///|
@@ -970,21 +979,21 @@ test "desktop runtime keeps primary controls visible in compact viewport" {
     height=720.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Docs"))
-  assert_true(has_text(commands, "Apps"))
-  assert_true(has_text(commands, "Downloads"))
-  assert_true(has_text(commands, "Finder"))
-  assert_true(has_text(commands, "09:41"))
+  assert_true(@test_support.widget_has_text(commands, "Docs"))
+  assert_true(@test_support.widget_has_text(commands, "Apps"))
+  assert_true(@test_support.widget_has_text(commands, "Downloads"))
+  assert_true(@test_support.widget_has_text(commands, "Finder"))
+  assert_true(@test_support.widget_has_text(commands, "09:41"))
 }
 
 ///|
 /// Pass the boot splash (timer is absent in headless runtimes, so tests
 /// tap through it exactly like impatient users would).
 fn skip_boot(runtime : @runtime.AppRuntime) -> Unit raise {
-  click_text(runtime, "Starting Mo Desktop")
+  @test_support.widget_tap_text(runtime, "Starting Mo Desktop")
 }
 
 ///|
@@ -995,8 +1004,8 @@ test "traffic light close button removes its window at runtime" {
     height=800.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   // Close-dot center for the initial Finder window at 1280x800 (measured):
   // window left ~166.4; dots start 20pt in, 12pt wide.
   let cx = 192.4
@@ -1029,9 +1038,9 @@ test "traffic light close button removes its window at runtime" {
   }
   // The Finder window's content disappears; the shell stays and the menu
   // bar app title falls back to "Desktop" (no focused window).
-  assert_false(has_text(after, "Project Notes.txt"))
-  assert_true(has_text(after, "Desktop"))
-  assert_false(has_text(after, "Sign In"))
+  assert_false(@test_support.widget_has_text(after, "Project Notes.txt"))
+  assert_true(@test_support.widget_has_text(after, "Desktop"))
+  assert_false(@test_support.widget_has_text(after, "Sign In"))
 }
 
 ///|
@@ -1042,10 +1051,11 @@ test "titlebar drag moves the window on screen" {
     height=800.0,
   )
   skip_boot(runtime)
-  click_text(runtime, "Sign In")
-  click_text(runtime, "Unlock")
+  @test_support.widget_tap_text(runtime, "Sign In")
+  @test_support.widget_tap_text(runtime, "Unlock")
   // The titlebar copy of the location label is the topmost "Documents".
-  guard text_frame(runtime.draw_commands(), "Documents") is Some(before) else {
+  guard @test_support.widget_text_frame(runtime.draw_commands(), "Documents")
+    is Some(before) else {
     fail("expected window title")
   }
   assert_true(before.origin.y < 160.0)
@@ -1080,7 +1090,8 @@ test "titlebar drag moves the window on screen" {
       ),
     ),
   )
-  guard text_frame(runtime.draw_commands(), "Documents") is Some(after) else {
+  guard @test_support.widget_text_frame(runtime.draw_commands(), "Documents")
+    is Some(after) else {
     fail("window title vanished after drag")
   }
   let dx = after.origin.x - before.origin.x
@@ -1090,49 +1101,8 @@ test "titlebar drag moves the window on screen" {
 }
 
 ///|
-fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
-  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
-    fail("expected text frame for " + text)
-  }
-  let point = @geometry.Point::new(
-    x=frame.origin.x + frame.size.width / 2.0,
-    y=frame.origin.y + frame.size.height / 2.0,
-  )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Down)),
-  )
-  runtime.dispatch_event(
-    Pointer(@core.PointerEvent::new(position=point, phase=Up)),
-  )
-}
-
-///|
-fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
-  commands.any(command => {
-    command is DrawText({ text: value, .. }) && value == text
-  })
-}
-
-///|
 fn has_image(commands : Array[@core.DrawCommand], suffix : String) -> Bool {
   commands.any(command => {
     command is DrawImage({ source, .. }) && source.has_suffix(suffix)
   })
-}
-
-///|
-fn text_frame(
-  commands : Array[@core.DrawCommand],
-  text : String,
-) -> @core.Rect? {
-  for command in commands {
-    match command {
-      DrawText({ text: value, frame, .. }) =>
-        if value == text {
-          return Some(frame)
-        }
-      _ => ()
-    }
-  }
-  None
 }

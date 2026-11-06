@@ -227,6 +227,17 @@ node scripts/external-consumer-ci.mjs --source package --profile web
 
 ## Focused
 
+Application package tests build a runtime from the app program and assert on
+drawn output through the shared `wzzc-dev/moui/runtime/test_support` widget
+harness (`WidgetHarness::from_program`, `tap_text`, `has_text`, plus the
+`widget_*` free functions). Import it `for "test"` only — it is test support,
+not an app-facing facade. `examples/counter/app`, `examples/settings/app`,
+`examples/file_importer/app`, `examples/mo_desktop/app`, and
+`examples/harmonyos_demo/app` are the reference users. The harness lives in
+the `moui` module rather than the unpublished `moui_tests` module because
+`moui_tests` depends on example modules and the reverse app-test import would
+be a module cycle.
+
 Provider composition and backend common boundary edits use the following minimum loop
 before broader profiles:
 

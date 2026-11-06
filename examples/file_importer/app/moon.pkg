@@ -8,8 +8,8 @@ import {
   "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/backend/common/services" @backend_common_services,
   "wzzc-dev/moui/geometry",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/runtime/test_support",
 } for "test"
 
 supported_targets = "+native+wasm-gc"
