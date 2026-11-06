@@ -72,7 +72,8 @@
   open.
 - Status 2026-11-07 (later session): display session still down. Six probes
   across ~8 minutes (direct, +60s wait, then four probes at ~55s intervals)
-  all reported `Calculator windows=0` via System Events. The serializer fix
+  all reported `Calculator windows=0` via System Events. Follow-up probes at
+  03:54:39, 03:56:49, and 03:59:59 local time reported the same result. The serializer fix
   and its unit/route regression tests are committed; resume by re-running
   `node scripts/record-macos-accessibility-evidence.mjs --timeout-ms 45000`
   once any freshly launched app reports a nonzero window count, then check
