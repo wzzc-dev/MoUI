@@ -45,6 +45,31 @@
 - [x] L1 runs on PRs, L2 on controlled platform/nightly hosts, and L3 only on
   matching screen-reader hosts; generated evidence stays under `artifacts/`.
 
+
+### macOS diagnosis (2026-11-07 session)
+
+- The native layer publishes a healthy remote AX tree: a manual `AXUIElement`
+  walk of the Showcase window listed 97 elements with correct roles
+  (AXButton/AXStaticText/AXTextField/AXScrollArea/AXGroup/AXCheckBox/AXSlider/
+  AXOutline/AXGrid) and a full parent/child hierarchy.
+- The probe still failed because `moui_macos_accessibility_sync` serialized
+  every `Option`-typed node field through the derived `Option[T] : ToJson`
+  shape, which wraps `Some(v)` as a one-element JSON array (`[v]`). The native
+  bridge reads scalars/dictionaries, so `semantic_id` arrived empty for all 97
+  nodes and every element fell back to the `moui.ax.<node_id>` identifier —
+  the probe's `a11y.*` identifier contract could never match.
+- Fix: `macos_semantics_node_json` now serializes `semantic_id`, `level`,
+  `numeric`, `text`, `collection`, and `focus_order` explicitly (scalar or
+  object or null), matching the native reader expectations. Unit coverage:
+  `moui/backend/macos/macos_accessibility_payload_wbtest.mbt`; route
+  regression: `examples/showcase/initial_section_probe_wbtest.mbt` proves
+  `initial_section_code=2` lands on the probe route.
+- End-to-end AX evidence recording is currently blocked by the local machine's
+  display session (freshly launched apps — including Calculator via
+  LaunchServices — report 0 windows through System Events, so no AX tree is
+  reachable). Re-run `node scripts/record-macos-accessibility-evidence.mjs`
+  on a host with a live display session; VoiceOver navigation evidence stays
+  open.
 ## Agent work protocol
 
 Work ownership and dependency order are canonical in

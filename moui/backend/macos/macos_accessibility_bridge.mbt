@@ -146,13 +146,95 @@ fn macos_checked_json(value : @core.SemanticsCheckedState?) -> Json {
 }
 
 ///|
+/// Option fields serialize through this explicit match because the derived
+/// `Option[T] : ToJson` shape wraps `Some(v)` as an array (`[v]`), which the
+/// native NSAccessibility bridge cannot read as a scalar.
+fn macos_optional_int_json(value : Int32?) -> Json {
+  match value {
+    Some(v) => Json(v)
+    None => Json((None : String?))
+  }
+}
+
+///|
+fn macos_optional_double_json(value : Double?) -> Json {
+  match value {
+    Some(v) => Json(v)
+    None => Json((None : String?))
+  }
+}
+
+///|
+fn macos_optional_string_json(value : String?) -> Json {
+  match value {
+    Some(v) => Json(v)
+    None => Json((None : String?))
+  }
+}
+
+///|
+fn macos_numeric_json(value : @core.SemanticsNumericValue?) -> Json {
+  match value {
+    Some(numeric) =>
+      (
+        {
+          "current": macos_optional_double_json(numeric.current),
+          "min": macos_optional_double_json(numeric.min),
+          "max": macos_optional_double_json(numeric.max),
+          "step": macos_optional_double_json(numeric.step),
+          "value_text": macos_optional_string_json(numeric.value_text),
+        } : Json)
+    None => Json((None : String?))
+  }
+}
+
+///|
+fn macos_text_json(value : @core.SemanticsTextValue?) -> Json {
+  match value {
+    Some(text) =>
+      (
+        {
+          "selection": match text.selection {
+            Some(range) => ({ "start": range.start, "end": range.end } : Json)
+            None => Json((None : String?))
+          },
+          "caret": macos_optional_int_json(text.caret),
+          "editable": text.editable,
+        } : Json)
+    None => Json((None : String?))
+  }
+}
+
+///|
+fn macos_collection_json(value : @core.SemanticsCollectionInfo?) -> Json {
+  match value {
+    Some(collection) =>
+      (
+        {
+          "row_index": macos_optional_int_json(collection.row_index),
+          "row_count": macos_optional_int_json(collection.row_count),
+          "row_span": macos_optional_int_json(collection.row_span),
+          "column_index": macos_optional_int_json(collection.column_index),
+          "column_count": macos_optional_int_json(collection.column_count),
+          "column_span": macos_optional_int_json(collection.column_span),
+          "set_size": macos_optional_int_json(collection.set_size),
+          "set_position": macos_optional_int_json(collection.set_position),
+        } : Json)
+    None => Json((None : String?))
+  }
+}
+
+///|
 fn macos_semantics_node_json(node : @core.SemanticsNode) -> Json {
   (
     {
       "node_id": node.node_id,
-      "semantic_id": node.semantic_id,
+      "semantic_id": match node.semantic_id {
+        Some(id) => Json(id.value())
+        None => Json((None : String?))
+      },
       "role": macos_semantics_role_code(node.role),
-      "level": node.level,
+      "level": macos_optional_int_json(node.level),
       "url": node.url,
       "label": node.label,
       "value": node.value,
@@ -172,14 +254,14 @@ fn macos_semantics_node_json(node : @core.SemanticsNode) -> Json {
         "password": node.state.password,
         "modal": node.state.modal,
       },
-      "numeric": node.numeric,
-      "text": node.text,
-      "collection": node.collection,
+      "numeric": macos_numeric_json(node.numeric),
+      "text": macos_text_json(node.text),
+      "collection": macos_collection_json(node.collection),
       "relations": node.relations,
       "live": macos_semantics_live_code(node.live),
       "atomic": node.live_atomic,
       "actions": node.actions.map(macos_semantics_action_code),
-      "focus_order": node.focus_order,
+      "focus_order": macos_optional_int_json(node.focus_order),
       "frame": node.frame,
       "children": node.children,
     } : Json)
