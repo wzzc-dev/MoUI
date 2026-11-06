@@ -18,13 +18,12 @@ import { spawnSync } from "node:child_process";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
-// Stable registry line consumed by the backward-compat probe. Registry
-// artifacts are immutable: the 0.1.7 line still ships legacy moon.mod.json
-// manifests (and transitively pulls mizchi/image / moonbitlang/quickcheck
-// copies that do too), which the manifest-migrated toolchain rejects outright.
-// 0.2.4 is the first line published after the moon.mod migration, so its
-// closure installs cleanly under the pinned toolchain.
-const registryBaseVersion = "0.2.4";
+// Stable registry line consumed by the external-consumer probe. Registry
+// artifacts are immutable, so this must name a release compatible with the
+// repository's minimum compiler. MoonBit 0.10.20 removed the old unqualified
+// `String.to_json()` path used by 0.2.x; 0.3.2 is the first line migrated to
+// `Json(value)` and the matching `moonbitlang/core/json` interface.
+const registryBaseVersion = "0.3.2";
 
 // Head versions must track the published module versions. Read them from each
 // module manifest instead of hardcoding so version bumps cannot leave this

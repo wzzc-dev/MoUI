@@ -209,12 +209,14 @@ Release build log, ELF reports and checksums, renderer smoke log, and
 SkParagraph text/emoji smoke log. L3 remains a separate matching-device gate.
 
 The `external-consumer.yml` workflow copies the selected base, Skia, or Web
-fixture outside the checkout. Until 0.2 is published, registry mode validates
-the stable base `wzzc-dev/moui@0.1.7`; package mode validates the 0.2 head
-archives for base-only, Skia, and Web consumers. Package-mode `moon tree`
-checks also reject concrete renderers and diagnostic/test dependencies from
-the base closure. Every resolved `.mooncakes` path must report
-`monorepoSource=false`:
+fixture outside the checkout. Registry mode validates the stable
+`wzzc-dev/moui@0.3.2` base artifact; package mode validates the current head
+archives for base-only, Skia, and Web consumers. The registry probe moves with
+the minimum compiler line because registry artifacts are immutable: 0.3.2 is
+the first release compatible with MoonBit 0.10.20's `Json(value)` interface.
+Package-mode `moon tree` checks also reject concrete renderers and
+diagnostic/test dependencies from the base closure. Every resolved
+`.mooncakes` path must report `monorepoSource=false`:
 
 ```sh
 node scripts/external-consumer-ci.mjs --source registry --profile base

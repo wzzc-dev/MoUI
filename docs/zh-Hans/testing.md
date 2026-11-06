@@ -91,7 +91,7 @@ bash scripts/test-linux-riscv64-cross-build.sh
 producer，上传 sysroot 包版本与 checksum manifest、Release build log、ELF
 报告与 checksum，以及两类 QEMU smoke 日志。
 
-`external-consumer.yml` workflow 会把选定的 base、Skia 或 Web fixture 复制到 checkout 外部。0.2 发布前，registry mode 继续验证稳定版 `wzzc-dev/moui@0.1.7` 的 base profile；package mode 验证 0.2 head 的 base-only、Skia 与 Web archives。package-mode `moon tree` 还会拒绝 concrete renderer 与诊断/测试依赖进入基础闭包。所有解析后的 `.mooncakes` 路径都必须报告 `monorepoSource=false`：
+`external-consumer.yml` workflow 会把选定的 base、Skia 或 Web fixture 复制到 checkout 外部。registry mode 验证稳定版 `wzzc-dev/moui@0.3.2` 的 base artifact；package mode 验证当前 head 的 base-only、Skia 与 Web archives。registry artifact 不可变，因此探针必须跟随最低编译器线：0.3.2 是首个兼容 MoonBit 0.10.20 `Json(value)` interface 的发布线。package-mode `moon tree` 还会拒绝 concrete renderer 与诊断/测试依赖进入基础闭包。所有解析后的 `.mooncakes` 路径都必须报告 `monorepoSource=false`：
 
 ```sh
 node scripts/external-consumer-ci.mjs --source registry --profile base
