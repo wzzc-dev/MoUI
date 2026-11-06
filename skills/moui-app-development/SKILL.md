@@ -20,6 +20,7 @@ moon run macos_skia --target native   # or windows_skia / linux_skia
 ```
 
 See `docs/getting-started.md` section B. Do not clone the monorepo for ordinary
+- Addon/control packages for third-party reuse: docs/addon-package-guide.md (moui new --template addon)
 app work. For host Effect/Subscription recipes, open `examples/showcase/app/platform`
 and `docs/non-render-component-cookbook.md`.
 

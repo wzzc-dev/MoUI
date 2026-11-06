@@ -141,3 +141,7 @@ moon run examples/counter/macos_skia --target native
 
 See [Development](development.md) and `AGENTS.md` for package boundaries and
 validation gates.
+
+## Beyond apps
+
+Building a reusable control or service library instead of an app? See [addon-package-guide.md](addon-package-guide.md) — `moui new --template addon` scaffolds the module.

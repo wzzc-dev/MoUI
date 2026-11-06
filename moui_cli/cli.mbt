@@ -84,7 +84,8 @@ fn new_usage() -> String {
     #|  --id ID                 Project identifier. Defaults to the target name.
     #|  --module OWNER/NAME     MoonBit module. Defaults to local/<id>.
     #|  --title TITLE           Display title. Defaults from the project id.
-    #|  --template NAME         App skeleton: counter (default) or hello.
+    #|  --template NAME         Skeleton: counter (default), hello, or addon
+    #|                          (library module without platform entrypoints).
     #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
     #|                          Defaults to 0.4.0. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
@@ -265,11 +266,18 @@ fn parse_new_args(
     Err(message) => return Err(message)
   }
   let template_name = template.val.unwrap_or("counter").to_lower()
-  if template_name != "counter" && template_name != "hello" {
+  if template_name != "counter" &&
+    template_name != "hello" &&
+    template_name != "addon" {
     return Err(
-      "unsupported template: " + template_name + " (expected counter|hello)",
+      "unsupported template: " +
+      template_name +
+      " (expected counter|hello|addon)",
     )
   }
+  // The addon template generates a library module without platform
+  // entrypoints, so the default web/host platform selection does not apply.
+  let selected_platforms = if template_name == "addon" { [] } else { selected }
   let options : @plan.ProjectOptions = {
     target: resolved_target,
     id: project_id,
@@ -280,7 +288,7 @@ fn parse_new_args(
     ),
     moui_skia_renderer_version: @plan.default_moui_skia_renderer_dependency_version,
     template: template_name,
-    platforms: selected,
+    platforms: selected_platforms,
     bundle_id: bundle_id.val,
   }
   match @plan.validate_project_options(options) {

@@ -32,7 +32,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [compatibility-policy.md](compatibility-policy.md) | `canonical` | SemVer, deprecation, quality levels, and external consumers |
 | [view-catalog.md](view-catalog.md) | `canonical` | Public controls coverage |
 | [custom-control-sdk.md](custom-control-sdk.md) | `canonical` | Package-local `ViewNode` controls, conformance, and migration |
-| [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
+| [addon-package-guide.md](addon-package-guide.md) | `canonical` | Third-party addon packages: module layout, stable extension surface, versioning, publication || [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
 | [tea-program-model.md](tea-program-model.md) | `canonical` | Program / Effect / Subscription model |
 | [task-lifecycle.md](task-lifecycle.md) | `canonical` | Effect/Subscription/ServiceTask/image/GPU ownership, cancellation, and teardown order |
 | [diagnostics.md](diagnostics.md) | `canonical` | DiagnosticEvent envelope, caller-owned sink, and producer/consumer map |

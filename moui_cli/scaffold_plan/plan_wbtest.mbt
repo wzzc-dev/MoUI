@@ -342,3 +342,49 @@ test "project manifest parser rejects unsupported and duplicate platforms" {
     content="true",
   )
 }
+
+///|
+test "addon template emits a library module without platform entrypoints" {
+  match
+    build_project_file_plan(
+      test_project_options([], template="addon"),
+      "0.0.0-test",
+    ) {
+    Ok(files) => {
+      let paths : Array[String] = []
+      for file in files {
+        paths.push(file.path)
+      }
+      assert_true(paths.contains("sample_app/moon.pkg"))
+      assert_true(paths.contains("sample_app/sample_app_control.mbt"))
+      assert_true(paths.contains("sample_app/sample_app_control_test.mbt"))
+      assert_false(paths.contains("app/app.mbt"))
+      assert_false(paths.contains(".moui/dev.mjs"))
+      assert_false(paths.any(path => path.contains("_skia")))
+      let control = test_planned_text(
+        files, "sample_app/sample_app_control.mbt",
+      )
+      assert_true(control.contains("impl @core.ViewNode for SampleApp"))
+      assert_true(control.contains("pub fn[Msg] sample_app_badge("))
+      assert_true(control.contains("@core.View::from_node("))
+      let test_src = test_planned_text(
+        files, "sample_app/sample_app_control_test.mbt",
+      )
+      assert_true(
+        test_src.contains("sample_app_badge(label=\"Addon\", count=3)"),
+      )
+      assert_true(test_src.contains("draw_commands"))
+      let pkg = test_planned_text(files, "sample_app/moon.pkg")
+      assert_true(pkg.contains("for \"test\""))
+      assert_true(pkg.contains("wzzc-dev/moui/runtime"))
+      assert_false(pkg.contains("test_support"))
+      let root_mod = test_planned_text(files, "moon.mod")
+      assert_true(root_mod.contains("wzzc-dev/moui@"))
+      assert_false(root_mod.contains("moui_web_renderer"))
+      assert_false(root_mod.contains("moui_skia_renderer"))
+      let readme = test_planned_text(files, "README.md")
+      assert_true(readme.contains("MoUI addon"))
+    }
+    Err(message) => fail(message)
+  }
+}

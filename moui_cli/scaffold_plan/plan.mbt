@@ -631,20 +631,40 @@ pub fn build_project_file_plan(
     platforms: options.platforms.copy(),
     bundle_id: options.bundle_id,
   }
-  let files = [
-    text_file(".gitignore", gitignore_text()),
-    text_file("README.md", readme_text(options, cli_version)),
-    text_file(".moui/dev.mjs", dev_runner_text()),
-    text_file("moon.mod", moon_mod_text(options)),
-    text_file("moon.work", moon_work_text()),
-    text_file("moui.project.json", manifest.to_json_text()),
-    text_file("app/moon.pkg", app_pkg_text()),
-    text_file(
-      "app/app.mbt",
-      app_text(options.title, template_id=options.template),
-    ),
-    text_file("app/app_test.mbt", app_test_text(template_id=options.template)),
-  ]
+  let files = if options.template == "addon" {
+    let type_name = product_name(options.id)
+    [
+      text_file(".gitignore", gitignore_text()),
+      text_file("README.md", addon_readme_text(options, cli_version)),
+      text_file("moon.mod", moon_mod_text(options)),
+      text_file("moon.work", moon_work_text()),
+      text_file("moui.project.json", manifest.to_json_text()),
+      text_file(options.id + "/moon.pkg", addon_pkg_text()),
+      text_file(
+        options.id + "/" + type_name.to_lower() + "_control.mbt",
+        addon_control_text(package_id=options.id, type_name~),
+      ),
+      text_file(
+        options.id + "/" + type_name.to_lower() + "_control_test.mbt",
+        addon_test_text(package_id=options.id, type_name~),
+      ),
+    ]
+  } else {
+    [
+      text_file(".gitignore", gitignore_text()),
+      text_file("README.md", readme_text(options, cli_version)),
+      text_file(".moui/dev.mjs", dev_runner_text()),
+      text_file("moon.mod", moon_mod_text(options)),
+      text_file("moon.work", moon_work_text()),
+      text_file("moui.project.json", manifest.to_json_text()),
+      text_file("app/moon.pkg", app_pkg_text()),
+      text_file(
+        "app/app.mbt",
+        app_text(options.title, template_id=options.template),
+      ),
+      text_file("app/app_test.mbt", app_test_text(template_id=options.template)),
+    ]
+  }
   if options.platforms.contains("web") {
     files.push(
       text_file("web_wasm/moon.pkg", web_pkg_text(options.module_name)),
@@ -692,4 +712,181 @@ pub fn build_project_file_plan(
   let sorted = files.copy()
   sorted.sort_by((left, right) => left.path.lexical_compare(right.path))
   Ok(sorted)
+}
+
+///|
+fn addon_pkg_text() -> String {
+  let template =
+    #|import {
+    #|  "wzzc-dev/moui",
+    #|  "wzzc-dev/moui/core",
+    #|}
+    #|
+    #|import {
+    #|  "wzzc-dev/moui/runtime",
+    #|} for "test"
+    #|
+    #|supported_targets = "+native+wasm-gc"
+    #|
+    #|options(
+    #|  targets: { },
+    #|)
+  template
+}
+
+///|
+fn addon_control_text(package_id~ : String, type_name~ : String) -> String {
+  let template =
+    #|///|
+    #|/// __TYPE__: a minimal third-party addon control. The node is immutable
+    #|/// declaration data; typed callbacks and `Msg` values live in the
+    #|/// `View::from_node` adapter below. See docs/custom-control-sdk.md for
+    #|/// the full conformance rules (declaration keys, semantics, actions).
+    #|priv struct __TYPE__ {
+    #|  label : String
+    #|  count : Int32
+    #|  key : String?
+    #|}
+    #|
+    #|///|
+    #|impl @core.ViewNode for __TYPE__ with fn identity(self) {
+    #|  @core.ViewIdentity::new(kind="__TYPE__", key=self.key)
+    #|}
+    #|
+    #|///|
+    #|impl @core.ViewNode for __TYPE__ with fn declaration(self) {
+    #|  @core.ViewDeclaration::channels(
+    #|    layout=Constant,
+    #|    paint=Exact(
+    #|      @core.DeclarationKey::record(
+    #|        type_tag="__TYPE__.paint",
+    #|        fields=[
+    #|          ("label", @core.DeclarationKey::string(self.label)),
+    #|          ("count", @core.DeclarationKey::int(self.count)),
+    #|        ],
+    #|      ),
+    #|    ),
+    #|    semantics=Exact(
+    #|      @core.DeclarationKey::record(
+    #|        type_tag="__TYPE__.semantics",
+    #|        fields=[
+    #|          ("label", @core.DeclarationKey::string(self.label)),
+    #|          ("count", @core.DeclarationKey::int(self.count)),
+    #|        ],
+    #|      ),
+    #|    ),
+    #|    platform=Constant,
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|impl @core.ViewNode for __TYPE__ with fn layout(_self, context) {
+    #|  @core.ViewLayoutResult::new(
+    #|    size=context.constraints.constrain(@core.Size::new(width=96.0, height=28.0)),
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|impl @core.ViewNode for __TYPE__ with fn paint(self, context) {
+    #|  let theme = context.environment.theme
+    #|  @core.ViewPaintPlan::commands([
+    #|    FillRoundedRect(
+    #|      @core.RoundedRect::new(rect=context.frame, radius=6.0),
+    #|      theme.palette.surface_variant,
+    #|    ),
+    #|    DrawText(
+    #|      @core.TextRun::new(
+    #|        text="\{self.label} \{self.count}",
+    #|        frame=context.frame,
+    #|        font=theme.typography.control,
+    #|        color=theme.palette.on_surface,
+    #|      ),
+    #|    ),
+    #|  ])
+    #|}
+    #|
+    #|///|
+    #|impl @core.ViewNode for __TYPE__ with fn semantics(self) {
+    #|  @core.ViewSemanticsInfo::leaf(
+    #|    role=@core.SemanticsRole::Status,
+    #|    label=self.label,
+    #|    value=self.count.to_string(),
+    #|  )
+    #|}
+    #|
+    #|///|
+    #|/// App-facing constructor: addon consumers call this and stay on opaque
+    #|/// `View[Msg]` values, never on the node type.
+    #|pub fn[Msg] __FN___badge(
+    #|  label~ : String,
+    #|  count~ : Int32,
+    #|  key? : String,
+    #|) -> @moui.View[Msg] {
+    #|  @core.View::from_node(__TYPE__::{ label, count, key })
+    #|}
+  template
+  .replace_all(old="__FN___badge", new=type_name.to_lower() + "_badge")
+  .replace_all(old="__PKG__", new=package_id)
+  .replace_all(old="__TYPE__", new=type_name)
+}
+
+///|
+fn addon_test_text(package_id~ : String, type_name~ : String) -> String {
+  (
+    #|///|
+    #|/// Runtime-level smoke: the control draws its label and commits a node.
+    #|/// Grow this with `wzzc-dev/moui/runtime/test_support` for tap/semantics
+    #|/// harness coverage once the addon targets a release that ships it.
+    #|test "__FN___badge draws its label" {
+    #|  let runtime = @runtime.new_program_with_dimensions(
+    #|    program=@moui.Program::simple(
+    #|      init=0,
+    #|      update=(model, _msg : Int) => model,
+    #|      view=_model => @__PKG__.__FN___badge(
+    #|        label="Addon",
+    #|        count=3,
+    #|      ),
+    #|    ),
+    #|    width=240.0,
+    #|    height=120.0,
+    #|  )
+    #|  assert_true(
+    #|    runtime
+    #|    .draw_commands()
+    #|    .any(command => {
+    #|      command is DrawText({ text: value, .. }) && value == "Addon 3"
+    #|    }),
+    #|  )
+    #|}
+  )
+  .replace_all(old="__FN___badge", new=type_name.to_lower() + "_badge")
+  .replace_all(old="__PKG__", new=package_id)
+}
+
+///|
+fn addon_readme_text(options : ProjectOptions, cli_version : String) -> String {
+  let builder = StringBuilder()
+  builder.write_string("# " + options.title + " (MoUI addon)\n\n")
+  builder.write_string(
+    "Generated by `moui` CLI " +
+    cli_version +
+    " for module `" +
+    options.module_name +
+    "` (template `" +
+    options.template +
+    "`).\n\n",
+  )
+  builder.write_string(
+    "A third-party MoUI addon package: custom `ViewNode` controls, domain helpers, and typed service contracts that MoUI apps consume as a versioned MoonBit module. The addon depends only on `wzzc-dev/moui` plus the app-facing facades (`views`, `animation`, `services`, ...) — never on `moui/runtime` internals, backends, or renderers. See docs/addon-package-guide.md in the MoUI repository for the publication contract.\n\n",
+  )
+  builder.write_string(
+    "## Validation\n\n```sh\nmoon test --target native\n```\n\n",
+  )
+  builder.write_string("## Publishing\n\n")
+  builder.write_string(
+    "Version with SemVer; publish to mooncakes.io as `" +
+    options.module_name +
+    "`. Breaking `ViewNode` declaration shapes, semantics contracts, or constructor signatures require a major version.\n",
+  )
+  builder.to_string()
 }
