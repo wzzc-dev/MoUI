@@ -61,8 +61,9 @@ pub fn AppServices::extension_capability_labels(Self) -> Array[String]
 pub fn AppServices::extensions(Self) -> Array[ServiceExtension]
 pub fn AppServices::files(Self) -> FileServices
 pub fn AppServices::menus(Self) -> MenuServices
-pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices, platform? : PlatformServices, extensions? : Array[ServiceExtension]) -> Self
+pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices, platform? : PlatformServices, remote_image? : RemoteImageService, extensions? : Array[ServiceExtension]) -> Self
 pub fn AppServices::platform(Self) -> PlatformServices
+pub fn AppServices::remote_image(Self) -> RemoteImageService
 pub fn AppServices::settings(Self) -> SettingsServices
 pub fn AppServices::unavailable() -> Self
 pub fn AppServices::urls(Self) -> UrlServices
@@ -327,6 +328,14 @@ pub fn ProtocolRegistration::new(scheme~ : String, handler~ : String) -> Self
 pub fn ProtocolRegistration::not_equal(Self, Self) -> Bool
 pub fn ProtocolRegistration::to_json(Self) -> @json.Json
 pub fn ProtocolRegistration::to_repr(Self) -> @debug.Repr
+
+pub struct RemoteImageService {
+  // private fields
+}
+pub fn RemoteImageService::is_available(Self) -> Bool
+pub fn RemoteImageService::new(set_completed_listener~ : ((String, Bytes) -> Unit) -> Unit) -> Self
+pub fn RemoteImageService::set_completed_listener(Self, (String, Bytes) -> Unit) -> Unit
+pub fn RemoteImageService::unavailable() -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RouteEvent {

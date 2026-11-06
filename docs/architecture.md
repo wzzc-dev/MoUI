@@ -38,7 +38,8 @@ ViewDeclaration -> ElementTree
 | `moui/backend/common/frame/` | Per-window `RendererSession`, pending/present completion, redraw, resize, and IME frame hooks. |
 | `moui/backend/common/image/` | Renderer image-request scheduling, cancellation, and host I/O task lifetime; `image/native` owns the filesystem image-byte source. Resource status, decoding, cache, and repaint decisions stay in the renderer session. |
 | `moui/backend/common/input/` | Neutral event conversion plus pointer/text/IME session state. Raw native decoding stays in concrete backends. |
-| `moui/backend/common/services/` | Service facade, async completion, and bridge lifetime; `services/{desktop,embedded,native}` own the concrete routers, callback transport, and filesystem services. |
+| `moui/backend/common/services/` | Service facade, async completion, and bridge lifetime; `services/{desktop,embedded,native}` own the concrete routers, callback transport, filesystem services, and the native remote-image loader. |
+| `moui/services/` | App-facing typed services: files, clipboard, URL, settings, appearance, menus, timers, routes, service extensions, and the `RemoteImageService` completion contract. It does not expose a host bridge or a concrete HTTP stack. |
 | `moui/backend/common/embedded/` | Embedded session assembly after `ApplicationHandler` callbacks: transport/session generation, renderer attach, service-update mapping, IME, semantics, and platform views. It composes the other owners without duplicating lifecycle/frame/image state. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. They decode native input locally and route neutral lifecycle facts through `backend/common`. |
 | `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |

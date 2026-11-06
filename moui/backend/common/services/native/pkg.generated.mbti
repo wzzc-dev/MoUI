@@ -3,6 +3,8 @@ package "wzzc-dev/moui/backend/common/services/native"
 
 import {
   "wzzc-dev/moui/backend",
+  "wzzc-dev/moui/backend/common/image",
+  "wzzc-dev/moui/services",
 }
 
 // Values
@@ -14,9 +16,23 @@ pub fn dispatch_list_directory(String) -> @backend.HostServiceResponse
 
 pub fn dispatch_text_file(@backend.HostTextFileRequest) -> @backend.HostServiceResponse
 
+pub fn remote_image_service() -> @services.RemoteImageService
+
+pub fn remote_image_starter(RemoteImageOwner) -> @image.WindowImageTaskStarter
+
+pub async fn remote_image_worker_loop(RemoteImageOwner) -> Unit
+
+pub fn set_remote_image_completed_listener((String, Bytes) -> Unit) -> Unit
+
+pub async fn with_remote_images(RemoteImageOwner, window~ : async () -> Unit) -> Unit
+
 // Errors
 
 // Types and methods
+pub struct RemoteImageOwner {
+  // private fields
+}
+pub fn RemoteImageOwner::new() -> Self
 
 // Type aliases
 

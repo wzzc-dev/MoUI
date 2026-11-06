@@ -243,9 +243,13 @@ should depend by default on:
   runtime/semantics IDs are no longer catch-all exports from `@views`.
 
 - `wzzc-dev/moui/services` — app-facing file, clipboard, URL, settings,
-  appearance, menu, timer, and route capabilities. One-shot operations return
-  typed `ServiceTask[T]`; sources emit core `Subscription` values. Neither API
-  exposes a host bridge, request id, or completion queue.
+  appearance, menu, timer, route, service-extension, and `RemoteImageService`
+  capabilities. One-shot operations return typed `ServiceTask[T]`; sources emit
+  core `Subscription` values. Neither API exposes a host bridge, request id, or
+  completion queue. Remote image loading is observed through
+  `AppServices::remote_image()`; the concrete native HTTP/retry/worker
+  implementation stays in `backend/common/services/native` and is installed by
+  the composition root.
 
 - `wzzc-dev/moui_i18n` — an **optional localization addon**. It provides locale
   normalization, static catalog lookup, fallback, named interpolation, and

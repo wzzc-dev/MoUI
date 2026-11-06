@@ -204,3 +204,13 @@ async fn remote_image_fetch_once(source : String) -> Bytes? {
 fn remote_image_source_is_fetchable(source : String) -> Bool {
   source.has_prefix("https://")
 }
+
+///|
+/// App-facing facade over the native remote-image loader. The concrete HTTP,
+/// retry, queue, and worker stay in this implementation package; apps depend on
+/// `moui/services.RemoteImageService` instead.
+pub fn remote_image_service() -> @services.RemoteImageService {
+  @services.RemoteImageService::new(set_completed_listener=listener => {
+    set_remote_image_completed_listener(listener)
+  })
+}

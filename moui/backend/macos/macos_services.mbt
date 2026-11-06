@@ -285,12 +285,14 @@ fn dispatch_macos_settings(
 /// Declarations made through an unwired source are simply never applied.
 pub fn app_environment(
   window_drag~ : @services.WindowDragRegionSource? = None,
+  remote_image~ : @services.RemoteImageService = @services.RemoteImageService::unavailable(),
 ) -> @services.AppEnvironment {
   @window_services.app_environment(
     bridge=macos_service_bridge(),
     timer=Some(macos_timer_source()),
     clock=Some(macos_perf_now_ms),
     window_drag~,
+    remote_image~,
   )
 }
 

@@ -79,6 +79,7 @@ pub struct AppServices {
   appearance_value : AppearanceServices
   menus_value : MenuServices
   platform_value : PlatformServices
+  priv remote_image_value : RemoteImageService
   priv extensions_value : Map[String, ServiceExtension]
 }
 
@@ -263,6 +264,7 @@ pub fn AppServices::new(
   appearance~ : AppearanceServices = AppearanceServices::new(),
   menus~ : MenuServices = MenuServices::new(),
   platform~ : PlatformServices = PlatformServices::unavailable(),
+  remote_image~ : RemoteImageService = RemoteImageService::unavailable(),
   extensions~ : Array[ServiceExtension] = [],
 ) -> AppServices {
   let extension_map : Map[String, ServiceExtension] = Map([])
@@ -277,6 +279,7 @@ pub fn AppServices::new(
     appearance_value: appearance,
     menus_value: menus,
     platform_value: platform,
+    remote_image_value: remote_image,
     extensions_value: extension_map,
   }
 }
@@ -319,6 +322,11 @@ pub fn AppServices::menus(self : AppServices) -> MenuServices {
 ///|
 pub fn AppServices::platform(self : AppServices) -> PlatformServices {
   self.platform_value
+}
+
+///|
+pub fn AppServices::remote_image(self : AppServices) -> RemoteImageService {
+  self.remote_image_value
 }
 
 ///|

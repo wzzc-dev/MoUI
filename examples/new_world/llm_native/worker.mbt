@@ -6,7 +6,7 @@
 /// — app-private subpackages may own host IO). This package is the only place
 /// that touches the network.
 ///
-/// Pattern (same as `moui/image_remote/remote_image.mbt` and
+/// Pattern (same as `moui/backend/common/services/native/image_remote.mbt` and
 /// `examples/mo_workbench/openseek_native_transport/openseek_worker.mbt`):
 /// the UI thread submits synchronously onto an async queue, a worker loop
 /// parked as a sibling of the window pump performs the request, and the result

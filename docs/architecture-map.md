@@ -146,7 +146,7 @@ renderers consume `DrawCommand` only.
 | Area | Owner path |
 |---|---|
 | Public controls / themes helpers | `moui/views` |
-| App-facing files/clipboard/URL/settings/menu tasks and timer/route sources | `moui/services` |
+| App-facing files/clipboard/URL/settings/menu tasks, timer/route sources, and `RemoteImageService` completion | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects / semantics | `moui/runtime` |
 | AppBuilder / run_app / HostRuntimeDriver / RedrawScheduler / host event adapters | `moui/apphost` |
@@ -158,7 +158,7 @@ renderers consume `DrawCommand` only.
 | Image loading, repaint revision, completion, callback detach, cancellation | `moui/backend/common/image` |
 | Input conversion and pointer/text/IME session state | `moui/backend/common/input` |
 | Service facade, async completion, and bridge lifetime | `moui/backend/common/services` |
-| Desktop/embedded/native service implementations | `moui/backend/common/services/{desktop,embedded,native}` |
+| Desktop/embedded/native service implementations (including the native remote-image loader) | `moui/backend/common/services/{desktop,embedded,native}` |
 | Native filesystem image-byte source | `moui/backend/common/image/native` |
 | Shared mobile session assembly (transport, renderer attach, IME, semantics, platform views) | `moui/backend/common/embedded` |
 | Physical Android/iOS/HarmonyOS callback dispatch | `wzzc-dev/window/internal/embedded_dispatch` |

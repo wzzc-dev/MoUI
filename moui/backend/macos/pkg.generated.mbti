@@ -15,7 +15,7 @@ import {
 }
 
 // Values
-pub fn app_environment(window_drag? : @services.WindowDragRegionSource?) -> @services.AppEnvironment
+pub fn app_environment(window_drag? : @services.WindowDragRegionSource?, remote_image? : @services.RemoteImageService) -> @services.AppEnvironment
 
 pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppRuntime) -> () -> Unit
 

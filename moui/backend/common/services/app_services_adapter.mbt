@@ -543,6 +543,7 @@ fn HostServicesAdapter::app_menu_services(
 fn HostServicesAdapter::as_app_services(
   self : HostServicesAdapter,
   lifecycle~ : @app_services.AppLifecycleSource? = None,
+  remote_image~ : @app_services.RemoteImageService = @app_services.RemoteImageService::unavailable(),
 ) -> @app_services.AppServices {
   @app_services.AppServices::new(
     files=self.app_file_services(),
@@ -616,6 +617,7 @@ fn HostServicesAdapter::as_app_services(
     }),
     menus=self.app_menu_services(),
     platform=self.app_platform_services(lifecycle~),
+    remote_image~,
   )
 }
 
@@ -626,9 +628,10 @@ fn HostServicesAdapter::app_environment(
   routes~ : @app_services.RouteSource? = None,
   lifecycle~ : @app_services.AppLifecycleSource? = None,
   clock~ : (() -> Double)? = None,
+  remote_image~ : @app_services.RemoteImageService = @app_services.RemoteImageService::unavailable(),
 ) -> @app_services.AppEnvironment {
   @app_services.AppEnvironment::new(
-    services=self.as_app_services(lifecycle~),
+    services=self.as_app_services(lifecycle~, remote_image~),
     timer~,
     routes~,
     clock~,
@@ -643,9 +646,11 @@ pub fn app_services(
   async_queue~ : ServiceAsyncQueue? = None,
   lifecycle~ : @app_services.AppLifecycleSource? = None,
   window_drag~ : @app_services.WindowDragRegionSource? = None,
+  remote_image~ : @app_services.RemoteImageService = @app_services.RemoteImageService::unavailable(),
 ) -> @app_services.AppServices {
   HostServicesAdapter::new(bridge~, async_queue~, window_drag~).as_app_services(
     lifecycle~,
+    remote_image~,
   )
 }
 
@@ -659,11 +664,13 @@ pub fn app_environment(
   lifecycle~ : @app_services.AppLifecycleSource? = None,
   clock~ : (() -> Double)? = None,
   window_drag~ : @app_services.WindowDragRegionSource? = None,
+  remote_image~ : @app_services.RemoteImageService = @app_services.RemoteImageService::unavailable(),
 ) -> @app_services.AppEnvironment {
   HostServicesAdapter::new(bridge~, async_queue~, window_drag~).app_environment(
     timer~,
     routes~,
     lifecycle~,
     clock~,
+    remote_image~,
   )
 }
