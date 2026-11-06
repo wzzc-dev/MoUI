@@ -84,7 +84,12 @@ function checkIdentityBranching() {
     /\bRendererBackendKind::\w+\b/,
   ];
 
-  const restrictedDirs = ["moui/core", "moui/backend", "moui/runtime"];
+  const restrictedDirs = [
+    "moui/core",
+    "moui/backend",
+    "moui/runtime",
+    "moui/apphost",
+  ];
 
   for (const dir of restrictedDirs) {
     const files = walkMbtFiles(dir);

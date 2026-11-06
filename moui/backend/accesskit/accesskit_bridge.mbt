@@ -4,14 +4,14 @@ pub struct AccessKitUpdate {
   generation : @core.SemanticsGeneration
   tree_update : @moon_accesskit.TreeUpdate
   removed : Array[@core.SemanticsNodeId]
-  announcements : Array[@runtime.AccessibilityAnnouncement]
+  announcements : Array[@apphost.AccessibilityAnnouncement]
 }
 
 ///|
 #derive(Eq, Debug)
 pub(all) enum AccessKitActionResult {
-  Handled(@runtime.SemanticsActionReceipt)
-  Rejected(@runtime.SemanticsActionDispatchError)
+  Handled(@apphost.SemanticsActionReceipt)
+  Rejected(@apphost.SemanticsActionDispatchError)
   BridgeUnavailable(String)
 }
 
@@ -27,8 +27,8 @@ pub extend AccessKitActionResult with Eq::{not_equal, equal}
 pub(all) struct AccessKitBridge {
   diagnostic_name : String
   available : Bool
-  publish : (@runtime.SemanticsRead) -> AccessKitUpdate?
-  perform : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult
+  publish : (@apphost.SemanticsRead) -> AccessKitUpdate?
+  perform : (@apphost.PerformSemanticsActionRequest) -> AccessKitActionResult
 }
 
 ///|
@@ -55,7 +55,7 @@ pub fn AccessKitUpdate::removed(
 ///|
 pub fn AccessKitUpdate::announcements(
   self : AccessKitUpdate,
-) -> Array[@runtime.AccessibilityAnnouncement] {
+) -> Array[@apphost.AccessibilityAnnouncement] {
   self.announcements.copy()
 }
 
@@ -349,7 +349,7 @@ fn build_accesskit_update(
   focused : @core.SemanticsNodeId?,
   nodes : Array[@core.SemanticsNode],
   removed : Array[@core.SemanticsNodeId],
-  announcements : Array[@runtime.AccessibilityAnnouncement],
+  announcements : Array[@apphost.AccessibilityAnnouncement],
 ) -> AccessKitUpdate {
   let (root_id, empty_node) = match root {
     Some(node_id) => (accesskit_node_id_for_semantics(node_id), None)
@@ -382,7 +382,7 @@ fn build_accesskit_update(
 
 ///|
 pub fn accesskit_update_from_semantics_read(
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> AccessKitUpdate? {
   match read {
     Full(snapshot) =>
@@ -416,7 +416,7 @@ pub fn accesskit_semantics_action_request(
   node_id~ : @core.SemanticsNodeId,
   generation~ : @core.SemanticsGeneration,
   action~ : @core.SemanticsAction,
-) -> @runtime.PerformSemanticsActionRequest {
+) -> @apphost.PerformSemanticsActionRequest {
   { target: ByNodeId(node_id), action, precondition: Exact(generation), }
 }
 
@@ -424,10 +424,10 @@ pub fn accesskit_semantics_action_request(
 pub fn AccessKitBridge::new(
   diagnostic_name~ : String = "accesskit",
   available~ : Bool = true,
-  publish~ : (@runtime.SemanticsRead) -> AccessKitUpdate? = read => {
+  publish~ : (@apphost.SemanticsRead) -> AccessKitUpdate? = read => {
     accesskit_update_from_semantics_read(read)
   },
-  perform~ : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult = _request => {
+  perform~ : (@apphost.PerformSemanticsActionRequest) -> AccessKitActionResult = _request => {
     BridgeUnavailable("accessibility action transport is not configured")
   },
 ) -> AccessKitBridge {
@@ -447,7 +447,7 @@ pub fn AccessKitBridge::unavailable(
 ///|
 pub fn AccessKitBridge::publish_semantics(
   self : AccessKitBridge,
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> AccessKitUpdate? {
   if self.available {
     (self.publish)(read)
@@ -459,7 +459,7 @@ pub fn AccessKitBridge::publish_semantics(
 ///|
 pub fn AccessKitBridge::perform_action(
   self : AccessKitBridge,
-  request : @runtime.PerformSemanticsActionRequest,
+  request : @apphost.PerformSemanticsActionRequest,
 ) -> AccessKitActionResult {
   if self.available {
     (self.perform)(request)
@@ -473,7 +473,7 @@ pub fn AccessKitBridge::perform_action(
 ///|
 pub fn AccessKitBridge::driver(
   diagnostic_name~ : String = "accesskit",
-  driver~ : @runtime.HostRuntimeDriver,
+  driver~ : @apphost.HostRuntimeDriver,
 ) -> AccessKitBridge {
   AccessKitBridge::new(diagnostic_name~, perform=request => {
     match driver.perform_semantics_action(request) {

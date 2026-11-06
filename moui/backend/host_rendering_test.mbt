@@ -35,7 +35,7 @@ test "host driver dispatches resize and deduplicates redraw requests" {
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   let metrics = @core.SurfaceMetrics::from_logical(
@@ -64,7 +64,7 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   ignore(
@@ -168,7 +168,7 @@ test "redraw scheduler schedules follow-up requested during frame" {
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   driver.request_redraw()

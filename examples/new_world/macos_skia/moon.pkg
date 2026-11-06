@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/macos",
   "wzzc-dev/moui_skia_renderer" @render_skia,

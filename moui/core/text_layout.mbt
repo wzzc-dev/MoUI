@@ -190,14 +190,9 @@ pub fn TextSystem::layout_paragraph(
   self : TextSystem,
   input : TextLayoutInput,
 ) -> TextParagraphLayoutResult {
-  match text_paragraph_cache_lookup(self.id, input) {
-    Some(result) => result
-    None => {
-      let result = (self.paragraph_layout)(input)
-      text_paragraph_cache_store(self.id, input, result)
-      result
-    }
-  }
+  // Memoization is owner-local: each renderer/text service wraps its
+  // paragraph hook with `moui/render/common`'s `TextParagraphCache`.
+  (self.paragraph_layout)(input)
 }
 
 ///|
@@ -206,10 +201,9 @@ pub fn TextSystem::register_font_data(
   family : FontFamily,
   data : Bytes,
 ) -> Unit {
+  // The owning renderer/text service bumps its own cache generation; core no
+  // longer keeps a process-wide text cache.
   (self.register_font_data)(family, data)
-  // Measured widths (and therefore cached paragraph layouts) can change
-  // whenever any font data is registered, for any backend.
-  text_paragraph_cache_bump_font_generation()
 }
 
 ///|

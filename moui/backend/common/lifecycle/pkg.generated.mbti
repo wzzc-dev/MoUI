@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/common/lifecycle"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/input",
   "wzzc-dev/moui/runtime",
@@ -146,7 +147,7 @@ pub fn WindowLifecycle::finish_close(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::lookup_window(Self, @wzzc-dev/window/core.WindowId) -> @backend.WindowId?
 pub fn WindowLifecycle::new(requests~ : @backend.WindowRequests, scene_resolver~ : WindowSceneResolver) -> Self
 pub fn WindowLifecycle::open_resolution(Self, @backend.WindowOpenRequest) -> WindowOpenResolution
-pub fn WindowLifecycle::register_primary_runtime_slot(Self, @backend.WindowId, @runtime.HostRuntimeDriver) -> Unit
+pub fn WindowLifecycle::register_primary_runtime_slot(Self, @backend.WindowId, @apphost.HostRuntimeDriver) -> Unit
 pub fn WindowLifecycle::register_runtime_slot(Self, WindowRuntimeSlot) -> Bool
 pub fn WindowLifecycle::request_exit(Self, Int32) -> Unit
 pub fn WindowLifecycle::rollback_window_record(Self, @backend.WindowId) -> Unit
@@ -221,9 +222,9 @@ pub fn WindowResolvedOpen::new(id~ : @backend.WindowId, record~ : @backend.Windo
 pub(all) struct WindowRuntimeSlot {
   id : @backend.WindowId
   record : @backend.WindowRecord
-  driver : @runtime.HostRuntimeDriver
+  driver : @apphost.HostRuntimeDriver
 }
-pub fn WindowRuntimeSlot::from_driver(record~ : @backend.WindowRecord, driver~ : @runtime.HostRuntimeDriver) -> Self
+pub fn WindowRuntimeSlot::from_driver(record~ : @backend.WindowRecord, driver~ : @apphost.HostRuntimeDriver) -> Self
 pub fn WindowRuntimeSlot::from_resolved_open(WindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
 pub fn WindowRuntimeSlot::new(record~ : @backend.WindowRecord, runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 
@@ -235,7 +236,7 @@ pub fn WindowRuntimeSlots::apply_request(Self, WindowRegistry, @backend.WindowRe
 pub fn WindowRuntimeSlots::count(Self) -> Int32
 pub fn WindowRuntimeSlots::focused_slot(Self) -> WindowRuntimeSlot?
 pub fn WindowRuntimeSlots::insert(Self, WindowRuntimeSlot) -> Bool
-pub fn WindowRuntimeSlots::insert_from_registry(Self, WindowRegistry, @backend.WindowId, driver~ : @runtime.HostRuntimeDriver) -> Bool
+pub fn WindowRuntimeSlots::insert_from_registry(Self, WindowRegistry, @backend.WindowId, driver~ : @apphost.HostRuntimeDriver) -> Bool
 pub fn WindowRuntimeSlots::is_empty(Self) -> Bool
 pub fn WindowRuntimeSlots::lookup(Self, @backend.WindowId) -> WindowRuntimeSlot?
 pub fn WindowRuntimeSlots::new() -> Self

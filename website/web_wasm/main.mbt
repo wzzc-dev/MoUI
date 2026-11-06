@@ -39,7 +39,7 @@ fn main {
     height=760.0,
   )
   runtime_ref.val = Some(runtime)
-  @runtime.run_app("MoUI - MoonBit GUI Framework", runtime)
+  @apphost.run_app("MoUI - MoonBit GUI Framework", runtime)
   .render_all(@webgpu_adapter.from_env())
   .backend(
     @web.entry(options=@web.WebAppOptions::new(route_source=Some(route_source))),

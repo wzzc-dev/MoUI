@@ -5,7 +5,7 @@ fn main {
     width=1280.0,
     height=820.0,
   )
-  @runtime.run_app("MoUI Playground", runtime)
+  @apphost.run_app("MoUI Playground", runtime)
   .render_all(@webgpu_adapter.from_env())
   .backend(@web.entry())
   .run()

@@ -4,7 +4,7 @@ fn main {
     host_summary=@macos_backend.macos_capability_summary(),
     environment=@macos_backend.app_environment(),
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   .render(
     @render_wgpu.native(
       platform=MacOS,

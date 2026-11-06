@@ -243,6 +243,12 @@ pub fn Brush::solid(Color) -> Self
 pub fn Brush::to_json(Self) -> @json.Json
 pub fn Brush::to_repr(Self) -> @debug.Repr
 
+pub struct CancelToken {
+  // private fields
+}
+pub fn CancelToken::is_current(Self, TaskScope) -> Bool
+pub fn CancelToken::scope_generation(Self) -> UInt64
+
 #derive(Eq, @debug.Debug)
 pub(all) struct ChildLayoutInfo {
   size : Size
@@ -1849,6 +1855,15 @@ pub fn SurfaceScale::equal(Self, Self) -> Bool
 pub fn SurfaceScale::not_equal(Self, Self) -> Bool
 pub fn SurfaceScale::to_json(Self) -> @json.Json
 pub fn SurfaceScale::to_repr(Self) -> @debug.Repr
+
+pub struct TaskScope {
+  // private fields
+}
+pub fn TaskScope::cancel(Self) -> Unit
+pub fn TaskScope::generation(Self) -> UInt64
+pub fn TaskScope::is_cancelled(Self) -> Bool
+pub fn TaskScope::new() -> Self
+pub fn TaskScope::token(Self) -> CancelToken
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum TextAlign {

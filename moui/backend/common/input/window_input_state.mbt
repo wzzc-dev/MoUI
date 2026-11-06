@@ -3,12 +3,12 @@
 /// session. Raw native decoding remains in concrete backends.
 pub struct WindowInputState {
   priv session : TextInputSession
-  priv event_sources : @runtime.HostPlatformEventSources?
+  priv event_sources : @apphost.HostPlatformEventSources?
 }
 
 ///|
 pub fn WindowInputState::new(
-  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  event_sources~ : @apphost.HostPlatformEventSources? = None,
 ) -> WindowInputState {
   { session: TextInputSession::new(), event_sources, }
 }
@@ -33,7 +33,7 @@ pub fn WindowInputState::publish(
   self : WindowInputState,
   window_id : @backend_host.WindowId,
   event : @backend_host.Event,
-) -> @runtime.HostPlatformEventPublishResult? {
+) -> @apphost.HostPlatformEventPublishResult? {
   match self.event_sources {
     Some(sources) => Some(sources.publish(window_id~, event~))
     None => None

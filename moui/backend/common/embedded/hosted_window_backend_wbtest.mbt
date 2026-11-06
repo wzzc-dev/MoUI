@@ -32,7 +32,7 @@ test "hosted window backend owns attach detach recreation and retry" {
   let dispose_count = Ref(0)
   let backend = HostedWindowBackend::new(
     runtime_factory=metrics => {
-      @runtime.AppRuntime::new_view(
+      @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
@@ -85,7 +85,7 @@ test "hosted window backend drops failed renderer window and allows retry" {
   let drop_count = Ref(0)
   let backend = HostedWindowBackend::new(
     runtime_factory=metrics => {
-      @runtime.AppRuntime::new_view(
+      @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
@@ -118,7 +118,7 @@ test "application close disposes the logical surface before physical exit" {
   let exits = Ref(0)
   let backend = HostedWindowBackend::new(
     runtime_factory=metrics => {
-      @runtime.AppRuntime::new_view(
+      @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
@@ -149,7 +149,7 @@ test "application close disposes the logical surface before physical exit" {
 test "read semantics since a published generation skips unchanged trees" {
   let backend = HostedWindowBackend::new(
     runtime_factory=metrics => {
-      @runtime.AppRuntime::new_view(
+      @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )

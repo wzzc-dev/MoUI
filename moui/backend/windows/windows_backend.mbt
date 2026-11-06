@@ -77,7 +77,7 @@ pub extend WindowsAccessibilityBridgeInfo with ToJson::{to_json}
 ///|
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @window_lifecycle.WindowSceneResolver
-  priv event_sources : @runtime.HostPlatformEventSources?
+  priv event_sources : @apphost.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   /// Same contract as `MacosHostAppOptions::frame_clock`: invoked around
   /// every runtime-owned frame phase of driver-driven redraws, so embedders
@@ -133,7 +133,7 @@ pub extend WindowsNativeHostBackend with @wzzc-dev/window/windows.ApplicationHan
 ///|
 pub fn WindowsHostAppOptions::new(
   scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  event_sources~ : @apphost.HostPlatformEventSources? = None,
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   frame_clock~ : (() -> Double)? = None,
   on_frame_presented~ : (() -> Unit)? = None,
@@ -162,8 +162,8 @@ pub fn WindowsHostSmokeOptions::new(
 pub fn entry(
   options~ : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   smoke_options~ : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
-) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(
+) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(
     id="windows",
     launch=request => {
       let binding = windows_surface_binding(request.renderer_providers())
@@ -221,14 +221,14 @@ fn windows_surface_binding(
       native_surface~,
       image_source=Some(image_source),
     )
-    @render_common.resolve_renderer(providers, surface)
+    @apphost.resolve_renderer_session(providers, surface)
   })
 }
 
 ///|
 fn launch_windows_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : WindowsSurfaceBinding,
   options~ : WindowsHostAppOptions,
   smoke_options~ : WindowsHostSmokeOptions,
@@ -248,7 +248,7 @@ fn launch_windows_app(
 ///|
 async fn launch_windows_app_async_pump(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : WindowsSurfaceBinding,
   options~ : WindowsHostAppOptions,
   window_requests~ : @host.WindowRequests,
@@ -297,7 +297,7 @@ extern "C" fn windows_time_end_period() -> Unit = "moui_windows_time_end_period"
 ///|
 fn create_windows_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : WindowsSurfaceBinding,
   options~ : WindowsHostAppOptions,
   smoke_options~ : WindowsHostSmokeOptions,
@@ -325,7 +325,7 @@ fn create_windows_app(
     on_frame_presented: options.on_frame_presented,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
-  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+  @apphost.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,
     event,
@@ -346,7 +346,7 @@ pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
 
 ///|
 pub fn windows_accessibility_bridge(
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> @accesskit_bridge.AccessKitBridge {
   @accesskit_bridge.AccessKitBridge::driver(
     diagnostic_name="uiautomation",
@@ -663,7 +663,7 @@ fn WindowsNativeHostBackend::redraw_window(
           let frame = submission.frame()
           platform_slot.window.pre_present_notify()
           let result = renderer.render_frame(submission)
-          @runtime.sync_platform_view_plugins(
+          @apphost.sync_platform_view_plugins(
             self.core.platform_view_plugins,
             platform_slot.window.native_window_handle(),
             frame,
@@ -675,7 +675,7 @@ fn WindowsNativeHostBackend::redraw_window(
             Some(callback) => callback()
             None => ()
           }
-          @runtime.finish_first_frame_smoke_auto_exit(
+          @apphost.finish_first_frame_smoke_auto_exit(
             platform_name="Windows",
             title=runtime_slot.record.title,
             flag=self.core.first_frame_smoke_auto_exit,
@@ -878,7 +878,7 @@ fn WindowsNativeHostBackend::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @runtime.HostRuntimeDriver::new(
+      let driver = @apphost.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )

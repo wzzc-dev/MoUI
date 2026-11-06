@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/linux"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/input",
@@ -19,9 +20,9 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn entry(options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions) -> @runtime.PlatformEntry
+pub fn entry(options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions) -> @apphost.PlatformEntry
 
-pub fn linux_accessibility_bridge(@runtime.HostRuntimeDriver) -> @accesskit.AccessKitBridge
+pub fn linux_accessibility_bridge(@apphost.HostRuntimeDriver) -> @accesskit.AccessKitBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
@@ -150,7 +151,7 @@ pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

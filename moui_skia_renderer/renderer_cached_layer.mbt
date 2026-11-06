@@ -89,12 +89,22 @@ fn SkiaRasterRenderer::render_frame_result(
   presented~ : Bool,
 ) -> @render.RenderFrameResult {
   let (shaping_hits, shaping_misses) = self.text_shaping_cache.frame_delta()
+  let diagnostics = self.unsupported_command_diagnostics.map(diagnostic => {
+    @diagnostics.DiagnosticEvent::new(
+      code="renderer.unsupported_command",
+      severity=@diagnostics.DiagnosticSeverity::Warning,
+      domain=@diagnostics.DiagnosticDomain::Render,
+      message=diagnostic.reason(),
+      source=diagnostic.command(),
+    )
+  })
   @render.RenderFrameResult::new(
     presented~,
     cache_hit_count=stats.cache_hit_count + shaping_hits,
     cache_miss_count=stats.cache_miss_count + shaping_misses,
     cache_update_count=stats.cache_update_count,
     cache_evict_count=stats.cache_evict_count,
+    diagnostics~,
   )
 }
 

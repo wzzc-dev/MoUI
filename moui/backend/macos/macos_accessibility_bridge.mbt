@@ -187,7 +187,7 @@ fn macos_semantics_node_json(node : @core.SemanticsNode) -> Json {
 
 ///|
 fn macos_announcement_json(
-  announcement : @runtime.AccessibilityAnnouncement,
+  announcement : @apphost.AccessibilityAnnouncement,
 ) -> Json {
   (
     {
@@ -208,7 +208,7 @@ fn macos_optional_node_id_json(value : @core.SemanticsNodeId?) -> Json {
 }
 
 ///|
-fn macos_semantics_read_json(read : @runtime.SemanticsRead) -> Json? {
+fn macos_semantics_read_json(read : @apphost.SemanticsRead) -> Json? {
   match read {
     Full(snapshot) =>
       Some(
@@ -335,7 +335,7 @@ fn macos_native_semantics_action(
 fn MacosNativeHostBackend::dispatch_accessibility_actions(
   _self : MacosNativeHostBackend,
   raw_view : UInt64,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Unit {
   for ;; {
     let bytes = macos_accessibility_take_action_native(raw_view)
@@ -368,7 +368,7 @@ fn MacosNativeHostBackend::dispatch_accessibility_actions(
       )
       continue
     }
-    let request : @runtime.PerformSemanticsActionRequest = {
+    let request : @apphost.PerformSemanticsActionRequest = {
       target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
       action,
       precondition: Exact(@core.SemanticsGeneration::new(generation)),

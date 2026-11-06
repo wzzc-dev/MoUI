@@ -90,7 +90,7 @@ test "host driver dispatches command intents through runtime action map" {
     commands=[@core.ActionCommand::new(intent=Copy)],
     on_message=_ => copied.val = copied.val + 1,
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let result = driver.dispatch(Command(Copy))
@@ -108,7 +108,7 @@ test "host driver applies theme change to runtime environment" {
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let result = driver.dispatch(ThemeChanged(Dark))

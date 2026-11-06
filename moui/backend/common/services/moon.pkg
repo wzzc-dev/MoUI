@@ -14,6 +14,6 @@ supported_targets = "+native+wasm-gc+wasm"
 warnings = "-unused_package"
 
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/views",
 } for "test"

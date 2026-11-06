@@ -4,8 +4,8 @@ package "wzzc-dev/moui/backend/common/input"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
 }
 
@@ -166,8 +166,8 @@ pub struct WindowInputState {
   // private fields
 }
 pub fn WindowInputState::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
-pub fn WindowInputState::new(event_sources? : @runtime.HostPlatformEventSources?) -> Self
-pub fn WindowInputState::publish(Self, @backend.WindowId, @backend.Event) -> @runtime.HostPlatformEventPublishResult?
+pub fn WindowInputState::new(event_sources? : @apphost.HostPlatformEventSources?) -> Self
+pub fn WindowInputState::publish(Self, @backend.WindowId, @backend.Event) -> @apphost.HostPlatformEventPublishResult?
 pub fn WindowInputState::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
 
 // Type aliases

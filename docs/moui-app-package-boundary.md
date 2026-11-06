@@ -521,7 +521,7 @@ Platform entrypoint packages are executable packages such as
 They create the runtime, connect a platform backend, and select a renderer.
 Desktop/Web/Wechat roots import `wzzc-dev/moui/runtime`, one concrete renderer package,
 and one platform backend, then use
-`@runtime.run_app(...)`, `.render(...)` or `.render_all(...)`, and
+`@apphost.run_app(...)`, `.render(...)` or `.render_all(...)`, and
 `.backend(...).run()`. Platform options are
 captured by `backend/<platform>.entry(...)`; renderer options and native-handle
 policy are captured by the renderer provider. A composition root never imports a renderer-specific

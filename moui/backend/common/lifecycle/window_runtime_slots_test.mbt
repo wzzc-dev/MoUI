@@ -165,7 +165,7 @@ test "host runtime driver exposes runtime state for platform slots" {
     root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let dark = runtime.environment().with_system_scheme(Dark)

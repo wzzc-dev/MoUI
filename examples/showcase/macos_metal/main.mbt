@@ -13,7 +13,7 @@ fn main {
     host_summary=@macos_backend.macos_capability_summary(),
     environment=@macos_backend.app_environment(),
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   .render(
     @render_metal.metal(
       text_engine=@render_metal.native_platform_text_engine(

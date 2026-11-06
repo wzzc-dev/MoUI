@@ -8,7 +8,7 @@ test "host driver dispatches ime composition text input events" {
     outlined=true,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   ignore(
@@ -35,7 +35,7 @@ test "host driver keeps unicode composition update in focused text state" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   ignore(

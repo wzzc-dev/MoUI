@@ -536,7 +536,7 @@ cross-origin text-file fetches。
 ## macOS 原生
 
 macOS 示例使用共享应用包、`backend/macos` 和显式 renderer 包。推荐的 `_skia` 入口导入
-`moui_skia_renderer`，并通过 `@runtime.run_app` 与 `@macos.entry()` 组合：
+`moui_skia_renderer`，并通过 `@apphost.run_app` 与 `@macos.entry()` 组合：
 
 ```sh
 moon build examples/showcase/macos_skia --target native
@@ -611,7 +611,7 @@ bundle 包含并验证 schema version 1 `Contents/Resources/moui-package.json` m
 ## Windows 原生
 
 Windows 原生示例使用 MSVC toolchain 和 vcpkg `zlib:x64-windows`。推荐的 `_skia` 入口导入
-`backend/windows` 与 `moui_skia_renderer`，并通过 `@runtime.run_app` 显式组合它们。Showcase
+`backend/windows` 与 `moui_skia_renderer`，并通过 `@apphost.run_app` 显式组合它们。Showcase
 `windows_wgpu` 是唯一 canonical native WGPU diagnostic；build/package helper 只为该
 WGPU 路线下载并打包 `wgpu_native.dll`。
 

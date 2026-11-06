@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/android" @android_host,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase",

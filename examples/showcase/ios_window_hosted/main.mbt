@@ -9,7 +9,7 @@ fn main {
     height=640.0,
   )
   println("moui-window-hosted ios: waiting for HostCmd surface")
-  @runtime.run_app("MoUI Showcase (ios window-hosted)", runtime)
+  @apphost.run_app("MoUI Showcase (ios window-hosted)", runtime)
   .render_all(@render_skia.from_env(platform=IOS))
   .backend(@ios_host.entry())
   .run()

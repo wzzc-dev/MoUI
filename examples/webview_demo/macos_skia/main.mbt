@@ -5,7 +5,7 @@ fn main {
   let capabilities = @webview_host.HostWebViewCapabilities::native_available(
     description="macOS WKWebView native embedding is available.",
   )
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI WebView Demo",
     @webview_demo.runtime(controller~, capabilities~),
   )

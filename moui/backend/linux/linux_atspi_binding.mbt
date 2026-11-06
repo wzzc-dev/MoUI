@@ -1,7 +1,7 @@
 ///|
 pub struct LinuxATSPIBinding {
   priv published_nodes : Map[@core.SemanticsNodeId, Unit]
-  priv dispatch : (@runtime.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult
+  priv dispatch : (@apphost.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult
   priv mut action_dispatch_count : Int32
   priv mut disposed : Bool
 }
@@ -26,7 +26,7 @@ pub extend LinuxATSPIBindingDiagnostics with ToJson::{to_json}
 
 ///|
 pub fn LinuxATSPIBinding::new(
-  dispatch~ : (@runtime.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult,
+  dispatch~ : (@apphost.PerformSemanticsActionRequest) -> @accesskit_bridge.AccessKitActionResult,
 ) -> LinuxATSPIBinding {
   {
     published_nodes: Map([]),
@@ -39,7 +39,7 @@ pub fn LinuxATSPIBinding::new(
 ///|
 pub fn LinuxATSPIBinding::publish_semantics(
   self : LinuxATSPIBinding,
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> LinuxATSPIBindingDiagnostics {
   if self.disposed {
     return self.diagnostics()
@@ -68,7 +68,7 @@ pub fn LinuxATSPIBinding::publish_semantics(
 ///|
 pub fn LinuxATSPIBinding::perform_action(
   self : LinuxATSPIBinding,
-  request : @runtime.PerformSemanticsActionRequest,
+  request : @apphost.PerformSemanticsActionRequest,
 ) -> @accesskit_bridge.AccessKitActionResult {
   if self.disposed {
     return BridgeUnavailable("Linux AT-SPI binding is disposed")

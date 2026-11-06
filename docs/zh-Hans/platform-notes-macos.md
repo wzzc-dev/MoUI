@@ -15,7 +15,7 @@ macOS 服务桥通过 `NSPasteboard` 路由文本剪贴板请求，通过 `NSWor
 实验性的**直连宿主 GPU 路线**（`moui_metal_renderer`，ADR 0045）是第三种东西：它是唯一**不链接 Skia 也不链接 wgpu**的路线。上面那段已经把随主线发布的 Skia GPU 路径称作“直连 Metal GPU provider”，所以“直连 Metal”并不能区分两者——能区分的说法是“无 Skia、无 wgpu”。`backend/macos` 仍然拥有窗口并创建 `CAMetalLayer`；renderer 通过 `HostSurface::native_surface()` 拿到那个 layer 句柄，自己设置 device、pixel format 与 pipeline，自己提交 drawable。文字覆盖来自组合根注入的引擎：
 
 ```moonbit
-@runtime.run_app("MoUI Showcase", runtime)
+@apphost.run_app("MoUI Showcase", runtime)
   .render(
     @render_metal.metal(
       text_engine=@render_metal.native_platform_text_engine(

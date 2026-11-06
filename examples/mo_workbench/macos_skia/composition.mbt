@@ -30,7 +30,7 @@ async fn run_workbench() -> Unit {
         height=680.0,
       )
       let window_task : async () -> Unit = async fn() {
-        @runtime.run_app("Mo Workbench", runtime)
+        @apphost.run_app("Mo Workbench", runtime)
         .render_all(@render_skia.from_env(platform=MacOS))
         .backend(@macos_host.entry(options=app_options))
         .run_async_pump()
@@ -60,7 +60,7 @@ async fn run_workbench() -> Unit {
         width=1300.0,
         height=680.0,
       )
-      @runtime.run_app("Mo Workbench", runtime)
+      @apphost.run_app("Mo Workbench", runtime)
       .render_all(@render_skia.from_env(platform=MacOS))
       .backend(@macos_host.entry(options=app_options))
       .run_async_pump() catch {

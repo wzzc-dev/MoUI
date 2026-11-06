@@ -58,7 +58,7 @@ let world_host : @world_app.WorldHost = {
 
 ///|
 fn main {
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI New World",
     // Initial logical size only: the runtime replaces it with the canvas's
     // measured size on the first resize, and the shell derives wide / medium /

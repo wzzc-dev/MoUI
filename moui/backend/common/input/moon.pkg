@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend" @backend_host,
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",

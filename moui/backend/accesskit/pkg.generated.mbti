@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/accesskit"
 import {
   "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 }
@@ -42,7 +43,7 @@ pub(all) struct AccessKitBridge {
   publish : (@runtime.SemanticsRead) -> AccessKitUpdate?
   perform : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult
 }
-pub fn AccessKitBridge::driver(diagnostic_name? : String, driver~ : @runtime.HostRuntimeDriver) -> Self
+pub fn AccessKitBridge::driver(diagnostic_name? : String, driver~ : @apphost.HostRuntimeDriver) -> Self
 pub fn AccessKitBridge::new(diagnostic_name? : String, available? : Bool, publish? : (@runtime.SemanticsRead) -> AccessKitUpdate?, perform? : (@runtime.PerformSemanticsActionRequest) -> AccessKitActionResult) -> Self
 pub fn AccessKitBridge::perform_action(Self, @runtime.PerformSemanticsActionRequest) -> AccessKitActionResult
 pub fn AccessKitBridge::publish_semantics(Self, @runtime.SemanticsRead) -> AccessKitUpdate?

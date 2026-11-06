@@ -31,7 +31,7 @@ test "AppBuilder passes ordered providers and window requests to backend" {
   let provider_ids : Array[String] = []
   let requests = @backend_host.WindowRequests::new(pending_count=() => 1)
   let pending_requests = Ref(0)
-  let entry = @runtime.PlatformEntry::new(id="test", launch=request => {
+  let entry = @apphost.PlatformEntry::new(id="test", launch=request => {
     launched.val = true
     title.val = request.title()
     for provider in request.renderer_providers() {
@@ -39,7 +39,7 @@ test "AppBuilder passes ordered providers and window requests to backend" {
     }
     pending_requests.val = request.window_requests().pending_count()
   })
-  @runtime.run_app("Builder Test", app_builder_test_runtime())
+  @apphost.run_app("Builder Test", app_builder_test_runtime())
   .render(app_builder_test_provider("first"))
   .render_all([
     app_builder_test_provider("second"),

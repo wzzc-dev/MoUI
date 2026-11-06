@@ -28,10 +28,16 @@ moui/core                      # contracts & value types only
         ▼                      ▼                        ▼
 moui/runtime             moui/backend              moui/render
 trees, effects,          neutral event/window/     surface/frame/image/provider
-HostRuntimeDriver        input/service protocols   protocols and DTOs
+semantics                input/service protocols   protocols and DTOs
         │                      │                        │
-        └──────────┬───────────┘                        ▼
-                   ▼                            moui/render/common
+        └──────────┬───────────┴────────────┬───────────┘
+                   ▼                        │
+             moui/apphost                   │
+       AppBuilder / run_app /               │
+       HostRuntimeDriver / RedrawScheduler  │
+                   │                        │
+                   ▼                        ▼
+          moui/backend/common        moui/render/common
           moui/backend/common                  provider selection, fallback,
           stateless host workflows                GPU worker,
                    │                            shared drawing algorithms
@@ -70,7 +76,7 @@ graphics library; it is not drawn above because it adds no dependency edge — i
 only non-`moui` imports are Apple frameworks.
 
 Composition: an executable entrypoint builds an `AppBuilder` with
-`@runtime.run_app`, supplies ordered `RendererProvider` values with
+`@apphost.run_app`, supplies ordered `RendererProvider` values with
 `.render`/`.render_all`, supplies a platform `PlatformEntry` with `.backend`,
 and calls `.run`. The backend creates an opaque `HostSurface` after its
 window exists; providers bind in registration order and the first
@@ -89,8 +95,8 @@ recorded as a degrade diagnostic.
 program on a surface that is neither a window nor a pixel device. Two members
 exist today: the terminal path (`moui_terminal_host` + `moui_tui_renderer`,
 whose output is an ANSI byte stream through a composition-root sink) and the
-agent path (`moui_agent`, a `HostRuntimeDriver` pump with no present target at
-all). Both share the shape — drive the runtime through `HostRuntimeDriver`,
+agent path (`moui_agent`, an apphost `HostRuntimeDriver` pump with no present
+target at all). Both share the shape — drive the runtime through `HostRuntimeDriver`,
 declare the output composition explicitly, and stay outside the canonical
 platform matrix, which describes windowed hosts. A future headless snapshot
 or semantic-dump renderer belongs to this category, not to the platform
@@ -108,10 +114,10 @@ display handles; renderer-local policies such as Skia's
 
 **Cross-layer edges (imports, beyond the tree above):**
 
-- `moui/runtime` → `moui/backend` (`HostRuntimeDriver::dispatch` takes `@host.Event`) and `moui/render` (`HostRuntimeDriver::apply_render_frame_result` takes `@render.RenderFrameResult`)
-- `moui/backend/common` → root `backend`, `core`, `services`, `runtime`, neutral `render`, and `render/common`; root `backend` never imports common
+- `moui/apphost` → `moui/runtime`, root `moui/backend`, and `moui/render`; it owns `AppBuilder`/`run_app`, `HostRuntimeDriver`, `RedrawScheduler`, and the host event adapters
+- `moui/backend/common` → root `backend`, `core`, `services`, `apphost`, neutral `render`, and `render/common`; it does not import `moui/runtime` directly (apphost re-exports the runtime values it needs)
 - `moui/render/common` → root `render` + `core`; root `render` never imports common
-- `backend/<platform>` → root/common backend layers, runtime, services, neutral render layers, and its matching `wzzc-dev/window` package; never a concrete renderer
+- `backend/<platform>` → root/common backend layers, apphost, services, neutral render layers, and its matching `wzzc-dev/window` package; never a concrete renderer
 
 **Domain facades (ADR 0003 / 0014):** `geometry`/`graphics`/`animation`/`text`/`state` re-export curated `@core` types only; `core` never imports them.
 
@@ -127,7 +133,7 @@ renderers consume `DrawCommand` only.
 |---|---|
 | `examples/*/app` | `moui/runtime`, `moui/backend/*`, `moui/render/*`, concrete backends, providers |
 | `moui/core` | `views`, runtime, backends, renderers |
-| `moui/backend` (root) | `moui/runtime`, `moui/render`, or `moui/backend/common` |
+| `moui/backend` (root) | `moui/runtime`, `moui/render`, `moui/apphost`, or `moui/backend/common` |
 | `moui/backend` | `moui/backend/common` (no reverse dependency, Phase F gate) |
 | `moui/render` | `moui/backend` (renderers consume `DrawCommand` only) |
 | view constructors | renderer fallback decisions, platform hosts |
@@ -142,7 +148,9 @@ renderers consume `DrawCommand` only.
 | Public controls / themes helpers | `moui/views` |
 | App-facing files/clipboard/URL/settings/menu tasks and timer/route sources | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
-| AppRuntime / trees / effects / HostRuntimeDriver / RedrawScheduler / HostWallClock | `moui/runtime` |
+| AppRuntime / trees / effects / semantics | `moui/runtime` |
+| AppBuilder / run_app / HostRuntimeDriver / RedrawScheduler / host event adapters | `moui/apphost` |
+| HostWallClock | `moui/runtime` |
 | Backend protocols and DTOs (Event/HostCmd/HostServiceBridge/WindowRequests/platform channel) | `moui/backend` |
 | Stateless cross-owner window-host workflows and DTO conversion | `moui/backend/common` |
 | Registry, request queue, runtime slots, platform ID map, phase/generation, exactly-once close | `moui/backend/common/lifecycle` |
@@ -163,7 +171,7 @@ renderers consume `DrawCommand` only.
 | Renderer-neutral native text providers and their shared payload protocol | `moui_text_providers` (`coretext`, `directwrite`, `fontconfig`, `cosmic_text`, `text_protocol`) |
 | Cell buffer underneath the ANSI path (damage/revision, CJK double width) | `moui_tui` |
 | TTY raw mode, SGR mouse modes, input decode, cell→logical geometry, explicit `tui-ansi` composition | `moui_terminal_host` (experimental) |
-| Application/platform composition | `examples/*/<platform>/main.mbt` through `@runtime.run_app` |
+| Application/platform composition | `examples/*/<platform>/main.mbt` through `@apphost.run_app` |
 | Skia FFI / native capability | `moui_skia` |
 | CPU raster stack (experimental) | `moui_sun` |
 | Embedded-runtime templates, native payload adapters, and nominal event loops/windows | `wzzc-dev/window/{android,ios,harmonyos}` |

@@ -4,7 +4,7 @@ fn main {
     host_summary=@linux_backend.linux_capability_summary(),
     environment=@linux_backend.app_environment(),
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   .render_all(@render_skia.from_env(platform=Linux))
   .backend(
     @linux_backend.entry(

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "description": "Ownership, intent, review, and lifecycle triggers layered over checks/platform-matrix.json and checks/release-modules.json. Technical route/module facts stay in those catalogs.",
-  "reviewedOn": "2026-11-05",
+  "reviewedOn": "2026-11-06",
   "releaseCoupling": {
     "mode": "synchronized-line",
-    "line": "0.3.x",
-    "adr": "docs/decisions/0055-synchronized-release-line.md",
+    "line": "0.4.x",
+    "adr": "docs/decisions/0065-zero-four-release-line.md",
     "baseOnlyPatch": "not-offered",
     "compatibilityMatrix": "deferred",
     "evidence": "checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs"

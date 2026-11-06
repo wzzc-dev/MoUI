@@ -9,7 +9,7 @@ test "host driver includes focused text commands in context menu" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -69,7 +69,7 @@ test "host driver disables copy and cut context menu commands without selection"
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -116,7 +116,7 @@ test "host driver enables copy and cut context menu commands with selection" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -174,7 +174,7 @@ test "host driver context menu pastes unicode into focused text input" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(

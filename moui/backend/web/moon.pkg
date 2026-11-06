@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/backend" @host,
@@ -10,7 +11,6 @@ import {
   "wzzc-dev/moui/backend/common/input" @window_input,
   "wzzc-dev/moui/backend/common/services" @window_services,
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/web" @window_web,

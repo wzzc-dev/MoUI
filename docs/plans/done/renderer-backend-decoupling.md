@@ -4,7 +4,7 @@
 >
 > - **被推翻的章节**：§3.6（`:724-744`，「不新增包 / 不删包」）、§5 迁移矩阵的 D 列（`:850-868`，「保留 `moui/backend/**` 下 13 个渲染器绑定子包」）、§3.5.3（`:717-723`，「`MOUI_SKIA_RENDERER` 字面量必须留在 `moui/backend/*/skia/*_skia_provider.mbt`」——该条已按接替方案 §5.1.1 U1 裁决改为落在 `moui/render/skia` 的 `from_env`）。
 > - **继续有效并被继承的章节**：§3.5.1（`:691-712`，`native_gpu_selection.mbt` 中立载荷与 skia 家族策略的拆分边界）、§5.1（`:868-881`，MoonBit `moon.pkg` 无特性开关导致「一个 (平台,渲染器) 组合 = 一个包 = 一个链接单元」的硬约束）、§6（`:893-1032`，能力协商与不变量论述）。
-> - **接替方案的核心差异**：删除全部 13 个绑定子包，装配上移到应用入口（composition root），以 `@runtime.run_app().render(...).backend(...)` 流式 API 表达；净减约 7729 行，`moui/backend` 包数 25 → 11，`backend → render` 依赖边 15 → 0。
+> - **接替方案的核心差异**：删除全部 13 个绑定子包，装配上移到应用入口（composition root），以 `@apphost.run_app().render(...).backend(...)` 流式 API 表达；净减约 7729 行，`moui/backend` 包数 25 → 11，`backend → render` 依赖边 15 → 0。
 > - 本文与接替方案均已归档；冲突时以 `backend-renderer-extraction.md` 的实施结果为准。
 
 - 文档状态：已取代（2026-08-03；目录形态与执行结论以 `backend-renderer-extraction.md` 为准）

@@ -62,8 +62,8 @@ fn window_test_text_field_runtime(
   width~ : Double = 240.0,
   height~ : Double = 40.0,
   outlined~ : Bool = false,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
+) -> @apphost.AppRuntime {
+  @apphost.AppRuntime::new_program(
     program=@core.Program::simple(
       init=value.val,
       update=(_model, next) => {

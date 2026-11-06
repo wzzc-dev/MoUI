@@ -91,6 +91,8 @@ pub fn representative_fallback_codepoint(String, skip_joiners? : Bool) -> Int32
 
 pub fn resolve_renderer(Array[@render.RendererProvider], @render.HostSurface) -> @render.RendererSession?
 
+pub fn resolve_renderer_with_plan(Array[@render.RendererProvider], @render.HostSurface) -> RendererBindingResolution
+
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
 
 pub fn set_svg_text_path_resolver((SvgTextRun) -> SvgTextRunOutline?) -> Unit
@@ -267,6 +269,30 @@ pub(all) enum PlanScopeKind {
 pub fn PlanScopeKind::equal(Self, Self) -> Bool
 pub fn PlanScopeKind::not_equal(Self, Self) -> Bool
 
+pub(all) struct RendererBindingResolution {
+  session : @render.RendererSession?
+  plan : RendererCapabilityPlan
+}
+
+pub(all) struct RendererCapabilityPlan {
+  provider_ids : Array[String]
+  selected_provider_id : String?
+  rejections : Array[RendererRejection]
+  features : Array[@render.RendererFeatureCapability]
+  follow_ups : Array[@render.RendererFeatureCapability]
+  surface_error : String?
+}
+pub fn RendererCapabilityPlan::from_providers(Array[@render.RendererProvider]) -> Self
+pub fn RendererCapabilityPlan::policy_problems(Self, RendererCapabilityPolicy) -> Array[String]
+pub fn RendererCapabilityPlan::rejection_summary(Self) -> String
+
+pub(all) struct RendererCapabilityPolicy {
+  required_features : Array[@render.RendererFeature]
+  allow_partial : Bool
+  fail_on_missing : Bool
+}
+pub fn RendererCapabilityPolicy::new(required_features? : Array[@render.RendererFeature], allow_partial? : Bool, fail_on_missing? : Bool) -> Self
+
 pub struct RendererProviderRegistry {
   // private fields
 }
@@ -276,6 +302,11 @@ pub fn RendererProviderRegistry::lookup(Self, String) -> @render.RendererProvide
 pub fn RendererProviderRegistry::new() -> Self
 pub fn RendererProviderRegistry::providers(Self) -> Array[@render.RendererProvider]
 pub fn RendererProviderRegistry::register(Self, @render.RendererProvider) -> Unit
+
+pub(all) struct RendererRejection {
+  provider_id : String
+  reason : String
+}
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub struct ShaderRegistryResult {
@@ -338,6 +369,16 @@ pub(all) struct SvgTextRunOutline {
   polygons : Array[Array[(Double, Double)]]
 }
 pub fn SvgTextRunOutline::to_repr(Self) -> @debug.Repr
+
+pub struct TextParagraphCache {
+  // private fields
+}
+pub fn TextParagraphCache::count(Self) -> Int32
+pub fn TextParagraphCache::font_generation(Self) -> Int32
+pub fn TextParagraphCache::layout_paragraph(Self, String, @core.TextLayoutInput, (@core.TextLayoutInput) -> @core.TextParagraphLayoutResult) -> @core.TextParagraphLayoutResult
+pub fn TextParagraphCache::new(capacity? : Int32, text_budget_bytes? : Int32) -> Self
+pub fn TextParagraphCache::register_font_data(Self) -> Unit
+pub fn TextParagraphCache::text_bytes(Self) -> Int32
 
 // Type aliases
 pub type SvgTextPathResolver = (SvgTextRun) -> SvgTextRunOutline?

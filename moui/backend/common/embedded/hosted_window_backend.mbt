@@ -78,7 +78,7 @@ pub fn mobile_host_surface_binding(
         description=presenter_description,
         present=frame => cpu_present(raw_handle, frame),
       )
-      @render_common.resolve_renderer(
+      @apphost.resolve_renderer_session(
         providers,
         @render.HostSurface::new(
           metrics=renderer_metrics,
@@ -109,7 +109,7 @@ pub fn HostedRuntimeSession::raw_handle(self : HostedRuntimeSession) -> UInt64 {
 ///|
 /// Create a session from a fresh surface handle and neutral host binding.
 pub fn HostedRuntimeSession::create(
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : @apphost.AppRuntime,
   raw_handle~ : UInt64,
   metrics~ : @core.SurfaceMetrics,
   binding~ : HostSurfaceBinding,
@@ -180,7 +180,7 @@ pub fn HostedRuntimeSession::metrics(
 ///|
 pub fn HostedRuntimeSession::runtime(
   self : HostedRuntimeSession,
-) -> @runtime.AppRuntime {
+) -> @apphost.AppRuntime {
   self.core.runtime()
 }
 
@@ -356,9 +356,9 @@ pub fn HostedRuntimeSession::dispose(self : HostedRuntimeSession) -> Unit {
 /// public accessors; `ApplicationHandler` slots call the shared methods.
 pub struct HostedWindowBackend {
   title : String
-  runtime_factory : (@core.SurfaceMetrics) -> @runtime.AppRuntime
+  runtime_factory : (@core.SurfaceMetrics) -> @apphost.AppRuntime
   surface_binding_factory : () -> HostSurfaceBinding
-  ime_sync : ((@runtime.AppRuntime?) -> Unit)?
+  ime_sync : ((@apphost.AppRuntime?) -> Unit)?
   /// Platform clipboard answer for synchronous host service requests.
   service_handler : (@host.HostServiceRequest) -> @host.HostServiceResponse?
   /// Monotonic milliseconds for frame timing. The runtime advances its animation
@@ -366,7 +366,7 @@ pub struct HostedWindowBackend {
   /// latched in flight (a wheel settle never ends).
   clock_ms : () -> Double
   mut window : HostedWindow?
-  mut runtime : @runtime.AppRuntime?
+  mut runtime : @apphost.AppRuntime?
   mut session : HostedRuntimeSession?
   lifecycle : @window_lifecycle.EmbeddedLifecycle
   mut last_pointer : @core.Point
@@ -378,9 +378,9 @@ pub struct HostedWindowBackend {
 ///|
 pub fn HostedWindowBackend::new(
   title~ : String = "MoUI",
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   surface_binding_factory~ : () -> HostSurfaceBinding,
-  ime_sync~ : ((@runtime.AppRuntime?) -> Unit)? = None,
+  ime_sync~ : ((@apphost.AppRuntime?) -> Unit)? = None,
   service_handler~ : (@host.HostServiceRequest) -> @host.HostServiceResponse? = _ => {
     None
   },
@@ -462,7 +462,7 @@ pub fn[T] HostedWindowBackend::with_session(
 pub fn HostedWindowBackend::read_semantics(
   self : HostedWindowBackend,
   since~ : @core.SemanticsGeneration? = None,
-) -> @runtime.SemanticsRead? {
+) -> @apphost.SemanticsRead? {
   match self.session {
     Some(session) => {
       let read = match since {
@@ -558,7 +558,7 @@ pub fn HostedWindowBackend::image_resource_records(
 /// Returns whether the runtime accepted it.
 pub fn HostedWindowBackend::perform_semantics_action(
   self : HostedWindowBackend,
-  request : @runtime.PerformSemanticsActionRequest,
+  request : @apphost.PerformSemanticsActionRequest,
 ) -> Bool {
   match self.session {
     Some(session) =>

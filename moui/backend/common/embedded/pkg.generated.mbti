@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/common/embedded"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/lifecycle",
   "wzzc-dev/moui/render",
@@ -155,9 +156,9 @@ pub struct EmbeddedRuntimeHostBridge {
   mut last_platform_views : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
   mut disposed : Bool
 }
-pub fn EmbeddedRuntimeHostBridge::dispatch_response(Self, EmbeddedHostResponse, @runtime.HostRuntimeDriver) -> Bool
-pub fn EmbeddedRuntimeHostBridge::dispatch_response_envelope(Self, EmbeddedHostResponseEnvelope, @runtime.HostRuntimeDriver) -> Bool
-pub fn EmbeddedRuntimeHostBridge::dispose(Self, driver? : @runtime.HostRuntimeDriver, reason? : String) -> Unit
+pub fn EmbeddedRuntimeHostBridge::dispatch_response(Self, EmbeddedHostResponse, @apphost.HostRuntimeDriver) -> Bool
+pub fn EmbeddedRuntimeHostBridge::dispatch_response_envelope(Self, EmbeddedHostResponseEnvelope, @apphost.HostRuntimeDriver) -> Bool
+pub fn EmbeddedRuntimeHostBridge::dispose(Self, driver? : @apphost.HostRuntimeDriver, reason? : String) -> Unit
 pub fn EmbeddedRuntimeHostBridge::disposed(Self) -> Bool
 pub fn EmbeddedRuntimeHostBridge::drain_update_envelope(Self) -> EmbeddedHostUpdateEnvelope
 pub fn EmbeddedRuntimeHostBridge::drain_update_envelope_json(Self) -> String

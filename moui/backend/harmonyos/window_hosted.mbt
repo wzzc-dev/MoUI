@@ -37,7 +37,7 @@ pub extend HarmonyOSEmbeddedRuntimeBackend with @wzzc-dev/window/harmonyos.Appli
 ///|
 pub fn HarmonyOSEmbeddedRuntimeBackend::new(
   title~ : String = "MoUI",
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
   auto_exit_after_frames~ : Int32? = None,
 ) -> HarmonyOSEmbeddedRuntimeBackend {
@@ -51,8 +51,8 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::new(
 
 ///|
 /// Application-builder entry for the HarmonyOS window-hosted event loop.
-pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="harmonyos", launch=request => {
+pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(id="harmonyos", launch=request => {
     let runtime = request.runtime()
     let app = HarmonyOSEmbeddedRuntimeBackend::new(
       title=request.title(),
@@ -93,7 +93,7 @@ fn image_status_token(status : @render.ImageResourceStatus) -> String {
 ///|
 fn new_harmonyos_embedded_runtime(
   title~ : String,
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   surface_binding_factory~ : () -> HarmonyOSSurfaceBinding,
   auto_exit_after_frames~ : Int32?,
 ) -> HarmonyOSEmbeddedRuntimeBackend {
@@ -449,7 +449,7 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
   }
   match harmonyos_accessibility_take_action() {
     Some(pending) => {
-      let request : @runtime.PerformSemanticsActionRequest = {
+      let request : @apphost.PerformSemanticsActionRequest = {
         target: @core.SemanticsTarget::ByNodeId(
           @core.SemanticsNodeId::new(pending.element_id.reinterpret_as_uint64()),
         ),
@@ -475,7 +475,7 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
 /// publish nothing rather than the empty projection.
 fn HarmonyOSEmbeddedRuntimeBackend::publish_accessibility_snapshot(
   self : HarmonyOSEmbeddedRuntimeBackend,
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> Unit {
   match read {
     Full(snapshot) => {

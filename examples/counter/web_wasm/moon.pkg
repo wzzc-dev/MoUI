@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/web",
   "wzzc-dev/moui_web_renderer" @webgpu_adapter,
   "wzzc-dev/moui/runtime",

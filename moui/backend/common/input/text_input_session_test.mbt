@@ -8,7 +8,7 @@ test "host driver maps focused text input through core text input event" {
     outlined=true,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   ignore(driver.dispatch(TextInput(InsertText("a"))))
@@ -38,7 +38,7 @@ test "host driver routes text clipboard commands through service bridge" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -94,7 +94,7 @@ test "host driver routes clipboard keyboard shortcuts through service bridge" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -173,7 +173,7 @@ test "host driver keyboard paste replaces selection with extended emoji" {
     height=40.0,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -228,7 +228,7 @@ test "host driver falls back clipboard shortcuts to action commands" {
     commands=[@core.ActionCommand::new(intent=Copy)],
     on_message=_ => copied.val = copied.val + 1,
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(
@@ -257,7 +257,7 @@ test "host driver defers paste action command while clipboard read is pending" {
     commands=[@core.ActionCommand::new(intent=Paste)],
     on_message=_ => pasted.val = pasted.val + 1,
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @backend_host.HostServiceBridge::new(

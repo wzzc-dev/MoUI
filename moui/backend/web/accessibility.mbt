@@ -110,7 +110,7 @@ pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
 
 ///|
 pub fn aria_update_from_semantics_read(
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> AriaSemanticsUpdate? {
   match read {
     Full(snapshot) =>
@@ -141,7 +141,7 @@ pub fn aria_update_from_semantics_read(
 priv struct WebSemanticsRuntimeBinding {
   raw_id : Int32
   canvas_id : String
-  driver : @runtime.HostRuntimeDriver
+  driver : @apphost.HostRuntimeDriver
   mut cursor : @core.SemanticsGeneration?
 }
 
@@ -152,7 +152,7 @@ let web_semantics_runtime_bindings : Array[WebSemanticsRuntimeBinding] = []
 fn register_web_semantics_runtime(
   raw_id : Int32,
   canvas_id : String,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Unit {
   unregister_web_semantics_runtime(raw_id)
   web_semantics_runtime_bindings.push({

@@ -5,7 +5,7 @@
 /// imports only its own package plus the public core/render/runtime APIs.
 test "throwaway renderer registers through AppBuilder and binds in registry order" {
   // The one registration line a composition root adds for a new renderer.
-  let builder = @runtime.run_app(
+  let builder = @apphost.run_app(
     "throwaway",
     @runtime.AppRuntime::new_view(
       root=(@views.text("throwaway") : @core.View[Unit]),

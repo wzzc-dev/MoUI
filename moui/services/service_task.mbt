@@ -33,6 +33,7 @@ pub struct ServiceTask[T] {
   key : String
   label : String
   start_fn : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?
+  scope : @core.TaskScope?
 }
 
 ///|
@@ -50,8 +51,9 @@ pub fn[T] ServiceTask::new(
   key~ : String,
   start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?,
   label~ : String = "",
+  scope~ : @core.TaskScope? = None,
 ) -> ServiceTask[T] {
-  { key, label, start_fn: start, }
+  { key, label, start_fn: start, scope, }
 }
 
 ///|
@@ -59,8 +61,9 @@ pub fn[T] ServiceTask::succeed(
   key~ : String,
   value~ : T,
   label~ : String = "",
+  scope~ : @core.TaskScope? = None,
 ) -> ServiceTask[T] {
-  ServiceTask::new(key~, label~, start=complete => {
+  ServiceTask::new(key~, label~, scope~, start=complete => {
     complete(Success(value))
     None
   })
@@ -71,8 +74,9 @@ pub fn[T] ServiceTask::fail(
   key~ : String,
   error~ : ServiceError,
   label~ : String = "",
+  scope~ : @core.TaskScope? = None,
 ) -> ServiceTask[T] {
-  ServiceTask::new(key~, label~, start=complete => {
+  ServiceTask::new(key~, label~, scope~, start=complete => {
     complete(Failure(error))
     None
   })
@@ -82,8 +86,9 @@ pub fn[T] ServiceTask::fail(
 pub fn[T] ServiceTask::cancelled(
   key~ : String,
   label~ : String = "",
+  scope~ : @core.TaskScope? = None,
 ) -> ServiceTask[T] {
-  ServiceTask::new(key~, label~, start=complete => {
+  ServiceTask::new(key~, label~, scope~, start=complete => {
     complete(Cancelled)
     None
   })
@@ -104,7 +109,12 @@ pub fn[T] ServiceTask::start(
   self : ServiceTask[T],
   complete : (ServiceTaskResult[T]) -> Unit,
 ) -> (() -> Unit)? {
-  (self.start_fn)(complete)
+  (self.start_fn)(result => {
+    match self.scope {
+      Some(scope) => if !scope.is_cancelled() { complete(result) }
+      None => complete(result)
+    }
+  })
 }
 
 ///|
@@ -112,7 +122,7 @@ pub fn[T, U] ServiceTask::map(
   self : ServiceTask[T],
   map : (T) -> U,
 ) -> ServiceTask[U] {
-  ServiceTask::new(key=self.key, label=self.label, start=complete => {
+  ServiceTask::new(key=self.key, label=self.label, scope=self.scope, start=complete => {
     self.start(result => {
       match result {
         Success(value) => complete(Success(map(value)))

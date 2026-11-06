@@ -206,6 +206,9 @@ pub fn HostServiceCapabilities::enabled_labels(
   if self.system_theme {
     labels.push("system theme")
   }
+  for label in self.extension_labels {
+    labels.push(label)
+  }
   labels
 }
 

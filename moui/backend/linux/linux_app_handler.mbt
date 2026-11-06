@@ -345,7 +345,7 @@ fn LinuxNativeHostBackend::redraw_window(
           if has_platform_views {
             renderer.set_platform_view_draw_fn(None)
           }
-          @runtime.sync_platform_view_plugins(
+          @apphost.sync_platform_view_plugins(
             self.core.platform_view_plugins,
             platform_slot.window.wl_surface(),
             frame,
@@ -354,7 +354,7 @@ fn LinuxNativeHostBackend::redraw_window(
           result
         },
         finish_presented=runtime_slot => {
-          @runtime.finish_first_frame_smoke_auto_exit(
+          @apphost.finish_first_frame_smoke_auto_exit(
             platform_name="Linux",
             title=runtime_slot.record.title,
             flag=self.core.first_frame_smoke_auto_exit,

@@ -56,7 +56,7 @@ test "macOS application-menu placement keeps global command ids" {
 
 ///|
 test "macOS application Edit commands reach focused MoUI text and clipboard" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=@views.text_field(
       "https://example.test/path",
       on_input=_value => (),

@@ -189,7 +189,7 @@ pub fn linux_environment_with_accessibility_settings(
 
 ///|
 pub fn linux_accessibility_bridge(
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> @accesskit_bridge.AccessKitBridge {
   let runtime_bridge = @accesskit_bridge.AccessKitBridge::driver(
     diagnostic_name="at-spi",

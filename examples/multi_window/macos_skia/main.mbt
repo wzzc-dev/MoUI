@@ -1,7 +1,7 @@
 ///|
 fn main {
   let (runtime, resolver, queue) = @multi_window.runtime_and_host()
-  @runtime.run_app("MoUI Multi-Window", runtime)
+  @apphost.run_app("MoUI Multi-Window", runtime)
   .render_all(@render_skia.from_env(platform=MacOS))
   .backend(
     @macos_backend.entry(

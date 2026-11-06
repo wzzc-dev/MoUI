@@ -269,7 +269,7 @@ fn find_aria_node(
 
 ///|
 test "web accessibility maps semantics to aria nodes" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(
       @views.checkbox(
         "Done",
@@ -304,7 +304,7 @@ test "web accessibility maps semantics to aria nodes" {
 
 ///|
 test "web accessibility maps landmarks heading level and link url" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(
       @views.text("Docs", width=120.0, height=32.0)
       .semantics_role(Heading)

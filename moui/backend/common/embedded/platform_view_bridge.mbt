@@ -25,7 +25,7 @@ fn EmbeddedRuntimeHostBridge::dispatch_platform_view_response(
   kind : String,
   id : String,
   event : @core.PlatformViewEvent,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Bool {
   if revision != self.platform_view_revision ||
     !self.last_platform_views.any(placement => {

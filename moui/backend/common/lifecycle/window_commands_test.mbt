@@ -102,7 +102,7 @@ test "host window commands can drain through runtime slots" {
     slots.insert_from_registry(
       registry,
       opened,
-      driver=@runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+      driver=@apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     ),
   )
   let commands = @lifecycle.WindowCommands::new()

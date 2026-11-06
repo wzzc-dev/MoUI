@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
 }
 
 // Values
@@ -206,9 +207,10 @@ pub(all) struct RenderFrameResult {
   cache_miss_count : Int32
   cache_update_count : Int32
   cache_evict_count : Int32
+  diagnostics : Array[@diagnostics.DiagnosticEvent]
 }
 pub fn RenderFrameResult::equal(Self, Self) -> Bool
-pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int32, cache_miss_count? : Int32, cache_update_count? : Int32, cache_evict_count? : Int32) -> Self
+pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int32, cache_miss_count? : Int32, cache_update_count? : Int32, cache_evict_count? : Int32, diagnostics? : Array[@diagnostics.DiagnosticEvent]) -> Self
 pub fn RenderFrameResult::not_equal(Self, Self) -> Bool
 pub fn RenderFrameResult::to_json(Self) -> @json.Json
 pub fn RenderFrameResult::to_repr(Self) -> @debug.Repr

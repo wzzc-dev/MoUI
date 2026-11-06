@@ -38,7 +38,7 @@ test "macos host options carry optional scene resolver and smoke options stay se
     SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
-        runtime=@runtime.AppRuntime::new_view(
+        runtime=@apphost.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
@@ -47,7 +47,7 @@ test "macos host options carry optional scene resolver and smoke options stay se
   })
   let options = MacosHostAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@runtime.HostPlatformEventSources::new()),
+    event_sources=Some(@apphost.HostPlatformEventSources::new()),
     show_after_first_present=false,
   )
   let smoke_options = MacosHostSmokeOptions::new(

@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui_wgpu_renderer" @render_wgpu,
   "wzzc-dev/moui_text_providers/coretext" @text_coretext,

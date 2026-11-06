@@ -106,11 +106,11 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
 - Web app route：shared app package -> `examples/<app>/web_wasm` composition ->
   `moui/backend/web` + `moui_web_renderer`。
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
   -> 中立 platform surface + `moui_skia_renderer` -> `moui_skia`。
 - Android 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/android_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> 共享
   `wzzc-dev/window/internal/embedded_dispatch` callback dispatch -> `EventLoop` -> 中立 Android
   surface binding -> `moui_skia_renderer` -> `moui_skia`。
@@ -118,20 +118,20 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
   backend 负责 runtime/session 与中立 surface 装配。
 - iOS 嵌入运行时路线（`experimental`）：shared app package ->
   `examples/<app>/ios_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> 共享 embedded-host kernel ->
   `EventLoop` -> 中立 iOS surface
   binding -> `moui_skia_renderer` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
 - HarmonyOS 嵌入运行时路线（`committed`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition，通过
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> 共享 embedded-host kernel ->
   `EventLoop` -> 中立 HarmonyOS
   surface binding -> `moui_skia_renderer` -> `moui_skia`。
   Native XComponent callbacks 是 surface、pointer、resize 和 detach events 的唯一来源。
 - Native WGPU route：shared app package -> platform `*_wgpu` entrypoint ->
-  `@runtime.run_app(...).render(@render_wgpu.native(...)).backend(@platform.entry())`
+  `@apphost.run_app(...).render(@render_wgpu.native(...)).backend(@platform.entry())`
   -> `moui_wgpu_renderer`。这是实验性且诊断性的路线，不是默认主线。
 
 平台入口应保持很薄：创建 program/runtime，通过 AppBuilder 组合 backend 与 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。

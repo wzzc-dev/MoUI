@@ -181,3 +181,25 @@ test "wrapping and carets stay on grapheme boundaries" {
   )
   assert_true(caret.origin.x >= text_frame.origin.x)
 }
+
+///|
+test "text area paragraph reuses its owner cache" {
+  let calls = Ref(0)
+  let cache = @render_common.TextParagraphCache::new()
+  let fallback = @core.TextSystem::fallback()
+  let text_system = @core.TextSystem::new(
+    id="text-area-cache-test",
+    measure=input => fallback.measure_text(input),
+    paragraph_layout=Some(input => {
+      cache.layout_paragraph("text-area-cache-test", input, input => {
+        calls.val = calls.val + 1
+        fallback.layout_paragraph(input)
+      })
+    }),
+  )
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
+  let font = @core.FontSpec::new(size=14.0)
+  ignore(text_area_paragraph(text_system, "one two three", font, frame))
+  ignore(text_area_paragraph(text_system, "one two three", font, frame))
+  inspect(calls.val, content="1")
+}

@@ -5,3 +5,7 @@ import {
   "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/style",
 }
+
+import {
+  "wzzc-dev/moui/render/common" @render_common,
+} for "wbtest"

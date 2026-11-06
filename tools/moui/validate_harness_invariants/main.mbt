@@ -735,7 +735,7 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
       // The composition root delegates lifecycle ownership to the platform
       // backend entry. The concrete ApplicationHandler/EventLoop remains in
       // the backend package and must not be duplicated in every app.
-      let has_composition = body.contains("@runtime.run_app(") &&
+      let has_composition = body.contains("@apphost.run_app(") &&
         (body.contains(".render(") || body.contains(".render_all("))
       let has_backend_entry = body.contains(".backend(") &&
         body.contains(".entry(") &&

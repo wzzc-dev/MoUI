@@ -4,7 +4,7 @@
 /// remain blocked on the old generation.
 pub fn EmbeddedRuntimeHostBridge::dispose(
   self : EmbeddedRuntimeHostBridge,
-  driver? : @runtime.HostRuntimeDriver,
+  driver? : @apphost.HostRuntimeDriver,
   reason~ : String = "embedded runtime host channel disposed",
 ) -> Unit {
   if !self.disposed {

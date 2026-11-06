@@ -33,6 +33,7 @@ pub struct SunRasterRenderer {
   unsupported_command_diagnostics : Array[SunUnsupportedCommandDiagnostic]
   mut last_frame : SunPixelFrame?
   text_system : @sun_text.TextSystem
+  text_paragraph_cache : @render_common.TextParagraphCache
   resources : @sun_renderer.RendererResources
   image_lifecycle : @render_common.ImageResourceLifecycle
   async_image_loading : Bool
@@ -104,6 +105,7 @@ pub fn create_with_present_target(
     unsupported_command_diagnostics: [],
     last_frame: None,
     text_system: @sun_text.TextSystem::with_font_cache_capacity(64),
+    text_paragraph_cache: @render_common.TextParagraphCache::new(),
     resources: @sun_renderer.RendererResources::with_font_capacity(
       1024, 1024, 64, 256, 256, 128,
     ),
@@ -208,9 +210,16 @@ pub fn SunRasterRenderer::text_system(
   @core.TextSystem::new(
     id="sun-raster-text-system",
     measure=input => self.measure_text_layout(input),
-    paragraph_layout=Some(input => self.paragraph_layout_result(input)),
+    paragraph_layout=Some(input => {
+      self.text_paragraph_cache.layout_paragraph(
+        "sun-raster-text-system",
+        input,
+        input => self.paragraph_layout_result(input),
+      )
+    }),
     register_font_data=(family, data) => {
       self.register_font_family_data(family, data)
+      self.text_paragraph_cache.register_font_data()
     },
   )
 }

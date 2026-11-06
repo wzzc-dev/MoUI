@@ -48,6 +48,7 @@ pub(all) struct Canvas2DRenderer {
   mut logical_height : Double
   mut scale_factor : Double
   mut disposed : Bool
+  // private fields
 }
 pub fn Canvas2DRenderer::dispose(Self) -> Unit
 pub fn Canvas2DRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]

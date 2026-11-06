@@ -5,6 +5,7 @@ import {
 import {
   "wzzc-dev/moui/views",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/render",
 } for "test"

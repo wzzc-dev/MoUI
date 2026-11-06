@@ -77,11 +77,6 @@ pub struct NativeRasterGlyph {
 }
 
 ///|
-fn NativeTextEngine::id(self : NativeTextEngine) -> String {
-  self.provider.id
-}
-
-///|
 pub fn NativeTextEngine::provider_id(self : NativeTextEngine) -> String {
   self.provider.id
 }

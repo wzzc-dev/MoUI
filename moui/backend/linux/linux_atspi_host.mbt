@@ -398,7 +398,7 @@ fn linux_atspi_native_semantics_action(
 ///|
 fn linux_atspi_decode_action(
   bytes : Bytes,
-) -> @runtime.PerformSemanticsActionRequest? {
+) -> @apphost.PerformSemanticsActionRequest? {
   if bytes.length() == 0 {
     return None
   }
@@ -428,7 +428,7 @@ fn linux_atspi_decode_action(
 fn LinuxNativeHostBackend::dispatch_atspi_actions(
   _self : LinuxNativeHostBackend,
   window_id : @host.WindowId,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Unit {
   for ;; {
     let bytes = linux_atspi_take_action_native(window_id.value.to_uint64())

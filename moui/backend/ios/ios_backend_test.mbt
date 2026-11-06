@@ -57,7 +57,7 @@ test "ios runtime session renders through supplied surface binding" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=120.0, height=80.0),
   )
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )

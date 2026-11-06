@@ -6,6 +6,7 @@ pub fn mobile_entrypoint_pkg_text(
   let template =
     #|import {
     #|  "wzzc-dev/moui/runtime",
+    #|  "wzzc-dev/moui/apphost",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
     #|  "wzzc-dev/moui_skia_renderer" @render_skia,
     #|  "__MODULE__/app" @app,
@@ -40,7 +41,7 @@ pub fn mobile_entrypoint_main_text(platform : String) -> String {
     #|    width=320.0,
     #|    height=640.0,
     #|  )
-    #|  @runtime.run_app("MoUI app (window-hosted)", runtime)
+    #|  @apphost.run_app("MoUI app (window-hosted)", runtime)
     #|    .render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::__SKIA_PLATFORM__))
     #|    .backend(@platform_host.entry())
     #|    .run()

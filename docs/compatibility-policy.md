@@ -13,6 +13,22 @@ public APIs, package boundaries, or host wire contracts. During the `0.x` line,
 a minor release can still contain a breaking change, but it must ship an
 upgrade note and a migration example in the same release.
 
+A patch release that needs a public symbol, package boundary, host wire
+contract, or app-import change is out of scope. Move the change to the next
+minor; no patch exception ledger is maintained.
+
+## 0.4.0 Architecture Program
+
+`0.4.0` is a declared breaking architecture program on the normal `0.x` minor
+path: the pre-1 policy permits breaking changes when the release ships an
+upgrade note and migration examples. No SemVer exception is recorded for this
+program. The release still moves the synchronized line and every public module
+to `0.4.x` together, and it still passes the external consumer gate.
+
+The program does not keep a compatibility layer. Moved public symbols are
+removed from their old package in the same release; in-tree call sites and the
+external consumer fixture move with them.
+
 ## Deprecation
 
 An API deprecation records its replacement, the release where the notice began,

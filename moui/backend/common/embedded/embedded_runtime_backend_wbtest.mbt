@@ -19,7 +19,7 @@ test "embedded runtime routes ctrl+c and ctrl+v through the clipboard service" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let runtime = @runtime.AppRuntime::new_program(
+  let runtime = @apphost.AppRuntime::new_program(
     program=@core.Program::simple(
       init=text.val,
       update=(_model, next) => {
@@ -111,7 +111,7 @@ test "embedded runtime ctrl sequence with modifier events reaches clipboard" {
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let runtime = @runtime.AppRuntime::new_program(
+  let runtime = @apphost.AppRuntime::new_program(
     program=@core.Program::simple(
       init=text.val,
       update=(_model, next) => {

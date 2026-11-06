@@ -163,7 +163,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.3.2",
+      #|  "mouiVersion": "0.4.0",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -193,7 +193,7 @@ test "default macOS project file plan is exact" {
   assert_true(web_pkg.contains("@webgpu_adapter"))
   assert_true(web_pkg.contains("web_dispatch_pointer_input"))
   let web_main = test_planned_text(files, "web_wasm/main.mbt")
-  assert_true(web_main.contains("@runtime.run_app"))
+  assert_true(web_main.contains("@apphost.run_app"))
   assert_true(web_main.contains(".render_all(@webgpu_adapter.from_env())"))
   assert_true(web_main.contains(".backend(@web.entry())"))
   assert_true(web_main.contains("pub fn web_dispatch_pointer_input"))
@@ -220,8 +220,9 @@ test "default macOS project file plan is exact" {
   assert_true(desktop_pkg.contains("wzzc-dev/moui/backend/macos"))
   assert_true(desktop_pkg.contains("wzzc-dev/moui_skia_renderer"))
   assert_true(desktop_pkg.contains("wzzc-dev/moui/runtime"))
+  assert_true(desktop_pkg.contains("wzzc-dev/moui/apphost"))
   assert_false(desktop_pkg.contains("wzzc-dev/moui/backend/macos/"))
-  assert_true(desktop_main.contains("@runtime.run_app"))
+  assert_true(desktop_main.contains("@apphost.run_app"))
   assert_true(
     desktop_main.contains(
       ".render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS))",
@@ -265,6 +266,7 @@ test "mobile config contains window-hosted platform defaults" {
       platform + "_window_hosted/main.mbt",
     )
     inspect(package_text.contains("wzzc-dev/moui/runtime"), content="true")
+    inspect(package_text.contains("wzzc-dev/moui/apphost"), content="true")
     inspect(
       package_text.contains("wzzc-dev/moui/backend/" + platform),
       content="true",
@@ -277,7 +279,7 @@ test "mobile config contains window-hosted platform defaults" {
       package_text.contains("wzzc-dev/moui/backend/" + platform + "/"),
       content="false",
     )
-    inspect(main_text.contains("@runtime.run_app"), content="true")
+    inspect(main_text.contains("@apphost.run_app"), content="true")
     inspect(
       main_text.contains(".render_all(@render_skia.from_env(platform="),
       content="true",

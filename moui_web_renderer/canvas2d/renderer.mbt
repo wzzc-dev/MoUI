@@ -12,6 +12,7 @@ pub(all) struct Canvas2DRenderer {
   mut logical_height : Double
   mut scale_factor : Double
   mut disposed : Bool
+  priv text_paragraph_cache : @render_common.TextParagraphCache
 }
 
 ///|
@@ -22,6 +23,7 @@ pub fn Canvas2DRenderer::new(canvas_id~ : String) -> Canvas2DRenderer {
     logical_height: 0.0,
     scale_factor: 1.0,
     disposed: false,
+    text_paragraph_cache: @render_common.TextParagraphCache::new(),
   }
 }
 
@@ -100,11 +102,23 @@ pub fn Canvas2DRenderer::render_frame(
 
 ///|
 pub fn Canvas2DRenderer::text_system(
-  _self : Canvas2DRenderer,
+  self : Canvas2DRenderer,
 ) -> @core.TextSystem {
   @core.TextSystem::new(
     id="canvas2d-text-system",
     measure=canvas2d_measure_text_impl,
+    paragraph_layout=Some(input => {
+      self.text_paragraph_cache.layout_paragraph(
+        "canvas2d-text-system",
+        input,
+        input => {
+          @core.TextSystem::new(
+            id="canvas2d-text-system",
+            measure=canvas2d_measure_text_impl,
+          ).layout_paragraph(input)
+        },
+      )
+    }),
   )
 }
 

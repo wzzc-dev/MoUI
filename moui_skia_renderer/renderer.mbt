@@ -39,6 +39,20 @@ pub struct SkiaUnsupportedCommandDiagnostic {
 }
 
 ///|
+pub fn SkiaUnsupportedCommandDiagnostic::command(
+  self : SkiaUnsupportedCommandDiagnostic,
+) -> String {
+  self.command
+}
+
+///|
+pub fn SkiaUnsupportedCommandDiagnostic::reason(
+  self : SkiaUnsupportedCommandDiagnostic,
+) -> String {
+  self.reason
+}
+
+///|
 pub extend SkiaUnsupportedCommandDiagnostic with Debug::{to_repr}
 
 ///|
@@ -62,20 +76,6 @@ pub extend SkiaFontResolution with Eq::{not_equal, equal}
 
 ///|
 pub extend SkiaFontResolution with ToJson::{to_json}
-
-///|
-pub fn SkiaUnsupportedCommandDiagnostic::command(
-  self : SkiaUnsupportedCommandDiagnostic,
-) -> String {
-  self.command
-}
-
-///|
-pub fn SkiaUnsupportedCommandDiagnostic::reason(
-  self : SkiaUnsupportedCommandDiagnostic,
-) -> String {
-  self.reason
-}
 
 ///|
 pub struct SkiaRasterRenderer {
@@ -121,6 +121,7 @@ pub struct SkiaRasterRenderer {
   priv mut platform_view_draw_fn : (() -> Unit)?
   priv mut platform_view_recording_canvas : @skia_native.Canvas?
   priv text_shaping_cache : SkiaTextShapingCache
+  priv text_paragraph_cache : @render_common.TextParagraphCache
   // Per-frame parameter objects reused across frames: the frame stats record
   // and the canvas scope stack are reset (never reallocated) at frame start
   // by draw_frame_to_canvas. The paint memo caches immutable paints by
@@ -273,6 +274,7 @@ pub fn create_with_present_target_and_route(
     platform_view_draw_fn: None,
     platform_view_recording_canvas: None,
     text_shaping_cache: SkiaTextShapingCache::new(),
+    text_paragraph_cache: @render_common.TextParagraphCache::new(),
     frame_stats: SkiaCachedLayerFrameStats::new(),
     frame_canvas_scopes: [],
     paint_memo: [],

@@ -87,6 +87,33 @@
       ]
     },
     {
+      "group": "architecture-api",
+      "slug": "diagnostics",
+      "title": "Diagnostics",
+      "path": "docs/diagnostics.md",
+      "summary": "Shared DiagnosticEvent envelope, caller-owned bounded sink, and the producer/consumer map.",
+      "keywords": [
+        "diagnostics",
+        "DiagnosticEvent",
+        "observability",
+        "degrade"
+      ]
+    },
+    {
+      "group": "architecture-api",
+      "slug": "task-lifecycle",
+      "title": "Task Lifecycle",
+      "path": "docs/task-lifecycle.md",
+      "summary": "Ownership, cancellation, and teardown order for effects, subscriptions, service tasks, image requests, and renderer sessions.",
+      "keywords": [
+        "task",
+        "cancellation",
+        "lifecycle",
+        "effects",
+        "subscriptions"
+      ]
+    },
+    {
       "group": "get-started",
       "slug": "tutorials",
       "title": "Tutorials",
@@ -635,6 +662,19 @@
         "readiness",
         "gates",
         "artifacts"
+      ]
+    },
+    {
+      "group": "status-roadmap",
+      "slug": "compatibility-matrix",
+      "title": "Compatibility Matrix",
+      "path": "docs/compatibility-matrix.md",
+      "summary": "0.4.x module intents, release stages, and exact base pins.",
+      "keywords": [
+        "compatibility",
+        "release line",
+        "modules",
+        "pins"
       ]
     },
     {
@@ -1224,6 +1264,33 @@
         },
         {
           "group": "architecture-api",
+          "slug": "diagnostics",
+          "title": "诊断",
+          "summary": "共享 DiagnosticEvent 信封、调用方拥有的有界 sink，以及生产者/消费者映射。",
+          "keywords": [
+            "诊断",
+            "DiagnosticEvent",
+            "可观测性",
+            "降级"
+          ],
+          "localizedPath": "docs/zh-Hans/diagnostics.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "task-lifecycle",
+          "title": "任务生命周期",
+          "summary": "Effect、Subscription、ServiceTask、image request 与 renderer session 的所有权、取消与 teardown 顺序。",
+          "keywords": [
+            "任务",
+            "取消",
+            "生命周期",
+            "Effect",
+            "Subscription"
+          ],
+          "localizedPath": "docs/zh-Hans/task-lifecycle.md"
+        },
+        {
+          "group": "architecture-api",
           "slug": "architecture-map",
           "title": "架构地图",
           "summary": "MoUI 架构地图的公开文档。",
@@ -1330,6 +1397,19 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/release-readiness.md"
+        },
+        {
+          "group": "status-roadmap",
+          "slug": "compatibility-matrix",
+          "title": "兼容矩阵",
+          "summary": "0.4.x 模块 intent、发布阶段与精确基础 pin。",
+          "keywords": [
+            "兼容",
+            "发布线",
+            "模块",
+            "pin"
+          ],
+          "localizedPath": "docs/zh-Hans/compatibility-matrix.md"
         },
         {
           "group": "contributing",

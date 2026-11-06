@@ -70,9 +70,12 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0052 | [Feature scope identity namespaces lifecycle keys](0052-feature-scope-lifecycle-identity.md) | 2026-11-05 | Accepted |
 | 0053 | [Component state remains Feature-first](0053-feature-first-component-state-boundary.md) | 2026-11-05 | Accepted |
 | 0054 | [Pointer gesture arbitration stays in transient runtime state](0054-pointer-gesture-arena.md) | 2026-11-05 | Accepted |
-| 0055 | [The 0.3.x release line is synchronized](0055-synchronized-release-line.md) | 2026-11-05 | Accepted |
+| 0055 | [The 0.3.x release line is synchronized](0055-synchronized-release-line.md) | 2026-11-05 | Superseded by 0065 |
 | 0056 | [Devtools trace is caller-owned, sampled, and bounded](0056-bounded-read-only-devtools-trace.md) | 2026-11-05 | Accepted |
 | 0057 | [Multi-entry view construction uses explicit builder and content keys](0057-explicit-builder-cache.md) | 2026-11-05 | Accepted |
 | 0058 | [`View::map` keeps the recursive typed adapter](0058-recursive-view-map-boundary.md) | 2026-11-05 | Accepted |
+| 0059 | [Host orchestration moves to `moui/apphost`](0059-apphost-orchestration-seam.md) | 2026-11-06 | Accepted |
+| 0064 | [First-class AppShell is deferred beyond 0.4.0](0064-appshell-deferred.md) | 2026-11-06 | Accepted |
+| 0065 | [The 0.4.x release line is synchronized](0065-zero-four-release-line.md) | 2026-11-06 | Accepted |
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

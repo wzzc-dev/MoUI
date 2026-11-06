@@ -79,6 +79,7 @@ pub struct AppServices {
   appearance_value : AppearanceServices
   menus_value : MenuServices
   platform_value : PlatformServices
+  priv extensions_value : Map[String, ServiceExtension]
 }
 
 ///|
@@ -262,7 +263,12 @@ pub fn AppServices::new(
   appearance~ : AppearanceServices = AppearanceServices::new(),
   menus~ : MenuServices = MenuServices::new(),
   platform~ : PlatformServices = PlatformServices::unavailable(),
+  extensions~ : Array[ServiceExtension] = [],
 ) -> AppServices {
+  let extension_map : Map[String, ServiceExtension] = Map([])
+  for extension in extensions {
+    extension_map[extension.id()] = extension
+  }
   {
     files_value: files,
     clipboard_value: clipboard,
@@ -271,6 +277,7 @@ pub fn AppServices::new(
     appearance_value: appearance,
     menus_value: menus,
     platform_value: platform,
+    extensions_value: extension_map,
   }
 }
 
@@ -312,4 +319,34 @@ pub fn AppServices::menus(self : AppServices) -> MenuServices {
 ///|
 pub fn AppServices::platform(self : AppServices) -> PlatformServices {
   self.platform_value
+}
+
+///|
+pub fn AppServices::extension(
+  self : AppServices,
+  id : String,
+) -> ServiceExtension? {
+  self.extensions_value.get(id)
+}
+
+///|
+pub fn AppServices::extensions(self : AppServices) -> Array[ServiceExtension] {
+  let values : Array[ServiceExtension] = []
+  for _id, extension in self.extensions_value {
+    values.push(extension)
+  }
+  values
+}
+
+///|
+/// Capability labels for the registered extensions. Apps/hosts can merge these
+/// with the built-in labels instead of maintaining a second hand-written list.
+pub fn AppServices::extension_capability_labels(
+  self : AppServices,
+) -> Array[String] {
+  let labels : Array[String] = []
+  for _id, extension in self.extensions_value {
+    labels.push(extension.capability_label())
+  }
+  labels
 }

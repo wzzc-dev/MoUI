@@ -1,8 +1,10 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
 }
 
 import {
+  "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/render/common" @render_common,
 } for "test"
 

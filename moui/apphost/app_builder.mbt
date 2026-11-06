@@ -5,6 +5,7 @@ pub struct AppLaunchRequest {
   runtime : AppRuntime
   renderer_providers : Array[@render.RendererProvider]
   window_requests : @backend_host.WindowRequests
+  capability_policy : @render_common.RendererCapabilityPolicy?
 }
 
 ///|
@@ -29,6 +30,13 @@ pub fn AppLaunchRequest::window_requests(
   self : AppLaunchRequest,
 ) -> @backend_host.WindowRequests {
   self.window_requests
+}
+
+///|
+pub fn AppLaunchRequest::capability_policy(
+  self : AppLaunchRequest,
+) -> @render_common.RendererCapabilityPolicy? {
+  self.capability_policy
 }
 
 ///|
@@ -81,6 +89,7 @@ pub struct AppBuilder {
   renderer_providers : Array[@render.RendererProvider]
   backend : PlatformEntry?
   window_requests : @backend_host.WindowRequests
+  capability_policy : @render_common.RendererCapabilityPolicy?
 }
 
 ///|
@@ -91,6 +100,7 @@ pub fn run_app(title : String, runtime : AppRuntime) -> AppBuilder {
     renderer_providers: [],
     backend: None,
     window_requests: @backend_host.WindowRequests::unavailable(),
+    capability_policy: None,
   }
 }
 
@@ -133,20 +143,66 @@ pub fn AppBuilder::window_requests(
 }
 
 ///|
+pub fn AppBuilder::capability_policy(
+  self : AppBuilder,
+  policy : @render_common.RendererCapabilityPolicy,
+) -> AppBuilder {
+  { ..self, capability_policy: Some(policy), }
+}
+
+///|
 pub fn AppBuilder::run(self : AppBuilder) -> Unit {
   if self.renderer_providers.is_empty() {
-    abort("runtime.run_app: at least one renderer provider is required")
+    abort("apphost.run_app: at least one renderer provider is required")
   }
+  validate_renderer_provider_ids(self.renderer_providers)
+  validate_app_builder_capability_policy(self)
   let backend = match self.backend {
     Some(backend) => backend
-    None => abort("runtime.run_app: a platform backend is required")
+    None => abort("apphost.run_app: a platform backend is required")
   }
   backend.launch({
     title: self.title,
     runtime: self.runtime,
     renderer_providers: self.renderer_providers,
     window_requests: self.window_requests,
+    capability_policy: self.capability_policy,
   })
+}
+
+///|
+fn validate_app_builder_capability_policy(builder : AppBuilder) -> Unit {
+  match builder.capability_policy {
+    None => ()
+    Some(policy) => {
+      let plan = @render_common.RendererCapabilityPlan::from_providers(
+        builder.renderer_providers,
+      )
+      let problems = plan.policy_problems(policy)
+      if !problems.is_empty() {
+        for problem in problems {
+          println("apphost capability: " + problem)
+        }
+        if policy.fail_on_missing {
+          abort("apphost.run_app: required renderer capabilities are missing")
+        }
+      }
+    }
+  }
+}
+
+///|
+fn validate_renderer_provider_ids(
+  providers : Array[@render.RendererProvider],
+) -> Unit {
+  let seen : Map[String, Unit] = Map([])
+  for provider in providers {
+    let id = provider.id()
+    if seen.contains(id) {
+      abort("apphost.run_app: duplicate renderer provider id: " + id)
+    }
+    seen[id] = ()
+  }
 }
 
 ///|
@@ -157,11 +213,13 @@ pub async fn AppBuilder::run_async_pump(
   frame_interval_ms~ : Int32 = 8,
 ) -> Unit {
   if self.renderer_providers.is_empty() {
-    abort("runtime.run_app: at least one renderer provider is required")
+    abort("apphost.run_app: at least one renderer provider is required")
   }
+  validate_renderer_provider_ids(self.renderer_providers)
+  validate_app_builder_capability_policy(self)
   let backend = match self.backend {
     Some(backend) => backend
-    None => abort("runtime.run_app: a platform backend is required")
+    None => abort("apphost.run_app: a platform backend is required")
   }
   backend.launch_async_pump(
     {
@@ -169,6 +227,7 @@ pub async fn AppBuilder::run_async_pump(
       runtime: self.runtime,
       renderer_providers: self.renderer_providers,
       window_requests: self.window_requests,
+      capability_policy: self.capability_policy,
     },
     frame_interval_ms,
   )

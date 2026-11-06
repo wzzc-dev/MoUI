@@ -18,8 +18,8 @@ pub extend WebBackendInfo with ToJson::{to_json}
 ///|
 struct WebApp {
   title : String
-  runtime : @runtime.AppRuntime
-  driver : @runtime.HostRuntimeDriver
+  runtime : @apphost.AppRuntime
+  driver : @apphost.HostRuntimeDriver
   services : @window_services.WindowServiceState
   async_services : @window_services.ServiceAsyncQueue
   lifecycle : @window_lifecycle.WindowLifecycle
@@ -58,7 +58,7 @@ let web_active_app : Ref[WebApp?] = Ref(None)
 ///|
 pub(all) struct WebAppOptions {
   scene_resolver : @window_lifecycle.WindowSceneResolver
-  event_sources : @runtime.HostPlatformEventSources?
+  event_sources : @apphost.HostPlatformEventSources?
   route_source : @services.RouteSource?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
@@ -78,7 +78,7 @@ pub fn backend_info() -> WebBackendInfo {
 ///|
 fn run_app_internal(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   renderer_providers : Array[@render.RendererProvider],
   options~ : WebAppOptions,
   window_requests~ : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
@@ -115,7 +115,7 @@ fn run_app_internal(
   let app = WebApp::{
     title,
     runtime,
-    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     services: @window_services.WindowServiceState::new(bridge=services),
     async_services,
     lifecycle,
@@ -131,7 +131,7 @@ fn run_app_internal(
     modifiers: @core.KeyModifiers::none(),
   }
   web_active_app.val = Some(app)
-  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+  @apphost.install_platform_view_plugins(options.platform_view_plugins, (
     _window_ptr,
     id,
     event,
@@ -164,8 +164,8 @@ fn web_environment_with_accessibility_settings(
 ///|
 pub fn entry(
   options~ : WebAppOptions = WebAppOptions::new(),
-) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="web", launch=request => {
+) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(id="web", launch=request => {
     run_app_internal(
       request.title(),
       request.runtime(),
@@ -179,7 +179,7 @@ pub fn entry(
 ///|
 pub fn WebAppOptions::new(
   scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  event_sources~ : @apphost.HostPlatformEventSources? = None,
   route_source~ : @services.RouteSource? = None,
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
 ) -> WebAppOptions {
@@ -306,7 +306,7 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.WindowId) -> Unit {
       self.input,
       window_id,
       render=(renderer, _runtime_slot, submission) => {
-        @runtime.sync_platform_view_plugins(
+        @apphost.sync_platform_view_plugins(
           self.platform_view_plugins,
           window_id.value.to_uint64(),
           submission.frame(),
@@ -452,7 +452,7 @@ fn resolve_web_renderer(
     scale_factor=metrics.scale_factor,
   )
   let surface = @render.HostSurface::new(surface_id~, metrics=renderer_metrics)
-  @render_common.resolve_renderer(providers, surface)
+  @apphost.resolve_renderer_session(providers, surface)
 }
 
 ///|

@@ -6,6 +6,7 @@ pub struct NativeTextCache {
   priv engine : NativeTextEngine
   priv measure_cache : Map[String, @core.TextLayoutResult]
   priv layout_cache : Map[String, NativeTextLayout]
+  priv paragraph_cache : @render_common.TextParagraphCache
 }
 
 ///|
@@ -17,7 +18,12 @@ pub fn NativeTextCache::new() -> NativeTextCache {
 pub fn NativeTextCache::new_with_engine(
   engine : NativeTextEngine,
 ) -> NativeTextCache {
-  { engine, measure_cache: Map([]), layout_cache: Map([]), }
+  {
+    engine,
+    measure_cache: Map([]),
+    layout_cache: Map([]),
+    paragraph_cache: @render_common.TextParagraphCache::new(),
+  }
 }
 
 ///|
@@ -98,6 +104,9 @@ pub fn NativeTextCache::register_font_data(
   data : Bytes,
 ) -> Unit {
   self.engine.register_font_data(family, data)
+  self.measure_cache.clear()
+  self.layout_cache.clear()
+  self.paragraph_cache.register_font_data()
 }
 
 ///|
@@ -224,9 +233,17 @@ pub fn native_text_system_with_engine(
 pub fn native_text_system_with_cache(
   cache : NativeTextCache,
 ) -> @core.TextSystem {
+  let id = cache.engine.provider_id()
   @core.TextSystem::new(
-    id=cache.engine.id(),
+    id~,
     measure=input => cache.measure(input),
+    paragraph_layout=Some(input => {
+      cache.paragraph_cache.layout_paragraph(id, input, input => {
+        @core.TextSystem::new(id~, measure=measure_input => {
+          cache.measure(measure_input)
+        }).layout_paragraph(input)
+      })
+    }),
     register_font_data=(family, data) => cache.register_font_data(family, data),
   )
 }

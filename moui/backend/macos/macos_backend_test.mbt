@@ -33,7 +33,7 @@ test "macos backend host options are constructed through provider runner API" {
 
 ///|
 test "macos accessibility bridge dispatches semantics actions" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.button("Run", on_click=()) : @core.View[Unit]),
     size=@core.Size::new(width=120.0, height=60.0),
   )
@@ -48,7 +48,7 @@ test "macos accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @macos.macos_accessibility_bridge(driver)
@@ -234,11 +234,11 @@ test "macos backend converts resize event to host metrics" {
 
 ///|
 test "macos resize metrics update runtime driver logical size" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.empty() : @core.View[Unit]),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let event = @window_input.window_event_to_host_with_modifiers(

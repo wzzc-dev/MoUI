@@ -26,7 +26,7 @@ pub extend IosEmbeddedRuntimeBackend with @wzzc-dev/window/ios.ApplicationHandle
 ///|
 pub fn IosEmbeddedRuntimeBackend::new(
   title~ : String = "MoUI",
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
   auto_exit_after_frames~ : Int32? = None,
 ) -> IosEmbeddedRuntimeBackend {
@@ -40,8 +40,8 @@ pub fn IosEmbeddedRuntimeBackend::new(
 
 ///|
 /// Application-builder entry for the iOS window-hosted event loop.
-pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="ios", launch=request => {
+pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(id="ios", launch=request => {
     let runtime = request.runtime()
     let app = IosEmbeddedRuntimeBackend::new(
       title=request.title(),
@@ -57,7 +57,7 @@ pub fn entry(auto_exit_after_frames~ : Int32? = None) -> @runtime.PlatformEntry 
 ///|
 fn new_ios_embedded_runtime(
   title~ : String,
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   surface_binding_factory~ : () -> IosSurfaceBinding,
   auto_exit_after_frames~ : Int32?,
 ) -> IosEmbeddedRuntimeBackend {

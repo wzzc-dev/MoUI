@@ -4,7 +4,7 @@ fn main {
     host_summary=@windows_backend.windows_capability_summary(),
     environment=@windows_backend.app_environment(),
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   .render(
     @render_wgpu.native(
       platform=Windows,

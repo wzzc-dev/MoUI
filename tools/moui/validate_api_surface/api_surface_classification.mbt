@@ -105,10 +105,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // makes draw frames carry the committed semantics tree. It sits with the
       // other AppRuntime host controls; the projection itself lives in the
       // terminal renderer.
-      // HostRuntimeDriver::keyboard_command_intent (+1): the platform-facing
-      // "does this chord resolve to a clipboard command" answer, logged by hosted
-      // backends before dispatch so Ctrl+C / Ctrl+V failures can be localized.
-      max_count: 597,
+      // ADR 0059 moved the host pump to moui/apphost; the runtime diagnostic
+      // surface is now the tree/state engine plus semantics DTOs.
+      max_count: 534,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -214,7 +213,7 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantic",
     "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
-    "View", "VisualStyle",
+    "View", "VisualStyle", "TaskScope", "CancelToken",
   ]
 }
 

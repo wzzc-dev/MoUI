@@ -293,22 +293,17 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      // AppBuilder, PlatformEntry, and AppLaunchRequest are the public
-      // application/platform composition contract.
-      // AppRuntime::set_semantics_frames_enabled (TUI output path decision B)
-      // is the host's opt-in for semantics-carrying draw frames, so pixel hosts
-      // never build a payload: +1 line, +1 pub.
-      // HostRuntimeDriver::keyboard_command_intent is the platform-facing answer
-      // to "does this chord resolve to a clipboard command": a hosted backend
-      // logs it before dispatch so a shortcut failure can be localized without
-      // guessing. +1 line, +1 pub.
-      max_lines: 935,
-      max_pub_lines: 597,
-      max_pub_all_lines: 28,
+      // ADR 0059 moved AppBuilder, PlatformEntry, AppLaunchRequest,
+      // HostRuntimeDriver, and the host event adapters to moui/apphost.
+      // Runtime keeps only the tree/state engine plus the semantics DTOs; its
+      // production interface must not import backend, render, or apphost.
+      max_lines: 787,
+      max_pub_lines: 534,
+      max_pub_all_lines: 19,
       required_tokens: [
-        "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
-        "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",
-        "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
+        "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
+        "pub fn[Model, Msg] new_program_with_dimensions(", "pub fn[Msg] new_view(",
+        "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
         "pub fn AppRuntime::set_semantics_frames_enabled(", "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
         "pub fn AppRuntime::read_semantics(", "pub fn AppRuntime::perform_semantics_action(",
@@ -324,8 +319,26 @@ fn package_budgets() -> Array[PackageBudget] {
         "moui_theme", "RuntimeState", "ViewNode", "VirtualNode", "ErasedViewNode",
         "ViewSpec", "pub using @core {type AppRuntime}", "inner : @core.AppRuntime",
         "core_inspector_snapshot", "core_program_runtime_snapshot", "@core.InspectorSnapshot",
-        "@core.ProgramRuntimeSnapshot",
+        "@core.ProgramRuntimeSnapshot", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
+        "\"wzzc-dev/moui/apphost\"",
       ],
+    },
+    {
+      label: "apphost facade",
+      path: "moui/apphost/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/apphost\"",
+      // ADR 0059: the single host orchestration seam. It may know runtime,
+      // backend, and render; runtime/backend/render must not import it.
+      max_lines: 189,
+      max_pub_lines: 99,
+      max_pub_all_lines: 5,
+      required_tokens: [
+        "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/runtime\"", "\"wzzc-dev/moui/backend\"",
+        "\"wzzc-dev/moui/render\"", "pub struct AppBuilder", "pub struct AppLaunchRequest",
+        "pub struct PlatformEntry", "pub fn run_app(", "pub(all) struct HostRuntimeDriver",
+        "pub struct HostPlatformEventSources", "RedrawScheduler",
+      ],
+      forbidden_tokens: ["moui_theme", "RuntimeState", "ViewNode", "ViewSpec"],
     },
     {
       label: "core",
@@ -405,8 +418,8 @@ fn package_budgets() -> Array[PackageBudget] {
       // two keyed constructors, stats getters, manual remove/clear, and the
       // derived equality/debug declarations. It stays advanced core rather
       // than entering the root app facade.
-      max_lines: 2720,
-      max_pub_lines: 1150,
+      max_lines: 2735,
+      max_pub_lines: 1159,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -503,7 +516,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "backend protocols",
       path: "moui/backend/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend\"",
-      max_lines: 701,
+      max_lines: 702,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [
@@ -526,7 +539,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // +2 lines again: RendererBackendKind::NativeDirectGpu and
       // RendererFamily::Metal, the identity a no-Skia host GPU surface needs.
       // +11/+6/+1(all) for SurfaceDamageCapability; default FullSurfaceOnly.
-      max_lines: 653,
+      max_lines: 655,
       max_pub_lines: 285,
       max_pub_all_lines: 32,
       required_tokens: [
@@ -539,6 +552,25 @@ fn package_budgets() -> Array[PackageBudget] {
         "ImageResourceLifecycle", "AsyncImageLoader", "ImageResourceRepaintTracker",
         "RendererFactory", "RendererProviderBinding", "WindowRenderer", "SurfaceDescriptor",
         "SurfaceRoute", "Metal", "HWND", "Wayland", "Vulkan", "EGL", "D3D",
+      ],
+    },
+    {
+      label: "core diagnostics",
+      path: "moui/core/diagnostics/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/core/diagnostics\"",
+      // Leaf envelope shared by runtime/render/backend/devtools. It carries no
+      // core/backend/render imports, so every layer can produce it without a
+      // dependency inversion.
+      max_lines: 69,
+      max_pub_lines: 24,
+      max_pub_all_lines: 3,
+      required_tokens: [
+        "pub(all) enum DiagnosticSeverity", "pub(all) enum DiagnosticDomain", "pub(all) struct DiagnosticEvent",
+        "pub struct DiagnosticSink",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/runtime\"", "\"wzzc-dev/moui/backend\"", "\"wzzc-dev/moui/render\"",
+        "moui_theme",
       ],
     },
     {
@@ -585,7 +617,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // SkiaSurfaceRoute derives Hash (hash/hash_combine) so renderer-side
       // struct-key caches can key routes without string interpolation:
       // +2 lines, +2 pub declarations.
-      max_lines: 293,
+      max_lines: 294,
       max_pub_lines: 167,
       max_pub_all_lines: 7,
       required_tokens: [
@@ -597,7 +629,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "sun renderer",
       path: "moui_sun_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_sun_renderer\"",
-      max_lines: 282,
+      max_lines: 283,
       max_pub_lines: 175,
       max_pub_all_lines: 1,
       required_tokens: [

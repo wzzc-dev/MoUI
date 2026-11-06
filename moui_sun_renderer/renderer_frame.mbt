@@ -6,7 +6,10 @@ pub fn SunRasterRenderer::render_frame(
   self.render_frame_inner(frame) catch {
     err => {
       self.record_unsupported_command("RenderFrame", err.message())
-      @render.RenderFrameResult::new(presented=false)
+      @render.RenderFrameResult::new(
+        presented=false,
+        diagnostics=sun_unsupported_command_events(self),
+      )
     }
   }
 }
@@ -65,7 +68,10 @@ fn SunRasterRenderer::render_frame_inner(
     }
   }
   if !complete {
-    return stats.to_render_frame_result(presented=false)
+    return stats.to_render_frame_result(
+      presented=false,
+      diagnostics=sun_unsupported_command_events(self),
+    )
   }
   match self.platform_view_draw_fn {
     Some(draw_fn) => draw_fn()
@@ -75,8 +81,26 @@ fn SunRasterRenderer::render_frame_inner(
   self.last_frame = Some(sun_frame)
   if (self.target.present)(sun_frame) {
     self.present_count = self.present_count + 1
-    stats.to_render_frame_result(presented=true)
+    stats.to_render_frame_result(
+      presented=true,
+      diagnostics=sun_unsupported_command_events(self),
+    )
   } else {
     raise PresentFailed(self.target.description)
   }
+}
+
+///|
+fn sun_unsupported_command_events(
+  renderer : SunRasterRenderer,
+) -> Array[@diagnostics.DiagnosticEvent] {
+  renderer.unsupported_command_diagnostics.map(diagnostic => {
+    @diagnostics.DiagnosticEvent::new(
+      code="renderer.unsupported_command",
+      severity=@diagnostics.DiagnosticSeverity::Warning,
+      domain=@diagnostics.DiagnosticDomain::Render,
+      message=diagnostic.reason(),
+      source=diagnostic.command(),
+    )
+  })
 }

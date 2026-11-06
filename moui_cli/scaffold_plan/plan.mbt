@@ -329,6 +329,7 @@ pub fn web_pkg_text(
     #|  "wzzc-dev/moui/backend/web",
     #|  "wzzc-dev/moui_web_renderer" @webgpu_adapter,
     #|  "wzzc-dev/moui/runtime",
+    #|  "wzzc-dev/moui/apphost",
     #|  "__MODULE__/app" @__APP_ALIAS__,
     #|}
     #|
@@ -365,7 +366,7 @@ pub fn web_main_text(title : String) -> String {
     #|    width=720.0,
     #|    height=480.0,
     #|  )
-    #|  @runtime.run_app("__TITLE__", runtime)
+    #|  @apphost.run_app("__TITLE__", runtime)
     #|    .render_all(@webgpu_adapter.from_env())
     #|    .backend(@web.entry())
     #|    .run()
@@ -413,6 +414,7 @@ pub fn desktop_pkg_text(module_name : String, platform : String) -> String {
   let template =
     #|import {
     #|  "wzzc-dev/moui/runtime",
+    #|  "wzzc-dev/moui/apphost",
     #|  "wzzc-dev/moui/backend/__PLATFORM__" @platform_host,
     #|  "wzzc-dev/moui_skia_renderer" @render_skia,
     #|  "__MODULE__/app" @app,
@@ -448,7 +450,7 @@ pub fn desktop_main_text(title : String, platform : String) -> String {
     #|    width=720.0,
     #|    height=480.0,
     #|  )
-    #|  @runtime.run_app("__TITLE__", runtime)
+    #|  @apphost.run_app("__TITLE__", runtime)
     #|    .render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::__SKIA_PLATFORM__))
     #|    .backend(@platform_host.entry())
     #|    .run()

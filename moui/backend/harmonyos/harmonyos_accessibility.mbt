@@ -180,7 +180,7 @@ pub fn harmonyos_accessibility_register() -> Bool {
 /// snapshot carries a tree; `Delta`/`Unchanged` publish an empty projection so
 /// ArkUI falls back to the previous node ids it already cached.
 pub fn harmonyos_accessibility_project(
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> AccessibilityProjection {
   match read {
     Full(snapshot) => {
@@ -330,7 +330,7 @@ extern "C" fn harmonyos_int32_address(array : FixedArray[Int32]) -> UInt64 = "mb
 /// the runtime rejects the action when the tree moved on, which is the same
 /// precondition macOS uses.
 pub fn harmonyos_accessibility_handle_action(
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
   element_id : Int64,
   action : Int32,
   generation : UInt64,
@@ -343,7 +343,7 @@ pub fn harmonyos_accessibility_handle_action(
   match kind {
     None => false
     Some(action) => {
-      let request : @runtime.PerformSemanticsActionRequest = {
+      let request : @apphost.PerformSemanticsActionRequest = {
         target: ByNodeId(
           @core.SemanticsNodeId::new(element_id.reinterpret_as_uint64()),
         ),

@@ -21,7 +21,7 @@ test "ios window-hosted host-sim creates session and presents" {
   let app = new_ios_embedded_runtime(
     title="window-hosted-test",
     runtime_factory=metrics => {
-      let runtime = @runtime.AppRuntime::new_view(
+      let runtime = @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )

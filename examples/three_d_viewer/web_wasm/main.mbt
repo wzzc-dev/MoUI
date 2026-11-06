@@ -8,7 +8,7 @@ fn main {
     viewport_host,
     unavailable_reason="WebGPU host imports or adapter are unavailable",
   )
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI 3D Viewer",
     @runtime.new_program_with_dimensions(
       program=@viewer_app.program_with_binding(

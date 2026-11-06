@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Backend/common owner packages, allowed dependency direction, and renderer-neutral root surface invariants. The `wzzc-dev/moui/runtime` imports inside backend/common are allowlisted per package: requiredImports pin the current importers (common root, lifecycle, input, embedded), forbiddenImports fail any new one. Adding an entry is a structure trigger requiring the HostRuntimeDriver seam review — see docs/golden-principles.md (structure triggers).",
+  "description": "Backend/common owner packages, allowed dependency direction, and renderer-neutral root surface invariants. ADR 0059 moved the host pump to `moui/apphost`: backend/common imports apphost for AppRuntime/HostRuntimeDriver and must not import `moui/runtime` directly. The apphost import is required for common root/lifecycle/input/embedded; runtime is forbidden for every backend/common owner. See docs/decisions/0059-apphost-orchestration-seam.md and docs/golden-principles.md (structure trigger 19).",
   "packageRules": [
     {
       "path": "moui/backend",
@@ -10,7 +10,8 @@
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/runtime",
-        "wzzc-dev/moui/render"
+        "wzzc-dev/moui/render",
+        "wzzc-dev/moui/apphost"
       ]
     },
     {
@@ -51,14 +52,15 @@
       ],
       "requiredImports": [
         "wzzc-dev/moui/backend",
-        "wzzc-dev/moui/runtime",
+        "wzzc-dev/moui/apphost",
         "wzzc-dev/moui/backend/common/input"
       ],
       "forbiddenImports": [
         "wzzc-dev/moui/backend/common",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/image",
-        "wzzc-dev/moui/backend/common/services"
+        "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/runtime"
       ]
     },
     {
@@ -108,7 +110,7 @@
       ],
       "requiredImports": [
         "wzzc-dev/moui/core",
-        "wzzc-dev/moui/runtime",
+        "wzzc-dev/moui/apphost",
         "wzzc-dev/moui/backend"
       ],
       "forbiddenImports": [
@@ -116,7 +118,8 @@
         "wzzc-dev/moui/backend/common/lifecycle",
         "wzzc-dev/moui/backend/common/frame",
         "wzzc-dev/moui/backend/common/image",
-        "wzzc-dev/moui/backend/common/services"
+        "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/runtime"
       ]
     },
     {
@@ -151,6 +154,9 @@
         "wzzc-dev/moui/backend/common/image",
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services",
+        "wzzc-dev/moui/apphost"
+      ],
+      "forbiddenImports": [
         "wzzc-dev/moui/runtime"
       ],
       "forbiddenSourceTokens": [
@@ -168,10 +174,11 @@
         "wzzc-dev/moui/backend/common/input",
         "wzzc-dev/moui/backend/common/services/embedded",
         "wzzc-dev/moui/backend/common/image/native",
-        "wzzc-dev/moui/runtime"
+        "wzzc-dev/moui/apphost"
       ],
       "forbiddenImports": [
-        "wzzc-dev/moui/backend/common"
+        "wzzc-dev/moui/backend/common",
+        "wzzc-dev/moui/runtime"
       ],
       "requiredSourceTokens": [
         "@window_input.transform_cross_platform_event"

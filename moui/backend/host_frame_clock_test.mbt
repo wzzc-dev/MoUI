@@ -16,7 +16,7 @@ test "host frame clock advances the paint clock in real time" {
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let now = Ref(1000.0)
-  let driver = @runtime.HostRuntimeDriver::new(
+  let driver = @apphost.HostRuntimeDriver::new(
     runtime~,
     schedule_redraw=() => (),
     frame_clock=Some(() => now.val),
@@ -46,7 +46,7 @@ test "host driver without a frame clock keeps the synthetic step" {
     root=view,
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   driver.begin_redraw()

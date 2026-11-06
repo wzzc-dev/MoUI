@@ -20,7 +20,7 @@ fn main {
     ),
     initial_section_code=showcase_initial_section_code(),
   )
-  @runtime.run_app("MoUI Showcase Wasm Host", runtime)
+  @apphost.run_app("MoUI Showcase Wasm Host", runtime)
   .render_all(providers)
   .backend(
     @web.entry(options=@web.WebAppOptions::new(route_source=Some(routes))),

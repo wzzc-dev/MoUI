@@ -5,10 +5,10 @@
 
 Root `backend` defines platform-neutral protocols and DTOs: input capabilities,
 coordinate policies, `Event`, `WindowId`, window requests, services, IME,
-accessibility, and platform views. `SurfaceMetrics` lives in `core`. Per ADR 0018,
-`HostRuntimeDriver`, `RedrawScheduler`, and `HostWallClock` live in
-`moui/runtime`; `backend` consumes them as contracts but does not own
-them.
+accessibility, and platform views. `SurfaceMetrics` lives in `core`. Per ADR
+0059, `HostRuntimeDriver` and `RedrawScheduler` live in `moui/apphost`;
+`HostWallClock` stays in `moui/runtime`. `backend/common` imports `apphost` for
+the host pump and does not import `moui/runtime` directly.
 
 `backend/common` implements the contract. It owns `WindowRegistry`,
 `WindowRequestQueue`, the unique platform-window map, lifecycle/frame/input
@@ -112,7 +112,7 @@ platform-local loop.
 `WindowCommands` is the higher-level command facade over the same queue for
 app-facing open/focus/resize/minimize/show/close helpers and shared draining
 into a registry or window runtime slots.
-Every application entrypoint calls `@runtime.run_app`, supplies ordered
+Every application entrypoint calls `@apphost.run_app`, supplies ordered
 `RendererProvider` values, supplies one platform `entry`, and calls
 `run`. Renderer-specific options and native-handle policy are captured by
 renderer providers; platform-

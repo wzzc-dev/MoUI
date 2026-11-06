@@ -287,6 +287,7 @@ pub fn create_renderer(
     last_fallback_plan: @render_common.plan_renderer_command_fallbacks([]),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     layer_cache: WebGpuLayerCommandCache::new(),
+    text_paragraph_cache: @render_common.TextParagraphCache::new(),
   }
 }
 
@@ -357,8 +358,16 @@ pub fn WebGpuWasmRenderer::text_system(
   @core.TextSystem::new(
     id="webgpu-wasm-host",
     measure=input => self.port.measure_text(input),
+    paragraph_layout=Some(input => {
+      self.text_paragraph_cache.layout_paragraph("webgpu-wasm-host", input, input => {
+        @core.TextSystem::new(id="webgpu-wasm-host", measure=measure_input => {
+          self.port.measure_text(measure_input)
+        }).layout_paragraph(input)
+      })
+    }),
     register_font_data=(family, data) => {
       self.port.register_font_data(family, data)
+      self.text_paragraph_cache.register_font_data()
     },
   )
 }

@@ -1,6 +1,6 @@
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/backend/common/lifecycle" @window_lifecycle,
   "wzzc-dev/moui/backend/common/frame" @window_frame,
@@ -9,7 +9,6 @@ import {
   "wzzc-dev/moui/backend/common/services/embedded" @host_services_embedded,
   "wzzc-dev/moui/backend/common/image/native" @host_image_native,
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "moonbitlang/core/json",

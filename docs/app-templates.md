@@ -146,7 +146,7 @@ fn main {
     width=520.0,
     height=360.0,
   )
-  @runtime.run_app("MoUI Counter", runtime)
+  @apphost.run_app("MoUI Counter", runtime)
     .render_all(@webgpu_adapter.from_env())
     .backend(@web.entry())
     .run()

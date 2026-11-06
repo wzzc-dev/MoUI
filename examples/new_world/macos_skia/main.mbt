@@ -200,7 +200,7 @@ async fn run_new_world() -> Unit {
       width=1200.0,
       height=800.0,
     )
-    @runtime.run_app("MoUI New World", runtime)
+    @apphost.run_app("MoUI New World", runtime)
     .render_all(
       @render_skia.from_env(platform=@render_skia.NativeGpuPlatform::MacOS),
     )

@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @runtime.run_app(
+  @apphost.run_app(
     "Mo Desktop",
     @runtime.new_program_with_dimensions(
       program=@mo_desktop_app.program(

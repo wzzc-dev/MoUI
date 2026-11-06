@@ -138,7 +138,7 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
 
 ///|
 pub fn macos_accessibility_bridge(
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> @accesskit_bridge.AccessKitBridge {
   @accesskit_bridge.AccessKitBridge::driver(diagnostic_name="appkit", driver~)
 }
@@ -300,7 +300,7 @@ pub fn app_environment(
 /// owns both that timing rule and the native shortcut conversion.
 pub fn application_menu_on_ready(
   menus : Array[@services.ApplicationMenu],
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
 ) -> () -> Unit {
   () => {
     let commands = macos_application_menu_commands(menus)
@@ -330,7 +330,7 @@ pub fn application_menu_on_ready(
 
 ///|
 fn dispatch_macos_application_command(
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   command : @core.ActionCommand,
 ) -> Unit {
   let focused_text = runtime.focused_text_input().focused

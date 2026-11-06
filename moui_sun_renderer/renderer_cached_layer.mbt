@@ -242,6 +242,7 @@ fn SunCachedLayerAdmissionRecord::to_diagnostic(
 fn SunCachedLayerFrameStats::to_render_frame_result(
   self : SunCachedLayerFrameStats,
   presented~ : Bool,
+  diagnostics~ : Array[@diagnostics.DiagnosticEvent] = [],
 ) -> @render.RenderFrameResult {
   @render.RenderFrameResult::new(
     presented~,
@@ -249,6 +250,7 @@ fn SunCachedLayerFrameStats::to_render_frame_result(
     cache_miss_count=self.cache_miss_count,
     cache_update_count=self.cache_update_count,
     cache_evict_count=self.cache_evict_count,
+    diagnostics~,
   )
 }
 

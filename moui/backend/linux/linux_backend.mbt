@@ -84,7 +84,7 @@ pub extend LinuxAccessibilityBridgeInfo with ToJson::{to_json}
 ///|
 pub struct LinuxHostAppOptions {
   priv scene_resolver : @window_lifecycle.WindowSceneResolver
-  priv event_sources : @runtime.HostPlatformEventSources?
+  priv event_sources : @apphost.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -151,7 +151,7 @@ pub extend LinuxNativeHostBackend with @wzzc-dev/window/linux.ApplicationHandler
 ///|
 pub fn LinuxHostAppOptions::new(
   scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
-  event_sources~ : @runtime.HostPlatformEventSources? = None,
+  event_sources~ : @apphost.HostPlatformEventSources? = None,
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar~ : Bool = false,
   platform_attributes~ : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),

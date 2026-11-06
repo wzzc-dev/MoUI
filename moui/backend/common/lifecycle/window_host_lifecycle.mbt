@@ -248,7 +248,7 @@ pub fn WindowLifecycle::register_runtime_slot(
 pub fn WindowLifecycle::register_primary_runtime_slot(
   self : WindowLifecycle,
   id : @backend_host.WindowId,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Unit {
   match self.windows.lookup(id) {
     Some(record) =>

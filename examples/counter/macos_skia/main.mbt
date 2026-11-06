@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI Counter",
     @runtime.new_program_with_dimensions(
       program=@counter_app.program(),

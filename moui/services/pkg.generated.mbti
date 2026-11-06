@@ -52,12 +52,16 @@ pub struct AppServices {
   appearance_value : AppearanceServices
   menus_value : MenuServices
   platform_value : PlatformServices
+  // private fields
 }
 pub fn AppServices::appearance(Self) -> AppearanceServices
 pub fn AppServices::clipboard(Self) -> ClipboardServices
+pub fn AppServices::extension(Self, String) -> ServiceExtension?
+pub fn AppServices::extension_capability_labels(Self) -> Array[String]
+pub fn AppServices::extensions(Self) -> Array[ServiceExtension]
 pub fn AppServices::files(Self) -> FileServices
 pub fn AppServices::menus(Self) -> MenuServices
-pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices, platform? : PlatformServices) -> Self
+pub fn AppServices::new(files? : FileServices, clipboard? : ClipboardServices, urls? : UrlServices, settings? : SettingsServices, appearance? : AppearanceServices, menus? : MenuServices, platform? : PlatformServices, extensions? : Array[ServiceExtension]) -> Self
 pub fn AppServices::platform(Self) -> PlatformServices
 pub fn AppServices::settings(Self) -> SettingsServices
 pub fn AppServices::unavailable() -> Self
@@ -383,20 +387,34 @@ pub fn ServiceError::to_json(Self) -> @json.Json
 pub fn ServiceError::to_repr(Self) -> @debug.Repr
 pub fn ServiceError::unavailable(String) -> Self
 
+pub struct ServiceExtension {
+  id : String
+  version : String
+  capability_label : String
+  call_fn : (@json.Json) -> ServiceTask[@json.Json]
+}
+pub fn ServiceExtension::call(Self, @json.Json) -> ServiceTask[@json.Json]
+pub fn ServiceExtension::capability_label(Self) -> String
+pub fn ServiceExtension::id(Self) -> String
+pub fn ServiceExtension::new(id~ : String, version? : String, capability_label? : String, call~ : (@json.Json) -> ServiceTask[@json.Json]) -> Self
+pub fn ServiceExtension::unavailable(id~ : String, version? : String, capability_label? : String) -> Self
+pub fn ServiceExtension::version(Self) -> String
+
 pub struct ServiceTask[T] {
   key : String
   label : String
   start_fn : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?
+  scope : @core.TaskScope?
 }
-pub fn[T] ServiceTask::cancelled(key~ : String, label? : String) -> Self[T]
+pub fn[T] ServiceTask::cancelled(key~ : String, label? : String, scope? : @core.TaskScope?) -> Self[T]
 pub fn[T, Msg] ServiceTask::effect(Self[T], map~ : (ServiceTaskResult[T]) -> Msg) -> @core.Effect[Msg]
-pub fn[T] ServiceTask::fail(key~ : String, error~ : ServiceError, label? : String) -> Self[T]
+pub fn[T] ServiceTask::fail(key~ : String, error~ : ServiceError, label? : String, scope? : @core.TaskScope?) -> Self[T]
 pub fn[T] ServiceTask::key(Self[T]) -> String
 pub fn[T] ServiceTask::label(Self[T]) -> String
 pub fn[T, U] ServiceTask::map(Self[T], (T) -> U) -> Self[U]
-pub fn[T] ServiceTask::new(key~ : String, start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?, label? : String) -> Self[T]
+pub fn[T] ServiceTask::new(key~ : String, start~ : ((ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?, label? : String, scope? : @core.TaskScope?) -> Self[T]
 pub fn[T] ServiceTask::start(Self[T], (ServiceTaskResult[T]) -> Unit) -> (() -> Unit)?
-pub fn[T] ServiceTask::succeed(key~ : String, value~ : T, label? : String) -> Self[T]
+pub fn[T] ServiceTask::succeed(key~ : String, value~ : T, label? : String, scope? : @core.TaskScope?) -> Self[T]
 
 #derive(Eq, @debug.Debug)
 pub(all) enum ServiceTaskResult[T] {

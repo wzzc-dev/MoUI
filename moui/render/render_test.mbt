@@ -267,3 +267,18 @@ test "shadow command degrades to layered rect batches" {
   inspect(batches.length(), content="3")
   assert_true(batches[0].color().a > batches[2].color().a)
 }
+
+///|
+test "render frame result carries diagnostic events" {
+  let event = @diagnostics.DiagnosticEvent::new(
+    code="renderer.feature.gap",
+    severity=@diagnostics.DiagnosticSeverity::Warning,
+    domain=@diagnostics.DiagnosticDomain::Render,
+    message="text is partial",
+  )
+  let result = @render.RenderFrameResult::new(presented=true, diagnostics=[
+    event,
+  ])
+  inspect(result.diagnostics.length(), content="1")
+  inspect(result.diagnostics[0].code, content="renderer.feature.gap")
+}

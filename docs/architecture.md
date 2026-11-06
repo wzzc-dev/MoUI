@@ -71,7 +71,7 @@ review trigger, graduation condition, and retirement condition in
 in `checks/platform-matrix.json` and `checks/release-modules.json`.
 
 <!-- BEGIN GENERATED RELEASE COUPLING -->
-Release line **`0.3.x`** uses **`synchronized-line`** coordination. A base-only patch path is **`not-offered`**, and a per-module compatibility matrix is **`deferred`**. Renderers and addons keep their current version unless their own contract changes; they do not receive a forced semantic bump for an unrelated base change. Decision: `docs/decisions/0055-synchronized-release-line.md`. Evidence: checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs.
+Release line **`0.4.x`** uses **`synchronized-line`** coordination. A base-only patch path is **`not-offered`**, and a per-module compatibility matrix is **`deferred`**. Renderers and addons keep their current version unless their own contract changes; they do not receive a forced semantic bump for an unrelated base change. Decision: `docs/decisions/0065-zero-four-release-line.md`. Evidence: checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs.
 <!-- END GENERATED RELEASE COUPLING -->
 
 <!-- BEGIN GENERATED MODULE PORTFOLIO -->
@@ -180,11 +180,11 @@ workspace.
 - Web app route: shared app package -> `examples/<app>/web_wasm` composition ->
   `moui/backend/web` + `moui_web_renderer`.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
   -> neutral platform surface + `moui_skia_renderer` -> `moui_skia`.
 - Android embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/android_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> shared
   `wzzc-dev/window/internal/embedded_dispatch` callback dispatch -> `EventLoop` -> neutral Android
   surface binding -> `moui_skia_renderer` -> `moui_skia`.
@@ -192,7 +192,7 @@ workspace.
   the embedded runtime backend owns runtime/session assembly and rendering.
 - iOS embedded-runtime route (`experimental`): shared app package ->
   `examples/<app>/ios_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> shared embedded-host kernel ->
   `EventLoop` -> neutral iOS surface
   binding -> `moui_skia_renderer` -> `moui_skia`.
@@ -200,7 +200,7 @@ workspace.
   loop only.
 - HarmonyOS embedded-runtime route (`committed`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition via
-  `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
+  `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> shared embedded-host kernel ->
   `EventLoop` -> neutral HarmonyOS
   surface binding -> `moui_skia_renderer` -> `moui_skia`.
@@ -518,8 +518,9 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   intent.
 - Backends normalize platform events into `Event`; they do not own UI
   state or mutate element/render trees directly.
-- `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
-  normalized events into `AppRuntime`, and exposes platform-neutral draw frames
+- `HostRuntimeDriver` (in `moui/apphost`, ADR 0059) owns redraw scheduling at
+  the host boundary, dispatches normalized events into `AppRuntime`, and exposes
+  platform-neutral draw frames
   for renderers. The redraw scheduler tracks `idle`, `scheduled`, `in-frame`,
   and `follow-up` states so repeated host callbacks coalesce and redraw
   requests made during presentation become the next frame.

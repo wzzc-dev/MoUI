@@ -79,8 +79,8 @@ pub(all) struct EmbeddedSemanticsUpdate {
   semantic_focused : @core.SemanticsNodeId?
   nodes : Array[EmbeddedSemanticsNode]
   removed : Array[@core.SemanticsNodeId]
-  issues : Array[@runtime.SemanticsIssue]
-  announcements : Array[@runtime.AccessibilityAnnouncement]
+  issues : Array[@apphost.SemanticsIssue]
+  announcements : Array[@apphost.AccessibilityAnnouncement]
 }
 
 ///|
@@ -134,7 +134,7 @@ pub(all) enum EmbeddedHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
-  Accessibility(@runtime.PerformSemanticsActionRequest)
+  Accessibility(@apphost.PerformSemanticsActionRequest)
   PlatformView(Int32, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 }

@@ -34,6 +34,8 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [custom-control-sdk.md](custom-control-sdk.md) | `canonical` | Package-local `ViewNode` controls, conformance, and migration |
 | [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
 | [tea-program-model.md](tea-program-model.md) | `canonical` | Program / Effect / Subscription model |
+| [task-lifecycle.md](task-lifecycle.md) | `canonical` | Effect/Subscription/ServiceTask/image/GPU ownership, cancellation, and teardown order |
+| [diagnostics.md](diagnostics.md) | `canonical` | DiagnosticEvent envelope, caller-owned sink, and producer/consumer map |
 | [agent-semantics.md](agent-semantics.md) | `canonical` | Committed semantics, generations, typed Agent actions, and MCP surface |
 | [plans/active/native-accessibility.md](plans/active/native-accessibility.md) | `map` | Native accessibility adapters, Probe work graph, and evidence rollout |
 | [plans/active/pointer-input-parity.md](plans/active/pointer-input-parity.md) | `map` | Gesture, touch selection, multi-pointer, scroll rebound and RTL parity work graph |
@@ -75,6 +77,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [showcases.md](showcases.md) | `canonical` | Showcase routes |
 | [app-templates.md](app-templates.md) | `canonical` | Templates |
 | [release-readiness.md](release-readiness.md) | `canonical` | Release gates |
+| [compatibility-matrix.md](compatibility-matrix.md) | `canonical` | 0.4.x module intents and exact base pins |
 | [maintenance.md](maintenance.md) | `canonical` | Baselines and ratchets |
 | [feature-status-dashboard.md](feature-status-dashboard.md) | `canonical` | Feature status overview |
 | [feature-proof-matrix.md](feature-proof-matrix.md) | `canonical` | Proof / evidence matrix |

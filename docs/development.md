@@ -54,7 +54,7 @@ node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 Android, iOS, and HarmonyOS use the embedded runtime backend route. The matching
 `wzzc-dev/window` template owns native lifecycle, surface creation, and input;
 the MoUI `*_window_hosted` entrypoint composes the program, `moui_skia_renderer`
-    providers, and the platform `entry()` through `@runtime.run_app`.
+    providers, and the platform `entry()` through `@apphost.run_app`.
 There is no app-specific native export table or second lifecycle bridge.
 
 Use host-sim checks before invoking platform toolchains:

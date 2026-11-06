@@ -151,7 +151,7 @@ fn LinuxNativeHostBackend::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @runtime.HostRuntimeDriver::new(
+      let driver = @apphost.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )

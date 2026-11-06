@@ -58,7 +58,7 @@ pub fn AndroidHostAppOptions::with_status_bar_immersive(
 ///|
 pub fn AndroidEmbeddedRuntimeBackend::new(
   title~ : String = "MoUI",
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   renderer_providers~ : Array[@render.RendererProvider],
   auto_exit_after_frames~ : Int32? = None,
 ) -> AndroidEmbeddedRuntimeBackend {
@@ -75,8 +75,8 @@ pub fn AndroidEmbeddedRuntimeBackend::new(
 pub fn entry(
   options~ : AndroidHostAppOptions = AndroidHostAppOptions::new(),
   auto_exit_after_frames~ : Int32? = None,
-) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="android", launch=request => {
+) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(id="android", launch=request => {
     ignore(
       android_set_status_bar_immersive(
         if options.status_bar_immersive {
@@ -101,7 +101,7 @@ pub fn entry(
 ///|
 fn new_android_embedded_runtime(
   title~ : String,
-  runtime_factory~ : (@core.SurfaceMetrics) -> @runtime.AppRuntime,
+  runtime_factory~ : (@core.SurfaceMetrics) -> @apphost.AppRuntime,
   surface_binding_factory~ : () -> AndroidSurfaceBinding,
   auto_exit_after_frames~ : Int32?,
 ) -> AndroidEmbeddedRuntimeBackend {

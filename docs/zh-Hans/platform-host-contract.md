@@ -6,8 +6,9 @@
 `backend` 是平台包与平台中立运行时之间的共享边界。它定义
 `SurfaceMetrics`、输入能力、坐标策略、`Event`、文本输入会话同步、
 文件拖放归一化，以及用于平台中立窗口生命周期和多窗口簿记的
-`WindowRegistry`。按 ADR 0018，`HostRuntimeDriver`、`RedrawScheduler`
-和 `HostWallClock` 位于 `moui/runtime`；`backend` 把它们当作契约消费，但不拥有它们。它还暴露 `WindowRequestQueue`，让应用/运行时或更高层宿主代码可以
+`WindowRegistry`。按 ADR 0059，`HostRuntimeDriver` 和 `RedrawScheduler`
+位于 `moui/apphost`；`HostWallClock` 仍位于 `moui/runtime`。`backend/common`
+通过 `apphost` 使用宿主泵，不直接 import `moui/runtime`。它还暴露 `WindowRequestQueue`，让应用/运行时或更高层宿主代码可以
 排队打开、聚焦、关闭、调整大小、最小化、显示和主窗口请求，而无需把这些请求嵌入平台后端。
 `OpenWindow` 请求除了标题和指标，还携带平台中立的场景 id 和负载，因此未来多窗口宿主有足够的
 应用层身份来为新的平台窗口选择运行时/内容。位于 `backend/common/lifecycle` 的 `WindowSceneResolver` 是匹配的共享契约，用于在
@@ -53,7 +54,7 @@ Web、macOS、Windows 和 Linux 应将其原生窗口事件转换为 `Event`，�
 平台本地循环。
 `WindowCommands` 是建立在同一队列之上的更高层命令门面，提供面向应用的打开/聚焦/调整大小/最小化/
 显示/关闭辅助方法，并共享排空到注册表或窗口运行时槽位的逻辑。
-每个应用入口调用 `@runtime.run_app`，提供有序 `RendererProvider` 与一个平台 `entry`，再调用
+每个应用入口调用 `@apphost.run_app`，提供有序 `RendererProvider` 与一个平台 `entry`，再调用
 `run`。渲染器选项和 native handle 解释策略由 provider 捕获，平台选项由 platform entry 捕获。有解析器时，`OpenWindow` 请求把场景解析为新的
 `AppRuntime`，创建另一个平台窗口和不透明 `HostSurface`，由首个接受的 provider 绑定 `RendererSession`，注册逐窗口
 `HostRuntimeDriver`，绑定平台 id，然后通过按窗口索引的槽位路由重绘、事件、上下文菜单、服务完成记录、

@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/host_modal",
@@ -20,9 +21,9 @@ pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppR
 
 pub fn backend_info() -> MacosBackendInfo
 
-pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @runtime.PlatformEntry
+pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @apphost.PlatformEntry
 
-pub fn macos_accessibility_bridge(@runtime.HostRuntimeDriver) -> @accesskit.AccessKitBridge
+pub fn macos_accessibility_bridge(@apphost.HostRuntimeDriver) -> @accesskit.AccessKitBridge
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
@@ -86,7 +87,7 @@ pub struct MacosHostAppOptions {
   // private fields
 }
 pub fn MacosHostAppOptions::dock_icon_path(Self) -> String?
-pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?, window_drag? : @services.WindowDragRegionSource?, dock_icon_path? : String?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?, window_drag? : @services.WindowDragRegionSource?, dock_icon_path? : String?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {

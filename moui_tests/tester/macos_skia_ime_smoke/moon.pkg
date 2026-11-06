@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/macos",
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,

@@ -2,9 +2,9 @@
 
 /// validate-host-import-baseline.mjs
 ///
-/// Enforces ADR 0018: `moui/backend` imports only platform-neutral host
-/// contracts. The package must NOT import `moui/runtime` or `moui/render` in
-/// its production (non-test) import section.
+/// Enforces ADR 0018 + ADR 0059: `moui/backend` imports only platform-neutral
+/// host contracts. The package must NOT import `moui/runtime`, `moui/render`,
+/// or `moui/apphost` in its production (non-test) import section.
 ///
 /// Mechanizable: scans `moui/backend/moon.pkg` for forbidden dependency
 /// lines in the production import block.
@@ -47,6 +47,7 @@ while ((match = blockRegex.exec(content)) !== null) {
 const forbiddenPatterns = [
   { pattern: /wzzc-dev\/moui\/runtime/, name: "moui/runtime" },
   { pattern: /wzzc-dev\/moui\/render/, name: "moui/render" },
+  { pattern: /wzzc-dev\/moui\/apphost/, name: "moui/apphost" },
 ];
 
 const violations = [];
@@ -64,8 +65,8 @@ if (violations.length > 0) {
     console.error(`  - ${name}`);
   }
   console.error(
-    `\nHost contracts must not depend on runtime or render implementation.` +
-    `\nMove runtime orchestration to moui/runtime and render glue to moui/render.` +
+    `\nHost contracts must not depend on runtime, render, or host orchestration.` +
+    `\nMove runtime orchestration to moui/apphost and render glue to moui/render.` +
     `\nTest-only imports are OK (for "test" / for "wbtest").`,
   );
   process.exit(1);

@@ -117,8 +117,11 @@ fn cell_caret_positions(
 ///|
 /// 等宽 cell 文本系统:让既有 `layout()` 在不接 GPU/字体栈时也能算出盒高。
 /// 度量单位就是 `CellBox`,所以布局结果与投影栅格共用一套网格。
-pub fn cell_text_system(cell : CellBox) -> @core.TextSystem {
-  @core.TextSystem::new(id="tui-cell", measure=input => {
+pub fn cell_text_system(
+  cell : CellBox,
+  cache~ : @render_common.TextParagraphCache = @render_common.TextParagraphCache::new(),
+) -> @core.TextSystem {
+  let measure : (@core.TextLayoutInput) -> @core.TextLayoutResult = input => {
     let cols = match input.max_width {
       Some(width) => cell_count(width, cell.width)
       None => cell_units(input.text)
@@ -133,5 +136,14 @@ pub fn cell_text_system(cell : CellBox) -> @core.TextSystem {
       baseline: cell.height,
       caret_positions: cell_caret_positions(input.text, cell, input.max_width),
     }
-  })
+  }
+  @core.TextSystem::new(
+    id="tui-cell",
+    measure~,
+    paragraph_layout=Some(input => {
+      cache.layout_paragraph("tui-cell", input, input => {
+        @core.TextSystem::new(id="tui-cell", measure~).layout_paragraph(input)
+      })
+    }),
+  )
 }

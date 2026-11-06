@@ -185,6 +185,7 @@ pub struct WebGpuWasmRenderer {
   priv mut last_fallback_plan : @render.RendererCommandPlan
   priv image_lifecycle : @render_common.ImageResourceLifecycle
   priv layer_cache : WebGpuLayerCommandCache
+  priv text_paragraph_cache : @render_common.TextParagraphCache
 }
 
 ///|

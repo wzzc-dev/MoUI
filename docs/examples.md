@@ -618,7 +618,7 @@ fetches.
 
 macOS examples use the shared app package plus `backend/macos` and an explicit
 renderer package. The recommended `_skia` entrypoints import `moui_skia_renderer` and
-compose it with `@macos.entry()` through `@runtime.run_app`:
+compose it with `@macos.entry()` through `@apphost.run_app`:
 
 ```sh
 moon build examples/showcase/macos_skia --target native
@@ -718,7 +718,7 @@ and update publication, and can consume the manifest as their input contract.
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
 The recommended `_skia` entrypoints import `backend/windows` plus
-`moui_skia_renderer` and compose them explicitly through `@runtime.run_app`.
+`moui_skia_renderer` and compose them explicitly through `@apphost.run_app`.
 Showcase `windows_wgpu` remains the canonical native WGPU diagnostic; the build/package helpers download and bundle `wgpu_native.dll`
 only for those WGPU packages.
 

@@ -26,6 +26,20 @@ pub struct SunUnsupportedCommandDiagnostic {
 }
 
 ///|
+pub fn SunUnsupportedCommandDiagnostic::command(
+  self : SunUnsupportedCommandDiagnostic,
+) -> String {
+  self.command
+}
+
+///|
+pub fn SunUnsupportedCommandDiagnostic::reason(
+  self : SunUnsupportedCommandDiagnostic,
+) -> String {
+  self.reason
+}
+
+///|
 pub extend SunUnsupportedCommandDiagnostic with Debug::{to_repr}
 
 ///|
@@ -70,18 +84,4 @@ pub fn SunPixelFrame::pixels(self : SunPixelFrame) -> FixedArray[Byte] {
 ///|
 pub fn SunPixelFrame::bytes(self : SunPixelFrame) -> Bytes {
   self.bytes
-}
-
-///|
-pub fn SunUnsupportedCommandDiagnostic::command(
-  self : SunUnsupportedCommandDiagnostic,
-) -> String {
-  self.command
-}
-
-///|
-pub fn SunUnsupportedCommandDiagnostic::reason(
-  self : SunUnsupportedCommandDiagnostic,
-) -> String {
-  self.reason
 }

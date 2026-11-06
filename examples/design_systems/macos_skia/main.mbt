@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI Design Systems",
     @runtime.new_program_with_dimensions(
       program=@design_systems_app.program(),

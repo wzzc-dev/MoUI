@@ -5,18 +5,18 @@
 /// Studio 的逐文件 Effect）负责。
 
 ///|
-pub let default_moui_dependency_version : String = "0.3.2"
+pub let default_moui_dependency_version : String = "0.4.0"
 
 ///|
 /// The web renderer releases independently from the framework; generated
 /// projects pin it separately so a framework bump does not force a matching
 /// renderer release.
-let default_web_renderer_dependency_version : String = "0.3.2"
+let default_web_renderer_dependency_version : String = "0.4.0"
 
 ///|
 /// The native Skia renderer releases independently from the framework;
 /// generated projects pin it separately for native platform entries.
-pub let default_moui_skia_renderer_dependency_version : String = "0.3.2"
+pub let default_moui_skia_renderer_dependency_version : String = "0.4.0"
 
 ///|
 #derive(Eq)

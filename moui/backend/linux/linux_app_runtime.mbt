@@ -5,8 +5,8 @@
 pub fn entry(
   options~ : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   smoke_options~ : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
-) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(
+) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(
     id="linux",
     launch=request => {
       let binding = linux_surface_binding(request.renderer_providers())
@@ -72,14 +72,14 @@ fn linux_surface_binding(
       native_surface~,
       image_source=Some(image_source),
     )
-    @render_common.resolve_renderer(providers, surface)
+    @apphost.resolve_renderer_session(providers, surface)
   })
 }
 
 ///|
 fn launch_linux_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   smoke_options~ : LinuxHostSmokeOptions,
@@ -99,7 +99,7 @@ fn launch_linux_app(
 ///|
 async fn launch_linux_app_async_pump(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   window_requests~ : @host.WindowRequests,
@@ -125,7 +125,7 @@ async fn launch_linux_app_async_pump(
 ///|
 fn create_linux_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : LinuxSurfaceBinding,
   options~ : LinuxHostAppOptions,
   smoke_options~ : LinuxHostSmokeOptions,
@@ -157,7 +157,7 @@ fn create_linux_app(
     platform_attributes: options.platform_attributes,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
-  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+  @apphost.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,
     event,

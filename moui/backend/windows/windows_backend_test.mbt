@@ -432,7 +432,7 @@ test "windows accessibility bridge reports UI Automation contract" {
 
 ///|
 test "windows accessibility bridge dispatches semantics actions" {
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.button("Enable", on_click=()) : @core.View[Unit]),
     size=@core.Size::new(width=140.0, height=60.0),
   )
@@ -447,7 +447,7 @@ test "windows accessibility bridge dispatches semantics actions" {
     }
   }
   let target = target.unwrap()
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let bridge = @windows.windows_accessibility_bridge(driver)

@@ -19,11 +19,11 @@ fn workflow_open_window(
     Some(record) => record
     None => abort("test window must be registered")
   }
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   if !lifecycle.register_runtime_slot(

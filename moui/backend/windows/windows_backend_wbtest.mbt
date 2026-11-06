@@ -60,7 +60,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
     SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
-        runtime=@runtime.AppRuntime::new_view(
+        runtime=@apphost.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
@@ -69,7 +69,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
   })
   let options = WindowsHostAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@runtime.HostPlatformEventSources::new()),
+    event_sources=Some(@apphost.HostPlatformEventSources::new()),
   )
   let smoke_options = WindowsHostSmokeOptions::new(
     first_frame_smoke_auto_exit=true,

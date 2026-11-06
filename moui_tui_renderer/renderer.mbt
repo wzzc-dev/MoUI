@@ -192,5 +192,17 @@ pub fn TuiRenderer::render_frame(
     self.sink.emit(bytes)
     self.present_count = self.present_count + 1
   }
-  @render.RenderFrameResult::new(presented~, queued=false)
+  let diagnostics = self.diagnostics
+    .records()
+    .map(record => {
+      @diagnostics.DiagnosticEvent::new(
+        code="tui.degrade." + record.source,
+        severity=@diagnostics.DiagnosticSeverity::Warning,
+        domain=@diagnostics.DiagnosticDomain::Render,
+        message=record.detail,
+        source=record.source,
+        detail=Some("count=" + record.count.to_string()),
+      )
+    })
+  @render.RenderFrameResult::new(presented~, queued=false, diagnostics~)
 }

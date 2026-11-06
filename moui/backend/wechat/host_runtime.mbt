@@ -2,7 +2,7 @@
 /// WeChat Mini Program host runtime state. Concrete rendering remains behind
 /// the neutral host renderer selected from application-supplied factories.
 priv struct WechatState {
-  mut driver : @runtime.HostRuntimeDriver?
+  mut driver : @apphost.HostRuntimeDriver?
   mut surface : @render.RendererSession?
   mut renderer_providers : Array[@render.RendererProvider]
   mut surface_id : String
@@ -41,20 +41,20 @@ pub fn WechatAppOptions::new(
 }
 
 ///|
-pub fn entry(options : WechatAppOptions) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(id="wechat", launch=request => {
+pub fn entry(options : WechatAppOptions) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(id="wechat", launch=request => {
     run_app_internal(request.runtime(), request.renderer_providers(), options)
   })
 }
 
 ///|
 fn run_app_internal(
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   renderer_providers : Array[@render.RendererProvider],
   options : WechatAppOptions,
 ) -> Unit {
   state.driver = Some(
-    @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
       state.needs_render = true
     }),
   )
@@ -87,7 +87,8 @@ fn WechatState::attach_surface(
     surface_id=self.surface_id,
     metrics~,
   )
-  match @render_common.resolve_renderer(self.renderer_providers, host_surface) {
+  match
+    @apphost.resolve_renderer_session(self.renderer_providers, host_surface) {
     Some(resolution) => {
       match self.surface {
         Some(surface) => surface.dispose()

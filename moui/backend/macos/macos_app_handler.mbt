@@ -280,7 +280,7 @@ fn MacosNativeHostBackend::redraw_window(
           if sync_before_render {
             match native_handle {
               Some(handle) =>
-                @runtime.sync_platform_view_plugins(
+                @apphost.sync_platform_view_plugins(
                   self.core.platform_view_plugins,
                   handle,
                   frame,
@@ -292,7 +292,7 @@ fn MacosNativeHostBackend::redraw_window(
           if !sync_before_render {
             match native_handle {
               Some(handle) =>
-                @runtime.sync_platform_view_plugins(
+                @apphost.sync_platform_view_plugins(
                   self.core.platform_view_plugins,
                   handle,
                   frame,
@@ -326,7 +326,7 @@ fn MacosNativeHostBackend::finish_presented_window(
 ) -> Bool {
   if self.record_native_ime_runtime_smoke(window_id) {
     true
-  } else if @runtime.finish_first_frame_smoke_auto_exit(
+  } else if @apphost.finish_first_frame_smoke_auto_exit(
       platform_name="macOS",
       title=runtime_slot.record.title,
       flag=self.core.first_frame_smoke_auto_exit,

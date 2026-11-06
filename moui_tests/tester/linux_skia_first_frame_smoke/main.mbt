@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @runtime.run_app("MoUI Text Input Smoke", @fixture.runtime())
+  @apphost.run_app("MoUI Text Input Smoke", @fixture.runtime())
   .render_all(@render_skia.from_env(platform=Linux))
   .backend(
     @linux.entry(

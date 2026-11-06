@@ -14,8 +14,8 @@ fn next_embedded_runtime_generation() -> Int32 {
 /// Shared runtime state for embedded runtime backends. Platform backends keep
 /// this type behind their public session wrappers and own native-handle syncing.
 pub struct EmbeddedRuntimeBackendCore {
-  priv runtime : @runtime.AppRuntime
-  priv driver : @runtime.HostRuntimeDriver
+  priv runtime : @apphost.AppRuntime
+  priv driver : @apphost.HostRuntimeDriver
   priv transport : @host_services_embedded.HostSessionTransport
   priv mut host_bridge : EmbeddedRuntimeHostBridge?
   /// Platform clipboard answer used for synchronous host service requests.
@@ -32,7 +32,7 @@ pub struct EmbeddedRuntimeBackendCore {
 
 ///|
 pub fn EmbeddedRuntimeBackendCore::new(
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : @apphost.AppRuntime,
   renderer~ : @render.RendererSession,
   metrics~ : @core.SurfaceMetrics,
   surface_generation~ : Int32,
@@ -44,7 +44,7 @@ pub fn EmbeddedRuntimeBackendCore::new(
   let transport = @host_services_embedded.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_generation(),
   )
-  let driver = @runtime.HostRuntimeDriver::new(
+  let driver = @apphost.HostRuntimeDriver::new(
     runtime~,
     schedule_redraw=() => transport.request_frame(),
     frame_clock=Some(frame_clock),
@@ -77,7 +77,7 @@ pub fn EmbeddedRuntimeBackendCore::metrics(
 ///|
 pub fn EmbeddedRuntimeBackendCore::runtime(
   self : EmbeddedRuntimeBackendCore,
-) -> @runtime.AppRuntime {
+) -> @apphost.AppRuntime {
   self.runtime
 }
 

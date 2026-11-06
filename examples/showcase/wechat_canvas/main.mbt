@@ -17,7 +17,7 @@ fn main {
     width~,
     height~,
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   .render(@render_canvas2d.canvas())
   .backend(
     @wechat.entry(

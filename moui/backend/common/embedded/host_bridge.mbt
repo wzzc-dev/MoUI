@@ -69,7 +69,7 @@ pub fn EmbeddedRuntimeHostBridge::service_bridge(
 ///|
 pub fn EmbeddedRuntimeHostBridge::sync(
   self : EmbeddedRuntimeHostBridge,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
 ) -> Int32 {
   if self.disposed {
     return 0

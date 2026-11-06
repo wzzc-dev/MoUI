@@ -7,8 +7,8 @@ let macos_first_present_pump_limit = 16
 pub fn entry(
   options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
-) -> @runtime.PlatformEntry {
-  @runtime.PlatformEntry::new(
+) -> @apphost.PlatformEntry {
+  @apphost.PlatformEntry::new(
     id="macos",
     launch=request => {
       let binding = macos_surface_binding(request.renderer_providers())
@@ -86,7 +86,7 @@ fn macos_surface_binding(
             native_surface~,
             image_source=Some(image_source),
           )
-          @render_common.resolve_renderer(providers, surface)
+          @apphost.resolve_renderer_session(providers, surface)
         }
         None => None
       }
@@ -111,7 +111,7 @@ fn macos_surface_binding(
 ///|
 fn launch_macos_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
@@ -182,7 +182,7 @@ pub async fn run_window_with_workers(
 ///|
 async fn launch_macos_app_async_pump(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options~ : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options~ : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
@@ -223,7 +223,7 @@ async fn launch_macos_app_async_pump(
 ///|
 fn create_macos_app(
   title : String,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   binding~ : MacosSurfaceBinding,
   options~ : MacosHostAppOptions,
   smoke_options~ : MacosHostSmokeOptions,
@@ -308,7 +308,7 @@ fn create_macos_app(
     promotion_fallback_count: 0,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
-  @runtime.install_platform_view_plugins(options.platform_view_plugins, (
+  @apphost.install_platform_view_plugins(options.platform_view_plugins, (
     window_ptr,
     id,
     event,

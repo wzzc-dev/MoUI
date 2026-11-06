@@ -24,7 +24,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
   let app = new_harmonyos_embedded_runtime(
     title="window-hosted-test",
     runtime_factory=metrics => {
-      let runtime = @runtime.AppRuntime::new_view(
+      let runtime = @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
@@ -68,7 +68,7 @@ test "accessibility pump records the published generation and keeps it across un
   let app = new_harmonyos_embedded_runtime(
     title="a11y-cursor-test",
     runtime_factory=metrics => {
-      @runtime.AppRuntime::new_view(
+      @apphost.AppRuntime::new_view(
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
@@ -110,11 +110,11 @@ test "wheel over scroll view dirties runtime and presents frames" {
   for i in 0..<40 {
     rows.push(@views.text("row \{i}", height=40.0))
   }
-  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
+  let runtime_ref : Ref[@apphost.AppRuntime?] = Ref(None)
   let app = new_harmonyos_embedded_runtime(
     title="wheel-repro",
     runtime_factory=metrics => {
-      let runtime = @runtime.AppRuntime::new_view(
+      let runtime = @apphost.AppRuntime::new_view(
         root=(
           @views.scroll_view(
             @views.column(rows, spacing=4.0),
@@ -226,7 +226,7 @@ test "program mode: wheel over scroll view marks redraw and presents frames" {
           )
         },
       )
-      @runtime.AppRuntime::new_program(program~, size=metrics.logical_size)
+      @apphost.AppRuntime::new_program(program~, size=metrics.logical_size)
     },
     surface_binding_factory=() => binding,
     auto_exit_after_frames=None,

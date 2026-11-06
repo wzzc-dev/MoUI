@@ -49,7 +49,7 @@ resolver-backed `OpenWindow` requests through `WebAppOptions` captured by
 `@web.entry`. Native host cores create platform windows through the same path
 but do not choose concrete renderer families. Application entrypoints supply
 ordered `RendererProvider` values and one platform `PlatformEntry` to
-`@runtime.run_app`. A resolved native window creates an opaque `HostSurface`,
+`@apphost.run_app`. A resolved native window creates an opaque `HostSurface`,
 binds the first accepting provider to a `RendererSession`, then registers a `HostRuntimeDriver`,
 platform binding, and platform slot, and routes redraw, events, context menus,
 host service completions, IME sync, and disposal by `WindowId`. Without a

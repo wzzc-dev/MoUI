@@ -41,16 +41,23 @@ Pre-written review conditions: when a trigger fires, the named review happens
 before the growth lands — do not pre-pay the structure, do not sleep through
 the signal (plan `cohesion-governance-convergence`, D1/D2).
 
-18. **`moui/core` package split** — trigger: `pkg.generated.mbti` exceeds ~3.5k
-    lines or an eighth domain lands. Action: split by domain into `core/<domain>`
-    subpackages with the root facade re-exporting (`pub using`); consumers keep
-    `wzzc-dev/moui/core`. Until then file-level organization is the contract.
-19. **`HostRuntimeDriver` seam review** — trigger: a new `backend/common` package
-    needs `wzzc-dev/moui/runtime`, or desktop-core + embedded runtime-type usage
-    doubles. Mechanization: `checks/backend-common-ownership.json` pins the
-    current importer set (required) and fails any new importer (forbidden).
-    Action: ADR review of the seam (candidates: driver interface inversion,
-    host-runtime module split) before adding the import.
+18. **`moui/core` package split** — trigger: at least two independent signals
+    fire: `pkg.generated.mbti` exceeds ~3.5k lines; public declarations exceed
+    ~1,200; importing package manifests exceed ~180; a measured change-coupling
+    or compile-critical-path review shows `core` dominates. Action: split by
+    domain into `core/<domain>` subpackages with the root facade re-exporting
+    (`pub using`); consumers keep `wzzc-dev/moui/core`. At the 0.4.0 window the
+    measured values are 2,735 mbti lines, 1,159 public declarations, and 146
+    importing manifests, so the split is not triggered; re-measure at each
+    release window. Until then file-level organization is the contract.
+19. **Host orchestration seam** — **actioned by ADR 0059**: `HostRuntimeDriver`,
+    `AppBuilder`/`run_app`, `RedrawScheduler`, and the host event adapters live
+    in `moui/apphost`; `moui/runtime` production imports only `moui/core`.
+    Mechanization: `checks/backend-common-ownership.json` requires apphost and
+    forbids runtime in every `backend/common` owner, and
+    `validate-host-import-baseline.mjs` keeps root `backend` free of apphost.
+    Re-open only if a new host package needs a second orchestration layer or
+    apphost itself starts owning tree/state.
 20. **MoonBit toolchain upgrade checklist** — on every moon version bump, re-read
     the reopen conditions in `docs/plans/debt/`: the three ViewNode-trait limits
     (`viewnode-trait-decomposition.md` — bare-`T` impl target, single parent

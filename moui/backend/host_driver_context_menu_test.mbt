@@ -8,7 +8,7 @@ test "host driver skips context menu without focused text input" {
     commands=[@core.ActionCommand::new(intent=Submit, label="Submit")],
     on_message=_ => submitted.val = submitted.val + 1,
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let services = @backend.HostServiceBridge::new(
@@ -89,7 +89,7 @@ test "host driver shows marked document context menu commands without text focus
       }
     },
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let seen_labels : Array[String] = []
@@ -167,7 +167,7 @@ test "host driver merges the editing group into a focused text context menu" {
       ),
     ],
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let seen_labels : Array[String] = []
@@ -222,7 +222,7 @@ test "host driver keeps document actions beside Cut and Copy with a selection" {
     value~,
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     ()
   })
   let seen_labels : Array[String] = []

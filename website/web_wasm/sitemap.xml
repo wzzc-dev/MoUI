@@ -6,6 +6,8 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fgetting-started</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fmoui-app-package-boundary</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftea-program-model</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fdiagnostics</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftask-lifecycle</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftutorials</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fviews-api-guide</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fview-catalog</loc></url>
@@ -48,6 +50,7 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftesting</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fmaintenance</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frelease-readiness</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fcompatibility-matrix</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fai-collaboration</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frepository-facts</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ffeature-proof-matrix</loc></url>
@@ -92,6 +95,8 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frenderer-capability-report&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2F3d-capability-report&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fdiagnostics&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftask-lifecycle&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture-map&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fagent-semantics&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fapi-surface&amp;lang=zh-Hans</loc></url>
@@ -101,6 +106,7 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftesting&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fmaintenance&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frelease-readiness&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fcompatibility-matrix&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fai-collaboration&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frepository-facts&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ffeature-proof-matrix&amp;lang=zh-Hans</loc></url>

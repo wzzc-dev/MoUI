@@ -12,7 +12,7 @@
 /// 那会被下一次逐行定位覆盖成残影。所有宿主侧文本都攒在 `TerminalExit` 里,
 /// 由调用方在离开 alt screen 之后打印。
 priv struct TerminalState {
-  mut driver : @runtime.HostRuntimeDriver?
+  mut driver : @apphost.HostRuntimeDriver?
   mut session : @render.RendererSession?
   mut input : TerminalInput?
   mut decoder : TerminalDecoder?
@@ -219,7 +219,7 @@ fn probe_tty() -> Result[(Tty, Int32, Int32), TerminalExit] {
 /// 从未被改过,还原路径因此是空操作而不是猜。
 fn run(
   tty : Tty,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
   input : TerminalInput,
   idle_timeout_ms : Int32,
   palette : @tui_renderer.TuiPalette,
@@ -231,7 +231,7 @@ fn run(
   // 终端投影只读语义帧,而语义负载默认关闭:不开就是拿一个空帧。
   runtime.set_semantics_frames_enabled(true)
   state.driver = Some(
-    @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
       state.needs_render = true
     }),
   )

@@ -159,6 +159,7 @@ pub struct SunRasterRenderer {
   unsupported_command_diagnostics : Array[SunUnsupportedCommandDiagnostic]
   mut last_frame : SunPixelFrame?
   text_system : @text.TextSystem
+  text_paragraph_cache : @common.TextParagraphCache
   resources : @renderer.RendererResources
   image_lifecycle : @common.ImageResourceLifecycle
   async_image_loading : Bool

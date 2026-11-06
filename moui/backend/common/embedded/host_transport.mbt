@@ -387,7 +387,7 @@ fn embedded_runtime_clipboard_request_json(
 pub fn EmbeddedRuntimeHostBridge::dispatch_response(
   self : EmbeddedRuntimeHostBridge,
   response : EmbeddedHostResponse,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Bool {
   if self.disposed {
     return false
@@ -425,7 +425,7 @@ fn EmbeddedRuntimeHostBridge::complete_service_response(
   self : EmbeddedRuntimeHostBridge,
   id : HostServiceRequestId,
   response : HostServiceResponse,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Bool {
   if !self.services.complete(id, response) {
     return false
@@ -442,7 +442,7 @@ fn EmbeddedRuntimeHostBridge::complete_service_response(
 pub fn EmbeddedRuntimeHostBridge::dispatch_response_envelope(
   self : EmbeddedRuntimeHostBridge,
   envelope : EmbeddedHostResponseEnvelope,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Bool {
   if envelope.schema_version != 1 ||
     envelope.session_generation != self.session_generation {

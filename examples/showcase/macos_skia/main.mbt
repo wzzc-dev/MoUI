@@ -9,7 +9,7 @@ fn main {
       0
     },
   )
-  @runtime.run_app("MoUI Showcase", runtime)
+  @apphost.run_app("MoUI Showcase", runtime)
   // .render(@render_skia.raster())
   .render(@render_skia.gpu(platform=MacOS))
   .backend(

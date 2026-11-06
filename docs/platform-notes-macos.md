@@ -115,7 +115,7 @@ pipelines, and presents drawables itself. Text coverage comes from the engine th
 composition root injects:
 
 ```moonbit
-@runtime.run_app("MoUI Showcase", runtime)
+@apphost.run_app("MoUI Showcase", runtime)
   .render(
     @render_metal.metal(
       text_engine=@render_metal.native_platform_text_engine(

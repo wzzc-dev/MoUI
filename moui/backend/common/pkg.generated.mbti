@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/backend/common"
 
 import {
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/frame",
   "wzzc-dev/moui/backend/common/image",
@@ -52,7 +53,7 @@ pub fn to_render_metrics(@core.SurfaceMetrics) -> @core.SurfaceMetrics
 pub(all) struct DesktopNativeHostBackendCore[W, Extra] {
   title : String
   runtime : @runtime.AppRuntime
-  driver : @runtime.HostRuntimeDriver
+  driver : @apphost.HostRuntimeDriver
   lifecycle : @lifecycle.WindowLifecycle
   frames : @frame.WindowFrameStates
   images : @image.WindowImageTaskStates
@@ -65,7 +66,7 @@ pub(all) struct DesktopNativeHostBackendCore[W, Extra] {
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
 }
-pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, frame_clock? : (() -> Double)?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
+pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, frame_clock? : (() -> Double)?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
 
 pub(all) struct DesktopSurfaceBinding[W] {
   create_renderer : (W, @core.SurfaceMetrics) -> @render.RendererSession?

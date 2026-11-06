@@ -343,7 +343,7 @@ fn windows_optional_node_value(value : @core.SemanticsNodeId?) -> UInt64 {
 fn WindowsNativeHostBackend::publish_windows_accessibility_read(
   _self : WindowsNativeHostBackend,
   hwnd : UInt64,
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> Unit {
   match read {
     Full(snapshot) => {
@@ -483,7 +483,7 @@ fn windows_native_semantics_action(
 ///|
 fn windows_decode_accessibility_action(
   bytes : Bytes,
-) -> @runtime.PerformSemanticsActionRequest? {
+) -> @apphost.PerformSemanticsActionRequest? {
   if bytes.length() == 0 {
     return None
   }
@@ -513,7 +513,7 @@ fn windows_decode_accessibility_action(
 fn WindowsNativeHostBackend::dispatch_windows_accessibility_actions(
   _self : WindowsNativeHostBackend,
   hwnd : UInt64,
-  driver : @runtime.HostRuntimeDriver,
+  driver : @apphost.HostRuntimeDriver,
 ) -> Unit {
   for ;; {
     let bytes = windows_accessibility_take_action_native(hwnd)

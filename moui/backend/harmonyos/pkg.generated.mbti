@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/harmonyos"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -16,9 +17,9 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> HarmonyOSBackendInfo
 
-pub fn entry(auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
+pub fn entry(auto_exit_after_frames? : Int32?) -> @apphost.PlatformEntry
 
-pub fn harmonyos_accessibility_handle_action(@runtime.HostRuntimeDriver, Int64, Int32, UInt64) -> Bool
+pub fn harmonyos_accessibility_handle_action(@apphost.HostRuntimeDriver, Int64, Int32, UInt64) -> Bool
 
 pub fn harmonyos_accessibility_project(@runtime.SemanticsRead) -> AccessibilityProjection
 

@@ -1,7 +1,7 @@
 ///|
 pub(all) struct WindowSceneInstance {
   request : @backend_host.WindowOpenRequest
-  runtime : @runtime.AppRuntime
+  runtime : @apphost.AppRuntime
 }
 
 ///|
@@ -31,7 +31,7 @@ pub struct WindowSceneResolver {
 ///|
 pub fn WindowSceneInstance::new(
   request~ : @backend_host.WindowOpenRequest,
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : @apphost.AppRuntime,
 ) -> WindowSceneInstance {
   { request, runtime, }
 }

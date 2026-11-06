@@ -2,7 +2,7 @@
 pub(all) struct WindowRuntimeSlot {
   id : @backend_host.WindowId
   record : @backend_host.WindowRecord
-  driver : @runtime.HostRuntimeDriver
+  driver : @apphost.HostRuntimeDriver
 }
 
 ///|
@@ -13,20 +13,20 @@ pub struct WindowRuntimeSlots {
 ///|
 pub fn WindowRuntimeSlot::new(
   record~ : @backend_host.WindowRecord,
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : @apphost.AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> WindowRuntimeSlot {
   {
     id: record.id,
     record,
-    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw~),
+    driver: @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw~),
   }
 }
 
 ///|
 pub fn WindowRuntimeSlot::from_driver(
   record~ : @backend_host.WindowRecord,
-  driver~ : @runtime.HostRuntimeDriver,
+  driver~ : @apphost.HostRuntimeDriver,
 ) -> WindowRuntimeSlot {
   { id: record.id, record, driver, }
 }
@@ -77,7 +77,7 @@ pub fn WindowRuntimeSlots::insert_from_registry(
   self : WindowRuntimeSlots,
   registry : WindowRegistry,
   id : @backend_host.WindowId,
-  driver~ : @runtime.HostRuntimeDriver,
+  driver~ : @apphost.HostRuntimeDriver,
 ) -> Bool {
   match registry.lookup(id) {
     Some(record) =>

@@ -46,15 +46,22 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 935,
-      "public_declarations": 597,
-      "pub_all_declarations": 24
+      "lines": 787,
+      "public_declarations": 515,
+      "pub_all_declarations": 19
+    },
+    {
+      "label": "apphost facade",
+      "path": "moui/apphost/pkg.generated.mbti",
+      "lines": 189,
+      "public_declarations": 94,
+      "pub_all_declarations": 5
     },
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2720,
-      "public_declarations": 1150,
+      "lines": 2735,
+      "public_declarations": 1159,
       "pub_all_declarations": 141
     },
     {
@@ -67,23 +74,30 @@
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 701,
+      "lines": 702,
       "public_declarations": 268,
       "pub_all_declarations": 44
     },
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 653,
+      "lines": 655,
       "public_declarations": 285,
       "pub_all_declarations": 32
     },
     {
+      "label": "core diagnostics",
+      "path": "moui/core/diagnostics/pkg.generated.mbti",
+      "lines": 69,
+      "public_declarations": 21,
+      "pub_all_declarations": 3
+    },
+    {
       "label": "render common",
       "path": "moui/render/common/pkg.generated.mbti",
-      "lines": 345,
-      "public_declarations": 140,
-      "pub_all_declarations": 8
+      "lines": 386,
+      "public_declarations": 152,
+      "pub_all_declarations": 12
     },
     {
       "label": "native text model",
@@ -95,14 +109,14 @@
     {
       "label": "skia renderer",
       "path": "moui_skia_renderer/pkg.generated.mbti",
-      "lines": 293,
+      "lines": 294,
       "public_declarations": 167,
       "pub_all_declarations": 7
     },
     {
       "label": "sun renderer",
       "path": "moui_sun_renderer/pkg.generated.mbti",
-      "lines": 282,
+      "lines": 283,
       "public_declarations": 175,
       "pub_all_declarations": 1
     },
@@ -137,14 +151,14 @@
     {
       "label": "backend common",
       "path": "moui/backend/common/pkg.generated.mbti",
-      "lines": 78,
+      "lines": 79,
       "public_declarations": 18,
       "pub_all_declarations": 2
     },
     {
       "label": "backend common lifecycle owner",
       "path": "moui/backend/common/lifecycle/pkg.generated.mbti",
-      "lines": 301,
+      "lines": 302,
       "public_declarations": 170,
       "pub_all_declarations": 7
     },

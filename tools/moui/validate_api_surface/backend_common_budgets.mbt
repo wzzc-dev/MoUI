@@ -7,12 +7,13 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/backend/common\"",
       // I1: DesktopSurfaceBinding[W] + DesktopNativeHostBackendCore[W, Extra]
       // moved the desktop backends' shared struct/construction surface here.
-      max_lines: 78,
+      // ADR 0059 adds the apphost import line (79) and forbids direct runtime.
+      max_lines: 79,
       max_pub_lines: 18,
       max_pub_all_lines: 2,
       required_tokens: [
-        "pub fn attach_window_surface", "pub fn dispatch_host_event", "pub fn run_window_redraw",
-        "pub fn dispose_window",
+        "\"wzzc-dev/moui/apphost\"", "pub fn attach_window_surface", "pub fn dispatch_host_event",
+        "pub fn run_window_redraw", "pub fn dispose_window",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_skia_renderer\"", "\"wzzc-dev/moui_wgpu_renderer\"", "SkiaRasterRenderer",

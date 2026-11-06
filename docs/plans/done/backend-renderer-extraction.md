@@ -694,7 +694,7 @@ pub fn linux_surface_kit(
 ```moonbit
 let skia = @render_skia.raster()
 let linux = @backend_linux.entry()
-@runtime.run_app("MoUI Showcase").program(runtime).render(skia).backend(linux).run()
+@apphost.run_app("MoUI Showcase").program(runtime).render(skia).backend(linux).run()
 ```
 
 #### 3.3.2 `RendererFactory`：延迟绑定是必需的
@@ -1269,14 +1269,14 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
    - `:38` 的协商调用改为 `@render.resolve_host_renderer`
    - `moui/backend/web/moon.pkg:7` 删除 `"wzzc-dev/moui/render/webgpu_adapter" @webgpu`
 3. `moui/backend/common/skia_preflight_fragments.mbt` 删除，两个函数的字符串改为由渲染器侧提供：`moui/render/skia` 导出 `skia_host_renderer_bridge_preflight_{mobile,desktop}()`，preflight 汇总在合成根拼装。
-4. `moui/runtime` 落地 `AppBuilder` 与 `run_app`（§3.3.4），`@runtime.run_app()` 成为**规范装配入口**；全部合成根迁移到该入口。根门面 `moui` 的 `run_app` re-export 不在本阶段做，按 §5.1.1 U3 裁决另走 RFC，且以 P5 的根门面依赖校验器落地为前置条件。
+4. `moui/runtime` 落地 `AppBuilder` 与 `run_app`（§3.3.4），`@apphost.run_app()` 成为**规范装配入口**；全部合成根迁移到该入口。根门面 `moui` 的 `run_app` re-export 不在本阶段做，按 §5.1.1 U3 裁决另走 RFC，且以 P5 的根门面依赖校验器落地为前置条件。
 5. `moui/render/skia` 落地 `from_env()`（§5.1.1 U1），三个桌面合成根改写为 `.render_all(@render_skia.from_env())`；`MOUI_SKIA_RENDERER` 字面量在全仓收敛到该文件一处。
 
 **机器验证信号**
 
 - `grep -rn "wzzc-dev/moui/render/" moui/backend --include=moon.pkg` 完全无子路径命中（E1 对 web/wechat 也成立）。
 - `grep -rn "MOUI_SKIA_RENDERER" --include=*.mbt moui/ examples/` 只在 `moui/render/skia/binding_factory.mbt` 命中一次。
-- `grep -rn "run_app_with_options\|SkiaAppOptions" examples/` 无输出（合成根全部走 `@runtime.run_app()`）。
+- `grep -rn "run_app_with_options\|SkiaAppOptions" examples/` 无输出（合成根全部走 `@apphost.run_app()`）。
 - `moui/backend` 全目录 `grep -riE "skia|sun|wgpu|canvas2d"` 命中数 = 0（含注释与字符串，E3 加强版）。
 - `moui/backend/common/` 下文件数 -1。
 - 微信小程序 wasm 产物体积对比：`wechat/canvas` 包删除后 `.wasm` 不增大。
@@ -1354,7 +1354,7 @@ B4 之前必须完成 R3 校验器口径重设计（口径见 §5.1.1 U1），�
 
 `moui/moon.pkg:1-3` 目前只 import `moui/core`，`moui/moui.mbt` 只有 `pub using @core`。要让用户写 `@moui.run_app(...)`，需给根门面加 `wzzc-dev/moui/runtime` import，根门面的依赖足迹会扩大到 `render` + `backend`。
 
-**推荐**：P4 阶段先只在 `moui/runtime` 提供（`@runtime.run_app(...)`），根门面 re-export 单独提 RFC。理由：根门面的最小依赖属性目前没有校验器保护，一旦扩大很难缩回，不应该顺带做掉。
+**推荐**：P4 阶段先只在 `moui/runtime` 提供（`@apphost.run_app(...)`），根门面 re-export 单独提 RFC。理由：根门面的最小依赖属性目前没有校验器保护，一旦扩大很难缩回，不应该顺带做掉。
 
 ### 5.1.1 总监裁决（2026-08-03）
 
@@ -1408,7 +1408,7 @@ pub fn from_env() -> Array[@render.RendererFactory]
 
 裁决内容：
 
-1. `AppBuilder` 的定义与实现落在 `moui/runtime`，P4 阶段实现并暴露 `@runtime.run_app()` 作为**规范入口**（`moui/runtime/moon.pkg:1-6` 已具备 `core` + `render` + `backend`，零新增依赖）。
+1. `AppBuilder` 的定义与实现落在 `moui/runtime`，P4 阶段实现并暴露 `@apphost.run_app()` 作为**规范入口**（`moui/runtime/moon.pkg:1-6` 已具备 `core` + `render` + `backend`，零新增依赖）。
 2. 同时在根门面 `moui` re-export `run_app`，对齐用户原始诉求的 `@moui.run_app()` 拼写；但该 re-export **作为独立 RFC 跟踪**，不与 P0-P5 主线捆绑合入。
 3. 新增（或扩展现有）校验器保护「根门面最小依赖」不变量，防止 `render` / `backend` / `host` 被无约束地拖进根门面的依赖闭包。该校验器是 re-export RFC 的**前置条件**：校验器先落地，re-export 才允许合入。
 
@@ -1416,7 +1416,7 @@ pub fn from_env() -> Array[@render.RendererFactory]
 
 | 动作 | 归属阶段 | 说明 |
 |---|---|---|
-| `@runtime.run_app()` 落地并成为规范入口 | P4 | 已在 P4 动作 4 中细化 |
+| `@apphost.run_app()` 落地并成为规范入口 | P4 | 已在 P4 动作 4 中细化 |
 | `scripts/validate-root-facade-deps.mjs` + `docs/rfcs/` 下的 re-export RFC | P5 | 见 P5 动作 8 |
 
 裁决的直接后果：§5.1 U3 中「根门面依赖足迹会扩大且无校验器保护」这一顾虑由「先建校验器、再谈扩大」的顺序约束解决，风险从「不可逆扩散」降级为「受校验器约束的可控扩散」。

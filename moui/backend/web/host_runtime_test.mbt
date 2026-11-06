@@ -23,7 +23,7 @@ test "web app options carry scene resolver and platform event sources" {
     SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
-        runtime=@runtime.AppRuntime::new_view(
+        runtime=@apphost.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
@@ -32,7 +32,7 @@ test "web app options carry scene resolver and platform event sources" {
   })
   let options = @web.WebAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@runtime.HostPlatformEventSources::new()),
+    event_sources=Some(@apphost.HostPlatformEventSources::new()),
     route_source=Some(@services.RouteSource::new()),
   )
   match options.event_sources {

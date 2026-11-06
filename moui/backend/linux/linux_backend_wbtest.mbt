@@ -17,7 +17,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
     SceneResolved(
       @window_lifecycle.WindowSceneInstance::new(
         request~,
-        runtime=@runtime.AppRuntime::new_view(
+        runtime=@apphost.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
@@ -26,7 +26,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
   })
   let options = LinuxHostAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@runtime.HostPlatformEventSources::new()),
+    event_sources=Some(@apphost.HostPlatformEventSources::new()),
   )
   let smoke_options = LinuxHostSmokeOptions::new(
     first_frame_smoke_auto_exit=true,
@@ -49,7 +49,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
 ///|
 test "linux at-spi binding publishes semantics dispatches actions and disposes" {
   let invoked = Ref(0)
-  let runtime = @runtime.AppRuntime::new_view(
+  let runtime = @apphost.AppRuntime::new_view(
     root=(@views.button("Apply", on_click=()) : @core.View[Unit]),
     size=@core.Size::new(width=120.0, height=80.0),
   )

@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @runtime.run_app("MoUI Text Input Smoke", @fixture.runtime())
+  @apphost.run_app("MoUI Text Input Smoke", @fixture.runtime())
   .render(@render_skia.raster(font_resolution=EmptyTypeface))
   .backend(
     @macos.entry(

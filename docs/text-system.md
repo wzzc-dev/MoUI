@@ -61,6 +61,12 @@ than a separate text-system blocker status.
   layout can expose geometry without claiming native SkParagraph or bidi
   parity. Core text editing uses the same cluster boundaries for basic
   left/right caret movement and shift-selection.
+- Paragraph memoization is owner-local, not a core process global.
+  `moui/render/common`'s `TextParagraphCache` wraps each factory's paragraph
+  compute hook; the renderer session or text service owns one instance and
+  chooses its entry cap and byte budget. Font registration bumps only that
+  owner's generation, so two renderers with different font sets never
+  invalidate each other's paragraphs.
 - `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
   install a platform text system before layout, painting, hit testing,
   selection, and IME anchor geometry are produced. The underlying
@@ -124,8 +130,9 @@ smoothness still require the matching-host smoke evidence described below.
 
 `moui/render/native_text` owns the neutral native text model: the provider
 callback bundle platform engines implement, provider response validation, the
-fallback chain, the measure/layout caches, and the `TextSystem` construction
-over them. `moui_wgpu_renderer` keeps only what is renderer-specific — glyph
+fallback chain, the per-renderer measure/run caches, and the `TextSystem`
+construction over them. Paragraph results are memoized by the owning
+`moui/render/common` cache installed by the factory, not by `moui/core`. `moui_wgpu_renderer` keeps only what is renderer-specific — glyph
 atlas upload, text vertex building, and the WGSL shader — and re-exports the
 model types so host entrypoints can keep naming the engine through the
 renderer they compose with. Neither package depends on the standalone Cosmic

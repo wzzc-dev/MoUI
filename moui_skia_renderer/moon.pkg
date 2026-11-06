@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common" @render_common,
   "wzzc-dev/moui_skia",

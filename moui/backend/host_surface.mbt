@@ -101,6 +101,9 @@ pub(all) struct HostServiceCapabilities {
   open_url : Bool
   system_theme : Bool
   settings : Bool
+  /// App-facing service extensions registered by the host. Built-in booleans
+  /// keep their stable labels; extensions contribute their own labels.
+  extension_labels : Array[String]
 }
 
 ///|
@@ -191,6 +194,7 @@ pub fn HostServiceCapabilities::none() -> HostServiceCapabilities {
     open_url: false,
     system_theme: false,
     settings: false,
+    extension_labels: [],
   }
 }
 
@@ -203,6 +207,7 @@ pub fn HostServiceCapabilities::new(
   open_url~ : Bool = false,
   system_theme~ : Bool = false,
   settings~ : Bool = false,
+  extension_labels~ : Array[String] = [],
 ) -> HostServiceCapabilities {
   {
     clipboard,
@@ -212,6 +217,7 @@ pub fn HostServiceCapabilities::new(
     open_url,
     system_theme,
     settings,
+    extension_labels,
   }
 }
 

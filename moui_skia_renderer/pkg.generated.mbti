@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/common",
   "wzzc-dev/moui_skia/native",
 }
 
@@ -46,7 +47,7 @@ pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_text_selection_geometry_diagnostic(String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double, font_resolution? : SkiaFontResolution) -> SkiaTextSelectionGeometryDiagnostic?
 
-pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
+pub fn skia_text_system(resolution? : SkiaFontResolution, cache? : @common.TextParagraphCache) -> @core.TextSystem
 
 pub fn skia_text_visual_order_diagnostic(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderDiagnostic?
 

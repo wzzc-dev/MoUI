@@ -430,10 +430,11 @@ pub(all) struct HostServiceCapabilities {
   open_url : Bool
   system_theme : Bool
   settings : Bool
+  extension_labels : Array[String]
 }
 pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
 pub fn HostServiceCapabilities::equal(Self, Self) -> Bool
-pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool, settings? : Bool) -> Self
+pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool, settings? : Bool, extension_labels? : Array[String]) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 pub fn HostServiceCapabilities::not_equal(Self, Self) -> Bool
 pub fn HostServiceCapabilities::to_json(Self) -> @json.Json

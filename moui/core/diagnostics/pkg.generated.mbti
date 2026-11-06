@@ -1,0 +1,69 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/core/diagnostics"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum DiagnosticDomain {
+  Runtime
+  Render
+  Backend
+  Text
+  Accessibility
+  Services
+}
+pub fn DiagnosticDomain::equal(Self, Self) -> Bool
+pub fn DiagnosticDomain::not_equal(Self, Self) -> Bool
+pub fn DiagnosticDomain::to_json(Self) -> @json.Json
+pub fn DiagnosticDomain::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct DiagnosticEvent {
+  code : String
+  severity : DiagnosticSeverity
+  domain : DiagnosticDomain
+  message : String
+  source : String
+  generation : UInt64?
+  frame : UInt64?
+  detail : String?
+}
+pub fn DiagnosticEvent::equal(Self, Self) -> Bool
+pub fn DiagnosticEvent::is_error(Self) -> Bool
+pub fn DiagnosticEvent::new(code~ : String, severity~ : DiagnosticSeverity, domain~ : DiagnosticDomain, message~ : String, source? : String, generation? : UInt64?, frame? : UInt64?, detail? : String?) -> Self
+pub fn DiagnosticEvent::not_equal(Self, Self) -> Bool
+pub fn DiagnosticEvent::to_json(Self) -> @json.Json
+pub fn DiagnosticEvent::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum DiagnosticSeverity {
+  Info
+  Warning
+  Error
+}
+pub fn DiagnosticSeverity::equal(Self, Self) -> Bool
+pub fn DiagnosticSeverity::not_equal(Self, Self) -> Bool
+pub fn DiagnosticSeverity::to_json(Self) -> @json.Json
+pub fn DiagnosticSeverity::to_repr(Self) -> @debug.Repr
+
+pub struct DiagnosticSink {
+  // private fields
+}
+pub fn DiagnosticSink::clear(Self) -> Unit
+pub fn DiagnosticSink::drain(Self) -> Array[DiagnosticEvent]
+pub fn DiagnosticSink::length(Self) -> Int32
+pub fn DiagnosticSink::new(capacity? : Int32) -> Self
+pub fn DiagnosticSink::push(Self, DiagnosticEvent) -> Unit
+pub fn DiagnosticSink::snapshot(Self) -> Array[DiagnosticEvent]
+
+// Type aliases
+
+// Traits

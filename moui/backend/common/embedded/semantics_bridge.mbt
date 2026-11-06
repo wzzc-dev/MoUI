@@ -25,7 +25,7 @@ fn embedded_semantics_node(node : @core.SemanticsNode) -> EmbeddedSemanticsNode 
 
 ///|
 fn embedded_semantics_update(
-  read : @runtime.SemanticsRead,
+  read : @apphost.SemanticsRead,
 ) -> EmbeddedSemanticsUpdate? {
   match read {
     Full(snapshot) =>
@@ -59,7 +59,7 @@ fn embedded_semantics_update(
 ///|
 fn EmbeddedRuntimeHostBridge::sync_semantics(
   self : EmbeddedRuntimeHostBridge,
-  runtime : @runtime.AppRuntime,
+  runtime : @apphost.AppRuntime,
 ) -> Unit {
   let read = match self.semantics_cursor {
     Some(cursor) => runtime.read_semantics(since=cursor)

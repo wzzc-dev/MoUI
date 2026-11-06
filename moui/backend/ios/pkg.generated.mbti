@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/ios"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -16,7 +17,7 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> IosBackendInfo
 
-pub fn entry(auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
+pub fn entry(auto_exit_after_frames? : Int32?) -> @apphost.PlatformEntry
 
 pub fn host_surface_binding_from_ios(IosSurfaceBinding) -> @embedded.HostSurfaceBinding
 

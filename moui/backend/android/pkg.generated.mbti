@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/android"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -30,7 +31,7 @@ pub fn app_environment() -> @services.AppEnvironment
 
 pub fn backend_info() -> AndroidBackendInfo
 
-pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int32?) -> @runtime.PlatformEntry
+pub fn entry(options? : AndroidHostAppOptions, auto_exit_after_frames? : Int32?) -> @apphost.PlatformEntry
 
 pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded.HostSurfaceBinding
 

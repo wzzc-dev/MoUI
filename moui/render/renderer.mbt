@@ -250,6 +250,10 @@ pub(all) struct RenderFrameResult {
   cache_miss_count : Int32
   cache_update_count : Int32
   cache_evict_count : Int32
+  /// Per-frame degradation facts. Renderers report unsupported commands,
+  /// fallbacks, and image failures here; hosts drain them into DevTools,
+  /// embedded wire updates, or the Agent diagnostics surface.
+  diagnostics : Array[@diagnostics.DiagnosticEvent]
 }
 
 ///|
@@ -478,6 +482,7 @@ pub fn RenderFrameResult::new(
   cache_miss_count~ : Int32 = 0,
   cache_update_count~ : Int32 = 0,
   cache_evict_count~ : Int32 = 0,
+  diagnostics~ : Array[@diagnostics.DiagnosticEvent] = [],
 ) -> RenderFrameResult {
   {
     presented,
@@ -486,6 +491,7 @@ pub fn RenderFrameResult::new(
     cache_miss_count,
     cache_update_count,
     cache_evict_count,
+    diagnostics,
   }
 }
 
