@@ -3,12 +3,13 @@
 // by the root facade.
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PopoverPlacement {
   BottomStart
   BottomEnd
   TopStart
   TopEnd
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PopoverPlacement with Debug::{to_repr}

@@ -1,9 +1,10 @@
 ///|
 /// Font header (head table)
+#derive(Eq, Debug)
 struct FontHead {
   units_per_em : Int32
   index_to_loc_format : Int32 // 0 = short, 1 = long
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontHead with Debug::{to_repr}
@@ -13,12 +14,13 @@ pub extend FontHead with Eq::{not_equal, equal}
 
 ///|
 /// Horizontal header (hhea table)
+#derive(Eq, Debug)
 struct FontHhea {
   ascent : Int32
   descent : Int32
   line_gap : Int32
   num_h_metrics : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontHhea with Debug::{to_repr}
@@ -28,10 +30,11 @@ pub extend FontHhea with Eq::{not_equal, equal}
 
 ///|
 /// Horizontal metrics
+#derive(Eq, Debug)
 struct LongHorMetric {
   advance_width : Int32
   lsb : Int32 // left side bearing
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LongHorMetric with Debug::{to_repr}
@@ -41,11 +44,12 @@ pub extend LongHorMetric with Eq::{not_equal, equal}
 
 ///|
 /// Simple glyph point
+#derive(Eq, Debug)
 struct GlyphPoint {
   x : Int32
   y : Int32
   on_curve : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GlyphPoint with Debug::{to_repr}
@@ -55,28 +59,31 @@ pub extend GlyphPoint with Eq::{not_equal, equal}
 
 ///|
 /// Glyph contour
+#derive(Debug)
 struct GlyphContour {
   points : Array[GlyphPoint]
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphContour with Debug::{to_repr}
 
 ///|
 /// Simple glyph data
+#derive(Debug)
 struct SimpleGlyph {
   contours : Array[GlyphContour]
   xmin : Int32
   ymin : Int32
   xmax : Int32
   ymax : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend SimpleGlyph with Debug::{to_repr}
 
 ///|
 /// A component of a composite glyph
+#derive(Debug)
 struct GlyphComponent {
   glyph_index : Int32
   x_offset : Int32
@@ -85,30 +92,32 @@ struct GlyphComponent {
   scale_y : Double
   scale_xy : Double
   scale_yx : Double
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphComponent with Debug::{to_repr}
 
 ///|
 /// Glyph data (simple or composite)
+#derive(Debug)
 enum GlyphData {
   Simple(SimpleGlyph)
   Composite(Array[GlyphComponent])
   Empty
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphData with Debug::{to_repr}
 
 ///|
 /// Table record in font file
+#derive(Eq, Debug)
 struct TableRecord {
   tag : String
   checksum : UInt32
   offset : UInt32
   length : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TableRecord with Debug::{to_repr}
@@ -118,11 +127,12 @@ pub extend TableRecord with Eq::{not_equal, equal}
 
 ///|
 /// Kerning pair
+#derive(Eq, Debug)
 struct KernPair {
   left : Int32
   right : Int32
   value : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend KernPair with Debug::{to_repr}
@@ -132,6 +142,7 @@ pub extend KernPair with Eq::{not_equal, equal}
 
 ///|
 /// Parsed font data
+#derive(Debug)
 struct Font {
   head : FontHead
   hhea : FontHhea
@@ -140,7 +151,7 @@ struct Font {
   glyphs : Array[GlyphData]
   glyph_count : Int32
   kern : Array[KernPair] // kerning pairs
-} derive(Debug)
+}
 
 ///|
 pub extend Font with Debug::{to_repr}

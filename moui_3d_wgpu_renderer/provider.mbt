@@ -11,11 +11,12 @@ pub fn descriptor() -> @render.ThreeDRendererDescriptor {
 }
 
 ///|
+#derive(Eq, Debug)
 pub enum WgpuNative3DPlatform {
   MacOS
   Windows
   Linux
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WgpuNative3DPlatform with Debug::{to_repr}

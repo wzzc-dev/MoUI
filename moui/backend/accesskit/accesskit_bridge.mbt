@@ -8,11 +8,12 @@ pub struct AccessKitUpdate {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AccessKitActionResult {
   Handled(@runtime.SemanticsActionReceipt)
   Rejected(@runtime.SemanticsActionDispatchError)
   BridgeUnavailable(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AccessKitActionResult with Debug::{to_repr}

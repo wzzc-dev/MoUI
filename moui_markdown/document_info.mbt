@@ -4,6 +4,7 @@
 
 ///|
 /// Block and inline statistics for a Markdown document.
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentInfo {
   character_count : Int32
   heading_count : Int32
@@ -18,7 +19,7 @@ pub(all) struct MarkdownDocumentInfo {
   image_count : Int32
   footnote_reference_count : Int32
   footnote_definition_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentInfo with Eq::{equal, not_equal}

@@ -4,22 +4,24 @@
 /// origin is deliberately absent — layer pixels are recorded in layer-local
 /// coordinates, so moving a same-size layer keeps its identity and stays a
 /// cache hit. Replaces the former 5-segment string interpolation per lookup.
+#derive(Eq, Hash)
 priv struct SkiaLayerIdentity {
   runtime_key : String
   route : SkiaSurfaceRoute
   scale_factor : Double
   physical_width : Int32
   physical_height : Int32
-} derive(Eq, Hash)
+}
 
 ///|
 /// Structural layer-cache key (identity + content revision). Hashed directly
 /// by the cache maps, so hits and misses no longer allocate an interpolated
 /// string per lookup.
+#derive(Eq, Hash)
 priv struct SkiaLayerCacheKey {
   identity : SkiaLayerIdentity
   content_revision : Int32
-} derive(Eq, Hash)
+}
 
 ///|
 priv struct SkiaCachedLayerImageEntry {

@@ -31,6 +31,7 @@ pub let layout_medium_min : Double = 760.0
 pub let layout_compact_controls_min : Double = 520.0
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum LayoutMode {
   /// Two columns: character rail | stage.
   Wide
@@ -38,7 +39,7 @@ pub(all) enum LayoutMode {
   Medium
   /// One full-screen column; the rail is an overlay.
   Compact
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LayoutMode with Debug::{to_repr}
@@ -63,12 +64,13 @@ pub fn LayoutMode::is_compact(self : LayoutMode) -> Bool {
 /// Chinese dialogue line stretched across a 2,500px monitor reads as a
 /// newspaper column, so the stage stops growing at `stage_max` and the block
 /// stays centered.
+#derive(Eq, Debug)
 pub(all) struct Layout {
   rail_width : Double
   stage_max : Double
   /// The gutter between the two columns.
   gutter : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Layout with Debug::{to_repr}
@@ -111,6 +113,7 @@ pub fn Layout::content_width(self : Layout) -> Double {
 /// Passed explicitly rather than read from a global: the same model is rendered
 /// by the Web page, the macOS window, and (in the plugin) a panel, and a cached
 /// "current width" would make one of them render at another's size.
+#derive(Eq, Debug)
 pub(all) struct Screen {
   width : Double
   height : Double
@@ -130,7 +133,7 @@ pub(all) struct Screen {
   drawer_width : Double
   /// True when a control row should wrap instead of overflowing.
   tight_controls : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Screen with Debug::{to_repr}

@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/common/host_modal"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
 }
@@ -12,13 +13,14 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HostModalInputTransform {
   offset : @core.Point
   scale : @core.Point
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HostModalInputTransform::equal(Self, Self) -> Bool
 pub fn HostModalInputTransform::not_equal(Self, Self) -> Bool
-pub fn HostModalInputTransform::to_json(Self) -> Json
+pub fn HostModalInputTransform::to_json(Self) -> @json.Json
 pub fn HostModalInputTransform::to_repr(Self) -> @debug.Repr
 
 pub struct HostModalSession {
@@ -47,24 +49,26 @@ pub fn HostModalSession::state(Self) -> HostModalSessionState
 pub fn HostModalSession::surface(Self) -> HostModalSurface?
 pub fn HostModalSession::transform_input(Self, @core.Point) -> @core.Point
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum HostModalSessionState {
   Pending
   Accepted
   Rejected
   Closed
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HostModalSessionState::equal(Self, Self) -> Bool
 pub fn HostModalSessionState::not_equal(Self, Self) -> Bool
-pub fn HostModalSessionState::to_json(Self) -> Json
+pub fn HostModalSessionState::to_json(Self) -> @json.Json
 pub fn HostModalSessionState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HostModalSurface {
   token : String
   generation : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HostModalSurface::equal(Self, Self) -> Bool
 pub fn HostModalSurface::not_equal(Self, Self) -> Bool
-pub fn HostModalSurface::to_json(Self) -> Json
+pub fn HostModalSurface::to_json(Self) -> @json.Json
 pub fn HostModalSurface::to_repr(Self) -> @debug.Repr
 
 // Type aliases

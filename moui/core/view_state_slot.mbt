@@ -23,9 +23,10 @@ pub struct ViewStateSlot[T] {
 
 ///|
 /// Runtime-owned storage behind `ViewStateContext`.
+#derive(Eq, Debug)
 pub struct ViewStateSlots {
   priv values : Map[DeclarationKey, Bytes]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewStateSlots with Debug::{to_repr}

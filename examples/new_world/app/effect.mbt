@@ -134,6 +134,7 @@ fn copy_prompt_effect(host : WorldHost, text : String) -> @moui.Effect[Msg] {
 /// key. The scope separates "the world description changed" (new world, new
 /// character, AI generation, accepted memory) from "one conversation grew"
 /// (send / reply), which is by far the hot path.
+#derive(Eq, Debug)
 pub(all) enum CommitScope {
   /// `world.md`, `world_book.md`, and every character card.
   World
@@ -142,7 +143,7 @@ pub(all) enum CommitScope {
   /// Exactly one character's memory file, plus the event log. A memory edit
   /// is rarer than a turn but hotter than a world rewrite.
   Memories(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CommitScope with Debug::{to_repr}

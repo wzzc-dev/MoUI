@@ -19,11 +19,12 @@
 ///|
 /// The active top-level tab. Work/Design render placeholder surfaces; Code is
 /// the interactive coding-agent chat surface.
+#derive(Eq, Debug)
 pub(all) enum TopTab {
   Work
   Code
   Design
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TopTab with Debug::{to_repr}
@@ -44,11 +45,12 @@ pub(all) enum ChatMessage {
 
 ///|
 /// Appearance mode for the workbench chrome.
+#derive(Eq, Debug)
 pub(all) enum AppearanceMode {
   System
   Light
   Dark
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AppearanceMode with Debug::{to_repr}
@@ -58,11 +60,12 @@ pub extend AppearanceMode with Eq::{not_equal, equal}
 
 ///|
 /// Tool-call approval policy (UI-only in this prototype).
+#derive(Eq, Debug)
 pub(all) enum ApprovalPolicy {
   NeverAsk
   AskOnWrite
   AskOnCommand
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ApprovalPolicy with Debug::{to_repr}
@@ -72,11 +75,12 @@ pub extend ApprovalPolicy with Eq::{not_equal, equal}
 
 ///|
 /// File-system access scope (UI-only in this prototype).
+#derive(Eq, Debug)
 pub(all) enum SandboxMode {
   ReadOnly
   WorkspaceWritable
   FullAccess
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SandboxMode with Debug::{to_repr}
@@ -92,13 +96,14 @@ pub extend SandboxMode with Eq::{not_equal, equal}
 /// A single LLM provider (OpenAI-compatible). Holds the connection details and
 /// the list of model ids the user can pick from. Models can be auto-discovered
 /// via the provider's `v1/models` endpoint or added manually in settings.
+#derive(Eq, Debug)
 pub struct ProviderConfig {
   id : String
   name : String
   base_url : String
   api_key : String
   models : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProviderConfig with Debug::{to_repr}
@@ -292,12 +297,13 @@ fn replace_provider_models(
 ///|
 /// Lifecycle status of a task, derived from the session's streaming state and
 /// the last terminal turn status.
+#derive(Eq, Debug)
 enum TaskStatus {
   Pending
   Running
   Completed
   Failed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TaskStatus with Debug::{to_repr}
@@ -308,12 +314,13 @@ pub extend TaskStatus with Eq::{not_equal, equal}
 ///|
 /// Sidebar task filter. Kept app-local; it only changes the projected task
 /// tree, not the backend session list.
+#derive(Eq, Debug)
 enum TaskFilter {
   AllTasks
   ActiveTask
   RunningTasks
   FailedTasks
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TaskFilter with Debug::{to_repr}
@@ -323,11 +330,12 @@ pub extend TaskFilter with Eq::{not_equal, equal}
 
 ///|
 /// Time-based grouping for the task list.
+#derive(Eq, Debug)
 enum TaskGroup {
   Today
   Yesterday
   Earlier
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TaskGroup with Debug::{to_repr}
@@ -338,10 +346,11 @@ pub extend TaskGroup with Eq::{not_equal, equal}
 ///|
 /// A node in the sidebar task tree. Can be a folder (group header) or a leaf
 /// (session-backed task). Folder nodes can be expanded/collapsed.
+#derive(Eq, Debug)
 enum TaskTreeNode {
   Folder(String, String, TaskGroup, Array[TaskTreeNode], Bool)
   Task(String, String, TaskGroup, TaskStatus, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TaskTreeNode with Debug::{to_repr}
@@ -437,11 +446,12 @@ pub struct SettingsWorkspace {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum SettingsSection {
   Api
   Agent
   Editor
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SettingsSection with Debug::{to_repr}
@@ -647,11 +657,12 @@ pub(all) enum SettingsMsg {
 
 ///|
 /// Editable field of a `ProviderConfig`.
+#derive(Eq, Debug)
 pub(all) enum ProviderField {
   Name
   BaseUrl
   ApiKey
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProviderField with Debug::{to_repr}

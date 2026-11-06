@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AriaNode {
   node_id : @core.SemanticsNodeId
   semantic_id : String?
@@ -33,7 +34,7 @@ pub(all) struct AriaNode {
   actions : Array[String]
   frame : @core.Rect
   children : Array[@core.SemanticsNodeId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AriaNode with Debug::{to_repr}
@@ -45,6 +46,7 @@ pub extend AriaNode with Eq::{not_equal, equal}
 pub extend AriaNode with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AriaSemanticsUpdate {
   kind : String
   generation : @core.SemanticsGeneration
@@ -53,7 +55,7 @@ pub(all) struct AriaSemanticsUpdate {
   semantic_focused : @core.SemanticsNodeId?
   nodes : Array[AriaNode]
   removed : Array[@core.SemanticsNodeId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AriaSemanticsUpdate with Debug::{to_repr}
@@ -205,6 +207,7 @@ fn sync_all_web_semantics() -> Unit {
 }
 
 ///|
+#derive(ToJson)
 priv struct WebSemanticsActionEvidence {
   raw_id : Int32
   node_id : String
@@ -215,7 +218,7 @@ priv struct WebSemanticsActionEvidence {
   after : String
   pending_work : Bool
   error : String
-} derive(ToJson)
+}
 
 ///|
 fn record_web_semantics_action_evidence(

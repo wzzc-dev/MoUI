@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignDensityResolverRecord {
   preset : @common.DesignPreset
   density : @common.DesignDensity
@@ -25,7 +26,7 @@ pub(all) struct DesignDensityResolverRecord {
   resolves_components : Bool
   status : DesignTokenStatus
   remaining_gap : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignDensityResolverRecord with Debug::{to_repr}

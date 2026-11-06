@@ -1,10 +1,11 @@
 ///|
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ColorScheme {
   Light
   Dark
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Full semantic color palette. Extended from the original 8-role palette to
@@ -19,6 +20,7 @@ pub(all) enum ColorScheme {
 /// - `<role>_container` is a tinted surface variant; `on_<role>_container`
 ///   is the text color on that container.
 /// `on_foreground` is an explicit alias of `background` for symmetry.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ColorPalette {
   // Base surfaces.
   foreground : Color
@@ -65,26 +67,29 @@ pub(all) struct ColorPalette {
   // Focus + scrim.
   focus : Color
   scrim : Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
   md : Double
   lg : Double
   xl : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RadiusScale {
   sm : Double
   md : Double
   lg : Double
   pill : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TypographyScale {
   /// Largest tier; page-level display numbers or hero headlines.
   display : FontSpec
@@ -106,57 +111,64 @@ pub(all) struct TypographyScale {
   overline : FontSpec
   /// Legacy alias for `label`: emphasized control text (buttons, tabs).
   control : FontSpec
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShadowScale {
   sm : ShadowStyle
   md : ShadowStyle
   lg : ShadowStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MotionScale {
   fast_ms : Double
   normal_ms : Double
   slow_ms : Double
   easing : Easing
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SurfaceScale {
   base : Brush
   raised : Brush
   overlay : Brush
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SurfaceLevel {
   Base
   Raised
   Overlay
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AccessibilityContrast {
   Standard
   High
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ContentSizeCategory {
   Small
   Medium
   Large
   ExtraLarge
   Accessibility
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Resolved, drawable neutral theme. A `Theme` is the output of
@@ -167,6 +179,7 @@ pub(all) enum ContentSizeCategory {
 /// `core` carries no control vocabulary. Controls read a `ControlThemeSet`
 /// resolved views-side from this neutral `Theme` at paint time; `style?` on
 /// a control constructor is a one-shot override.
+#derive(Eq, Debug, ToJson)
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
@@ -176,7 +189,7 @@ pub(all) struct Theme {
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Runtime environment snapshot. Carries the user's `theme_spec` (intent), the
@@ -184,6 +197,7 @@ pub(all) struct Theme {
 /// from both. Changing `system_scheme` rebuilds the full theme via
 /// `with_system_scheme`; the legacy `with_color_scheme` (which only flipped a
 /// flag and left the palette stale) is removed.
+#derive(Eq, Debug, ToJson)
 pub(all) struct Environment {
   theme_spec : ThemeSpec
   system_scheme : ColorScheme
@@ -196,7 +210,7 @@ pub(all) struct Environment {
   reduced_motion : Bool
   content_size_category : ContentSizeCategory
   enabled : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 // ---------------------------------------------------------------------------
 // ColorPalette factories

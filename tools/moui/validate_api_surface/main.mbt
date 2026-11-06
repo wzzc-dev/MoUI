@@ -212,6 +212,10 @@ fn views_facade_required_tokens() -> Array[String] {
 
 ///|
 fn package_budgets() -> Array[PackageBudget] {
+  // MoonBit 0.10.20 emits `@json.Json`/`@debug.Debug` qualifications and
+  // `#derive(...)` attributes in `.mbti` output. The declaration counts below
+  // are unchanged by that migration; only the line budgets are raised to the
+  // formatter's new baseline.
   let budgets = [
     {
       label: "root facade (app-loop sugar)",
@@ -298,7 +302,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // to "does this chord resolve to a clipboard command": a hosted backend
       // logs it before dispatch so a shortcut failure can be localized without
       // guessing. +1 line, +1 pub.
-      max_lines: 891,
+      max_lines: 935,
       max_pub_lines: 597,
       max_pub_all_lines: 28,
       required_tokens: [
@@ -401,7 +405,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // two keyed constructors, stats getters, manual remove/clear, and the
       // derived equality/debug declarations. It stays advanced core rather
       // than entering the root app facade.
-      max_lines: 2575,
+      max_lines: 2720,
       max_pub_lines: 1150,
       max_pub_all_lines: 141,
       required_tokens: [
@@ -499,7 +503,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "backend protocols",
       path: "moui/backend/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend\"",
-      max_lines: 654,
+      max_lines: 701,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [
@@ -522,7 +526,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // +2 lines again: RendererBackendKind::NativeDirectGpu and
       // RendererFamily::Metal, the identity a no-Skia host GPU surface needs.
       // +11/+6/+1(all) for SurfaceDamageCapability; default FullSurfaceOnly.
-      max_lines: 619,
+      max_lines: 653,
       max_pub_lines: 285,
       max_pub_all_lines: 32,
       required_tokens: [
@@ -563,7 +567,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // renderer share one model instead of importing the diagnostic wgpu
       // renderer package. Budget = current surface exactly: growth here is a
       // cross-renderer protocol change, not a renderer-local convenience.
-      max_lines: 94,
+      max_lines: 96,
       max_pub_lines: 46,
       max_pub_all_lines: 1,
       required_tokens: [
@@ -581,7 +585,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // SkiaSurfaceRoute derives Hash (hash/hash_combine) so renderer-side
       // struct-key caches can key routes without string interpolation:
       // +2 lines, +2 pub declarations.
-      max_lines: 281,
+      max_lines: 293,
       max_pub_lines: 167,
       max_pub_all_lines: 7,
       required_tokens: [
@@ -593,7 +597,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "sun renderer",
       path: "moui_sun_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_sun_renderer\"",
-      max_lines: 272,
+      max_lines: 282,
       max_pub_lines: 175,
       max_pub_all_lines: 1,
       required_tokens: [
@@ -607,7 +611,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "webgpu adapter",
       path: "moui_web_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_web_renderer\"",
-      max_lines: 183,
+      max_lines: 190,
       max_pub_lines: 92,
       max_pub_all_lines: 2,
       required_tokens: [
@@ -624,7 +628,7 @@ fn package_budgets() -> Array[PackageBudget] {
       // 154/77/3 -> 116/55/2: the native text model moved to
       // `moui/render/native_text`; what remains here is the re-export block
       // that keeps host entrypoints naming the engine through this renderer.
-      max_lines: 116,
+      max_lines: 119,
       max_pub_lines: 55,
       max_pub_all_lines: 2,
       required_tokens: [

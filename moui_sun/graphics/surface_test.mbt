@@ -1574,11 +1574,12 @@ test "present_pixels_rect helper dispatches through Surface trait" {
 }
 
 ///|
+#derive(Debug)
 struct MutatingSurface {
   width : Int32
   height : Int32
   mut present_count : Int32
-} derive(Debug)
+}
 
 ///|
 fn MutatingSurface::new(width : Int32, height : Int32) -> MutatingSurface {
@@ -1655,11 +1656,12 @@ impl Surface for MutatingSurface with fn present_pixels_rect(
 }
 
 ///|
+#derive(Debug)
 struct BackendFailingSurface {
   width : Int32
   height : Int32
   present_rects : Array[@graphics.PixelRect]
-} derive(Debug)
+}
 
 ///|
 fn BackendFailingSurface::new(

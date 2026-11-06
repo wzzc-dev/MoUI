@@ -31,12 +31,13 @@ pub struct ViewBuilderCache[Msg] {
 ///
 /// Counters cover the cache handle's lifetime. `clear` removes entries without
 /// resetting these counters.
+#derive(Eq, Debug)
 pub struct ViewBuilderCacheStats {
   priv build_count : Int32
   priv hit_count : Int32
   priv miss_count : Int32
   priv entry_count : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewBuilderCacheStats with Debug::{to_repr}

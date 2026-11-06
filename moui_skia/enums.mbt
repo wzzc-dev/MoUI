@@ -1,5 +1,6 @@
 ///|
 /// Porter-Duff and extended blend modes mirrored from Skia.
+#derive(Debug, Eq)
 pub(all) enum BlendMode {
   Clear
   Src
@@ -30,7 +31,7 @@ pub(all) enum BlendMode {
   Saturation
   Color
   Luminosity
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend BlendMode with Debug::{to_repr}
@@ -83,11 +84,12 @@ pub fn BlendMode::to_skia_ordinal(self : BlendMode) -> Int32 {
 
 ///|
 /// How paint geometry is rasterized.
+#derive(Debug, Eq)
 pub(all) enum PaintStyle {
   Fill
   Stroke
   StrokeAndFill
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PaintStyle with Debug::{to_repr}
@@ -114,11 +116,12 @@ pub fn PaintStyle::to_skia_ordinal(self : PaintStyle) -> Int32 {
 
 ///|
 /// Shape used at the end of an open stroked contour.
+#derive(Debug, Eq)
 pub(all) enum StrokeCap {
   Butt
   Round
   Square
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StrokeCap with Debug::{to_repr}
@@ -145,11 +148,12 @@ pub fn StrokeCap::to_skia_ordinal(self : StrokeCap) -> Int32 {
 
 ///|
 /// Shape used when two stroked segments meet.
+#derive(Debug, Eq)
 pub(all) enum StrokeJoin {
   Miter
   Round
   Bevel
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StrokeJoin with Debug::{to_repr}
@@ -176,11 +180,12 @@ pub fn StrokeJoin::to_skia_ordinal(self : StrokeJoin) -> Int32 {
 
 ///|
 /// How `Canvas::draw_points` interprets a point array.
+#derive(Debug, Eq)
 pub(all) enum PointMode {
   Points
   Lines
   Polygon
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PointMode with Debug::{to_repr}
@@ -207,12 +212,13 @@ pub fn PointMode::to_skia_ordinal(self : PointMode) -> Int32 {
 
 ///|
 /// Interpretation of alpha in pixel data.
+#derive(Debug, Eq)
 pub(all) enum AlphaType {
   Unknown
   Opaque
   Premul
   Unpremul
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend AlphaType with Debug::{to_repr}
@@ -230,6 +236,7 @@ pub impl Default for AlphaType with fn default() {
 
 ///|
 /// Pixel storage formats common in Skia surfaces and images.
+#derive(Debug, Eq)
 pub(all) enum ColorType {
   Unknown
   Alpha8
@@ -243,7 +250,7 @@ pub(all) enum ColorType {
   Gray8
   RGBAF16
   RGBAF32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ColorType with Debug::{to_repr}
@@ -261,12 +268,13 @@ pub impl Default for ColorType with fn default() {
 
 ///|
 /// Sampling behavior when coordinates land outside shader bounds.
+#derive(Debug, Eq)
 pub(all) enum TileMode {
   Clamp
   Repeat
   Mirror
   Decal
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TileMode with Debug::{to_repr}
@@ -294,6 +302,7 @@ pub fn TileMode::to_skia_ordinal(self : TileMode) -> Int32 {
 
 ///|
 /// Encoded image container formats accepted by Skia encoders.
+#derive(Debug, Eq)
 pub(all) enum EncodedImageFormat {
   BMP
   GIF
@@ -309,7 +318,7 @@ pub(all) enum EncodedImageFormat {
   HEIF
   AVIF
   JPEGXL
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend EncodedImageFormat with Debug::{to_repr}
@@ -370,10 +379,11 @@ pub fn EncodedImageFormat::from_skia_ordinal(
 
 ///|
 /// How a new clip geometry combines with the current canvas clip.
+#derive(Debug, Eq)
 pub(all) enum ClipOp {
   Difference
   Intersect
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ClipOp with Debug::{to_repr}
@@ -399,10 +409,11 @@ pub fn ClipOp::to_skia_ordinal(self : ClipOp) -> Int32 {
 
 ///|
 /// Pixel reconstruction filter used when images are sampled.
+#derive(Debug, Eq)
 pub(all) enum FilterMode {
   Nearest
   Linear
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FilterMode with Debug::{to_repr}
@@ -428,11 +439,12 @@ pub fn FilterMode::to_skia_ordinal(self : FilterMode) -> Int32 {
 
 ///|
 /// Mipmap sampling mode used together with `FilterMode`.
+#derive(Debug, Eq)
 pub(all) enum MipmapMode {
   None
   Nearest
   Linear
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend MipmapMode with Debug::{to_repr}

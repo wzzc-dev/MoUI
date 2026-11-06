@@ -1,11 +1,12 @@
 ///|
 /// Top-level Showcase workspaces. Each maps to an isolated feature package.
+#derive(Eq, Debug, ToJson)
 pub(all) enum Workspace {
   Components
   Patterns
   Platform
   Diagnostics
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Workspace with Debug::{to_repr}
@@ -17,10 +18,11 @@ pub extend Workspace with Eq::{not_equal, equal}
 pub extend Workspace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShowcaseRoute {
   workspace : Workspace
   id : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShowcaseRoute with Debug::{to_repr}

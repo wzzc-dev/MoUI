@@ -1,11 +1,12 @@
 ///|
 /// Perspective camera with the glTF-compatible Y-up, right-handed convention.
+#derive(Eq, Debug, ToJson)
 pub(all) struct PerspectiveCamera {
   fov_y_radians : Double
   aspect : Double
   near : Double
   far : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PerspectiveCamera with Debug::{to_repr}
@@ -79,13 +80,14 @@ pub fn PerspectiveCamera::far(self : PerspectiveCamera) -> Double {
 ///|
 /// Orbit camera state. `polar` is measured from the positive Y axis and is
 /// clamped away from the poles so orbiting cannot flip the view upside down.
+#derive(Eq, Debug, ToJson)
 pub(all) struct OrbitCamera {
   target : Vec3
   radius : Double
   azimuth : Double
   polar : Double
   perspective : PerspectiveCamera
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend OrbitCamera with Debug::{to_repr}

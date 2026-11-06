@@ -105,6 +105,7 @@ const DEFAULT_IDLE_TIMEOUT_MS : Int32 = 50
 
 ///|
 /// 宿主退出原因。正常退出只有一种:应用自己请求关闭。
+#derive(Eq, Debug)
 pub(all) enum TerminalExit {
   /// 应用请求关闭(运行时报 close_requested)。
   Closed
@@ -118,7 +119,7 @@ pub(all) enum TerminalExit {
   RendererRejected(String)
   /// 写终端失败(管道被关、EPIPE),带原因。
   WriteFailed(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TerminalExit with Eq::{not_equal, equal}

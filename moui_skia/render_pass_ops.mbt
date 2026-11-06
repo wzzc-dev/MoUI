@@ -1,10 +1,11 @@
 ///|
 /// How a render pass should initialize its target pixels.
+#derive(Debug, Eq)
 pub(all) enum RenderPassLoadOp {
   LoadExisting
   ClearBeforeDraw
   DontCareLoad
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderPassLoadOp with Debug::{to_repr}
@@ -34,11 +35,12 @@ pub fn RenderPassLoadOp::preserves_existing_pixels(
 
 ///|
 /// How a render pass should finish target pixels after drawing.
+#derive(Debug, Eq)
 pub(all) enum RenderPassStoreOp {
   StorePixels
   DiscardPixels
   PresentPixels
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderPassStoreOp with Debug::{to_repr}

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignTokenCategory {
   Color
   Typography
@@ -12,7 +13,7 @@ pub(all) enum DesignTokenCategory {
   SchemeVariant
   ComponentStyle
   Customization
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenCategory with Debug::{to_repr}
@@ -24,13 +25,14 @@ pub extend DesignTokenCategory with Eq::{not_equal, equal}
 pub extend DesignTokenCategory with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignTokenLayer {
   ReferenceToken
   SystemToken
   AliasToken
   ComponentToken
   MoUIAdapter
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenLayer with Debug::{to_repr}
@@ -42,6 +44,7 @@ pub extend DesignTokenLayer with Eq::{not_equal, equal}
 pub extend DesignTokenLayer with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignTokenStatus {
   NotMapped
   SourceMapped
@@ -49,7 +52,7 @@ pub(all) enum DesignTokenStatus {
   ThemeMapped
   ComponentMapped
   OfficialComplete
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenStatus with Debug::{to_repr}
@@ -61,6 +64,7 @@ pub extend DesignTokenStatus with Eq::{not_equal, equal}
 pub extend DesignTokenStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSystemSource {
   label : String
   url : String
@@ -69,7 +73,7 @@ pub(all) struct DesignSystemSource {
   token_path : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSystemSource with Debug::{to_repr}
@@ -81,6 +85,7 @@ pub extend DesignSystemSource with Eq::{not_equal, equal}
 pub extend DesignSystemSource with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTokenCoverage {
   category : DesignTokenCategory
   layer : DesignTokenLayer
@@ -88,7 +93,7 @@ pub(all) struct DesignTokenCoverage {
   moui_surface : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenCoverage with Debug::{to_repr}
@@ -100,12 +105,13 @@ pub extend DesignTokenCoverage with Eq::{not_equal, equal}
 pub extend DesignTokenCoverage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignVariantCoverage {
   variant : @common.DesignSchemeVariant
   source_family : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignVariantCoverage with Debug::{to_repr}
@@ -117,13 +123,14 @@ pub extend DesignVariantCoverage with Eq::{not_equal, equal}
 pub extend DesignVariantCoverage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignComponentCoverage {
   component : String
   source_family : String
   moui_surface : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignComponentCoverage with Debug::{to_repr}
@@ -135,12 +142,13 @@ pub extend DesignComponentCoverage with Eq::{not_equal, equal}
 pub extend DesignComponentCoverage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignCustomizationCoverage {
   capability : String
   api_surface : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignCustomizationCoverage with Debug::{to_repr}
@@ -152,6 +160,7 @@ pub extend DesignCustomizationCoverage with Eq::{not_equal, equal}
 pub extend DesignCustomizationCoverage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSystemManifest {
   preset : @common.DesignPreset
   official_name : String
@@ -162,7 +171,7 @@ pub(all) struct DesignSystemManifest {
   component_coverage : Array[DesignComponentCoverage]
   customization_coverage : Array[DesignCustomizationCoverage]
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSystemManifest with Debug::{to_repr}

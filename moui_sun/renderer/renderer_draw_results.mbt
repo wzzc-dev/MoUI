@@ -1,5 +1,6 @@
 ///|
 /// Result of drawing text through glyph-mask cache and atlas resources.
+#derive(Debug)
 pub struct TextAtlasDrawResult {
   glyph_count : Int32
   drawn_glyph_count : Int32
@@ -9,7 +10,7 @@ pub struct TextAtlasDrawResult {
   atlas_hit_count : Int32
   atlas_inserted_count : Int32
   did_clear_atlas : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend TextAtlasDrawResult with Debug::{to_repr}
@@ -17,28 +18,31 @@ pub extend TextAtlasDrawResult with Debug::{to_repr}
 ///|
 /// Result of drawing one fallback line through glyph-mask cache and atlas
 /// resources.
+#derive(Debug)
 pub struct TextFallbackAtlasDrawResult {
   plan : @text.FontFallbackPlan
   drawn_span_count : Int32
   skipped_span_count : Int32
   advance_width : Double
   atlas_result : TextAtlasDrawResult
-} derive(Debug)
+}
 
 ///|
 pub extend TextFallbackAtlasDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of drawing text through a caller-owned rendered text-mask cache.
+#derive(Debug)
 pub struct TextMaskDrawResult {
   did_render_mask : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend TextMaskDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of drawing a single line through an ordered font fallback stack.
+#derive(Debug)
 pub struct TextFallbackDrawResult {
   plan : @text.FontFallbackPlan
   drawn_span_count : Int32
@@ -46,17 +50,18 @@ pub struct TextFallbackDrawResult {
   rendered_mask_count : Int32
   cache_hit_count : Int32
   advance_width : Double
-} derive(Debug)
+}
 
 ///|
 pub extend TextFallbackDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of parsing font bytes through renderer resources and drawing text.
+#derive(Debug)
 pub struct CachedFontTextDrawResult {
   did_parse_font : Bool
   text_result : TextMaskDrawResult
-} derive(Debug)
+}
 
 ///|
 pub extend CachedFontTextDrawResult with Debug::{to_repr}
@@ -64,10 +69,11 @@ pub extend CachedFontTextDrawResult with Debug::{to_repr}
 ///|
 /// Result of parsing font bytes through renderer resources and drawing atlas
 /// text.
+#derive(Debug)
 pub struct CachedFontAtlasDrawResult {
   did_parse_font : Bool
   atlas_result : TextAtlasDrawResult
-} derive(Debug)
+}
 
 ///|
 pub extend CachedFontAtlasDrawResult with Debug::{to_repr}
@@ -75,11 +81,12 @@ pub extend CachedFontAtlasDrawResult with Debug::{to_repr}
 ///|
 /// Result of parsing a font-byte fallback stack and drawing cached fallback
 /// text.
+#derive(Debug)
 pub struct CachedFontFallbackDrawResult {
   parsed_font_count : Int32
   font_cache_hit_count : Int32
   fallback_result : TextFallbackDrawResult
-} derive(Debug)
+}
 
 ///|
 pub extend CachedFontFallbackDrawResult with Debug::{to_repr}
@@ -87,47 +94,52 @@ pub extend CachedFontFallbackDrawResult with Debug::{to_repr}
 ///|
 /// Result of parsing a font-byte fallback stack and drawing atlas fallback
 /// text.
+#derive(Debug)
 pub struct CachedFontFallbackAtlasDrawResult {
   parsed_font_count : Int32
   font_cache_hit_count : Int32
   fallback_result : TextFallbackAtlasDrawResult
-} derive(Debug)
+}
 
 ///|
 pub extend CachedFontFallbackAtlasDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of drawing through a caller-owned pixmap cache.
+#derive(Debug)
 pub struct CachedPixmapDrawResult {
   did_insert_pixmap : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend CachedPixmapDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of decoding BMP bytes through a pixmap cache and drawing them.
+#derive(Debug)
 pub struct CachedBmpPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend CachedBmpPixmapDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of decoding PNG bytes through a pixmap cache and drawing them.
+#derive(Debug)
 pub struct CachedPngPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend CachedPngPixmapDrawResult with Debug::{to_repr}
 
 ///|
 /// Result of decoding raw RGBA bytes through a pixmap cache and drawing them.
+#derive(Debug)
 pub struct CachedRgbaPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend CachedRgbaPixmapDrawResult with Debug::{to_repr}

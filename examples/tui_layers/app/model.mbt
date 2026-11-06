@@ -6,11 +6,12 @@
 /// chain is separate (see `app_test.mbt`), so typing reaches the field only once
 /// the field has been clicked. Keeping it in the cycle is what lets the key-help
 /// line and the border colour say "now keys type, they do not command".
+#derive(Eq, Debug)
 pub(all) enum Pane {
   LayersPane
   FilesPane
   FilterPane
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Pane with Debug::{to_repr}
@@ -19,11 +20,12 @@ pub extend Pane with Debug::{to_repr}
 pub extend Pane with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Layer {
   id : String
   name : String
   visible : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Layer with Debug::{to_repr}
@@ -67,11 +69,12 @@ pub struct Model {
 ///|
 /// App-side mirror of `@views.TreeItem`: that value type carries no `Eq`/`Debug`,
 /// and the model has to stay printable in tests.
+#derive(Debug)
 pub(all) struct Node {
   id : String
   label : String
   children : Array[Node]
-} derive(Debug)
+}
 
 ///|
 pub extend Node with Debug::{to_repr}

@@ -154,10 +154,11 @@ pub(all) struct PaintContext {
 pub fn PaintContext::finish(Self) -> Array[@core.DrawCommand]
 pub fn PaintContext::new() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PressableTransition {
   Idle
   Active(@core.PressableState, Double)
-} derive(Eq, @debug.Debug)
+}
 pub fn PressableTransition::equal(Self, Self) -> Bool
 pub fn PressableTransition::not_equal(Self, Self) -> Bool
 pub fn PressableTransition::to_repr(Self) -> @debug.Repr

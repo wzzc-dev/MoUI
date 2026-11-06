@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourcePackageRecord {
   preset : @common.DesignPreset
   package_name : String
@@ -16,7 +17,7 @@ pub(all) struct DesignSourcePackageRecord {
   status : DesignTokenStatus
   pending_gap : String
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourcePackageRecord with Debug::{to_repr}

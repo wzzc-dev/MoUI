@@ -56,13 +56,14 @@ extern "C" fn windows_file_dialog_bytes(
 extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int32 = "moui_windows_show_menu"
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowsAccessibilityBridgeInfo with Debug::{to_repr}

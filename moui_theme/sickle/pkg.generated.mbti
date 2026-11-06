@@ -3,6 +3,7 @@ package "wzzc-dev/moui_theme/sickle"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/style",
 }
@@ -27,15 +28,16 @@ pub fn theme(scheme? : @core.ColorScheme, mode? : SickleStyleMode) -> @core.Them
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum SickleStyleMode {
   Skeuo
   Flat
   Hybrid
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SickleStyleMode::equal(Self, Self) -> Bool
 pub fn SickleStyleMode::label(Self) -> String
 pub fn SickleStyleMode::not_equal(Self, Self) -> Bool
-pub fn SickleStyleMode::to_json(Self) -> Json
+pub fn SickleStyleMode::to_json(Self) -> @json.Json
 pub fn SickleStyleMode::to_repr(Self) -> @debug.Repr
 
 // Type aliases

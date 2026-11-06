@@ -10,11 +10,12 @@
 /// because `FormFieldState` values are strings; app models that keep real
 /// `Bool`s match on the action directly instead of going through
 /// `FormFieldState`.
+#derive(Eq, Debug, ToJson)
 pub(all) enum FieldAction {
   Text(String)
   Toggle(Bool)
   Select(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FieldAction with Debug::{to_repr}

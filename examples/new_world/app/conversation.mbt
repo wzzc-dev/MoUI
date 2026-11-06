@@ -8,10 +8,11 @@
 
 ///|
 /// Who said a line.
+#derive(Eq, Debug, ToJson)
 pub(all) enum Speaker {
   Player
   Character(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Speaker with Debug::{to_repr}
@@ -38,6 +39,7 @@ fn speaker_role(speaker : Speaker) -> String {
 /// chat product has. `text` is always the selected alternative, so every
 /// existing reader (prompt assembly, transcript rendering, export) keeps
 /// working unchanged; swiping only swaps `text` and `selected`.
+#derive(Eq, Debug, ToJson)
 pub struct ChatLine {
   speaker : Speaker
   text : String
@@ -46,7 +48,7 @@ pub struct ChatLine {
   /// Index into the logical list `[text] + alternatives`, so a swipe can move
   /// left/right without losing the original answer.
   selected : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ChatLine with Debug::{to_repr}
@@ -70,6 +72,7 @@ pub fn ChatLine::player(text : String) -> ChatLine {
 /// The intent only changes how the line is framed in the prompt and how it is
 /// shown in the transcript; it never changes what is stored (a `ChatLine` is
 /// still just a speaker plus text), so an old journal keeps loading.
+#derive(Eq, Debug)
 pub(all) enum InputIntent {
   /// Plain speech: `你：…`.
   Say
@@ -84,7 +87,7 @@ pub(all) enum InputIntent {
   /// of answering it. This is the writer's seat: you say what the beat is,
   /// the model plays it out in your characters' voices.
   Beat
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend InputIntent with Debug::{to_repr}
@@ -242,6 +245,7 @@ pub let chat_history_limit : Int32 = 60
 
 ///|
 /// One character's conversation.
+#derive(Eq, Debug)
 pub struct Conversation {
   character_id : String
   lines : Array[ChatLine]
@@ -263,7 +267,7 @@ pub struct Conversation {
   /// This conversation's scene atmosphere, overriding the world default.
   /// `None` = use `Scenario::mood`. Session-level and optional on disk.
   mood : SceneMood?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Conversation with Debug::{to_repr}
@@ -396,9 +400,10 @@ pub fn Conversation::to_wire(self : Conversation) -> Array[(String, String)] {
 
 ///|
 /// Every conversation in the current scenario, keyed by character id.
+#derive(Eq, Debug)
 pub struct ConversationBook {
   entries : Array[Conversation]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ConversationBook with Debug::{to_repr}

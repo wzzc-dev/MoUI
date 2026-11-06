@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTokenMapping {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -8,7 +9,7 @@ pub(all) struct DesignTokenMapping {
   moui_token : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenMapping with Debug::{to_repr}
@@ -20,6 +21,7 @@ pub extend DesignTokenMapping with Eq::{not_equal, equal}
 pub extend DesignTokenMapping with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourceUsage {
   preset : @common.DesignPreset
   source_label : String
@@ -31,7 +33,7 @@ pub(all) struct DesignSourceUsage {
   source_status : DesignTokenStatus
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceUsage with Debug::{to_repr}

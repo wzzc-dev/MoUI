@@ -3,6 +3,7 @@ package "examples/multi_window/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
@@ -36,10 +37,11 @@ pub(all) enum Msg {
   IncrementShared
 }
 
+#derive(Eq)
 pub(all) enum Scene {
   Main
   Inspector(String)
-} derive(Eq)
+}
 pub fn Scene::equal(Self, Self) -> Bool
 pub fn Scene::not_equal(Self, Self) -> Bool
 
@@ -53,55 +55,60 @@ pub fn WindowActions::new(dispatch~ : (WindowRequest) -> Unit, subscribe? : ((Wi
 pub fn[Msg] WindowActions::subscription(Self, map~ : (WindowEvent) -> Msg) -> @core.Subscription[Msg]
 pub fn WindowActions::unavailable() -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum WindowEvent {
   Opened(WindowId)
   Updated(WindowId)
   Rejected(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowEvent::equal(Self, Self) -> Bool
 pub fn WindowEvent::not_equal(Self, Self) -> Bool
-pub fn WindowEvent::to_json(Self) -> Json
+pub fn WindowEvent::to_json(Self) -> @json.Json
 pub fn WindowEvent::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WindowId {
   value : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowId::equal(Self, Self) -> Bool
 pub fn WindowId::new(Int32) -> Self
 pub fn WindowId::not_equal(Self, Self) -> Bool
-pub fn WindowId::to_json(Self) -> Json
+pub fn WindowId::to_json(Self) -> @json.Json
 pub fn WindowId::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WindowOpenRequest {
   title : String
   scene : WindowScene
   width : Double
   height : Double
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowOpenRequest::equal(Self, Self) -> Bool
 pub fn WindowOpenRequest::new(title~ : String, scene~ : WindowScene, width~ : Double, height~ : Double) -> Self
 pub fn WindowOpenRequest::not_equal(Self, Self) -> Bool
-pub fn WindowOpenRequest::to_json(Self) -> Json
+pub fn WindowOpenRequest::to_json(Self) -> @json.Json
 pub fn WindowOpenRequest::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum WindowRequest {
   Open(WindowOpenRequest)
   Focus(WindowId)
   Close(WindowId)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowRequest::equal(Self, Self) -> Bool
 pub fn WindowRequest::not_equal(Self, Self) -> Bool
-pub fn WindowRequest::to_json(Self) -> Json
+pub fn WindowRequest::to_json(Self) -> @json.Json
 pub fn WindowRequest::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WindowScene {
   scene_id : String
   payload : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowScene::equal(Self, Self) -> Bool
 pub fn WindowScene::new(scene_id~ : String, payload? : String) -> Self
 pub fn WindowScene::not_equal(Self, Self) -> Bool
-pub fn WindowScene::to_json(Self) -> Json
+pub fn WindowScene::to_json(Self) -> @json.Json
 pub fn WindowScene::to_repr(Self) -> @debug.Repr
 
 // Type aliases

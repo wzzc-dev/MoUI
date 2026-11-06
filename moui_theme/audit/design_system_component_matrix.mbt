@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignComponentTokenMatrixRecord {
   preset : @common.DesignPreset
   component : String
@@ -18,7 +19,7 @@ pub(all) struct DesignComponentTokenMatrixRecord {
   pending_token_family : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignComponentTokenMatrixRecord with Debug::{to_repr}

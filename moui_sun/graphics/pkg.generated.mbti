@@ -15,6 +15,7 @@ pub fn validate_present_rect(Int32, Int32, Int32, Int32, Int32, Int32, Int32, Fi
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum BlendMode {
   Clear
   Source
@@ -46,21 +47,23 @@ pub(all) enum BlendMode {
   Luminosity
   LinearBurn
   Subtract
-} derive(Eq, @debug.Debug)
+}
 pub fn BlendMode::equal(Self, Self) -> Bool
 pub fn BlendMode::not_equal(Self, Self) -> Bool
 pub fn BlendMode::to_repr(Self) -> @debug.Repr
 
-type BmpInfo derive(@debug.Debug)
+#derive(@debug.Debug)
+type BmpInfo
 pub fn BmpInfo::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct Canvas {
   pixmap : Pixmap
   mut transform : Transform
   mut clip_rect : Rect?
   state_stack : Array[CanvasState]
   dirty_region : DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn Canvas::clear(Self, Color) -> Unit
 pub fn Canvas::clear_clip(Self) -> Unit
 pub fn Canvas::clear_dirty_region(Self) -> Unit
@@ -128,18 +131,21 @@ pub fn Canvas::stroke_rounded_rect_corners(Self, Double, Double, Double, Double,
 pub fn Canvas::to_repr(Self) -> @debug.Repr
 pub fn Canvas::translate(Self, tx~ : Double, ty~ : Double) -> Unit
 
-type CanvasEdge derive(@debug.Debug)
+#derive(@debug.Debug)
+type CanvasEdge
 pub fn CanvasEdge::to_repr(Self) -> @debug.Repr
 
-type CanvasState derive(@debug.Debug)
+#derive(@debug.Debug)
+type CanvasState
 pub fn CanvasState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Color {
   r : Byte
   g : Byte
   b : Byte
   a : Byte
-} derive(Eq, @debug.Debug)
+}
 pub fn Color::black() -> Self
 pub fn Color::blend_over(Self, Self) -> Self
 pub fn Color::blend_with(Self, Self, BlendMode) -> Self
@@ -158,13 +164,15 @@ pub fn Color::white() -> Self
 pub fn Color::with_alpha(Self, Byte) -> Self
 pub impl Show for Color
 
-type DashCursor derive(@debug.Debug)
+#derive(@debug.Debug)
+type DashCursor
 pub fn DashCursor::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct DirtyPresentPlan {
   mode : DirtyPresentPlanMode
   rects : Array[PixelRect]
-} derive(@debug.Debug)
+}
 pub fn DirtyPresentPlan::get_mode(Self) -> DirtyPresentPlanMode
 pub fn DirtyPresentPlan::get_present_bounds(Self) -> PixelRect?
 pub fn DirtyPresentPlan::get_present_byte_count(Self) -> Int32
@@ -177,27 +185,30 @@ pub fn DirtyPresentPlan::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn DirtyPresentPlan::to_repr(Self) -> @debug.Repr
 pub fn DirtyPresentPlan::uses_bounds_fallback(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DirtyPresentPlanMode {
   Empty
   Rects
   Bounds
-} derive(Eq, @debug.Debug)
+}
 pub fn DirtyPresentPlanMode::equal(Self, Self) -> Bool
 pub fn DirtyPresentPlanMode::not_equal(Self, Self) -> Bool
 pub fn DirtyPresentPlanMode::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DirtyPresentStrategy {
   Skip
   Partial
   Full
-} derive(Eq, @debug.Debug)
+}
 pub fn DirtyPresentStrategy::equal(Self, Self) -> Bool
 pub fn DirtyPresentStrategy::not_equal(Self, Self) -> Bool
 pub fn DirtyPresentStrategy::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct DirtyRegion {
   mut rects : Array[PixelRect]
-} derive(@debug.Debug)
+}
 pub fn DirtyRegion::add_all(Self, Int32, Int32) -> Unit
 pub fn DirtyRegion::add_clipped_rect(Self, PixelRect, PixelRect) -> Unit
 pub fn DirtyRegion::add_rect(Self, PixelRect) -> Unit
@@ -211,10 +222,11 @@ pub fn DirtyRegion::present_plan(Self, PixelRect, Int32) -> DirtyPresentPlan
 pub fn DirtyRegion::present_rects(Self, PixelRect, Int32) -> Array[PixelRect]
 pub fn DirtyRegion::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct DirtySubmitPlan {
   dirty_bounds : PixelRect?
   present_plan : DirtyPresentPlan
-} derive(@debug.Debug)
+}
 pub fn DirtySubmitPlan::get_dirty_bounds(Self) -> PixelRect?
 pub fn DirtySubmitPlan::get_present_bounds(Self) -> PixelRect?
 pub fn DirtySubmitPlan::get_present_byte_count(Self) -> Int32
@@ -229,10 +241,11 @@ pub fn DirtySubmitPlan::saves_full_present_pixels(Self, Int32, Int32) -> Bool
 pub fn DirtySubmitPlan::to_repr(Self) -> @debug.Repr
 pub fn DirtySubmitPlan::uses_bounds_fallback(Self) -> Bool
 
+#derive(@debug.Debug)
 pub struct DirtySubmitResult {
   submit_plan : DirtySubmitPlan
   presented_rect_count : Int32
-} derive(@debug.Debug)
+}
 pub fn DirtySubmitResult::did_present(Self) -> Bool
 pub fn DirtySubmitResult::get_dirty_bounds(Self) -> PixelRect?
 pub fn DirtySubmitResult::get_present_bounds(Self) -> PixelRect?
@@ -249,42 +262,47 @@ pub fn DirtySubmitResult::to_repr(Self) -> @debug.Repr
 pub fn DirtySubmitResult::uses_bounds_fallback(Self) -> Bool
 pub fn DirtySubmitResult::was_clipped_away(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DirtySubmitState {
   Clean
   Present
   DirtyClippedAway
-} derive(Eq, @debug.Debug)
+}
 pub fn DirtySubmitState::equal(Self, Self) -> Bool
 pub fn DirtySubmitState::not_equal(Self, Self) -> Bool
 pub fn DirtySubmitState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FillRule {
   NonZero
   EvenOdd
-} derive(Eq, @debug.Debug)
+}
 pub fn FillRule::equal(Self, Self) -> Bool
 pub fn FillRule::not_equal(Self, Self) -> Bool
 pub fn FillRule::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ImageQuality {
   Fast
   Balanced
   High
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageQuality::equal(Self, Self) -> Bool
 pub fn ImageQuality::not_equal(Self, Self) -> Bool
 pub fn ImageQuality::to_repr(Self) -> @debug.Repr
 pub fn ImageQuality::to_sampling(Self) -> ImageSampling
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ImageSampling {
   Nearest
   Bilinear
   Bicubic
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageSampling::equal(Self, Self) -> Bool
 pub fn ImageSampling::not_equal(Self, Self) -> Bool
 pub fn ImageSampling::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct Layer {
   mut canvas : Canvas
   mut x : Int32
@@ -294,7 +312,7 @@ pub struct Layer {
   mut blend_mode : BlendMode
   mut shader : PaintShader?
   mut filter : PaintFilter?
-} derive(@debug.Debug)
+}
 pub fn Layer::bounds(Self) -> PixelRect
 pub fn Layer::clear(Self, Color) -> Unit
 pub fn Layer::clear_dirty_region(Self) -> Unit
@@ -333,6 +351,7 @@ pub fn Layer::translated_bounds(Self) -> PixelRect
 pub fn Layer::translated_dirty_bounds(Self) -> PixelRect?
 pub fn Layer::translated_dirty_rects(Self, Int32) -> Array[PixelRect]
 
+#derive(@debug.Debug)
 pub struct LayerCompositeResult {
   composited_rect_count : Int32
   local_dirty_bounds : PixelRect?
@@ -340,7 +359,7 @@ pub struct LayerCompositeResult {
   uses_bounds_fallback : Bool
   did_composite : Bool
   did_clear_dirty : Bool
-} derive(@debug.Debug)
+}
 pub fn LayerCompositeResult::did_clear_dirty(Self) -> Bool
 pub fn LayerCompositeResult::did_composite(Self) -> Bool
 pub fn LayerCompositeResult::get_composited_rect_count(Self) -> Int32
@@ -349,10 +368,11 @@ pub fn LayerCompositeResult::get_target_dirty_bounds(Self) -> PixelRect?
 pub fn LayerCompositeResult::to_repr(Self) -> @debug.Repr
 pub fn LayerCompositeResult::uses_bounds_fallback(Self) -> Bool
 
+#derive(@debug.Debug)
 pub struct LayerTree {
   layers : Array[Layer]
   invalidation : DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn LayerTree::add_layer(Self, Layer) -> Int32
 pub fn LayerTree::clear_dirty_regions(Self) -> Unit
 pub fn LayerTree::clear_layer_filter(Self, Int32) -> Bool
@@ -399,10 +419,11 @@ pub fn[S : Surface] LayerTree::submit_to_by_policy(Self, Canvas, S, RenderFrameS
 pub fn[S : Surface] LayerTree::submit_to_by_policy_with_limit(Self, Canvas, S, Int32, RenderFrameSubmitPolicy) -> Result[RenderFrameSubmitResult, PresentError]
 pub fn LayerTree::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct MemoryPresentRecord {
   rect : PixelRect
   row_bytes : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn MemoryPresentRecord::equal(Self, Self) -> Bool
 pub fn MemoryPresentRecord::get_present_byte_count(Self) -> Int32
 pub fn MemoryPresentRecord::get_present_pixel_count(Self) -> Int32
@@ -413,13 +434,14 @@ pub fn MemoryPresentRecord::get_source_padding_byte_count(Self) -> Int32
 pub fn MemoryPresentRecord::not_equal(Self, Self) -> Bool
 pub fn MemoryPresentRecord::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct MemorySurface {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
   mut present_count : Int32
   present_records : Array[MemoryPresentRecord]
-} derive(@debug.Debug)
+}
 pub fn MemorySurface::checksum(Self) -> Int32
 pub fn MemorySurface::checksum_rect(Self, PixelRect) -> Result[Int32, PresentError]
 pub fn MemorySurface::get_height(Self) -> Int32
@@ -451,20 +473,23 @@ pub fn MemorySurface::to_rgba_bytes(Self) -> Bytes
 pub fn MemorySurface::to_rgba_rect_bytes(Self, PixelRect) -> Result[Bytes, PresentError]
 pub impl Surface for MemorySurface
 
+#derive(Eq, @debug.Debug)
 pub struct NinePatchInsets {
   left : Int32
   top : Int32
   right : Int32
   bottom : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn NinePatchInsets::equal(Self, Self) -> Bool
 pub fn NinePatchInsets::new(left~ : Int32, top~ : Int32, right~ : Int32, bottom~ : Int32) -> Self
 pub fn NinePatchInsets::not_equal(Self, Self) -> Bool
 pub fn NinePatchInsets::to_repr(Self) -> @debug.Repr
 
-type NinePatchSlices derive(@debug.Debug)
+#derive(@debug.Debug)
+type NinePatchSlices
 pub fn NinePatchSlices::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct Paint {
   mut color : Color
   mut shader : PaintShader?
@@ -479,7 +504,7 @@ pub struct Paint {
   mut stroke_dash_offset : Double
   mut fill_rule : FillRule
   mut opacity : Double
-} derive(@debug.Debug)
+}
 pub fn Paint::clear_filter(Self) -> Self
 pub fn Paint::clear_shader(Self) -> Self
 pub fn Paint::clear_stroke_dash(Self) -> Self
@@ -517,7 +542,8 @@ pub fn Paint::set_stroke_width(Self, Double) -> Self
 pub fn Paint::set_style(Self, PaintStyle) -> Self
 pub fn Paint::to_repr(Self) -> @debug.Repr
 
-type PaintFilter derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type PaintFilter
 pub fn PaintFilter::apply(Self, Color) -> Color
 pub fn PaintFilter::brightness(Double) -> Self
 pub fn PaintFilter::color_matrix(Array[Double]) -> Self
@@ -540,6 +566,7 @@ pub fn PaintFilter::sepia() -> Self
 pub fn PaintFilter::then(Self, Self) -> Self
 pub fn PaintFilter::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PaintFilterType {
   Modulate
   Grayscale
@@ -549,12 +576,13 @@ pub(all) enum PaintFilterType {
   Saturate
   Sepia
   ColorMatrix
-} derive(Eq, @debug.Debug)
+}
 pub fn PaintFilterType::equal(Self, Self) -> Bool
 pub fn PaintFilterType::not_equal(Self, Self) -> Bool
 pub fn PaintFilterType::to_repr(Self) -> @debug.Repr
 
-type PaintGradientStop derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type PaintGradientStop
 pub fn PaintGradientStop::equal(Self, Self) -> Bool
 pub fn PaintGradientStop::get_color(Self) -> Color
 pub fn PaintGradientStop::get_offset(Self) -> Double
@@ -562,7 +590,8 @@ pub fn PaintGradientStop::new(offset~ : Double, color~ : Color) -> Self
 pub fn PaintGradientStop::not_equal(Self, Self) -> Bool
 pub fn PaintGradientStop::to_repr(Self) -> @debug.Repr
 
-type PaintShader derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type PaintShader
 pub fn PaintShader::equal(Self, Self) -> Bool
 pub fn PaintShader::get_gradient_stop(Self, Int32) -> PaintGradientStop?
 pub fn PaintShader::get_gradient_stop_count(Self) -> Int32
@@ -586,40 +615,44 @@ pub fn PaintShader::sweep_gradient_stops(cx~ : Double, cy~ : Double, start_angle
 pub fn PaintShader::to_repr(Self) -> @debug.Repr
 pub fn PaintShader::transformed(Self, Transform) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PaintShaderSpread {
   Clamp
   Repeat
   Mirror
   Decal
-} derive(Eq, @debug.Debug)
+}
 pub fn PaintShaderSpread::equal(Self, Self) -> Bool
 pub fn PaintShaderSpread::not_equal(Self, Self) -> Bool
 pub fn PaintShaderSpread::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PaintShaderType {
   LinearGradient
   RadialGradient
   SweepGradient
-} derive(Eq, @debug.Debug)
+}
 pub fn PaintShaderType::equal(Self, Self) -> Bool
 pub fn PaintShaderType::not_equal(Self, Self) -> Bool
 pub fn PaintShaderType::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PaintStyle {
   Fill
   Stroke
-} derive(Eq, @debug.Debug)
+}
 pub fn PaintStyle::equal(Self, Self) -> Bool
 pub fn PaintStyle::not_equal(Self, Self) -> Bool
 pub fn PaintStyle::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct Path {
   segments : Array[PathSegment]
   mut current_x : Double
   mut current_y : Double
   mut start_x : Double
   mut start_y : Double
-} derive(@debug.Debug)
+}
 pub fn Path::add_arc(Self, Double, Double, Double, Double, Double) -> Self
 pub fn Path::add_circle(Self, Double, Double, Double) -> Self
 pub fn Path::add_ellipse(Self, Double, Double, Double, Double) -> Self
@@ -655,33 +688,36 @@ pub fn Path::transformed(Self, Transform) -> Self
 pub fn Path::union(Self, Self) -> Self?
 pub fn Path::xor(Self, Self) -> Self?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PathBooleanOp {
   Union
   Intersection
   Difference
   Xor
-} derive(Eq, @debug.Debug)
+}
 pub fn PathBooleanOp::equal(Self, Self) -> Bool
 pub fn PathBooleanOp::not_equal(Self, Self) -> Bool
 pub fn PathBooleanOp::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum PathSegment {
   MoveTo(Double, Double)
   LineTo(Double, Double)
   QuadTo(Double, Double, Double, Double)
   CubicTo(Double, Double, Double, Double, Double, Double)
   Close
-} derive(Eq, @debug.Debug)
+}
 pub fn PathSegment::equal(Self, Self) -> Bool
 pub fn PathSegment::not_equal(Self, Self) -> Bool
 pub fn PathSegment::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct PixelRect {
   x : Int32
   y : Int32
   width : Int32
   height : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn PixelRect::area(Self) -> Int32
 pub fn PixelRect::bottom(Self) -> Int32
 pub fn PixelRect::clip_to(Self, Self) -> Self?
@@ -696,11 +732,12 @@ pub fn PixelRect::right(Self) -> Int32
 pub fn PixelRect::to_repr(Self) -> @debug.Repr
 pub fn PixelRect::union(Self, Self) -> Self
 
+#derive(@debug.Debug)
 pub struct Pixmap {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
-} derive(@debug.Debug)
+}
 pub fn Pixmap::blend_mask(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], Color) -> Unit
 pub fn Pixmap::blend_mask_rect(Self, Int32, Int32, Int32, Int32, FixedArray[Byte], PixelRect, Color) -> Unit
 pub fn Pixmap::blend_nine_patch_pixmap(Self, Int32, Int32, Int32, Int32, Self, NinePatchInsets, Double, ImageSampling) -> Unit
@@ -749,12 +786,13 @@ pub fn Pixmap::to_repr(Self) -> @debug.Repr
 pub fn Pixmap::to_rgba_bytes(Self) -> Bytes
 pub fn Pixmap::to_rgba_rect_bytes(Self, PixelRect) -> Result[Bytes, PresentError]
 
+#derive(@debug.Debug)
 pub struct PixmapCache {
   mut pixmaps : Map[String, Pixmap]
   mut access_order : Array[String]
   capacity : Int32
   is_bounded : Bool
-} derive(@debug.Debug)
+}
 pub fn PixmapCache::capacity(Self) -> Int32
 pub fn PixmapCache::clear(Self) -> Unit
 pub fn PixmapCache::contains(Self, String) -> Bool
@@ -776,24 +814,27 @@ pub fn PixmapCache::remove(Self, String) -> Unit
 pub fn PixmapCache::to_repr(Self) -> @debug.Repr
 pub fn PixmapCache::with_capacity(Int32) -> Self
 
+#derive(@debug.Debug)
 pub struct PixmapCacheDecodeResult {
   pixmap : Pixmap
   did_decode : Bool
-} derive(@debug.Debug)
+}
 pub fn PixmapCacheDecodeResult::did_decode(Self) -> Bool
 pub fn PixmapCacheDecodeResult::did_hit_cache(Self) -> Bool
 pub fn PixmapCacheDecodeResult::get_pixmap(Self) -> Pixmap
 pub fn PixmapCacheDecodeResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct PixmapCacheInsertResult {
   pixmap : Pixmap
   did_insert : Bool
-} derive(@debug.Debug)
+}
 pub fn PixmapCacheInsertResult::did_hit_cache(Self) -> Bool
 pub fn PixmapCacheInsertResult::did_insert(Self) -> Bool
 pub fn PixmapCacheInsertResult::get_pixmap(Self) -> Pixmap
 pub fn PixmapCacheInsertResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PixmapDecodeError {
   UnexpectedEndOfData(Int32, Int32, Int32)
   InvalidRgbaDimensions(Int32, Int32)
@@ -828,50 +869,59 @@ pub(all) enum PixmapDecodeError {
   PngStoredBlockLengthMismatch(Int32, Int32)
   PngInflateLengthMismatch(Int32, Int32)
   PngScanlineLengthMismatch(Int32, Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn PixmapDecodeError::equal(Self, Self) -> Bool
 pub fn PixmapDecodeError::not_equal(Self, Self) -> Bool
 pub fn PixmapDecodeError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PixmapEncodeError {
   InvalidPngDimensions(Int32, Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn PixmapEncodeError::equal(Self, Self) -> Bool
 pub fn PixmapEncodeError::not_equal(Self, Self) -> Bool
 pub fn PixmapEncodeError::to_repr(Self) -> @debug.Repr
 
-type PngDeflateBitReader derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngDeflateBitReader
 pub fn PngDeflateBitReader::to_repr(Self) -> @debug.Repr
 
-type PngDeflateHuffman derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngDeflateHuffman
 pub fn PngDeflateHuffman::to_repr(Self) -> @debug.Repr
 
-type PngDeflateHuffmanEntry derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngDeflateHuffmanEntry
 pub fn PngDeflateHuffmanEntry::to_repr(Self) -> @debug.Repr
 
-type PngDeflateTables derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngDeflateTables
 pub fn PngDeflateTables::to_repr(Self) -> @debug.Repr
 
-type PngHeader derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngHeader
 pub fn PngHeader::to_repr(Self) -> @debug.Repr
 
-type PngInfo derive(@debug.Debug)
+#derive(@debug.Debug)
+type PngInfo
 pub fn PngInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Point {
   x : Double
   y : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Point::equal(Self, Self) -> Bool
 pub fn Point::new(x~ : Double, y~ : Double) -> Self
 pub fn Point::not_equal(Self, Self) -> Bool
 pub fn Point::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct PresentBatch {
   payloads : Array[PresentRectPayload]
   present_pixel_count : Int32
   present_byte_count : Int32
-} derive(@debug.Debug)
+}
 pub fn PresentBatch::get_full_present_byte_savings(Self, Int32, Int32) -> Int32
 pub fn PresentBatch::get_full_present_pixel_savings(Self, Int32, Int32) -> Int32
 pub fn PresentBatch::get_payloads(Self) -> Array[PresentRectPayload]
@@ -890,11 +940,12 @@ pub fn[S : Surface] PresentBatch::submit_to_result(Self, S) -> Result[PresentBat
 pub fn PresentBatch::to_repr(Self) -> @debug.Repr
 pub fn[S : Surface] PresentBatch::validate_for(Self, S) -> Result[Unit, PresentError]
 
+#derive(@debug.Debug)
 pub struct PresentBatchSubmitPlan {
   batch : PresentBatch
   surface_width : Int32
   surface_height : Int32
-} derive(@debug.Debug)
+}
 pub fn PresentBatchSubmitPlan::get_batch(Self) -> PresentBatch
 pub fn PresentBatchSubmitPlan::get_full_present_byte_savings(Self) -> Int32
 pub fn PresentBatchSubmitPlan::get_full_present_pixel_savings(Self) -> Int32
@@ -913,10 +964,11 @@ pub fn[S : Surface] PresentBatchSubmitPlan::submit_to(Self, S) -> Result[Int32, 
 pub fn[S : Surface] PresentBatchSubmitPlan::submit_to_result(Self, S) -> Result[PresentBatchSubmitResult, PresentError]
 pub fn PresentBatchSubmitPlan::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct PresentBatchSubmitResult {
   submit_plan : PresentBatchSubmitPlan
   presented_rect_count : Int32
-} derive(@debug.Debug)
+}
 pub fn PresentBatchSubmitResult::did_present(Self) -> Bool
 pub fn PresentBatchSubmitResult::get_batch(Self) -> PresentBatch
 pub fn PresentBatchSubmitResult::get_full_present_byte_savings(Self) -> Int32
@@ -936,32 +988,35 @@ pub fn PresentBatchSubmitResult::needs_present(Self) -> Bool
 pub fn PresentBatchSubmitResult::saves_full_present_pixels(Self) -> Bool
 pub fn PresentBatchSubmitResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PresentError {
   InvalidDimensions(Int32, Int32)
   SizeMismatch(Int32, Int32, Int32, Int32)
   RectOutOfBounds(Int32, Int32, Int32, Int32, Int32, Int32)
   InvalidRowBytes(Int32, Int32)
   PixelBufferTooSmall(Int32, Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn PresentError::equal(Self, Self) -> Bool
 pub fn PresentError::not_equal(Self, Self) -> Bool
 pub fn PresentError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PresentRectInfo {
   required_row_bytes : Int32
   required_len : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn PresentRectInfo::equal(Self, Self) -> Bool
 pub fn PresentRectInfo::not_equal(Self, Self) -> Bool
 pub fn PresentRectInfo::required_len(Self) -> Int32
 pub fn PresentRectInfo::required_row_bytes(Self) -> Int32
 pub fn PresentRectInfo::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct PresentRectPayload {
   rect : PixelRect
   row_bytes : Int32
   pixels : FixedArray[Byte]
-} derive(@debug.Debug)
+}
 pub fn PresentRectPayload::get_pixels(Self) -> FixedArray[Byte]
 pub fn PresentRectPayload::get_present_byte_count(Self) -> Int32
 pub fn PresentRectPayload::get_present_pixel_count(Self) -> Int32
@@ -973,12 +1028,13 @@ pub fn PresentRectPayload::new(PixelRect, Int32, FixedArray[Byte]) -> Result[Sel
 pub fn[S : Surface] PresentRectPayload::submit_to(Self, S) -> Result[Unit, PresentError]
 pub fn PresentRectPayload::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Rect {
   x : Double
   y : Double
   width : Double
   height : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Rect::bottom(Self) -> Double
 pub fn Rect::contains(Self, Double, Double) -> Bool
 pub fn Rect::equal(Self, Self) -> Bool
@@ -989,11 +1045,12 @@ pub fn Rect::not_equal(Self, Self) -> Bool
 pub fn Rect::right(Self) -> Double
 pub fn Rect::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderFrame {
   mut canvas : Canvas
   layer_tree : LayerTree
   mut dirty_rect_limit : Int32
-} derive(@debug.Debug)
+}
 pub fn RenderFrame::clear_dirty_regions(Self) -> Unit
 pub fn RenderFrame::dirty_bounds(Self) -> PixelRect?
 pub fn[S : Surface] RenderFrame::dirty_present_batch(Self, S) -> Result[PresentBatch, PresentError]
@@ -1031,10 +1088,11 @@ pub fn[S : Surface] RenderFrame::submit_scheduled_to(Self, S, RenderFrameSchedul
 pub fn[S : Surface] RenderFrame::submit_to_by_policy(Self, S, RenderFrameSubmitPolicy) -> Result[RenderFrameSubmitResult, PresentError]
 pub fn RenderFrame::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct RenderFrameLayerClearRequest {
   layer_index : Int32
   color : Color
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameLayerClearRequest::equal(Self, Self) -> Bool
 pub fn RenderFrameLayerClearRequest::get_color(Self) -> Color
 pub fn RenderFrameLayerClearRequest::get_layer_index(Self) -> Int32
@@ -1042,19 +1100,21 @@ pub fn RenderFrameLayerClearRequest::new(Int32, Color) -> Self
 pub fn RenderFrameLayerClearRequest::not_equal(Self, Self) -> Bool
 pub fn RenderFrameLayerClearRequest::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderFrameLayerReplacementRequest {
   layer_index : Int32
   layer : Layer
-} derive(@debug.Debug)
+}
 pub fn RenderFrameLayerReplacementRequest::get_layer(Self) -> Layer
 pub fn RenderFrameLayerReplacementRequest::get_layer_index(Self) -> Int32
 pub fn RenderFrameLayerReplacementRequest::new(Int32, Layer) -> Self
 pub fn RenderFrameLayerReplacementRequest::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderFrameSchedule {
   submit_plan : RenderFrameSubmitPlan
   action : RenderFrameScheduleAction
-} derive(@debug.Debug)
+}
 pub fn RenderFrameSchedule::get_action(Self) -> RenderFrameScheduleAction
 pub fn RenderFrameSchedule::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSchedule::get_present_bounds(Self) -> PixelRect?
@@ -1072,15 +1132,17 @@ pub fn RenderFrameSchedule::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameSchedule::uses_bounds_fallback(Self) -> Bool
 pub fn RenderFrameSchedule::was_clipped_away(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderFrameScheduleAction {
   Skip
   SubmitWithoutPresent
   Present
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameScheduleAction::equal(Self, Self) -> Bool
 pub fn RenderFrameScheduleAction::not_equal(Self, Self) -> Bool
 pub fn RenderFrameScheduleAction::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderFrameSubmitPlan {
   dirty_submit_plan : DirtySubmitPlan
   strategy : DirtyPresentStrategy
@@ -1088,7 +1150,7 @@ pub struct RenderFrameSubmitPlan {
   present_rect_count : Int32
   present_pixel_count : Int32
   present_byte_count : Int32
-} derive(@debug.Debug)
+}
 pub fn RenderFrameSubmitPlan::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitPlan::get_dirty_submit_plan(Self) -> DirtySubmitPlan
 pub fn RenderFrameSubmitPlan::get_present_bounds(Self) -> PixelRect?
@@ -1104,19 +1166,21 @@ pub fn RenderFrameSubmitPlan::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameSubmitPlan::uses_bounds_fallback(Self) -> Bool
 pub fn RenderFrameSubmitPlan::was_clipped_away(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderFrameSubmitPolicy {
   DirtyOnly
   CachedRedraw
   FullRedraw
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameSubmitPolicy::equal(Self, Self) -> Bool
 pub fn RenderFrameSubmitPolicy::not_equal(Self, Self) -> Bool
 pub fn RenderFrameSubmitPolicy::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderFrameSubmitRequest {
   policy : RenderFrameSubmitPolicy
   schedule : RenderFrameSchedule
-} derive(@debug.Debug)
+}
 pub fn RenderFrameSubmitRequest::get_action(Self) -> RenderFrameScheduleAction
 pub fn RenderFrameSubmitRequest::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitRequest::get_policy(Self) -> RenderFrameSubmitPolicy
@@ -1137,10 +1201,11 @@ pub fn RenderFrameSubmitRequest::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameSubmitRequest::uses_bounds_fallback(Self) -> Bool
 pub fn RenderFrameSubmitRequest::was_clipped_away(Self) -> Bool
 
+#derive(@debug.Debug)
 pub struct RenderFrameSubmitResult {
   submit_plan : RenderFrameSubmitPlan
   presented_rect_count : Int32
-} derive(@debug.Debug)
+}
 pub fn RenderFrameSubmitResult::did_present(Self) -> Bool
 pub fn RenderFrameSubmitResult::get_dirty_bounds(Self) -> PixelRect?
 pub fn RenderFrameSubmitResult::get_present_bounds(Self) -> PixelRect?
@@ -1170,42 +1235,49 @@ pub fn ScanlineRasterizer::fill_triangle(Self, Double, Double, Double, Double, D
 pub fn ScanlineRasterizer::get_pixels(Self) -> FixedArray[Byte]
 pub fn ScanlineRasterizer::new(Int32, Int32) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct Size {
   width : Double
   height : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Size::equal(Self, Self) -> Bool
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
 pub fn Size::not_equal(Self, Self) -> Bool
 pub fn Size::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum StrokeCap {
   Butt
   Round
   Square
-} derive(Eq, @debug.Debug)
+}
 pub fn StrokeCap::equal(Self, Self) -> Bool
 pub fn StrokeCap::not_equal(Self, Self) -> Bool
 pub fn StrokeCap::to_repr(Self) -> @debug.Repr
 
-type StrokeEndpoint derive(@debug.Debug)
+#derive(@debug.Debug)
+type StrokeEndpoint
 pub fn StrokeEndpoint::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum StrokeJoin {
   Miter
   Round
   Bevel
-} derive(Eq, @debug.Debug)
+}
 pub fn StrokeJoin::equal(Self, Self) -> Bool
 pub fn StrokeJoin::not_equal(Self, Self) -> Bool
 pub fn StrokeJoin::to_repr(Self) -> @debug.Repr
 
-type StrokeJoinPoint derive(@debug.Debug)
+#derive(@debug.Debug)
+type StrokeJoinPoint
 pub fn StrokeJoinPoint::to_repr(Self) -> @debug.Repr
 
-type StrokePathData derive(@debug.Debug)
+#derive(@debug.Debug)
+type StrokePathData
 pub fn StrokePathData::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Transform {
   a : Double
   b : Double
@@ -1213,7 +1285,7 @@ pub struct Transform {
   d : Double
   tx : Double
   ty : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Transform::affine(a~ : Double, b~ : Double, c~ : Double, d~ : Double, tx~ : Double, ty~ : Double) -> Self
 pub fn Transform::apply(Self, Double, Double) -> (Double, Double)
 pub fn Transform::equal(Self, Self) -> Bool
@@ -1226,10 +1298,11 @@ pub fn Transform::scale(sx~ : Double, sy~ : Double) -> Self
 pub fn Transform::to_repr(Self) -> @debug.Repr
 pub fn Transform::translate(tx~ : Double, ty~ : Double) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct Vec2 {
   x : Double
   y : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Vec2::equal(Self, Self) -> Bool
 pub fn Vec2::new(x~ : Double, y~ : Double) -> Self
 pub fn Vec2::not_equal(Self, Self) -> Bool

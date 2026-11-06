@@ -25,10 +25,11 @@ pub(all) enum TransformedWindowEvent {
 /// Neutral surface lifecycle state shared by window-hosted and desktop
 /// adapters. Platform packages keep the native surface handles and own their
 /// attach/detach callbacks; the bridge owns only the logical lifecycle state.
+#derive(Eq, Debug)
 pub(all) enum PlatformSurfaceLifecycle {
   Detached
   Attached(@core.SurfaceMetrics)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PlatformSurfaceLifecycle with Debug::{to_repr}

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSystemReport {
   preset : @common.DesignPreset
   scheme : @core.ColorScheme
@@ -30,7 +31,7 @@ pub(all) struct DesignSystemReport {
   golden_mappings : Array[DesignTokenMapping]
   unanchored_golden_mappings : Array[DesignTokenMapping]
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSystemReport with Debug::{to_repr}

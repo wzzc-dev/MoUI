@@ -3,6 +3,7 @@
 /// Provides the host capability summary for the Mini Program platform.
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WechatBackendCapabilities {
   canvas_surface : Bool
   pointer : Bool
@@ -12,7 +13,7 @@ pub(all) struct WechatBackendCapabilities {
   ime : Bool
   clipboard : Bool
   system_theme : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WechatBackendCapabilities with Debug::{to_repr}
@@ -29,12 +30,13 @@ pub extend WechatBackendCapabilities with ToJson::{to_json}
 /// without real Mini Program pixel smoke and touch event verification.
 /// `status` is a coarse evidence class: `experimental` until those close
 /// remaining gaps.
+#derive(Eq, Debug, ToJson)
 pub(all) struct WechatBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WechatBackendReadiness with Debug::{to_repr}
@@ -46,6 +48,7 @@ pub extend WechatBackendReadiness with Eq::{not_equal, equal}
 pub extend WechatBackendReadiness with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WechatBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : WechatBackendCapabilities
@@ -53,7 +56,7 @@ pub(all) struct WechatBackendInfo {
   input : @host.HostInputCapabilities
   readiness : WechatBackendReadiness
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WechatBackendInfo with Debug::{to_repr}

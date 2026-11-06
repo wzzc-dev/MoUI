@@ -1,12 +1,13 @@
 ///|
 /// Error returned when presenting RGBA pixels to a surface fails.
+#derive(Eq, Debug)
 pub(all) enum PresentError {
   InvalidDimensions(Int32, Int32)
   SizeMismatch(Int32, Int32, Int32, Int32)
   RectOutOfBounds(Int32, Int32, Int32, Int32, Int32, Int32)
   InvalidRowBytes(Int32, Int32)
   PixelBufferTooSmall(Int32, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentError with Debug::{to_repr}
@@ -17,10 +18,11 @@ pub extend PresentError with Eq::{not_equal, equal}
 ///|
 /// Validated geometry for a rectangle present call. Backends can use this to
 /// share row-stride and buffer-size checks with the reference MemorySurface.
+#derive(Eq, Debug)
 pub(all) struct PresentRectInfo {
   required_row_bytes : Int32
   required_len : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentRectInfo with Debug::{to_repr}
@@ -30,22 +32,24 @@ pub extend PresentRectInfo with Eq::{not_equal, equal}
 
 ///|
 /// Packed source pixels for one rectangle present operation.
+#derive(Debug)
 pub struct PresentRectPayload {
   rect : PixelRect
   row_bytes : Int32
   pixels : FixedArray[Byte]
-} derive(Debug)
+}
 
 ///|
 pub extend PresentRectPayload with Debug::{to_repr}
 
 ///|
 /// A materialized batch of packed rectangle present payloads.
+#derive(Debug)
 pub struct PresentBatch {
   payloads : Array[PresentRectPayload]
   present_pixel_count : Int32
   present_byte_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PresentBatch with Debug::{to_repr}
@@ -53,31 +57,34 @@ pub extend PresentBatch with Debug::{to_repr}
 ///|
 /// Validated dry-run plan for submitting a materialized present batch to a
 /// concrete surface.
+#derive(Debug)
 pub struct PresentBatchSubmitPlan {
   batch : PresentBatch
   surface_width : Int32
   surface_height : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PresentBatchSubmitPlan with Debug::{to_repr}
 
 ///|
 /// Result of submitting a materialized present batch to a concrete surface.
+#derive(Debug)
 pub struct PresentBatchSubmitResult {
   submit_plan : PresentBatchSubmitPlan
   presented_rect_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PresentBatchSubmitResult with Debug::{to_repr}
 
 ///|
 /// One validated present operation recorded by MemorySurface.
+#derive(Eq, Debug)
 pub struct MemoryPresentRecord {
   rect : PixelRect
   row_bytes : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemoryPresentRecord with Debug::{to_repr}
@@ -730,13 +737,14 @@ pub(open) trait Surface {
 
 ///|
 /// In-memory surface used as the reference backend for tests and headless tools.
+#derive(Debug)
 pub struct MemorySurface {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
   mut present_count : Int32
   present_records : Array[MemoryPresentRecord]
-} derive(Debug)
+}
 
 ///|
 pub extend MemorySurface with Debug::{to_repr}

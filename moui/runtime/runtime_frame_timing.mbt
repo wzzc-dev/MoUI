@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RuntimeFrameTiming {
   priv build_ms : Double
   priv layout_ms : Double
   priv paint_ms : Double
   priv draw_ms : Double
   priv total_ms : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RuntimeFrameTiming with Debug::{to_repr}

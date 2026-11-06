@@ -4,11 +4,12 @@
 /// This is the neutral contract shared by window backends and renderers. The
 /// scale factor is always positive; constructors normalize invalid values to
 /// one so callers cannot accidentally divide by zero when converting input.
+#derive(Eq, Debug, ToJson)
 pub(all) struct SurfaceMetrics {
   logical_size : Size
   physical_size : Size
   scale_factor : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SurfaceMetrics with Debug::{to_repr}

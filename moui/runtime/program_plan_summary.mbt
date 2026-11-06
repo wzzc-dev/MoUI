@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum EffectPlanKind {
   EffectPlanNone
   EffectPlanBatch
@@ -6,7 +7,7 @@ pub(all) enum EffectPlanKind {
   EffectPlanDispatch
   EffectPlanRun
   EffectPlanTask
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectPlanKind with Debug::{to_repr}
@@ -18,6 +19,7 @@ pub extend EffectPlanKind with Eq::{not_equal, equal}
 pub extend EffectPlanKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct EffectPlanSummary {
   priv root_kind : EffectPlanKind
   priv none_count : Int32
@@ -31,7 +33,7 @@ pub struct EffectPlanSummary {
   priv descriptors : Array[@core.EffectDescriptor]
   priv duplicate_descriptor_key_count : Int32
   priv duplicate_descriptor_keys : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectPlanSummary with Debug::{to_repr}
@@ -43,11 +45,12 @@ pub extend EffectPlanSummary with Eq::{not_equal, equal}
 pub extend EffectPlanSummary with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanNone
   SubscriptionPlanBatch
   SubscriptionPlanSource
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionPlanKind with Debug::{to_repr}
@@ -59,6 +62,7 @@ pub extend SubscriptionPlanKind with Eq::{not_equal, equal}
 pub extend SubscriptionPlanKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SubscriptionPlanSummary {
   priv root_kind : SubscriptionPlanKind
   priv none_count : Int32
@@ -68,7 +72,7 @@ pub struct SubscriptionPlanSummary {
   priv duplicate_keys : Array[String]
   priv max_depth : Int32
   priv descriptors : Array[@core.SubscriptionDescriptor]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionPlanSummary with Debug::{to_repr}

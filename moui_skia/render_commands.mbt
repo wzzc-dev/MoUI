@@ -1,6 +1,7 @@
 ///|
 /// Portable render command recorded before a concrete backend turns it into
 /// native Canvas calls.
+#derive(Debug, Eq)
 pub(all) enum RenderCommand {
   SaveCanvas
   RestoreCanvas
@@ -51,7 +52,7 @@ pub(all) enum RenderCommand {
   DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
   DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderCommand with Debug::{to_repr}

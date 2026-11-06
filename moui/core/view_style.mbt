@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum MainAxisAlignment {
   MainStart
   MainCenter
@@ -6,7 +7,7 @@ pub(all) enum MainAxisAlignment {
   SpaceBetween
   SpaceAround
   SpaceEvenly
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MainAxisAlignment with Debug::{to_repr}
@@ -18,12 +19,13 @@ pub extend MainAxisAlignment with Eq::{not_equal, equal}
 pub extend MainAxisAlignment with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum CrossAxisAlignment {
   CrossStart
   CrossCenter
   CrossEnd
   CrossStretch
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend CrossAxisAlignment with Debug::{to_repr}
@@ -35,10 +37,11 @@ pub extend CrossAxisAlignment with Eq::{not_equal, equal}
 pub extend CrossAxisAlignment with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Alignment {
   x : Double
   y : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Alignment with Debug::{to_repr}
@@ -50,10 +53,11 @@ pub extend Alignment with Eq::{not_equal, equal}
 pub extend Alignment with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct KeyboardShortcut {
   key : String
   modifiers : KeyModifiers
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend KeyboardShortcut with Debug::{to_repr}
@@ -65,11 +69,12 @@ pub extend KeyboardShortcut with Eq::{not_equal, equal}
 pub extend KeyboardShortcut with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PressableState {
   Normal
   Hovered
   Pressed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PressableState with Debug::{to_repr}
@@ -81,12 +86,13 @@ pub extend PressableState with Eq::{not_equal, equal}
 pub extend PressableState with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
   background : Brush?
   corner_radius : Double?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ViewStyle with Debug::{to_repr}
@@ -98,6 +104,7 @@ pub extend ViewStyle with Eq::{not_equal, equal}
 pub extend ViewStyle with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ImageFit {
   Contain
   Cover
@@ -105,7 +112,7 @@ pub(all) enum ImageFit {
   ScaleDown
   FitWidth
   FitHeight
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ImageFit with Debug::{to_repr}
@@ -117,12 +124,13 @@ pub extend ImageFit with Eq::{not_equal, equal}
 pub extend ImageFit with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShadowStyle {
   color : Color
   offset : Point
   blur_radius : Double
   spread : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShadowStyle with Debug::{to_repr}
@@ -134,10 +142,11 @@ pub extend ShadowStyle with Eq::{not_equal, equal}
 pub extend ShadowStyle with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct BorderStyle {
   brush : Brush
   width : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend BorderStyle with Debug::{to_repr}
@@ -149,6 +158,7 @@ pub extend BorderStyle with Eq::{not_equal, equal}
 pub extend BorderStyle with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct VisualStyle {
   background : Brush?
   foreground : Color?
@@ -156,7 +166,7 @@ pub(all) struct VisualStyle {
   shadow : ShadowStyle?
   radius : Double?
   opacity : Double?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend VisualStyle with Debug::{to_repr}

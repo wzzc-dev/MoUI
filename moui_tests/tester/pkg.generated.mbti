@@ -3,6 +3,7 @@ package "wzzc-dev/moui_tests/tester"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/runtime",
 }
 
@@ -14,29 +15,31 @@ pub fn runtime_smoke_snapshot(title~ : String, @runtime.AppRuntime) -> RuntimeSm
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RuntimeSmokeSnapshot {
   title : String
   draw_command_count : Int32
   focused_text_input : Bool
   text_input_text : String
   inspector : @runtime.InspectorSnapshot
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RuntimeSmokeSnapshot::equal(Self, Self) -> Bool
 pub fn RuntimeSmokeSnapshot::not_equal(Self, Self) -> Bool
-pub fn RuntimeSmokeSnapshot::to_json(Self) -> Json
+pub fn RuntimeSmokeSnapshot::to_json(Self) -> @json.Json
 pub fn RuntimeSmokeSnapshot::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct TesterStepResult {
   name : String
   passed : Bool
   detail : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn TesterStepResult::equal(Self, Self) -> Bool
 pub fn TesterStepResult::fail(name~ : String, detail? : String) -> Self
 pub fn TesterStepResult::label(Self) -> String
 pub fn TesterStepResult::not_equal(Self, Self) -> Bool
 pub fn TesterStepResult::pass(name~ : String, detail? : String) -> Self
-pub fn TesterStepResult::to_json(Self) -> Json
+pub fn TesterStepResult::to_json(Self) -> @json.Json
 pub fn TesterStepResult::to_repr(Self) -> @debug.Repr
 
 // Type aliases

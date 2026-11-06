@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxBackendInfo {
   host_info : @host.HostAppInfo
   window_backend_available : Bool
@@ -8,7 +9,7 @@ pub(all) struct LinuxBackendInfo {
   services : @host.HostServiceCapabilities
   readiness : LinuxBackendReadiness
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxBackendInfo with Debug::{to_repr}
@@ -20,6 +21,7 @@ pub extend LinuxBackendInfo with Eq::{not_equal, equal}
 pub extend LinuxBackendInfo with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -32,7 +34,7 @@ pub(all) struct LinuxBackendCapabilities {
   drag_drop : Bool
   accessibility : Bool
   scale_factor : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxBackendCapabilities with Debug::{to_repr}
@@ -44,11 +46,12 @@ pub extend LinuxBackendCapabilities with Eq::{not_equal, equal}
 pub extend LinuxBackendCapabilities with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxBackendReadiness {
   ready : Bool
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxBackendReadiness with Debug::{to_repr}
@@ -60,13 +63,14 @@ pub extend LinuxBackendReadiness with Eq::{not_equal, equal}
 pub extend LinuxBackendReadiness with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxAccessibilityBridgeInfo with Debug::{to_repr}
@@ -99,10 +103,11 @@ type LinuxSurfaceBinding = @window_host.DesktopSurfaceBinding[
 ]
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxClientDecorationState with Debug::{to_repr}

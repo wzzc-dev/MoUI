@@ -371,22 +371,16 @@ test "ViewSemanticsInfo grouped helpers compose with overlaying" {
     value="q",
   )
   let overlay = @core.ViewSemanticsInfo::new(invalid=true)
-  inspect(
-    overlay.overlaying(base_helper) == overlay.overlaying(base_new),
-    content="true",
-  )
-  inspect(overlay.overlaying(base_helper).invalid, content="Some(true)")
+  assert_true(overlay.overlaying(base_helper) == overlay.overlaying(base_new))
+  debug_inspect(overlay.overlaying(base_helper).invalid, content="Some(true)")
   // The helper's own fields survive being the overlay target's base.
   let wrapper = @core.ViewSemanticsInfo::new(label="Wrapper")
-  inspect(wrapper.overlaying(base_helper).label, content="Some(Wrapper)")
-  inspect(wrapper.overlaying(base_helper).value, content="Some(q)")
-  inspect(
-    wrapper.overlaying(base_helper).role == Some(TextField),
-    content="true",
+  debug_inspect(
+    wrapper.overlaying(base_helper).label,
+    content="Some(\"Wrapper\")",
   )
+  debug_inspect(wrapper.overlaying(base_helper).value, content="Some(\"q\")")
+  assert_true(wrapper.overlaying(base_helper).role == Some(TextField))
   // composition is never inherited from the base.
-  inspect(
-    wrapper.overlaying(base_helper).composition == Transparent,
-    content="true",
-  )
+  assert_true(wrapper.overlaying(base_helper).composition == Transparent)
 }

@@ -1,5 +1,6 @@
 ///|
 /// Replayable CPU render command.
+#derive(Debug)
 pub enum RenderCommand {
   Clear(@graphics.Color)
   FillRect(Double, Double, Double, Double, @graphics.Paint)
@@ -478,22 +479,24 @@ pub enum RenderCommand {
     @text.LayoutConfig,
     @graphics.Paint
   )
-} derive(Debug)
+}
 
 ///|
 pub extend RenderCommand with Debug::{to_repr}
 
 ///|
 /// Ordered list of CPU render commands.
+#derive(Debug)
 pub struct RenderPipeline {
   commands : Array[RenderCommand]
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipeline with Debug::{to_repr}
 
 ///|
 /// Telemetry returned after replaying a render pipeline.
+#derive(Eq, Debug)
 pub struct RenderPipelineReplayResult {
   command_count : Int32
   clear_count : Int32
@@ -501,7 +504,7 @@ pub struct RenderPipelineReplayResult {
   stroke_count : Int32
   image_count : Int32
   text_count : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderPipelineReplayResult with Debug::{to_repr}
@@ -511,11 +514,12 @@ pub extend RenderPipelineReplayResult with Eq::{not_equal, equal}
 
 ///|
 /// Error returned by checked plain render-pipeline replay.
+#derive(Eq, Debug)
 pub(all) enum RenderPipelineReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderPipelineReplayError with Debug::{to_repr}
@@ -525,6 +529,7 @@ pub extend RenderPipelineReplayError with Eq::{not_equal, equal}
 
 ///|
 /// Telemetry returned after replaying a pipeline through RendererResources.
+#derive(Eq, Debug)
 pub struct RenderPipelineResourceReplayResult {
   replay_result : RenderPipelineReplayResult
   keyed_font_count : Int32
@@ -542,7 +547,7 @@ pub struct RenderPipelineResourceReplayResult {
   atlas_cache_hit_count : Int32
   atlas_insert_count : Int32
   atlas_clear_count : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderPipelineResourceReplayResult with Debug::{to_repr}
@@ -552,13 +557,14 @@ pub extend RenderPipelineResourceReplayResult with Eq::{not_equal, equal}
 
 ///|
 /// Error returned by checked RendererResources pipeline replay.
+#derive(Eq, Debug)
 pub(all) enum RenderPipelineResourceReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
   FontDataMissing(String)
   FontFileReadFailed(String, String)
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderPipelineResourceReplayError with Debug::{to_repr}
@@ -568,6 +574,7 @@ pub extend RenderPipelineResourceReplayError with Eq::{not_equal, equal}
 
 ///|
 /// Conservative CPU-side analysis of a render pipeline before replay.
+#derive(Debug)
 pub struct RenderPipelineAnalysis {
   command_count : Int32
   clear_count : Int32
@@ -576,13 +583,14 @@ pub struct RenderPipelineAnalysis {
   image_count : Int32
   text_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineAnalysis with Debug::{to_repr}
 
 ///|
 /// Conservative diff between two retained render pipelines.
+#derive(Debug)
 pub struct RenderPipelineDiffResult {
   previous_command_count : Int32
   next_command_count : Int32
@@ -591,20 +599,21 @@ pub struct RenderPipelineDiffResult {
   inserted_command_count : Int32
   removed_command_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineDiffResult with Debug::{to_repr}
 
 ///|
 /// Coarse command category used by CPU batch scheduling.
+#derive(Eq, Debug)
 pub(all) enum RenderPipelineBatchKind {
   Clear
   Fill
   Stroke
   Image
   Text
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderPipelineBatchKind with Debug::{to_repr}
@@ -614,42 +623,46 @@ pub extend RenderPipelineBatchKind with Eq::{not_equal, equal}
 
 ///|
 /// One contiguous run of commands with the same scheduling category.
+#derive(Debug)
 pub struct RenderPipelineBatch {
   kind : RenderPipelineBatchKind
   start_index : Int32
   command_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineBatch with Debug::{to_repr}
 
 ///|
 /// Scheduler-facing grouping of a render pipeline into contiguous CPU batches.
+#derive(Debug)
 pub struct RenderPipelineBatchPlan {
   command_count : Int32
   batches : Array[RenderPipelineBatch]
   dirty_region : @graphics.DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineBatchPlan with Debug::{to_repr}
 
 ///|
 /// One image resource use discovered before replaying a render pipeline.
+#derive(Debug)
 pub struct RenderPipelineImageDependency {
   command_index : Int32
   resource_key : String?
   source_width : Int32
   source_height : Int32
   source_pixel_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineImageDependency with Debug::{to_repr}
 
 ///|
 /// One parsed-font text resource use discovered before replaying a pipeline.
+#derive(Debug)
 pub struct RenderPipelineTextDependency {
   command_index : Int32
   resource_key : String?
@@ -658,30 +671,32 @@ pub struct RenderPipelineTextDependency {
   glyph_count : Int32
   layout_width : Double
   layout_height : Double
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineTextDependency with Debug::{to_repr}
 
 ///|
 /// One keyed font resource use discovered before replaying a pipeline.
+#derive(Debug)
 pub struct RenderPipelineFontDependency {
   command_index : Int32
   font_key : String
   font_byte_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineFontDependency with Debug::{to_repr}
 
 ///|
 /// Resource dependencies that can be pre-resolved from existing commands.
+#derive(Debug)
 pub struct RenderPipelineResourcePlan {
   command_count : Int32
   font_dependencies : Array[RenderPipelineFontDependency]
   image_dependencies : Array[RenderPipelineImageDependency]
   text_dependencies : Array[RenderPipelineTextDependency]
-} derive(Debug)
+}
 
 ///|
 pub extend RenderPipelineResourcePlan with Debug::{to_repr}

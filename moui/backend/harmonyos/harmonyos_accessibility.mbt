@@ -368,11 +368,12 @@ extern "C" fn harmonyos_accessibility_take_action_native(
 
 ///|
 /// A queued ArkUI accessibility action waiting for the host loop to dispatch it.
+#derive(Eq, Debug)
 pub struct PendingAccessibilityAction {
   element_id : Int64
   action : Int32
   generation : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PendingAccessibilityAction::element_id(

@@ -1,8 +1,9 @@
 ///|
 /// Window-hosted native surface handle.
+#derive(Eq, Debug, ToJson)
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AndroidSurfaceHandle with Debug::{to_repr}
@@ -29,6 +30,7 @@ pub fn AndroidSurfaceHandle::raw(self : AndroidSurfaceHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AndroidBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -42,7 +44,7 @@ pub(all) struct AndroidBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AndroidBackendCapabilities with Debug::{to_repr}
@@ -61,12 +63,13 @@ pub extend AndroidBackendCapabilities with ToJson::{to_json}
 ///
 /// `status` is a coarse evidence class: `experimental` until window-hosted
 /// matching-device smoke and presenter verification close the remaining gaps.
+#derive(Eq, Debug, ToJson)
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AndroidBackendReadiness with Debug::{to_repr}
@@ -78,6 +81,7 @@ pub extend AndroidBackendReadiness with Eq::{not_equal, equal}
 pub extend AndroidBackendReadiness with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AndroidBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : AndroidBackendCapabilities
@@ -85,7 +89,7 @@ pub(all) struct AndroidBackendInfo {
   input : @host.HostInputCapabilities
   readiness : AndroidBackendReadiness
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AndroidBackendInfo with Debug::{to_repr}

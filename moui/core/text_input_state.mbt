@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextInputState {
   focused : Bool
   text : String
@@ -8,7 +9,7 @@ pub(all) struct TextInputState {
   composition_cursor : TextRange?
   frame : Rect
   caret_rect : Rect
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextInputState with Debug::{to_repr}

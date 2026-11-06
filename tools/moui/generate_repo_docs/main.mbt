@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 suberror RepoDocsError {
   Invalid(String)
-} derive(Eq, Debug)
+}
 
 ///|
 fn[T] Result::or_raise(self : Result[T, String]) -> T raise RepoDocsError {

@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SickleStyleMode {
   Skeuo
   Flat
   Hybrid
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SickleStyleMode with Debug::{to_repr}

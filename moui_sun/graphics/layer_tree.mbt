@@ -1,10 +1,11 @@
 ///|
 /// Ordered collection of cached layers. Layers added later are composited above
 /// earlier layers.
+#derive(Debug)
 pub struct LayerTree {
   layers : Array[Layer]
   invalidation : DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend LayerTree with Debug::{to_repr}

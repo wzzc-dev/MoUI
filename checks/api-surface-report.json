@@ -46,14 +46,14 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 891,
+      "lines": 935,
       "public_declarations": 597,
       "pub_all_declarations": 24
     },
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2572,
+      "lines": 2720,
       "public_declarations": 1150,
       "pub_all_declarations": 141
     },
@@ -67,56 +67,56 @@
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 654,
+      "lines": 701,
       "public_declarations": 268,
       "pub_all_declarations": 44
     },
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 619,
+      "lines": 653,
       "public_declarations": 285,
       "pub_all_declarations": 32
     },
     {
       "label": "render common",
       "path": "moui/render/common/pkg.generated.mbti",
-      "lines": 331,
+      "lines": 345,
       "public_declarations": 140,
       "pub_all_declarations": 8
     },
     {
       "label": "native text model",
       "path": "moui/render/native_text/pkg.generated.mbti",
-      "lines": 94,
+      "lines": 96,
       "public_declarations": 46,
       "pub_all_declarations": 1
     },
     {
       "label": "skia renderer",
       "path": "moui_skia_renderer/pkg.generated.mbti",
-      "lines": 281,
+      "lines": 293,
       "public_declarations": 167,
       "pub_all_declarations": 7
     },
     {
       "label": "sun renderer",
       "path": "moui_sun_renderer/pkg.generated.mbti",
-      "lines": 272,
+      "lines": 282,
       "public_declarations": 175,
       "pub_all_declarations": 1
     },
     {
       "label": "webgpu adapter",
       "path": "moui_web_renderer/pkg.generated.mbti",
-      "lines": 183,
+      "lines": 190,
       "public_declarations": 92,
       "pub_all_declarations": 2
     },
     {
       "label": "native wgpu renderer",
       "path": "moui_wgpu_renderer/pkg.generated.mbti",
-      "lines": 116,
+      "lines": 119,
       "public_declarations": 55,
       "pub_all_declarations": 2
     },
@@ -144,7 +144,7 @@
     {
       "label": "backend common lifecycle owner",
       "path": "moui/backend/common/lifecycle/pkg.generated.mbti",
-      "lines": 297,
+      "lines": 301,
       "public_declarations": 170,
       "pub_all_declarations": 7
     },
@@ -165,7 +165,7 @@
     {
       "label": "backend common input owner",
       "path": "moui/backend/common/input/pkg.generated.mbti",
-      "lines": 171,
+      "lines": 175,
       "public_declarations": 61,
       "pub_all_declarations": 7
     },

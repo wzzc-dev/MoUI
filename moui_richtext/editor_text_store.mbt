@@ -18,12 +18,13 @@
 /// Internal detail of `MarkdownDocumentTextStore`; public only because the
 /// session (a `pub(all)` struct) transitively exposes the store. Do not
 /// construct or mutate segments directly — go through the store API.
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownTextSegment {
   // Absolute char offsets, mutated in place when edits before shift the tail.
   mut start : Int32
   mut end : Int32
   mut text : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownTextSegment with Debug::{to_repr}

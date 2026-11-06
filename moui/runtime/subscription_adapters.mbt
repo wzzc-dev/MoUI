@@ -11,10 +11,11 @@ pub struct HostPlatformEventSources {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostPlatformEventPublishResult {
   host_event_count : Int32
   window_event_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostPlatformEventPublishResult with Debug::{to_repr}
@@ -26,10 +27,11 @@ pub extend HostPlatformEventPublishResult with Eq::{not_equal, equal}
 pub extend HostPlatformEventPublishResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostWindowEvent {
   window_id : @backend_host.WindowId
   event : @backend_host.Event
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostWindowEvent with Debug::{to_repr}

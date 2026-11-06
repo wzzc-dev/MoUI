@@ -1,9 +1,10 @@
 ///|
 /// Fill rule for path filling
+#derive(Eq, Debug)
 pub(all) enum FillRule {
   NonZero
   EvenOdd
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FillRule with Debug::{to_repr}
@@ -13,10 +14,11 @@ pub extend FillRule with Eq::{not_equal, equal}
 
 ///|
 /// Paint style
+#derive(Eq, Debug)
 pub(all) enum PaintStyle {
   Fill
   Stroke
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintStyle with Debug::{to_repr}
@@ -26,11 +28,12 @@ pub extend PaintStyle with Eq::{not_equal, equal}
 
 ///|
 /// Stroke cap style
+#derive(Eq, Debug)
 pub(all) enum StrokeCap {
   Butt
   Round
   Square
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend StrokeCap with Debug::{to_repr}
@@ -40,11 +43,12 @@ pub extend StrokeCap with Eq::{not_equal, equal}
 
 ///|
 /// Stroke join style
+#derive(Eq, Debug)
 pub(all) enum StrokeJoin {
   Miter
   Round
   Bevel
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend StrokeJoin with Debug::{to_repr}
@@ -54,6 +58,7 @@ pub extend StrokeJoin with Eq::{not_equal, equal}
 
 ///|
 /// Pixel blend mode used when compositing paint over destination pixels.
+#derive(Eq, Debug)
 pub(all) enum BlendMode {
   Clear
   Source
@@ -85,7 +90,7 @@ pub(all) enum BlendMode {
   Luminosity
   LinearBurn
   Subtract
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BlendMode with Debug::{to_repr}
@@ -95,6 +100,7 @@ pub extend BlendMode with Eq::{not_equal, equal}
 
 ///|
 /// Paint configuration for drawing operations
+#derive(Debug)
 pub struct Paint {
   mut color : Color
   mut shader : PaintShader?
@@ -109,7 +115,7 @@ pub struct Paint {
   mut stroke_dash_offset : Double
   mut fill_rule : FillRule
   mut opacity : Double
-} derive(Debug)
+}
 
 ///|
 pub extend Paint with Debug::{to_repr}

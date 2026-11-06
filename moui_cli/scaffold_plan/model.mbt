@@ -5,26 +5,27 @@
 /// Studio 的逐文件 Effect）负责。
 
 ///|
-pub let default_moui_dependency_version : String = "0.3.0"
+pub let default_moui_dependency_version : String = "0.3.2"
 
 ///|
 /// The web renderer releases independently from the framework; generated
 /// projects pin it separately so a framework bump does not force a matching
 /// renderer release.
-let default_web_renderer_dependency_version : String = "0.3.0"
+let default_web_renderer_dependency_version : String = "0.3.2"
 
 ///|
 /// The native Skia renderer releases independently from the framework;
 /// generated projects pin it separately for native platform entries.
-pub let default_moui_skia_renderer_dependency_version : String = "0.3.0"
+pub let default_moui_skia_renderer_dependency_version : String = "0.3.2"
 
 ///|
+#derive(Eq)
 pub(all) enum HostPlatform {
   Macos
   Windows
   Linux
   Unknown
-} derive(Eq)
+}
 
 ///|
 pub extend HostPlatform with Eq::{not_equal, equal}

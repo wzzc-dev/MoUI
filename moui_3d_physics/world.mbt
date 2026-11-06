@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum BodyType {
   Dynamic
   Fixed
   Kinematic
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend BodyType with Debug::{to_repr}
@@ -15,9 +16,10 @@ pub extend BodyType with Eq::{not_equal, equal}
 pub extend BodyType with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, Hash, ToJson)
 pub(all) struct BodyId {
   value : Int64
-} derive(Eq, Debug, Hash, ToJson)
+}
 
 ///|
 pub extend BodyId with Debug::{to_repr}
@@ -42,9 +44,10 @@ pub fn BodyId::value(self : BodyId) -> Int64 {
 }
 
 ///|
+#derive(Eq, Debug, Hash, ToJson)
 pub(all) struct ColliderId {
   value : Int64
-} derive(Eq, Debug, Hash, ToJson)
+}
 
 ///|
 pub extend ColliderId with Debug::{to_repr}
@@ -69,6 +72,7 @@ pub fn ColliderId::value(self : ColliderId) -> Int64 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum Shape {
   Ball(Double)
   Cuboid(@moui_3d.Vec3)
@@ -77,7 +81,7 @@ pub(all) enum Shape {
   CapsuleZ(Double, Double)
   Triangle(@moui_3d.Vec3, @moui_3d.Vec3, @moui_3d.Vec3)
   Trimesh(Array[@moui_3d.Vec3], Array[(Int32, Int32, Int32)])
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Shape with Debug::{to_repr}
@@ -89,12 +93,13 @@ pub extend Shape with Eq::{not_equal, equal}
 pub extend Shape with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct BodyDesc {
   body_type : BodyType
   position : @moui_3d.Vec3
   rotation : @moui_3d.Quat
   gravity_scale : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend BodyDesc with Debug::{to_repr}
@@ -136,13 +141,14 @@ pub fn BodyDesc::gravity_scale(self : BodyDesc) -> Double {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ColliderDesc {
   shape : Shape
   body : BodyId?
   sensor : Bool
   friction : Double
   restitution : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ColliderDesc with Debug::{to_repr}
@@ -196,12 +202,13 @@ pub fn ColliderDesc::restitution(self : ColliderDesc) -> Double {
 }
 
 ///|
+#derive(Debug)
 pub(all) struct RayHit {
   collider : ColliderId
   distance : Double
   position : @moui_3d.Vec3
   normal : @moui_3d.Vec3
-} derive(Debug)
+}
 
 ///|
 pub extend RayHit with Debug::{to_repr}
@@ -237,13 +244,14 @@ pub fn RayHit::new(
 }
 
 ///|
+#derive(Debug)
 pub(all) struct PhysicsWorld {
   gravity : @moui_3d.Vec3
   mut next_body : Int64
   mut next_collider : Int64
   bodies : Map[BodyId, BodyDesc]
   colliders : Map[ColliderId, ColliderDesc]
-} derive(Debug)
+}
 
 ///|
 pub extend PhysicsWorld with Debug::{to_repr}

@@ -56,10 +56,11 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
+#derive(Eq, Hash)
 priv struct KeyedChildComposite {
   key : String
   kind : String
-} derive(Eq, Hash)
+}
 
 ///|
 fn mount_runtime_view_node(spec : &RuntimeViewNode) -> ElementNode {

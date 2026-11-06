@@ -22,10 +22,11 @@
 /// Where a memory came from. `Authored` lines are written by the player (or
 /// hand-edited in the file); `Adopted` lines were proposed by the model and
 /// explicitly kept by the player.
+#derive(Eq, Debug)
 pub(all) enum MemorySource {
   Authored
   Adopted
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemorySource with Debug::{to_repr}
@@ -35,6 +36,7 @@ pub extend MemorySource with Eq::{not_equal, equal}
 
 ///|
 /// One remembered fact about the shared history.
+#derive(Eq, Debug)
 pub struct MemoryEntry {
   content : String
   /// Pinned entries are always injected into the prompt; the rest are pulled
@@ -52,7 +54,7 @@ pub struct MemoryEntry {
   /// latest entry of a topic reaches the prompt; the earlier ones stay in the
   /// file as history.
   topic : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemoryEntry with Debug::{to_repr}
@@ -125,10 +127,11 @@ pub fn MemoryEntry::with_topic(
 
 ///|
 /// The memories of one character.
+#derive(Eq, Debug)
 pub struct CharacterMemories {
   character_id : String
   entries : Array[MemoryEntry]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CharacterMemories with Debug::{to_repr}
@@ -139,9 +142,10 @@ pub extend CharacterMemories with Eq::{not_equal, equal}
 ///|
 /// Every character's memories for the current world. Mirrors
 /// `ConversationBook`'s API so both books read the same way.
+#derive(Eq, Debug)
 pub struct MemoryBook {
   entries : Array[CharacterMemories]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemoryBook with Debug::{to_repr}

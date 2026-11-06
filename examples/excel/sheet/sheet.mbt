@@ -5,10 +5,11 @@ pub let default_row_count : Int32 = 30
 pub let default_col_count : Int32 = 12
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Selection {
   row : Int32
   col : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Selection with Debug::{to_repr}
@@ -17,10 +18,11 @@ pub extend Selection with Debug::{to_repr}
 pub extend Selection with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Clipboard {
   cells : Array[Array[@cell.Cell]]
   origin : Selection
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Clipboard with Debug::{to_repr}
@@ -29,10 +31,11 @@ pub extend Clipboard with Debug::{to_repr}
 pub extend Clipboard with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct IndexedCell {
   index : Int32
   cell : @cell.Cell
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IndexedCell with Debug::{to_repr}
@@ -41,12 +44,13 @@ pub extend IndexedCell with Debug::{to_repr}
 pub extend IndexedCell with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CellChange {
   row : Int32
   col : Int32
   old_cell : @cell.Cell
   new_cell : @cell.Cell
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellChange with Debug::{to_repr}
@@ -68,6 +72,7 @@ priv struct FormulaRefToken {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum UndoOp {
   CellEdit(Int32, Int32, @cell.Cell, @cell.Cell)
   CellBatchEdit(Array[CellChange])
@@ -76,7 +81,7 @@ pub(all) enum UndoOp {
   ColumnInsert(Int32)
   RowDelete(Int32, Array[IndexedCell])
   ColumnDelete(Int32, Array[IndexedCell])
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend UndoOp with Debug::{to_repr}
@@ -85,17 +90,19 @@ pub extend UndoOp with Debug::{to_repr}
 pub extend UndoOp with Eq::{not_equal, equal}
 
 ///|
+#derive(Debug)
 pub(all) struct Sheet {
   name : String
   row_count : Int32
   col_count : Int32
   cells : Map[String, @cell.Cell]
-} derive(Debug)
+}
 
 ///|
 pub extend Sheet with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 pub(all) struct Workbook {
   sheets : Array[Sheet]
   active_sheet : Int32
@@ -104,7 +111,7 @@ pub(all) struct Workbook {
   clipboard : Clipboard
   undo_stack : Array[UndoOp]
   redo_stack : Array[UndoOp]
-} derive(Debug)
+}
 
 ///|
 pub extend Workbook with Debug::{to_repr}

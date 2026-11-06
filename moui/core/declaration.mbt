@@ -3,9 +3,10 @@
 ///
 /// Keys compare their complete encoded bytes. Hashing is only an acceleration
 /// used by hashed containers before exact equality; it is not identity.
+#derive(Eq, Hash, Debug)
 pub struct DeclarationKey {
   priv bytes : Bytes
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend DeclarationKey with Debug::{to_repr}
@@ -18,6 +19,7 @@ pub extend DeclarationKey with Hash::{hash, hash_combine}
 
 ///|
 /// Cache behavior for one declaration channel.
+#derive(Eq)
 pub(all) enum DeclarationChannel {
   /// The channel never changes for a reused view identity.
   Constant
@@ -25,19 +27,20 @@ pub(all) enum DeclarationChannel {
   Exact(DeclarationKey)
   /// The channel must be treated as changed on every reconciliation.
   Uncacheable
-} derive(Eq)
+}
 
 ///|
 pub extend DeclarationChannel with Eq::{not_equal, equal}
 
 ///|
 /// The four independently declared invalidation channels for a view node.
+#derive(Eq)
 pub struct ViewDeclaration {
   layout : DeclarationChannel
   paint : DeclarationChannel
   semantics : DeclarationChannel
   platform : DeclarationChannel
-} derive(Eq)
+}
 
 ///|
 pub extend ViewDeclaration with Eq::{not_equal, equal}
@@ -46,12 +49,13 @@ pub extend ViewDeclaration with Eq::{not_equal, equal}
 /// Effective changes between two declarations.
 ///
 /// A layout change always implies paint, semantics, and platform changes.
+#derive(Eq, Debug)
 pub struct DeclarationChanges {
   layout : Bool
   paint : Bool
   semantics : Bool
   platform : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DeclarationChanges with Debug::{to_repr}

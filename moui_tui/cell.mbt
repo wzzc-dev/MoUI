@@ -1,10 +1,11 @@
 ///|
 /// 终端颜色:默认色、256 索引色、真彩色 RGB。
+#derive(Eq, Debug)
 pub(all) enum TermColor {
   Default
   Indexed(Int32)
   Rgb(Int32, Int32, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TermColor with Debug::{to_repr}
@@ -14,6 +15,7 @@ pub extend TermColor with Eq::{not_equal, equal}
 
 ///|
 /// 单元格属性(SGR 状态)。
+#derive(Eq, Debug)
 pub(all) struct CellAttrs {
   fg : TermColor
   bg : TermColor
@@ -22,7 +24,7 @@ pub(all) struct CellAttrs {
   italic : Bool
   underline : Bool
   reverse : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellAttrs with Debug::{to_repr}
@@ -95,11 +97,12 @@ pub fn attrs_with_fg(attrs : CellAttrs, fg : TermColor) -> CellAttrs {
 
 ///|
 /// 单元格:一个字符(宽字符占两格,第二格为 continuation,ch 为空)。
+#derive(Eq, Debug)
 pub(all) struct Cell {
   ch : String
   width : Int32
   attrs : CellAttrs
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Cell with Debug::{to_repr}

@@ -3002,11 +3002,12 @@ test "LayerTree::present_dirty_to restores shader/filter pixels before retry" {
 }
 
 ///|
+#derive(Debug)
 struct RecordingSurface {
   width : Int32
   height : Int32
   rects : Array[@graphics.PixelRect]
-} derive(Debug)
+}
 
 ///|
 fn RecordingSurface::new(width : Int32, height : Int32) -> RecordingSurface {
@@ -3109,10 +3110,11 @@ fn make_layer_tree_red_to_alpha_filter() -> @graphics.PaintFilter {
 }
 
 ///|
+#derive(Debug)
 struct FailingSurface {
   width : Int32
   height : Int32
-} derive(Debug)
+}
 
 ///|
 fn FailingSurface::new(width : Int32, height : Int32) -> FailingSurface {

@@ -4,6 +4,7 @@
 /// It is a same-thread model: submitted frames are held by reference and never
 /// mutated or consumed here, so no per-frame command copy is made (the real
 /// handoff copies happen in the platform worker, if any).
+#derive(Eq, Debug, ToJson)
 pub(all) enum GpuRenderWorkerState {
   Idle
   Lost
@@ -11,7 +12,7 @@ pub(all) enum GpuRenderWorkerState {
   Recovered
   FallbackToRaster
   Shutdown
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend GpuRenderWorkerState with Debug::{to_repr}
@@ -23,16 +24,18 @@ pub extend GpuRenderWorkerState with Eq::{not_equal, equal}
 pub extend GpuRenderWorkerState with ToJson::{to_json}
 
 ///|
+#derive(Debug)
 pub(all) struct GpuRenderWorkerFrame {
   token : @render.FrameToken
   submitted_at_ms : Double
   input : @render.RenderFrameInput
-} derive(Debug)
+}
 
 ///|
 pub extend GpuRenderWorkerFrame with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
   submitted : Int32
@@ -51,7 +54,7 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   pending : Bool
   control_pending : Int32
   worker_thread_id : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend GpuRenderWorkerDiagnostics with Debug::{to_repr}

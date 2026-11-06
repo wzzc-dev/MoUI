@@ -66,7 +66,7 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       label: "backend common input owner",
       path: "moui/backend/common/input/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common/input\"",
-      max_lines: 171,
+      max_lines: 175,
       max_pub_lines: 61,
       max_pub_all_lines: 7,
       required_tokens: [

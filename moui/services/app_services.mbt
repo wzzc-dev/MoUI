@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct ClipboardImage {
   mime_type : String
   bytes : Bytes
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ClipboardImage with Debug::{to_repr}
@@ -42,10 +43,11 @@ pub(all) enum ApplicationMenuItem {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ApplicationMenuPlacement with Debug::{to_repr}

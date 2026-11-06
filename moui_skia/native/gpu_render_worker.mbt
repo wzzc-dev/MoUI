@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum GpuRenderWorkerState {
   Idle
   Lost
@@ -6,7 +7,7 @@ pub(all) enum GpuRenderWorkerState {
   Recovered
   FallbackToRaster
   Shutdown
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GpuRenderWorkerState with Debug::{to_repr}
@@ -15,6 +16,7 @@ pub extend GpuRenderWorkerState with Debug::{to_repr}
 pub extend GpuRenderWorkerState with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum GpuRenderWorkerControl {
   Attach(UInt64)
   AttachSurface(UInt64, UInt64)
@@ -22,7 +24,7 @@ pub(all) enum GpuRenderWorkerControl {
   Detach
   ContextLoss(String)
   Shutdown
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GpuRenderWorkerControl with Debug::{to_repr}
@@ -31,12 +33,13 @@ pub extend GpuRenderWorkerControl with Debug::{to_repr}
 pub extend GpuRenderWorkerControl with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum GpuRenderCompletionStatus {
   PictureRecorded
   Presented
   Dropped
   FallbackToRaster
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GpuRenderCompletionStatus with Debug::{to_repr}
@@ -45,6 +48,7 @@ pub extend GpuRenderCompletionStatus with Debug::{to_repr}
 pub extend GpuRenderCompletionStatus with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct GpuRenderCompletion {
   sequence : Int32
   surface_generation : Int32
@@ -54,7 +58,7 @@ pub(all) struct GpuRenderCompletion {
   presented_at_ms : Double
   status : GpuRenderCompletionStatus
   context_generation : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GpuRenderCompletion with Debug::{to_repr}
@@ -63,6 +67,7 @@ pub extend GpuRenderCompletion with Debug::{to_repr}
 pub extend GpuRenderCompletion with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct GpuRenderWorkerDiagnostics {
   state : GpuRenderWorkerState
   submitted : Int32
@@ -81,7 +86,7 @@ pub(all) struct GpuRenderWorkerDiagnostics {
   in_flight : Bool
   pending : Bool
   worker_thread_id : Int64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GpuRenderWorkerDiagnostics with Debug::{to_repr}

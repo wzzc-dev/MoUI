@@ -2,12 +2,13 @@
 /// The kind of application a desktop window belongs to. Kept separate from
 /// window identity so several windows can share one app (like multiple
 /// Finder windows on macOS).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum AppKind {
   FinderApp
   SafariApp
   NotesApp
   TerminalApp
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend AppKind with @moonbitlang/core/json.FromJson::{from_json}
@@ -25,10 +26,11 @@ pub extend AppKind with ToJson::{to_json}
 /// Stable identity for one window instance. `serial` comes from a
 /// monotonically increasing counter on the model, so ids are never reused
 /// within a session.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct WindowId {
   app : AppKind
   serial : Int32
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend WindowId with @moonbitlang/core/json.FromJson::{from_json}
@@ -44,11 +46,12 @@ pub extend WindowId with ToJson::{to_json}
 
 ///|
 /// Lifecycle of a single window, mirroring macOS zoom/minimize semantics.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum WindowState {
   NormalWindow
   MinimizedWindow
   MaximizedWindow
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend WindowState with @moonbitlang/core/json.FromJson::{from_json}
@@ -66,12 +69,13 @@ pub extend WindowState with ToJson::{to_json}
 /// Persisted geometry of one window. Offsets are relative to the centered
 /// default position so the layout survives viewport changes; width/height of
 /// `0.0` mean "responsive default" until the user explicitly resizes.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct WindowBounds {
   offset_x : Double
   offset_y : Double
   width : Double
   height : Double
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend WindowBounds with @moonbitlang/core/json.FromJson::{from_json}
@@ -94,12 +98,13 @@ fn WindowBounds::default() -> WindowBounds {
 /// One entry in the desktop window table. Painting order is derived from
 /// `z_order`: higher values paint later (on top). The focused window is the
 /// visible window with the highest z-order.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct WindowRecord {
   id : WindowId
   state : WindowState
   bounds : WindowBounds
   z_order : Int32
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend WindowRecord with @moonbitlang/core/json.FromJson::{from_json}

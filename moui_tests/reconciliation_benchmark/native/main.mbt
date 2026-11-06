@@ -287,10 +287,11 @@ fn bench_comparison_reduction(
 }
 
 ///|
+#derive(Eq, Hash)
 struct BenchCompositeKey {
   key : String
   kind : Int32
-} derive(Eq, Hash)
+}
 
 ///|
 fn bench_build_index_struct(

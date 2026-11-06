@@ -19,11 +19,12 @@ pub struct FileImporterApp {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FileImporterStatus {
   Ready
   Requesting
   Unavailable(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FileImporterStatus with Debug::{to_repr}
@@ -35,10 +36,11 @@ pub extend FileImporterStatus with Eq::{not_equal, equal}
 pub extend FileImporterStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ImportedFile {
   path : String
   source : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ImportedFile with Debug::{to_repr}

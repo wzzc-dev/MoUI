@@ -2,6 +2,7 @@
 type RichTextFormatter = (String) -> RichTextDocument
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextInputTransform {
   text : String
   caret : Int32
@@ -10,7 +11,7 @@ pub(all) struct RichTextInputTransform {
   // the range is unknown (from_input_transform then falls back to the O(doc)
   // common-prefix diff in from_sources).
   edit_range : MarkdownSourceRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextInputTransform with Debug::{to_repr}
@@ -22,10 +23,11 @@ pub extend RichTextInputTransform with Eq::{not_equal, equal}
 pub extend RichTextInputTransform with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextSourceRange {
   start : Int32
   end : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextSourceRange with Debug::{to_repr}
@@ -37,9 +39,10 @@ pub extend RichTextSourceRange with Eq::{not_equal, equal}
 pub extend RichTextSourceRange with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RichTextDecoration {
   Strikethrough
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextDecoration with Debug::{to_repr}
@@ -58,9 +61,10 @@ pub extend RichTextDecoration with ToJson::{to_json}
 /// so its shape, weight, and color drift per machine. The block keeps a
 /// text-shaped `prefix` so caret, selection, and hit-test arithmetic stay
 /// character-indexed; only the painted lane swaps the glyph for the marker.
+#derive(Eq, Debug, ToJson)
 pub(all) enum RichTextMarker {
   TaskCheckbox(Bool)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextMarker with Debug::{to_repr}
@@ -72,6 +76,7 @@ pub extend RichTextMarker with Eq::{not_equal, equal}
 pub extend RichTextMarker with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextRun {
   text : String
   visual_text : String?
@@ -85,7 +90,7 @@ pub(all) struct RichTextRun {
   background_radius : Double
   decoration : RichTextDecoration?
   source_range : RichTextSourceRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextRun with Debug::{to_repr}
@@ -102,13 +107,14 @@ pub extend RichTextRun with ToJson::{to_json}
 /// span) used by paint/geometry. Empty `runs` means "render `text` plain",
 /// which keeps viewer-side tables and any legacy construction unstyled but
 /// correct.
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextTableCell {
   text : String
   runs : Array[RichTextRun]
   header : Bool
   align : @core.TextAlign?
   source_range : RichTextSourceRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextTableCell with Debug::{to_repr}
@@ -120,13 +126,14 @@ pub extend RichTextTableCell with Eq::{not_equal, equal}
 pub extend RichTextTableCell with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextTable {
   rows : Array[Array[RichTextTableCell]]
   row_height : Double
   cell_padding : @core.Insets
   border : @core.Color
   header_background : @core.Brush?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextTable with Debug::{to_repr}
@@ -138,6 +145,7 @@ pub extend RichTextTable with Eq::{not_equal, equal}
 pub extend RichTextTable with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
   table : RichTextTable?
@@ -154,7 +162,7 @@ pub(all) struct RichTextBlock {
   line_align : @core.TextAlign?
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextBlock with Debug::{to_repr}
@@ -166,9 +174,10 @@ pub extend RichTextBlock with Eq::{not_equal, equal}
 pub extend RichTextBlock with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RichTextDocument {
   blocks : Array[RichTextBlock]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RichTextDocument with Debug::{to_repr}

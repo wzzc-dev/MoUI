@@ -1,8 +1,9 @@
 ///|
+#derive(Eq)
 pub(all) enum PlaygroundFile {
   Main
   Package
-} derive(Eq)
+}
 
 ///|
 pub extend PlaygroundFile with Eq::{not_equal, equal}

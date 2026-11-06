@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostCapabilitySummary {
   backend : HostBackendKind
   label : String
@@ -15,7 +16,7 @@ pub(all) struct HostCapabilitySummary {
   host_modal_available : Bool
   web_view_description : String
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostCapabilitySummary with Debug::{to_repr}

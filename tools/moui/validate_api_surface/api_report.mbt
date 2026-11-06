@@ -1,11 +1,12 @@
 ///|
+#derive(ToJson)
 struct ApiPackageReport {
   label : String
   path : String
   lines : Int32
   public_declarations : Int32
   pub_all_declarations : Int32
-} derive(ToJson)
+}
 
 ///|
 fn write_api_package_report(
@@ -17,7 +18,7 @@ fn write_api_package_report(
     return Ok(())
   }
   let path = @tools.resolve_path(repo_root, report_path)
-  let text = ({ "schemaVersion": 1, "packages": reports.to_json() } : Json).stringify(
+  let text = ({ "schemaVersion": 1, "packages": Json(reports) } : Json).stringify(
       indent=2,
     ) +
     "\n"

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignCustomizationKind {
   ThemeInheritance
   ThemeTokenOverride
@@ -6,7 +7,7 @@ pub(all) enum DesignCustomizationKind {
   DesignTokenGroupOverride
   ComponentTokenOverride
   VariantThemeResolution
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignCustomizationKind with Debug::{to_repr}
@@ -18,6 +19,7 @@ pub extend DesignCustomizationKind with Eq::{not_equal, equal}
 pub extend DesignCustomizationKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignCustomizationCapabilityRecord {
   preset : @common.DesignPreset
   kind : DesignCustomizationKind
@@ -29,7 +31,7 @@ pub(all) struct DesignCustomizationCapabilityRecord {
   recomputes_dependents : Bool
   status : DesignTokenStatus
   remaining_gap : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignCustomizationCapabilityRecord with Debug::{to_repr}

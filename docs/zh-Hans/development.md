@@ -305,9 +305,19 @@ sh scripts/check.sh --profile daily
 
 ## CI 与工具链
 
-GitHub Actions 通过 `.github/actions/setup-moonbit` 安装 MoonBit。pinned compiler version 位于 `.moonbit-toolchain`；将 CI 移到新的 MoonBit toolchain version 时更新该文件。当前 pin 是 MoonBit `0.10.4`（`moonc v0.10.4+ade96c819`）。
+GitHub Actions 通过 `.github/actions/setup-moonbit` 安装 MoonBit。pinned compiler version 位于 `.moonbit-toolchain`；将 CI 移到新的 MoonBit toolchain version 时更新该文件。当前 pin 是 MoonBit `0.10.20`（`moonc v0.10.20+65efd5b93`，`moonrun 0.1.20261104`）。
 
-MoonBit 0.10.4 会将裸 `{}` 视为 empty maps / JSON objects / blocks 的歧义写法。在使用位置优先写 `Map([])`、`Json::empty_object()` 或 `{ () }`。`assert_eq` 和相关 debug helpers 现在要求 `Debug` 而不是 `Show`。
+0.10.19+ 语法迁移已成为仓库基线：
+
+- trait derivation 使用类型声明上方的 `#derive(...)`；旧的 `} derive(...)` 后缀已废弃，`moon fmt` 会执行迁移。
+- `Int` 与 `UInt` 仍是 `Int32` 与 `UInt32` 的别名。新的 binary、FFI 与 wire-facing 代码应优先写显式宽度名，不要机械改写稳定的生成片段。
+- `Json` 与 `ToJson` 位于 `moonbitlang/core/json`。生成的 interface 会把类型写成 `@json.Json`；将 `ToJson` 值转成 JSON 时优先使用 `Json(value)`。
+- 旧 `not(expr)`、布尔 `inspect` 或依赖 `Show` 的 helper 应分别改用 `!expr`、`assert_true(...)` 与 `debug_inspect(...)`。
+- `moon check` 默认会更新被检查本地包的 `pkg.generated.mbti`。审阅并提交 interface 变化，或使用 `--no-mbti` 做纯类型检查。
+- 以字符串或代码生成器形式内嵌的源码不受 `moon fmt` 管理；其中的
+  `#derive(...)` 需要显式迁移，并由生成结果测试覆盖。
+
+0.10.4 的 bare-brace 注意事项仍是有效的风格建议：在 `{}` 有歧义的位置优先写 `Map([])`、`Json::empty_object()` 或 `{ () }`。
 
 `ci.yml` 通过 checked wrappers 表达 routine gates：PR profile gate 运行 `sh scripts/check.sh --profile pr`，Linux platform contracts 运行 `sh scripts/check.sh --profile platform`。Windows MSVC job 有意把 setup、backend/provider tests 和 packaging 保持为显式 PowerShell steps；它只添加一个 wrapper contract check：
 

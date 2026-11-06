@@ -78,22 +78,24 @@ pub fn DegradeLog::note(Self, String, String) -> Unit
 pub fn DegradeLog::records(Self) -> Array[DegradeRecord]
 pub fn DegradeLog::total(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DegradeRecord {
   source : String
   detail : String
   count : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn DegradeRecord::equal(Self, Self) -> Bool
 pub fn DegradeRecord::not_equal(Self, Self) -> Bool
 pub fn DegradeRecord::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RoleKind {
   Region
   Item
   Label
   Content
   Placeholder
-} derive(Eq, @debug.Debug)
+}
 pub fn RoleKind::equal(Self, Self) -> Bool
 pub fn RoleKind::not_equal(Self, Self) -> Bool
 pub fn RoleKind::to_repr(Self) -> @debug.Repr

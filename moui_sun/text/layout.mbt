@@ -1,10 +1,11 @@
 ///|
 /// Layout metrics for text
+#derive(Eq, Debug)
 pub struct LayoutMetrics {
   width : Double
   height : Double
   baseline : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LayoutMetrics with Debug::{to_repr}
@@ -24,12 +25,13 @@ pub fn LayoutMetrics::new(
 
 ///|
 /// Text alignment.
+#derive(Eq, Debug)
 pub(all) enum TextAlign {
   Left
   Center
   Right
   Justify
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextAlign with Debug::{to_repr}
@@ -39,6 +41,7 @@ pub extend TextAlign with Eq::{not_equal, equal}
 
 ///|
 /// Text layout configuration
+#derive(Debug)
 pub struct LayoutConfig {
   max_width : Double
   font_size : Double
@@ -46,7 +49,7 @@ pub struct LayoutConfig {
   alignment : TextAlign
   letter_spacing : Double
   word_spacing : Double
-} derive(Debug)
+}
 
 ///|
 pub extend LayoutConfig with Debug::{to_repr}
@@ -73,13 +76,14 @@ pub fn LayoutConfig::new(
 
 ///|
 /// A positioned glyph for rendering
+#derive(Debug)
 struct PositionedGlyph {
   glyph_id : Int32
   origin_x : Double
   x : Double
   y : Double
   advance_width : Double
-} derive(Debug)
+}
 
 ///|
 pub extend PositionedGlyph with Debug::{to_repr}
@@ -110,22 +114,24 @@ pub fn PositionedGlyph::get_advance_width(self : PositionedGlyph) -> Double {
 
 ///|
 /// A line of positioned glyphs
+#derive(Debug)
 struct LayoutLine {
   glyphs : Array[PositionedGlyph]
   width : Double
   y : Double
-} derive(Debug)
+}
 
 ///|
 pub extend LayoutLine with Debug::{to_repr}
 
 ///|
 /// Layout result containing positioned glyphs
+#derive(Debug)
 struct LayoutResult {
   lines : Array[LayoutLine]
   total_width : Double
   total_height : Double
-} derive(Debug)
+}
 
 ///|
 pub extend LayoutResult with Debug::{to_repr}

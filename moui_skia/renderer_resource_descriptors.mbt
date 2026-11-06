@@ -10,11 +10,12 @@ fn renderer_resource_non_negative_i64(value : Int64) -> Int64 {
 ///|
 /// Cache metadata for one backend resource. Empty keys are automatically marked
 /// non-cacheable so anonymous one-shot resources do not collide in an LRU map.
+#derive(Debug, Eq)
 pub(all) struct RendererResourceDescriptor {
   key : RendererResourceKey
   byte_size : Int64
   cacheable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RendererResourceDescriptor with Debug::{to_repr}

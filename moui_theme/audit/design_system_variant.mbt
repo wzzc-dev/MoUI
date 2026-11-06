@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignVariantResolverRecord {
   preset : @common.DesignPreset
   variant : @common.DesignSchemeVariant
@@ -19,7 +20,7 @@ pub(all) struct DesignVariantResolverRecord {
   resolves_theme : Bool
   status : DesignTokenStatus
   remaining_gap : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignVariantResolverRecord with Debug::{to_repr}

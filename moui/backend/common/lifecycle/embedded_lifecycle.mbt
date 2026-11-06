@@ -1,11 +1,12 @@
 ///|
 /// Logical lifecycle phase owned by MoUI for an embedded host.
+#derive(Eq, Debug)
 pub enum EmbeddedHostLifecyclePhase {
   Idle
   Resumed
   SurfaceAttached
   Exited
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend EmbeddedHostLifecyclePhase with Debug::{to_repr}
@@ -17,11 +18,12 @@ pub extend EmbeddedHostLifecyclePhase with Eq::{not_equal, equal}
 /// Surface identity crossing the physical window adapter boundary. The
 /// generation is created here; embedded transport has its own session
 /// generation and must never mint a surface epoch.
+#derive(Eq, Debug)
 pub struct EmbeddedHostSurface {
   handle : UInt64
   metrics : @core.SurfaceMetrics
   generation : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend EmbeddedHostSurface with Debug::{to_repr}
@@ -30,6 +32,7 @@ pub extend EmbeddedHostSurface with Debug::{to_repr}
 pub extend EmbeddedHostSurface with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub enum EmbeddedWindowHostAction {
   Resumed
   CanCreateSurfaces
@@ -38,7 +41,7 @@ pub enum EmbeddedWindowHostAction {
   DestroySurfaces
   Suspended
   Exit(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend EmbeddedWindowHostAction with Debug::{to_repr}

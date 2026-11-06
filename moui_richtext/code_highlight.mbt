@@ -10,6 +10,7 @@
 
 ///|
 /// Token kinds produced by the highlighter, each with a stable color.
+#derive(Eq, Debug)
 pub enum CodeHighlightToken {
   CodePlain
   CodeKeyword
@@ -21,7 +22,7 @@ pub enum CodeHighlightToken {
   CodeOperator
   CodeAnnotation
   CodeEscape
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CodeHighlightToken with Debug::{to_repr}

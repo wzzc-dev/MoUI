@@ -3,9 +3,9 @@
 /// MoonBit derive-generated trait impls are only "implicit promoted" to regular
 /// methods, which is deprecated — the sanctioned re-export is the explicit
 /// `pub extend T with Trait::{...}` line. Hand-writing three to five of those
-/// lines after every `derive(...)` clause in `moui/core` is pure boilerplate,
+/// lines after every `#derive(...)` attribute in `moui/core` is pure boilerplate,
 /// so this tool derives them mechanically from the source of truth (the
-/// `derive` clauses and hand-written `pub impl` blocks) into one committed
+/// `#derive` attributes and hand-written `pub impl` blocks) into one committed
 /// generated file.
 ///
 /// Scope: `moui/core/paint.mbt`, `moui/core/semantics.mbt`,
@@ -13,19 +13,21 @@
 /// other core files stay hand-written.
 
 ///|
+#derive(Eq, Debug)
 struct TypeDerives {
   name : String
   file : String
-  /// Traits requested by the type's `derive(...)` clause.
+  /// Traits requested by the type's `#derive(...)` attribute.
   derived : Array[String]
   /// Traits promoted from hand-written `pub impl <Trait> for <Type>` blocks.
   impld : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct ParsedSource {
   types : Array[TypeDerives]
-} derive(Eq, Debug)
+}
 
 ///|
 /// Canonical emission order and method-set for every supported trait.
@@ -104,7 +106,7 @@ fn ident_at(line : String, from : Int32) -> String? {
 }
 
 ///|
-/// Traits inside a `derive(A, B, C)` clause found anywhere in the line.
+/// Traits inside a `#derive(A, B, C)` attribute found anywhere in the line.
 fn derive_traits(line : String) -> Result[Array[String], String] {
   let open = match line.find("derive(") {
     Some(index) => index + "derive(".length()
@@ -173,7 +175,7 @@ fn find_type(types : Array[TypeDerives], name : String) -> TypeDerives? {
 ///|
 fn parse_source(file : String, text : String) -> Result[ParsedSource, String] {
   let types : Array[TypeDerives] = []
-  let mut current : String? = None
+  let pending_derived : Array[String] = []
   let lines = text.split("\n").map(fn(v) { v.to_owned() }).collect()
   for line in lines {
     if boilerplate_extend_line(line) {
@@ -197,41 +199,45 @@ fn parse_source(file : String, text : String) -> Result[ParsedSource, String] {
         }
       None => ()
     }
-    match type_decl_name(line) {
-      Some(name) => current = Some(name)
-      None => ()
-    }
-    if line.contains("derive(") {
+    let trimmed = line.trim()
+    if trimmed.has_prefix("#derive(") {
       let traits = match derive_traits(line) {
         Ok(value) => value
         Err(message) => return Err(file + ": " + message)
       }
-      let owner = match current {
-        Some(name) => name
-        None => ""
-      }
-      for trait_name in traits {
-        if extend_method_set(trait_name) is None {
-          return Err(
-            file +
-            ": unmapped derive trait `" +
-            trait_name +
-            "` on type " +
-            owner,
-          )
+      pending_derived.clear()
+      pending_derived.append(traits)
+    }
+    if trimmed.contains("} derive(") {
+      return Err(
+        file +
+        ": deprecated suffix derive syntax; use a #derive(...) attribute before the type declaration",
+      )
+    }
+    match type_decl_name(line) {
+      Some(name) => {
+        if pending_derived.is_empty() {
+          continue
+        }
+        let traits = pending_derived.copy()
+        pending_derived.clear()
+        for trait_name in traits {
+          if extend_method_set(trait_name) is None {
+            return Err(
+              file +
+              ": unmapped derive trait `" +
+              trait_name +
+              "` on type " +
+              name,
+            )
+          }
+        }
+        match find_type(types, name) {
+          Some(entry) => entry.derived.append(traits)
+          None => types.push({ name, file, derived: traits, impld: [], })
         }
       }
-      if owner != "" {
-        match find_type(types, owner) {
-          Some(entry) =>
-            for trait_name in traits {
-              entry.derived.push(trait_name)
-            }
-          None =>
-            types.push({ name: owner, file, derived: traits.copy(), impld: [], })
-        }
-        current = None
-      }
+      None => ()
     }
   }
   Ok({ types, })

@@ -39,12 +39,13 @@ pub(all) enum ShowcaseMsg {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ShowcaseRouteHistoryCommand {
   PushRoute(String)
   ReplaceRoute(String)
   BackRoute
   ForwardRoute
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShowcaseRouteHistoryCommand with Debug::{to_repr}

@@ -1,12 +1,14 @@
 ///|
+#derive(Eq, Debug, ToJson)
 priv struct MeasuredNode {
   element_id : ElementId
   size : Size
   flex_weight : Double
   children : Array[MeasuredNode]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 priv struct PlacedNode {
   element_id : ElementId
   /// Frame in the parent's child-coordinate space. Root and hoisted overlay
@@ -23,7 +25,7 @@ priv struct PlacedNode {
   /// render subtrees are hoisted and painted after the whole tree so popup
   /// content escapes ancestor clip rects.
   overlay_child_indices : Array[Int32]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 fn PlacedNode::to_layout_result(

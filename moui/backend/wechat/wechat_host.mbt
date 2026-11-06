@@ -3,13 +3,14 @@
 /// Analogous to the web host's canvas host, adapted for Mini Program constraints.
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct CanvasHostConstraints {
   requires_focusable_canvas : Bool
   disallow_css_transform : Bool
   disallow_canvas_border_padding : Bool
   coordinates_are_logical_pixels : Bool
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend CanvasHostConstraints with Debug::{to_repr}

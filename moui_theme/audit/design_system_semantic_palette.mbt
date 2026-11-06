@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignSemanticPaletteRole {
   PaletteForeground
   PaletteBackground
@@ -14,7 +15,7 @@ pub(all) enum DesignSemanticPaletteRole {
   PaletteInfo
   PaletteFocus
   PaletteScrim
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSemanticPaletteRole with Debug::{to_repr}
@@ -26,6 +27,7 @@ pub extend DesignSemanticPaletteRole with Eq::{not_equal, equal}
 pub extend DesignSemanticPaletteRole with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSemanticPaletteRoleRecord {
   preset : @common.DesignPreset
   role : DesignSemanticPaletteRole
@@ -50,7 +52,7 @@ pub(all) struct DesignSemanticPaletteRoleRecord {
   status : DesignTokenStatus
   remaining_gap : String
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSemanticPaletteRoleRecord with Debug::{to_repr}

@@ -61,12 +61,13 @@ pub fn web_pkg_text(String, app_alias? : String) -> String
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum HostPlatform {
   Macos
   Windows
   Linux
   Unknown
-} derive(Eq)
+}
 pub fn HostPlatform::equal(Self, Self) -> Bool
 pub fn HostPlatform::name(Self) -> String
 pub fn HostPlatform::not_equal(Self, Self) -> Bool

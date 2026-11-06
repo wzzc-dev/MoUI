@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct ElementId {
   value : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ElementId with Debug::{to_repr}

@@ -20,13 +20,14 @@ fn render_frame_finalization_resource_plan(
 ///|
 /// Auditable backend finalization boundary for a finalized frame before
 /// flush/submit is performed on its target surface.
+#derive(Debug, Eq)
 pub(all) struct RenderFrameFinalizationDescriptor {
   frame : RenderFrameDescriptor
   frame_index : Int32
   validation_status : RenderFrameValidationStatus
   finalization : SurfaceFinalizationDescriptor?
   resource_plan : RendererResourcePlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderFrameFinalizationDescriptor with Debug::{to_repr}

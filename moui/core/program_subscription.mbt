@@ -24,11 +24,12 @@ pub struct SubscriptionRuntimeSource[Msg] {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 struct SubscriptionDescriptor {
   key : String
   kind : String
   label : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionDescriptor with Debug::{to_repr}

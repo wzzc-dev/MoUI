@@ -3,6 +3,7 @@ package "wzzc-dev/moui_3d_xr"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui_3d",
 }
 
@@ -14,32 +15,35 @@ pub fn webxr_descriptor() -> XrProviderDescriptor
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum XrBackend {
   WebXr
   OpenXr
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn XrBackend::equal(Self, Self) -> Bool
 pub fn XrBackend::not_equal(Self, Self) -> Bool
-pub fn XrBackend::to_json(Self) -> Json
+pub fn XrBackend::to_json(Self) -> @json.Json
 pub fn XrBackend::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct XrFrame {
   timestamp : Double
   views : Array[XrView]
   input_sources : Array[XrInputSource]
-} derive(@debug.Debug)
+}
 pub fn XrFrame::input_sources(Self) -> Array[XrInputSource]
 pub fn XrFrame::new(timestamp~ : Double, views~ : Array[XrView], input_sources? : Array[XrInputSource]) -> Self
 pub fn XrFrame::timestamp(Self) -> Double
 pub fn XrFrame::to_repr(Self) -> @debug.Repr
 pub fn XrFrame::views(Self) -> Array[XrView]
 
+#derive(@debug.Debug)
 pub(all) struct XrInputSource {
   id : String
   handedness : String
   grip : XrPose?
   target_ray : XrPose?
-} derive(@debug.Debug)
+}
 pub fn XrInputSource::grip(Self) -> XrPose?
 pub fn XrInputSource::handedness(Self) -> String
 pub fn XrInputSource::id(Self) -> String
@@ -47,52 +51,57 @@ pub fn XrInputSource::new(id~ : String, handedness? : String, grip? : XrPose?, t
 pub fn XrInputSource::target_ray(Self) -> XrPose?
 pub fn XrInputSource::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct XrPose {
   position : @moui_3d.Vec3
   orientation : @moui_3d.Quat
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn XrPose::equal(Self, Self) -> Bool
 pub fn XrPose::new(position~ : @moui_3d.Vec3, orientation~ : @moui_3d.Quat) -> Self
 pub fn XrPose::not_equal(Self, Self) -> Bool
 pub fn XrPose::orientation(Self) -> @moui_3d.Quat
 pub fn XrPose::position(Self) -> @moui_3d.Vec3
-pub fn XrPose::to_json(Self) -> Json
+pub fn XrPose::to_json(Self) -> @json.Json
 pub fn XrPose::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct XrProviderDescriptor {
   backend : XrBackend
   id : String
   status : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn XrProviderDescriptor::backend(Self) -> XrBackend
 pub fn XrProviderDescriptor::equal(Self, Self) -> Bool
 pub fn XrProviderDescriptor::id(Self) -> String
 pub fn XrProviderDescriptor::new(backend~ : XrBackend, id~ : String, status~ : String) -> Self
 pub fn XrProviderDescriptor::not_equal(Self, Self) -> Bool
 pub fn XrProviderDescriptor::status(Self) -> String
-pub fn XrProviderDescriptor::to_json(Self) -> Json
+pub fn XrProviderDescriptor::to_json(Self) -> @json.Json
 pub fn XrProviderDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum XrResult {
   Presented
   Unavailable(String)
   Failed(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn XrResult::equal(Self, Self) -> Bool
 pub fn XrResult::not_equal(Self, Self) -> Bool
-pub fn XrResult::to_json(Self) -> Json
+pub fn XrResult::to_json(Self) -> @json.Json
 pub fn XrResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum XrSessionMode {
   Inline
   ImmersiveVr
   ImmersiveAr
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn XrSessionMode::equal(Self, Self) -> Bool
 pub fn XrSessionMode::not_equal(Self, Self) -> Bool
-pub fn XrSessionMode::to_json(Self) -> Json
+pub fn XrSessionMode::to_json(Self) -> @json.Json
 pub fn XrSessionMode::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct XrView {
   view : @moui_3d.Mat4
   projection : @moui_3d.Mat4
@@ -100,7 +109,7 @@ pub(all) struct XrView {
   viewport_y : Int32
   viewport_width : Int32
   viewport_height : Int32
-} derive(@debug.Debug)
+}
 pub fn XrView::new(view~ : @moui_3d.Mat4, projection~ : @moui_3d.Mat4, viewport_x~ : Int32, viewport_y~ : Int32, viewport_width~ : Int32, viewport_height~ : Int32) -> Self
 pub fn XrView::projection(Self) -> @moui_3d.Mat4
 pub fn XrView::to_repr(Self) -> @debug.Repr

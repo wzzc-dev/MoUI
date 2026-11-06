@@ -1,6 +1,7 @@
 ///|
 /// Neutral request to present an existing MoUI surface in a host-owned modal
 /// layer. The host never receives application state or a second content model.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostModalRequest {
   request_id : Int32
   presentation_id : String
@@ -8,7 +9,7 @@ pub(all) struct HostModalRequest {
   bounds : @core.Rect
   modality : HostModalModality
   semantics_generation : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalRequest with Debug::{to_repr}
@@ -20,10 +21,11 @@ pub extend HostModalRequest with Eq::{not_equal, equal}
 pub extend HostModalRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostModalModality {
   NonModal
   Modal
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalModality with Debug::{to_repr}
@@ -37,11 +39,12 @@ pub extend HostModalModality with ToJson::{to_json}
 ///|
 /// Result of accepting or rejecting a request. `Pending` is represented by
 /// the absence of a result while the host negotiates capabilities.
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostModalResult {
   Accepted
   Rejected(String)
   Closed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalResult with Debug::{to_repr}
@@ -54,6 +57,7 @@ pub extend HostModalResult with ToJson::{to_json}
 
 ///|
 /// Typed host lifecycle facts returned to the runtime/TEA boundary.
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostModalEvent {
   Pending(Int32, String, Int32)
   Accepted(Int32, String, Int32)
@@ -62,7 +66,7 @@ pub(all) enum HostModalEvent {
   SurfaceAttached(Int32, String, Int32, String)
   SurfaceDetached(Int32, String, Int32, String)
   Input(Int32, String, Int32, @core.PointerEvent)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalEvent with Debug::{to_repr}
@@ -76,12 +80,13 @@ pub extend HostModalEvent with ToJson::{to_json}
 ///|
 /// Capabilities are declarative; a missing capability must transparently use
 /// the view-level presentation path.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostModalCapabilities {
   native_modal : Bool
   surface_attach : Bool
   input_transform : Bool
   semantics_bridge : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalCapabilities with Debug::{to_repr}

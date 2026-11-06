@@ -1,10 +1,11 @@
 ///|
 /// A two-dimensional vector used by the 3D addon for texture coordinates and
 /// screen-space input.
+#derive(Eq, Debug, ToJson)
 pub(all) struct Vec2 {
   x : Double
   y : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Vec2 with Debug::{to_repr}
@@ -18,11 +19,12 @@ pub extend Vec2 with ToJson::{to_json}
 ///|
 /// A three-dimensional vector. Public scene coordinates use `Double` so
 /// camera and picking calculations stay deterministic before GPU packing.
+#derive(Eq, Debug, ToJson)
 pub(all) struct Vec3 {
   x : Double
   y : Double
   z : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Vec3 with Debug::{to_repr}
@@ -35,12 +37,13 @@ pub extend Vec3 with ToJson::{to_json}
 
 ///|
 /// A four-dimensional vector used for colors and homogeneous coordinates.
+#derive(Eq, Debug, ToJson)
 pub(all) struct Vec4 {
   x : Double
   y : Double
   z : Double
   w : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Vec4 with Debug::{to_repr}
@@ -192,9 +195,10 @@ pub fn Vec4::scale(self : Vec4, amount : Double) -> Vec4 {
 
 ///|
 /// Row-major 4x4 matrix. Translation occupies indices 3, 7 and 11.
+#derive(Debug)
 pub(all) struct Mat4 {
   values : Array[Double]
-} derive(Debug)
+}
 
 ///|
 pub extend Mat4 with Debug::{to_repr}
@@ -357,12 +361,13 @@ pub fn Mat4::perspective(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Quat {
   x : Double
   y : Double
   z : Double
   w : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Quat with Debug::{to_repr}
@@ -461,11 +466,12 @@ pub fn Quat::to_mat4(self : Quat) -> Mat4 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Aabb {
   min : Vec3
   max : Vec3
   valid : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Aabb with Debug::{to_repr}
@@ -571,10 +577,11 @@ pub fn Aabb::transformed(self : Aabb, matrix : Mat4) -> Aabb {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Ray {
   origin : Vec3
   direction : Vec3
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Ray with Debug::{to_repr}

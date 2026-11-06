@@ -1,10 +1,11 @@
 ///|
 /// Global story catalog: one flat sidebar of categories (gpui-story style),
 /// while feature packages stay isolated behind workspace routes.
+#derive(Eq, Debug)
 pub(all) struct CatalogGroup {
   id : String
   title : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogGroup with Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend CatalogGroup with Debug::{to_repr}
 pub extend CatalogGroup with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CatalogItem {
   workspace : String
   id : String
@@ -21,7 +23,7 @@ pub(all) struct CatalogItem {
   summary : String
   badge : String
   tone : @views.BadgeTone
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogItem with Debug::{to_repr}

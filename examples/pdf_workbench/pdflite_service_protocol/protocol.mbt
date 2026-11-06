@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum PdfWorkbenchPdfliteServiceRequest {
   LoadDocument(String, Bytes)
   WritebackDocument(String, Bytes, Array[@app.PdfWorkbenchEdit])
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PdfWorkbenchPdfliteServiceRequest with Debug::{to_repr}

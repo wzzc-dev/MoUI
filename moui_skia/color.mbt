@@ -1,6 +1,7 @@
 ///|
 /// Packed Skia ARGB color in 0xAARRGGBB order.
-pub(all) struct Color(UInt32) derive(Debug, Eq)
+#derive(Debug, Eq)
+pub(all) struct Color(UInt32)
 
 ///|
 pub extend Color with Debug::{to_repr}
@@ -142,12 +143,13 @@ pub impl Default for Color with fn default() {
 
 ///|
 /// Floating-point RGBA color in linear component order.
+#derive(Debug, Eq)
 pub(all) struct Color4f {
   r : Scalar
   g : Scalar
   b : Scalar
   a : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Color4f with Debug::{to_repr}

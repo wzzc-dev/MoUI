@@ -1,12 +1,12 @@
 name = "wzzc-dev/moui_markdown"
 
-version = "0.3.0"
+version = "0.3.2"
 
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.3.0",
-  "wzzc-dev/moui_richtext@0.3.0",
+  "wzzc-dev/moui@0.3.2",
+  "wzzc-dev/moui_richtext@0.3.2",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

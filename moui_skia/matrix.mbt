@@ -1,5 +1,6 @@
 ///|
 /// Member positions in a 3x3 Skia matrix.
+#derive(Debug, Eq)
 pub(all) enum MatrixMember {
   ScaleX
   SkewX
@@ -10,7 +11,7 @@ pub(all) enum MatrixMember {
   Persp0
   Persp1
   Persp2
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend MatrixMember with Debug::{to_repr}
@@ -20,6 +21,7 @@ pub extend MatrixMember with Eq::{not_equal, equal}
 
 ///|
 /// Row-major 3x3 transform matrix matching Skia's public member layout.
+#derive(Debug, Eq)
 pub(all) struct Matrix {
   scale_x : Scalar
   skew_x : Scalar
@@ -30,7 +32,7 @@ pub(all) struct Matrix {
   persp_0 : Scalar
   persp_1 : Scalar
   persp_2 : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Matrix with Debug::{to_repr}

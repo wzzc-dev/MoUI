@@ -5,13 +5,14 @@ let sun_cached_layer_max_entries : Int32 = 32
 let sun_cached_layer_admission_max_records : Int32 = 512
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SunCachedLayerAdmissionDiagnostic {
   priv identity_key : String
   priv update_streak : Int32
   priv hit_count : Int32
   priv skip_reason : String
   priv churn_without_hit : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SunCachedLayerAdmissionDiagnostic with Debug::{to_repr}
@@ -23,6 +24,7 @@ pub extend SunCachedLayerAdmissionDiagnostic with Eq::{not_equal, equal}
 pub extend SunCachedLayerAdmissionDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SunCachedLayerDiagnostic {
   priv cached_layer_count : Int32
   priv max_cached_layer_count : Int32
@@ -35,7 +37,7 @@ pub struct SunCachedLayerDiagnostic {
   priv cached_layer_keys : Array[String]
   priv admission_records : Array[SunCachedLayerAdmissionDiagnostic]
   priv cache_ready : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SunCachedLayerDiagnostic with Debug::{to_repr}

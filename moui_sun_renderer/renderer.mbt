@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) suberror SunRendererError {
   InvalidSurfaceSize(Int32, Int32)
   PresentFailed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SunRendererError with Debug::{to_repr}

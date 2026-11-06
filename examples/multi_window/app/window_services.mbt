@@ -1,9 +1,10 @@
 ///|
 /// Application-owned window identity. Platform host identifiers are converted
 /// at the composition boundary.
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowId {
   value : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowId with Debug::{to_repr}
@@ -21,10 +22,11 @@ pub fn WindowId::new(value : Int32) -> WindowId {
 
 ///|
 /// Serializable scene payload understood by this application.
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowScene {
   scene_id : String
   payload : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowScene with Debug::{to_repr}
@@ -44,12 +46,13 @@ pub fn WindowScene::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowOpenRequest {
   title : String
   scene : WindowScene
   width : Double
   height : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowOpenRequest with Debug::{to_repr}
@@ -71,11 +74,12 @@ pub fn WindowOpenRequest::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WindowRequest {
   Open(WindowOpenRequest)
   Focus(WindowId)
   Close(WindowId)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowRequest with Debug::{to_repr}
@@ -87,11 +91,12 @@ pub extend WindowRequest with Eq::{not_equal, equal}
 pub extend WindowRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WindowEvent {
   Opened(WindowId)
   Updated(WindowId)
   Rejected(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowEvent with Debug::{to_repr}

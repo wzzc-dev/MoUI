@@ -28,11 +28,12 @@ pub struct ViewMemo[Msg] {
 /// A miss is counted when a lookup is not served from the cache. A build is
 /// counted after `build` returns successfully. They are normally equal, but
 /// remain separate so a failed build cannot be mistaken for completed work.
+#derive(Eq, Debug)
 pub struct ViewMemoStats {
   priv build_count : Int32
   priv hit_count : Int32
   priv miss_count : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewMemoStats with Debug::{to_repr}

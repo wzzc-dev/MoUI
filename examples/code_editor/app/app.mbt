@@ -20,11 +20,12 @@ pub(all) struct CodeEditorFeature {
 }
 
 ///|
+#derive(Eq)
 pub(all) enum CodeEditorMode {
   SourceEditor
   DiffEditor
   ProviderLab
-} derive(Eq)
+}
 
 ///|
 pub extend CodeEditorMode with Eq::{not_equal, equal}

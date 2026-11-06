@@ -1,11 +1,12 @@
 ///|
 /// Lifecycle state owned by the neutral host-modal session.
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostModalSessionState {
   Pending
   Accepted
   Rejected
   Closed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalSessionState with Debug::{to_repr}
@@ -19,10 +20,11 @@ pub extend HostModalSessionState with ToJson::{to_json}
 ///|
 /// A host surface token is opaque to the contract. The concrete platform
 /// chooses its native surface id; the session only validates attach/detach.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostModalSurface {
   token : String
   generation : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalSurface with Debug::{to_repr}
@@ -34,10 +36,11 @@ pub extend HostModalSurface with Eq::{not_equal, equal}
 pub extend HostModalSurface with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostModalInputTransform {
   offset : @core.Point
   scale : @core.Point
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostModalInputTransform with Debug::{to_repr}

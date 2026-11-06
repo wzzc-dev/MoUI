@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum WebViewBridgeKind {
   Hello
   Event
   Request
   Response
   Cancel
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WebViewBridgeKind with Debug::{to_repr}
@@ -14,6 +15,7 @@ pub extend WebViewBridgeKind with Debug::{to_repr}
 pub extend WebViewBridgeKind with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct WebViewBridgeEnvelope {
   kind : WebViewBridgeKind
   channel : String
@@ -21,7 +23,7 @@ pub(all) struct WebViewBridgeEnvelope {
   navigation_id : WebViewNavigationId
   payload : Json
   error : WebViewError?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WebViewBridgeEnvelope with Debug::{to_repr}

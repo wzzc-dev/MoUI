@@ -6,11 +6,12 @@ pub(all) struct FileDialogOptions {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DirectoryEntry {
   name : String
   path : String
   is_directory : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DirectoryEntry with Debug::{to_repr}

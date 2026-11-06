@@ -9,10 +9,11 @@
 
 ///|
 /// The prompt pair for a world-generation request.
+#derive(Eq, Debug)
 pub struct WorldIdeaPrompt {
   system : String
   user : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WorldIdeaPrompt with Debug::{to_repr}

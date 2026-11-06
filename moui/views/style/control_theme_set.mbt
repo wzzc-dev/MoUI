@@ -3,6 +3,7 @@
 /// per-control token set; controls resolve variant/state at paint time. An app
 /// that wants a branded design system sets this once on the root environment
 /// (via the ambient resolver) and every control inherits it.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ControlThemeSet {
   button : ButtonTheme
   text_field : TextFieldTheme
@@ -14,7 +15,7 @@ pub(all) struct ControlThemeSet {
   feedback : FeedbackTheme
   badge : BadgeTheme
   form_validation : FormValidationTheme
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ControlThemeSet with Debug::{to_repr}

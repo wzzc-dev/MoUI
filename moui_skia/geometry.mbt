@@ -1,9 +1,10 @@
 ///|
 /// Integer point or vector.
+#derive(Debug, Eq)
 pub(all) struct IPoint {
   x : Int32
   y : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend IPoint with Debug::{to_repr}
@@ -51,10 +52,11 @@ pub fn IPoint::to_point(self : IPoint) -> Point {
 
 ///|
 /// Floating-point point or vector.
+#derive(Debug, Eq)
 pub(all) struct Point {
   x : Scalar
   y : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Point with Debug::{to_repr}
@@ -181,10 +183,11 @@ pub fn Point::to_ipoint_round(self : Point) -> IPoint {
 
 ///|
 /// Integer width and height.
+#derive(Debug, Eq)
 pub(all) struct ISize {
   width : Int32
   height : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ISize with Debug::{to_repr}
@@ -232,10 +235,11 @@ pub fn ISize::to_size(self : ISize) -> Size {
 
 ///|
 /// Floating-point width and height.
+#derive(Debug, Eq)
 pub(all) struct Size {
   width : Scalar
   height : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Size with Debug::{to_repr}
@@ -294,12 +298,13 @@ pub fn Size::to_isize_round(self : Size) -> ISize {
 
 ///|
 /// Integer rectangle stored as left/top/right/bottom bounds.
+#derive(Debug, Eq)
 pub(all) struct IRect {
   left : Int32
   top : Int32
   right : Int32
   bottom : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend IRect with Debug::{to_repr}
@@ -568,12 +573,13 @@ pub fn IRect::to_rect(self : IRect) -> Rect {
 
 ///|
 /// Floating-point rectangle stored as left/top/right/bottom bounds.
+#derive(Debug, Eq)
 pub(all) struct Rect {
   left : Scalar
   top : Scalar
   right : Scalar
   bottom : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Rect with Debug::{to_repr}
@@ -963,13 +969,14 @@ pub fn Rect::to_irect_round(self : Rect) -> IRect {
 ///
 /// Corners are stored in Skia order: upper-left, upper-right, lower-right,
 /// lower-left.
+#derive(Debug, Eq)
 pub(all) struct RRect {
   rect : Rect
   upper_left : Size
   upper_right : Size
   lower_right : Size
   lower_left : Size
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RRect with Debug::{to_repr}

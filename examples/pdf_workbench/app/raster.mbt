@@ -10,6 +10,7 @@ pub(all) struct PdfWorkbenchRasterRequest {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PdfWorkbenchRasterPage {
   cache_key : String
   page_number : Int32
@@ -19,7 +20,7 @@ pub(all) struct PdfWorkbenchRasterPage {
   height_px : Int32
   image_source : String
   diagnostic : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchRasterPage with Debug::{to_repr}
@@ -31,11 +32,12 @@ pub extend PdfWorkbenchRasterPage with Eq::{not_equal, equal}
 pub extend PdfWorkbenchRasterPage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PdfWorkbenchRasterResponse {
   RasterPageReady(PdfWorkbenchRasterPage)
   RasterPageUnavailable(String)
   RasterPageFailed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchRasterResponse with Debug::{to_repr}
@@ -47,13 +49,14 @@ pub extend PdfWorkbenchRasterResponse with Eq::{not_equal, equal}
 pub extend PdfWorkbenchRasterResponse with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PdfWorkbenchRasterStatus {
   RasterIdle
   RasterRendering(String)
   RasterReady
   RasterUnavailable(String)
   RasterFailed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchRasterStatus with Debug::{to_repr}

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FormFieldStatus {
   Normal
   Required
@@ -6,7 +7,7 @@ pub(all) enum FormFieldStatus {
   Invalid
   Disabled
   ReadOnly
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormFieldStatus with Debug::{to_repr}
@@ -30,10 +31,11 @@ pub fn FormFieldStatus::to_string(self : FormFieldStatus) -> String {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FormFieldLayout {
   Vertical
   Horizontal
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormFieldLayout with Debug::{to_repr}
@@ -53,11 +55,12 @@ pub fn FormFieldLayout::to_string(self : FormFieldLayout) -> String {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FormValidationDisplay {
   Always
   OnInvalid
   Hidden
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormValidationDisplay with Debug::{to_repr}

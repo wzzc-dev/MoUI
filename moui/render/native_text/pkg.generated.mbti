@@ -3,6 +3,7 @@ package "wzzc-dev/moui/render/native_text"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
@@ -53,13 +54,14 @@ pub fn NativeRasterGlyph::new(width~ : Int32, height~ : Int32, bearing_x~ : Int3
 pub fn NativeRasterGlyph::pixels(Self) -> Bytes
 pub fn NativeRasterGlyph::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
   ColorRgba
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn NativeRasterGlyphFormat::equal(Self, Self) -> Bool
 pub fn NativeRasterGlyphFormat::not_equal(Self, Self) -> Bool
-pub fn NativeRasterGlyphFormat::to_json(Self) -> Json
+pub fn NativeRasterGlyphFormat::to_json(Self) -> @json.Json
 pub fn NativeRasterGlyphFormat::to_repr(Self) -> @debug.Repr
 
 pub struct NativeTextCache {

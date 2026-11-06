@@ -55,13 +55,14 @@ pub(all) enum Msg {
   Copy
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ParseState {
   Ground
   Escape
   Csi
   Osc
   OscEscape
-} derive(Eq, @debug.Debug)
+}
 pub fn ParseState::equal(Self, Self) -> Bool
 pub fn ParseState::not_equal(Self, Self) -> Bool
 pub fn ParseState::to_repr(Self) -> @debug.Repr

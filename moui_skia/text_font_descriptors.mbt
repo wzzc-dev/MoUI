@@ -1,10 +1,11 @@
 ///|
 /// Skia-style font style request shared by native typeface matching and fallback.
+#derive(Debug, Eq)
 pub(all) struct FontStyleRequest {
   weight : Int32
   width : Int32
   slant : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontStyleRequest with Debug::{to_repr}
@@ -83,12 +84,13 @@ fn normalized_font_descriptor_skew(value : Float) -> Float {
 
 ///|
 /// Value-layer description of a native font handle derived from a typeface.
+#derive(Debug, Eq)
 pub(all) struct FontDescriptor {
   typeface_key : RendererResourceKey
   size : Float
   scale_x : Float
   skew_x : Float
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontDescriptor with Debug::{to_repr}

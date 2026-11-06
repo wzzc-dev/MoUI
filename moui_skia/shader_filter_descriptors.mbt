@@ -1,11 +1,12 @@
 ///|
 /// Portable shader recipes that can be planned before native Skia handles are
 /// created.
+#derive(Debug, Eq)
 pub(all) enum ShaderDescriptor {
   ColorShader(Color)
   LinearGradientShader(Point, Point, Color, Color, TileMode)
   RadialGradientShader(Point, Float, Color, Color, TileMode)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ShaderDescriptor with Debug::{to_repr}

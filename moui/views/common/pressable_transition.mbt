@@ -5,10 +5,11 @@
 /// Stored in a per-control view-state slot, which the reconciler preserves
 /// while element identity is reused, so new controls adopt transitions without
 /// re-implementing `ViewStateValue` encode/decode boilerplate.
+#derive(Eq, Debug)
 pub(all) enum PressableTransition {
   Idle
   Active(@core.PressableState, Double)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PressableTransition with Debug::{to_repr}

@@ -1,10 +1,11 @@
 ///|
 /// Device-space shader used as a Paint color source.
+#derive(Eq, Debug)
 struct PaintShader {
   kind : PaintShaderKind
   local_from_device : Transform?
   transform_valid : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintShader with Debug::{to_repr}
@@ -14,10 +15,11 @@ pub extend PaintShader with Eq::{not_equal, equal}
 
 ///|
 /// One color stop in a gradient shader.
+#derive(Eq, Debug)
 struct PaintGradientStop {
   offset : Double
   color : Color
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintGradientStop with Debug::{to_repr}
@@ -27,12 +29,13 @@ pub extend PaintGradientStop with Eq::{not_equal, equal}
 
 ///|
 /// Spread mode applied to gradient coordinates outside the unit interval.
+#derive(Eq, Debug)
 pub(all) enum PaintShaderSpread {
   Clamp
   Repeat
   Mirror
   Decal
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintShaderSpread with Debug::{to_repr}
@@ -42,11 +45,12 @@ pub extend PaintShaderSpread with Eq::{not_equal, equal}
 
 ///|
 /// Public shader family used for inspection and paint pipeline planning.
+#derive(Eq, Debug)
 pub(all) enum PaintShaderType {
   LinearGradient
   RadialGradient
   SweepGradient
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintShaderType with Debug::{to_repr}
@@ -55,6 +59,7 @@ pub extend PaintShaderType with Debug::{to_repr}
 pub extend PaintShaderType with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 priv enum PaintShaderKind {
   LinearGradient(LinearGradientShader)
   LinearGradientStops(LinearGradientStopsShader)
@@ -62,9 +67,10 @@ priv enum PaintShaderKind {
   RadialGradientStops(RadialGradientStopsShader)
   SweepGradient(SweepGradientShader)
   SweepGradientStops(SweepGradientStopsShader)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct LinearGradientShader {
   x0 : Double
   y0 : Double
@@ -73,9 +79,10 @@ priv struct LinearGradientShader {
   start_color : Color
   end_color : Color
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct LinearGradientStopsShader {
   x0 : Double
   y0 : Double
@@ -83,9 +90,10 @@ priv struct LinearGradientStopsShader {
   y1 : Double
   stops : Array[PaintGradientStop]
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct RadialGradientShader {
   cx : Double
   cy : Double
@@ -93,18 +101,20 @@ priv struct RadialGradientShader {
   start_color : Color
   end_color : Color
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct RadialGradientStopsShader {
   cx : Double
   cy : Double
   radius : Double
   stops : Array[PaintGradientStop]
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct SweepGradientShader {
   cx : Double
   cy : Double
@@ -113,9 +123,10 @@ priv struct SweepGradientShader {
   start_color : Color
   end_color : Color
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv struct SweepGradientStopsShader {
   cx : Double
   cy : Double
@@ -123,7 +134,7 @@ priv struct SweepGradientStopsShader {
   sweep_angle : Double
   stops : Array[PaintGradientStop]
   spread : PaintShaderSpread
-} derive(Eq, Debug)
+}
 
 ///|
 /// Create a gradient color stop. Offsets are clamped into 0.0..1.0.

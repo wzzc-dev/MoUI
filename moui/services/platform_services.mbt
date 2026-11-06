@@ -1,6 +1,7 @@
 ///|
 /// Permission categories are intentionally platform-neutral. A host may map
 /// them to native prompts, browser permissions, or an unavailable result.
+#derive(Eq, Hash, Debug, ToJson)
 pub(all) enum PermissionKind {
   Notifications
   Camera
@@ -8,7 +9,7 @@ pub(all) enum PermissionKind {
   Location
   Photos
   Files
-} derive(Eq, Hash, Debug, ToJson)
+}
 
 ///|
 pub extend PermissionKind with Debug::{to_repr}
@@ -23,11 +24,12 @@ pub extend PermissionKind with Hash::{hash, hash_combine}
 pub extend PermissionKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PermissionStatus {
   Granted
   Denied
   Restricted
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PermissionStatus with Debug::{to_repr}
@@ -42,10 +44,11 @@ pub extend PermissionStatus with ToJson::{to_json}
 /// Host lifecycle events describe whether the application is visible to the
 /// user. Window focus remains a window/input concern and is not represented
 /// here.
+#derive(Eq, Debug, ToJson)
 pub(all) enum AppLifecycleEvent {
   Foreground
   Background
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AppLifecycleEvent with Debug::{to_repr}
@@ -165,11 +168,12 @@ pub fn FileAssociation::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct NotificationRequest {
   id : String
   title : String
   body : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend NotificationRequest with Debug::{to_repr}
@@ -181,11 +185,12 @@ pub extend NotificationRequest with Eq::{not_equal, equal}
 pub extend NotificationRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TrayItem {
   id : String
   label : String
   tooltip : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TrayItem with Debug::{to_repr}
@@ -197,11 +202,12 @@ pub extend TrayItem with Eq::{not_equal, equal}
 pub extend TrayItem with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShareRequest {
   title : String
   text : String
   url : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShareRequest with Debug::{to_repr}
@@ -213,11 +219,12 @@ pub extend ShareRequest with Eq::{not_equal, equal}
 pub extend ShareRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PrintRequest {
   title : String
   text : String
   mime_type : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PrintRequest with Debug::{to_repr}
@@ -229,10 +236,11 @@ pub extend PrintRequest with Eq::{not_equal, equal}
 pub extend PrintRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ProtocolRegistration {
   scheme : String
   handler : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ProtocolRegistration with Debug::{to_repr}
@@ -244,11 +252,12 @@ pub extend ProtocolRegistration with Eq::{not_equal, equal}
 pub extend ProtocolRegistration with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct FileAssociation {
   extension : String
   mime_type : String
   handler : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FileAssociation with Debug::{to_repr}

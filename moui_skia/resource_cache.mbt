@@ -7,6 +7,7 @@ priv struct ResourceCacheItem[V] {
 
 ///|
 /// Observable counters for a resource cache.
+#derive(Debug, Eq)
 pub(all) struct ResourceCacheStats {
   count : Int32
   byte_size : Int64
@@ -14,7 +15,7 @@ pub(all) struct ResourceCacheStats {
   hits : Int32
   misses : Int32
   evictions : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ResourceCacheStats with Debug::{to_repr}

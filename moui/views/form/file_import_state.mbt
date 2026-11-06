@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
   Pending
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FileImportAvailability with Debug::{to_repr}

@@ -16,10 +16,11 @@
 
 ///|
 /// The two hand-tuned appearances.
+#derive(Eq, Debug)
 pub(all) enum Appearance {
   Paper
   Ink
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Appearance with Debug::{to_repr}

@@ -8,6 +8,7 @@ type HostWebGpuRenderer = Int32
 type HostWebGpuString = Int32
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) suberror WebGpuHostError {
   Unavailable
   AdapterUnavailable
@@ -16,7 +17,7 @@ pub(all) suberror WebGpuHostError {
   PipelineUnavailable
   InvalidResource
   HostError(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostError with Debug::{to_repr}
@@ -28,11 +29,12 @@ pub extend WebGpuHostError with Eq::{not_equal, equal}
 pub extend WebGpuHostError with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct WebGpuHostCapabilities {
   priv webgpu_available : Bool
   priv adapter_ready : Bool
   priv can_render : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostCapabilities with Debug::{to_repr}
@@ -44,13 +46,14 @@ pub extend WebGpuHostCapabilities with Eq::{not_equal, equal}
 pub extend WebGpuHostCapabilities with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct WebGpuHostImportInfo {
   priv import_module : String
   priv target : String
   priv surface_resource : String
   priv renderer_resource : String
   priv description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostImportInfo with Debug::{to_repr}
@@ -62,13 +65,14 @@ pub extend WebGpuHostImportInfo with Eq::{not_equal, equal}
 pub extend WebGpuHostImportInfo with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct WebGpuHostAdapterInfo {
   priv renderer : @render.RendererBackendInfo
   priv surface_contract : @render.WgpuSurfaceContract
   priv imports : WebGpuHostImportInfo
   priv capabilities : WebGpuHostCapabilities
   priv description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostAdapterInfo with Debug::{to_repr}
@@ -80,6 +84,7 @@ pub extend WebGpuHostAdapterInfo with Eq::{not_equal, equal}
 pub extend WebGpuHostAdapterInfo with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WebGpuHostCall {
   BeginFrame(@core.Size)
   Clear(@core.Color)
@@ -107,7 +112,7 @@ pub(all) enum WebGpuHostCall {
   PopFilter
   DrawShaderEffect(@core.ShaderEffectSpec)
   Present
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostCall with Debug::{to_repr}
@@ -142,10 +147,11 @@ priv enum RoundedBrushHostPayload {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct WebGpuHostSurface {
   priv canvas_id : String
   priv mut metrics : @core.SurfaceMetrics
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebGpuHostSurface with Debug::{to_repr}

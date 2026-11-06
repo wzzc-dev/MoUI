@@ -1,10 +1,11 @@
 ///|
 /// glTF animation interpolation modes supported by the CPU evaluator.
+#derive(Eq, Debug, ToJson)
 pub(all) enum AnimationInterpolation {
   Step
   Linear
   CubicSpline
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AnimationInterpolation with Debug::{to_repr}
@@ -16,12 +17,13 @@ pub extend AnimationInterpolation with Eq::{not_equal, equal}
 pub extend AnimationInterpolation with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AnimationPath {
   Translation
   Rotation
   Scale
   Weights
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AnimationPath with Debug::{to_repr}
@@ -33,12 +35,13 @@ pub extend AnimationPath with Eq::{not_equal, equal}
 pub extend AnimationPath with ToJson::{to_json}
 
 ///|
+#derive(Debug)
 pub(all) struct AnimationKeyframe {
   time : Double
   value : Array[Double]
   in_tangent : Array[Double]
   out_tangent : Array[Double]
-} derive(Debug)
+}
 
 ///|
 pub extend AnimationKeyframe with Debug::{to_repr}
@@ -81,12 +84,13 @@ pub fn AnimationKeyframe::out_tangent(
 }
 
 ///|
+#derive(Debug)
 pub(all) struct AnimationChannel {
   node : NodeId
   path : AnimationPath
   interpolation : AnimationInterpolation
   keyframes : Array[AnimationKeyframe]
-} derive(Debug)
+}
 
 ///|
 pub extend AnimationChannel with Debug::{to_repr}
@@ -129,11 +133,12 @@ pub fn AnimationChannel::keyframes(
 /// A named glTF animation clip. Channels are evaluated independently and can
 /// be blended or selected by the application without coupling the scene to a
 /// playback clock.
+#derive(Debug)
 pub(all) struct AnimationClip {
   name : String
   channels : Array[AnimationChannel]
   duration : Double
-} derive(Debug)
+}
 
 ///|
 pub extend AnimationClip with Debug::{to_repr}
@@ -168,11 +173,12 @@ pub fn AnimationClip::duration(self : AnimationClip) -> Double {
 }
 
 ///|
+#derive(Debug)
 pub(all) struct AnimationSample {
   node : NodeId
   path : AnimationPath
   value : Array[Double]
-} derive(Debug)
+}
 
 ///|
 pub extend AnimationSample with Debug::{to_repr}

@@ -28,6 +28,7 @@
 /// "no border". `bottom_border_only` paints only the bottom edge (Fluent 2
 /// underline inputs). `inner_focus_border` paints an inner stroke inside the
 /// control frame on focus (Fluent 2 focus reveal).
+#derive(Eq, Debug, ToJson)
 pub(all) struct ControlStateTokens {
   foreground : @core.Color
   background : @core.Color
@@ -36,7 +37,7 @@ pub(all) struct ControlStateTokens {
   radius : Double
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ControlStateTokens with Debug::{to_repr}
@@ -51,6 +52,7 @@ pub extend ControlStateTokens with ToJson::{to_json}
 /// Resolved per-state style. Paint layer: `background` is a `Brush`, `border`
 /// is `None` when `border_width == 0.0`. This is the type controls actually
 /// consume when emitting `DrawCommand`s.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ControlStateStyle {
   foreground : @core.Color
   background : @core.Brush
@@ -59,7 +61,7 @@ pub(all) struct ControlStateStyle {
   shadow : @core.ShadowStyle?
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ControlStateStyle with Debug::{to_repr}
@@ -134,6 +136,7 @@ fn control_state_border(state : ControlStateTokens) -> @core.BorderStyle? {
 /// for the normal state; hover/press/disabled are derived from the state-layer
 /// model (see `ButtonTheme::resolve`). Fluent 2 fills `subtle`/`subtle_brand`
 /// distinctly; neutral presets alias them to `ghost`/`tonal`.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ButtonTheme {
   primary : ControlStateTokens
   tonal : ControlStateTokens
@@ -143,7 +146,7 @@ pub(all) struct ButtonTheme {
   subtle_brand : ControlStateTokens
   // State-layer alphas used to derive hovered/pressed/disabled backgrounds.
   state_layer : StateLayerTokens
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ButtonTheme with Debug::{to_repr}
@@ -155,6 +158,7 @@ pub extend ButtonTheme with Eq::{not_equal, equal}
 pub extend ButtonTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ButtonVariantToken {
   Primary
   Tonal
@@ -162,7 +166,7 @@ pub(all) enum ButtonVariantToken {
   Ghost
   Subtle
   SubtleBrand
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ButtonVariantToken with Debug::{to_repr}
@@ -178,6 +182,7 @@ pub extend ButtonVariantToken with ToJson::{to_json}
 /// (buttons, list rows, menu items): a translucent overlay of `color` is
 /// blended onto the base background at `hover_alpha`/`focus_alpha`/... to
 /// produce interaction feedback without per-variant color shifts.
+#derive(Eq, Debug, ToJson)
 pub(all) struct StateLayerTokens {
   color : @core.Color
   hover_alpha : Double
@@ -186,7 +191,7 @@ pub(all) struct StateLayerTokens {
   dragged_alpha : Double
   selected_alpha : Double
   disabled_alpha : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend StateLayerTokens with Debug::{to_repr}
@@ -330,11 +335,12 @@ fn clamp_unit(value : Double) -> Double {
 ///|
 /// Text-field appearance tier. Fluent 2 ships an underline variant; the neutral
 /// default is `Outline` (full border).
+#derive(Eq, Debug, ToJson)
 pub(all) enum TextFieldAppearance {
   Filled
   Outline
   Underline
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextFieldAppearance with Debug::{to_repr}
@@ -346,6 +352,7 @@ pub extend TextFieldAppearance with Eq::{not_equal, equal}
 pub extend TextFieldAppearance with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextFieldTheme {
   normal : ControlStateTokens
   focused : ControlStateTokens
@@ -354,7 +361,7 @@ pub(all) struct TextFieldTheme {
   cursor : @core.Color
   font : @core.FontSpec
   appearance : TextFieldAppearance
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextFieldTheme with Debug::{to_repr}
@@ -385,6 +392,7 @@ pub fn TextFieldTheme::resolve(
 /// Per-tier surface component tokens. Fluent 2 cards carry distinct shadows
 /// per layer (shadow2/4/28); neutral presets leave them `None` and rely on the
 /// flat surface idiom.
+#derive(Eq, Debug, ToJson)
 pub(all) struct SurfaceTheme {
   base_padding : Double
   raised_padding : Double
@@ -395,7 +403,7 @@ pub(all) struct SurfaceTheme {
   base_shadow : @core.ShadowStyle?
   raised_shadow : @core.ShadowStyle?
   overlay_shadow : @core.ShadowStyle?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SurfaceTheme with Debug::{to_repr}
@@ -414,10 +422,11 @@ pub extend SurfaceTheme with ToJson::{to_json}
 /// Shape of a choice-control box (checkbox/radio). `Square` draws a rounded
 /// rectangle; `Circle` draws a full circle. Fluent 2 radios use `Circle`,
 /// checkboxes use `Square`.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ChoiceControlShape {
   Square
   Circle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ChoiceControlShape with Debug::{to_repr}
@@ -440,10 +449,11 @@ pub fn ChoiceControlShape::label(self : ChoiceControlShape) -> String {
 ///|
 /// How a selected choice control marks itself. `Checkmark` draws a "✓" glyph
 /// on the filled box; `Dot` draws a small filled inner circle (radio style).
+#derive(Eq, Debug, ToJson)
 pub(all) enum CheckMarkStyle {
   Checkmark
   Dot
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend CheckMarkStyle with Debug::{to_repr}
@@ -465,10 +475,11 @@ pub fn CheckMarkStyle::label(self : CheckMarkStyle) -> String {
 ///|
 /// Shape of a slider thumb. `Rounded` uses the theme radius; `Circle` forces a
 /// full circle (thumb radius = thumb_size / 2). Fluent 2 sliders use `Circle`.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThumbShape {
   Rounded
   Circle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThumbShape with Debug::{to_repr}
@@ -488,6 +499,7 @@ pub fn ThumbShape::label(self : ThumbShape) -> String {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ChoiceControlTheme {
   foreground : @core.Color
   selected_color : @core.Color
@@ -499,7 +511,7 @@ pub(all) struct ChoiceControlTheme {
   // How a selected indicator renders its mark. Checkmark for checkboxes, Dot
   // for radios.
   check_style : CheckMarkStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ChoiceControlTheme with Debug::{to_repr}
@@ -511,11 +523,12 @@ pub extend ChoiceControlTheme with Eq::{not_equal, equal}
 pub extend ChoiceControlTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ProgressTheme {
   foreground : @core.Color
   background : @core.Color
   radius : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ProgressTheme with Debug::{to_repr}
@@ -527,6 +540,7 @@ pub extend ProgressTheme with Eq::{not_equal, equal}
 pub extend ProgressTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SliderTheme {
   foreground : @core.Color
   background : @core.Color
@@ -536,7 +550,7 @@ pub(all) struct SliderTheme {
   radius : Double
   // Thumb shape. Circle forces a round thumb regardless of `radius`.
   thumb_shape : ThumbShape
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SliderTheme with Debug::{to_repr}
@@ -548,13 +562,14 @@ pub extend SliderTheme with Eq::{not_equal, equal}
 pub extend SliderTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PickerTheme {
   font : @core.FontSpec
   foreground : @core.Color
   background : @core.Brush
   radius : Double
   popup_max_height : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PickerTheme with Debug::{to_repr}
@@ -566,11 +581,12 @@ pub extend PickerTheme with Eq::{not_equal, equal}
 pub extend PickerTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ToneTokens {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ToneTokens with Debug::{to_repr}
@@ -582,6 +598,7 @@ pub extend ToneTokens with Eq::{not_equal, equal}
 pub extend ToneTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct FeedbackTheme {
   neutral : ToneTokens
   info : ToneTokens
@@ -590,7 +607,7 @@ pub(all) struct FeedbackTheme {
   danger : ToneTokens
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FeedbackTheme with Debug::{to_repr}
@@ -602,6 +619,7 @@ pub extend FeedbackTheme with Eq::{not_equal, equal}
 pub extend FeedbackTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct BadgeTheme {
   neutral : ToneTokens
   accent : ToneTokens
@@ -610,7 +628,7 @@ pub(all) struct BadgeTheme {
   danger : ToneTokens
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend BadgeTheme with Debug::{to_repr}
@@ -622,13 +640,14 @@ pub extend BadgeTheme with Eq::{not_equal, equal}
 pub extend BadgeTheme with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct FormValidationTheme {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormValidationTheme with Debug::{to_repr}

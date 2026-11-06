@@ -48,10 +48,11 @@ const PENDING_LIMIT : Int32 = 4096
 
 ///|
 /// 终端报告的位置:cell 坐标,0 起算(SGR 的 1 起算在解码时已折算)。
+#derive(Eq, Debug)
 pub(all) struct CellPosition {
   col : Int32
   row : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellPosition with Eq::{not_equal, equal}
@@ -60,11 +61,12 @@ pub extend CellPosition with Eq::{not_equal, equal}
 pub extend CellPosition with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MousePhase {
   Press
   Release
   Drag
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MousePhase with Eq::{not_equal, equal}
@@ -75,12 +77,13 @@ pub extend MousePhase with Debug::{to_repr}
 ///|
 /// SGR(1006) 鼠标报告。`button` 为终端原始按钮号:0 左 1 中 2 右,
 /// 3 表示「无键移动」(1003 模式),不是第 4 个按钮。
+#derive(Eq, Debug)
 pub(all) struct MouseReport {
   position : CellPosition
   button : Int32
   phase : MousePhase
   modifiers : @core.KeyModifiers
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MouseReport with Eq::{not_equal, equal}
@@ -91,11 +94,12 @@ pub extend MouseReport with Debug::{to_repr}
 ///|
 /// 滚轮:终端只给「一格」这个事实,不给像素增量。换算成
 /// `@core.PointerEvent.wheel_delta` 由 `input_channel` 按平台同款行高策略完成。
+#derive(Eq, Debug)
 pub(all) struct WheelReport {
   position : CellPosition
   up : Bool
   modifiers : @core.KeyModifiers
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WheelReport with Eq::{not_equal, equal}
@@ -106,12 +110,13 @@ pub extend WheelReport with Debug::{to_repr}
 ///|
 /// 一条完整序列解码出的输入事实。键盘/鼠标/滚轮三类都在此暴露,
 /// backend 不吞掉任何一类。
+#derive(Eq, Debug)
 pub(all) enum TerminalEvent {
   Key(@core.KeyboardEvent)
   Text(@core.TextInputEvent)
   Mouse(MouseReport)
   Wheel(WheelReport)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TerminalEvent with Eq::{not_equal, equal}

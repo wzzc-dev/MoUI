@@ -3,6 +3,7 @@ package "examples/new_world/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/style",
@@ -161,7 +162,7 @@ pub fn llm_parse_reply(String) -> String?
 
 pub fn llm_reply_from_body(String) -> String?
 
-pub fn llm_request_body(LlmRequest, stream? : Bool) -> Json
+pub fn llm_request_body(LlmRequest, stream? : Bool) -> @json.Json
 
 pub fn location_at(Scenario, @core.Point, @core.Point) -> String?
 
@@ -310,15 +311,17 @@ pub fn world_nudge(Scenario) -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Appearance {
   Paper
   Ink
-} derive(Eq, @debug.Debug)
+}
 pub fn Appearance::equal(Self, Self) -> Bool
 pub fn Appearance::not_equal(Self, Self) -> Bool
 pub fn Appearance::to_repr(Self) -> @debug.Repr
 pub fn Appearance::wire(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CharacterArchetype {
   label : String
   name : String
@@ -334,7 +337,7 @@ pub(all) struct CharacterArchetype {
   setting : String
   opening : String
   memory_rules : String
-} derive(Eq, @debug.Debug)
+}
 pub fn CharacterArchetype::equal(Self, Self) -> Bool
 pub fn CharacterArchetype::not_equal(Self, Self) -> Bool
 pub fn CharacterArchetype::to_repr(Self) -> @debug.Repr
@@ -346,6 +349,7 @@ pub(all) enum CharacterAssetKind {
   Other
 }
 
+#derive(Eq, @debug.Debug)
 pub struct CharacterCard {
   id : String
   name : String
@@ -365,7 +369,7 @@ pub struct CharacterCard {
   location : String
   point : @core.Point
   color : @core.Color
-} derive(Eq, @debug.Debug)
+}
 pub fn CharacterCard::appearance(Self) -> String
 pub fn CharacterCard::character_md_text(Self) -> String
 pub fn CharacterCard::color(Self) -> @core.Color
@@ -390,6 +394,7 @@ pub fn CharacterCard::setting(Self) -> String
 pub fn CharacterCard::to_repr(Self) -> @debug.Repr
 pub fn CharacterCard::voice(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CharacterDraft {
   name : String
   persona : String
@@ -407,7 +412,7 @@ pub(all) struct CharacterDraft {
   setting : String
   opening : String
   memory_rules : String
-} derive(Eq, @debug.Debug)
+}
 pub fn CharacterDraft::differs_from(Self, CharacterCard) -> Bool
 pub fn CharacterDraft::equal(Self, Self) -> Bool
 pub fn CharacterDraft::from_card(CharacterCard) -> Self
@@ -433,22 +438,24 @@ pub fn CharacterDraft::with_user_identity(Self, String) -> Self
 pub fn CharacterDraft::with_user_name(Self, String) -> Self
 pub fn CharacterDraft::with_voice(Self, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct CharacterMemories {
   character_id : String
   entries : Array[MemoryEntry]
-} derive(Eq, @debug.Debug)
+}
 pub fn CharacterMemories::character_id(Self) -> String
 pub fn CharacterMemories::entries(Self) -> Array[MemoryEntry]
 pub fn CharacterMemories::equal(Self, Self) -> Bool
 pub fn CharacterMemories::not_equal(Self, Self) -> Bool
 pub fn CharacterMemories::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct ChatLine {
   speaker : Speaker
   text : String
   alternatives : Array[String]
   selected : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn ChatLine::alternatives(Self) -> Array[String]
 pub fn ChatLine::candidate_count(Self) -> Int32
 pub fn ChatLine::character(String, String) -> Self
@@ -459,25 +466,27 @@ pub fn ChatLine::player(String) -> Self
 pub fn ChatLine::selected(Self) -> Int32
 pub fn ChatLine::speaker(Self) -> Speaker
 pub fn ChatLine::text(Self) -> String
-pub fn ChatLine::to_json(Self) -> Json
+pub fn ChatLine::to_json(Self) -> @json.Json
 pub fn ChatLine::to_repr(Self) -> @debug.Repr
 pub fn ChatLine::with_alternative(Self, String) -> Self
 pub fn ChatLine::with_candidate(Self, Int32) -> Self
 pub fn ChatLine::with_text(Self, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CommitScope {
   World
   Conversation(String)
   Memories(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn CommitScope::equal(Self, Self) -> Bool
 pub fn CommitScope::not_equal(Self, Self) -> Bool
 pub fn CommitScope::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ComposerPart {
   intent : InputIntent
   text : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ComposerPart::equal(Self, Self) -> Bool
 pub fn ComposerPart::intent(Self) -> InputIntent
 pub fn ComposerPart::new(InputIntent, String) -> Self
@@ -486,6 +495,7 @@ pub fn ComposerPart::text(Self) -> String
 pub fn ComposerPart::to_line_text(Self) -> String
 pub fn ComposerPart::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Conversation {
   character_id : String
   lines : Array[ChatLine]
@@ -495,7 +505,7 @@ pub struct Conversation {
   summarized_upto : Int32
   appended : Int32
   mood : SceneMood?
-} derive(Eq, @debug.Debug)
+}
 pub fn Conversation::append(Self, ChatLine) -> Self
 pub fn Conversation::appended(Self) -> Int32
 pub fn Conversation::character_id(Self) -> String
@@ -516,9 +526,10 @@ pub fn Conversation::with_pending(Self, Bool) -> Self
 pub fn Conversation::with_streaming(Self, String) -> Self
 pub fn Conversation::with_summary(Self, String, Int32) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct ConversationBook {
   entries : Array[Conversation]
-} derive(Eq, @debug.Debug)
+}
 pub fn ConversationBook::active_count(Self) -> Int32
 pub fn ConversationBook::clear(Self) -> Unit
 pub fn ConversationBook::clone(Self) -> Self
@@ -531,14 +542,16 @@ pub fn ConversationBook::set(Self, Conversation) -> Unit
 pub fn ConversationBook::to_json_text(Self) -> String
 pub fn ConversationBook::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ConversationsFile {
   conversations : Array[Conversation]
   valid : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn ConversationsFile::equal(Self, Self) -> Bool
 pub fn ConversationsFile::not_equal(Self, Self) -> Bool
 pub fn ConversationsFile::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DrawerKind {
   Profile
   Memory
@@ -546,35 +559,38 @@ pub(all) enum DrawerKind {
   Events
   Prompt
   WorldBook
-} derive(Eq, @debug.Debug)
+}
 pub fn DrawerKind::equal(Self, Self) -> Bool
 pub fn DrawerKind::not_equal(Self, Self) -> Bool
 pub fn DrawerKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct EventsFile {
   events : Array[String]
   valid : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn EventsFile::equal(Self, Self) -> Bool
 pub fn EventsFile::not_equal(Self, Self) -> Bool
 pub fn EventsFile::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum InputIntent {
   Say
   Do
   Story
   Beat
-} derive(Eq, @debug.Debug)
+}
 pub fn InputIntent::equal(Self, Self) -> Bool
 pub fn InputIntent::label(Self) -> String
 pub fn InputIntent::not_equal(Self, Self) -> Bool
 pub fn InputIntent::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Layout {
   rail_width : Double
   stage_max : Double
   gutter : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Layout::content_width(Self) -> Double
 pub fn Layout::default() -> Self
 pub fn Layout::equal(Self, Self) -> Bool
@@ -582,16 +598,18 @@ pub fn Layout::for_width(Double) -> Self
 pub fn Layout::not_equal(Self, Self) -> Bool
 pub fn Layout::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LayoutMode {
   Wide
   Medium
   Compact
-} derive(Eq, @debug.Debug)
+}
 pub fn LayoutMode::equal(Self, Self) -> Bool
 pub fn LayoutMode::is_compact(Self) -> Bool
 pub fn LayoutMode::not_equal(Self, Self) -> Bool
 pub fn LayoutMode::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct LlmRequest {
   character_id : String
   endpoint : String
@@ -599,7 +617,7 @@ pub struct LlmRequest {
   model : String
   temperature : Double
   messages : Array[(String, String)]
-} derive(Eq, @debug.Debug)
+}
 pub fn LlmRequest::api_key(Self) -> String
 pub fn LlmRequest::character_id(Self) -> String
 pub fn LlmRequest::endpoint(Self) -> String
@@ -614,34 +632,38 @@ pub fn LlmRequest::temperature(Self) -> Double
 pub fn LlmRequest::to_repr(Self) -> @debug.Repr
 pub fn LlmRequest::user(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct LoreHit {
   entry : WorldEntry
   depth : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn LoreHit::equal(Self, Self) -> Bool
 pub fn LoreHit::not_equal(Self, Self) -> Bool
 pub fn LoreHit::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LorePosition {
   Before
   After
-} derive(Eq, @debug.Debug)
+}
 pub fn LorePosition::equal(Self, Self) -> Bool
 pub fn LorePosition::not_equal(Self, Self) -> Bool
 pub fn LorePosition::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MapStyle {
   Full
   Ambient
   Backdrop
-} derive(Eq, @debug.Debug)
+}
 pub fn MapStyle::equal(Self, Self) -> Bool
 pub fn MapStyle::not_equal(Self, Self) -> Bool
 pub fn MapStyle::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct MemoryBook {
   entries : Array[CharacterMemories]
-} derive(Eq, @debug.Debug)
+}
 pub fn MemoryBook::clear(Self) -> Unit
 pub fn MemoryBook::clone(Self) -> Self
 pub fn MemoryBook::equal(Self, Self) -> Bool
@@ -652,13 +674,14 @@ pub fn MemoryBook::not_equal(Self, Self) -> Bool
 pub fn MemoryBook::set(Self, CharacterMemories) -> Unit
 pub fn MemoryBook::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct MemoryEntry {
   content : String
   pinned : Bool
   source : MemorySource
   hidden : Bool
   topic : String
-} derive(Eq, @debug.Debug)
+}
 pub fn MemoryEntry::authored(String) -> Self
 pub fn MemoryEntry::content(Self) -> String
 pub fn MemoryEntry::equal(Self, Self) -> Bool
@@ -673,22 +696,25 @@ pub fn MemoryEntry::with_hidden(Self, Bool) -> Self
 pub fn MemoryEntry::with_pinned(Self, Bool) -> Self
 pub fn MemoryEntry::with_topic(Self, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MemorySource {
   Authored
   Adopted
-} derive(Eq, @debug.Debug)
+}
 pub fn MemorySource::equal(Self, Self) -> Bool
 pub fn MemorySource::not_equal(Self, Self) -> Bool
 pub fn MemorySource::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MessagePlan {
   messages : Array[(String, String)]
   evicted : Array[ChatLine]
-} derive(Eq, @debug.Debug)
+}
 pub fn MessagePlan::equal(Self, Self) -> Bool
 pub fn MessagePlan::not_equal(Self, Self) -> Bool
 pub fn MessagePlan::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct ModelConfig {
   endpoint : String
   model : String
@@ -696,7 +722,7 @@ pub struct ModelConfig {
   temperature : Double
   context_preset : String
   appearance : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn ModelConfig::api_key(Self) -> String
 pub fn ModelConfig::appearance(Self) -> String
 pub fn ModelConfig::context_budget(Self) -> Int32
@@ -718,13 +744,14 @@ pub fn ModelConfig::with_endpoint(Self, String) -> Self
 pub fn ModelConfig::with_model(Self, String) -> Self
 pub fn ModelConfig::with_temperature(Self, Double) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MoodVariant {
   Calm
   Tense
   Warm
   Cold
   Mysterious
-} derive(Eq, @debug.Debug)
+}
 pub fn MoodVariant::equal(Self, Self) -> Bool
 pub fn MoodVariant::not_equal(Self, Self) -> Bool
 pub fn MoodVariant::to_repr(Self) -> @debug.Repr
@@ -834,19 +861,21 @@ pub(all) enum Msg {
   WorldImported(Bool, String, Array[(String, String)])
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Page {
   Main
   Settings
-} derive(Eq, @debug.Debug)
+}
 pub fn Page::equal(Self, Self) -> Bool
 pub fn Page::not_equal(Self, Self) -> Bool
 pub fn Page::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Relationship {
   user_identity : String
   user_name : String
   boundary : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Relationship::boundary(Self) -> String
 pub fn Relationship::empty() -> Self
 pub fn Relationship::equal(Self, Self) -> Bool
@@ -856,6 +885,7 @@ pub fn Relationship::to_repr(Self) -> @debug.Repr
 pub fn Relationship::user_identity(Self) -> String
 pub fn Relationship::user_name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Scenario {
   id : String
   name : String
@@ -866,7 +896,7 @@ pub struct Scenario {
   characters : Array[CharacterCard]
   world_book : Array[WorldEntry]
   mood : SceneMood
-} derive(Eq, @debug.Debug)
+}
 pub fn Scenario::background(Self) -> String
 pub fn Scenario::character(Self, String) -> CharacterCard?
 pub fn Scenario::character_point(Self, String) -> @core.Point?
@@ -890,12 +920,13 @@ pub fn Scenario::with_world_book(Self, Array[WorldEntry]) -> Self
 pub fn Scenario::world_book(Self) -> Array[WorldEntry]
 pub fn Scenario::world_files(Self) -> Array[(String, String)]
 
+#derive(Eq, @debug.Debug)
 pub struct ScenarioLocation {
   id : String
   name : String
   description : String
   rect : @core.Rect
-} derive(Eq, @debug.Debug)
+}
 pub fn ScenarioLocation::description(Self) -> String
 pub fn ScenarioLocation::equal(Self, Self) -> Bool
 pub fn ScenarioLocation::id(Self) -> String
@@ -905,11 +936,12 @@ pub fn ScenarioLocation::not_equal(Self, Self) -> Bool
 pub fn ScenarioLocation::rect(Self) -> @core.Rect
 pub fn ScenarioLocation::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct SceneMood {
   title : String
   time_label : String
   variant : MoodVariant
-} derive(Eq, @debug.Debug)
+}
 pub fn SceneMood::empty() -> Self
 pub fn SceneMood::equal(Self, Self) -> Bool
 pub fn SceneMood::not_equal(Self, Self) -> Bool
@@ -918,6 +950,7 @@ pub fn SceneMood::title(Self) -> String
 pub fn SceneMood::to_repr(Self) -> @debug.Repr
 pub fn SceneMood::variant(Self) -> MoodVariant
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Screen {
   width : Double
   height : Double
@@ -929,29 +962,32 @@ pub(all) struct Screen {
   header_height : Double
   drawer_width : Double
   tight_controls : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Screen::equal(Self, Self) -> Bool
 pub fn Screen::for_viewport(Double, Double) -> Self
 pub fn Screen::not_equal(Self, Self) -> Bool
 pub fn Screen::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum Speaker {
   Player
   Character(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn Speaker::equal(Self, Self) -> Bool
 pub fn Speaker::not_equal(Self, Self) -> Bool
-pub fn Speaker::to_json(Self) -> Json
+pub fn Speaker::to_json(Self) -> @json.Json
 pub fn Speaker::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WorldBundle {
   name : String
   files : Array[(String, String)]
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldBundle::equal(Self, Self) -> Bool
 pub fn WorldBundle::not_equal(Self, Self) -> Bool
 pub fn WorldBundle::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct WorldEntry {
   keys : Array[String]
   content : String
@@ -959,7 +995,7 @@ pub struct WorldEntry {
   position : LorePosition
   recursion : Int32
   probability : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldEntry::content(Self) -> String
 pub fn WorldEntry::equal(Self, Self) -> Bool
 pub fn WorldEntry::keys(Self) -> Array[String]
@@ -974,6 +1010,7 @@ pub fn WorldEntry::with_content(Self, String) -> Self
 pub fn WorldEntry::with_keys(Self, Array[String]) -> Self
 pub fn WorldEntry::with_priority(Self, Int32) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WorldFiles {
   world_md : String
   book_md : String
@@ -983,11 +1020,12 @@ pub(all) struct WorldFiles {
   conversation_files : Array[(String, String)]
   events_json : String
   portraits : Array[(String, String)]
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldFiles::equal(Self, Self) -> Bool
 pub fn WorldFiles::not_equal(Self, Self) -> Bool
 pub fn WorldFiles::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct WorldHost {
   list_worlds : ((Array[String]) -> Unit) -> Unit
   pick_root : ((Array[String]) -> Unit) -> Unit
@@ -998,17 +1036,19 @@ pub(all) struct WorldHost {
   export_world : (String, String, (Bool) -> Unit) -> Unit
   import_world : ((Bool, String) -> Unit) -> Unit
   copy_to_clipboard : (String) -> Unit
-} derive(@debug.Debug)
+}
 pub fn WorldHost::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct WorldIdeaPrompt {
   system : String
   user : String
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldIdeaPrompt::equal(Self, Self) -> Bool
 pub fn WorldIdeaPrompt::not_equal(Self, Self) -> Bool
 pub fn WorldIdeaPrompt::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct WorldModel {
   scenario : Scenario
   conversations : ConversationBook
@@ -1057,7 +1097,7 @@ pub struct WorldModel {
   memory_topic_input : String
   portraits : Array[(String, String)]
   scene_location : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldModel::active_conversation_key(Self) -> String?
 pub fn WorldModel::api_key_revealed(Self) -> Bool
 pub fn WorldModel::atmosphere(Self) -> Bool
@@ -1116,13 +1156,14 @@ pub fn WorldModel::world_epoch(Self) -> Int32
 pub fn WorldModel::world_name(Self) -> String
 pub fn WorldModel::worlds(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct WorldParse {
   scenario : Scenario
   conversations : Array[Conversation]
   memories : MemoryBook
   events : Array[String]
   warnings : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldParse::equal(Self, Self) -> Bool
 pub fn WorldParse::not_equal(Self, Self) -> Bool
 pub fn WorldParse::to_repr(Self) -> @debug.Repr

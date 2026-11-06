@@ -1,21 +1,23 @@
 ///|
 /// A contiguous text segment covered by the same font-face index.
+#derive(Debug)
 struct FontFallbackSpan {
   face_index : Int32
   text : String
   char_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend FontFallbackSpan with Debug::{to_repr}
 
 ///|
 /// A font fallback plan for a text string.
+#derive(Debug)
 struct FontFallbackPlan {
   spans : Array[FontFallbackSpan]
   char_count : Int32
   missing_char_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend FontFallbackPlan with Debug::{to_repr}

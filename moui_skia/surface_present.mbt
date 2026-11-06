@@ -31,12 +31,13 @@ fn normalized_surface_present_buffer_index(
 
 ///|
 /// Per-frame presentation scheduling metadata for a presentable target.
+#derive(Debug, Eq)
 pub(all) struct SurfacePresentDescriptor {
   target : SurfaceTargetDescriptor
   frame_index : Int32
   buffer_index : Int32
   present_mode : SurfacePresentMode?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfacePresentDescriptor with Debug::{to_repr}
@@ -76,10 +77,11 @@ pub fn SurfaceTargetDescriptor::present_descriptor(
 
 ///|
 /// Per-frame surface finalization metadata before a backend flushes/submits work.
+#derive(Debug, Eq)
 pub(all) struct SurfaceFinalizationDescriptor {
   target : SurfaceTargetDescriptor
   frame_index : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceFinalizationDescriptor with Debug::{to_repr}

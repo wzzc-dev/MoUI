@@ -225,18 +225,19 @@ fn scroll_transform_local_text_frame(
 
 ///|
 test "scroll paint commands are translated by the viewport transform" {
-  let runtime = AppRuntime::new_view(
-    root=@views.scroll_view(
-      @views.column(
-        [
-          @views.frame(@views.text("Above"), width=100.0, height=100.0),
-          @views.text("Scrolled"),
-        ],
-        spacing=0.0,
-      ),
-      width=100.0,
-      height=80.0,
+  let root : @core.View[Unit] = @views.scroll_view(
+    @views.column(
+      [
+        @views.frame(@views.text("Above"), width=100.0, height=100.0),
+        @views.text("Scrolled"),
+      ],
+      spacing=0.0,
     ),
+    width=100.0,
+    height=80.0,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
     size=@core.Size::new(width=100.0, height=100.0),
   )
   ignore(runtime.draw_frame())

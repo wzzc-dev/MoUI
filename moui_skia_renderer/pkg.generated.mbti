@@ -3,6 +3,7 @@ package "wzzc-dev/moui_skia_renderer"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui_skia/native",
@@ -50,6 +51,7 @@ pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
 pub fn skia_text_visual_order_diagnostic(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderDiagnostic?
 
 // Errors
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) suberror SkiaRendererError {
   SkiaUnavailable
   SurfaceUnavailable
@@ -57,11 +59,11 @@ pub(all) suberror SkiaRendererError {
   ReadPixelsUnavailable
   GpuContextUnavailable(String)
   PresentFailed(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaRendererError::equal(Self, Self) -> Bool
 pub fn SkiaRendererError::message(Self) -> String
 pub fn SkiaRendererError::not_equal(Self, Self) -> Bool
-pub fn SkiaRendererError::to_json(Self) -> Json
+pub fn SkiaRendererError::to_json(Self) -> @json.Json
 pub fn SkiaRendererError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
@@ -78,6 +80,7 @@ pub struct HostGpuPresentTarget {
 pub fn HostGpuPresentTarget::description(Self) -> String
 pub fn HostGpuPresentTarget::new(description~ : String, create_window_surface~ : (@native.GpuContext?, @core.SurfaceMetrics) -> @native.Surface?, present_gpu~ : (@native.GpuContext?, @native.Surface) -> HostGpuPresentOutcome) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum NativeGpuPlatform {
   MacOS
   Windows
@@ -85,31 +88,33 @@ pub(all) enum NativeGpuPlatform {
   Android
   IOS
   HarmonyOS
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn NativeGpuPlatform::equal(Self, Self) -> Bool
 pub fn NativeGpuPlatform::gpu_promoted(Self) -> Bool
 pub fn NativeGpuPlatform::not_equal(Self, Self) -> Bool
 pub fn NativeGpuPlatform::platform_label(Self) -> String
 pub fn NativeGpuPlatform::surface_route(Self) -> SkiaSurfaceRoute
-pub fn NativeGpuPlatform::to_json(Self) -> Json
+pub fn NativeGpuPlatform::to_json(Self) -> @json.Json
 pub fn NativeGpuPlatform::to_repr(Self) -> @debug.Repr
 pub impl NativePlatformSurface for NativeGpuPlatform
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum NativeRendererMode {
   Auto
   SkiaGpu
   SkiaRaster
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn NativeRendererMode::equal(Self, Self) -> Bool
 pub fn NativeRendererMode::label(Self) -> String
 pub fn NativeRendererMode::not_equal(Self, Self) -> Bool
 pub fn NativeRendererMode::parse(String) -> Self?
-pub fn NativeRendererMode::to_json(Self) -> Json
+pub fn NativeRendererMode::to_json(Self) -> @json.Json
 pub fn NativeRendererMode::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SkiaEmojiFontFallbackDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaEmojiFontFallbackDiagnostic::cluster_count(Self) -> Int32
 pub fn SkiaEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(Self) -> Bool
 pub fn SkiaEmojiFontFallbackDiagnostic::emoji_fallback_attempted(Self) -> Bool
@@ -135,16 +140,17 @@ pub fn SkiaEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(Self) -> In
 pub fn SkiaEmojiFontFallbackDiagnostic::shaper(Self) -> String
 pub fn SkiaEmojiFontFallbackDiagnostic::text(Self) -> String
 pub fn SkiaEmojiFontFallbackDiagnostic::text_system_id(Self) -> String
-pub fn SkiaEmojiFontFallbackDiagnostic::to_json(Self) -> Json
+pub fn SkiaEmojiFontFallbackDiagnostic::to_json(Self) -> @json.Json
 pub fn SkiaEmojiFontFallbackDiagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaFontResolution::equal(Self, Self) -> Bool
 pub fn SkiaFontResolution::not_equal(Self, Self) -> Bool
-pub fn SkiaFontResolution::to_json(Self) -> Json
+pub fn SkiaFontResolution::to_json(Self) -> @json.Json
 pub fn SkiaFontResolution::to_repr(Self) -> @debug.Repr
 
 pub struct SkiaHybridRenderer {
@@ -156,9 +162,10 @@ pub fn SkiaHybridRenderer::render_frame(Self, @render.RenderFrameSubmission) -> 
 pub fn SkiaHybridRenderer::requested_mode(Self) -> NativeRendererMode
 pub fn SkiaHybridRenderer::surface_route(Self) -> SkiaSurfaceRoute
 
+#derive(Eq, @debug.Debug)
 pub struct SkiaPixelFrame {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn SkiaPixelFrame::equal(Self, Self) -> Bool
 pub fn SkiaPixelFrame::height(Self) -> Int32
 pub fn SkiaPixelFrame::not_equal(Self, Self) -> Bool
@@ -168,13 +175,14 @@ pub fn SkiaPixelFrame::scale_factor(Self) -> Double
 pub fn SkiaPixelFrame::to_repr(Self) -> @debug.Repr
 pub fn SkiaPixelFrame::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum SkiaPresentKind {
   CpuPixelFrame
   HostGpuSurface
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaPresentKind::equal(Self, Self) -> Bool
 pub fn SkiaPresentKind::not_equal(Self, Self) -> Bool
-pub fn SkiaPresentKind::to_json(Self) -> Json
+pub fn SkiaPresentKind::to_json(Self) -> @json.Json
 pub fn SkiaPresentKind::to_repr(Self) -> @debug.Repr
 
 pub struct SkiaPresentTarget {
@@ -209,13 +217,14 @@ pub fn SkiaRasterRenderer::to_renderer_session(Self, image_source? : @render.Hos
 pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int32
 pub fn SkiaRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SkiaUnsupportedCommandDiagnostic]
 
+#derive(Eq, Hash, @debug.Debug, @json.ToJson)
 pub(all) enum SkiaSurfaceRoute {
   RasterSurfaceRoute
   MetalGpuSurfaceRoute
   VulkanGpuSurfaceRoute
   EglGpuSurfaceRoute
   Direct3DGpuSurfaceRoute
-} derive(Eq, Hash, ToJson, @debug.Debug)
+}
 pub fn SkiaSurfaceRoute::equal(Self, Self) -> Bool
 pub fn SkiaSurfaceRoute::hash(Self) -> Int32
 pub fn SkiaSurfaceRoute::hash_combine(Self, Hasher) -> Unit
@@ -223,12 +232,13 @@ pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
 pub fn SkiaSurfaceRoute::is_implemented(Self) -> Bool
 pub fn SkiaSurfaceRoute::label(Self) -> String
 pub fn SkiaSurfaceRoute::not_equal(Self, Self) -> Bool
-pub fn SkiaSurfaceRoute::to_json(Self) -> Json
+pub fn SkiaSurfaceRoute::to_json(Self) -> @json.Json
 pub fn SkiaSurfaceRoute::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SkiaTextSelectionGeometryDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaTextSelectionGeometryDiagnostic::bidi_visual_order_observed(Self) -> Bool
 pub fn SkiaTextSelectionGeometryDiagnostic::equal(Self, Self) -> Bool
 pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_inside(Self) -> Bool
@@ -240,35 +250,37 @@ pub fn SkiaTextSelectionGeometryDiagnostic::selected_line_count(Self) -> Int32
 pub fn SkiaTextSelectionGeometryDiagnostic::selection_range(Self) -> @core.TextRange
 pub fn SkiaTextSelectionGeometryDiagnostic::selection_rect_count(Self) -> Int32
 pub fn SkiaTextSelectionGeometryDiagnostic::text(Self) -> String
-pub fn SkiaTextSelectionGeometryDiagnostic::to_json(Self) -> Json
+pub fn SkiaTextSelectionGeometryDiagnostic::to_json(Self) -> @json.Json
 pub fn SkiaTextSelectionGeometryDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SkiaTextSelectionGeometryDiagnostic::visual_order_differs(Self) -> Bool
 pub fn SkiaTextSelectionGeometryDiagnostic::visual_segment_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SkiaTextVisualOrderDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaTextVisualOrderDiagnostic::equal(Self, Self) -> Bool
 pub fn SkiaTextVisualOrderDiagnostic::glyph_count(Self) -> Int32
 pub fn SkiaTextVisualOrderDiagnostic::logical_cluster_count(Self) -> Int32
 pub fn SkiaTextVisualOrderDiagnostic::logical_text(Self) -> String
 pub fn SkiaTextVisualOrderDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SkiaTextVisualOrderDiagnostic::segment_count(Self) -> Int32
-pub fn SkiaTextVisualOrderDiagnostic::to_json(Self) -> Json
+pub fn SkiaTextVisualOrderDiagnostic::to_json(Self) -> @json.Json
 pub fn SkiaTextVisualOrderDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SkiaTextVisualOrderDiagnostic::visual_cluster_count(Self) -> Int32
 pub fn SkiaTextVisualOrderDiagnostic::visual_order_differs(Self) -> Bool
 pub fn SkiaTextVisualOrderDiagnostic::visual_text(Self) -> String
 pub fn SkiaTextVisualOrderDiagnostic::width(Self) -> Double
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SkiaUnsupportedCommandDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SkiaUnsupportedCommandDiagnostic::command(Self) -> String
 pub fn SkiaUnsupportedCommandDiagnostic::equal(Self, Self) -> Bool
 pub fn SkiaUnsupportedCommandDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SkiaUnsupportedCommandDiagnostic::reason(Self) -> String
-pub fn SkiaUnsupportedCommandDiagnostic::to_json(Self) -> Json
+pub fn SkiaUnsupportedCommandDiagnostic::to_json(Self) -> @json.Json
 pub fn SkiaUnsupportedCommandDiagnostic::to_repr(Self) -> @debug.Repr
 
 // Type aliases

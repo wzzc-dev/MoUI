@@ -1,9 +1,10 @@
 ///|
 /// Portable image recipes that can be planned before native Skia images are
 /// decoded or uploaded.
+#derive(Debug, Eq)
 pub(all) enum ImageDescriptor {
   EncodedImage(Bytes, EncodedImageFormat?, ISize?)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ImageDescriptor with Debug::{to_repr}

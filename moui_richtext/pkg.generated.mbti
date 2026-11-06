@@ -3,6 +3,7 @@ package "wzzc-dev/moui_richtext"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "moonbitlang/core/ref",
   "wzzc-dev/moui/core",
 }
@@ -124,6 +125,7 @@ pub struct CodeHighlightSpan {
   kind : CodeHighlightToken
 }
 
+#derive(Eq, @debug.Debug)
 pub enum CodeHighlightToken {
   CodePlain
   CodeKeyword
@@ -135,23 +137,25 @@ pub enum CodeHighlightToken {
   CodeOperator
   CodeAnnotation
   CodeEscape
-} derive(Eq, @debug.Debug)
+}
 pub fn CodeHighlightToken::equal(Self, Self) -> Bool
 pub fn CodeHighlightToken::not_equal(Self, Self) -> Bool
 pub fn CodeHighlightToken::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
   inlines : Array[MarkdownInline]
   table_alignments : Array[@core.TextAlign?]
   code_language : String?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownBlock::equal(Self, Self) -> Bool
 pub fn MarkdownBlock::not_equal(Self, Self) -> Bool
-pub fn MarkdownBlock::to_json(Self) -> Json
+pub fn MarkdownBlock::to_json(Self) -> @json.Json
 pub fn MarkdownBlock::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum MarkdownBlockKind {
   Heading(Int32)
   Paragraph
@@ -165,10 +169,10 @@ pub(all) enum MarkdownBlockKind {
   FootnoteDefinition(String)
   HtmlBlock
   FrontMatter
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownBlockKind::equal(Self, Self) -> Bool
 pub fn MarkdownBlockKind::not_equal(Self, Self) -> Bool
-pub fn MarkdownBlockKind::to_json(Self) -> Json
+pub fn MarkdownBlockKind::to_json(Self) -> @json.Json
 pub fn MarkdownBlockKind::to_repr(Self) -> @debug.Repr
 
 pub struct MarkdownBlockView {
@@ -187,6 +191,7 @@ pub struct MarkdownBlockViewProjection {
   line_align : @core.TextAlign?
 }
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentBlock {
   id : Int32
   mut revision : Int32
@@ -196,12 +201,13 @@ pub(all) struct MarkdownDocumentBlock {
   text : String
   fingerprint : UInt64
   inline_count : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentBlock::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentBlock::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentBlock::to_json(Self) -> Json
+pub fn MarkdownDocumentBlock::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentBlock::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentBlockHeightMetric {
   mut block_id : Int32
   mut block_index : Int32
@@ -211,33 +217,36 @@ pub(all) struct MarkdownDocumentBlockHeightMetric {
   visual_height_units : Double
   mut source_top_units : Double
   source_height_units : Double
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentBlockHeightMetric::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentBlockHeightMetric::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentBlockHeightMetric::to_json(Self) -> Json
+pub fn MarkdownDocumentBlockHeightMetric::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentBlockHeightMetric::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentDirtyRange {
   start_block : Int32
   end_block : Int32
   source_start : Int32
   source_end : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentDirtyRange::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentDirtyRange::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentDirtyRange::to_json(Self) -> Json
+pub fn MarkdownDocumentDirtyRange::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentDirtyRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentHeightIndex {
   visual_content_units : Double
   source_content_units : Double
   blocks : Array[MarkdownDocumentBlockHeightMetric]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentHeightIndex::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentHeightIndex::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentHeightIndex::to_json(Self) -> Json
+pub fn MarkdownDocumentHeightIndex::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentHeightIndex::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentLayoutBlock {
   block_id : Int32
   block_index : Int32
@@ -245,12 +254,13 @@ pub(all) struct MarkdownDocumentLayoutBlock {
   top : Double
   height : Double
   source_range : MarkdownSourceRange
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentLayoutBlock::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentLayoutBlock::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentLayoutBlock::to_json(Self) -> Json
+pub fn MarkdownDocumentLayoutBlock::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentLayoutBlock::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentLayoutCache {
   revision : Int32
   width : Double
@@ -261,12 +271,13 @@ pub(all) struct MarkdownDocumentLayoutCache {
   visible_start : Int32
   visible_end : Int32
   blocks : Array[MarkdownDocumentLayoutBlock]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentLayoutCache::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentLayoutCache::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentLayoutCache::to_json(Self) -> Json
+pub fn MarkdownDocumentLayoutCache::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentLayoutCache::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentRichTextWindow {
   document : RichTextDocument
   content_height : Double
@@ -279,12 +290,13 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   block_count : Int32
   rendered_block_count : Int32
   clip_lines : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentRichTextWindow::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentRichTextWindow::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentRichTextWindow::to_json(Self) -> Json
+pub fn MarkdownDocumentRichTextWindow::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentRichTextWindow::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentSession {
   text_store : MarkdownDocumentTextStore
   source_length : Int32
@@ -305,7 +317,7 @@ pub(all) struct MarkdownDocumentSession {
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentSession::apply(Self, MarkdownEditTransaction) -> Self
 pub fn MarkdownDocumentSession::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentSession::estimated_content_height(Self, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
@@ -317,7 +329,7 @@ pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, 
 pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
 pub fn MarkdownDocumentSession::source(Self) -> String
 pub fn MarkdownDocumentSession::source_offset_y(Self, Int32, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
-pub fn MarkdownDocumentSession::to_json(Self) -> Json
+pub fn MarkdownDocumentSession::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentSession::to_repr(Self) -> @debug.Repr
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 
@@ -339,12 +351,13 @@ pub fn MarkdownDocumentTextStore::seed(Self, String) -> Unit
 pub fn MarkdownDocumentTextStore::segmented(String, Array[Int32]) -> Self
 pub fn MarkdownDocumentTextStore::source(Self) -> String
 pub fn MarkdownDocumentTextStore::text_of(Self, Int32, Int32) -> String
-pub fn MarkdownDocumentTextStore::to_json(Self) -> Json
+pub fn MarkdownDocumentTextStore::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentTextStore::to_repr(Self) -> @debug.Repr
 pub impl Eq for MarkdownDocumentTextStore
-pub impl ToJson for MarkdownDocumentTextStore
 pub impl @debug.Debug for MarkdownDocumentTextStore
+pub impl @json.ToJson for MarkdownDocumentTextStore
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum MarkdownEditReason {
   LoadDocument
   TextInput
@@ -352,12 +365,13 @@ pub(all) enum MarkdownEditReason {
   ReplaceEdit
   ToggleTaskEdit
   MediaEdit
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditReason::equal(Self, Self) -> Bool
 pub fn MarkdownEditReason::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditReason::to_json(Self) -> Json
+pub fn MarkdownEditReason::to_json(Self) -> @json.Json
 pub fn MarkdownEditReason::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditTransaction {
   previous_source : String
   source : String
@@ -367,7 +381,7 @@ pub(all) struct MarkdownEditTransaction {
   caret : Int32
   selection : @core.TextRange?
   reason : MarkdownEditReason
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditTransaction::equal(Self, Self) -> Bool
 pub fn MarkdownEditTransaction::from_edit(String, String, Int32, deleted~ : String, replacement~ : String, caret~ : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::from_edit_result(String, MarkdownEditorEditResult, reason? : MarkdownEditReason) -> Self
@@ -375,19 +389,21 @@ pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransf
 pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownEditTransaction::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int32, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
-pub fn MarkdownEditTransaction::to_json(Self) -> Json
+pub fn MarkdownEditTransaction::to_json(Self) -> @json.Json
 pub fn MarkdownEditTransaction::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
   mut source_range : MarkdownSourceRange
   mut content_range : MarkdownSourceRange
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorBlock::equal(Self, Self) -> Bool
 pub fn MarkdownEditorBlock::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditorBlock::to_json(Self) -> Json
+pub fn MarkdownEditorBlock::to_json(Self) -> @json.Json
 pub fn MarkdownEditorBlock::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum MarkdownEditorCommand {
   Bold
   Italic
@@ -420,29 +436,32 @@ pub(all) enum MarkdownEditorCommand {
   DeleteTableRow
   DeleteTableColumn
   SetTableColumnAlignment(@core.TextAlign?)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorCommand::equal(Self, Self) -> Bool
 pub fn MarkdownEditorCommand::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditorCommand::to_json(Self) -> Json
+pub fn MarkdownEditorCommand::to_json(Self) -> @json.Json
 pub fn MarkdownEditorCommand::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorEditResult {
   source : String
   caret : Int32
   selection : @core.TextRange?
   edit_range : MarkdownSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorEditResult::equal(Self, Self) -> Bool
 pub fn MarkdownEditorEditResult::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditorEditResult::to_json(Self) -> Json
+pub fn MarkdownEditorEditResult::to_json(Self) -> @json.Json
 pub fn MarkdownEditorEditResult::to_repr(Self) -> @debug.Repr
 
-type MarkdownEditorHtmlBlockParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownEditorHtmlBlockParseResult
 pub fn MarkdownEditorHtmlBlockParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownEditorHtmlBlockParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorHtmlBlockParseResult::to_repr(Self) -> @debug.Repr
 
-type MarkdownEditorIndentedCodeParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownEditorIndentedCodeParseResult
 pub fn MarkdownEditorIndentedCodeParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownEditorIndentedCodeParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorIndentedCodeParseResult::to_repr(Self) -> @debug.Repr
@@ -452,40 +471,46 @@ pub(all) struct MarkdownEditorInputContext {
   store : MarkdownDocumentTextStore
 }
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int32
   title : String
   mut source_start : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorOutlineItem::equal(Self, Self) -> Bool
 pub fn MarkdownEditorOutlineItem::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditorOutlineItem::to_json(Self) -> Json
+pub fn MarkdownEditorOutlineItem::to_json(Self) -> @json.Json
 pub fn MarkdownEditorOutlineItem::to_repr(Self) -> @debug.Repr
 
-type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownEditorParagraphParseResult
 pub fn MarkdownEditorParagraphParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownEditorParagraphParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorParagraphParseResult::to_repr(Self) -> @debug.Repr
 
-type MarkdownEditorRunSourceRange derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownEditorRunSourceRange
 pub fn MarkdownEditorRunSourceRange::equal(Self, Self) -> Bool
 pub fn MarkdownEditorRunSourceRange::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorRunSourceRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorSelection {
   caret : Int32
   selection : @core.TextRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorSelection::equal(Self, Self) -> Bool
 pub fn MarkdownEditorSelection::not_equal(Self, Self) -> Bool
-pub fn MarkdownEditorSelection::to_json(Self) -> Json
+pub fn MarkdownEditorSelection::to_json(Self) -> @json.Json
 pub fn MarkdownEditorSelection::to_repr(Self) -> @debug.Repr
 
-type MarkdownEditorSetextHeadingParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownEditorSetextHeadingParseResult
 pub fn MarkdownEditorSetextHeadingParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownEditorSetextHeadingParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorSetextHeadingParseResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorSnapshot {
   source : String
   blocks : Array[MarkdownEditorBlock]
@@ -497,39 +522,44 @@ pub(all) struct MarkdownEditorSnapshot {
   metadata_title : String
   metadata_tags : Array[String]
   outline : Array[MarkdownEditorOutlineItem]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownEditorSnapshot::equal(Self, Self) -> Bool
 pub fn MarkdownEditorSnapshot::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorSnapshot::parse(String) -> Self
 pub fn MarkdownEditorSnapshot::parse_with_font(String, @core.FontSpec, base_dir? : String?) -> Self
-pub fn MarkdownEditorSnapshot::to_json(Self) -> Json
+pub fn MarkdownEditorSnapshot::to_json(Self) -> @json.Json
 pub fn MarkdownEditorSnapshot::to_repr(Self) -> @debug.Repr
 
-type MarkdownHtmlBlockParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownHtmlBlockParseResult
 pub fn MarkdownHtmlBlockParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownHtmlBlockParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownHtmlBlockParseResult::to_repr(Self) -> @debug.Repr
 
-type MarkdownHtmlEntityDecodeResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownHtmlEntityDecodeResult
 pub fn MarkdownHtmlEntityDecodeResult::equal(Self, Self) -> Bool
 pub fn MarkdownHtmlEntityDecodeResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownHtmlEntityDecodeResult::to_repr(Self) -> @debug.Repr
 
-type MarkdownIndentedCodeParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownIndentedCodeParseResult
 pub fn MarkdownIndentedCodeParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownIndentedCodeParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownIndentedCodeParseResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownInline::equal(Self, Self) -> Bool
 pub fn MarkdownInline::not_equal(Self, Self) -> Bool
-pub fn MarkdownInline::to_json(Self) -> Json
+pub fn MarkdownInline::to_json(Self) -> @json.Json
 pub fn MarkdownInline::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum MarkdownInlineKind {
   Plain
   Bold
@@ -542,12 +572,13 @@ pub(all) enum MarkdownInlineKind {
   Image
   FootnoteReference
   HtmlInline
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownInlineKind::equal(Self, Self) -> Bool
 pub fn MarkdownInlineKind::not_equal(Self, Self) -> Bool
-pub fn MarkdownInlineKind::to_json(Self) -> Json
+pub fn MarkdownInlineKind::to_json(Self) -> @json.Json
 pub fn MarkdownInlineKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MarkdownLinkBounds {
   open_start : Int32
   close_start : Int32
@@ -556,30 +587,33 @@ pub(all) struct MarkdownLinkBounds {
   definition_target_start : Int32
   definition_target_end : Int32
   reference_label : String
-} derive(Eq, @debug.Debug)
+}
 pub fn MarkdownLinkBounds::equal(Self, Self) -> Bool
 pub fn MarkdownLinkBounds::not_equal(Self, Self) -> Bool
 pub fn MarkdownLinkBounds::to_repr(Self) -> @debug.Repr
 
-type MarkdownParagraphParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownParagraphParseResult
 pub fn MarkdownParagraphParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownParagraphParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownParagraphParseResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MarkdownReferenceContext {
   range : @core.TextRange
   bounds : MarkdownLinkBounds
-} derive(Eq, @debug.Debug)
+}
 pub fn MarkdownReferenceContext::equal(Self, Self) -> Bool
 pub fn MarkdownReferenceContext::not_equal(Self, Self) -> Bool
 pub fn MarkdownReferenceContext::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownScrollGlide {
   from_y : Double
   to_y : Double
   start_ms : Double
   tau_ms : Double
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownScrollGlide::display_offset(Self, Double, compensation? : Double, scale? : Double) -> Double
 pub fn MarkdownScrollGlide::equal(Self, Self) -> Bool
 pub fn MarkdownScrollGlide::exact_offset_at(Self, Double) -> Double
@@ -589,34 +623,38 @@ pub fn MarkdownScrollGlide::not_equal(Self, Self) -> Bool
 pub fn MarkdownScrollGlide::offset_at(Self, Double, scale? : Double) -> Double
 pub fn MarkdownScrollGlide::offset_at_with_compensation(Self, Double, Double, scale? : Double) -> Double
 pub fn MarkdownScrollGlide::settled(Double) -> Self
-pub fn MarkdownScrollGlide::to_json(Self) -> Json
+pub fn MarkdownScrollGlide::to_json(Self) -> @json.Json
 pub fn MarkdownScrollGlide::to_repr(Self) -> @debug.Repr
 pub fn MarkdownScrollGlide::with_anchor_compensation(Self, Double, Double, now_ms? : Double) -> Self
 
-type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MarkdownSetextHeadingParseResult
 pub fn MarkdownSetextHeadingParseResult::equal(Self, Self) -> Bool
 pub fn MarkdownSetextHeadingParseResult::not_equal(Self, Self) -> Bool
 pub fn MarkdownSetextHeadingParseResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownSourceRange {
   mut start : Int32
   mut end : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownSourceRange::equal(Self, Self) -> Bool
 pub fn MarkdownSourceRange::not_equal(Self, Self) -> Bool
-pub fn MarkdownSourceRange::to_json(Self) -> Json
+pub fn MarkdownSourceRange::to_json(Self) -> @json.Json
 pub fn MarkdownSourceRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownTextSegment {
   mut start : Int32
   mut end : Int32
   mut text : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownTextSegment::equal(Self, Self) -> Bool
 pub fn MarkdownTextSegment::not_equal(Self, Self) -> Bool
-pub fn MarkdownTextSegment::to_json(Self) -> Json
+pub fn MarkdownTextSegment::to_json(Self) -> @json.Json
 pub fn MarkdownTextSegment::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
   table : RichTextTable?
@@ -633,51 +671,56 @@ pub(all) struct RichTextBlock {
   line_align : @core.TextAlign?
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextBlock::equal(Self, Self) -> Bool
 pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, marker? : RichTextMarker?, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?, line_align? : @core.TextAlign?) -> Self
 pub fn RichTextBlock::not_equal(Self, Self) -> Bool
-pub fn RichTextBlock::to_json(Self) -> Json
+pub fn RichTextBlock::to_json(Self) -> @json.Json
 pub fn RichTextBlock::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum RichTextDecoration {
   Strikethrough
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextDecoration::equal(Self, Self) -> Bool
 pub fn RichTextDecoration::not_equal(Self, Self) -> Bool
-pub fn RichTextDecoration::to_json(Self) -> Json
+pub fn RichTextDecoration::to_json(Self) -> @json.Json
 pub fn RichTextDecoration::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextDocument {
   blocks : Array[RichTextBlock]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextDocument::equal(Self, Self) -> Bool
 pub fn RichTextDocument::new(blocks~ : Array[RichTextBlock]) -> Self
 pub fn RichTextDocument::not_equal(Self, Self) -> Bool
 pub fn RichTextDocument::plain(String) -> Self
-pub fn RichTextDocument::to_json(Self) -> Json
+pub fn RichTextDocument::to_json(Self) -> @json.Json
 pub fn RichTextDocument::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextInputTransform {
   text : String
   caret : Int32
   selection : @core.TextRange?
   edit_range : MarkdownSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextInputTransform::equal(Self, Self) -> Bool
 pub fn RichTextInputTransform::new(text~ : String, caret~ : Int32, selection? : @core.TextRange?, edit_range? : MarkdownSourceRange?) -> Self
 pub fn RichTextInputTransform::not_equal(Self, Self) -> Bool
-pub fn RichTextInputTransform::to_json(Self) -> Json
+pub fn RichTextInputTransform::to_json(Self) -> @json.Json
 pub fn RichTextInputTransform::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum RichTextMarker {
   TaskCheckbox(Bool)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextMarker::equal(Self, Self) -> Bool
 pub fn RichTextMarker::not_equal(Self, Self) -> Bool
-pub fn RichTextMarker::to_json(Self) -> Json
+pub fn RichTextMarker::to_json(Self) -> @json.Json
 pub fn RichTextMarker::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextRun {
   text : String
   visual_text : String?
@@ -691,44 +734,47 @@ pub(all) struct RichTextRun {
   background_radius : Double
   decoration : RichTextDecoration?
   source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextRun::equal(Self, Self) -> Bool
 pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : @core.Size?, image_fit? : @core.ImageFit, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?, image_width_fraction? : Double?) -> Self
 pub fn RichTextRun::not_equal(Self, Self) -> Bool
-pub fn RichTextRun::to_json(Self) -> Json
+pub fn RichTextRun::to_json(Self) -> @json.Json
 pub fn RichTextRun::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextSourceRange {
   start : Int32
   end : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextSourceRange::equal(Self, Self) -> Bool
 pub fn RichTextSourceRange::not_equal(Self, Self) -> Bool
-pub fn RichTextSourceRange::to_json(Self) -> Json
+pub fn RichTextSourceRange::to_json(Self) -> @json.Json
 pub fn RichTextSourceRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextTable {
   rows : Array[Array[RichTextTableCell]]
   row_height : Double
   cell_padding : @core.Insets
   border : @core.Color
   header_background : @core.Brush?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextTable::equal(Self, Self) -> Bool
 pub fn RichTextTable::not_equal(Self, Self) -> Bool
-pub fn RichTextTable::to_json(Self) -> Json
+pub fn RichTextTable::to_json(Self) -> @json.Json
 pub fn RichTextTable::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextTableCell {
   text : String
   runs : Array[RichTextRun]
   header : Bool
   align : @core.TextAlign?
   source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn RichTextTableCell::equal(Self, Self) -> Bool
 pub fn RichTextTableCell::not_equal(Self, Self) -> Bool
-pub fn RichTextTableCell::to_json(Self) -> Json
+pub fn RichTextTableCell::to_json(Self) -> @json.Json
 pub fn RichTextTableCell::to_repr(Self) -> @debug.Repr
 
 // Type aliases

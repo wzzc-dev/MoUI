@@ -87,17 +87,19 @@ pub fn conversation_path(character_id : String) -> String {
 /// One parsed journal file: the restored content plus whether the text was
 /// actually valid. `valid` stays true for an absent (`""`) or empty file, so
 /// only real damage produces a warning.
+#derive(Eq, Debug)
 pub(all) struct ConversationsFile {
   conversations : Array[Conversation]
   valid : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 /// One parsed events file, same contract as `ConversationsFile`.
+#derive(Eq, Debug)
 pub(all) struct EventsFile {
   events : Array[String]
   valid : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ConversationsFile with Debug::{to_repr}

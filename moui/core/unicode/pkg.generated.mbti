@@ -15,10 +15,11 @@ pub fn stabilize_grapheme_cluster_carets(String, Array[Double]) -> Array[Double]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct GraphemeRange {
   start : Int32
   end : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn GraphemeRange::collapsed(Int32) -> Self
 pub fn GraphemeRange::equal(Self, Self) -> Bool
 pub fn GraphemeRange::is_collapsed(Self) -> Bool
@@ -27,9 +28,10 @@ pub fn GraphemeRange::normalized(Self) -> Self
 pub fn GraphemeRange::not_equal(Self, Self) -> Bool
 pub fn GraphemeRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct TextGraphemeBoundaries {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn TextGraphemeBoundaries::boundaries(Self) -> Array[Int32]
 pub fn TextGraphemeBoundaries::ceil_boundary(Self, Int32) -> Int32
 pub fn TextGraphemeBoundaries::clamp_index(Self, Int32) -> Int32

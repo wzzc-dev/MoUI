@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignDensity {
   Compact
   Standard
   Comfortable
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignDensity with Debug::{to_repr}
@@ -18,12 +19,13 @@ pub extend DesignDensity with ToJson::{to_json}
 /// Variant of a design-system theme resolved against a system color scheme.
 /// Construction-surface enum (lives in `common` because `DesignSystemTokens.variant`
 /// and `tokens_for_variant` consume it); audit records reference it via `@common`.
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignSchemeVariant {
   SchemeLight
   SchemeDark
   SchemeHighContrast
   SchemeSystem
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSchemeVariant with Debug::{to_repr}
@@ -43,6 +45,7 @@ pub extend DesignSchemeVariant with ToJson::{to_json}
 /// `colorNeutralStroke1/2` distinctly instead of collapsing them into a single
 /// `surface`/`surface_variant` pair. Presets that do not need the full ramp
 /// alias the tiers (e.g. background2 = background1) via their palette builder.
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSemanticPalette {
   foreground : @core.Color
   background : @core.Color
@@ -80,7 +83,7 @@ pub(all) struct DesignSemanticPalette {
   info : @core.Color
   focus : @core.Color
   scrim : @core.Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSemanticPalette with Debug::{to_repr}
@@ -96,6 +99,7 @@ pub extend DesignSemanticPalette with ToJson::{to_json}
 /// the legacy body/title/caption/control four. Presets that do not define a
 /// full ramp leave these `None`; `core_typography` falls back to derived
 /// values from the four base tiers.
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTypographyTokens {
   body : @core.FontSpec
   title : @core.FontSpec
@@ -108,7 +112,7 @@ pub(all) struct DesignTypographyTokens {
   title_medium : @core.FontSpec?
   body_strong : @core.FontSpec?
   caption_strong : @core.FontSpec?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTypographyTokens with Debug::{to_repr}
@@ -120,6 +124,7 @@ pub extend DesignTypographyTokens with Eq::{not_equal, equal}
 pub extend DesignTypographyTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSpacingTokens {
   xs : Double
   sm : Double
@@ -127,7 +132,7 @@ pub(all) struct DesignSpacingTokens {
   lg : Double
   xl : Double
   density_multiplier : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSpacingTokens with Debug::{to_repr}
@@ -139,12 +144,13 @@ pub extend DesignSpacingTokens with Eq::{not_equal, equal}
 pub extend DesignSpacingTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignRadiusTokens {
   sm : Double
   md : Double
   lg : Double
   pill : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignRadiusTokens with Debug::{to_repr}
@@ -156,6 +162,7 @@ pub extend DesignRadiusTokens with Eq::{not_equal, equal}
 pub extend DesignRadiusTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignElevationTokens {
   sm : @core.ShadowStyle
   md : @core.ShadowStyle
@@ -166,7 +173,7 @@ pub(all) struct DesignElevationTokens {
   card : @core.ShadowStyle?
   flyout : @core.ShadowStyle?
   dialog : @core.ShadowStyle?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignElevationTokens with Debug::{to_repr}
@@ -178,12 +185,13 @@ pub extend DesignElevationTokens with Eq::{not_equal, equal}
 pub extend DesignElevationTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignMotionTokens {
   fast_ms : Double
   normal_ms : Double
   slow_ms : Double
   easing : @core.Easing
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignMotionTokens with Debug::{to_repr}
@@ -195,11 +203,12 @@ pub extend DesignMotionTokens with Eq::{not_equal, equal}
 pub extend DesignMotionTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSurfaceTokens {
   base : @core.Brush
   raised : @core.Brush
   overlay : @core.Brush
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSurfaceTokens with Debug::{to_repr}
@@ -211,6 +220,7 @@ pub extend DesignSurfaceTokens with Eq::{not_equal, equal}
 pub extend DesignSurfaceTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignStateLayerTokens {
   color : @core.Color
   hover_alpha : Double
@@ -219,7 +229,7 @@ pub(all) struct DesignStateLayerTokens {
   dragged_alpha : Double
   selected_alpha : Double
   disabled_alpha : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignStateLayerTokens with Debug::{to_repr}
@@ -231,6 +241,7 @@ pub extend DesignStateLayerTokens with Eq::{not_equal, equal}
 pub extend DesignStateLayerTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignControlStateTokens {
   foreground : @core.Color
   background : @core.Color
@@ -244,7 +255,7 @@ pub(all) struct DesignControlStateTokens {
   // Fluent 2 focus "reveal" paints an inner stroke inside the control frame.
   // `None` means no inner focus border (the neutral default).
   inner_focus_border : @core.Color?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignControlStateTokens with Debug::{to_repr}
@@ -258,11 +269,12 @@ pub extend DesignControlStateTokens with ToJson::{to_json}
 ///|
 /// TextField appearance tier. Fluent 2 ships an underline variant; the neutral
 /// default is `Outline` so existing presets keep their full-border behavior.
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignTextFieldAppearance {
   Filled
   Outline
   Underline
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTextFieldAppearance with Debug::{to_repr}
@@ -274,6 +286,7 @@ pub extend DesignTextFieldAppearance with Eq::{not_equal, equal}
 pub extend DesignTextFieldAppearance with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignButtonTokens {
   primary : DesignControlStateTokens
   tonal : DesignControlStateTokens
@@ -283,7 +296,7 @@ pub(all) struct DesignButtonTokens {
   // `ghost`/`tonal` so the shared builder keeps a uniform 4-variant surface.
   subtle : DesignControlStateTokens
   subtle_brand : DesignControlStateTokens
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignButtonTokens with Debug::{to_repr}
@@ -295,6 +308,7 @@ pub extend DesignButtonTokens with Eq::{not_equal, equal}
 pub extend DesignButtonTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTextFieldTokens {
   normal : DesignControlStateTokens
   focused : DesignControlStateTokens
@@ -304,7 +318,7 @@ pub(all) struct DesignTextFieldTokens {
   font : @core.FontSpec
   // Fluent 2 declares an underline appearance; neutral presets use `Outline`.
   appearance : DesignTextFieldAppearance
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTextFieldTokens with Debug::{to_repr}
@@ -316,6 +330,7 @@ pub extend DesignTextFieldTokens with Eq::{not_equal, equal}
 pub extend DesignTextFieldTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSurfaceComponentTokens {
   base_padding : Double
   raised_padding : Double
@@ -329,7 +344,7 @@ pub(all) struct DesignSurfaceComponentTokens {
   base_shadow : @core.ShadowStyle?
   raised_shadow : @core.ShadowStyle?
   overlay_shadow : @core.ShadowStyle?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSurfaceComponentTokens with Debug::{to_repr}
@@ -341,6 +356,7 @@ pub extend DesignSurfaceComponentTokens with Eq::{not_equal, equal}
 pub extend DesignSurfaceComponentTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignChoiceControlTokens {
   foreground : @core.Color
   selected_color : @core.Color
@@ -349,7 +365,7 @@ pub(all) struct DesignChoiceControlTokens {
   control_size : Double
   box_shape : @views.ChoiceControlShape
   check_style : @views.CheckMarkStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignChoiceControlTokens with Debug::{to_repr}
@@ -361,11 +377,12 @@ pub extend DesignChoiceControlTokens with Eq::{not_equal, equal}
 pub extend DesignChoiceControlTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignProgressTokens {
   foreground : @core.Color
   background : @core.Color
   radius : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignProgressTokens with Debug::{to_repr}
@@ -377,6 +394,7 @@ pub extend DesignProgressTokens with Eq::{not_equal, equal}
 pub extend DesignProgressTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSliderTokens {
   foreground : @core.Color
   background : @core.Color
@@ -385,7 +403,7 @@ pub(all) struct DesignSliderTokens {
   thumb_size : Double
   radius : Double
   thumb_shape : @views.ThumbShape
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSliderTokens with Debug::{to_repr}
@@ -397,13 +415,14 @@ pub extend DesignSliderTokens with Eq::{not_equal, equal}
 pub extend DesignSliderTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignPickerTokens {
   font : @core.FontSpec
   foreground : @core.Color
   background : @core.Brush
   radius : Double
   popup_max_height : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignPickerTokens with Debug::{to_repr}
@@ -415,11 +434,12 @@ pub extend DesignPickerTokens with Eq::{not_equal, equal}
 pub extend DesignPickerTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignToneTokens {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignToneTokens with Debug::{to_repr}
@@ -431,6 +451,7 @@ pub extend DesignToneTokens with Eq::{not_equal, equal}
 pub extend DesignToneTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignFeedbackTokens {
   neutral : DesignToneTokens
   info : DesignToneTokens
@@ -439,7 +460,7 @@ pub(all) struct DesignFeedbackTokens {
   danger : DesignToneTokens
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignFeedbackTokens with Debug::{to_repr}
@@ -451,6 +472,7 @@ pub extend DesignFeedbackTokens with Eq::{not_equal, equal}
 pub extend DesignFeedbackTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignBadgeTokens {
   neutral : DesignToneTokens
   accent : DesignToneTokens
@@ -459,7 +481,7 @@ pub(all) struct DesignBadgeTokens {
   danger : DesignToneTokens
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignBadgeTokens with Debug::{to_repr}
@@ -471,13 +493,14 @@ pub extend DesignBadgeTokens with Eq::{not_equal, equal}
 pub extend DesignBadgeTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignFormValidationTokens {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
   radius : Double
   padding : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignFormValidationTokens with Debug::{to_repr}
@@ -489,6 +512,7 @@ pub extend DesignFormValidationTokens with Eq::{not_equal, equal}
 pub extend DesignFormValidationTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignComponentTokens {
   button : DesignButtonTokens
   text_field : DesignTextFieldTokens
@@ -501,7 +525,7 @@ pub(all) struct DesignComponentTokens {
   feedback : DesignFeedbackTokens
   badge : DesignBadgeTokens
   form_validation : DesignFormValidationTokens
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignComponentTokens with Debug::{to_repr}
@@ -513,6 +537,7 @@ pub extend DesignComponentTokens with Eq::{not_equal, equal}
 pub extend DesignComponentTokens with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignButtonCoreStyles {
   primary : @views.ButtonStyle
   tonal : @views.ButtonStyle
@@ -520,7 +545,7 @@ pub(all) struct DesignButtonCoreStyles {
   ghost : @views.ButtonStyle
   subtle : @views.ButtonStyle
   subtle_brand : @views.ButtonStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignButtonCoreStyles with Debug::{to_repr}
@@ -532,11 +557,12 @@ pub extend DesignButtonCoreStyles with Eq::{not_equal, equal}
 pub extend DesignButtonCoreStyles with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTextFieldCoreStyles {
   filled : @views.TextFieldStyle
   outline : @views.TextFieldStyle
   plain : @views.TextFieldStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTextFieldCoreStyles with Debug::{to_repr}
@@ -548,11 +574,12 @@ pub extend DesignTextFieldCoreStyles with Eq::{not_equal, equal}
 pub extend DesignTextFieldCoreStyles with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSurfaceCoreStyles {
   base : @views.SurfaceStyle
   raised : @views.SurfaceStyle
   overlay : @views.SurfaceStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSurfaceCoreStyles with Debug::{to_repr}
@@ -564,6 +591,7 @@ pub extend DesignSurfaceCoreStyles with Eq::{not_equal, equal}
 pub extend DesignSurfaceCoreStyles with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
   text_field : DesignTextFieldCoreStyles
@@ -576,7 +604,7 @@ pub(all) struct DesignCoreComponentStyles {
   feedback : @views.FeedbackStyle
   badge : @views.BadgeStyle
   form_validation : @views.FormValidationStyle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignCoreComponentStyles with Debug::{to_repr}
@@ -588,6 +616,7 @@ pub extend DesignCoreComponentStyles with Eq::{not_equal, equal}
 pub extend DesignCoreComponentStyles with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSystemTokens {
   preset : DesignPreset
   scheme : @core.ColorScheme
@@ -603,7 +632,7 @@ pub(all) struct DesignSystemTokens {
   surfaces : DesignSurfaceTokens
   state_layer : DesignStateLayerTokens
   components : DesignComponentTokens
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSystemTokens with Debug::{to_repr}

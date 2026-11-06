@@ -1,4 +1,5 @@
 ///|
+#derive(Debug)
 pub struct SunPixelFrame {
   priv width : Int32
   priv height : Int32
@@ -6,7 +7,7 @@ pub struct SunPixelFrame {
   priv scale_factor : Double
   priv pixels : FixedArray[Byte]
   priv bytes : Bytes
-} derive(Debug)
+}
 
 ///|
 pub extend SunPixelFrame with Debug::{to_repr}
@@ -18,10 +19,11 @@ pub struct SunPresentTarget {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SunUnsupportedCommandDiagnostic {
   priv command : String
   priv reason : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SunUnsupportedCommandDiagnostic with Debug::{to_repr}

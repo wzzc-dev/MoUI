@@ -75,11 +75,13 @@ MoUI is ready for a preview handoff when the repository can demonstrate:
 | Examples | Showcase remains the default runnable doc; new user-facing framework features have visible Showcase coverage or a recorded reason to skip it. Design Systems is addon diagnostic coverage isolated in the dedicated `moui_theme` preview example. | Mainline app package tests plus Showcase Web wasm-gc builds; `sh scripts/check.sh --profile theme` for addon checks |
 | Guidance freshness | Docs, `AGENTS.md`, and repo-local skills agree after guidance-affecting changes. The guidance-consistency guard is implemented as the MoonBit tool at `tools/moui/validate_guidance_consistency`; run it directly with `moon run tools/moui/validate_guidance_consistency --target native`, plus manual audit notes in the handoff. |  |
 
-The 0.2 module release order, when a release is explicitly authorized, is:
-base and bindings; Skia/Web/WGPU/Sun renderer modules; addons and agent; then
-agent MCP and CLI. `checks/release-modules.json` is the canonical
-directory/stage catalog. Matching versions are only a 0.2 migration-release
-condition; later module releases are independent.
+The 0.3.x synchronized module release order, when a release is explicitly
+authorized, is: base and bindings (`moui`, `moui_skia`, `moui_sun`, `moui_tui`,
+`moui_text_providers`); the six renderer modules; the twelve addon modules; then
+the `moui_agent_mcp` and `moui_cli` entrypoints. `checks/release-modules.json`
+is the canonical directory/stage catalog, and
+[ADR 0055](decisions/0055-synchronized-release-line.md) owns the synchronized
+line policy.
 
 ## Current Evidence Snapshot
 

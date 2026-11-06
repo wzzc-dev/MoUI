@@ -6,7 +6,8 @@ package "wzzc-dev/moui_tests/reconciliation_benchmark/native"
 // Errors
 
 // Types and methods
-type BenchCompositeKey derive(Eq, Hash)
+#derive(Eq, Hash)
+type BenchCompositeKey
 
 type BenchItem
 

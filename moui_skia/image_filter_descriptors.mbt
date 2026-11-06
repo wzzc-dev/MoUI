@@ -1,8 +1,9 @@
 ///|
 /// Portable image-filter recipes that can be mapped to native Skia filters.
+#derive(Debug, Eq)
 pub(all) enum ImageFilterDescriptor {
   BlurImageFilter(Float, Float)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ImageFilterDescriptor with Debug::{to_repr}

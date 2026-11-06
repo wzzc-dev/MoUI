@@ -1,8 +1,9 @@
 ///|
 /// Window-hosted native surface handle.
+#derive(Eq, Debug, ToJson)
 pub(all) struct IosSurfaceHandle {
   raw : UInt64
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend IosSurfaceHandle with Debug::{to_repr}
@@ -29,6 +30,7 @@ pub fn IosSurfaceHandle::raw(self : IosSurfaceHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct IosBackendCapabilities {
   embedded_view : Bool
   external_event_loop : Bool
@@ -42,7 +44,7 @@ pub(all) struct IosBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend IosBackendCapabilities with Debug::{to_repr}
@@ -61,12 +63,13 @@ pub extend IosBackendCapabilities with ToJson::{to_json}
 ///
 /// `status` is a coarse evidence class: `experimental` until window-hosted
 /// matching-simulator smoke and presenter verification close gaps.
+#derive(Eq, Debug, ToJson)
 pub(all) struct IosBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend IosBackendReadiness with Debug::{to_repr}
@@ -78,6 +81,7 @@ pub extend IosBackendReadiness with Eq::{not_equal, equal}
 pub extend IosBackendReadiness with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct IosBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : IosBackendCapabilities
@@ -85,7 +89,7 @@ pub(all) struct IosBackendInfo {
   input : @host.HostInputCapabilities
   readiness : IosBackendReadiness
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend IosBackendInfo with Debug::{to_repr}

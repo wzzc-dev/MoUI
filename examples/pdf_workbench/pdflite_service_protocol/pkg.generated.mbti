@@ -21,10 +21,11 @@ pub fn PdfWorkbenchPdfliteServiceHandler::document_services(Self) -> @app.PdfWor
 pub fn PdfWorkbenchPdfliteServiceHandler::handle_request(Self, PdfWorkbenchPdfliteServiceRequest) -> PdfWorkbenchPdfliteServiceResponse
 pub fn PdfWorkbenchPdfliteServiceHandler::new(handle~ : (PdfWorkbenchPdfliteServiceRequest) -> PdfWorkbenchPdfliteServiceResponse) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PdfWorkbenchPdfliteServiceRequest {
   LoadDocument(String, Bytes)
   WritebackDocument(String, Bytes, Array[@app.PdfWorkbenchEdit])
-} derive(Eq, @debug.Debug)
+}
 pub fn PdfWorkbenchPdfliteServiceRequest::equal(Self, Self) -> Bool
 pub fn PdfWorkbenchPdfliteServiceRequest::from_json_line(String) -> Self?
 pub fn PdfWorkbenchPdfliteServiceRequest::not_equal(Self, Self) -> Bool

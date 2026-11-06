@@ -1,11 +1,12 @@
 ///|
 /// 2D rectangle defined by origin and size
+#derive(Eq, Debug)
 pub struct Rect {
   x : Double
   y : Double
   width : Double
   height : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Rect with Debug::{to_repr}
@@ -67,10 +68,11 @@ pub fn Rect::contains(self : Rect, px : Double, py : Double) -> Bool {
 
 ///|
 /// 2D size (width and height)
+#derive(Eq, Debug)
 pub struct Size {
   width : Double
   height : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Size with Debug::{to_repr}

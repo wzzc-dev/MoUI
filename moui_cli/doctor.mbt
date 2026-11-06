@@ -1,10 +1,11 @@
 ///|
+#derive(Eq)
 priv enum DoctorStatus {
   Pass
   Warn
   Fail
   Skip
-} derive(Eq)
+}
 
 ///|
 fn DoctorStatus::name(self : DoctorStatus) -> String {

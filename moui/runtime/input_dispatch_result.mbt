@@ -2,11 +2,12 @@
 /// Result returned to an input host immediately after a pointer event has
 /// reached the runtime tree. Hosts use this to decide browser default behavior
 /// and native pointer capture; application views remain unaware of the host.
+#derive(Eq, Debug, ToJson)
 pub struct InputDispatchResult {
   handled : Bool
   capture_pointer : Bool
   release_pointer : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend InputDispatchResult with Debug::{to_repr}

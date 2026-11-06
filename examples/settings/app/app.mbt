@@ -66,6 +66,7 @@ pub(all) struct SettingsModel {
 ///|
 /// Flat wire format for saveable persistence; deliberately independent of
 /// the section split so stored snapshots stay stable across refactors.
+#derive(Eq, Debug)
 pub struct SettingsSnapshot {
   selected_section : String
   display_name : String
@@ -75,7 +76,7 @@ pub struct SettingsSnapshot {
   notifications : Bool
   telemetry : Bool
   saved_label : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SettingsSnapshot with Debug::{to_repr}

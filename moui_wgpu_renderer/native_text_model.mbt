@@ -37,10 +37,11 @@ let atlas_height : Int32 = 1024
 let atlas_padding : Int32 = 1
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum NativeTextEngineSetting {
   MoonCosmic
   PlatformDefault
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend NativeTextEngineSetting with Debug::{to_repr}

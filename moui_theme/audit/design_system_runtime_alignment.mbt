@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignRuntimeTokenAlignmentRecord {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -16,7 +17,7 @@ pub(all) struct DesignRuntimeTokenAlignmentRecord {
   runtime_aligned : Bool
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignRuntimeTokenAlignmentRecord with Debug::{to_repr}
@@ -171,10 +172,11 @@ fn runtime_alignment_note(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 struct RuntimeTokenValue {
   available : Bool
   value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RuntimeTokenValue with Debug::{to_repr}

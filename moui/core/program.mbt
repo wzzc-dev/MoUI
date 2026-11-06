@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 struct EffectDescriptor {
   key : String
   kind : String
   label : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectDescriptor with Debug::{to_repr}

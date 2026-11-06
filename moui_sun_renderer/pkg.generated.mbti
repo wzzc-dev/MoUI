@@ -3,6 +3,7 @@ package "wzzc-dev/moui_sun_renderer"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common",
@@ -35,27 +36,29 @@ pub fn sun_image_load_completion_from_bytes(String, Bytes, background_io? : Bool
 pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor
 
 // Errors
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) suberror SunRendererError {
   InvalidSurfaceSize(Int32, Int32)
   PresentFailed(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunRendererError::equal(Self, Self) -> Bool
 pub fn SunRendererError::message(Self) -> String
 pub fn SunRendererError::not_equal(Self, Self) -> Bool
-pub fn SunRendererError::to_json(Self) -> Json
+pub fn SunRendererError::to_json(Self) -> @json.Json
 pub fn SunRendererError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunCachedLayerAdmissionDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunCachedLayerAdmissionDiagnostic::churn_without_hit(Self) -> Bool
 pub fn SunCachedLayerAdmissionDiagnostic::equal(Self, Self) -> Bool
 pub fn SunCachedLayerAdmissionDiagnostic::hit_count(Self) -> Int32
 pub fn SunCachedLayerAdmissionDiagnostic::identity_key(Self) -> String
 pub fn SunCachedLayerAdmissionDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SunCachedLayerAdmissionDiagnostic::skip_reason(Self) -> String
-pub fn SunCachedLayerAdmissionDiagnostic::to_json(Self) -> Json
+pub fn SunCachedLayerAdmissionDiagnostic::to_json(Self) -> @json.Json
 pub fn SunCachedLayerAdmissionDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SunCachedLayerAdmissionDiagnostic::update_streak(Self) -> Int32
 
@@ -67,9 +70,10 @@ pub struct SunCachedLayerAdmissionRecord {
   mut last_revision : Int32
 }
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunCachedLayerDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunCachedLayerDiagnostic::admission_record_count(Self) -> Int32
 pub fn SunCachedLayerDiagnostic::admission_records(Self) -> Array[SunCachedLayerAdmissionDiagnostic]
 pub fn SunCachedLayerDiagnostic::cache_ready(Self) -> Bool
@@ -80,16 +84,17 @@ pub fn SunCachedLayerDiagnostic::equal(Self, Self) -> Bool
 pub fn SunCachedLayerDiagnostic::max_cached_layer_count(Self) -> Int32
 pub fn SunCachedLayerDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SunCachedLayerDiagnostic::summary(Self) -> String
-pub fn SunCachedLayerDiagnostic::to_json(Self) -> Json
+pub fn SunCachedLayerDiagnostic::to_json(Self) -> @json.Json
 pub fn SunCachedLayerDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SunCachedLayerDiagnostic::total_evict_count(Self) -> Int32
 pub fn SunCachedLayerDiagnostic::total_hit_count(Self) -> Int32
 pub fn SunCachedLayerDiagnostic::total_miss_count(Self) -> Int32
 pub fn SunCachedLayerDiagnostic::total_update_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunEmojiFontFallbackDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunEmojiFontFallbackDiagnostic::cluster_count(Self) -> Int32
 pub fn SunEmojiFontFallbackDiagnostic::covered_char_count(Self) -> Int32
 pub fn SunEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(Self) -> Bool
@@ -124,12 +129,13 @@ pub fn SunEmojiFontFallbackDiagnostic::span_count(Self) -> Int32
 pub fn SunEmojiFontFallbackDiagnostic::summary(Self) -> String
 pub fn SunEmojiFontFallbackDiagnostic::text(Self) -> String
 pub fn SunEmojiFontFallbackDiagnostic::text_system_id(Self) -> String
-pub fn SunEmojiFontFallbackDiagnostic::to_json(Self) -> Json
+pub fn SunEmojiFontFallbackDiagnostic::to_json(Self) -> @json.Json
 pub fn SunEmojiFontFallbackDiagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct SunPixelFrame {
   // private fields
-} derive(@debug.Debug)
+}
 pub fn SunPixelFrame::bytes(Self) -> Bytes
 pub fn SunPixelFrame::height(Self) -> Int32
 pub fn SunPixelFrame::pixels(Self) -> FixedArray[Byte]
@@ -196,9 +202,10 @@ pub fn SunRasterRenderer::to_renderer_session(Self, image_source? : @render.Host
 pub fn SunRasterRenderer::unsupported_command_count(Self) -> Int32
 pub fn SunRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SunUnsupportedCommandDiagnostic]
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunTextMaturityDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunTextMaturityDiagnostic::bidi_visual_order_ready(Self) -> Bool
 pub fn SunTextMaturityDiagnostic::color_emoji_ready(Self) -> Bool
 pub fn SunTextMaturityDiagnostic::equal(Self, Self) -> Bool
@@ -216,13 +223,14 @@ pub fn SunTextMaturityDiagnostic::selection_rect_count(Self) -> Int32
 pub fn SunTextMaturityDiagnostic::selection_rects_ready(Self) -> Bool
 pub fn SunTextMaturityDiagnostic::summary(Self) -> String
 pub fn SunTextMaturityDiagnostic::text_system_id(Self) -> String
-pub fn SunTextMaturityDiagnostic::to_json(Self) -> Json
+pub fn SunTextMaturityDiagnostic::to_json(Self) -> @json.Json
 pub fn SunTextMaturityDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SunTextMaturityDiagnostic::unicode_17_grapheme_boundary_ready(Self) -> Bool
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunTextSelectionGeometryDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunTextSelectionGeometryDiagnostic::bidi_visual_order_observed(Self) -> Bool
 pub fn SunTextSelectionGeometryDiagnostic::bidi_visual_order_ready(Self) -> Bool
 pub fn SunTextSelectionGeometryDiagnostic::equal(Self, Self) -> Bool
@@ -235,14 +243,15 @@ pub fn SunTextSelectionGeometryDiagnostic::selected_line_count(Self) -> Int32
 pub fn SunTextSelectionGeometryDiagnostic::selection_range(Self) -> @core.TextRange
 pub fn SunTextSelectionGeometryDiagnostic::selection_rect_count(Self) -> Int32
 pub fn SunTextSelectionGeometryDiagnostic::text(Self) -> String
-pub fn SunTextSelectionGeometryDiagnostic::to_json(Self) -> Json
+pub fn SunTextSelectionGeometryDiagnostic::to_json(Self) -> @json.Json
 pub fn SunTextSelectionGeometryDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SunTextSelectionGeometryDiagnostic::visual_order_differs(Self) -> Bool
 pub fn SunTextSelectionGeometryDiagnostic::visual_segment_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunTextVisualOrderDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunTextVisualOrderDiagnostic::bidi_visual_order_ready(Self) -> Bool
 pub fn SunTextVisualOrderDiagnostic::equal(Self, Self) -> Bool
 pub fn SunTextVisualOrderDiagnostic::glyph_count(Self) -> Int32
@@ -250,21 +259,22 @@ pub fn SunTextVisualOrderDiagnostic::logical_cluster_count(Self) -> Int32
 pub fn SunTextVisualOrderDiagnostic::logical_text(Self) -> String
 pub fn SunTextVisualOrderDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SunTextVisualOrderDiagnostic::segment_count(Self) -> Int32
-pub fn SunTextVisualOrderDiagnostic::to_json(Self) -> Json
+pub fn SunTextVisualOrderDiagnostic::to_json(Self) -> @json.Json
 pub fn SunTextVisualOrderDiagnostic::to_repr(Self) -> @debug.Repr
 pub fn SunTextVisualOrderDiagnostic::visual_cluster_count(Self) -> Int32
 pub fn SunTextVisualOrderDiagnostic::visual_order_differs(Self) -> Bool
 pub fn SunTextVisualOrderDiagnostic::visual_text(Self) -> String
 pub fn SunTextVisualOrderDiagnostic::width(Self) -> Double
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SunUnsupportedCommandDiagnostic {
   // private fields
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SunUnsupportedCommandDiagnostic::command(Self) -> String
 pub fn SunUnsupportedCommandDiagnostic::equal(Self, Self) -> Bool
 pub fn SunUnsupportedCommandDiagnostic::not_equal(Self, Self) -> Bool
 pub fn SunUnsupportedCommandDiagnostic::reason(Self) -> String
-pub fn SunUnsupportedCommandDiagnostic::to_json(Self) -> Json
+pub fn SunUnsupportedCommandDiagnostic::to_json(Self) -> @json.Json
 pub fn SunUnsupportedCommandDiagnostic::to_repr(Self) -> @debug.Repr
 
 // Type aliases

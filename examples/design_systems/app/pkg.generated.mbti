@@ -3,6 +3,7 @@ package "examples/design_systems/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui_theme/common",
 }
@@ -17,16 +18,17 @@ pub fn view(DesignSystemsModel) -> @core.View[DesignSystemsMsg]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum DesignSystemChoice {
   Material
   Carbon
   Primer
   Fluent
   Sickle
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DesignSystemChoice::equal(Self, Self) -> Bool
 pub fn DesignSystemChoice::not_equal(Self, Self) -> Bool
-pub fn DesignSystemChoice::to_json(Self) -> Json
+pub fn DesignSystemChoice::to_json(Self) -> @json.Json
 pub fn DesignSystemChoice::to_repr(Self) -> @debug.Repr
 
 pub struct DesignSystemsApp {

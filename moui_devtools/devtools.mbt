@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SnapshotSummary {
   width : Double
   height : Double
@@ -9,7 +10,7 @@ pub(all) struct SnapshotSummary {
   semantics_node_count : Int32
   active_effect_task_count : Int32
   active_subscription_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SnapshotSummary with Debug::{to_repr}
@@ -24,13 +25,14 @@ pub extend SnapshotSummary with ToJson::{to_json}
 /// A structured Inspector view for DevTools clients. The runtime owns the
 /// detailed tree snapshots; this report keeps the five sections together so a
 /// tool can inspect one section without parsing a large summary string.
+#derive(Eq, Debug, ToJson)
 pub(all) struct InspectorReport {
   runtime : @runtime.RuntimeInspectorSnapshot
   view_tree : @runtime.ViewTreeInspectorSnapshot
   layout : @runtime.LayoutInspectorSnapshot
   render : @runtime.RenderInspectorSnapshot
   semantics : @runtime.SemanticsInspectorSnapshot
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend InspectorReport with Debug::{to_repr}

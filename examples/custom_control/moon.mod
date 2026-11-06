@@ -5,5 +5,5 @@ version = "0.1.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.3.0",
+  "wzzc-dev/moui@0.3.2",
 }

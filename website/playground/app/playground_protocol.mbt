@@ -1,8 +1,9 @@
 ///|
+#derive(ToJson, FromJson)
 pub(all) struct CompileFile {
   path : String
   source : String
-} derive(ToJson, FromJson)
+}
 
 ///|
 pub extend CompileFile with @moonbitlang/core/json.FromJson::{from_json}
@@ -11,11 +12,12 @@ pub extend CompileFile with @moonbitlang/core/json.FromJson::{from_json}
 pub extend CompileFile with ToJson::{to_json}
 
 ///|
+#derive(ToJson, FromJson)
 pub(all) struct CompileRequest {
   revision : Int32
   files : Array[CompileFile]
   lesson_id : String
-} derive(ToJson, FromJson)
+}
 
 ///|
 pub extend CompileRequest with @moonbitlang/core/json.FromJson::{from_json}
@@ -24,11 +26,12 @@ pub extend CompileRequest with @moonbitlang/core/json.FromJson::{from_json}
 pub extend CompileRequest with ToJson::{to_json}
 
 ///|
+#derive(ToJson, FromJson)
 pub(all) struct PlaygroundProject {
   schema_version : Int32
   files : Array[CompileFile]
   lesson_id : String
-} derive(ToJson, FromJson)
+}
 
 ///|
 pub extend PlaygroundProject with @moonbitlang/core/json.FromJson::{from_json}
@@ -37,11 +40,12 @@ pub extend PlaygroundProject with @moonbitlang/core/json.FromJson::{from_json}
 pub extend PlaygroundProject with ToJson::{to_json}
 
 ///|
+#derive(Eq, ToJson, FromJson)
 pub(all) enum CompileStatus {
   Success
   Failed
   Unavailable
-} derive(Eq, ToJson, FromJson)
+}
 
 ///|
 pub extend CompileStatus with @moonbitlang/core/json.FromJson::{from_json}
@@ -53,6 +57,7 @@ pub extend CompileStatus with Eq::{not_equal, equal}
 pub extend CompileStatus with ToJson::{to_json}
 
 ///|
+#derive(ToJson, FromJson)
 pub(all) struct CompileDiagnostic {
   severity : String
   message : String
@@ -61,7 +66,7 @@ pub(all) struct CompileDiagnostic {
   column : Int32
   end_line : Int32
   end_column : Int32
-} derive(ToJson, FromJson)
+}
 
 ///|
 pub extend CompileDiagnostic with @moonbitlang/core/json.FromJson::{from_json}
@@ -70,11 +75,12 @@ pub extend CompileDiagnostic with @moonbitlang/core/json.FromJson::{from_json}
 pub extend CompileDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(ToJson, FromJson)
 pub(all) struct CompileResult {
   revision : Int32
   status : CompileStatus
   diagnostics : Array[CompileDiagnostic]
-} derive(ToJson, FromJson)
+}
 
 ///|
 pub extend CompileResult with @moonbitlang/core/json.FromJson::{from_json}

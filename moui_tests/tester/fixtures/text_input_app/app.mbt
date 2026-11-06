@@ -2,9 +2,10 @@
 using @views {column, text, text_field}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextInputSmokeModel {
   value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextInputSmokeModel with Debug::{to_repr}
@@ -16,9 +17,10 @@ pub extend TextInputSmokeModel with Eq::{not_equal, equal}
 pub extend TextInputSmokeModel with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum TextInputSmokeMsg {
   ValueChanged(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextInputSmokeMsg with Debug::{to_repr}

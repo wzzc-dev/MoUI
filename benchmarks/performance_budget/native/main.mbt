@@ -54,11 +54,12 @@ struct LeafMemoCounters {
 }
 
 ///|
+#derive(Eq)
 priv enum LeafConstructionMode {
   Direct
   Memo
   BuilderCache
-} derive(Eq)
+}
 
 ///|
 fn LeafConstructionMode::label(self : LeafConstructionMode) -> String {

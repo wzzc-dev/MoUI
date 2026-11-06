@@ -1,8 +1,9 @@
 ///|
+#derive(Eq)
 pub(all) struct ViewIdentity {
   kind : String
   key : Key?
-} derive(Eq)
+}
 
 ///|
 pub extend ViewIdentity with Eq::{not_equal, equal}
@@ -30,6 +31,7 @@ pub fn ViewLayoutContext::effective_theme(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
@@ -49,7 +51,7 @@ pub(all) struct ViewLayoutResult {
   /// tight constraints derived from that frame, so internal layout wraps to
   /// the extent the child actually occupies (ADR 0035).
   child_frames_tight : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ViewLayoutResult with Debug::{to_repr}
@@ -64,10 +66,11 @@ pub extend ViewLayoutResult with ToJson::{to_json}
 /// Recursive layout tree produced by the layout pass. Unlike
 /// `ViewLayoutResult` (a single node's measured size + child frames),
 /// `LayoutResult` is the fully-nested tree emitted by `AppRuntime::layout`.
+#derive(Eq, Debug, ToJson)
 pub(all) struct LayoutResult {
   frame : Rect
   children : Array[LayoutResult]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LayoutResult with Debug::{to_repr}
@@ -139,6 +142,7 @@ pub(all) struct ViewPlatformContext {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ViewPaintPlan {
   commands : Array[DrawCommand]
   child_layers : Array[ViewPaintLayer]
@@ -150,7 +154,7 @@ pub(all) struct ViewPaintPlan {
   /// The runtime folds this across the painted tree to decide whether to keep
   /// ticking. Controls that hard-cut between states leave this false.
   animating : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewPaintPlan with Debug::{to_repr}
@@ -159,13 +163,14 @@ pub extend ViewPaintPlan with Debug::{to_repr}
 pub extend ViewPaintPlan with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ViewPaintLayer {
   frame : Rect
   cache_key : String
   content_revision : Int32
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewPaintLayer with Debug::{to_repr}
@@ -203,12 +208,13 @@ pub fn ViewEventContext::effective_theme(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ViewDirtyHint {
   ViewClean
   ViewPaintDirty
   ViewLayoutDirty
   ViewBuildDirty
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewDirtyHint with Debug::{to_repr}
@@ -217,6 +223,7 @@ pub extend ViewDirtyHint with Debug::{to_repr}
 pub extend ViewDirtyHint with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ViewEventResult[Msg] {
   changed : Bool
   activated : Bool
@@ -226,7 +233,7 @@ pub(all) struct ViewEventResult[Msg] {
   text_control : TextControlStateContext?
   dirty : ViewDirtyHint
   messages : Array[Msg]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewEventResult with Debug::{to_repr}
@@ -235,11 +242,12 @@ pub extend ViewEventResult with Debug::{to_repr}
 pub extend ViewEventResult with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ViewTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewTextCommandResult with Debug::{to_repr}
@@ -248,6 +256,7 @@ pub extend ViewTextCommandResult with Debug::{to_repr}
 pub extend ViewTextCommandResult with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ViewSemanticsInfo {
   composition : SemanticsComposition
   semantic_id : SemanticId?
@@ -275,7 +284,7 @@ pub(all) struct ViewSemanticsInfo {
   relations : SemanticsRelationsDeclaration?
   live : SemanticsLive?
   live_atomic : Bool?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ViewSemanticsInfo with Debug::{to_repr}
@@ -287,6 +296,7 @@ pub extend ViewSemanticsInfo with Eq::{not_equal, equal}
 pub extend ViewSemanticsInfo with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ViewStateContext {
   focused : Bool
   hovered : Bool
@@ -296,7 +306,7 @@ pub(all) struct ViewStateContext {
   expanded : Bool
   disabled : Bool
   slots : ViewStateSlots
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewStateContext with Debug::{to_repr}
@@ -305,6 +315,7 @@ pub extend ViewStateContext with Debug::{to_repr}
 pub extend ViewStateContext with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextControlStateContext {
   caret : Int32
   selection : TextRange?
@@ -324,7 +335,7 @@ pub(all) struct TextControlStateContext {
   /// 表面坐标下希望被最近滚动祖先露出的矩形（caret 或选区）。运行时在
   /// 事件后的那一帧消费它并清回 None，所以视图只在 caret/选区变化时填写。
   reveal : Rect?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextControlStateContext with Debug::{to_repr}

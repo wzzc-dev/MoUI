@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WebBackendInfo {
   host_info : @host.HostAppInfo
   uses_window_web_backend : Bool
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebBackendInfo with Debug::{to_repr}

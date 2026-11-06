@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum MarkdownBlockKind {
   Heading(Int32)
   Paragraph
@@ -12,7 +13,7 @@ pub(all) enum MarkdownBlockKind {
   FootnoteDefinition(String)
   HtmlBlock
   FrontMatter
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownBlockKind with Debug::{to_repr}
@@ -24,13 +25,14 @@ pub extend MarkdownBlockKind with Eq::{not_equal, equal}
 pub extend MarkdownBlockKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
   inlines : Array[MarkdownInline]
   table_alignments : Array[@core.TextAlign?]
   code_language : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownBlock with Debug::{to_repr}
@@ -186,10 +188,11 @@ fn parse_markdown_uncached(text : String) -> Array[MarkdownBlock] {
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownHtmlBlockParseResult {
   block : MarkdownBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownHtmlBlockParseResult with Debug::{to_repr}
@@ -611,10 +614,11 @@ fn markdown_html_block_line_comment_end(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownSetextHeadingParseResult {
   block : MarkdownBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownSetextHeadingParseResult with Debug::{to_repr}
@@ -723,10 +727,11 @@ fn markdown_setext_underline_level(line : String) -> Int32? {
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownIndentedCodeParseResult {
   block : MarkdownBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownIndentedCodeParseResult with Debug::{to_repr}
@@ -841,10 +846,11 @@ fn markdown_min_int(a : Int32, b : Int32) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownParagraphParseResult {
   block : MarkdownBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownParagraphParseResult with Debug::{to_repr}

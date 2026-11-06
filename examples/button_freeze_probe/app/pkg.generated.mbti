@@ -3,6 +3,7 @@ package "examples/button_freeze_probe/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
@@ -27,6 +28,7 @@ pub struct Model {
 }
 pub fn Model::new() -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum Msg {
   QueryChanged(String)
   ToggleActive
@@ -35,10 +37,10 @@ pub(all) enum Msg {
   ClearFilters
   PrimaryPulse
   TonalPulse
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn Msg::equal(Self, Self) -> Bool
 pub fn Msg::not_equal(Self, Self) -> Bool
-pub fn Msg::to_json(Self) -> Json
+pub fn Msg::to_json(Self) -> @json.Json
 pub fn Msg::to_repr(Self) -> @debug.Repr
 
 // Type aliases

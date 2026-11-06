@@ -13,13 +13,14 @@
 
 ///|
 /// One place in the scene. Rects are in scenario-map logical pixels.
+#derive(Eq, Debug)
 pub struct ScenarioLocation {
   id : String
   name : String
   /// What the model is told about this place.
   description : String
   rect : @geometry.Rect
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ScenarioLocation with Debug::{to_repr}
@@ -64,6 +65,7 @@ pub fn ScenarioLocation::rect(self : ScenarioLocation) -> @geometry.Rect {
 /// the creator form, the Markdown card, and the prompt each need them
 /// separately: who the player *is* in the story, what the character *calls*
 /// them, and the line the relationship does not cross.
+#derive(Eq, Debug)
 pub struct Relationship {
   /// Who the player is in the story (e.g. 徒弟 / 过街老鼠).
   user_identity : String
@@ -71,7 +73,7 @@ pub struct Relationship {
   user_name : String
   /// The line the relationship does not cross (e.g. 不过问身世).
   boundary : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Relationship with Debug::{to_repr}
@@ -109,13 +111,14 @@ pub fn Relationship::boundary(self : Relationship) -> String {
 ///|
 /// The flavour of a scene's atmosphere: it picks the accent colour of the
 /// scene header and tints the ambient map. It never changes the text.
+#derive(Eq, Debug)
 pub(all) enum MoodVariant {
   Calm
   Tense
   Warm
   Cold
   Mysterious
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MoodVariant with Debug::{to_repr}
@@ -153,11 +156,12 @@ pub fn mood_from_wire(text : String) -> MoodVariant {
 /// The world carries a default; each conversation may override it (a night
 /// that turns into dawn). The title is the *visible* half of the atmosphere
 /// contract — the prompt gets the same string the header shows.
+#derive(Eq, Debug)
 pub struct SceneMood {
   title : String
   time_label : String
   variant : MoodVariant
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SceneMood with Debug::{to_repr}
@@ -193,6 +197,7 @@ pub fn SceneMood::variant(self : SceneMood) -> MoodVariant {
 /// ③ voice & example lines, ④ the relationship with the player, ⑤ the
 /// current situation & opening, ⑥ hidden info & memory rules. `goal` and
 /// `secret` ride along; `location`/`point`/`color` serve the ambient map.
+#derive(Eq, Debug)
 pub struct CharacterCard {
   id : String
   name : String
@@ -242,7 +247,7 @@ pub struct CharacterCard {
   point : @geometry.Point
   /// Colour used for their map marker.
   color : @graphics.Color
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CharacterCard with Debug::{to_repr}
@@ -388,6 +393,7 @@ pub fn CharacterCard::color(self : CharacterCard) -> @graphics.Color {
 /// content is injected into the prompt. This is the SillyTavern "world info"
 /// mechanism, and it is how a scenario stays small while still reacting to what
 /// the player actually says.
+#derive(Eq, Debug)
 pub struct WorldEntry {
   /// Trigger keywords, matched case-insensitively as substrings.
   keys : Array[String]
@@ -408,15 +414,16 @@ pub struct WorldEntry {
   /// always. Below 100 lets a world keep a fact occasional so it stays fresh;
   /// the roll is deterministic per (entry, turn) so a retry is reproducible.
   probability : Int32
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum LorePosition {
   /// Top of the system prompt, before the persona (world rules).
   Before
   /// Just before the conversation history (scene facts).
   After
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LorePosition with Debug::{to_repr}
@@ -510,6 +517,7 @@ pub fn WorldEntry::content(self : WorldEntry) -> String {
 
 ///|
 /// A whole world.
+#derive(Eq, Debug)
 pub struct Scenario {
   id : String
   name : String
@@ -524,7 +532,7 @@ pub struct Scenario {
   /// The world's default scene atmosphere (title, time, mood). A
   /// conversation may override it; the header always shows one.
   mood : SceneMood
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Scenario with Debug::{to_repr}

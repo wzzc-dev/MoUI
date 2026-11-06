@@ -23,10 +23,11 @@
 
 ///|
 /// One staged part of the next turn.
+#derive(Eq, Debug)
 pub(all) struct ComposerPart {
   intent : InputIntent
   text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ComposerPart with Debug::{to_repr}

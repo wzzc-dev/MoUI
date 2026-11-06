@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SvgImportResult {
   priv commands : Array[@core.DrawCommand]
   priv diagnostics : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SvgImportResult with Debug::{to_repr}

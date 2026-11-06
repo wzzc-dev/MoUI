@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowId {
   value : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowId with Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend WindowId with Eq::{not_equal, equal}
 pub extend WindowId with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WindowLifecyclePhase {
   WindowCreated
   WindowVisible
@@ -20,7 +22,7 @@ pub(all) enum WindowLifecyclePhase {
   WindowMinimized
   WindowCloseRequested
   WindowClosed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowLifecyclePhase with Debug::{to_repr}
@@ -32,10 +34,11 @@ pub extend WindowLifecyclePhase with Eq::{not_equal, equal}
 pub extend WindowLifecyclePhase with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowScene {
   scene_id : String
   payload : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowScene with Debug::{to_repr}
@@ -47,6 +50,7 @@ pub extend WindowScene with Eq::{not_equal, equal}
 pub extend WindowScene with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowRecord {
   id : WindowId
   title : String
@@ -54,7 +58,7 @@ pub(all) struct WindowRecord {
   metrics : @core.SurfaceMetrics
   phase : WindowLifecyclePhase
   primary : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowRecord with Debug::{to_repr}
@@ -66,12 +70,13 @@ pub extend WindowRecord with Eq::{not_equal, equal}
 pub extend WindowRecord with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowOpenRequest {
   title : String
   scene : WindowScene
   metrics : @core.SurfaceMetrics
   primary : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowOpenRequest with Debug::{to_repr}
@@ -83,6 +88,7 @@ pub extend WindowOpenRequest with Eq::{not_equal, equal}
 pub extend WindowOpenRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WindowRequest {
   OpenWindow(WindowOpenRequest)
   FocusWindow(WindowId)
@@ -91,7 +97,7 @@ pub(all) enum WindowRequest {
   MinimizeWindow(WindowId)
   ShowWindow(WindowId)
   SetPrimaryWindow(WindowId)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowRequest with Debug::{to_repr}
@@ -103,11 +109,12 @@ pub extend WindowRequest with Eq::{not_equal, equal}
 pub extend WindowRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum WindowRequestResult {
   WindowOpened(WindowId)
   WindowUpdated(WindowId)
   WindowRejected(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowRequestResult with Debug::{to_repr}
@@ -119,10 +126,11 @@ pub extend WindowRequestResult with Eq::{not_equal, equal}
 pub extend WindowRequestResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WindowRequestCompletion {
   request : WindowRequest
   result : WindowRequestResult
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WindowRequestCompletion with Debug::{to_repr}

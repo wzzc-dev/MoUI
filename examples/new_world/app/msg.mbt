@@ -16,10 +16,11 @@
 ///|
 /// Top-level pages: the main three-stage layout and a full-width settings
 /// page (the model configuration lives in `<世界库>/config.json`).
+#derive(Eq, Debug)
 pub(all) enum Page {
   Main
   Settings
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Page with Debug::{to_repr}
@@ -33,6 +34,7 @@ pub extend Page with Eq::{not_equal, equal}
 /// The drawer is where everything the old permanent right rail used to show
 /// now lives on demand: the character profile, the memory manager, the model
 /// status, and the event log. The stage keeps its full width for reading.
+#derive(Eq, Debug)
 pub(all) enum DrawerKind {
   Profile
   Memory
@@ -43,7 +45,7 @@ pub(all) enum DrawerKind {
   Prompt
   /// The world book: the world's own keyword-triggered lore, editable here.
   WorldBook
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DrawerKind with Debug::{to_repr}

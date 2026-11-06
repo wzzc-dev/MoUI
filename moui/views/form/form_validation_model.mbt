@@ -7,11 +7,12 @@ struct FormFieldState {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
   summary : FormValidationSummary
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormValidationResult with Debug::{to_repr}
@@ -23,10 +24,11 @@ pub extend FormValidationResult with Eq::{not_equal, equal}
 pub extend FormValidationResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct FormFieldError {
   name : String
   message : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormFieldError with Debug::{to_repr}
@@ -43,11 +45,12 @@ struct FormValidationRule {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct FormValidationSummary {
   valid : Bool
   errors : Array[FormFieldError]
   first_invalid_id : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FormValidationSummary with Debug::{to_repr}

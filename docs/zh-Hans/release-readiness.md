@@ -59,10 +59,12 @@
 | Examples | Showcase 和 Markdown Editor 保持为默认可运行文档；新的用户可见 framework features 具有可见 Showcase 覆盖，或记录跳过理由。Design Systems 是隔离在专用 `moui_theme` preview example 中的 addon diagnostic coverage。 | Mainline app package tests 加 Showcase/Markdown Editor Web wasm-gc builds；addon checks 使用 `sh scripts/check.sh --profile theme` |
 | Guidance freshness | Docs、`AGENTS.md` 和 repo-local skills 在影响 guidance 的变更后保持一致。guidance-consistency guard 作为 MoonBit 工具在 `tools/moui/validate_guidance_consistency` 实现；使用 `moon run tools/moui/validate_guidance_consistency --target native` 直接运行，并在 handoff 中加入手动 audit notes。 |  |
 
-只有在明确授权发布时，0.2 模块发布顺序才是：基础模块与 bindings；
-Skia/Web/WGPU/Sun renderer modules；addons 与 agent；最后是 agent
-MCP 与 CLI。`checks/release-modules.json` 是目录/阶段的唯一目录表。版本相等
-只属于 0.2 迁移首发条件；后续模块独立演进。
+只有在明确授权发布时，0.3.x synchronized module 发布顺序才是：基础模块与
+bindings（`moui`、`moui_skia`、`moui_sun`、`moui_tui`、
+`moui_text_providers`）；六个 renderer modules；十二个 addon modules；最后是
+`moui_agent_mcp` 与 `moui_cli` entrypoints。`checks/release-modules.json` 是
+目录/阶段的唯一目录表，[ADR 0055](../decisions/0055-synchronized-release-line.md)
+拥有 synchronized line policy。
 
 ## 当前证据快照
 

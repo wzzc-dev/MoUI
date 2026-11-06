@@ -1,5 +1,6 @@
 ///|
 /// Renderer-owned resource families that commonly need backend caches.
+#derive(Debug, Eq, Hash)
 pub(all) enum RendererResourceKind {
   ImageResource
   ShaderResource
@@ -13,7 +14,7 @@ pub(all) enum RendererResourceKind {
   SurfaceResource
   GpuContextResource
   GpuSurfaceResource
-} derive(Debug, Eq, Hash)
+}
 
 ///|
 pub extend RendererResourceKind with Debug::{to_repr}
@@ -47,10 +48,11 @@ pub fn RendererResourceKind::is_surface(self : RendererResourceKind) -> Bool {
 ///|
 /// Stable key for renderer-owned resources. The `id` is intentionally bytes so
 /// callers can use hashes, URLs, font family bytes, or serialized descriptors.
+#derive(Debug, Eq, Hash)
 pub(all) struct RendererResourceKey {
   kind : RendererResourceKind
   id : Bytes
-} derive(Debug, Eq, Hash)
+}
 
 ///|
 pub extend RendererResourceKey with Debug::{to_repr}

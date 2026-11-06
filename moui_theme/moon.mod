@@ -2,10 +2,10 @@ name = "wzzc-dev/moui_theme"
 
 preferred_target = "native"
 
-version = "0.3.0"
+version = "0.3.2"
 
 import {
-  "wzzc-dev/moui@0.3.0",
+  "wzzc-dev/moui@0.3.2",
 }
 
 readme = "README.mbt.md"

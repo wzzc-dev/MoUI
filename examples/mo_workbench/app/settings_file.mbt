@@ -2,13 +2,14 @@
 
 ///|
 /// One persisted provider (OpenAI-compatible). Mirrors `ProviderConfig`.
+#derive(Eq, Debug, ToJson, FromJson)
 pub struct MoProviderFile {
   id : String
   name : String
   base_url : String
   api_key : String
   models : Array[String]
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend MoProviderFile with @moonbitlang/core/json.FromJson::{from_json}
@@ -26,6 +27,7 @@ pub extend MoProviderFile with ToJson::{to_json}
 /// Portable on-disk settings document (`settings.json.example` template).
 /// Providers replace the previous single `openai_api_key`/`openai_base_url`
 /// pair so multiple vendors can be configured and switch between.
+#derive(Eq, Debug, ToJson, FromJson)
 pub struct MoWorkbenchSettingsFile {
   providers : Array[MoProviderFile]
   active_provider_id : String?
@@ -40,7 +42,7 @@ pub struct MoWorkbenchSettingsFile {
   sandbox_mode : String
   font_size : Int32
   appearance : String
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend MoWorkbenchSettingsFile with @moonbitlang/core/json.FromJson::{
@@ -58,6 +60,7 @@ pub extend MoWorkbenchSettingsFile with ToJson::{to_json}
 
 ///|
 /// Legacy single-provider layout, kept only for migration of old files.
+#derive(Eq, Debug, ToJson, FromJson)
 struct MoWorkbenchSettingsFileLegacy {
   openai_api_key : String
   openai_base_url : String
@@ -68,7 +71,7 @@ struct MoWorkbenchSettingsFileLegacy {
   sandbox_mode : String
   font_size : Int32
   appearance : String
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend MoWorkbenchSettingsFileLegacy with @moonbitlang/core/json.FromJson::{

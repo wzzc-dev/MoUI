@@ -28,10 +28,11 @@ pub struct NativeGlyphKey {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
   ColorRgba
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend NativeRasterGlyphFormat with Debug::{to_repr}

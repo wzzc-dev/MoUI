@@ -4,10 +4,11 @@
 
 ///|
 /// User-facing UI languages supported by the desktop shell.
+#derive(Eq, Debug)
 pub(all) enum AppLanguage {
   EnglishLanguage
   ChineseLanguage
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AppLanguage with Debug::{to_repr}

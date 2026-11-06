@@ -50,7 +50,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
 
 ///|
 test "accessibility pump records the published generation and keeps it across unchanged pumps" {
-  if not(harmonyos_a11y_pump_enabled) {
+  if !harmonyos_a11y_pump_enabled {
     return
   }
   let binding = HarmonyOSSurfaceBinding::new(create_renderer=(
@@ -210,7 +210,7 @@ test "program mode: wheel over scroll view marks redraw and presents frames" {
             @core.Effect::none(),
           )
         },
-        update=(model, message) => {
+        update=(_, message) => {
           match message {
             WheelProgramMsg::WheelScrolled(offset) =>
               (WheelProgramModel::{ offset, }, @core.Effect::none())

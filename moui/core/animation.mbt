@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Frame {
   time_ms : Double
   delta_ms : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Frame with Debug::{to_repr}
@@ -14,11 +15,12 @@ pub extend Frame with Eq::{not_equal, equal}
 pub extend Frame with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AnimationStatus {
   Idle
   Running
   Completed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AnimationStatus with Debug::{to_repr}
@@ -30,12 +32,13 @@ pub extend AnimationStatus with Eq::{not_equal, equal}
 pub extend AnimationStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum Easing {
   Linear
   EaseIn
   EaseOut
   EaseInOut
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Easing with Debug::{to_repr}
@@ -54,12 +57,13 @@ priv struct Tween {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct TransitionStyle {
   opacity : Double
   offset : Point
   scale : Point
   foreground : Color?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TransitionStyle with Debug::{to_repr}
@@ -71,12 +75,13 @@ pub extend TransitionStyle with Eq::{not_equal, equal}
 pub extend TransitionStyle with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct TransitionSpec {
   from : TransitionStyle
   to : TransitionStyle
   duration_ms : Double
   easing : Easing
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TransitionSpec with Debug::{to_repr}
@@ -88,11 +93,12 @@ pub extend TransitionSpec with Eq::{not_equal, equal}
 pub extend TransitionSpec with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct TransitionSample {
   progress : Double
   style : TransitionStyle
   present : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TransitionSample with Debug::{to_repr}

@@ -3,10 +3,11 @@
 ///
 /// The native layer will attach real Skia `ColorSpace` handles; this value layer
 /// keeps the stable pieces needed by surfaces, pixmaps, and images.
+#derive(Debug, Eq)
 pub(all) struct ColorInfo {
   color_type : ColorType
   alpha_type : AlphaType
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ColorInfo with Debug::{to_repr}
@@ -97,10 +98,11 @@ pub fn ColorInfo::with_color_type(
 
 ///|
 /// Dimensions plus color metadata for images, bitmaps, pixmaps, and surfaces.
+#derive(Debug, Eq)
 pub(all) struct ImageInfo {
   dimensions : ISize
   color_info : ColorInfo
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ImageInfo with Debug::{to_repr}

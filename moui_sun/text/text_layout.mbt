@@ -1,10 +1,11 @@
 ///|
 /// Positioned glyphs for a single shaped and laid-out line.
+#derive(Debug)
 struct GlyphRun {
   glyphs : Array[PositionedGlyph]
   width : Double
   baseline_y : Double
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphRun with Debug::{to_repr}
@@ -45,10 +46,11 @@ pub fn GlyphRun::glyph_count(self : GlyphRun) -> Int32 {
 
 ///|
 /// Stable text layout facade used by higher-level renderers and GUI code.
+#derive(Debug)
 struct TextLayout {
   runs : Array[GlyphRun]
   metrics : LayoutMetrics
-} derive(Debug)
+}
 
 ///|
 pub extend TextLayout with Debug::{to_repr}

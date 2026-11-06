@@ -12,11 +12,12 @@
 
 ///|
 /// Thinking mode choice for backends that expose one.
+#derive(Eq, Debug)
 pub(all) enum ThinkingChoice {
   Normal
   High
   Max
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ThinkingChoice with Debug::{to_repr}
@@ -26,12 +27,13 @@ pub extend ThinkingChoice with Eq::{not_equal, equal}
 
 ///|
 /// Terminal status of an agent turn.
+#derive(Eq, Debug)
 pub(all) enum TurnStatus {
   Finished
   Aborted
   Interrupted
   Failed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TurnStatus with Debug::{to_repr}
@@ -43,9 +45,10 @@ pub extend TurnStatus with Eq::{not_equal, equal}
 /// Agent backend selected by the workbench. The retired in-process OpenSeek
 /// backend is no longer a choice; settings files that still say "openseek"
 /// fall back to ACP.
+#derive(Eq, Debug)
 pub(all) enum AgentBackendKind {
   Acp
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentBackendKind with Debug::{to_repr}
@@ -68,10 +71,11 @@ pub fn agent_backend_kind_from_id(id : String) -> AgentBackendKind {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AgentConfigValue {
   Boolean(Bool)
   ValueId(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentConfigValue with Debug::{to_repr}
@@ -80,10 +84,11 @@ pub extend AgentConfigValue with Debug::{to_repr}
 pub extend AgentConfigValue with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PermissionOutcome {
   Selected(String)
   Cancelled
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PermissionOutcome with Debug::{to_repr}
@@ -92,11 +97,12 @@ pub extend PermissionOutcome with Debug::{to_repr}
 pub extend PermissionOutcome with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub struct AgentPermissionOption {
   id : String
   name : String
   kind : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentPermissionOption with Debug::{to_repr}
@@ -114,6 +120,7 @@ pub fn agent_permission_option(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AgentPermissionRequest {
   request_id : String
   session_id : String
@@ -121,7 +128,7 @@ pub struct AgentPermissionRequest {
   title : String
   kind : String
   options : Array[AgentPermissionOption]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentPermissionRequest with Debug::{to_repr}
@@ -142,11 +149,12 @@ pub fn agent_permission_request(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AgentSessionMode {
   id : String
   name : String
   description : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentSessionMode with Debug::{to_repr}
@@ -164,10 +172,11 @@ pub fn agent_session_mode(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AgentSessionModeState {
   current_mode_id : String
   available_modes : Array[AgentSessionMode]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentSessionModeState with Debug::{to_repr}
@@ -184,13 +193,14 @@ pub fn agent_session_mode_state(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AgentSessionConfigOption {
   id : String
   name : String
   description : String?
   current_value : AgentConfigValue
   values : Array[AgentPermissionOption]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentSessionConfigOption with Debug::{to_repr}
@@ -251,11 +261,12 @@ pub(all) enum AgentEvent {
 
 ///|
 /// A lightweight session summary for the sidebar list.
+#derive(Eq, Debug)
 pub struct SessionSummary {
   id : String
   first_prompt : String
   last_active_unix_seconds : Int64?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SessionSummary with Debug::{to_repr}

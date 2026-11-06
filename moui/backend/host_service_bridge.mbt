@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostClipboardRequest {
   ReadText
   WriteText(String)
   ReadImage
   WriteImage(String, Bytes)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostClipboardRequest with Debug::{to_repr}
@@ -16,11 +17,12 @@ pub extend HostClipboardRequest with Eq::{not_equal, equal}
 pub extend HostClipboardRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostFileDialogKind {
   OpenFile
   SaveFile
   PickDirectory
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostFileDialogKind with Debug::{to_repr}
@@ -32,12 +34,13 @@ pub extend HostFileDialogKind with Eq::{not_equal, equal}
 pub extend HostFileDialogKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostFileDialogOptions {
   kind : HostFileDialogKind
   title : String
   filters : Array[String]
   default_name : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostFileDialogOptions with Debug::{to_repr}
@@ -49,10 +52,11 @@ pub extend HostFileDialogOptions with Eq::{not_equal, equal}
 pub extend HostFileDialogOptions with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostTextFileRequest {
   ReadText(String)
   WriteText(String, String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostTextFileRequest with Debug::{to_repr}
@@ -64,10 +68,11 @@ pub extend HostTextFileRequest with Eq::{not_equal, equal}
 pub extend HostTextFileRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostBinaryFileRequest {
   ReadBytes(String)
   WriteBytes(String, Bytes)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostBinaryFileRequest with Debug::{to_repr}
@@ -79,11 +84,12 @@ pub extend HostBinaryFileRequest with Eq::{not_equal, equal}
 pub extend HostBinaryFileRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostSettingsRequest {
   Read(String)
   Write(String, String)
   Remove(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostSettingsRequest with Debug::{to_repr}
@@ -95,11 +101,12 @@ pub extend HostSettingsRequest with Eq::{not_equal, equal}
 pub extend HostSettingsRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct HostDirectoryEntry {
   priv name : String
   priv path : String
   priv is_directory : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostDirectoryEntry with Debug::{to_repr}
@@ -135,11 +142,12 @@ pub fn HostDirectoryEntry::is_directory(self : HostDirectoryEntry) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct HostBinaryFileDiagnostic {
   priv path : String
   priv byte_length : Int32
   priv operation : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostBinaryFileDiagnostic with Debug::{to_repr}
@@ -151,6 +159,7 @@ pub extend HostBinaryFileDiagnostic with Eq::{not_equal, equal}
 pub extend HostBinaryFileDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@core.ActionCommand])
@@ -168,7 +177,7 @@ pub(all) enum HostServiceRequest {
   /// native 可达,web 无文件系统 → 能力判定直接显式不可用。
   DeleteFile(String)
   PlatformChannel(PlatformChannelRequest)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostServiceRequest with Debug::{to_repr}
@@ -180,10 +189,11 @@ pub extend HostServiceRequest with Eq::{not_equal, equal}
 pub extend HostServiceRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostApplicationMenuPlacement {
   MenuBar
   ApplicationMenu
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostApplicationMenuPlacement with Debug::{to_repr}
@@ -197,11 +207,12 @@ pub extend HostApplicationMenuPlacement with ToJson::{to_json}
 ///|
 /// One application menu group. `MenuBar` creates a top-level menu; hosts with
 /// a standard application menu may place `ApplicationMenu` items there.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostApplicationMenu {
   title : String
   items : Array[HostApplicationMenuItem]
   placement : HostApplicationMenuPlacement
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostApplicationMenu with Debug::{to_repr}
@@ -219,6 +230,7 @@ pub extend HostApplicationMenu with ToJson::{to_json}
 /// `action_id` is host-defined and is delivered to the platform action handler
 /// when the item is chosen. Keyboard accelerators use `key_equivalent` plus
 /// `key_modifier_mask` (platform bit masks; see platform notes).
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostApplicationMenuItem {
   title : String
   action_id : Int32
@@ -226,7 +238,7 @@ pub(all) struct HostApplicationMenuItem {
   key_modifier_mask : Int32
   separator : Bool
   enabled : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostApplicationMenuItem with Debug::{to_repr}
@@ -271,6 +283,7 @@ pub fn HostApplicationMenuItem::separator() -> HostApplicationMenuItem {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostServiceResponse {
   Unavailable(String)
   Pending(HostServiceRequestId)
@@ -293,7 +306,7 @@ pub(all) enum HostServiceResponse {
   DirectoryListing(String, Array[HostDirectoryEntry])
   FileDeleted(String)
   PlatformChannel(PlatformChannelResponse)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostServiceResponse with Debug::{to_repr}
@@ -305,6 +318,7 @@ pub extend HostServiceResponse with Eq::{not_equal, equal}
 pub extend HostServiceResponse with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostServiceKind {
   ClipboardService
   MenuService
@@ -317,7 +331,7 @@ pub(all) enum HostServiceKind {
   DirectoryListingService
   FileDeleteService
   PlatformChannelService
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostServiceKind with Debug::{to_repr}

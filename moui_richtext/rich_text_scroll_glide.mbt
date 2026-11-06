@@ -18,6 +18,7 @@
 /// reversal, or a clamp at the document edge) the jump is backwards.
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownScrollGlide {
   from_y : Double
   to_y : Double
@@ -28,7 +29,7 @@ pub(all) struct MarkdownScrollGlide {
   /// while a dense momentum stream wants only enough smoothing to even out its
   /// own irregular event cadence.
   tau_ms : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownScrollGlide with Debug::{to_repr}
