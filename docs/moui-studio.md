@@ -6,7 +6,10 @@ what a block actually does. It targets both geeks and beginners, with a
 technical-looking shell: dark engineering panels, hairline dividers, mono-first
 toolchain output, a grid canvas, and a terminal-style console.
 
-- Source: `moui_studio/` — standalone git subrepository (`wzzc-dev/moui_studio`, following the `examples/momark` pattern), also a `moon.work` member
+- Source: [wzzc-dev/moui_studio](https://github.com/wzzc-dev/moui_studio) — an
+  **external repository**, not a submodule or `moon.work` member of MoUI. Use the
+  [vendor workflow](vendor-workflow.md) for MoUI changes made while developing
+  Studio.
 - Entrypoints: Web (`web_wasm`) and macOS (`macos_skia`)
 - Code source of truth: imported MoonBit projects keep `form.mbt` +
   `handlers.mbt` as the on-disk truth; the in-memory `.studio.json` format is a
@@ -230,7 +233,7 @@ terminal), and the AI workbench mode (PsAi) keeps its own centre composer.
 
 Studio is organised as an editor with pluggable surfaces (ADR 0042), mirroring
 the skeleton of VS Code / IntelliJ / Zed at MoonBit-static scale. The
-`moui_studio/workbench` package owns the editor core; `app` only composes and
+the `workbench` package in the external Studio repo owns the editor core; `app` only composes and
 sets policy:
 
 - **Documents** (`DocumentStore`): every open file is a document with a
@@ -326,29 +329,31 @@ The fixed three-sentence differentiator:
 
 ## Build and run
 
+Run these from the external Studio checkout (with the vendor override described
+in [vendor-workflow.md](vendor-workflow.md) when MoUI is being changed):
+
 ```sh
 # Web (wasm-gc)
-moon build moui_studio/web_wasm --target wasm-gc
+moon build web_wasm --target wasm-gc
 
 # macOS native (mainline desktop: full capability set)
-moon run moui_studio/macos_skia --target native
+moon run macos_skia --target native
 
 # Linux / Windows native (Skia; capability gaps degrade explicitly:
 # no PTY terminal, no webview preview, no wall-clock FFI, no immersive
 # titlebar; provider/compile/build/persistence/MCP are shared)
-moon run moui_studio/linux_skia --target native
-moon run moui_studio/windows_skia --target native
+moon run linux_skia --target native
+moon run windows_skia --target native
 
 # HarmonyOS (window-hosted embedded runtime; committed, ready=true)
-moon run moui_studio/harmonyos_window_hosted --target native
+moon run harmonyos_window_hosted --target native
 
 # Tests
-moon test moui_studio/app --target native
-moon test moui_studio/app --target wasm-gc
+moon test app --target native
+moon test app --target wasm-gc
 ```
 
-See `moui_studio/README.md` for the full verification loop and
-`docs/plans/done/moui-studio.md` for the acceptance matrix.
+See `wzzc-dev/moui_studio` for the full verification loop and acceptance matrix.
 
 
 ## 插件化架构（M0–M7，2026-10-06）

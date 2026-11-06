@@ -317,10 +317,11 @@ rule.
 
 1. **Release train (`0.4.0`):** W0.3-W0.4, W1, W2, W3, W4, W5, W6, W7, W8.1-W8.2.
    All slices land before the version bump; no intermediate release.
-2. **Release window:** move `moui_studio/moon.mod`, `generated_dependency_versions`,
-   `moui_cli` default dependency versions, and the generated CLI/Studio
-   templates from the 0.3.2 runtime API to `moui/apphost` atomically with the
-   0.4.0 manifests.
+2. **Release window:** move the external consumer pins (MoMark and MoUI Studio),
+   `moui_cli` default dependency versions, and the generated CLI templates from
+   the 0.3.2 runtime API to `moui/apphost` atomically with the 0.4.0 manifests.
+   MoMark and Studio are external repositories now; framework changes follow the
+   [vendor workflow](../../vendor-workflow.md).
 3. **Post-`0.4.0`:** measure the result and decide whether a `1.0` stability
    promise is justified.
 

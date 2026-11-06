@@ -885,6 +885,11 @@ fn collect_mbt_files(
   }
   for entry in entries {
     let relative = relative_dir + "/" + entry
+    // External consumer checkouts are not MoUI source. They may exist locally
+    // for the vendor workflow but must not enter this repository's API audit.
+    if relative == "examples/momark" || relative == "moui_studio" {
+      continue
+    }
     let absolute = @tools.resolve_path(repo_root, relative)
     if @tools.directory_exists(absolute) {
       if !skipped_directory_name(entry) {
@@ -1178,6 +1183,11 @@ fn collect_shared_app_moon_pkgs(
     }
   }
   for entry in entries {
+    // MoMark is an external repository; a local vendor checkout under
+    // `examples/momark` is not part of this repository's app boundary.
+    if entry == "momark" {
+      continue
+    }
     let path = "examples/" + entry + "/app/moon.pkg"
     if @tools.file_exists(@tools.resolve_path(repo_root, path)) {
       paths.push(path)

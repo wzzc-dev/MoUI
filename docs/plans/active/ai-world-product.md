@@ -125,7 +125,8 @@
 
 - `git subtree split -P examples/ai_world` → 独立仓库 `wzzc-dev/ai_world`。
 - 模块名 `examples/ai_world` → `wzzc-dev/ai_world`；子包 import 同步。
-- 挂载为 `ai_world/` submodule（对齐 `moui_studio/`、`examples/momark`）。
+- 保持为独立仓库，不再挂载 submodule；MoUI 改动走
+  [vendor-workflow](../vendor-workflow.md)（对齐现在的 MoMark / MoUI Studio 模式）。
 - 同步：`moon.work`、`checks/profiles.json`、`checks/dead-message-catalog.json`、
   `examples/catalog.json`、`docs/examples.md`、`docs/markdown-editor.md` 式
   指针文档、`memories/repo/`。

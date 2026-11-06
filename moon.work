@@ -52,7 +52,6 @@ members = [
   "./examples/terminal",
   "./examples/tui_layers",
   "./examples/new_world",
-  "./moui_studio",
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",
   "./benchmarks/performance_budget",

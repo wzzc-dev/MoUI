@@ -14,11 +14,11 @@ GitHub 源码：https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench
 
 MoMark 是一个 Typora 风格的所见即所得 Markdown 编辑器，在源码和可视化编辑模式之间
 共享一个带类型的 Markdown 应用模型。它基于已发布的 `wzzc-dev/moui` 与
-`wzzc-dev/moui_richtext` 包构建，保存在独立仓库中，并作为 `examples/momark` 子模块
-挂载到本工作区。
+`wzzc-dev/moui_richtext` 包构建，保存在独立外部仓库中，不再作为本仓库的
+submodule 或 `moon.work` 成员。
 
 GitHub 源码：https://github.com/wzzc-dev/MoMark
-子模块：`examples/momark`
+框架改动：[vendor 工作流](vendor-workflow.md)
 
 ## Showcase
 

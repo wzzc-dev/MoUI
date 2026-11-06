@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 
-// Workspace test sweep for the main repo. `moui_studio` is a subrepo whose
-// tests (and the Rust-built plugin fixtures they take) are owned by its own CI
-// (wzzc-dev/moui_studio), so it stays out of this sweep. Members come from
-// moon.work, and packages are enumerated explicitly: `moon test` with no paths
-// would also run the subrepo, while module paths alone only test the module
-// root package and silently drop the rest of the tree.
+// Workspace test sweep for the main repo. Members come from moon.work, and
+// packages are enumerated explicitly: `moon test` with no paths would also run
+// nested modules, while module paths alone only test the module root package
+// and silently drop the rest of the tree.
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { repoRoot } from "./lib/moonbit-tool-runner.mjs";
 
-const EXCLUDED_MEMBERS = new Set(["moui_studio"]);
 const SKIP_DIRS = new Set(["_build", ".git", ".repos", "node_modules", "dist", "target", "artifacts"]);
 const MANIFESTS = ["moon.pkg", "moon.pkg.json"];
 const MODULE_MANIFESTS = ["moon.mod", "moon.mod.json"];
@@ -25,8 +22,7 @@ if (!membersBlock) {
 const members = [...membersBlock[1].matchAll(/"([^"]+)"/g)].map(match =>
   match[1].replace(/^\.\//, ""),
 );
-const skipped = members.filter(member => EXCLUDED_MEMBERS.has(member));
-const targets = members.filter(member => !EXCLUDED_MEMBERS.has(member));
+const targets = members;
 if (targets.length === 0) {
   console.error("moon.work members array is empty");
   process.exit(1);

@@ -1,16 +1,15 @@
 # Markdown Editor
 
 The Typora-style WYSIWYG Markdown editor (MoMark) lives in its own repository,
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), and is vendored into this
-workspace as the `examples/momark` Git submodule. It builds on the published
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark). It builds on the published
 `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages, so the editing model,
 session rendering, and platform entrypoints are documented in the MoMark
 repository README and docs.
 
-`examples/momark` is a `moon.work` member, so `moon check examples/momark` builds
-the app against this checkout instead of the published packages. The submodule
-pins its own upstream commit; bump it from the MoMark repository with
-`git submodule update --remote examples/momark`.
+MoMark is **not** a submodule or `moon.work` member of this repository. For
+framework changes, use the [vendor workflow](vendor-workflow.md): clone MoUI
+into the MoMark checkout, point `moon.work` at the local modules, prove the
+change in both repositories, then send the framework change back as a MoUI PR.
 
 This repository keeps the framework-side pieces MoMark consumes:
 
@@ -52,5 +51,5 @@ it. Both build for native and `wasm-gc`; consumers pin them together.
 
 The historical in-repo Markdown Editor example was removed when MoMark
 graduated into its own repository. The live app, its app-level editing model,
-and platform commands now ship in this workspace through the `examples/momark`
-submodule; see the MoMark repository for its standalone documentation.
+and platform commands now ship from `wzzc-dev/MoMark`; see that repository for
+its standalone documentation and platform entrypoints.

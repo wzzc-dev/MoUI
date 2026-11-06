@@ -231,6 +231,12 @@ fn collect_source_files(
     }
     entries.sort_by((left, right) => left.lexical_compare(right))
     for entry in entries {
+      let relative = relative_path + "/" + entry
+      // External consumer checkouts may exist locally for the vendor workflow;
+      // they are not first-party source and must not enter the line policy.
+      if relative == "examples/momark" || relative == "moui_studio" {
+        continue
+      }
       if !skipped_directory(entry) {
         collect_source_files(
           repo_root,

@@ -50,5 +50,9 @@ examples/mo_workbench/macos_skia/.mo_workbench/settings.json
 .box-agent/
 .zcodeignore
 competition-2026/*
-# MoUI Studio (subrepo moui_studio) runtime state, never commit
+# Former submodules are external repositories now. A local vendor checkout may
+# exist for the vendor workflow, but it is not tracked by this repository.
+examples/momark/
+moui_studio/
+# MoUI Studio runtime state, never commit
 .studio/

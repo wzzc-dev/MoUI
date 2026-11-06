@@ -151,7 +151,7 @@ These commands generate local scaffold manifests and logs under `artifacts/`; re
 
 The featured examples — `showcase`, `mo_workbench`, and `excel` — share app logic in `examples/<name>/app` and expose thin platform entrypoints.
 
-**MoUI Studio** (`moui_studio`, standalone subrepository `wzzc-dev/moui_studio`) is MoUI's own IDE: a bilingual visual programming environment where design, blocks, and code views all edit one statement-level IR, with `form.mbt` + `handlers.mbt` as the on-disk source of truth for imported projects, three real preview modes (headless frame, web live preview, native run), and readable structured AI proposals. See `docs/moui-studio.md` and ADR 0037. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
+**MoUI Studio** ([wzzc-dev/moui_studio](https://github.com/wzzc-dev/moui_studio)) is MoUI's own IDE: a bilingual visual programming environment where design, blocks, and code views all edit one statement-level IR, with `form.mbt` + `handlers.mbt` as the on-disk source of truth for imported projects, three real preview modes (headless frame, web live preview, native run), and readable structured AI proposals. It is an **external repository**, not a submodule or workspace member; see `docs/moui-studio.md`, ADR 0037, and the [vendor workflow](docs/vendor-workflow.md) when a Studio change needs a MoUI change. Showcase uses `web_wasm`, desktop renderer-specific entrypoints, and `android_window_hosted`, `ios_window_hosted`, and `harmonyos_window_hosted` mobile entrypoints.
 
 To try Showcase on a mobile platform, follow the platform-specific setup, build, and run instructions for [Android](docs/android-support.md), [iOS](docs/ios-support.md), or [HarmonyOS](docs/harmonyos-support.md). Standard examples use the matching `wzzc-dev/window` platform template through `moui build`.
 
@@ -185,10 +185,11 @@ moon run examples/showcase/linux_skia --target native
 ### Markdown Editor
 
 The Typora-style WYSIWYG Markdown editor (MoMark) lives in its own repository,
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark), vendored here as the
-`examples/momark` submodule and registered as a `moon.work` member. It builds on
-published `wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages; see the MoMark
-README for setup and platform entrypoints.
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark). It builds on published
+`wzzc-dev/moui` and `wzzc-dev/moui_richtext` packages and is **not** a submodule
+or workspace member here. See the MoMark README for setup and platform
+entrypoints; use the [vendor workflow](docs/vendor-workflow.md) for framework
+changes.
 
 ### Mo Workbench
 

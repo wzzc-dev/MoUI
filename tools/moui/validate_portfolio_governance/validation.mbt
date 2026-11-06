@@ -492,7 +492,7 @@ fn markdown_surface_files(
   failures : Array[String],
 ) -> Array[String] {
   let files : Array[String] = []
-  for root in ["docs", "skills", "examples/momark/docs"] {
+  for root in ["docs", "skills"] {
     collect_markdown_files(repo_root, root, files, failures)
   }
   for

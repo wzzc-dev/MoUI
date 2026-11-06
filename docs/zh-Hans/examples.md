@@ -57,11 +57,11 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | WebView Demo | 原生 platform WebView 模式 | `examples/webview_demo/app/` | 受控 `web_view` primitive、native host capability fallback、address bar、controller navigation tasks、JSON Bridge request/response，以及 macOS Skia native entrypoint |
 | PDF Workbench | PDF 阅读和轻量编辑原型 | `examples/pdf_workbench/app/` | 简洁的原生 PDF reader/editor shell、host binary file service open/save flow、PDFium page bitmap preview、fit-width responsive reading canvas、scrollable page/inspector panels、reader fullscreen toggle、page navigation/direct page jump/search/metadata summaries、可 undo/可 discard 的 preview rotate/crop/stamp/title/bookmark/note edit state、用于真实 parsing/writeback checks 的独立 `pdflite_adapter` 包、JSONL pdflite helper protocol 加 native process transport、用于 page rasterization 的 native-only `pdfium_adapter` 包、macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | 命令元数据和菜单模式 | `examples/command_palette/app/` | Command palette rows、shortcut labels、enabled/disabled dispatch、command menu、context menu fallback、`program(environment)`，以及 `@services.MenuServices::show_context` native menu preview |
-| MoMark (Markdown Editor) | Typora 风格编辑原型，独立发布并以子模块形式挂载 | `examples/momark/app/` | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview |
+| MoMark (Markdown Editor) | Typora 风格编辑应用，独立发布（`wzzc-dev/MoMark`），本仓库不跟踪 | external `wzzc-dev/MoMark` | Editor snapshot core、`mizchi/markdown` parsing、source-range mapping、primary rich text editor、可选 source preview；MoUI 改动走 vendor 工作流 |
 | Code Editor | 原生代码编辑器 shell 和 language-provider 原型 | `examples/code_editor/app/` | 带 activity rail、file tab、line-number gutter、status bar、tokenizer-backed highlighting、bracket matching、auto indentation、multi-cursor edits、hidden find/replace overlay、runtime action-command shortcuts、completion overlay、diagnostics、hover、go-to-definition、main-editor Diff mode 的原生 `moui_richtext` editor shell，以及通过应用拥有 callbacks 注册的 custom language/provider |
 | Mo Desktop | macOS 风格响应式桌面模拟 | `examples/mo_desktop/app/` | Lock/unlock session、image wallpaper、menu bar、live dock、calendar/weather/task widgets、带 navigation/search/icon-list modes/selection 的 responsive Finder、Safari start page 和 search results、可搜索 Apps/Actions launcher、notifications、Control Center toggles/sliders、全局 light/dark appearance、Web wasm-gc 和 macOS Skia 入口 |
 | Mo Workbench | 以 Native-Skia 为优先的桌面 agent dogfood 应用 | `examples/mo_workbench/app/` | 受 DeepSeek-GUI 启发的多工作区 shell，包含 Code chat、starter cards、backend-aware OpenSeek/ACP controls、responsive left rail、optional right inspector、low-noise status bar、grouped Settings form、static Write/Connect Phone/Scheduled Tasks/Plugins surfaces、injected stub backend、OpenSeek native transport、generic ACP stdio native transport、macOS Skia native entrypoint |
-| MoUI Studio（独立子仓库） | MoUI 的 IDE 工具：中英双语可视化编程环境，兼顾极客与入门教学，技术风 UI | `moui_studio/app/`、`moui_studio/domain/{ir,studio_lang,codec,proposals,blocks}`、`moui_studio/services/{model_provider,provider_native,export,compile_native,compiled_runtime,diff}`、`moui_studio/web_wasm`、`moui_studio/macos_skia` | 一份语句级 IR 支撑三个同源视图（窗体设计 / Scratch 式带类型积木 / 双语 MoUI Studio 代码 `如果…则…结束` ↔ `if…then…end`）；**显式双轨**——解释轨（100_000 步预算指令机、提交数据确认闸门、审计日志、单步、聚光灯）与编译轨（IR → `app/generated_handlers.mbt` 可读 MoonBit → `moon update` → `moon check` → `moon build --target wasm-gc|native` → 启动 native 烟测产物；仅 native 可达，Web 显式声明只有解释轨 + 源码预览）；编译失败回渲染结构化文件/行/列/错误码诊断并可跳回 IR 语句，绝不静默降级；两轨由差分矩阵硬门逐项拉平（样例 × 语句类 × zh-Hans/en-US：控件文本、变量终态、审计序列、闸门状态、运行终态，无「已知差异清单」）；结构化 AI 提案 + 字段级 diff + 完整校验链（schema → IR 不变量 → 双语 parser → 预算 → 可读性）；确定性离线假模型 + 仅 native 的 StepFun（`step-5-preview`）provider（读 gitignored `.config.json`）；`moui_i18n` 中英界面；技术风 `studio_theme()`（石墨面板、朱砂唯一强调色、等宽工具链输出、网格画布、终端式控制台）+ Ctrl/Cmd+K 键盘优先命令面板；三个教学样例与教案；内核同步 bundle 的独立应用导出 |
+| MoUI Studio（外部仓库） | MoUI 的 IDE 工具：中英双语可视化编程环境，兼顾极客与入门教学，技术风 UI | external `wzzc-dev/moui_studio` | 一份语句级 IR 支撑三个同源视图；显式解释轨/编译轨、结构化诊断、AI 提案与独立导出。不是 submodule 或 workspace 成员；MoUI 改动走 vendor 工作流 |
 
 聚焦 Website 检查：
 
@@ -271,9 +271,9 @@ wiring、text diagnostics 和 advanced rendering，
 - `Examples`：Counter 和 Todo 可复用应用模式，直到专用示例应用覆盖这些工作流。
 
 Typora 风格的所见即所得 Markdown 编辑器（MoMark）在自有仓库
-[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) 独立发布，并作为
-`examples/momark` 子模块挂载到本工作区，与它所消费的框架一起构建。它基于已发布的
-`wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建。指针说明参见
+[wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) 独立发布，基于已发布的
+`wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建。它不是本仓库的 submodule
+或 workspace 成员；MoUI 改动走 [vendor 工作流](vendor-workflow.md)。指针说明参见
 [Markdown Editor](markdown-editor.md)。
 
 ## Settings

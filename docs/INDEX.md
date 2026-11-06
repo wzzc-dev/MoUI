@@ -45,7 +45,8 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [text-system.md](text-system.md) | `deep` | Text architecture |
 | [internationalization.md](internationalization.md) | `canonical` | Message catalogs, locale selection, and bilingual docs workflow |
 | [visual-theme-system.md](visual-theme-system.md) | `deep` | Theme system |
-| [markdown-editor.md](markdown-editor.md) | `shallow` | Markdown editor: MoMark `examples/momark` submodule pointer |
+| [markdown-editor.md](markdown-editor.md) | `shallow` | Markdown editor: external MoMark repository and MoUI-side richtext/markdown pieces |
+| [vendor-workflow.md](vendor-workflow.md) | `canonical` | Local vendor checkout → MoUI PR workflow for MoMark and MoUI Studio |
 | [../examples/mo_desktop/ARCHITECTURE.md](../examples/mo_desktop/ARCHITECTURE.md) | `deep` | Desktop shell example: windows, registry, persistence, session flow |
 
 ## Platforms & readiness
@@ -73,7 +74,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | Doc | Status | Use when |
 |---|---|---|
 | [examples.md](examples.md) | `canonical` | Example commands and coverage |
-| [moui-studio.md](moui-studio.md) | `canonical` | MoUI Studio IDE positioning, dual-track semantics, market comparison |
+| [moui-studio.md](moui-studio.md) | `canonical` | External MoUI Studio IDE positioning, dual-track semantics, market comparison |
 | [showcases.md](showcases.md) | `canonical` | Showcase routes |
 | [app-templates.md](app-templates.md) | `canonical` | Templates |
 | [release-readiness.md](release-readiness.md) | `canonical` | Release gates |

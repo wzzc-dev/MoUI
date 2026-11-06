@@ -271,68 +271,6 @@
           ]
         },
         {
-          "name": "studio i18n catalogs",
-          "argv": [
-            "node",
-            "scripts/generate-i18n-catalogs.mjs",
-            "--input",
-            "moui_studio/app/i18n/catalogs.json",
-            "--out",
-            "moui_studio/app/i18n_catalog_generated.mbt",
-            "--check"
-          ]
-        },
-        {
-          "name": "studio app tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/app",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "studio compiled runtime tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/services/compiled_runtime",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "studio diff matrix tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/services/diff",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "studio compile native tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/services/compile_native",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "studio export tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_studio/services/export",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "cli scaffold generator tests",
           "argv": [
             "moon",
@@ -350,18 +288,6 @@
             "moui_cli/scaffold_plan",
             "--target",
             "wasm-gc"
-          ]
-        },
-        {
-          "name": "studio export kernel sync",
-          "argv": [
-            "moon",
-            "run",
-            "moui_studio/tools/sync_kernel",
-            "--target",
-            "native",
-            "--",
-            "--check"
           ]
         },
         {

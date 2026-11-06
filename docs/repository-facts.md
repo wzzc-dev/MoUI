@@ -61,7 +61,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/terminal |
 | ./examples/tui_layers |
 | ./examples/new_world |
-| ./moui_studio |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
 | ./benchmarks/performance_budget |
@@ -142,7 +141,7 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 54.
+Published documents: 55.
 
 | Group | Documents |
 |---|---:|
@@ -151,5 +150,5 @@ Published documents: 54.
 | Examples (examples) | 5 |
 | Platforms (platforms) | 16 |
 | Architecture & API (architecture-api) | 8 |
-| Contributing (contributing) | 5 |
+| Contributing (contributing) | 6 |
 | Status & Roadmap (status-roadmap) | 5 |

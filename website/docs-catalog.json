@@ -627,6 +627,19 @@
     },
     {
       "group": "contributing",
+      "slug": "vendor-workflow",
+      "title": "Vendor Workflow",
+      "path": "docs/vendor-workflow.md",
+      "summary": "Use a local MoUI vendor checkout while developing MoMark or MoUI Studio, then send the framework change back as a MoUI PR.",
+      "keywords": [
+        "vendor",
+        "MoMark",
+        "MoUI Studio",
+        "pull request"
+      ]
+    },
+    {
+      "group": "contributing",
       "slug": "testing",
       "title": "Testing",
       "path": "docs/testing.md",
@@ -1361,6 +1374,19 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/development.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "vendor-workflow",
+          "title": "Vendor 工作流",
+          "summary": "在开发 MoMark 或 MoUI Studio 时本地 vendor MoUI，并把框架改动作为 MoUI PR 提回。",
+          "keywords": [
+            "vendor",
+            "MoMark",
+            "MoUI Studio",
+            "PR"
+          ],
+          "localizedPath": "docs/zh-Hans/vendor-workflow.md"
         },
         {
           "group": "contributing",
