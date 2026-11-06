@@ -4,6 +4,10 @@ struct FileBudget {
   max_lines : Int32
 }
 
+// MoonBit 0.10.20 moves `#derive` above the type declaration, adding one
+// physical line per derived declaration. The affected ratchets absorb that
+// formatting-only growth; behavior and source structure do not change.
+
 ///|
 fn file_budgets() -> Array[FileBudget] {
   [
@@ -83,7 +87,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/common/lifecycle/window_requests_test.mbt",
       max_lines: 385,
     },
-    { path: "moui/backend/window_lifecycle.mbt", max_lines: 174, },
+    { path: "moui/backend/window_lifecycle.mbt", max_lines: 182, },
     {
       path: "moui/backend/common/lifecycle/window_registry.mbt",
       max_lines: 325,
@@ -102,16 +106,16 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/lifecycle/window_platform_map.mbt",
-      max_lines: 108,
+      max_lines: 109,
     },
-    { path: "moui/backend/web/host_runtime.mbt", max_lines: 483, },
+    { path: "moui/backend/web/host_runtime.mbt", max_lines: 484, },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620, },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240, },
     { path: "moui/backend/web/web_host.mbt", max_lines: 500, },
     { path: "moui/backend/web/web_window_requests.mbt", max_lines: 200, },
     { path: "moui/backend/web/web_window_slots.mbt", max_lines: 85, },
     { path: "moui/core/view_tree.mbt", max_lines: 813, },
-    { path: "moui/core/view_style.mbt", max_lines: 264, },
+    { path: "moui/core/view_style.mbt", max_lines: 274, },
     { path: "moui/core/custom_layout.mbt", max_lines: 141, },
     { path: "moui/core/date_value.mbt", max_lines: 135, },
     { path: "moui/core/program_subscription.mbt", max_lines: 360, },
@@ -157,7 +161,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 379,
+      max_lines: 383,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -171,7 +175,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
       max_lines: 115,
     },
-    { path: "examples/pdf_workbench/app/app.mbt", max_lines: 391, },
+    { path: "examples/pdf_workbench/app/app.mbt", max_lines: 396, },
     { path: "examples/pdf_workbench/app/host_services.mbt", max_lines: 530, },
     { path: "examples/pdf_workbench/app/navigation.mbt", max_lines: 230, },
     { path: "examples/pdf_workbench/app/edit_commands.mbt", max_lines: 220, },
@@ -181,13 +185,13 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_preview.mbt", max_lines: 315, },
     { path: "examples/pdf_workbench/app/view_sidebar.mbt", max_lines: 285, },
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470, },
-    { path: "examples/excel/sheet/sheet.mbt", max_lines: 1871, },
+    { path: "examples/excel/sheet/sheet.mbt", max_lines: 1878, },
     { path: "moui_skia_renderer/skia_renderer_wbtest.mbt", max_lines: 75, },
     // 205 -> 260: the shared PlanScopeKind scope vocabulary moved here from the
     // deleted draw_plan.mbt lowering, so this file stays the single home of
     // scope-balance validation (E2 plan slice, 2026-10-31).
     { path: "moui/render/common/capabilities_fallbacks.mbt", max_lines: 260, },
-    { path: "moui/render/capabilities_feature_model.mbt", max_lines: 331, },
+    { path: "moui/render/capabilities_feature_model.mbt", max_lines: 338, },
     { path: "moui/render/common/capabilities_report.mbt", max_lines: 47, },
     { path: "moui/render/common/image_lifecycle_state.mbt", max_lines: 60, },
     { path: "moui/render/common/image_lifecycle_updates.mbt", max_lines: 76, },
@@ -198,10 +202,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/common/provider_selection.mbt", max_lines: 105, },
     { path: "moui/render/image_resource_completions.mbt", max_lines: 101, },
     { path: "moui/render/image_resource_records.mbt", max_lines: 70, },
-    { path: "moui/render/image_resource_types.mbt", max_lines: 71, },
+    { path: "moui/render/image_resource_types.mbt", max_lines: 75, },
     { path: "moui_sun_renderer/renderer.mbt", max_lines: 373, },
     { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 853, },
-    { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 85, },
+    { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 87, },
     { path: "moui_sun_renderer/renderer_text_draw.mbt", max_lines: 664, },
     {
       path: "moui_sun_renderer/renderer_text_diagnostic_producers.mbt",
@@ -209,7 +213,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui_sun_renderer/renderer_text_diagnostic_values.mbt",
-      max_lines: 638,
+      max_lines: 642,
     },
     // The 500 + 300 budgets for the old `native_text_model.mbt` and
     // `native_text_provider_engine.mbt` moved with the code to
@@ -220,7 +224,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui_wgpu_renderer/native_text_glyph_atlas.mbt", max_lines: 140, },
     { path: "moui_wgpu_renderer/native_text_model.mbt", max_lines: 120, },
     { path: "moui_wgpu_renderer/native_text_rendering.mbt", max_lines: 320, },
-    { path: "moui/views/style/control_style.mbt", max_lines: 624, },
+    { path: "moui/views/style/control_style.mbt", max_lines: 636, },
     { path: "moui/views/style/control_style_text.mbt", max_lines: 40, },
     { path: "moui/views/style/control_style_surface.mbt", max_lines: 105, },
     { path: "moui/views/style/control_style_button.mbt", max_lines: 70, },
@@ -260,7 +264,7 @@ fn file_budgets() -> Array[FileBudget] {
     // Slider exposes localized labels, range metadata, and typed numeric
     // actions as part of the neutral accessibility contract.
     { path: "moui/views/slider/slider.mbt", max_lines: 397, },
-    { path: "moui/views/form/form_state.mbt", max_lines: 92, },
+    { path: "moui/views/form/form_state.mbt", max_lines: 95, },
     { path: "moui/views/form/form_layout.mbt", max_lines: 80, },
     { path: "moui/views/form/form_field.mbt", max_lines: 95, },
     { path: "moui/views/form/form_field_state.mbt", max_lines: 45, },
@@ -346,9 +350,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data/data_table.mbt", max_lines: 70, },
     { path: "moui/views/data/data_table_header.mbt", max_lines: 40, },
     { path: "moui/views/data/data_table_rendering.mbt", max_lines: 154, },
-    { path: "moui/views/data/data_grid_state.mbt", max_lines: 230, },
-    { path: "moui/views/data/data_grid_viewport_state.mbt", max_lines: 134, },
-    { path: "moui/views/data/data_grid_edit_state.mbt", max_lines: 100, },
+    { path: "moui/views/data/data_grid_state.mbt", max_lines: 233, },
+    { path: "moui/views/data/data_grid_viewport_state.mbt", max_lines: 136, },
+    { path: "moui/views/data/data_grid_edit_state.mbt", max_lines: 102, },
     { path: "moui/views/data/data_incremental_state.mbt", max_lines: 71, },
     { path: "moui/views/data/data_grid_semantics.mbt", max_lines: 57, },
     { path: "moui/views/data/data_variable_list_metrics.mbt", max_lines: 489, },
@@ -364,8 +368,8 @@ fn file_budgets() -> Array[FileBudget] {
     // 470 -> 479 (2026-10-14, TUI output path decision B): the opt-in
     // `set_semantics_frames_enabled` sits beside the `draw_frame` it steers.
     { path: "moui/runtime/runtime.mbt", max_lines: 479, },
-    { path: "moui/runtime/diagnostics.mbt", max_lines: 579, },
-    { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 305, },
+    { path: "moui/runtime/diagnostics.mbt", max_lines: 587, },
+    { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 316, },
     {
       // 1113 -> 1116 (2026-10-23, §4): `last_event_hit_path` documents that the
       // readout is not keyed by pointer id.

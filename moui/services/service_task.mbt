@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ServiceError {
   code : String
   message : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ServiceError with Debug::{to_repr}
@@ -14,11 +15,12 @@ pub extend ServiceError with Eq::{not_equal, equal}
 pub extend ServiceError with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ServiceTaskResult[T] {
   Success(T)
   Failure(ServiceError)
   Cancelled
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ServiceTaskResult with Debug::{to_repr}

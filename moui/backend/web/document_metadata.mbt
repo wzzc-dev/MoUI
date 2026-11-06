@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct WebDocumentMetadata {
   title : String
   description : String
@@ -6,7 +7,7 @@ pub(all) struct WebDocumentMetadata {
   image : String
   locale : String
   direction : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebDocumentMetadata with Debug::{to_repr}

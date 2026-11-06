@@ -2,6 +2,7 @@
 /// Off-screen drawing cache backed by a Canvas. Layers are intended for GUI
 /// subtrees that can redraw locally and then composite their dirty pixels into a
 /// parent canvas.
+#derive(Debug)
 pub struct Layer {
   mut canvas : Canvas
   mut x : Int32
@@ -11,13 +12,14 @@ pub struct Layer {
   mut blend_mode : BlendMode
   mut shader : PaintShader?
   mut filter : PaintFilter?
-} derive(Debug)
+}
 
 ///|
 pub extend Layer with Debug::{to_repr}
 
 ///|
 /// Telemetry for a dirty layer composite attempt.
+#derive(Debug)
 pub struct LayerCompositeResult {
   composited_rect_count : Int32
   local_dirty_bounds : PixelRect?
@@ -25,7 +27,7 @@ pub struct LayerCompositeResult {
   uses_bounds_fallback : Bool
   did_composite : Bool
   did_clear_dirty : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend LayerCompositeResult with Debug::{to_repr}

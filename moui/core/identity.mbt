@@ -1,7 +1,8 @@
 ///|
+#derive(Eq)
 struct Key {
   value : String
-} derive(Eq)
+}
 
 ///|
 pub extend Key with Eq::{not_equal, equal}

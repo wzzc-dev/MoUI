@@ -11,22 +11,24 @@ pub fn binding_status() -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum AddPathMode {
   Append
   Extend
-} derive(Eq, @debug.Debug)
+}
 pub fn AddPathMode::default() -> Self
 pub fn AddPathMode::equal(Self, Self) -> Bool
 pub fn AddPathMode::not_equal(Self, Self) -> Bool
 pub fn AddPathMode::to_repr(Self) -> @debug.Repr
 pub impl Default for AddPathMode
 
+#derive(Eq, @debug.Debug)
 pub(all) enum AlphaType {
   Unknown
   Opaque
   Premul
   Unpremul
-} derive(Eq, @debug.Debug)
+}
 pub fn AlphaType::default() -> Self
 pub fn AlphaType::equal(Self, Self) -> Bool
 pub fn AlphaType::is_opaque(Self) -> Bool
@@ -34,6 +36,7 @@ pub fn AlphaType::not_equal(Self, Self) -> Bool
 pub fn AlphaType::to_repr(Self) -> @debug.Repr
 pub impl Default for AlphaType
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BlendMode {
   Clear
   Src
@@ -64,7 +67,7 @@ pub(all) enum BlendMode {
   Saturation
   Color
   Luminosity
-} derive(Eq, @debug.Debug)
+}
 pub fn BlendMode::default() -> Self
 pub fn BlendMode::equal(Self, Self) -> Bool
 pub fn BlendMode::not_equal(Self, Self) -> Bool
@@ -72,10 +75,11 @@ pub fn BlendMode::to_repr(Self) -> @debug.Repr
 pub fn BlendMode::to_skia_ordinal(Self) -> Int32
 pub impl Default for BlendMode
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ClipOp {
   Difference
   Intersect
-} derive(Eq, @debug.Debug)
+}
 pub fn ClipOp::default() -> Self
 pub fn ClipOp::equal(Self, Self) -> Bool
 pub fn ClipOp::not_equal(Self, Self) -> Bool
@@ -83,7 +87,8 @@ pub fn ClipOp::to_repr(Self) -> @debug.Repr
 pub fn ClipOp::to_skia_ordinal(Self) -> Int32
 pub impl Default for ClipOp
 
-pub(all) struct Color(UInt32) derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+pub(all) struct Color(UInt32)
 pub fn Color::a(Self) -> Byte
 pub fn Color::argb(Self) -> UInt32
 pub fn Color::b(Self) -> Byte
@@ -112,12 +117,13 @@ pub fn Color::with_alpha(Self, Byte) -> Self
 pub fn Color::yellow() -> Self
 pub impl Default for Color
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Color4f {
   r : Float
   g : Float
   b : Float
   a : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Color4f::default() -> Self
 pub fn Color4f::equal(Self, Self) -> Bool
 pub fn Color4f::from_color(Color) -> Self
@@ -130,12 +136,13 @@ pub fn Color4f::transparent() -> Self
 pub fn Color4f::with_alpha(Self, Float) -> Self
 pub impl Default for Color4f
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ColorFilterDescriptor {
   ColorMatrixFilter(Array[Float])
   SaturationFilter(Float)
   BrightnessFilter(Float)
   ContrastFilter(Float)
-} derive(Eq, @debug.Debug)
+}
 pub fn ColorFilterDescriptor::brightness(Float) -> Self?
 pub fn ColorFilterDescriptor::contrast(Float) -> Self?
 pub fn ColorFilterDescriptor::equal(Self, Self) -> Bool
@@ -147,10 +154,11 @@ pub fn ColorFilterDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn ColorFilterDescriptor::saturation(Float) -> Self?
 pub fn ColorFilterDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ColorInfo {
   color_type : ColorType
   alpha_type : AlphaType
-} derive(Eq, @debug.Debug)
+}
 pub fn ColorInfo::bytes_per_pixel(Self) -> Int32
 pub fn ColorInfo::default() -> Self
 pub fn ColorInfo::equal(Self, Self) -> Bool
@@ -163,6 +171,7 @@ pub fn ColorInfo::with_alpha_type(Self, AlphaType) -> Self
 pub fn ColorInfo::with_color_type(Self, ColorType) -> Self
 pub impl Default for ColorInfo
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ColorType {
   Unknown
   Alpha8
@@ -176,7 +185,7 @@ pub(all) enum ColorType {
   Gray8
   RGBAF16
   RGBAF32
-} derive(Eq, @debug.Debug)
+}
 pub fn ColorType::bytes_per_pixel(Self) -> Int32
 pub fn ColorType::default() -> Self
 pub fn ColorType::equal(Self, Self) -> Bool
@@ -186,10 +195,11 @@ pub fn ColorType::shift_per_pixel(Self) -> Int32
 pub fn ColorType::to_repr(Self) -> @debug.Repr
 pub impl Default for ColorType
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CubicResampler {
   b : Float
   c : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn CubicResampler::catmull_rom() -> Self
 pub fn CubicResampler::equal(Self, Self) -> Bool
 pub fn CubicResampler::mitchell() -> Self
@@ -197,6 +207,7 @@ pub fn CubicResampler::new(Float, Float) -> Self
 pub fn CubicResampler::not_equal(Self, Self) -> Bool
 pub fn CubicResampler::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum EncodedImageFormat {
   BMP
   GIF
@@ -212,7 +223,7 @@ pub(all) enum EncodedImageFormat {
   HEIF
   AVIF
   JPEGXL
-} derive(Eq, @debug.Debug)
+}
 pub fn EncodedImageFormat::default() -> Self
 pub fn EncodedImageFormat::equal(Self, Self) -> Bool
 pub fn EncodedImageFormat::from_skia_ordinal(Int32) -> Self?
@@ -221,10 +232,11 @@ pub fn EncodedImageFormat::to_repr(Self) -> @debug.Repr
 pub fn EncodedImageFormat::to_skia_ordinal(Self) -> Int32
 pub impl Default for EncodedImageFormat
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FilterMode {
   Nearest
   Linear
-} derive(Eq, @debug.Debug)
+}
 pub fn FilterMode::default() -> Self
 pub fn FilterMode::equal(Self, Self) -> Bool
 pub fn FilterMode::not_equal(Self, Self) -> Bool
@@ -232,12 +244,13 @@ pub fn FilterMode::to_repr(Self) -> @debug.Repr
 pub fn FilterMode::to_skia_ordinal(Self) -> Int32
 pub impl Default for FilterMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontDescriptor {
   typeface_key : RendererResourceKey
   size : Float
   scale_x : Float
   skew_x : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn FontDescriptor::default(size? : Float) -> Self
 pub fn FontDescriptor::equal(Self, Self) -> Bool
 pub fn FontDescriptor::from_typeface(RendererResourceKey, size? : Float) -> Self
@@ -252,10 +265,11 @@ pub fn FontDescriptor::with_size(Self, Float) -> Self
 pub fn FontDescriptor::with_skew_x(Self, Float) -> Self
 pub fn FontDescriptor::with_typeface_key(Self, RendererResourceKey) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontFallbackChain {
   primary_family : Bytes
   fallback_families : Array[Bytes]
-} derive(Eq, @debug.Debug)
+}
 pub fn FontFallbackChain::contains_family(Self, Bytes) -> Bool
 pub fn FontFallbackChain::equal(Self, Self) -> Bool
 pub fn FontFallbackChain::family_at(Self, Int32) -> Bytes?
@@ -266,12 +280,13 @@ pub fn FontFallbackChain::not_equal(Self, Self) -> Bool
 pub fn FontFallbackChain::to_repr(Self) -> @debug.Repr
 pub fn FontFallbackChain::with_family(Self, Bytes) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontFallbackMatchDescriptor {
   request : FontFallbackRequest
   matched_family : Bytes
   fallback_index : Int32
   synthetic : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn FontFallbackMatchDescriptor::equal(Self, Self) -> Bool
 pub fn FontFallbackMatchDescriptor::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
 pub fn FontFallbackMatchDescriptor::is_valid(Self) -> Bool
@@ -284,12 +299,13 @@ pub fn FontFallbackMatchDescriptor::resource_plan(Self, size? : Float, scale_x? 
 pub fn FontFallbackMatchDescriptor::source_family(Self) -> Bytes?
 pub fn FontFallbackMatchDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontFallbackRequest {
   families : FontFallbackChain
   bcp47 : Array[Bytes]
   character : Int32
   style : FontStyleRequest
-} derive(Eq, @debug.Debug)
+}
 pub fn FontFallbackRequest::equal(Self, Self) -> Bool
 pub fn FontFallbackRequest::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
 pub fn FontFallbackRequest::has_character(Self) -> Bool
@@ -307,10 +323,11 @@ pub fn FontFallbackRequest::to_repr(Self) -> @debug.Repr
 pub fn FontFallbackRequest::with_character(Self, Int32) -> Self
 pub fn FontFallbackRequest::with_style(Self, FontStyleRequest) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontFallbackResolutionDescriptor {
   request : FontFallbackRequest
   resolved_match : FontFallbackMatchDescriptor
-} derive(Eq, @debug.Debug)
+}
 pub fn FontFallbackResolutionDescriptor::equal(Self, Self) -> Bool
 pub fn FontFallbackResolutionDescriptor::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> FontDescriptor
 pub fn FontFallbackResolutionDescriptor::is_valid(Self) -> Bool
@@ -323,11 +340,12 @@ pub fn FontFallbackResolutionDescriptor::resource_plan(Self, size? : Float, scal
 pub fn FontFallbackResolutionDescriptor::source_family(Self) -> Bytes?
 pub fn FontFallbackResolutionDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FontStyleRequest {
   weight : Int32
   width : Int32
   slant : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn FontStyleRequest::bold() -> Self
 pub fn FontStyleRequest::default() -> Self
 pub fn FontStyleRequest::equal(Self, Self) -> Bool
@@ -340,13 +358,14 @@ pub fn FontStyleRequest::not_equal(Self, Self) -> Bool
 pub fn FontStyleRequest::to_repr(Self) -> @debug.Repr
 pub impl Default for FontStyleRequest
 
+#derive(Eq, @debug.Debug)
 pub(all) enum GpuContextBackend {
   MockGpuContext
   MetalGpuContext
   VulkanGpuContext
   Direct3D12GpuContext
   OpenGLGpuContext
-} derive(Eq, @debug.Debug)
+}
 pub fn GpuContextBackend::default() -> Self
 pub fn GpuContextBackend::equal(Self, Self) -> Bool
 pub fn GpuContextBackend::is_mock(Self) -> Bool
@@ -355,6 +374,7 @@ pub fn GpuContextBackend::not_equal(Self, Self) -> Bool
 pub fn GpuContextBackend::to_repr(Self) -> @debug.Repr
 pub impl Default for GpuContextBackend
 
+#derive(Eq, @debug.Debug)
 pub(all) struct GpuContextDescriptor {
   backend : GpuContextBackend
   id : Bytes
@@ -362,7 +382,7 @@ pub(all) struct GpuContextDescriptor {
   device_id : Bytes
   queue_family_index : Int32
   protected_context : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn GpuContextDescriptor::direct3d12(Bytes, adapter_id? : Bytes, device_id? : Bytes) -> Self
 pub fn GpuContextDescriptor::equal(Self, Self) -> Bool
 pub fn GpuContextDescriptor::is_anonymous(Self) -> Bool
@@ -377,10 +397,11 @@ pub fn GpuContextDescriptor::to_repr(Self) -> @debug.Repr
 pub fn GpuContextDescriptor::vulkan(Bytes, adapter_id? : Bytes, device_id? : Bytes, queue_family_index? : Int32) -> Self
 pub fn GpuContextDescriptor::with_protected_context(Self, Bool) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct IPoint {
   x : Int32
   y : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn IPoint::default() -> Self
 pub fn IPoint::equal(Self, Self) -> Bool
 pub fn IPoint::equals(Self, Int32, Int32) -> Bool
@@ -393,12 +414,13 @@ pub fn IPoint::to_repr(Self) -> @debug.Repr
 pub fn IPoint::zero() -> Self
 pub impl Default for IPoint
 
+#derive(Eq, @debug.Debug)
 pub(all) struct IRect {
   left : Int32
   top : Int32
   right : Int32
   bottom : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn IRect::bottom(Self) -> Int32
 pub fn IRect::contains_point(Self, IPoint) -> Bool
 pub fn IRect::contains_rect(Self, Self) -> Bool
@@ -441,10 +463,11 @@ pub fn IRect::x(Self) -> Int32
 pub fn IRect::y(Self) -> Int32
 pub impl Default for IRect
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ISize {
   width : Int32
   height : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn ISize::area(Self) -> Int64
 pub fn ISize::default() -> Self
 pub fn ISize::empty() -> Self
@@ -457,9 +480,10 @@ pub fn ISize::to_repr(Self) -> @debug.Repr
 pub fn ISize::to_size(Self) -> Size
 pub impl Default for ISize
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ImageDescriptor {
   EncodedImage(Bytes, EncodedImageFormat?, ISize?)
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageDescriptor::byte_size(Self) -> Int64
 pub fn ImageDescriptor::dimensions(Self) -> ISize?
 pub fn ImageDescriptor::encoded(Bytes, format? : EncodedImageFormat?, dimensions? : ISize?) -> Self?
@@ -470,9 +494,10 @@ pub fn ImageDescriptor::resource_descriptor(Self, byte_size? : Int64) -> Rendere
 pub fn ImageDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn ImageDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ImageFilterDescriptor {
   BlurImageFilter(Float, Float)
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageFilterDescriptor::blur(Float, Float) -> Self?
 pub fn ImageFilterDescriptor::equal(Self, Self) -> Bool
 pub fn ImageFilterDescriptor::is_valid(Self) -> Bool
@@ -481,10 +506,11 @@ pub fn ImageFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> R
 pub fn ImageFilterDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn ImageFilterDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ImageInfo {
   dimensions : ISize
   color_info : ColorInfo
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageInfo::a8(ISize) -> Self
 pub fn ImageInfo::alpha_type(Self) -> AlphaType
 pub fn ImageInfo::bounds(Self) -> IRect
@@ -517,9 +543,10 @@ pub fn ImageInfo::with_color_type(Self, ColorType) -> Self
 pub fn ImageInfo::with_dimensions(Self, ISize) -> Self
 pub impl Default for ImageInfo
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MaskFilterDescriptor {
   BlurMaskFilter(Float)
-} derive(Eq, @debug.Debug)
+}
 pub fn MaskFilterDescriptor::blur(Float) -> Self?
 pub fn MaskFilterDescriptor::equal(Self, Self) -> Bool
 pub fn MaskFilterDescriptor::is_valid(Self) -> Bool
@@ -528,6 +555,7 @@ pub fn MaskFilterDescriptor::resource_descriptor(Self, byte_size? : Int64) -> Re
 pub fn MaskFilterDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn MaskFilterDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Matrix {
   scale_x : Float
   skew_x : Float
@@ -538,7 +566,7 @@ pub(all) struct Matrix {
   persp_0 : Float
   persp_1 : Float
   persp_2 : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Matrix::concat(Self, Self) -> Self
 pub fn Matrix::default() -> Self
 pub fn Matrix::determinant(Self) -> Float
@@ -594,6 +622,7 @@ pub fn Matrix::translate_y(Self) -> Float
 pub fn Matrix::values(Self) -> Array[Float]
 pub impl Default for Matrix
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MatrixMember {
   ScaleX
   SkewX
@@ -604,16 +633,17 @@ pub(all) enum MatrixMember {
   Persp0
   Persp1
   Persp2
-} derive(Eq, @debug.Debug)
+}
 pub fn MatrixMember::equal(Self, Self) -> Bool
 pub fn MatrixMember::not_equal(Self, Self) -> Bool
 pub fn MatrixMember::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MeasuredTextRunDescriptor {
   measurement : TextMeasurementDescriptor
   advance : Float
   bounds : Rect?
-} derive(Eq, @debug.Debug)
+}
 pub fn MeasuredTextRunDescriptor::equal(Self, Self) -> Bool
 pub fn MeasuredTextRunDescriptor::has_bounds(Self) -> Bool
 pub fn MeasuredTextRunDescriptor::is_valid(Self) -> Bool
@@ -624,11 +654,12 @@ pub fn MeasuredTextRunDescriptor::resource_key(Self, Bytes) -> RendererResourceK
 pub fn MeasuredTextRunDescriptor::resource_plan(Self, Bytes, measured_byte_size? : Int64, measurement_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
 pub fn MeasuredTextRunDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MipmapMode {
   None
   Nearest
   Linear
-} derive(Eq, @debug.Debug)
+}
 pub fn MipmapMode::default() -> Self
 pub fn MipmapMode::equal(Self, Self) -> Bool
 pub fn MipmapMode::not_equal(Self, Self) -> Bool
@@ -636,6 +667,7 @@ pub fn MipmapMode::to_repr(Self) -> @debug.Repr
 pub fn MipmapMode::to_skia_ordinal(Self) -> Int32
 pub impl Default for MipmapMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Paint {
   color : Color
   anti_alias : Bool
@@ -646,7 +678,7 @@ pub(all) struct Paint {
   stroke_cap : StrokeCap
   stroke_join : StrokeJoin
   blend_mode : BlendMode
-} derive(Eq, @debug.Debug)
+}
 pub fn Paint::alpha(Self) -> Byte
 pub fn Paint::blend_mode_ordinal(Self) -> Int32
 pub fn Paint::color_argb(Self) -> UInt32
@@ -673,11 +705,12 @@ pub fn Paint::style_ordinal(Self) -> Int32
 pub fn Paint::to_repr(Self) -> @debug.Repr
 pub impl Default for Paint
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PaintStyle {
   Fill
   Stroke
   StrokeAndFill
-} derive(Eq, @debug.Debug)
+}
 pub fn PaintStyle::default() -> Self
 pub fn PaintStyle::equal(Self, Self) -> Bool
 pub fn PaintStyle::not_equal(Self, Self) -> Bool
@@ -685,11 +718,12 @@ pub fn PaintStyle::to_repr(Self) -> @debug.Repr
 pub fn PaintStyle::to_skia_ordinal(Self) -> Int32
 pub impl Default for PaintStyle
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Path {
   fill_type : PathFillType
   verbs : Array[PathVerb]
   current_point : Point?
-} derive(Eq, @debug.Debug)
+}
 pub fn Path::add_circle(Self, Point, Float, direction? : PathDirection) -> Self
 pub fn Path::add_oval(Self, Rect, direction? : PathDirection) -> Self
 pub fn Path::add_path(Self, Self, matrix? : Matrix, mode? : AddPathMode) -> Self
@@ -736,10 +770,11 @@ pub fn Path::with_fill_type(Self, PathFillType) -> Self
 pub fn Path::with_offset(Self, Point) -> Self
 pub impl Default for Path
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PathDirection {
   CW
   CCW
-} derive(Eq, @debug.Debug)
+}
 pub fn PathDirection::default() -> Self
 pub fn PathDirection::equal(Self, Self) -> Bool
 pub fn PathDirection::not_equal(Self, Self) -> Bool
@@ -747,12 +782,13 @@ pub fn PathDirection::to_repr(Self) -> @debug.Repr
 pub fn PathDirection::to_skia_ordinal(Self) -> Int32
 pub impl Default for PathDirection
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PathFillType {
   Winding
   EvenOdd
   InverseWinding
   InverseEvenOdd
-} derive(Eq, @debug.Debug)
+}
 pub fn PathFillType::default() -> Self
 pub fn PathFillType::equal(Self, Self) -> Bool
 pub fn PathFillType::is_inverse(Self) -> Bool
@@ -761,26 +797,29 @@ pub fn PathFillType::to_repr(Self) -> @debug.Repr
 pub fn PathFillType::to_skia_ordinal(Self) -> Int32
 pub impl Default for PathFillType
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PathLine {
   start : Point
   end : Point
-} derive(Eq, @debug.Debug)
+}
 pub fn PathLine::equal(Self, Self) -> Bool
 pub fn PathLine::new(Point, Point) -> Self
 pub fn PathLine::not_equal(Self, Self) -> Bool
 pub fn PathLine::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PathRect {
   rect : Rect
   is_closed : Bool
   direction : PathDirection
-} derive(Eq, @debug.Debug)
+}
 pub fn PathRect::equal(Self, Self) -> Bool
 pub fn PathRect::new(Rect, Bool, PathDirection) -> Self
 pub fn PathRect::not_equal(Self, Self) -> Bool
 pub fn PathRect::to_repr(Self) -> @debug.Repr
 
-pub(all) struct PathSegmentMask(Int32) derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+pub(all) struct PathSegmentMask(Int32)
 pub fn PathSegmentMask::bits(Self) -> Int32
 pub fn PathSegmentMask::conic() -> Self
 pub fn PathSegmentMask::contains(Self, Self) -> Bool
@@ -793,6 +832,7 @@ pub fn PathSegmentMask::not_equal(Self, Self) -> Bool
 pub fn PathSegmentMask::quad() -> Self
 pub fn PathSegmentMask::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PathVerb {
   MoveTo(Point)
   LineTo(Point)
@@ -800,16 +840,17 @@ pub(all) enum PathVerb {
   ConicTo(Point, Point, Float)
   CubicTo(Point, Point, Point)
   Close
-} derive(Eq, @debug.Debug)
+}
 pub fn PathVerb::equal(Self, Self) -> Bool
 pub fn PathVerb::not_equal(Self, Self) -> Bool
 pub fn PathVerb::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Pixmap {
   image_info : ImageInfo
   row_bytes : Int32
   pixels : Bytes
-} derive(Eq, @debug.Debug)
+}
 pub fn Pixmap::alpha_type(Self) -> AlphaType
 pub fn Pixmap::bounds(Self) -> IRect
 pub fn Pixmap::byte_size(Self) -> Int32
@@ -831,10 +872,11 @@ pub fn Pixmap::shift_per_pixel(Self) -> Int32
 pub fn Pixmap::to_repr(Self) -> @debug.Repr
 pub fn Pixmap::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Point {
   x : Float
   y : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Point::cross(Self, Self) -> Float
 pub fn Point::default() -> Self
 pub fn Point::distance_to(Self, Self) -> Float
@@ -861,11 +903,12 @@ pub fn Point::with_length(Self, Float) -> Self?
 pub fn Point::zero() -> Self
 pub impl Default for Point
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PointMode {
   Points
   Lines
   Polygon
-} derive(Eq, @debug.Debug)
+}
 pub fn PointMode::default() -> Self
 pub fn PointMode::equal(Self, Self) -> Bool
 pub fn PointMode::not_equal(Self, Self) -> Bool
@@ -873,13 +916,14 @@ pub fn PointMode::to_repr(Self) -> @debug.Repr
 pub fn PointMode::to_skia_ordinal(Self) -> Int32
 pub impl Default for PointMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RRect {
   rect : Rect
   upper_left : Size
   upper_right : Size
   lower_right : Size
   lower_left : Size
-} derive(Eq, @debug.Debug)
+}
 pub fn RRect::bounds(Self) -> Rect
 pub fn RRect::contains_rect(Self, Rect) -> Bool
 pub fn RRect::default() -> Self
@@ -904,12 +948,13 @@ pub fn RRect::with_offset_to(Self, Point) -> Self
 pub fn RRect::with_outset(Self, Size) -> Self
 pub impl Default for RRect
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Rect {
   left : Float
   top : Float
   right : Float
   bottom : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Rect::bl(Self) -> Point
 pub fn Rect::bottom(Self) -> Float
 pub fn Rect::bottom_left(Self) -> Point
@@ -969,6 +1014,7 @@ pub fn Rect::x(Self) -> Float
 pub fn Rect::y(Self) -> Float
 pub impl Default for Rect
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderCommand {
   SaveCanvas
   RestoreCanvas
@@ -1007,7 +1053,7 @@ pub(all) enum RenderCommand {
   DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
   DeclareRenderResource(RendererResourceDescriptor)
   PresentSurface
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderCommand::clear(Color) -> Self
 pub fn RenderCommand::clip_path(Path, op? : ClipOp) -> Self
 pub fn RenderCommand::clip_rect(Rect, op? : ClipOp) -> Self
@@ -1060,10 +1106,11 @@ pub fn RenderCommand::text_run_resource_key(Self) -> RendererResourceKey?
 pub fn RenderCommand::to_repr(Self) -> @debug.Repr
 pub fn RenderCommand::translate(Point) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderCommandList {
   pass : RenderPassDescriptor
   commands : Array[RenderCommand]
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderCommandList::append(Self, RenderCommand) -> Self
 pub fn RenderCommandList::clear(Self, Color) -> Self
 pub fn RenderCommandList::clip_path(Self, Path, op? : ClipOp) -> Self
@@ -1120,6 +1167,7 @@ pub fn RenderCommandList::to_repr(Self) -> @debug.Repr
 pub fn RenderCommandList::touched_bounds(Self) -> Rect?
 pub fn RenderCommandList::translate(Self, Point) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderCommandStats {
   command_count : Int32
   draw_count : Int32
@@ -1138,20 +1186,21 @@ pub(all) struct RenderCommandStats {
   max_save_depth : Int32
   final_save_depth : Int32
   unbalanced_restore_count : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderCommandStats::empty() -> Self
 pub fn RenderCommandStats::equal(Self, Self) -> Bool
 pub fn RenderCommandStats::is_state_balanced(Self) -> Bool
 pub fn RenderCommandStats::not_equal(Self, Self) -> Bool
 pub fn RenderCommandStats::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderFrameDescriptor {
   target : SurfaceTargetDescriptor
   command_list : RenderCommandList
   resource_plan : RendererResourcePlan
   stats : RenderCommandStats
   touched_bounds : Rect?
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int32
 pub fn RenderFrameDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
@@ -1175,13 +1224,14 @@ pub fn RenderFrameDescriptor::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameDescriptor::uncacheable_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameDescriptor::validation_status(Self) -> RenderFrameValidationStatus
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderFrameFinalizationDescriptor {
   frame : RenderFrameDescriptor
   frame_index : Int32
   validation_status : RenderFrameValidationStatus
   finalization : SurfaceFinalizationDescriptor?
   resource_plan : RendererResourcePlan
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameFinalizationDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int32
 pub fn RenderFrameFinalizationDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameFinalizationDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
@@ -1196,13 +1246,14 @@ pub fn RenderFrameFinalizationDescriptor::requires_gpu_context(Self) -> Bool
 pub fn RenderFrameFinalizationDescriptor::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameFinalizationDescriptor::uncacheable_resource_plan(Self) -> RendererResourcePlan
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderFrameSubmissionDescriptor {
   frame : RenderFrameDescriptor
   frame_index : Int32
   validation_status : RenderFrameValidationStatus
   present : SurfacePresentDescriptor?
   resource_plan : RendererResourcePlan
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameSubmissionDescriptor::cache_resources(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> Int32
 pub fn RenderFrameSubmissionDescriptor::cacheable_resource_plan(Self) -> RendererResourcePlan
 pub fn RenderFrameSubmissionDescriptor::cached_cacheable_resource_plan(Self, ResourceCache[RendererResourceKey, RendererResourceDescriptor]) -> RendererResourcePlan
@@ -1216,18 +1267,20 @@ pub fn RenderFrameSubmissionDescriptor::not_equal(Self, Self) -> Bool
 pub fn RenderFrameSubmissionDescriptor::to_repr(Self) -> @debug.Repr
 pub fn RenderFrameSubmissionDescriptor::uncacheable_resource_plan(Self) -> RendererResourcePlan
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderFrameValidationStatus {
   FrameReady
   FrameTargetMismatch
   FrameUnbalancedState
   FrameMissingGpuContext
   FrameMissingPresent
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderFrameValidationStatus::equal(Self, Self) -> Bool
 pub fn RenderFrameValidationStatus::is_ready(Self) -> Bool
 pub fn RenderFrameValidationStatus::not_equal(Self, Self) -> Bool
 pub fn RenderFrameValidationStatus::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
   target_key : RendererResourceKey?
@@ -1235,7 +1288,7 @@ pub(all) struct RenderPassDescriptor {
   load_op : RenderPassLoadOp
   clear_color : Color?
   store_op : RenderPassStoreOp
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPassDescriptor::clear(SurfaceDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp) -> Self
 pub fn RenderPassDescriptor::clear_target(SurfaceTargetDescriptor, Color, bounds? : IRect?, store_op? : RenderPassStoreOp?) -> Self
 pub fn RenderPassDescriptor::equal(Self, Self) -> Bool
@@ -1258,11 +1311,12 @@ pub fn RenderPassDescriptor::with_load_op(Self, RenderPassLoadOp) -> Self
 pub fn RenderPassDescriptor::with_store_op(Self, RenderPassStoreOp) -> Self
 pub fn RenderPassDescriptor::without_clear(Self) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderPassLoadOp {
   LoadExisting
   ClearBeforeDraw
   DontCareLoad
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPassLoadOp::default() -> Self
 pub fn RenderPassLoadOp::equal(Self, Self) -> Bool
 pub fn RenderPassLoadOp::needs_clear(Self) -> Bool
@@ -1271,11 +1325,12 @@ pub fn RenderPassLoadOp::preserves_existing_pixels(Self) -> Bool
 pub fn RenderPassLoadOp::to_repr(Self) -> @debug.Repr
 pub impl Default for RenderPassLoadOp
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderPassStoreOp {
   StorePixels
   DiscardPixels
   PresentPixels
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPassStoreOp::default() -> Self
 pub fn RenderPassStoreOp::equal(Self, Self) -> Bool
 pub fn RenderPassStoreOp::keeps_pixels(Self) -> Bool
@@ -1284,11 +1339,12 @@ pub fn RenderPassStoreOp::not_equal(Self, Self) -> Bool
 pub fn RenderPassStoreOp::to_repr(Self) -> @debug.Repr
 pub impl Default for RenderPassStoreOp
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RendererResourceDescriptor {
   key : RendererResourceKey
   byte_size : Int64
   cacheable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn RendererResourceDescriptor::color_filter(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::equal(Self, Self) -> Bool
 pub fn RendererResourceDescriptor::filter(Bytes, byte_size? : Int64) -> Self
@@ -1312,10 +1368,11 @@ pub fn RendererResourceDescriptor::typeface(Bytes, byte_size? : Int64) -> Self
 pub fn RendererResourceDescriptor::uncacheable(Self) -> Self
 pub fn RendererResourceDescriptor::with_byte_size(Self, Int64) -> Self
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct RendererResourceKey {
   kind : RendererResourceKind
   id : Bytes
-} derive(Eq, Hash, @debug.Debug)
+}
 pub fn RendererResourceKey::color_filter(Bytes) -> Self
 pub fn RendererResourceKey::equal(Self, Self) -> Bool
 pub fn RendererResourceKey::font(Bytes) -> Self
@@ -1337,6 +1394,7 @@ pub fn RendererResourceKey::text_run(Bytes) -> Self
 pub fn RendererResourceKey::to_repr(Self) -> @debug.Repr
 pub fn RendererResourceKey::typeface(Bytes) -> Self
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) enum RendererResourceKind {
   ImageResource
   ShaderResource
@@ -1350,7 +1408,7 @@ pub(all) enum RendererResourceKind {
   SurfaceResource
   GpuContextResource
   GpuSurfaceResource
-} derive(Eq, Hash, @debug.Debug)
+}
 pub fn RendererResourceKind::equal(Self, Self) -> Bool
 pub fn RendererResourceKind::hash(Self) -> Int32
 pub fn RendererResourceKind::hash_combine(Self, Hasher) -> Unit
@@ -1361,13 +1419,14 @@ pub fn RendererResourceKind::is_text(Self) -> Bool
 pub fn RendererResourceKind::not_equal(Self, Self) -> Bool
 pub fn RendererResourceKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RendererResourcePlan {
   descriptors : Array[RendererResourceDescriptor]
   byte_size : Int64
   cacheable_count : Int32
   uncacheable_count : Int32
   gpu_backed_count : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn RendererResourcePlan::byte_size_for_kind(Self, RendererResourceKind) -> Int64
 pub fn RendererResourcePlan::cacheable_descriptors(Self) -> Array[RendererResourceDescriptor]
 pub fn RendererResourcePlan::cacheable_resource_plan(Self) -> Self
@@ -1413,6 +1472,7 @@ pub fn[K : Hash + Eq, V] ResourceCache::remove(Self[K, V], K) -> Bool
 pub fn[K : Hash + Eq, V] ResourceCache::set_max_bytes(Self[K, V], Int64) -> Unit
 pub fn[K, V] ResourceCache::stats(Self[K, V]) -> ResourceCacheStats
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ResourceCacheStats {
   count : Int32
   byte_size : Int64
@@ -1420,16 +1480,17 @@ pub(all) struct ResourceCacheStats {
   hits : Int32
   misses : Int32
   evictions : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceCacheStats::equal(Self, Self) -> Bool
 pub fn ResourceCacheStats::not_equal(Self, Self) -> Bool
 pub fn ResourceCacheStats::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SamplingOptions {
   filter : FilterMode
   mipmap : MipmapMode
   cubic : CubicResampler?
-} derive(Eq, @debug.Debug)
+}
 pub fn SamplingOptions::catmull_rom() -> Self
 pub fn SamplingOptions::cubic_b(Self) -> Float
 pub fn SamplingOptions::cubic_c(Self) -> Float
@@ -1446,11 +1507,12 @@ pub fn SamplingOptions::to_repr(Self) -> @debug.Repr
 pub fn SamplingOptions::uses_cubic(Self) -> Bool
 pub impl Default for SamplingOptions
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ShaderDescriptor {
   ColorShader(Color)
   LinearGradientShader(Point, Point, Color, Color, TileMode)
   RadialGradientShader(Point, Float, Color, Color, TileMode)
-} derive(Eq, @debug.Debug)
+}
 pub fn ShaderDescriptor::color(Color) -> Self
 pub fn ShaderDescriptor::equal(Self, Self) -> Bool
 pub fn ShaderDescriptor::is_valid(Self) -> Bool
@@ -1461,12 +1523,13 @@ pub fn ShaderDescriptor::resource_descriptor(Self, byte_size? : Int64) -> Render
 pub fn ShaderDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn ShaderDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ShapedGlyphRunDescriptor {
   shaped_run : ShapedTextRunDescriptor
   glyph_ids : Array[Int32]
   positions : Array[Point]
   clusters : Array[Int32]
-} derive(Eq, @debug.Debug)
+}
 pub fn ShapedGlyphRunDescriptor::cluster_count(Self) -> Int32
 pub fn ShapedGlyphRunDescriptor::equal(Self, Self) -> Bool
 pub fn ShapedGlyphRunDescriptor::glyph_count(Self) -> Int32
@@ -1479,12 +1542,13 @@ pub fn ShapedGlyphRunDescriptor::resource_key(Self, Bytes) -> RendererResourceKe
 pub fn ShapedGlyphRunDescriptor::resource_plan(Self, Bytes, glyph_run_byte_size? : Int64, shaped_byte_size? : Int64, shaping_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
 pub fn ShapedGlyphRunDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ShapedTextRunDescriptor {
   shaping : TextShapingDescriptor
   glyph_count : Int32
   cluster_count : Int32
   advance : Point
-} derive(Eq, @debug.Debug)
+}
 pub fn ShapedTextRunDescriptor::equal(Self, Self) -> Bool
 pub fn ShapedTextRunDescriptor::glyph_run_descriptor(Self, glyph_ids? : Array[Int32], positions? : Array[Point], clusters? : Array[Int32]) -> ShapedGlyphRunDescriptor
 pub fn ShapedTextRunDescriptor::is_valid(Self) -> Bool
@@ -1495,10 +1559,11 @@ pub fn ShapedTextRunDescriptor::resource_key(Self, Bytes) -> RendererResourceKey
 pub fn ShapedTextRunDescriptor::resource_plan(Self, Bytes, shaped_byte_size? : Int64, shaping_byte_size? : Int64, text_byte_size? : Int64, font_byte_size? : Int64, fallback_byte_size? : Int64) -> RendererResourcePlan
 pub fn ShapedTextRunDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Size {
   width : Float
   height : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Size::default() -> Self
 pub fn Size::empty() -> Self
 pub fn Size::equal(Self, Self) -> Bool
@@ -1513,11 +1578,12 @@ pub fn Size::to_isize_round(Self) -> ISize
 pub fn Size::to_repr(Self) -> @debug.Repr
 pub impl Default for Size
 
+#derive(Eq, @debug.Debug)
 pub(all) enum StrokeCap {
   Butt
   Round
   Square
-} derive(Eq, @debug.Debug)
+}
 pub fn StrokeCap::default() -> Self
 pub fn StrokeCap::equal(Self, Self) -> Bool
 pub fn StrokeCap::not_equal(Self, Self) -> Bool
@@ -1525,11 +1591,12 @@ pub fn StrokeCap::to_repr(Self) -> @debug.Repr
 pub fn StrokeCap::to_skia_ordinal(Self) -> Int32
 pub impl Default for StrokeCap
 
+#derive(Eq, @debug.Debug)
 pub(all) enum StrokeJoin {
   Miter
   Round
   Bevel
-} derive(Eq, @debug.Debug)
+}
 pub fn StrokeJoin::default() -> Self
 pub fn StrokeJoin::equal(Self, Self) -> Bool
 pub fn StrokeJoin::not_equal(Self, Self) -> Bool
@@ -1537,11 +1604,12 @@ pub fn StrokeJoin::to_repr(Self) -> @debug.Repr
 pub fn StrokeJoin::to_skia_ordinal(Self) -> Int32
 pub impl Default for StrokeJoin
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SurfaceBackend {
   Raster
   Window
   Gpu
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceBackend::default() -> Self
 pub fn SurfaceBackend::equal(Self, Self) -> Bool
 pub fn SurfaceBackend::is_gpu(Self) -> Bool
@@ -1552,10 +1620,11 @@ pub fn SurfaceBackend::not_equal(Self, Self) -> Bool
 pub fn SurfaceBackend::to_repr(Self) -> @debug.Repr
 pub impl Default for SurfaceBackend
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SurfaceBudget {
   Budgeted
   Unbudgeted
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceBudget::default() -> Self
 pub fn SurfaceBudget::equal(Self, Self) -> Bool
 pub fn SurfaceBudget::is_budgeted(Self) -> Bool
@@ -1563,6 +1632,7 @@ pub fn SurfaceBudget::not_equal(Self, Self) -> Bool
 pub fn SurfaceBudget::to_repr(Self) -> @debug.Repr
 pub impl Default for SurfaceBudget
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SurfaceDescriptor {
   backend : SurfaceBackend
   image_info : ImageInfo
@@ -1570,7 +1640,7 @@ pub(all) struct SurfaceDescriptor {
   sample_count : Int32
   stencil_bits : Int32
   budget : SurfaceBudget
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceDescriptor::bounds(Self) -> IRect
 pub fn SurfaceDescriptor::dimensions(Self) -> ISize
 pub fn SurfaceDescriptor::equal(Self, Self) -> Bool
@@ -1599,10 +1669,11 @@ pub fn SurfaceDescriptor::with_origin(Self, SurfaceOrigin) -> Self
 pub fn SurfaceDescriptor::with_sample_count(Self, Int32) -> Self
 pub fn SurfaceDescriptor::with_stencil_bits(Self, Int32) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SurfaceFinalizationDescriptor {
   target : SurfaceTargetDescriptor
   frame_index : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceFinalizationDescriptor::equal(Self, Self) -> Bool
 pub fn SurfaceFinalizationDescriptor::is_finalizable(Self) -> Bool
 pub fn SurfaceFinalizationDescriptor::new(SurfaceTargetDescriptor, frame_index? : Int32) -> Self
@@ -1614,22 +1685,24 @@ pub fn SurfaceFinalizationDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfaceFinalizationDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
 pub fn SurfaceFinalizationDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SurfaceOrigin {
   TopLeft
   BottomLeft
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceOrigin::default() -> Self
 pub fn SurfaceOrigin::equal(Self, Self) -> Bool
 pub fn SurfaceOrigin::not_equal(Self, Self) -> Bool
 pub fn SurfaceOrigin::to_repr(Self) -> @debug.Repr
 pub impl Default for SurfaceOrigin
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SurfacePresentDescriptor {
   target : SurfaceTargetDescriptor
   frame_index : Int32
   buffer_index : Int32
   present_mode : SurfacePresentMode?
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfacePresentDescriptor::allows_tearing(Self) -> Bool
 pub fn SurfacePresentDescriptor::equal(Self, Self) -> Bool
 pub fn SurfacePresentDescriptor::is_presentable(Self) -> Bool
@@ -1642,11 +1715,12 @@ pub fn SurfacePresentDescriptor::resource_key(Self) -> RendererResourceKey
 pub fn SurfacePresentDescriptor::resource_plan(Self, byte_size? : Int64) -> RendererResourcePlan
 pub fn SurfacePresentDescriptor::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SurfacePresentMode {
   ImmediatePresent
   MailboxPresent
   FifoPresent
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfacePresentMode::allows_tearing(Self) -> Bool
 pub fn SurfacePresentMode::default() -> Self
 pub fn SurfacePresentMode::equal(Self, Self) -> Bool
@@ -1655,13 +1729,14 @@ pub fn SurfacePresentMode::prefers_vsync(Self) -> Bool
 pub fn SurfacePresentMode::to_repr(Self) -> @debug.Repr
 pub impl Default for SurfacePresentMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
   target_id : Bytes
   present_mode : SurfacePresentMode?
   max_frames_in_flight : Int32
   gpu_context_key : RendererResourceKey?
-} derive(Eq, @debug.Debug)
+}
 pub fn SurfaceTargetDescriptor::bounds(Self) -> IRect
 pub fn SurfaceTargetDescriptor::dimensions(Self) -> ISize
 pub fn SurfaceTargetDescriptor::equal(Self, Self) -> Bool
@@ -1692,10 +1767,11 @@ pub fn SurfaceTargetDescriptor::without_gpu_context(Self) -> Self
 pub fn SurfaceTargetDescriptor::without_present(Self) -> Self
 pub fn SurfaceTargetDescriptor::without_target_id(Self) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TextDirection {
   LeftToRight
   RightToLeft
-} derive(Eq, @debug.Debug)
+}
 pub fn TextDirection::default() -> Self
 pub fn TextDirection::equal(Self, Self) -> Bool
 pub fn TextDirection::is_left_to_right(Self) -> Bool
@@ -1704,13 +1780,14 @@ pub fn TextDirection::not_equal(Self, Self) -> Bool
 pub fn TextDirection::to_repr(Self) -> @debug.Repr
 pub impl Default for TextDirection
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TextMeasurementDescriptor {
   run : TextRunDescriptor
   font_key : RendererResourceKey
   width : Float
   measure_bounds : Bool
   shape : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn TextMeasurementDescriptor::equal(Self, Self) -> Bool
 pub fn TextMeasurementDescriptor::is_shaped(Self) -> Bool
 pub fn TextMeasurementDescriptor::measured_run_descriptor(Self, advance? : Float, bounds? : Rect?) -> MeasuredTextRunDescriptor
@@ -1726,10 +1803,11 @@ pub fn TextMeasurementDescriptor::with_run(Self, TextRunDescriptor) -> Self
 pub fn TextMeasurementDescriptor::with_shape(Self, Bool) -> Self
 pub fn TextMeasurementDescriptor::with_width(Self, Float) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TextRange {
   start : Int32
   end : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn TextRange::contains_offset(Self, Int32) -> Bool
 pub fn TextRange::equal(Self, Self) -> Bool
 pub fn TextRange::is_empty(Self) -> Bool
@@ -1738,11 +1816,12 @@ pub fn TextRange::new(Int32, Int32) -> Self
 pub fn TextRange::not_equal(Self, Self) -> Bool
 pub fn TextRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TextRunDescriptor {
   range : TextRange
   direction : TextDirection
   fallback : FontFallbackRequest
-} derive(Eq, @debug.Debug)
+}
 pub fn TextRunDescriptor::equal(Self, Self) -> Bool
 pub fn TextRunDescriptor::is_empty(Self) -> Bool
 pub fn TextRunDescriptor::is_right_to_left(Self) -> Bool
@@ -1756,11 +1835,12 @@ pub fn TextRunDescriptor::with_direction(Self, TextDirection) -> Self
 pub fn TextRunDescriptor::with_fallback(Self, FontFallbackRequest) -> Self
 pub fn TextRunDescriptor::with_range(Self, TextRange) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TextShapingDescriptor {
   run : TextRunDescriptor
   font_key : RendererResourceKey
   width : Float
-} derive(Eq, @debug.Debug)
+}
 pub fn TextShapingDescriptor::equal(Self, Self) -> Bool
 pub fn TextShapingDescriptor::measurement_descriptor(Self) -> TextMeasurementDescriptor
 pub fn TextShapingDescriptor::new(run? : TextRunDescriptor, font_key? : RendererResourceKey, width? : Float) -> Self
@@ -1774,12 +1854,13 @@ pub fn TextShapingDescriptor::with_font_key(Self, RendererResourceKey) -> Self
 pub fn TextShapingDescriptor::with_run(Self, TextRunDescriptor) -> Self
 pub fn TextShapingDescriptor::with_width(Self, Float) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TileMode {
   Clamp
   Repeat
   Mirror
   Decal
-} derive(Eq, @debug.Debug)
+}
 pub fn TileMode::default() -> Self
 pub fn TileMode::equal(Self, Self) -> Bool
 pub fn TileMode::not_equal(Self, Self) -> Bool
@@ -1787,6 +1868,7 @@ pub fn TileMode::to_repr(Self) -> @debug.Repr
 pub fn TileMode::to_skia_ordinal(Self) -> Int32
 pub impl Default for TileMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WindowSurfaceDescriptor {
   window_id : Bytes
   logical_size : Size
@@ -1797,7 +1879,7 @@ pub(all) struct WindowSurfaceDescriptor {
   stencil_bits : Int32
   present_mode : SurfacePresentMode
   max_frames_in_flight : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowSurfaceDescriptor::dimensions(Self) -> ISize
 pub fn WindowSurfaceDescriptor::equal(Self, Self) -> Bool
 pub fn WindowSurfaceDescriptor::from_physical_size(Bytes, ISize, device_pixel_ratio? : Float, origin? : SurfaceOrigin, sample_count? : Int32, stencil_bits? : Int32, present_mode? : SurfacePresentMode, max_frames_in_flight? : Int32) -> Self

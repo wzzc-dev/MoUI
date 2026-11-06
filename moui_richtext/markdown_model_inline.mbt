@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum MarkdownInlineKind {
   Plain
   Bold
@@ -11,7 +12,7 @@ pub(all) enum MarkdownInlineKind {
   Image
   FootnoteReference
   HtmlInline
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownInlineKind with Debug::{to_repr}
@@ -23,11 +24,12 @@ pub extend MarkdownInlineKind with Eq::{not_equal, equal}
 pub extend MarkdownInlineKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownInline with Debug::{to_repr}
@@ -54,10 +56,11 @@ fn markdown_inline(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownHtmlEntityDecodeResult {
   ch : Char
   end : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownHtmlEntityDecodeResult with Debug::{to_repr}

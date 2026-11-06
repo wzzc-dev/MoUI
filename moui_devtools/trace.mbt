@@ -16,11 +16,12 @@ const TRACE_TEXT_ENTRY_LIMIT : Int32 = 16
 const TRACE_TEXT_DIFF_LIMIT : Int32 = 4
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsTreeChangeKind {
   SemanticsTreeAdded
   SemanticsTreeRemoved
   SemanticsTreeChanged
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SemanticsTreeChangeKind with Debug::{to_repr}
@@ -32,6 +33,7 @@ pub extend SemanticsTreeChangeKind with Eq::{not_equal, equal}
 pub extend SemanticsTreeChangeKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsTreeChangedField {
   SemanticsTreeFieldRole
   SemanticsTreeFieldLabel
@@ -45,7 +47,7 @@ pub(all) enum SemanticsTreeChangedField {
   SemanticsTreeFieldChecked
   SemanticsTreeFieldExpanded
   SemanticsTreeFieldDisabled
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SemanticsTreeChangedField with Debug::{to_repr}
@@ -57,13 +59,14 @@ pub extend SemanticsTreeChangedField with Eq::{not_equal, equal}
 pub extend SemanticsTreeChangedField with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsTreeDiffEntry {
   kind : SemanticsTreeChangeKind
   node_id : String
   before : @runtime.SemanticsInspectorEntry?
   after : @runtime.SemanticsInspectorEntry?
   changed_fields : Array[SemanticsTreeChangedField]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SemanticsTreeDiffEntry with Debug::{to_repr}
@@ -75,6 +78,7 @@ pub extend SemanticsTreeDiffEntry with Eq::{not_equal, equal}
 pub extend SemanticsTreeDiffEntry with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsTreeDiff {
   baseline : Bool
   added_count : Int32
@@ -82,7 +86,7 @@ pub(all) struct SemanticsTreeDiff {
   changed_count : Int32
   dropped_count : Int32
   entries : Array[SemanticsTreeDiffEntry]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SemanticsTreeDiff with Debug::{to_repr}
@@ -94,6 +98,7 @@ pub extend SemanticsTreeDiff with Eq::{not_equal, equal}
 pub extend SemanticsTreeDiff with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsMessageTrace {
   dispatched_delta : Int32
   updated_delta : Int32
@@ -102,7 +107,7 @@ pub(all) struct DevtoolsMessageTrace {
   drained_delta : Int32
   pending_after : Int32
   max_pending_after : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsMessageTrace with Debug::{to_repr}
@@ -114,6 +119,7 @@ pub extend DevtoolsMessageTrace with Eq::{not_equal, equal}
 pub extend DevtoolsMessageTrace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsEffectTrace {
   planned_delta : Int32
   run_delta : Int32
@@ -124,7 +130,7 @@ pub(all) struct DevtoolsEffectTrace {
   ignored_delta : Int32
   active_after : Int32
   descriptors : Array[@core.EffectDescriptor]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsEffectTrace with Debug::{to_repr}
@@ -136,6 +142,7 @@ pub extend DevtoolsEffectTrace with Eq::{not_equal, equal}
 pub extend DevtoolsEffectTrace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsFrameTrace {
   timed : Bool
   rebuild_passes : Int32
@@ -149,7 +156,7 @@ pub(all) struct DevtoolsFrameTrace {
   total_ms : Double
   damage_kind : String
   damage_rect_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsFrameTrace with Debug::{to_repr}
@@ -161,12 +168,13 @@ pub extend DevtoolsFrameTrace with Eq::{not_equal, equal}
 pub extend DevtoolsFrameTrace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsCacheTrace {
   layout_hits_delta : Int32
   layout_misses_delta : Int32
   render_hits_delta : Int32
   render_misses_delta : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsCacheTrace with Debug::{to_repr}
@@ -178,6 +186,7 @@ pub extend DevtoolsCacheTrace with Eq::{not_equal, equal}
 pub extend DevtoolsCacheTrace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsMemoTrace {
   available : Bool
   builds_delta : Int32
@@ -186,7 +195,7 @@ pub(all) struct DevtoolsMemoTrace {
   builds_after : Int32
   hits_after : Int32
   misses_after : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsMemoTrace with Debug::{to_repr}
@@ -198,6 +207,7 @@ pub extend DevtoolsMemoTrace with Eq::{not_equal, equal}
 pub extend DevtoolsMemoTrace with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsTraceEntry {
   sequence : Int32
   messages : DevtoolsMessageTrace
@@ -206,7 +216,7 @@ pub(all) struct DevtoolsTraceEntry {
   caches : DevtoolsCacheTrace
   memo : DevtoolsMemoTrace
   semantics : SemanticsTreeDiff
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsTraceEntry with Debug::{to_repr}
@@ -218,11 +228,12 @@ pub extend DevtoolsTraceEntry with Eq::{not_equal, equal}
 pub extend DevtoolsTraceEntry with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DevtoolsTraceReport {
   capacity : Int32
   semantics_diff_limit : Int32
   entries : Array[DevtoolsTraceEntry]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DevtoolsTraceReport with Debug::{to_repr}

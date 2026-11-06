@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 pub(all) struct ViewportSnapshot {
   scene_revision : Int64
   scene : Scene
   camera : OrbitCamera
   bounds : Aabb
-} derive(Debug)
+}
 
 ///|
 pub extend ViewportSnapshot with Debug::{to_repr}
@@ -47,12 +48,13 @@ pub struct ThreeDViewportBinding {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ViewportStatus {
   Loading
   Ready
   Unavailable(String)
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ViewportStatus with Debug::{to_repr}
@@ -329,6 +331,7 @@ impl @core.ViewNode for ThreeDViewportNode with fn semantics(self) {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ViewportEvent {
   PointerDown(@core.Point)
   PointerMove(@core.Point)
@@ -338,7 +341,7 @@ pub(all) enum ViewportEvent {
   Focus(Bool)
   Pick(NodeId)
   RendererStatus
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ViewportEvent with Debug::{to_repr}

@@ -1,10 +1,11 @@
 ///|
 /// Rendering target family for a surface descriptor.
+#derive(Debug, Eq)
 pub(all) enum SurfaceBackend {
   Raster
   Window
   Gpu
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceBackend with Debug::{to_repr}
@@ -42,10 +43,11 @@ pub fn SurfaceBackend::is_presentable(self : SurfaceBackend) -> Bool {
 
 ///|
 /// Pixel origin used by a render target.
+#derive(Debug, Eq)
 pub(all) enum SurfaceOrigin {
   TopLeft
   BottomLeft
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceOrigin with Debug::{to_repr}
@@ -63,10 +65,11 @@ pub impl Default for SurfaceOrigin with fn default() {
 
 ///|
 /// Whether a surface should count against an implementation resource budget.
+#derive(Debug, Eq)
 pub(all) enum SurfaceBudget {
   Budgeted
   Unbudgeted
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceBudget with Debug::{to_repr}
@@ -89,6 +92,7 @@ pub fn SurfaceBudget::is_budgeted(self : SurfaceBudget) -> Bool {
 
 ///|
 /// Stable value-layer contract for raster, window, and future GPU surfaces.
+#derive(Debug, Eq)
 pub(all) struct SurfaceDescriptor {
   backend : SurfaceBackend
   image_info : ImageInfo
@@ -96,7 +100,7 @@ pub(all) struct SurfaceDescriptor {
   sample_count : Int32
   stencil_bits : Int32
   budget : SurfaceBudget
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceDescriptor with Debug::{to_repr}

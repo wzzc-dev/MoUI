@@ -3,6 +3,7 @@ package "wzzc-dev/moui_webview/host"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
@@ -22,6 +23,7 @@ pub fn webview_utf8_size(String) -> Int32
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct HostPatchBundle {
   id : String
   version : String
@@ -29,23 +31,25 @@ pub(all) struct HostPatchBundle {
   stylesheet : String?
   document_start_script : String?
   document_end_script : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn HostPatchBundle::equal(Self, Self) -> Bool
 pub fn HostPatchBundle::new(id~ : String, version~ : String, allowed_origins~ : Array[WebViewOrigin], stylesheet? : String?, document_start_script? : String?, document_end_script? : String?) -> Self
 pub fn HostPatchBundle::not_equal(Self, Self) -> Bool
 pub fn HostPatchBundle::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct HostPatchReport {
   bundle_id : String
   version : String
   navigation_id : WebViewNavigationId
   success : Bool
   detail : String
-} derive(Eq, @debug.Debug)
+}
 pub fn HostPatchReport::equal(Self, Self) -> Bool
 pub fn HostPatchReport::not_equal(Self, Self) -> Bool
 pub fn HostPatchReport::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HostWebViewCapabilities {
   available : Bool
   controlled_navigation : Bool
@@ -54,14 +58,15 @@ pub(all) struct HostWebViewCapabilities {
   host_patch : Bool
   native_embedding : Bool
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HostWebViewCapabilities::equal(Self, Self) -> Bool
 pub fn HostWebViewCapabilities::native_available(description? : String) -> Self
 pub fn HostWebViewCapabilities::not_equal(Self, Self) -> Bool
-pub fn HostWebViewCapabilities::to_json(Self) -> Json
+pub fn HostWebViewCapabilities::to_json(Self) -> @json.Json
 pub fn HostWebViewCapabilities::to_repr(Self) -> @debug.Repr
 pub fn HostWebViewCapabilities::unavailable(description? : String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum HostWebViewCommand {
   Navigate(String)
   Reload
@@ -70,93 +75,101 @@ pub(all) enum HostWebViewCommand {
   GoForward
   PostMessage(String)
   Dispose
-} derive(Eq, @debug.Debug)
+}
 pub fn HostWebViewCommand::equal(Self, Self) -> Bool
 pub fn HostWebViewCommand::not_equal(Self, Self) -> Bool
 pub fn HostWebViewCommand::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct HostWebViewNativeConfig {
   revision : UInt64
   allowed_origins : String
   document_start_script : String
   document_end_script : String
-} derive(Eq, @debug.Debug)
+}
 pub fn HostWebViewNativeConfig::equal(Self, Self) -> Bool
 pub fn HostWebViewNativeConfig::not_equal(Self, Self) -> Bool
 pub fn HostWebViewNativeConfig::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct HostWebViewQueuedCommand {
   controller_id : String
   command_id : WebViewCommandId
   navigation_id : WebViewNavigationId?
   command : HostWebViewCommand
-} derive(Eq, @debug.Debug)
+}
 pub fn HostWebViewQueuedCommand::equal(Self, Self) -> Bool
 pub fn HostWebViewQueuedCommand::not_equal(Self, Self) -> Bool
 pub fn HostWebViewQueuedCommand::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewBridgeEnvelope {
   kind : WebViewBridgeKind
   channel : String
   request_id : WebViewRequestId?
   navigation_id : WebViewNavigationId
-  payload : Json
+  payload : @json.Json
   error : WebViewError?
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewBridgeEnvelope::cancel(request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId) -> Self
 pub fn WebViewBridgeEnvelope::equal(Self, Self) -> Bool
-pub fn WebViewBridgeEnvelope::event(channel~ : String, navigation_id~ : WebViewNavigationId, payload~ : Json) -> Self
+pub fn WebViewBridgeEnvelope::event(channel~ : String, navigation_id~ : WebViewNavigationId, payload~ : @json.Json) -> Self
 pub fn WebViewBridgeEnvelope::not_equal(Self, Self) -> Bool
 pub fn WebViewBridgeEnvelope::parse(String) -> Result[Self, WebViewError]
-pub fn WebViewBridgeEnvelope::request(channel~ : String, request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, payload~ : Json) -> Self
-pub fn WebViewBridgeEnvelope::response(request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, result~ : Result[Json, WebViewError]) -> Self
+pub fn WebViewBridgeEnvelope::request(channel~ : String, request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, payload~ : @json.Json) -> Self
+pub fn WebViewBridgeEnvelope::response(request_id~ : WebViewRequestId, navigation_id~ : WebViewNavigationId, result~ : Result[@json.Json, WebViewError]) -> Self
 pub fn WebViewBridgeEnvelope::to_json_string(Self) -> String
 pub fn WebViewBridgeEnvelope::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WebViewBridgeKind {
   Hello
   Event
   Request
   Response
   Cancel
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewBridgeKind::equal(Self, Self) -> Bool
 pub fn WebViewBridgeKind::not_equal(Self, Self) -> Bool
 pub fn WebViewBridgeKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewBridgeMessage {
   channel : String
   origin : WebViewOrigin
   navigation_id : WebViewNavigationId
-  payload : Json
-} derive(Eq, @debug.Debug)
+  payload : @json.Json
+}
 pub fn WebViewBridgeMessage::equal(Self, Self) -> Bool
 pub fn WebViewBridgeMessage::not_equal(Self, Self) -> Bool
 pub fn WebViewBridgeMessage::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum WebViewChannelDirection {
   PageToHost
   HostToPage
   Bidirectional
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WebViewChannelDirection::equal(Self, Self) -> Bool
 pub fn WebViewChannelDirection::not_equal(Self, Self) -> Bool
-pub fn WebViewChannelDirection::to_json(Self) -> Json
+pub fn WebViewChannelDirection::to_json(Self) -> @json.Json
 pub fn WebViewChannelDirection::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WebViewChannelPolicy {
   name : String
   direction : WebViewChannelDirection
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WebViewChannelPolicy::equal(Self, Self) -> Bool
 pub fn WebViewChannelPolicy::new(name~ : String, direction? : WebViewChannelDirection) -> Self
 pub fn WebViewChannelPolicy::not_equal(Self, Self) -> Bool
-pub fn WebViewChannelPolicy::to_json(Self) -> Json
+pub fn WebViewChannelPolicy::to_json(Self) -> @json.Json
 pub fn WebViewChannelPolicy::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct WebViewCommandId {
   // private fields
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn WebViewCommandId::compare(Self, Self) -> Int32
 pub fn WebViewCommandId::equal(Self, Self) -> Bool
 pub fn WebViewCommandId::hash(Self) -> Int32
@@ -170,10 +183,11 @@ pub fn WebViewCommandId::to_repr(Self) -> @debug.Repr
 pub fn WebViewCommandId::to_wire(Self) -> String
 pub fn WebViewCommandId::value(Self) -> UInt64
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewCommandReceipt {
   command_id : WebViewCommandId
   navigation_id : WebViewNavigationId?
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewCommandReceipt::equal(Self, Self) -> Bool
 pub fn WebViewCommandReceipt::not_equal(Self, Self) -> Bool
 pub fn WebViewCommandReceipt::to_repr(Self) -> @debug.Repr
@@ -187,41 +201,45 @@ pub fn WebViewController::go_back(Self) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::go_forward(Self) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::id(Self) -> String
 pub fn WebViewController::navigate(Self, String) -> WebViewTask[WebViewCommandReceipt]
-pub fn WebViewController::post_message(Self, channel~ : String, payload~ : Json) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::post_message(Self, channel~ : String, payload~ : @json.Json) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::reload(Self) -> WebViewTask[WebViewCommandReceipt]
-pub fn WebViewController::request(Self, channel~ : String, payload~ : Json, timeout_ms? : Int32) -> WebViewTask[Json]
-pub fn WebViewController::respond(Self, request_id~ : WebViewRequestId, result~ : Result[Json, WebViewError]) -> WebViewTask[WebViewCommandReceipt]
+pub fn WebViewController::request(Self, channel~ : String, payload~ : @json.Json, timeout_ms? : Int32) -> WebViewTask[@json.Json]
+pub fn WebViewController::respond(Self, request_id~ : WebViewRequestId, result~ : Result[@json.Json, WebViewError]) -> WebViewTask[WebViewCommandReceipt]
 pub fn WebViewController::stop(Self) -> WebViewTask[WebViewCommandReceipt]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewControllerConfig {
   security : WebViewSecurityPolicy
   capabilities : Array[String]
   host_patches : Array[HostPatchBundle]
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewControllerConfig::equal(Self, Self) -> Bool
 pub fn WebViewControllerConfig::new(security? : WebViewSecurityPolicy, capabilities? : Array[String], host_patches? : Array[HostPatchBundle]) -> Self
 pub fn WebViewControllerConfig::not_equal(Self, Self) -> Bool
 pub fn WebViewControllerConfig::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WebViewDiagnostic {
   code : String
   message : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WebViewDiagnostic::equal(Self, Self) -> Bool
 pub fn WebViewDiagnostic::not_equal(Self, Self) -> Bool
-pub fn WebViewDiagnostic::to_json(Self) -> Json
+pub fn WebViewDiagnostic::to_json(Self) -> @json.Json
 pub fn WebViewDiagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WebViewError {
   code : String
   message : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WebViewError::equal(Self, Self) -> Bool
 pub fn WebViewError::new(code~ : String, message~ : String) -> Self
 pub fn WebViewError::not_equal(Self, Self) -> Bool
-pub fn WebViewError::to_json(Self) -> Json
+pub fn WebViewError::to_json(Self) -> @json.Json
 pub fn WebViewError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WebViewEvent {
   Ready(Array[String])
   NavigationRequested(String)
@@ -237,7 +255,7 @@ pub(all) enum WebViewEvent {
   HostPatchReported(HostPatchReport)
   Diagnostic(WebViewDiagnostic)
   Disposed
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewEvent::equal(Self, Self) -> Bool
 pub fn WebViewEvent::from_platform_event(@core.PlatformViewEvent) -> Self?
 pub fn WebViewEvent::not_equal(Self, Self) -> Bool
@@ -256,18 +274,20 @@ pub fn WebViewHost::pending_command_count(Self) -> Int32
 pub fn WebViewHost::pending_request_count(Self) -> Int32
 pub fn WebViewHost::poll_timeouts(Self, Int64) -> Int64?
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewNavigation {
   id : WebViewNavigationId
   url : String
   redirected : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewNavigation::equal(Self, Self) -> Bool
 pub fn WebViewNavigation::not_equal(Self, Self) -> Bool
 pub fn WebViewNavigation::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct WebViewNavigationId {
   // private fields
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn WebViewNavigationId::compare(Self, Self) -> Int32
 pub fn WebViewNavigationId::equal(Self, Self) -> Bool
 pub fn WebViewNavigationId::hash(Self) -> Int32
@@ -281,21 +301,23 @@ pub fn WebViewNavigationId::to_repr(Self) -> @debug.Repr
 pub fn WebViewNavigationId::to_wire(Self) -> String
 pub fn WebViewNavigationId::value(Self) -> UInt64
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WebViewNoDragRegion {
   left : Double
   top : Double
   right : Double
   bottom : Double
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WebViewNoDragRegion::equal(Self, Self) -> Bool
 pub fn WebViewNoDragRegion::new(left~ : Double, top~ : Double, right~ : Double, bottom~ : Double) -> Self
 pub fn WebViewNoDragRegion::not_equal(Self, Self) -> Bool
-pub fn WebViewNoDragRegion::to_json(Self) -> Json
+pub fn WebViewNoDragRegion::to_json(Self) -> @json.Json
 pub fn WebViewNoDragRegion::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct WebViewOrigin {
   // private fields
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn WebViewOrigin::compare(Self, Self) -> Int32
 pub fn WebViewOrigin::equal(Self, Self) -> Bool
 pub fn WebViewOrigin::hash(Self) -> Int32
@@ -309,20 +331,22 @@ pub fn WebViewOrigin::parse(String) -> Self?
 pub fn WebViewOrigin::to_repr(Self) -> @debug.Repr
 pub fn WebViewOrigin::value(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewPageRequest {
   id : WebViewRequestId
   channel : String
   origin : WebViewOrigin
   navigation_id : WebViewNavigationId
-  payload : Json
-} derive(Eq, @debug.Debug)
+  payload : @json.Json
+}
 pub fn WebViewPageRequest::equal(Self, Self) -> Bool
 pub fn WebViewPageRequest::not_equal(Self, Self) -> Bool
 pub fn WebViewPageRequest::to_repr(Self) -> @debug.Repr
 
+#derive(Compare, Eq, Hash, @debug.Debug)
 pub struct WebViewRequestId {
   // private fields
-} derive(Compare, Eq, Hash, @debug.Debug)
+}
 pub fn WebViewRequestId::compare(Self, Self) -> Int32
 pub fn WebViewRequestId::equal(Self, Self) -> Bool
 pub fn WebViewRequestId::hash(Self) -> Int32
@@ -336,13 +360,14 @@ pub fn WebViewRequestId::to_repr(Self) -> @debug.Repr
 pub fn WebViewRequestId::to_wire(Self) -> String
 pub fn WebViewRequestId::value(Self) -> UInt64
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WebViewSecurityPolicy {
   allowed_origins : Array[WebViewOrigin]
   allowed_channels : Array[WebViewChannelPolicy]
   allow_file_urls : Bool
   max_message_bytes : Int32
   max_pending_requests : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn WebViewSecurityPolicy::deny_all() -> Self
 pub fn WebViewSecurityPolicy::equal(Self, Self) -> Bool
 pub fn WebViewSecurityPolicy::new(allowed_origins? : Array[WebViewOrigin], allowed_channels? : Array[WebViewChannelPolicy], allow_file_urls? : Bool, max_message_bytes? : Int32, max_pending_requests? : Int32) -> Self
@@ -371,11 +396,12 @@ pub fn[T, Msg] WebViewTask::effect(Self[T], map~ : (WebViewTaskResult[T]) -> Msg
 pub fn[T] WebViewTask::new(key~ : String, start~ : ((WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?, label? : String) -> Self[T]
 pub fn[T] WebViewTask::start(Self[T], (WebViewTaskResult[T]) -> Unit) -> (() -> Unit)?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WebViewTaskResult[T] {
   Success(T)
   Failure(WebViewError)
   Cancelled
-} derive(Eq, @debug.Debug)
+}
 pub fn[T : Eq] WebViewTaskResult::equal(Self[T], Self[T]) -> Bool
 pub fn[T : Eq] WebViewTaskResult::not_equal(Self[T], Self[T]) -> Bool
 pub fn[T : @debug.Debug] WebViewTaskResult::to_repr(Self[T]) -> @debug.Repr

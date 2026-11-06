@@ -165,59 +165,65 @@ fn png_crc32_update(crc : UInt32, byte : Byte) -> UInt32 {
 }
 
 ///|
+#derive(Debug)
 struct PngInfo {
   width : Int32
   height : Int32
   idat : Array[Byte]
-} derive(Debug)
+}
 
 ///|
 pub extend PngInfo with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct PngHeader {
   width : Int32
   height : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PngHeader with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct PngDeflateBitReader {
   data : Array[Byte]
   stream_end : Int32
   mut byte_offset : Int32
   mut bit_offset : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PngDeflateBitReader with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct PngDeflateHuffmanEntry {
   symbol : Int32
   length : Int32
   code : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PngDeflateHuffmanEntry with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct PngDeflateHuffman {
   entries : Array[PngDeflateHuffmanEntry]
   max_bits : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend PngDeflateHuffman with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct PngDeflateTables {
   literal_lengths : PngDeflateHuffman
   distances : PngDeflateHuffman
-} derive(Debug)
+}
 
 ///|
 pub extend PngDeflateTables with Debug::{to_repr}

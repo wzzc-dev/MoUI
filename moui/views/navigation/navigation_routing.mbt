@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteLocation with Debug::{to_repr}
@@ -14,10 +15,11 @@ pub extend RouteLocation with Eq::{not_equal, equal}
 pub extend RouteLocation with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteQueryParam {
   key : String
   value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteQueryParam with Debug::{to_repr}
@@ -29,10 +31,11 @@ pub extend RouteQueryParam with Eq::{not_equal, equal}
 pub extend RouteQueryParam with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteParam {
   key : String
   value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteParam with Debug::{to_repr}
@@ -44,12 +47,13 @@ pub extend RouteParam with Eq::{not_equal, equal}
 pub extend RouteParam with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteDescriptor {
   id : String
   path : String
   title : String
   fallback : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteDescriptor with Debug::{to_repr}
@@ -61,9 +65,10 @@ pub extend RouteDescriptor with Eq::{not_equal, equal}
 pub extend RouteDescriptor with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouterSnapshot {
   routes : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouterSnapshot with Debug::{to_repr}
@@ -75,11 +80,12 @@ pub extend RouterSnapshot with Eq::{not_equal, equal}
 pub extend RouterSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteHistoryEntry {
   route : String
   title : String
   source : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteHistoryEntry with Debug::{to_repr}
@@ -91,10 +97,11 @@ pub extend RouteHistoryEntry with Eq::{not_equal, equal}
 pub extend RouteHistoryEntry with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
   cursor : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RouteHistoryState with Debug::{to_repr}

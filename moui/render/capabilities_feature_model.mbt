@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RendererFeature {
   Rect
   RoundedRect
@@ -17,7 +18,7 @@ pub(all) enum RendererFeature {
   TextShaping
   EmojiText
   AsyncImage
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererFeature with Debug::{to_repr}
@@ -29,13 +30,14 @@ pub extend RendererFeature with Eq::{not_equal, equal}
 pub extend RendererFeature with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RendererFeatureStatus {
   Supported
   Partial
   Gap
   HostForwarded
   Unavailable
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererFeatureStatus with Debug::{to_repr}
@@ -47,6 +49,7 @@ pub extend RendererFeatureStatus with Eq::{not_equal, equal}
 pub extend RendererFeatureStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RendererBackendFeatureCapability {
   /// Stable identity of the registered provider that supplied this entry.
   /// `backend` is retained only as a built-in diagnostic classification.
@@ -55,7 +58,7 @@ pub(all) struct RendererBackendFeatureCapability {
   backend : RendererBackendKind
   status : RendererFeatureStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererBackendFeatureCapability with Debug::{to_repr}
@@ -67,10 +70,11 @@ pub extend RendererBackendFeatureCapability with Eq::{not_equal, equal}
 pub extend RendererBackendFeatureCapability with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RendererFeatureCapability {
   feature : RendererFeature
   providers : Array[RendererBackendFeatureCapability]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererFeatureCapability with Debug::{to_repr}
@@ -82,11 +86,12 @@ pub extend RendererFeatureCapability with Eq::{not_equal, equal}
 pub extend RendererFeatureCapability with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RendererCommandFallbackKind {
   PlannedFallback
   UnbalancedPop
   UnclosedScope
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererCommandFallbackKind with Debug::{to_repr}
@@ -98,13 +103,14 @@ pub extend RendererCommandFallbackKind with Eq::{not_equal, equal}
 pub extend RendererCommandFallbackKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RendererCommandFallback {
   priv index : Int32
   priv feature : RendererFeature
   priv command : String
   priv kind : RendererCommandFallbackKind
   priv reason : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererCommandFallback with Debug::{to_repr}
@@ -116,13 +122,14 @@ pub extend RendererCommandFallback with Eq::{not_equal, equal}
 pub extend RendererCommandFallback with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct RendererCommandPlan {
   priv total_commands : Int32
   priv fallback_count : Int32
   priv final_layer_depth : Int32
   priv final_filter_depth : Int32
   priv fallbacks : Array[RendererCommandFallback]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererCommandPlan with Debug::{to_repr}

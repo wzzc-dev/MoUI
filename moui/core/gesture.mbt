@@ -5,11 +5,12 @@ priv struct TapGestureResult {
 }
 
 ///|
+#derive(Eq)
 priv enum LongPressGesturePhase {
   Idle
   Pressing
   Recognized
-} derive(Eq)
+}
 
 ///|
 priv struct LongPressGestureState {
@@ -248,6 +249,7 @@ fn double_tap_gesture_view_state_slot() -> ViewStateSlot[DoubleTapGestureState] 
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DragGesturePhase {
   Idle
   Pending
@@ -255,7 +257,7 @@ pub(all) enum DragGesturePhase {
   Changed
   Ended
   Cancelled
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DragGesturePhase with Debug::{to_repr}
@@ -267,13 +269,14 @@ pub extend DragGesturePhase with Eq::{not_equal, equal}
 pub extend DragGesturePhase with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DragGestureEvent {
   phase : DragGesturePhase
   start : Point
   position : Point
   delta : Point
   translation : Point
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DragGestureEvent with Debug::{to_repr}

@@ -3,6 +3,7 @@ package "wzzc-dev/moui_devtools"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 }
@@ -27,17 +28,19 @@ pub fn trace_report_text(DevtoolsTrace, max_entries? : Int32) -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsCacheTrace {
   layout_hits_delta : Int32
   layout_misses_delta : Int32
   render_hits_delta : Int32
   render_misses_delta : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsCacheTrace::equal(Self, Self) -> Bool
 pub fn DevtoolsCacheTrace::not_equal(Self, Self) -> Bool
-pub fn DevtoolsCacheTrace::to_json(Self) -> Json
+pub fn DevtoolsCacheTrace::to_json(Self) -> @json.Json
 pub fn DevtoolsCacheTrace::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsEffectTrace {
   planned_delta : Int32
   run_delta : Int32
@@ -48,12 +51,13 @@ pub(all) struct DevtoolsEffectTrace {
   ignored_delta : Int32
   active_after : Int32
   descriptors : Array[@core.EffectDescriptor]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsEffectTrace::equal(Self, Self) -> Bool
 pub fn DevtoolsEffectTrace::not_equal(Self, Self) -> Bool
-pub fn DevtoolsEffectTrace::to_json(Self) -> Json
+pub fn DevtoolsEffectTrace::to_json(Self) -> @json.Json
 pub fn DevtoolsEffectTrace::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsFrameTrace {
   timed : Bool
   rebuild_passes : Int32
@@ -67,12 +71,13 @@ pub(all) struct DevtoolsFrameTrace {
   total_ms : Double
   damage_kind : String
   damage_rect_count : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsFrameTrace::equal(Self, Self) -> Bool
 pub fn DevtoolsFrameTrace::not_equal(Self, Self) -> Bool
-pub fn DevtoolsFrameTrace::to_json(Self) -> Json
+pub fn DevtoolsFrameTrace::to_json(Self) -> @json.Json
 pub fn DevtoolsFrameTrace::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsMemoTrace {
   available : Bool
   builds_delta : Int32
@@ -81,12 +86,13 @@ pub(all) struct DevtoolsMemoTrace {
   builds_after : Int32
   hits_after : Int32
   misses_after : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsMemoTrace::equal(Self, Self) -> Bool
 pub fn DevtoolsMemoTrace::not_equal(Self, Self) -> Bool
-pub fn DevtoolsMemoTrace::to_json(Self) -> Json
+pub fn DevtoolsMemoTrace::to_json(Self) -> @json.Json
 pub fn DevtoolsMemoTrace::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsMessageTrace {
   dispatched_delta : Int32
   updated_delta : Int32
@@ -95,10 +101,10 @@ pub(all) struct DevtoolsMessageTrace {
   drained_delta : Int32
   pending_after : Int32
   max_pending_after : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsMessageTrace::equal(Self, Self) -> Bool
 pub fn DevtoolsMessageTrace::not_equal(Self, Self) -> Bool
-pub fn DevtoolsMessageTrace::to_json(Self) -> Json
+pub fn DevtoolsMessageTrace::to_json(Self) -> @json.Json
 pub fn DevtoolsMessageTrace::to_repr(Self) -> @debug.Repr
 
 pub struct DevtoolsTrace {
@@ -116,6 +122,7 @@ pub fn DevtoolsTrace::record_frame(Self, @runtime.InspectorSnapshot, timing~ : @
 pub fn DevtoolsTrace::report(Self) -> DevtoolsTraceReport
 pub fn DevtoolsTrace::semantics_diff_limit(Self) -> Int32
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsTraceEntry {
   sequence : Int32
   messages : DevtoolsMessageTrace
@@ -124,29 +131,31 @@ pub(all) struct DevtoolsTraceEntry {
   caches : DevtoolsCacheTrace
   memo : DevtoolsMemoTrace
   semantics : SemanticsTreeDiff
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsTraceEntry::equal(Self, Self) -> Bool
 pub fn DevtoolsTraceEntry::not_equal(Self, Self) -> Bool
-pub fn DevtoolsTraceEntry::to_json(Self) -> Json
+pub fn DevtoolsTraceEntry::to_json(Self) -> @json.Json
 pub fn DevtoolsTraceEntry::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DevtoolsTraceReport {
   capacity : Int32
   semantics_diff_limit : Int32
   entries : Array[DevtoolsTraceEntry]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DevtoolsTraceReport::equal(Self, Self) -> Bool
 pub fn DevtoolsTraceReport::not_equal(Self, Self) -> Bool
-pub fn DevtoolsTraceReport::to_json(Self) -> Json
+pub fn DevtoolsTraceReport::to_json(Self) -> @json.Json
 pub fn DevtoolsTraceReport::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct InspectorReport {
   runtime : @runtime.RuntimeInspectorSnapshot
   view_tree : @runtime.ViewTreeInspectorSnapshot
   layout : @runtime.LayoutInspectorSnapshot
   render : @runtime.RenderInspectorSnapshot
   semantics : @runtime.SemanticsInspectorSnapshot
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn InspectorReport::equal(Self, Self) -> Bool
 pub fn InspectorReport::from_snapshot(@runtime.InspectorSnapshot) -> Self
 pub fn InspectorReport::layout(Self) -> @runtime.LayoutInspectorSnapshot
@@ -154,20 +163,22 @@ pub fn InspectorReport::not_equal(Self, Self) -> Bool
 pub fn InspectorReport::render(Self) -> @runtime.RenderInspectorSnapshot
 pub fn InspectorReport::runtime(Self) -> @runtime.RuntimeInspectorSnapshot
 pub fn InspectorReport::semantics(Self) -> @runtime.SemanticsInspectorSnapshot
-pub fn InspectorReport::to_json(Self) -> Json
+pub fn InspectorReport::to_json(Self) -> @json.Json
 pub fn InspectorReport::to_repr(Self) -> @debug.Repr
 pub fn InspectorReport::view_tree(Self) -> @runtime.ViewTreeInspectorSnapshot
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum SemanticsTreeChangeKind {
   SemanticsTreeAdded
   SemanticsTreeRemoved
   SemanticsTreeChanged
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SemanticsTreeChangeKind::equal(Self, Self) -> Bool
 pub fn SemanticsTreeChangeKind::not_equal(Self, Self) -> Bool
-pub fn SemanticsTreeChangeKind::to_json(Self) -> Json
+pub fn SemanticsTreeChangeKind::to_json(Self) -> @json.Json
 pub fn SemanticsTreeChangeKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum SemanticsTreeChangedField {
   SemanticsTreeFieldRole
   SemanticsTreeFieldLabel
@@ -181,12 +192,13 @@ pub(all) enum SemanticsTreeChangedField {
   SemanticsTreeFieldChecked
   SemanticsTreeFieldExpanded
   SemanticsTreeFieldDisabled
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SemanticsTreeChangedField::equal(Self, Self) -> Bool
 pub fn SemanticsTreeChangedField::not_equal(Self, Self) -> Bool
-pub fn SemanticsTreeChangedField::to_json(Self) -> Json
+pub fn SemanticsTreeChangedField::to_json(Self) -> @json.Json
 pub fn SemanticsTreeChangedField::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct SemanticsTreeDiff {
   baseline : Bool
   added_count : Int32
@@ -194,22 +206,23 @@ pub(all) struct SemanticsTreeDiff {
   changed_count : Int32
   dropped_count : Int32
   entries : Array[SemanticsTreeDiffEntry]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SemanticsTreeDiff::equal(Self, Self) -> Bool
 pub fn SemanticsTreeDiff::not_equal(Self, Self) -> Bool
-pub fn SemanticsTreeDiff::to_json(Self) -> Json
+pub fn SemanticsTreeDiff::to_json(Self) -> @json.Json
 pub fn SemanticsTreeDiff::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct SemanticsTreeDiffEntry {
   kind : SemanticsTreeChangeKind
   node_id : String
   before : @runtime.SemanticsInspectorEntry?
   after : @runtime.SemanticsInspectorEntry?
   changed_fields : Array[SemanticsTreeChangedField]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SemanticsTreeDiffEntry::equal(Self, Self) -> Bool
 pub fn SemanticsTreeDiffEntry::not_equal(Self, Self) -> Bool
-pub fn SemanticsTreeDiffEntry::to_json(Self) -> Json
+pub fn SemanticsTreeDiffEntry::to_json(Self) -> @json.Json
 pub fn SemanticsTreeDiffEntry::to_repr(Self) -> @debug.Repr
 
 pub struct SnapshotHistory {
@@ -221,6 +234,7 @@ pub fn SnapshotHistory::length(Self) -> Int32
 pub fn SnapshotHistory::new() -> Self
 pub fn SnapshotHistory::push(Self, @runtime.InspectorSnapshot) -> Unit
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct SnapshotSummary {
   width : Double
   height : Double
@@ -231,12 +245,12 @@ pub(all) struct SnapshotSummary {
   semantics_node_count : Int32
   active_effect_task_count : Int32
   active_subscription_count : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn SnapshotSummary::equal(Self, Self) -> Bool
 pub fn SnapshotSummary::from_snapshot(@runtime.InspectorSnapshot) -> Self
 pub fn SnapshotSummary::not_equal(Self, Self) -> Bool
 pub fn SnapshotSummary::text(Self) -> String
-pub fn SnapshotSummary::to_json(Self) -> Json
+pub fn SnapshotSummary::to_json(Self) -> @json.Json
 pub fn SnapshotSummary::to_repr(Self) -> @debug.Repr
 
 // Type aliases

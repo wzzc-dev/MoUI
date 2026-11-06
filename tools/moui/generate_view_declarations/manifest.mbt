@@ -6,6 +6,7 @@
 /// reading them like any other declaration body.
 
 ///|
+#derive(Eq, Debug)
 struct FieldSpec {
   /// Record label for the field.
   name : String
@@ -24,9 +25,10 @@ struct FieldSpec {
   record : String
   /// Sub-fields for the `record_option` encoder.
   fields : Array[FieldSpec]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct KeySpec {
   /// Record form: tag + labelled fields.
   record : String
@@ -35,18 +37,20 @@ struct KeySpec {
   bare : FieldSpec?
   /// Whole raw key expression form.
   expr : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct ChannelSpec {
   /// exact | theme_pinned | uncacheable | constant
   kind : String
   /// When true, a pinned `style` degrades the paint channel to Uncacheable.
   style_pins_uncacheable : Bool
   key : KeySpec?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct NodeSpec {
   node : String
   pkg : String
@@ -59,12 +63,13 @@ struct NodeSpec {
   /// "" when per-channel; "constant" / "uncacheable" for whole declarations.
   whole : String
   channels : Array[(String, ChannelSpec)]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct Manifest {
   nodes : Array[NodeSpec]
-} derive(Eq, Debug)
+}
 
 ///|
 fn json_object(

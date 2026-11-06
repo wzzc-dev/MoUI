@@ -375,7 +375,7 @@ fn files_json(files : Array[(String, String)]) -> String {
     rows.push(Json::array([Json::string(pair.0), Json::string(pair.1)]))
   }
   let root : Map[String, Json] = { "files": Json::array(rows) }
-  root.to_json().stringify()
+  Json(root).stringify()
 }
 
 ///|

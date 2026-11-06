@@ -3,6 +3,7 @@ package "examples/data_table/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/data",
 }
@@ -17,6 +18,7 @@ pub fn view(DataTableModel) -> @core.View[DataTableMsg]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DataRecord {
   id : Int32
   project : String
@@ -24,31 +26,33 @@ pub(all) struct DataRecord {
   owner : String
   team : String
   priority : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataRecord::equal(Self, Self) -> Bool
 pub fn DataRecord::new(id~ : Int32, project~ : String, status~ : String, owner~ : String, team~ : String, priority~ : String) -> Self
 pub fn DataRecord::not_equal(Self, Self) -> Bool
-pub fn DataRecord::to_json(Self) -> Json
+pub fn DataRecord::to_json(Self) -> @json.Json
 pub fn DataRecord::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum DataSortKey {
   Project
   Owner
   Status
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataSortKey::equal(Self, Self) -> Bool
 pub fn DataSortKey::not_equal(Self, Self) -> Bool
-pub fn DataSortKey::to_json(Self) -> Json
+pub fn DataSortKey::to_json(Self) -> @json.Json
 pub fn DataSortKey::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum DataStatus {
   Ready
   Loading
   Failed(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataStatus::equal(Self, Self) -> Bool
 pub fn DataStatus::not_equal(Self, Self) -> Bool
-pub fn DataStatus::to_json(Self) -> Json
+pub fn DataStatus::to_json(Self) -> @json.Json
 pub fn DataStatus::to_repr(Self) -> @debug.Repr
 
 pub struct DataTableApp {

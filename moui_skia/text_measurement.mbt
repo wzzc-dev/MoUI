@@ -10,13 +10,14 @@ fn normalized_text_measurement_width(width : Float) -> Float {
 ///|
 /// Value-layer request for measuring or shaping a text run with stable cache
 /// identity and explicit font/fallback dependencies.
+#derive(Debug, Eq)
 pub(all) struct TextMeasurementDescriptor {
   run : TextRunDescriptor
   font_key : RendererResourceKey
   width : Float
   measure_bounds : Bool
   shape : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TextMeasurementDescriptor with Debug::{to_repr}
@@ -180,11 +181,12 @@ fn measured_text_bounds_cache_id(bounds : Rect?) -> Bytes {
 
 ///|
 /// Value-layer metadata for a native text measurement result.
+#derive(Debug, Eq)
 pub(all) struct MeasuredTextRunDescriptor {
   measurement : TextMeasurementDescriptor
   advance : Float
   bounds : Rect?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend MeasuredTextRunDescriptor with Debug::{to_repr}

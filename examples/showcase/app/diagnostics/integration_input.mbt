@@ -13,11 +13,12 @@ pub(all) struct ShowcaseHostDiagnostics {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ShowcaseCapabilityPriority {
   GapOrPartial
   FollowUp
   Complete
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ShowcaseCapabilityPriority with Debug::{to_repr}

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DateValue {
   year : Int32
   month : Int32
@@ -6,7 +7,7 @@ pub(all) struct DateValue {
   hour : Int32
   minute : Int32
   second : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DateValue with Debug::{to_repr}

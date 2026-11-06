@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/macos"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/host_modal",
@@ -56,27 +57,29 @@ pub async fn run_window_with_workers(window~ : async () -> Unit, workers~ : Arra
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MacosAccessibilityBridgeInfo::equal(Self, Self) -> Bool
 pub fn MacosAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
-pub fn MacosAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn MacosAccessibilityBridgeInfo::to_json(Self) -> @json.Json
 pub fn MacosAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MacosBackendInfo {
   host_info : @backend.HostAppInfo
   renderer_available : Bool
   accessibility : MacosAccessibilityBridgeInfo
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MacosBackendInfo::equal(Self, Self) -> Bool
 pub fn MacosBackendInfo::not_equal(Self, Self) -> Bool
-pub fn MacosBackendInfo::to_json(Self) -> Json
+pub fn MacosBackendInfo::to_json(Self) -> @json.Json
 pub fn MacosBackendInfo::to_repr(Self) -> @debug.Repr
 
 pub struct MacosHostAppOptions {

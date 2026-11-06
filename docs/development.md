@@ -566,11 +566,28 @@ log in release notes.
 GitHub Actions installs MoonBit through `.github/actions/setup-moonbit`. The
 pinned compiler version lives in `.moonbit-toolchain`; update that file when
 moving CI to a new MoonBit toolchain version. The current pin is MoonBit
-`0.10.4` (`moonc v0.10.4+ade96c819`).
+`0.10.20` (`moonc v0.10.20+65efd5b93`, `moonrun 0.1.20261104`).
 
-MoonBit 0.10.4 treats bare `{}` as ambiguous for empty maps / JSON objects /
-blocks. Prefer `Map([])`, `Json::empty_object()`, or `{ () }` at the use site.
-`assert_eq` and related debug helpers now require `Debug` rather than `Show`.
+The 0.10.19+ syntax migration is now the repository baseline:
+
+- Trait derivation uses `#derive(...)` above the type declaration. The old
+  `} derive(...)` suffix is deprecated; `moon fmt` performs the migration.
+- `Int` and `UInt` remain aliases for `Int32` and `UInt32`. Prefer the explicit
+  width names in new binary, FFI, and wire-facing code rather than mechanically
+  rewriting stable generated snippets.
+- `Json` and `ToJson` live in `moonbitlang/core/json`. Generated interfaces
+  spell the type as `@json.Json`; prefer `Json(value)` when converting a
+  `ToJson` value.
+- Use `!expr`, `assert_true(...)`, and `debug_inspect(...)` where the older
+  `not(expr)`, boolean `inspect`, or `Show`-based helpers would be ambiguous.
+- `moon check` updates `pkg.generated.mbti` for checked local packages by
+  default. Commit reviewed interface changes, or pass `--no-mbti` for a
+  type-check-only loop.
+- Source embedded in strings or code generators is outside `moon fmt`;
+  migrate `#derive(...)` there explicitly and cover it with a generation test.
+
+The 0.10.4 bare-brace caution also remains useful style guidance: prefer
+`Map([])`, `Json::empty_object()`, or `{ () }` at sites where `{}` is ambiguous.
 
 `ci.yml` expresses routine gates through the checked wrappers: the PR profile
 gate runs `sh scripts/check.sh --profile pr`, and Linux platform contracts run

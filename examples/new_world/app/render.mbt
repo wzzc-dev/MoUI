@@ -17,11 +17,12 @@
 /// `Ambient` is the full-screen atmosphere view: the same geography, half
 /// strength, no name plates. `Backdrop` is a whisper behind the text: no
 /// labels, no ring, and every fill at a fifth of its alpha.
+#derive(Eq, Debug)
 pub(all) enum MapStyle {
   Full
   Ambient
   Backdrop
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MapStyle with Debug::{to_repr}

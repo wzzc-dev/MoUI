@@ -382,7 +382,7 @@ pub fn HarmonyOSEmbeddedRuntimeBackend::needs_redraw(
 pub fn HarmonyOSEmbeddedRuntimeBackend::pump_accessibility(
   self : HarmonyOSEmbeddedRuntimeBackend,
 ) -> Unit {
-  if not(harmonyos_a11y_pump_enabled) {
+  if !harmonyos_a11y_pump_enabled {
     // TEMP: disabled for the a11y-pump frame-cost attribution experiment.
     return
   }

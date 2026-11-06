@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct PlatformWindowBinding {
   platform_id : @window_core.WindowId
   host_id : @backend_host.WindowId
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PlatformWindowBinding with Debug::{to_repr}

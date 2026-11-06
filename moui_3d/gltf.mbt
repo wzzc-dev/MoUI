@@ -1,9 +1,10 @@
 ///|
 /// glTF 2.0 container and metadata model. Platform I/O remains outside this
 /// package; callers provide bytes and an optional URI resolver.
+#derive(FromJson)
 priv struct GltfAsset {
   version : String
-} derive(FromJson)
+}
 
 ///|
 priv struct GltfBuffer {
@@ -50,9 +51,10 @@ priv struct GltfNodeJson {
 }
 
 ///|
+#derive(FromJson)
 priv struct GltfTextureInfo {
   index : Int32
-} derive(FromJson)
+}
 
 ///|
 priv struct GltfPbrJson {
@@ -527,6 +529,7 @@ impl @json.FromJson for GltfRoot with fn from_json(json, path) {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) suberror GltfError {
   EmptyInput
   InvalidMagic
@@ -556,7 +559,7 @@ pub(all) suberror GltfError {
   UnsupportedAnimationPath(String)
   InvalidNode(Int32)
   InvalidNodeCycle(Int32)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend GltfError with Debug::{to_repr}
@@ -572,6 +575,7 @@ pub extend GltfError with ToJson::{to_json}
 pub type GltfResourceResolver = (String) -> Bytes?
 
 ///|
+#derive(Debug)
 pub(all) struct GltfDocument {
   json : String
   binary : Bytes?
@@ -582,7 +586,7 @@ pub(all) struct GltfDocument {
   sampler_count : Int32
   camera_count : Int32
   scene_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend GltfDocument with Debug::{to_repr}

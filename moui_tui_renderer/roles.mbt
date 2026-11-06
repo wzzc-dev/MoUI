@@ -12,13 +12,14 @@
 /// `Selectable list`、`Entry 0, row 0` 这类聚合名字画在条目同一行上,
 /// 被更深一层的文本打断成 `e list`、`EnEntry 0row 0` 这种残字 ——
 /// 半截标题比没有标题更难读。
+#derive(Eq, Debug)
 pub(all) enum RoleKind {
   Region
   Item
   Label
   Content
   Placeholder
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RoleKind with Debug::{to_repr}

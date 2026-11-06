@@ -1,11 +1,12 @@
 ///|
 /// RGBA color representation
+#derive(Eq, Debug)
 pub(all) struct Color {
   r : Byte
   g : Byte
   b : Byte
   a : Byte
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Color with Debug::{to_repr}

@@ -9,6 +9,7 @@
 /// stay flat strings here because the editor edits them one at a time.
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CharacterDraft {
   name : String
   persona : String
@@ -32,7 +33,7 @@ pub(all) struct CharacterDraft {
   setting : String
   opening : String
   memory_rules : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CharacterDraft with Debug::{to_repr}
@@ -299,6 +300,7 @@ pub fn first_free_spot(scenario : Scenario) -> @geometry.Point {
 /// empty persona box. An archetype seeds every field with something coherent
 /// that the player then edits, instead of asking them to author a character
 /// from nothing.
+#derive(Eq, Debug)
 pub(all) struct CharacterArchetype {
   label : String
   name : String
@@ -314,7 +316,7 @@ pub(all) struct CharacterArchetype {
   setting : String
   opening : String
   memory_rules : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CharacterArchetype with Debug::{to_repr}

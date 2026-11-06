@@ -1,8 +1,9 @@
 ///|
 /// Portable mask-filter recipes that can be mapped to native Skia filters.
+#derive(Debug, Eq)
 pub(all) enum MaskFilterDescriptor {
   BlurMaskFilter(Float)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend MaskFilterDescriptor with Debug::{to_repr}

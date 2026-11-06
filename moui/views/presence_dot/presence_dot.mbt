@@ -1,13 +1,14 @@
 ///|
 /// Presence indicator status. Maps to Fluent 2 `PresenceBadge` statuses:
 /// Available (green), Away (yellow), Busy (red), Offline (gray).
+#derive(Eq, Debug, ToJson)
 pub(all) enum PresenceStatus {
   Available
   Away
   Busy
   Offline
   Unknown
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PresenceStatus with Debug::{to_repr}

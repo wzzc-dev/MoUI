@@ -16,21 +16,23 @@ pub fn resolve_open_request(WindowRegistry, @backend.WindowOpenRequest, WindowSc
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub enum EmbeddedHostLifecyclePhase {
   Idle
   Resumed
   SurfaceAttached
   Exited
-} derive(Eq, @debug.Debug)
+}
 pub fn EmbeddedHostLifecyclePhase::equal(Self, Self) -> Bool
 pub fn EmbeddedHostLifecyclePhase::not_equal(Self, Self) -> Bool
 pub fn EmbeddedHostLifecyclePhase::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct EmbeddedHostSurface {
   handle : UInt64
   metrics : @wzzc-dev/moui/core.SurfaceMetrics
   generation : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn EmbeddedHostSurface::equal(Self, Self) -> Bool
 pub fn EmbeddedHostSurface::not_equal(Self, Self) -> Bool
 pub fn EmbeddedHostSurface::to_repr(Self) -> @debug.Repr
@@ -57,6 +59,7 @@ pub fn EmbeddedLifecycle::surface_generation(Self) -> Int32
 pub fn EmbeddedLifecycle::suspended(Self) -> Array[EmbeddedWindowHostAction]
 pub fn EmbeddedLifecycle::unregister_window(Self, @backend.WindowId) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub enum EmbeddedWindowHostAction {
   Resumed
   CanCreateSurfaces
@@ -65,15 +68,16 @@ pub enum EmbeddedWindowHostAction {
   DestroySurfaces
   Suspended
   Exit(Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn EmbeddedWindowHostAction::equal(Self, Self) -> Bool
 pub fn EmbeddedWindowHostAction::not_equal(Self, Self) -> Bool
 pub fn EmbeddedWindowHostAction::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct PlatformWindowBinding {
   platform_id : @wzzc-dev/window/core.WindowId
   host_id : @backend.WindowId
-} derive(Eq, @debug.Debug)
+}
 pub fn PlatformWindowBinding::equal(Self, Self) -> Bool
 pub fn PlatformWindowBinding::not_equal(Self, Self) -> Bool
 pub fn PlatformWindowBinding::to_repr(Self) -> @debug.Repr

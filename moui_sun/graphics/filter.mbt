@@ -1,8 +1,9 @@
 ///|
 /// Paint color filter applied after color sampling and before opacity.
+#derive(Eq, Debug)
 struct PaintFilter {
   filters : Array[PaintFilterKind]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintFilter with Debug::{to_repr}
@@ -12,6 +13,7 @@ pub extend PaintFilter with Eq::{not_equal, equal}
 
 ///|
 /// Public filter stage family used for inspection and paint pipeline planning.
+#derive(Eq, Debug)
 pub(all) enum PaintFilterType {
   Modulate
   Grayscale
@@ -21,7 +23,7 @@ pub(all) enum PaintFilterType {
   Saturate
   Sepia
   ColorMatrix
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PaintFilterType with Debug::{to_repr}
@@ -30,6 +32,7 @@ pub extend PaintFilterType with Debug::{to_repr}
 pub extend PaintFilterType with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 priv enum PaintFilterKind {
   Modulate(Color)
   Grayscale
@@ -39,7 +42,7 @@ priv enum PaintFilterKind {
   Saturate(Double)
   Sepia
   ColorMatrix(Array[Double])
-} derive(Eq, Debug)
+}
 
 ///|
 /// Create a filter chain with no stages. Applying it returns the source color.

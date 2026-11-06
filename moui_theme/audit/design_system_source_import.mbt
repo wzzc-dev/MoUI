@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourceImportedToken {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -15,7 +16,7 @@ pub(all) struct DesignSourceImportedToken {
   moui_token : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceImportedToken with Debug::{to_repr}
@@ -27,6 +28,7 @@ pub extend DesignSourceImportedToken with Eq::{not_equal, equal}
 pub extend DesignSourceImportedToken with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourceImportCoverage {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -42,7 +44,7 @@ pub(all) struct DesignSourceImportCoverage {
   moui_token : String
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceImportCoverage with Debug::{to_repr}
@@ -54,6 +56,7 @@ pub extend DesignSourceImportCoverage with Eq::{not_equal, equal}
 pub extend DesignSourceImportCoverage with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourceImportIntegrityRecord {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -77,7 +80,7 @@ pub(all) struct DesignSourceImportIntegrityRecord {
   integrity_ok : Bool
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceImportIntegrityRecord with Debug::{to_repr}

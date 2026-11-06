@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum NativeGpuPlatform {
   MacOS
   Windows
@@ -6,7 +7,7 @@ pub(all) enum NativeGpuPlatform {
   Android
   IOS
   HarmonyOS
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend NativeGpuPlatform with Debug::{to_repr}
@@ -25,11 +26,12 @@ pub extend NativeGpuPlatform with NativePlatformSurface::{
 pub extend NativeGpuPlatform with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum NativeRendererMode {
   Auto
   SkiaGpu
   SkiaRaster
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend NativeRendererMode with Debug::{to_repr}
@@ -43,13 +45,14 @@ pub extend NativeRendererMode with ToJson::{to_json}
 ///|
 /// Renderer-local route used to select the concrete Skia GPU API. Platform
 /// and graphics API names never cross the root `moui/render` boundary.
+#derive(Eq, Hash, Debug, ToJson)
 pub(all) enum SkiaSurfaceRoute {
   RasterSurfaceRoute
   MetalGpuSurfaceRoute
   VulkanGpuSurfaceRoute
   EglGpuSurfaceRoute
   Direct3DGpuSurfaceRoute
-} derive(Eq, Hash, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaSurfaceRoute with Debug::{to_repr}

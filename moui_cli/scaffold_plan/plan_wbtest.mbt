@@ -163,7 +163,7 @@ test "default macOS project file plan is exact" {
       #|  "id": "sample_app",
       #|  "title": "Sample App",
       #|  "module": "example/sample_app",
-      #|  "mouiVersion": "0.3.0",
+      #|  "mouiVersion": "0.3.2",
       #|  "platforms": [
       #|    "web",
       #|    "macos"
@@ -198,7 +198,7 @@ test "default macOS project file plan is exact" {
   assert_true(web_main.contains(".backend(@web.entry())"))
   assert_true(web_main.contains("pub fn web_dispatch_pointer_input"))
   // The generated project's moon.mod pins default_moui_dependency_version and
-  // its browser_runtime.js comes from that same registry package. The 0.3.0
+  // its browser_runtime.js comes from that same registry package. The 0.3
   // Web pointer ABI carries pointer_id + pressure (10 args); a generated shim
   // that still forwards only 8 fails `moon build --target wasm-gc` with
   // "requires 10 arguments, but is given 8". Keep the shim, the default pin,

@@ -12,17 +12,19 @@ import {
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub struct CachedBmpPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(@debug.Debug)
+}
 pub fn CachedBmpPixmapDrawResult::did_decode_pixmap(Self) -> Bool
 pub fn CachedBmpPixmapDrawResult::did_hit_cache(Self) -> Bool
 pub fn CachedBmpPixmapDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedFontAtlasDrawResult {
   did_parse_font : Bool
   atlas_result : TextAtlasDrawResult
-} derive(@debug.Debug)
+}
 pub fn CachedFontAtlasDrawResult::did_clear_atlas(Self) -> Bool
 pub fn CachedFontAtlasDrawResult::did_hit_font_cache(Self) -> Bool
 pub fn CachedFontAtlasDrawResult::did_parse_font(Self) -> Bool
@@ -36,11 +38,12 @@ pub fn CachedFontAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int32
 pub fn CachedFontAtlasDrawResult::get_skipped_glyph_count(Self) -> Int32
 pub fn CachedFontAtlasDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedFontFallbackAtlasDrawResult {
   parsed_font_count : Int32
   font_cache_hit_count : Int32
   fallback_result : TextFallbackAtlasDrawResult
-} derive(@debug.Debug)
+}
 pub fn CachedFontFallbackAtlasDrawResult::did_clear_atlas(Self) -> Bool
 pub fn CachedFontFallbackAtlasDrawResult::get_advance_width(Self) -> Double
 pub fn CachedFontFallbackAtlasDrawResult::get_atlas_hit_count(Self) -> Int32
@@ -62,11 +65,12 @@ pub fn CachedFontFallbackAtlasDrawResult::get_span_count(Self) -> Int32
 pub fn CachedFontFallbackAtlasDrawResult::has_missing_glyphs(Self) -> Bool
 pub fn CachedFontFallbackAtlasDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedFontFallbackDrawResult {
   parsed_font_count : Int32
   font_cache_hit_count : Int32
   fallback_result : TextFallbackDrawResult
-} derive(@debug.Debug)
+}
 pub fn CachedFontFallbackDrawResult::get_advance_width(Self) -> Double
 pub fn CachedFontFallbackDrawResult::get_drawn_span_count(Self) -> Int32
 pub fn CachedFontFallbackDrawResult::get_fallback_result(Self) -> TextFallbackDrawResult
@@ -81,10 +85,11 @@ pub fn CachedFontFallbackDrawResult::get_text_cache_hit_count(Self) -> Int32
 pub fn CachedFontFallbackDrawResult::has_missing_glyphs(Self) -> Bool
 pub fn CachedFontFallbackDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedFontTextDrawResult {
   did_parse_font : Bool
   text_result : TextMaskDrawResult
-} derive(@debug.Debug)
+}
 pub fn CachedFontTextDrawResult::did_hit_font_cache(Self) -> Bool
 pub fn CachedFontTextDrawResult::did_hit_text_cache(Self) -> Bool
 pub fn CachedFontTextDrawResult::did_parse_font(Self) -> Bool
@@ -92,36 +97,41 @@ pub fn CachedFontTextDrawResult::did_render_mask(Self) -> Bool
 pub fn CachedFontTextDrawResult::get_text_result(Self) -> TextMaskDrawResult
 pub fn CachedFontTextDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedPixmapDrawResult {
   did_insert_pixmap : Bool
-} derive(@debug.Debug)
+}
 pub fn CachedPixmapDrawResult::did_hit_cache(Self) -> Bool
 pub fn CachedPixmapDrawResult::did_insert_pixmap(Self) -> Bool
 pub fn CachedPixmapDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedPngPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(@debug.Debug)
+}
 pub fn CachedPngPixmapDrawResult::did_decode_pixmap(Self) -> Bool
 pub fn CachedPngPixmapDrawResult::did_hit_cache(Self) -> Bool
 pub fn CachedPngPixmapDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct CachedRgbaPixmapDrawResult {
   did_decode_pixmap : Bool
-} derive(@debug.Debug)
+}
 pub fn CachedRgbaPixmapDrawResult::did_decode_pixmap(Self) -> Bool
 pub fn CachedRgbaPixmapDrawResult::did_hit_cache(Self) -> Bool
 pub fn CachedRgbaPixmapDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct FontBytesFallbackSource {
   font_key : String
   font_data : Bytes
-} derive(@debug.Debug)
+}
 pub fn FontBytesFallbackSource::get_font_data(Self) -> Bytes
 pub fn FontBytesFallbackSource::get_font_key(Self) -> String
 pub fn FontBytesFallbackSource::new(String, Bytes) -> Self
 pub fn FontBytesFallbackSource::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub enum RenderCommand {
   Clear(@graphics.Color)
   FillRect(Double, Double, Double, Double, @graphics.Paint)
@@ -178,12 +188,13 @@ pub enum RenderCommand {
   DrawLoadedFontFallbackKeyed(Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
   DrawLoadedFontFallbackAtlasKeyed(Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
   DrawLoadedFontAtlasKeyed(String, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
-} derive(@debug.Debug)
+}
 pub fn RenderCommand::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipeline {
   commands : Array[RenderCommand]
-} derive(@debug.Debug)
+}
 pub fn RenderPipeline::analyze(Self, Int32, Int32) -> RenderPipelineAnalysis
 pub fn RenderPipeline::batch_plan(Self, Int32, Int32) -> RenderPipelineBatchPlan
 pub fn RenderPipeline::clear_canvas(Self, @graphics.Color) -> Self
@@ -255,6 +266,7 @@ pub fn RenderPipeline::stroke_path(Self, @graphics.Path, @graphics.Paint) -> Sel
 pub fn RenderPipeline::stroke_rect(Self, Double, Double, Double, Double, @graphics.Paint) -> Self
 pub fn RenderPipeline::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineAnalysis {
   command_count : Int32
   clear_count : Int32
@@ -263,7 +275,7 @@ pub struct RenderPipelineAnalysis {
   image_count : Int32
   text_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineAnalysis::get_clear_count(Self) -> Int32
 pub fn RenderPipelineAnalysis::get_command_count(Self) -> Int32
 pub fn RenderPipelineAnalysis::get_dirty_bounds(Self) -> @graphics.PixelRect?
@@ -277,12 +289,13 @@ pub fn RenderPipelineAnalysis::get_text_count(Self) -> Int32
 pub fn RenderPipelineAnalysis::has_dirty(Self) -> Bool
 pub fn RenderPipelineAnalysis::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineBatch {
   kind : RenderPipelineBatchKind
   start_index : Int32
   command_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineBatch::get_command_count(Self) -> Int32
 pub fn RenderPipelineBatch::get_dirty_bounds(Self) -> @graphics.PixelRect?
 pub fn RenderPipelineBatch::get_dirty_rect_count(Self) -> Int32
@@ -293,22 +306,24 @@ pub fn RenderPipelineBatch::get_start_index(Self) -> Int32
 pub fn RenderPipelineBatch::has_dirty(Self) -> Bool
 pub fn RenderPipelineBatch::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderPipelineBatchKind {
   Clear
   Fill
   Stroke
   Image
   Text
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPipelineBatchKind::equal(Self, Self) -> Bool
 pub fn RenderPipelineBatchKind::not_equal(Self, Self) -> Bool
 pub fn RenderPipelineBatchKind::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineBatchPlan {
   command_count : Int32
   batches : Array[RenderPipelineBatch]
   dirty_region : @graphics.DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineBatchPlan::get_batch_count(Self) -> Int32
 pub fn RenderPipelineBatchPlan::get_batches(Self) -> Array[RenderPipelineBatch]
 pub fn RenderPipelineBatchPlan::get_command_count(Self) -> Int32
@@ -318,6 +333,7 @@ pub fn RenderPipelineBatchPlan::get_present_plan(Self, Int32, Int32, Int32) -> @
 pub fn RenderPipelineBatchPlan::has_dirty(Self) -> Bool
 pub fn RenderPipelineBatchPlan::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineDiffResult {
   previous_command_count : Int32
   next_command_count : Int32
@@ -326,7 +342,7 @@ pub struct RenderPipelineDiffResult {
   inserted_command_count : Int32
   removed_command_count : Int32
   dirty_region : @graphics.DirtyRegion
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineDiffResult::get_changed_command_count(Self) -> Int32
 pub fn RenderPipelineDiffResult::get_dirty_bounds(Self) -> @graphics.PixelRect?
 pub fn RenderPipelineDiffResult::get_dirty_rect_count(Self) -> Int32
@@ -341,23 +357,25 @@ pub fn RenderPipelineDiffResult::has_changes(Self) -> Bool
 pub fn RenderPipelineDiffResult::has_dirty(Self) -> Bool
 pub fn RenderPipelineDiffResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineFontDependency {
   command_index : Int32
   font_key : String
   font_byte_count : Int32
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineFontDependency::get_command_index(Self) -> Int32
 pub fn RenderPipelineFontDependency::get_font_byte_count(Self) -> Int32
 pub fn RenderPipelineFontDependency::get_font_key(Self) -> String
 pub fn RenderPipelineFontDependency::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineImageDependency {
   command_index : Int32
   resource_key : String?
   source_width : Int32
   source_height : Int32
   source_pixel_count : Int32
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineImageDependency::get_command_index(Self) -> Int32
 pub fn RenderPipelineImageDependency::get_resource_key(Self) -> String?
 pub fn RenderPipelineImageDependency::get_source_height(Self) -> Int32
@@ -366,15 +384,17 @@ pub fn RenderPipelineImageDependency::get_source_width(Self) -> Int32
 pub fn RenderPipelineImageDependency::has_resource_key(Self) -> Bool
 pub fn RenderPipelineImageDependency::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderPipelineReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPipelineReplayError::equal(Self, Self) -> Bool
 pub fn RenderPipelineReplayError::not_equal(Self, Self) -> Bool
 pub fn RenderPipelineReplayError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct RenderPipelineReplayResult {
   command_count : Int32
   clear_count : Int32
@@ -382,7 +402,7 @@ pub struct RenderPipelineReplayResult {
   stroke_count : Int32
   image_count : Int32
   text_count : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPipelineReplayResult::equal(Self, Self) -> Bool
 pub fn RenderPipelineReplayResult::get_clear_count(Self) -> Int32
 pub fn RenderPipelineReplayResult::get_command_count(Self) -> Int32
@@ -393,12 +413,13 @@ pub fn RenderPipelineReplayResult::get_text_count(Self) -> Int32
 pub fn RenderPipelineReplayResult::not_equal(Self, Self) -> Bool
 pub fn RenderPipelineReplayResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineResourcePlan {
   command_count : Int32
   font_dependencies : Array[RenderPipelineFontDependency]
   image_dependencies : Array[RenderPipelineImageDependency]
   text_dependencies : Array[RenderPipelineTextDependency]
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineResourcePlan::get_command_count(Self) -> Int32
 pub fn RenderPipelineResourcePlan::get_font_byte_count(Self) -> Int32
 pub fn RenderPipelineResourcePlan::get_font_count(Self) -> Int32
@@ -419,17 +440,19 @@ pub fn RenderPipelineResourcePlan::get_text_run_count(Self) -> Int32
 pub fn RenderPipelineResourcePlan::has_resources(Self) -> Bool
 pub fn RenderPipelineResourcePlan::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RenderPipelineResourceReplayError {
   ImageDecodeFailed(String, @graphics.PixmapDecodeError)
   FontDataMissing(String)
   FontFileReadFailed(String, String)
   FontParseFailed(String, @text.FontParseError)
   FontLoaderRequired(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPipelineResourceReplayError::equal(Self, Self) -> Bool
 pub fn RenderPipelineResourceReplayError::not_equal(Self, Self) -> Bool
 pub fn RenderPipelineResourceReplayError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct RenderPipelineResourceReplayResult {
   replay_result : RenderPipelineReplayResult
   keyed_font_count : Int32
@@ -447,7 +470,7 @@ pub struct RenderPipelineResourceReplayResult {
   atlas_cache_hit_count : Int32
   atlas_insert_count : Int32
   atlas_clear_count : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn RenderPipelineResourceReplayResult::equal(Self, Self) -> Bool
 pub fn RenderPipelineResourceReplayResult::get_atlas_cache_hit_count(Self) -> Int32
 pub fn RenderPipelineResourceReplayResult::get_atlas_clear_count(Self) -> Int32
@@ -477,6 +500,7 @@ pub fn RenderPipelineResourceReplayResult::get_text_mask_render_count(Self) -> I
 pub fn RenderPipelineResourceReplayResult::not_equal(Self, Self) -> Bool
 pub fn RenderPipelineResourceReplayResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RenderPipelineTextDependency {
   command_index : Int32
   resource_key : String?
@@ -485,7 +509,7 @@ pub struct RenderPipelineTextDependency {
   glyph_count : Int32
   layout_width : Double
   layout_height : Double
-} derive(@debug.Debug)
+}
 pub fn RenderPipelineTextDependency::get_command_index(Self) -> Int32
 pub fn RenderPipelineTextDependency::get_glyph_count(Self) -> Int32
 pub fn RenderPipelineTextDependency::get_layout_height(Self) -> Double
@@ -496,9 +520,10 @@ pub fn RenderPipelineTextDependency::get_text_byte_count(Self) -> Int32
 pub fn RenderPipelineTextDependency::has_resource_key(Self) -> Bool
 pub fn RenderPipelineTextDependency::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct Renderer {
   canvas : @graphics.Canvas
-} derive(@debug.Debug)
+}
 pub fn Renderer::analyze_pipeline(Self, RenderPipeline) -> RenderPipelineAnalysis
 pub fn Renderer::diff_pipelines(Self, RenderPipeline, RenderPipeline) -> RenderPipelineDiffResult
 pub fn Renderer::draw_bmp_bytes_cached(Self, Bytes, Int32, Int32, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
@@ -636,11 +661,12 @@ pub fn Renderer::plan_pipeline_batches(Self, RenderPipeline) -> RenderPipelineBa
 pub fn Renderer::plan_pipeline_resources(Self, RenderPipeline) -> RenderPipelineResourcePlan
 pub fn Renderer::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RendererResources {
   font_cache : @text.FontFaceCache
   text : RendererTextResources
   image_cache : @graphics.PixmapCache
-} derive(@debug.Debug)
+}
 pub fn RendererResources::clear(Self) -> Unit
 pub fn RendererResources::contains_font_face(Self, String) -> Bool
 pub fn RendererResources::contains_glyph_mask(Self, String) -> Bool
@@ -658,6 +684,7 @@ pub fn RendererResources::to_repr(Self) -> @debug.Repr
 pub fn RendererResources::with_capacities(Int32, Int32, Int32, Int32, Int32) -> Self
 pub fn RendererResources::with_font_capacity(Int32, Int32, Int32, Int32, Int32, Int32) -> Self
 
+#derive(@debug.Debug)
 pub struct RendererResourcesSnapshot {
   font_face_count : Int32
   font_face_capacity : Int32
@@ -666,7 +693,7 @@ pub struct RendererResourcesSnapshot {
   image_count : Int32
   image_capacity : Int32
   image_is_bounded : Bool
-} derive(@debug.Debug)
+}
 pub fn RendererResourcesSnapshot::get_font_face_capacity(Self) -> Int32
 pub fn RendererResourcesSnapshot::get_font_face_count(Self) -> Int32
 pub fn RendererResourcesSnapshot::get_image_capacity(Self) -> Int32
@@ -676,11 +703,12 @@ pub fn RendererResourcesSnapshot::is_font_face_capacity_bounded(Self) -> Bool
 pub fn RendererResourcesSnapshot::is_image_capacity_bounded(Self) -> Bool
 pub fn RendererResourcesSnapshot::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct RendererTextResources {
   text_cache : @text.TextMaskCache
   glyph_cache : @text.GlyphMaskCache
   atlas : @text.GlyphMaskAtlas
-} derive(@debug.Debug)
+}
 pub fn RendererTextResources::clear(Self) -> Unit
 pub fn RendererTextResources::contains_glyph_mask(Self, String) -> Bool
 pub fn RendererTextResources::contains_text_mask(Self, String) -> Bool
@@ -692,6 +720,7 @@ pub fn RendererTextResources::snapshot(Self) -> RendererTextResourcesSnapshot
 pub fn RendererTextResources::to_repr(Self) -> @debug.Repr
 pub fn RendererTextResources::with_capacities(Int32, Int32, Int32, Int32) -> Self
 
+#derive(@debug.Debug)
 pub struct RendererTextResourcesSnapshot {
   text_mask_count : Int32
   text_mask_capacity : Int32
@@ -706,7 +735,7 @@ pub struct RendererTextResourcesSnapshot {
   atlas_used_pixel_count : Int32
   atlas_free_pixel_count : Int32
   atlas_occupancy_ratio : Double
-} derive(@debug.Debug)
+}
 pub fn RendererTextResourcesSnapshot::get_atlas_capacity(Self) -> Int32
 pub fn RendererTextResourcesSnapshot::get_atlas_entry_count(Self) -> Int32
 pub fn RendererTextResourcesSnapshot::get_atlas_free_pixel_count(Self) -> Int32
@@ -722,6 +751,7 @@ pub fn RendererTextResourcesSnapshot::is_glyph_mask_capacity_bounded(Self) -> Bo
 pub fn RendererTextResourcesSnapshot::is_text_mask_capacity_bounded(Self) -> Bool
 pub fn RendererTextResourcesSnapshot::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct TextAtlasDrawResult {
   glyph_count : Int32
   drawn_glyph_count : Int32
@@ -731,7 +761,7 @@ pub struct TextAtlasDrawResult {
   atlas_hit_count : Int32
   atlas_inserted_count : Int32
   did_clear_atlas : Bool
-} derive(@debug.Debug)
+}
 pub fn TextAtlasDrawResult::did_clear_atlas(Self) -> Bool
 pub fn TextAtlasDrawResult::get_atlas_hit_count(Self) -> Int32
 pub fn TextAtlasDrawResult::get_atlas_inserted_count(Self) -> Int32
@@ -742,13 +772,14 @@ pub fn TextAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int32
 pub fn TextAtlasDrawResult::get_skipped_glyph_count(Self) -> Int32
 pub fn TextAtlasDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct TextFallbackAtlasDrawResult {
   plan : @text.FontFallbackPlan
   drawn_span_count : Int32
   skipped_span_count : Int32
   advance_width : Double
   atlas_result : TextAtlasDrawResult
-} derive(@debug.Debug)
+}
 pub fn TextFallbackAtlasDrawResult::did_clear_atlas(Self) -> Bool
 pub fn TextFallbackAtlasDrawResult::get_advance_width(Self) -> Double
 pub fn TextFallbackAtlasDrawResult::get_atlas_hit_count(Self) -> Int32
@@ -768,6 +799,7 @@ pub fn TextFallbackAtlasDrawResult::get_span_count(Self) -> Int32
 pub fn TextFallbackAtlasDrawResult::has_missing_glyphs(Self) -> Bool
 pub fn TextFallbackAtlasDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct TextFallbackDrawResult {
   plan : @text.FontFallbackPlan
   drawn_span_count : Int32
@@ -775,7 +807,7 @@ pub struct TextFallbackDrawResult {
   rendered_mask_count : Int32
   cache_hit_count : Int32
   advance_width : Double
-} derive(@debug.Debug)
+}
 pub fn TextFallbackDrawResult::get_advance_width(Self) -> Double
 pub fn TextFallbackDrawResult::get_cache_hit_count(Self) -> Int32
 pub fn TextFallbackDrawResult::get_drawn_span_count(Self) -> Int32
@@ -788,9 +820,10 @@ pub fn TextFallbackDrawResult::get_span_count(Self) -> Int32
 pub fn TextFallbackDrawResult::has_missing_glyphs(Self) -> Bool
 pub fn TextFallbackDrawResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct TextMaskDrawResult {
   did_render_mask : Bool
-} derive(@debug.Debug)
+}
 pub fn TextMaskDrawResult::did_hit_cache(Self) -> Bool
 pub fn TextMaskDrawResult::did_render_mask(Self) -> Bool
 pub fn TextMaskDrawResult::to_repr(Self) -> @debug.Repr

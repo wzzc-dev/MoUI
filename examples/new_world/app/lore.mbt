@@ -18,11 +18,12 @@
 
 ///|
 /// One entry selected for injection, with the reason it fired.
+#derive(Eq, Debug)
 pub(all) struct LoreHit {
   entry : WorldEntry
   /// How many recursion rounds it took to reach this entry (0 = direct match).
   depth : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LoreHit with Debug::{to_repr}

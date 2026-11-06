@@ -1,8 +1,9 @@
 ///|
 /// Parsed font face used by higher-level layout and rendering APIs.
+#derive(Debug)
 struct FontFace {
   font : Font
-} derive(Debug)
+}
 
 ///|
 pub extend FontFace with Debug::{to_repr}
@@ -40,22 +41,24 @@ pub fn FontData::parse(self : FontData) -> Result[FontFace, FontParseError] {
 ///|
 /// Small checked font-face cache for GUI/resource code that repeatedly asks for
 /// the same parsed face.
+#derive(Debug)
 struct FontFaceCache {
   mut faces : Map[String, FontFace]
   mut access_order : Array[String]
   capacity : Int32
   is_bounded : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend FontFaceCache with Debug::{to_repr}
 
 ///|
 /// Result of reading a checked font face from cache or parsing it on miss.
+#derive(Debug)
 struct FontFaceCacheParseResult {
   face : FontFace
   did_parse : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend FontFaceCacheParseResult with Debug::{to_repr}

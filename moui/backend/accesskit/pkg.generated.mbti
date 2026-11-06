@@ -26,11 +26,12 @@ pub fn accesskit_update_from_semantics_read(@runtime.SemanticsRead) -> AccessKit
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum AccessKitActionResult {
   Handled(@runtime.SemanticsActionReceipt)
   Rejected(@runtime.SemanticsActionDispatchError)
   BridgeUnavailable(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn AccessKitActionResult::equal(Self, Self) -> Bool
 pub fn AccessKitActionResult::not_equal(Self, Self) -> Bool
 pub fn AccessKitActionResult::to_repr(Self) -> @debug.Repr

@@ -107,8 +107,8 @@
     },
     {
       "path": "examples/excel/sheet/sheet.mbt",
-      "maxLines": 1875,
-      "reason": "Existing spreadsheet domain implementation."
+      "maxLines": 1900,
+      "reason": "Existing spreadsheet domain implementation. Quantized 1875->1900 2026-11-06 (measured 1878) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "moui_sun_renderer/renderer_test.mbt",
@@ -197,8 +197,8 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 4250,
-      "reason": "Existing rich-text editor session state machine."
+      "maxLines": 4275,
+      "reason": "Existing rich-text editor session state machine. Quantized 4250->4275 2026-11-06 (measured 4253) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "scripts/record-web-runtime-presentation.mjs",
@@ -282,13 +282,13 @@
     },
     {
       "path": "moui_skia/geometry.mbt",
-      "maxLines": 1275,
-      "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
+      "maxLines": 1300,
+      "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration. Quantized 1275->1300 2026-11-06 (measured 1280) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "examples/mo_desktop/app/model.mbt",
-      "maxLines": 1250,
-      "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration."
+      "maxLines": 1275,
+      "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration. Quantized 1250->1275 2026-11-06 (measured 1259) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "examples/new_world/app/update.mbt",
@@ -304,18 +304,18 @@
   "data": [
     {
       "path": "moui_theme/audit/design_system_golden.mbt",
-      "maxLines": 2723,
-      "reason": "Audited design-system golden token table."
+      "maxLines": 2725,
+      "reason": "Audited design-system golden token table. Quantized 2723->2725 2026-11-06 (measured 2725) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "moui_theme/audit/design_system_official_tokens.mbt",
-      "maxLines": 2446,
-      "reason": "Official design-system token anchor table."
+      "maxLines": 2450,
+      "reason": "Official design-system token anchor table. Quantized 2446->2450 2026-11-06 (measured 2449) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "moui_theme/common/design_system_tokens.mbt",
-      "maxLines": 2484,
-      "reason": "Shared design-system token data table."
+      "maxLines": 2525,
+      "reason": "Shared design-system token data table. Quantized 2484->2525 2026-11-06 (measured 2513) for the formatting-only `#derive` migration to MoonBit 0.10.20."
     },
     {
       "path": "moui_theme/audit/design_system_source_import_fluent.mbt",

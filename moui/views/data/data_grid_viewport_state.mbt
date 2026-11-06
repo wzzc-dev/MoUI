@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridFreezePanes {
   rows : Int32
   columns : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridFreezePanes with Debug::{to_repr}
@@ -32,6 +33,7 @@ pub fn DataGridFreezePanes::columns(self : DataGridFreezePanes) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridViewport {
   first_row : Int32
   last_row : Int32
@@ -40,7 +42,7 @@ pub struct DataGridViewport {
   row_count : Int32
   column_count : Int32
   freeze : DataGridFreezePanes
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridViewport with Debug::{to_repr}

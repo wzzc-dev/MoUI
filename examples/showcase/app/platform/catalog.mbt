@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct CatalogGroup {
   id : String
   title : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogGroup with Debug::{to_repr}
@@ -11,13 +12,14 @@ pub extend CatalogGroup with Debug::{to_repr}
 pub extend CatalogGroup with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CatalogItem {
   id : String
   group_id : String
   title : String
   summary : String
   badge : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogItem with Debug::{to_repr}

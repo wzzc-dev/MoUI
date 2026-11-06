@@ -9,12 +9,13 @@
 
 ///|
 /// One quick-format palette entry.
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownPaletteItem {
   action : String
   label : String
   group : String
   shortcut : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownPaletteItem with Eq::{equal, not_equal}

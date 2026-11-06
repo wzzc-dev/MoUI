@@ -30,9 +30,10 @@ renderers → addons → entrypoints),模块内部依赖关系决定阶段顺序
   才爆出 API 不存在(moui_cli 的 `lexical_compare` 需要新 x)。发布前
   每个模块单独 `cd <dir> && moon check` 不能暴露这个,要用发布沙箱或
   在模块目录里 `moon update && moon check` 按自身 pin 验证。
-- `checks/external-consumer/moon.mod` 的 `wzzc-dev/moui@0.1.7` 是**故意的**
-  兼容测试钉(docs/testing.md "Until 0.2 is published" 句),不要跟随
-  全量 bump;0.2 发布后是否切到 registry 模式测 0.2 是独立决策。
+- `scripts/external-consumer-ci.mjs` 的 `registryBaseVersion` 必须指向
+  当前最低编译器仍能构建的不可变 registry artifact。MoonBit 0.10.20 移除了
+  旧 `to_json` 写法后，0.2.x 无法再由新编译器构建，探针已切到 0.3.2；
+  后续增加最低编译器版本时也要同步重评该常量。
 - 从未上过 mooncakes 的内部模块(moui_tests/moui_tools/
   moui_product_tools/moui_3d_web_renderer/moui_3d_wgpu_renderer/momark)
   只 bump 版本号不发布,保持工作区 override 无警告。

@@ -5,6 +5,7 @@
 /// is `6`. It is an instantaneous value rather than a timer; applications that
 /// need updates should pair it with an app-facing `@services.TimerSource`
 /// subscription supplied by the composition root.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostWallClock {
   year : Int32
   month : Int32
@@ -13,7 +14,7 @@ pub(all) struct HostWallClock {
   hour : Int32
   minute : Int32
   second : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostWallClock with Debug::{to_repr}

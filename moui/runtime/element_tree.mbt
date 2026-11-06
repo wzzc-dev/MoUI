@@ -112,6 +112,7 @@ priv struct ElementLayoutCache {
 /// Time-dependent paint plans bypass the cache through
 /// `ViewPaintPlan.animating` or the overlay-enter fade check; a static plan may
 /// be reused across ticks.
+#derive(Eq)
 priv struct RenderCacheKey {
   frame : Rect
   focused : Bool
@@ -124,7 +125,7 @@ priv struct RenderCacheKey {
   state_revision : Int32
   text_revision : Int32
   place_revision : Int32
-} derive(Eq)
+}
 
 ///|
 priv struct ElementRenderCache {

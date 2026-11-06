@@ -30,11 +30,12 @@ pub struct DataTableApp {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DataStatus {
   Ready
   Loading
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataStatus with Debug::{to_repr}
@@ -46,11 +47,12 @@ pub extend DataStatus with Eq::{not_equal, equal}
 pub extend DataStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DataSortKey {
   Project
   Owner
   Status
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataSortKey with Debug::{to_repr}
@@ -62,6 +64,7 @@ pub extend DataSortKey with Eq::{not_equal, equal}
 pub extend DataSortKey with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DataRecord {
   id : Int32
   project : String
@@ -69,7 +72,7 @@ pub(all) struct DataRecord {
   owner : String
   team : String
   priority : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataRecord with Debug::{to_repr}

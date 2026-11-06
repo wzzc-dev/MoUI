@@ -1,31 +1,34 @@
 ///|
 /// Small keyed cache for reusable pixmap resources.
+#derive(Debug)
 pub struct PixmapCache {
   mut pixmaps : Map[String, Pixmap]
   mut access_order : Array[String]
   capacity : Int32
   is_bounded : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend PixmapCache with Debug::{to_repr}
 
 ///|
 /// Result of reading a pixmap from cache or inserting it on miss.
+#derive(Debug)
 pub struct PixmapCacheInsertResult {
   pixmap : Pixmap
   did_insert : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend PixmapCacheInsertResult with Debug::{to_repr}
 
 ///|
 /// Result of reading a pixmap from cache or decoding bytes on miss.
+#derive(Debug)
 pub struct PixmapCacheDecodeResult {
   pixmap : Pixmap
   did_decode : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend PixmapCacheDecodeResult with Debug::{to_repr}

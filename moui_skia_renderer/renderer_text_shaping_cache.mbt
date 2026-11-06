@@ -12,41 +12,45 @@
 /// Hashable mirror of one `FontFamily`. `@core.FontFamily` derives `Eq` but
 /// not `Hash`, so the structured key carries a stable tag plus the `Name`
 /// payload. Kept package-local: the shaping cache owns its key format.
+#derive(Eq, Hash)
 priv struct SkiaShapingFamilyKey {
   tag : Int32
   name : String
-} derive(Eq, Hash)
+}
 
 ///|
 /// Hashable mirror of one `FontVariation` axis/value pair.
+#derive(Eq, Hash)
 priv struct SkiaShapingVariationKey {
   axis : String
   value : Double
-} derive(Eq, Hash)
+}
 
 ///|
 /// Hashable mirror of `@core.FontSpec`. Field-for-field: family stack (tagged
 /// because the enum has a `Name(String)` payload), size, weight, style, and
 /// variation axes. Double fields are zero-normalized so `0.0` and `-0.0`
 /// (equal under `Eq`) cannot end up with different hashes in a `Map` key.
+#derive(Eq, Hash)
 priv struct SkiaShapingFontKey {
   families : Array[SkiaShapingFamilyKey]
   size : Double
   weight : Int32
   style : Int32
   variations : Array[SkiaShapingVariationKey]
-} derive(Eq, Hash)
+}
 
 ///|
 /// Full shaping cache key: structural font identity plus resolution and the
 /// text itself. Replaces the former `font_spec.to_json().stringify() + tag +
 /// text` concatenation that allocated a JSON tree, a stringified document,
 /// and a merged string on every lookup.
+#derive(Eq, Hash)
 priv struct SkiaTextShapingKey {
   font : SkiaShapingFontKey
   system_font_mgr : Bool
   text : String
-} derive(Eq, Hash)
+}
 
 ///|
 priv struct SkiaTextShapingEntry {

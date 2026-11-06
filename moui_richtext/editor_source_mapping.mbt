@@ -1113,10 +1113,11 @@ fn markdown_editor_front_matter_block_at(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownEditorHtmlBlockParseResult {
   block : MarkdownEditorBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownEditorHtmlBlockParseResult with Debug::{to_repr}
@@ -1301,10 +1302,11 @@ fn markdown_editor_html_block_result(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownEditorSetextHeadingParseResult {
   block : MarkdownEditorBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownEditorSetextHeadingParseResult with Debug::{to_repr}
@@ -1853,10 +1855,11 @@ fn markdown_editor_block_with_references(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownEditorIndentedCodeParseResult {
   block : MarkdownEditorBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownEditorIndentedCodeParseResult with Debug::{to_repr}
@@ -1955,10 +1958,11 @@ fn markdown_editor_indented_code_line(
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownEditorParagraphParseResult {
   block : MarkdownEditorBlock
   end_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownEditorParagraphParseResult with Debug::{to_repr}
@@ -2701,10 +2705,11 @@ fn markdown_editor_heading_source(level : Int32, text : String) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 struct MarkdownEditorRunSourceRange {
   start : Int32
   end : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownEditorRunSourceRange with Debug::{to_repr}

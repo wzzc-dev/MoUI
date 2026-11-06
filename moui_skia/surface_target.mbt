@@ -1,10 +1,11 @@
 ///|
 /// Presentation policy for a window or GPU-backed surface target.
+#derive(Debug, Eq)
 pub(all) enum SurfacePresentMode {
   ImmediatePresent
   MailboxPresent
   FifoPresent
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfacePresentMode with Debug::{to_repr}
@@ -33,13 +34,14 @@ pub fn SurfacePresentMode::allows_tearing(self : SurfacePresentMode) -> Bool {
 ///|
 /// Stable value-layer contract for a renderable target and its presentation
 /// boundary. Raster targets are valid but never presentable.
+#derive(Debug, Eq)
 pub(all) struct SurfaceTargetDescriptor {
   surface : SurfaceDescriptor
   target_id : Bytes
   present_mode : SurfacePresentMode?
   max_frames_in_flight : Int32
   gpu_context_key : RendererResourceKey?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceTargetDescriptor with Debug::{to_repr}

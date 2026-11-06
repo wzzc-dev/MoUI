@@ -1,9 +1,10 @@
 ///|
 /// Font data (simplified representation)
+#derive(Debug)
 struct FontData {
   data : Bytes
   font_index : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend FontData with Debug::{to_repr}
@@ -28,12 +29,13 @@ pub fn FontData::get_font_index(self : FontData) -> Int32 {
 
 ///|
 /// Font metrics information
+#derive(Eq, Debug)
 pub struct FontMetrics {
   units_per_em : Int32
   ascent : Int32
   descent : Int32
   line_gap : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontMetrics with Debug::{to_repr}

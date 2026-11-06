@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FocusTraversalDirection {
   Next
   Previous
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FocusTraversalDirection with Debug::{to_repr}
@@ -14,23 +15,25 @@ pub extend FocusTraversalDirection with Eq::{not_equal, equal}
 pub extend FocusTraversalDirection with ToJson::{to_json}
 
 ///|
+#derive(Eq)
 struct FocusScopeItem {
   id : String
   enabled : Bool
   focusable : Bool
-} derive(Eq)
+}
 
 ///|
 pub extend FocusScopeItem with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq)
 struct FocusScope {
   items : Array[FocusScopeItem]
   current : String?
   wrap : Bool
   default_action : String
   dismiss_action : String
-} derive(Eq)
+}
 
 ///|
 pub extend FocusScope with Eq::{not_equal, equal}

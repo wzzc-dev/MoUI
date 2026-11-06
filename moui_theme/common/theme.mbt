@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignPreset {
   Material
   Carbon
   Primer
   Fluent
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignPreset with Debug::{to_repr}

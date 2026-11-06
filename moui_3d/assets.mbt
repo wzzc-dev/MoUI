@@ -16,11 +16,12 @@ pub fn AssetByteSource::read(self : AssetByteSource, uri : String) -> Bytes? {
 }
 
 ///|
+#derive(Debug)
 pub(all) enum AssetLoadResult {
   Bytes(Bytes)
   Missing(String)
   Invalid(String)
-} derive(Debug)
+}
 
 ///|
 pub extend AssetLoadResult with Debug::{to_repr}

@@ -1,12 +1,13 @@
 ///|
 /// Path segment types
+#derive(Eq, Debug)
 pub enum PathSegment {
   MoveTo(Double, Double)
   LineTo(Double, Double)
   QuadTo(Double, Double, Double, Double)
   CubicTo(Double, Double, Double, Double, Double, Double)
   Close
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PathSegment with Debug::{to_repr}
@@ -16,12 +17,13 @@ pub extend PathSegment with Eq::{not_equal, equal}
 
 ///|
 /// Boolean operation for supported path operands.
+#derive(Eq, Debug)
 pub(all) enum PathBooleanOp {
   Union
   Intersection
   Difference
   Xor
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PathBooleanOp with Debug::{to_repr}
@@ -31,13 +33,14 @@ pub extend PathBooleanOp with Eq::{not_equal, equal}
 
 ///|
 /// 2D path builder for constructing vector shapes
+#derive(Debug)
 pub struct Path {
   segments : Array[PathSegment]
   mut current_x : Double
   mut current_y : Double
   mut start_x : Double
   mut start_y : Double
-} derive(Debug)
+}
 
 ///|
 pub extend Path with Debug::{to_repr}

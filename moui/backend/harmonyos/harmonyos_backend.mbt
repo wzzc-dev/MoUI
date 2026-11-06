@@ -1,8 +1,9 @@
 ///|
 /// Window-hosted native surface handle.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HarmonyOSSurfaceHandle with Debug::{to_repr}
@@ -29,6 +30,7 @@ pub fn HarmonyOSSurfaceHandle::raw(self : HarmonyOSSurfaceHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -42,7 +44,7 @@ pub(all) struct HarmonyOSBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HarmonyOSBackendCapabilities with Debug::{to_repr}
@@ -61,12 +63,13 @@ pub extend HarmonyOSBackendCapabilities with ToJson::{to_json}
 ///
 /// `status` is a coarse evidence class: `experimental` until signed-device
 /// full smoke and presenter verification close remaining gaps.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HarmonyOSBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HarmonyOSBackendReadiness with Debug::{to_repr}
@@ -78,6 +81,7 @@ pub extend HarmonyOSBackendReadiness with Eq::{not_equal, equal}
 pub extend HarmonyOSBackendReadiness with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HarmonyOSBackendInfo {
   host_info : @host.HostAppInfo
   capabilities : HarmonyOSBackendCapabilities
@@ -85,7 +89,7 @@ pub(all) struct HarmonyOSBackendInfo {
   input : @host.HostInputCapabilities
   readiness : HarmonyOSBackendReadiness
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HarmonyOSBackendInfo with Debug::{to_repr}

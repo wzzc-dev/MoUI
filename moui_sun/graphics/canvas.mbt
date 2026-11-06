@@ -1,21 +1,23 @@
 ///|
 /// 2D drawing canvas backed by a pixmap
+#derive(Debug)
 pub struct Canvas {
   pixmap : Pixmap
   mut transform : Transform
   mut clip_rect : Rect?
   state_stack : Array[CanvasState]
   dirty_region : DirtyRegion
-} derive(Debug)
+}
 
 ///|
 pub extend Canvas with Debug::{to_repr}
 
 ///|
+#derive(Debug)
 struct CanvasState {
   transform : Transform
   clip_rect : Rect?
-} derive(Debug)
+}
 
 ///|
 pub extend CanvasState with Debug::{to_repr}

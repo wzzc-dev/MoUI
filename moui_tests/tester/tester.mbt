@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TesterStepResult {
   name : String
   passed : Bool
   detail : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TesterStepResult with Debug::{to_repr}
@@ -15,13 +16,14 @@ pub extend TesterStepResult with Eq::{not_equal, equal}
 pub extend TesterStepResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RuntimeSmokeSnapshot {
   title : String
   draw_command_count : Int32
   focused_text_input : Bool
   text_input_text : String
   inspector : @runtime.InspectorSnapshot
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RuntimeSmokeSnapshot with Debug::{to_repr}

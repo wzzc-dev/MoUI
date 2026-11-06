@@ -1,5 +1,6 @@
 ///|
 /// Agent-facing duplicate identity diagnostic from one committed snapshot.
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentSemanticsIssue {
   DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
   MissingRelationTarget(
@@ -13,7 +14,7 @@ pub(all) enum AgentSemanticsIssue {
     @core.SemanticId,
     Array[@core.SemanticsNodeId]
   )
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentSemanticsIssue with Debug::{to_repr}
@@ -26,13 +27,14 @@ pub extend AgentSemanticsIssue with ToJson::{to_json}
 
 ///|
 /// Immutable full semantics projection exposed by `AgentHost`.
+#derive(Eq, Debug, ToJson)
 pub(all) struct AgentSemanticsSnapshot {
   generation : @core.SemanticsGeneration
   root : @core.SemanticsNodeId?
   focused : @core.SemanticsNodeId?
   nodes : Array[@core.SemanticsNode]
   issues : Array[AgentSemanticsIssue]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentSemanticsSnapshot with Debug::{to_repr}
@@ -45,6 +47,7 @@ pub extend AgentSemanticsSnapshot with ToJson::{to_json}
 
 ///|
 /// Incremental semantics projection between two committed generations.
+#derive(Eq, Debug, ToJson)
 pub(all) struct AgentSemanticsDelta {
   from : @core.SemanticsGeneration
   to : @core.SemanticsGeneration
@@ -54,7 +57,7 @@ pub(all) struct AgentSemanticsDelta {
   removed : Array[@core.SemanticsNodeId]
   issues : Array[AgentSemanticsIssue]
   announcements : Array[AgentAccessibilityAnnouncement]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentSemanticsDelta with Debug::{to_repr}
@@ -67,13 +70,14 @@ pub extend AgentSemanticsDelta with ToJson::{to_json}
 
 ///|
 /// Agent-facing projection of one live-region change.
+#derive(Eq, Debug, ToJson)
 pub(all) struct AgentAccessibilityAnnouncement {
   node_id : @core.SemanticsNodeId
   generation : @core.SemanticsGeneration
   live : @core.SemanticsLive
   is_atomic : Bool
   text : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentAccessibilityAnnouncement with Debug::{to_repr}
@@ -86,11 +90,12 @@ pub extend AgentAccessibilityAnnouncement with ToJson::{to_json}
 
 ///|
 /// Result of reading committed semantics with an optional independent cursor.
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentSemanticsRead {
   Full(AgentSemanticsSnapshot)
   Delta(AgentSemanticsDelta)
   Unchanged(@core.SemanticsGeneration)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentSemanticsRead with Debug::{to_repr}
@@ -102,9 +107,10 @@ pub extend AgentSemanticsRead with Eq::{not_equal, equal}
 pub extend AgentSemanticsRead with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentReadError {
   HostClosed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentReadError with Debug::{to_repr}
@@ -116,10 +122,11 @@ pub extend AgentReadError with Eq::{not_equal, equal}
 pub extend AgentReadError with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentGenerationPrecondition {
   Exact(@core.SemanticsGeneration)
   Latest
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentGenerationPrecondition with Debug::{to_repr}
@@ -131,11 +138,12 @@ pub extend AgentGenerationPrecondition with Eq::{not_equal, equal}
 pub extend AgentGenerationPrecondition with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AgentActionRequest {
   target : @core.SemanticsTarget
   action : @core.SemanticsAction
   precondition : AgentGenerationPrecondition
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentActionRequest with Debug::{to_repr}
@@ -147,11 +155,12 @@ pub extend AgentActionRequest with Eq::{not_equal, equal}
 pub extend AgentActionRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AgentActionReceipt {
   before : @core.SemanticsGeneration
   after : @core.SemanticsGeneration
   pending_work : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentActionReceipt with Debug::{to_repr}
@@ -163,6 +172,7 @@ pub extend AgentActionReceipt with Eq::{not_equal, equal}
 pub extend AgentActionReceipt with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentActionError {
   HostClosed
   StaleGeneration(@core.SemanticsGeneration, @core.SemanticsGeneration)
@@ -172,7 +182,7 @@ pub(all) enum AgentActionError {
   ActionUnavailable(@core.SemanticsTarget, @core.SemanticsActionKind)
   HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
   ReentrantDispatch
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentActionError with Debug::{to_repr}
@@ -293,13 +303,14 @@ fn agent_action_error(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RuntimeStateSnapshot {
   dispatched_count : Int32
   update_count : Int32
   pending_message_count : Int32
   active_subscription_count : Int32
   active_effect_task_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RuntimeStateSnapshot with Debug::{to_repr}
@@ -311,10 +322,11 @@ pub extend RuntimeStateSnapshot with Eq::{not_equal, equal}
 pub extend RuntimeStateSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PaintSummary {
   texts : Array[String]
   draw_command_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PaintSummary with Debug::{to_repr}
@@ -326,10 +338,11 @@ pub extend PaintSummary with Eq::{not_equal, equal}
 pub extend PaintSummary with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DiagnosticsDispatchResult {
   accepted : Bool
   reason : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DiagnosticsDispatchResult with Debug::{to_repr}
@@ -341,9 +354,10 @@ pub extend DiagnosticsDispatchResult with Eq::{not_equal, equal}
 pub extend DiagnosticsDispatchResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AgentDiagnosticsError {
   HostClosed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AgentDiagnosticsError with Debug::{to_repr}

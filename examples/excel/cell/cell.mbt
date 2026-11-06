@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct CellAddress {
   row : Int32
   col : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellAddress with Debug::{to_repr}
@@ -11,10 +12,11 @@ pub extend CellAddress with Debug::{to_repr}
 pub extend CellAddress with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CellRange {
   start : CellAddress
   end : CellAddress
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellRange with Debug::{to_repr}
@@ -23,12 +25,13 @@ pub extend CellRange with Debug::{to_repr}
 pub extend CellRange with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CellAlign {
   Auto
   Left
   Center
   Right
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellAlign with Debug::{to_repr}
@@ -37,12 +40,13 @@ pub extend CellAlign with Debug::{to_repr}
 pub extend CellAlign with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum NumFormat {
   General
   Currency
   Percent
   Fixed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend NumFormat with Debug::{to_repr}
@@ -51,12 +55,13 @@ pub extend NumFormat with Debug::{to_repr}
 pub extend NumFormat with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CellValue {
   Empty
   Number(Double)
   Text(String)
   Error(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellValue with Debug::{to_repr}
@@ -65,6 +70,7 @@ pub extend CellValue with Debug::{to_repr}
 pub extend CellValue with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CellFormat {
   bold : Bool
   italic : Bool
@@ -73,7 +79,7 @@ pub(all) struct CellFormat {
   num_format : NumFormat
   bg_color : String
   text_color : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CellFormat with Debug::{to_repr}
@@ -82,11 +88,12 @@ pub extend CellFormat with Debug::{to_repr}
 pub extend CellFormat with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Cell {
   raw : String
   value : CellValue
   format : CellFormat
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Cell with Debug::{to_repr}

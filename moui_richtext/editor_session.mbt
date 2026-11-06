@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum MarkdownEditReason {
   LoadDocument
   TextInput
@@ -6,7 +7,7 @@ pub(all) enum MarkdownEditReason {
   ReplaceEdit
   ToggleTaskEdit
   MediaEdit
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditReason with Debug::{to_repr}
@@ -18,6 +19,7 @@ pub extend MarkdownEditReason with Eq::{not_equal, equal}
 pub extend MarkdownEditReason with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditTransaction {
   previous_source : String
   source : String
@@ -30,7 +32,7 @@ pub(all) struct MarkdownEditTransaction {
   caret : Int32
   selection : @core.TextRange?
   reason : MarkdownEditReason
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditTransaction with Debug::{to_repr}
@@ -42,12 +44,13 @@ pub extend MarkdownEditTransaction with Eq::{not_equal, equal}
 pub extend MarkdownEditTransaction with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentDirtyRange {
   start_block : Int32
   end_block : Int32
   source_start : Int32
   source_end : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentDirtyRange with Debug::{to_repr}
@@ -59,6 +62,7 @@ pub extend MarkdownDocumentDirtyRange with Eq::{not_equal, equal}
 pub extend MarkdownDocumentDirtyRange with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentBlock {
   id : Int32
   // The dirty ±1 edge re-stamps its revision in place on the shared
@@ -75,7 +79,7 @@ pub(all) struct MarkdownDocumentBlock {
   // stress fixture that was ~200k allocations per document open.
   fingerprint : UInt64
   inline_count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentBlock with Debug::{to_repr}
@@ -87,6 +91,7 @@ pub extend MarkdownDocumentBlock with Eq::{not_equal, equal}
 pub extend MarkdownDocumentBlock with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentLayoutBlock {
   block_id : Int32
   block_index : Int32
@@ -94,7 +99,7 @@ pub(all) struct MarkdownDocumentLayoutBlock {
   top : Double
   height : Double
   source_range : MarkdownSourceRange
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentLayoutBlock with Debug::{to_repr}
@@ -106,6 +111,7 @@ pub extend MarkdownDocumentLayoutBlock with Eq::{not_equal, equal}
 pub extend MarkdownDocumentLayoutBlock with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentBlockHeightMetric {
   // Identity re-stamps in place when a dirty edge bumps the block's
   // revision; position/offset/top fields shift with the incremental apply.
@@ -117,7 +123,7 @@ pub(all) struct MarkdownDocumentBlockHeightMetric {
   visual_height_units : Double
   mut source_top_units : Double
   source_height_units : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentBlockHeightMetric with Debug::{to_repr}
@@ -129,11 +135,12 @@ pub extend MarkdownDocumentBlockHeightMetric with Eq::{not_equal, equal}
 pub extend MarkdownDocumentBlockHeightMetric with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentHeightIndex {
   visual_content_units : Double
   source_content_units : Double
   blocks : Array[MarkdownDocumentBlockHeightMetric]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentHeightIndex with Debug::{to_repr}
@@ -145,6 +152,7 @@ pub extend MarkdownDocumentHeightIndex with Eq::{not_equal, equal}
 pub extend MarkdownDocumentHeightIndex with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentLayoutCache {
   revision : Int32
   width : Double
@@ -155,7 +163,7 @@ pub(all) struct MarkdownDocumentLayoutCache {
   visible_start : Int32
   visible_end : Int32
   blocks : Array[MarkdownDocumentLayoutBlock]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentLayoutCache with Debug::{to_repr}
@@ -167,6 +175,7 @@ pub extend MarkdownDocumentLayoutCache with Eq::{not_equal, equal}
 pub extend MarkdownDocumentLayoutCache with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentRichTextWindow {
   document : RichTextDocument
   content_height : Double
@@ -183,7 +192,7 @@ pub(all) struct MarkdownDocumentRichTextWindow {
   // height above it, so consumers place content correctly without reading
   // this. It is exposed for assertions and diagnostics.
   clip_lines : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentRichTextWindow with Debug::{to_repr}
@@ -195,6 +204,7 @@ pub extend MarkdownDocumentRichTextWindow with Eq::{not_equal, equal}
 pub extend MarkdownDocumentRichTextWindow with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownDocumentSession {
   // The document text: per-block segments with a lazily materialized
   // whole-source view (`source`). Edits mutate the store in place; every
@@ -221,7 +231,7 @@ pub(all) struct MarkdownDocumentSession {
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownDocumentSession with Debug::{to_repr}
@@ -373,8 +383,8 @@ fn markdown_document_source_substring_after_prefix(
     source
     .offset_of_nth_char(
       end - start,
-      start_offset~,
-      end_offset=source_utf16_length,
+      start=start_offset,
+      end=source_utf16_length,
     )
     .unwrap_or(source_utf16_length)
   }

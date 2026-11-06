@@ -2,10 +2,11 @@
 /// Renderer-neutral image record state machine. `generation` advances
 /// on every actual record mutation so hot per-frame callers can skip
 /// re-reading the record set when nothing changed.
+#derive(Eq, Debug)
 pub struct ImageResourceLifecycle {
   priv mut records : Map[String, @render.ImageResourceRecord]
   priv mut generation : Int64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageResourceLifecycle with Debug::{to_repr}

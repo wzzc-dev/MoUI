@@ -1,8 +1,9 @@
 ///|
 /// Renderer core that composes vector drawing, text masks, and pixmap output.
+#derive(Debug)
 pub struct Renderer {
   canvas : @graphics.Canvas
-} derive(Debug)
+}
 
 ///|
 pub extend Renderer with Debug::{to_repr}

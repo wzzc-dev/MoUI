@@ -2,15 +2,16 @@
 test "parse_source collects derives and pub impl traits per type" {
   let source =
     #|///|
+    #|#derive(Eq, Debug, ToJson)
     #|pub(all) struct Color {
     #|  r : Double
     #|  g : Double
-    #|} derive(Eq, Debug, ToJson)
     #|
     #|///|
+    #|#derive(Eq, Compare, Hash, Debug)
     #|pub struct SemanticId {
     #|  priv value : String
-    #|} derive(Eq, Compare, Hash, Debug)
+    #|}
     #|
     #|///|
     #|pub impl ToJson for SemanticId with fn to_json(self : SemanticId) -> Json {
@@ -37,9 +38,10 @@ test "parse_source collects derives and pub impl traits per type" {
 ///|
 test "parse_source rejects boilerplate extends in hand-written sources" {
   let source =
+    #|#derive(Eq, Debug, ToJson)
     #|pub(all) struct Color {
     #|  r : Double
-    #|} derive(Eq, Debug, ToJson)
+    #|}
     #|
     #|pub extend Color with Debug::{to_repr}
     #|
@@ -52,9 +54,10 @@ test "parse_source rejects boilerplate extends in hand-written sources" {
 ///|
 test "parse_source rejects unmapped derive traits" {
   let source =
+    #|#derive(Eq, Custom)
     #|pub struct Widget {
     #|  x : Int
-    #|} derive(Eq, Custom)
+    #|}
     #|
   match parse_source("test.mbt", source) {
     Ok(_) => fail("unmapped trait must be rejected")
@@ -104,5 +107,19 @@ test "type_decl_name matches visibility and kind prefixes" {
   assert_eq(type_decl_name("priv struct Hidden {"), Some("Hidden"))
   assert_eq(type_decl_name("struct Bare {"), Some("Bare"))
   assert_eq(type_decl_name("pub fn Color::rgba()"), None)
-  assert_eq(type_decl_name("} derive(Eq)"), None)
+  assert_eq(type_decl_name("#derive(Eq)"), None)
+}
+
+///|
+test "parse_source rejects deprecated suffix derive syntax" {
+  let source =
+    #|pub struct Widget {
+    #|  x : Int
+    #|} derive(Eq)
+    #|
+  match parse_source("test.mbt", source) {
+    Ok(_) => fail("deprecated suffix derive syntax must be rejected")
+    Err(message) =>
+      assert_true(message.contains("deprecated suffix derive syntax"))
+  }
 }

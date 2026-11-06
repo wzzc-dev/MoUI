@@ -17,6 +17,7 @@
 ///        | FallbackToRaster (repeated failure exceeded the budget)
 /// The deadline is `3 * vsync_ms` after the loss was reported; on expiry
 /// without recovery, the renderer thread falls back to raster.
+#derive(Eq, Debug, ToJson)
 pub(all) enum RendererRecoveryState {
   /// No context loss has been reported; the GPU route is healthy.
   Idle
@@ -36,7 +37,7 @@ pub(all) enum RendererRecoveryState {
   /// renderer thread must fall back to `SkiaRasterNative` while preserving
   /// `AppRuntime` state. The payload is the final failure reason.
   FallbackToRaster(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererRecoveryState with Debug::{to_repr}
@@ -51,6 +52,7 @@ pub extend RendererRecoveryState with ToJson::{to_json}
 /// Tunable recovery budget. Per ADR 0006, context-loss recovery must
 /// complete within 3 VSyncs. Repeated failure above
 /// `max_consecutive_recovery_failures` triggers the raster fallback.
+#derive(Eq, Debug, ToJson)
 pub(all) struct RendererRecoveryBudget {
   /// VSync interval in milliseconds. Default 16.67 ms (60 Hz).
   vsync_ms : Double
@@ -61,7 +63,7 @@ pub(all) struct RendererRecoveryBudget {
   /// Default 2 per ADR 0006 (recovery is retried once; the second failure
   /// falls back).
   max_consecutive_recovery_failures : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererRecoveryBudget with Debug::{to_repr}
@@ -340,6 +342,7 @@ pub fn RendererRecovery::snapshot(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RendererRecoverySnapshot {
   state : String
   loss_count : Int32
@@ -348,7 +351,7 @@ pub(all) struct RendererRecoverySnapshot {
   recovery_deadline_ms : Double
   consecutive_failures : Int32
   fallback_reason : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererRecoverySnapshot with Debug::{to_repr}

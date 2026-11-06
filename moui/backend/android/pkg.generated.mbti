@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/android"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -36,6 +37,7 @@ pub fn host_surface_binding_from_android(AndroidSurfaceBinding) -> @embedded.Hos
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct AndroidBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -49,12 +51,13 @@ pub(all) struct AndroidBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn AndroidBackendCapabilities::equal(Self, Self) -> Bool
 pub fn AndroidBackendCapabilities::not_equal(Self, Self) -> Bool
-pub fn AndroidBackendCapabilities::to_json(Self) -> Json
+pub fn AndroidBackendCapabilities::to_json(Self) -> @json.Json
 pub fn AndroidBackendCapabilities::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct AndroidBackendInfo {
   host_info : @backend.HostAppInfo
   capabilities : AndroidBackendCapabilities
@@ -62,21 +65,22 @@ pub(all) struct AndroidBackendInfo {
   input : @backend.HostInputCapabilities
   readiness : AndroidBackendReadiness
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn AndroidBackendInfo::equal(Self, Self) -> Bool
 pub fn AndroidBackendInfo::not_equal(Self, Self) -> Bool
-pub fn AndroidBackendInfo::to_json(Self) -> Json
+pub fn AndroidBackendInfo::to_json(Self) -> @json.Json
 pub fn AndroidBackendInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn AndroidBackendReadiness::equal(Self, Self) -> Bool
 pub fn AndroidBackendReadiness::not_equal(Self, Self) -> Bool
-pub fn AndroidBackendReadiness::to_json(Self) -> Json
+pub fn AndroidBackendReadiness::to_json(Self) -> @json.Json
 pub fn AndroidBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct AndroidEmbeddedRuntimeBackend {
@@ -112,15 +116,16 @@ pub struct AndroidSurfaceBinding {
 }
 pub fn AndroidSurfaceBinding::new(create_renderer~ : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (AndroidSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn AndroidSurfaceHandle::equal(Self, Self) -> Bool
 pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn AndroidSurfaceHandle::none() -> Self
 pub fn AndroidSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
-pub fn AndroidSurfaceHandle::to_json(Self) -> Json
+pub fn AndroidSurfaceHandle::to_json(Self) -> @json.Json
 pub fn AndroidSurfaceHandle::to_repr(Self) -> @debug.Repr
 
 // Type aliases

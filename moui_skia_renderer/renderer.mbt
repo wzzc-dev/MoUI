@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) suberror SkiaRendererError {
   SkiaUnavailable
   SurfaceUnavailable
@@ -6,7 +7,7 @@ pub(all) suberror SkiaRendererError {
   ReadPixelsUnavailable
   GpuContextUnavailable(String)
   PresentFailed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaRendererError with Debug::{to_repr}
@@ -31,10 +32,11 @@ pub fn SkiaRendererError::message(self : SkiaRendererError) -> String {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SkiaUnsupportedCommandDiagnostic {
   priv command : String
   priv reason : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaUnsupportedCommandDiagnostic with Debug::{to_repr}
@@ -46,10 +48,11 @@ pub extend SkiaUnsupportedCommandDiagnostic with Eq::{not_equal, equal}
 pub extend SkiaUnsupportedCommandDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaFontResolution with Debug::{to_repr}

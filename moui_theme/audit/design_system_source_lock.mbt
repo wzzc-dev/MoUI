@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignSourceRefKind {
   WorkspaceRef
   LiveDocumentationRef
   MovingBranchRef
   StableSnapshotRef
   MissingRef
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceRefKind with Debug::{to_repr}
@@ -17,6 +18,7 @@ pub extend DesignSourceRefKind with Eq::{not_equal, equal}
 pub extend DesignSourceRefKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignSourceLockRecord {
   preset : @common.DesignPreset
   source_label : String
@@ -30,7 +32,7 @@ pub(all) struct DesignSourceLockRecord {
   stable_lock : Bool
   status : DesignTokenStatus
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSourceLockRecord with Debug::{to_repr}

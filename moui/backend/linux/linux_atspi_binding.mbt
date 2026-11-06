@@ -7,12 +7,13 @@ pub struct LinuxATSPIBinding {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinuxATSPIBindingDiagnostics {
   native_binding_ready : Bool
   published_node_count : Int32
   action_dispatch_count : Int32
   disposed : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend LinuxATSPIBindingDiagnostics with Debug::{to_repr}

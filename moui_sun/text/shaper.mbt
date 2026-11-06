@@ -1,9 +1,10 @@
 ///|
 /// Text direction
+#derive(Eq, Debug)
 pub enum TextDirection {
   LeftToRight
   RightToLeft
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextDirection with Debug::{to_repr}
@@ -25,9 +26,10 @@ pub fn TextDirection::right_to_left() -> TextDirection {
 
 ///|
 /// Text script (ISO 15924 code)
+#derive(Eq, Debug)
 struct Script {
   tag : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Script with Debug::{to_repr}
@@ -59,12 +61,13 @@ pub fn Script::get_tag(self : Script) -> String {
 
 ///|
 /// Shaping buffer for text layout
+#derive(Debug)
 struct ShapingBuffer {
   text : String
   direction : TextDirection
   script : Script
   font_size : Double
-} derive(Debug)
+}
 
 ///|
 pub extend ShapingBuffer with Debug::{to_repr}

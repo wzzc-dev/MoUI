@@ -27,10 +27,11 @@ fn copy_non_empty_unique_bytes(
 
 ///|
 /// Ordered family list used before asking a native font manager for fallback.
+#derive(Debug, Eq)
 pub(all) struct FontFallbackChain {
   primary_family : Bytes
   fallback_families : Array[Bytes]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontFallbackChain with Debug::{to_repr}
@@ -136,12 +137,13 @@ pub fn FontFallbackChain::with_family(
 
 ///|
 /// Font fallback query for one character or run.
+#derive(Debug, Eq)
 pub(all) struct FontFallbackRequest {
   families : FontFallbackChain
   bcp47 : Array[Bytes]
   character : Int32
   style : FontStyleRequest
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontFallbackRequest with Debug::{to_repr}
@@ -209,12 +211,13 @@ pub fn FontFallbackRequest::with_style(
 
 ///|
 /// Value-layer metadata for a native font fallback/typeface match result.
+#derive(Debug, Eq)
 pub(all) struct FontFallbackMatchDescriptor {
   request : FontFallbackRequest
   matched_family : Bytes
   fallback_index : Int32
   synthetic : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontFallbackMatchDescriptor with Debug::{to_repr}
@@ -471,10 +474,11 @@ pub fn FontFallbackMatchDescriptor::resource_plan(
 
 ///|
 /// Value-layer metadata for a completed font fallback resolution.
+#derive(Debug, Eq)
 pub(all) struct FontFallbackResolutionDescriptor {
   request : FontFallbackRequest
   resolved_match : FontFallbackMatchDescriptor
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontFallbackResolutionDescriptor with Debug::{to_repr}

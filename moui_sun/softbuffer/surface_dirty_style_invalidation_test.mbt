@@ -10,9 +10,10 @@ test "NativeSurface materializes opacity style invalidation batch without submit
   assert_eq(frame.get_layer_tree().add_layer(background), 0)
   assert_eq(frame.get_layer_tree().add_layer(layer), 1)
 
-  let surface = NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
-    count.val = count.val + 1
-  })
+  let surface = @softbuffer.NativeSurface::from_frame(42, frame).with_pre_present_hook(fn() {
+      count.val = count.val + 1
+    },
+  )
   assert_true(surface.present_frame_dirty(frame) == Ok(1))
   assert_eq(count.val, 1)
   assert_eq(

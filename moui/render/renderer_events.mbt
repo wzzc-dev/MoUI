@@ -1,9 +1,10 @@
 ///|
 /// Identifies one frame submission for one native-surface generation.
+#derive(Eq, Debug, ToJson)
 pub struct FrameToken {
   priv surface_generation : Int32
   priv sequence : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FrameToken with Debug::{to_repr}
@@ -61,9 +62,10 @@ pub fn RenderFrameSubmission::frame(
 
 ///|
 /// Opaque renderer-owned identity for one image I/O request.
+#derive(Eq, Debug, ToJson)
 pub struct RendererImageLoadToken {
   priv value : Int64
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererImageLoadToken with Debug::{to_repr}
@@ -172,11 +174,12 @@ pub fn RendererImageLoadCompletion::result(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RendererImageCompletionResult {
   Applied(Bool)
   Stale
   Disposed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RendererImageCompletionResult with Debug::{to_repr}

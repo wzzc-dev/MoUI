@@ -3,6 +3,7 @@
 ///
 /// Native Skia paints will use a separate handle type once the C++ FFI layer is
 /// wired to real Skia binaries.
+#derive(Debug, Eq)
 pub(all) struct Paint {
   color : Color
   anti_alias : Bool
@@ -13,7 +14,7 @@ pub(all) struct Paint {
   stroke_cap : StrokeCap
   stroke_join : StrokeJoin
   blend_mode : BlendMode
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Paint with Debug::{to_repr}

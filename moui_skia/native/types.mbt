@@ -49,6 +49,7 @@ pub(all) struct Paragraph {
 
 ///|
 /// SkParagraph line metrics exposed with UTF-8 byte ranges.
+#derive(Debug, Eq)
 pub(all) struct ParagraphLineMetric {
   start : Int32
   end : Int32
@@ -62,7 +63,7 @@ pub(all) struct ParagraphLineMetric {
   ascent : Float
   descent : Float
   height : Float
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ParagraphLineMetric with Debug::{to_repr}
@@ -86,10 +87,11 @@ pub fn ParagraphLineMetric::is_valid(self : ParagraphLineMetric) -> Bool {
 
 ///|
 /// SkParagraph hit-test result exposed as a UTF-8 byte offset.
+#derive(Debug, Eq)
 pub(all) struct ParagraphHitTestResult {
   offset : Int32
   downstream : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ParagraphHitTestResult with Debug::{to_repr}
@@ -99,7 +101,8 @@ pub extend ParagraphHitTestResult with Eq::{not_equal, equal}
 
 ///|
 /// Native Skia glyph identifier.
-pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
+#derive(Debug, Eq)
+pub(all) struct GlyphId(UInt16)
 
 ///|
 pub extend GlyphId with Debug::{to_repr}
@@ -125,6 +128,7 @@ pub fn GlyphId::to_int(self : GlyphId) -> Int32 {
 
 ///|
 /// Native Skia font metrics in y-down coordinates.
+#derive(Debug, Eq)
 pub(all) struct FontMetrics {
   top : Float
   ascent : Float
@@ -142,7 +146,7 @@ pub(all) struct FontMetrics {
   strikeout_thickness : Float?
   strikeout_position : Float?
   has_bounds : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FontMetrics with Debug::{to_repr}
@@ -277,6 +281,7 @@ pub(all) struct Surface {
 
 ///|
 /// Native support decision for creating a surface from a value-layer target.
+#derive(Debug, Eq)
 pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetSupported
   SurfaceTargetEmpty
@@ -286,7 +291,7 @@ pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetMissingGpuContext
   SurfaceTargetGpuContextMismatch
   SurfaceTargetGpuContextUnsupported
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceTargetSupportStatus with Debug::{to_repr}
@@ -303,6 +308,7 @@ pub fn SurfaceTargetSupportStatus::is_supported(
 
 ///|
 /// Native diagnostic status for a value-layer GPU context descriptor.
+#derive(Debug, Eq)
 pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextAvailable
   SkiaGpuContextSkiaUnavailable
@@ -321,7 +327,7 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextEglOptInDisabled
   SkiaGpuContextEglHeadersUnavailable
   SkiaGpuContextEglRuntimeUnavailable
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SkiaGpuContextSupportStatus with Debug::{to_repr}
@@ -347,6 +353,7 @@ pub(all) struct Canvas {
 
 ///|
 /// Summary of replaying a value-layer render command list into a native Canvas.
+#derive(Debug, Eq)
 pub(all) struct CanvasReplayStats {
   command_count : Int32
   replayed_count : Int32
@@ -364,7 +371,7 @@ pub(all) struct CanvasReplayStats {
   filter_resource_count : Int32
   path_resource_count : Int32
   text_resource_count : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CanvasReplayStats with Debug::{to_repr}
@@ -374,11 +381,12 @@ pub extend CanvasReplayStats with Eq::{not_equal, equal}
 
 ///|
 /// Coarse outcome for replaying commands into a native Canvas.
+#derive(Debug, Eq)
 pub(all) enum CanvasReplayStatus {
   CanvasReplayComplete
   CanvasReplayDeferredPresent
   CanvasReplaySkippedCommands
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CanvasReplayStatus with Debug::{to_repr}
@@ -546,13 +554,14 @@ fn canvas_replay_skipped_stats(
 
 ///|
 /// Summary of rendering a value-layer frame through a native surface boundary.
+#derive(Debug, Eq)
 pub(all) struct SurfaceFrameReplayStats {
   replay : CanvasReplayStats
   validation_status : @skia.RenderFrameValidationStatus
   surface_matches : Bool
   finalization : @skia.RenderFrameFinalizationDescriptor
   finalized : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceFrameReplayStats with Debug::{to_repr}
@@ -562,13 +571,14 @@ pub extend SurfaceFrameReplayStats with Eq::{not_equal, equal}
 
 ///|
 /// Coarse outcome for rendering a value-layer frame through a native surface.
+#derive(Debug, Eq)
 pub(all) enum SurfaceFrameReplayStatus {
   SurfaceFrameReplayComplete
   SurfaceFrameReplayValidationFailed(@skia.RenderFrameValidationStatus)
   SurfaceFrameReplaySurfaceMismatch
   SurfaceFrameReplaySkippedCommands
   SurfaceFrameReplayFinalizationFailed
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SurfaceFrameReplayStatus with Debug::{to_repr}
@@ -623,6 +633,7 @@ pub fn SurfaceFrameReplayStats::finalization_resource_plan(
 
 ///|
 /// Aggregate counters across the native replay resource caches.
+#derive(Debug, Eq)
 pub(all) struct NativeReplayResourceStats {
   cache_count : Int32
   resource_count : Int32
@@ -631,7 +642,7 @@ pub(all) struct NativeReplayResourceStats {
   hits : Int32
   misses : Int32
   evictions : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend NativeReplayResourceStats with Debug::{to_repr}

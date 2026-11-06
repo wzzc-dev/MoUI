@@ -52,6 +52,7 @@ fn window_surface_logical_size_from_physical_size(
 ///
 /// `window_id` is an owned, stable identity token chosen by the host GUI layer;
 /// it should identify the window/swapchain without borrowing a platform handle.
+#derive(Debug, Eq)
 pub(all) struct WindowSurfaceDescriptor {
   window_id : Bytes
   logical_size : Size
@@ -62,7 +63,7 @@ pub(all) struct WindowSurfaceDescriptor {
   stencil_bits : Int32
   present_mode : SurfacePresentMode
   max_frames_in_flight : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend WindowSurfaceDescriptor with Debug::{to_repr}

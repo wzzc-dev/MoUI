@@ -112,17 +112,19 @@ fn openseek_default_thinking() -> @deepseek.ThinkingMode {
 
 ///|
 /// OpenAI-compatible `v1/models` listing shape.
+#derive(FromJson)
 struct ModelsResponse {
   data : Array[ModelEntry]
-} derive(FromJson)
+}
 
 ///|
 pub extend ModelsResponse with @moonbitlang/core/json.FromJson::{from_json}
 
 ///|
+#derive(FromJson)
 struct ModelEntry {
   id : String
-} derive(FromJson)
+}
 
 ///|
 pub extend ModelEntry with @moonbitlang/core/json.FromJson::{from_json}

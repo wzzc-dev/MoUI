@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTokenGroupResolverRecord {
   preset : @common.DesignPreset
   requirement : DesignSystemRequirement
@@ -19,7 +20,7 @@ pub(all) struct DesignTokenGroupResolverRecord {
   resolves_neutral_surface : Bool
   status : DesignTokenStatus
   remaining_gap : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenGroupResolverRecord with Debug::{to_repr}

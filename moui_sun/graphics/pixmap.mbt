@@ -1,21 +1,23 @@
 ///|
 /// Pixel buffer for 2D rendering (RGBA format)
+#derive(Debug)
 pub struct Pixmap {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
-} derive(Debug)
+}
 
 ///|
 pub extend Pixmap with Debug::{to_repr}
 
 ///|
 /// Sampling mode used when scaling source pixmaps.
+#derive(Eq, Debug)
 pub(all) enum ImageSampling {
   Nearest
   Bilinear
   Bicubic
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageSampling with Debug::{to_repr}
@@ -26,11 +28,12 @@ pub extend ImageSampling with Eq::{not_equal, equal}
 ///|
 /// Image quality strategy for callers that prefer intent over a concrete
 /// sampling algorithm.
+#derive(Eq, Debug)
 pub(all) enum ImageQuality {
   Fast
   Balanced
   High
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageQuality with Debug::{to_repr}
@@ -50,12 +53,13 @@ pub fn ImageQuality::to_sampling(self : ImageQuality) -> ImageSampling {
 
 ///|
 /// Insets used for nine-patch image scaling.
+#derive(Eq, Debug)
 pub struct NinePatchInsets {
   left : Int32
   top : Int32
   right : Int32
   bottom : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend NinePatchInsets with Debug::{to_repr}
@@ -74,6 +78,7 @@ pub fn NinePatchInsets::new(
 }
 
 ///|
+#derive(Debug)
 struct NinePatchSlices {
   src_left : Int32
   src_right : Int32
@@ -83,7 +88,7 @@ struct NinePatchSlices {
   dst_right : Int32
   dst_top : Int32
   dst_bottom : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend NinePatchSlices with Debug::{to_repr}

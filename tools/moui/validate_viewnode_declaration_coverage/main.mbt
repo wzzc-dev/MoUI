@@ -7,46 +7,52 @@
 /// semantics cache invalidation, so this gate turns that class of bug into a
 /// PR-time error. Waivers live in `checks/viewnode-declaration-coverage.json`
 /// and ratchet down as `moui/views` is cleared.
+#derive(Eq, Debug)
 struct NodeField {
   name : String
   exempt : Bool
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct StructDef {
   name : String
   file : String
   line : Int32
   fields : Array[NodeField]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct NodeImpl {
   has_view_node : Bool
   has_declaration : Bool
   declaration_body : String
   identity_body : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct Violation {
   path : String
   node : String
   field : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct Waiver {
   pkg : String
   node : String
   field : String
   reason : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct Baseline {
   waived : Array[Waiver]
-} derive(Eq, Debug)
+}
 
 ///|
 struct Finding {

@@ -56,11 +56,11 @@
 - i18n：语言存 app model + settings 快照（mo_desktop 模式），入口经宿主回调
   同步 `Environment.locale`（website 模式）；shared app 不 import runtime。
 
-## 工具链陷阱（2026-09-25/26 实测，moon 0.1.20260920）
+## 工具链陷阱（2026-09-25/26 实测，moon 0.1.20260920；2026-11-06 由 0.10.20 更新）
 
-- `derive(Eq, Debug)` 在新模块触发 `implicit_impl_as_method` 警告（每个 derive
-  一条，原因未定位）。**对策：app 包默认零 derive**（counter 风格），枚举比较
-  用 `is` 模式，断言用 `assert_true(x is Variant)`。
+- 旧工具链的 `derive(Eq, Debug)` 曾触发 `implicit_impl_as_method` 警告。
+  0.10.20 起改用类型上方的 `#derive(...)`，`moon fmt` 自动迁移；当前 Studio
+  与 workspace 的 clean `moon check --target all` 均为 0 warning。
 - `Map::new()`→`Map([], capacity=16)`；`Array::new(capacity=n)`；
   `Option.or(x)`→`unwrap_or(x)`；`not(expr)`→`!expr`；`derive(Show)` 废弃
   （用 Debug）。`assert_eq` 需要 `Eq + Debug`。

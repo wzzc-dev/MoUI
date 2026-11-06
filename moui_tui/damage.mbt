@@ -1,10 +1,11 @@
 ///|
 /// 一次呈现所需的最小脏信息:整屏重建,或按行增量。
 /// `rows` 升序去重;由 `TermScreen::take_damage` 产出并随即清零。
+#derive(Eq, Debug)
 pub(all) struct Damage {
   full : Bool
   rows : Array[Int32]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Damage with Debug::{to_repr}

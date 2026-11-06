@@ -16,6 +16,7 @@
 
 ///|
 /// Every file of one world folder, relative path plus content.
+#derive(Eq, Debug)
 pub(all) struct WorldFiles {
   world_md : String
   book_md : String
@@ -37,7 +38,7 @@ pub(all) struct WorldFiles {
   /// `Array[(String, String)]`); a portrait is a few hundred KB, so the
   /// encoding cost is irrelevant next to keeping one host contract.
   portraits : Array[(String, String)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WorldFiles with Debug::{to_repr}
@@ -48,6 +49,7 @@ pub extend WorldFiles with Eq::{not_equal, equal}
 ///|
 /// A parsed world plus every fallback the parser had to take, so the UI can
 /// tell the player which file degraded instead of failing silently.
+#derive(Eq, Debug)
 pub struct WorldParse {
   scenario : Scenario
   /// Restored conversations, filtered to characters that still exist.
@@ -57,7 +59,7 @@ pub struct WorldParse {
   /// Restored event log, newest first, as the model keeps it.
   events : Array[String]
   warnings : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WorldParse with Debug::{to_repr}

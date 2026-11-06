@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 suberror SourcePolicyError {
   Invalid(String)
-} derive(Eq, Debug)
+}
 
 ///|
 struct PolicyEntry {

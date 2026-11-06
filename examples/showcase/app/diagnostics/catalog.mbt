@@ -1,10 +1,11 @@
 ///|
 /// Diagnostics is the only Showcase package that may import runtime/render.
 /// Catalog is intentionally narrow — component demos live under Components/Patterns.
+#derive(Eq, Debug)
 pub(all) struct CatalogGroup {
   id : String
   title : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogGroup with Debug::{to_repr}
@@ -13,13 +14,14 @@ pub extend CatalogGroup with Debug::{to_repr}
 pub extend CatalogGroup with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CatalogItem {
   id : String
   group_id : String
   title : String
   summary : String
   badge : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogItem with Debug::{to_repr}

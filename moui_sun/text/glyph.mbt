@@ -1,8 +1,9 @@
 ///|
 /// Glyph ID type (wraps Int)
+#derive(Eq, Debug)
 struct GlyphId {
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GlyphId with Debug::{to_repr}
@@ -24,13 +25,14 @@ pub fn GlyphId::to_int(self : GlyphId) -> Int32 {
 
 ///|
 /// Glyph position with advance and offset
+#derive(Eq, Debug)
 struct GlyphPosition {
   glyph_id : GlyphId
   x_advance : Int32
   y_advance : Int32
   x_offset : Int32
   y_offset : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GlyphPosition with Debug::{to_repr}
@@ -82,10 +84,11 @@ pub fn GlyphPosition::get_y_offset(self : GlyphPosition) -> Int32 {
 
 ///|
 /// Glyph info with cluster mapping
+#derive(Eq, Debug)
 struct GlyphInfo {
   glyph_id : GlyphId
   cluster : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GlyphInfo with Debug::{to_repr}
@@ -113,11 +116,12 @@ pub fn GlyphInfo::get_cluster(self : GlyphInfo) -> Int32 {
 
 ///|
 /// Result of text shaping operation
+#derive(Debug)
 struct ShapedText {
   glyphs : Array[GlyphInfo]
   positions : Array[GlyphPosition]
   width : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend ShapedText with Debug::{to_repr}

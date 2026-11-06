@@ -1,27 +1,31 @@
 ///|
+#derive(Eq, Debug)
 struct ChildModel {
   count : Int32
   label : String
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum ChildMsg {
   Inc
   SetLabel(String)
   Ping
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 struct ParentModel {
   title : String
   child : ChildModel
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 enum ParentMsg {
   Child(ChildMsg)
   Other(String)
-} derive(Eq, Debug)
+}
 
 ///|
 fn child_read(parent : ParentModel) -> ChildModel {

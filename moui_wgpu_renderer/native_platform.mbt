@@ -1,10 +1,11 @@
 ///|
 /// Renderer-owned interpretation policy for opaque native surface handles.
+#derive(Eq, Debug, ToJson)
 pub(all) enum WgpuNativePlatform {
   MacOS
   Windows
   Linux
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WgpuNativePlatform with Debug::{to_repr}

@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct TodoItem {
   id : Int32
   label : String
   completed : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TodoItem with Debug::{to_repr}

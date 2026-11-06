@@ -8,10 +8,11 @@
 /// `@common.` from every other pkg, and the bare (unqualified) form for
 /// nodes generated *inside* `moui/views/common` itself, which cannot import
 /// its own pkg.
+#derive(Eq, Debug)
 struct EmitContext {
   pkg : String
   common : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn emit_context(pkg : String) -> EmitContext {

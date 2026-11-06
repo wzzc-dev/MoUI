@@ -1,5 +1,6 @@
 ///|
 /// Unicode Line Break classes (UAX #14)
+#derive(Eq, Debug)
 pub enum LineBreakClass {
   BK // Mandatory Break
   CR // Carriage Return
@@ -36,7 +37,7 @@ pub enum LineBreakClass {
   ZWJ // Zero Width Joiner
   AI // Ambiguous
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LineBreakClass with Debug::{to_repr}

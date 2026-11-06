@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownSourceRange {
   // Mutable so hot-path suffix shifts (the incremental apply moving the
   // ranges of up to every block after an edit) can update the two ints in
   // place instead of allocating a fresh record per block per keystroke.
   mut start : Int32
   mut end : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownSourceRange with Debug::{to_repr}
@@ -17,6 +18,7 @@ pub extend MarkdownSourceRange with Eq::{not_equal, equal}
 pub extend MarkdownSourceRange with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditorBlock {
   block : MarkdownBlock
   // Absolute source offsets are shifted in place by the incremental apply;
@@ -25,7 +27,7 @@ pub(all) struct MarkdownEditorBlock {
   // an apply — read them at use time.
   mut source_range : MarkdownSourceRange
   mut content_range : MarkdownSourceRange
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorBlock with Debug::{to_repr}
@@ -37,6 +39,7 @@ pub extend MarkdownEditorBlock with Eq::{not_equal, equal}
 pub extend MarkdownEditorBlock with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditorSnapshot {
   source : String
   blocks : Array[MarkdownEditorBlock]
@@ -48,7 +51,7 @@ pub(all) struct MarkdownEditorSnapshot {
   metadata_title : String
   metadata_tags : Array[String]
   outline : Array[MarkdownEditorOutlineItem]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorSnapshot with Debug::{to_repr}
@@ -60,13 +63,14 @@ pub extend MarkdownEditorSnapshot with Eq::{not_equal, equal}
 pub extend MarkdownEditorSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditorOutlineItem {
   level : Int32
   title : String
   // Absolute source offset, shifted in place by the incremental apply's
   // fast path (same shared-mutable contract as the block ranges).
   mut source_start : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorOutlineItem with Debug::{to_repr}
@@ -78,10 +82,11 @@ pub extend MarkdownEditorOutlineItem with Eq::{not_equal, equal}
 pub extend MarkdownEditorOutlineItem with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditorSelection {
   caret : Int32
   selection : @core.TextRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorSelection with Debug::{to_repr}
@@ -93,6 +98,7 @@ pub extend MarkdownEditorSelection with Eq::{not_equal, equal}
 pub extend MarkdownEditorSelection with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownEditorEditResult {
   source : String
   caret : Int32
@@ -101,7 +107,7 @@ pub(all) struct MarkdownEditorEditResult {
   // range is unknown (callers then fall back to the O(doc) common-prefix
   // diff in from_sources).
   edit_range : MarkdownSourceRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorEditResult with Debug::{to_repr}
@@ -113,6 +119,7 @@ pub extend MarkdownEditorEditResult with Eq::{not_equal, equal}
 pub extend MarkdownEditorEditResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum MarkdownEditorCommand {
   Bold
   Italic
@@ -145,7 +152,7 @@ pub(all) enum MarkdownEditorCommand {
   DeleteTableRow
   DeleteTableColumn
   SetTableColumnAlignment(@core.TextAlign?)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownEditorCommand with Debug::{to_repr}

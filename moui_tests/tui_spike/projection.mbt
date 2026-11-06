@@ -20,12 +20,13 @@ pub struct CellGrid {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct FrameAudit {
   nodes : Int32
   off_grid_point : Int32
   off_grid_size : Int32
   worst_off_grid_px : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FrameAudit with Debug::{to_repr}

@@ -1,10 +1,11 @@
 ///|
 /// Command stream for one render pass. This is the value-layer boundary a GUI
 /// renderer can build and inspect before handing commands to native Skia.
+#derive(Debug, Eq)
 pub(all) struct RenderCommandList {
   pass : RenderPassDescriptor
   commands : Array[RenderCommand]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderCommandList with Debug::{to_repr}

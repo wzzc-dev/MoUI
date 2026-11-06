@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct ChoiceItem {
   id : String
   label : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ChoiceItem with Debug::{to_repr}

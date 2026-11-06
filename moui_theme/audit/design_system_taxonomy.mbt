@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTokenTaxonomyRecord {
   preset : @common.DesignPreset
   category : DesignTokenCategory
@@ -17,7 +18,7 @@ pub(all) struct DesignTokenTaxonomyRecord {
   status : DesignTokenStatus
   remaining_gap : String
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTokenTaxonomyRecord with Debug::{to_repr}

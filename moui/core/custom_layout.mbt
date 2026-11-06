@@ -5,6 +5,7 @@
 /// `child_alignment_guides`) with a single, typed record per child. The
 /// runtime fills this from the measured/placed child element, so custom
 /// layouts no longer have to rely on guessed baseline values.
+#derive(Eq, Debug)
 pub(all) struct ChildLayoutInfo {
   /// Measured size of the child after its own layout pass.
   size : Size
@@ -20,7 +21,7 @@ pub(all) struct ChildLayoutInfo {
   alignment_guides : AlignmentGuideSet
   /// Flex weight declared by the child. `0.0` means the child is not flex.
   flex_weight : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ChildLayoutInfo with Debug::{to_repr}
@@ -61,12 +62,13 @@ pub fn ChildLayoutInfo::baseline_or_estimate(self : ChildLayoutInfo) -> Double {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct AlignmentGuideSet {
   leading : Double
   center : Double
   trailing : Double
   first_baseline : Double?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend AlignmentGuideSet with Debug::{to_repr}

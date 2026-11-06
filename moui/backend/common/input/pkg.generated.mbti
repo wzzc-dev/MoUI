@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/common/input"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
@@ -80,10 +81,11 @@ pub fn InputState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModi
 pub fn InputState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> @backend.Event?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PlatformSurfaceLifecycle {
   Detached
   Attached(@wzzc-dev/moui/core.SurfaceMetrics)
-} derive(Eq, @debug.Debug)
+}
 pub fn PlatformSurfaceLifecycle::attach(@wzzc-dev/moui/core.SurfaceMetrics) -> Self
 pub fn PlatformSurfaceLifecycle::detach(Self) -> Self
 pub fn PlatformSurfaceLifecycle::equal(Self, Self) -> Bool
@@ -100,6 +102,7 @@ pub fn SurfaceState::logical_size(Self) -> @wzzc-dev/moui/core.Size
 pub fn SurfaceState::new(metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
 pub fn SurfaceState::resize(Self, @wzzc-dev/moui/core.SurfaceMetrics) -> @backend.Event
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct TextInputImeRequestDiagnostics {
   focused : Bool
   text_length : Int32
@@ -114,10 +117,10 @@ pub(all) struct TextInputImeRequestDiagnostics {
   has_surrounding_text : Bool
   surrounding_text_utf8_length : Int32
   surrounding_text : String?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn TextInputImeRequestDiagnostics::equal(Self, Self) -> Bool
 pub fn TextInputImeRequestDiagnostics::not_equal(Self, Self) -> Bool
-pub fn TextInputImeRequestDiagnostics::to_json(Self) -> Json
+pub fn TextInputImeRequestDiagnostics::to_json(Self) -> @json.Json
 pub fn TextInputImeRequestDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub struct TextInputImeStateKey {
@@ -141,12 +144,13 @@ pub fn TextInputSession::last_diagnostics(Self) -> TextInputImeRequestDiagnostic
 pub fn TextInputSession::new() -> Self
 pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TextInputSessionAction {
   NoImeChange
   EnableIme(@wzzc-dev/window/core.ImeRequest)
   UpdateIme(@wzzc-dev/window/core.ImeRequest)
   DisableIme(@wzzc-dev/window/core.ImeRequest)
-} derive(Eq, @debug.Debug)
+}
 pub fn TextInputSessionAction::equal(Self, Self) -> Bool
 pub fn TextInputSessionAction::not_equal(Self, Self) -> Bool
 pub fn TextInputSessionAction::to_repr(Self) -> @debug.Repr

@@ -1,11 +1,12 @@
 ///|
 /// A line segment for rasterization
+#derive(Debug)
 struct LineSegment {
   x0 : Double
   y0 : Double
   x1 : Double
   y1 : Double
-} derive(Debug)
+}
 
 ///|
 pub extend LineSegment with Debug::{to_repr}
@@ -29,11 +30,12 @@ struct Rasterizer {
 
 ///|
 /// Grayscale coverage mask produced by text rasterization
+#derive(Debug)
 struct CoverageMask {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
-} derive(Debug)
+}
 
 ///|
 pub extend CoverageMask with Debug::{to_repr}
@@ -74,24 +76,26 @@ pub fn CoverageMask::copy(self : CoverageMask) -> CoverageMask {
 
 ///|
 /// Placement of one glyph mask inside a glyph mask atlas.
+#derive(Debug)
 struct GlyphAtlasEntry {
   key : String
   x : Int32
   y : Int32
   width : Int32
   height : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphAtlasEntry with Debug::{to_repr}
 
 ///|
 /// Result of inserting a glyph mask into an atlas with lifecycle policy.
+#derive(Debug)
 struct GlyphMaskAtlasInsertResult {
   entry : GlyphAtlasEntry
   did_clear : Bool
   did_reuse : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphMaskAtlasInsertResult with Debug::{to_repr}
@@ -171,6 +175,7 @@ pub fn GlyphMaskAtlasInsertResult::did_reuse(
 
 ///|
 /// Small row-packed atlas for rendered glyph coverage masks.
+#derive(Debug)
 struct GlyphMaskAtlas {
   width : Int32
   height : Int32
@@ -180,7 +185,7 @@ struct GlyphMaskAtlas {
   mut cursor_y : Int32
   mut row_height : Int32
   mut used_pixel_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphMaskAtlas with Debug::{to_repr}
@@ -411,28 +416,31 @@ fn copy_mask_into_atlas(
 
 ///|
 /// Small keyed cache for rendered glyph coverage masks.
+#derive(Debug)
 struct GlyphMaskCache {
   mut masks : Map[String, CoverageMask]
   mut access_order : Array[String]
   capacity : Int32
   is_bounded : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphMaskCache with Debug::{to_repr}
 
 ///|
 /// Result of reading a glyph mask from cache or rasterizing it on miss.
+#derive(Debug)
 struct GlyphMaskCacheRasterizeResult {
   mask : CoverageMask
   did_rasterize : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend GlyphMaskCacheRasterizeResult with Debug::{to_repr}
 
 ///|
 /// Placement data for a glyph mask rendered from a font face.
+#derive(Debug)
 struct FaceGlyphMaskPlacement {
   width : Int32
   height : Int32
@@ -440,18 +448,19 @@ struct FaceGlyphMaskPlacement {
   origin_y : Double
   draw_offset_x : Int32
   draw_offset_y : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend FaceGlyphMaskPlacement with Debug::{to_repr}
 
 ///|
 /// Result of reading a face glyph mask from cache or rasterizing it on miss.
+#derive(Debug)
 struct FaceGlyphMaskCacheResult {
   mask : CoverageMask
   placement : FaceGlyphMaskPlacement
   did_rasterize : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend FaceGlyphMaskCacheResult with Debug::{to_repr}
@@ -745,22 +754,24 @@ fn GlyphMaskCache::evict_over_capacity(self : GlyphMaskCache) -> Unit {
 
 ///|
 /// Small keyed cache for rendered text coverage masks.
+#derive(Debug)
 struct TextMaskCache {
   mut masks : Map[String, CoverageMask]
   mut access_order : Array[String]
   capacity : Int32
   is_bounded : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend TextMaskCache with Debug::{to_repr}
 
 ///|
 /// Result of reading a rendered text mask from cache or rendering it on miss.
+#derive(Debug)
 struct TextMaskCacheRenderResult {
   mask : CoverageMask
   did_render : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend TextMaskCacheRenderResult with Debug::{to_repr}

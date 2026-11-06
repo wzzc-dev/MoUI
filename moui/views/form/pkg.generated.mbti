@@ -3,6 +3,7 @@ package "wzzc-dev/moui/views/form"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
   "wzzc-dev/moui/views/style",
@@ -50,21 +51,23 @@ pub struct BaselineFormRow[Msg] {
 }
 pub fn[Msg] BaselineFormRow::new(label~ : @core.View[Msg], control~ : @core.View[Msg]) -> Self[Msg]
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum FieldAction {
   Text(String)
   Toggle(Bool)
   Select(String)
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FieldAction::equal(Self, Self) -> Bool
 pub fn FieldAction::not_equal(Self, Self) -> Bool
-pub fn FieldAction::to_json(Self) -> Json
+pub fn FieldAction::to_json(Self) -> @json.Json
 pub fn FieldAction::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
   Pending
-} derive(Eq, @debug.Debug)
+}
 pub fn FileImportAvailability::equal(Self, Self) -> Bool
 pub fn FileImportAvailability::not_equal(Self, Self) -> Bool
 pub fn FileImportAvailability::to_repr(Self) -> @debug.Repr
@@ -80,25 +83,27 @@ pub fn FormController::field_error(Self, String) -> String
 pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
 pub fn FormController::validate(Self) -> FormValidationSummary
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct FormFieldError {
   name : String
   message : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormFieldError::equal(Self, Self) -> Bool
 pub fn FormFieldError::message(Self) -> String
 pub fn FormFieldError::name(Self) -> String
 pub fn FormFieldError::new(name~ : String, message~ : String) -> Self
 pub fn FormFieldError::not_equal(Self, Self) -> Bool
-pub fn FormFieldError::to_json(Self) -> Json
+pub fn FormFieldError::to_json(Self) -> @json.Json
 pub fn FormFieldError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum FormFieldLayout {
   Vertical
   Horizontal
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormFieldLayout::equal(Self, Self) -> Bool
 pub fn FormFieldLayout::not_equal(Self, Self) -> Bool
-pub fn FormFieldLayout::to_json(Self) -> Json
+pub fn FormFieldLayout::to_json(Self) -> @json.Json
 pub fn FormFieldLayout::to_repr(Self) -> @debug.Repr
 pub fn FormFieldLayout::to_string(Self) -> String
 
@@ -109,6 +114,7 @@ pub fn FormFieldState::validate(Self) -> FormFieldError?
 pub fn FormFieldState::value(Self) -> String
 pub fn FormFieldState::with_value(Self, String) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum FormFieldStatus {
   Normal
   Required
@@ -116,35 +122,37 @@ pub(all) enum FormFieldStatus {
   Invalid
   Disabled
   ReadOnly
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormFieldStatus::equal(Self, Self) -> Bool
 pub fn FormFieldStatus::not_equal(Self, Self) -> Bool
-pub fn FormFieldStatus::to_json(Self) -> Json
+pub fn FormFieldStatus::to_json(Self) -> @json.Json
 pub fn FormFieldStatus::to_repr(Self) -> @debug.Repr
 pub fn FormFieldStatus::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum FormValidationDisplay {
   Always
   OnInvalid
   Hidden
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormValidationDisplay::equal(Self, Self) -> Bool
 pub fn FormValidationDisplay::not_equal(Self, Self) -> Bool
-pub fn FormValidationDisplay::to_json(Self) -> Json
+pub fn FormValidationDisplay::to_json(Self) -> @json.Json
 pub fn FormValidationDisplay::to_repr(Self) -> @debug.Repr
 pub fn FormValidationDisplay::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
   summary : FormValidationSummary
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormValidationResult::equal(Self, Self) -> Bool
 pub fn FormValidationResult::errors(Self) -> Array[FormFieldError]
 pub fn FormValidationResult::new(valid~ : Bool, errors~ : Array[FormFieldError], summary~ : FormValidationSummary) -> Self
 pub fn FormValidationResult::not_equal(Self, Self) -> Bool
 pub fn FormValidationResult::summary(Self) -> FormValidationSummary
-pub fn FormValidationResult::to_json(Self) -> Json
+pub fn FormValidationResult::to_json(Self) -> @json.Json
 pub fn FormValidationResult::to_repr(Self) -> @debug.Repr
 pub fn FormValidationResult::valid(Self) -> Bool
 
@@ -153,11 +161,12 @@ pub fn FormValidationRule::from_validator((String) -> String?) -> Self
 pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
 pub fn FormValidationRule::required(message? : String) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct FormValidationSummary {
   valid : Bool
   errors : Array[FormFieldError]
   first_invalid_id : String?
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn FormValidationSummary::equal(Self, Self) -> Bool
 pub fn FormValidationSummary::errors(Self) -> Array[FormFieldError]
 pub fn FormValidationSummary::first_invalid_id(Self) -> String?
@@ -165,7 +174,7 @@ pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
 pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
 pub fn FormValidationSummary::new(valid~ : Bool, errors~ : Array[FormFieldError], first_invalid_id? : String?) -> Self
 pub fn FormValidationSummary::not_equal(Self, Self) -> Bool
-pub fn FormValidationSummary::to_json(Self) -> Json
+pub fn FormValidationSummary::to_json(Self) -> @json.Json
 pub fn FormValidationSummary::to_repr(Self) -> @debug.Repr
 pub fn FormValidationSummary::valid(Self) -> Bool
 

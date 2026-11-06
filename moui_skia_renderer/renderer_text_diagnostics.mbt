@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SkiaTextVisualOrderDiagnostic {
   priv logical_text : String
   priv visual_text : String
@@ -8,7 +9,7 @@ pub struct SkiaTextVisualOrderDiagnostic {
   priv glyph_count : Int32
   priv width : Double
   priv visual_order_differs : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaTextVisualOrderDiagnostic with Debug::{to_repr}
@@ -20,6 +21,7 @@ pub extend SkiaTextVisualOrderDiagnostic with Eq::{not_equal, equal}
 pub extend SkiaTextVisualOrderDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SkiaTextSelectionGeometryDiagnostic {
   priv text : String
   priv selection_range : @core.TextRange
@@ -32,7 +34,7 @@ pub struct SkiaTextSelectionGeometryDiagnostic {
   priv visual_order_differs : Bool
   priv visual_segment_count : Int32
   priv bidi_visual_order_observed : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaTextSelectionGeometryDiagnostic with Debug::{to_repr}
@@ -44,6 +46,7 @@ pub extend SkiaTextSelectionGeometryDiagnostic with Eq::{not_equal, equal}
 pub extend SkiaTextSelectionGeometryDiagnostic with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SkiaEmojiFontFallbackDiagnostic {
   priv text : String
   priv text_system_id : String
@@ -68,7 +71,7 @@ pub struct SkiaEmojiFontFallbackDiagnostic {
   priv fallback_request_ready : Bool
   priv missing_glyph_recovery_ready : Bool
   priv deterministic_color_emoji_ready : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaEmojiFontFallbackDiagnostic with Debug::{to_repr}

@@ -387,17 +387,18 @@ test "retained repaint boundaries never inline a hoisted overlay" {
 /// entirely (no traversal, no layer/surface churn); any input moves the
 /// generation and the next pass re-collects exactly once.
 test "C3: idle placement passes skip the overlay collect" {
+  let root : @core.View[Unit] = @views.overlay_host(
+    @views.frame(@views.text("Base"), width=200.0, height=100.0),
+    [
+      @views.PresentationSpec::new(
+        id="menu",
+        kind=Popover,
+        content=@views.frame(@views.text("Menu"), width=40.0, height=20.0),
+      ),
+    ],
+  )
   let runtime = AppRuntime::new_view(
-    root=@views.overlay_host(
-      @views.frame(@views.text("Base"), width=200.0, height=100.0),
-      [
-        @views.PresentationSpec::new(
-          id="menu",
-          kind=Popover,
-          content=@views.frame(@views.text("Menu"), width=40.0, height=20.0),
-        ),
-      ],
-    ),
+    root~,
     size=@core.Size::new(width=200.0, height=100.0),
   )
   ignore(runtime.draw_frame())

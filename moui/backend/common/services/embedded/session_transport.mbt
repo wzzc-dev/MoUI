@@ -5,11 +5,12 @@
 ///|
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum HostSessionState {
   Detached
   Attached
   Destroyed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostSessionState with Debug::{to_repr}
@@ -21,12 +22,13 @@ pub extend HostSessionState with Eq::{not_equal, equal}
 pub extend HostSessionState with ToJson::{to_json}
 
 ///|
+#derive(Debug, ToJson)
 pub(all) struct HostSession {
   mut generation : Int32
   mut surface_epoch : Int32
   mut state : HostSessionState
   mut attached_once : Bool
-} derive(Debug, ToJson)
+}
 
 ///|
 pub extend HostSession with Debug::{to_repr}
@@ -108,11 +110,12 @@ pub fn HostSession::destroy(self : HostSession) -> Bool {
 }
 
 ///|
+#derive(Debug, ToJson)
 pub struct HostFrameScheduler {
   mut requested : Bool
   mut in_frame : Bool
   mut follow_up : Bool
-} derive(Debug, ToJson)
+}
 
 ///|
 pub extend HostFrameScheduler with Debug::{to_repr}
@@ -174,9 +177,10 @@ pub fn HostFrameScheduler::reset(self : HostFrameScheduler) -> Unit {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostRequestId {
   value : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostRequestId with Debug::{to_repr}
@@ -188,11 +192,12 @@ pub extend HostRequestId with Eq::{not_equal, equal}
 pub extend HostRequestId with ToJson::{to_json}
 
 ///|
+#derive(Debug, ToJson)
 pub struct HostChannel {
   mut next_request_id : Int32
   mut pending : Array[HostRequestId]
   mut updates : Array[HostWireUpdate]
-} derive(Debug, ToJson)
+}
 
 ///|
 pub extend HostChannel with Debug::{to_repr}
@@ -266,11 +271,12 @@ pub fn HostChannel::pending_count(self : HostChannel) -> Int32 {
 ///|
 /// A neutral outbound host update. `payload` stays JSON so this SDK owns
 /// transport semantics without importing MoUI host or runtime types.
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostWireUpdate {
   kind : String
   request_id : HostRequestId?
   payload : Json
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostWireUpdate with Debug::{to_repr}
@@ -303,12 +309,13 @@ pub fn HostChannel::drain_updates(self : HostChannel) -> Array[HostWireUpdate] {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct HostWireEnvelope {
   schema_version : Int32
   session_generation : Int32
   surface_epoch : Int32
   updates : Array[HostWireUpdate]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend HostWireEnvelope with Debug::{to_repr}

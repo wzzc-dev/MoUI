@@ -15,6 +15,7 @@
 /// layer is that the model sees the *history*: a two-message request would
 /// silently drop the rolling summary, the world-book hits, and every earlier
 /// turn.
+#derive(Eq, Debug)
 pub struct LlmRequest {
   character_id : String
   /// Provider base URL or full chat/completions path.
@@ -24,7 +25,7 @@ pub struct LlmRequest {
   temperature : Double
   /// Ordered wire messages: `("system" | "user" | "assistant", content)`.
   messages : Array[(String, String)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LlmRequest with Debug::{to_repr}

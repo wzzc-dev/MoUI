@@ -11,11 +11,12 @@
 ///
 /// `pub(all)`: consumers outside this package must be able to build
 /// non-default option sets (the find-bar toggles write these fields).
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownFindOptions {
   case_sensitive : Bool
   whole_word : Bool
   regex : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownFindOptions with Eq::{equal, not_equal}
@@ -34,10 +35,11 @@ pub fn MarkdownFindOptions::default() -> MarkdownFindOptions {
 ///|
 /// A find query seeded from the caret word: `query` is the text, `range`
 /// the selection to activate once the find bar opens.
+#derive(Eq, Debug, ToJson)
 pub(all) struct MarkdownFindSeed {
   query : String
   range : @core.TextRange
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MarkdownFindSeed with Debug::{to_repr}

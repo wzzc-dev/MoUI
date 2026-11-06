@@ -1,9 +1,10 @@
 ///|
 /// 2D point with floating point coordinates
+#derive(Eq, Debug)
 pub struct Point {
   x : Double
   y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Point with Debug::{to_repr}
@@ -19,10 +20,11 @@ pub fn Point::new(x~ : Double, y~ : Double) -> Point {
 
 ///|
 /// 2D vector (same as Point but semantically different)
+#derive(Eq, Debug)
 pub struct Vec2 {
   x : Double
   y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Vec2 with Debug::{to_repr}

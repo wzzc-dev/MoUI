@@ -4,12 +4,13 @@ pub struct PdfWorkbenchApp {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub enum PdfWorkbenchStatus {
   Empty
   Requesting(String)
   Ready
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchStatus with Debug::{to_repr}
@@ -21,23 +22,25 @@ pub extend PdfWorkbenchStatus with Eq::{not_equal, equal}
 pub extend PdfWorkbenchStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq)
 pub enum PdfWorkbenchOperation {
   PickOpenFile
   ReadPdf(String)
   PickSaveFile
   PrepareSave(String)
   WritePdf(String)
-} derive(Eq)
+}
 
 ///|
 pub extend PdfWorkbenchOperation with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PdfWorkbenchPageSummary {
   page_number : Int32
   text_preview : String
   content_diagnostic : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchPageSummary with Debug::{to_repr}
@@ -49,12 +52,13 @@ pub extend PdfWorkbenchPageSummary with Eq::{not_equal, equal}
 pub extend PdfWorkbenchPageSummary with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PdfWorkbenchCropBox {
   left : Double
   bottom : Double
   right : Double
   top : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchCropBox with Debug::{to_repr}
@@ -66,6 +70,7 @@ pub extend PdfWorkbenchCropBox with Eq::{not_equal, equal}
 pub extend PdfWorkbenchCropBox with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PdfWorkbenchEdit {
   RotatePage(Int32, Int32)
   CropPage(Int32, PdfWorkbenchCropBox)
@@ -73,7 +78,7 @@ pub(all) enum PdfWorkbenchEdit {
   SetMetadataTitle(String)
   AddBookmark(Int32, String)
   AddTextAnnotation(Int32, String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend PdfWorkbenchEdit with Debug::{to_repr}

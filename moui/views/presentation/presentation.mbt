@@ -2,6 +2,7 @@
 /// A presentation kind describes the interaction and semantic role of a
 /// surface. The runtime may use this value when selecting focus and host
 /// presentation behavior.
+#derive(Eq, Debug)
 pub(all) enum PresentationKind {
   Popover
   Dialog
@@ -9,7 +10,7 @@ pub(all) enum PresentationKind {
   Tooltip
   ContextMenu
   Toast
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationKind with Debug::{to_repr}
@@ -20,11 +21,12 @@ pub extend PresentationKind with Eq::{not_equal, equal}
 ///|
 /// An anchor is a stable view key, a viewport point, or — inside
 /// `popup_host` — the host node's own base frame.
+#derive(Eq, Debug)
 pub(all) enum PresentationAnchor {
   StableKey(String)
   Viewport(@core.Point)
   HostBase
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationAnchor with Debug::{to_repr}
@@ -37,6 +39,7 @@ pub extend PresentationAnchor with Eq::{not_equal, equal}
 /// `Start` and `End` name the anchor's leading and trailing edges, and
 /// `Left`/`Right` are the two physical sides, so right-to-left layout mirrors
 /// each candidate rather than using a second set of names.
+#derive(Eq, Debug)
 pub(all) enum PresentationPlacementCandidate {
   AboveStart
   AboveCenter
@@ -51,7 +54,7 @@ pub(all) enum PresentationPlacementCandidate {
   RightCenter
   RightEnd
   Center
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationPlacementCandidate with Debug::{to_repr}
@@ -63,11 +66,12 @@ pub extend PresentationPlacementCandidate with Eq::{not_equal, equal}
 /// Placement policy shared by view-level and host presentations. The anchor
 /// itself lives on `PresentationSpec`; a placement only describes where around
 /// that anchor the surface may land.
+#derive(Eq, Debug)
 pub(all) struct PresentationPlacement {
   candidates : Array[PresentationPlacementCandidate]
   viewport_insets : @core.Insets
   clamp_to_viewport : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationPlacement with Debug::{to_repr}
@@ -77,10 +81,11 @@ pub extend PresentationPlacement with Eq::{not_equal, equal}
 
 ///|
 /// Whether a presentation blocks background interaction and semantics.
+#derive(Eq, Debug)
 pub(all) enum PresentationModality {
   NonModal
   Modal
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationModality with Debug::{to_repr}
@@ -103,11 +108,12 @@ pub(all) struct PresentationDismissPolicy[Msg] {
 ///|
 /// Host routing preference. Unavailable native hosts must fall back to the
 /// view-level surface unless `NativeRequired` is selected.
+#derive(Eq, Debug)
 pub(all) enum PresentationHostPolicy {
   ViewOnly
   PreferNative
   NativeRequired
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationHostPolicy with Debug::{to_repr}
@@ -149,12 +155,13 @@ pub fn PresentationHostPolicy::shows_view_surface(
 ///|
 /// Standard presentation transition. Runtime/theme motion may sample this;
 /// reduced-motion hosts should complete it immediately.
+#derive(Eq, Debug)
 pub(all) enum PresentationTransition {
   Fade
   Scale
   Slide
   None
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PresentationTransition with Debug::{to_repr}

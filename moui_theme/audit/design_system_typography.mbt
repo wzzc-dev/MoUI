@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignTypographyRole {
   TypographyBody
   TypographyTitle
   TypographyCaption
   TypographyControl
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTypographyRole with Debug::{to_repr}
@@ -16,6 +17,7 @@ pub extend DesignTypographyRole with Eq::{not_equal, equal}
 pub extend DesignTypographyRole with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignTypographyRoleRecord {
   preset : @common.DesignPreset
   role : DesignTypographyRole
@@ -45,7 +47,7 @@ pub(all) struct DesignTypographyRoleRecord {
   status : DesignTokenStatus
   remaining_gap : String
   note : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignTypographyRoleRecord with Debug::{to_repr}

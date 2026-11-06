@@ -8,7 +8,7 @@ Do not place `moui_skia` binding checks here; keep those under
 Current tools:
 
 - `generate_core_derives/` regenerates `moui/core/derives.generated.mbt` from
-  the `derive(...)` clauses and hand-written `pub impl` trait blocks in
+  the `#derive(...)` attributes and hand-written `pub impl` trait blocks in
   `moui/core/{paint,semantics,theme}.mbt`; the generated file re-exports
   derived trait methods across package boundaries with explicit `pub extend`
   lines (MoonBit implicit method promotion is deprecated). Drift is checked by

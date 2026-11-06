@@ -336,13 +336,14 @@ fn markdown_editor_preserved_merge_prefix(
 }
 
 ///|
+#derive(Eq)
 priv enum MarkdownEditorMergeBlockKind {
   Plain
   Bullet
   Task
   Ordered
   Quote
-} derive(Eq)
+}
 
 ///|
 fn markdown_editor_merge_block_kind(

@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Point {
   x : Double
   y : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Point with Debug::{to_repr}
@@ -14,10 +15,11 @@ pub extend Point with Eq::{not_equal, equal}
 pub extend Point with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Size {
   width : Double
   height : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Size with Debug::{to_repr}
@@ -29,10 +31,11 @@ pub extend Size with Eq::{not_equal, equal}
 pub extend Size with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Rect {
   origin : Point
   size : Size
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Rect with Debug::{to_repr}
@@ -44,12 +47,13 @@ pub extend Rect with Eq::{not_equal, equal}
 pub extend Rect with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Insets {
   top : Double
   right : Double
   bottom : Double
   left : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Insets with Debug::{to_repr}
@@ -61,10 +65,11 @@ pub extend Insets with Eq::{not_equal, equal}
 pub extend Insets with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Constraints {
   min : Size
   max : Size
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Constraints with Debug::{to_repr}
@@ -76,10 +81,11 @@ pub extend Constraints with Eq::{not_equal, equal}
 pub extend Constraints with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum Axis {
   Horizontal
   Vertical
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Axis with Debug::{to_repr}

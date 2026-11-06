@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct DownstreamSlotValue {
   count : Int32
   progress : Double
-} derive(Eq, Debug)
+}
 
 ///|
 impl @core.ViewStateValue for DownstreamSlotValue with fn view_state_type_key() {

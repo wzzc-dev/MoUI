@@ -3,6 +3,7 @@
 /// | a  b  tx |
 /// | c  d  ty |
 /// | 0  0  1  |
+#derive(Eq, Debug)
 pub struct Transform {
   a : Double
   b : Double
@@ -10,7 +11,7 @@ pub struct Transform {
   d : Double
   tx : Double
   ty : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Transform with Debug::{to_repr}

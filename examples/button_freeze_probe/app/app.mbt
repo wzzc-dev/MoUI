@@ -22,6 +22,7 @@ pub struct Model {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum Msg {
   QueryChanged(String)
   ToggleActive
@@ -30,7 +31,7 @@ pub(all) enum Msg {
   ClearFilters
   PrimaryPulse
   TonalPulse
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend Msg with Debug::{to_repr}

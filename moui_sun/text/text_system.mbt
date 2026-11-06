@@ -1,11 +1,12 @@
 ///|
 /// High-level text state for GUI/editor code: a keyed font registry plus
 /// layout and caret helpers built on the stable FontFace/TextLayout facades.
+#derive(Debug)
 struct TextSystem {
   loader : MemoryFontLoader
   face_cache : FontFaceCache
   mut font_keys : Array[String]
-} derive(Debug)
+}
 
 ///|
 pub extend TextSystem with Debug::{to_repr}
@@ -15,6 +16,7 @@ pub extend TextSystem with FontLoader::{load_font_data}
 
 ///|
 /// Caret geometry in layout-local coordinates for one text insertion point.
+#derive(Eq, Debug)
 struct TextCaret {
   index : Int32
   line : Int32
@@ -22,7 +24,7 @@ struct TextCaret {
   y : Double
   height : Double
   baseline_y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextCaret with Debug::{to_repr}
@@ -32,6 +34,7 @@ pub extend TextCaret with Eq::{not_equal, equal}
 
 ///|
 /// Highlight geometry for one visual line of a text selection.
+#derive(Eq, Debug)
 struct TextSelectionRect {
   start_index : Int32
   end_index : Int32
@@ -41,7 +44,7 @@ struct TextSelectionRect {
   width : Double
   height : Double
   baseline_y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextSelectionRect with Debug::{to_repr}
@@ -51,6 +54,7 @@ pub extend TextSelectionRect with Eq::{not_equal, equal}
 
 ///|
 /// Result of registering checked font data in a TextSystem.
+#derive(Debug)
 struct TextSystemFontRegistration {
   key : String
   face : FontFace
@@ -58,7 +62,7 @@ struct TextSystemFontRegistration {
   did_replace : Bool
   did_replace_cached_face : Bool
   font_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend TextSystemFontRegistration with Debug::{to_repr}
@@ -66,13 +70,14 @@ pub extend TextSystemFontRegistration with Debug::{to_repr}
 ///|
 /// Prepared text layout for GUI/editor code that needs several geometry
 /// queries from the same registered font, text, and layout config.
+#derive(Debug)
 struct TextSystemLayout {
   key : String
   text : String
   config : LayoutConfig
   face : FontFace
   layout : TextLayout
-} derive(Debug)
+}
 
 ///|
 pub extend TextSystemLayout with Debug::{to_repr}

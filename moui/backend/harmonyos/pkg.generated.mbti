@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/harmonyos"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -64,6 +65,7 @@ pub struct AccessibilityProjection {
   // private fields
 }
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HarmonyOSBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -77,12 +79,13 @@ pub(all) struct HarmonyOSBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HarmonyOSBackendCapabilities::equal(Self, Self) -> Bool
 pub fn HarmonyOSBackendCapabilities::not_equal(Self, Self) -> Bool
-pub fn HarmonyOSBackendCapabilities::to_json(Self) -> Json
+pub fn HarmonyOSBackendCapabilities::to_json(Self) -> @json.Json
 pub fn HarmonyOSBackendCapabilities::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HarmonyOSBackendInfo {
   host_info : @backend.HostAppInfo
   capabilities : HarmonyOSBackendCapabilities
@@ -90,21 +93,22 @@ pub(all) struct HarmonyOSBackendInfo {
   input : @backend.HostInputCapabilities
   readiness : HarmonyOSBackendReadiness
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HarmonyOSBackendInfo::equal(Self, Self) -> Bool
 pub fn HarmonyOSBackendInfo::not_equal(Self, Self) -> Bool
-pub fn HarmonyOSBackendInfo::to_json(Self) -> Json
+pub fn HarmonyOSBackendInfo::to_json(Self) -> @json.Json
 pub fn HarmonyOSBackendInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HarmonyOSBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HarmonyOSBackendReadiness::equal(Self, Self) -> Bool
 pub fn HarmonyOSBackendReadiness::not_equal(Self, Self) -> Bool
-pub fn HarmonyOSBackendReadiness::to_json(Self) -> Json
+pub fn HarmonyOSBackendReadiness::to_json(Self) -> @json.Json
 pub fn HarmonyOSBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct HarmonyOSEmbeddedRuntimeBackend {
@@ -139,22 +143,24 @@ pub struct HarmonyOSSurfaceBinding {
 }
 pub fn HarmonyOSSurfaceBinding::new(create_renderer~ : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (HarmonyOSSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct HarmonyOSSurfaceHandle {
   raw : UInt64
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn HarmonyOSSurfaceHandle::equal(Self, Self) -> Bool
 pub fn HarmonyOSSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn HarmonyOSSurfaceHandle::none() -> Self
 pub fn HarmonyOSSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn HarmonyOSSurfaceHandle::raw(Self) -> UInt64
-pub fn HarmonyOSSurfaceHandle::to_json(Self) -> Json
+pub fn HarmonyOSSurfaceHandle::to_json(Self) -> @json.Json
 pub fn HarmonyOSSurfaceHandle::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct PendingAccessibilityAction {
   element_id : Int64
   action : Int32
   generation : UInt64
-} derive(Eq, @debug.Debug)
+}
 pub fn PendingAccessibilityAction::action(Self) -> Int32
 pub fn PendingAccessibilityAction::element_id(Self) -> Int64
 pub fn PendingAccessibilityAction::equal(Self, Self) -> Bool

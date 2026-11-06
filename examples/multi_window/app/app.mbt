@@ -2,10 +2,11 @@
 using @views {button, card, center, column, row, text}
 
 ///|
+#derive(Eq)
 pub(all) enum Scene {
   Main
   Inspector(String)
-} derive(Eq)
+}
 
 ///|
 pub extend Scene with Eq::{not_equal, equal}

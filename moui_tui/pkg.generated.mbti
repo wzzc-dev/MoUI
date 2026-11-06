@@ -21,15 +21,17 @@ pub fn unicode_width(String) -> Int32
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Cell {
   ch : String
   width : Int32
   attrs : CellAttrs
-} derive(Eq, @debug.Debug)
+}
 pub fn Cell::equal(Self, Self) -> Bool
 pub fn Cell::not_equal(Self, Self) -> Bool
 pub fn Cell::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CellAttrs {
   fg : TermColor
   bg : TermColor
@@ -38,26 +40,28 @@ pub(all) struct CellAttrs {
   italic : Bool
   underline : Bool
   reverse : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn CellAttrs::default() -> Self
 pub fn CellAttrs::equal(Self, Self) -> Bool
 pub fn CellAttrs::not_equal(Self, Self) -> Bool
 pub fn CellAttrs::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Damage {
   full : Bool
   rows : Array[Int32]
-} derive(Eq, @debug.Debug)
+}
 pub fn Damage::equal(Self, Self) -> Bool
 pub fn Damage::is_empty(Self) -> Bool
 pub fn Damage::not_equal(Self, Self) -> Bool
 pub fn Damage::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TermColor {
   Default
   Indexed(Int32)
   Rgb(Int32, Int32, Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn TermColor::equal(Self, Self) -> Bool
 pub fn TermColor::not_equal(Self, Self) -> Bool
 pub fn TermColor::to_repr(Self) -> @debug.Repr

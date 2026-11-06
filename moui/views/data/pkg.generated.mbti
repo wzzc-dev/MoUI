@@ -3,6 +3,7 @@ package "wzzc-dev/moui/views/data"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
 }
@@ -98,33 +99,36 @@ pub struct DataFilter[Msg] {
   enabled : Bool
 }
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridCell {
   row : Int32
   column : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridCell::column(Self) -> Int32
 pub fn DataGridCell::equal(Self, Self) -> Bool
 pub fn DataGridCell::not_equal(Self, Self) -> Bool
 pub fn DataGridCell::row(Self) -> Int32
-pub fn DataGridCell::to_json(Self) -> Json
+pub fn DataGridCell::to_json(Self) -> @json.Json
 pub fn DataGridCell::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridEditCommit {
   cell : DataGridCell
   value : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridEditCommit::cell(Self) -> DataGridCell
 pub fn DataGridEditCommit::equal(Self, Self) -> Bool
 pub fn DataGridEditCommit::not_equal(Self, Self) -> Bool
-pub fn DataGridEditCommit::to_json(Self) -> Json
+pub fn DataGridEditCommit::to_json(Self) -> @json.Json
 pub fn DataGridEditCommit::to_repr(Self) -> @debug.Repr
 pub fn DataGridEditCommit::value(Self) -> String
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridEditState {
   active : DataGridCell?
   original : String
   draft : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridEditState::active_cell(Self) -> DataGridCell?
 pub fn DataGridEditState::begin(Self, DataGridCell, String) -> Self
 pub fn DataGridEditState::cancel(Self) -> Self
@@ -134,38 +138,41 @@ pub fn DataGridEditState::equal(Self, Self) -> Bool
 pub fn DataGridEditState::idle() -> Self
 pub fn DataGridEditState::is_dirty(Self) -> Bool
 pub fn DataGridEditState::not_equal(Self, Self) -> Bool
-pub fn DataGridEditState::to_json(Self) -> Json
+pub fn DataGridEditState::to_json(Self) -> @json.Json
 pub fn DataGridEditState::to_repr(Self) -> @debug.Repr
 pub fn DataGridEditState::update(Self, String) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridFreezePanes {
   rows : Int32
   columns : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridFreezePanes::columns(Self) -> Int32
 pub fn DataGridFreezePanes::equal(Self, Self) -> Bool
 pub fn DataGridFreezePanes::not_equal(Self, Self) -> Bool
 pub fn DataGridFreezePanes::rows(Self) -> Int32
-pub fn DataGridFreezePanes::to_json(Self) -> Json
+pub fn DataGridFreezePanes::to_json(Self) -> @json.Json
 pub fn DataGridFreezePanes::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridSelectionRange {
   first : DataGridCell
   last : DataGridCell
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridSelectionRange::cell_count(Self) -> Int32
 pub fn DataGridSelectionRange::contains(Self, DataGridCell) -> Bool
 pub fn DataGridSelectionRange::equal(Self, Self) -> Bool
 pub fn DataGridSelectionRange::first(Self) -> DataGridCell
 pub fn DataGridSelectionRange::last(Self) -> DataGridCell
 pub fn DataGridSelectionRange::not_equal(Self, Self) -> Bool
-pub fn DataGridSelectionRange::to_json(Self) -> Json
+pub fn DataGridSelectionRange::to_json(Self) -> @json.Json
 pub fn DataGridSelectionRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridSelectionState {
   anchor : DataGridCell
   focus : DataGridCell
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridSelectionState::anchor(Self) -> DataGridCell
 pub fn DataGridSelectionState::equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::focus(Self) -> DataGridCell
@@ -175,9 +182,10 @@ pub fn DataGridSelectionState::new(row? : Int32, column? : Int32) -> Self
 pub fn DataGridSelectionState::not_equal(Self, Self) -> Bool
 pub fn DataGridSelectionState::range(Self) -> DataGridSelectionRange
 pub fn DataGridSelectionState::select(Self, DataGridCell, extending? : Bool) -> Self
-pub fn DataGridSelectionState::to_json(Self) -> Json
+pub fn DataGridSelectionState::to_json(Self) -> @json.Json
 pub fn DataGridSelectionState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub struct DataGridViewport {
   first_row : Int32
   last_row : Int32
@@ -186,12 +194,12 @@ pub struct DataGridViewport {
   row_count : Int32
   column_count : Int32
   freeze : DataGridFreezePanes
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn DataGridViewport::cells(Self) -> Array[DataGridCell]
 pub fn DataGridViewport::contains(Self, DataGridCell) -> Bool
 pub fn DataGridViewport::equal(Self, Self) -> Bool
 pub fn DataGridViewport::not_equal(Self, Self) -> Bool
-pub fn DataGridViewport::to_json(Self) -> Json
+pub fn DataGridViewport::to_json(Self) -> @json.Json
 pub fn DataGridViewport::to_repr(Self) -> @debug.Repr
 
 pub struct DataSortState {

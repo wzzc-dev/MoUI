@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/windows"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/lifecycle",
@@ -34,16 +35,17 @@ pub fn windows_timer_source() -> @services.TimerSource
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn WindowsAccessibilityBridgeInfo::equal(Self, Self) -> Bool
 pub fn WindowsAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
-pub fn WindowsAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn WindowsAccessibilityBridgeInfo::to_json(Self) -> @json.Json
 pub fn WindowsAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
 pub struct WindowsHostAppOptions {

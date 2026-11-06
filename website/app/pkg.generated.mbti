@@ -101,6 +101,7 @@ pub struct WebsiteDocDocument {
   source : String
 }
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct WebsiteDocEntry {
   group : String
   slug : String
@@ -108,21 +109,22 @@ pub struct WebsiteDocEntry {
   path : String
   summary : String
   keywords : Array[String]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn WebsiteDocEntry::equal(Self, Self) -> Bool
-pub fn WebsiteDocEntry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocEntry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocEntry::not_equal(Self, Self) -> Bool
-pub fn WebsiteDocEntry::to_json(Self) -> Json
+pub fn WebsiteDocEntry::to_json(Self) -> @json.Json
 pub fn WebsiteDocEntry::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct WebsiteDocGroup {
   id : String
   title : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn WebsiteDocGroup::equal(Self, Self) -> Bool
-pub fn WebsiteDocGroup::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocGroup::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocGroup::not_equal(Self, Self) -> Bool
-pub fn WebsiteDocGroup::to_json(Self) -> Json
+pub fn WebsiteDocGroup::to_json(Self) -> @json.Json
 pub fn WebsiteDocGroup::to_repr(Self) -> @debug.Repr
 
 pub enum WebsiteDocLoadState {
@@ -133,24 +135,26 @@ pub enum WebsiteDocLoadState {
   DocNotFound(String)
 }
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub struct WebsiteDocsCatalog {
   schemaVersion : Int32
   siteUrl : String
   groups : Array[WebsiteDocGroup]
   entries : Array[WebsiteDocEntry]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn WebsiteDocsCatalog::equal(Self, Self) -> Bool
-pub fn WebsiteDocsCatalog::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocsCatalog::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocsCatalog::not_equal(Self, Self) -> Bool
-pub fn WebsiteDocsCatalog::to_json(Self) -> Json
+pub fn WebsiteDocsCatalog::to_json(Self) -> @json.Json
 pub fn WebsiteDocsCatalog::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum WebsitePage {
   WebsiteHome
   WebsiteTutorial
   WebsiteDocs
   WebsiteShowcases
-} derive(Eq, @debug.Debug)
+}
 pub fn WebsitePage::equal(Self, Self) -> Bool
 pub fn WebsitePage::not_equal(Self, Self) -> Bool
 pub fn WebsitePage::to_repr(Self) -> @debug.Repr

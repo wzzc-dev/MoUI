@@ -1,10 +1,11 @@
 ///|
 /// 一条降级记录:哪个来源、丢的是什么、这一帧出现了几次。
+#derive(Eq, Debug)
 pub(all) struct DegradeRecord {
   source : String
   detail : String
   count : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DegradeRecord with Debug::{to_repr}

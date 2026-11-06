@@ -20,13 +20,14 @@ fn render_frame_submission_resource_plan(
 ///|
 /// Auditable backend submission boundary for a finalized frame plus any
 /// per-frame present resources.
+#derive(Debug, Eq)
 pub(all) struct RenderFrameSubmissionDescriptor {
   frame : RenderFrameDescriptor
   frame_index : Int32
   validation_status : RenderFrameValidationStatus
   present : SurfacePresentDescriptor?
   resource_plan : RendererResourcePlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderFrameSubmissionDescriptor with Debug::{to_repr}

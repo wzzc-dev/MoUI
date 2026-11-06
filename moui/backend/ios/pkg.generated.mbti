@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/ios"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/embedded",
   "wzzc-dev/moui/render",
@@ -36,6 +37,7 @@ pub fn ios_window_hosted_pump_host_sim(IosEmbeddedRuntimeBackend, surface_handle
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct IosBackendCapabilities {
   embedded_view : Bool
   external_event_loop : Bool
@@ -49,12 +51,13 @@ pub(all) struct IosBackendCapabilities {
   system_theme : Bool
   accessibility : Bool
   async_image : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn IosBackendCapabilities::equal(Self, Self) -> Bool
 pub fn IosBackendCapabilities::not_equal(Self, Self) -> Bool
-pub fn IosBackendCapabilities::to_json(Self) -> Json
+pub fn IosBackendCapabilities::to_json(Self) -> @json.Json
 pub fn IosBackendCapabilities::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct IosBackendInfo {
   host_info : @backend.HostAppInfo
   capabilities : IosBackendCapabilities
@@ -62,21 +65,22 @@ pub(all) struct IosBackendInfo {
   input : @backend.HostInputCapabilities
   readiness : IosBackendReadiness
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn IosBackendInfo::equal(Self, Self) -> Bool
 pub fn IosBackendInfo::not_equal(Self, Self) -> Bool
-pub fn IosBackendInfo::to_json(Self) -> Json
+pub fn IosBackendInfo::to_json(Self) -> @json.Json
 pub fn IosBackendInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct IosBackendReadiness {
   ready : Bool
   status : String
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn IosBackendReadiness::equal(Self, Self) -> Bool
 pub fn IosBackendReadiness::not_equal(Self, Self) -> Bool
-pub fn IosBackendReadiness::to_json(Self) -> Json
+pub fn IosBackendReadiness::to_json(Self) -> @json.Json
 pub fn IosBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct IosEmbeddedRuntimeBackend {
@@ -111,15 +115,16 @@ pub struct IosSurfaceBinding {
 }
 pub fn IosSurfaceBinding::new(create_renderer~ : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (IosSurfaceHandle, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct IosSurfaceHandle {
   raw : UInt64
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn IosSurfaceHandle::equal(Self, Self) -> Bool
 pub fn IosSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn IosSurfaceHandle::none() -> Self
 pub fn IosSurfaceHandle::not_equal(Self, Self) -> Bool
 pub fn IosSurfaceHandle::raw(Self) -> UInt64
-pub fn IosSurfaceHandle::to_json(Self) -> Json
+pub fn IosSurfaceHandle::to_json(Self) -> @json.Json
 pub fn IosSurfaceHandle::to_repr(Self) -> @debug.Repr
 
 // Type aliases

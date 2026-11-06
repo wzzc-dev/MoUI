@@ -6,6 +6,7 @@
 /// One entry in the desktop application registry. Data only: behavior stays
 /// in the app's typed message/update/view; the shell consults the
 /// descriptor for labels, artwork hints, and default window geometry.
+#derive(Eq, Debug)
 pub(all) struct AppDescriptor {
   id : AppKind
   label : String
@@ -18,7 +19,7 @@ pub(all) struct AppDescriptor {
   default_height : Double
   /// Ordering hint: lower values appear earlier in the Dock and launcher.
   dock_priority : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AppDescriptor with Debug::{to_repr}

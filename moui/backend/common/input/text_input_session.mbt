@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum TextInputSessionAction {
   NoImeChange
   EnableIme(@window_core.ImeRequest)
   UpdateIme(@window_core.ImeRequest)
   DisableIme(@window_core.ImeRequest)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextInputSessionAction with Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend TextInputSessionAction with Debug::{to_repr}
 pub extend TextInputSessionAction with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextInputImeRequestDiagnostics {
   focused : Bool
   text_length : Int32
@@ -31,7 +33,7 @@ pub(all) struct TextInputImeRequestDiagnostics {
   // text budget; oversized texts deliver a bounded window around the
   // cursor instead (see `text_input_ime_request_diagnostics_windowed`).
   surrounding_text : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextInputImeRequestDiagnostics with Debug::{to_repr}

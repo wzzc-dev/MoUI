@@ -209,12 +209,14 @@ Release build log, ELF reports and checksums, renderer smoke log, and
 SkParagraph text/emoji smoke log. L3 remains a separate matching-device gate.
 
 The `external-consumer.yml` workflow copies the selected base, Skia, or Web
-fixture outside the checkout. Until 0.2 is published, registry mode validates
-the stable base `wzzc-dev/moui@0.1.7`; package mode validates the 0.2 head
-archives for base-only, Skia, and Web consumers. Package-mode `moon tree`
-checks also reject concrete renderers and diagnostic/test dependencies from
-the base closure. Every resolved `.mooncakes` path must report
-`monorepoSource=false`:
+fixture outside the checkout. Registry mode validates the stable
+`wzzc-dev/moui@0.3.2` base artifact; package mode validates the current head
+archives for base-only, Skia, and Web consumers. The registry probe moves with
+the minimum compiler line because registry artifacts are immutable: 0.3.2 is
+the first release compatible with MoonBit 0.10.20's `Json(value)` interface.
+Package-mode `moon tree` checks also reject concrete renderers and
+diagnostic/test dependencies from the base closure. Every resolved
+`.mooncakes` path must report `monorepoSource=false`:
 
 ```sh
 node scripts/external-consumer-ci.mjs --source registry --profile base
@@ -420,7 +422,7 @@ scroll-cache counters block that job. The Showcase scroll budget pairs cache
 hit-rate floors with absolute layout/render misses per frame, so a change that
 removes root rebuilds cannot lower the hit rate while increasing missed work.
 Wall-clock budgets remain report-only:
-shared `macos-14` runs drift 1.3-1.5x on p50 for identical code, so a timing
+shared GitHub-hosted macOS runs drift 1.3-1.5x on p50 for identical code, so a timing
 line that goes red is reviewed by hand instead of blocking the PR. The
 renderer-free `moui/runtime` structural regression runs in the `pr` profile and
 blocks a whole-tree builder regression even when the macOS benchmark is
@@ -580,7 +582,7 @@ starvation cannot extend the confirmation window into a red.
 
 The gate runs unattended in CI: `.github/workflows/moui-runtime-gates.yml`
 executes `node scripts/smoke-gate.mjs --suite tui.pty-interaction-smoke --run`
-on the nightly schedule and on manual dispatch, on macos-14, and uploads the
+on the nightly schedule and on manual dispatch, on macos-latest, and uploads the
 raw-stream artifact on failure. The catalog command is `mode: run`; developers
 can still run `sh scripts/tui-pty-smoke.sh` directly for local reproduction.
 

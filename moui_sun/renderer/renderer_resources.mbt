@@ -1,27 +1,30 @@
 ///|
 /// Caller-owned text rendering resources shared across renderer text draws.
+#derive(Debug)
 pub struct RendererTextResources {
   text_cache : @text.TextMaskCache
   glyph_cache : @text.GlyphMaskCache
   atlas : @text.GlyphMaskAtlas
-} derive(Debug)
+}
 
 ///|
 pub extend RendererTextResources with Debug::{to_repr}
 
 ///|
 /// Caller-owned renderer resources shared across GUI text and image draws.
+#derive(Debug)
 pub struct RendererResources {
   font_cache : @text.FontFaceCache
   text : RendererTextResources
   image_cache : @graphics.PixmapCache
-} derive(Debug)
+}
 
 ///|
 pub extend RendererResources with Debug::{to_repr}
 
 ///|
 /// Snapshot of renderer text resource cache and atlas state.
+#derive(Debug)
 pub struct RendererTextResourcesSnapshot {
   text_mask_count : Int32
   text_mask_capacity : Int32
@@ -36,13 +39,14 @@ pub struct RendererTextResourcesSnapshot {
   atlas_used_pixel_count : Int32
   atlas_free_pixel_count : Int32
   atlas_occupancy_ratio : Double
-} derive(Debug)
+}
 
 ///|
 pub extend RendererTextResourcesSnapshot with Debug::{to_repr}
 
 ///|
 /// Snapshot of renderer-wide resource cache state.
+#derive(Debug)
 pub struct RendererResourcesSnapshot {
   font_face_count : Int32
   font_face_capacity : Int32
@@ -51,17 +55,18 @@ pub struct RendererResourcesSnapshot {
   image_count : Int32
   image_capacity : Int32
   image_is_bounded : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend RendererResourcesSnapshot with Debug::{to_repr}
 
 ///|
 /// One keyed font-byte source in an ordered fallback stack.
+#derive(Debug)
 pub struct FontBytesFallbackSource {
   font_key : String
   font_data : Bytes
-} derive(Debug)
+}
 
 ///|
 pub extend FontBytesFallbackSource with Debug::{to_repr}

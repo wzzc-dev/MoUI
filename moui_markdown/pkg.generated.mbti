@@ -3,6 +3,7 @@ package "wzzc-dev/moui_markdown"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui_richtext",
@@ -88,6 +89,7 @@ pub fn markdown_snapshot_reading_time_short_label(@moui_richtext.MarkdownEditorS
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownDocumentInfo {
   character_count : Int32
   heading_count : Int32
@@ -102,41 +104,44 @@ pub(all) struct MarkdownDocumentInfo {
   image_count : Int32
   footnote_reference_count : Int32
   footnote_definition_count : Int32
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownDocumentInfo::equal(Self, Self) -> Bool
 pub fn MarkdownDocumentInfo::not_equal(Self, Self) -> Bool
-pub fn MarkdownDocumentInfo::to_json(Self) -> Json
+pub fn MarkdownDocumentInfo::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownFindOptions {
   case_sensitive : Bool
   whole_word : Bool
   regex : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownFindOptions::default() -> Self
 pub fn MarkdownFindOptions::equal(Self, Self) -> Bool
 pub fn MarkdownFindOptions::not_equal(Self, Self) -> Bool
-pub fn MarkdownFindOptions::to_json(Self) -> Json
+pub fn MarkdownFindOptions::to_json(Self) -> @json.Json
 pub fn MarkdownFindOptions::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownFindSeed {
   query : String
   range : @core.TextRange
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownFindSeed::equal(Self, Self) -> Bool
 pub fn MarkdownFindSeed::not_equal(Self, Self) -> Bool
-pub fn MarkdownFindSeed::to_json(Self) -> Json
+pub fn MarkdownFindSeed::to_json(Self) -> @json.Json
 pub fn MarkdownFindSeed::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownPaletteItem {
   action : String
   label : String
   group : String
   shortcut : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn MarkdownPaletteItem::equal(Self, Self) -> Bool
 pub fn MarkdownPaletteItem::not_equal(Self, Self) -> Bool
-pub fn MarkdownPaletteItem::to_json(Self) -> Json
+pub fn MarkdownPaletteItem::to_json(Self) -> @json.Json
 pub fn MarkdownPaletteItem::to_repr(Self) -> @debug.Repr
 
 // Type aliases

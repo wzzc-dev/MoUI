@@ -1,10 +1,11 @@
 ///|
 /// Error returned by font loaders and loader-backed cache helpers.
+#derive(Eq, Debug)
 pub(all) enum FontLoadError {
   MissingFontData(String)
   FontFileReadFailed(String, String)
   FontParseFailed(String, FontParseError)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontLoadError with Debug::{to_repr}
@@ -20,10 +21,11 @@ pub(open) trait FontLoader {
 
 ///|
 /// One file-backed font source registered in a loader.
+#derive(Eq, Debug)
 struct FontFileSource {
   path : String
   font_index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontFileSource with Debug::{to_repr}
@@ -33,9 +35,10 @@ pub extend FontFileSource with Eq::{not_equal, equal}
 
 ///|
 /// In-memory font loader for tests, embedded assets, and caller-owned bytes.
+#derive(Debug)
 struct MemoryFontLoader {
   mut fonts : Map[String, FontData]
-} derive(Debug)
+}
 
 ///|
 pub extend MemoryFontLoader with Debug::{to_repr}
@@ -45,9 +48,10 @@ pub extend MemoryFontLoader with FontLoader::{load_font_data}
 
 ///|
 /// File-backed font loader keyed by caller-provided resource names.
+#derive(Debug)
 struct FileFontLoader {
   mut sources : Map[String, FontFileSource]
-} derive(Debug)
+}
 
 ///|
 pub extend FileFontLoader with Debug::{to_repr}

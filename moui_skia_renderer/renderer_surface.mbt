@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug)
 pub struct SkiaPixelFrame {
   priv width : Int32
   priv height : Int32
   priv row_bytes : Int32
   priv scale_factor : Double
   priv pixels : Bytes
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SkiaPixelFrame with Debug::{to_repr}
@@ -30,10 +31,11 @@ pub struct SkiaPresentTarget {
 ///   platform presenter owns a window-backed GPU surface (Metal drawable,
 ///   Vulkan swapchain, EGL surface, D3D12 swapchain) and Skia flushes the
 ///   drawable directly. `read_pixels` and the second CPU copy are skipped.
+#derive(Eq, Debug, ToJson)
 pub(all) enum SkiaPresentKind {
   CpuPixelFrame
   HostGpuSurface
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SkiaPresentKind with Debug::{to_repr}

@@ -1,12 +1,13 @@
 ///|
 /// Flattened outline of one laid-out text run, in user-space coordinates.
+#derive(Debug)
 pub(all) struct TextRunOutline {
   /// Total advance width of the laid-out run in user units.
   width : Double
   /// Closed polygons for the run, outer contours and holes alike. Windings
   /// come straight from the font, so a nonzero fill rule preserves holes.
   polygons : Array[Array[(Double, Double)]]
-} derive(Debug)
+}
 
 ///|
 pub extend TextRunOutline with Debug::{to_repr}

@@ -4,10 +4,11 @@
 
 ///|
 /// package free of any core dependency.
+#derive(Eq, Debug)
 pub(all) struct GraphemeRange {
   start : Int32
   end : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GraphemeRange with Debug::{to_repr}
@@ -60,10 +61,11 @@ fn clamp_int(value : Int32, min : Int32, max : Int32) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct TextGraphemeBoundaries {
   priv text : String
   priv boundaries : Array[Int32]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TextGraphemeBoundaries with Debug::{to_repr}

@@ -21,10 +21,11 @@ pub fn markdown_editor_selected_image_target(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MarkdownReferenceContext {
   range : @core.TextRange
   bounds : MarkdownLinkBounds
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownReferenceContext with Debug::{to_repr}
@@ -350,6 +351,7 @@ fn markdown_editor_code_block_enter(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MarkdownLinkBounds {
   open_start : Int32
   close_start : Int32
@@ -358,7 +360,7 @@ pub(all) struct MarkdownLinkBounds {
   definition_target_start : Int32
   definition_target_end : Int32
   reference_label : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MarkdownLinkBounds with Debug::{to_repr}

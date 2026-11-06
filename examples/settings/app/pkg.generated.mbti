@@ -65,6 +65,7 @@ pub(all) enum SettingsMsg {
   ResetSettings
 }
 
+#derive(Eq, @debug.Debug)
 pub struct SettingsSnapshot {
   selected_section : String
   display_name : String
@@ -74,7 +75,7 @@ pub struct SettingsSnapshot {
   notifications : Bool
   telemetry : Bool
   saved_label : String
-} derive(Eq, @debug.Debug)
+}
 pub fn SettingsSnapshot::equal(Self, Self) -> Bool
 pub fn SettingsSnapshot::not_equal(Self, Self) -> Bool
 pub fn SettingsSnapshot::to_repr(Self) -> @debug.Repr

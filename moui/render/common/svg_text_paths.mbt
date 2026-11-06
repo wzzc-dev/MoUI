@@ -19,11 +19,12 @@
 ///|
 /// Anchor semantics of an SVG `<text>` run, resolved from the
 /// `text-anchor` attribute (with group inheritance) at scan time.
+#derive(Eq, Debug)
 pub(all) enum SvgTextAnchor {
   Start
   Middle
   End
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SvgTextAnchor with Debug::{to_repr}
@@ -35,6 +36,7 @@ pub extend SvgTextAnchor with Eq::{not_equal, equal}
 /// One SVG `<text>` run, in the node's own user space. `x`/`baseline_y` carry
 /// the anchor point and baseline; `text` and `font_size` are the element's
 /// literal content.
+#derive(Debug)
 pub(all) struct SvgTextRun {
   text : String
   font_size : Double
@@ -43,7 +45,7 @@ pub(all) struct SvgTextRun {
   anchor : SvgTextAnchor
   /// `textLength` attribute in the run's user space; 0 when unspecified.
   text_length : Double
-} derive(Debug)
+}
 
 ///|
 pub extend SvgTextRun with Debug::{to_repr}
@@ -53,10 +55,11 @@ pub extend SvgTextRun with Debug::{to_repr}
 /// the run's left edge on the baseline (Start anchoring), `width` is the
 /// laid-out advance, and polygons are closed contours ready for a nonzero
 /// fill. Returning `None` keeps the bitmap fallback for that run.
+#derive(Debug)
 pub(all) struct SvgTextRunOutline {
   width : Double
   polygons : Array[Array[(Double, Double)]]
-} derive(Debug)
+}
 
 ///|
 pub extend SvgTextRunOutline with Debug::{to_repr}

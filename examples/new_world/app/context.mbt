@@ -290,10 +290,11 @@ pub fn frame_player_text(text : String, intent : InputIntent) -> String {
 /// The outcome of planning one request: the wire messages plus the history
 /// lines that did NOT fit the budget (oldest first). The evicted tail is what
 /// the compressor consumes, so eviction stays a pure, inspectable value.
+#derive(Eq, Debug)
 pub(all) struct MessagePlan {
   messages : Array[(String, String)]
   evicted : Array[ChatLine]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MessagePlan with Debug::{to_repr}

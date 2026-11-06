@@ -47,12 +47,13 @@ pub fn bundle_encode(name : String, files : Array[(String, String)]) -> String {
 
 ///|
 /// One decoded bundle.
+#derive(Eq, Debug)
 pub(all) struct WorldBundle {
   /// The folder name the bundle asks for, already sanitized for use inside a
   /// library.
   name : String
   files : Array[(String, String)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WorldBundle with Debug::{to_repr}

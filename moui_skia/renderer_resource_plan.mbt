@@ -29,13 +29,14 @@ fn renderer_resource_plan_unique_descriptors(
 
 ///|
 /// Auditable resource requirements for a backend render step.
+#derive(Debug, Eq)
 pub(all) struct RendererResourcePlan {
   descriptors : Array[RendererResourceDescriptor]
   byte_size : Int64
   cacheable_count : Int32
   uncacheable_count : Int32
   gpu_backed_count : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RendererResourcePlan with Debug::{to_repr}

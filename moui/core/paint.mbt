@@ -1,12 +1,14 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Color {
   r : Double
   g : Double
   b : Double
   a : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FontFamily {
   Name(String)
   SystemUi
@@ -19,98 +21,110 @@ pub(all) enum FontFamily {
   Emoji
   Math
   FangSong
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct FontFamilyStack {
   families : Array[FontFamily]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FontStyle {
   Normal
   Italic
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// A single variation axis of a variable font. `axis` is the 4-character
 /// OpenType tag (e.g. "wght", "wdth", "ital", "opsz", "slnt").
+#derive(Eq, Debug, ToJson)
 pub struct FontVariation {
   axis : String
   value : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct FontSpec {
   families : FontFamilyStack
   size : Double
   weight : Int32
   style : FontStyle
   variations : Array[FontVariation]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum TextAlign {
   TextStart
   TextCenter
   TextEnd
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextRun {
   text : String
   frame : Rect
   font : FontSpec
   color : Color
   align : TextAlign
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LinearGradientSpec {
   start : Point
   end : Point
   start_color : Color
   end_color : Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RadialGradientSpec {
   center : Point
   radius : Double
   center_color : Color
   edge_color : Color
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
   RadialGradient(RadialGradientSpec)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShadowSpec {
   rect : RoundedRect
   color : Color
   offset : Point
   blur_radius : Double
   spread : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ImageRun {
   source : String
   frame : Rect
   opacity : Double
   fit : ImageFit
   src_rect : Rect?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Draw a sub-rectangle of the source image.
@@ -131,6 +145,7 @@ pub fn ImageRun::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct Transform2D {
   a : Double
   b : Double
@@ -138,9 +153,10 @@ pub(all) struct Transform2D {
   d : Double
   tx : Double
   ty : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum BlendMode {
   SourceOver
   Multiply
@@ -148,66 +164,74 @@ pub(all) enum BlendMode {
   Overlay
   Darken
   Lighten
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum LayerMask {
   NoMask
   RectMask(Rect)
   RoundedMask(RoundedRect)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct LayerSpec {
   opacity : Double
   blend_mode : BlendMode
   mask : LayerMask
   offscreen : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct RetainedLayerSpec {
   key : String
   frame : Rect
   content_revision : Int32
   scale_factor : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
   Brightness(Double)
   Contrast(Double)
   ColorMatrix(Array[Double])
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum PathVerb {
   MoveTo(Point)
   LineTo(Point)
   QuadTo(Point, Point)
   CubicTo(Point, Point, Point)
   Close
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct PathSpec {
   verbs : Array[PathVerb]
   fill : Brush?
   stroke : Brush?
   stroke_width : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShaderEffectSpec {
   name : String
   frame : Rect
   uniforms : Array[Double]
   fallback : Brush
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DrawCommand {
   Clear(Color)
   FillRect(Rect, Color)
@@ -235,7 +259,7 @@ pub(all) enum DrawCommand {
   PopFilter
   DrawPath(PathSpec)
   DrawShaderEffect(ShaderEffectSpec)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn Color::rgba(

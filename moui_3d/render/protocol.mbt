@@ -1,11 +1,12 @@
 ///|
 /// Capability state is explicit so a 2D MoUI page can remain usable when the
 /// selected 3D host lacks WebGPU or native WGPU.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThreeDRendererStatus {
   Available
   Unavailable(String)
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDRendererStatus with Debug::{to_repr}
@@ -17,10 +18,11 @@ pub extend ThreeDRendererStatus with Eq::{not_equal, equal}
 pub extend ThreeDRendererStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThreeDRendererBackend {
   NativeWgpu
   WebGpu
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDRendererBackend with Debug::{to_repr}
@@ -32,12 +34,13 @@ pub extend ThreeDRendererBackend with Eq::{not_equal, equal}
 pub extend ThreeDRendererBackend with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ThreeDRendererDescriptor {
   id : String
   backend : ThreeDRendererBackend
   status : ThreeDRendererStatus
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDRendererDescriptor with Debug::{to_repr}
@@ -85,11 +88,12 @@ pub fn ThreeDRendererDescriptor::description(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ThreeDViewportSize {
   width : Int32
   height : Int32
   scale_factor : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDViewportSize with Debug::{to_repr}
@@ -143,6 +147,7 @@ pub fn ThreeDViewportSize::scale_factor(self : ThreeDViewportSize) -> Double {
 ///|
 /// Stable identity for renderer-owned GPU resources. The key is neutral;
 /// concrete providers decide how it maps to buffers, textures and pipelines.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThreeDResourceKind {
   Mesh
   Material
@@ -150,7 +155,7 @@ pub(all) enum ThreeDResourceKind {
   Sampler
   Skin
   Pipeline
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDResourceKind with Debug::{to_repr}
@@ -162,10 +167,11 @@ pub extend ThreeDResourceKind with Eq::{not_equal, equal}
 pub extend ThreeDResourceKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ThreeDResourceKey {
   kind : ThreeDResourceKind
   value : Int64
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDResourceKey with Debug::{to_repr}
@@ -195,11 +201,12 @@ pub fn ThreeDResourceKey::value(self : ThreeDResourceKey) -> Int64 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThreeDResourceChange {
   Create(ThreeDResourceKey)
   Update(ThreeDResourceKey)
   Remove(ThreeDResourceKey)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDResourceChange with Debug::{to_repr}
@@ -211,10 +218,11 @@ pub extend ThreeDResourceChange with Eq::{not_equal, equal}
 pub extend ThreeDResourceChange with ToJson::{to_json}
 
 ///|
+#derive(Debug)
 pub(all) struct ThreeDResourceDiff {
   revision : Int64
   changes : Array[ThreeDResourceChange]
-} derive(Debug)
+}
 
 ///|
 pub extend ThreeDResourceDiff with Debug::{to_repr}
@@ -343,6 +351,7 @@ fn find_resource_key(
 ///|
 /// A renderer-neutral primitive packet. Geometry is copied once at packet
 /// creation; renderers no longer walk the mutable CPU Scene each frame.
+#derive(Debug)
 pub(all) struct ThreeDRenderItem {
   node : @moui_3d.NodeId
   primitive_index : Int32
@@ -354,7 +363,7 @@ pub(all) struct ThreeDRenderItem {
   roughness : Double
   skin : Int32?
   morph_targets : Array[Array[@moui_3d.VertexDelta]]
-} derive(Debug)
+}
 
 ///|
 pub extend ThreeDRenderItem with Debug::{to_repr}
@@ -414,6 +423,7 @@ pub fn ThreeDRenderItem::morph_targets(
 }
 
 ///|
+#derive(Debug)
 pub(all) struct ThreeDRenderPacket {
   revision : Int64
   view : @moui_3d.Mat4
@@ -421,7 +431,7 @@ pub(all) struct ThreeDRenderPacket {
   camera_position : @moui_3d.Vec3
   items : Array[ThreeDRenderItem]
   resources : ThreeDResourceDiff
-} derive(Debug)
+}
 
 ///|
 pub extend ThreeDRenderPacket with Debug::{to_repr}
@@ -812,12 +822,13 @@ pub fn ThreeDRenderPacket::from_snapshot(
 }
 
 ///|
+#derive(Debug)
 pub(all) struct ThreeDFrame {
   revision : Int64
   snapshot : @moui_3d.ViewportSnapshot
   packet : ThreeDRenderPacket
   size : ThreeDViewportSize
-} derive(Debug)
+}
 
 ///|
 pub extend ThreeDFrame with Debug::{to_repr}
@@ -871,12 +882,13 @@ pub fn ThreeDFrame::with_packet(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThreeDRenderResult {
   Presented
   Queued
   Unavailable(String)
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThreeDRenderResult with Debug::{to_repr}

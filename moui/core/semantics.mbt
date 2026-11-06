@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsRole {
   None
   Text
@@ -37,7 +38,7 @@ pub(all) enum SemanticsRole {
   Row
   Cell
   Separator
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// A stable application-owned identifier for one effective semantic boundary.
@@ -45,9 +46,10 @@ pub(all) enum SemanticsRole {
 /// Values are exact and case-sensitive. Parsing rejects empty values, values
 /// longer than 255 UTF-8 bytes, and values containing Unicode whitespace or
 /// control characters.
+#derive(Eq, Compare, Hash, Debug)
 pub struct SemanticId {
   priv value : String
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 fn semantic_id_code_unit_is_forbidden(code_unit : UInt16) -> Bool {
@@ -111,9 +113,10 @@ pub impl ToJson for SemanticId with fn to_json(self : SemanticId) -> Json {
 
 ///|
 /// Runtime-session-local identity for one committed semantics node.
+#derive(Eq, Compare, Hash, Debug)
 pub struct SemanticsNodeId {
   priv value : UInt64
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 pub fn SemanticsNodeId::new(value : UInt64) -> SemanticsNodeId {
@@ -138,9 +141,10 @@ pub impl ToJson for SemanticsNodeId with fn to_json(self : SemanticsNodeId) -> J
 
 ///|
 /// Version of one runtime's atomically committed public semantics snapshot.
+#derive(Eq, Compare, Hash, Debug)
 pub struct SemanticsGeneration {
   priv value : UInt64
-} derive(Eq, Compare, Hash, Debug)
+}
 
 ///|
 pub fn SemanticsGeneration::new(value : UInt64) -> SemanticsGeneration {
@@ -167,6 +171,7 @@ pub impl ToJson for SemanticsGeneration with fn to_json(
 
 ///|
 /// A payload-free semantic capability advertised by a committed node.
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsActionKind {
   Activate
   Focus
@@ -182,9 +187,10 @@ pub(all) enum SemanticsActionKind {
   SetNumericValue
   SetSelection
   ShowMenu
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsScrollDirection {
   Forward
   Backward
@@ -192,11 +198,12 @@ pub(all) enum SemanticsScrollDirection {
   Down
   Left
   Right
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// A typed semantic invocation. Payload requirements are encoded by the
 /// constructor rather than represented by an optional side channel.
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsAction {
   Activate
   Focus
@@ -212,7 +219,7 @@ pub(all) enum SemanticsAction {
   SetNumericValue(Double)
   SetSelection(TextRange)
   ShowMenu
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsAction::kind(self : SemanticsAction) -> SemanticsActionKind {
@@ -235,27 +242,30 @@ pub fn SemanticsAction::kind(self : SemanticsAction) -> SemanticsActionKind {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsCheckedState {
   Unchecked
   Checked
   Mixed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsLive {
   Off
   Polite
   Assertive
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsNumericValue {
   current : Double?
   min : Double?
   max : Double?
   step : Double?
   value_text : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsNumericValue::new(
@@ -269,11 +279,12 @@ pub fn SemanticsNumericValue::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsTextValue {
   selection : TextRange?
   caret : Int32?
   editable : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsTextValue::new(
@@ -285,6 +296,7 @@ pub fn SemanticsTextValue::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsCollectionInfo {
   row_index : Int32?
   row_count : Int32?
@@ -294,7 +306,7 @@ pub(all) struct SemanticsCollectionInfo {
   column_span : Int32?
   set_size : Int32?
   set_position : Int32?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsCollectionInfo::new(
@@ -321,13 +333,14 @@ pub fn SemanticsCollectionInfo::new(
 
 ///|
 /// Relations declared by views use application-stable semantic IDs.
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsRelationsDeclaration {
   labelled_by : Array[SemanticId]
   described_by : Array[SemanticId]
   controls : Array[SemanticId]
   error_message : Array[SemanticId]
   active_descendant : Array[SemanticId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsRelationsDeclaration::new(
@@ -341,23 +354,25 @@ pub fn SemanticsRelationsDeclaration::new(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsRelationKind {
   LabelledBy
   DescribedBy
   Controls
   ErrorMessage
   ActiveDescendant
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Relations in a committed snapshot contain only resolved runtime node IDs.
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsRelations {
   labelled_by : Array[SemanticsNodeId]
   described_by : Array[SemanticsNodeId]
   controls : Array[SemanticsNodeId]
   error_message : Array[SemanticsNodeId]
   active_descendant : Array[SemanticsNodeId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsRelations::empty() -> SemanticsRelations {
@@ -373,21 +388,23 @@ pub fn SemanticsRelations::empty() -> SemanticsRelations {
 ///|
 /// Controls how one view declaration contributes to the effective semantics
 /// tree.
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsComposition {
   Transparent
   Boundary
   MergeDescendants
   Hidden
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// Selects either an application-owned stable ID, a session-local committed
 /// node ID, or a stepwise walk of the committed semantics hierarchy.
+#derive(Eq, Debug, ToJson)
 pub(all) enum SemanticsTarget {
   BySemanticId(SemanticId)
   ByNodeId(SemanticsNodeId)
   ByPath(Array[SemanticsPathSegment])
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// One step of a `ByPath` walk, resolved from the committed semantics tree.
@@ -400,15 +417,17 @@ pub(all) enum SemanticsTarget {
 /// A step that supplies no filter at all addresses a position rather than a
 /// node. The wire decoder rejects such a step, and runtime resolution treats
 /// it as no match, so an agent cannot request one.
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsPathSegment {
   index : Int32
   role : SemanticsRole?
   label : String?
   value : String?
   semantic_id : SemanticId?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
@@ -423,9 +442,10 @@ pub(all) struct SemanticsState {
   multiline : Bool
   password : Bool
   modal : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct SemanticsNode {
   node_id : SemanticsNodeId
   semantic_id : SemanticId?
@@ -446,7 +466,7 @@ pub(all) struct SemanticsNode {
   focus_order : Int32?
   frame : Rect
   children : Array[SemanticsNodeId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsState::default() -> SemanticsState {
@@ -476,12 +496,13 @@ pub fn SemanticsState::default() -> SemanticsState {
 /// overlap repair) is the consuming renderer's job and must not move here.
 /// The mutable backing array stays private and accessors return fresh
 /// projections, so a renderer cannot mutate runtime-owned committed state.
+#derive(Eq, Debug, ToJson)
 pub struct SemanticsFramePayload {
   priv generation : SemanticsGeneration
   priv root : SemanticsNodeId?
   priv focused : SemanticsNodeId?
   priv nodes : Array[SemanticsNode]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn SemanticsFramePayload::new(
@@ -527,9 +548,10 @@ pub fn SemanticsFramePayload::nodes(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ScrollAlignment {
   Start
   Center
   End
   Nearest
-} derive(Eq, Debug, ToJson)
+}

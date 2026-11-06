@@ -1,9 +1,10 @@
 ///|
 /// Lightweight text direction used by value-layer text layout contracts.
+#derive(Debug, Eq)
 pub(all) enum TextDirection {
   LeftToRight
   RightToLeft
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TextDirection with Debug::{to_repr}
@@ -31,10 +32,11 @@ pub fn TextDirection::is_right_to_left(self : TextDirection) -> Bool {
 
 ///|
 /// Half-open byte range for a shaped text run.
+#derive(Debug, Eq)
 pub(all) struct TextRange {
   start : Int32
   end : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TextRange with Debug::{to_repr}
@@ -65,11 +67,12 @@ pub fn TextRange::contains_offset(self : TextRange, offset : Int32) -> Bool {
 
 ///|
 /// Value-layer description of a text run before native shaping or fallback.
+#derive(Debug, Eq)
 pub(all) struct TextRunDescriptor {
   range : TextRange
   direction : TextDirection
   fallback : FontFallbackRequest
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TextRunDescriptor with Debug::{to_repr}

@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_available : Bool
   accessibility : MacosAccessibilityBridgeInfo
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MacosBackendInfo with Debug::{to_repr}
@@ -16,13 +17,14 @@ pub extend MacosBackendInfo with Eq::{not_equal, equal}
 pub extend MacosBackendInfo with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend MacosAccessibilityBridgeInfo with Debug::{to_repr}

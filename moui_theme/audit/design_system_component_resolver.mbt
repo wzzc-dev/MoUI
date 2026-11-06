@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct DesignComponentStyleResolverRecord {
   preset : @common.DesignPreset
   component : String
@@ -19,7 +20,7 @@ pub(all) struct DesignComponentStyleResolverRecord {
   resolves_core_style : Bool
   status : DesignTokenStatus
   remaining_gap : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignComponentStyleResolverRecord with Debug::{to_repr}

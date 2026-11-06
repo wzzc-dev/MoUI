@@ -16,6 +16,7 @@
 ///
 /// Deliberately excludes session-only state (draft, selection, editing buffer,
 /// transient notices, in-flight pending flags): those are *meant* to reset.
+#derive(Eq, Debug)
 pub(all) struct PersistedShape {
   /// `(conversation key, [(speaker, text)])`, sorted by key.
   conversations : Array[(String, Array[(String, String)])]
@@ -33,7 +34,7 @@ pub(all) struct PersistedShape {
   portraits : Array[(String, String)]
   /// Locations, in order.
   locations : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PersistedShape with Debug::{to_repr}

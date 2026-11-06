@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DamageRegion {
   Empty
   FullSurface(String)
   Rects(Array[Rect])
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DamageRegion with Debug::{to_repr}
@@ -19,6 +20,7 @@ pub extend DamageRegion with ToJson::{to_json}
 /// `commands` contains view content and does not need a leading `Clear`.
 /// Adapters for legacy command-only renderers must materialize that clear when
 /// lowering a frame back to an `Array[DrawCommand]`.
+#derive(Eq, Debug, ToJson)
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
@@ -33,7 +35,7 @@ pub(all) struct DrawFrame {
   /// it and pay nothing; a non-pixel renderer (TUI) projects from it instead of
   /// reaching back into the runtime mid-paint.
   semantics : SemanticsFramePayload?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DrawFrame with Debug::{to_repr}

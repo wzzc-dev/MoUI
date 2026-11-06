@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridCell {
   row : Int32
   column : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridCell with Debug::{to_repr}
@@ -34,10 +35,11 @@ pub fn data_grid_cell_key(row_key : String, column_key : String) -> String {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridSelectionRange {
   first : DataGridCell
   last : DataGridCell
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridSelectionRange with Debug::{to_repr}
@@ -99,10 +101,11 @@ pub fn DataGridSelectionRange::cell_count(
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridSelectionState {
   anchor : DataGridCell
   focus : DataGridCell
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridSelectionState with Debug::{to_repr}

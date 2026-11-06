@@ -1,12 +1,13 @@
 ///|
 /// Future GPU context families that can back a GPU surface target.
+#derive(Debug, Eq)
 pub(all) enum GpuContextBackend {
   MockGpuContext
   MetalGpuContext
   VulkanGpuContext
   Direct3D12GpuContext
   OpenGLGpuContext
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GpuContextBackend with Debug::{to_repr}
@@ -41,6 +42,7 @@ pub fn GpuContextBackend::is_native_window_backend(
 ///|
 /// Stable identity for a GPU context or device queue a future native backend can
 /// use when creating GPU-backed surfaces.
+#derive(Debug, Eq)
 pub(all) struct GpuContextDescriptor {
   backend : GpuContextBackend
   id : Bytes
@@ -48,7 +50,7 @@ pub(all) struct GpuContextDescriptor {
   device_id : Bytes
   queue_family_index : Int32
   protected_context : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend GpuContextDescriptor with Debug::{to_repr}

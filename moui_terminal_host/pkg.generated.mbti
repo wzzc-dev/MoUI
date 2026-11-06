@@ -17,38 +17,42 @@ pub fn[Msg] run_view(root~ : @core.View[Msg], cell? : @moui_tui_renderer.CellBox
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct CellPosition {
   col : Int32
   row : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn CellPosition::equal(Self, Self) -> Bool
 pub fn CellPosition::not_equal(Self, Self) -> Bool
 pub fn CellPosition::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MousePhase {
   Press
   Release
   Drag
-} derive(Eq, @debug.Debug)
+}
 pub fn MousePhase::equal(Self, Self) -> Bool
 pub fn MousePhase::not_equal(Self, Self) -> Bool
 pub fn MousePhase::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MouseReport {
   position : CellPosition
   button : Int32
   phase : MousePhase
   modifiers : @core.KeyModifiers
-} derive(Eq, @debug.Debug)
+}
 pub fn MouseReport::equal(Self, Self) -> Bool
 pub fn MouseReport::not_equal(Self, Self) -> Bool
 pub fn MouseReport::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum PollState {
   Ready
   Timeout
   Unavailable
-} derive(Eq, @debug.Debug)
+}
 pub fn PollState::equal(Self, Self) -> Bool
 pub fn PollState::not_equal(Self, Self) -> Bool
 pub fn PollState::to_repr(Self) -> @debug.Repr
@@ -61,16 +65,18 @@ pub fn TerminalDecoder::flush(Self) -> TerminalEvent?
 pub fn TerminalDecoder::new() -> Self
 pub fn TerminalDecoder::pending_bytes(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TerminalEvent {
   Key(@core.KeyboardEvent)
   Text(@core.TextInputEvent)
   Mouse(MouseReport)
   Wheel(WheelReport)
-} derive(Eq, @debug.Debug)
+}
 pub fn TerminalEvent::equal(Self, Self) -> Bool
 pub fn TerminalEvent::not_equal(Self, Self) -> Bool
 pub fn TerminalEvent::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TerminalExit {
   Closed
   NotTerminal
@@ -78,7 +84,7 @@ pub(all) enum TerminalExit {
   SetupFailed(String)
   RendererRejected(String)
   WriteFailed(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TerminalExit::describe(Self) -> String
 pub fn TerminalExit::equal(Self, Self) -> Bool
 pub fn TerminalExit::not_equal(Self, Self) -> Bool
@@ -112,11 +118,12 @@ pub fn Tty::terminate_requested(Self) -> Bool
 pub fn Tty::wait(Self, timeout_ms~ : Int32) -> PollState
 pub fn Tty::write_text(Self, String) -> String?
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WheelReport {
   position : CellPosition
   up : Bool
   modifiers : @core.KeyModifiers
-} derive(Eq, @debug.Debug)
+}
 pub fn WheelReport::equal(Self, Self) -> Bool
 pub fn WheelReport::not_equal(Self, Self) -> Bool
 pub fn WheelReport::to_repr(Self) -> @debug.Repr

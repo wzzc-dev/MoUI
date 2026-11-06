@@ -14,6 +14,7 @@ using @window_input {text_input_ime_request_diagnostics}
 ///|
 /// Wire-neutral IME request payload. Native adapters keep the existing JSON
 /// schema while the runtime owns the conversion to and from core text ranges.
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedImeRequest {
   revision : Int32
   enabled : Bool
@@ -24,7 +25,7 @@ pub(all) struct EmbeddedImeRequest {
   composition_cursor : @core.TextRange?
   frame : @core.Rect
   candidate_anchor : @core.Rect
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedImeRequest with Debug::{to_repr}
@@ -36,6 +37,7 @@ pub extend EmbeddedImeRequest with Eq::{not_equal, equal}
 pub extend EmbeddedImeRequest with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedSemanticsNode {
   node_id : @core.SemanticsNodeId
   semantic_id : @core.SemanticId?
@@ -56,7 +58,7 @@ pub(all) struct EmbeddedSemanticsNode {
   focus_order : Int32?
   frame : @core.Rect
   children : Array[@core.SemanticsNodeId]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedSemanticsNode with Debug::{to_repr}
@@ -68,6 +70,7 @@ pub extend EmbeddedSemanticsNode with Eq::{not_equal, equal}
 pub extend EmbeddedSemanticsNode with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedSemanticsUpdate {
   kind : String
   generation : @core.SemanticsGeneration
@@ -78,7 +81,7 @@ pub(all) struct EmbeddedSemanticsUpdate {
   removed : Array[@core.SemanticsNodeId]
   issues : Array[@runtime.SemanticsIssue]
   announcements : Array[@runtime.AccessibilityAnnouncement]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedSemanticsUpdate with Debug::{to_repr}
@@ -90,10 +93,11 @@ pub extend EmbeddedSemanticsUpdate with Eq::{not_equal, equal}
 pub extend EmbeddedSemanticsUpdate with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedPlatformViewSnapshot {
   revision : Int32
   placements : Array[@core.PlatformViewPlacement]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedPlatformViewSnapshot with Debug::{to_repr}
@@ -105,6 +109,7 @@ pub extend EmbeddedPlatformViewSnapshot with Eq::{not_equal, equal}
 pub extend EmbeddedPlatformViewSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum EmbeddedHostUpdate {
   Ime(EmbeddedImeRequest)
   Clipboard(HostPendingServiceRequest)
@@ -112,7 +117,7 @@ pub(all) enum EmbeddedHostUpdate {
   Diagnostic(String)
   PlatformViews(EmbeddedPlatformViewSnapshot)
   PlatformChannel(HostPendingServiceRequest)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedHostUpdate with Debug::{to_repr}
@@ -124,6 +129,7 @@ pub extend EmbeddedHostUpdate with Eq::{not_equal, equal}
 pub extend EmbeddedHostUpdate with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum EmbeddedHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
@@ -131,7 +137,7 @@ pub(all) enum EmbeddedHostResponse {
   Accessibility(@runtime.PerformSemanticsActionRequest)
   PlatformView(Int32, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedHostResponse with Debug::{to_repr}
@@ -143,11 +149,12 @@ pub extend EmbeddedHostResponse with Eq::{not_equal, equal}
 pub extend EmbeddedHostResponse with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedHostUpdateEnvelope {
   schema_version : Int32
   session_generation : Int32
   updates : Array[EmbeddedHostUpdate]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedHostUpdateEnvelope with Debug::{to_repr}
@@ -159,11 +166,12 @@ pub extend EmbeddedHostUpdateEnvelope with Eq::{not_equal, equal}
 pub extend EmbeddedHostUpdateEnvelope with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct EmbeddedHostResponseEnvelope {
   schema_version : Int32
   session_generation : Int32
   response : EmbeddedHostResponse
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EmbeddedHostResponseEnvelope with Debug::{to_repr}

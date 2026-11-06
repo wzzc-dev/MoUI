@@ -39,11 +39,12 @@ pub(all) struct ShowcaseModel {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ShowcaseTodoItem {
   id : Int32
   text : String
   completed : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShowcaseTodoItem with Debug::{to_repr}
@@ -98,12 +99,13 @@ pub(all) enum ShowcaseMsg {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum ShowcaseRouteHistoryCommand {
   PushRoute(String)
   ReplaceRoute(String)
   BackRoute
   ForwardRoute
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ShowcaseRouteHistoryCommand with Debug::{to_repr}

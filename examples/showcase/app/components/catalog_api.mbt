@@ -1,10 +1,11 @@
 ///|
 /// Hosted Showcase catalog entries (body-only shell). Mobile Service Probe lives
 /// only under the Platform workspace.
+#derive(Eq, Debug)
 pub(all) struct CatalogGroup {
   id : String
   title : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogGroup with Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend CatalogGroup with Debug::{to_repr}
 pub extend CatalogGroup with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct CatalogItem {
   id : String
   group_id : String
@@ -20,7 +22,7 @@ pub(all) struct CatalogItem {
   summary : String
   badge : String
   tone : @views.BadgeTone
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CatalogItem with Debug::{to_repr}

@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextCommandResult {
   handled : Bool
   changed : Bool
   clipboard_text : String?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextCommandResult with Debug::{to_repr}

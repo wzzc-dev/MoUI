@@ -20,13 +20,14 @@ pub struct DesignSystemsApp {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum DesignSystemChoice {
   Material
   Carbon
   Primer
   Fluent
   Sickle
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DesignSystemChoice with Debug::{to_repr}

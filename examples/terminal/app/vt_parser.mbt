@@ -1,12 +1,13 @@
 ///|
 /// 解析状态。
+#derive(Eq, Debug)
 pub(all) enum ParseState {
   Ground
   Escape
   Csi
   Osc
   OscEscape
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ParseState with Debug::{to_repr}

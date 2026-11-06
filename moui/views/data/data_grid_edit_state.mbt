@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridEditCommit {
   cell : DataGridCell
   value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridEditCommit with Debug::{to_repr}
@@ -14,11 +15,12 @@ pub extend DataGridEditCommit with Eq::{not_equal, equal}
 pub extend DataGridEditCommit with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct DataGridEditState {
   active : DataGridCell?
   original : String
   draft : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend DataGridEditState with Debug::{to_repr}

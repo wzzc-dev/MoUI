@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct ComplexDataRow {
   id : String
   value : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn complex_data_height(item : String) -> Double {

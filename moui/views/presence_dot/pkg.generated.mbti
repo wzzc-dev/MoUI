@@ -3,6 +3,7 @@ package "wzzc-dev/moui/views/presence_dot"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
@@ -12,17 +13,18 @@ pub fn[Msg] presence_dot(PresenceStatus, size? : Double, theme? : @core.Theme, o
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum PresenceStatus {
   Available
   Away
   Busy
   Offline
   Unknown
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn PresenceStatus::equal(Self, Self) -> Bool
 pub fn PresenceStatus::label(Self) -> String
 pub fn PresenceStatus::not_equal(Self, Self) -> Bool
-pub fn PresenceStatus::to_json(Self) -> Json
+pub fn PresenceStatus::to_json(Self) -> @json.Json
 pub fn PresenceStatus::to_repr(Self) -> @debug.Repr
 pub fn PresenceStatus::to_string(Self) -> String
 

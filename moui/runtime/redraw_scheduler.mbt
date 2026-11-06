@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum RedrawSchedulerState {
   RedrawIdle
   RedrawScheduled
   RedrawInFrame
   RedrawFollowUpScheduled
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend RedrawSchedulerState with Debug::{to_repr}

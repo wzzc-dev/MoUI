@@ -12,13 +12,14 @@
 /// resolved by the `moui_theme` addon, which produces a complete `@core.Theme`
 /// (including `components`). The enum lives in `core` so `Environment` can
 /// record the user's choice without `core` depending on the addon.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThemePreset {
   Minimal
   Material
   Carbon
   Primer
   Fluent
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThemePreset with Debug::{to_repr}
@@ -31,11 +32,12 @@ pub extend ThemePreset with ToJson::{to_json}
 
 ///|
 /// Color mode: force light, force dark, or follow the system.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ColorMode {
   Light
   Dark
   System
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ColorMode with Debug::{to_repr}
@@ -49,11 +51,12 @@ pub extend ColorMode with ToJson::{to_json}
 ///|
 /// Density tier. `Compact` shrinks spacing by ~18%, `Comfortable` grows it by
 /// ~18%; `Standard` is 1.0.
+#derive(Eq, Debug, ToJson)
 pub(all) enum ThemeDensity {
   Compact
   Standard
   Comfortable
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThemeDensity with Debug::{to_repr}
@@ -86,6 +89,7 @@ pub fn ThemeDensity::multiplier(self : ThemeDensity) -> Double {
 /// User theme intent. Built by app code (or by a branded addon helper) and
 /// stored on `Environment.theme_spec`; the resolver consumes it whenever the
 /// system scheme changes so a `ThemeChanged` event rebuilds the full theme.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ThemeSpec {
   preset : ThemePreset
   color_mode : ColorMode
@@ -96,7 +100,7 @@ pub(all) struct ThemeSpec {
   // branded addons may use it to seed their own palette generation.
   seed : Color?
   reduced_motion : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ThemeSpec with Debug::{to_repr}

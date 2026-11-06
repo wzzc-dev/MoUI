@@ -34,7 +34,8 @@ pub fn write_file(String, Bytes) -> Unit raise @fs.IOError
 // Errors
 
 // Types and methods
-type CoverageMask derive(@debug.Debug)
+#derive(@debug.Debug)
+type CoverageMask
 pub fn CoverageMask::copy(Self) -> Self
 pub fn CoverageMask::get_height(Self) -> Int32
 pub fn CoverageMask::get_pixels(Self) -> FixedArray[Byte]
@@ -42,13 +43,15 @@ pub fn CoverageMask::get_width(Self) -> Int32
 pub fn CoverageMask::new(Int32, Int32, FixedArray[Byte]) -> Self
 pub fn CoverageMask::to_repr(Self) -> @debug.Repr
 
-type FaceGlyphMaskCacheResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type FaceGlyphMaskCacheResult
 pub fn FaceGlyphMaskCacheResult::did_rasterize(Self) -> Bool
 pub fn FaceGlyphMaskCacheResult::get_mask(Self) -> CoverageMask
 pub fn FaceGlyphMaskCacheResult::get_placement(Self) -> FaceGlyphMaskPlacement
 pub fn FaceGlyphMaskCacheResult::to_repr(Self) -> @debug.Repr
 
-type FaceGlyphMaskPlacement derive(@debug.Debug)
+#derive(@debug.Debug)
+type FaceGlyphMaskPlacement
 pub fn FaceGlyphMaskPlacement::get_draw_offset_x(Self) -> Int32
 pub fn FaceGlyphMaskPlacement::get_draw_offset_y(Self) -> Int32
 pub fn FaceGlyphMaskPlacement::get_height(Self) -> Int32
@@ -57,7 +60,8 @@ pub fn FaceGlyphMaskPlacement::get_origin_y(Self) -> Double
 pub fn FaceGlyphMaskPlacement::get_width(Self) -> Int32
 pub fn FaceGlyphMaskPlacement::to_repr(Self) -> @debug.Repr
 
-type FileFontLoader derive(@debug.Debug)
+#derive(@debug.Debug)
+type FileFontLoader
 pub fn FileFontLoader::clear(Self) -> Unit
 pub fn FileFontLoader::contains(Self, String) -> Bool
 pub fn FileFontLoader::insert(Self, String, FontFileSource) -> FontFileSource
@@ -69,17 +73,20 @@ pub fn FileFontLoader::remove(Self, String) -> Unit
 pub fn FileFontLoader::to_repr(Self) -> @debug.Repr
 pub impl FontLoader for FileFontLoader
 
-type Font derive(@debug.Debug)
+#derive(@debug.Debug)
+type Font
 pub fn Font::to_repr(Self) -> @debug.Repr
 
-type FontData derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontData
 pub fn FontData::get_data(Self) -> Bytes
 pub fn FontData::get_font_index(Self) -> Int32
 pub fn FontData::new(Bytes, font_index? : Int32) -> Self
 pub fn FontData::parse(Self) -> Result[FontFace, FontParseError]
 pub fn FontData::to_repr(Self) -> @debug.Repr
 
-type FontFace derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontFace
 pub fn FontFace::char_to_glyph(Self, Int32) -> Int32
 pub fn FontFace::from_bytes(Bytes) -> Result[Self, FontParseError]
 pub fn FontFace::from_data(FontData) -> Result[Self, FontParseError]
@@ -89,7 +96,8 @@ pub fn FontFace::has_glyph_for_char(Self, Int32) -> Bool
 pub fn FontFace::text_run_outline(Self, String, Double, Double, Double, target_length? : Double) -> TextRunOutline
 pub fn FontFace::to_repr(Self) -> @debug.Repr
 
-type FontFaceCache derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontFaceCache
 pub fn FontFaceCache::capacity(Self) -> Int32
 pub fn FontFaceCache::clear(Self) -> Unit
 pub fn FontFaceCache::contains(Self, String) -> Bool
@@ -107,13 +115,15 @@ pub fn FontFaceCache::remove(Self, String) -> Unit
 pub fn FontFaceCache::to_repr(Self) -> @debug.Repr
 pub fn FontFaceCache::with_capacity(Int32) -> Self
 
-type FontFaceCacheParseResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontFaceCacheParseResult
 pub fn FontFaceCacheParseResult::did_hit_cache(Self) -> Bool
 pub fn FontFaceCacheParseResult::did_parse(Self) -> Bool
 pub fn FontFaceCacheParseResult::get_face(Self) -> FontFace
 pub fn FontFaceCacheParseResult::to_repr(Self) -> @debug.Repr
 
-type FontFallbackPlan derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontFallbackPlan
 pub fn FontFallbackPlan::get_char_count(Self) -> Int32
 pub fn FontFallbackPlan::get_missing_char_count(Self) -> Int32
 pub fn FontFallbackPlan::get_spans(Self) -> Array[FontFallbackSpan]
@@ -122,14 +132,16 @@ pub fn FontFallbackPlan::is_empty(Self) -> Bool
 pub fn FontFallbackPlan::span_count(Self) -> Int32
 pub fn FontFallbackPlan::to_repr(Self) -> @debug.Repr
 
-type FontFallbackSpan derive(@debug.Debug)
+#derive(@debug.Debug)
+type FontFallbackSpan
 pub fn FontFallbackSpan::get_char_count(Self) -> Int32
 pub fn FontFallbackSpan::get_face_index(Self) -> Int32
 pub fn FontFallbackSpan::get_text(Self) -> String
 pub fn FontFallbackSpan::is_missing(Self) -> Bool
 pub fn FontFallbackSpan::to_repr(Self) -> @debug.Repr
 
-type FontFileSource derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type FontFileSource
 pub fn FontFileSource::equal(Self, Self) -> Bool
 pub fn FontFileSource::get_font_index(Self) -> Int32
 pub fn FontFileSource::get_path(Self) -> String
@@ -137,37 +149,42 @@ pub fn FontFileSource::new(String, font_index? : Int32) -> Self
 pub fn FontFileSource::not_equal(Self, Self) -> Bool
 pub fn FontFileSource::to_repr(Self) -> @debug.Repr
 
-type FontHead derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type FontHead
 pub fn FontHead::equal(Self, Self) -> Bool
 pub fn FontHead::not_equal(Self, Self) -> Bool
 pub fn FontHead::to_repr(Self) -> @debug.Repr
 
-type FontHhea derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type FontHhea
 pub fn FontHhea::equal(Self, Self) -> Bool
 pub fn FontHhea::not_equal(Self, Self) -> Bool
 pub fn FontHhea::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FontLoadError {
   MissingFontData(String)
   FontFileReadFailed(String, String)
   FontParseFailed(String, FontParseError)
-} derive(Eq, @debug.Debug)
+}
 pub fn FontLoadError::equal(Self, Self) -> Bool
 pub fn FontLoadError::not_equal(Self, Self) -> Bool
 pub fn FontLoadError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct FontMetrics {
   units_per_em : Int32
   ascent : Int32
   descent : Int32
   line_gap : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn FontMetrics::equal(Self, Self) -> Bool
 pub fn FontMetrics::line_height(Self) -> Int32
 pub fn FontMetrics::new(units_per_em~ : Int32, ascent~ : Int32, descent~ : Int32, line_gap? : Int32) -> Self
 pub fn FontMetrics::not_equal(Self, Self) -> Bool
 pub fn FontMetrics::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FontParseError {
   UnexpectedEndOfData(Int32, Int32, Int32)
   InvalidFontHeader(UInt32)
@@ -184,12 +201,13 @@ pub(all) enum FontParseError {
   InvalidCmapSegmentCount(Int32)
   InvalidCmapSegmentRange(Int32, Int32)
   InvalidCmapGroupRange(Int32, Int32)
-} derive(Eq, @debug.Debug)
+}
 pub fn FontParseError::equal(Self, Self) -> Bool
 pub fn FontParseError::not_equal(Self, Self) -> Bool
 pub fn FontParseError::to_repr(Self) -> @debug.Repr
 
-type GlyphAtlasEntry derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphAtlasEntry
 pub fn GlyphAtlasEntry::get_height(Self) -> Int32
 pub fn GlyphAtlasEntry::get_key(Self) -> String
 pub fn GlyphAtlasEntry::get_width(Self) -> Int32
@@ -198,23 +216,28 @@ pub fn GlyphAtlasEntry::get_y(Self) -> Int32
 pub fn GlyphAtlasEntry::new(key~ : String, x~ : Int32, y~ : Int32, width~ : Int32, height~ : Int32) -> Self
 pub fn GlyphAtlasEntry::to_repr(Self) -> @debug.Repr
 
-type GlyphComponent derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphComponent
 pub fn GlyphComponent::to_repr(Self) -> @debug.Repr
 
-type GlyphContour derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphContour
 pub fn GlyphContour::to_repr(Self) -> @debug.Repr
 
-type GlyphData derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphData
 pub fn GlyphData::to_repr(Self) -> @debug.Repr
 
-type GlyphId derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type GlyphId
 pub fn GlyphId::equal(Self, Self) -> Bool
 pub fn GlyphId::new(Int32) -> Self
 pub fn GlyphId::not_equal(Self, Self) -> Bool
 pub fn GlyphId::to_int(Self) -> Int32
 pub fn GlyphId::to_repr(Self) -> @debug.Repr
 
-type GlyphInfo derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type GlyphInfo
 pub fn GlyphInfo::equal(Self, Self) -> Bool
 pub fn GlyphInfo::get_cluster(Self) -> Int32
 pub fn GlyphInfo::get_glyph_id(Self) -> GlyphId
@@ -222,7 +245,8 @@ pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int32) -> Self
 pub fn GlyphInfo::not_equal(Self, Self) -> Bool
 pub fn GlyphInfo::to_repr(Self) -> @debug.Repr
 
-type GlyphMaskAtlas derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphMaskAtlas
 pub fn GlyphMaskAtlas::can_fit(Self, CoverageMask) -> Bool
 pub fn GlyphMaskAtlas::clear(Self) -> Unit
 pub fn GlyphMaskAtlas::get(Self, String) -> GlyphAtlasEntry?
@@ -240,13 +264,15 @@ pub fn GlyphMaskAtlas::new(Int32, Int32) -> Self
 pub fn GlyphMaskAtlas::to_mask(Self) -> CoverageMask
 pub fn GlyphMaskAtlas::to_repr(Self) -> @debug.Repr
 
-type GlyphMaskAtlasInsertResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphMaskAtlasInsertResult
 pub fn GlyphMaskAtlasInsertResult::did_clear(Self) -> Bool
 pub fn GlyphMaskAtlasInsertResult::did_reuse(Self) -> Bool
 pub fn GlyphMaskAtlasInsertResult::get_entry(Self) -> GlyphAtlasEntry
 pub fn GlyphMaskAtlasInsertResult::to_repr(Self) -> @debug.Repr
 
-type GlyphMaskCache derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphMaskCache
 pub fn GlyphMaskCache::capacity(Self) -> Int32
 pub fn GlyphMaskCache::clear(Self) -> Unit
 pub fn GlyphMaskCache::contains(Self, String) -> Bool
@@ -261,15 +287,18 @@ pub fn GlyphMaskCache::remove(Self, String) -> Unit
 pub fn GlyphMaskCache::to_repr(Self) -> @debug.Repr
 pub fn GlyphMaskCache::with_capacity(Int32) -> Self
 
-type GlyphMaskCacheRasterizeResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphMaskCacheRasterizeResult
 pub fn GlyphMaskCacheRasterizeResult::to_repr(Self) -> @debug.Repr
 
-type GlyphPoint derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type GlyphPoint
 pub fn GlyphPoint::equal(Self, Self) -> Bool
 pub fn GlyphPoint::not_equal(Self, Self) -> Bool
 pub fn GlyphPoint::to_repr(Self) -> @debug.Repr
 
-type GlyphPosition derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type GlyphPosition
 pub fn GlyphPosition::equal(Self, Self) -> Bool
 pub fn GlyphPosition::get_glyph_id(Self) -> GlyphId
 pub fn GlyphPosition::get_x_advance(Self) -> Int32
@@ -280,18 +309,21 @@ pub fn GlyphPosition::new(glyph_id~ : GlyphId, x_advance? : Int32, y_advance? : 
 pub fn GlyphPosition::not_equal(Self, Self) -> Bool
 pub fn GlyphPosition::to_repr(Self) -> @debug.Repr
 
-type GlyphRun derive(@debug.Debug)
+#derive(@debug.Debug)
+type GlyphRun
 pub fn GlyphRun::get_baseline_y(Self) -> Double
 pub fn GlyphRun::get_glyphs(Self) -> Array[PositionedGlyph]
 pub fn GlyphRun::get_width(Self) -> Double
 pub fn GlyphRun::glyph_count(Self) -> Int32
 pub fn GlyphRun::to_repr(Self) -> @debug.Repr
 
-type KernPair derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type KernPair
 pub fn KernPair::equal(Self, Self) -> Bool
 pub fn KernPair::not_equal(Self, Self) -> Bool
 pub fn KernPair::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub struct LayoutConfig {
   max_width : Double
   font_size : Double
@@ -299,26 +331,30 @@ pub struct LayoutConfig {
   alignment : TextAlign
   letter_spacing : Double
   word_spacing : Double
-} derive(@debug.Debug)
+}
 pub fn LayoutConfig::new(max_width? : Double, font_size? : Double, line_height? : Double, alignment? : TextAlign, letter_spacing? : Double, word_spacing? : Double) -> Self
 pub fn LayoutConfig::to_repr(Self) -> @debug.Repr
 
-type LayoutLine derive(@debug.Debug)
+#derive(@debug.Debug)
+type LayoutLine
 pub fn LayoutLine::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct LayoutMetrics {
   width : Double
   height : Double
   baseline : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn LayoutMetrics::equal(Self, Self) -> Bool
 pub fn LayoutMetrics::new(width~ : Double, height~ : Double, baseline~ : Double) -> Self
 pub fn LayoutMetrics::not_equal(Self, Self) -> Bool
 pub fn LayoutMetrics::to_repr(Self) -> @debug.Repr
 
-type LayoutResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type LayoutResult
 pub fn LayoutResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum LineBreakClass {
   BK
   CR
@@ -355,7 +391,7 @@ pub enum LineBreakClass {
   ZWJ
   AI
   Unknown
-} derive(Eq, @debug.Debug)
+}
 pub fn LineBreakClass::equal(Self, Self) -> Bool
 pub fn LineBreakClass::not_equal(Self, Self) -> Bool
 pub fn LineBreakClass::output(Self, &Logger) -> Unit
@@ -363,15 +399,18 @@ pub fn LineBreakClass::to_repr(Self) -> @debug.Repr
 pub fn LineBreakClass::to_string(Self) -> String
 pub impl Show for LineBreakClass
 
-type LineSegment derive(@debug.Debug)
+#derive(@debug.Debug)
+type LineSegment
 pub fn LineSegment::to_repr(Self) -> @debug.Repr
 
-type LongHorMetric derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type LongHorMetric
 pub fn LongHorMetric::equal(Self, Self) -> Bool
 pub fn LongHorMetric::not_equal(Self, Self) -> Bool
 pub fn LongHorMetric::to_repr(Self) -> @debug.Repr
 
-type MemoryFontLoader derive(@debug.Debug)
+#derive(@debug.Debug)
+type MemoryFontLoader
 pub fn MemoryFontLoader::clear(Self) -> Unit
 pub fn MemoryFontLoader::contains(Self, String) -> Bool
 pub fn MemoryFontLoader::insert(Self, String, FontData) -> FontData
@@ -383,7 +422,8 @@ pub fn MemoryFontLoader::remove(Self, String) -> Unit
 pub fn MemoryFontLoader::to_repr(Self) -> @debug.Repr
 pub impl FontLoader for MemoryFontLoader
 
-type PositionedGlyph derive(@debug.Debug)
+#derive(@debug.Debug)
+type PositionedGlyph
 pub fn PositionedGlyph::get_advance_width(Self) -> Double
 pub fn PositionedGlyph::get_glyph_id(Self) -> Int32
 pub fn PositionedGlyph::get_x(Self) -> Double
@@ -400,7 +440,8 @@ pub fn Rasterizer::new(Int32, Int32) -> Self
 pub fn Rasterizer::rasterize_text_face(Self, FontFace, String, Double, Double, LayoutConfig) -> Unit
 pub fn Rasterizer::to_mask(Self) -> CoverageMask
 
-type Script derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Script
 pub fn Script::cjk() -> Self
 pub fn Script::cyrillic() -> Self
 pub fn Script::equal(Self, Self) -> Bool
@@ -409,14 +450,16 @@ pub fn Script::latin() -> Self
 pub fn Script::not_equal(Self, Self) -> Bool
 pub fn Script::to_repr(Self) -> @debug.Repr
 
-type ShapedText derive(@debug.Debug)
+#derive(@debug.Debug)
+type ShapedText
 pub fn ShapedText::get_glyphs(Self) -> Array[GlyphInfo]
 pub fn ShapedText::get_positions(Self) -> Array[GlyphPosition]
 pub fn ShapedText::get_width(Self) -> Int32
 pub fn ShapedText::glyph_count(Self) -> Int32
 pub fn ShapedText::to_repr(Self) -> @debug.Repr
 
-type ShapingBuffer derive(@debug.Debug)
+#derive(@debug.Debug)
+type ShapingBuffer
 pub fn ShapingBuffer::get_direction(Self) -> TextDirection
 pub fn ShapingBuffer::get_font_size(Self) -> Double
 pub fn ShapingBuffer::get_script(Self) -> Script
@@ -425,25 +468,29 @@ pub fn ShapingBuffer::new(String, direction? : TextDirection, script? : Script, 
 pub fn ShapingBuffer::shape(Self, FontData) -> ShapedText
 pub fn ShapingBuffer::to_repr(Self) -> @debug.Repr
 
-type SimpleGlyph derive(@debug.Debug)
+#derive(@debug.Debug)
+type SimpleGlyph
 pub fn SimpleGlyph::to_repr(Self) -> @debug.Repr
 
-type TableRecord derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type TableRecord
 pub fn TableRecord::equal(Self, Self) -> Bool
 pub fn TableRecord::not_equal(Self, Self) -> Bool
 pub fn TableRecord::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TextAlign {
   Left
   Center
   Right
   Justify
-} derive(Eq, @debug.Debug)
+}
 pub fn TextAlign::equal(Self, Self) -> Bool
 pub fn TextAlign::not_equal(Self, Self) -> Bool
 pub fn TextAlign::to_repr(Self) -> @debug.Repr
 
-type TextCaret derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type TextCaret
 pub fn TextCaret::equal(Self, Self) -> Bool
 pub fn TextCaret::get_baseline_y(Self) -> Double
 pub fn TextCaret::get_height(Self) -> Double
@@ -454,17 +501,19 @@ pub fn TextCaret::get_y(Self) -> Double
 pub fn TextCaret::not_equal(Self, Self) -> Bool
 pub fn TextCaret::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub enum TextDirection {
   LeftToRight
   RightToLeft
-} derive(Eq, @debug.Debug)
+}
 pub fn TextDirection::equal(Self, Self) -> Bool
 pub fn TextDirection::left_to_right() -> Self
 pub fn TextDirection::not_equal(Self, Self) -> Bool
 pub fn TextDirection::right_to_left() -> Self
 pub fn TextDirection::to_repr(Self) -> @debug.Repr
 
-type TextLayout derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextLayout
 pub fn TextLayout::get_baseline(Self) -> Double
 pub fn TextLayout::get_height(Self) -> Double
 pub fn TextLayout::get_metrics(Self) -> LayoutMetrics
@@ -474,7 +523,8 @@ pub fn TextLayout::layout(FontFace, String, LayoutConfig) -> Self
 pub fn TextLayout::run_count(Self) -> Int32
 pub fn TextLayout::to_repr(Self) -> @debug.Repr
 
-type TextMaskCache derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextMaskCache
 pub fn TextMaskCache::capacity(Self) -> Int32
 pub fn TextMaskCache::clear(Self) -> Unit
 pub fn TextMaskCache::contains(Self, String) -> Bool
@@ -490,18 +540,21 @@ pub fn TextMaskCache::remove(Self, String) -> Unit
 pub fn TextMaskCache::to_repr(Self) -> @debug.Repr
 pub fn TextMaskCache::with_capacity(Int32) -> Self
 
-type TextMaskCacheRenderResult derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextMaskCacheRenderResult
 pub fn TextMaskCacheRenderResult::did_render(Self) -> Bool
 pub fn TextMaskCacheRenderResult::get_mask(Self) -> CoverageMask
 pub fn TextMaskCacheRenderResult::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct TextRunOutline {
   width : Double
   polygons : Array[Array[(Double, Double)]]
-} derive(@debug.Debug)
+}
 pub fn TextRunOutline::to_repr(Self) -> @debug.Repr
 
-type TextSelectionRect derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type TextSelectionRect
 pub fn TextSelectionRect::equal(Self, Self) -> Bool
 pub fn TextSelectionRect::get_baseline_y(Self) -> Double
 pub fn TextSelectionRect::get_end_index(Self) -> Int32
@@ -514,7 +567,8 @@ pub fn TextSelectionRect::get_y(Self) -> Double
 pub fn TextSelectionRect::not_equal(Self, Self) -> Bool
 pub fn TextSelectionRect::to_repr(Self) -> @debug.Repr
 
-type TextSystem derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextSystem
 pub fn TextSystem::caret_at_text_position(Self, String, String, Double, Double, LayoutConfig) -> Result[TextCaret, FontLoadError]
 pub fn TextSystem::caret_for_text(Self, String, String, Int32, LayoutConfig) -> Result[TextCaret, FontLoadError]
 pub fn TextSystem::clear_font_face_cache(Self) -> Unit
@@ -546,7 +600,8 @@ pub fn TextSystem::to_repr(Self) -> @debug.Repr
 pub fn TextSystem::with_font_cache_capacity(Int32) -> Self
 pub impl FontLoader for TextSystem
 
-type TextSystemFontRegistration derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextSystemFontRegistration
 pub fn TextSystemFontRegistration::did_replace(Self) -> Bool
 pub fn TextSystemFontRegistration::did_replace_cached_face(Self) -> Bool
 pub fn TextSystemFontRegistration::get_face(Self) -> FontFace
@@ -555,7 +610,8 @@ pub fn TextSystemFontRegistration::get_font_data(Self) -> FontData
 pub fn TextSystemFontRegistration::get_key(Self) -> String
 pub fn TextSystemFontRegistration::to_repr(Self) -> @debug.Repr
 
-type TextSystemLayout derive(@debug.Debug)
+#derive(@debug.Debug)
+type TextSystemLayout
 pub fn TextSystemLayout::caret_at_position(Self, Double, Double) -> TextCaret
 pub fn TextSystemLayout::caret_for_index(Self, Int32) -> TextCaret
 pub fn TextSystemLayout::get_config(Self) -> LayoutConfig

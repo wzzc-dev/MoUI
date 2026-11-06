@@ -1,17 +1,19 @@
 ///|
 /// A frame-sized drawing target with a z-ordered layer tree and a dirty-present
 /// policy. This is the small unit an event loop can submit to a Surface.
+#derive(Debug)
 pub struct RenderFrame {
   mut canvas : Canvas
   layer_tree : LayerTree
   mut dirty_rect_limit : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrame with Debug::{to_repr}
 
 ///|
 /// Strategy-aware dry-run plan for submitting a RenderFrame to a Surface.
+#derive(Debug)
 pub struct RenderFrameSubmitPlan {
   dirty_submit_plan : DirtySubmitPlan
   strategy : DirtyPresentStrategy
@@ -19,28 +21,30 @@ pub struct RenderFrameSubmitPlan {
   present_rect_count : Int32
   present_pixel_count : Int32
   present_byte_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrameSubmitPlan with Debug::{to_repr}
 
 ///|
 /// Result of submitting a RenderFrame through the strategy-aware scheduler.
+#derive(Debug)
 pub struct RenderFrameSubmitResult {
   submit_plan : RenderFrameSubmitPlan
   presented_rect_count : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrameSubmitResult with Debug::{to_repr}
 
 ///|
 /// Event-loop-facing action selected from a dry-run RenderFrame submit plan.
+#derive(Eq, Debug)
 pub(all) enum RenderFrameScheduleAction {
   Skip
   SubmitWithoutPresent
   Present
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderFrameScheduleAction with Debug::{to_repr}
@@ -51,11 +55,12 @@ pub extend RenderFrameScheduleAction with Eq::{not_equal, equal}
 ///|
 /// Event-loop-facing submit policy for choosing between dirty-only work,
 /// cached repaint requests, and unconditional full redraws.
+#derive(Eq, Debug)
 pub(all) enum RenderFrameSubmitPolicy {
   DirtyOnly
   CachedRedraw
   FullRedraw
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderFrameSubmitPolicy with Debug::{to_repr}
@@ -65,10 +70,11 @@ pub extend RenderFrameSubmitPolicy with Eq::{not_equal, equal}
 
 ///|
 /// Dry-run scheduling decision for submitting a RenderFrame to a Surface.
+#derive(Debug)
 pub struct RenderFrameSchedule {
   submit_plan : RenderFrameSubmitPlan
   action : RenderFrameScheduleAction
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrameSchedule with Debug::{to_repr}
@@ -77,20 +83,22 @@ pub extend RenderFrameSchedule with Debug::{to_repr}
 /// Policy intent paired with the dry-run schedule selected for one frame
 /// submit. Event loops can inspect this request, then execute the same
 /// precomputed decision without recomputing scheduling state.
+#derive(Debug)
 pub struct RenderFrameSubmitRequest {
   policy : RenderFrameSubmitPolicy
   schedule : RenderFrameSchedule
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrameSubmitRequest with Debug::{to_repr}
 
 ///|
 /// Request to resize one frame-owned layer cache and clear it to a color.
+#derive(Eq, Debug)
 pub struct RenderFrameLayerClearRequest {
   layer_index : Int32
   color : Color
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RenderFrameLayerClearRequest with Debug::{to_repr}
@@ -100,10 +108,11 @@ pub extend RenderFrameLayerClearRequest with Eq::{not_equal, equal}
 
 ///|
 /// Request to replace one frame-owned layer cache.
+#derive(Debug)
 pub struct RenderFrameLayerReplacementRequest {
   layer_index : Int32
   layer : Layer
-} derive(Debug)
+}
 
 ///|
 pub extend RenderFrameLayerReplacementRequest with Debug::{to_repr}

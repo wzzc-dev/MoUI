@@ -3,11 +3,12 @@
 ///
 /// This mirrors the lightweight role of Skia's `SkPixmap`, but owns the copied
 /// bytes on the MoonBit side so it is safe across backend boundaries.
+#derive(Debug, Eq)
 pub(all) struct Pixmap {
   image_info : ImageInfo
   row_bytes : Int32
   pixels : Bytes
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Pixmap with Debug::{to_repr}

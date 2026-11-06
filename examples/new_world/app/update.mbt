@@ -8,6 +8,7 @@
 /// cosmetic event rather than a corrupted world.
 
 ///|
+#derive(Eq, Debug)
 pub struct WorldModel {
   scenario : Scenario
   conversations : ConversationBook
@@ -126,7 +127,7 @@ pub struct WorldModel {
   /// `selected` as "who answers next", so switching modes never rewrites a
   /// private chat.
   scene_location : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WorldModel with Debug::{to_repr}
@@ -203,6 +204,7 @@ pub type TurnRunner = (LlmRequest, (String?) -> Unit, (String) -> Unit) -> Unit
 /// (`conversations.json`, `events.json`) when present. Hosts that filter to
 /// `*.md` alone look correct but silently reset every conversation on reopen,
 /// so both entrypoints read the JSON files too.
+#derive(Debug)
 pub(all) struct WorldHost {
   /// Non-interactive listing of the world folders in the library.
   list_worlds : ((Array[String]) -> Unit) -> Unit
@@ -230,7 +232,7 @@ pub(all) struct WorldHost {
   /// Put text on the clipboard, so the prompt preview can be carried to
   /// another tool.
   copy_to_clipboard : (String) -> Unit
-} derive(Debug)
+}
 
 ///|
 pub extend WorldHost with Debug::{to_repr}

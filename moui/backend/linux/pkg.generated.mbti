@@ -3,6 +3,7 @@ package "wzzc-dev/moui/backend/linux"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/accesskit",
   "wzzc-dev/moui/backend/common/input",
@@ -64,29 +65,32 @@ pub fn LinuxATSPIBinding::new(dispatch~ : (@runtime.PerformSemanticsActionReques
 pub fn LinuxATSPIBinding::perform_action(Self, @runtime.PerformSemanticsActionRequest) -> @accesskit.AccessKitActionResult
 pub fn LinuxATSPIBinding::publish_semantics(Self, @runtime.SemanticsRead) -> LinuxATSPIBindingDiagnostics
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxATSPIBindingDiagnostics {
   native_binding_ready : Bool
   published_node_count : Int32
   action_dispatch_count : Int32
   disposed : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxATSPIBindingDiagnostics::equal(Self, Self) -> Bool
 pub fn LinuxATSPIBindingDiagnostics::not_equal(Self, Self) -> Bool
-pub fn LinuxATSPIBindingDiagnostics::to_json(Self) -> Json
+pub fn LinuxATSPIBindingDiagnostics::to_json(Self) -> @json.Json
 pub fn LinuxATSPIBindingDiagnostics::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : String
   semantics_bridge_available : Bool
   native_accessibility_bridge_available : Bool
   action_dispatch_available : Bool
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxAccessibilityBridgeInfo::equal(Self, Self) -> Bool
 pub fn LinuxAccessibilityBridgeInfo::not_equal(Self, Self) -> Bool
-pub fn LinuxAccessibilityBridgeInfo::to_json(Self) -> Json
+pub fn LinuxAccessibilityBridgeInfo::to_json(Self) -> @json.Json
 pub fn LinuxAccessibilityBridgeInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -99,12 +103,13 @@ pub(all) struct LinuxBackendCapabilities {
   drag_drop : Bool
   accessibility : Bool
   scale_factor : Bool
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxBackendCapabilities::equal(Self, Self) -> Bool
 pub fn LinuxBackendCapabilities::not_equal(Self, Self) -> Bool
-pub fn LinuxBackendCapabilities::to_json(Self) -> Json
+pub fn LinuxBackendCapabilities::to_json(Self) -> @json.Json
 pub fn LinuxBackendCapabilities::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxBackendInfo {
   host_info : @backend.HostAppInfo
   window_backend_available : Bool
@@ -114,30 +119,32 @@ pub(all) struct LinuxBackendInfo {
   services : @backend.HostServiceCapabilities
   readiness : LinuxBackendReadiness
   description : String
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxBackendInfo::equal(Self, Self) -> Bool
 pub fn LinuxBackendInfo::not_equal(Self, Self) -> Bool
-pub fn LinuxBackendInfo::to_json(Self) -> Json
+pub fn LinuxBackendInfo::to_json(Self) -> @json.Json
 pub fn LinuxBackendInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxBackendReadiness {
   ready : Bool
   blocked_by : Array[String]
   next_steps : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxBackendReadiness::equal(Self, Self) -> Bool
 pub fn LinuxBackendReadiness::not_equal(Self, Self) -> Bool
-pub fn LinuxBackendReadiness::to_json(Self) -> Json
+pub fn LinuxBackendReadiness::to_json(Self) -> @json.Json
 pub fn LinuxBackendReadiness::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
-} derive(Eq, ToJson, @debug.Debug)
+}
 pub fn LinuxClientDecorationState::equal(Self, Self) -> Bool
 pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double) -> Self
 pub fn LinuxClientDecorationState::not_equal(Self, Self) -> Bool
-pub fn LinuxClientDecorationState::to_json(Self) -> Json
+pub fn LinuxClientDecorationState::to_json(Self) -> @json.Json
 pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 
 pub struct LinuxHostAppOptions {

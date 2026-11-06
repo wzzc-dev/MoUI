@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum XrSessionMode {
   Inline
   ImmersiveVr
   ImmersiveAr
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend XrSessionMode with Debug::{to_repr}
@@ -15,10 +16,11 @@ pub extend XrSessionMode with Eq::{not_equal, equal}
 pub extend XrSessionMode with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum XrBackend {
   WebXr
   OpenXr
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend XrBackend with Debug::{to_repr}
@@ -30,6 +32,7 @@ pub extend XrBackend with Eq::{not_equal, equal}
 pub extend XrBackend with ToJson::{to_json}
 
 ///|
+#derive(Debug)
 pub(all) struct XrView {
   view : @moui_3d.Mat4
   projection : @moui_3d.Mat4
@@ -37,7 +40,7 @@ pub(all) struct XrView {
   viewport_y : Int32
   viewport_width : Int32
   viewport_height : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend XrView with Debug::{to_repr}
@@ -75,10 +78,11 @@ pub fn XrView::viewport_height(self : XrView) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct XrPose {
   position : @moui_3d.Vec3
   orientation : @moui_3d.Quat
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend XrPose with Debug::{to_repr}
@@ -108,12 +112,13 @@ pub fn XrPose::orientation(self : XrPose) -> @moui_3d.Quat {
 }
 
 ///|
+#derive(Debug)
 pub(all) struct XrInputSource {
   id : String
   handedness : String
   grip : XrPose?
   target_ray : XrPose?
-} derive(Debug)
+}
 
 ///|
 pub extend XrInputSource with Debug::{to_repr}
@@ -149,11 +154,12 @@ pub fn XrInputSource::target_ray(self : XrInputSource) -> XrPose? {
 }
 
 ///|
+#derive(Debug)
 pub(all) struct XrFrame {
   timestamp : Double
   views : Array[XrView]
   input_sources : Array[XrInputSource]
-} derive(Debug)
+}
 
 ///|
 pub extend XrFrame with Debug::{to_repr}
@@ -183,11 +189,12 @@ pub fn XrFrame::input_sources(self : XrFrame) -> Array[XrInputSource] {
 }
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum XrResult {
   Presented
   Unavailable(String)
   Failed(String)
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend XrResult with Debug::{to_repr}
@@ -199,11 +206,12 @@ pub extend XrResult with Eq::{not_equal, equal}
 pub extend XrResult with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct XrProviderDescriptor {
   backend : XrBackend
   id : String
   status : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend XrProviderDescriptor with Debug::{to_repr}

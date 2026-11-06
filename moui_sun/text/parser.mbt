@@ -1,5 +1,6 @@
 ///|
 /// Error returned by the checked TTF parser entry point.
+#derive(Eq, Debug)
 pub(all) enum FontParseError {
   UnexpectedEndOfData(Int32, Int32, Int32)
   InvalidFontHeader(UInt32)
@@ -16,7 +17,7 @@ pub(all) enum FontParseError {
   InvalidCmapSegmentCount(Int32)
   InvalidCmapSegmentRange(Int32, Int32)
   InvalidCmapGroupRange(Int32, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FontParseError with Debug::{to_repr}

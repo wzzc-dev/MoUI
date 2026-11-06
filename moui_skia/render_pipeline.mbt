@@ -1,5 +1,6 @@
 ///|
 /// Value-layer boundary for a single render pass.
+#derive(Debug, Eq)
 pub(all) struct RenderPassDescriptor {
   surface : SurfaceDescriptor
   target_key : RendererResourceKey?
@@ -7,7 +8,7 @@ pub(all) struct RenderPassDescriptor {
   load_op : RenderPassLoadOp
   clear_color : Color?
   store_op : RenderPassStoreOp
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderPassDescriptor with Debug::{to_repr}

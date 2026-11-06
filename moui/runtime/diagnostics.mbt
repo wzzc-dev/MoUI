@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SubscriptionKindCount {
   priv kind : String
   priv count : Int32
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionKindCount with Debug::{to_repr}
@@ -14,10 +15,11 @@ pub extend SubscriptionKindCount with Eq::{not_equal, equal}
 pub extend SubscriptionKindCount with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
   SubscriptionCancelled
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionLifecycleStatus with Debug::{to_repr}
@@ -29,11 +31,12 @@ pub extend SubscriptionLifecycleStatus with Eq::{not_equal, equal}
 pub extend SubscriptionLifecycleStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
   SubscriptionKindChanged
   SubscriptionRuntimeDestroyed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionCancelReason with Debug::{to_repr}
@@ -45,13 +48,14 @@ pub extend SubscriptionCancelReason with Eq::{not_equal, equal}
 pub extend SubscriptionCancelReason with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct SubscriptionLifecycleSnapshot {
   priv key : String
   priv kind : String
   priv label : String
   priv status : SubscriptionLifecycleStatus
   priv cancel_reason : SubscriptionCancelReason?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend SubscriptionLifecycleSnapshot with Debug::{to_repr}
@@ -63,11 +67,12 @@ pub extend SubscriptionLifecycleSnapshot with Eq::{not_equal, equal}
 pub extend SubscriptionLifecycleSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskActive
   EffectTaskCompleted
   EffectTaskCancelled
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectTaskLifecycleStatus with Debug::{to_repr}
@@ -79,11 +84,12 @@ pub extend EffectTaskLifecycleStatus with Eq::{not_equal, equal}
 pub extend EffectTaskLifecycleStatus with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
   EffectTaskKindChanged
   EffectTaskRuntimeDestroyed
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectTaskCancelReason with Debug::{to_repr}
@@ -95,13 +101,14 @@ pub extend EffectTaskCancelReason with Eq::{not_equal, equal}
 pub extend EffectTaskCancelReason with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct EffectTaskLifecycleSnapshot {
   priv key : String
   priv kind : String
   priv label : String
   priv status : EffectTaskLifecycleStatus
   priv cancel_reason : EffectTaskCancelReason?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend EffectTaskLifecycleSnapshot with Debug::{to_repr}
@@ -113,6 +120,7 @@ pub extend EffectTaskLifecycleSnapshot with Eq::{not_equal, equal}
 pub extend EffectTaskLifecycleSnapshot with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct ProgramRuntimeSnapshot {
   priv dispatched_count : Int32
   priv update_count : Int32
@@ -154,7 +162,7 @@ pub struct ProgramRuntimeSnapshot {
   priv active_subscriptions : Array[@core.SubscriptionDescriptor]
   priv active_subscription_kind_counts : Array[SubscriptionKindCount]
   priv subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ProgramRuntimeSnapshot with Debug::{to_repr}

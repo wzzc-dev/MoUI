@@ -1,11 +1,12 @@
 ///|
 /// Portable color-filter recipes that mirror the native filter constructors.
+#derive(Debug, Eq)
 pub(all) enum ColorFilterDescriptor {
   ColorMatrixFilter(Array[Float])
   SaturationFilter(Float)
   BrightnessFilter(Float)
   ContrastFilter(Float)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ColorFilterDescriptor with Debug::{to_repr}

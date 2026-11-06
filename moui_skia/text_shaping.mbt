@@ -1,11 +1,12 @@
 ///|
 /// Value-layer request for shaping a text run with stable cache identity and
 /// explicit font/fallback dependencies.
+#derive(Debug, Eq)
 pub(all) struct TextShapingDescriptor {
   run : TextRunDescriptor
   font_key : RendererResourceKey
   width : Float
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TextShapingDescriptor with Debug::{to_repr}
@@ -121,12 +122,13 @@ fn normalized_shaped_text_advance(advance : Point) -> Point {
 
 ///|
 /// Value-layer metadata for a native shaped text run result.
+#derive(Debug, Eq)
 pub(all) struct ShapedTextRunDescriptor {
   shaping : TextShapingDescriptor
   glyph_count : Int32
   cluster_count : Int32
   advance : Point
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ShapedTextRunDescriptor with Debug::{to_repr}
@@ -323,12 +325,13 @@ fn normalized_shaped_glyph_text_run(
 
 ///|
 /// Detailed glyph IDs, positions, and clusters for a shaped text run.
+#derive(Debug, Eq)
 pub(all) struct ShapedGlyphRunDescriptor {
   shaped_run : ShapedTextRunDescriptor
   glyph_ids : Array[Int32]
   positions : Array[Point]
   clusters : Array[Int32]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ShapedGlyphRunDescriptor with Debug::{to_repr}

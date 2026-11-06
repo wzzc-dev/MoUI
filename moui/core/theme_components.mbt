@@ -11,6 +11,7 @@
 /// control theme token structs (`ButtonTheme`, `ControlStateTokens`,
 /// `ComponentThemes`, …) moved to `moui/views` as `ControlThemeSet`; this
 /// file no longer carries control-specific types.
+#derive(Eq, Debug, ToJson)
 pub(all) enum InteractionState {
   Normal
   Hovered
@@ -19,7 +20,7 @@ pub(all) enum InteractionState {
   Disabled
   Selected
   Invalid
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend InteractionState with Debug::{to_repr}

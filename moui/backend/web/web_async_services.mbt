@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 enum WebAsyncHostServiceKind {
   ClipboardReadText
   ClipboardReadImage
@@ -8,7 +9,7 @@ enum WebAsyncHostServiceKind {
   FileDialogPickDirectory
   TextFileReadText
   TextFileWriteText
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebAsyncHostServiceKind with Debug::{to_repr}
@@ -20,6 +21,7 @@ pub extend WebAsyncHostServiceKind with Eq::{not_equal, equal}
 pub extend WebAsyncHostServiceKind with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 struct WebAsyncHostServiceRequest {
   id : @host.HostServiceRequestId
   kind : WebAsyncHostServiceKind
@@ -28,7 +30,7 @@ struct WebAsyncHostServiceRequest {
   default_name : String
   path : String
   text : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend WebAsyncHostServiceRequest with Debug::{to_repr}

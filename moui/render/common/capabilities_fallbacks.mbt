@@ -3,6 +3,7 @@
 /// vocabulary renderers push/pop on their own execution state stacks while
 /// interpreting a `@core.DrawCommand` stream directly, and the same kinds
 /// `plan_renderer_command_fallbacks` validates on the stream itself.
+#derive(Eq)
 pub(all) enum PlanScopeKind {
   Clip
   RoundedClip
@@ -10,7 +11,7 @@ pub(all) enum PlanScopeKind {
   Opacity
   Layer
   Filter
-} derive(Eq)
+}
 
 ///|
 pub extend PlanScopeKind with Eq::{not_equal, equal}

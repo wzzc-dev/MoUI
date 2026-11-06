@@ -1,11 +1,12 @@
 ///|
 /// Fill rule used when rasterizing a path.
+#derive(Debug, Eq)
 pub(all) enum PathFillType {
   Winding
   EvenOdd
   InverseWinding
   InverseEvenOdd
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PathFillType with Debug::{to_repr}
@@ -38,10 +39,11 @@ pub fn PathFillType::to_skia_ordinal(self : PathFillType) -> Int32 {
 
 ///|
 /// Direction used when adding closed contours.
+#derive(Debug, Eq)
 pub(all) enum PathDirection {
   CW
   CCW
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PathDirection with Debug::{to_repr}
@@ -67,10 +69,11 @@ pub fn PathDirection::to_skia_ordinal(self : PathDirection) -> Int32 {
 
 ///|
 /// How path appends connect the source path to the destination path.
+#derive(Debug, Eq)
 pub(all) enum AddPathMode {
   Append
   Extend
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend AddPathMode with Debug::{to_repr}
@@ -88,6 +91,7 @@ pub impl Default for AddPathMode with fn default() {
 
 ///|
 /// Cross-platform path verb data modeled after Skia path commands.
+#derive(Debug, Eq)
 pub(all) enum PathVerb {
   MoveTo(Point)
   LineTo(Point)
@@ -95,7 +99,7 @@ pub(all) enum PathVerb {
   ConicTo(Point, Point, Float)
   CubicTo(Point, Point, Point)
   Close
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PathVerb with Debug::{to_repr}
@@ -105,10 +109,11 @@ pub extend PathVerb with Eq::{not_equal, equal}
 
 ///|
 /// A single line segment recognized from a path.
+#derive(Debug, Eq)
 pub(all) struct PathLine {
   start : Point
   end : Point
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PathLine with Debug::{to_repr}
@@ -123,11 +128,12 @@ pub fn PathLine::new(start : Point, end : Point) -> PathLine {
 
 ///|
 /// Rectangle recognized from a path, plus Skia's closed and direction metadata.
+#derive(Debug, Eq)
 pub(all) struct PathRect {
   rect : Rect
   is_closed : Bool
   direction : PathDirection
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend PathRect with Debug::{to_repr}
@@ -146,7 +152,8 @@ pub fn PathRect::new(
 
 ///|
 /// Bitmask of path segment kinds, matching Skia's public segment-mask values.
-pub(all) struct PathSegmentMask(Int32) derive(Debug, Eq)
+#derive(Debug, Eq)
+pub(all) struct PathSegmentMask(Int32)
 
 ///|
 pub extend PathSegmentMask with Debug::{to_repr}
@@ -212,11 +219,12 @@ fn PathSegmentMask::union(
 /// The native package owns real `SkPath` handles. This value layer keeps a
 /// portable path command stream that can be built, inspected, and tested on all
 /// MoonBit targets before being converted at a native boundary.
+#derive(Debug, Eq)
 pub(all) struct Path {
   fill_type : PathFillType
   verbs : Array[PathVerb]
   current_point : Point?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Path with Debug::{to_repr}

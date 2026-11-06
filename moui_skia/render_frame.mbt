@@ -30,13 +30,14 @@ fn render_frame_resource_descriptors(
 
 ///|
 /// Validation outcome for a finalized render frame.
+#derive(Debug, Eq)
 pub(all) enum RenderFrameValidationStatus {
   FrameReady
   FrameTargetMismatch
   FrameUnbalancedState
   FrameMissingGpuContext
   FrameMissingPresent
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderFrameValidationStatus with Debug::{to_repr}
@@ -53,13 +54,14 @@ pub fn RenderFrameValidationStatus::is_ready(
 
 ///|
 /// Frame-level value boundary for a target plus its finalized render commands.
+#derive(Debug, Eq)
 pub(all) struct RenderFrameDescriptor {
   target : SurfaceTargetDescriptor
   command_list : RenderCommandList
   resource_plan : RendererResourcePlan
   stats : RenderCommandStats
   touched_bounds : Rect?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderFrameDescriptor with Debug::{to_repr}

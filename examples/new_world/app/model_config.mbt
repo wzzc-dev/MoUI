@@ -13,6 +13,7 @@
 /// stays out of every world export, import, and shared world folder.
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub struct ModelConfig {
   endpoint : String
   model : String
@@ -28,7 +29,7 @@ pub struct ModelConfig {
   /// like `context_preset`: an absent field defaults to paper, never wipes
   /// the rest of the configuration.
   appearance : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ModelConfig with Debug::{to_repr}

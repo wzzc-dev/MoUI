@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum SessionPhase {
   Boot
   Locked
   Login
   Unlocked
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SessionPhase with Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend SessionPhase with Debug::{to_repr}
 pub extend SessionPhase with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DesktopOverlay {
   OverlayNone
   MenuBarMenu(DesktopMenu)
@@ -23,7 +25,7 @@ pub(all) enum DesktopOverlay {
   AboutThisMac
   SystemSettings
   AppStore
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DesktopOverlay with Debug::{to_repr}
@@ -32,6 +34,7 @@ pub extend DesktopOverlay with Debug::{to_repr}
 pub extend DesktopOverlay with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DesktopMenu {
   SystemMenu
   AppMenu
@@ -41,7 +44,7 @@ pub(all) enum DesktopMenu {
   GoMenu
   WindowMenu
   HelpMenu
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DesktopMenu with Debug::{to_repr}
@@ -50,6 +53,7 @@ pub extend DesktopMenu with Debug::{to_repr}
 pub extend DesktopMenu with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MenuCommand {
   ToggleAppearance
   ShowAboutThisMac
@@ -72,7 +76,7 @@ pub(all) enum MenuCommand {
   ResetDesktopSettingsCommand
   LogOutSession
   ToggleLanguageCommand
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MenuCommand with Debug::{to_repr}
@@ -81,11 +85,12 @@ pub extend MenuCommand with Debug::{to_repr}
 pub extend MenuCommand with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum FinderLocation {
   Documents
   Applications
   Downloads
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FinderLocation with Debug::{to_repr}
@@ -94,10 +99,11 @@ pub extend FinderLocation with Debug::{to_repr}
 pub extend FinderLocation with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum FinderViewMode {
   IconView
   ListView
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FinderViewMode with Debug::{to_repr}
@@ -106,10 +112,11 @@ pub extend FinderViewMode with Debug::{to_repr}
 pub extend FinderViewMode with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum LauncherTab {
   Apps
   Actions
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LauncherTab with Debug::{to_repr}
@@ -118,11 +125,12 @@ pub extend LauncherTab with Debug::{to_repr}
 pub extend LauncherTab with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DesktopTask {
   ReviewDesktop
   ReplyToMaya
   PlanTahoePhotos
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DesktopTask with Debug::{to_repr}
@@ -131,11 +139,12 @@ pub extend DesktopTask with Debug::{to_repr}
 pub extend DesktopTask with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AppearanceMode {
   SystemAppearance
   LightAppearance
   DarkAppearance
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AppearanceMode with Debug::{to_repr}
@@ -144,10 +153,11 @@ pub extend AppearanceMode with Debug::{to_repr}
 pub extend AppearanceMode with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BrowserPage {
   StartPage
   SearchResults(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BrowserPage with Debug::{to_repr}
@@ -156,11 +166,12 @@ pub extend BrowserPage with Debug::{to_repr}
 pub extend BrowserPage with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DesktopService {
   SystemAppearanceService
   FileImportService
   UrlOpenService
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DesktopService with Debug::{to_repr}
@@ -169,6 +180,7 @@ pub extend DesktopService with Debug::{to_repr}
 pub extend DesktopService with Eq::{not_equal, equal}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct DesktopClock {
   year : Int32
   month : Int32
@@ -177,7 +189,7 @@ pub(all) struct DesktopClock {
   hour : Int32
   minute : Int32
   second : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DesktopClock with Debug::{to_repr}

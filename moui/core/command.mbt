@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum CommandIntent {
   Activate
   Submit
@@ -10,7 +11,7 @@ pub(all) enum CommandIntent {
   Redo
   SelectAll
   OpenContextMenu
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend CommandIntent with Debug::{to_repr}
@@ -22,6 +23,7 @@ pub extend CommandIntent with Eq::{not_equal, equal}
 pub extend CommandIntent with ToJson::{to_json}
 
 ///|
+#derive(Eq, Debug, ToJson)
 pub(all) struct ActionCommand {
   intent : CommandIntent
   shortcut : KeyboardShortcut?
@@ -30,7 +32,7 @@ pub(all) struct ActionCommand {
   group : String
   description : String
   context_menu : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ActionCommand with Debug::{to_repr}

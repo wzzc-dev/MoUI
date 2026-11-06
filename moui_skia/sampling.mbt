@@ -1,9 +1,10 @@
 ///|
 /// Cubic resampler coefficients for high-quality image scaling.
+#derive(Debug, Eq)
 pub(all) struct CubicResampler {
   b : Scalar
   c : Scalar
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CubicResampler with Debug::{to_repr}
@@ -30,11 +31,12 @@ pub fn CubicResampler::catmull_rom() -> CubicResampler {
 
 ///|
 /// Image sampling options modeled after Skia's `SkSamplingOptions`.
+#derive(Debug, Eq)
 pub(all) struct SamplingOptions {
   filter : FilterMode
   mipmap : MipmapMode
   cubic : CubicResampler?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend SamplingOptions with Debug::{to_repr}

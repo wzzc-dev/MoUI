@@ -8,6 +8,7 @@ fn RenderCommand::save_depth_delta(self : RenderCommand) -> Int32 {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct RenderCommandStats {
   command_count : Int32
   draw_count : Int32
@@ -26,7 +27,7 @@ pub(all) struct RenderCommandStats {
   max_save_depth : Int32
   final_save_depth : Int32
   unbalanced_restore_count : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RenderCommandStats with Debug::{to_repr}

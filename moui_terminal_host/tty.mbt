@@ -42,11 +42,12 @@ fn fd_is_a_terminal(fd : Int32) -> Bool {
 ///|
 /// `wait` 的结果。`Timeout` 不是错误:它就是「这一轮没有更多字节」的事实,
 /// 解码器据此把裸 ESC 结算成 Escape 键。
+#derive(Eq, Debug)
 pub enum PollState {
   Ready
   Timeout
   Unavailable
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PollState with Eq::{not_equal, equal}

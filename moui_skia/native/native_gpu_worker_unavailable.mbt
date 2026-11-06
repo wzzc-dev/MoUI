@@ -3,6 +3,7 @@
 pub struct NativeGpuRenderWorker {}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum NativeGpuWorkerCompletionStatus {
   PictureRecorded
   Dropped
@@ -10,9 +11,10 @@ pub(all) enum NativeGpuWorkerCompletionStatus {
   FallbackToRaster
   Presented
   Unknown(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct NativeGpuWorkerCompletion {
   sequence : Int64
   control_token : Int64
@@ -23,9 +25,10 @@ pub(all) struct NativeGpuWorkerCompletion {
   processed_at_ms : Double
   presented_at_ms : Double
   status : NativeGpuWorkerCompletionStatus
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct NativeGpuWorkerDiagnostics {
   worker_thread_id : Int64
   submitted : Int64
@@ -39,7 +42,7 @@ pub(all) struct NativeGpuWorkerDiagnostics {
   resource_cache_bytes : Int64
   control_pending : Int32
   completion_pending : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend NativeGpuWorkerCompletion with Debug::{to_repr}

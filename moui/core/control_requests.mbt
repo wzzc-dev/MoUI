@@ -1,10 +1,11 @@
 ///|
 /// Immutable programmatic scroll request. A monotonically increasing `id`
 /// lets the runtime-owned element slot apply each request at most once.
+#derive(Eq, Debug, ToJson)
 pub(all) struct ScrollRequest {
   id : Int32
   offset : Point
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend ScrollRequest with Debug::{to_repr}
@@ -23,10 +24,11 @@ pub fn ScrollRequest::new(id~ : Int32, offset~ : Point) -> ScrollRequest {
 ///|
 /// Immutable programmatic focus request. Reusing an id is a no-op for an
 /// already mounted target.
+#derive(Eq, Debug, ToJson)
 pub(all) struct FocusRequest {
   id : Int32
   key : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend FocusRequest with Debug::{to_repr}

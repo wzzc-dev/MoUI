@@ -12,13 +12,14 @@
 /// position written into `caret`/`selection`) is all a redo step needs,
 /// because `before` and `after` already describe both directions of
 /// the edit.
+#derive(Eq, Debug, ToJson)
 pub(all) struct TextHistoryEntryContext {
   start : Int32
   before : String
   after : String
   caret : Int32
   selection : TextRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub extend TextHistoryEntryContext with Debug::{to_repr}

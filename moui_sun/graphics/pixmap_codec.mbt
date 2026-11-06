@@ -1,5 +1,6 @@
 ///|
 /// Error returned when decoding pixmap bytes.
+#derive(Eq, Debug)
 pub(all) enum PixmapDecodeError {
   UnexpectedEndOfData(Int32, Int32, Int32)
   InvalidRgbaDimensions(Int32, Int32)
@@ -34,7 +35,7 @@ pub(all) enum PixmapDecodeError {
   PngStoredBlockLengthMismatch(Int32, Int32)
   PngInflateLengthMismatch(Int32, Int32)
   PngScanlineLengthMismatch(Int32, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PixmapDecodeError with Debug::{to_repr}
@@ -44,9 +45,10 @@ pub extend PixmapDecodeError with Eq::{not_equal, equal}
 
 ///|
 /// Error returned when encoding pixmap bytes.
+#derive(Eq, Debug)
 pub(all) enum PixmapEncodeError {
   InvalidPngDimensions(Int32, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PixmapEncodeError with Debug::{to_repr}
@@ -226,6 +228,7 @@ fn append_bmp_u32_le(out : Array[Byte], value : Int32) -> Unit {
 }
 
 ///|
+#derive(Debug)
 struct BmpInfo {
   pixel_offset : Int32
   width : Int32
@@ -233,7 +236,7 @@ struct BmpInfo {
   is_top_down : Bool
   bytes_per_pixel : Int32
   source_row_bytes : Int32
-} derive(Debug)
+}
 
 ///|
 pub extend BmpInfo with Debug::{to_repr}
