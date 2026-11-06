@@ -1199,12 +1199,14 @@ pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (M
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::runtime_commands(Self[Model, Msg], Model) -> Array[ProgramCommand[Msg]]
 pub fn[Model, Msg] Program::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg])
+pub fn[Model, Msg] Program::runtime_state_persistence(Self[Model, Msg]) -> ProgramStatePersistence[Model]?
 pub fn[Model, Msg] Program::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
 pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
 pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::with_commands(Self[Model, Msg], commands~ : (Model) -> Array[ProgramCommand[Msg]]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::with_state_persistence(Self[Model, Msg], save~ : (Model) -> String, load~ : (String) -> Model?) -> Self[Model, Msg]
 
 pub struct ProgramCommand[Msg] {
   command : ActionCommand
@@ -1214,6 +1216,20 @@ pub fn[Msg] ProgramCommand::command(Self[Msg]) -> ActionCommand
 pub fn[Msg, NextMsg] ProgramCommand::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] ProgramCommand::message(Self[Msg]) -> Msg
 pub fn[Msg] ProgramCommand::new(command~ : ActionCommand, message~ : Msg) -> Self[Msg]
+
+pub struct ProgramStatePersistence[Model] {
+  // private fields
+}
+pub fn[Model] ProgramStatePersistence::load(Self[Model], String) -> Model?
+pub fn[Model] ProgramStatePersistence::new(save~ : (Model) -> String, load~ : (String) -> Model?) -> Self[Model]
+pub fn[Model] ProgramStatePersistence::save(Self[Model], Model) -> String
+
+pub struct ProgramStateTransport {
+  // private fields
+}
+pub fn ProgramStateTransport::new(read~ : () -> String?, write~ : (String) -> Unit) -> Self
+pub fn ProgramStateTransport::read(Self) -> String?
+pub fn ProgramStateTransport::write(Self, String) -> Unit
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RadialGradientSpec {

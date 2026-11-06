@@ -62,3 +62,23 @@ fn text_frame(
   }
   None
 }
+
+///|
+test "counter dev-state persistence round-trips the model" {
+  match @app.program_with_dev_state().runtime_state_persistence() {
+    Some(persistence) => {
+      let mut model = @app.Model::new()
+      for _ in 0..<42 {
+        model = @app.update(model, @app.Increment)
+      }
+      let payload = persistence.save(model)
+      match persistence.load(payload) {
+        Some(model) => inspect(model.count, content="42")
+        None => abort("expected model restore")
+      }
+      assert_true(persistence.load("not json") is None)
+      assert_true(persistence.load("{}") is None)
+    }
+    None => abort("expected dev-state persistence")
+  }
+}

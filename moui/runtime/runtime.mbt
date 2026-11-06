@@ -42,9 +42,27 @@ pub fn[Model, Msg] AppRuntime::new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
   environment~ : @core.Environment = @core.Environment::neutral(),
+  state_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
-  let model = Ref(initial_model)
+  // State-preserving dev restart: when the program declares persistence and
+  // the composition root supplies a transport, restore the model from the
+  // transport payload after init. Init effects still run; a missing or
+  // unreadable payload falls back to the init model.
+  let model = Ref(
+    match (program.runtime_state_persistence(), state_transport) {
+      (Some(persistence), Some(transport)) =>
+        match transport.read() {
+          Some(payload) =>
+            match persistence.load(payload) {
+              Some(restored) => restored
+              None => initial_model
+            }
+          None => initial_model
+        }
+      _ => initial_model
+    },
+  )
   let program_runtime = ProgramRuntimeDiagnostics::new()
   let pending_messages : Array[Msg] = []
   let pending_index = Ref(0)
@@ -115,6 +133,11 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let (next_model, effect) = program.runtime_update(model.val, message)
         program_runtime.record_update()
         model.val = next_model
+        match (program.runtime_state_persistence(), state_transport) {
+          (Some(persistence), Some(transport)) =>
+            transport.write(persistence.save(next_model))
+          _ => ()
+        }
         match runtime_ref.val {
           Some(runtime) => runtime.state.request_root_rebuild()
           None => ()
@@ -214,8 +237,9 @@ pub fn[Model, Msg] new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
   environment~ : @core.Environment = @core.Environment::neutral(),
+  state_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
-  AppRuntime::new_program(program~, size~, environment~)
+  AppRuntime::new_program(program~, size~, environment~, state_transport~)
 }
 
 ///|
@@ -224,11 +248,13 @@ pub fn[Model, Msg] new_program_with_dimensions(
   width~ : Double,
   height~ : Double,
   environment~ : @core.Environment = @core.Environment::neutral(),
+  state_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
   AppRuntime::new_program(
     program~,
     size=@core.Size::new(width~, height~),
     environment~,
+    state_transport~,
   )
 }
 

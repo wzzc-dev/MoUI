@@ -261,3 +261,23 @@ the current entry count. The cache does not change `View::map`; caching a
 mapped subtree requires the mapping to be part of the cached builder. The API
 is advanced core and is not re-exported from the root `moui` facade; see
 [ADR 0057](decisions/0057-explicit-builder-cache.md).
+
+## State-Preserving Dev Restarts
+
+`Program::with_state_persistence(save~, load~)` declares how the application
+model serializes to a string payload and recovers from one. When the
+composition root also passes a `ProgramStateTransport` to the
+`@runtime.new_program*` constructors — the shared native desktop services ship
+`dev_state_transport` / `dev_state_transport_path` over `MOUI_DEV_STATE_FILE`,
+which `moui dev` sets for every native restart — the runtime:
+
+1. Restores the model from the transport payload after `init` returns. Init
+   effects still run, and a missing, stale, or unreadable payload falls back to
+   the init model.
+2. Writes the serialized model back through the transport after every
+   committed update, so a dev-loop kill and restart resumes from the last
+   update rather than the initial model.
+
+Only the application model crosses the restart. Runtime-slot state (hover,
+focus, caret/selection, scroll) stays transient by design. This is a
+restart-based handoff, not an in-process hot reload.

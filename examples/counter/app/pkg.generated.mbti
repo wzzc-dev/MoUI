@@ -8,6 +8,8 @@ import {
 // Values
 pub fn program() -> @core.Program[Model, Msg]
 
+pub fn program_with_dev_state() -> @core.Program[Model, Msg]
+
 pub fn update(Model, Msg) -> Model
 
 pub fn view(Model) -> @core.View[Msg]

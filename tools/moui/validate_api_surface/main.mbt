@@ -418,8 +418,14 @@ fn package_budgets() -> Array[PackageBudget] {
       // two keyed constructors, stats getters, manual remove/clear, and the
       // derived equality/debug declarations. It stays advanced core rather
       // than entering the root app facade.
-      max_lines: 2735,
-      max_pub_lines: 1159,
+      // ProgramStateTransport / ProgramStatePersistence (+16 lines, +10 pub):
+      // the state-preserving dev restart contract (plan dev-state-persistence).
+      // The two closure records stay pure in core so the runtime can restore
+      // and save the model without an I/O dependency, while transports are
+      // built at the composition root. Program::with_state_persistence and
+      // the runtime_state_persistence accessor mirror the runtime_* pattern.
+      max_lines: 2751,
+      max_pub_lines: 1169,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

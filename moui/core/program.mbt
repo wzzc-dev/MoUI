@@ -56,6 +56,7 @@ struct Program[Model, Msg] {
   view : (Model, ViewEnvironment) -> View[Msg]
   subscriptions : (Model) -> Subscription[Msg]
   commands : (Model) -> Array[ProgramCommand[Msg]]
+  state_persistence : ProgramStatePersistence[Model]?
 }
 
 ///|
@@ -234,6 +235,7 @@ pub fn[Model, Msg] Program::new(
     view: (model, _env) => view(model),
     subscriptions,
     commands: _model => [],
+    state_persistence: None,
   }
 }
 
@@ -244,7 +246,14 @@ pub fn[Model, Msg] Program::new_with_environment(
   view~ : (Model, ViewEnvironment) -> View[Msg],
   subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Program[Model, Msg] {
-  { init, update, view, subscriptions, commands: _model => [], }
+  {
+    init,
+    update,
+    view,
+    subscriptions,
+    commands: _model => [],
+    state_persistence: None,
+  }
 }
 
 ///|
@@ -253,6 +262,23 @@ pub fn[Model, Msg] Program::with_commands(
   commands~ : (Model) -> Array[ProgramCommand[Msg]],
 ) -> Program[Model, Msg] {
   { ..self, commands, }
+}
+
+///|
+/// Declare the model serialization used for state-preserving dev restarts.
+/// When the composition root also supplies a `ProgramStateTransport`, the
+/// runtime restores the model from the transport payload at construction and
+/// writes the serialized model after every committed update. See
+/// `ProgramStatePersistence` for the save/load contract.
+pub fn[Model, Msg] Program::with_state_persistence(
+  self : Program[Model, Msg],
+  save~ : (Model) -> String,
+  load~ : (String) -> Model?,
+) -> Program[Model, Msg] {
+  {
+    ..self,
+    state_persistence: Some(ProgramStatePersistence::new(save~, load~)),
+  }
 }
 
 ///|
@@ -324,4 +350,11 @@ pub fn[Model, Msg] Program::runtime_commands(
   model : Model,
 ) -> Array[ProgramCommand[Msg]] {
   (self.commands)(model)
+}
+
+///|
+pub fn[Model, Msg] Program::runtime_state_persistence(
+  self : Program[Model, Msg],
+) -> ProgramStatePersistence[Model]? {
+  self.state_persistence
 }

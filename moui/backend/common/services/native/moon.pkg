@@ -2,9 +2,11 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/http",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "wzzc-dev/moui/backend" @host,
   "wzzc-dev/moui/backend/common/image" @window_image,
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
 }
 

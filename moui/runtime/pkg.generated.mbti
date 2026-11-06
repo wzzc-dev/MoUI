@@ -10,9 +10,9 @@ import {
 // Values
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
-pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
+pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> AppRuntime
 
-pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment) -> AppRuntime
+pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> AppRuntime
 
 pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
 
@@ -75,7 +75,7 @@ pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
+pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn AppRuntime::profile_draw_frame(Self, () -> Double) -> ProfiledDrawFrame

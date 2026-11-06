@@ -4,10 +4,15 @@ package "wzzc-dev/moui/backend/common/services/native"
 import {
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/backend/common/image",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn dev_state_transport(String) -> @core.ProgramStateTransport
+
+pub fn dev_state_transport_path() -> String?
+
 pub fn dispatch_binary_file(@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse
 
 pub fn dispatch_delete_file(String) -> @backend.HostServiceResponse

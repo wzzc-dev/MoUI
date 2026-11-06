@@ -224,5 +224,6 @@ pub fn[Model, Msg] Program::from_feature(
     view: feature.view,
     subscriptions: feature.subscriptions,
     commands: feature.commands,
+    state_persistence: None,
   }
 }

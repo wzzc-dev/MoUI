@@ -41,7 +41,11 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // five read accessors and three derived trait methods. It joins the other
       // cross-runtime semantics value types here; the projection work
       // (quantization, clipping, overlap repair) is the renderer's, not core's.
-      max_count: 1177,
+      // ProgramStateTransport / ProgramStatePersistence (+4): the state
+      // handoff contract for state-preserving dev restarts (plan
+      // dev-state-persistence) — closure records with the same shape as the
+      // other cross-runtime protocol value types.
+      max_count: 1181,
     },
     {
       path: "moui/core/pkg.generated.mbti",

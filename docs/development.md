@@ -268,9 +268,13 @@ root when they are not under the current directory.
 Native targets restart after a successful rebuild. Web targets expose a status
 endpoint, refresh the page after a successful build, and display compiler
 diagnostics in an injected overlay while continuing to watch for the fix. The
-optional `--state PATH` value is exported as `MOUI_DEV_STATE_FILE`; applications
-may use it for file-based model handoff during a restart. This is deliberately
-not an in-process, state-preserving hot reload.
+optional `--state PATH` value (default `.moui/dev-state.json`) is exported as
+`MOUI_DEV_STATE_FILE`. Applications that opt in through
+`Program::with_state_persistence` plus a `ProgramStateTransport` at the
+composition root get a state-preserving restart: the runtime restores the last
+model at startup and rewrites the state file after every committed update.
+This is still restart-based model handoff, deliberately not an in-process hot
+reload. See [TEA program model](tea-program-model.md).
 
 ### Build, install, and launch
 
