@@ -68,6 +68,34 @@
   (`pending=0 taken=1` per pump), and the a11y cursor publishing once at
   startup instead of per pump.
 
+## 2026-11-05 current-tree re-evaluation
+
+A fresh Showcase HAP from the current tree was installed on matching `HAD-W32`
+(HarmonyOS `7.0.0.107`, 2090×1324 surface, Maleoon 916, OpenGL ES 3.2).
+Two long drags measured 154 and 123 frames:
+
+- Frame p50/p95 was 4.99/7.80 ms and 5.20/8.00 ms; render was 8.91/11.06 ms
+  and 8.63/11.26 ms.
+- Inter-frame p50/p95 was 16/20 ms and 20/26 ms, so full-surface pacing is now
+  around 50-60 fps rather than the earlier 19-30 fps capture.
+- EGL present was 1.2-2.4 ms. The remaining per-frame cost is above the swap,
+  but it no longer misses the full-surface frame budget.
+- All 277 frames logged full-surface damage. Reasons were "dirty region covers
+  most of the surface", "activation rebuild", and one "dirty bounds
+  unavailable". The Showcase shell still sends `on_scroll` offsets into its
+  model, so the scroll tick becomes a root activation rebuild.
+
+W2.3b therefore closes as evidence-backed non-adoption: do not add EGL partial
+swapping while runtime damage is full and the full-surface budget is met. The
+host-side transient-scroll cleanup is complete under
+`architecture-priority-execution` N5: the Showcase shell no longer converts
+scroll ticks into model messages or activation rebuilds. No post-N5
+matching-device capture has been taken, so the pacing numbers above remain the
+pre-N5 baseline and must not be presented as a device improvement. Reopen W2.3b
+only when runtime rect damage, a measured matching-device budget miss, and
+device damage/preserved-buffer extension support all exist. Local evidence:
+`artifacts/harmonyos/w23b-baseline/` (generated artifacts are not committed).
+
 ## Changes
 
 - `moui/backend/harmonyos/window_hosted.mbt`
@@ -92,7 +120,10 @@
 
 - Present-failure message surfacing (renderer records `RenderFrame` +
   `err.message()` internally; needs a renderer→backend diagnostic channel).
-- Scroll rebuild churn: per-tick `on_scroll` → `request_root_rebuild`.
+- Scroll rebuild churn: per-tick `on_scroll` → `request_root_rebuild` was
+  removed by `architecture-priority-execution` N5 on the host path; a post-N5
+  matching-device pacing capture remains unowned until the W2.3b reopen gates
+  apply.
 - Unsynchronized C event ring (`native_harmonyos_host.c`, drop-oldest at 256).
 
 ## Validation

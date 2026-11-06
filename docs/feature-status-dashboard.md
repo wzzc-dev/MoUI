@@ -99,19 +99,41 @@ proof status:
   decoded RGBA pixels, row bytes, `background_io`, and `background_decode`, and
   Skia applies decoded completions directly into the image cache.
 
-## Mobile Status
+## Route Readiness
 
-**Product class: `experimental`** for Android, iOS, HarmonyOS, and WeChat Mini
-Program (code paths compile and host-sim tests pass; **no**
-development/demonstration usability or product commitment without
-matching-device evidence). See
+<!-- BEGIN GENERATED ROUTE READINESS STATUS -->
+| Route / variant | Intent | Product class | Ready | Owner | Reviewed | Evidence |
+|---|---|---|---|---|---|---|
+| `macos-skia` | product | `committed` | yes | `platform/macos` | 2026-11-05 | `checks/platforms/macos.json` |
+| `web-webgpu` | product | `committed` | yes | `platform/web` | 2026-11-05 | `checks/platforms/web.json` |
+| `windows-skia` | product | `committed` | yes | `platform/windows` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-skia` | product | `committed` | yes | `platform/linux` | 2026-11-05 | `checks/platforms/linux.json` |
+| `macos-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/macos.json` |
+| `windows-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/linux.json` |
+| `android-skia` | lab | `experimental` | no | `platform/android` | 2026-11-05 | `checks/platforms/android.json` |
+| `ios-skia` | lab | `experimental` | no | `platform/ios` | 2026-11-05 | `checks/platforms/ios.json` |
+| `harmonyos-skia` | product | `committed` | yes | `platform/harmonyos` | 2026-11-05 | `checks/platforms/harmonyos.json` |
+| `macos-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/macos.json` |
+| `windows-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/windows.json` |
+| `linux-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/linux.json` |
+| `wechat-canvas2d` | lab | `experimental` | no | `platform/wechat` | 2026-11-05 | `checks/platforms/wechat.json` |
+| `linux-skia-riscv64` (architecture variant) | lab | `experimental` | no | `platform/linux-riscv64` | 2026-11-05 | `checks/architecture-evidence/linux-skia-riscv64.json` |
+
+Intent, owner, and review dates come from `checks/portfolio-governance.json`; product class, readiness, and evidence paths stay owned by `checks/platform-matrix.json`.
+<!-- END GENERATED ROUTE READINESS STATUS -->
+
+HarmonyOS is `committed` on matching-device R6 evidence. Android, iOS, and
+WeChat Mini Program remain `experimental`: their code paths compile and
+host-sim tests pass, but no development/demonstration usability or product
+commitment is made without matching-device evidence. See
 [platform-readiness-declaration.md](platform-readiness-declaration.md).
 
 The window-hosted path uses `HostCmd` → `EventLoop` → `ApplicationHandler` →
 MoUI adapters. HarmonyOS XComponent callbacks exclusively own surface, pointer,
 resize, and detach. Host-sim coverage is available through
 `sh scripts/window-hosted-hostsim-smoke.sh`; matching-device evidence remains
-pending for all three platforms.
+pending for Android and iOS.
 
 `SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
 the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,

@@ -1,12 +1,43 @@
 {
-  "schemaVersion": 1,
-  "description": "Initial reviewed MoUI performance guardrails for the canonical native Skia Raster runner. Timings are milliseconds; byte and allocation metrics are per scenario process. drawMs/totalMs baselines are grounded in the 2026-10-27 native-skia-raster artifact (40 frames) with 2.4-3.8x headroom; the older five entries are unreviewed placeholder ceilings.",
+  "schemaVersion": 2,
+  "description": "Reviewed MoUI performance guardrails for the canonical native Skia Raster runner. Structural counters are exact, machine-independent update/scroll gates. Timings are milliseconds; byte and allocation metrics are per scenario process. drawMs/totalMs baselines are grounded in the 2026-10-27 native-skia-raster artifact (40 frames) with 2.4-3.8x headroom; the older five entries remain report-only placeholder ceilings. Shared-host and local timing artifacts never authorize a ratchet.",
   "runner": "native-skia-raster",
   "updatePolicy": {
     "owner": "runtime-maintainers",
     "requiredApprovals": 1,
     "reasonRequired": true,
     "instructions": "Update a baseline only with a matching benchmark artifact, runner identity, and a review note explaining the expected regression or improvement."
+  },
+  "structural": {
+    "minimumFrames": 30,
+    "artifactRunsForReview": 2,
+    "varianceRule": "Structural counts must match the reviewed scenario and builder-cache invariants on every run. Timing ratios may be ratcheted only after a named dedicated benchmark runner exists and is the job that enforces the gate, and two artifacts from that same runner show the same-code p50 spread is at most 15%. Two shared-host or local artifacts are report-only evidence even when their spread is at most 15%. Record the runner identity, commands, artifact paths, and review note.",
+    "leafScenarios": {
+      "leaf-update-1k-builder-cache": {
+        "nodes": 1001,
+        "mapLayers": 1,
+        "maxNodeBuildsPerFrame": 2,
+        "minBuilderCacheHitRate": 0.99,
+        "maxBuilderCacheMissesPerFrame": 1,
+        "minRenderCacheHitRate": 0.99
+      },
+      "leaf-update-10k-builder-cache": {
+        "nodes": 10001,
+        "mapLayers": 1,
+        "maxNodeBuildsPerFrame": 2,
+        "minBuilderCacheHitRate": 0.99,
+        "maxBuilderCacheMissesPerFrame": 1,
+        "minRenderCacheHitRate": 0.99
+      }
+    },
+    "scrollScenarios": {
+      "showcase-runtime-scroll": {
+        "minLayoutCacheHitRate": 0.18,
+        "maxLayoutCacheMissesPerFrame": 5,
+        "minRenderCacheHitRate": 0.19,
+        "maxRenderCacheMissesPerFrame": 2
+      }
+    }
   },
   "scenarios": {
     "showcase-runtime-scroll": {

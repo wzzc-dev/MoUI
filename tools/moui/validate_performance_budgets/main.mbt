@@ -3,6 +3,7 @@ struct PerformanceBudgetCliOptions {
   repo_root : String
   catalog : String
   results : String
+  structural_only : Bool
   help : Bool
 }
 
@@ -16,6 +17,7 @@ fn performance_budget_usage() -> String {
     #|  --repo-root PATH  Repository root. Defaults to cwd.
     #|  --catalog PATH    Budget catalog. Default: checks/performance-budgets.json
     #|  --results PATH    Optional measured result JSON to compare with baselines.
+    #|  --structural-only Validate structural counts without timing/resource gates.
     #|  -h, --help        Show this help.
     #|
   text
@@ -28,6 +30,7 @@ fn performance_parse_cli(
   let repo_root = Ref(@env.current_dir().unwrap_or(""))
   let catalog = Ref("checks/performance-budgets.json")
   let results = Ref("")
+  let structural_only = Ref(false)
   let help = Ref(false)
   let mut index = 0
   while index < args.length() {
@@ -47,6 +50,10 @@ fn performance_parse_cli(
         help.val = true
         index += 1
       }
+      "--structural-only" => {
+        structural_only.val = true
+        index += 1
+      }
       other => return Err("unknown argument: " + other)
     }
   }
@@ -54,6 +61,7 @@ fn performance_parse_cli(
     repo_root: repo_root.val,
     catalog: catalog.val,
     results: results.val,
+    structural_only: structural_only.val,
     help: help.val,
   })
 }
@@ -81,8 +89,8 @@ fn performance_budget_run(args : Array[String]) -> Int32 {
       return 1
     }
   }
-  let budgets = match performance_parse_catalog(catalog_text) {
-    Ok(budgets) => budgets
+  let catalog = match performance_parse_catalog(catalog_text) {
+    Ok(catalog) => catalog
     Err(failures) => {
       for failure in failures {
         println(options.catalog + ": " + failure)
@@ -92,7 +100,8 @@ fn performance_budget_run(args : Array[String]) -> Int32 {
   }
   if options.results == "" {
     println(
-      options.catalog + ": ok (5 performance budget scenarios, catalog only)",
+      options.catalog +
+      ": ok (5 timing scenarios and structural budgets, catalog only)",
     )
     return 0
   }
@@ -105,9 +114,17 @@ fn performance_budget_run(args : Array[String]) -> Int32 {
       return 1
     }
   }
-  let failures = performance_validate_results(result_text, budgets)
+  let failures = if options.structural_only {
+    performance_validate_structural_results_only(result_text, catalog)
+  } else {
+    performance_validate_results(result_text, catalog)
+  }
   if failures.is_empty() {
-    println(options.results + ": ok (performance budgets)")
+    if options.structural_only {
+      println(options.results + ": ok (structural performance budgets)")
+    } else {
+      println(options.results + ": ok (performance budgets)")
+    }
     0
   } else {
     for failure in failures {

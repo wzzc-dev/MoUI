@@ -112,9 +112,10 @@ or `label` differs from the incoming one, the runtime records one entry per
 distinct collision shape in the program diagnostics snapshot
 (`superseded_effect_task_key_count` / `superseded_effect_task_keys`), exposed on
 `AppRuntime::program_runtime_snapshot` and the inspector snapshot. Treat an
-effect key as a namespaced identity rather than a display label: prefix it with
-the owning module and purpose (for example `import.raster.page-3` or
-`settings.load.theme`), never share one key across different kinds or labels,
+effect key as a namespaced identity rather than a display label. A scoped
+`Feature` prefixes the key automatically; standalone/root code should prefix it
+with the owning module and purpose (for example `import.raster.page-3` or
+`settings.load.theme`). Never share one key across different kinds or labels,
 and keep key, kind, and label identical when intentionally restarting the same
 operation so the restart stays a plain last-writer replacement without a
 collision record.
@@ -171,21 +172,37 @@ the Program. Runtime keeps the current command map synchronized with the model;
 keyboard shortcuts, native application menus, and context-menu selections all
 enqueue the declared `Msg` in FIFO order and pass through the same `update`.
 Apps must not install command closures that mutate model state outside TEA.
-Environment-aware TEA apps should use
-the `*_with_environment` constructors instead of taking `ComponentContext` in their
-view layer. In both cases event dispatch flows through typed messages instead of
-exposing the runtime tree.
+Environment-aware TEA apps should use the `*_with_environment` constructors
+instead of receiving mutable runtime state in their view layer. In both cases
+event dispatch flows through typed messages instead of exposing the runtime
+tree.
 
 ## Feature Composition
 
 `Feature[Model, Msg]` packages the same five-tuple as `Program` (`init`,
 `update`, `view`, `subscriptions`, `commands`) as a value that can be defined
 and tested independently, then mounted into a parent model with
-`Feature::scope(read, write, wrap)`. The scope runs the child update through
-the lens pair and lifts messages, effects, views, subscriptions, and commands
-with the existing `View::map` / `Effect::map` / `Subscription::map` helpers —
-the same shape as hand-written wrapper variants, minus the per-message
+`Feature::scope(scope_id, read, write, wrap)`. The scope runs the child update
+through the lens pair and lifts messages, effects, views, subscriptions, and
+commands with the existing `View::map` / `Effect::map` / `Subscription::map`
+helpers — the same shape as hand-written wrapper variants, minus the per-message
 boilerplate. App roots stay `Program`; bridge with `Program::from_feature`.
+
+`scope_id` is a stable identity, not a display label. It namespaces the child's
+structured Effect and Subscription keys, so two mounts of the same reusable
+feature can both use `key="refresh"` or `key="tick"` without superseding or
+deduplicating each other. Use a model-derived id for keyed instances; pass a
+empty id only for a legacy/root mount. Changing the id intentionally
+cancels the old subscription and starts the new one. This is still pure
+composition: it adds no state, mount hook, or component lifecycle.
+
+Persistent component state also stays with the parent model. For multiple
+instances, the parent owns a keyed collection of child models and routes typed
+messages to the selected entry; the same stable key supplies `scope_id` for
+lifecycle isolation. Save/restore is an app-owned explicit snapshot codec over
+that parent model. A scope id is not a state key or storage slot, and there is
+no framework `SaveableStateStore`. See
+[ADR 0053](decisions/0053-feature-first-component-state-boundary.md).
 
 Naming: this `Feature` (the core TEA composition unit) is unrelated to
 `RendererFeature` (renderer capability tags in `moui/render`) and to the
@@ -206,3 +223,41 @@ Two deliberate limits:
 Composition rules and keyed field messages:
 [Non-render component cookbook](non-render-component-cookbook.md#feature-composition-with-scope).
 Runnable shape: `examples/settings/app`.
+
+### Explicit view construction memo
+
+`@core.ViewMemo[Msg]` is an opt-in, single-entry cache for expensive view
+builders. `ViewMemo::view(key~, build~)` rebuilds only when the caller's
+content-canonical `DeclarationKey` changes. The key must cover every model
+value, event-handler capture, and environment value read by `build`; the memo
+does not infer dependencies.
+
+A memo caches construction, not component state. Element identity,
+reconciliation, layout, paint, and transient control state remain runtime-owned.
+Use one memo per independently invalidated subtree, and measure the builder
+before adding one. `ViewMemo::stats()` reports caller-owned build, hit, and miss
+counts without adding a global registry or dependency tracking. The API is
+advanced core, not part of the root `moui` app-loop facade; see
+[ADR 0049](decisions/0049-explicit-view-memo.md).
+
+### Explicit keyed construction cache
+
+`@core.ViewBuilderCache[Msg]` is the multi-entry counterpart for keyed
+collections and explicitly managed conditional slots. Every lookup supplies a
+stable `builder_key` and a complete `content_key`:
+
+- `builder_key` identifies the logical construction slot across frames. For a
+  reorderable collection, use the item's persistent identity rather than its
+  array position.
+- `content_key` covers every value the builder reads or captures: model fields,
+  environment/theme, the selected conditional branch, event-handler messages,
+  and any `View::map` capture when the mapped view is cached.
+
+An entry hits only when both keys match. The caller owns retention: remove a
+key when its item or branch disappears, and clear the cache when the screen or
+root is torn down. There is no automatic eviction, global registry, or
+component lifecycle. `ViewBuilderCacheStats` reports builds, hits, misses, and
+the current entry count. The cache does not change `View::map`; caching a
+mapped subtree requires the mapping to be part of the cached builder. The API
+is advanced core and is not re-exported from the root `moui` facade; see
+[ADR 0057](decisions/0057-explicit-builder-cache.md).

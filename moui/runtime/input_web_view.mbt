@@ -39,6 +39,7 @@ fn ElementNode::dispatch_web_view_event(
       capture_target: None,
       focused: None,
       deliveries: [],
+      gesture: PointerGestureTrace::empty(),
     }
   }
 }

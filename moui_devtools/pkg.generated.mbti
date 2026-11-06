@@ -3,6 +3,7 @@ package "wzzc-dev/moui_devtools"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 }
 
@@ -19,9 +20,126 @@ pub fn snapshot_report_json(@runtime.InspectorSnapshot, indent? : Int32) -> Stri
 
 pub fn snapshot_summary(@runtime.InspectorSnapshot) -> SnapshotSummary
 
+pub fn trace_report_json(DevtoolsTrace, indent? : Int32) -> String
+
+pub fn trace_report_text(DevtoolsTrace, max_entries? : Int32) -> String
+
 // Errors
 
 // Types and methods
+pub(all) struct DevtoolsCacheTrace {
+  layout_hits_delta : Int32
+  layout_misses_delta : Int32
+  render_hits_delta : Int32
+  render_misses_delta : Int32
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsCacheTrace::equal(Self, Self) -> Bool
+pub fn DevtoolsCacheTrace::not_equal(Self, Self) -> Bool
+pub fn DevtoolsCacheTrace::to_json(Self) -> Json
+pub fn DevtoolsCacheTrace::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DevtoolsEffectTrace {
+  planned_delta : Int32
+  run_delta : Int32
+  send_delta : Int32
+  started_delta : Int32
+  completed_delta : Int32
+  cancelled_delta : Int32
+  ignored_delta : Int32
+  active_after : Int32
+  descriptors : Array[@core.EffectDescriptor]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsEffectTrace::equal(Self, Self) -> Bool
+pub fn DevtoolsEffectTrace::not_equal(Self, Self) -> Bool
+pub fn DevtoolsEffectTrace::to_json(Self) -> Json
+pub fn DevtoolsEffectTrace::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DevtoolsFrameTrace {
+  timed : Bool
+  rebuild_passes : Int32
+  layout_passes : Int32
+  paint_passes : Int32
+  draw_builds : Int32
+  build_ms : Double
+  layout_ms : Double
+  paint_ms : Double
+  draw_ms : Double
+  total_ms : Double
+  damage_kind : String
+  damage_rect_count : Int32
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsFrameTrace::equal(Self, Self) -> Bool
+pub fn DevtoolsFrameTrace::not_equal(Self, Self) -> Bool
+pub fn DevtoolsFrameTrace::to_json(Self) -> Json
+pub fn DevtoolsFrameTrace::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DevtoolsMemoTrace {
+  available : Bool
+  builds_delta : Int32
+  hits_delta : Int32
+  misses_delta : Int32
+  builds_after : Int32
+  hits_after : Int32
+  misses_after : Int32
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsMemoTrace::equal(Self, Self) -> Bool
+pub fn DevtoolsMemoTrace::not_equal(Self, Self) -> Bool
+pub fn DevtoolsMemoTrace::to_json(Self) -> Json
+pub fn DevtoolsMemoTrace::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DevtoolsMessageTrace {
+  dispatched_delta : Int32
+  updated_delta : Int32
+  ignored_delta : Int32
+  enqueued_delta : Int32
+  drained_delta : Int32
+  pending_after : Int32
+  max_pending_after : Int32
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsMessageTrace::equal(Self, Self) -> Bool
+pub fn DevtoolsMessageTrace::not_equal(Self, Self) -> Bool
+pub fn DevtoolsMessageTrace::to_json(Self) -> Json
+pub fn DevtoolsMessageTrace::to_repr(Self) -> @debug.Repr
+
+pub struct DevtoolsTrace {
+  // private fields
+}
+pub fn DevtoolsTrace::capacity(Self) -> Int32
+pub fn DevtoolsTrace::clear(Self) -> Unit
+pub fn DevtoolsTrace::entries(Self) -> Array[DevtoolsTraceEntry]
+pub fn DevtoolsTrace::is_empty(Self) -> Bool
+pub fn DevtoolsTrace::latest(Self) -> DevtoolsTraceEntry?
+pub fn DevtoolsTrace::length(Self) -> Int32
+pub fn DevtoolsTrace::new(capacity? : Int32, semantics_diff_limit? : Int32) -> Self
+pub fn DevtoolsTrace::record(Self, @runtime.InspectorSnapshot, memo_stats? : @core.ViewMemoStats) -> DevtoolsTraceEntry
+pub fn DevtoolsTrace::record_frame(Self, @runtime.InspectorSnapshot, timing~ : @runtime.RuntimeFrameTiming, memo_stats? : @core.ViewMemoStats) -> DevtoolsTraceEntry
+pub fn DevtoolsTrace::report(Self) -> DevtoolsTraceReport
+pub fn DevtoolsTrace::semantics_diff_limit(Self) -> Int32
+
+pub(all) struct DevtoolsTraceEntry {
+  sequence : Int32
+  messages : DevtoolsMessageTrace
+  effects : DevtoolsEffectTrace
+  frame : DevtoolsFrameTrace
+  caches : DevtoolsCacheTrace
+  memo : DevtoolsMemoTrace
+  semantics : SemanticsTreeDiff
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsTraceEntry::equal(Self, Self) -> Bool
+pub fn DevtoolsTraceEntry::not_equal(Self, Self) -> Bool
+pub fn DevtoolsTraceEntry::to_json(Self) -> Json
+pub fn DevtoolsTraceEntry::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DevtoolsTraceReport {
+  capacity : Int32
+  semantics_diff_limit : Int32
+  entries : Array[DevtoolsTraceEntry]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DevtoolsTraceReport::equal(Self, Self) -> Bool
+pub fn DevtoolsTraceReport::not_equal(Self, Self) -> Bool
+pub fn DevtoolsTraceReport::to_json(Self) -> Json
+pub fn DevtoolsTraceReport::to_repr(Self) -> @debug.Repr
+
 pub(all) struct InspectorReport {
   runtime : @runtime.RuntimeInspectorSnapshot
   view_tree : @runtime.ViewTreeInspectorSnapshot
@@ -39,6 +157,60 @@ pub fn InspectorReport::semantics(Self) -> @runtime.SemanticsInspectorSnapshot
 pub fn InspectorReport::to_json(Self) -> Json
 pub fn InspectorReport::to_repr(Self) -> @debug.Repr
 pub fn InspectorReport::view_tree(Self) -> @runtime.ViewTreeInspectorSnapshot
+
+pub(all) enum SemanticsTreeChangeKind {
+  SemanticsTreeAdded
+  SemanticsTreeRemoved
+  SemanticsTreeChanged
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTreeChangeKind::equal(Self, Self) -> Bool
+pub fn SemanticsTreeChangeKind::not_equal(Self, Self) -> Bool
+pub fn SemanticsTreeChangeKind::to_json(Self) -> Json
+pub fn SemanticsTreeChangeKind::to_repr(Self) -> @debug.Repr
+
+pub(all) enum SemanticsTreeChangedField {
+  SemanticsTreeFieldRole
+  SemanticsTreeFieldLabel
+  SemanticsTreeFieldValue
+  SemanticsTreeFieldFrame
+  SemanticsTreeFieldDepth
+  SemanticsTreeFieldChildCount
+  SemanticsTreeFieldActionCount
+  SemanticsTreeFieldFocusable
+  SemanticsTreeFieldSelected
+  SemanticsTreeFieldChecked
+  SemanticsTreeFieldExpanded
+  SemanticsTreeFieldDisabled
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTreeChangedField::equal(Self, Self) -> Bool
+pub fn SemanticsTreeChangedField::not_equal(Self, Self) -> Bool
+pub fn SemanticsTreeChangedField::to_json(Self) -> Json
+pub fn SemanticsTreeChangedField::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SemanticsTreeDiff {
+  baseline : Bool
+  added_count : Int32
+  removed_count : Int32
+  changed_count : Int32
+  dropped_count : Int32
+  entries : Array[SemanticsTreeDiffEntry]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTreeDiff::equal(Self, Self) -> Bool
+pub fn SemanticsTreeDiff::not_equal(Self, Self) -> Bool
+pub fn SemanticsTreeDiff::to_json(Self) -> Json
+pub fn SemanticsTreeDiff::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SemanticsTreeDiffEntry {
+  kind : SemanticsTreeChangeKind
+  node_id : String
+  before : @runtime.SemanticsInspectorEntry?
+  after : @runtime.SemanticsInspectorEntry?
+  changed_fields : Array[SemanticsTreeChangedField]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsTreeDiffEntry::equal(Self, Self) -> Bool
+pub fn SemanticsTreeDiffEntry::not_equal(Self, Self) -> Bool
+pub fn SemanticsTreeDiffEntry::to_json(Self) -> Json
+pub fn SemanticsTreeDiffEntry::to_repr(Self) -> @debug.Repr
 
 pub struct SnapshotHistory {
   // private fields

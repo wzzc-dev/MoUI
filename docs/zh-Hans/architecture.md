@@ -123,7 +123,7 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
   `EventLoop` -> 中立 iOS surface
   binding -> `moui_skia_renderer` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
-- HarmonyOS 嵌入运行时路线（`experimental`）：shared app package ->
+- HarmonyOS 嵌入运行时路线（`committed`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition，通过
   `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> 共享 embedded-host kernel ->

@@ -63,6 +63,49 @@ ViewDeclaration -> ElementTree
 | `tools/` | MoonBit-backed repository validators used by JS shell entrypoints under `scripts/`. |
 | `scripts/` | Local/CI command entrypoints, smoke runners, package validators, and platform setup helpers. |
 
+## Portfolio And Release Line
+
+Every canonical route and public release module has an explicit owner, intent,
+review trigger, graduation condition, and retirement condition in
+`checks/portfolio-governance.json`. The technical route and module facts remain
+in `checks/platform-matrix.json` and `checks/release-modules.json`.
+
+<!-- BEGIN GENERATED RELEASE COUPLING -->
+Release line **`0.3.x`** uses **`synchronized-line`** coordination. A base-only patch path is **`not-offered`**, and a per-module compatibility matrix is **`deferred`**. Renderers and addons keep their current version unless their own contract changes; they do not receive a forced semantic bump for an unrelated base change. Decision: `docs/decisions/0055-synchronized-release-line.md`. Evidence: checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs.
+<!-- END GENERATED RELEASE COUPLING -->
+
+<!-- BEGIN GENERATED MODULE PORTFOLIO -->
+| Module | Owner | Intent | Release stage |
+|---|---|---|---|
+| `moui` | `framework/core` | product | `base-bindings` |
+| `moui_skia` | `bindings/skia` | product | `base-bindings` |
+| `moui_sun` | `bindings/sun` | lab | `base-bindings` |
+| `moui_tui` | `terminal/cell-model` | lab | `base-bindings` |
+| `moui_text_providers` | `text/providers` | product | `base-bindings` |
+| `moui_skia_renderer` | `renderers/skia` | product | `renderers` |
+| `moui_web_renderer` | `renderers/web` | product | `renderers` |
+| `moui_wgpu_renderer` | `renderers/wgpu` | diagnostic | `renderers` |
+| `moui_metal_renderer` | `renderers/metal` | diagnostic | `renderers` |
+| `moui_sun_renderer` | `renderers/sun` | lab | `renderers` |
+| `moui_tui_renderer` | `renderers/tui` | lab | `renderers` |
+| `moui_agent` | `addons/agent` | lab | `addons` |
+| `moui_terminal_host` | `addons/terminal-host` | lab | `addons` |
+| `moui_devtools` | `addons/devtools` | product | `addons` |
+| `moui_i18n` | `addons/i18n` | product | `addons` |
+| `moui_richtext` | `addons/richtext` | product | `addons` |
+| `moui_markdown` | `addons/markdown` | product | `addons` |
+| `moui_theme` | `addons/theme` | product | `addons` |
+| `moui_webview` | `addons/webview` | product | `addons` |
+| `moui_3d` | `addons/3d` | lab | `addons` |
+| `moui_3d_physics` | `addons/3d` | lab | `addons` |
+| `moui_3d_physics_rapier` | `addons/3d` | lab | `addons` |
+| `moui_3d_xr` | `addons/3d` | lab | `addons` |
+| `moui_agent_mcp` | `entrypoints/agent-mcp` | product | `entrypoints` |
+| `moui_cli` | `entrypoints/cli` | product | `entrypoints` |
+
+Only public release modules are listed; `moui_tests` is internal. Source facts: `checks/release-modules.json`; ownership and intent: `checks/portfolio-governance.json`.
+<!-- END GENERATED MODULE PORTFOLIO -->
+
 ## Backend Hosting Models
 
 The two native backend models are classified by host ownership, not by device
@@ -155,7 +198,7 @@ workspace.
   binding -> `moui_skia_renderer` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
-- HarmonyOS embedded-runtime route (`experimental`): shared app package ->
+- HarmonyOS embedded-runtime route (`committed`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` composition via
   `@runtime.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::HarmonyOS)).backend(@harmonyos.entry())`
   -> `wzzc-dev/window/harmonyos` `HostCmd` -> shared embedded-host kernel ->
@@ -375,9 +418,11 @@ Key surface: `Program::simple` / `Program::new` / `Program::with_commands` / `*_
 `Effect::send` / `Effect::run` / `Effect::task` / `Effect::service_task`,
 `Subscription::timer` / `Subscription::host_event` / `Subscription::route_event`,
 `View::map`, `Effect::map`, `Subscription::map`,
-`Feature` / `Feature::scope` / `ScopedFeature` for sub-model composition, and
-`Program::from_feature` to bridge a root `Feature` into the runtime-facing
-`Program`. Message drains are bounded
+`Feature` / `Feature::scope(scope_id, ...)` / `ScopedFeature` for sub-model
+composition, and `Program::from_feature` to bridge a root `Feature` into the
+runtime-facing `Program`. A stable scope id namespaces child Effect and
+Subscription keys for multi-instance mounts without adding component state.
+Message drains are bounded
 runtime turns; stale dispatchers after `AppRuntime::destroy()` are ignored.
 
 ## Runtime Mental Model
@@ -432,6 +477,12 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   including dirty element ids, alongside legacy reason strings. Inspector
   snapshots read cached layout/render/semantics state without draining pending
   dirty work, so devtools can consume stable fields instead of parsing captions.
+  `moui_devtools.DevtoolsTrace` is a caller-owned, bounded sample history over
+  those snapshots: it records counter deltas, frame-pass/timing data when the
+  caller supplies a profiled frame, caller-owned memo counters, and a bounded
+  semantics-tree diff. It adds no runtime trace store or message interceptor,
+  and the first sample is a baseline rather than a synthetic diff
+  (ADR 0056).
   Structured effect descriptors from `Effect::run`, `Effect::task`, and
   `Effect::service_task` travel through effect summaries so tooling can identify
   planned structured or service/task runners without inspecting `Msg` values;
@@ -458,11 +509,13 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   frame. Rect-damage renderers must constrain the complete command stream to
   the effective damage clip. Every retained layer carries its complete current
   frame payload so a renderer can rebuild it after eviction.
-  `DrawFrame.platform_views` carries native platform-view
-  placements such as `web_view` without adding them to `DrawCommand`. Legacy
-  tests can still call `draw_commands()` for a full command stream. Renderers
-  may degrade based on capability, but view constructors preserve brush, border,
-  shadow, clip, image, and text intent.
+  `DrawFrame.platform_views` carries native platform-view placements such as
+  `web_view` without adding them to `DrawCommand`. Its commands stay in
+  node-local space and carry explicit layout transform scopes. Legacy tests can
+  still call `draw_commands()` for a full stream with layout translations folded
+  into screen-space geometry. Renderers may degrade based on capability, but
+  view constructors preserve brush, border, shadow, clip, image, and text
+  intent.
 - Backends normalize platform events into `Event`; they do not own UI
   state or mutate element/render trees directly.
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
@@ -497,6 +550,11 @@ results live in `Model` and change only through typed `Msg` values handled by
 `update`. `Effect` and `Subscription` are the only app-facing side-effect
 paths. There is no generic `State`, `Binding`, `DerivedState`, component
 context, saveable store, or model setter API.
+
+`Feature::scope` ids namespace Effect and Subscription lifecycle keys only.
+Persistent multi-instance component state lives in the parent `Model`, and
+save/restore uses app-owned explicit snapshot DTOs rather than a runtime
+component store (ADR 0053).
 
 Controls may keep interaction transients in typed `ViewStateSlot` values scoped
 to an element identity and runtime lifetime. Hover, pressed, drag, caret,

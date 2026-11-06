@@ -111,24 +111,40 @@ pub fn[Model, Msg] Feature::runtime_commands(
 /// effects, views, subscriptions, and commands into the parent's types; the
 /// parent `update` routes through one match arm per wrapper variant, exactly
 /// like the hand-written delegation this replaces.
+///
+/// `scope_id` is a stable identity for this mount, not a display label.
+/// Reusable or multi-instance features should provide a model-derived id such
+/// as `"settings"` or `"settings/" + id`; it namespaces structured Effect and
+/// Subscription descriptor keys so sibling scopes can reuse local keys without
+/// superseding or deduplicating each other. An empty id keeps the root
+/// namespace for compatibility with an unscoped single mount. The scope is
+/// still pure composition: it adds no state, mount hook, or lifecycle machine.
 pub fn[Child, ChildMsg, Parent, ParentMsg] Feature::scope(
   self : Feature[Child, ChildMsg],
+  scope_id~ : String = "",
   read~ : (Parent) -> Child,
   write~ : (Child, Parent) -> Parent,
   wrap~ : (ChildMsg) -> ParentMsg,
 ) -> ScopedFeature[Parent, Child, ChildMsg, ParentMsg] {
-  { read, write, feature: self, wrap, }
+  {
+    read,
+    write,
+    feature: self,
+    wrap,
+    scope_prefix: scope_identity_prefix(scope_id),
+  }
 }
 
 ///|
 /// A `Feature` mounted into a parent model, produced by `Feature::scope`.
-/// Holds only pure functions (lens pair, message constructor, and the child
-/// feature); it carries no state and can be rebuilt at any time.
+/// Holds only pure functions plus a stable scope id; it carries no state and
+/// can be rebuilt at any time.
 pub struct ScopedFeature[Parent, Child, ChildMsg, ParentMsg] {
   priv read : (Parent) -> Child
   priv write : (Child, Parent) -> Parent
   priv feature : Feature[Child, ChildMsg]
   priv wrap : (ChildMsg) -> ParentMsg
+  priv scope_prefix : String
 }
 
 ///|
@@ -140,7 +156,7 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::init(
   self : ScopedFeature[Parent, Child, ChildMsg, ParentMsg],
 ) -> (Child, Effect[ParentMsg]) {
   let (child, effect) = (self.feature.init)()
-  (child, effect.map(self.wrap))
+  (child, effect.map(self.wrap).prefix_scope(self.scope_prefix))
 }
 
 ///|
@@ -153,7 +169,10 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::update(
   message : ChildMsg,
 ) -> (Parent, Effect[ParentMsg]) {
   let (child, effect) = (self.feature.update)((self.read)(parent), message)
-  ((self.write)(child, parent), effect.map(self.wrap))
+  (
+    (self.write)(child, parent),
+    effect.map(self.wrap).prefix_scope(self.scope_prefix),
+  )
 }
 
 ///|
@@ -174,7 +193,9 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::subscriptions(
   self : ScopedFeature[Parent, Child, ChildMsg, ParentMsg],
   parent : Parent,
 ) -> Subscription[ParentMsg] {
-  (self.feature.subscriptions)((self.read)(parent)).map(self.wrap)
+  (self.feature.subscriptions)((self.read)(parent))
+  .map(self.wrap)
+  .prefix_scope(self.scope_prefix)
 }
 
 ///|

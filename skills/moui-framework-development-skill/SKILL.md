@@ -272,7 +272,7 @@ owning-package boundaries clear.
   `libskia.so` hides Ganesh internal symbols required by the separate
   `libskia_ganesh_ext.a`; dynamic linking remains supported only for explicit
   `skia-raster` builds.
-- `examples/harmonyos_demo`: standalone experimental HarmonyOS demo with a
+- `examples/harmonyos_demo`: standalone HarmonyOS demo with a
   window-hosted entrypoint. Use `moui build harmonyos harmonyos_demo` for the
   template-driven build; matching device or emulator evidence is still required
   before claiming runtime support.

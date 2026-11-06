@@ -61,6 +61,131 @@ fn long_press_runtime(received~ : Array[String]) -> @runtime.AppRuntime {
 }
 
 ///|
+/// A pressable with both duration and tap recognizers. `tap_outer` selects
+/// which modifier wraps the other, so arbitration cannot depend on stack order.
+fn long_press_and_tap_runtime(
+  received~ : Array[String],
+  tap_outer~ : Bool,
+) -> @runtime.AppRuntime {
+  let base : @core.View[String] = runtime_test_rect(
+    width=100.0,
+    height=40.0,
+    color=@core.Color::blue(),
+  )
+  let root = if tap_outer {
+    base.on_long_press("long press").on_tap("tap")
+  } else {
+    base.on_tap("tap").on_long_press("long press")
+  }
+  @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+}
+
+///|
+/// A quick release must fire exactly the tap recognizer, regardless of whether
+/// the tap or long-press modifier is the outer wrapper.
+test "tap and long press resolve a quick release independent of stack order" {
+  for tap_outer in [true, false] {
+    let received : Array[String] = []
+    let runtime = long_press_and_tap_runtime(received~, tap_outer~)
+    long_press_press(runtime~)
+    long_press_press(runtime~, phase=Up)
+    assert_eq(received, ["tap"])
+  }
+}
+
+///|
+/// A completed hold owns the stream: the release must only unwind the
+/// long-press recognizer, not activate a sibling tap wrapper.
+test "long press wins the stream independent of tap modifier order" {
+  for tap_outer in [true, false] {
+    let received : Array[String] = []
+    let runtime = long_press_and_tap_runtime(received~, tap_outer~)
+    long_press_press(runtime~)
+    assert_true(long_press_frame(runtime~, time_ms=0.0))
+    assert_true(long_press_frame(runtime~, time_ms=250.0))
+    assert_true(received.is_empty())
+    assert_true(long_press_frame(runtime~, time_ms=520.0))
+    assert_eq(received, ["long press"])
+    long_press_press(runtime~, phase=Up)
+    assert_eq(received, ["long press"])
+  }
+}
+
+///|
+/// Two held pointers keep independent arena streams. Each pressable completes
+/// its own long press, and neither release falls through to the tap wrapper.
+test "gesture arena keeps tap and long press state per pointer id" {
+  let received : Array[String] = []
+  let first : @core.View[String] = runtime_test_rect(
+      width=100.0,
+      height=40.0,
+      color=@core.Color::blue(),
+    )
+    .on_long_press("long-a")
+    .on_tap("tap-a")
+  let second : @core.View[String] = runtime_test_rect(
+      width=100.0,
+      height=40.0,
+      color=@core.Color::rgba(r=0.86, g=0.12, b=0.12),
+    )
+    .on_long_press("long-b")
+    .on_tap("tap-b")
+  let runtime = @runtime.AppRuntime::new_view(
+    root=@views.column([first, second], spacing=0.0),
+    size=@core.Size::new(width=100.0, height=80.0),
+    on_message=Some(message => received.push(message)),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=Down,
+        id=0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=50.0),
+        phase=Down,
+        id=1,
+      ),
+    ),
+  )
+  assert_true(long_press_frame(runtime~, time_ms=0.0))
+  assert_true(long_press_frame(runtime~, time_ms=250.0))
+  assert_true(received.is_empty())
+  assert_true(long_press_frame(runtime~, time_ms=520.0))
+  assert_eq(received.length(), 2)
+  assert_true(received.contains("long-a"))
+  assert_true(received.contains("long-b"))
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=Up,
+        id=0,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=50.0),
+        phase=Up,
+        id=1,
+      ),
+    ),
+  )
+  assert_eq(received.length(), 2)
+}
+
+///|
 /// A hold alone reaches the duration: the frame after the `Down` claims another,
 /// the frames before the deadline are still quiet, the deadline delivers the
 /// message exactly once, and the settled subtree stops asking.

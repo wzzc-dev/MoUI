@@ -396,8 +396,13 @@ fn package_budgets() -> Array[PackageBudget] {
       // repo's 90+ `new()` call sites so controls stop restating
       // `composition=` on every leaf. The struct and `new` are unchanged.
       // +5 lines, +5 pub.
-      max_lines: 2534,
-      max_pub_lines: 1125,
+      // W1.2a ViewMemo: +6 lines, +3 pub; W1.4 caller-owned stats: +11, +8; W2.4 child_transform: +1, +0.
+      // N1 ViewBuilderCache: +20 lines, +14 pub. The advanced surface needs
+      // two keyed constructors, stats getters, manual remove/clear, and the
+      // derived equality/debug declarations. It stays advanced core rather
+      // than entering the root app facade.
+      max_lines: 2575,
+      max_pub_lines: 1150,
       max_pub_all_lines: 141,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -516,9 +521,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // RendererFamily::Terminal, the protocol names the cell projector needs.
       // +2 lines again: RendererBackendKind::NativeDirectGpu and
       // RendererFamily::Metal, the identity a no-Skia host GPU surface needs.
-      max_lines: 608,
-      max_pub_lines: 279,
-      max_pub_all_lines: 31,
+      // +11/+6/+1(all) for SurfaceDamageCapability; default FullSurfaceOnly.
+      max_lines: 619,
+      max_pub_lines: 285,
+      max_pub_all_lines: 32,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
         "RendererSession", "HostSurface", "NativeSurface", "FrameToken", "RenderFrameSubmission",

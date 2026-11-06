@@ -33,6 +33,7 @@ members = [
   "./moui_tui",
   "./moui_text_providers",
   "./examples/counter",
+  "./examples/custom_control",
   "./examples/multi_window",
   "./examples/harmonyos_demo",
   "./examples/button_freeze_probe",

@@ -26,7 +26,7 @@ fn ShowcaseModel::devtools_inspector_card(
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
         text(
-          "moui_devtools InspectorReport captured from a probe runtime: runtime, view tree, layout, render, semantics",
+          "moui_devtools InspectorReport plus a bounded interaction trace: messages, effects, frame phases, caches, memo, semantics diff",
           width=inner_width,
           height=22.0,
         )
@@ -39,10 +39,10 @@ fn ShowcaseModel::devtools_inspector_card(
           scroll_view(
             column(line_views, spacing=2.0),
             width=inner_width,
-            height=240.0,
+            height=360.0,
           ),
           width=inner_width,
-          height=244.0,
+          height=364.0,
         ),
         text(report.json_text, width=inner_width, height=44.0)
         .font(theme.typography.caption)
@@ -52,7 +52,7 @@ fn ShowcaseModel::devtools_inspector_card(
       align=Start,
     ),
     width~,
-    height=430.0,
+    height=552.0,
     padding=theme.spacing_scale.md,
   )
 }

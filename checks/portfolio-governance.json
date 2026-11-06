@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "description": "Ownership, intent, review, and lifecycle triggers layered over checks/platform-matrix.json and checks/release-modules.json. Technical route/module facts stay in those catalogs.",
+  "reviewedOn": "2026-11-05",
+  "releaseCoupling": {
+    "mode": "synchronized-line",
+    "line": "0.3.x",
+    "adr": "docs/decisions/0055-synchronized-release-line.md",
+    "baseOnlyPatch": "not-offered",
+    "compatibilityMatrix": "deferred",
+    "evidence": "checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs"
+  },
+  "routes": [
+    {
+      "id": "macos-skia",
+      "owner": "platform/macos",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Presenter, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Already committed; retain only while the evidence file records the required runtime L3 and the route remains release-blocking.",
+      "retirement": "Demote or remove if matching-host evidence cannot be reproduced or an approved successor route replaces it."
+    },
+    {
+      "id": "web-webgpu",
+      "owner": "platform/web",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Browser presenter, fallback, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Already committed; retain only while browser presentation evidence and the Canvas2D fallback remain release-blocking.",
+      "retirement": "Demote or remove if browser runtime evidence cannot be reproduced or an approved successor route replaces it."
+    },
+    {
+      "id": "windows-skia",
+      "owner": "platform/windows",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Presenter, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Already committed; retain only while the matching-host evidence file records the required runtime L3.",
+      "retirement": "Demote or remove if matching-host evidence cannot be reproduced or an approved successor route replaces it."
+    },
+    {
+      "id": "linux-skia",
+      "owner": "platform/linux",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Presenter, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Already committed; retain only while the matching-host evidence file records the required runtime L3.",
+      "retirement": "Demote or remove if matching-host evidence cannot be reproduced or an approved successor route replaces it."
+    },
+    {
+      "id": "macos-wgpu",
+      "owner": "renderers/wgpu",
+      "intent": "diagnostic",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Native WGPU dependency, renderer capability, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only by a new route/product ADR after capability and matching-host evidence support a product commitment.",
+      "retirement": "Retire if unused for two reviews, dependency maintenance exceeds its diagnostic value, or the Skia route covers the same evidence need."
+    },
+    {
+      "id": "windows-wgpu",
+      "owner": "renderers/wgpu",
+      "intent": "diagnostic",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Native WGPU dependency, renderer capability, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only by a new route/product ADR after capability and matching-host evidence support a product commitment.",
+      "retirement": "Retire if unused for two reviews, dependency maintenance exceeds its diagnostic value, or the Skia route covers the same evidence need."
+    },
+    {
+      "id": "linux-wgpu",
+      "owner": "renderers/wgpu",
+      "intent": "diagnostic",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Native WGPU dependency, renderer capability, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only by a new route/product ADR after capability and matching-host evidence support a product commitment.",
+      "retirement": "Retire if unused for two reviews, dependency maintenance exceeds its diagnostic value, or the Skia route covers the same evidence need."
+    },
+    {
+      "id": "android-skia",
+      "owner": "platform/android",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Window-hosted template, matching-device evidence, product-class, or release-gate change; at least quarterly.",
+      "graduation": "Promote only after matching-device L3 covers presenter, pointer, resize, IME, clipboard, accessibility, detach/recreate, and usability, with a promotion ADR.",
+      "retirement": "Retire if the window-hosted composition cannot build for two reviews or matching-device evidence remains unavailable after the declared lab window."
+    },
+    {
+      "id": "ios-skia",
+      "owner": "platform/ios",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Window-hosted template, matching-device evidence, product-class, or release-gate change; at least quarterly.",
+      "graduation": "Promote only after matching-device L3 covers presenter, input, resize, IME, clipboard, accessibility, detach/recreate, and usability, with a promotion ADR.",
+      "retirement": "Retire if the window-hosted composition cannot build for two reviews or matching-device evidence remains unavailable after the declared lab window."
+    },
+    {
+      "id": "harmonyos-skia",
+      "owner": "platform/harmonyos",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "R6 capability, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Already committed; retain only while all declared R6 capabilities remain observed on a matching device and recorded in the evidence file.",
+      "retirement": "Demote or remove if matching-device evidence cannot be reproduced or an approved successor route replaces it."
+    },
+    {
+      "id": "macos-sun",
+      "owner": "renderers/sun",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sun renderer capability, conformance evidence, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only after the capability report, conformance suite, and matching-host evidence justify a product route by ADR.",
+      "retirement": "Retire if unused for two reviews or if the experiment no longer informs the mainline renderer."
+    },
+    {
+      "id": "windows-sun",
+      "owner": "renderers/sun",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sun renderer capability, conformance evidence, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only after the capability report, conformance suite, and matching-host evidence justify a product route by ADR.",
+      "retirement": "Retire if unused for two reviews or if the experiment no longer informs the mainline renderer."
+    },
+    {
+      "id": "linux-sun",
+      "owner": "renderers/sun",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sun renderer capability, conformance evidence, or mainline renderer change; at least quarterly.",
+      "graduation": "Promote only after the capability report, conformance suite, and matching-host evidence justify a product route by ADR.",
+      "retirement": "Retire if unused for two reviews or if the experiment no longer informs the mainline renderer."
+    },
+    {
+      "id": "wechat-canvas2d",
+      "owner": "platform/wechat",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Mini Program runtime, pixel/touch/service evidence, product-class, or release-gate change; at least quarterly.",
+      "graduation": "Promote only after real Mini Program pixel, touch, and wx service evidence passes and a product-usability ADR is approved.",
+      "retirement": "Retire if the client runtime cannot build for two reviews or real-client evidence remains unavailable after the declared lab window."
+    },
+    {
+      "id": "linux-skia-riscv64",
+      "owner": "platform/linux-riscv64",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sysroot fixture, cross-build, QEMU evidence, or matching-device availability change; at least quarterly.",
+      "graduation": "Promote only after matching RISC-V64 Wayland device evidence covers first frame, input, IME, clipboard, and services without changing the Linux product claim.",
+      "retirement": "Retire if the locked toolchain/sysroot cannot be maintained or QEMU evidence no longer exercises an active architecture need."
+    }
+  ],
+  "modules": [
+    {
+      "name": "wzzc-dev/moui",
+      "owner": "framework/core",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Public package boundary, release-stage, API-surface, or dependency-closure change; quarterly otherwise.",
+      "evidence": "checks/release-modules.json, package manifest, public API report, package tests, and release closure validator",
+      "graduation": "Already public; retain only while it remains in an approved release stage and its required API and test gates pass.",
+      "retirement": "Remove or merge if no composition root depends on the module for two reviews or its scope moves to a more cohesive owner."
+    },
+    {
+      "name": "wzzc-dev/moui_skia",
+      "owner": "bindings/skia",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Skia binding, prebuild, native capability, or release-stage change; quarterly otherwise.",
+      "evidence": "package manifest, binding smoke tests, native prebuild checks, and release closure validator",
+      "graduation": "Already public; retain only while the mainline Skia route depends on it and its native/build gates pass.",
+      "retirement": "Remove if the binding is replaced by an approved successor or no product renderer imports it."
+    },
+    {
+      "name": "wzzc-dev/moui_sun",
+      "owner": "bindings/sun",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sun raster experiment, native build, or mainline renderer change; at least quarterly.",
+      "evidence": "package manifest, Sun raster tests, and experimental renderer evidence",
+      "graduation": "Promote only as part of an approved Sun renderer product route.",
+      "retirement": "Retire if unused for two reviews or if the experiment no longer informs the mainline renderer."
+    },
+    {
+      "name": "wzzc-dev/moui_tui",
+      "owner": "terminal/cell-model",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Terminal cell model, PTY smoke, or product-intent change; at least quarterly.",
+      "evidence": "package tests, TUI PTY smoke, and terminal route documentation",
+      "graduation": "Promote only after a product-intent ADR and repeatable console evidence beyond the current PTY proof.",
+      "retirement": "Retire if the cell experiment is unused for two reviews or no renderer/host depends on it."
+    },
+    {
+      "name": "wzzc-dev/moui_text_providers",
+      "owner": "text/providers",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Text provider protocol, platform font backend, or renderer capability change; quarterly otherwise.",
+      "evidence": "provider package tests, native text smoke tests, and release closure validator",
+      "graduation": "Already public; retain only while renderer providers share its neutral text contracts.",
+      "retirement": "Remove or consolidate if no renderer text provider imports the module for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_skia_renderer",
+      "owner": "renderers/skia",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Skia renderer provider, renderer contract, capability report, or release-stage change; quarterly otherwise.",
+      "evidence": "provider manifest, renderer contract tests, real-Skia smoke evidence, and capability report",
+      "graduation": "Already public; retain only while the native Skia routes remain committed.",
+      "retirement": "Remove if the native Skia product route is replaced or no composition root selects the provider."
+    },
+    {
+      "name": "wzzc-dev/moui_web_renderer",
+      "owner": "renderers/web",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Browser WebGPU/Canvas2D provider, renderer contract, or release-stage change; quarterly otherwise.",
+      "evidence": "provider manifest, Web renderer contract tests, browser presentation manifest, and capability report",
+      "graduation": "Already public; retain only while the Web route and fallback remain committed.",
+      "retirement": "Remove if the Web product route is replaced or no web composition root selects a provider."
+    },
+    {
+      "name": "wzzc-dev/moui_wgpu_renderer",
+      "owner": "renderers/wgpu",
+      "intent": "diagnostic",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Native WGPU dependency, diagnostic route, or release-stage change; at least quarterly.",
+      "evidence": "provider manifest, focused native WGPU tests, and capability report",
+      "graduation": "Promote only with a product route ADR and matching-host renderer evidence.",
+      "retirement": "Retire if unused for two reviews or if dependency maintenance exceeds diagnostic value."
+    },
+    {
+      "name": "wzzc-dev/moui_metal_renderer",
+      "owner": "renderers/metal",
+      "intent": "diagnostic",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Direct host-GPU experiment, capability report, or release-stage change; at least quarterly.",
+      "evidence": "provider manifest, direct-GPU contract tests, and capability report",
+      "graduation": "Promote only with a new product route ADR and full matching-device renderer evidence.",
+      "retirement": "Retire if parked for two reviews with no product path or if the mainline renderer covers the experiment."
+    },
+    {
+      "name": "wzzc-dev/moui_sun_renderer",
+      "owner": "renderers/sun",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Sun renderer provider, conformance suite, or release-stage change; at least quarterly.",
+      "evidence": "provider manifest, Sun renderer tests, and capability report",
+      "graduation": "Promote only as part of an approved Sun product route.",
+      "retirement": "Retire if unused for two reviews or if the experiment no longer informs the mainline renderer."
+    },
+    {
+      "name": "wzzc-dev/moui_tui_renderer",
+      "owner": "renderers/tui",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "ANSI renderer, terminal smoke, or release-stage change; at least quarterly.",
+      "evidence": "provider manifest, TUI renderer tests, and PTY smoke evidence",
+      "graduation": "Promote only with a terminal product-intent ADR and browser/console coverage beyond the PTY proof.",
+      "retirement": "Retire if unused for two reviews or no terminal host selects the renderer."
+    },
+    {
+      "name": "wzzc-dev/moui_agent",
+      "owner": "addons/agent",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Agent protocol, runtime inspector, or release-stage change; at least quarterly.",
+      "evidence": "package tests, agent integration tests, and runtime inspector contracts",
+      "graduation": "Promote only after the agent protocol has stable external-consumer evidence.",
+      "retirement": "Retire if no supported agent entrypoint imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_terminal_host",
+      "owner": "addons/terminal-host",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Terminal host, console evidence, or release-stage change; at least quarterly.",
+      "evidence": "package tests, TUI PTY smoke, and host documentation",
+      "graduation": "Promote only as part of an approved terminal product route.",
+      "retirement": "Retire if unused for two reviews or the cell renderer experiment ends."
+    },
+    {
+      "name": "wzzc-dev/moui_devtools",
+      "owner": "addons/devtools",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Inspector protocol, diagnostics contract, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, diagnostics contracts, and semantic snapshot tests",
+      "graduation": "Already public; retain only while diagnostics consumers depend on it.",
+      "retirement": "Remove or merge if no supported diagnostic entrypoint imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_i18n",
+      "owner": "addons/i18n",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Catalog format, locale support, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, generated catalog checks, and release closure validator",
+      "graduation": "Already public; retain only while first-party apps and consumers use its catalog contracts.",
+      "retirement": "Remove or merge if no supported app imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_richtext",
+      "owner": "addons/richtext",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Rich-text engine, editor contract, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, editor integration tests, and release closure validator",
+      "graduation": "Already public; retain only while first-party editors depend on its domain model.",
+      "retirement": "Remove or merge if no supported editor imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_markdown",
+      "owner": "addons/markdown",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Markdown chrome, editor integration, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, markdown editor integration tests, and release closure validator",
+      "graduation": "Already public; retain only while a supported editor uses the chrome addon.",
+      "retirement": "Remove or merge if no supported editor imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_theme",
+      "owner": "addons/theme",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Theme contract, design-system adapter, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, theme audit, and release closure validator",
+      "graduation": "Already public; retain only while a supported design-system or app consumes it.",
+      "retirement": "Remove or merge if no supported consumer imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_webview",
+      "owner": "addons/webview",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "WebView protocol, platform backend, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, backend integration tests, and release closure validator",
+      "graduation": "Already public; retain only while a supported platform backend exposes it.",
+      "retirement": "Remove if no supported backend or app imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_3d",
+      "owner": "addons/3d",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "3D scene/rendering API or release-stage change; at least quarterly.",
+      "evidence": "package tests and 3D diagnostics",
+      "graduation": "Promote only after a stable scene API and matching-host rendering evidence justify product use.",
+      "retirement": "Retire if unused for two reviews or if the experiment has no product path."
+    },
+    {
+      "name": "wzzc-dev/moui_3d_physics",
+      "owner": "addons/3d",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Physics contract, 3D integration, or release-stage change; at least quarterly.",
+      "evidence": "package tests and physics conformance fixtures",
+      "graduation": "Promote only as part of an approved 3D product route.",
+      "retirement": "Retire if the 3D experiment ends or no supported consumer imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_3d_physics_rapier",
+      "owner": "addons/3d",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Rapier dependency, physics contract, or release-stage change; at least quarterly.",
+      "evidence": "package tests, dependency checks, and physics conformance fixtures",
+      "graduation": "Promote only as part of an approved 3D product route with the dependency reviewed.",
+      "retirement": "Retire if the 3D experiment ends or the dependency cannot be maintained."
+    },
+    {
+      "name": "wzzc-dev/moui_3d_xr",
+      "owner": "addons/3d",
+      "intent": "lab",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "XR host capability, matching-device evidence, or release-stage change; at least quarterly.",
+      "evidence": "package tests and XR host diagnostics",
+      "graduation": "Promote only after matching-device XR evidence and a product route ADR.",
+      "retirement": "Retire if matching-device evidence remains unavailable after the declared lab window."
+    },
+    {
+      "name": "wzzc-dev/moui_agent_mcp",
+      "owner": "entrypoints/agent-mcp",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "MCP protocol, agent integration, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, MCP integration tests, and release closure validator",
+      "graduation": "Already public; retain only while a supported agent integration depends on it.",
+      "retirement": "Remove if no supported agent entrypoint imports it for two reviews."
+    },
+    {
+      "name": "wzzc-dev/moui_cli",
+      "owner": "entrypoints/cli",
+      "intent": "product",
+      "reviewDate": "2026-11-05",
+      "reviewTrigger": "Project generator, doctor, platform build, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, generator integration tests, and release closure validator",
+      "graduation": "Already public; retain only while supported project and platform workflows use it.",
+      "retirement": "Remove if an approved tool replaces its workflows or no supported workflow uses it for two reviews."
+    }
+  ]
+}

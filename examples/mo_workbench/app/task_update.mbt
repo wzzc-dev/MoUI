@@ -41,9 +41,12 @@ fn settings_scope() -> @moui.ScopedFeature[
   SettingsMsg,
   WorkbenchMsg,
 ] {
-  settings_feature().scope(read=settings_read, write=settings_write, wrap=msg => {
-    SettingsMsg(msg)
-  })
+  settings_feature().scope(
+    scope_id="workbench/settings",
+    read=settings_read,
+    write=settings_write,
+    wrap=msg => SettingsMsg(msg),
+  )
 }
 
 // ---------------------------------------------------------------------------

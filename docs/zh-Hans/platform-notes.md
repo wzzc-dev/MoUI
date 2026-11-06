@@ -50,7 +50,7 @@ platform window event -> Event -> AppRuntime -> DrawCommand -> renderer
 - [Linux](platform-notes-linux.md) — Wayland 宿主、运行时要求、Skia renderer composition、运行时证据和剩余缺口。
 - [Android](../android-support.md)（**experimental**）— window-hosted Activity、APK 打包和 matching-device evidence requirements。
 - [iOS](../ios-support.md)（**experimental**）— window-hosted UIKit template、Simulator 打包和 matching-device evidence requirements。
-- [HarmonyOS](../harmonyos-support.md)（**experimental**）— window-hosted Stage Ability/XComponent template、HAP 打包和 signed-device evidence requirements。
+- [HarmonyOS](../harmonyos-support.md)（**committed**）— window-hosted Stage Ability/XComponent template、HAP 打包和 matching-device R6 证据。
 
 产品类别摘要：[平台就绪声明](../platform-readiness-declaration.md)。
 

@@ -44,6 +44,18 @@ pub fn platform_service_bridge() -> @host.HostServiceBridge {
 - 让不可用服务受 capability gate 约束。
 - 为成功路径和 unavailable 路径添加宿主与后端测试。
 
+## 第三方控件模板
+
+先阅读[自定义控件 SDK](custom-control-sdk.md)，并以
+`examples/custom_control` 为起点。使用包内 `ViewNode` 实现，并从控件包自己的
+公开面暴露一个 `View[Msg]` constructor。只有当控件是第一方、面向普通 app 代码
+时，才把 constructor 加入 `moui/views`。
+
+已提交状态和领域行为留在消费者 app model；瞬态 focus、selection 和 IME 状态
+属于 runtime text-control context。控件应发出类型化消息并保持 renderer-neutral。
+第一方控件还需要在 `checks/component-quality.json` 中登记为 `stable`、`preview`
+或 `experimental`，并让 `evidence` 指向聚焦测试和指南。
+
 ## 渲染器能力模板
 
 检查清单：

@@ -74,6 +74,12 @@ section_nav(
 
 只有当 `Type::new` 形式能让类型标注或跨包 API 边界更清楚时才使用它。这样普通 app 包可以保持在 `moui + views` 上，同时让更低层的 runtime、host 和 renderer 包不出现在 view 代码中。
 
+## 消息类型与 `View::map` 成本
+
+`View::map` 在每次 view 调用时重建整个被包装子树：每层都会为每个节点重新创建 adapter、复制 children 与 semantics-handler 数组，并包装 event closure。原生 leaf benchmark 记录的是确定性结构成本：30 帧内，1k/10k 树的一层 map 会产生 30,060/300,060 次 adapter 复制；两层 map 翻倍。帧耗时只作为诊断，因为共享 runner 的波动大于该复制增量（`benchmarks/performance_budget/native/main.mbt`）。`full_cycle` 中的 `F-deep-click` 与 `G-deep-dblmap-click` 提供同一成本的 wall-clock 对照。
+
+Program 顶层优先使用扁平的 `Msg` enum，并直接在 parent view（或普通构造 helper）中生成子消息，不要在 feature module 内层层嵌套 `map`。`map` 适合真实组合边界：把拥有独立 `Msg` 的 standalone feature view 挂到 app；但任意 root-to-leaf 路径上的 map 层数应保持很小。构造时的快照是已承诺的所有权契约（`from_node` 必须承受 producer 随后修改 `children` 数组，由 `moui/core/view_node_test.mbt` 固定），不是可以随意去掉的额外开销。ADR 0058 记录当前语言为什么无法安全实现非复制 transform chain；债务和重开条件位于 `docs/plans/debt/message-transform-chain.md`。
+
 ## 边界
 
 普通 app authoring 使用 `views`：控件、layout、surface、scrolling 和简单组合。

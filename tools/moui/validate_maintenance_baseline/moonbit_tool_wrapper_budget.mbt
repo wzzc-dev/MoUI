@@ -21,6 +21,7 @@ fn moonbit_tool_wrapper_budgets() -> Array[WrapperBudget] {
     { path: "scripts/validate-maintenance-baseline.mjs", max_lines: 12, },
     { path: "scripts/validate-package-manifest.mjs", max_lines: 28, },
     { path: "scripts/validate-performance-budgets.mjs", max_lines: 26, },
+    { path: "scripts/validate-portfolio-governance.mjs", max_lines: 16, },
     { path: "scripts/validate-renderer-provider-manifests.mjs", max_lines: 12, },
     { path: "scripts/validate-release-module-closures.mjs", max_lines: 12, },
     {

@@ -8,8 +8,11 @@ const marker = "MOUI_PERFORMANCE_RESULT=";
 let output = "";
 let frames = "60";
 let warmup = "12";
+let leafFrames = "30";
+let leafWarmup = "6";
 let provider = process.env.MOUI_PERFORMANCE_PROVIDER || "skia";
 let surfaceRoute = process.env.MOUI_PERFORMANCE_SURFACE_ROUTE || "raster";
+let structuralOnly = false;
 const routes = ["raster", "metal-gpu", "metal-gpu-host", "metal-gpu-host-rotating"];
 const providers = ["skia", "skia-neutral", "sun"];
 const args = process.argv.slice(2);
@@ -17,6 +20,7 @@ for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
   if (
     arg === "--output" || arg === "--frames" || arg === "--warmup" ||
+    arg === "--leaf-frames" || arg === "--leaf-warmup" ||
     arg === "--surface-route" || arg === "--provider"
   ) {
     const value = args[index + 1];
@@ -27,6 +31,8 @@ for (let index = 0; index < args.length; index += 1) {
     if (arg === "--output") output = value;
     if (arg === "--frames") frames = value;
     if (arg === "--warmup") warmup = value;
+    if (arg === "--leaf-frames") leafFrames = value;
+    if (arg === "--leaf-warmup") leafWarmup = value;
     if (arg === "--surface-route") surfaceRoute = value;
     if (arg === "--provider") provider = value;
     index += 1;
@@ -36,7 +42,8 @@ for (let index = 0; index < args.length; index += 1) {
         providers.join("|") +
         "] [--surface-route " +
         routes.join("|") +
-        "] [--output PATH] [--frames N] [--warmup N]",
+        "] [--output PATH] [--frames N] [--warmup N] [--leaf-frames N] " +
+        "[--leaf-warmup N] [--structural-only]",
     );
     console.log(
       "  skia + raster is the gated runner (native-skia-raster); every other",
@@ -46,12 +53,17 @@ for (let index = 0; index < args.length; index += 1) {
     );
     console.log("  validated against budgets.");
     console.log(
+      "  --structural-only enforces build/cache counts while leaving timing gates report-only.",
+    );
+    console.log(
       "  the metal-gpu routes exist only for provider skia: they are arguments to",
     );
     console.log(
       "  Skia's own constructor, and no RendererProvider expression reaches them.",
     );
     process.exit(0);
+  } else if (arg === "--structural-only") {
+    structuralOnly = true;
   } else {
     console.error("unknown argument: " + arg);
     process.exit(2);
@@ -92,6 +104,8 @@ const result = runCommand(
       MOUI_PERFORMANCE_PROVIDER: provider,
       MOUI_PERFORMANCE_FRAMES: frames,
       MOUI_PERFORMANCE_WARMUP: warmup,
+      MOUI_PERFORMANCE_LEAF_FRAMES: leafFrames,
+      MOUI_PERFORMANCE_LEAF_WARMUP: leafWarmup,
       MOUI_PERFORMANCE_SURFACE_ROUTE: surfaceRoute,
     },
   },
@@ -113,13 +127,15 @@ mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, JSON.stringify(report, null, 2) + "\n");
 
 if (gated) {
+  const validationArgs = [
+    "scripts/validate-performance-budgets.mjs",
+    "--results",
+    outputPath,
+  ];
+  if (structuralOnly) validationArgs.push("--structural-only");
   runCommand(
     "node",
-    [
-      "scripts/validate-performance-budgets.mjs",
-      "--results",
-      outputPath,
-    ],
+    validationArgs,
   );
 } else {
   console.log(

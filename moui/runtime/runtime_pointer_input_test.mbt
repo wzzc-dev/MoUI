@@ -318,6 +318,58 @@ test "captured gesture ancestors arbitrate tap versus drag" {
 }
 
 ///|
+/// Nested drag modifiers must not both activate on the claiming `Move`.
+/// The inner recognizer wins the arena and keeps receiving the stream; the
+/// outer recognizer is cancelled instead of also emitting a drag message.
+test "nested drag modifiers activate only the inner recognizer" {
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=40.0,
+      height=40.0,
+      padding=0.0,
+    )
+    .on_drag(event => "inner:" + event.phase.label())
+    .on_drag(event => "outer:" + event.phase.label())
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=40.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let start = @core.Point::new(x=20.0, y=20.0)
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(position=start, phase=Down),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=20.0),
+        phase=Move,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=36.0, y=20.0),
+        phase=Move,
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_pointer_input(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=36.0, y=20.0),
+        phase=Up,
+      ),
+    ),
+  )
+  inspect(received.join(","), content="inner:Started,inner:Changed,inner:Ended")
+}
+
+///|
 fn runtime_damage_rebuild_program() -> @core.Program[Bool, Unit] {
   @core.Program::simple(init=false, update=(visible, _message) => !visible, view=visible => {
     if visible {

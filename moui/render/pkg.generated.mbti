@@ -548,12 +548,13 @@ pub fn RendererSession::gpu_fallback_active(Self) -> Bool
 pub fn RendererSession::gpu_recovery_count(Self) -> Int32
 pub fn RendererSession::image_diagnostics(Self) -> RendererImageDiagnostics
 pub fn RendererSession::inject_context_loss(Self) -> Unit
-pub fn RendererSession::new(resize~ : (@core.SurfaceMetrics) -> Unit, render_frame~ : (RenderFrameSubmission) -> RenderFrameResult, drain_events? : (() -> Array[RendererEvent])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int32, recover? : (String) -> RecoveryResult, dispose? : () -> Unit, image_records? : () -> Array[ImageResourceRecord], image_records_generation? : (() -> Int64)?, apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool, image_source? : HostImageSource, image_decoder? : RendererImageDecoder?, native_surface? : NativeSurface?, platform_view? : RendererPlatformViewCapability, gpu_recovery? : RendererGpuRecoveryCapability) -> Self
+pub fn RendererSession::new(resize~ : (@core.SurfaceMetrics) -> Unit, render_frame~ : (RenderFrameSubmission) -> RenderFrameResult, drain_events? : (() -> Array[RendererEvent])?, text_system~ : () -> @core.TextSystem, present_count? : () -> Int32, recover? : (String) -> RecoveryResult, dispose? : () -> Unit, image_records? : () -> Array[ImageResourceRecord], image_records_generation? : (() -> Int64)?, apply_image_load_completion? : (ImageResourceLoadCompletion) -> Bool, image_source? : HostImageSource, image_decoder? : RendererImageDecoder?, native_surface? : NativeSurface?, platform_view? : RendererPlatformViewCapability, gpu_recovery? : RendererGpuRecoveryCapability, surface_damage? : SurfaceDamageCapability) -> Self
 pub fn RendererSession::present_count(Self) -> Int32
 pub fn RendererSession::recover(Self, String) -> RecoveryResult
 pub fn RendererSession::render_frame(Self, RenderFrameSubmission) -> RenderFrameResult
 pub fn RendererSession::resize(Self, @core.SurfaceMetrics) -> Unit
 pub fn RendererSession::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
+pub fn RendererSession::surface_damage_capability(Self) -> SurfaceDamageCapability
 pub fn RendererSession::text_system(Self) -> @core.TextSystem
 
 pub(all) enum RendererTarget {
@@ -565,6 +566,16 @@ pub fn RendererTarget::equal(Self, Self) -> Bool
 pub fn RendererTarget::not_equal(Self, Self) -> Bool
 pub fn RendererTarget::to_json(Self) -> Json
 pub fn RendererTarget::to_repr(Self) -> @debug.Repr
+
+pub(all) enum SurfaceDamageCapability {
+  FullSurfaceOnly
+  SubRect
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceDamageCapability::equal(Self, Self) -> Bool
+pub fn SurfaceDamageCapability::label(Self) -> String
+pub fn SurfaceDamageCapability::not_equal(Self, Self) -> Bool
+pub fn SurfaceDamageCapability::to_json(Self) -> Json
+pub fn SurfaceDamageCapability::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind

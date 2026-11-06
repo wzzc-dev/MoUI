@@ -53,8 +53,8 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2534,
-      "public_declarations": 1125,
+      "lines": 2572,
+      "public_declarations": 1150,
       "pub_all_declarations": 141
     },
     {
@@ -74,9 +74,9 @@
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 608,
-      "public_declarations": 279,
-      "pub_all_declarations": 31
+      "lines": 619,
+      "public_declarations": 285,
+      "pub_all_declarations": 32
     },
     {
       "label": "render common",

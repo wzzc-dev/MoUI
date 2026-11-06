@@ -31,6 +31,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [api-surface.md](api-surface.md) | `canonical` | Public API tiers and guards |
 | [compatibility-policy.md](compatibility-policy.md) | `canonical` | SemVer, deprecation, quality levels, and external consumers |
 | [view-catalog.md](view-catalog.md) | `canonical` | Public controls coverage |
+| [custom-control-sdk.md](custom-control-sdk.md) | `canonical` | Package-local `ViewNode` controls, conformance, and migration |
 | [views-api-guide.md](views-api-guide.md) | `deep` | Views API usage |
 | [tea-program-model.md](tea-program-model.md) | `canonical` | Program / Effect / Subscription model |
 | [agent-semantics.md](agent-semantics.md) | `canonical` | Committed semantics, generations, typed Agent actions, and MCP surface |

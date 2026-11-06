@@ -148,7 +148,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
-      max_count: 281,
+      // SurfaceDamageCapability and the session negotiation accessor are
+      // renderer-contract surface, not app API.
+      max_count: 287,
     },
     {
       path: "moui/render/pkg.generated.mbti",

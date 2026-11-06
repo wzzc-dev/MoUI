@@ -3,6 +3,7 @@ test "fallback diagnostics input carries devtools report fields" {
   let input = ShowcaseDiagnosticsInput::fallback()
   assert_true(input.devtools.summary_text.length() > 0)
   assert_true(input.devtools.report_text.contains("[view]"))
+  assert_true(input.devtools.report_text.contains("[trace]"))
   assert_true(input.devtools.json_text.length() > 0)
 }
 

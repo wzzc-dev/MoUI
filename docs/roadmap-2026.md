@@ -60,10 +60,11 @@ Focus areas:
 
 - Stabilize `AppRuntime::new_view` for direct static views and
   `AppRuntime::new_program` as the default typed app runtime.
-- Keep `ComponentContext::watch` and `ctx.binding` as the preferred state access
-  patterns during component builds.
-- Use `ComponentContext::run_effect` for component-scoped effects with cleanup, and
-  the scoped save/restore helpers for small saveable string state.
+- Keep `Program`/`Feature` as the state boundary: persistent state lives in the
+  parent model, and component composition uses pure scoped lenses without a
+  hidden context object, binding, or runtime-owned state store.
+- Use `Effect`/`Subscription` for side effects and `Feature::scope` ids for
+  keyed lifecycle identity; use app-owned snapshot DTOs for save/restore.
 - Preserve ordered modifier semantics through public `View[Msg]` modifiers.
 - Keep `@views.custom_children_layout` as the advanced child layout delegate
   for package-local custom controls and layout experiments.
@@ -72,12 +73,14 @@ Focus areas:
 - Review public API changes with `moon info` and generated `pkg.generated.mbti`
   diffs.
 
-First P0 foundations now exist for component effects, saveable string/bool/int
-state, custom child layout delegates, and keyed effect reuse. Follow-up work
-should broaden saveable state into a general codec model, add richer lifecycle
-coverage beyond the current `on_mount`/`on_dispose` helpers, and extend the
-custom layout protocol with layout cache and alignment guides. Custom layouts
-already receive child baseline signals.
+Current foundations are explicit `Feature` composition, scoped
+Effect/Subscription identity, caller-keyed `ViewMemo` and `ViewBuilderCache`,
+typed runtime slots for interaction transients, and custom child layout
+delegates. Follow-up work should improve diagnostics and apply the explicit
+builder/content-key contract where measured, while recursive `View::map`
+copying remains a separate design problem. Do not reintroduce a parallel
+component state/lifecycle model. Custom layouts already receive child baseline
+signals.
 
 Validation:
 

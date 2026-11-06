@@ -182,7 +182,7 @@ fn RuntimeState::set_environment(
 ) -> Unit {
   if self.environment != environment {
     self.environment = environment
-    self.request_root_rebuild(reason="environment changed")
+    self.request_root_rebuild(reason="environment changed", damage=FullSurface)
     self.dirty.needs_layout = true
     self.dirty.needs_paint = true
     self.dirty.needs_redraw = true
@@ -239,6 +239,7 @@ fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.dirty.clear()
   self.animfocus.focused_element = None
   self.animfocus.pointer_captures.clear()
+  self.animfocus.gesture_arena.clear()
   self.animfocus.active_focus_trap = None
   self.animfocus.saved_focus_key = None
   self.animfocus.saved_focus_semantic_id = None
@@ -272,12 +273,12 @@ fn RuntimeState::set_redraw_callback(
 ///|
 fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
   self.ensure_layout_tree()
-  self.layout_tree.root.to_layout_result()
+  self.layout_tree.root.to_layout_result(Transform2D::identity())
 }
 
 ///|
 fn RuntimeState::cached_layout(self : RuntimeState) -> LayoutResult {
-  self.layout_tree.root.to_layout_result()
+  self.layout_tree.root.to_layout_result(Transform2D::identity())
 }
 
 ///|
@@ -362,7 +363,7 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
   commands.push(Clear(Color::white()))
   self.rebuild_if_possible()
   self.ensure_render_tree()
-  self.render_tree.root.collect_draw_commands(commands)
+  self.render_tree.root.collect_legacy_draw_commands(commands)
   self.append_exiting_overlay_commands(commands)
   self.stats.last_command_count = commands.length()
   commands
@@ -459,7 +460,7 @@ fn RuntimeState::cached_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
   let commands : Array[DrawCommand] = [Clear(Color::white())]
-  self.render_tree.root.collect_draw_commands(commands)
+  self.render_tree.root.collect_legacy_draw_commands(commands)
   commands
 }
 
@@ -479,9 +480,14 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
         )
         self.element_tree = ElementTree::new(result.node)
         self.next_element_id = result.next_id
+        if result.structure_changed {
+          self.ensure_full_surface_damage("structure changed")
+        } else if result.dirty_kind.layout {
+          self.ensure_full_surface_damage("layout changed")
+        }
         self.sync_focus_trap_after_rebuild()
         self.clear_stale_pointer_capture()
-        self.mark_current_dirty_elements()
+        self.mark_current_dirty_elements(fallback=NoFallback)
       }
       None => ()
     }
@@ -503,10 +509,13 @@ fn RuntimeState::set_root_builder(
 fn RuntimeState::request_root_rebuild(
   self : RuntimeState,
   reason~ : String = "program model changed",
+  damage~ : RebuildDamage = Projection,
 ) -> Unit {
   if self.root_builder is Some(_) {
     self.dirty.needs_rebuild = true
-    self.dirty.full_damage_reason = Some(reason)
+    if damage is FullSurface {
+      self.ensure_full_surface_damage(reason)
+    }
     self.queue_dirty_element(self.element_tree.id())
     self.queue_build_dirty(self.element_tree.id())
     self.request_rebuild_wakeup()
@@ -515,7 +524,18 @@ fn RuntimeState::request_root_rebuild(
 
 ///|
 fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
-  self.request_root_rebuild(reason="activation rebuild")
+  self.request_root_rebuild(reason="activation rebuild", damage=FullSurface)
+}
+
+///|
+/// Rebuild invalidation class. A program projection may be a no-op or may
+/// produce paint-only changes that reconciliation can localize. Callers that
+/// know the rebuild is caused by global input (environment, viewport,
+/// activation, or overlay lifecycle) force a full surface until their effects
+/// have a precise move model.
+priv enum RebuildDamage {
+  Projection
+  FullSurface
 }
 
 ///|
@@ -628,6 +648,11 @@ priv struct AnimFocusState {
   /// the subtree keeps animating so a recognizer that completes on elapsed time
   /// can fire while a finger holds still. Absent key means not pressed.
   pointer_presses : Map[Int32, Point]
+  /// Per-pointer recognizer ownership for the current press stream. This is
+  /// transient input state, not component state: it exists only to arbitrate
+  /// competing tap/long-press/drag/scroll recognizers and is discarded when the
+  /// pointer is released.
+  gesture_arena : PointerGestureArena
   mut active_focus_trap : ElementId?
   mut saved_focus_key : String?
   mut saved_focus_semantic_id : SemanticId?
@@ -719,6 +744,7 @@ fn AnimFocusState::new() -> AnimFocusState {
     semantic_focused: None,
     pointer_captures: Map([]),
     pointer_presses: Map([]),
+    gesture_arena: PointerGestureArena::new(),
     active_focus_trap: None,
     saved_focus_key: None,
     saved_focus_semantic_id: None,

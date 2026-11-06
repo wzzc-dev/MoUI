@@ -130,6 +130,18 @@ fn[Msg] collected(effect : @core.Effect[Msg]) -> Array[Msg] {
 }
 
 ///|
+fn[Msg] effect_descriptor_keys(effect : @core.Effect[Msg]) -> Array[String] {
+  let out : Array[String] = []
+  effect.runtime_visit(
+    _message => (),
+    _dispatch_effect => (),
+    (descriptor, _run) => out.push(descriptor.key()),
+    (descriptor, _start) => out.push(descriptor.key()),
+  )
+  out
+}
+
+///|
 fn test_env() -> @core.ViewEnvironment {
   @core.ViewEnvironment::new(
     viewport_size=@core.Size::new(width=100.0, height=100.0),
@@ -256,17 +268,80 @@ test "ScopedFeature::view lifts child messages through the wrapper" {
 
 ///|
 test "ScopedFeature::subscriptions lifts source messages" {
-  let scoped = child_scope()
+  let scoped = child_feature().scope(
+    scope_id="settings",
+    read=child_read,
+    write=child_write,
+    wrap=child_message,
+  )
   let parent = sample_parent()
   let subscription = scoped.subscriptions(parent)
   let descriptors = subscription.descriptors()
   assert_eq(descriptors.length(), 1)
-  assert_eq(descriptors[0].key(), "child/tick")
+  assert_eq(descriptors[0].key(), "settings/child/tick")
   let sources = subscription.runtime_sources()
   assert_eq(sources.length(), 1)
   let out : Array[ParentMsg] = []
   let _stop = sources[0].start(message => out.push(message))
   assert_eq(out, [Child(Inc)])
+}
+
+///|
+test "Feature scope namespaces structured effects without changing messages" {
+  let feature = @core.Feature::new(
+    init=() => {
+      (
+        { count: 0, label: "init", },
+        @core.Effect::batch([
+          @core.Effect::send(Ping),
+          @core.Effect::run(key="refresh", run=_dispatch => ()),
+          @core.Effect::task(key="load", start=_dispatch => None),
+        ]),
+      )
+    },
+    update=(model, _message) => (model, @core.Effect::none()),
+    view=model => feature_test_view(model.label),
+  )
+  let scoped = feature.scope(
+    scope_id="settings/%",
+    read=child_read,
+    write=child_write,
+    wrap=child_message,
+  )
+  let (_, effect) = scoped.init()
+  assert_eq(collected(effect), [Child(Ping)])
+  assert_eq(effect_descriptor_keys(effect), [
+    "settings%2F%25/refresh", "settings%2F%25/load",
+  ])
+}
+
+///|
+test "Sibling feature scopes isolate identical local lifecycle keys" {
+  let left = child_feature().scope(
+    scope_id="left",
+    read=child_read,
+    write=child_write,
+    wrap=child_message,
+  )
+  let right = child_feature().scope(
+    scope_id="a/b",
+    read=child_read,
+    write=child_write,
+    wrap=child_message,
+  )
+  let parent = sample_parent()
+  let left_keys = left.subscriptions(parent).descriptors().map(d => d.key())
+  let right_keys = right.subscriptions(parent).descriptors().map(d => d.key())
+  assert_eq(left_keys, ["left/child/tick"])
+  assert_eq(right_keys, ["a%2Fb/child/tick"])
+  assert_true(left_keys[0] != right_keys[0])
+}
+
+///|
+test "Empty feature scope keeps the root lifecycle namespace" {
+  let parent = sample_parent()
+  let keys = child_scope().subscriptions(parent).descriptors().map(d => d.key())
+  assert_eq(keys, ["child/tick"])
 }
 
 ///|

@@ -48,12 +48,18 @@ Checklist:
 
 ## Third-Party Control Template
 
-Use a package-local `ViewNode` implementation and expose one constructor from
-`moui/views` only when the control is intended for ordinary app code. Register
-the control in `checks/component-quality.json` with one of `stable`, `preview`,
-or `experimental` levels and point `evidence` at focused tests and guidance.
-Keep app state and domain behavior in the consumer app package; the control
-should emit typed messages and remain renderer-neutral.
+Follow the [Custom Control SDK](custom-control-sdk.md) and start from
+`examples/custom_control`. Use a package-local `ViewNode` implementation and
+expose one `View[Msg]` constructor from the control package's public surface.
+Add the constructor to `moui/views` only when it is a first-party control
+intended for ordinary app code.
+
+Keep committed state and domain behavior in the consumer app model; transient
+focus, selection, and IME state belongs to the runtime text-control context.
+The control should emit typed messages and remain renderer-neutral. For a
+first-party control, register it in `checks/component-quality.json` with one of
+`stable`, `preview`, or `experimental` levels and point `evidence` at focused
+tests and guidance.
 
 ## Host-Service Extension Template
 

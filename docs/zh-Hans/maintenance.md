@@ -35,6 +35,8 @@ MoUI 保持窄而明确的默认维护基线，让框架可以持续增长，而
 
 API surface guard 独立于这条维护基线。它跟踪生成的公开 API 大小、禁止的边界 token，以及 `app_constructor`、`advanced_core_protocol`、`runtime_diagnostic`、`host_contract`、`renderer_contract` 等语义 API 分类预算。扩展公开 API 前，请参见 [API surface](../api-surface.md) 和 [API surface audit](../api-surface-audit.md)。
 
+应用性能护栏由 `checks/performance-budgets.json` 拥有。PR profile 验证 catalog，macOS benchmark job 阻断结构 build/cache 计数并上传忽略的 Skia Raster 产物；墙钟 timing 仍是报告项。Timing ratchet 需要实际执行门禁的专用 benchmark runner，以及同一 runner 上两次同代码产物不超过 15% 的 p50 spread，并记录审查说明。不要把结构下限下调来掩盖无解释的回归，也不要比较不同 runner 的产物。
+
 当前 `max` 值有意匹配今天的债务，因此无关变更不需要解决整个积压。当一次重构拆分文件、把 control 级入口点移动到 `views`、收缩公开 surface area 或移除根 facade 转发时，请在同一次提交中下调对应预算。
 
 默认 wrapper 运行 `daily` scope。MoonBit 工具还支持 full-workspace 热点 scope：

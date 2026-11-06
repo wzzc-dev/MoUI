@@ -16,41 +16,53 @@ fn scroll_direction_child() -> @core.Size {
 ///|
 test "a scroll offset measures from the reading edge" {
   let frame = @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)
-  let ltr_start = scroll_child_frame(
+  let ltr_start = scroll_content_frame(
     frame~,
+    viewport=scroll_direction_viewport(),
+    child_size=scroll_direction_child(),
+  )
+  let ltr_start_transform = scroll_child_transform(
     offset=@core.Point::new(x=0.0, y=0.0),
     viewport=scroll_direction_viewport(),
     child_size=scroll_direction_child(),
     direction=LeftToRight,
   )
-  let rtl_start = scroll_child_frame(
+  let rtl_start = scroll_content_frame(
     frame~,
+    viewport=scroll_direction_viewport(),
+    child_size=scroll_direction_child(),
+  )
+  let rtl_start_transform = scroll_child_transform(
     offset=@core.Point::new(x=0.0, y=0.0),
     viewport=scroll_direction_viewport(),
     child_size=scroll_direction_child(),
     direction=RightToLeft,
   )
   // 前缘距离为 0 时，LTR 露出左端，RTL 露出右端
-  assert_eq(ltr_start.origin.x, 0.0)
-  assert_eq(rtl_start.origin.x, -100.0)
+  assert_eq(ltr_start.origin.x + ltr_start_transform.tx, 0.0)
+  assert_eq(rtl_start.origin.x + rtl_start_transform.tx, -100.0)
   assert_eq(rtl_start.origin.y, ltr_start.origin.y)
-  let ltr_end = scroll_child_frame(
-    frame~,
+  let ltr_end_transform = scroll_child_transform(
     offset=@core.Point::new(x=100.0, y=0.0),
     viewport=scroll_direction_viewport(),
     child_size=scroll_direction_child(),
     direction=LeftToRight,
   )
-  let rtl_end = scroll_child_frame(
-    frame~,
+  let rtl_end_transform = scroll_child_transform(
     offset=@core.Point::new(x=100.0, y=0.0),
     viewport=scroll_direction_viewport(),
     child_size=scroll_direction_child(),
     direction=RightToLeft,
   )
   // 滚到底正好是另一端：LTR 的终点等于 RTL 的起点，反之亦然
-  assert_true(ltr_end == rtl_start)
-  assert_true(rtl_end == ltr_start)
+  assert_true(
+    ltr_start.origin.x + ltr_end_transform.tx ==
+    rtl_start.origin.x + rtl_start_transform.tx,
+  )
+  assert_true(
+    rtl_start.origin.x + rtl_end_transform.tx ==
+    ltr_start.origin.x + ltr_start_transform.tx,
+  )
 }
 
 ///|
@@ -111,9 +123,77 @@ test "the container layout reads the direction off the environment" {
       direction=RightToLeft,
     ),
   )
-  assert_eq(ltr.child_frames[0].origin.x, -30.0)
-  assert_eq(rtl.child_frames[0].origin.x, -70.0)
+  assert_eq(ltr.child_frames[0].origin.x, 0.0)
+  assert_eq(rtl.child_frames[0].origin.x, 0.0)
+  assert_eq(ltr.child_transform.tx, -30.0)
+  assert_eq(rtl.child_transform.tx, -70.0)
   assert_eq(rtl.child_frames[0].origin.y, ltr.child_frames[0].origin.y)
+}
+
+///|
+test "paint-only overshoot is mirrored with the content transform" {
+  let viewport = scroll_direction_viewport()
+  let child = scroll_direction_child()
+  let ltr = scroll_paint_shift(
+    @core.Point::new(x=50.0, y=0.0),
+    @core.Point::new(x=40.0, y=0.0),
+    viewport,
+    child,
+    direction=LeftToRight,
+  )
+  let rtl = scroll_paint_shift(
+    @core.Point::new(x=50.0, y=0.0),
+    @core.Point::new(x=40.0, y=0.0),
+    viewport,
+    child,
+    direction=RightToLeft,
+  )
+  assert_eq(ltr.x, 10.0)
+  assert_eq(rtl.x, -10.0)
+  assert_eq(ltr.y, 0.0)
+  assert_eq(rtl.y, 0.0)
+}
+
+///|
+test "paint-only overshoot past either RTL edge follows the leading edge" {
+  let viewport = scroll_direction_viewport()
+  let child = scroll_direction_child()
+  // Offset values outside [0, max] model a rubber band past an edge. The
+  // authoritative offset is clamped first; the visible offset is not.
+  let ltr_start = scroll_paint_shift(
+    @core.Point::new(x=0.0, y=0.0),
+    @core.Point::new(x=-20.0, y=0.0),
+    viewport,
+    child,
+    direction=LeftToRight,
+  )
+  let rtl_start = scroll_paint_shift(
+    @core.Point::new(x=0.0, y=0.0),
+    @core.Point::new(x=-20.0, y=0.0),
+    viewport,
+    child,
+    direction=RightToLeft,
+  )
+  let ltr_end = scroll_paint_shift(
+    @core.Point::new(x=100.0, y=0.0),
+    @core.Point::new(x=120.0, y=0.0),
+    viewport,
+    child,
+    direction=LeftToRight,
+  )
+  let rtl_end = scroll_paint_shift(
+    @core.Point::new(x=100.0, y=0.0),
+    @core.Point::new(x=120.0, y=0.0),
+    viewport,
+    child,
+    direction=RightToLeft,
+  )
+  assert_eq(ltr_start.x, 20.0)
+  assert_eq(rtl_start.x, -20.0)
+  assert_eq(ltr_end.x, -20.0)
+  assert_eq(rtl_end.x, 20.0)
+  assert_eq(ltr_start.y, 0.0)
+  assert_eq(rtl_end.y, 0.0)
 }
 
 ///|

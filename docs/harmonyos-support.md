@@ -101,12 +101,14 @@ moon test moui/backend/harmonyos --target native
 ```
 
 A device or HVD claim requires first frame, input, surface detach/recreate,
-IME, clipboard, accessibility, and async-image observations. Signed-device
-evidence is required before treating `checks/platforms/harmonyos.json` as more
-than `partial`.
+IME, clipboard, accessibility, and async-image observations. The committed
+claim is backed by signed-device evidence in
+`checks/platforms/harmonyos.json`; repeat the focused checks after host,
+toolchain, or runtime changes and keep the GPU seven-gate claim separate.
 
 ## Status
 
-The source path and host-sim route are available, while actual presentation and
-full service evidence are pending. See `docs/platform-readiness-declaration.md`
-and `docs/window-hosted-moui.md` for the readiness boundary.
+The source path, host-sim route, and matching-device R6 evidence are available.
+The remaining quality gap is the separate GPU seven-gate claim. See
+`docs/platform-readiness-declaration.md` and `docs/window-hosted-moui.md` for
+the readiness boundary.

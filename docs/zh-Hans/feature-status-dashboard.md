@@ -62,14 +62,14 @@
 - **发布就绪**：就绪。`moui-renderer-real-skia-ci.yml` workflow 会在每个 PR 上自动获取三个平台的 second-frame 和 deferred-completion marker。
 - **Runtime 路径**：Off-main-thread file I/O 和 Skia decode 已通过平台 native worker 为 local-file source 实现（macOS 上 GCD，Linux 上 pthread，Windows 上 CreateThread）。`ImageResourceLoadCompletion` 可携带 decoded RGBA pixels、row bytes、`background_io` 和 `background_decode`，Skia 会把 decoded completion 直接应用到 image cache。
 
-## 移动端状态
+## 路线就绪度
 
-Android、iOS、HarmonyOS 和微信小程序的**产品分类：`experimental`**（代码路径可编译且 host-sim tests 通过；在匹配设备证据落地前，**不**做任何开发/演示可用性或产品承诺）。请见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
+HarmonyOS 为 **`committed`**，匹配真机 R6 证据已记录在 `checks/platforms/harmonyos.json`。Android、iOS 和微信小程序仍为 **`experimental`**（代码路径可编译且 host-sim tests 通过；在匹配设备证据落地前，**不**做任何开发/演示可用性或产品承诺）。权威状态见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
 
 window-hosted 路径使用 `HostCmd` → `EventLoop` → `ApplicationHandler` → MoUI
 adapters。HarmonyOS XComponent callbacks 独占 surface、pointer、resize 和 detach。
-通过 `sh scripts/window-hosted-hostsim-smoke.sh` 提供 host-sim 覆盖；三个平台的
-matching-device evidence 仍 pending。
+通过 `sh scripts/window-hosted-hostsim-smoke.sh` 提供 host-sim 覆盖；Android 和 iOS
+的 matching-device evidence 仍 pending，HarmonyOS 已通过匹配真机证据。
 
 `SkiaGpuNative` 按 GPU readback elimination plan 第 1 阶段携带未 promoted 的 window-surface source 路径（iOS/macOS Metal、Android Vulkan/GLES、HarmonyOS EGL/GLES、Windows D3D12、Linux Wayland Vulkan）。native worker 在独立线程上证明安全的 `SkPicture`/POD handoff。它的 macOS 分支现在拥有 Ganesh/Metal context 和 drawable presentation，并在本地 first-frame smoke 后发出 `Presented`；剩余平台 worker ownership 和所有 promotion manifest 仍然 pending。第 2 阶段 promotion gate 脚手架具有 L1 package-test 证明：
 

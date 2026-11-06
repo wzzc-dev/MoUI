@@ -186,7 +186,8 @@ priv enum SemanticIdIndexEntry {
 priv struct SemanticActionRoute {
   kind : @core.SemanticsActionKind
   element : ElementNode
-  layout : PlacedNode
+  frame : @core.Rect
+  child_frames : Array[@core.Rect]
   environment : @core.Environment
   style : @core.ViewStyle
 }

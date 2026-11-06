@@ -63,6 +63,23 @@
           ]
         },
         {
+          "name": "portfolio governance",
+          "argv": [
+            "node",
+            "scripts/validate-portfolio-governance.mjs"
+          ]
+        },
+        {
+          "name": "portfolio governance validator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_portfolio_governance",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "guidance consistency",
           "argv": [
             "node",
@@ -205,6 +222,16 @@
           "argv": [
             "node",
             "scripts/validate-runtime-state-render-ownership.mjs"
+          ]
+        },
+        {
+          "name": "runtime ownership validator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_runtime_state_render_ownership",
+            "--target",
+            "native"
           ]
         },
         {
@@ -510,6 +537,26 @@
             "moon",
             "test",
             "examples/agent_counter",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "custom control widget tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/custom_control/widgets",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "custom control app tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/custom_control/app",
             "--target",
             "native"
           ]

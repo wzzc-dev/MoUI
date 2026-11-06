@@ -92,6 +92,36 @@ pub extend RendererPresentationModel with Eq::{not_equal, equal}
 pub extend RendererPresentationModel with ToJson::{to_json}
 
 ///|
+/// What a renderer session is allowed to do with `DrawFrame.damage`.
+///
+/// `FullSurfaceOnly` is the default and preserves the frame contract: every
+/// presented frame overwrites the whole surface. `SubRect` is an explicit
+/// capability granted by the composition root after the renderer proves its
+/// clear, clip, redraw, and present paths preserve pixels outside the damage
+/// region.
+pub(all) enum SurfaceDamageCapability {
+  FullSurfaceOnly
+  SubRect
+} derive(Eq, Debug, ToJson)
+
+///|
+pub extend SurfaceDamageCapability with Debug::{to_repr}
+
+///|
+pub extend SurfaceDamageCapability with Eq::{not_equal, equal}
+
+///|
+pub extend SurfaceDamageCapability with ToJson::{to_json}
+
+///|
+pub fn SurfaceDamageCapability::label(self : SurfaceDamageCapability) -> String {
+  match self {
+    FullSurfaceOnly => "full-surface-only"
+    SubRect => "sub-rect"
+  }
+}
+
+///|
 pub(all) enum RendererTarget {
   Native
   WasmGc

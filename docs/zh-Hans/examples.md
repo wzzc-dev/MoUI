@@ -24,6 +24,9 @@ Design Systems 是附加包诊断覆盖，提供 Web wasm-gc 以及 macOS、Wind
 覆盖它们的示例。如果需要一个可运行的单一界面，把这些宿主配方连同 canvas 绘制都
 打包进去，请打开 Showcase 的 Platform 工作区。
 
+当现有 view 的组合能力不够，需要可复用的包内 `ViewNode` 时，请使用
+[自定义控件 SDK](custom-control-sdk.md)。
+
 开始新的共享应用包时，请使用 [App 模板](app-templates.md)。独立应用应使用
 `moui new`（参见[入门](getting-started.md)）；文档骨架覆盖计数器、dashboard
 和 document-editor 形态，适用于 monorepo 或手写包。根目录的 `website/` 工作区在
@@ -41,6 +44,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Playground | MoonBit 原生浏览器教程和编辑器 | `website/playground/app/`, `website/playground/web_wasm/` | 使用 `moui_richtext` 构建的代码编辑器、受控 `main.mbt`/`moon.pkg` 文件、应用安全 import 验证、固定版本 MoonBit 编译器 Worker 桥接、沙盒预览宿主、本地持久化、分享 URL 协议，以及六份双语课程资产 |
 | Agent Counter | 最小 agent 可控制运行时示例 | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | 带有语义和命令意图流的 Counter 应用，用于 agent 观察和控制，另有原生 macOS Skia 入口 |
 | Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息，以及保留的 macOS/Web 入口 |
+| Custom Control | 可复用包内控件的参考 SDK | `examples/custom_control/widgets/`, `examples/custom_control/app/` | 与消息无关的可编辑计数器：已提交值由 model 拥有，使用类型化 callback 和语义 action、显式 declaration channel、pointer-seeded caret、有界 IME composition、LTR/RTL 几何，以及 golden layout/paint 测试 |
 | Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `WindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `WindowRequestQueue` 与 `WindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
 | HarmonyOS Demo | 平台中立 HarmonyOS 交互模型 | `examples/harmonyos_demo/app/` | viewport/tap feedback app model；canonical HarmonyOS composition 与设备证据统一由 Showcase 承担 |
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
@@ -277,7 +281,7 @@ Typora 风格的所见即所得 Markdown 编辑器（MoMark）在自有仓库
 Settings 示例是没有平台入口的共享应用包。它展示 account preferences 推荐的 non-render
 shell：公开 sidebar constructor 驱动受控 section selection，form field 在 app model
 中拥有 validation messages，segmented control 选择 light/dark/system theme mode，
-`SaveableStateStore` snapshot 可在没有 host service 的情况下恢复当前 settings。
+应用自有的 `SettingsSnapshot` codec 可在没有 host service 的情况下恢复当前 settings。
 
 ## Data Table
 
@@ -676,6 +680,8 @@ Showcase `linux_wgpu` 是唯一 canonical native WGPU diagnostic，使用 fontco
 ```sh
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
+moon test examples/custom_control/widgets --target native
+moon test examples/custom_control/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/excel/cell --target native

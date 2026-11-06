@@ -89,9 +89,13 @@ leaving lower-level runtime, host, and renderer packages out of view code.
 
 `View::map` rebuilds the entire wrapped subtree on every view call: each layer
 re-creates one adapter per node, snapshots its children and semantics-handler
-arrays, and wraps its event closure. The `full_cycle` benchmark measures about
-+10% rebuild cost per map layer on a 511-node deep tree (`F-deep-click` vs
-`G-deep-dblmap-click` in `benchmarks/full_cycle/native/main.mbt`).
+arrays, and wraps its event closure. The native leaf benchmark records the
+structural copy count: with one map layer, 1k/10k trees make 30,060/300,060
+adapter copies over 30 frames; with two layers those counts double. Frame timing
+is report-only because shared-host variance is larger than the copy delta
+(`benchmarks/performance_budget/native/main.mbt`). The `full_cycle` benchmark
+provides the wall-clock companion (`F-deep-click` vs `G-deep-dblmap-click` in
+`benchmarks/full_cycle/native/main.mbt`).
 
 Prefer a flat top-level `Msg` enum for the program, and build child messages
 directly in the parent view (or via plain constructor helpers) instead of
@@ -102,7 +106,9 @@ root-to-leaf path small (one layer is fine; stacked layers multiply). The
 construction snapshots are a documented ownership contract (`from_node` must
 survive a producer-owned `children` array being mutated afterwards, pinned in
 `moui/core/view_node_test.mbt`), so the copies are not incidental overhead to
-strip; full message-adapter fusion is tracked as framework debt instead.
+strip. ADR 0058 records why the typed non-copying transform chain is not
+implementable with the current language representation; the debt and reopen
+triggers live in `docs/plans/debt/message-transform-chain.md`.
 
 ## Boundary
 

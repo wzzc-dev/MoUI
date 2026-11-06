@@ -37,9 +37,9 @@ impl @core.ViewNode for OverlayMarker with fn paint(_self, ctx) {
     ..@core.ViewPaintPlan::empty(),
     overlay_commands: [
       FillRect(
-        // Paint commands use the runtime's absolute frame. Keeping the marker
-        // in local coordinates would expose the wrong native WebView region
-        // whenever the marker is nested in an aligned/offset overlay.
+        // Paint commands stay in the marker's local space. The runtime applies
+        // the same accumulated transform to this hoisted overlay command as to
+        // the marker's screen frame.
         ctx.frame,
         @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
       ),

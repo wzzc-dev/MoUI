@@ -34,3 +34,15 @@ test "diagnostics landing semantics include the devtools inspector card" {
   }
   assert_true(found)
 }
+
+///|
+test "diagnostics devtools report carries a representative interaction trace" {
+  let report = diagnostics_input(
+    @host.HostCapabilitySummary::new(backend=Test),
+    [],
+  )
+  assert_true(report.devtools.report_text.contains("[trace]"))
+  assert_true(report.devtools.report_text.contains("semantics=+/-/~="))
+  assert_true(report.devtools.report_text.contains("messages(dispatch/update"))
+  assert_true(report.devtools.report_text.contains("effects(plan/run"))
+}

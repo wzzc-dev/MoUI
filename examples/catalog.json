@@ -14,6 +14,12 @@
       "featured": false
     },
     {
+      "id": "custom_control",
+      "path": "examples/custom_control",
+      "title": "Custom Control",
+      "featured": false
+    },
+    {
       "id": "multi_window",
       "path": "examples/multi_window",
       "title": "Multi Window",

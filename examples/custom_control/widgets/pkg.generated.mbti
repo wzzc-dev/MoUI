@@ -1,0 +1,17 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/custom_control/widgets"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn[Msg] editable_counter(label~ : String, value~ : String, numeric_value~ : Double, on_input~ : (String) -> Msg, on_increment? : Msg, on_decrement? : Msg, min_value? : Double, max_value? : Double, step? : Double, width? : Double, height? : Double, key? : String) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

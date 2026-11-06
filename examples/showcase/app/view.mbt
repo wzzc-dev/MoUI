@@ -239,8 +239,6 @@ fn shell_sidebar(
         column(list_rows, spacing=theme.spacing_scale.xs, align=Start),
         width=rail_width,
         height=list_height,
-        offset=model.sidebar_scroll,
-        on_scroll=Some(offset => SidebarScrolled(offset)),
         shows_indicator=true,
       ),
     ],
@@ -298,8 +296,7 @@ fn shell_detail(
     ),
     width~,
     height~,
-    offset=model.detail_scroll,
-    on_scroll=Some(offset => DetailScrolled(offset)),
+    request?=model.detail_scroll_request,
     shows_indicator=true,
   ).frame(width~, height~)
 }
@@ -336,8 +333,6 @@ fn mobile_catalog_list(
         column(list_rows, spacing=theme.spacing_scale.sm, align=Start),
         width~,
         height=list_height,
-        offset=model.sidebar_scroll,
-        on_scroll=Some(offset => SidebarScrolled(offset)),
         shows_indicator=true,
       ),
     ],
@@ -377,8 +372,7 @@ fn mobile_detail(
     ),
     width~,
     height~,
-    offset=model.detail_scroll,
-    on_scroll=Some(offset => DetailScrolled(offset)),
+    request?=model.detail_scroll_request,
     shows_indicator=true,
   ).frame(width~, height~)
 }

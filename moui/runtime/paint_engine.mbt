@@ -20,12 +20,30 @@ fn ElementNode::render_with_environment(
       overlay_fade_duration_ms(environment),
     )
     is Some(_)
-  if environment.matches_default_cache_key() &&
-    !enter_fading &&
+  let focused_here = focused == Some(self.id)
+  let cache_key : RenderCacheKey = {
+    frame: bounds,
+    focused: focused_here,
+    environment_id: environment.environment_id,
+    style: environment.style,
+    font: environment.font,
+    foreground: environment.foreground,
+    corner_radius: environment.corner_radius,
+    text_system_id: environment.text_system.id(),
+    state_revision: self.control.state_revision,
+    text_revision: self.control.text_revision,
+    place_revision: self.layout_cache.place_revision,
+  }
+  let cache_key_matches = self.render_cache.cached_key == Some(cache_key)
+  let cached_render_is_static = match self.render_cache.cached_render {
+    Some(render) => !render.animating
+    None => false
+  }
+  if !enter_fading &&
+    cache_key_matches &&
+    cached_render_is_static &&
     !self.has_dirty_paint() &&
-    !self.has_dirty_layout() &&
-    self.render_cache.cached_render_frame == Some(bounds) &&
-    self.render_cache.cached_render_focused == focused {
+    !self.has_dirty_layout() {
     match self.render_cache.cached_render {
       Some(render) => {
         self.render_cache.hit_count = self.render_cache.hit_count + 1
@@ -39,38 +57,25 @@ fn ElementNode::render_with_environment(
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
+  let cached_plan_is_static = match self.render_cache.cached_plan {
+    Some(plan) => !plan.animating
+    None => false
+  }
   let plan = if !enter_fading &&
-    environment.matches_default_cache_key() &&
-    !self.dirty.needs_paint &&
-    self.render_cache.cached_render_frame == Some(bounds) &&
-    self.render_cache.cached_render_focused == focused {
+    cache_key_matches &&
+    cached_plan_is_static &&
+    !self.dirty.needs_paint {
     match self.render_cache.cached_plan {
       Some(plan) => plan
       None =>
-        self.view_node.paint({
-          frame: bounds,
-          child_frames: placed.children.map(child => child.frame),
-          focused: focused == Some(self.id),
-          state: self.control.view_context(focused == Some(self.id)),
-          text_control: self.control.text_context(),
-          environment: render_environment_to_view_environment(environment),
-          style: environment.style,
-          text_system: environment.text_system,
-          now_ms: environment.now_ms,
-        })
+        self.view_node.paint(
+          self.paint_context(bounds, placed, focused_here, environment),
+        )
     }
   } else {
-    self.view_node.paint({
-      frame: bounds,
-      child_frames: placed.children.map(child => child.frame),
-      focused: focused == Some(self.id),
-      state: self.control.view_context(focused == Some(self.id)),
-      text_control: self.control.text_context(),
-      environment: render_environment_to_view_environment(environment),
-      style: environment.style,
-      text_system: environment.text_system,
-      now_ms: environment.now_ms,
-    })
+    self.view_node.paint(
+      self.paint_context(bounds, placed, focused_here, environment),
+    )
   }
   commands.append(plan.commands)
   for layer in plan.child_layers {
@@ -81,7 +86,19 @@ fn ElementNode::render_with_environment(
   // Child hit regions come from the placed tree (frame ∩ accumulated clip);
   // hoisted overlay children escape ancestor clips entirely, so no paint-time
   // clip trimming is needed here.
-  let child_environment = environment.with_child_context(self.view_node)
+  let child_environment_value = self.view_node.child_environment(
+    environment.environment,
+  )
+  let child_environment_id = self.child_environment_identity(
+    child_environment_value,
+    environment.environment,
+    environment.environment_id,
+  )
+  let child_environment = environment.with_child_context(
+    child_environment_value,
+    self.view_node.child_style(environment.style),
+    child_environment_id,
+  )
   for index, child in self.children {
     if index < placed.children.length() {
       let rendered = child.render_with_environment(
@@ -101,7 +118,12 @@ fn ElementNode::render_with_environment(
   self.refresh_descendant_dirty_flags()
   self.render_cache.content_revision = self.render_cache.content_revision + 1
   let paint_bounds = render_node_paint_bounds(
-    bounds, commands, children, post_commands, overlay_commands,
+    Rect::new(x=0.0, y=0.0, width=bounds.size.width, height=bounds.size.height),
+    placed.child_transform,
+    commands,
+    children,
+    post_commands,
+    overlay_commands,
   )
   // A subtree is animating if this node's own paint reported a mid-animation
   // sample or any rendered child did. Folded up so the runtime only needs to
@@ -111,10 +133,12 @@ fn ElementNode::render_with_environment(
   let render = {
     element_id: self.id,
     frame: bounds,
+    child_transform: placed.child_transform,
+    clips_children: placed.clips_children,
     children,
     is_overlay_child: false,
+    is_paint_layer: false,
     paint_bounds,
-    hit_rect: Some(placed.hit_rect),
     render_opacity: overlay_enter_opacity(
       overlay_enter,
       self.id,
@@ -132,19 +156,65 @@ fn ElementNode::render_with_environment(
     animating,
   }
   let render = if plan.repaint_boundary {
-    render.with_repaint_boundary_cache()
+    if render.contains_overlay_subtree() {
+      { ..render, is_repaint_boundary: true, }
+    } else {
+      render.with_repaint_boundary_cache()
+    }
   } else {
     render
   }
   // A fading node must not persist into the cache: its opacity changes every
   // frame while its frame/key stays identical.
-  if environment.matches_default_cache_key() && !enter_fading {
-    self.render_cache.cached_render_frame = Some(bounds)
-    self.render_cache.cached_render_focused = focused
+  if !enter_fading && !plan.animating {
+    self.render_cache.cached_key = Some(cache_key)
     self.render_cache.cached_plan = Some(plan)
+  } else {
+    self.render_cache.cached_key = None
+    self.render_cache.cached_plan = None
+  }
+  if !enter_fading && !animating {
     self.render_cache.cached_render = Some(render)
+  } else {
+    self.render_cache.cached_render = None
   }
   render
+}
+
+///|
+fn ElementNode::paint_context(
+  self : ElementNode,
+  bounds : Rect,
+  placed : PlacedNode,
+  focused_here : Bool,
+  environment : RenderEnvironment,
+) -> @core.ViewPaintContext {
+  let local_frame = Rect::new(
+    x=0.0,
+    y=0.0,
+    width=bounds.size.width,
+    height=bounds.size.height,
+  )
+  let child_frames : Array[Rect] = []
+  for index, child in placed.children {
+    let frame = if placed.overlay_child_indices.contains(index) {
+      child.frame
+    } else {
+      runtime_transform_rect(placed.child_transform, child.frame)
+    }
+    child_frames.push(frame)
+  }
+  {
+    frame: local_frame,
+    child_frames,
+    focused: focused_here,
+    state: self.control.view_context(focused_here),
+    text_control: self.control.text_context(),
+    environment: render_environment_to_view_environment(environment),
+    style: environment.style,
+    text_system: environment.text_system,
+    now_ms: environment.now_ms,
+  }
 }
 
 ///|
@@ -153,7 +223,13 @@ fn view_paint_layer_render_node(
   layer : @core.ViewPaintLayer,
 ) -> RenderNode {
   let paint_bounds = render_node_paint_bounds(
-    layer.frame,
+    Rect::new(
+      x=0.0,
+      y=0.0,
+      width=layer.frame.size.width,
+      height=layer.frame.size.height,
+    ),
+    Transform2D::identity(),
     layer.commands,
     [],
     [],
@@ -162,10 +238,12 @@ fn view_paint_layer_render_node(
   {
     element_id,
     frame: layer.frame,
+    child_transform: Transform2D::identity(),
+    clips_children: false,
     children: [],
     is_overlay_child: false,
+    is_paint_layer: true,
     paint_bounds,
-    hit_rect: None,
     render_opacity: None,
     content_revision: layer.content_revision,
     is_repaint_boundary: true,
@@ -190,6 +268,7 @@ fn view_paint_layer_render_node(
 ///|
 fn render_node_paint_bounds(
   frame : Rect,
+  child_transform : Transform2D,
   commands : Array[DrawCommand],
   children : Array[RenderNode],
   post_commands : Array[DrawCommand],
@@ -200,7 +279,21 @@ fn render_node_paint_bounds(
     bounds = optional_rect_union(bounds, command.bounds())
   }
   for child in children {
-    bounds = optional_rect_union(bounds, Some(child.paint_bounds))
+    if child.is_paint_layer {
+      bounds = optional_rect_union(bounds, Some(child.paint_bounds))
+    } else if !child.is_overlay_child {
+      let child_space = runtime_transform_compose(
+        child_transform,
+        Transform2D::translation(
+          dx=child.frame.origin.x,
+          dy=child.frame.origin.y,
+        ),
+      )
+      bounds = optional_rect_union(
+        bounds,
+        Some(runtime_transform_rect(child_space, child.paint_bounds)),
+      )
+    }
   }
   for command in post_commands {
     bounds = optional_rect_union(bounds, command.bounds())

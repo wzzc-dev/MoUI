@@ -80,8 +80,7 @@ The current target placement is:
   WebView constructors and bridge types belong to `moui_webview/views` and
   `moui_webview/host`.
 - Runtime and diagnostics belong in `moui/runtime`: runtime inspector,
-  program-lifecycle snapshots, view/render-diagnostic snapshots, and
-  `ComponentContext` runtime-construction details.
+  program-lifecycle snapshots, and view/render-diagnostic snapshots.
 - App-facing platform capabilities belong in `moui/services`. Generic host
   capabilities and host-service protocols stay in `moui/backend`; WebView wire
   commands/events and policies stay in `moui_webview`.
@@ -137,13 +136,12 @@ must not be reversed by moving them back into `core`.
   `TextRange`, grapheme boundaries, `TextSystem`, the paragraph-layout contract,
   and foundational text-input state. `moui/views` retains only the plain-text
   `text`/`text_field`/`text_area` controls.
-- **The `ComponentContext` runtime-construction entrypoint has been narrowed**:
-  `ComponentContext` remains a component-facing kernel type in `core` because
-  the signatures of `View::from_node` / `views.component` require it and `core`
-  cannot depend on `runtime`. The runtime constructs an execution context with
-  `ComponentContext::from_runtime(ComponentRuntimeContextInput)`; ordinary
-  component APIs do not expose scattered runtime-storage parameters, and domain
-  facades do not re-export this construction entrypoint.
+- **Persistent component state stays Feature-first**: ordinary controls take
+  immutable values plus typed callbacks; reusable controls implement
+  `ViewNode` and are constructed with `View::from_node`. The parent model owns
+  persistent and keyed instance state, `Feature::scope` names lifecycle keys
+  only, and save/restore uses an app-owned snapshot DTO (ADR 0053). There is no
+  runtime component store or hidden context object.
 - **Date-picker control semantics have moved out**: `DateValue` is a neutral
   data model and remains in `core`; `DatePickerMode` is concrete control
   semantics and belongs in `moui/views`. The low-level display-mode
@@ -401,10 +399,9 @@ Drawing, animation, focus, and low-level runtime-ID paths:
 - Use `@state.FocusScope`, `@state.FocusScopeItem`, and `@state.ColorScheme`
   for focus / scheme types.
 - When required, use diagnostics/kernel-only types such as
-  `@core.SemanticsRole` and `@core.ComponentContext` directly, and restrict
-  this to Showcase/diagnostics/custom-kernel or test contexts. Element
-  identity is runtime-private; no app or diagnostic package receives an
-  `@core.ElementId`.
+  `@core.SemanticsRole` directly, and restrict this to
+  Showcase/diagnostics/custom-kernel or test contexts. Element identity is
+  runtime-private; no app or diagnostic package receives an `@core.ElementId`.
 
 ### No Convenience API / Test-Only or Framework Direct `@core`
 
@@ -504,7 +501,9 @@ Place a new control as follows:
 Third-party addon packages may import `wzzc-dev/moui/core`, implement the open
 `ViewNode` trait for their own concrete node types, and call `View::from_node`.
 They cannot implement methods for MoUI-owned node types, access runtime trees,
-or bypass typed `View[Msg]` message delivery.
+or bypass typed `View[Msg]` message delivery. See the
+[Custom Control SDK](custom-control-sdk.md) for the supported package shape,
+declaration/identity rules, and conformance tests.
 
 In other words, Iced’s control layer is both the built-in-control and
 custom-control entrypoint. MoUI currently unifies those entrypoints in

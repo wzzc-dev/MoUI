@@ -9,6 +9,11 @@ priv struct ReconcileResult {
   node : ElementNode
   next_id : Int32
   dirty_kind : ReconcileDirtyKind
+  /// A child was inserted, removed, or reordered. Layout declarations alone
+  /// are covered by `dirty_kind.layout`; this flag keeps tree movement
+  /// distinguishable for conservative full-surface damage until placement
+  /// move tracking exists.
+  structure_changed : Bool
 }
 
 ///|
@@ -118,6 +123,7 @@ fn reconcile_element_for_runtime(
       node: mounted.node,
       next_id: mounted.next_id,
       dirty_kind: ReconcileDirtyKind::layout(),
+      structure_changed: true,
     }
   } else {
     let own_dirty = runtime_view_node_reconcile_dirty_kind(
@@ -125,6 +131,13 @@ fn reconcile_element_for_runtime(
       next_view_node,
     )
     old.view_node = next_view_node
+    // A node whose presentation declaration changed may also have changed its
+    // child-environment transform. Clean nodes provably keep the same
+    // transform, so this does not turn every rebuild into a full environment
+    // comparison.
+    if own_dirty.layout || own_dirty.paint {
+      old.layout_cache.child_environment_classified = false
+    }
     old.key = runtime_view_node_identity_key(old.view_node)
     let children_result = reconcile_children_for_runtime(
       old.children,
@@ -142,7 +155,12 @@ fn reconcile_element_for_runtime(
     old.refresh_descendant_dirty_flags()
     old.apply_descendant_reconcile_dirty(children_result.dirty_kind)
     let dirty_kind = effective_own_dirty.combine(children_result.dirty_kind)
-    { node: old, next_id: children_result.next_id, dirty_kind, }
+    {
+      node: old,
+      next_id: children_result.next_id,
+      dirty_kind,
+      structure_changed: children_result.structure_changed,
+    }
   }
 }
 

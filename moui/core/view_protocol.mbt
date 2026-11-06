@@ -33,10 +33,14 @@ pub fn ViewLayoutContext::effective_theme(
 pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
+  /// Transform from the coordinate space of `child_frames` into this node's
+  /// coordinate space. Scroll containers use it to keep content-local layout
+  /// while presenting a viewport offset.
+  child_transform : Transform2D
   /// True when this node clips its children to its own frame (scroll
-  /// containers, clip modifiers). The placement pass folds this into the
-  /// accumulated clip so hit regions respect clipping without consulting
-  /// paint output.
+  /// containers, clip modifiers). Boundary consumers intersect the screen
+  /// frame with the accumulated clip; layout and paint caches remain
+  /// content-local.
   clips_children : Bool
   /// True when the node's `child_frames` are final sizing constraints that
   /// may be tighter than the constraints a child was measured under (flex
@@ -87,7 +91,12 @@ pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
 
 ///|
 pub(all) struct ViewPaintContext {
+  /// Node-local frame at the origin. Draw commands use this coordinate space;
+  /// the runtime applies the accumulated parent/child transform around them.
   frame : Rect
+  /// Child frames in this node's paint space, including `child_transform`.
+  /// Hoisted overlay children keep their screen frame because they escape
+  /// ancestor transforms.
   child_frames : Array[Rect]
   focused : Bool
   state : ViewStateContext
@@ -119,7 +128,11 @@ pub fn ViewPaintContext::effective_theme(
 /// independently from paint so native child views can update without creating
 /// draw commands or scheduling a renderer frame.
 pub(all) struct ViewPlatformContext {
+  /// Node-local frame at the origin. Returned placements must use this space;
+  /// the runtime transforms them into screen space for `DrawFrame`.
   frame : Rect
+  /// Child frames in this node's placement space, including
+  /// `child_transform`. Hoisted overlay children are already screen-positioned.
   child_frames : Array[Rect]
   environment : Environment
   style : ViewStyle
@@ -162,6 +175,8 @@ pub extend ViewPaintLayer with Eq::{not_equal, equal}
 
 ///|
 pub(all) struct ViewEventContext {
+  /// Screen-space frame and child frames. Pointer coordinates are screen-space
+  /// too; controls should not apply an ancestor transform a second time.
   frame : Rect
   child_frames : Array[Rect]
   event : AppEvent
@@ -335,10 +350,11 @@ pub fn ViewIdentity::new(kind~ : String, key~ : String? = None) -> ViewIdentity 
 pub fn ViewLayoutResult::new(
   size~ : Size,
   child_frames~ : Array[Rect] = [],
+  child_transform~ : Transform2D = Transform2D::identity(),
   clips_children~ : Bool = false,
   child_frames_tight~ : Bool = false,
 ) -> ViewLayoutResult {
-  { size, child_frames, clips_children, child_frames_tight, }
+  { size, child_frames, child_transform, clips_children, child_frames_tight, }
 }
 
 ///|

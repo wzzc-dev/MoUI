@@ -39,6 +39,9 @@ and virtual lists to the examples that exercise them. For a single runnable
 surface that packs those host recipes plus canvas paint, open Showcase's
 Platform workspace.
 
+Use the [Custom Control SDK](custom-control-sdk.md) when composing existing
+views is not enough and a reusable package-local `ViewNode` is required.
+
 Use [App templates](app-templates.md) when starting a new shared app package.
 Standalone apps should use `moui new` (see [Getting started](getting-started.md));
 the docs skeletons cover counter, dashboard, and document-editor shapes for
@@ -59,11 +62,12 @@ entrypoint supplies the program and renderer provider. Run
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/`, `examples/counter/{macos_skia,web_wasm,terminal}/` | Simple `Program::simple` flow with retained macOS Skia, Web, and terminal (`moon run examples/counter/terminal`) entrypoints |
+| Custom Control | Reference SDK for reusable package-local controls | `examples/custom_control/widgets/`, `examples/custom_control/app/` | Message-independent editable counter with model-owned committed state, typed callbacks and semantic actions, declaration channels, pointer-seeded caret, bounded IME composition, LTR/RTL geometry, and golden layout/paint tests |
 | New World | Local-first text-dialogue AI storytelling tool over a Markdown folder database | `examples/new_world/app/`, `examples/new_world/{llm_web,llm_native,web_wasm,macos_skia}/` | Folder-as-database worlds (`world.md` + `characters/*.md` + `world_book.md` + per-character `conversations/*.json` + `events.json`) with tolerant reload and incremental commits, where the library root holds only `config.json` (key included, because a world is a sibling subfolder and never carries it) and each world subfolder is directly shareable; provider turns carrying the whole planned message list through injected `TurnRunner`/`WorldHost` contracts; conversation editing (regenerate + swipes, inline edit, delete, clear, branch as sibling files); a full lorebook (priority / position / recursion / probability); character creation wizard (archetypes + one-line AI drafting); portraits as `data:` URIs with a colour-block fallback; multi-character scenes; explicit time advance; world export/import as one bundle; a composable say/do/story composer that sends several intents in one turn; a responsive shell (three-column workbench, tabbed medium layout, single-column portrait-phone layout with wrapped control rows) that moves library management and AI world generation into settings once a world is open; IndexedDB-backed folder grants so a Web reload needs no re-authorisation, with an in-page fallback library keyed per world |
 | 3D Viewer | Experimental interactive cube and static glTF/GLB viewer | `examples/three_d_viewer/app/`, `examples/three_d_viewer/{macos_wgpu,web_wasm}/` | Independent `moui_3d` scene/snapshot model with orbit camera input, macOS child CAMetalLayer + native WGPU and Web secondary-canvas WebGPU host paths; no CPU fallback |
 | 3D Physics Viewer | Native Rapier physics integration for the 3D addon | `examples/three_d_physics_viewer/app/`, `examples/three_d_physics_viewer/macos/` | Dynamic sphere falling and visibly bouncing on a fixed collider, fixed-step Play/Pause/Step/Reset controls, scene transform synchronization, and ray-query status |
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent runtimes through the module-root integration facade, with retained macOS and Web routes |
-| HarmonyOS Demo | Standalone experimental HarmonyOS app model | `examples/harmonyos_demo/app/` | Platform-neutral viewport/tap feedback; platform probing belongs to Showcase/tester |
+| HarmonyOS Demo | Standalone HarmonyOS app model | `examples/harmonyos_demo/app/` | Platform-neutral viewport/tap feedback; platform probing belongs to Showcase/tester |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal button/filter repro with a retained macOS Skia entrypoint |
 | Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | Strict TEA root over Components, Patterns, Platform, and pure diagnostic DTOs; module-root integration adapts runtime/render facts. Showcase alone covers all 14 canonical routes. |
 | Design Systems | Addon diagnostic theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | Source-mapped design-system diagnostics with retained Web and macOS Skia entrypoints |
@@ -322,8 +326,8 @@ The Settings example is a shared app package without platform entrypoints. It
 shows the recommended non-render shell for account preferences: a public sidebar
 constructor drives controlled section selection, form fields own validation
 messages in the app model, segmented controls choose light/dark/system theme
-mode, and `SaveableStateStore` snapshots restore the current settings without a
-host service.
+mode, and the app-owned `SettingsSnapshot` codec restores the current settings
+without a host service.
 
 ## Data Table
 
@@ -785,6 +789,8 @@ points:
 ```sh
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
+moon test examples/custom_control/widgets --target native
+moon test examples/custom_control/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/excel/cell --target native

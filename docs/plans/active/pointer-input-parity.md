@@ -87,6 +87,7 @@ These constrain every slice and are cheap to re-check, expensive to rediscover:
 | §4 multi-pointer | `PointerEvent.id`/`pressure`, decode `FingerId`/`Force`, per-id capture, Web ABI | done |
 | §6 honest text semantics | stop hardcoding `read_only`/`password`, use `View::semantics_state` | done |
 | §9 RTL mirroring | 11 groups across `moui/views` + `moui/core` alignment/guide math, delete the inert `moui/runtime` direction parameter, wire `mirror_x`, mirrored-frame property tests | done 2026-10-23 (widened beyond views, approved) |
+| §10 gesture arena | per-pointer runtime arbitration for tap, long press, drag and scroll; no public event signal | done 2026-11-05 |
 | §7 pinch / rotation | end-to-end gesture variants | approved 2026-10-23 in full, pending |
 
 Owner approvals recorded on 2026-10-23, all riding the 0.3.0 migration that the
@@ -393,6 +394,26 @@ real horizontal drag range — pinned by a layout probe in
 `examples/new_world/app/layout_probe_test.mbt` and by
 `moui/runtime/nested_scroll_release_test.mbt`.
 
+## §10 landing note: first completed gesture owns the pointer stream (2026-11-05)
+
+The remaining tap-versus-long-press defect was not another recognizer state
+bug. Modifier stacking creates independently valid recognizers, and an outer
+tap kept its `Pressed` state when an inner long press completed. The captured
+unwind only cancelled a child after an ancestor recognized, so the reverse stack
+order still emitted both commands.
+
+The runtime now records candidates on `Down` and keeps one transient arena per
+`PointerEvent.id`. The first activated recognizer, or a scroll view with an
+authoritative layout change, becomes the stream owner. Other candidates receive
+a direct `Cancel`; later samples go only to the winner's event handler. The
+arena is cleared on `Up`/`Cancel` and pruned after element-tree rebuilds. It
+adds no public signal, model state, or second component lifecycle. ADR 0054
+records the boundary.
+
+Regressions cover both modifier orders for quick tap and completed long press,
+independent arena streams for two pointer ids, the existing multi-pointer
+capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
+
 ## Debt and known gaps
 
 - **Run-internal text direction is still LTR.** §9 mirrors where a text block
@@ -412,8 +433,6 @@ real horizontal drag range — pinned by a layout probe in
   hardcode finger id 0, so two-finger touch is out of reach from this repository
   even after §4. macOS trackpad/touch-bar-input and Web (two `touch` points) are
   the evidence sources.
-- **`.on_long_press()` + `.on_tap()` on one view fire both** for the first tap:
-  suppressing the click would need a new cross-modifier public signal.
 - `SemanticsTextValue::new(editable=true)` still describes the control class
   rather than writability; Windows stores `text_flags` it never reads and Web
   never consumes `editable`.

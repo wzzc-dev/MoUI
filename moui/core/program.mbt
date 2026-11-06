@@ -135,6 +135,53 @@ pub fn[Msg] Effect::service_task(
 }
 
 ///|
+/// Encode a stable scope id once at mount construction. Escape `%` before `/`
+/// so an id containing either character cannot alias a different scope/key
+/// pair. An empty id is the root namespace.
+fn scope_identity_prefix(scope_id : String) -> String {
+  if scope_id == "" {
+    ""
+  } else {
+    scope_id.replace_all(old="%", new="%25").replace_all(old="/", new="%2F") +
+    "/"
+  }
+}
+
+///|
+fn scope_identity_key(scope_prefix : String, key : String) -> String {
+  if scope_prefix == "" {
+    key
+  } else {
+    scope_prefix + key
+  }
+}
+
+///|
+fn EffectDescriptor::prefix_scope(
+  self : EffectDescriptor,
+  scope_prefix : String,
+) -> EffectDescriptor {
+  { ..self, key: scope_identity_key(scope_prefix, self.key), }
+}
+
+///|
+fn[Msg] Effect::prefix_scope(
+  self : Effect[Msg],
+  scope_prefix : String,
+) -> Effect[Msg] {
+  match self {
+    NoEffect => NoEffect
+    Batch(effects) =>
+      Batch(effects.map(effect => effect.prefix_scope(scope_prefix)))
+    Send(message) => Send(message)
+    Dispatch(run) => Dispatch(run)
+    Run(descriptor, run) => Run(descriptor.prefix_scope(scope_prefix), run)
+    Task(descriptor, start) =>
+      Task(descriptor.prefix_scope(scope_prefix), start)
+  }
+}
+
+///|
 pub fn[Msg] Effect::runtime_visit(
   self : Effect[Msg],
   send : (Msg) -> Unit,

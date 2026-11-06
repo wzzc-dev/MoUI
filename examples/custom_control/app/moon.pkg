@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/string",
+  "examples/custom_control/widgets",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+} for "test"
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

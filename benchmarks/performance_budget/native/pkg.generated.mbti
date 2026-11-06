@@ -6,6 +6,16 @@ package "benchmarks/performance_budget/native"
 // Errors
 
 // Types and methods
+type CacheCounterSnapshot
+
+type LeafMemoCounters
+
+type LeafUpdateModel
+
+type LeafUpdateResult
+
+type LeafUpdateSamples
+
 type PerfFramePump
 
 type ResourceSamples
