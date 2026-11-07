@@ -87,6 +87,8 @@ pub fn picker_item(String, String) -> @style.PickerItem
 
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] refresh_indicator(refreshing~ : Bool, on_refresh~ : Msg, child~ : @core.View[Msg], theme? : @core.Theme, trigger_distance? : Double, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]

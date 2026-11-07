@@ -83,7 +83,8 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // flow/wrap 布局原语 +2，抵消旧 text/tooltip 签名扩展各 -1 后净 +1。
       // carousel +1：swipeable page surface 与 slider/range_slider 同属
       // app-facing 视图构造词汇。
-      max_count: 140,
+      // refresh_indicator +1：pull-to-refresh surface 同上。
+      max_count: 141,
     },
     {
       path: "moui/views/pkg.generated.mbti",

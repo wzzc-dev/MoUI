@@ -294,6 +294,8 @@ pub fn[Msg] radio_group(Array[@controls.ChoiceItem], selected~ : String, on_sele
 
 pub fn[Msg] range_slider(@slider.SliderRange, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((@slider.SliderRange) -> Msg)?) -> @core.View[Msg]
 
+pub fn[Msg] refresh_indicator(refreshing~ : Bool, on_refresh~ : Msg, child~ : @core.View[Msg], theme? : @core.Theme, trigger_distance? : Double, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]

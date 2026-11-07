@@ -515,8 +515,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // is app-facing vocabulary alongside `slider`.
       // 696 -> 697 / 333 -> 334 (+1 declaration, +1 line): `carousel` joins
       // the facade — the swipeable page surface is app-facing vocabulary.
-      max_lines: 697,
-      max_pub_lines: 334,
+      // 697 -> 698 / 334 -> 335 (+1 declaration, +1 line):
+      // `refresh_indicator` joins the facade — the pull-to-refresh surface is
+      // app-facing vocabulary.
+      max_lines: 698,
+      max_pub_lines: 335,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
