@@ -228,7 +228,7 @@ pub fn minimal_control_theme_set(@core.Theme) -> @style.ControlThemeSet
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> @navigation.NavigationDestination[Msg]
 
-pub fn[Msg] navigation_stack_selected(String, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+pub fn[Msg] navigation_stack_selected(String, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg], transition? : @navigation.RouteTransition) -> @core.View[Msg]
 
 pub fn new_control_state_style(foreground~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle, radius? : Double, shadow? : @core.ShadowStyle, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> @style.ControlStateStyle
 
@@ -310,7 +310,15 @@ pub fn[Msg] rounded_clip(@core.View[Msg], radius? : Double) -> @core.View[Msg]
 
 pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[@controls.ActionItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+pub fn route_transition_fade(duration_ms? : Double) -> @navigation.RouteTransition
+
+pub fn route_transition_none() -> @navigation.RouteTransition
+
+pub fn route_transition_scale(duration_ms? : Double) -> @navigation.RouteTransition
+
+pub fn route_transition_slide(duration_ms? : Double) -> @navigation.RouteTransition
+
+pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDestination[Msg]], fallback? : @core.View[Msg], transition? : @navigation.RouteTransition) -> @core.View[Msg]
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
@@ -617,6 +625,10 @@ pub using @navigation {type RouteLocation}
 pub using @navigation {type RouteParam}
 
 pub using @navigation {type RouteQueryParam}
+
+pub using @navigation {type RouteTransition}
+
+pub using @navigation {type RouteTransitionKind}
 
 pub using @navigation {type RouterSnapshot}
 

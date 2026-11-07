@@ -518,8 +518,12 @@ fn package_budgets() -> Array[PackageBudget] {
       // 697 -> 698 / 334 -> 335 (+1 declaration, +1 line):
       // `refresh_indicator` joins the facade — the pull-to-refresh surface is
       // app-facing vocabulary.
-      max_lines: 698,
-      max_pub_lines: 335,
+      // 698 -> 709 / 335 -> 341 (+6 declarations, +11 lines): the automatic
+      // route transition parameters join the facade — `type RouteTransition`,
+      // `type RouteTransitionKind`, and the four constructors behind
+      // `router_stack`/`navigation_stack_selected`'s `transition~` parameter.
+      max_lines: 709,
+      max_pub_lines: 341,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

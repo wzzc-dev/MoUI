@@ -165,10 +165,11 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 95,
     },
     {
-      // 383 -> 391 (2026-11-07, §7): the decode-test and showcase-app budget
-      // notes, plus this self-referential entry's own growth.
+      // 383 -> 393 (2026-11-07, §7 + route transitions): the decode-test,
+      // showcase-app, and views-facade budget notes, plus this
+      // self-referential entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 391,
+      max_lines: 393,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -245,7 +246,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/style/control_style_badge.mbt", max_lines: 120, },
     { path: "moui/views/style/control_style_form.mbt", max_lines: 90, },
     { path: "moui/views/common/control_helpers.mbt", max_lines: 15, },
-    { path: "moui/views/views.mbt", max_lines: 440, },
+    // 440 -> 450 (2026-11-07, §7 后续切片): facade 透出自动路由转场参数
+    // (type RouteTransition/RouteTransitionKind + 四个构造函数)。
+    { path: "moui/views/views.mbt", max_lines: 450, },
     { path: "moui/views/controls/choice_state.mbt", max_lines: 25, },
     { path: "moui/views/controls/choice_groups.mbt", max_lines: 70, },
     { path: "moui/views/controls/choice_segmented.mbt", max_lines: 60, },

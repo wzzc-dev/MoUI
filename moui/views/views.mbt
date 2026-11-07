@@ -81,7 +81,15 @@ pub using @layout {row, column}
 pub using @layout {stack}
 
 ///|
-pub using @navigation {overlay_marker}
+pub using @navigation {
+  overlay_marker,
+  type RouteTransition,
+  type RouteTransitionKind,
+  route_transition_slide,
+  route_transition_fade,
+  route_transition_scale,
+  route_transition_none,
+}
 
 ///|
 pub using @core {type DragGestureEvent, type DragGesturePhase}

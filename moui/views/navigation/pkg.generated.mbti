@@ -31,7 +31,7 @@ pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : 
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
-pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg], transition? : RouteTransition) -> @core.View[Msg]
 
 pub fn[Msg] overlay_marker(width~ : Double, height~ : Double) -> @core.View[Msg]
 
@@ -41,7 +41,17 @@ pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
 
 pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[@controls.ActionItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+pub fn route_transition_direction(previous_count~ : Int32, next_count~ : Int32) -> Int32
+
+pub fn route_transition_fade(duration_ms? : Double) -> RouteTransition
+
+pub fn route_transition_none() -> RouteTransition
+
+pub fn route_transition_scale(duration_ms? : Double) -> RouteTransition
+
+pub fn route_transition_slide(duration_ms? : Double) -> RouteTransition
+
+pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg], transition? : RouteTransition) -> @core.View[Msg]
 
 pub fn[Msg] section_nav(String, Array[SectionNavItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, item_width? : Double, item_height? : Double, orientation? : @core.Axis) -> @core.View[Msg]
 
@@ -186,6 +196,17 @@ pub fn RouteQueryParam::not_equal(Self, Self) -> Bool
 pub fn RouteQueryParam::to_json(Self) -> @json.Json
 pub fn RouteQueryParam::to_repr(Self) -> @debug.Repr
 pub fn RouteQueryParam::value(Self) -> String
+
+pub struct RouteTransition {
+  kind : RouteTransitionKind
+  duration_ms : Double
+}
+
+pub(all) enum RouteTransitionKind {
+  Slide
+  Fade
+  Scale
+}
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub struct RouterSnapshot {

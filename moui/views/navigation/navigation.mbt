@@ -33,13 +33,26 @@ pub fn[Msg] navigation_stack_selected(
   selected : String,
   destinations : Array[NavigationDestination[Msg]],
   fallback~ : @core.View[Msg] = @container.empty(),
+  transition~ : RouteTransition = route_transition_none(),
 ) -> @core.View[Msg] {
+  let mut matched = fallback
+  let mut matched_route = "@fallback"
   for destination in destinations {
     if destination.route == selected {
-      return destination.view
+      matched = destination.view
+      matched_route = destination.route
     }
   }
-  fallback
+  if transition.duration_ms <= 0.0 {
+    matched
+  } else {
+    route_stack_transition_view(
+      matched,
+      top_route=matched_route,
+      route_count=destinations.length(),
+      transition~,
+    )
+  }
 }
 
 ///|
@@ -47,15 +60,28 @@ pub fn[Msg] router_stack(
   router : RouterState,
   destinations : Array[NavigationDestination[Msg]],
   fallback~ : @core.View[Msg] = @container.empty(),
+  transition~ : RouteTransition = route_transition_none(),
 ) -> @core.View[Msg] {
   let location = router.current()
+  let mut matched = fallback
+  let mut matched_route = "@fallback"
   for destination in destinations {
     if destination.route == location.path ||
       destination.route == location.to_route() {
-      return destination.view
+      matched = destination.view
+      matched_route = destination.route
     }
   }
-  fallback
+  if transition.duration_ms <= 0.0 {
+    matched
+  } else {
+    route_stack_transition_view(
+      matched,
+      top_route=matched_route,
+      route_count=router.routes.length(),
+      transition~,
+    )
+  }
 }
 
 ///|

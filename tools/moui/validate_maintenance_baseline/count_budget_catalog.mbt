@@ -25,7 +25,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // 坐标舞台(M4):Placed 结构 +1(stage/place 布局原语)。
       // 68 = 67 + 1 SliderRange (range_slider 的双端取值结构,与 slider 的
       // TEA 受控值同风格,经 facade 以 pub using 透出)。
-      max_count: 68,
+      // 69 = 68 + 1 RouteTransitionKind (路由转场风格枚举,随
+      // router_stack/navigation_stack 的 transition~ 参数透出)。
+      max_count: 69,
     },
     {
       kind: "pub(all)",
