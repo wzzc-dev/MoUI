@@ -264,11 +264,32 @@ fn ios_common_compile_flags(
     "-I" + window_ios_root,
     "-I" + window_ios_root + "/native/include",
     "-I" + workspace_root + "/moui_skia/native",
+    // Simulator/Device SDKs lack the macOS-only runtime headers
+    // (sys/vnode.h, sys/random.h) that lib/runtime/*.c include; the
+    // compat shims provide minimal declarations for the APIs whose
+    // symbols exist in libSystem.
+    "-I" + workspace_root + "/moui/backend/ios/runtime_compat",
     "-D__APPLE__",
     "-DTARGET_OS_IPHONE=1",
     "-DMBW_IOS_MOONBIT_MAIN=mbw_ios_moonbit_main",
   ]
   flags
+}
+
+///|
+fn path_basename(path : String) -> String {
+  let last = path.split("/").last()
+  match last {
+    Some(name) => name.to_string()
+    None => path
+  }
+}
+
+///|
+/// Runtime compilation carries no extra flags by default; the per-file
+/// extras (spawn shim force-include) are added by the caller when needed.
+fn runtime_extra_flags() -> Array[String] {
+  []
 }
 
 ///|
@@ -518,19 +539,71 @@ fn build_ios(
     }
   }
   // Moon runtime.
-  // The 0.10.20 toolchain moved the runtime source to lib/runtime/runtime.c;
-  // older layouts keep lib/runtime.c. Prefer the new path.
-  let runtime_c = if path_is_file(join_path(moon_home, "lib/runtime/runtime.c")) {
-    join_path(moon_home, "lib/runtime/runtime.c")
-  } else {
-    join_path(moon_home, "lib/runtime.c")
-  }
-  if path_is_file(runtime_c) {
+  // The 0.10.20 toolchain splits the runtime into lib/runtime/*.c (one C
+  // file per subsystem); older layouts keep a single lib/runtime.c. Four of
+  // the split sources (env.c, dir.c, fs.c, thread_pool.c) include
+  // macOS/Linux-only headers that the iOS SDKs lack — the
+  // runtime_compat shim dir provides minimal declarations for the APIs
+  // whose symbols exist in libSystem, and the spawn stub returns ENOSYS
+  // for the one API Apple marks unavailable on iOS.
+  let runtime_dir = join_path(moon_home, "lib/runtime")
+  let runtime_single_c = join_path(moon_home, "lib/runtime.c")
+  let runtime_compat_dir = join_path(
+    workspace_root_abs, "moui/backend/ios/runtime_compat",
+  )
+  let spawn_stub_o = join_path(obj_dir, "ios_spawn_stub.o")
+  let spawn_stub_c = join_path(runtime_compat_dir, "ios_stub_spawn_addchdir.c")
+  if path_is_file(join_path(runtime_dir, "runtime.c")) {
+    // Directory form: compile every runtime source. The spawn shim header
+    // force-includes the addchdir remap for thread_pool.c; the shim include
+    // dir in common_flags intercepts sys/vnode.h and sys/random.h.
+    let spawn_include : Array[String] = [
+      "-include",
+      join_path(runtime_compat_dir, "posix_spawn_addchdir.h"),
+    ]
+    let entries = @fs.read_dir(runtime_dir) catch {
+      error => return Err("runtime dir listing failed")
+    }
+    let sources : Array[String] = []
+    for entry in entries {
+      if entry.has_suffix(".c") {
+        sources.push(join_path(runtime_dir, entry))
+      }
+    }
+    sources.sort()
+    for source in sources {
+      let base = path_basename(source)
+      let runtime_o = join_path(obj_dir, "runtime_" + base + ".o")
+      let extra = if base == "thread_pool.c" {
+        spawn_include
+      } else {
+        runtime_extra_flags()
+      }
+      match
+        compile_ios_object(clang, common_flags, source, runtime_o, "", extra) {
+        Ok(_) => objs.push(runtime_o)
+        Err(message) => {
+          ok = false
+          return Err(message)
+        }
+      }
+    }
+    // The spawn addchdir stub satisfies thread_pool.c's remapped call.
+    match
+      compile_ios_object(clang, common_flags, spawn_stub_c, spawn_stub_o, "", []) {
+      Ok(_) => objs.push(spawn_stub_o)
+      Err(message) => {
+        ok = false
+        return Err(message)
+      }
+    }
+  } else if path_is_file(runtime_single_c) {
+    // Single-file form (older toolchains): the runtime.c carries everything.
     let runtime_o = join_path(obj_dir, "runtime.o")
     let runtime_extra : Array[String] = ["-Dgetentropy=mbw_ios_getentropy"]
     match
       compile_ios_object(
-        clang, common_flags, runtime_c, runtime_o, "", runtime_extra,
+        clang, common_flags, runtime_single_c, runtime_o, "", runtime_extra,
       ) {
       Ok(_) => objs.push(runtime_o)
       Err(message) => {
@@ -539,7 +612,7 @@ fn build_ios(
       }
     }
   } else {
-    log_warn("Moon runtime not found at " + runtime_c)
+    log_warn("Moon runtime not found at " + runtime_single_c)
   }
   // Window iOS host glue (Objective-C).
   let native_ios_host_c = join_path(ios_pkg_root, "native_ios_host.c")

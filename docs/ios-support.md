@@ -79,20 +79,38 @@ detach/recreate, IME, clipboard, accessibility, and async-image behavior.
 Update `checks/platforms/ios.json` only when the actual presenter route is
 verified by matching-host evidence.
 
-## Simulator Build Blocker (2026-11-07)
+## Simulator Build (2026-11-07, unblocked)
 
-`moui build ios showcase --sdk iphonesimulator` compiles the entrypoint,
-host, and Skia stubs for the simulator, but the final link fails: the
-0.10.20 toolchain split the Moon runtime into
-`$MOON_HOME/lib/runtime/*.c`, and four of those sources (env.c, dir.c,
-fs.c, thread_pool.c) use Linux/macOS-only headers and APIs
-(`sys/random.h`, `sys/vnode.h`, `posix_spawn_file_actions_addchdir_np`)
-that the iOS Simulator SDK lacks, so `moonbit_eprintln` and the fs/dir
-symbols stay undefined. `moui_cli/build_ios.mbt` now prefers the new
-runtime source path (fixed 2026-11-07); the remaining gap is an
-iOS port of those four runtime sources in moonbitlang/runtime (or
-simulator compat shims), after which the simulator evidence suite
-matching the HarmonyOS R6 pattern can run.
+`moui build ios showcase --sdk iphonesimulator` now builds and links a
+runnable simulator .app end to end. Two repairs landed the same day:
+
+1. `moui_cli/build_ios.mbt` prefers the 0.10.20 toolchain's split runtime
+   (`lib/runtime/*.c`, one object per subsystem) over the removed
+   `lib/runtime.c` and compiles every split source for the iOS target.
+2. `moui/backend/ios/runtime_compat/` provides simulator SDK shims for the
+   four runtime sources whose `__MACH__` branches assume the full macOS
+   SDK: `sys/vnode.h` (file-type enum; the Simulator SDK omits the header
+   but `sys/attr.h` types cover it), `sys/random.h` (getentropy declaration;
+   the symbol exists in libSystem), and a posix_spawn addchdir remap to an
+   ENOSYS stub (Apple marks the API unavailable on iOS; the hosted apps
+   never spawn with a cwd).
+
+The shim is applied only to the Moon runtime sources compiled by
+`moui build ios` via `-I` + `-include` — the same pattern the Android
+CMakeLists uses with `mbw_android_compat.h`. A moonbitlang/runtime upstream
+port of the four sources remains the clean long-term fix; the shim is the
+MoUI-side unblock.
+
+The built .app installs, launches, and renders the Mobile Service Probe on
+the iPhone 17 simulator (iOS 26.3) — real Skia pixels, viewport 402 x 874,
+async image rendered.
+
+Evidence collection next: the R6 suite (first frame, pointer, resize,
+surface lifecycle, IME, clipboard, accessibility, async image) on the
+simulator follows the same automation pattern as the Android pass. Touch
+input automation needs `idb` installed (the simulator UI backend reports it
+absent); clipboard via `simctl pbcopy/pbpaste`; rotation via
+`simctl ui booted rotation`.
 
 ## Status
 

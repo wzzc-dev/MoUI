@@ -2,22 +2,25 @@
   "schemaVersion": 1,
   "platform": "ios",
   "sourceBuild": {
-    "status": "partial",
-    "windowHosted": "partial",
-    "verifiedOn": "2026-07-22",
-    "matrixCommand": "moui build ios showcase --mobile-config examples/showcase/moui.mobile.json --prepare-only",
-    "evidence": "window-hosted template and CLI migration are checked; installable app evidence is pending"
+    "status": "passed",
+    "windowHosted": "passed",
+    "verifiedOn": "2026-11-07",
+    "matrixCommand": "moui build ios showcase --mobile-config examples/showcase/moui.mobile.json --sdk iphonesimulator",
+    "evidence": "installable simulator .app built from HEAD via `moui build ios --sdk iphonesimulator` (21.5MB executable, status=built), installed via simctl and launched on iPhone 17 (iOS 26.3 simulator); artifacts/ios/showcase.app. The build needed two repairs landed with this update: moui_cli/build_ios.mbt now prefers the 0.10.20 toolchain's split runtime (lib/runtime/*.c, one object per subsystem) over the removed lib/runtime.c, and moui/backend/ios/runtime_compat/ provides simulator SDK shims (sys/vnode.h, sys/random.h, posix_spawn addchdir stub) for the four runtime sources whose __MACH__ branches assume the full macOS SDK."
   },
   "rendererL2": {
     "status": "partial",
     "presenterRoute": "metal-direct",
     "presenterEvidence": {
-      "status": "unverified",
-      "kind": "none",
-      "reference": "fresh matching-simulator direct-present marker pending"
+      "status": "partial",
+      "kind": "matching-simulator-rendered-frames",
+      "reference": "Skia-rendered probe UI screenshots on the iPhone 17 simulator (text, fields, images, viewport 402 x 874); direct-present log marker still pending. artifacts/ios/showcase.app + screenshots at /tmp/ios-sim-final.png (evidence dir not committed)"
     }
   },
-  "runtimeL3": { "status": "partial", "evidence": "window-hosted matching-simulator suite pending" },
+  "runtimeL3": {
+    "status": "partial",
+    "evidence": "window-hosted matching-simulator suite pending"
+  },
   "hostKind": "window-hosted-ios",
   "deploymentFloor": "iOS 15.0",
   "toolchainFloor": "Xcode 15.4 / Swift 5",
