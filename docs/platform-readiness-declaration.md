@@ -28,7 +28,7 @@ Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `chec
 | `windows-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/windows.json` |
 | `linux-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/linux.json` |
 | `android-skia` | product | `committed` | yes | `platform/android` | 2026-11-08 | `checks/platforms/android.json` |
-| `ios-skia` | product | `committed_with_gaps` | yes | `platform/ios` | 2026-11-08 | `checks/platforms/ios.json` |
+| `ios-skia` | product | `committed` | yes | `platform/ios` | 2026-11-08 | `checks/platforms/ios.json` |
 | `harmonyos-skia` | product | `committed` | yes | `platform/harmonyos` | 2026-11-05 | `checks/platforms/harmonyos.json` |
 | `macos-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/macos.json` |
 | `windows-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/windows.json` |

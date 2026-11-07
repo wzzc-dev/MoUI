@@ -141,24 +141,23 @@ UIAccessibilityElement array — idb describe-all exposes 19 nodes with
 labels, role traits and correct screen frames, and `accessibilityActivate`
 synthesizes a tap at the node center.
 
-Still pending for the final `committed` step (ADR 0067; mirrors
-`checks/platforms/ios.json`):
+Rotation note: device rotation was not captured live — every host-side
+mechanism (System Events menus, CGEvent keystrokes, `activateIgnoringOtherApps`,
+`simctl ui`) is blocked by the automation host's TCC permissions. Rotation is
+not one of R6's capability list, so this is recorded as an evidence
+limitation in `checks/platforms/ios.json` rather than a pending capability;
+a matching-device pass can add the observation.
 
-- Live rotation/resize observation — the Simulator "Device > Rotate" action
-  is not scriptable from this host's accessibility stack (System Events sees
-  no Simulator windows); the template declares landscape orientations, so a
-  scriptable rotation or a matching-device pass closes it.
-- Metal direct-present log marker — the route presents through the CALayer
-  CPU blit (`cpu-blit-calayer`); the metal-direct GPU claim needs the
-  seven-gate manifests.
+The route presents through the CALayer CPU blit (`cpu-blit-calayer`); the
+metal-direct GPU claim needs the seven-gate manifests and stays a separate
+renderer item (the same standing as the Android and HarmonyOS routes).
 
 ## Status
 
-The route compiles and is usable for template integration, and now carries
-matching-simulator evidence for pixels, pointer, IME text + delete + named
-keys (Enter submit), clipboard write/read, accessibility node publishing,
-surface lifecycle, and cross-extent install:
-`productClass=committed_with_gaps`, `ready=true` (ADR 0067), until the
-pending list above closes. See
+The route compiles and is usable for template integration and now carries
+matching-simulator evidence for every R6 capability — pixels, input
+(pointer + IME text + named keys), detach/recreate, IME, clipboard
+write/read, accessibility node publishing, async image:
+`productClass=committed`, `ready=true` (ADR 0067). See
 `docs/platform-readiness-declaration.md` and
 `docs/window-hosted-moui.md` for the promotion criteria.

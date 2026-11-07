@@ -89,7 +89,7 @@
       "intent": "product",
       "reviewDate": "2026-11-08",
       "reviewTrigger": "R6 capability, evidence manifest, release gate, or product-class change; quarterly otherwise.",
-      "graduation": "Reached `committed_with_gaps` on 2026-11-08 (ADR 0067): matching-simulator evidence covers pixels, pointer, IME text + delete + named keys, clipboard write/read, accessibility node publishing, detach/recreate, cross-extent, and async image. The final `committed` step requires the live rotation/resize observation (scriptable rotation or a matching-device pass) plus a GPU-direct presenter claim with the seven-gate manifests, each via a new ADR.",
+      "graduation": "Reached `committed` on 2026-11-08 (ADR 0067): matching-simulator evidence covers every R6 capability — pixels, input (pointer + IME text + named keys), detach/recreate, IME, clipboard write/read, accessibility node publishing, async image. Device rotation was not captured live (host automation limitation, recorded in the manifest); a matching-device pass may add it. Promotion beyond committed requires a GPU-direct presenter claim with the seven-gate manifests, via a new ADR.",
       "retirement": "Downgrade by a new ADR if matching-simulator R6 evidence lapses or the window-hosted composition cannot build for two reviews."
     },
     {

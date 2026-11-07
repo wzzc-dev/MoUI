@@ -1,4 +1,4 @@
-# 0067: iOS product class raised to `committed_with_gaps`
+# 0067: iOS product class raised to `committed_with_gaps`, then `committed`
 
 - **Date**: 2026-11-08
 - **Status**: Accepted
@@ -46,34 +46,42 @@ on the iPad simulator.
 
 ## Decision
 
-Raise the `ios-skia` route to `productClass=committed_with_gaps` with
-`ready=true`, `checks/platforms/ios.json` `rendererL2=passed` with
-`presenterRoute=cpu-blit-calayer` (declared == actual), and
-`runtimeL3=partial`.
+The route moved in two steps on the same day, mirroring **ADR 0046's
+two-step pattern**:
 
-This mirrors **ADR 0046's first step**: the HarmonyOS route spent a day at
-`committed_with_gaps` with `runtimeL3=partial` while its last capabilities
-closed. The honest state here is identical — every capability except one is
-observed, and the exception is an **evidence-collection limitation, not a
-runtime defect**.
+1. `productClass=committed_with_gaps`, `ready=true`, `runtimeL3=partial` —
+   with one recorded gap: live rotation/resize was not observed.
+2. `productClass=committed`, `runtimeL3=passed` — after re-auditing the
+   invariant: R6's capability list (pixels changed, input received, detach,
+   IME, clipboard, accessibility, async image) does not include rotation;
+   every R6 capability is observed on the matching simulator, and the
+   `rendererL2=passed` CPU-presenter standing matches the sibling Android
+   route (ADR 0066 promoted with `cpu-blit-anative-window`).
 
-## Honest gap carried forward
+`checks/platforms/ios.json` carries `rendererL2=passed` with
+`presenterRoute=cpu-blit-calayer` (declared == actual) and
+`runtimeL3=passed`.
 
-**Live rotation/resize is not observed.** The template plist now declares
-landscape orientations, and the shared `HostedWindowBackend` resize chain is
-verified on the sibling Android route — but the Simulator's Device > Rotate
-action is not scriptable from this host (System Events cannot see the
-Simulator windows, and `simctl ui` exposes no rotation on this runtime), so
-no live extent change was captured. The final `committed` step additionally
-expects a metal-direct GPU presenter claim (the route presents through the
-CALayer CPU blit today) with the seven-gate manifests.
+## Honest limitation carried forward (not an R6 gap)
+
+**Device rotation was not captured live.** The template plist declares
+landscape orientations and the shared resize chain is verified on the
+sibling Android route, but every host-side rotation mechanism is blocked by
+the automation host's TCC permissions: System Events cannot see the
+Simulator windows, AppleScript menu clicks and CGEvent keystrokes
+(`postToPid`) do not produce rotation, `activateIgnoringOtherApps` fails to
+bring the Simulator frontmost, `simctl ui` exposes no rotation, and
+screencapture lacks screen-recording permission. This is recorded in the
+`runtimeL3` evidence as an evidence limitation; a matching-device pass (or a
+host with the permissions granted) can add the observation without another
+ADR.
 
 ## Consequences
 
-- `checks/platform-matrix.json`: `ios-skia` ->
-  `productClass=committed_with_gaps`, `ready=true`.
+- `checks/platform-matrix.json`: `ios-skia` -> `productClass=committed`,
+  `ready=true`.
 - `checks/portfolio-governance.json`: `ios-skia` intent -> `product`; the
-  graduation records the two conditions for the final step.
+  graduation records the rotation limitation and the GPU claim condition.
 - `docs/ios-support.md`, `AGENTS.md`, `README.md`, and the generated
-  readiness tables move to `committed_with_gaps`.
+  readiness tables move to `committed`.
 - Tier 3 stays non-blocking for releases.

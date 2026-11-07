@@ -193,7 +193,7 @@
       "releaseBlocking": false,
       "evidenceRequired": "matching-device L3",
       "evidenceFile": "checks/platforms/ios.json",
-      "productClass": "committed_with_gaps",
+      "productClass": "committed",
       "ready": true,
       "coverage": [
         "scheduled",

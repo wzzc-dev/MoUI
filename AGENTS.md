@@ -19,7 +19,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 - Release closure: `wzzc-dev/moui` must not depend on concrete renderers, renderer bindings, diagnostic renderer stacks, or integration-test libraries. Composition roots declare their selected renderer module explicitly.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
-- Embedded-runtime product class: **Android** is `committed` (`ready=true`, `runtimeL3=passed`) on matching-emulator evidence for all R6 capabilities (ADR 0066); **iOS** is `committed_with_gaps` (`ready=true`, `runtimeL3=partial`; live rotation observation pending, ADR 0067); **HarmonyOS** is `committed` (`ready=true`, `runtimeL3=passed`) on matching-device evidence for all R6 capabilities. `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0021, ADR 0046, ADR 0066, ADR 0067.
+- Embedded-runtime product class: **Android** and **iOS** are `committed` (`ready=true`, `runtimeL3=passed`) on matching-emulator/simulator evidence for all R6 capabilities (ADR 0066, ADR 0067; iOS records device rotation as an evidence limitation, not an R6 gap); **HarmonyOS** is `committed` (`ready=true`, `runtimeL3=passed`) on matching-device evidence for all R6 capabilities. `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0021, ADR 0046, ADR 0066, ADR 0067.
 - `moon.work`: no local `./window/modules/window*` members by default (use
   `window-dev-mode.sh on/off`), no `./openseek`.
 - Discover APIs with `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
