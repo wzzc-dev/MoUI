@@ -140,11 +140,14 @@ deletions forwarded to the native `KeyboardText`/`KeyboardKey` channels) and
 evidence pass verified insert ("abc" at the caret), delete (Backspace), and
 submit (Enter -> "Last: Probe submit 1") through the runtime.
 
-Still pending for `committed`: clipboard flow evidence (the backend declares
-clipboard; the Host services page flow was not exercised on the emulator) and
+Still pending for `committed`: clipboard write and read (the Host services
+page reports "Unavailable: clipboard write is unavailable" and "Unavailable:
+clipboard read is unavailable" — the window embedder's clipboard
+platform-channel service is unwired in `wzzc-dev/window/android`) and
 accessibility node publishing (the window embedder's a11y adaptation is
 declared but uiautomator showed no text nodes from the MoUI surface). These
-are the remaining R6 capabilities blocking the `committed` promotion.
+are the remaining R6 capabilities blocking the `committed` promotion. The
+keyboard/IME text channel was fixed and verified the same day (see above).
 
 ## Status
 
