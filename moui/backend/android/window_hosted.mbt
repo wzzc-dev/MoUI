@@ -109,6 +109,26 @@ fn new_android_embedded_runtime(
     backend: @embedded_runtime.HostedWindowBackend::new(
       title~,
       runtime_factory~,
+      // Answer clipboard requests synchronously from the embedder's JNI
+      // ClipboardManager bridge so Ctrl+C / Ctrl+X / Ctrl+V style commands
+      // resolve on the spot (see `android_clipboard.mbt`); the showcase
+      // service buttons go through `app_environment()`'s ClipboardServices.
+      service_handler=request => {
+        match request {
+          Clipboard(ReadText) =>
+            match android_clipboard_read_text() {
+              Some(text) => Some(ClipboardText(text))
+              None => Some(Unavailable("clipboard does not contain text"))
+            }
+          Clipboard(WriteText(text)) =>
+            if android_clipboard_write_text(text) {
+              Some(ClipboardWritten)
+            } else {
+              Some(Unavailable("clipboard write failed"))
+            }
+          _ => None
+        }
+      },
       surface_binding_factory=() => {
         host_surface_binding_from_android(surface_binding_factory())
       },

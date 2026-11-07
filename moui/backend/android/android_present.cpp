@@ -4,6 +4,23 @@
 
 #if defined(__ANDROID__)
 #include <android/native_window.h>
+#else
+// Host-test stubs for the window-embedder clipboard JNI bridge. On Android the
+// real implementations live in
+// `window/modules/window/android/native_android_host.c` (same .so); defining
+// them here only for non-Android native builds keeps host test links resolved.
+#include <moonbit.h>
+
+extern "C" int32_t mbw_android_clipboard_write_text(const char *utf8,
+                                                    int32_t length) {
+  (void)utf8;
+  (void)length;
+  return 0;
+}
+
+extern "C" moonbit_bytes_t mbw_android_clipboard_read_text(void) {
+  return moonbit_make_bytes(0, 0);
+}
 #endif
 
 extern "C" int moui_android_present_pixels_to_surface(

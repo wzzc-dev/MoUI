@@ -270,8 +270,40 @@ pub fn android_capability_summary(
 }
 
 ///|
-/// The embedded host channel does not yet expose an app-facing service bridge.
-/// Keep services unavailable until callbacks can complete typed tasks.
+/// Clipboard answers synchronously through the window embedder's JNI
+/// ClipboardManager bridge (`android_clipboard.mbt`), the same contract
+/// HarmonyOS provides from `harmonyos_backend.app_environment`.
 pub fn app_environment() -> @services.AppEnvironment {
-  @services.AppEnvironment::new()
+  let clipboard = @services.ClipboardServices::new(
+    read_text=() => {
+      match android_clipboard_read_text() {
+        Some(text) =>
+          @services.ServiceTask::succeed(
+            key="android:clipboard:read-text",
+            value=text,
+          )
+        None =>
+          @services.ServiceTask::fail(
+            key="android:clipboard:read-text",
+            error=@services.ServiceError::unavailable(
+              "clipboard does not contain text",
+            ),
+          )
+      }
+    },
+    write_text=text => {
+      if android_clipboard_write_text(text) {
+        @services.ServiceTask::succeed(
+          key="android:clipboard:write-text",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="android:clipboard:write-text",
+          error=@services.ServiceError::unavailable("clipboard write failed"),
+        )
+      }
+    },
+  )
+  @services.AppEnvironment::new(services=@services.AppServices::new(clipboard~))
 }
