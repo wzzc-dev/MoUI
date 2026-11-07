@@ -375,6 +375,37 @@ fn[Msg] OnDragModifier::to_any_modifier(
 }
 
 ///|
+priv struct OnGestureModifier[Msg] {
+  handler : (GestureEvent) -> Msg
+}
+
+///|
+/// OS-recognized gestures (trackpad pinch/rotation/pan, double tap, pressure)
+/// need no per-view recognizer state: the host recognizer has already done the
+/// multi-finger work, so every sample that reaches this element is delivered
+/// as-is and the app owns the accumulated transform.
+fn[Msg] OnGestureModifier::to_any_modifier(
+  self : OnGestureModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnGesture",
+    event: fn(ctx) {
+      match ctx.event {
+        Gesture(event) =>
+          {
+            ..ViewEventResult::message(handler(event)),
+            captured: true,
+            dirty: ViewPaintDirty,
+          }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}
+
+///|
 priv struct OnDragWithFrameModifier[Msg] {
   handler : (DragGestureEvent, Rect) -> Msg
 }

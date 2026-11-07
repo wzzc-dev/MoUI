@@ -150,6 +150,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       self.dirty.rebuild_wakeup_redraw = false
     }
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
+    Gesture(event) => self.dispatch_gesture_event(event)
     Keyboard(event) => {
       let layout = self.layout_tree_for_input()
       // Top-most dismissal layer stack (ADR 0033): overlay hosts registered
@@ -321,6 +322,9 @@ fn RuntimeState::dispatch_pointer_event(
 ) -> InputDispatchResult {
   self.bump_overlay_input_generation()
   self.ensure_render_tree()
+  // Trackpad gestures carry no position of their own; the last primary
+  // pointer sample is the target proxy (see `input_gesture.mbt`).
+  self.last_pointer_position = Some(event.position)
   self.last_event_hit_path = self.element_tree.root.inspector_hit_path(
     event.position,
     self.render_tree.root,

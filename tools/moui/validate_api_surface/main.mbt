@@ -431,9 +431,15 @@ fn package_budgets() -> Array[PackageBudget] {
       // TransitionSpec::with_spring plus the interruptible stateful solver
       // (value + velocity accessors) for app-driven motion. Motion value
       // types are core protocol surface like the rest of animation.mbt.
-      max_lines: 2783,
-      max_pub_lines: 1188,
-      max_pub_all_lines: 143,
+      // GestureEvent / GestureKind / GesturePhase / View::on_gesture /
+      // AppEvent::Gesture (+33 lines, +26 pub, +3 pub(all)): plan §7 —
+      // OS-recognized trackpad gestures join the core event protocol the same
+      // way pointer/keyboard events live there; the host recognizer has
+      // already done the multi-finger work, so core carries only the sample
+      // DTO and the observer modifier.
+      max_lines: 2825,
+      max_pub_lines: 1214,
+      max_pub_all_lines: 146,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
@@ -532,7 +538,10 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "backend protocols",
       path: "moui/backend/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend\"",
-      max_lines: 702,
+      // +1 line: Event::Gesture carries the core gesture sample through the
+      // shared host event model (plan §7), so platform decode layers have one
+      // host event type to land OS-recognized gestures on.
+      max_lines: 703,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [

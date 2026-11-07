@@ -410,3 +410,88 @@ test "window theme change maps to host theme event" {
     Some(_) => fail("theme changes are handled by the host runtime driver")
   }
 }
+
+///|
+test "host decodes trackpad gesture window events into gesture samples" {
+  // Pinch: additive magnification fraction with the touch phase preserved.
+  match
+    @input.window_event_to_host_with_modifiers(
+      PinchGesture(None, 0.05, Moved),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+    ) {
+    Some(Gesture(event)) => {
+      assert_true(event.kind == Pinch)
+      assert_true(event.phase == Moved)
+      inspect(event.scale_delta, content="0.05")
+      inspect(event.rotation_delta, content="0")
+    }
+    _ => fail("expected pinch gesture sample")
+  }
+  // Rotation carries radians; a cancelled stream still ends.
+  match
+    @input.window_event_to_host_with_modifiers(
+      RotationGesture(None, 0.0 - 0.25, Cancelled),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+    ) {
+    Some(Gesture(event)) => {
+      assert_true(event.kind == Rotate)
+      assert_true(event.phase == Ended)
+      inspect(event.rotation_delta, content="-0.25")
+    }
+    _ => fail("expected rotate gesture sample")
+  }
+  // Pan translation converts from physical to logical pixels.
+  match
+    @input.window_event_to_host_with_modifiers(
+      PanGesture(None, PhysicalPositionF64(40.0, 0.0 - 60.0), Started),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+      scale_factor=2.0,
+    ) {
+    Some(Gesture(event)) => {
+      assert_true(event.kind == Pan)
+      assert_true(event.phase == Started)
+      inspect(event.pan_delta.x, content="20")
+      inspect(event.pan_delta.y, content="-30")
+    }
+    _ => fail("expected pan gesture sample")
+  }
+  // Double tap is instantaneous; pressure keeps its normalized force and
+  // platform stage.
+  match
+    @input.window_event_to_host_with_modifiers(
+      DoubleTapGesture(None),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+    ) {
+    Some(Gesture(event)) => {
+      assert_true(event.kind == DoubleTap)
+      assert_true(event.phase == Started)
+    }
+    _ => fail("expected double tap gesture sample")
+  }
+  match
+    @input.window_event_to_host_with_modifiers(
+      TouchpadPressure(None, 0.75, 2),
+      @core.Point::new(x=0.0, y=0.0),
+      @core.KeyModifiers::none(),
+    ) {
+    Some(Gesture(event)) => {
+      assert_true(event.kind == Pressure)
+      inspect(event.pressure, content="0.75")
+      inspect(event.pressure_stage, content="2")
+    }
+    _ => fail("expected pressure gesture sample")
+  }
+  // The samples ride the shared host->core conversion.
+  match
+    @input.window_event_to_core(
+      PinchGesture(None, 0.1, Ended),
+      @core.Point::new(x=0.0, y=0.0),
+    ) {
+    Some(Gesture({ kind: Pinch, phase: Ended, scale_delta: 0.1, .. })) => ()
+    _ => fail("expected core gesture app event")
+  }
+}

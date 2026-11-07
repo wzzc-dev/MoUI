@@ -74,6 +74,10 @@ pub fn HostRuntimeDriver::dispatch(
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
       }
+    Gesture(event) => {
+      self.runtime.dispatch_event(Gesture(event))
+      self.request_redraw_if_needed()
+    }
     RedrawRequested => {
       self.begin_redraw()
       self.finish_redraw()

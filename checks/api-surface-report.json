@@ -60,9 +60,9 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2783,
-      "public_declarations": 1188,
-      "pub_all_declarations": 143
+      "lines": 2825,
+      "public_declarations": 1202,
+      "pub_all_declarations": 146
     },
     {
       "label": "views facade",
@@ -74,7 +74,7 @@
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 702,
+      "lines": 703,
       "public_declarations": 268,
       "pub_all_declarations": 44
     },

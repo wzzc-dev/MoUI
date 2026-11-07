@@ -88,7 +88,7 @@ These constrain every slice and are cheap to re-check, expensive to rediscover:
 | §6 honest text semantics | stop hardcoding `read_only`/`password`, use `View::semantics_state` | done |
 | §9 RTL mirroring | 11 groups across `moui/views` + `moui/core` alignment/guide math, delete the inert `moui/runtime` direction parameter, wire `mirror_x`, mirrored-frame property tests | done 2026-10-23 (widened beyond views, approved) |
 | §10 gesture arena | per-pointer runtime arbitration for tap, long press, drag and scroll; no public event signal | done 2026-11-05 |
-| §7 pinch / rotation | end-to-end gesture variants | approved 2026-10-23 in full, pending |
+| §7 pinch / rotation | end-to-end gesture variants | done 2026-11-07 (see the §7 landing notes) |
 
 Owner approvals recorded on 2026-10-23, all riding the 0.3.0 migration that the
 API contraction already started:
@@ -317,8 +317,8 @@ is a facade, every subpackage has to be named explicitly in the test run.
   (NaN and out-of-range clamp to `1.0`), `Mouse`/`Unknown` are `(0, 1.0)`, and a
   `TabletTool` keeps id 0 with its own force/angle. `PointerEntered`/`PointerLeft`
   stay dropped on purpose — hover is resolved from `Move` plus the synthetic
-  `Exit`. `PinchGesture`, `RotationGesture`, `PanGesture`, `DoubleTapGesture` and
-  `TouchpadPressure` still fall into `_ => None` until §7.
+  `Exit`. The gesture variants landed with §7 (2026-11-07): they decode into
+  `Event::Gesture` instead of `_ => None`.
 - The Web input ABI is 10 parameters end to end (`browser_runtime.js` →
   `web_dispatch_pointer_input` → app forwarder). `browser_runtime.js` ships
   inside the published module and is the only caller of the export, so the 10
@@ -457,6 +457,43 @@ capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
   into the clamp edge stays inside the authoritative range and settles; a
   wheel step or a press during the glide ends it. Physics helpers are covered
   in `moui/views/controls/scroll_view_wbtest.mbt`.
+
+## §7 landing notes: OS-recognized gestures ride a dedicated event type (2026-11-07)
+
+- **The host recognizer does the multi-finger work.** The macOS trackpad
+  delivers already-recognized gesture samples (`PinchGesture` magnification,
+  `RotationGesture` radians, `PanGesture` translation, `DoubleTapGesture`,
+  `TouchpadPressure`); MoUI carries them as one `AppEvent::Gesture` sample
+  (`GestureEvent` with `GestureKind` + `GesturePhase`, zero fields for kinds
+  that do not use them) instead of synthesizing a fake pointer stream. No
+  gesture-arena interaction: these are not pointer streams, so capture, hover,
+  and recognizer arbitration are untouched.
+- **Decode** (`window_event_decode.mbt`): all five window variants land on
+  `@backend_host.Event::Gesture`, `TouchPhase::Cancelled` maps to
+  `GesturePhase::Ended` (one terminal sample either way), and the pan
+  translation converts from physical to logical pixels like any pointer
+  coordinate. The five-variant debt bullet from §4 is closed.
+- **Dispatch** (`moui/runtime/input_gesture.mbt`): gestures carry no
+  position, so the runtime targets the element chain at the last known
+  primary pointer position (`RuntimeState::last_pointer_position`, recorded
+  per pointer dispatch) and walks the hit path deepest-first — the first
+  handler that claims the gesture wins, so a text nested inside a
+  gesture-observing canvas hands the gesture up to the canvas. No pointer
+  sample yet means no target and the gesture is dropped. With nothing
+  animating the walk costs nothing; gestures never self-schedule frames.
+- **Modifier**: `View::on_gesture(handler)` is a stateless observer — the OS
+  recognizer already did the work, so the app accumulates its own transform
+  state per stream. Deliberately v1-honest: no scroll-wheel integration, no
+  built-in zoom accumulation, and the embedded hosts still deliver one finger
+  only (the upstream `host_queue.mbt` finger-id gap is unchanged).
+- Evidence: decode table tests for all five variants with phase and unit
+  conversion (`window_event_decode_test.mbt`), modifier delivery/ignoring
+  (`modifier_test.mbt`), and runtime end-to-end cases for cursor-targeting,
+  deepest-handler claiming, off-content dropping, and the no-pointer drop
+  (`input_gesture_test.mbt`). Budgets moved with reasons: core
+  `max_lines/pub/pub(all)` (gesture protocol types + modifier), backend +1
+  (`Event::Gesture`), classification `advanced_core_protocol` 1200 -> 1214,
+  the decode-test line budget, and the catalog's own self-referential entry.
 
 ## Debt and known gaps
 

@@ -395,10 +395,67 @@ pub fn window_event_to_host_with_modifiers(
       Some(ThemeChanged(window_theme_to_color_scheme(theme)))
     // `PointerEntered`/`PointerLeft` are dropped on purpose: the runtime
     // synthesises `Exit` from the `Move` stream, which keeps hover correct on
-    // hosts that never emit a leave event. `PinchGesture`, `RotationGesture`,
-    // `PanGesture`, `DoubleTapGesture` and `TouchpadPressure` have no host
-    // event type to land on yet; the pinch/rotation slice adds them.
+    // hosts that never emit a leave event.
+    PinchGesture(_, delta, phase) =>
+      Some(
+        Gesture(
+          @core.GestureEvent::new(
+            kind=Pinch,
+            phase=touch_phase_to_gesture(phase),
+            scale_delta=delta,
+          ),
+        ),
+      )
+    RotationGesture(_, delta, phase) =>
+      Some(
+        Gesture(
+          @core.GestureEvent::new(
+            kind=Rotate,
+            phase=touch_phase_to_gesture(phase),
+            rotation_delta=delta,
+          ),
+        ),
+      )
+    // The window crate expresses the pan translation as a physical position
+    // pair; it converts like any other pointer coordinate.
+    PanGesture(_, translation, phase) =>
+      Some(
+        Gesture(
+          @core.GestureEvent::new(
+            kind=Pan,
+            phase=touch_phase_to_gesture(phase),
+            pan_delta=physical_position_to_core(translation, scale_factor~),
+          ),
+        ),
+      )
+    DoubleTapGesture(_) =>
+      Some(Gesture(@core.GestureEvent::new(kind=DoubleTap, phase=Started)))
+    TouchpadPressure(_, pressure, stage) =>
+      Some(
+        Gesture(
+          @core.GestureEvent::new(
+            kind=Pressure,
+            phase=Moved,
+            pressure~,
+            pressure_stage=stage,
+          ),
+        ),
+      )
     _ => None
+  }
+}
+
+///|
+/// Host gesture streams terminate on `Cancelled` too, so the app sees one
+/// `Ended` sample either way; there is no separate cancelled gesture phase.
+fn touch_phase_to_gesture(
+  phase : @window_core.TouchPhase,
+) -> @core.GesturePhase {
+  match phase {
+    Started => Started
+    Moved => Moved
+    Ended => Ended
+    Cancelled => Ended
   }
 }
 

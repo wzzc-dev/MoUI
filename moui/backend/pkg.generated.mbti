@@ -23,6 +23,7 @@ pub(all) enum Event {
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
   Command(@core.CommandIntent)
+  Gesture(@core.GestureEvent)
   RedrawRequested
   CloseRequested
 }

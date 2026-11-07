@@ -292,6 +292,93 @@ test "on_drag identity" {
 }
 
 ///|
+test "on_gesture identity and event delivery" {
+  let received : Array[@core.GestureEvent] = []
+  let view : @core.View[Unit] = @core.View::from_node(ModTestNode::{
+    kind: "gesture-observable",
+    size: @core.Size::new(width=8.0, height=8.0),
+  }).on_gesture(event => received.push(event))
+  assert_true(view.identity().kind.contains("OnGesture"))
+  // Gesture samples reach the handler; every field of a kind travels with it.
+  ignore(
+    view.event({
+      frame: @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
+      child_frames: [],
+      event: Gesture(
+        @core.GestureEvent::new(kind=Pinch, phase=Moved, scale_delta=0.05),
+      ),
+      focused: false,
+      state: {
+        focused: false,
+        hovered: false,
+        pressed: false,
+        selected: false,
+        checked: false,
+        expanded: false,
+        disabled: false,
+        slots: @core.ViewStateSlots::empty(),
+      },
+      text_control: {
+        caret: 0,
+        selection: None,
+        text_selection_anchor: None,
+        goal_column: None,
+        reveal: None,
+        text_selection_origin: None,
+        composition: None,
+        composition_cursor: None,
+        undo_stack: [],
+        redo_stack: [],
+      },
+      text_system: @core.TextSystem::fallback(),
+      environment: @core.Environment::neutral(),
+      style: @core.ViewStyle::empty(),
+      now_ms: 0.0,
+    }),
+  )
+  assert_true(received.length() == 1)
+  assert_true(received[0].kind == Pinch)
+  assert_true(received[0].phase == Moved)
+  assert_true(received[0].scale_delta == 0.05)
+  // Non-gesture events pass through untouched.
+  ignore(
+    view.event({
+      frame: @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
+      child_frames: [],
+      event: Keyboard(@core.KeyboardEvent::new(key="Escape", pressed=true)),
+      focused: false,
+      state: {
+        focused: false,
+        hovered: false,
+        pressed: false,
+        selected: false,
+        checked: false,
+        expanded: false,
+        disabled: false,
+        slots: @core.ViewStateSlots::empty(),
+      },
+      text_control: {
+        caret: 0,
+        selection: None,
+        text_selection_anchor: None,
+        goal_column: None,
+        reveal: None,
+        text_selection_origin: None,
+        composition: None,
+        composition_cursor: None,
+        undo_stack: [],
+        redo_stack: [],
+      },
+      text_system: @core.TextSystem::fallback(),
+      environment: @core.Environment::neutral(),
+      style: @core.ViewStyle::empty(),
+      now_ms: 0.0,
+    }),
+  )
+  assert_true(received.length() == 1)
+}
+
+///|
 test "on_hover is a transparent observer with no focus stop or role" {
   let view : @core.View[Bool] = @core.View::from_node(ModTestNode::{
     kind: "hoverable",

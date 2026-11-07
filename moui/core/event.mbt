@@ -199,6 +199,102 @@ pub extend RedrawReason with ToJson::{to_json}
 
 ///|
 #derive(Eq, Debug, ToJson)
+pub(all) enum GestureKind {
+  Pinch
+  Rotate
+  Pan
+  DoubleTap
+  Pressure
+}
+
+///|
+pub extend GestureKind with Debug::{to_repr}
+
+///|
+pub extend GestureKind with Eq::{not_equal, equal}
+
+///|
+pub extend GestureKind with ToJson::{to_json}
+
+///|
+/// OS-recognized gesture stream phase: trackpads and system recognizers
+/// deliver `Started` / `Moved` / `Ended`; an instantaneous gesture such as a
+/// double tap arrives as `Started` with no follow-up.
+#derive(Eq, Debug, ToJson)
+pub(all) enum GesturePhase {
+  Started
+  Moved
+  Ended
+}
+
+///|
+pub extend GesturePhase with Debug::{to_repr}
+
+///|
+pub extend GesturePhase with Eq::{not_equal, equal}
+
+///|
+pub extend GesturePhase with ToJson::{to_json}
+
+///|
+/// One OS-recognized gesture sample (a trackpad pinch, rotation, pan,
+/// double-tap, or pressure change). The host recognizer has already done the
+/// multi-finger work, so the event carries per-sample deltas rather than a
+/// touch stream; fields that do not belong to the kind stay at their zero
+/// value instead of growing a variant per kind.
+///
+/// Gestures carry no position: the runtime targets the content under the last
+/// known primary pointer, so a trackpad pinch zooms what the cursor is over.
+#derive(Eq, Debug, ToJson)
+pub(all) struct GestureEvent {
+  kind : GestureKind
+  phase : GesturePhase
+  /// `Pinch`: additive magnification fraction since the last sample
+  /// (0.05 = 5% zoom in, -0.05 = zoom out). Zero for every other kind.
+  scale_delta : Double
+  /// `Rotate`: radians since the last sample. Zero for every other kind.
+  rotation_delta : Double
+  /// `Pan`: translation in logical pixels since the last sample. Zero for
+  /// every other kind.
+  pan_delta : Point
+  /// `Pressure`: normalized force (0..1). Zero for every other kind.
+  pressure : Double
+  /// `Pressure`: platform pressure stage. Zero for every other kind.
+  pressure_stage : Int32
+}
+
+///|
+pub extend GestureEvent with Debug::{to_repr}
+
+///|
+pub extend GestureEvent with Eq::{not_equal, equal}
+
+///|
+pub extend GestureEvent with ToJson::{to_json}
+
+///|
+pub fn GestureEvent::new(
+  kind~ : GestureKind,
+  phase~ : GesturePhase,
+  scale_delta~ : Double = 0.0,
+  rotation_delta~ : Double = 0.0,
+  pan_delta~ : Point = Point::new(x=0.0, y=0.0),
+  pressure~ : Double = 0.0,
+  pressure_stage~ : Int32 = 0,
+) -> GestureEvent {
+  {
+    kind,
+    phase,
+    scale_delta,
+    rotation_delta,
+    pan_delta,
+    pressure,
+    pressure_stage,
+  }
+}
+
+///|
+#derive(Eq, Debug, ToJson)
 pub(all) enum AppEvent {
   FrameTick(Frame)
   Pointer(PointerEvent)
@@ -208,6 +304,7 @@ pub(all) enum AppEvent {
   PlatformView(String, PlatformViewEvent)
   Resize(Size)
   Redraw(RedrawReason)
+  Gesture(GestureEvent)
   CloseRequested
 }
 

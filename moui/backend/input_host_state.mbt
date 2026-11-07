@@ -93,6 +93,7 @@ pub(all) enum Event {
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
   Command(@core.CommandIntent)
+  Gesture(@core.GestureEvent)
   RedrawRequested
   CloseRequested
 }
@@ -193,6 +194,7 @@ pub fn Event::to_core(self : Event) -> @core.AppEvent? {
     DragDrop(event) => Some(DragDrop(event))
     ThemeChanged(_) => None
     Command(_) => None
+    Gesture(event) => Some(Gesture(event))
     RedrawRequested => Some(Redraw(Explicit))
     CloseRequested => Some(CloseRequested)
   }

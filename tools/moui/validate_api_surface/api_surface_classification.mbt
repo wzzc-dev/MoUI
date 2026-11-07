@@ -48,7 +48,10 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // SpringSpec / SpringState / spring_progress (+19, including the
       // Debug/Eq/ToJson extend lines): plan spring-animation — spring motion
       // joins the cross-runtime animation protocol types.
-      max_count: 1200,
+      // GestureEvent / GestureKind / GesturePhase (+14, including the
+      // Debug/Eq/ToJson/Show extend lines and View::on_gesture): plan §7 —
+      // OS-recognized gesture samples are core event-protocol surface.
+      max_count: 1214,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -214,9 +217,9 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Constraints", "ContentSize", "ControlState", "CrossAxis", "Custom", "Damage",
     "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",
     "Environment", "Feedback", "Feature", "Filter", "Focus", "Font", "FormValidationTheme",
-    "Frame", "Image", "Insets", "InteractionState", "Key", "Keyboard", "Layer", "Layout",
-    "LinearGradient", "MainAxis", "Motion", "Navigation", "Path", "PickerTheme",
-    "PlatformView", "Point", "Pointer", "Program", "Progress", "RadialGradient",
+    "Frame", "Gesture", "Image", "Insets", "InteractionState", "Key", "Keyboard",
+    "Layer", "Layout", "LinearGradient", "MainAxis", "Motion", "Navigation", "Path",
+    "PickerTheme", "PlatformView", "Point", "Pointer", "Program", "Progress", "RadialGradient",
     "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantic",
     "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",

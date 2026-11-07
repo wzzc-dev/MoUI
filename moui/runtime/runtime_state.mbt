@@ -21,6 +21,10 @@ priv struct RuntimeState {
   clock : Clock
   mut pending_scroll_request : ScrollRequest?
   mut last_event_hit_path : Array[Int32]
+  /// Last known primary pointer position, the target proxy for
+  /// position-less host gestures (a trackpad pinch belongs to the content
+  /// under the cursor). `None` until the first pointer sample arrives.
+  mut last_pointer_position : Point?
   mut last_frame_timing : RuntimeFrameTiming
   /// Post-layout overlay frame overrides: host element id -> (child index,
   /// absolute rect). Applied by the placement pass after the layout fixpoint.
@@ -112,6 +116,7 @@ fn RuntimeState::new_runtime_view_node(
     clock: Clock::new(),
     pending_scroll_request: None,
     last_event_hit_path: [],
+    last_pointer_position: None,
     last_frame_timing: RuntimeFrameTiming::zero(),
     overlay_overrides: [],
     layer_stack: [],

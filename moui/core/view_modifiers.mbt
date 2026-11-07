@@ -400,6 +400,20 @@ pub fn[Msg] View::on_drag(
 }
 
 ///|
+/// Observe OS-recognized gestures — trackpad pinch, rotation, pan, double
+/// tap, and pressure — over this subtree. The runtime targets the content
+/// under the last known primary pointer position, so a trackpad pinch zooms
+/// what the cursor is over; every sample of the stream is delivered as-is and
+/// the app accumulates its own transform state (the host recognizer has
+/// already done the multi-finger work).
+pub fn[Msg] View::on_gesture(
+  self : View[Msg],
+  handler : (GestureEvent) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnGestureModifier::{ handler, }.to_any_modifier())
+}
+
+///|
 pub fn[Msg] View::on_drag_with_frame(
   self : View[Msg],
   handler : (DragGestureEvent, Rect) -> Msg,

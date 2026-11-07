@@ -68,8 +68,11 @@ fn file_budgets() -> Array[FileBudget] {
     {
       // 304 -> 412 (2026-10-23, pointer-input-parity §4): finger identity and
       // force decode evidence for every source kind.
+      // 412 -> 497 (2026-11-07, §7): OS-recognized gesture decode evidence
+      // for pinch/rotation/pan/double-tap/pressure with phase and unit
+      // conversion.
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 412,
+      max_lines: 497,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
@@ -160,8 +163,10 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 95,
     },
     {
+      // 383 -> 389 (2026-11-07, §7): the decode-test budget note and this
+      // self-referential entry's own note grow with the gesture evidence.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 383,
+      max_lines: 389,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
