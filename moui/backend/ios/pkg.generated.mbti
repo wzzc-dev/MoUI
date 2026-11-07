@@ -21,6 +21,10 @@ pub fn entry(auto_exit_after_frames? : Int32?) -> @apphost.PlatformEntry
 
 pub fn host_surface_binding_from_ios(IosSurfaceBinding) -> @embedded.HostSurfaceBinding
 
+pub fn ios_accessibility_project(@runtime.SemanticsRead) -> String?
+
+pub fn ios_accessibility_publish(String) -> Bool
+
 pub fn ios_capability_matrix() -> IosBackendCapabilities
 
 pub fn ios_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
@@ -90,6 +94,7 @@ pub fn IosBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct IosEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
+  mut accessibility_cursor : @wzzc-dev/moui/core.SemanticsGeneration?
 }
 pub fn IosEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
@@ -101,6 +106,7 @@ pub fn IosEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/ios.Acti
 pub fn IosEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int32?) -> Self
 pub fn IosEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
 pub fn IosEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
+pub fn IosEmbeddedRuntimeBackend::pump_accessibility(Self) -> Unit
 pub fn IosEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/ios.ActiveEventLoop) -> Unit
 pub fn IosEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn IosEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/ios.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit

@@ -6,6 +6,9 @@
 /// the IME sink and window creation stay here.
 pub struct IosEmbeddedRuntimeBackend {
   backend : @embedded_runtime.HostedWindowBackend
+  /// Semantics generation already published to the embedder's accessibility
+  /// bridge (see `ios_accessibility.mbt`).
+  mut accessibility_cursor : @core.SemanticsGeneration?
 }
 
 ///|
@@ -97,6 +100,7 @@ fn new_ios_embedded_runtime(
       }),
       auto_exit_after_frames~,
     ),
+    accessibility_cursor: None,
   }
 }
 
@@ -202,6 +206,47 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn ab
   _event_loop,
 ) {
   self.backend.about_to_wait()
+  self.pump_accessibility()
+}
+
+///|
+/// Publishes the semantics tree to the embedder's accessibility bridge when
+/// the committed generation moved past the published cursor (the same cursor
+/// discipline the Android bridge uses).
+pub fn IosEmbeddedRuntimeBackend::pump_accessibility(
+  self : IosEmbeddedRuntimeBackend,
+) -> Unit {
+  match self.backend.read_semantics(since=self.accessibility_cursor) {
+    Some(Unchanged(_)) => ()
+    Some(Full(snapshot)) => self.publish_accessibility_snapshot(Full(snapshot))
+    Some(Delta(_)) =>
+      match self.backend.read_semantics() {
+        Some(read) => self.publish_accessibility_snapshot(read)
+        None => ()
+      }
+    None => ()
+  }
+}
+
+///|
+/// Publishes a `Full` semantics snapshot and records its generation as the
+/// accessibility cursor. Other reads publish nothing: the ObjC publisher
+/// replaces its node table only on an accepted publish.
+fn IosEmbeddedRuntimeBackend::publish_accessibility_snapshot(
+  self : IosEmbeddedRuntimeBackend,
+  read : @apphost.SemanticsRead,
+) -> Unit {
+  match read {
+    Full(snapshot) =>
+      match ios_accessibility_project(Full(snapshot)) {
+        Some(tree) =>
+          if ios_accessibility_publish(tree) {
+            self.accessibility_cursor = Some(snapshot.generation())
+          }
+        None => ()
+      }
+    _ => ()
+  }
 }
 
 ///|
