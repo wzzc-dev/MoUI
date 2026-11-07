@@ -29,3 +29,15 @@ test "progress smoke" {
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
+
+///|
+test "range slider smoke" {
+  let view : @core.View[Unit] = @views.range_slider(
+    { start: 0.25, end: 0.75, },
+    min=0.0,
+    max=1.0,
+    on_change=Some(fn(_range) { () }),
+  )
+  @common.assert_layouts(view)
+  @common.assert_paints(view)
+}

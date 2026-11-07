@@ -25,8 +25,8 @@
     {
       "label": "animation sugar",
       "path": "moui/animation/pkg.generated.mbti",
-      "lines": 21,
-      "public_declarations": 3,
+      "lines": 25,
+      "public_declarations": 5,
       "pub_all_declarations": 0
     },
     {
@@ -60,15 +60,15 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2735,
-      "public_declarations": 1159,
-      "pub_all_declarations": 141
+      "lines": 2783,
+      "public_declarations": 1188,
+      "pub_all_declarations": 143
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 688,
-      "public_declarations": 328,
+      "lines": 693,
+      "public_declarations": 330,
       "pub_all_declarations": 1
     },
     {

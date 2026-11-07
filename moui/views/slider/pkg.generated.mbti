@@ -2,16 +2,27 @@
 package "wzzc-dev/moui/views/slider"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/style",
 }
 
 // Values
+pub fn[Msg] range_slider(SliderRange, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((SliderRange) -> Msg)?) -> @core.View[Msg]
+
 pub fn[Msg] slider(Double, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct SliderRange {
+  start : Double
+  end : Double
+}
+pub fn SliderRange::equal(Self, Self) -> Bool
+pub fn SliderRange::not_equal(Self, Self) -> Bool
+pub fn SliderRange::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

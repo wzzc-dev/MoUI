@@ -23,7 +23,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       label: "moui/views",
       path: "moui/views",
       // 坐标舞台(M4):Placed 结构 +1(stage/place 布局原语)。
-      max_count: 67,
+      // 68 = 67 + 1 SliderRange (range_slider 的双端取值结构,与 slider 的
+      // TEA 受控值同风格,经 facade 以 pub using 透出)。
+      max_count: 68,
     },
     {
       kind: "pub(all)",

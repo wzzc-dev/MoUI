@@ -13,6 +13,7 @@ import {
   "wzzc-dev/moui/views/popover",
   "wzzc-dev/moui/views/presence_dot",
   "wzzc-dev/moui/views/presentation",
+  "wzzc-dev/moui/views/slider",
   "wzzc-dev/moui/views/style",
 }
 
@@ -288,6 +289,8 @@ pub fn push_transform(@common.PaintContext, @core.Transform2D) -> Unit
 pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] radio_group(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] range_slider(@slider.SliderRange, min? : Double, max? : Double, step? : Double, label? : String, value_text? : String, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((@slider.SliderRange) -> Msg)?) -> @core.View[Msg]
 
 pub fn required_field(message? : String) -> (String) -> String?
 
@@ -630,6 +633,8 @@ pub using @data {type SelectionState}
 pub using @style {type SheetPresentationMode}
 
 pub using @navigation {type SidebarItem}
+
+pub using @slider {type SliderRange}
 
 pub using @style {type SliderStyle}
 

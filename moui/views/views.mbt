@@ -180,7 +180,7 @@ pub using @checkbox {toggle, radio}
 pub using @progress {progress}
 
 ///|
-pub using @slider {slider}
+pub using @slider {slider, range_slider, type SliderRange}
 
 // === composite / domain views ===
 
