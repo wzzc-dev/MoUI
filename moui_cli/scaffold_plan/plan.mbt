@@ -633,6 +633,9 @@ pub fn build_project_file_plan(
   }
   let files = if options.template == "addon" {
     let type_name = product_name(options.id)
+    // File and constructor names follow the guide's snake_case convention
+    // (`<id>_control.mbt`, `<id>_badge`), not the camel-cased type name.
+    let snake_name = options.id.replace_all(old="-", new="_")
     [
       text_file(".gitignore", gitignore_text()),
       text_file("README.md", addon_readme_text(options, cli_version)),
@@ -641,12 +644,12 @@ pub fn build_project_file_plan(
       text_file("moui.project.json", manifest.to_json_text()),
       text_file(options.id + "/moon.pkg", addon_pkg_text()),
       text_file(
-        options.id + "/" + type_name.to_lower() + "_control.mbt",
-        addon_control_text(package_id=options.id, type_name~),
+        options.id + "/" + snake_name + "_control.mbt",
+        addon_control_text(package_id=options.id, type_name~, snake_name~),
       ),
       text_file(
-        options.id + "/" + type_name.to_lower() + "_control_test.mbt",
-        addon_test_text(package_id=options.id, type_name~),
+        options.id + "/" + snake_name + "_control_test.mbt",
+        addon_test_text(package_id=options.id, type_name~, snake_name~),
       ),
     ]
   } else {
@@ -735,7 +738,11 @@ fn addon_pkg_text() -> String {
 }
 
 ///|
-fn addon_control_text(package_id~ : String, type_name~ : String) -> String {
+fn addon_control_text(
+  package_id~ : String,
+  type_name~ : String,
+  snake_name~ : String,
+) -> String {
   let template =
     #|///|
     #|/// __TYPE__: a minimal third-party addon control. The node is immutable
@@ -825,13 +832,17 @@ fn addon_control_text(package_id~ : String, type_name~ : String) -> String {
     #|  @core.View::from_node(__TYPE__::{ label, count, key })
     #|}
   template
-  .replace_all(old="__FN___badge", new=type_name.to_lower() + "_badge")
+  .replace_all(old="__FN___badge", new=snake_name + "_badge")
   .replace_all(old="__PKG__", new=package_id)
   .replace_all(old="__TYPE__", new=type_name)
 }
 
 ///|
-fn addon_test_text(package_id~ : String, type_name~ : String) -> String {
+fn addon_test_text(
+  package_id~ : String,
+  type_name~ : String,
+  snake_name~ : String,
+) -> String {
   (
     #|///|
     #|/// Runtime-level smoke: the control draws its label and commits a node.
@@ -842,10 +853,7 @@ fn addon_test_text(package_id~ : String, type_name~ : String) -> String {
     #|    program=@moui.Program::simple(
     #|      init=0,
     #|      update=(model, _msg : Int) => model,
-    #|      view=_model => @__PKG__.__FN___badge(
-    #|        label="Addon",
-    #|        count=3,
-    #|      ),
+    #|      view=_model => @__PKG__.__FN___badge(label="Addon", count=3),
     #|    ),
     #|    width=240.0,
     #|    height=120.0,
@@ -859,7 +867,7 @@ fn addon_test_text(package_id~ : String, type_name~ : String) -> String {
     #|  )
     #|}
   )
-  .replace_all(old="__FN___badge", new=type_name.to_lower() + "_badge")
+  .replace_all(old="__FN___badge", new=snake_name + "_badge")
   .replace_all(old="__PKG__", new=package_id)
 }
 

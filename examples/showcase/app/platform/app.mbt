@@ -512,7 +512,7 @@ pub fn view_body(
     _ => host_services_page(model)
   }
   if width > 0.0 {
-    page.frame(width=width)
+    page.frame(width~)
   } else {
     page
   }

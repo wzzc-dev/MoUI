@@ -128,6 +128,20 @@
     },
     {
       "group": "guides",
+      "slug": "addon-package-guide",
+      "title": "Addon Package Guide",
+      "path": "docs/addon-package-guide.md",
+      "summary": "How to build, validate, and publish a third-party MoUI addon module of custom controls, domain helpers, and service contracts.",
+      "keywords": [
+        "addon",
+        "package",
+        "publish",
+        "third-party",
+        "mooncakes"
+      ]
+    },
+    {
+      "group": "guides",
       "slug": "views-api-guide",
       "title": "Views API Guide",
       "path": "docs/views-api-guide.md",
@@ -879,6 +893,20 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/tutorials.md"
+        },
+        {
+          "group": "guides",
+          "slug": "addon-package-guide",
+          "title": "Addon Package 指南",
+          "summary": "如何构建、校验并发布第三方 MoUI addon 模块：自定义控件、领域辅助与服务契约。",
+          "keywords": [
+            "addon",
+            "package",
+            "发布",
+            "第三方",
+            "mooncakes"
+          ],
+          "localizedPath": "docs/zh-Hans/addon-package-guide.md"
         },
         {
           "group": "guides",
