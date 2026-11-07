@@ -124,22 +124,30 @@ fn scroll_runtime_state(
 /// and `on_scroll` all report that value — while `raw_offset` retains the
 /// overshoot so the paint pass can draw a bounded rubber band and release can
 /// settle it back.
+///
+/// `track_position`/`track_time_ms`/`velocity` carry release-velocity tracking
+/// for the fling: the tracked pair is the last sample with a distinct clock
+/// stamp and real travel, and `velocity` is that interval's offset-space
+/// speed in px/ms.
 priv struct ScrollDragState {
   active : Bool
   dragging : Bool
   origin : @core.Point
   last_position : @core.Point
   raw_offset : @core.Point
+  track_position : @core.Point
+  track_time_ms : Double
+  velocity : @core.Point
 }
 
 ///|
 impl @core.ViewStateValue for ScrollDragState with fn view_state_type_key() {
-  @core.DeclarationKey::string("moui.views.ScrollDragState.v1")
+  @core.DeclarationKey::string("moui.views.ScrollDragState.v2")
 }
 
 ///|
 impl @core.ViewStateValue for ScrollDragState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=50)
+  let output = Buffer(size_hint=90)
   output.write_byte(if self.active { 1 } else { 0 })
   output.write_byte(if self.dragging { 1 } else { 0 })
   output.write_double_be(self.origin.x)
@@ -148,6 +156,11 @@ impl @core.ViewStateValue for ScrollDragState with fn encode_view_state(self) {
   output.write_double_be(self.last_position.y)
   output.write_double_be(self.raw_offset.x)
   output.write_double_be(self.raw_offset.y)
+  output.write_double_be(self.track_position.x)
+  output.write_double_be(self.track_position.y)
+  output.write_double_be(self.track_time_ms)
+  output.write_double_be(self.velocity.x)
+  output.write_double_be(self.velocity.y)
   output.to_bytes()
 }
 
@@ -156,7 +169,7 @@ impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
   _self,
   bytes,
 ) {
-  if bytes.length() != 50 {
+  if bytes.length() != 90 {
     // A rejected decode falls back to the slot's initial value, i.e. no drag
     // in progress. The pre-overscroll encodings are rejected rather than
     // folded into this shape: a fabricated `raw_offset` would pull the surface
@@ -175,7 +188,7 @@ impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
         _ => None
       },
     )
-    match (flags, @common.view_decode_doubles(bytes, from=2, count=6)) {
+    match (flags, @common.view_decode_doubles(bytes, from=2, count=11)) {
       ((Some(active), Some(dragging)), Some(values)) =>
         Some({
           active,
@@ -183,6 +196,9 @@ impl @core.ViewStateValue for ScrollDragState with fn decode_view_state(
           origin: @core.Point::new(x=values[0], y=values[1]),
           last_position: @core.Point::new(x=values[2], y=values[3]),
           raw_offset: @core.Point::new(x=values[4], y=values[5]),
+          track_position: @core.Point::new(x=values[6], y=values[7]),
+          track_time_ms: values[8],
+          velocity: @core.Point::new(x=values[9], y=values[10]),
         })
       _ => None
     }
@@ -199,6 +215,9 @@ fn scroll_drag_state_slot() -> @core.ViewStateSlot[ScrollDragState] {
       origin: @core.Point::new(x=0.0, y=0.0),
       last_position: @core.Point::new(x=0.0, y=0.0),
       raw_offset: @core.Point::new(x=0.0, y=0.0),
+      track_position: @core.Point::new(x=0.0, y=0.0),
+      track_time_ms: 0.0,
+      velocity: @core.Point::new(x=0.0, y=0.0),
     },
   )
 }
@@ -268,6 +287,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
   let runtime_state = scroll_runtime_state(self, ctx.state)
   let drag = ctx.state.read_slot(scroll_drag_state_slot())
   let motion = ctx.state.read_slot(scroll_motion_state_slot())
+  let fling = ctx.state.read_slot(scroll_fling_state_slot())
   // Geometry stays at the authoritative clamped offset; only the painted
   // surface moves, by the overshoot a held drag is carrying or a released band
   // is still settling.
@@ -316,8 +336,10 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
       []
     },
     repaint_boundary: false,
-    // Keep producing frames while either the rubber band is settling or a wheel
-    // step is easing; without this the surface freezes mid-interpolation.
+    // Keep producing frames while the rubber band is settling or a fling is
+    // still gliding; without this the surface freezes mid-interpolation. The
+    // runtime's frame pump turns this latch into `FrameTick` events for the
+    // fling (see `moui/runtime/frame_pump.mbt`).
     animating: !drag.active &&
     (
       scroll_motion_is_animating(
@@ -325,7 +347,7 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
         runtime_state.offset,
         now_ms=ctx.now_ms,
       ) ||
-      false
+      scroll_fling_is_live(fling, runtime_state.offset, now_ms=ctx.now_ms)
     ),
   }
 }
@@ -370,8 +392,15 @@ fn[Msg] scroll_container_event(
           current.offset,
           now_ms=ctx.now_ms,
         )
+        // A wheel step takes over from a live fling even when it clamps to
+        // the same offset: the glide must not keep fighting the wheel.
+        let flinging = scroll_fling_is_live(
+          ctx.state.read_slot(scroll_fling_state_slot()),
+          current.offset,
+          now_ms=ctx.now_ms,
+        )
         let moved = next_offset != current.offset
-        if !moved && !settling {
+        if !moved && !settling && !flinging {
           @core.ViewEventResult::ignored()
         } else {
           let next = { ..current, offset: next_offset, }
@@ -382,6 +411,7 @@ fn[Msg] scroll_container_event(
             state=Some(
               ctx.state
               .without_slot(scroll_motion_state_slot())
+              .without_slot(scroll_fling_state_slot())
               .with_slot(scroll_runtime_state_slot(), next),
             ),
             dirty=if moved { ViewLayoutDirty } else { ViewPaintDirty },
@@ -394,8 +424,135 @@ fn[Msg] scroll_container_event(
       } else {
         @core.ViewEventResult::ignored()
       }
+    FrameTick(frame) => scroll_container_fling_tick(node, ctx, frame, on_scroll)
     _ => @core.ViewEventResult::ignored()
   }
+}
+
+///|
+/// Advance a live fling by one frame. Runs on the runtime's frame pump
+/// (`AppEvent::FrameTick` dispatched into animating subtrees): the
+/// authoritative offset moves through the normal state -> layout ->
+/// `on_scroll` path, so a windowed list re-materializes its rows from the
+/// app's offset exactly as it does for a drag.
+fn[Msg] scroll_container_fling_tick(
+  node : ScrollContainer,
+  ctx : @core.ViewEventContext,
+  frame : @core.Frame,
+  on_scroll : ((@core.Point) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  let fling_slot = scroll_fling_state_slot()
+  let fling = ctx.state.read_slot(fling_slot)
+  let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
+  let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+  let current = scroll_runtime_state(node, ctx.state)
+  // An offset the fling does not own — a wheel step, a request, a controlled
+  // app value — ends it, as does a clock that stopped moving forward: a tick
+  // that cannot make progress must not hold the frame latch forever.
+  if fling.anchor != current.offset ||
+    frame.time_ms <= fling.last_time_ms ||
+    frame.time_ms >= fling.start_time_ms + scroll_fling_max_duration_ms() {
+    return @common.view_event_result(
+      state=Some(ctx.state.without_slot(fling_slot)),
+    )
+  }
+  let dt = @common.view_min_double(
+    frame.time_ms - fling.last_time_ms,
+    scroll_fling_max_step_ms(),
+  )
+  // Mirror `scroll_drag_band`'s extent gating: a rangeless horizontal axis
+  // pulls no band, so an accidental sideways fling stops instead of sliding
+  // the surface over content that never overflowed.
+  let x_extent = if scroll_axis_has_range(
+      viewport_axis=viewport_size.width,
+      child_axis=child_size.width,
+    ) {
+    scroll_overscroll_extent(viewport_size.width)
+  } else {
+    0.0
+  }
+  let x = scroll_fling_axis_step(
+    velocity=fling.velocity.x,
+    position=current.offset.x,
+    dt~,
+    extent=x_extent,
+    max_offset=@common.view_max_double(
+      0.0,
+      child_size.width - viewport_size.width,
+    ),
+  )
+  let y = scroll_fling_axis_step(
+    velocity=fling.velocity.y,
+    position=current.offset.y,
+    dt~,
+    extent=scroll_overscroll_extent(viewport_size.height),
+    max_offset=@common.view_max_double(
+      0.0,
+      child_size.height - viewport_size.height,
+    ),
+  )
+  let next_offset = @core.Point::new(x=x.position, y=y.position)
+  let next_velocity = @core.Point::new(x=x.velocity, y=y.velocity)
+  let moved = next_offset != current.offset
+  let banded = x.band != 0.0 || y.band != 0.0
+  let stopped = next_velocity.x.abs() < scroll_fling_stop_velocity_px_per_ms() &&
+    next_velocity.y.abs() < scroll_fling_stop_velocity_px_per_ms()
+  // The rebound band plays only when the fling as a whole finishes at the
+  // edge: one axis hitting its clamp while the other still glides takes the
+  // hard stop and keeps its glide.
+  let hands_off_to_band = banded && stopped
+  let dispatch = moved && (node.offset is None || on_scroll is Some(_))
+  let mut state_context = ctx.state
+  if moved {
+    state_context = state_context.with_slot(scroll_runtime_state_slot(), {
+      ..current,
+      offset: next_offset,
+    })
+  }
+  if hands_off_to_band {
+    state_context = state_context
+      .without_slot(fling_slot)
+      .with_slot(scroll_motion_state_slot(), {
+        anchor: next_offset,
+        start_time_ms: frame.time_ms,
+        duration: @core.Point::new(
+          x=scroll_rebound_axis_duration(
+            overscroll=x.band,
+            extent=scroll_overscroll_extent(viewport_size.width),
+          ),
+          y=scroll_rebound_axis_duration(
+            overscroll=y.band,
+            extent=scroll_overscroll_extent(viewport_size.height),
+          ),
+        ),
+        band: @core.Point::new(x=x.band, y=y.band),
+      })
+  } else if stopped {
+    state_context = state_context.without_slot(fling_slot)
+  } else {
+    state_context = state_context.with_slot(fling_slot, {
+      anchor: next_offset,
+      start_time_ms: fling.start_time_ms,
+      last_time_ms: frame.time_ms,
+      velocity: next_velocity,
+    })
+  }
+  @common.view_event_result(
+    changed=moved || hands_off_to_band,
+    activated=dispatch && on_scroll is Some(_),
+    state=Some(state_context),
+    dirty=if moved {
+      ViewLayoutDirty
+    } else if hands_off_to_band {
+      ViewPaintDirty
+    } else {
+      ViewClean
+    },
+    messages=match on_scroll {
+      Some(handler) => if dispatch { [handler(next_offset)] } else { [] }
+      None => []
+    },
+  )
 }
 
 ///|
@@ -458,6 +615,9 @@ fn[Msg] scroll_container_drag_event(
         origin: event.position,
         last_position: event.position,
         raw_offset,
+        track_position: event.position,
+        track_time_ms: ctx.now_ms,
+        velocity: @core.Point::new(x=0.0, y=0.0),
       }
       {
         changed: carried,
@@ -467,6 +627,7 @@ fn[Msg] scroll_container_drag_event(
         state: Some(
           ctx.state
           .without_slot(scroll_motion_state_slot())
+          .without_slot(scroll_fling_state_slot())
           .with_slot(slot, next),
         ),
         text_control: None,
@@ -514,11 +675,47 @@ fn[Msg] scroll_container_drag_event(
       } else {
         drag.raw_offset
       }
+      // Track release velocity in offset space. A tracked pair needs a clock
+      // step and real travel to divide by: same-stamp samples (several host
+      // events inside one frame) and zero-delta samples (the runtime's
+      // pressed-pointer re-sample while something else animates) leave the
+      // tracked pair alone, so the next real sample measures the full travel
+      // and a held-still finger never inherits stale speed. The interval is
+      // used as-is rather than blended — a micro-stall inside a flick reads
+      // as "no fling" on release, which is the conservative failure.
+      let track_dt = ctx.now_ms - drag.track_time_ms
+      let (next_track_position, next_track_time_ms, next_velocity) = if !is_dragging {
+        (drag.track_position, drag.track_time_ms, drag.velocity)
+      } else if !drag.dragging {
+        // First dragging sample: measure from here, so a held press before
+        // the slop does not dilute the flick that follows.
+        (event.position, ctx.now_ms, drag.velocity)
+      } else if track_dt > 0.0 && event.position != drag.track_position {
+        let instant = @core.Point::new(
+          x=scroll_fling_clamp_velocity(
+            0.0 -
+            scroll_leading_x_delta(
+              event.position.x - drag.track_position.x,
+              ctx.environment.layout_direction,
+            ) /
+            track_dt,
+          ),
+          y=scroll_fling_clamp_velocity(
+            0.0 - (event.position.y - drag.track_position.y) / track_dt,
+          ),
+        )
+        (event.position, ctx.now_ms, instant)
+      } else {
+        (drag.track_position, drag.track_time_ms, drag.velocity)
+      }
       let next_drag = {
         ..drag,
         dragging: is_dragging,
         last_position: event.position,
         raw_offset,
+        track_position: next_track_position,
+        track_time_ms: next_track_time_ms,
+        velocity: next_velocity,
       }
       let next_context = ctx.state.with_slot(slot, next_drag)
       if !is_dragging {
@@ -594,7 +791,33 @@ fn[Msg] scroll_container_drag_event(
         @core.Point::new(x=0.0, y=0.0)
       }
       let settling = band.x != 0.0 || band.y != 0.0
-      let state_context = if settling {
+      // A fling needs a live clock (a frozen one could never advance it), a
+      // release that did not end past the clamp — that release answers with
+      // the band — and tracked motion recent enough to still be the gesture's
+      // own velocity. Only a real `Up` flings: an explicit `Cancel`/`Exit`
+      // take the plain release.
+      let can_fling = event.phase == Up &&
+        drag.dragging &&
+        ctx.now_ms > 0.0 &&
+        !settling &&
+        ctx.now_ms > drag.track_time_ms &&
+        ctx.now_ms - drag.track_time_ms <= scroll_fling_track_window_ms()
+      let starts_fling = can_fling &&
+        (
+          drag.velocity.x.abs() >= scroll_fling_start_velocity_px_per_ms() ||
+          drag.velocity.y.abs() >= scroll_fling_start_velocity_px_per_ms()
+        )
+      let state_context = if starts_fling {
+        ctx.state
+        .without_slot(slot)
+        .without_slot(scroll_motion_state_slot())
+        .with_slot(scroll_fling_state_slot(), {
+          anchor: current.offset,
+          start_time_ms: ctx.now_ms,
+          last_time_ms: ctx.now_ms,
+          velocity: drag.velocity,
+        })
+      } else if settling {
         ctx.state
         .without_slot(slot)
         .with_slot(scroll_motion_state_slot(), {
@@ -616,13 +839,13 @@ fn[Msg] scroll_container_drag_event(
         ctx.state.without_slot(slot)
       }
       {
-        changed: settling,
+        changed: settling || starts_fling,
         activated: false,
         focused: false,
         captured: true,
         state: Some(state_context),
         text_control: None,
-        dirty: if settling {
+        dirty: if settling || starts_fling {
           ViewPaintDirty
         } else {
           ViewClean

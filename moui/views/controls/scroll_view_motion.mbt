@@ -278,3 +278,192 @@ fn scroll_visible_offset(
   }
   @core.Point::new(x=authoritative.x + band.x, y=authoritative.y + band.y)
 }
+
+///|
+/// A released fling: release velocity the runtime advances frame by frame.
+///
+/// `anchor` is the authoritative offset the fling owns. The tick handler
+/// rewrites it with every advance, so an offset that moved for any other
+/// reason — a wheel step, a semantic action, a `ScrollRequest`, a controlled
+/// app value — no longer matches and the fling is discarded, the same rule
+/// the rebound band follows.
+priv struct ScrollFlingState {
+  anchor : @core.Point
+  start_time_ms : Double
+  last_time_ms : Double
+  velocity : @core.Point
+}
+
+///|
+impl @core.ViewStateValue for ScrollFlingState with fn view_state_type_key() {
+  @core.DeclarationKey::string("moui.views.ScrollFlingState.v1")
+}
+
+///|
+impl @core.ViewStateValue for ScrollFlingState with fn encode_view_state(self) {
+  let output = Buffer(size_hint=48)
+  output.write_double_be(self.anchor.x)
+  output.write_double_be(self.anchor.y)
+  output.write_double_be(self.start_time_ms)
+  output.write_double_be(self.last_time_ms)
+  output.write_double_be(self.velocity.x)
+  output.write_double_be(self.velocity.y)
+  output.to_bytes()
+}
+
+///|
+impl @core.ViewStateValue for ScrollFlingState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes.length() != 48 {
+    None
+  } else {
+    match @common.view_decode_doubles(bytes, from=0, count=6) {
+      Some(values) =>
+        Some({
+          anchor: @core.Point::new(x=values[0], y=values[1]),
+          start_time_ms: values[2],
+          last_time_ms: values[3],
+          velocity: @core.Point::new(x=values[4], y=values[5]),
+        })
+      None => None
+    }
+  }
+}
+
+///|
+fn scroll_fling_state_slot() -> @core.ViewStateSlot[ScrollFlingState] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.scroll.fling"),
+    initial={
+      anchor: @core.Point::new(x=0.0, y=0.0),
+      start_time_ms: 0.0,
+      last_time_ms: 0.0,
+      velocity: @core.Point::new(x=0.0, y=0.0),
+    },
+  )
+}
+
+///|
+/// Velocity decay time constant: a flick retains about a third of its speed
+/// after this much clock time, which reads as a glide rather than a slide.
+fn scroll_fling_decay_tau_ms() -> Double {
+  325.0
+}
+
+///|
+fn scroll_fling_decay_factor(dt~ : Double) -> Double {
+  @math.exp(-dt / scroll_fling_decay_tau_ms())
+}
+
+///|
+/// Below this the motion reads as stopped: one tick advances well under a
+/// pixel even at a fast frame rate.
+fn scroll_fling_stop_velocity_px_per_ms() -> Double {
+  0.02
+}
+
+///|
+/// Release velocity under this never reads as a flick; keep the plain release.
+fn scroll_fling_start_velocity_px_per_ms() -> Double {
+  0.08
+}
+
+///|
+/// A release whose last tracked movement is older than this is a lift, not
+/// the end of a flick: the tracked velocity could be from any earlier moment,
+/// so the plain release wins.
+fn scroll_fling_track_window_ms() -> Double {
+  120.0
+}
+
+///|
+/// Per-axis velocity clamp so one tracking glitch cannot launch the surface.
+fn scroll_fling_max_velocity_px_per_ms() -> Double {
+  4.0
+}
+
+///|
+fn scroll_fling_clamp_velocity(v : Double) -> Double {
+  let bound = scroll_fling_max_velocity_px_per_ms()
+  v.clamp(min=0.0 - bound, max=bound)
+}
+
+///|
+/// One fling step never advances the clock more than this much, so a stalled
+/// host cannot teleport the surface.
+fn scroll_fling_max_step_ms() -> Double {
+  100.0
+}
+
+///|
+/// Hard lifetime cap: even a host that keeps the animation latch alive cannot
+/// tick a fling past this.
+fn scroll_fling_max_duration_ms() -> Double {
+  4000.0
+}
+
+///|
+/// Edge-hit bounce: leftover velocity is read as this much equivalent travel
+/// before the drag-band damping bounds it.
+fn scroll_fling_edge_band_ms() -> Double {
+  80.0
+}
+
+///|
+/// Whether a fling still owns frame motion: the authoritative offset is still
+/// the one it anchored, the clock is live, and at least one axis is above the
+/// stop threshold. Paint reads this to keep the host producing frames while
+/// the runtime's frame pump keeps advancing the offset.
+fn scroll_fling_is_live(
+  fling : ScrollFlingState,
+  authoritative : @core.Point,
+  now_ms~ : Double,
+) -> Bool {
+  fling.anchor == authoritative &&
+  now_ms > 0.0 &&
+  now_ms >= fling.start_time_ms &&
+  now_ms < fling.start_time_ms + scroll_fling_max_duration_ms() &&
+  (
+    fling.velocity.x.abs() >= scroll_fling_stop_velocity_px_per_ms() ||
+    fling.velocity.y.abs() >= scroll_fling_stop_velocity_px_per_ms()
+  )
+}
+
+///|
+/// One axis of a fling step: the clamped position after advancing, the decayed
+/// velocity, and the rebound band amplitude if the step hit the clamp edge.
+priv struct ScrollFlingAxisStep {
+  position : Double
+  velocity : Double
+  band : Double
+}
+
+///|
+/// Advance one fling axis by `dt`. Velocity decays exponentially; a step that
+/// runs past the clamp lands on it, stops that axis, and hands the leftover
+/// speed to the rebound band as a bounded bounce (`extent` of 0.0 — a
+/// rangeless axis — means no band, just the stop).
+fn scroll_fling_axis_step(
+  velocity~ : Double,
+  position~ : Double,
+  dt~ : Double,
+  extent~ : Double,
+  max_offset~ : Double,
+) -> ScrollFlingAxisStep {
+  if velocity.abs() < scroll_fling_stop_velocity_px_per_ms() {
+    return { position, velocity: 0.0, band: 0.0, }
+  }
+  let decayed = velocity * scroll_fling_decay_factor(dt~)
+  let advanced = position + decayed * dt
+  let clamped = advanced.clamp(min=0.0, max=max_offset)
+  if clamped != advanced {
+    let band = scroll_overscroll_damped(
+      decayed * scroll_fling_edge_band_ms(),
+      extent~,
+    )
+    return { position: clamped, velocity: 0.0, band, }
+  }
+  { position: advanced, velocity: decayed, band: 0.0, }
+}

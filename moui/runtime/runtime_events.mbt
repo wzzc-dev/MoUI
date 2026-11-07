@@ -129,6 +129,11 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             ),
           )
         }
+        // Authoritative frame motion (scroll fling inertia) can only advance
+        // through the normal event -> state -> layout -> `on_scroll` path, so
+        // the tick itself is dispatched into the animating subtrees. See
+        // `frame_pump.mbt`.
+        self.dispatch_frame_ticks_to_animating(frame)
       }
     }
     Resize(size) => {

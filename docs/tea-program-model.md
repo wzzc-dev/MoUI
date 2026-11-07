@@ -66,6 +66,18 @@ granular, and the host keeps producing frames for at most the hold duration.
 There is no app-visible timer and no `Msg` for the wake itself; the app only sees
 the ordinary typed message when the gesture completes.
 
+The same latch also drives frame motion whose *authoritative* state changes per
+frame — scroll fling inertia is the first consumer. A paint-only sample cannot
+move an authoritative offset (layout, hit-testing, and `on_scroll` all read it),
+so while the latch is held the runtime dispatches the `AppEvent::FrameTick` event
+itself to the deepest subtrees whose last paint reported a live animation. The
+scroll container advances its offset through the ordinary event -> state ->
+layout -> `on_scroll` path per frame and keeps the latch until its velocity
+decays past the stop threshold, so a windowed list re-materializes its rows from
+the app's offset exactly as it does for a drag. Handlers that own no frame
+motion ignore the tick; no public API is involved beyond the existing
+`AppEvent::FrameTick` variant.
+
 Agent actions follow the same loop. Runtime commits the current semantics,
 validates a generation-tagged typed action, applies transient UI state, delivers
 typed messages FIFO, drains synchronous TEA work, and commits again. It never

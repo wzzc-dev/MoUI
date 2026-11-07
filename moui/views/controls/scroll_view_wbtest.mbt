@@ -828,6 +828,9 @@ test "scroll drag and motion codecs reject a corrupt sample" {
     origin: scroll_test_band_point(x=1.5, y=0.0 - 2.25),
     last_position: scroll_test_band_point(x=3.0, y=4.5),
     raw_offset: scroll_test_band_point(x=0.0 - 6.125, y=7.0),
+    track_position: scroll_test_band_point(x=2.75, y=0.0 - 1.0),
+    track_time_ms: 901.25,
+    velocity: scroll_test_band_point(x=0.0, y=0.0 - 1.5),
   }
   let motion = ScrollMotionState::{
     anchor: scroll_test_band_point(y=400.0),
@@ -837,7 +840,7 @@ test "scroll drag and motion codecs reject a corrupt sample" {
   }
   let drag_bytes = @core.ViewStateValue::encode_view_state(drag)
   let motion_bytes = @core.ViewStateValue::encode_view_state(motion)
-  assert_true(drag_bytes.length() == 50)
+  assert_true(drag_bytes.length() == 90)
   assert_true(motion_bytes.length() == 56)
   let drag_again = @core.ViewStateValue::decode_view_state(drag, drag_bytes).unwrap()
   assert_true(drag_again.active && drag_again.dragging)
@@ -846,6 +849,11 @@ test "scroll drag and motion codecs reject a corrupt sample" {
   assert_true(
     drag_again.raw_offset == scroll_test_band_point(x=0.0 - 6.125, y=7.0),
   )
+  assert_true(
+    drag_again.track_position == scroll_test_band_point(x=2.75, y=0.0 - 1.0),
+  )
+  assert_true(drag_again.track_time_ms == 901.25)
+  assert_true(drag_again.velocity == scroll_test_band_point(y=0.0 - 1.5))
   let motion_again = @core.ViewStateValue::decode_view_state(
     motion, motion_bytes,
   ).unwrap()
@@ -860,8 +868,11 @@ test "scroll drag and motion codecs reject a corrupt sample" {
   // A truncated or foreign sample is rejected rather than decoded into a
   // plausible-looking drag: falling back to the initial value (no drag in
   // progress) is the only safe reading of bytes this control did not write.
+  // The 50-byte sample below is the pre-fling v1 shape — an upgrade that
+  // meets it mid-session falls back to "no drag" instead of inventing
+  // tracking fields.
   assert_true(
-    @core.ViewStateValue::decode_view_state(drag, drag_bytes[0:49].to_owned())
+    @core.ViewStateValue::decode_view_state(drag, drag_bytes[0:89].to_owned())
     is None,
   )
   assert_true(
@@ -923,4 +934,77 @@ test "scroll drag state and offset stay element-owned" {
     ),
   ).state.unwrap_or(after_move)
   assert_false(released.read_slot(scroll_drag_state_slot()).active)
+}
+
+///|
+test "fling physics: decay, stop threshold, and edge band hand-off" {
+  // Decay over one 100ms step retains exp(-100/325).
+  let factor = scroll_fling_decay_factor(dt=100.0)
+  assert_true(factor > 0.73 && factor < 0.74)
+  // A gliding step advances and decays, with no band.
+  let glide = scroll_fling_axis_step(
+    velocity=1.0,
+    position=100.0,
+    dt=100.0,
+    extent=25.0,
+    max_offset=400.0,
+  )
+  assert_true(glide.position > 170.0 && glide.position < 180.0)
+  assert_true(glide.velocity > 0.7 && glide.velocity < 0.8)
+  assert_true(glide.band == 0.0)
+  // A step past the clamp lands on it and hands a bounded band back.
+  let edge = scroll_fling_axis_step(
+    velocity=1.0,
+    position=390.0,
+    dt=100.0,
+    extent=25.0,
+    max_offset=400.0,
+  )
+  assert_true(edge.position == 400.0)
+  assert_true(edge.velocity == 0.0)
+  assert_true(edge.band > 0.0 && edge.band < 25.0)
+  // A rangeless axis (extent 0) takes the hard stop, no band.
+  let rangeless = scroll_fling_axis_step(
+    velocity=1.0,
+    position=0.0,
+    dt=100.0,
+    extent=0.0,
+    max_offset=0.0,
+  )
+  assert_true(rangeless.position == 0.0)
+  assert_true(rangeless.velocity == 0.0)
+  assert_true(rangeless.band == 0.0)
+  // Below the stop threshold the axis is already done.
+  let stopped = scroll_fling_axis_step(
+    velocity=0.01,
+    position=50.0,
+    dt=100.0,
+    extent=25.0,
+    max_offset=400.0,
+  )
+  assert_true(stopped.position == 50.0)
+  assert_true(stopped.velocity == 0.0)
+  // Liveness follows the anchor and the clock, not just the velocity.
+  let fling : ScrollFlingState = {
+    anchor: @core.Point::new(x=0.0, y=50.0),
+    start_time_ms: 100.0,
+    last_time_ms: 100.0,
+    velocity: @core.Point::new(x=0.0, y=1.0),
+  }
+  assert_true(
+    scroll_fling_is_live(fling, @core.Point::new(x=0.0, y=50.0), now_ms=150.0),
+  )
+  assert_false(
+    scroll_fling_is_live(fling, @core.Point::new(x=0.0, y=60.0), now_ms=150.0),
+  )
+  assert_false(
+    scroll_fling_is_live(fling, @core.Point::new(x=0.0, y=50.0), now_ms=0.0),
+  )
+  assert_false(
+    scroll_fling_is_live(
+      fling,
+      @core.Point::new(x=0.0, y=50.0),
+      now_ms=100.0 + scroll_fling_max_duration_ms() + 1.0,
+    ),
+  )
 }

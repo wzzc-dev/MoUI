@@ -81,7 +81,7 @@ These constrain every slice and are cheap to re-check, expensive to rediscover:
 | §0 doc references | `docs/view-catalog.md`, `docs/zh-Hans/view-catalog.md` | done |
 | §1 gesture state persistence | `moui/core` private slots + codecs, `ctx.now_ms` as the single clock | done |
 | §2 timed wake on hold | runtime paint latch + synthetic `Move` from `FrameTick`, zero new public API | done |
-| §3 scroll rebound | `moui/views/controls`: bounded rubber band, animated rebound, derived indicator geometry (band/motion code split into `scroll_view_motion.mbt`); horizontal axis gated on a real scroll range 2026-10-24 | done; inertia approved 2026-10-23, pending |
+| §3 scroll rebound | `moui/views/controls`: bounded rubber band, animated rebound, derived indicator geometry (band/motion code split into `scroll_view_motion.mbt`); horizontal axis gated on a real scroll range 2026-10-24 | done; inertia delivered 2026-11-07 (see the §3 inertia landing notes) |
 | §8 single edit engine | delete the duplicated caret/selection helpers in `moui/views/text` | done |
 | §5 touch-era selection | click count, `text_word_range_at` (bounded subset), caret drag, goal column, `reveal`, Showcase evidence | done |
 | §4 multi-pointer | `PointerEvent.id`/`pressure`, decode `FingerId`/`Force`, per-id capture, Web ABI | done |
@@ -414,6 +414,50 @@ Regressions cover both modifier orders for quick tap and completed long press,
 independent arena streams for two pointer ids, the existing multi-pointer
 capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
 
+## §3 inertia landing notes: the runtime pumps `FrameTick` into animating subtrees (2026-11-07)
+
+- **The production change is a frame pump, not a physics engine.** While
+  `animfocus.active_animations` is held, `RuntimeState::dispatch_event` now also
+  dispatches the `AppEvent::FrameTick` event itself to the deepest render
+  subtrees whose last paint reported a live animation
+  (`moui/runtime/frame_pump.mbt`). An authoritative offset can only advance
+  through the normal event -> state -> layout -> `on_scroll` path, so a fling
+  that never received an event would have been the same declared-but-inert API
+  this plan exists to prevent. No public surface moved: `AppEvent::FrameTick`
+  already existed and every existing handler ignores it.
+- **Velocity tracking lives in offset space** on the drag state
+  (`ScrollDragState` v2 encoding: `track_position`/`track_time_ms`/`velocity`).
+  A tracked pair needs a clock step *and* real travel: same-stamp samples
+  (several host events inside one frame) and zero-delta samples (the §2
+  pressed-pointer re-sample while something else animates) leave the tracked
+  pair alone, so a held-still finger never inherits stale speed. The interval
+  is used as-is rather than blended — a micro-stall inside a flick reads as
+  "no fling" on release, the conservative failure. A release only flings on a
+  real `Up`, with a live clock, no overshoot band to settle, and a last
+  tracked sample within 120ms; `Cancel`/`Exit` take the plain release.
+- **Physics**: exponential decay with τ=325ms, start threshold 0.08 px/ms,
+  stop threshold 0.02 px/ms, per-axis velocity clamp at 4 px/ms, per-tick clock
+  clamp at 100ms, and a 4s hard lifetime cap. A step that runs past the clamp
+  lands on it and, when the fling as a whole finishes there, hands the leftover
+  speed to the existing rebound band as a bounded paint-only bounce — the same
+  legality the drag-release band already had. One axis hitting its clamp while
+  the other still glides takes the hard stop and keeps its glide; a rangeless
+  horizontal axis takes no band (mirroring `scroll_drag_band`'s gating), so an
+  accidental sideways fling stops instead of sliding the surface.
+- **Foreign movement ends the fling.** The fling state anchors the offset it
+  owns and the tick handler rewrites the anchor as it advances; a wheel step, a
+  `ScrollRequest`, a semantic scroll, or a controlled app value that moves the
+  offset without touching the fling slot fails the anchor check on the next
+  tick and is discarded. A press grabs the surface the same way (`Down` clears
+  the slot), and a tick whose clock did not move forward discards the state
+  rather than holding the latch forever.
+- Evidence: `moui/runtime/frame_pump_test.mbt` drives a real `AppRuntime` —
+  fling advances the offset and emits `on_scroll` per frame until the decay
+  ends the latch; a release without tracked velocity does not fling; a fling
+  into the clamp edge stays inside the authoritative range and settles; a
+  wheel step or a press during the glide ends it. Physics helpers are covered
+  in `moui/views/controls/scroll_view_wbtest.mbt`.
+
 ## Debt and known gaps
 
 - **Run-internal text direction is still LTR.** §9 mirrors where a text block
@@ -424,11 +468,11 @@ capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
   may claim RTL text support, and `Environment.layout_direction` must not be
   forwarded into `moui/views/text` placement by itself (that would put the caret
   and the selection highlight on the wrong side of the glyphs).
-- **Scroll inertia is not delivered yet.** A truthful fling needs the runtime to
-  pump frames into the view tree while a subtree holds the latch, which is a
-  `moui/runtime` production change. Approved 2026-10-23 and tracked as the
-  remaining half of §3; shipping exponential velocity decay inside `moui/views`
-  alone would have been another declared-but-inert API, so it was held back.
+- **Scroll inertia is delivered (2026-11-07, see the landing notes above).**
+  What the delivery does *not* cover: pinch/rotation recognizers (§7), fling
+  for the embedded hosts' single-finger queue (finger id 0 works, but two-finger
+  touch needs the upstream fix below), and any scroll *indicator* animation of
+  its own — the indicator geometry already follows the offset per frame.
 - **Upstream mobile pointers.** `window/modules/window/{ios,android,harmonyos}/host_queue.mbt`
   hardcode finger id 0, so two-finger touch is out of reach from this repository
   even after §4. macOS trackpad/touch-bar-input and Web (two `touch` points) are
