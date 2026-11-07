@@ -55,6 +55,7 @@ fn[Msg] text_field_reveal_caret(
       text=display_text,
       font~,
       max_width=text_frame.size.width,
+      direction=ctx.environment.layout_direction,
     ),
   )
   let visual_caret = text_field_visual_caret(value, control, focused=true)
@@ -116,6 +117,7 @@ fn[Msg] handle_text_field_pointer(
       ctx.text_system,
       search_bar,
       event.position,
+      direction=ctx.environment.layout_direction,
     )
     let selection = text_click_selection(text, hit, count=clicks.count)
     let caret = match selection {
@@ -158,6 +160,7 @@ fn[Msg] handle_text_field_pointer(
         ctx.text_system,
         search_bar,
         event.position,
+        direction=ctx.environment.layout_direction,
       )
       let selection = if caret == anchor {
         None

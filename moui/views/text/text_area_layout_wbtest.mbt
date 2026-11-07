@@ -199,7 +199,23 @@ test "text area paragraph reuses its owner cache" {
   )
   let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
   let font = @core.FontSpec::new(size=14.0)
-  ignore(text_area_paragraph(text_system, "one two three", font, frame))
-  ignore(text_area_paragraph(text_system, "one two three", font, frame))
+  ignore(
+    text_area_paragraph(
+      text_system,
+      "one two three",
+      font,
+      frame,
+      direction=LeftToRight,
+    ),
+  )
+  ignore(
+    text_area_paragraph(
+      text_system,
+      "one two three",
+      font,
+      frame,
+      direction=LeftToRight,
+    ),
+  )
   inspect(calls.val, content="1")
 }

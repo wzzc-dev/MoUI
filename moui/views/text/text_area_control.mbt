@@ -156,6 +156,7 @@ fn[Msg] text_area_reveal_caret(
     display_text,
     font,
     text_frame,
+    direction=ctx.environment.layout_direction,
   )
   let line_count = paragraph.lines.length()
   let offset = text_area_clamped_scroll_offset(
@@ -373,6 +374,7 @@ fn[Msg] text_area_vertical_caret_move(
     display_text,
     font,
     text_frame,
+    direction=ctx.environment.layout_direction,
   )
   let visual_caret = text_field_visual_caret(
     text,
@@ -462,6 +464,7 @@ fn[Msg] handle_text_area_pointer(
       display_text,
       font,
       text_frame,
+      direction=ctx.environment.layout_direction,
     )
     let line_count = paragraph.lines.length()
     let offset = text_area_clamped_scroll_offset(
@@ -497,6 +500,7 @@ fn[Msg] handle_text_area_pointer(
       display_text,
       font,
       text_frame,
+      direction=ctx.environment.layout_direction,
     )
     let offset = text_area_clamped_scroll_offset(
       text_area_scroll_offset(ctx.state),
@@ -557,6 +561,7 @@ fn[Msg] handle_text_area_pointer(
         display_text,
         font,
         text_frame,
+        direction=ctx.environment.layout_direction,
       )
       let offset = text_area_clamped_scroll_offset(
         text_area_scroll_offset(ctx.state),
@@ -615,6 +620,7 @@ fn text_input_state_for_multi_line(
   text_system~ : @core.TextSystem,
   line_height~ : Double,
   scroll_offset~ : Double,
+  direction~ : @core.LayoutDirection,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
@@ -624,7 +630,15 @@ fn text_input_state_for_multi_line(
   let paragraph = if display_text == "" {
     None
   } else {
-    Some(text_area_paragraph(text_system, display_text, font, text_frame))
+    Some(
+      text_area_paragraph(
+        text_system,
+        display_text,
+        font,
+        text_frame,
+        direction~,
+      ),
+    )
   }
   let offset = text_area_clamped_scroll_offset(
     scroll_offset,

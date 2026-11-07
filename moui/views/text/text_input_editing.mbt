@@ -16,6 +16,7 @@ fn text_input_state_for_single_line(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   search_bar~ : Bool,
+  direction~ : @core.LayoutDirection,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
@@ -25,6 +26,7 @@ fn text_input_state_for_single_line(
       text=display_text,
       font~,
       max_width=text_frame.size.width,
+      direction~,
     ),
   )
   let caret = boundaries.nearest_boundary(control.caret)
@@ -75,11 +77,17 @@ fn single_line_text_caret_at_position(
   text_system : @core.TextSystem,
   search_bar : Bool,
   position : @core.Point,
+  direction~ : @core.LayoutDirection,
 ) -> Int32 {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let text_frame = single_line_text_frame(frame, search_bar, text != "")
   let layout = text_system.measure_text(
-    @core.TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
+    @core.TextLayoutInput::new(
+      text~,
+      font~,
+      max_width=text_frame.size.width,
+      direction~,
+    ),
   )
   let caret_positions = layout.caret_positions
   if caret_positions.is_empty() {

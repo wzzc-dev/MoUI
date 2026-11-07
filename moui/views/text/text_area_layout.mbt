@@ -12,9 +12,15 @@ fn text_area_paragraph(
   text : String,
   font : @core.FontSpec,
   text_frame : @core.Rect,
+  direction~ : @core.LayoutDirection,
 ) -> @core.TextParagraphLayoutResult {
   text_system.layout_paragraph(
-    @core.TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
+    @core.TextLayoutInput::new(
+      text~,
+      font~,
+      max_width=text_frame.size.width,
+      direction~,
+    ),
   )
 }
 
@@ -24,6 +30,9 @@ fn text_area_glyph_row_height(
   line_text : String,
   font : @core.FontSpec,
 ) -> Double {
+  // Height-only consumption: the run-internal direction mirrors caret x
+  // positions and never changes measured heights, so this helper keeps the
+  // default direction.
   text_system.measure_text(@core.TextLayoutInput::new(text=line_text, font~)).size.height.max(
     font.size * 1.15,
   )

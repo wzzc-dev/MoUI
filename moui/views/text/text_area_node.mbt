@@ -53,6 +53,7 @@ impl @core.ViewNode for TextArea with fn paint(self, ctx) {
     theme=resolved_theme,
     scroll_offset=text_area_scroll_offset(ctx.state),
     line_height=self.line_height,
+    direction=ctx.environment.layout_direction,
   )
   {
     commands,
@@ -80,6 +81,7 @@ impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
       text_system=ctx.text_system,
       line_height=self.line_height,
       scroll_offset=text_area_scroll_offset(ctx.state),
+      direction=ctx.environment.layout_direction,
     ),
   )
 }

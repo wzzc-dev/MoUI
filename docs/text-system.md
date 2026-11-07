@@ -380,13 +380,16 @@ return glyph advances and caret positions laid out for that base direction:
 the core fallback provider mirrors its stabilized caret positions for
 `RightToLeft` (caret 0 at the right edge, the final caret at the left edge;
 width, height, and baseline are direction-independent), and the paragraph
-fallback forwards the direction into its inner measurement. Consumers that
-map carets and selections to x positions (`views/text` caret drawing,
-selection rects) do not read the field yet, so callers keep the default and
-no view claims RTL text support. Native providers (cosmic, SkParagraph,
-DirectWrite, CoreText) keep their own shaper-driven run detection; plumb the
-base direction through them and consume it in `views/text` as the next RTL
-slice.
+fallback forwards the direction into its inner measurement. `views/text`
+consumes the field (step 2): every measurement forwards
+`Environment.layout_direction`, and the caret/selection/hit-test mappings are
+direction-agnostic against the measured positions — nearest-distance hit
+tests and direct-index paint read the mirrored positions without their own
+direction logic. Mixed-direction base handling and explicit glyph-order
+plumbing stay with the native providers (cosmic and SkParagraph already
+auto-detect run direction internally, which keeps pure-RTL runs consistent
+with the mirrored carets); no view claims full RTL text support beyond the
+single-run contract.
 
 **Proof Status**
 

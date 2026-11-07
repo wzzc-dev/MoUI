@@ -57,7 +57,12 @@ impl @core.ViewNode for Text with fn layout(self, context) {
     }
     let wrap_width = if available < 1.0 { 1.0 } else { available }
     let paragraph = context.text_system.layout_paragraph(
-      @core.TextLayoutInput::new(text=self.text, font~, max_width=wrap_width),
+      @core.TextLayoutInput::new(
+        text=self.text,
+        font~,
+        max_width=wrap_width,
+        direction=context.environment.layout_direction,
+      ),
     )
     let size = @core.Size::new(
       width=wrap_width,
@@ -66,7 +71,11 @@ impl @core.ViewNode for Text with fn layout(self, context) {
     @core.ViewLayoutResult::new(size=context.constraints.constrain(size))
   } else {
     let measured = context.text_system.measure_text(
-      @core.TextLayoutInput::new(text=self.text, font~),
+      @core.TextLayoutInput::new(
+        text=self.text,
+        font~,
+        direction=context.environment.layout_direction,
+      ),
     )
     // The requested width/height act as a minimum, mirroring Button's `min_size`:
     // text that fits keeps the requested box, and text that does not fit grows the
@@ -105,6 +114,7 @@ impl @core.ViewNode for Text with fn paint(self, context) {
         text=self.text,
         font~,
         max_width=context.frame.size.width,
+        direction=context.environment.layout_direction,
       ),
     )
     commands.push(PushClip(context.frame))

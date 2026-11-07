@@ -20,6 +20,7 @@ fn append_text_field_commands(
   theme~ : @core.Theme,
   bottom_border_only~ : Bool = false,
   inner_focus_border~ : @core.Color? = None,
+  direction~ : @core.LayoutDirection,
 ) -> Unit {
   ignore(size)
   let border = if focused { focused_border } else { border }
@@ -59,6 +60,7 @@ fn append_text_field_commands(
         text=display_text,
         font~,
         max_width=text_frame.size.width,
+        direction~,
       ),
     )
     append_text_field_editing_overlay(
@@ -93,6 +95,7 @@ fn append_searchbar_commands(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   theme~ : @core.Theme,
+  direction~ : @core.LayoutDirection,
 ) -> Unit {
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   let border = if focused { focused_border } else { border }
@@ -126,6 +129,7 @@ fn append_searchbar_commands(
         text=display_text,
         font~,
         max_width=text_frame.size.width,
+        direction~,
       ),
     )
     append_text_field_editing_overlay(

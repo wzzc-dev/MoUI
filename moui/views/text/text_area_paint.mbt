@@ -19,6 +19,7 @@ fn append_text_area_commands(
   theme~ : @core.Theme,
   scroll_offset~ : Double,
   line_height~ : Double,
+  direction~ : @core.LayoutDirection,
 ) -> Unit {
   let border = if focused { focused_border } else { border }
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
@@ -37,10 +38,11 @@ fn append_text_area_commands(
     },
     font,
     text_frame,
+    direction~,
   )
   commands.push(PushClip(text_frame))
   let wrapped = if is_placeholder {
-    text_area_paragraph(text_system, placeholder, font, text_frame)
+    text_area_paragraph(text_system, placeholder, font, text_frame, direction~)
   } else {
     paragraph
   }

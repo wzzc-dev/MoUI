@@ -165,11 +165,11 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 95,
     },
     {
-      // 383 -> 393 (2026-11-07, §7 + route transitions): the decode-test,
-      // showcase-app, and views-facade budget notes, plus this
-      // self-referential entry's own growth.
+      // 383 -> 399 (2026-11-07, §7 + route transitions + RTL step 2): the
+      // decode-test, showcase-app, views-facade, and text-helper budget
+      // notes, plus this self-referential entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 393,
+      max_lines: 399,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -183,7 +183,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",
       max_lines: 115,
     },
-    { path: "examples/pdf_workbench/app/app.mbt", max_lines: 396, },
+    { path: "examples/pdf_workbench/app/app.mbt", max_lines: 397, },
     { path: "examples/pdf_workbench/app/host_services.mbt", max_lines: 530, },
     { path: "examples/pdf_workbench/app/navigation.mbt", max_lines: 230, },
     { path: "examples/pdf_workbench/app/edit_commands.mbt", max_lines: 220, },
@@ -287,16 +287,22 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/text/text_input_controls.mbt", max_lines: 245, },
     // 250 -> 317 (2026-10-23, pointer-input-parity): the pointer path now
     // resolves click counts, a caret-drag anchor, and reveal requests.
-    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 317, },
+    // 317 -> 320 (2026-11-07, RTL step 2): pointer hit-test calls forward the
+    // environment base direction.
+    { path: "moui/views/text/text_input_event_handlers.mbt", max_lines: 320, },
     { path: "moui/views/text/text_input_apply.mbt", max_lines: 400, },
     // 500 -> 307 (2026-10-23): the duplicated caret engine was deleted in
     // favour of the core editing primitives, so the ratchet takes it back.
-    { path: "moui/views/text/text_input_editing.mbt", max_lines: 307, },
+    // 307 -> 315 (2026-11-07, RTL step 2): the single-line helpers carry the
+    // base-direction parameter into their measurements.
+    { path: "moui/views/text/text_input_editing.mbt", max_lines: 315, },
     { path: "moui/views/text/text_input_paint.mbt", max_lines: 510, },
     // 525 -> 640 (2026-09-05): richtext perf commits; see followups plan.
     // 640 -> 672 (2026-10-23): the field publishes its caret as a reveal
     // request so an ancestor scroll view can bring it back into view.
-    { path: "moui/views/text/text_area_control.mbt", max_lines: 672, },
+    // 672 -> 686 (2026-11-07, RTL step 2): the area paragraph calls forward
+    // the environment base direction.
+    { path: "moui/views/text/text_area_control.mbt", max_lines: 686, },
     { path: "moui/views/feedback/feedback_state.mbt", max_lines: 110, },
     { path: "moui/views/feedback/feedback_guidance.mbt", max_lines: 55, },
     { path: "moui/views/feedback/feedback_panel.mbt", max_lines: 105, },

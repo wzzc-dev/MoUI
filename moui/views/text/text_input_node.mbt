@@ -53,6 +53,7 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
       control=ctx.text_control,
       text_system=ctx.text_system,
       theme=resolved_theme,
+      direction=ctx.environment.layout_direction,
     )
   } else {
     append_text_field_commands(
@@ -75,6 +76,7 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
       text_system=ctx.text_system,
       theme=resolved_theme,
       bottom_border_only=normal.bottom_border_only,
+      direction=ctx.environment.layout_direction,
       inner_focus_border=if ctx.focused {
         focused.inner_focus_border
       } else {
@@ -107,6 +109,7 @@ impl @core.ViewNode for SingleLineTextInput with fn text_input_state(self, ctx) 
       control=ctx.text_control,
       text_system=ctx.text_system,
       search_bar=self.search_bar,
+      direction=ctx.environment.layout_direction,
     ),
   )
 }

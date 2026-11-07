@@ -222,6 +222,7 @@ test "clicks hit the scrolled line, not the unscrolled one" {
     value,
     font,
     text_frame,
+    direction=LeftToRight,
   )
   assert_eq(paragraph.lines.length(), 20)
   let target = paragraph.lines[19]
