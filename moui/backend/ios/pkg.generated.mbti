@@ -25,6 +25,10 @@ pub fn ios_capability_matrix() -> IosBackendCapabilities
 
 pub fn ios_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
 
+pub fn ios_clipboard_read_text() -> String?
+
+pub fn ios_clipboard_write_text(String) -> Bool
+
 pub fn ios_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn ios_readiness() -> IosBackendReadiness
