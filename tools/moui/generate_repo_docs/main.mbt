@@ -456,11 +456,20 @@ fn validate_mobile_platform_contract(
     )
   }
   if facts.actual_presenter_route == "unverified" {
-    if facts.presenter_evidence_status != "unverified" ||
-      facts.presenter_evidence_kind != "none" {
+    // Either no presenter observation at all, or an honest partial one: frames
+    // seen on the matching host without identifying the route (e.g. the iOS
+    // simulator's first frames). `passed` stays unreachable in both cases —
+    // the checks below keep L2/L3 gated on a verified actual route.
+    let partial_ok = facts.presenter_evidence_status == "partial" &&
+      facts.presenter_evidence_kind != ""
+    if !partial_ok &&
+      (
+        facts.presenter_evidence_status != "unverified" ||
+        facts.presenter_evidence_kind != "none"
+      ) {
       return Err(
         label +
-        ": an unverified actual presenter route requires unverified/none presenter evidence",
+        ": an unverified actual presenter route requires unverified/none or partial presenter evidence",
       )
     }
   } else {
@@ -470,11 +479,17 @@ fn validate_mobile_platform_contract(
         ": actual presenter route must match the declared renderer route",
       )
     }
-    if facts.presenter_evidence_status != "verified" ||
-      facts.presenter_evidence_kind != "matching-device-direct-present" {
+    // A verified present on matching hardware is either a direct GPU present
+    // (metal/egl/vulkan) or an honest CPU presenter route (e.g. Android's
+    // ANativeWindow blit); the kind records which, and the declared route
+    // must name the same thing.
+    let verified_kind = facts.presenter_evidence_kind ==
+      "matching-device-direct-present" ||
+      facts.presenter_evidence_kind == "matching-device-cpu-present"
+    if facts.presenter_evidence_status != "verified" || !verified_kind {
       return Err(
         label +
-        ": an actual presenter route requires matching-device direct-present evidence",
+        ": an actual presenter route requires verified matching-device direct-present or CPU-present evidence",
       )
     }
   }

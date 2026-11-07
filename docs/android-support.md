@@ -158,15 +158,50 @@ intrinsic width (~292 logical) instead of the 375-wide detail column.
 Fixed by pinning the matched page with `.frame(width=width)` (probe card
 border now 24..399 logical, full content width).
 
-These are the remaining R6 capabilities blocking the `committed` promotion.
-The keyboard/IME text channel was fixed and verified the same day (see
-above).
+## Clipboard + accessibility evidence (2026-11-08) → `committed` promotion
+
+The last two R6 gaps closed on 2026-11-08, both in the `wzzc-dev/window`
+embedder (branch `moui-support`):
+
+- **Clipboard** (`f20be5e`): `HostedActivity` gains
+  `writeClipboard`/`readClipboard` (ClipboardManager, UI-thread marshalled
+  with a latch) and `native_android_host.c` exposes
+  `mbw_android_clipboard_write_text`/`_read_text` over JNI. Emulator
+  evidence: Host services write -> "Last: Clipboard written" plus the
+  system clipboard bubble showing the payload; read-back -> "Last:
+  Clipboard read: showcase-platform ticks=0".
+- **Accessibility** (`be96543`): `publishAccessibility(String)` parses the
+  MoonBit-encoded semantics tree and `HostedA11yProvider` maps virtual ids
+  to `AccessibilityNodeInfo` (role -> className, logical*density screen
+  bounds, state). Key detail: the provider's HOST branch must call
+  `host.onInitializeAccessibilityNodeInfo(info)` — `obtain(host)` only sets
+  the source, and without it the host node reports zero bounds/invisible,
+  hiding the whole virtual subtree. Emulator evidence: uiautomator dump
+  exposes 16 text nodes with correct bounds
+  (`artifacts/android/emulator-evidence/uiautomator-semantics.xml`).
+  ACTION_CLICK synthesizes a tap at the node center on the existing pointer
+  channel (TalkBack's double-tap-to-activate contract).
+
+MoUI side: `moui/backend/android/android_clipboard.mbt` +
+`android_accessibility.mbt` bind the bridges; `app_environment()` wires
+ClipboardServices; the window-hosted backend pumps semantics to the
+provider from `about_to_wait` with a generation cursor.
+
+With these, every R6 capability is observed on the matching emulator and
+the route is promoted to `committed` (`checks/platforms/android.json`
+`runtimeL3=passed`, ADR 0066). The honest remaining gap is the presenter:
+the route presents through the ANativeWindow CPU blit, and the
+vulkan-direct GPU route stays an unclaimed renderer item (the GPU
+seven-gate manifests), the same standing the HarmonyOS GPU gap had at
+ADR 0046.
 
 ## Status
 
-The route is usable for development and template integration, and now carries
-matching-emulator runtime evidence for pixels, pointer, resize, viewport, and
-surface lifecycle, but it is not a product-complete Android claim: keyboard
-text, clipboard, accessibility, and async-image evidence are still open. See
-`docs/platform-readiness-declaration.md` and `docs/window-hosted-moui.md` for
-the evidence boundary.
+The route is usable for development and template integration and carries
+complete matching-emulator runtime evidence for pixels, pointer, resize,
+viewport, keyboard/IME text, clipboard write/read, accessibility node
+publishing, surface lifecycle, and async image (`runtimeL3=passed`,
+`productClass=committed`). The presenter is the ANativeWindow CPU blit;
+a vulkan-direct GPU claim is the open renderer item. See
+`docs/platform-readiness-declaration.md` and `docs/window-hosted-moui.md`
+for the evidence boundary.

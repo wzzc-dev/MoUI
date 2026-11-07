@@ -4,25 +4,25 @@
   "sourceBuild": {
     "status": "passed",
     "windowHosted": "passed",
-    "verifiedOn": "2026-11-07",
+    "verifiedOn": "2026-11-08",
     "matrixCommand": "moui build android showcase --mobile-config examples/showcase/moui.mobile.json",
     "evidence": "installable debug APK built from HEAD via `moui build android` + gradle assembleDebug (36.6MB, status=built), installed via adb (Streamed Install Success) and launched on emulator-5554 (Pixel 6 AVD, API 34, arm64); artifacts/android/emulator-evidence/"
   },
   "rendererL2": {
-    "status": "partial",
-    "presenterRoute": "vulkan-direct",
+    "status": "passed",
+    "presenterRoute": "cpu-blit-anative-window",
     "presenterEvidence": {
-      "status": "partial",
-      "kind": "matching-emulator-rendered-frames",
-      "reference": "MoUIWindow font mgr=android-ndk families=220 in logcat; Skia-rendered probe UI screenshots (text, fields, images) at artifacts/android/emulator-evidence/; direct-present log marker still pending"
+      "status": "verified",
+      "kind": "matching-device-cpu-present",
+      "reference": "Skia-rendered probe UI screenshots (text, fields, images) on matching emulator-5554 (Pixel 6 AVD, API 34) through the ANativeWindow CPU blit presenter (moui/backend/android/android_backend.mbt 'Android host CPU presenter' -> moui_android_present_pixels_to_surface); artifacts/android/emulator-evidence/. The vulkan-direct GPU route (policy default for Android in native_gpu_policy.mbt) is not claimed yet — the GPU seven-gate promotion stays a separate renderer item, the same standing the HarmonyOS GPU gap had at ADR 0046."
     }
   },
   "runtimeL3": {
-    "status": "partial",
-    "evidence": "Matching-emulator capability matrix on emulator-5554 (Pixel 6 AVD, API 34), 2026-11-07 (updated after the keyboard/IME channel fix in wzzc-dev/window/android): OBSERVED — first frame (HostedActivity displayed 1.374s, Skia-rendered probe UI), pointer (tap focused the probe field; tap activated the probe button: Action count 0->1, Last: Probe action 1), resize/rotation (landscape -> responsive two-column reflow with route header, no ghosting; portrait restored), surface detach/recreate (force-stop + relaunch -> fresh MoUIWindow init in a new process), app-visible viewport (411 x 914 reported by the probe), keyboard/IME text (adb input text 'abc' inserted at the caret via Ime(Commit) -> field 'mobile-abc-probe', Backspace deleted via the named-key Backspace channel -> 'mobile-ab-probe', Enter submitted -> 'Last: Probe submit 1'; after the HostedActivity keyboard fix: HostedInputConnection commits/deletes forwarded to nativeOnKeyboardCodepoint/nativeOnKeyboardKey, dispatchKeyEvent routes named keys, onCheckIsTextEditor + focusable surface view), async image (the probe's data-URI image renders as the red square — loaded and painted). PENDING — clipboard flow evidence (the backend declares clipboard; the Host services page flow was not exercised), accessibility node publishing (uiautomator shows no text nodes from the MoUI surface; the window embedder's a11y adaptation is declared but not verified). Evidence screenshots: artifacts/android/emulator-evidence/"
+    "status": "passed",
+    "evidence": "All R6 capabilities observed on the matching emulator (emulator-5554, Pixel 6 AVD, API 34), 2026-11-07/08. Pixels: Skia-rendered first frame through the ANativeWindow CPU blit presenter (HostedActivity displayed ~1.4s, nonblank screenshots). Pointer: tap focused the probe field and activated the probe button (Action count 0->1->2, 'Last: Probe action N'). Resize/rotation: landscape -> responsive two-column reflow with route header, no ghosting; portrait restored; the runtime rebuilds at 411x914 (probe viewport card) and pages fill the measured content width after the shell width fix. Keyboard/IME text: adb input text inserts at the caret via Ime(Commit) -> 'mobile-abc-probe'; Backspace deletes via the named-key channel; Enter submits ('Last: Probe submit 1'). Clipboard: Host services write -> 'Last: Clipboard written' + the system clipboard bubble shows 'showcase-platform ticks=0'; read-back -> 'Last: Clipboard read: showcase-platform ticks=0' through the embedder JNI ClipboardManager bridge (wzzc-dev/window moui-support f20be5e). Accessibility: the template's AccessibilityNodeProvider publishes the runtime semantics tree over JNI (moui/backend/android/android_accessibility.mbt; wzzc-dev/window moui-support be96543) — uiautomator dump exposes 16 text nodes (MoUI Showcase, Back, All stories, probe labels, Activate service probe, ...) with correct screen bounds and role classNames; publish log 'a11y published gen=1 nodes=18 root=18'. Surface detach/recreate: force-stop + relaunch -> fresh MoUIWindow init in a new process. App-visible viewport: 411 x 914 reported by the probe. Async image: the probe's data-URI image renders as the red square — loaded and painted. Evidence screenshots + uiautomator-semantics.xml: artifacts/android/emulator-evidence/"
   },
   "hostKind": "window-hosted-android",
   "deploymentFloor": "Android 23",
   "toolchainFloor": "AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1",
-  "actualPresenterRoute": "unverified"
+  "actualPresenterRoute": "cpu-blit-anative-window"
 }

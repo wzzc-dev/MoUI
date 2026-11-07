@@ -27,7 +27,7 @@ Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `chec
 | `macos-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/macos.json` |
 | `windows-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/windows.json` |
 | `linux-wgpu` | diagnostic | `diagnostic` | no | `renderers/wgpu` | 2026-11-05 | `checks/platforms/linux.json` |
-| `android-skia` | lab | `experimental` | no | `platform/android` | 2026-11-05 | `checks/platforms/android.json` |
+| `android-skia` | product | `committed` | yes | `platform/android` | 2026-11-08 | `checks/platforms/android.json` |
 | `ios-skia` | lab | `experimental` | no | `platform/ios` | 2026-11-05 | `checks/platforms/ios.json` |
 | `harmonyos-skia` | product | `committed` | yes | `platform/harmonyos` | 2026-11-05 | `checks/platforms/harmonyos.json` |
 | `macos-sun` | lab | `experimental` | no | `renderers/sun` | 2026-11-05 | `checks/platforms/macos.json` |
@@ -52,7 +52,7 @@ OS product completeness.
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
 | **Windows** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; matching-host Win32 runtime smoke + Showcase first-frame (`checks/platforms/windows.json` `runtimeL3=passed`, 2026-08-29, ADR 0031) | — |
 | **Linux** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; matching-host Wayland runtime smoke + Showcase first-frame (`checks/platforms/linux.json` `runtimeL3=passed`, 2026-08-30, ADR 0032) | — |
-| **Android** | **experimental** | `ready=false`: the window-hosted template + session compile and host-sim tests pass, but no development/demonstration usability or product commitment is made; `status=experimental` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim; usability commitment |
+| **Android** | **committed** | Usable as a product mainline on the window-hosted route | L0–L2 PR/real Skia; matching-emulator (Pixel 6 AVD, API 34) runtime evidence with pointer, keyboard/IME text + named keys, resize, app-visible viewport, clipboard write + read (embedder JNI ClipboardManager bridge), AccessibilityNodeProvider semantics publishing (uiautomator text nodes), surface detach/recreate and async image (`checks/platforms/android.json` `runtimeL3=passed`, 2026-11-08, ADR 0066) | GPU seven-gate claim (the route presents through the ANativeWindow CPU blit presenter; vulkan-direct is a separate renderer item) |
 | **iOS** | **experimental** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim; usability commitment |
 | **HarmonyOS** | **committed** | Usable as a product mainline | L0–L2 PR/real Skia; signed matching-device HAP with `egl-direct` presenter evidence, pointer, keyboard/IME text, resize, app-visible viewport, clipboard read + write, ArkUI accessibility provider, surface detach/recreate and async image (`checks/platforms/harmonyos.json` `runtimeL3=passed`, 2026-10-30, ADR 0046) | GPU seven-gate claim |
 | **WeChat Mini Program** | **experimental** | `ready=false`: the window-hosted Canvas 2D session compiles, but no development/demonstration usability or product commitment is made; `status=experimental` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations; usability commitment |
@@ -464,9 +464,9 @@ sh scripts/window-hosted-hostsim-smoke.sh
 
 | Platform | Current evidence | Remaining work |
 |------|--------|------|
-| Android | host-sim and package checks | matching-device presentation, input, lifecycle, and service evidence |
+| Android | host-sim and package checks; matching-emulator L3 complete (`checks/platforms/android.json` `runtimeL3=passed`, 2026-11-08, ADR 0066) | GPU seven-gate claim (vulkan-direct presenter) |
 | iOS | host-sim and package checks | matching simulator/device presentation, input, lifecycle, and service evidence |
-| HarmonyOS | host-sim and package checks | signed-device presentation, input, lifecycle, and service evidence |
+| HarmonyOS | host-sim and package checks; matching-device L3 complete (ADR 0046) | GPU seven-gate claim |
 
 Use `scripts/window-hosted-vm-smoke.sh` with one of
 `WINDOW_HOSTED_ANDROID_AVD=1`, `WINDOW_HOSTED_IOS_SIM=1`, or

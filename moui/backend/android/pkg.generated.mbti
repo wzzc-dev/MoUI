@@ -13,9 +13,17 @@ import {
 }
 
 // Values
+pub fn android_accessibility_project(@runtime.SemanticsRead) -> String?
+
+pub fn android_accessibility_publish(String) -> Bool
+
 pub fn android_capability_matrix() -> AndroidBackendCapabilities
 
 pub fn android_capability_summary(services? : @backend.HostServiceCapabilities) -> @backend.HostCapabilitySummary
+
+pub fn android_clipboard_read_text() -> String?
+
+pub fn android_clipboard_write_text(String) -> Bool
 
 pub fn android_input_capabilities() -> @backend.HostInputCapabilities
 
@@ -86,6 +94,7 @@ pub fn AndroidBackendReadiness::to_repr(Self) -> @debug.Repr
 
 pub struct AndroidEmbeddedRuntimeBackend {
   backend : @embedded.HostedWindowBackend
+  mut accessibility_cursor : @wzzc-dev/moui/core.SemanticsGeneration?
 }
 pub fn AndroidEmbeddedRuntimeBackend::about_to_wait(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::can_create_surfaces(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
@@ -97,6 +106,7 @@ pub fn AndroidEmbeddedRuntimeBackend::memory_warning(Self, @wzzc-dev/window/andr
 pub fn AndroidEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @runtime.AppRuntime, renderer_providers~ : Array[@render.RendererProvider], auto_exit_after_frames? : Int32?) -> Self
 pub fn AndroidEmbeddedRuntimeBackend::new_events(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.StartCause) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::proxy_wake_up(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
+pub fn AndroidEmbeddedRuntimeBackend::pump_accessibility(Self) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::resumed(Self, @wzzc-dev/window/android.ActiveEventLoop) -> Unit
 pub fn AndroidEmbeddedRuntimeBackend::session_attached(Self) -> Bool
 pub fn AndroidEmbeddedRuntimeBackend::standard_key_binding(Self, @wzzc-dev/window/android.ActiveEventLoop, @wzzc-dev/window/core.WindowId, String) -> Unit

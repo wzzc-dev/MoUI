@@ -256,8 +256,7 @@ pub fn AndroidEmbeddedRuntimeBackend::pump_accessibility(
 ) -> Unit {
   match self.backend.read_semantics(since=self.accessibility_cursor) {
     Some(Unchanged(_)) => ()
-    Some(Full(snapshot)) =>
-      self.publish_accessibility_snapshot(Full(snapshot))
+    Some(Full(snapshot)) => self.publish_accessibility_snapshot(Full(snapshot))
     Some(Delta(_)) =>
       match self.backend.read_semantics() {
         Some(read) => self.publish_accessibility_snapshot(read)
@@ -277,16 +276,14 @@ fn AndroidEmbeddedRuntimeBackend::publish_accessibility_snapshot(
   read : @apphost.SemanticsRead,
 ) -> Unit {
   match read {
-    Full(snapshot) => {
+    Full(snapshot) =>
       match android_accessibility_project(Full(snapshot)) {
-        Some(tree) => {
+        Some(tree) =>
           if android_accessibility_publish(tree) {
             self.accessibility_cursor = Some(snapshot.generation())
           }
-        }
         None => ()
       }
-    }
     _ => ()
   }
 }

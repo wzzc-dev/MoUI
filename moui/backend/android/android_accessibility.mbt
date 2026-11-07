@@ -88,7 +88,9 @@ fn android_a11y_encode_node(
   builder.write_string("\u{1F}")
   builder.write_string(node.frame.origin.y.to_string())
   builder.write_string("\u{1F}")
-  builder.write_string((node.frame.origin.x + node.frame.size.width).to_string())
+  builder.write_string(
+    (node.frame.origin.x + node.frame.size.width).to_string(),
+  )
   builder.write_string("\u{1F}")
   builder.write_string(
     (node.frame.origin.y + node.frame.size.height).to_string(),
@@ -106,9 +108,7 @@ fn android_a11y_encode_node(
 /// publishes through its AccessibilityNodeProvider. Only a `Full` snapshot
 /// carries a tree; anything else returns `None` so the provider keeps the
 /// node table it already holds.
-pub fn android_accessibility_project(
-  read : @apphost.SemanticsRead,
-) -> String? {
+pub fn android_accessibility_project(read : @apphost.SemanticsRead) -> String? {
   match read {
     Full(snapshot) => {
       let nodes = snapshot.nodes()

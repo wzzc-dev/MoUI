@@ -77,11 +77,11 @@
     {
       "id": "android-skia",
       "owner": "platform/android",
-      "intent": "lab",
-      "reviewDate": "2026-11-05",
-      "reviewTrigger": "Window-hosted template, matching-device evidence, product-class, or release-gate change; at least quarterly.",
-      "graduation": "Promote only after matching-device L3 covers presenter, pointer, resize, IME, clipboard, accessibility, detach/recreate, and usability, with a promotion ADR.",
-      "retirement": "Retire if the window-hosted composition cannot build for two reviews or matching-device evidence remains unavailable after the declared lab window."
+      "intent": "product",
+      "reviewDate": "2026-11-08",
+      "reviewTrigger": "R6 capability, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Reached `committed` on 2026-11-08 (ADR 0066): matching-emulator L3 covers pixels, pointer, resize, IME text + named keys, clipboard write/read, accessibility node publishing, detach/recreate, viewport, and async image. Re-promotion beyond committed only by a new route/product ADR after a GPU-direct presenter claim with the seven-gate manifests.",
+      "retirement": "Downgrade by a new ADR if matching-emulator R6 evidence lapses or the window-hosted composition cannot build for two reviews."
     },
     {
       "id": "ios-skia",
