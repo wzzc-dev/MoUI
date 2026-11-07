@@ -1,11 +1,14 @@
-# 2026-11-08: Android → `committed`; iOS evidence pass
+# 2026-11-08: Android → `committed`; iOS → `committed_with_gaps`
 
 - **Goal**: advance the Android and iOS window-hosted routes toward
   `committed` (one VM at a time, per the user constraint).
 - **Outcome**: Android promoted to `committed` (ADR 0066) with every R6
-  capability observed on the matching emulator; iOS collected its first
-  matching-simulator R6 evidence pass (clipboard, pointer, IME, lifecycle)
-  and stays honestly `experimental` with a recorded pending list.
+  capability observed on the matching emulator. iOS closed its pending list
+  (named-key channel, UIAccessibility bridge) and promoted to
+  `committed_with_gaps` (ADR 0067) — every R6 capability observed except
+  live rotation, which is an evidence-collection limitation (the Simulator
+  rotate action is not scriptable from this host), recorded as the gap for
+  the final `committed` step.
 
 ## Android slices (one commit each)
 
@@ -55,10 +58,27 @@ relaunch re-initializes, iPad cross-extent install/run.
   `sh scripts/check.sh --profile pr` before promotion-sized commits (it
   surfaced four standing findings this session).
 
+## iOS second pass (named keys + a11y → ADR 0067)
+
+| Commit | Slice |
+|---|---|
+| window `887d463` | `MBW_IOS_HOST_NAMED_KEY` 16 (pressesBegan/Ended + `insertText:@"\n"` Return interception) + `mbw_ios_template_a11y_publish` (flat traversal-ordered UIAccessibilityElement array) |
+| `f738e14bc` | `ios_accessibility.mbt` projection + `pump_accessibility` cursor |
+| `99d463e8c` | Promotion: rendererL2 passed (`cpu-blit-calayer`), matrix/manifests/governance, ADR 0067 |
+
+Evidence: idb describe-all exposes 19 semantic nodes with labels/roles/
+frames; hardware Return submits ("Last: Probe submit 1"); clipboard
+round-trip cross-checked with `simctl pbpaste`.
+
+Traps: ObjC string literals cannot carry `\u001E` (control-char universal
+character names) — use `\x1E`; `??` is not Objective-C; `printf` needs
+`<stdio.h>` in the window host C; the governance validator's product-intent
+rule now recognizes `committed_with_gaps`.
+
 ## Remaining
 
-- iOS pending list (see `docs/ios-support.md`): live rotation automation,
-  named-key channel, a11y bridge, Metal direct-present marker.
+- iOS final `committed` step (ADR 0067): scriptable live-rotation evidence
+  (or a matching-device pass) + metal-direct GPU seven-gate claim.
 - Android follow-ups: vulkan-direct presenter seven-gate claim; TalkBack
   action-focus on matching hardware.
 - The `window` submodule gitlink in MoUI still pins the pre-IME commit; the
