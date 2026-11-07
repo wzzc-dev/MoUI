@@ -148,13 +148,15 @@ Still pending for `committed`:
   unwired in `wzzc-dev/window/android`.
 - Accessibility node publishing: the window embedder's a11y adaptation is
   declared but uiautomator showed no text nodes from the MoUI surface.
-- Root layout resize: the runtime root stays at the entrypoint-declared
-  initial size (320 logical) centered in the 411-wide surface instead of
-  tracking the surface resize. The chain is wired in code (SurfaceResized ->
-  host event Resized -> driver.dispatch -> runtime Resize -> root rebuild)
-  but the rendered content does not widen — needs embedded-session
-  debugging. Text wrapping (wrap=true on the probe/host-services pages)
-  mitigates readability within the current layout.
+
+The earlier "root layout resize" suspicion was a misdiagnosis, resolved on
+2026-11-08 by measured card-border evidence: the resize chain works (the
+runtime rebuilds at 411x914 and the probe reports that viewport). The
+narrow-content appearance came from the Showcase platform `view_body`
+ignoring the shell's content width, so page columns fell back to their
+intrinsic width (~292 logical) instead of the 375-wide detail column.
+Fixed by pinning the matched page with `.frame(width=width)` (probe card
+border now 24..399 logical, full content width).
 
 These are the remaining R6 capabilities blocking the `committed` promotion.
 The keyboard/IME text channel was fixed and verified the same day (see
