@@ -4,9 +4,9 @@
   "sourceBuild": {
     "status": "passed",
     "windowHosted": "passed",
-    "verifiedOn": "2026-11-07",
-    "matrixCommand": "moui build ios showcase --mobile-config examples/showcase/moui.mobile.json --sdk iphonesimulator",
-    "evidence": "installable simulator .app built from HEAD via `moui build ios --sdk iphonesimulator` (21.5MB executable, status=built), installed via simctl and launched on iPhone 17 (iOS 26.3 simulator); artifacts/ios/showcase.app. The build needed two repairs landed with this update: moui_cli/build_ios.mbt now prefers the 0.10.20 toolchain's split runtime (lib/runtime/*.c, one object per subsystem) over the removed lib/runtime.c, and moui/backend/ios/runtime_compat/ provides simulator SDK shims (sys/vnode.h, sys/random.h, posix_spawn addchdir stub) for the four runtime sources whose __MACH__ branches assume the full macOS SDK."
+    "verifiedOn": "2026-11-08",
+    "matrixCommand": "moui build ios showcase --sdk iphonesimulator --mobile-config examples/showcase/moui.mobile.json",
+    "evidence": "installable simulator .app built from HEAD via `moui build ios --sdk iphonesimulator` + clang++ direct link (21MB, adhoc-signed), installed via simctl and launched on the iPhone 17 simulator (iOS 26.3, arm64); artifacts/ios/. NOTE: omitting --sdk iphonesimulator silently links a device-platform binary (LC_BUILD_VERSION platform=IOS) that SpringBoard rejects with 'not valid application' / launch error 163 — the simulator SDK flag is mandatory."
   },
   "rendererL2": {
     "status": "partial",
@@ -19,7 +19,7 @@
   },
   "runtimeL3": {
     "status": "partial",
-    "evidence": "window-hosted matching-simulator suite pending"
+    "evidence": "Matching-simulator capability matrix (iPhone 17, iOS 26.3; iPad Pro 11 cross-extent), 2026-11-07/08. OBSERVED — first frame (Skia-rendered probe UI, viewport 402 x 874 reported by the probe), pointer (idb tap on Activate service probe: Action count 0->1), keyboard/IME text (idb text inserts at the caret -> 'mobile-servicea-probebc-probe'; the hidden-UITextView diff adapter forwards Commit), delete (backspaces shorten the value), clipboard write + read (Host services write -> 'Last: Clipboard written'; host-side `simctl pbpaste` prints 'showcase-platform ticks=0'; read -> 'Last: Clipboard read: showcase-platform ticks=0' through the UIPasteboard bridge), async image (the probe's data-URI image renders as the red square), surface detach/recreate (terminate + relaunch -> fresh probe session, new pid), cross-extent install+run on the iPad simulator. PENDING — live rotation/resize automation (the Simulator Device > Rotate menu is not scriptable from this host's accessibility; the template plist now declares landscape), named-key channel (hardware Enter/submit — the iOS template routes only IME text diffs), accessibility node publishing (no UIAccessibility element bridge yet), Metal direct-present log marker. Evidence screenshots under /tmp (session-local)."
   },
   "hostKind": "window-hosted-ios",
   "deploymentFloor": "iOS 15.0",

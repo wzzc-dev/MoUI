@@ -105,16 +105,52 @@ The built .app installs, launches, and renders the Mobile Service Probe on
 the iPhone 17 simulator (iOS 26.3) — real Skia pixels, viewport 402 x 874,
 async image rendered.
 
-Evidence collection next: the R6 suite (first frame, pointer, resize,
-surface lifecycle, IME, clipboard, accessibility, async image) on the
-simulator follows the same automation pattern as the Android pass. Touch
-input automation needs `idb` installed (the simulator UI backend reports it
-absent); clipboard via `simctl pbcopy/pbpaste`; rotation via
-`simctl ui booted rotation`.
+## Matching-simulator evidence (2026-11-08, idb pass)
+
+With `idb` installed (CLI + `idb_companion`), the pointer/IME flows are
+drivable from the host, and the clipboard channel landed the same day:
+
+- **Build trap (mandatory flag)**: `moui build ios` without
+  `--sdk iphonesimulator` silently links a **device-platform** binary
+  (`LC_BUILD_VERSION platform=IOS`). The simulator's SpringBoard rejects it
+  with "not valid application" / launch error 163 ("Security policy issue").
+  The recorded matrixCommand pins the flag.
+- **Template plist**: the packaged .app was rejected until `UIDeviceFamily`
+  (iPhone), `CFBundleInfoDictionaryVersion 6.0`, and landscape orientations
+  were added to the template `Info.plist` (window `moui-support` `a0ee0ff`).
+- **Pointer**: `idb ui tap` on "Activate service probe" -> Action count
+  0 -> 1.
+- **IME text + delete**: `idb ui text` inserts at the caret through the
+  hidden-UITextView diff adapter (`mobile-servicea-probebc-probe`);
+  `idb ui key 42` backspaces shorten it.
+- **Clipboard write + read** (`aedd44897`): Host services write -> "Last:
+  Clipboard written"; host-side `simctl pbpaste` prints
+  "showcase-platform ticks=0"; read -> "Last: Clipboard read:
+  showcase-platform ticks=0" through the general UIPasteboard bridge
+  (`moui/backend/ios/ios_clipboard.{mm,mbt}` + `app_environment()`
+  ClipboardServices + `service_handler`).
+- **Surface detach/recreate**: terminate + relaunch -> fresh probe session.
+- **Cross-extent**: the same .app installs and runs on the iPad simulator.
+
+Still pending for `committed` (mirrors `checks/platforms/ios.json`):
+
+- Live rotation/resize automation — the Simulator "Device > Rotate" menu is
+  not scriptable from this host's accessibility stack; the template now
+  declares landscape orientations, so a scriptable rotation completes the
+  live-resize observation.
+- Named-key channel — hardware Enter/submit/arrows are not routed (the iOS
+  template forwards only IME text diffs); the probe submit count cannot be
+  driven by keyboard yet.
+- Accessibility node publishing — no UIAccessibility element bridge yet
+  (the Android route's AccessibilityNodeProvider bridge is the pattern).
+- Metal direct-present log marker (rendererL2 stays `partial`).
 
 ## Status
 
-The route compiles and is usable for template integration, but remains
-**experimental** (product_class `experimental`, `ready=false`). See
+The route compiles and is usable for template integration, and now carries
+matching-simulator evidence for pixels, pointer, IME text + delete,
+clipboard write/read, surface lifecycle, and cross-extent install, but it
+remains **experimental** (product_class `experimental`, `ready=false`) until
+the pending list above closes. See
 `docs/platform-readiness-declaration.md` and
 `docs/window-hosted-moui.md` for the promotion criteria.
