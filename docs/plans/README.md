@@ -66,6 +66,10 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [semantic-id-ergonomics-and-path-targeting](done/semantic-id-ergonomics-and-path-targeting.md) | Declare semantic ids inline and let agents walk the committed semantics hierarchy with a filtered `ByPath` target |
 | [native-accessibility](active/native-accessibility.md) | Complete native accessibility adapters and matching-host evidence for the Showcase Probe |
 | [pointer-input-parity](active/pointer-input-parity.md) | Make declared-but-inert input land for real: long press / double tap, touch selection, multi-pointer identity, scroll rebound, honest text semantics, RTL mirroring |
+| [text-provider-native-completion](active/text-provider-native-completion.md) | Finish the scaffolded native text providers: DirectWrite shaping/IME, fontconfig/HarfBuzz measurement, and matching-host Windows IME evidence |
+| [gpu-partial-repaint](active/gpu-partial-repaint.md) | Turn damage bookkeeping into GPU-side partial repaint: per-route capability queries, damage-rect presentation on Metal/SkiaGpuNative, and present-rect budgets |
+| [in-process-hot-reload-rfc](active/in-process-hot-reload-rfc.md) | RFC for replacing the restart-based dev loop with in-process reload: transient-state transport, interpreter-driven swap, or web-first module reload |
+| [rtl-step3-native-base-direction](active/rtl-step3-native-base-direction.md) | Plumb `TextLayoutInput.direction` into the native providers (SkParagraph/cosmic/DirectWrite/CoreText) with a shared direction-matrix fixture |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
 | [linux-x11-backend](active/linux-x11-backend.md) | Add an X11 (Xlib) windowing backend to the Linux package with runtime selection and UTM VM validation |
