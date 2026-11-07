@@ -79,6 +79,21 @@ detach/recreate, IME, clipboard, accessibility, and async-image behavior.
 Update `checks/platforms/ios.json` only when the actual presenter route is
 verified by matching-host evidence.
 
+## Simulator Build Blocker (2026-11-07)
+
+`moui build ios showcase --sdk iphonesimulator` compiles the entrypoint,
+host, and Skia stubs for the simulator, but the final link fails: the
+0.10.20 toolchain split the Moon runtime into
+`$MOON_HOME/lib/runtime/*.c`, and four of those sources (env.c, dir.c,
+fs.c, thread_pool.c) use Linux/macOS-only headers and APIs
+(`sys/random.h`, `sys/vnode.h`, `posix_spawn_file_actions_addchdir_np`)
+that the iOS Simulator SDK lacks, so `moonbit_eprintln` and the fs/dir
+symbols stay undefined. `moui_cli/build_ios.mbt` now prefers the new
+runtime source path (fixed 2026-11-07); the remaining gap is an
+iOS port of those four runtime sources in moonbitlang/runtime (or
+simulator compat shims), after which the simulator evidence suite
+matching the HarmonyOS R6 pattern can run.
+
 ## Status
 
 The route compiles and is usable for template integration, but remains

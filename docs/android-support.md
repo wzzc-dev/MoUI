@@ -116,8 +116,35 @@ input, surface detach/recreate, IME, clipboard, accessibility, and async-image
 observations. Keep `checks/platforms/android.json` at `partial` until that
 evidence verifies the actual presenter route.
 
+## Matching-Emulator Evidence (2026-11-07)
+
+A matching-emulator pass was recorded on `emulator-5554` (Pixel 6 AVD
+`moui_api34`, API 34, arm64) with a debug APK built from HEAD via
+`moui build android showcase --mobile-config examples/showcase/moui.mobile.json`
+(Gradle 9.6.1 / AGP 9.2.1; set `local.properties` `sdk.dir` or export
+`ANDROID_HOME` for the Gradle step). Screenshots:
+`artifacts/android/emulator-evidence/`.
+
+Observed: first frame (HostedActivity displayed 1.374s, Skia-rendered probe
+UI), pointer (tap focused the probe field; tap activated the probe button —
+Action count 0 -> 1, "Last: Probe action 1"), resize/rotation (landscape
+responsive two-column reflow with the route header, no ghosting; portrait
+restored), surface detach/recreate (force-stop + relaunch into a fresh
+`MoUIWindow` init in a new process), and the app-visible viewport (411 x 914
+reported by the probe).
+
+Still pending for `committed`: keyboard/IME text delivery (`adb shell input
+text` and Backspace do not reach the MoUI text field — the Android window
+template's keyboard channel for IME commits is unwired in
+`wzzc-dev/window/android`), clipboard selftest markers, accessibility bridge
+markers, and the async-image ready marker. These are the remaining R6
+capabilities blocking the `committed` promotion.
+
 ## Status
 
-The route is usable for development and template integration, but it is not a
-product-complete Android claim. See `docs/platform-readiness-declaration.md`
-and `docs/window-hosted-moui.md` for the evidence boundary.
+The route is usable for development and template integration, and now carries
+matching-emulator runtime evidence for pixels, pointer, resize, viewport, and
+surface lifecycle, but it is not a product-complete Android claim: keyboard
+text, clipboard, accessibility, and async-image evidence are still open. See
+`docs/platform-readiness-declaration.md` and `docs/window-hosted-moui.md` for
+the evidence boundary.

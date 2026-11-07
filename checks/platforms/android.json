@@ -2,22 +2,25 @@
   "schemaVersion": 1,
   "platform": "android",
   "sourceBuild": {
-    "status": "partial",
-    "windowHosted": "partial",
-    "verifiedOn": "2026-07-22",
-    "matrixCommand": "moui build android showcase --mobile-config examples/showcase/moui.mobile.json --prepare-only",
-    "evidence": "window-hosted template and CLI migration are checked; installable APK evidence is pending"
+    "status": "passed",
+    "windowHosted": "passed",
+    "verifiedOn": "2026-11-07",
+    "matrixCommand": "moui build android showcase --mobile-config examples/showcase/moui.mobile.json",
+    "evidence": "installable debug APK built from HEAD via `moui build android` + gradle assembleDebug (36.6MB, status=built), installed via adb (Streamed Install Success) and launched on emulator-5554 (Pixel 6 AVD, API 34, arm64); artifacts/android/emulator-evidence/"
   },
   "rendererL2": {
     "status": "partial",
     "presenterRoute": "vulkan-direct",
     "presenterEvidence": {
-      "status": "unverified",
-      "kind": "none",
-      "reference": "fresh matching-device direct-present marker pending"
+      "status": "partial",
+      "kind": "matching-emulator-rendered-frames",
+      "reference": "MoUIWindow font mgr=android-ndk families=220 in logcat; Skia-rendered probe UI screenshots (text, fields, images) at artifacts/android/emulator-evidence/; direct-present log marker still pending"
     }
   },
-  "runtimeL3": { "status": "partial", "evidence": "window-hosted matching-device suite pending" },
+  "runtimeL3": {
+    "status": "partial",
+    "evidence": "Matching-emulator capability matrix on emulator-5554 (Pixel 6 AVD, API 34), 2026-11-07: OBSERVED — first frame (HostedActivity displayed 1.374s, Skia-rendered probe UI), pointer (tap focused the probe field; tap activated the probe button: Action count 0->1, Last: Probe action 1), resize/rotation (landscape -> responsive two-column reflow with route header, no ghosting; portrait restored), surface detach/recreate (force-stop + relaunch -> fresh MoUIWindow init in a new process), app-visible viewport (411 x 914 reported by the probe). PENDING — keyboard/IME text (`adb shell input text` keystrokes and Backspace do not reach the MoUI text field: the Android window template keyboard channel for IME commits is unwired), clipboard markers (probe action ran without a clipboard selftest marker), accessibility bridge markers, async-image ready marker (placeholder visible, no ImageReady log). Evidence screenshots: artifacts/android/emulator-evidence/"
+  },
   "hostKind": "window-hosted-android",
   "deploymentFloor": "Android 23",
   "toolchainFloor": "AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1",

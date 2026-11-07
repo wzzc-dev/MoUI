@@ -518,7 +518,13 @@ fn build_ios(
     }
   }
   // Moon runtime.
-  let runtime_c = join_path(moon_home, "lib/runtime.c")
+  // The 0.10.20 toolchain moved the runtime source to lib/runtime/runtime.c;
+  // older layouts keep lib/runtime.c. Prefer the new path.
+  let runtime_c = if path_is_file(join_path(moon_home, "lib/runtime/runtime.c")) {
+    join_path(moon_home, "lib/runtime/runtime.c")
+  } else {
+    join_path(moon_home, "lib/runtime.c")
+  }
   if path_is_file(runtime_c) {
     let runtime_o = join_path(obj_dir, "runtime.o")
     let runtime_extra : Array[String] = ["-Dgetentropy=mbw_ios_getentropy"]
