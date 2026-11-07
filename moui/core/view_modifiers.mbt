@@ -400,6 +400,21 @@ pub fn[Msg] View::on_drag(
 }
 
 ///|
+/// Observe a two-finger pinch/rotation over this subtree: the recognizer
+/// tracks the first two `PointerEvent.id` streams that press inside the view,
+/// emits a `Started` sample when the second finger lands, one `Moved` sample
+/// per movement of either finger (span ratio + wrapped angle delta since the
+/// previous sample), and `Ended` when a tracked finger lifts. Samples claim
+/// their pointer stream in the gesture arena, so a child tap wins over an
+/// armed-but-unmoved pinch.
+pub fn[Msg] View::on_pinch(
+  self : View[Msg],
+  handler : (PinchGestureEvent) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnPinchModifier::{ handler, }.to_any_modifier())
+}
+
+///|
 /// Observe OS-recognized gestures — trackpad pinch, rotation, pan, double
 /// tap, and pressure — over this subtree. The runtime targets the content
 /// under the last known primary pointer position, so a trackpad pinch zooms

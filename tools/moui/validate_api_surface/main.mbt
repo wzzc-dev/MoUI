@@ -441,9 +441,13 @@ fn package_budgets() -> Array[PackageBudget] {
       // existing struct line; the ctor parameter widens the same line):
       // RTL step 1 — the measurement input carries the run-internal base
       // direction and the fallback provider honors it.
-      max_lines: 2826,
-      max_pub_lines: 1214,
-      max_pub_all_lines: 146,
+      // PinchGestureEvent / View::on_pinch (+~40 lines, +5 pub, +1 pub(all)):
+      // plan §7 touch recognizer — the two-finger pinch/rotation recognizer
+      // is a view-side modifier over the §4 id streams; core carries the
+      // sample DTO, the recognition state, and the observer modifier.
+      max_lines: 2870,
+      max_pub_lines: 1219,
+      max_pub_all_lines: 147,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

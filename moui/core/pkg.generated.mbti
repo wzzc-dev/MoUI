@@ -1143,6 +1143,18 @@ pub fn PathVerb::to_json(Self) -> @json.Json
 pub fn PathVerb::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct PinchGestureEvent {
+  phase : GesturePhase
+  scale_delta : Double
+  rotation_delta : Double
+  focus : Point
+}
+pub fn PinchGestureEvent::equal(Self, Self) -> Bool
+pub fn PinchGestureEvent::not_equal(Self, Self) -> Bool
+pub fn PinchGestureEvent::to_json(Self) -> @json.Json
+pub fn PinchGestureEvent::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 }
@@ -2403,6 +2415,7 @@ pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self
 pub fn[Msg] View::on_gesture(Self[Msg], (GestureEvent) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_hover(Self[Msg], (Bool) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
+pub fn[Msg] View::on_pinch(Self[Msg], (PinchGestureEvent) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_secondary_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_secondary_tap_with_frame(Self[Msg], (Point, Rect) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]

@@ -88,7 +88,7 @@ These constrain every slice and are cheap to re-check, expensive to rediscover:
 | §6 honest text semantics | stop hardcoding `read_only`/`password`, use `View::semantics_state` | done |
 | §9 RTL mirroring | 11 groups across `moui/views` + `moui/core` alignment/guide math, delete the inert `moui/runtime` direction parameter, wire `mirror_x`, mirrored-frame property tests | done 2026-10-23 (widened beyond views, approved) |
 | §10 gesture arena | per-pointer runtime arbitration for tap, long press, drag and scroll; no public event signal | done 2026-11-05 |
-| §7 pinch / rotation | end-to-end gesture variants | done 2026-11-07 (see the §7 landing notes) |
+| §7 pinch / rotation | end-to-end gesture variants | done 2026-11-07 (see the §7 landing notes); touch-side two-finger recognizer delivered 2026-11-07 (see the §7 touch recognizer notes) |
 
 Owner approvals recorded on 2026-10-23, all riding the 0.3.0 migration that the
 API contraction already started:
@@ -501,6 +501,31 @@ capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
   `max_lines/pub/pub(all)` (gesture protocol types + modifier), backend +1
   (`Event::Gesture`), classification `advanced_core_protocol` 1200 -> 1214,
   the decode-test line budget, and the catalog's own self-referential entry.
+
+## §7 touch recognizer notes: two-finger pinch/rotation on the id streams (2026-11-07)
+
+- **The transport §4 built is the recognizer's input.** `View::on_pinch`
+  tracks the first two `PointerEvent.id` streams that press inside the view:
+  the second Down arms the gesture with a `Started` sample (identity deltas,
+  focus = midpoint), every Move of either tracked finger emits one `Moved`
+  sample (span ratio since the previous sample, angle delta wrapped to
+  (-π, π]), and a tracked lift emits `Ended` and clears the pair. Third
+  fingers never join; an explicit `Cancel`/`Exit` tears down silently.
+- **The recognizer is a view-side modifier, not a host channel.** The §7
+  `AppEvent::Gesture` path carries OS-recognized trackpad samples; the touch
+  recognizer consumes the raw multi-pointer stream the same way `on_drag`
+  consumes its single stream, with per-view state in a runtime slot
+  (`PinchRecognitionState`, fixed 60-byte encoding) so rebuilds mid-gesture
+  keep the pair. Samples claim their pointer stream (`activated: true`), so
+  the §10 arena cancels an armed-but-unmoved pinch when a child tap wins —
+  and the recognizer's own `Down` only commits state, keeping child taps
+  alive. Composition limit mirrors `refresh_indicator`: a nested child that
+  captures a stream owns it until the runtime bubbles streams to gesture
+  observers.
+- Evidence: `modifier_pinch_test.mbt` covers arming, per-stream movement
+  deltas (span ratio and angle from either finger), terminal `Ended` +
+  fresh-pair re-arming, third-finger and cancel behavior, the wrap across the
+  ±π seam (a raw -6.0 delta folds to +0.28), and the modifier identity.
 
 ## Debt and known gaps
 

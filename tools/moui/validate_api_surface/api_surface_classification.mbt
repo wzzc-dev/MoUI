@@ -51,7 +51,10 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // GestureEvent / GestureKind / GesturePhase (+14, including the
       // Debug/Eq/ToJson/Show extend lines and View::on_gesture): plan §7 —
       // OS-recognized gesture samples are core event-protocol surface.
-      max_count: 1214,
+      // PinchGestureEvent / View::on_pinch (+5): plan §7 touch recognizer —
+      // the two-finger sample DTO and observer modifier join the same
+      // event-protocol surface.
+      max_count: 1219,
     },
     {
       path: "moui/core/pkg.generated.mbti",
