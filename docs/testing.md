@@ -238,6 +238,32 @@ the `moui` module rather than the unpublished `moui_tests` module because
 `moui_tests` depends on example modules and the reverse app-test import would
 be a module cycle.
 
+### Golden image regression (`moui_tests/golden`)
+
+```sh
+moon test moui_tests/golden --target native
+```
+
+The golden suite renders small deterministic scenes (solid/rounded rects,
+linear gradient, clip+transform+opacity, path fill) through the Sun CPU raster
+renderer in-process — no GPU, no native Skia, no host font provider — and gates
+the RGBA pixels three ways: a perceptual gate (two presentations through
+independent renderer instances diff at zero through `pixelmatch`), a cache gate
+(a second render through the same renderer stays pixel-identical), and the
+golden gate itself (each scene's FNV-1a hash of its RGBA bytes equals a
+checked-in constant in `moui_tests/golden/baselines.mbt`). A content probe
+verifies known scene pixels directly so an opaque hash cannot hide a silently
+dropped command.
+
+The scenes are geometric only because rasterizing them is pure arithmetic and
+the hashes are host-independent; text and shadow scenes wait for glyph/source
+stability across hosts before their hashes can be checked in. The suite is a
+focused check, not yet a profile gate. When an intentional renderer or
+draw-command change moves a hash, read the actual value from the failing
+test's diff, paste it over the constant in `baselines.mbt`, and record the
+reason in the commit message — the same ratchet flow the maintenance baselines
+use.
+
 Provider composition and backend common boundary edits use the following minimum loop
 before broader profiles:
 

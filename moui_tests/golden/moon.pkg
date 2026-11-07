@@ -1,0 +1,7 @@
+supported_targets = "+native"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_sun_renderer",
+  "mizchi/pixelmatch",
+}

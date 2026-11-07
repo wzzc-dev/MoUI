@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tests/golden"
+
+import {
+  "mizchi/pixelmatch",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_sun_renderer",
+}
+
+// Values
+pub let golden_baseline_clip_transform_opacity : UInt64
+
+pub let golden_baseline_linear_gradient : UInt64
+
+pub let golden_baseline_path_fill : UInt64
+
+pub let golden_baseline_solid_and_rounded_rects : UInt64
+
+pub fn golden_baselines() -> Array[(String, UInt64)]
+
+pub fn golden_frame_hash(width~ : Int32, height~ : Int32, row_bytes~ : Int32, pixels~ : FixedArray[Byte]) -> UInt64
+
+pub fn golden_frame_image(@moui_sun_renderer.SunPixelFrame) -> @pixelmatch.Image
+
+pub fn golden_render_frame(Array[@core.DrawCommand]) -> @moui_sun_renderer.SunPixelFrame raise
+
+pub fn golden_render_frames(Array[@core.DrawCommand], passes~ : Int32) -> Array[@moui_sun_renderer.SunPixelFrame] raise
+
+pub fn golden_scenes() -> Array[(String, Array[@core.DrawCommand])]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

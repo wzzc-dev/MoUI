@@ -10,6 +10,7 @@ import {
   "wzzc-dev/moui_web_renderer@0.4.0",
   "wzzc-dev/moui_wgpu_renderer@0.4.0",
   "wzzc-dev/moui_metal_renderer@0.4.0",
+  "wzzc-dev/moui_sun_renderer@0.4.0",
   "wzzc-dev/moui_text_providers@0.4.0",
   "wzzc-dev/moui_skia@0.4.0",
   "Milky2018/wgpu_mbt@0.16.2",
