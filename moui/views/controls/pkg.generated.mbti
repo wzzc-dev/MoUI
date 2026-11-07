@@ -23,6 +23,8 @@ pub fn[Msg] aspect_ratio(@core.View[Msg], Double) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] carousel(Int32, Int32, on_page_change~ : (Int32) -> Msg, builder~ : (Int32) -> @core.View[Msg], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] checkbox_group(Array[ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] chip(String, selected? : Bool, on_click? : Msg?, variant? : @style.ChipVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]

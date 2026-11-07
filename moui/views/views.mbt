@@ -31,7 +31,7 @@ pub using @icon {icon}
 pub using @text {text, text_field, text_area}
 
 ///|
-pub using @controls {clearable_text_field, password_field}
+pub using @controls {carousel, clearable_text_field, password_field}
 
 ///|
 pub using @presence_dot {type PresenceStatus, presence_dot}

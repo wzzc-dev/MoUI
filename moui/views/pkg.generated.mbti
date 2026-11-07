@@ -56,6 +56,8 @@ pub fn[Msg] canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ : (@commo
 
 pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
+pub fn[Msg] carousel(Int32, Int32, on_page_change~ : (Int32) -> Msg, builder~ : (Int32) -> @core.View[Msg], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double) -> @core.View[Msg]

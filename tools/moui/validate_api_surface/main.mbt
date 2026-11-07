@@ -513,8 +513,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // 694 -> 696 / 331 -> 333 (+2 declarations, +2 lines): `range_slider`
       // and `type SliderRange` join the facade — the two-thumb range control
       // is app-facing vocabulary alongside `slider`.
-      max_lines: 696,
-      max_pub_lines: 333,
+      // 696 -> 697 / 333 -> 334 (+1 declaration, +1 line): `carousel` joins
+      // the facade — the swipeable page surface is app-facing vocabulary.
+      max_lines: 697,
+      max_pub_lines: 334,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

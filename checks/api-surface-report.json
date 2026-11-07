@@ -67,8 +67,8 @@
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 693,
-      "public_declarations": 330,
+      "lines": 695,
+      "public_declarations": 331,
       "pub_all_declarations": 1
     },
     {
