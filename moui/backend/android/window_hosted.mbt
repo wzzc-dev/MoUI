@@ -6,6 +6,9 @@
 /// creation and raw surface access stay here.
 pub struct AndroidEmbeddedRuntimeBackend {
   backend : @embedded_runtime.HostedWindowBackend
+  /// Semantics generation already published to the embedder's accessibility
+  /// provider (see `android_accessibility.mbt`).
+  mut accessibility_cursor : @core.SemanticsGeneration?
 }
 
 ///|
@@ -134,6 +137,7 @@ fn new_android_embedded_runtime(
       },
       auto_exit_after_frames~,
     ),
+    accessibility_cursor: None,
   }
 }
 
@@ -239,6 +243,52 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
   _event_loop,
 ) {
   self.backend.about_to_wait()
+  self.pump_accessibility()
+}
+
+///|
+/// Publishes the semantics tree to the embedder's accessibility provider when
+/// the committed generation moved past the published cursor. Runs every event
+/// loop iteration, so `Unchanged` reads skip the projection entirely (the
+/// same cursor discipline the HarmonyOS bridge uses).
+pub fn AndroidEmbeddedRuntimeBackend::pump_accessibility(
+  self : AndroidEmbeddedRuntimeBackend,
+) -> Unit {
+  match self.backend.read_semantics(since=self.accessibility_cursor) {
+    Some(Unchanged(_)) => ()
+    Some(Full(snapshot)) =>
+      self.publish_accessibility_snapshot(Full(snapshot))
+    Some(Delta(_)) =>
+      match self.backend.read_semantics() {
+        Some(read) => self.publish_accessibility_snapshot(read)
+        None => ()
+      }
+    None => ()
+  }
+}
+
+///|
+/// Publishes a `Full` semantics snapshot and records its generation as the
+/// accessibility cursor. Other reads publish nothing: the Java provider
+/// replaces its node table only on an accepted publish, so an empty push
+/// would wipe a table TalkBack is still reading.
+fn AndroidEmbeddedRuntimeBackend::publish_accessibility_snapshot(
+  self : AndroidEmbeddedRuntimeBackend,
+  read : @apphost.SemanticsRead,
+) -> Unit {
+  match read {
+    Full(snapshot) => {
+      match android_accessibility_project(Full(snapshot)) {
+        Some(tree) => {
+          if android_accessibility_publish(tree) {
+            self.accessibility_cursor = Some(snapshot.generation())
+          }
+        }
+        None => ()
+      }
+    }
+    _ => ()
+  }
 }
 
 ///|
