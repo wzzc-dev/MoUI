@@ -498,6 +498,12 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   subscription plan summary, including planned subscription descriptors, for
   inspector tooling. This is the single application state/effect model; there
   is no second component lifecycle state machine.
+  `moui_devtools/overlay` turns those traces into drop-in debug surfaces:
+  `snapshot_overlay` renders the inspector report as a bounded text column,
+  and `frame_trace_overlay` renders the recorded frame traces as a
+  phase-stacked sparkline scaled against the frame budget with a
+  frames/last/p95/over-budget summary line — both pure views over
+  caller-owned data, adding no trace store of their own.
 - Layout uses constraints down, measured size up, then parent placement, and
   writes the result into `LayoutTree`.
 - Paint consumes `LayoutTree` frames to build `RenderTree` and emits

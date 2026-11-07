@@ -4,14 +4,33 @@ package "wzzc-dev/moui_devtools/overlay"
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_devtools",
 }
 
 // Values
+pub fn frame_phase_color(phase~ : String, theme~ : @core.Theme) -> @core.Color
+
+pub fn frame_phase_spans(@moui_devtools.DevtoolsFrameTrace) -> Array[FramePhaseSpan]
+
+pub fn frame_sparkline_segment_heights(@moui_devtools.DevtoolsFrameTrace, budget_ms~ : Double, max_height~ : Double) -> Array[Double]
+
+pub fn frame_trace_entries(@moui_devtools.DevtoolsTrace) -> Array[@moui_devtools.DevtoolsFrameTrace]
+
+pub fn frame_trace_overlay(Array[@moui_devtools.DevtoolsFrameTrace], theme? : @core.Theme, budget_ms? : Double, sparkline_height? : Double, bar_width? : Double, bar_gap? : Double, width? : Double, max_bars? : Int32) -> @core.View[Unit]
+
+pub fn frame_trace_p95(Array[@moui_devtools.DevtoolsFrameTrace]) -> Double
+
+pub fn frame_trace_stats_line(Array[@moui_devtools.DevtoolsFrameTrace], budget_ms~ : Double) -> String
+
 pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme, max_lines? : Int32) -> @core.View[Unit]
 
 // Errors
 
 // Types and methods
+pub struct FramePhaseSpan {
+  phase : String
+  ms : Double
+}
 
 // Type aliases
 
