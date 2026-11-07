@@ -86,11 +86,11 @@
     {
       "id": "ios-skia",
       "owner": "platform/ios",
-      "intent": "lab",
-      "reviewDate": "2026-11-05",
-      "reviewTrigger": "Window-hosted template, matching-device evidence, product-class, or release-gate change; at least quarterly.",
-      "graduation": "Promote only after matching-device L3 covers presenter, input, resize, IME, clipboard, accessibility, detach/recreate, and usability, with a promotion ADR.",
-      "retirement": "Retire if the window-hosted composition cannot build for two reviews or matching-device evidence remains unavailable after the declared lab window."
+      "intent": "product",
+      "reviewDate": "2026-11-08",
+      "reviewTrigger": "R6 capability, evidence manifest, release gate, or product-class change; quarterly otherwise.",
+      "graduation": "Reached `committed_with_gaps` on 2026-11-08 (ADR 0067): matching-simulator evidence covers pixels, pointer, IME text + delete + named keys, clipboard write/read, accessibility node publishing, detach/recreate, cross-extent, and async image. The final `committed` step requires the live rotation/resize observation (scriptable rotation or a matching-device pass) plus a GPU-direct presenter claim with the seven-gate manifests, each via a new ADR.",
+      "retirement": "Downgrade by a new ADR if matching-simulator R6 evidence lapses or the window-hosted composition cannot build for two reviews."
     },
     {
       "id": "harmonyos-skia",

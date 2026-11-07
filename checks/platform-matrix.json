@@ -1,7 +1,12 @@
 {
   "schemaVersion": 1,
   "description": "Canonical MoUI platform/renderer routes. Support tier, evidence level, and product readiness are independent dimensions.",
-  "requiredCheckProfiles": ["pr", "daily", "platform", "theme"],
+  "requiredCheckProfiles": [
+    "pr",
+    "daily",
+    "platform",
+    "theme"
+  ],
   "routes": [
     {
       "id": "macos-skia",
@@ -19,7 +24,11 @@
       "evidenceFile": "checks/platforms/macos.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["pr", "daily", "release"]
+      "coverage": [
+        "pr",
+        "daily",
+        "release"
+      ]
     },
     {
       "id": "web-webgpu",
@@ -37,7 +46,11 @@
       "evidenceFile": "checks/platforms/web.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["pr", "daily", "release"],
+      "coverage": [
+        "pr",
+        "daily",
+        "release"
+      ],
       "fallback": "canvas2d"
     },
     {
@@ -56,7 +69,10 @@
       "evidenceFile": "checks/platforms/windows.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["platform", "release"]
+      "coverage": [
+        "platform",
+        "release"
+      ]
     },
     {
       "id": "linux-skia",
@@ -74,7 +90,10 @@
       "evidenceFile": "checks/platforms/linux.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["platform", "release"]
+      "coverage": [
+        "platform",
+        "release"
+      ]
     },
     {
       "id": "macos-wgpu",
@@ -92,7 +111,10 @@
       "evidenceFile": "checks/platforms/macos.json",
       "productClass": "diagnostic",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "windows-wgpu",
@@ -110,7 +132,10 @@
       "evidenceFile": "checks/platforms/windows.json",
       "productClass": "diagnostic",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "linux-wgpu",
@@ -128,7 +153,10 @@
       "evidenceFile": "checks/platforms/linux.json",
       "productClass": "diagnostic",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "android-skia",
@@ -146,7 +174,10 @@
       "evidenceFile": "checks/platforms/android.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "ios-skia",
@@ -162,9 +193,12 @@
       "releaseBlocking": false,
       "evidenceRequired": "matching-device L3",
       "evidenceFile": "checks/platforms/ios.json",
-      "productClass": "experimental",
-      "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "productClass": "committed_with_gaps",
+      "ready": true,
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "harmonyos-skia",
@@ -182,7 +216,10 @@
       "evidenceFile": "checks/platforms/harmonyos.json",
       "productClass": "committed",
       "ready": true,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "macos-sun",
@@ -200,7 +237,10 @@
       "evidenceFile": "checks/platforms/macos.json",
       "productClass": "experimental",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "windows-sun",
@@ -218,7 +258,10 @@
       "evidenceFile": "checks/platforms/windows.json",
       "productClass": "experimental",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "linux-sun",
@@ -236,7 +279,10 @@
       "evidenceFile": "checks/platforms/linux.json",
       "productClass": "experimental",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     },
     {
       "id": "wechat-canvas2d",
@@ -254,7 +300,10 @@
       "evidenceFile": "checks/platforms/wechat.json",
       "productClass": "experimental",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     }
   ],
   "architectureVariants": [
@@ -266,7 +315,9 @@
       "target": "native",
       "architecture": "riscv64",
       "abi": "gnu",
-      "rendererModes": ["skia-raster"],
+      "rendererModes": [
+        "skia-raster"
+      ],
       "tier": 3,
       "releaseGate": "non-blocking",
       "releaseBlocking": false,
@@ -274,7 +325,10 @@
       "evidenceFile": "checks/architecture-evidence/linux-skia-riscv64.json",
       "productClass": "experimental",
       "ready": false,
-      "coverage": ["scheduled", "manual"]
+      "coverage": [
+        "scheduled",
+        "manual"
+      ]
     }
   ]
 }

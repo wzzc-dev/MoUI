@@ -229,7 +229,16 @@ fn validate_route_intent(
 ) -> Unit {
   let expected = intent_expectation(governance.intent)
   if expected is Some((product_class, ready)) {
-    if route.product_class != product_class {
+    // `product` intent covers both committed classes: `committed` (all R6
+    // capabilities, ADR 0046 second step / ADR 0066) and
+    // `committed_with_gaps` (ADR 0046 first step / ADR 0067), the recorded
+    // state where evidence is complete minus documented gaps.
+    let class_ok = route.product_class == product_class ||
+      (
+        governance.intent == "product" &&
+        route.product_class == "committed_with_gaps"
+      )
+    if !class_ok {
       failures.push(
         "route " +
         route.id +
@@ -237,7 +246,7 @@ fn validate_route_intent(
         governance.intent +
         "' requires productClass '" +
         product_class +
-        "', found '" +
+        "' (or 'committed_with_gaps' for the product intent), found '" +
         route.product_class +
         "'",
       )

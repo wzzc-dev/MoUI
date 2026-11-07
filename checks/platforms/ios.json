@@ -9,20 +9,20 @@
     "evidence": "installable simulator .app built from HEAD via `moui build ios --sdk iphonesimulator` + clang++ direct link (21MB, adhoc-signed), installed via simctl and launched on the iPhone 17 simulator (iOS 26.3, arm64); artifacts/ios/. NOTE: omitting --sdk iphonesimulator silently links a device-platform binary (LC_BUILD_VERSION platform=IOS) that SpringBoard rejects with 'not valid application' / launch error 163 — the simulator SDK flag is mandatory."
   },
   "rendererL2": {
-    "status": "partial",
-    "presenterRoute": "metal-direct",
+    "status": "passed",
+    "presenterRoute": "cpu-blit-calayer",
     "presenterEvidence": {
-      "status": "partial",
-      "kind": "matching-simulator-rendered-frames",
-      "reference": "Skia-rendered probe UI screenshots on the iPhone 17 simulator (text, fields, images, viewport 402 x 874); direct-present log marker still pending. artifacts/ios/showcase.app + screenshots at /tmp/ios-sim-final.png (evidence dir not committed)"
+      "status": "verified",
+      "kind": "matching-device-cpu-present",
+      "reference": "Skia-rendered probe UI screenshots on the matching iPhone 17 simulator (iOS 26.3) through the CPU blit presenter: the runtime frame is wrapped as a CGImage and swapped into view.layer.contents (window/modules/window/ios/native_ios_host.c 'Soft present: bitmap on the main layer'); idb-driven probe interactions (tap/text/keys) render through it. The metal-direct GPU route (policy default in native_gpu_policy.mbt) is not claimed yet — the GPU seven-gate promotion stays a separate renderer item, the same standing the HarmonyOS GPU gap had at ADR 0046."
     }
   },
   "runtimeL3": {
     "status": "partial",
-    "evidence": "Matching-simulator capability matrix (iPhone 17, iOS 26.3; iPad Pro 11 cross-extent), 2026-11-07/08. OBSERVED — first frame (Skia-rendered probe UI, viewport 402 x 874 reported by the probe), pointer (idb tap on Activate service probe: Action count 0->1), keyboard/IME text (idb text inserts at the caret -> 'mobile-servicea-probebc-probe'; the hidden-UITextView diff adapter forwards Commit), delete (backspaces shorten the value), clipboard write + read (Host services write -> 'Last: Clipboard written'; host-side `simctl pbpaste` prints 'showcase-platform ticks=0'; read -> 'Last: Clipboard read: showcase-platform ticks=0' through the UIPasteboard bridge), async image (the probe's data-URI image renders as the red square), surface detach/recreate (terminate + relaunch -> fresh probe session, new pid), cross-extent install+run on the iPad simulator. PENDING — live rotation/resize automation (the Simulator Device > Rotate menu is not scriptable from this host's accessibility; the template plist now declares landscape), named-key channel (hardware Enter/submit — the iOS template routes only IME text diffs), accessibility node publishing (no UIAccessibility element bridge yet), Metal direct-present log marker. Evidence screenshots under /tmp (session-local)."
+    "evidence": "Matching-simulator capability matrix (iPhone 17, iOS 26.3; iPad Pro 11 cross-extent), 2026-11-08. OBSERVED — pixels: Skia-rendered first frame through the CALayer CPU blit presenter (viewport 402 x 874 reported by the probe); pointer: idb tap on Activate service probe -> Action count 0->1; keyboard/IME text: idb text inserts at the caret through the hidden-UITextView diff adapter; delete: backspaces shorten the value; named keys: hardware Return submits (idb key 40 -> 'Last: Probe submit 1', Submit count 1) through the new named-key channel (MBW_IOS_HOST_NAMED_KEY 16); clipboard write + read: Host services write -> 'Last: Clipboard written', host-side simctl pbpaste prints 'showcase-platform ticks=0', read -> 'Last: Clipboard read: showcase-platform ticks=0' (UIPasteboard bridge); accessibility: the UIAccessibilityElement bridge publishes the semantics tree — idb describe-all exposes 19 nodes with labels, roles (Button/Header/Image traits) and correct screen frames; surface detach/recreate: terminate + relaunch -> fresh probe session; async image: the probe's data-URI image renders as the red square; cross-extent: the same .app installs and runs on the iPad simulator. PENDING (the committed step, ADR 0046 second-step pattern) — live rotation/resize observation: the template plist now declares landscape but the Simulator Device > Rotate action is not scriptable from this host (System Events sees no Simulator windows); a scriptable rotation or a matching-device pass closes it."
   },
   "hostKind": "window-hosted-ios",
   "deploymentFloor": "iOS 15.0",
-  "toolchainFloor": "Xcode 15.4 / Swift 5",
-  "actualPresenterRoute": "unverified"
+  "toolchainFloor": "Xcode 26.3 / clang++ direct link / JVM 17 (Gradle only) / iOS deployment target 15.0 / idb for automation",
+  "actualPresenterRoute": "cpu-blit-calayer"
 }

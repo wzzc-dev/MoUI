@@ -132,7 +132,7 @@ This file is generated from repository manifests and validator reports.
 |---|---|---|---|---|---|---|---|---|
 | android | passed | passed | passed | window-hosted-android | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | cpu-blit-anative-window | cpu-blit-anative-window |
 | harmonyos | passed | passed | passed | window-hosted-harmonyos | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | egl-direct |
-| ios | passed | partial | partial | window-hosted-ios | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
+| ios | passed | passed | partial | window-hosted-ios | iOS 15.0 | Xcode 26.3 / clang++ direct link / JVM 17 (Gradle only) / iOS deployment target 15.0 / idb for automation | cpu-blit-calayer | cpu-blit-calayer |
 | linux | passed | passed | passed | native-wayland | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
 | macos | passed | passed | passed | native-window | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
 | web | passed | passed | passed | browser | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |

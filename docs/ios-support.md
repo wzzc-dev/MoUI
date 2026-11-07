@@ -132,25 +132,33 @@ drivable from the host, and the clipboard channel landed the same day:
 - **Surface detach/recreate**: terminate + relaunch -> fresh probe session.
 - **Cross-extent**: the same .app installs and runs on the iPad simulator.
 
-Still pending for `committed` (mirrors `checks/platforms/ios.json`):
+Named keys landed the same day (`MBW_IOS_HOST_NAMED_KEY` 16): hardware
+Return submits through the proxy's `insertText:` interception ("Last: Probe
+submit 1", Submit count 1), and `pressesBegan/Ended` forward the HID codes
+for Backspace/Tab/Escape/arrows. The accessibility bridge landed too: the
+semantics tree publishes into a flat, traversal-ordered
+UIAccessibilityElement array — idb describe-all exposes 19 nodes with
+labels, role traits and correct screen frames, and `accessibilityActivate`
+synthesizes a tap at the node center.
 
-- Live rotation/resize automation — the Simulator "Device > Rotate" menu is
-  not scriptable from this host's accessibility stack; the template now
-  declares landscape orientations, so a scriptable rotation completes the
-  live-resize observation.
-- Named-key channel — hardware Enter/submit/arrows are not routed (the iOS
-  template forwards only IME text diffs); the probe submit count cannot be
-  driven by keyboard yet.
-- Accessibility node publishing — no UIAccessibility element bridge yet
-  (the Android route's AccessibilityNodeProvider bridge is the pattern).
-- Metal direct-present log marker (rendererL2 stays `partial`).
+Still pending for the final `committed` step (ADR 0067; mirrors
+`checks/platforms/ios.json`):
+
+- Live rotation/resize observation — the Simulator "Device > Rotate" action
+  is not scriptable from this host's accessibility stack (System Events sees
+  no Simulator windows); the template declares landscape orientations, so a
+  scriptable rotation or a matching-device pass closes it.
+- Metal direct-present log marker — the route presents through the CALayer
+  CPU blit (`cpu-blit-calayer`); the metal-direct GPU claim needs the
+  seven-gate manifests.
 
 ## Status
 
 The route compiles and is usable for template integration, and now carries
-matching-simulator evidence for pixels, pointer, IME text + delete,
-clipboard write/read, surface lifecycle, and cross-extent install, but it
-remains **experimental** (product_class `experimental`, `ready=false`) until
-the pending list above closes. See
+matching-simulator evidence for pixels, pointer, IME text + delete + named
+keys (Enter submit), clipboard write/read, accessibility node publishing,
+surface lifecycle, and cross-extent install:
+`productClass=committed_with_gaps`, `ready=true` (ADR 0067), until the
+pending list above closes. See
 `docs/platform-readiness-declaration.md` and
 `docs/window-hosted-moui.md` for the promotion criteria.

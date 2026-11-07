@@ -38,7 +38,7 @@ The current mainline is native Skia raster plus the Web `wasm-gc + window/web + 
 | Windows | **committed** | Product mainline (L0–L3 evidence) |
 | Linux | **committed** | Product mainline (L0–L3 evidence) |
 | Android | **committed** | Matching-emulator verified: ANativeWindow CPU-blit Skia present, pointer, keyboard/IME text + named keys, resize, app viewport, clipboard write + read (embedder JNI bridge), AccessibilityNodeProvider semantics, detach/recreate, async image (ADR 0066) |
-| iOS | **experimental** | Simulator .app builds via runtime compat shims; R6 evidence collection in progress |
+| iOS | **committed_with_gaps** | Matching-simulator verified: CALayer CPU-blit Skia present, pointer, keyboard/IME text + delete + named keys (Enter submit), clipboard write + read (UIPasteboard bridge), UIAccessibilityElement semantics, detach/recreate, async image (ADR 0067); live rotation + metal-direct pending |
 | HarmonyOS | **committed** | Matching-device verified: `egl-direct` Skia present, pointer, keyboard/IME, resize, app viewport, clipboard read + write, ArkUI accessibility, detach/recreate, async image (ADR 0046) |
 
 Android, iOS, and WeChat Mini Program are **not** "unwired glue only." Android is **committed** on its recorded matching-emulator R6 evidence (ADR 0066). iOS and WeChat remain **experimental**: code compiles and host-sim tests pass, but no development/demonstration usability or product commitment is made without matching-device evidence. HarmonyOS is **committed** on its recorded matching-device R6 evidence (ADR 0046). See [platform readiness declaration](docs/platform-readiness-declaration.md).
