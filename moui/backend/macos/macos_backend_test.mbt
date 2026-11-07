@@ -17,7 +17,9 @@ test "macos capability summary exposes native service readiness" {
   inspect(summary.services.file_access, content="true")
   inspect(summary.drag_drop_available, content="true")
   inspect(summary.multi_window, content="true")
-  inspect(summary.native_accessibility_available, content="false")
+  // Raised with the external AX L2 probe pass recorded in
+  // docs/plans/active/native-accessibility.md (2026-11-07).
+  inspect(summary.native_accessibility_available, content="true")
 }
 
 ///|
