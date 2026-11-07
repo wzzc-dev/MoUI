@@ -291,10 +291,7 @@ pub fn app_environment() -> @services.AppEnvironment {
     },
     write_text=text => {
       if ios_clipboard_write_text(text) {
-        @services.ServiceTask::succeed(
-          key="ios:clipboard:write-text",
-          value=(),
-        )
+        @services.ServiceTask::succeed(key="ios:clipboard:write-text", value=())
       } else {
         @services.ServiceTask::fail(
           key="ios:clipboard:write-text",
