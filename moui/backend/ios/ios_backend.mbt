@@ -268,7 +268,40 @@ pub fn ios_capability_summary(
 }
 
 ///|
-/// The embedded host channel does not yet expose an app-facing service bridge.
+/// Clipboard answers synchronously through the general UIPasteboard
+/// (`ios_clipboard.mbt`), the same contract Android provides from the
+/// embedder's JNI ClipboardManager bridge.
 pub fn app_environment() -> @services.AppEnvironment {
-  @services.AppEnvironment::new()
+  let clipboard = @services.ClipboardServices::new(
+    read_text=() => {
+      match ios_clipboard_read_text() {
+        Some(text) =>
+          @services.ServiceTask::succeed(
+            key="ios:clipboard:read-text",
+            value=text,
+          )
+        None =>
+          @services.ServiceTask::fail(
+            key="ios:clipboard:read-text",
+            error=@services.ServiceError::unavailable(
+              "clipboard does not contain text",
+            ),
+          )
+      }
+    },
+    write_text=text => {
+      if ios_clipboard_write_text(text) {
+        @services.ServiceTask::succeed(
+          key="ios:clipboard:write-text",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="ios:clipboard:write-text",
+          error=@services.ServiceError::unavailable("clipboard write failed"),
+        )
+      }
+    },
+  )
+  @services.AppEnvironment::new(services=@services.AppServices::new(clipboard~))
 }

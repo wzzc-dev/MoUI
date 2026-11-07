@@ -22,6 +22,6 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "ios_present.mm" ],
+  "native-stub": [ "ios_present.mm", "ios_clipboard.mm" ],
   targets: { },
 )

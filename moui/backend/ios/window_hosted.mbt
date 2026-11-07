@@ -66,6 +66,26 @@ fn new_ios_embedded_runtime(
     backend: @embedded_runtime.HostedWindowBackend::new(
       title~,
       runtime_factory~,
+      // Answer clipboard requests synchronously from the general UIPasteboard
+      // so Ctrl+C / Ctrl+X / Ctrl+V style commands resolve on the spot (see
+      // `ios_clipboard.mbt`); the showcase service buttons go through
+      // `app_environment()`'s ClipboardServices.
+      service_handler=request => {
+        match request {
+          Clipboard(ReadText) =>
+            match ios_clipboard_read_text() {
+              Some(text) => Some(ClipboardText(text))
+              None => Some(Unavailable("clipboard does not contain text"))
+            }
+          Clipboard(WriteText(text)) =>
+            if ios_clipboard_write_text(text) {
+              Some(ClipboardWritten)
+            } else {
+              Some(Unavailable("clipboard write failed"))
+            }
+          _ => None
+        }
+      },
       surface_binding_factory=() => {
         host_surface_binding_from_ios(surface_binding_factory())
       },

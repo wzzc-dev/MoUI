@@ -714,6 +714,7 @@ fn build_ios(
   }
   let mm_glue = [
     join_path(workspace_root_abs, "moui/backend/ios/ios_present.mm"),
+    join_path(workspace_root_abs, "moui/backend/ios/ios_clipboard.mm"),
   ]
   for glue in mm_glue {
     if path_is_file(glue) {
