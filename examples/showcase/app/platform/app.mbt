@@ -501,12 +501,20 @@ pub fn view_body(
   width~ : Double = 0.0,
   viewport~ : @core.Size? = None,
 ) -> @moui.View[Msg] {
-  ignore(width)
-  match model.route {
+  // The shell detail column passes the measured content width. Without a
+  // pinned frame the page column falls back to its intrinsic width (the widest
+  // child, e.g. the probe card), so pages render narrower than the viewport
+  // even after the runtime resize reaches the layout.
+  let page = match model.route {
     "canvas" => canvas_page(model)
     "mobile-service-probe" => mobile_service_probe_page(model, viewport~)
     "route-session" => route_session_page(model)
     _ => host_services_page(model)
+  }
+  if width > 0.0 {
+    page.frame(width=width)
+  } else {
+    page
   }
 }
 
