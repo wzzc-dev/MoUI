@@ -500,10 +500,16 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   is no second component lifecycle state machine.
   `moui_devtools/overlay` turns those traces into drop-in debug surfaces:
   `snapshot_overlay` renders the inspector report as a bounded text column,
-  and `frame_trace_overlay` renders the recorded frame traces as a
+  `frame_trace_overlay` renders the recorded frame traces as a
   phase-stacked sparkline scaled against the frame budget with a
-  frames/last/p95/over-budget summary line — both pure views over
-  caller-owned data, adding no trace store of their own.
+  frames/last/p95/over-budget summary line, `inspector_tree_view` renders
+  the view-tree summary as a depth-indented outline with per-element dirty
+  channels (build/layout/paint) and the snapshot's counts header, and
+  `trace_timeline_view` renders the traced interactions as one row per
+  entry with active-channel letters (messages/effects/frame/caches/
+  semantics) and per-channel summary numbers, keeping the most recent rows
+  visible — all pure views over caller-owned data, adding no trace store
+  of their own.
 - Layout uses constraints down, measured size up, then parent placement, and
   writes the result into `LayoutTree`.
 - Paint consumes `LayoutTree` frames to build `RenderTree` and emits

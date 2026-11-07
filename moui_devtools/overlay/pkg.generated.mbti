@@ -22,7 +22,17 @@ pub fn frame_trace_p95(Array[@moui_devtools.DevtoolsFrameTrace]) -> Double
 
 pub fn frame_trace_stats_line(Array[@moui_devtools.DevtoolsFrameTrace], budget_ms~ : Double) -> String
 
+pub fn inspector_tree_rows(@runtime.InspectorSnapshot) -> Array[InspectorTreeRow]
+
+pub fn inspector_tree_view(@runtime.InspectorSnapshot, theme? : @core.Theme, width? : Double, row_height? : Double, max_rows? : Int32) -> @core.View[Unit]
+
 pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme, max_lines? : Int32) -> @core.View[Unit]
+
+pub fn trace_timeline_rows(Array[@moui_devtools.DevtoolsTraceEntry]) -> Array[TraceTimelineRow]
+
+pub fn trace_timeline_skip(entry_count~ : Int32, max_rows~ : Int32) -> Int32
+
+pub fn trace_timeline_view(Array[@moui_devtools.DevtoolsTraceEntry], theme? : @core.Theme, width? : Double, row_height? : Double, max_rows? : Int32) -> @core.View[Unit]
 
 // Errors
 
@@ -30,6 +40,19 @@ pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme, max_li
 pub struct FramePhaseSpan {
   phase : String
   ms : Double
+}
+
+pub struct InspectorTreeRow {
+  depth : Int32
+  kind : String
+  element_id : Int32
+  dirty_channels : String
+}
+
+pub struct TraceTimelineRow {
+  sequence : Int32
+  channels : String
+  summary : String
 }
 
 // Type aliases
