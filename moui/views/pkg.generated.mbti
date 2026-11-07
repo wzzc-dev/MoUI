@@ -78,6 +78,10 @@ pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ 
 
 pub fn[Msg] collapsible_panel(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] color_picker(selected~ : @core.Color, on_change~ : (@core.Color) -> Msg, swatches? : Array[@core.Color], columns? : Int32, width? : Double) -> @core.View[Msg]
+
+pub fn color_picker_default_swatches() -> Array[@core.Color]
+
 pub fn[Msg] column(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
 pub fn[Msg] column_visibility_panel(Array[@data.TableColumn], visible~ : Array[String], on_toggle~ : (String, Bool) -> Msg, locked? : Array[String], title? : String, summary? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]

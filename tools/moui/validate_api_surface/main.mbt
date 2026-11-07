@@ -530,8 +530,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // route transition parameters join the facade — `type RouteTransition`,
       // `type RouteTransitionKind`, and the four constructors behind
       // `router_stack`/`navigation_stack_selected`'s `transition~` parameter.
-      max_lines: 709,
-      max_pub_lines: 341,
+      // 709 -> 713 / 341 -> 343 (+2 declarations, +4 lines): `color_picker`
+      // and `color_picker_default_swatches` join the facade — the token-grid
+      // picker is app-facing vocabulary.
+      max_lines: 713,
+      max_pub_lines: 343,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

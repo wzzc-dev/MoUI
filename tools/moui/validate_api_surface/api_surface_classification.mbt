@@ -87,7 +87,8 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // carousel +1：swipeable page surface 与 slider/range_slider 同属
       // app-facing 视图构造词汇。
       // refresh_indicator +1：pull-to-refresh surface 同上。
-      max_count: 141,
+      // color_picker +2：token-grid picker 与默认色板 ramp 同上。
+      max_count: 143,
     },
     {
       path: "moui/views/pkg.generated.mbti",

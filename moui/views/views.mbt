@@ -34,6 +34,8 @@ pub using @text {text, text_field, text_area}
 pub using @controls {
   carousel,
   clearable_text_field,
+  color_picker,
+  color_picker_default_swatches,
   password_field,
   refresh_indicator,
 }
