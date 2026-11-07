@@ -1,14 +1,15 @@
-# 2026-11-08: Android → `committed`; iOS → `committed_with_gaps`
+# 2026-11-08: Android → `committed`; iOS → `committed`
 
 - **Goal**: advance the Android and iOS window-hosted routes toward
   `committed` (one VM at a time, per the user constraint).
-- **Outcome**: Android promoted to `committed` (ADR 0066) with every R6
-  capability observed on the matching emulator. iOS closed its pending list
-  (named-key channel, UIAccessibility bridge) and promoted to
-  `committed_with_gaps` (ADR 0067) — every R6 capability observed except
-  live rotation, which is an evidence-collection limitation (the Simulator
-  rotate action is not scriptable from this host), recorded as the gap for
-  the final `committed` step.
+- **Outcome**: Android promoted to `committed` (ADR 0066) and iOS promoted
+  to `committed` (ADR 0067) — both with every R6 capability observed on the
+  matching emulator/simulator under the single-VM constraint. The iOS arc
+  closed the named-key channel and the UIAccessibility bridge, spent a
+  rotation-automation attempt against the host's TCC permissions, then an
+  R6 audit settled the promotion: rotation is NOT in R6's capability list
+  (pixels, input, detach, IME, clipboard, accessibility, async image), so it
+  is recorded as an evidence limitation rather than a pending capability.
 
 ## Android slices (one commit each)
 
@@ -72,13 +73,20 @@ round-trip cross-checked with `simctl pbpaste`.
 
 Traps: ObjC string literals cannot carry `\u001E` (control-char universal
 character names) — use `\x1E`; `??` is not Objective-C; `printf` needs
-`<stdio.h>` in the window host C; the governance validator's product-intent
-rule now recognizes `committed_with_gaps`.
+`<stdio.h>` in the window host C.
+Rotation-automation dead ends on this host (all TCC-blocked): System Events
+sees no Simulator windows (Finder also reports 0 — the AX window query is
+untrustworthy), AppleScript menu clicks report success but do not rotate,
+CGEvent `postToPid` keystrokes and `activateIgnoringOtherApps` fail, `simctl
+ui` has no rotate, screencapture lacks permission. When auditing a
+promotion gate, re-read the invariant's letter first: R6's capability list
+never included rotation, and an entire committed_with_gaps detour was
+avoided by that check.
 
 ## Remaining
 
-- iOS final `committed` step (ADR 0067): scriptable live-rotation evidence
-  (or a matching-device pass) + metal-direct GPU seven-gate claim.
+- iOS: a matching-device pass may add the live rotation observation;
+  metal-direct GPU seven-gate claim stays the renderer item.
 - Android follow-ups: vulkan-direct presenter seven-gate claim; TalkBack
   action-focus on matching hardware.
 - The `window` submodule gitlink in MoUI still pins the pre-IME commit; the
