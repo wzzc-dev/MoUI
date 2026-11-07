@@ -33,6 +33,11 @@ pub(all) struct ShowcaseModel {
   todo_draft : String
   last_drop_label : String
   gesture_label : String
+  pinch_total : Double
+  rotation_total : Double
+  pan_total : @geometry.Point
+  double_tap_count : Int32
+  last_gesture_phase : String
   selection_text : String
   diagnostics_input : ShowcaseDiagnosticsInput
   diagnostics_panel_scroll : @geometry.Point
@@ -93,6 +98,7 @@ pub(all) enum ShowcaseMsg {
   TodoRemove(Int32)
   RecordFileDrop(Array[String])
   RecordGesture(String)
+  RecordTrackpadGesture(@core.GestureEvent)
   SelectionTextChanged(String)
   ResizePanel(Double)
   DiagnosticsPanelScrolled(@geometry.Point)
@@ -174,6 +180,11 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     todo_draft: "",
     last_drop_label: "No files dropped",
     gesture_label: "No gesture yet",
+    pinch_total: 0.0,
+    rotation_total: 0.0,
+    pan_total: @geometry.Point::new(x=0.0, y=0.0),
+    double_tap_count: 0,
+    last_gesture_phase: "none",
     selection_text: showcase_selection_passage(),
     diagnostics_input: ShowcaseDiagnosticsInput::fallback(),
     diagnostics_panel_scroll: @geometry.Point::new(x=0.0, y=0.0),
@@ -383,10 +394,58 @@ pub fn ShowcaseModel::update(
     RecordFileDrop(paths) =>
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)", }
     RecordGesture(label) => { ..self, gesture_label: label, }
+    RecordTrackpadGesture(event) => self.record_trackpad_gesture(event)
     SelectionTextChanged(value) => { ..self, selection_text: value, }
     ResizePanel(size) => { ..self, slider_value: size / 520.0, }
     DiagnosticsPanelScrolled(point) =>
       { ..self, diagnostics_panel_scroll: point, }
+  }
+}
+
+///|
+
+///|
+/// Fold one OS-recognized gesture sample into the trackpad-gesture card's
+/// evidence totals: per-kind accumulation plus the last stream phase, so the
+/// Showcase can prove the `AppEvent::Gesture` path end to end.
+fn ShowcaseModel::record_trackpad_gesture(
+  self : ShowcaseModel,
+  event : @core.GestureEvent,
+) -> ShowcaseModel {
+  let phase = match event.phase {
+    @core.GesturePhase::Started => "started"
+    @core.GesturePhase::Moved => "moved"
+    @core.GesturePhase::Ended => "ended"
+  }
+  match event.kind {
+    @core.GestureKind::Pinch =>
+      {
+        ..self,
+        pinch_total: self.pinch_total + event.scale_delta,
+        last_gesture_phase: phase,
+      }
+    @core.GestureKind::Rotate =>
+      {
+        ..self,
+        rotation_total: self.rotation_total + event.rotation_delta,
+        last_gesture_phase: phase,
+      }
+    @core.GestureKind::Pan =>
+      {
+        ..self,
+        pan_total: @geometry.Point::new(
+          x=self.pan_total.x + event.pan_delta.x,
+          y=self.pan_total.y + event.pan_delta.y,
+        ),
+        last_gesture_phase: phase,
+      }
+    @core.GestureKind::DoubleTap =>
+      {
+        ..self,
+        double_tap_count: self.double_tap_count + 1,
+        last_gesture_phase: phase,
+      }
+    @core.GestureKind::Pressure => { ..self, last_gesture_phase: phase, }
   }
 }
 

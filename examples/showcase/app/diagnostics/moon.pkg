@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/math",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui/views",

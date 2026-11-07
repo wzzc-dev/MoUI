@@ -486,6 +486,13 @@ capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
   state per stream. Deliberately v1-honest: no scroll-wheel integration, no
   built-in zoom accumulation, and the embedded hosts still deliver one finger
   only (the upstream `host_queue.mbt` finger-id gap is unchanged).
+- **Showcase evidence**: the Interaction Lab carries a Trackpad gestures card
+  (`trackpad_gesture_card`) — an `on_gesture` surface with a marker canvas
+  that applies the accumulated scale/rotation/translation, captions with the
+  live totals, and a `showcase.trackpad-gesture-surface` semantic id. The
+  app-level tests drive a real runtime through a full gesture stream and
+  assert both the delivery count and the folded model totals
+  (`interaction_lab_section_wbtest.mbt`), plus the no-pointer-target drop.
 - Evidence: decode table tests for all five variants with phase and unit
   conversion (`window_event_decode_test.mbt`), modifier delivery/ignoring
   (`modifier_test.mbt`), and runtime end-to-end cases for cursor-targeting,

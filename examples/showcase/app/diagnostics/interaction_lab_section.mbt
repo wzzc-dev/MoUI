@@ -15,6 +15,7 @@ fn ShowcaseModel::interaction_lab_section(
         self.file_drop_card(theme, card_width, self.last_drop_label),
         self.focus_shortcut_card(theme, card_width),
         self.gesture_card(theme, card_width, self.gesture_label),
+        self.trackpad_gesture_card(theme, card_width),
         self.text_selection_card(theme, card_width, self.selection_text),
         self.popover_dropdown_card(theme, card_width),
         self.variant_gallery_card(theme, card_width),
@@ -124,6 +125,107 @@ fn ShowcaseModel::gesture_card(
     height=146.0,
     padding=theme.spacing_scale.md,
   )
+}
+
+///|
+/// OS-recognized gesture evidence (pointer-input-parity §7): the surface
+/// receives `AppEvent::Gesture` samples through `View::on_gesture`, the
+/// marker visual applies the accumulated totals, and the captions carry the
+/// exact numbers the app-level test asserts. The closure captures the model
+/// totals at build time — every update rebuilds the card, so the visual and
+/// the readout track the stream one frame behind the events, which is the
+/// honest TEA shape.
+fn ShowcaseModel::trackpad_gesture_card(
+  self : ShowcaseModel,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[ShowcaseMsg] {
+  ignore(self)
+  let surface_width = width - 64.0
+  let surface_height = 72.0
+  let pinch = self.pinch_total
+  let rotation = self.rotation_total
+  let pan = self.pan_total
+  let marker = @views.canvas(
+    measure=_ => @core.Size::new(width=surface_width, height=surface_height),
+    draw=(ctx, frame) => {
+      let center_x = frame.origin.x + frame.size.width / 2.0 + pan.x
+      let center_y = frame.origin.y + frame.size.height / 2.0 + pan.y
+      let scale = clamp_double(1.0 + pinch, 0.25, 4.0)
+      let half = 18.0 * scale
+      let cos = @math.cos(rotation)
+      let sin = @math.sin(rotation)
+      fn corner(dx : Double, dy : Double) -> @core.Point {
+        @core.Point::new(
+          x=center_x + dx * cos - dy * sin,
+          y=center_y + dx * sin + dy * cos,
+        )
+      }
+
+      @views.draw_path(ctx, {
+        verbs: [
+          @core.PathVerb::MoveTo(corner(0.0 - half, 0.0 - half)),
+          @core.PathVerb::LineTo(corner(half, 0.0 - half)),
+          @core.PathVerb::LineTo(corner(half, half)),
+          @core.PathVerb::LineTo(corner(0.0 - half, half)),
+          @core.PathVerb::Close,
+        ],
+        fill: Some(@core.Brush::Solid(theme.palette.primary)),
+        stroke: None,
+        stroke_width: 0.0,
+      })
+    },
+    semantics_label="trackpad gesture marker",
+  )
+  let surface = container(
+      marker,
+      width=surface_width,
+      height=surface_height,
+      background=theme.palette.surface_variant.multiply_alpha(0.44),
+      corner_radius=theme.radius_scale.sm,
+    )
+    .on_gesture(event => RecordTrackpadGesture(event))
+    .semantic_id("showcase.trackpad-gesture-surface")
+  showcase_soft_card(
+    theme,
+    column(
+      [
+        text("Trackpad gestures", width=width - 32.0, height=24.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        surface,
+        text(
+          "pinch \{showcase_signed_percent(self.pinch_total)} · rotate \{showcase_signed_radians(self.rotation_total)} rad",
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "pan (\{showcase_signed_radians(self.pan_total.x)}, \{showcase_signed_radians(self.pan_total.y)}) · double taps \{self.double_tap_count} · \{self.last_gesture_phase}",
+          width=width - 32.0,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=Start,
+    ),
+    width~,
+    height=218.0,
+    padding=theme.spacing_scale.md,
+  )
+}
+
+///|
+fn showcase_signed_percent(value : Double) -> String {
+  "\{(value * 100.0).round()}"
+}
+
+///|
+fn showcase_signed_radians(value : Double) -> String {
+  "\{((value * 100.0).round() / 100.0)}"
 }
 
 ///|

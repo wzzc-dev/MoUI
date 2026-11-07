@@ -28,7 +28,9 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 720,
     },
     { path: "examples/showcase/app/platform/app.mbt", max_lines: 720, },
-    { path: "examples/showcase/app/diagnostics/app.mbt", max_lines: 720, },
+    // 720 -> 725 (2026-11-07, §7): the Showcase gesture-evidence state folds
+    // five message kinds into per-kind totals (record_trackpad_gesture).
+    { path: "examples/showcase/app/diagnostics/app.mbt", max_lines: 725, },
     {
       path: "examples/showcase/app/diagnostics/components.mbt",
       max_lines: 960,
@@ -163,10 +165,10 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 95,
     },
     {
-      // 383 -> 389 (2026-11-07, §7): the decode-test budget note and this
-      // self-referential entry's own note grow with the gesture evidence.
+      // 383 -> 391 (2026-11-07, §7): the decode-test and showcase-app budget
+      // notes, plus this self-referential entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 389,
+      max_lines: 391,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
