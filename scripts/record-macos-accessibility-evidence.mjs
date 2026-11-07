@@ -142,7 +142,12 @@ const matchActionTrace = (nativeActions, requests, receipts) => {
     );
     const receipt = request && receipts.find(candidate =>
       candidate.nodeId === request.nodeId && candidate.kind === request.kind &&
-      candidate.before === request.generation &&
+      // AX actions dispatch with the Latest precondition, so the runtime may
+      // have advanced past the element's payload generation between the sync
+      // that produced the element and this enqueue. The causal contract is
+      // "dispatch happened at or after the request's snapshot": same node,
+      // same kind, receipt.before >= request.generation.
+      Number(candidate.before) >= Number(request.generation) &&
       !matched.some(item => item.receipt === candidate),
     );
     if (!request || !receipt) {

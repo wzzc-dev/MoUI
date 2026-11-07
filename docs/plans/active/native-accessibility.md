@@ -36,8 +36,16 @@
 - [x] Live-region deltas produce announcements without moving either focus.
 - [x] Web exposes legal DOM/ARIA roles, relations, ranges, collections, modal,
   and live metadata through a real Chrome accessibility-tree smoke.
-- [ ] macOS publishes real NSAccessibility objects and passes AX query/action
-  plus VoiceOver navigation evidence for the Showcase Probe.
+- [x] macOS publishes real NSAccessibility objects and passes AX query/action
+  evidence for the Showcase Probe:
+  `node scripts/record-macos-accessibility-evidence.mjs --timeout-ms 45000
+  --require-passed` records `result=passed` with 199 committed AX nodes, all
+  11 probe identifiers, 18 native actions (press, dialog dismiss, checkbox,
+  slider increment/set_numeric_value, text-field focus/text/selection/submit,
+  tree/grid/select), three-phase keyboard focus, accessibility focus, and
+  announcements.
+- [ ] macOS VoiceOver navigation evidence (screen-reader session over the
+  probe; `unverifiedCapabilities` records `voiceover` pending).
 - [x] Windows and Linux remain `native_accessibility_available=false` until
   real UIA/AT-SPI client evidence exists.
 - [x] Agent MCP remains exactly `read_semantics` and `perform_action`, backed by
@@ -70,10 +78,20 @@
   reachable). Re-run `node scripts/record-macos-accessibility-evidence.mjs`
   on a host with a live display session; VoiceOver navigation evidence stays
   open.
-- Status 2026-11-07 (later session): display session still down. Six probes
-  across ~8 minutes (direct, +60s wait, then four probes at ~55s intervals)
-  all reported `Calculator windows=0` via System Events. Follow-up probes at
-  03:54:39, 03:56:49, and 03:59:59 local time reported the same result. The serializer fix
+- Status 2026-11-07 (evidence session): after the user reconnected the
+  remote display, the recorder passed end to end. Two more real defects were
+  fixed on the way:
+  1. The bridge dispatched AX actions with an `Exact(element generation)`
+     precondition, but back-to-back actions commit semantics in between, so
+     the captured generation went stale and the runtime rejected the action
+     (`StaleGeneration(3 vs 4)`); AX actions now dispatch with `Latest`.
+  2. The recorder's request/receipt pairing required
+     `receipt.before === request.generation`, which only held under the old
+     Exact behavior; it now checks the causal contract
+     (`receipt.before >= request.generation`, same node and kind).
+  Earlier status (display down): 82 probes from 03:54 to 10:07 all reported
+  `Calculator windows=0` via System Events; a control experiment confirmed
+  the blocker was environmental, not the code changes. The serializer fix
   and its unit/route regression tests are committed; resume by re-running
   `node scripts/record-macos-accessibility-evidence.mjs --timeout-ms 45000`
   once any freshly launched app reports a nonzero window count, then check

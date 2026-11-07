@@ -439,7 +439,7 @@ fn MacosNativeHostBackend::dispatch_accessibility_actions(
       macos_json_string_field(fields, "generation") is Some(generation_text) &&
       macos_json_string_field(fields, "kind") is Some(kind) &&
       macos_parse_decimal_u64(node_text) is Some(node_id) &&
-      macos_parse_decimal_u64(generation_text) is Some(generation) else {
+      macos_parse_decimal_u64(generation_text) is Some(_) else {
       println("macOS accessibility action decode failed: invalid identity")
       continue
     }
@@ -453,7 +453,14 @@ fn MacosNativeHostBackend::dispatch_accessibility_actions(
     let request : @apphost.PerformSemanticsActionRequest = {
       target: ByNodeId(@core.SemanticsNodeId::new(node_id)),
       action,
-      precondition: Exact(@core.SemanticsGeneration::new(generation)),
+      // Assistive-technology actions target the node as currently on screen.
+      // The element's captured generation goes stale whenever any other
+      // action commits between the payload sync that produced it and this
+      // enqueue (back-to-back VoiceOver activations, probe sequences), so an
+      // Exact check would reject legitimate actions with StaleGeneration.
+      // Latest still resolves ByNodeId against the committed snapshot and
+      // fails honestly when the node no longer exists.
+      precondition: Latest,
     }
     match driver.perform_semantics_action(request) {
       Ok(receipt) => {
