@@ -4,6 +4,16 @@ pub(all) struct TextLayoutInput {
   text : String
   font : FontSpec
   max_width : Double?
+  /// The run-internal base direction the measurement must honor. Providers
+  /// capable of run-internal ordering return glyph advances and caret
+  /// positions laid out for this direction: for `RightToLeft` the first
+  /// logical character occupies the rightmost advance and
+  /// `caret_positions[i]` measures from the right edge
+  /// (`caret_positions[i] == width - ltr_caret_positions[i]` for the
+  /// fallback provider). Consumers that map carets and selections to x
+  /// positions (views/text) read the same field; until they do, callers
+  /// keep the `LeftToRight` default and no view may claim RTL text support.
+  direction : LayoutDirection
 }
 
 ///|
@@ -146,8 +156,9 @@ pub fn TextLayoutInput::new(
   text~ : String,
   font~ : FontSpec,
   max_width? : Double,
+  direction~ : LayoutDirection = LeftToRight,
 ) -> TextLayoutInput {
-  { text, font, max_width, }
+  { text, font, max_width, direction, }
 }
 
 ///|
@@ -361,7 +372,16 @@ fn fallback_paragraph_layout_result(
   measure : (TextLayoutInput) -> TextLayoutResult,
   text_system_id : String,
 ) -> TextParagraphLayoutResult {
-  let measured = measure(TextLayoutInput::new(text=input.text, font=input.font))
+  // The paragraph fallback measures the full text with the same base
+  // direction; its caret-rect mapping stays LTR until the views/text slice
+  // consumes run-internal ordering.
+  let measured = measure(
+    TextLayoutInput::new(
+      text=input.text,
+      font=input.font,
+      direction=input.direction,
+    ),
+  )
   let line_ranges = fallback_paragraph_line_ranges(input, measured)
   let caret_rects : Array[Rect] = []
   let text_length = input.text.to_array().length()
@@ -646,6 +666,19 @@ fn fallback_text_layout_result(input : TextLayoutInput) -> TextLayoutResult {
     carets.push(cursor)
   }
   let carets = fallback_stabilize_grapheme_cluster_carets(input.text, carets)
+  // Run-internal direction: the fallback shaper lays one uniform run, so an
+  // RTL base direction mirrors the stabilized LTR positions — caret 0 sits
+  // at the right edge and the last caret at the left edge. The advance order
+  // itself is unchanged, so width and baseline stay identical.
+  let carets = if input.direction == RightToLeft {
+    let mirrored : Array[Double] = []
+    for caret in carets {
+      mirrored.push(width - caret)
+    }
+    mirrored
+  } else {
+    carets
+  }
   {
     size: Size::new(width~, height=input.font.size * 1.25),
     baseline: input.font.size * 0.8,
@@ -670,4 +703,58 @@ test "fallback paragraph derives wrapping from one text measurement" {
   assert_true(paragraph.lines.length() > 1)
   assert_eq(measure_count[0], 1)
   assert_eq(paragraph.caret_rects.length(), 49)
+}
+
+///|
+test "fallback measurement mirrors carets for an RTL base direction" {
+  let ltr = fallback_text_layout_result(
+    TextLayoutInput::new(text="ab", font=FontSpec::new(size=10.0)),
+  )
+  let rtl = fallback_text_layout_result(
+    TextLayoutInput::new(
+      text="ab",
+      font=FontSpec::new(size=10.0),
+      direction=RightToLeft,
+    ),
+  )
+  // Same advances: width, height, and baseline are direction-independent.
+  assert_true(ltr.size.width == rtl.size.width)
+  assert_true(ltr.size.height == rtl.size.height)
+  assert_true(ltr.baseline == rtl.baseline)
+  // RTL mirrors the stabilized positions: caret 0 sits at the right edge
+  // and the final caret at the left edge.
+  let count = ltr.caret_positions.length()
+  assert_true(rtl.caret_positions.length() == count)
+  for index in 0..<count {
+    assert_true(
+      (rtl.caret_positions[index] + ltr.caret_positions[index] - ltr.size.width).abs() <
+      0.000001,
+    )
+  }
+  // The first logical caret is the rightmost one.
+  assert_true(rtl.caret_positions[0] == rtl.size.width)
+  assert_true(rtl.caret_positions[count - 1] == 0.0)
+}
+
+///|
+test "the paragraph fallback forwards the base direction to its measure" {
+  let seen : Array[LayoutDirection] = []
+  let system = TextSystem::new(id="direction-probe", measure=input => {
+    seen.push(input.direction)
+    fallback_text_layout_result(input)
+  })
+  ignore(
+    system.layout_paragraph(
+      TextLayoutInput::new(
+        text="one two three four five six seven eight nine ten",
+        font=FontSpec::new(size=14.0),
+        max_width=80.0,
+        direction=RightToLeft,
+      ),
+    ),
+  )
+  assert_true(seen.length() > 0)
+  for direction in seen {
+    assert_true(direction == RightToLeft)
+  }
 }

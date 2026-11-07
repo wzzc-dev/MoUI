@@ -2059,9 +2059,10 @@ pub(all) struct TextLayoutInput {
   text : String
   font : FontSpec
   max_width : Double?
+  direction : LayoutDirection
 }
 pub fn TextLayoutInput::equal(Self, Self) -> Bool
-pub fn TextLayoutInput::new(text~ : String, font~ : FontSpec, max_width? : Double) -> Self
+pub fn TextLayoutInput::new(text~ : String, font~ : FontSpec, max_width? : Double, direction? : LayoutDirection) -> Self
 pub fn TextLayoutInput::not_equal(Self, Self) -> Bool
 pub fn TextLayoutInput::to_json(Self) -> @json.Json
 pub fn TextLayoutInput::to_repr(Self) -> @debug.Repr

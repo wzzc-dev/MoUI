@@ -437,7 +437,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // way pointer/keyboard events live there; the host recognizer has
       // already done the multi-finger work, so core carries only the sample
       // DTO and the observer modifier.
-      max_lines: 2825,
+      // TextLayoutInput.direction (+1 line, +0 pub: the field rides the
+      // existing struct line; the ctor parameter widens the same line):
+      // RTL step 1 — the measurement input carries the run-internal base
+      // direction and the fallback provider honors it.
+      max_lines: 2826,
       max_pub_lines: 1214,
       max_pub_all_lines: 146,
       required_tokens: [

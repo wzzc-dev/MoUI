@@ -504,14 +504,15 @@ capture/re-sample suite, drag-versus-tap, and nested-scroll release behavior.
 
 ## Debt and known gaps
 
-- **Run-internal text direction is still LTR.** §9 mirrors where a text block
-  *sits*, not how its runs are ordered inside it: `@core.TextLayoutInput` carries
-  no direction, so measurement always returns LTR-ordered glyph and caret
-  offsets, and `moui_sun`'s `TextDirection` is unreachable from the port. A
-  direction-carrying `TextSystem` slice is the prerequisite; until then no view
-  may claim RTL text support, and `Environment.layout_direction` must not be
-  forwarded into `moui/views/text` placement by itself (that would put the caret
-  and the selection highlight on the wrong side of the glyphs).
+- **Run-internal text direction is stepwise RTL.** Step 1 landed (2026-11-07):
+  `@core.TextLayoutInput` carries a `direction` field and the core fallback
+  provider mirrors its stabilized caret positions for `RightToLeft`
+  (`docs/text-system.md` documents the contract). Still open: `views/text`
+  consuming the field for caret/selection x mapping (until then no view may
+  claim RTL text support, and `Environment.layout_direction` must not be
+  forwarded into `moui/views/text` placement by itself), the native providers'
+  base-direction plumbing (cosmic and SkParagraph already auto-detect run
+  direction internally), and `moui_sun`'s unreachable `TextDirection`.
 - **Scroll inertia is delivered (2026-11-07, see the landing notes above).**
   What the delivery does *not* cover: pinch/rotation recognizers (§7), fling
   for the embedded hosts' single-finger queue (finger id 0 works, but two-finger

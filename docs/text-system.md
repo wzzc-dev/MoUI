@@ -372,6 +372,22 @@ Remote font loading is intentionally outside the current backend contract.
 
 ## Current Guarantees
 
+**Run-Internal Direction (step 1 of the RTL slice)**
+
+`TextLayoutInput` carries a `direction` field (`LayoutDirection`,
+defaulting to `LeftToRight`). Providers capable of run-internal ordering
+return glyph advances and caret positions laid out for that base direction:
+the core fallback provider mirrors its stabilized caret positions for
+`RightToLeft` (caret 0 at the right edge, the final caret at the left edge;
+width, height, and baseline are direction-independent), and the paragraph
+fallback forwards the direction into its inner measurement. Consumers that
+map carets and selections to x positions (`views/text` caret drawing,
+selection rects) do not read the field yet, so callers keep the default and
+no view claims RTL text support. Native providers (cosmic, SkParagraph,
+DirectWrite, CoreText) keep their own shaper-driven run detection; plumb the
+base direction through them and consume it in `views/text` as the next RTL
+slice.
+
 **Proof Status**
 
 Text shaping and emoji text are declared `supported` in `renderer-capability-report.md`.
