@@ -286,7 +286,10 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
   column(
     [
       text("Host services").title(),
-      text("Timer, window resize, clipboard, file open, and host shortcuts."),
+      text(
+        "Timer, window resize, clipboard, file open, and host shortcuts.",
+        wrap=true,
+      ),
       text("Last: \{model.last_event}"),
       card(
         column([
@@ -422,8 +425,11 @@ fn mobile_service_probe_page(
   column(
     [
       text("Mobile Service Probe").title(),
-      text("IME, action, image, and viewport checks for mobile host sessions."),
-      text("Last: \{model.last_event}"),
+      text(
+        "IME, action, image, and viewport checks for mobile host sessions.",
+        wrap=true,
+      ),
+      text("Last: \{model.last_event}", wrap=true),
       card(
         column(
           [
