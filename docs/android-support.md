@@ -133,12 +133,18 @@ restored), surface detach/recreate (force-stop + relaunch into a fresh
 `MoUIWindow` init in a new process), and the app-visible viewport (411 x 914
 reported by the probe).
 
-Still pending for `committed`: keyboard/IME text delivery (`adb shell input
-text` and Backspace do not reach the MoUI text field — the Android window
-template's keyboard channel for IME commits is unwired in
-`wzzc-dev/window/android`), clipboard selftest markers, accessibility bridge
-markers, and the async-image ready marker. These are the remaining R6
-capabilities blocking the `committed` promotion.
+The keyboard/IME text channel was fixed the same day (2026-11-07): the
+window-hosted template now provides an `InputConnection` (IME commits and
+deletions forwarded to the native `KeyboardText`/`KeyboardKey` channels) and
+`dispatchKeyEvent` routes named keys (Backspace/Delete/Enter/arrows). The
+evidence pass verified insert ("abc" at the caret), delete (Backspace), and
+submit (Enter -> "Last: Probe submit 1") through the runtime.
+
+Still pending for `committed`: clipboard flow evidence (the backend declares
+clipboard; the Host services page flow was not exercised on the emulator) and
+accessibility node publishing (the window embedder's a11y adaptation is
+declared but uiautomator showed no text nodes from the MoUI surface). These
+are the remaining R6 capabilities blocking the `committed` promotion.
 
 ## Status
 
