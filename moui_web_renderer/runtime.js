@@ -2530,6 +2530,30 @@ export function createWebGpuImports(options = {}) {
       }
       threeDRenderers.delete(rendererHandle);
     },
+    three_d_update_resources(rendererHandle, payload) {
+      const renderer = threeDRenderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      try {
+        const encoded = `${stringValue(payload) ?? ""}`;
+        const next = renderer.resourceResidency ?? new Map();
+        if (encoded.length > 0) {
+          for (const entry of encoded.split(";")) {
+            const [operation, kind, value] = entry.split(":");
+            if (!operation || !kind || value === undefined) return invalidResource();
+            const key = `${kind}:${value}`;
+            if (operation === "remove") next.delete(key);
+            else if (operation === "create" || operation === "update") next.set(key, operation);
+            else return invalidResource();
+          }
+        }
+        renderer.resourceResidency = next;
+        renderer.resourceRevision = (renderer.resourceRevision || 0) + 1;
+        return ok();
+      } catch (error) {
+        globalThis.console?.error?.("MoUI 3D resource residency update failed", error);
+        return invalidResource();
+      }
+    },
     three_d_surface_dispose(surfaceHandle) {
       const surface = threeDSurfaces.get(surfaceHandle);
       surface?.context?.unconfigure?.();
@@ -2790,41 +2814,31 @@ export function createWebGpuImports(options = {}) {
     push_layer(rendererHandle, opacity, blendMode, maskKind, maskX, maskY, maskWidth, maskHeight, maskRadius, offscreen) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
+      // Layer masks arrive in the caller's node-local coordinate space (the
+      // runtime applies the accumulated parent/child transform around node
+      // paint output, e.g. a retained rich-text block's paint bounds inside a
+      // nested view). Convert the mask to screen space with the active state
+      // transform, matching push_clip, so compositeScope intersects it against
+      // the screen-space clip instead of culling the whole layer.
+      const localMask = {
+        x: Number(maskX) || 0,
+        y: Number(maskY) || 0,
+        width: Number(maskWidth) || 0,
+        height: Number(maskHeight) || 0,
+      };
+      const screenMask = transformRect(rendererState(renderer).transform, localMask);
+      const maskScale = localMask.width > 0 ? screenMask.width / localMask.width : 1;
       const layer = {
         opacity: clampOpacity(opacity),
         blendMode: Number(blendMode) || 0,
         mask: {
           kind: Number(maskKind) || 0,
-          x: Number(maskX) || 0,
-          y: Number(maskY) || 0,
-          width: Number(maskWidth) || 0,
-          height: Number(maskHeight) || 0,
-          radius: Number(maskRadius) || 0,
+          x: screenMask.x,
+          y: screenMask.y,
+          width: screenMask.width,
+          height: screenMask.height,
+          radius: Math.max(0, (Number(maskRadius) || 0) * maskScale),
         },
-    three_d_update_resources(rendererHandle, payload) {
-      const renderer = threeDRenderers.get(rendererHandle);
-      if (!renderer) return invalidResource();
-      try {
-        const encoded = `${stringValue(payload) ?? ""}`;
-        const next = renderer.resourceResidency ?? new Map();
-        if (encoded.length > 0) {
-          for (const entry of encoded.split(";")) {
-            const [operation, kind, value] = entry.split(":");
-            if (!operation || !kind || value === undefined) return invalidResource();
-            const key = `${kind}:${value}`;
-            if (operation === "remove") next.delete(key);
-            else if (operation === "create" || operation === "update") next.set(key, operation);
-            else return invalidResource();
-          }
-        }
-        renderer.resourceResidency = next;
-        renderer.resourceRevision = (renderer.resourceRevision || 0) + 1;
-        return ok();
-      } catch (error) {
-        globalThis.console?.error?.("MoUI 3D resource residency update failed", error);
-        return invalidResource();
-      }
-    },
         clip: rendererState(renderer).clip ? { ...rendererState(renderer).clip } : undefined,
         filter: undefined,
         offscreen: !!offscreen,
