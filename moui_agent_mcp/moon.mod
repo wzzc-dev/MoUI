@@ -2,13 +2,13 @@ name = "wzzc-dev/moui_agent_mcp"
 
 preferred_target = "native"
 
-version = "0.5.0"
+version = "0.5.1"
 
 license = "Apache-2.0"
 
 import {
-  "wzzc-dev/moui@0.5.0",
-  "wzzc-dev/moui_agent@0.5.0",
+  "wzzc-dev/moui@0.5.1",
+  "wzzc-dev/moui_agent@0.5.1",
   "moonbitlang/async@0.22.5",
 }
 

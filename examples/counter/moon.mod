@@ -5,9 +5,9 @@ version = "0.1.0"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.5.0",
-  "wzzc-dev/window@0.5.4-0.2.5",
-  "wzzc-dev/moui_skia_renderer@0.5.0",
-  "wzzc-dev/moui_web_renderer@0.5.0",
-  "wzzc-dev/moui_terminal_host@0.5.0",
+  "wzzc-dev/moui@0.5.1",
+  "wzzc-dev/window@0.5.4-0.2.6",
+  "wzzc-dev/moui_skia_renderer@0.5.1",
+  "wzzc-dev/moui_web_renderer@0.5.1",
+  "wzzc-dev/moui_terminal_host@0.5.1",
 }
