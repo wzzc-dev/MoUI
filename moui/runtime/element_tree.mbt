@@ -11,6 +11,11 @@ priv struct ElementNode {
   render_cache : ElementRenderCache
   semantics_cache : ElementSemanticsCache
   platform_cache : ElementPlatformCache
+  // Declaration of `view_node`. Rebuilt nodes would otherwise re-encode every
+  // canonical key twice per reconcile; the retained element already knows the
+  // previous side. Only mount and reconcile assign `view_node`, so this stays
+  // in step with it.
+  mut declaration_cache : @core.ViewDeclaration?
 }
 
 ///|

@@ -104,6 +104,7 @@ fn mount_runtime_view_node_for_runtime(
       render_cache: ElementRenderCache::empty(),
       semantics_cache: ElementSemanticsCache::empty(),
       platform_cache: ElementPlatformCache::empty(),
+      declaration_cache: None,
     },
     next_id: next,
   }
@@ -127,10 +128,12 @@ fn reconcile_element_for_runtime(
       structure_changed: true,
     }
   } else {
-    let own_dirty = runtime_view_node_reconcile_dirty_kind(
+    let (own_dirty, next_declaration) = runtime_view_node_reconcile_dirty_kind(
       old.view_node,
       next_view_node,
+      old.declaration_cache,
     )
+    old.declaration_cache = Some(next_declaration)
     old.view_node = next_view_node
     // A node whose presentation declaration changed may also have changed its
     // child-environment transform. Clean nodes provably keep the same

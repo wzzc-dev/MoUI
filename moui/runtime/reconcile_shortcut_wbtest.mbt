@@ -28,7 +28,11 @@ fn f1_assert_same_dirty_kind(
   current : &RuntimeViewNode,
   next : &RuntimeViewNode,
 ) -> Unit raise {
-  let optimized = runtime_view_node_reconcile_dirty_kind(current, next)
+  let (optimized, _) = runtime_view_node_reconcile_dirty_kind(
+    current,
+    next,
+    None,
+  )
   let reference = f1_reference_dirty_kind(current, next)
   assert_true(optimized.layout == reference.layout)
   assert_true(optimized.paint == reference.paint)
@@ -103,7 +107,7 @@ test "F1: Exact semantics channel with unchanged key short-circuits to clean" {
   // array allocation without changing the verdict.
   let current = f1_node(declaration=f1_exact_declaration())
   let next = f1_node(declaration=f1_exact_declaration())
-  let kind = runtime_view_node_reconcile_dirty_kind(current, next)
+  let (kind, _) = runtime_view_node_reconcile_dirty_kind(current, next, None)
   assert_false(kind.layout)
   assert_false(kind.paint)
   assert_false(kind.semantics)
@@ -122,7 +126,7 @@ test "F1: Exact semantics channel with changed key stays dirty" {
     declaration=f1_exact_declaration(semantics_key="v2"),
     label="v2",
   )
-  let kind = runtime_view_node_reconcile_dirty_kind(current, next)
+  let (kind, _) = runtime_view_node_reconcile_dirty_kind(current, next, None)
   assert_true(kind.semantics)
   f1_assert_same_dirty_kind(current, next)
 }
@@ -138,7 +142,7 @@ test "F1: Constant and Uncacheable channels keep the defensive comparison" {
     declaration=f1_exact_declaration(constant=true),
     label="changed",
   )
-  let kind = runtime_view_node_reconcile_dirty_kind(current, next)
+  let (kind, _) = runtime_view_node_reconcile_dirty_kind(current, next, None)
   assert_true(kind.semantics)
   f1_assert_same_dirty_kind(current, next)
   // A differing action-kind set is likewise still caught on the kept path.
@@ -147,8 +151,10 @@ test "F1: Constant and Uncacheable channels keep the defensive comparison" {
     declaration=f1_exact_declaration(constant=true),
     handlers=1,
   )
-  let kinds_kind = runtime_view_node_reconcile_dirty_kind(
-    kinds_current, kinds_next,
+  let (kinds_kind, _) = runtime_view_node_reconcile_dirty_kind(
+    kinds_current,
+    kinds_next,
+    None,
   )
   assert_true(kinds_kind.semantics)
   f1_assert_same_dirty_kind(kinds_current, kinds_next)
@@ -160,8 +166,10 @@ test "F1: Constant and Uncacheable channels keep the defensive comparison" {
     declaration=f1_exact_declaration(uncacheable=true),
     label="changed",
   )
-  let uncacheable_kind = runtime_view_node_reconcile_dirty_kind(
-    uncacheable_current, uncacheable_next,
+  let (uncacheable_kind, _) = runtime_view_node_reconcile_dirty_kind(
+    uncacheable_current,
+    uncacheable_next,
+    None,
   )
   assert_true(uncacheable_kind.semantics)
   f1_assert_same_dirty_kind(uncacheable_current, uncacheable_next)
@@ -171,7 +179,7 @@ test "F1: Constant and Uncacheable channels keep the defensive comparison" {
 test "F1: layout change still implies semantics for the Exact channel" {
   let current = f1_node(declaration=f1_exact_declaration(layout_key="l1"))
   let next = f1_node(declaration=f1_exact_declaration(layout_key="l2"))
-  let kind = runtime_view_node_reconcile_dirty_kind(current, next)
+  let (kind, _) = runtime_view_node_reconcile_dirty_kind(current, next, None)
   assert_true(kind.layout)
   assert_true(kind.paint)
   assert_true(kind.semantics)
