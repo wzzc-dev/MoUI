@@ -2480,6 +2480,134 @@ moonbit_skia_surface_direct3d_present_and_acquire_next(
 }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_direct3d_resize_window(
+  MoonbitSkiaSurface* wrapper,
+  uint64_t hwnd_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->surface == nullptr ||
+    wrapper->host_present_handle == nullptr ||
+    wrapper->gpu_context_owner == nullptr
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
+  defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* swap_chain = moonbit_skia_d3d12_swap_chain(wrapper->host_present_handle);
+  GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+  if (swap_chain == nullptr || gpu_context == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  if (width <= 0 || height <= 0) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  if (swap_chain->width != static_cast<UINT>(width) ||
+    swap_chain->height != static_cast<UINT>(height)) {
+    // Release the old back-buffer surface claim first, then drain every
+    // holder of the back buffers exactly like the present path: free the
+    // resource cache, flushAndSubmit so Skia's own fence gates the deferred
+    // D3D12 release queue, retire leftovers with performDeferredCleanup, and
+    // fence-wait. ResizeBuffers cannot satisfy its all-references-released
+    // precondition while a presented frame's wrapper is still alive.
+    wrapper->surface->unref();
+    wrapper->surface = nullptr;
+    wrapper->host_present_handle = nullptr;
+    gpu_context->freeGpuResources();
+    gpu_context->flushAndSubmit();
+    gpu_context->performDeferredCleanup(std::chrono::milliseconds(0));
+    (void)moonbit_skia_d3d12_wait_for_frame(swap_chain);
+    HRESULT hr = swap_chain->swap_chain->ResizeBuffers(
+      3,
+      static_cast<UINT>(width),
+      static_cast<UINT>(height),
+      DXGI_FORMAT_R8G8B8A8_UNORM,
+      0
+    );
+    if (FAILED(hr)) {
+      // DXGI allows only one flip-model swap chain per HWND; when
+      // ResizeBuffers keeps failing while any wrapper still references a back
+      // buffer, release this swap chain and recreate it at the new size.
+      gpu_context->freeGpuResources();
+      gpu_context->flushAndSubmit();
+      gpu_context->performDeferredCleanup(std::chrono::milliseconds(0));
+      (void)moonbit_skia_d3d12_wait_for_frame(swap_chain);
+      swap_chain->swap_chain.Reset();
+      HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(hwnd_ptr));
+      ComPtr<IDXGIFactory4> resize_factory;
+      if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&resize_factory)))) {
+        DXGI_SWAP_CHAIN_DESC1 resize_description = {};
+        resize_description.Width = static_cast<UINT>(width);
+        resize_description.Height = static_cast<UINT>(height);
+        resize_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        resize_description.SampleDesc.Count = 1;
+        resize_description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        resize_description.BufferCount = 3;
+        resize_description.Scaling = DXGI_SCALING_STRETCH;
+        resize_description.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        resize_description.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+        ComPtr<IDXGISwapChain1> recreated;
+        if (SUCCEEDED(resize_factory->CreateSwapChainForHwnd(
+          swap_chain->queue.Get(),
+          hwnd,
+          &resize_description,
+          nullptr,
+          nullptr,
+          &recreated
+        ))) {
+          if (FAILED(recreated.As(&swap_chain->swap_chain))) {
+            swap_chain->swap_chain.Reset();
+          }
+        }
+      }
+    }
+    if (swap_chain->swap_chain == nullptr) {
+      swap_chain->last_device_removed_reason = swap_chain->device->GetDeviceRemovedReason();
+      moonbit_skia_com_release(swap_chain);
+      return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+    }
+    swap_chain->width = static_cast<UINT>(width);
+    swap_chain->height = static_cast<UINT>(height);
+  } else {
+    // Same-size resize: only drop the old back-buffer surface claim; the
+    // wrapper below re-wraps the current back buffer.
+    wrapper->surface->unref();
+    wrapper->surface = nullptr;
+    wrapper->host_present_handle = nullptr;
+  }
+  swap_chain->frame_index = swap_chain->swap_chain->GetCurrentBackBufferIndex();
+  MoonbitSkiaSurface* new_wrapper = moonbit_skia_d3d12_wrap_back_buffer(
+    gpu_context,
+    swap_chain,
+    width,
+    height,
+    origin
+  );
+  if (new_wrapper->surface == nullptr) {
+    moonbit_skia_com_release(swap_chain);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  return new_wrapper;
+#else
+  (void)hwnd_ptr;
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
 moonbit_skia_surface_vulkan_window(
   MoonbitSkiaGpuContext* context,
   uint64_t anw_ptr,

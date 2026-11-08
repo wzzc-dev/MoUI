@@ -625,6 +625,7 @@ pub fn Surface::direct3d_gpu_context_headers_available() -> Bool
 pub fn Surface::direct3d_gpu_context_opt_in_enabled() -> Bool
 pub fn Surface::direct3d_gpu_context_runtime_available() -> Bool
 pub fn Surface::direct3d_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::direct3d_resize_window(Self, GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::direct3d_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::egl_gpu_context_headers_available() -> Bool
 pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool

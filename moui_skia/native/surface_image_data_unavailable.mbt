@@ -318,6 +318,20 @@ pub fn Surface::direct3d_window_surface(
 }
 
 ///|
+pub fn Surface::direct3d_resize_window(
+  surface : Surface,
+  context : GpuContext,
+  hwnd_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  ignore(surface)
+  ignore(context)
+  ignore(hwnd_ptr)
+  ignore(descriptor)
+  None
+}
+
+///|
 pub fn Surface::direct3d_present_and_acquire_next(
   surface : Surface,
   context : GpuContext,

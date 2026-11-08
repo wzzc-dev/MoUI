@@ -215,6 +215,18 @@ extern "C" fn native_surface_direct3d_window(
 ) -> SurfaceHandle = "moonbit_skia_surface_direct3d_window"
 
 ///|
+#borrow(surface)
+extern "C" fn native_surface_direct3d_resize_window(
+  surface : SurfaceHandle,
+  hwnd_ptr : UInt64,
+  width : Int32,
+  height : Int32,
+  origin : Int32,
+  sample_count : Int32,
+  stencil_bits : Int32,
+) -> SurfaceHandle = "moonbit_skia_surface_direct3d_resize_window"
+
+///|
 /// Present the swap chain backing a `Surface` created via
 /// `native_surface_direct3d_window`, and return the next back buffer wrapped as
 /// a fresh `Surface` for the following frame.
@@ -964,6 +976,47 @@ pub fn Surface::direct3d_window_surface(
       descriptor,
     )
   }
+}
+
+///|
+/// Resize the swap chain backing a `Surface` created via
+/// `Surface::direct3d_window_surface` in place, and return the back buffer at
+/// the new size wrapped as a fresh `Surface`.
+///
+/// Unlike `Surface::direct3d_window_surface` this never creates a second
+/// swap chain for the HWND: it consumes the old surface wrapper's swap chain,
+/// drains Skia-side references exactly like the present path, then resizes via
+/// `ResizeBuffers` — releasing and recreating the swap chain when that fails.
+/// Creating a second flip-model swap chain on the same HWND is rejected by
+/// DXGI, so live resizes must go through this entry.
+///
+/// Returns `None` when the GPU context is unavailable, the size is empty, or
+/// the swap chain cannot produce a back buffer at the new size (e.g. device
+/// lost, or the native Skia build lacks D3D support).
+pub fn Surface::direct3d_resize_window(
+  surface : Surface,
+  context : GpuContext,
+  hwnd_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if !context.is_available() || hwnd_ptr == 0 {
+    return None
+  }
+  if descriptor.is_empty() || !descriptor.is_gpu() {
+    return None
+  }
+  Surface::from_handle(
+    native_surface_direct3d_resize_window(
+      surface.handle,
+      hwnd_ptr,
+      descriptor.width(),
+      descriptor.height(),
+      native_surface_origin_ordinal(descriptor.origin),
+      descriptor.sample_count,
+      descriptor.stencil_bits,
+    ),
+    descriptor,
+  )
 }
 
 ///|

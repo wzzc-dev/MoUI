@@ -496,6 +496,16 @@ fn skia_gpu_resize_window_surface(
         )
       }
     }
+    // Windows must resize the existing per-HWND swap chain (see
+    // Surface::direct3d_resize_window); creating a second flip-model swap
+    // chain via skia_gpu_window_surface is rejected by DXGI and poisoned the
+    // live-resize path into the CPU fallback.
+    Windows =>
+      surface.direct3d_resize_window(
+        context,
+        native_surface.surface_handle(),
+        skia_gpu_surface_descriptor(metrics),
+      )
     _ => skia_gpu_window_surface(context, platform, native_surface, metrics)
   }
 }
