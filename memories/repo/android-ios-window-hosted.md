@@ -36,3 +36,11 @@
 - window embedder commits live on the `moui-support` branch (f20be5e,
   be96543, a0ee0ff); the MoUI `window` submodule pin still points at the
   pre-IME commit until those push and the pin bumps.
+
+- Release flow (0.5.0/0.5.1, 2026-11-08): bump-release-line.mjs ->
+  releaseCoupling.line in portfolio-governance -> compatibility-matrix pins
+  -> docs/releases/<v>.md -> validators -> publish in dependency order
+  (base first) with `moon update` between retries (the client registry index
+  only refreshes on demand; the upload 200 is async).
+- `git push` aborts on drifted submodules (momark/moui_studio); use
+  `--recurse-submodules=no` for the superproject push.

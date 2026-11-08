@@ -83,6 +83,27 @@ promotion gate, re-read the invariant's letter first: R6's capability list
 never included rotation, and an entire committed_with_gaps detour was
 avoided by that check.
 
+## 0.5.0 / 0.5.1 release (same day)
+
+- `node scripts/bump-release-line.mjs <version>` advances all 25 public
+  modules + workspace pins; release notes in `docs/releases/<v>.md`;
+  `releaseCoupling.line` in `checks/portfolio-governance.json` must move to
+  the new line (its validator rejects modules outside the declared line);
+  `docs/compatibility-matrix.md` base pins are hand-synced.
+- **Publishing order matters**: the registry resolves each module's pinned
+  deps at publish time, so publish the base (`wzzc-dev/moui`) first, then
+  downstream in dependency order, retrying as versions propagate.
+- **`moon update` refreshes the client registry index** — after each publish,
+  newly uploaded versions become resolvable only after an index refresh
+  (the upload 200 is async); a retry loop of publish -> moon update -> sleep
+  drained all 25 modules.
+- `git push` with drifted submodules aborts under the default
+  recurse-submodules check; `--recurse-submodules=no` pushes the superproject
+  (pre-existing momark/moui_studio drift, untouched by this work).
+- window 侧发布：`modules/window` 单独 `moon publish`（0.5.4-0.2.6 含移动端
+  剪贴板/a11y/命名键 embedder 代码）。0.5.0 曾带旧 window pin 发布——需要新
+  公开符号的依赖变更必须在同一发布窗口内完成依赖侧发布。
+
 ## Remaining
 
 - iOS: a matching-device pass may add the live rotation observation;
