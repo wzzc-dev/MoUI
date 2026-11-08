@@ -189,7 +189,7 @@ const RUNNER_SOURCE = `fn main {
     width=960.0,
     height=640.0,
   )
-  @runtime.run_app(
+  @apphost.run_app(
     "MoUI Playground Preview",
     runtime,
   )
@@ -256,6 +256,7 @@ async function compile(request) {
     { path: manifest.userPackage, alias: "user" },
     { path: "wzzc-dev/moui", alias: "moui" },
     { path: "wzzc-dev/moui/runtime", alias: "runtime" },
+    { path: "wzzc-dev/moui/apphost", alias: "apphost" },
     { path: "wzzc-dev/moui/backend/web", alias: "web" },
     { path: "wzzc-dev/moui_web_renderer", alias: "webgpu_adapter" },
     prelude,
@@ -285,6 +286,7 @@ async function compile(request) {
   const roots = [
     ...imports.map(value => value.path),
     "wzzc-dev/moui/runtime",
+    "wzzc-dev/moui/apphost",
     "wzzc-dev/moui/backend/web",
     // The fixed Runner links the web adapter directly; its core must be
     // included or linkCore fails with Key_not_found for
@@ -308,9 +310,8 @@ async function compile(request) {
     "web_complete_async_file_dialog",
     "web_complete_async_text_file_read",
   ];
-  let linked;
-  try {
-    linked = compiler.linkCore({
+  const linkOnce = () =>
+    compiler.linkCore({
       coreFiles,
       main: manifest.runnerPackage,
       pkgSources: manifest.pkgSources,
@@ -324,8 +325,23 @@ async function compile(request) {
       sources: {},
       stopOnMain: false,
     });
-  } catch (error) {
-    throw new Error(`Core link failed (${packageCores.length} packages): ${error instanceof Error ? error.message : String(error)}`);
+  let linked;
+  try {
+    linked = linkOnce();
+  } catch (firstError) {
+    // The jsoo-compiled linker's first invocation with the full web closure
+    // can raise Stack_overflow before its internal lazily-built tables are
+    // warm; the identical retry then links deterministically (observed in
+    // Node against the packaged assets: call 1 fails, calls 2+ succeed with
+    // the same input). Retry once and only report if it fails again.
+    try {
+      linked = linkOnce();
+    } catch (secondError) {
+      throw new Error(
+        `Core link failed (${packageCores.length} packages): ${secondError instanceof Error ? secondError.message : String(secondError)}` +
+        ` (first attempt: ${firstError instanceof Error ? firstError.message : String(firstError)})`,
+      );
+    }
   }
   return {
     revision: request.revision,

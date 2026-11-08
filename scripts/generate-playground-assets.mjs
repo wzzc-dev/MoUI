@@ -38,6 +38,11 @@ const ALLOWED_IMPORTS = [
 const PLAYGROUND_REQUIRE_PACKAGES = [
   ...ALLOWED_IMPORTS,
   "wzzc-dev/moui/runtime",
+  // The fixed Runner starts the preview app through the apphost facade
+  // (compiler-worker.js RUNNER_SOURCE); without its prebuilt asset the
+  // in-browser compile fails with "Value run_app not found in package
+  // 'runtime'" after run_app moved out of the runtime package.
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/web",
   // The fixed Runner imports the web adapter directly
   // (compiler-worker.js RUNNER_SOURCE); without its prebuilt asset the
@@ -185,11 +190,12 @@ for (const name of ["compiler-worker.js", "playground-bridge.js", "preview-host.
   copy(join(repoRoot, "website/playground/host", name), join(outDir, "host", name));
 }
 
-const localMooncCandidates = [
-  process.env.MOONBIT_PLAYGROUND_MOONC,
-  join(repoRoot, "dist/playground/assets/moonc-web.cjs"),
-  join(repoRoot, "dist/pages/playground/assets/moonc-web.cjs"),
-].filter(Boolean);
+// Only an explicit environment override may substitute the local compiler
+// bundle. Silent lookups under `dist/` are banned on purpose: that directory
+// is not versioned, so a stale checkout silently packages a moonc that
+// cannot parse the current toolchain's core files and the in-browser link
+// fails with opaque jsoo errors.
+const localMooncCandidates = [process.env.MOONC_PLAYGROUND_MOONC].filter(Boolean);
 const localMoonc = localMooncCandidates.find(path => existsSync(path));
 if (localMoonc) {
   copy(localMoonc, join(outDir, "assets", "moonc-web.cjs"));
@@ -291,6 +297,7 @@ const collectPackage = id => {
 for (const id of [
   ...ALLOWED_IMPORTS,
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/web",
   // The fixed Runner imports the web adapter directly
   // (compiler-worker.js RUNNER_SOURCE); without it the in-browser compile
