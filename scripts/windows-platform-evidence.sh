@@ -172,7 +172,7 @@ echo "  Skia link flags: $win_link_flags" | tee -a "$preflight_log"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/windows" @windows_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase",
@@ -225,6 +225,20 @@ MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/windows_skia --target native 2>&1 \
   | tee -a "$preflight_log"
+
+echo "=== Step 4.5: Stage Skia ICU data next to the executable ===" | tee -a "$preflight_log"
+# Skia's SkLoadICU only searches the exe/module directories (the ICU_DATA
+# environment variable is ignored), so the release Skia package's icudtl.dat
+# must be staged next to the executable before the run.
+exe_dir="$REPO_ROOT/_build/native/debug/build/examples/showcase/windows_skia"
+icu_src="$skia_lib_dir/icudtl.dat"
+mkdir -p "$exe_dir"
+rm -f "$exe_dir/icudtl.dat"
+if ln "$icu_src" "$exe_dir/icudtl.dat" 2>/dev/null || cp "$icu_src" "$exe_dir/icudtl.dat" 2>/dev/null; then
+  echo "  icudtl.dat staged from $icu_src" | tee -a "$preflight_log"
+else
+  echo "  WARNING: could not stage $icu_src; SkParagraph text layout will degrade" | tee -a "$preflight_log"
+fi
 
 echo "=== Step 5: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \

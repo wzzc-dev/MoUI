@@ -155,7 +155,7 @@ cp "$showcase_pkg" "$showcase_backup"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase",
@@ -184,7 +184,7 @@ cp "$first_frame_pkg" "$first_frame_backup"
 
 cat > "$first_frame_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/linux",
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,

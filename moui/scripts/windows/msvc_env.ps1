@@ -197,7 +197,11 @@ function Test-ZlibArtifacts {
 #region Helpers — MoonBit toolchain and WGPU
 
 function Get-MsvcClCompilerPath {
-  $cl = (& where.exe cl.exe 2>$null | Select-Object -First 1)
+  # Get-Command instead of `where.exe ... 2>$null`: under Windows PowerShell 5.1
+  # with $ErrorActionPreference = "Stop", a native command's redirected stderr
+  # becomes a terminating NativeCommandError, killing the script before the
+  # vswhere-based candidates below can be evaluated.
+  $cl = (Get-Command cl.exe -ErrorAction SilentlyContinue | Select-Object -First 1).Source
   if ([string]::IsNullOrWhiteSpace($cl)) {
     throw "cl.exe is not available after importing vcvarsall.bat"
   }
@@ -231,7 +235,8 @@ function Get-MsvcClangClCompilerPath {
     }
   }
 
-  $onPath = (& where.exe clang-cl.exe 2>$null | Select-Object -First 1)
+  # Same PS 5.1 stderr constraint as Get-MsvcClCompilerPath; use Get-Command.
+  $onPath = (Get-Command clang-cl.exe -ErrorAction SilentlyContinue | Select-Object -First 1).Source
   if (-not [string]::IsNullOrWhiteSpace($onPath)) {
     $candidates += $onPath.Trim()
   }

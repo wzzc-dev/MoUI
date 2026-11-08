@@ -113,6 +113,59 @@ function Find-ZlibRuntimeDll {
   throw "Could not find zlib runtime DLL under $binDir"
 }
 
+function Test-PackageUsesSkia {
+  param([string]$PackagePath)
+
+  $pkgPath = Join-Path $repoRoot (Join-Path (Convert-PackagePath $PackagePath) "moon.pkg")
+  if (-not (Test-Path -LiteralPath $pkgPath)) {
+    return $false
+  }
+  $pkg = Get-Content -LiteralPath $pkgPath -Raw
+  return $pkg.Contains("wzzc-dev/moui_skia_renderer")
+}
+
+function Find-SkiaIcuDataFile {
+  # The Skia ICU data table ships inside the release Skia package and must sit
+  # next to the executable: Skia's SkLoadICU only searches the exe/module
+  # directories (it ignores the ICU_DATA environment variable).
+  $skiaScript = Join-Path $repoRoot "moui_skia\scripts\fetch-release-skia.ps1"
+  if (-not (Test-Path -LiteralPath $skiaScript)) {
+    return $null
+  }
+  $cacheDir = Join-Path $repoRoot "moui_skia\.skia-cache\release"
+  $envLines = & $skiaScript -Platform windows -Arch auto -Config Release -LinkMode static -CacheDir $cacheDir -PrintEnv 2>$null
+  $libDir = $envLines | ForEach-Object {
+    if ($_ -match '^MOUI_SKIA_SKIA_LIB_DIR=(.*)$') { $Matches[1] }
+  } | Select-Object -Last 1
+  if ([string]::IsNullOrWhiteSpace($libDir)) {
+    return $null
+  }
+  $icuData = Join-Path $libDir "icudtl.dat"
+  if (Test-Path -LiteralPath $icuData) {
+    return $icuData
+  }
+  return $null
+}
+
+function Copy-SkiaIcuData {
+  param([string]$DestinationDir)
+
+  if (-not (Test-PackageUsesSkia $Package)) {
+    return
+  }
+  $icuData = Find-SkiaIcuDataFile
+  if ($null -eq $icuData) {
+    Write-Warning "Skia icudtl.dat was not found under moui_skia\.skia-cache; SkParagraph text layout will not work in the packaged app."
+    return
+  }
+  $destination = Join-Path $DestinationDir "icudtl.dat"
+  Remove-Item -LiteralPath $destination -Force -ErrorAction SilentlyContinue
+  New-Item -ItemType HardLink -Path $destination -Target $icuData -ErrorAction SilentlyContinue | Out-Null
+  if (-not (Test-Path -LiteralPath $destination)) {
+    Copy-Item -LiteralPath $icuData -Destination $destination
+  }
+}
+
 function Write-Utf8NoBom {
   param(
     [string]$PathValue,
@@ -198,6 +251,8 @@ try {
   $zlibRuntime = Find-ZlibRuntimeDll
   $zlibRuntimeName = Split-Path -Leaf $zlibRuntime
   Copy-Item -LiteralPath $zlibRuntime -Destination (Join-Path $appDir $zlibRuntimeName)
+
+  Copy-SkiaIcuData $appDir
 
   if ($usesWgpu) {
     $runCmd = @(

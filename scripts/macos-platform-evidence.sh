@@ -148,7 +148,7 @@ cp "$showcase_pkg" "$showcase_backup"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "examples/showcase",
