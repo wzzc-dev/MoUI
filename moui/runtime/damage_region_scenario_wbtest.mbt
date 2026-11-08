@@ -17,8 +17,12 @@
 /// resize re-renders (frame-keyed render cache) without ever entering the
 /// paint-dirty id set — dirty-id-derived damage would ghost its exposed
 /// strip. Narrowing rebuild damage therefore needs placement-level move
-/// detection plus an active-animation/fade gate; that lever is recorded in
-/// the plan, not landed here.
+/// detection plus an active-animation/fade gate. Placement tracking has since
+/// landed (`DamageIndex::placement_changes`, pinned by
+/// `placement_damage_wbtest.mbt`) and the `Placement` damage class uses it;
+/// the classes below stay `Absolute` because their paint effects are not
+/// placement-visible (activation, environment, viewport) or have no render
+/// node to compare (exit ghosts).
 
 ///|
 fn damage_scenario_wheel(direction : Double) -> @core.AppEvent {

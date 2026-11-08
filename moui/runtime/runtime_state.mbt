@@ -486,9 +486,9 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
         self.element_tree = ElementTree::new(result.node)
         self.next_element_id = result.next_id
         if result.structure_changed {
-          self.ensure_full_surface_damage("structure changed")
+          self.ensure_full_surface_damage(Absolute("structure changed"))
         } else if result.dirty_kind.layout {
-          self.ensure_full_surface_damage("layout changed")
+          self.ensure_full_surface_damage(Placement("layout changed"))
         }
         self.sync_focus_trap_after_rebuild()
         self.clear_stale_pointer_capture()
@@ -519,7 +519,7 @@ fn RuntimeState::request_root_rebuild(
   if self.root_builder is Some(_) {
     self.dirty.needs_rebuild = true
     if damage is FullSurface {
-      self.ensure_full_surface_damage(reason)
+      self.ensure_full_surface_damage(Absolute(reason))
     }
     self.queue_dirty_element(self.element_tree.id())
     self.queue_build_dirty(self.element_tree.id())
@@ -604,7 +604,7 @@ priv struct DirtyTracking {
   mut needs_platform : Bool
   // Rebuilding can remove pixels that no current render node covers. Keep a
   // full-surface damage request until the rebuilt tree has been painted.
-  mut full_damage_reason : String?
+  mut full_damage_reason : FullDamageClass?
   // Union of damage from every paint pass since the last frame build. Events
   // can paint (via `ensure_render_tree`) before the host asks for a frame;
   // shipping only the latest pass's damage would leave earlier changes —

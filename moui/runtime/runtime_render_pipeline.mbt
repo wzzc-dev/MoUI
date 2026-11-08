@@ -21,9 +21,23 @@ fn RuntimeState::mark_visual_work(self : RuntimeState) -> Unit {
 }
 
 ///|
+/// Why a paint pass wants the whole surface.
+///
+/// `Absolute` covers changes placement tracking cannot describe: global input
+/// whose paint effects leave bounds untouched (environment, viewport,
+/// activation), element structure changes, and exit ghosts, which are command
+/// snapshots with no render node to compare. `Placement` covers layout moving
+/// content; `DamageIndex::placement_changes` can localize it once both the
+/// previous and current render trees exist.
+priv enum FullDamageClass {
+  Absolute(String)
+  Placement(String)
+}
+
+///|
 fn RuntimeState::ensure_full_surface_damage(
   self : RuntimeState,
-  reason : String,
+  reason : FullDamageClass,
 ) -> Unit {
   if self.dirty.full_damage_reason is None {
     self.dirty.full_damage_reason = Some(reason)
@@ -208,9 +222,9 @@ fn RuntimeState::apply_overlay_placements(self : RuntimeState) -> Unit {
     self.mark_dirty(id)
   }
   // Re-placing an overlay moves clean in-flow pixels as well as the overlay
-  // itself. The dirty-id paint bounds do not describe the newly exposed
-  // strips, so keep the whole surface conservative until move tracking lands.
-  self.ensure_full_surface_damage("overlay placement changed")
+  // itself. Placement tracking compares screen-space bounds across frames, so
+  // those exposed strips are now covered by the moved ids' previous bounds.
+  self.ensure_full_surface_damage(Placement("overlay placement changed"))
   self.dirty.needs_paint = true
   self.dirty.needs_redraw = true
 }
@@ -297,17 +311,18 @@ fn collect_overlay_overrides(
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
   let dirty_ids = self.dirty.dirty_paint_elements.to_array()
-  // Layout work can move clean subtrees. Until placement-level move tracking
-  // exists, the previous and current bounds of dirty paint ids do not cover
-  // those exposed strips, so layout frames stay full.
+  // Layout work can move clean subtrees that never enter the paint-dirty id
+  // set. `compute_damage_region` compares screen-space placement across the
+  // two render trees to recover those exposed strips, so a layout frame is a
+  // placement request rather than an unconditional full surface.
   let layout_work = self.dirty.needs_layout
   let force_full_reason = match self.dirty.full_damage_reason {
     Some(reason) => Some(reason)
     None =>
       if previous_render.root.element_id.value() == 0 {
-        Some("initial frame")
+        Some(Absolute("initial frame"))
       } else if layout_work {
-        Some("layout changed")
+        Some(Placement("layout changed"))
       } else {
         None
       }
@@ -380,58 +395,86 @@ fn RuntimeState::compute_damage_region(
   previous : RenderTree,
   current : RenderTree,
   dirty_ids : Array[ElementId],
-  force_full_reason~ : String?,
+  force_full_reason~ : FullDamageClass?,
 ) -> DamageRegion {
-  match force_full_reason {
-    Some(reason) => DamageRegion::full(reason)
-    None => {
-      if dirty_ids.is_empty() {
-        return DamageRegion::full("dirty bounds unavailable")
+  let placement_reason = match force_full_reason {
+    Some(Absolute(reason)) => return DamageRegion::full(reason)
+    Some(Placement(reason)) => Some(reason)
+    None => None
+  }
+  // Exit ghosts are command snapshots painted outside the render tree, so
+  // placement tracking has no node to compare for their in-flight fades.
+  match placement_reason {
+    Some(reason) =>
+      if !self.exiting_overlays.is_empty() {
+        return DamageRegion::full(reason)
       }
-      // Every id in the dirty set was marked paint-dirty on itself, so its
-      // own paint output may change anywhere inside its bounds. Descendant
-      // rects never cover that: a scroll offset that an ancestor re-paints
-      // moves content across the whole subtree, and clearing only the leaf
-      // rects would leave previous-frame pixels (e.g. a scrolled image)
-      // ghosting outside them. Union each id's previous and current damage
-      // bounds unconditionally. One pass per tree keeps the index build O(n)
-      // regardless of the number of dirty ids.
-      let previous_index = DamageIndex::build(previous.root)
-      let current_index = DamageIndex::build(current.root)
-      let surface = Rect::new(
-        x=0.0,
-        y=0.0,
-        width=self.size.width,
-        height=self.size.height,
-      )
-      let rects : Array[Rect] = []
-      let mut missing_bounds = false
-      for id in dirty_ids {
-        let mut found_bounds = false
-        match previous_index.damage_bounds(id) {
-          Some(bounds) => {
-            rects.push(bounds)
-            found_bounds = true
-          }
-          None => ()
-        }
-        match current_index.damage_bounds(id) {
-          Some(bounds) => {
-            rects.push(bounds)
-            found_bounds = true
-          }
-          None => ()
-        }
-        if !found_bounds {
-          missing_bounds = true
-        }
-      }
-      if missing_bounds || rects.is_empty() {
-        DamageRegion::full("dirty bounds unavailable")
-      } else {
-        DamageRegion::from_rects(rects, surface)
+    None => ()
+  }
+  // Every id in the dirty set was marked paint-dirty on itself, so its
+  // own paint output may change anywhere inside its bounds. Descendant
+  // rects never cover that: a scroll offset that an ancestor re-paints
+  // moves content across the whole subtree, and clearing only the leaf
+  // rects would leave previous-frame pixels (e.g. a scrolled image)
+  // ghosting outside them. Union each id's previous and current damage
+  // bounds unconditionally. One pass per tree keeps the index build O(n)
+  // regardless of the number of dirty ids.
+  let previous_index = DamageIndex::build(previous.root)
+  let current_index = DamageIndex::build(current.root)
+  let ids = dirty_ids
+  if placement_reason is Some(_) {
+    let seen : Map[Int32, Bool] = Map([])
+    for id in ids {
+      seen[id.value()] = true
+    }
+    for id in current_index.placement_changes(previous_index) {
+      if !seen.contains(id.value()) {
+        ids.push(id)
+        seen[id.value()] = true
       }
     }
+  }
+  if ids.is_empty() {
+    // Layout ran but nothing moved, faded or re-painted, so there is no pixel
+    // to update. Without a placement request an empty dirty set still means
+    // the caller could not describe its change.
+    return match placement_reason {
+      Some(_) => DamageRegion::empty()
+      None => DamageRegion::full("dirty bounds unavailable")
+    }
+  }
+  let surface = Rect::new(
+    x=0.0,
+    y=0.0,
+    width=self.size.width,
+    height=self.size.height,
+  )
+  let rects : Array[Rect] = []
+  let mut missing_bounds = false
+  for id in ids {
+    let mut found_bounds = false
+    match previous_index.damage_bounds(id) {
+      Some(bounds) => {
+        rects.push(bounds)
+        found_bounds = true
+      }
+      None => ()
+    }
+    match current_index.damage_bounds(id) {
+      Some(bounds) => {
+        rects.push(bounds)
+        found_bounds = true
+      }
+      None => ()
+    }
+    if !found_bounds {
+      missing_bounds = true
+    }
+  }
+  if missing_bounds || rects.is_empty() {
+    DamageRegion::full("dirty bounds unavailable")
+  } else {
+    DamageRegion::from_rects(rects, surface)
   }
 }
 
@@ -659,7 +702,7 @@ fn RuntimeState::track_overlay_surface_lifecycle(
               started_ms: now_ms,
               duration_ms: self.overlay_transition_duration_ms(),
             })
-            self.ensure_full_surface_damage("overlay exited")
+            self.ensure_full_surface_damage(Absolute("overlay exited"))
           }
         }
         None => ()

@@ -173,7 +173,7 @@ test "damage classification: paint-only selection uses precise dirty bounds" {
 }
 
 ///|
-test "damage classification: layout-only projection stays full" {
+test "damage classification: layout-only projection uses the changed cell" {
   let variant = Ref(0)
   let runtime = damage_classification_runtime(() => {
     damage_classification_stage([
@@ -187,8 +187,19 @@ test "damage classification: layout-only projection stays full" {
   variant.val = 1
   runtime.request_root_rebuild(reason="layout-only projection")
   let frame = runtime.build_draw_frame()
-  assert_true(frame.damage is FullSurface(_))
-  assert_eq(frame.damage.full_reason(), "layout changed")
+  // The layout declaration changed but the placed geometry did not, so
+  // placement tracking finds no moved id and only the re-painted cell is
+  // damaged. The three stable cells keep their pixels.
+  match frame.damage {
+    Rects(rects) => {
+      let changed_cell = @core.Point::new(x=50.0, y=20.0)
+      let stable_cell = @core.Point::new(x=150.0, y=20.0)
+      assert_true(rects.any(rect => rect.inflate(1.0).contains(changed_cell)))
+      assert_false(rects.any(rect => rect.inflate(1.0).contains(stable_cell)))
+    }
+    FullSurface(reason) => fail("expected placed damage, got \{reason}")
+    Empty => fail("expected the changed cell to be damaged")
+  }
 }
 
 ///|

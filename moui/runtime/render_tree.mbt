@@ -718,6 +718,7 @@ priv struct DamageIndexEntry {
   paint_bounds : Rect
   parent_id : Int32?
   is_repaint_boundary : Bool
+  render_opacity : Double?
 }
 
 ///|
@@ -768,7 +769,45 @@ fn DamageIndex::build_node(
     paint_bounds: runtime_transform_rect(node_to_screen, node.paint_bounds),
     parent_id,
     is_repaint_boundary: node.is_repaint_boundary,
+    render_opacity: node.render_opacity,
   }
+}
+
+///|
+/// Element ids whose on-screen placement changed between two frames.
+///
+/// `paint_bounds` is already screen space, so one comparison catches a node
+/// that moved itself, was resized, or was carried along by an ancestor
+/// transform (scroll offsets included) — the clean subtrees that layout work
+/// moves without ever marking paint-dirty. Overlay fade opacity is compared
+/// alongside it because a fade changes pixels without changing bounds,
+/// including on the frame where it settles at 1.0.
+///
+/// Ids present on only one side are reported too: a render node can appear or
+/// disappear without an element structure change (paint layers, retained
+/// layers, viewport-culled blocks), and the side that still has bounds owns
+/// the pixels to paint or to clear.
+fn DamageIndex::placement_changes(
+  self : DamageIndex,
+  previous : DamageIndex,
+) -> Array[ElementId] {
+  let changed : Array[ElementId] = []
+  for id, entry in self.entries {
+    match previous.entries.get(id) {
+      Some(before) =>
+        if before.paint_bounds != entry.paint_bounds ||
+          before.render_opacity != entry.render_opacity {
+          changed.push(ElementId::new(id))
+        }
+      None => changed.push(ElementId::new(id))
+    }
+  }
+  for id in previous.entries.keys() {
+    if !self.entries.contains(id) {
+      changed.push(ElementId::new(id))
+    }
+  }
+  changed
 }
 
 ///|
