@@ -49,8 +49,7 @@ if (packages.length === 0) {
   process.exit(1);
 }
 console.log(
-  `workspace tests: ${packages.length} packages in ${targets.length} members` +
-    (skipped.length > 0 ? ` (subrepo-owned, skipped: ${skipped.join(", ")})` : ""),
+  `workspace tests: ${packages.length} packages in ${targets.length} members`,
 );
 
 const result = spawnSync("moon", ["test", ...packages, ...process.argv.slice(2)], {
