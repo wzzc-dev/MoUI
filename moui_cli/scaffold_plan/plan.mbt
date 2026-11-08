@@ -649,7 +649,7 @@ pub fn build_project_file_plan(
       ),
       text_file(
         options.id + "/" + snake_name + "_control_test.mbt",
-        addon_test_text(package_id=options.id, type_name~, snake_name~),
+        addon_test_text(package_id=options.id, snake_name~),
       ),
     ]
   } else {
@@ -838,11 +838,7 @@ fn addon_control_text(
 }
 
 ///|
-fn addon_test_text(
-  package_id~ : String,
-  type_name~ : String,
-  snake_name~ : String,
-) -> String {
+fn addon_test_text(package_id~ : String, snake_name~ : String) -> String {
   (
     #|///|
     #|/// Runtime-level smoke: the control draws its label and commits a node.

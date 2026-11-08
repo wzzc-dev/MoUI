@@ -280,7 +280,7 @@ fn ios_common_compile_flags(
 fn path_basename(path : String) -> String {
   let last = path.split("/").last()
   match last {
-    Some(name) => name.to_string()
+    Some(name) => name.to_owned()
     None => path
   }
 }
@@ -562,7 +562,7 @@ fn build_ios(
       join_path(runtime_compat_dir, "posix_spawn_addchdir.h"),
     ]
     let entries = @fs.read_dir(runtime_dir) catch {
-      error => return Err("runtime dir listing failed")
+      _ => return Err("runtime dir listing failed")
     }
     let sources : Array[String] = []
     for entry in entries {

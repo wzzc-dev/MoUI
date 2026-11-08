@@ -4,19 +4,14 @@
 /// the hex descriptions.
 
 ///|
-fn color_picker_test_view(
-  selected~ : @core.Color,
-  received~ : Array[@core.Color],
-) -> @core.View[@core.Color] {
+fn color_picker_test_view(selected~ : @core.Color) -> @core.View[@core.Color] {
   color_picker(selected~, on_change=color => color, width=272.0)
 }
 
 ///|
 test "color picker lays out a swatch grid with the declared columns" {
-  let received : Array[@core.Color] = []
   let view : @core.View[@core.Color] = color_picker_test_view(
     selected=color_picker_default_swatches()[0],
-    received~,
   )
   let layout = view.layout({
     constraints: @core.Constraints::tight(
@@ -59,7 +54,6 @@ test "tapping a swatch reports its color through on_change" {
   let swatches = color_picker_default_swatches()
   let view : @core.View[@core.Color] = color_picker_test_view(
     selected=swatches[0],
-    received~,
   )
   // The swatches are child views: the tap reaches them through the runtime's
   // element walk, exactly as a user's press would.
@@ -106,17 +100,15 @@ test "tapping a swatch reports its color through on_change" {
 
 ///|
 test "swatch semantics carry the selection and the hex description" {
-  let received : Array[@core.Color] = []
   let swatches = color_picker_default_swatches()
   let view : @core.View[@core.Color] = color_picker_test_view(
     selected=swatches[2],
-    received~,
   )
   let info = view.semantics()
   assert_true(info.role == Some(Group))
   assert_true(info.value.unwrap() == "color picker")
   // The hex helper matches the swatch description format.
-  assert_true(color_picker_hex(swatches[2]).substring(start=0, end=1) == "#")
+  assert_true(color_picker_hex(swatches[2])[:1] == "#")
 }
 
 ///|
@@ -124,7 +116,7 @@ test "hex descriptions round-trip the color channels" {
   // The primary blue from the palette prints its exact channels.
   let blue = @core.Color::rgba(r=0.12, g=0.36, b=0.95)
   let hex = color_picker_hex(blue)
-  assert_true(hex.substring(start=0, end=3) == "#1f")
+  assert_true(hex[:3] == "#1f")
   inspect(hex.length(), content="7")
   // Pure extremes round-trip.
   inspect(

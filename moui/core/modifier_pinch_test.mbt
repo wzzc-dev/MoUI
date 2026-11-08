@@ -290,15 +290,19 @@ test "rotation deltas wrap across the angle seam" {
   // Step two: continue counterclockwise to just past -pi (angle ~ -3.0).
   // The raw difference (-6.0) exceeds pi; the wrap folds it to a small
   // positive delta crossing the seam the short way.
-  let move_b = view.event(
-    pinch_test_context(
-      event=pinch_test_pointer(
-        id=1,
-        x=100.0 * @math.cos(0.0 - 3.0),
-        y=100.0 + 100.0 * @math.sin(0.0 - 3.0),
-        phase=Move,
+  // Only the recorded rotation matters for this step; the event result is
+  // intentionally discarded.
+  ignore(
+    view.event(
+      pinch_test_context(
+        event=pinch_test_pointer(
+          id=1,
+          x=100.0 * @math.cos(0.0 - 3.0),
+          y=100.0 + 100.0 * @math.sin(0.0 - 3.0),
+          phase=Move,
+        ),
+        state=move_a.state.unwrap(),
       ),
-      state=move_a.state.unwrap(),
     ),
   )
   assert_true(received.length() == 3)

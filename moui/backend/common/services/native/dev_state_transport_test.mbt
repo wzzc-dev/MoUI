@@ -23,5 +23,5 @@ test "dev_state_transport round-trips payload through the filesystem" {
 
 ///|
 test "dev_state_transport_path is unset outside the dev loop" {
-  assert_true(dev_state_transport_path() is None)
+  assert_true(@native.dev_state_transport_path() is None)
 }
