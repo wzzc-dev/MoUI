@@ -1,7 +1,9 @@
 # 0065: The 0.4.x release line is synchronized
 
 - **Date**: 2026-11-06
-- **Status**: Accepted (supersedes ADR 0055)
+- **Status**: Accepted (supersedes ADR 0055). The synchronized-line policy
+  continues on the `0.5.x` line: 0.5.0 advanced every public module together
+  with the platform-bridge features recorded in `docs/releases/0.5.0.md`.
 - **Deciders**: wzzc-dev (agent-assisted architecture review)
 - **Related**: ADR 0055, ADR 0059, `checks/release-modules.json`,
   `docs/releases/0.4.0.md`

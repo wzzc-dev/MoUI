@@ -23,7 +23,10 @@ minor; no patch exception ledger is maintained.
 path: the pre-1 policy permits breaking changes when the release ships an
 upgrade note and migration examples. No SemVer exception is recorded for this
 program. The release still moves the synchronized line and every public module
-to `0.4.x` together, and it still passes the external consumer gate.
+to `0.4.x` together, and it still passes the external consumer gate. The
+synchronized-line policy (ADR 0065) continues on the `0.5.x` line: 0.5.0
+advances every public module together with the platform-bridge features
+recorded in `docs/releases/0.5.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
 removed from their old package in the same release; in-tree call sites and the
