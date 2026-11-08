@@ -47,8 +47,8 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3750,
-      "reason": "Existing native Skia surface and image bridge implementation. Raised 3525->3675 2026-10-31 (six 25-line quanta, measured 3667) for the Surface::egl_resize_window C stub (EGL window back-buffer re-wrap) landed with the HarmonyOS window-hosted route. Raised 3675->3750 2026-11-03 (three 25-line quanta, measured 3732) for the HarmonyOS frame-diagnostics instrumentation landed with the scroll/drag frame-starvation fix."
+      "maxLines": 3875,
+      "reason": "Existing native Skia surface and image bridge implementation. Raised 3525->3675 2026-10-31 (six 25-line quanta, measured 3667) for the Surface::egl_resize_window C stub (EGL window back-buffer re-wrap) landed with the HarmonyOS window-hosted route. Raised 3675->3750 2026-11-03 (three 25-line quanta, measured 3732) for the HarmonyOS frame-diagnostics instrumentation landed with the scroll/drag frame-starvation fix. Raised 3750->3875 2026-11-08 (five 25-line quanta, measured 3860) for the per-HWND D3D12 swap chain reuse across GPU surface resizes."
     },
     {
       "path": "moui_sun/graphics/render_frame_test.mbt",
@@ -157,8 +157,8 @@
     },
     {
       "path": "moui_skia/native/surface_image_data_native.mbt",
-      "maxLines": 1575,
-      "reason": "Existing native surface/image bindings. Raised 1525->1575 2026-10-31 (two 25-line quanta, measured 1565) for the Surface::egl_resize_window binding (EGL window back-buffer re-wrap for the HarmonyOS window-hosted route) and its surface-image-data capability contract."
+      "maxLines": 1625,
+      "reason": "Existing native surface/image bindings. Raised 1525->1575 2026-10-31 (two 25-line quanta, measured 1565) for the Surface::egl_resize_window binding (EGL window back-buffer re-wrap for the HarmonyOS window-hosted route) and its surface-image-data capability contract. Raised 1575->1625 2026-11-08 (two 25-line quanta, measured 1618) for the per-HWND D3D12 swap chain resize bindings."
     },
     {
       "path": "moui_sun/graphics/surface.mbt",
