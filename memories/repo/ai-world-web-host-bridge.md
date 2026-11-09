@@ -1,5 +1,11 @@
 # ai_world web host bridge (folder database + provider)
 
+> **Graduated 2026-11-09**: this example left MoUI and now lives at
+> `/Volumes/Data/Code/moon/new_world` (module `wzzc-dev/new_world`; it was
+> `examples/new_world` in-tree, renamed from `examples/ai_world`). The gotchas
+> below still describe the app's design; the file paths in **Where** are
+> repointed to the standalone repo. MoUI no longer carries this example.
+
 ## Rule
 
 For an app-private wasm-gc capability (network, folder/file IO), put the
@@ -379,10 +385,10 @@ diagnostics log: a wasm trap in a completion is otherwise invisible.
 
 ## Where
 
-`examples/ai_world/llm_web/bridge.mbt` (wasm-gc side),
-`examples/ai_world/web_wasm/index.html` (`ai_world_host` + boot queue),
-`examples/ai_world/macos_skia/main.mbt` (`@async/fs` worker twin),
-`examples/ai_world/app/msg.mbt` + `effect.mbt` + `turn.mbt` + `creation.mbt`
+`/Volumes/Data/Code/moon/new_world/llm_web/bridge.mbt` (wasm-gc side),
+`/Volumes/Data/Code/moon/new_world/web_wasm/index.html` (`ai_world_host` + boot queue),
+`/Volumes/Data/Code/moon/new_world/macos_skia/main.mbt` (`@async/fs` worker twin),
+`/Volumes/Data/Code/moon/new_world/app/msg.mbt` + `effect.mbt` + `turn.mbt` + `creation.mbt`
 (protocol / host effects / turn pipelines / wizard+generation),
-`examples/ai_world/app/lore.mbt` (lorebook selection),
-`docs/plans/active/ai-world-engine.md` (product state).
+`/Volumes/Data/Code/moon/new_world/app/lore.mbt` (lorebook selection),
+`/Volumes/Data/Code/moon/MoUI/docs/plans/done/ai-world-engine.md` (product state).

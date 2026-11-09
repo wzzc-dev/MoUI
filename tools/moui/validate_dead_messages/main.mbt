@@ -253,9 +253,10 @@ fn parse_catalog(text : String) -> Result[Catalog, String] {
     }
     enums.push({ name, path, scan_roots: roots, waivers, })
   }
-  if enums.is_empty() {
-    return Err("catalog declares no enums")
-  }
+  // An empty catalog is valid: it means no example currently registers a
+  // dead-UI gate, so there is nothing to check. The main flow already
+  // summarizes `0 enums, all constructed` and passes vacuously. (The catalog
+  // emptied when the New World example graduated out of MoUI.)
   Ok({ enums, })
 }
 

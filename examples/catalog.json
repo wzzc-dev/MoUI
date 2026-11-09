@@ -132,12 +132,6 @@
       "path": "examples/tui_layers",
       "title": "TUI Layers",
       "featured": false
-    },
-    {
-      "id": "new_world",
-      "path": "examples/new_world",
-      "title": "New World",
-      "featured": true
     }
   ]
 }

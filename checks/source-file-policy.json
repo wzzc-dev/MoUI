@@ -289,16 +289,6 @@
       "path": "examples/mo_desktop/app/model.mbt",
       "maxLines": 1275,
       "reason": "Trait-method promotions (Eq/Debug/Hash/Compare/ToJson/Show and package host traits) inlined next to their type definitions during the extends-file migration. Quantized 1250->1275 2026-11-06 (measured 1259) for the formatting-only `#derive` migration to MoonBit 0.10.20."
-    },
-    {
-      "path": "examples/new_world/app/update.mbt",
-      "maxLines": 1600,
-      "reason": "Existing New World update logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet. Quantized 1591->1600 to the 25-line budget step 2026-10-25."
-    },
-    {
-      "path": "examples/new_world/app/world_store.mbt",
-      "maxLines": 1350,
-      "reason": "Existing New World folder-store logic that predates this registration; already above the new-file hard limit at HEAD, so it is recorded as an existing ratchet. Quantized 1330->1350 to the 25-line budget step 2026-10-25."
     }
   ],
   "data": [

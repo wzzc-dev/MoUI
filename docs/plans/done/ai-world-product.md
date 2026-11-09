@@ -1,9 +1,13 @@
-# Plan: AI World — 从示例到产品，并毕业为子模块
+# Plan: AI World — 从示例到产品，并毕业为独立仓库
 
-- **Status**: active
+- **Status**: done
+- **Graduation**: 2026-11-09 作为**本地独立仓库**
+  `/Volumes/Data/Code/moon/new_world`（模块 `wzzc-dev/new_world`）毕业；原
+  `examples/new_world` 已从 MoUI 摘除（`moon.work`/`checks`/`catalog`/`docs`
+  同步清理）。`examples/ai_world` 是该示例在改名前的历史路径。
 - **Goal**: 把 `examples/ai_world` 从「技术上闭环的示例」推进为**可用的本地优先
   AI 叙事工具**，补齐立绘与同类产品已被验证的成熟能力，最后按
-  `moui-studio-standalone-subrepo` 的先例毕业为独立仓库 + submodule。
+  `moui-studio-standalone-subrepo` 的先例毕业为独立仓库。
   共享 `app` 包继续保持纯 TEA；平台入口保持薄。
 - **Non-goals**: 多人联机、语音、本地模型推理（llama.cpp/onnx）、自建后端、
   框架 invariant 改动。任何新能力先落在 `app` 与 app-private 包里，证明可复用
@@ -119,18 +123,23 @@
   可选写回 `world.md` 的时间线小节。
 - **不做**自主循环 tick，除非 3b 验证后有明确收益。
 
-### 毕业：独立子仓库
+### 毕业：独立仓库（已完成）
 
-按 [moui-studio-standalone-subrepo](../done/moui-studio-standalone-subrepo.md) 先例：
+**实际结果（2026-11-09）**：以**本地独立仓库**形式毕业，未走 GitHub
+subtree/submodule 路线。`examples/new_world` 整树复制为
+`/Volumes/Data/Code/moon/new_world`，模块名改为 `wzzc-dev/new_world`
+（自导入/`.mbti`/`web_wasm/index.html`/README 同步改写，Web 路改为
+`../.mooncakes/...` + `../_build/...` 独立单模块布局），独立构建验证通过
+（`moon test app` 326 项、`llm_native` 3 项、`web_wasm` wasm-gc 构建全绿），
+然后从 MoUI 完整摘除（`moon.work`、`checks/profiles.json` 三个 pr 步骤、
+`checks/dead-message-catalog.json`、`checks/source-file-policy.json` 两处
+ratchet、`examples/catalog.json`、`docs/examples.md`，并再生
+`docs/repository-facts.md` + website 同步）。
 
-- `git subtree split -P examples/ai_world` → 独立仓库 `wzzc-dev/ai_world`。
-- 模块名 `examples/ai_world` → `wzzc-dev/ai_world`；子包 import 同步。
-- 保持为独立仓库，不再挂载 submodule；MoUI 改动走
-  [vendor-workflow](../vendor-workflow.md)（对齐现在的 MoMark / MoUI Studio 模式）。
-- 同步：`moon.work`、`checks/profiles.json`、`checks/dead-message-catalog.json`、
-  `examples/catalog.json`、`docs/examples.md`、`docs/markdown-editor.md` 式
-  指针文档、`memories/repo/`。
-- 毕业**前置条件**：阶段一、二完成 + 立绘完成 + 截图/featured 就位。
+原计划的 subtree/submodule 路线（`git subtree split` → `wzzc-dev/ai_world`
+submodule、vendor-workflow 协作）未采用；如需推 GitHub 再补远端。
+
+- 毕业**前置条件**：阶段一、二完成 + 立绘完成 + 截图/featured 就位 —— 全部达成。
 
 ## 借鉴清单（同类产品的成熟件，只取与「本地优先 + 文件夹数据库」相容的）
 

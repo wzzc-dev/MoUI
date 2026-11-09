@@ -322,9 +322,10 @@ is a facade, every subpackage has to be named explicitly in the test run.
 - The Web input ABI is 10 parameters end to end (`browser_runtime.js` →
   `web_dispatch_pointer_input` → app forwarder). `browser_runtime.js` ships
   inside the published module and is the only caller of the export, so the 10
-  workspace forwarders (`examples/{counter,new_world,showcase,multi_window,
+  workspace forwarders (`examples/{counter,showcase,multi_window,
   mo_desktop,design_systems,three_d_viewer}/web_wasm`, `moui_studio/web_wasm`,
-  `website/web_wasm`, `website/playground/web_wasm`) were rewritten in lockstep
+  `website/web_wasm`, `website/playground/web_wasm`; `new_world` graduated to
+  `/Volumes/Data/Code/moon/new_world`) were rewritten in lockstep
   instead of keeping a compatibility shim. The router reports `pointerId` only
   for `pointerType === "touch"` and pressure only for touch/pen, which keeps
   mouse streams on the documented `(0, 1.0)`.
@@ -366,7 +367,7 @@ is a facade, every subpackage has to be named explicitly in the test run.
 `scroll_container` pans on both axes, and the overscroll band was computed per
 axis from the viewport size alone — so a horizontal drag moved the painted
 surface even when the content never overflowed horizontally. The visible
-symptom was `examples/new_world`'s onboarding card sliding sideways under the
+symptom was New World's onboarding card sliding sideways under the
 pointer. `scroll_axis_has_range` now gates both the pointer's horizontal delta
 and the horizontal band on `child.width > viewport.width`, which is UIKit's
 `alwaysBounceHorizontal = NO` and Qt's `AutoFlickDirection`.
@@ -391,7 +392,8 @@ scroller so one gesture is still recognized by exactly one container. The
 other half of the symptom was app-side: the settings title row measured
 `wide + action_gap` (fixed widths + spacing overflow), and that overflow became
 real horizontal drag range — pinned by a layout probe in
-`examples/new_world/app/layout_probe_test.mbt` and by
+`/Volumes/Data/Code/moon/new_world/app/layout_probe_test.mbt` (the example
+graduated out of MoUI) and by
 `moui/runtime/nested_scroll_release_test.mbt`.
 
 ## §10 landing note: first completed gesture owns the pointer stream (2026-11-05)

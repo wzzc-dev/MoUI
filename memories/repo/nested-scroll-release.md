@@ -38,6 +38,6 @@ the overflow turns into drag range.
 Regression tests: `moui/runtime/nested_scroll_release_test.mbt` (click on an
 inner control, then button-less hover; drag from an inner control routes to
 the inner scroller only) and the layout probe
-`examples/new_world/app/layout_probe_test.mbt` ("设置页内容不横向溢出滚动视口",
+`/Volumes/Data/Code/moon/new_world/app/layout_probe_test.mbt` ("设置页内容不横向溢出滚动视口",
 asserts no frame width lands strictly between the content budget and the card
 width).

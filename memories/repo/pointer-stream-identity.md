@@ -28,7 +28,7 @@
   (`raw_id, kind, x, y, delta_x, delta_y, button, modifiers, pointer_id,
   pressure`). `browser_runtime.js` is the only caller of the
   `web_dispatch_pointer_input` wasm export; the workspace forwarders
-  (10 files: `examples/{counter,new_world,showcase,multi_window,mo_desktop,design_systems,three_d_viewer}/web_wasm`,
+  (10 files: `examples/{counter,showcase,multi_window,mo_desktop,design_systems,three_d_viewer}/web_wasm`,
   `moui_studio/web_wasm`, `website/web_wasm`, `website/playground/web_wasm`) and
   the playground `compiler-worker.js` inline template all have to move in the
   same change. There is no compatibility shim.
@@ -64,7 +64,7 @@ When touching pointer transport, decode, or the Web input ABI, check all three
 layers at once: `moui/core` contract, `moui/backend` decode plus
 `browser_runtime.js`, and `moui/runtime` per-id state. Then compile every Web
 entrypoint at its own target — one command for all of them is
-`moon check examples/counter/web_wasm examples/new_world/web_wasm
+`moon check examples/counter/web_wasm /Volumes/Data/Code/moon/new_world/web_wasm
 examples/showcase/web_wasm examples/multi_window/web_wasm
 examples/mo_desktop/web_wasm examples/design_systems/web_wasm
 examples/three_d_viewer/web_wasm moui_studio/web_wasm website/web_wasm

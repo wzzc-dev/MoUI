@@ -60,7 +60,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/webview_demo |
 | ./examples/terminal |
 | ./examples/tui_layers |
-| ./examples/new_world |
 | ./benchmarks/app_cached_layer |
 | ./benchmarks/full_cycle |
 | ./benchmarks/performance_budget |
@@ -124,7 +123,6 @@ This file is generated from repository manifests and validator reports.
 | WebView Demo | examples/webview_demo | no |
 | Terminal | examples/terminal | yes |
 | TUI Layers | examples/tui_layers | no |
-| New World | examples/new_world | yes |
 
 ## Platform Status
 

@@ -30,7 +30,7 @@
 
 Both failure classes look like "the widget moved when I did not ask it to", and
 the fix is on the app side half the time. Measuring the laid-out tree (see
-`examples/new_world/app/layout_probe_test.mbt`) distinguishes a band from a
+`/Volumes/Data/Code/moon/new_world/app/layout_probe_test.mbt`) distinguishes a band from a
 range; the painted-shift assertion in `scroll_view_wbtest.mbt` pins the gate.
 
 ## How to apply

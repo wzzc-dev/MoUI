@@ -666,36 +666,6 @@
             "--target",
             "wasm-gc"
           ]
-        },
-        {
-          "name": "New World app tests",
-          "argv": [
-            "moon",
-            "test",
-            "examples/new_world/app",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "New World native transport tests",
-          "argv": [
-            "moon",
-            "test",
-            "examples/new_world/llm_native",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "New World Web build",
-          "argv": [
-            "moon",
-            "build",
-            "examples/new_world/web_wasm",
-            "--target",
-            "wasm-gc"
-          ]
         }
       ]
     },
