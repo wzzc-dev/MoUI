@@ -250,28 +250,6 @@ fn translate_path(path : @core.PathSpec, offset : Point) -> @core.PathSpec {
 }
 
 ///|
-fn RenderNode::drain_deferred_draw(
-  deferred : Array[RenderNode],
-  commands : Array[DrawCommand],
-  overlays : Array[DrawCommand],
-) -> Unit {
-  let mut head = 0
-  while head < deferred.length() {
-    let node = deferred[head]
-    let screen_space = Transform2D::translation(
-      dx=node.frame.origin.x,
-      dy=node.frame.origin.y,
-    )
-    RenderNode::push_transform(commands, screen_space)
-    deferred[head].collect_draw_commands_with_overlays(
-      screen_space, commands, overlays, deferred,
-    )
-    RenderNode::pop_transform(commands, screen_space)
-    head = head + 1
-  }
-}
-
-///|
 fn RenderNode::drain_deferred_frame(
   deferred : Array[RenderNode],
   commands : Array[DrawCommand],
@@ -428,7 +406,7 @@ fn RenderNode::collect_frame_commands_with_overlays(
     match self.cached_layer_spec() {
       Some(spec) => {
         commands.push(BeginRetainedLayer(spec))
-        self.collect_uncached_frame_commands_with_overlays(
+        self.append_retained_frame_commands(
           node_to_screen, commands, overlays, deferred,
         )
         commands.push(EndRetainedLayer(spec.key))
@@ -446,32 +424,25 @@ fn RenderNode::collect_frame_commands_with_overlays(
 }
 
 ///|
-fn RenderNode::collect_draw_commands_with_overlays(
+/// P16 puts the complete payload on the wire every frame, so the copy is not
+/// optional — but re-deriving it by walking the subtree is. The payload was
+/// already flattened when the layer was painted; replaying it emits the same
+/// commands without composing a transform per descendant per frame.
+///
+/// Commands are node-local and carry their own transform scopes, so the
+/// flattened payload is independent of where the layer lands on screen.
+/// Overlay commands are the exception: they escape the layer's transform and
+/// are re-wrapped under the live one here.
+fn RenderNode::append_retained_frame_commands(
   self : RenderNode,
   node_to_screen : Transform2D,
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
   deferred : Array[RenderNode],
 ) -> Unit {
-  let fade = match self.render_opacity {
-    Some(opacity) => opacity < 1.0
-    None => false
-  }
-  if fade {
-    commands.push(
-      PushOpacity(
-        match self.render_opacity {
-          Some(opacity) => opacity
-          None => 1.0
-        },
-      ),
-    )
-  }
   match self.cached_draw_commands {
-    Some(cached) => {
-      for command in cached {
-        commands.push(command)
-      }
+    Some(payload) => {
+      commands.append(payload)
       match self.cached_overlay_draw_commands {
         Some(cached_overlays) =>
           RenderNode::append_overlay_commands(
@@ -479,57 +450,12 @@ fn RenderNode::collect_draw_commands_with_overlays(
           )
         None => ()
       }
-      return
     }
-    None => ()
-  }
-  for command in self.paint_commands {
-    commands.push(command)
-  }
-  let child_content_to_screen = runtime_transform_compose(
-    node_to_screen,
-    self.child_transform,
-  )
-  for child in self.children {
-    if child.is_overlay_child {
-      deferred.push(child)
-    } else if child.is_paint_layer {
-      child.collect_draw_commands_with_overlays(
+    None =>
+      self.collect_uncached_frame_commands_with_overlays(
         node_to_screen, commands, overlays, deferred,
       )
-    } else {
-      // Paint commands are content-local. Apply the node's content transform
-      // and the child's frame together so a scroll tick does not need to
-      // rewrite any descendant's draw commands.
-      let child_space = runtime_transform_compose(
-        self.child_transform,
-        Transform2D::translation(
-          dx=child.frame.origin.x,
-          dy=child.frame.origin.y,
-        ),
-      )
-      let child_to_screen = runtime_transform_compose(
-        child_content_to_screen,
-        Transform2D::translation(
-          dx=child.frame.origin.x,
-          dy=child.frame.origin.y,
-        ),
-      )
-      RenderNode::push_transform(commands, child_space)
-      child.collect_draw_commands_with_overlays(
-        child_to_screen, commands, overlays, deferred,
-      )
-      RenderNode::pop_transform(commands, child_space)
-    }
   }
-  for command in self.post_paint_commands {
-    commands.push(command)
-  }
-  RenderNode::append_overlay_commands(
-    overlays,
-    self.overlay_paint_commands,
-    node_to_screen,
-  )
 }
 
 ///|
@@ -612,6 +538,9 @@ fn RenderNode::append_overlay_commands(
   source : Array[DrawCommand],
   node_to_screen : Transform2D,
 ) -> Unit {
+  if source.is_empty() {
+    return
+  }
   let transformed = !runtime_transform_is_identity(node_to_screen)
   if transformed {
     overlays.push(PushTransform(node_to_screen))
@@ -625,19 +554,23 @@ fn RenderNode::append_overlay_commands(
 }
 
 ///|
+/// Flatten the layer once, at paint time, using the same traversal the frame
+/// builder would run. The result is the payload `append_retained_frame_commands`
+/// replays, so a cache hit costs a copy rather than a subtree walk.
 fn RenderNode::with_repaint_boundary_cache(self : RenderNode) -> RenderNode {
   let commands : Array[DrawCommand] = []
   let overlays : Array[DrawCommand] = []
   // Cache building inlines hoisted overlay children so the retained layer is
-  // self-contained; only the root traversal defers them.
+  // self-contained; only the root traversal defers them. Callers guarantee this
+  // subtree has none, so `deferred` stays empty in practice.
   let deferred : Array[RenderNode] = []
-  self.collect_draw_commands_with_overlays(
+  self.collect_uncached_frame_commands_with_overlays(
     Transform2D::identity(),
     commands,
     overlays,
     deferred,
   )
-  RenderNode::drain_deferred_draw(deferred, commands, overlays)
+  RenderNode::drain_deferred_frame(deferred, commands, overlays)
   {
     ..self,
     is_repaint_boundary: true,
