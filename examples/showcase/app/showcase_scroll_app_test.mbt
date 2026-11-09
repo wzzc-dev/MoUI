@@ -101,7 +101,14 @@ test "showcase wheel scroll stays in element state without root rebuild" {
     frame.damage.full_reason() == "activation rebuild",
     msg="an internal scroll must not request an activation rebuild",
   )
-  inspect(frame.damage.full_reason(), content="layout changed")
+  // Placement tracking derives the region from the content the scroll actually
+  // moved instead of the blanket "layout changed" class. This pane moves enough
+  // that the coalesced rects still cover most of the surface, but the reason is
+  // now measured rather than assumed.
+  inspect(
+    frame.damage.full_reason(),
+    content="dirty region covers most of the surface",
+  )
 }
 
 ///|
