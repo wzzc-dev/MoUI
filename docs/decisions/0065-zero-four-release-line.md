@@ -4,6 +4,10 @@
 - **Status**: Accepted (supersedes ADR 0055). The synchronized-line policy
   continues on the `0.5.x` line: 0.5.0 advanced every public module together
   with the platform-bridge features recorded in `docs/releases/0.5.0.md`.
+  It continues again on `0.6.x`: 0.6.0 advances every public module together
+  with the mature-framework parity program recorded in
+  `docs/releases/0.6.0.md`. The cadence is unchanged, so no superseding ADR
+  is required.
 - **Deciders**: wzzc-dev (agent-assisted architecture review)
 - **Related**: ADR 0055, ADR 0059, `checks/release-modules.json`,
   `docs/releases/0.4.0.md`

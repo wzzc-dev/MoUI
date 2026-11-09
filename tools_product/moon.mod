@@ -4,13 +4,13 @@ version = "0.2.2"
 
 import {
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui@0.5.2",
+  "wzzc-dev/moui@0.6.0",
   "wzzc-dev/moui_tools@0.2.2",
-  "wzzc-dev/moui_skia_renderer@0.5.2",
-  "wzzc-dev/moui_sun_renderer@0.5.2",
-  "wzzc-dev/moui_tui_renderer@0.5.2",
-  "wzzc-dev/moui_wgpu_renderer@0.5.2",
-  "wzzc-dev/moui_metal_renderer@0.5.2",
+  "wzzc-dev/moui_skia_renderer@0.6.0",
+  "wzzc-dev/moui_sun_renderer@0.6.0",
+  "wzzc-dev/moui_tui_renderer@0.6.0",
+  "wzzc-dev/moui_wgpu_renderer@0.6.0",
+  "wzzc-dev/moui_metal_renderer@0.6.0",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

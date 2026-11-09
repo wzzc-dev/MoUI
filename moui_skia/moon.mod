@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_skia"
 
-version = "0.5.2"
+version = "0.6.0"
 
 import {
   "wzzc-dev/windowing@0.1.2",

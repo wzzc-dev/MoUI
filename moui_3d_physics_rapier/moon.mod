@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_3d_physics_rapier"
 
-version = "0.5.2"
+version = "0.6.0"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui_3d_physics@0.5.2",
-  "wzzc-dev/moui_3d@0.5.2",
+  "wzzc-dev/moui_3d_physics@0.6.0",
+  "wzzc-dev/moui_3d@0.6.0",
   "Milky2018/moon_rapier@0.5.2",
 }
 

@@ -69,7 +69,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [pointer-input-parity](active/pointer-input-parity.md) | Make declared-but-inert input land for real: long press / double tap, touch selection, multi-pointer identity, scroll rebound, honest text semantics, RTL mirroring |
 | [text-provider-native-completion](active/text-provider-native-completion.md) | Finish the scaffolded native text providers: DirectWrite shaping/IME, fontconfig/HarfBuzz measurement, and matching-host Windows IME evidence |
 | [gpu-partial-repaint](active/gpu-partial-repaint.md) | Turn damage bookkeeping into GPU-side partial repaint: per-route capability queries, damage-rect presentation on Metal/SkiaGpuNative, and present-rect budgets |
-| [mature-framework-parity-optimizations](active/mature-framework-parity-optimizations.md) | Close the six gaps from the Flutter/SwiftUI/Compose/Qt/iced comparison: declaration cache, placement-level damage, retained-layer encoding, Feature skipping, RFC 0007 intrinsic sizing, CLDR i18n |
 | [in-process-hot-reload-rfc](active/in-process-hot-reload-rfc.md) | RFC for replacing the restart-based dev loop with in-process reload: transient-state transport, interpreter-driven swap, or web-first module reload |
 | [rtl-step3-native-base-direction](active/rtl-step3-native-base-direction.md) | Plumb `TextLayoutInput.direction` into the native providers (SkParagraph/cosmic/DirectWrite/CoreText) with a shared direction-matrix fixture |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
@@ -112,6 +111,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [mature-framework-parity-optimizations](done/mature-framework-parity-optimizations.md) | Close the six gaps from the Flutter/SwiftUI/Compose/Qt/iced comparison: declaration cache, placement-level damage, retained-payload replay, Feature skipping (RFC 0008), RFC 0007 intrinsic sizing, CLDR i18n — released as `0.6.0` |
 | [architecture-priority-execution](done/architecture-priority-execution.md) | Completed the three 2026-11 architecture reviews as one evidence-gated program: cache/damage correctness, leaf-only memoization, content-coordinate scrolling, Feature-first component boundary, gesture/control extension, route/release/doc governance, and transient-scroll/damage localization (N5) |
 | [runtime-state-render-ownership-convergence](done/runtime-state-render-ownership-convergence.md) | Move accessibility out of runtime, unify app state ownership, and make renderer sessions own render resources |
 | [overlay-placement-portal-unification](done/overlay-placement-portal-unification.md) | Move anchoring out of the layout fixpoint (post-layout placement pass), add the portal path for control popups, unify popup mechanisms, and add LayerStack/hit/transition/native-modal completion |

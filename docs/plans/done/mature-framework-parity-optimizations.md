@@ -1,6 +1,6 @@
 # Plan: mature-framework parity optimizations
 
-- **Status**: active
+- **Status**: done (2026-11-09, released as `0.6.0`)
 - **Goal**: Close the six gaps found by comparing MoUI against Flutter,
   SwiftUI, Compose, Qt and iced. Each point lands as its own commit; the
   program ends with a synchronized release-line bump and release notes.
@@ -70,3 +70,23 @@ landed with a mutation-sensitive test on the wired path: the declaration
 cache, the placement scan, the retained-payload replay, and the feature
 view key each have a test that fails when the optimization is disconnected.
 Release closure follows ADR 0065 (synchronized line, staged publish).
+
+## Closure (2026-11-09)
+
+All six points landed as one commit each, then the synchronized line advanced
+to `0.6.0` (`docs/releases/0.6.0.md`); ADR 0065's Status records the `0.6.x`
+continuation.
+
+| Point | Commit |
+|---|---|
+| 1 declaration cache | `493e0733c` |
+| 2 placement-level damage | `15486a661` (+ showcase expectation `70ffa11a2`) |
+| 3 retained-payload replay | `5f4bfbc0c` |
+| 4 Feature skipping (RFC 0008) | `d8e514504` |
+| 5 RFC 0007 intrinsic sizing | `1ab1e7934` |
+| 6 CLDR i18n | `d7aadb8e6` |
+
+Deferred, not silently dropped: RFC 0007 proposal 2 (button/input defaults)
+and the example pixel-size cleanup; `examples/mo_workbench`'s four
+package-global memos are now eligible to migrate onto RFC 0008 but that
+migration is its own work, not part of this program.

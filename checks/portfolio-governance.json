@@ -4,7 +4,7 @@
   "reviewedOn": "2026-11-08",
   "releaseCoupling": {
     "mode": "synchronized-line",
-    "line": "0.5.x",
+    "line": "0.6.x",
     "adr": "docs/decisions/0065-zero-four-release-line.md",
     "baseOnlyPatch": "not-offered",
     "compatibilityMatrix": "deferred",

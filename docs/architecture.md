@@ -72,7 +72,7 @@ review trigger, graduation condition, and retirement condition in
 in `checks/platform-matrix.json` and `checks/release-modules.json`.
 
 <!-- BEGIN GENERATED RELEASE COUPLING -->
-Release line **`0.5.x`** uses **`synchronized-line`** coordination. A base-only patch path is **`not-offered`**, and a per-module compatibility matrix is **`deferred`**. Renderers and addons keep their current version unless their own contract changes; they do not receive a forced semantic bump for an unrelated base change. Decision: `docs/decisions/0065-zero-four-release-line.md`. Evidence: checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs.
+Release line **`0.6.x`** uses **`synchronized-line`** coordination. A base-only patch path is **`not-offered`**, and a per-module compatibility matrix is **`deferred`**. Renderers and addons keep their current version unless their own contract changes; they do not receive a forced semantic bump for an unrelated base change. Decision: `docs/decisions/0065-zero-four-release-line.md`. Evidence: checks/release-modules.json, exact workspace pins, and node scripts/validate-release-module-closures.mjs.
 <!-- END GENERATED RELEASE COUPLING -->
 
 <!-- BEGIN GENERATED MODULE PORTFOLIO -->

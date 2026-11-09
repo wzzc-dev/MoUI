@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_cli"
 
-version = "0.5.2"
+version = "0.6.0"
 
 readme = "README.md"
 

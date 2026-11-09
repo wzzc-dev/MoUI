@@ -2,7 +2,7 @@
 
 Status: Accepted (2026-11-09)
 
-Author: plan `docs/plans/active/mature-framework-parity-optimizations.md` (point 4)
+Author: plan `docs/plans/done/mature-framework-parity-optimizations.md` (point 4)
 
 Related: ADR 0049 (`ViewMemo`), ADR 0053 (feature-first state boundary),
 ADR 0057 (explicit builder cache)
