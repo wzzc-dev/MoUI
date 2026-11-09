@@ -28,6 +28,7 @@ struct Feature[Model, Msg] {
   view : (Model, ViewEnvironment) -> View[Msg]
   subscriptions : (Model) -> Subscription[Msg]
   commands : (Model) -> Array[ProgramCommand[Msg]]
+  view_key : ((Model, ViewEnvironment) -> DeclarationKey)?
 }
 
 ///|
@@ -43,6 +44,7 @@ pub fn[Model, Msg] Feature::new(
     view: (model, _env) => view(model),
     subscriptions,
     commands: _model => [],
+    view_key: None,
   }
 }
 
@@ -53,7 +55,7 @@ pub fn[Model, Msg] Feature::new_with_environment(
   view~ : (Model, ViewEnvironment) -> View[Msg],
   subscriptions~ : (Model) -> Subscription[Msg] = _model => Subscription::none(),
 ) -> Feature[Model, Msg] {
-  { init, update, view, subscriptions, commands: _model => [], }
+  { init, update, view, subscriptions, commands: _model => [], view_key: None, }
 }
 
 ///|
@@ -81,12 +83,56 @@ pub fn[Model, Msg] Feature::runtime_update(
 }
 
 ///|
+/// Declare every input `view` reads as a canonical key (RFC 0008).
+///
+/// This is a pure declaration: it stores one function on the feature value and
+/// creates no cache. The key belongs next to the `view` body that reads the
+/// inputs, so each mount reuses one reviewable dependency set instead of
+/// re-deriving it at every call site.
+///
+/// The contract is `ViewBuilderCache`'s (ADR 0057). An omitted model field,
+/// environment value, branch payload, or handler capture serves a stale view.
+pub fn[Model, Msg] Feature::with_view_key(
+  self : Feature[Model, Msg],
+  view_key~ : (Model, ViewEnvironment) -> DeclarationKey,
+) -> Feature[Model, Msg] {
+  { ..self, view_key: Some(view_key), }
+}
+
+///|
 pub fn[Model, Msg] Feature::runtime_view(
   self : Feature[Model, Msg],
   model : Model,
   environment : ViewEnvironment,
 ) -> View[Msg] {
   (self.view)(model, environment)
+}
+
+///|
+/// Build through a caller-owned cache, skipping `view` when the declared key is
+/// unchanged (RFC 0008).
+///
+/// `builder_key` identifies this mount within the cache and must stay stable
+/// while the subtree remains mounted; it is what keeps two instances of the
+/// same feature from sharing an entry. The cache cannot live on the feature
+/// itself, because `Feature::scope` is called on one feature value per sibling.
+///
+/// A feature with no `with_view_key` declaration builds unconditionally.
+/// Opting in is per feature, so forgetting costs performance, not correctness.
+pub fn[Model, Msg] Feature::runtime_view_cached(
+  self : Feature[Model, Msg],
+  model : Model,
+  environment : ViewEnvironment,
+  cache~ : ViewBuilderCache[Msg],
+  builder_key~ : DeclarationKey,
+) -> View[Msg] {
+  match self.view_key {
+    Some(key) =>
+      cache.view(builder_key~, content_key=key(model, environment), build=() => {
+        (self.view)(model, environment)
+      })
+    None => (self.view)(model, environment)
+  }
 }
 
 ///|
@@ -184,6 +230,31 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::view(
   environment : ViewEnvironment,
 ) -> View[ParentMsg] {
   (self.feature.view)((self.read)(parent), environment).map(self.wrap)
+}
+
+///|
+/// Build the child view through a caller-owned cache and lift its messages to
+/// the parent's message type (RFC 0008).
+///
+/// The cached entry is the already-mapped view. `wrap` is fixed for this
+/// `ScopedFeature`'s lifetime and `builder_key` identifies the mount, so the
+/// map capture ADR 0057 requires in the content key is covered by the builder
+/// key rather than by the child's declared `view_key`.
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::view_cached(
+  self : ScopedFeature[Parent, Child, ChildMsg, ParentMsg],
+  parent : Parent,
+  environment : ViewEnvironment,
+  cache~ : ViewBuilderCache[ParentMsg],
+  builder_key~ : DeclarationKey,
+) -> View[ParentMsg] {
+  let child = (self.read)(parent)
+  match self.feature.view_key {
+    Some(key) =>
+      cache.view(builder_key~, content_key=key(child, environment), build=() => {
+        (self.feature.view)(child, environment).map(self.wrap)
+      })
+    None => (self.feature.view)(child, environment).map(self.wrap)
+  }
 }
 
 ///|

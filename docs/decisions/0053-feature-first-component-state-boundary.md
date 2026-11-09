@@ -81,6 +81,11 @@ decision.
 - W1.2b automatic builder reuse is not enabled by this decision. The supported
   construction optimization remains the explicit, caller-keyed `ViewMemo`;
   automatic reuse would require a separate explicit builder-key contract/RFC.
+  Follow-up (2026-11-09): ADR 0057 supplied that contract and RFC 0008 added the
+  composition-boundary facade over it (`Feature::with_view_key` +
+  `runtime_view_cached` / `ScopedFeature::view_cached`). Keys stay explicitly
+  declared and the cache stays caller-owned, so this decision's boundary is
+  unchanged: there is still no runtime-owned component state.
 - Keyed multi-instance state and persistence stay reviewable in ordinary app
   code and tests.
 - Reconsider this decision only with external-consumer evidence showing

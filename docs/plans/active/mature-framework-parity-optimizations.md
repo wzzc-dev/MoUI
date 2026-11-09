@@ -21,34 +21,52 @@ existing machinery.
    reconcile even though `declaration()` is pure over stored fields.
    `ElementNode` now carries `declaration_cache`, assigned only at the two
    sites that assign `view_node` (mount and reconcile).
-2. **`layout changed` → full damage** — `runtime_render_pipeline.mbt`
-   forced the whole surface whenever layout ran, because layout moves
-   clean subtrees that never enter the paint-dirty id set. Add
-   placement-level move tracking: compare screen-space `paint_bounds`
-   (and overlay fade opacity) per element id between the previous and
-   current render trees, and union the moved ids' previous+current bounds
-   into the damage region. Split `full_damage_reason` into an absolute
-   class (structure, environment, viewport, activation, exit ghosts) and
-   a placement class that move tracking may narrow.
-3. **Retained layers re-emit full payload** — P16 requires the full
-   declaration plus payload every frame and forbids `DrawCachedLayer`, so
-   a cache hit still costs O(total commands). RFC required: the invariant
-   is deliberate (renderer owns hit/update/eviction).
-4. **Feature-level skipping** — Compose strong-skipping analogue at
-   `Feature::runtime_view(Self, Model, ViewEnvironment)`. ADR 0053:82-83
-   explicitly leaves automatic builder reuse behind a separate
-   builder-key contract/RFC. `examples/mo_workbench` hand-rolls
-   package-global `Ref` + `physical_equal` memos today, which is the
-   demand evidence and the anti-pattern ADR 0057 forbids.
-5. **RFC 0007 intrinsic sizing** — still Draft. `text()` defaults to a
-   160x32 box used as a *minimum*, so short strings reserve dead space.
-   Accept the RFC and make text content-sized by default.
-6. **i18n too thin** — `moui_i18n/translator.mbt` hardcodes en/zh plural
-   rules, with no CLDR coverage and no locale number/date formatting.
+2. **`layout changed` → full damage** — landed. Layout moves clean subtrees
+   that never enter the paint-dirty id set, so the pipeline used to force
+   the whole surface whenever layout ran. `DamageIndex::placement_changes`
+   now compares screen-space `paint_bounds` and overlay fade opacity per
+   element id between the previous and current render trees and unions the
+   moved ids' previous+current bounds. `full_damage_reason` split into an
+   absolute class (structure, environment, viewport, activation, exit
+   ghosts) and a placement class that move tracking may narrow.
+3. **Retained layers re-emit full payload** — landed, no RFC needed. P16
+   constrains the payload and its ownership, not how the runtime assembles
+   it: the wire still carries `BeginRetainedLayer` + the complete payload +
+   `EndRetainedLayer` every frame and renderer sessions still own
+   hit/update/eviction. The avoidable cost was re-deriving that payload by
+   walking the subtree when it had already been flattened at paint time.
+   The flattening now uses the frame traversal itself, so the replayed
+   bytes are the bytes the walk produced, and the second near-duplicate
+   command walker was deleted. Empty overlay sources no longer emit no-op
+   transform scopes — that is what previously made the two paths disagree.
+4. **Feature-level skipping** — landed via RFC 0008. ADR 0057 already
+   supplied the explicit builder-key contract ADR 0053:82-83 asked for;
+   RFC 0008 adds the composition-boundary facade over it.
+   `Feature::with_view_key` declares the content key next to the view body;
+   `runtime_view_cached` / `ScopedFeature::view_cached` build through a
+   caller-owned `ViewBuilderCache` with a per-mount builder key. Nothing is
+   inferred and no lifecycle is owned. The second-adopter evidence was
+   `examples/mo_workbench`'s four hand-rolled package-global
+   `Ref` + `physical_equal` memos, which are the shape ADR 0057 forbids.
+5. **RFC 0007 intrinsic sizing** — accepted and landed for `text()`.
+   `size` is already a minimum, so defaulting width/height to zero makes
+   the measured size win unless the caller asks for a deliberate fixed box.
+   `wrap=true` now takes the incoming constraint as the line width instead
+   of collapsing an unset width to a 1px floor. No declaration-schema
+   change: `Text.layout` already keys on `size`. Proposals 2 (buttons and
+   inputs) and the example pixel-size cleanup stay deferred.
+6. **i18n too thin** — landed. `moui_i18n` now carries CLDR cardinal plural
+   categories (zero/one/two/few/many/other, including the CLDR 42+
+   exact-million `many` for fr/pt/es/it), locale integer/decimal formatting
+   with `minimumGroupingDigits` and lakh/crore grouping, and locale date
+   ordering. `Translator::translate_count` resolves through the category
+   with an `.other` fallback instead of hardcoded en/zh branches.
 
 ## Validation
 
 Smallest router loop per point (`moon test <pkg-dir> --target native`),
-then `sh scripts/check.sh --profile pr` before each commit. Points 3 and
-4 additionally need the RFC accepted and the invariant table updated.
+then `sh scripts/check.sh --profile pr` before each commit. Every point
+landed with a mutation-sensitive test on the wired path: the declaration
+cache, the placement scan, the retained-payload replay, and the feature
+view key each have a test that fails when the optimization is disconnected.
 Release closure follows ADR 0065 (synchronized line, staged publish).

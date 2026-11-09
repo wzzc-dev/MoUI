@@ -139,6 +139,13 @@ This is caller-owned construction state, not a runtime service or component
 store. A future convenience facade requires a second adopter and measured
 evidence; it must not infer keys or lifecycle.
 
+Follow-up (2026-11-09): RFC 0008 added that facade for the composition
+boundary — `Feature::with_view_key` declares the content key next to the view
+body, and `runtime_view_cached` / `ScopedFeature::view_cached` build through a
+caller-owned `ViewBuilderCache`. It infers no keys and owns no lifecycle; the
+second-adopter evidence was `examples/mo_workbench`'s hand-rolled
+package-global memos, which are the shape this decision forbids.
+
 ### Relationship to existing primitives
 
 - `ViewMemo` remains the single-entry primitive for one independently

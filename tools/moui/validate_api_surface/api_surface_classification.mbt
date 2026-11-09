@@ -54,7 +54,15 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // PinchGestureEvent / View::on_pinch (+5): plan §7 touch recognizer —
       // the two-finger sample DTO and observer modifier join the same
       // event-protocol surface.
-      max_count: 1219,
+      // Feature::with_view_key / Feature::runtime_view_cached /
+      // ScopedFeature::view_cached (+3): RFC 0008 — the composition-boundary
+      // facade over ADR 0057's explicit builder cache. The content-key
+      // declaration travels with the Feature so each mount reuses one
+      // reviewable dependency set; the cache itself stays caller-owned.
+      // These are cross-runtime TEA composition protocol, the same family as
+      // the rest of the Feature/ScopedFeature surface, and nothing is
+      // re-exported from the root facade.
+      max_count: 1222,
     },
     {
       path: "moui/core/pkg.generated.mbti",

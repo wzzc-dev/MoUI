@@ -723,8 +723,10 @@ pub fn[Model, Msg] Feature::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg
 pub fn[Model, Msg] Feature::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
 pub fn[Model, Msg] Feature::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
 pub fn[Model, Msg] Feature::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
+pub fn[Model, Msg] Feature::runtime_view_cached(Self[Model, Msg], Model, ViewEnvironment, cache~ : ViewBuilderCache[Msg], builder_key~ : DeclarationKey) -> View[Msg]
 pub fn[Child, ChildMsg, Parent, ParentMsg] Feature::scope(Self[Child, ChildMsg], scope_id? : String, read~ : (Parent) -> Child, write~ : (Child, Parent) -> Parent, wrap~ : (ChildMsg) -> ParentMsg) -> ScopedFeature[Parent, Child, ChildMsg, ParentMsg]
 pub fn[Model, Msg] Feature::with_commands(Self[Model, Msg], commands~ : (Model) -> Array[ProgramCommand[Msg]]) -> Self[Model, Msg]
+pub fn[Model, Msg] Feature::with_view_key(Self[Model, Msg], view_key~ : (Model, ViewEnvironment) -> DeclarationKey) -> Self[Model, Msg]
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum FilterEffect {
@@ -1379,6 +1381,7 @@ pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::init(Self[Parent, Chil
 pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::subscriptions(Self[Parent, Child, ChildMsg, ParentMsg], Parent) -> Subscription[ParentMsg]
 pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::update(Self[Parent, Child, ChildMsg, ParentMsg], Parent, ChildMsg) -> (Parent, Effect[ParentMsg])
 pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::view(Self[Parent, Child, ChildMsg, ParentMsg], Parent, ViewEnvironment) -> View[ParentMsg]
+pub fn[Parent, Child, ChildMsg, ParentMsg] ScopedFeature::view_cached(Self[Parent, Child, ChildMsg, ParentMsg], Parent, ViewEnvironment, cache~ : ViewBuilderCache[ParentMsg], builder_key~ : DeclarationKey) -> View[ParentMsg]
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum ScrollAlignment {
