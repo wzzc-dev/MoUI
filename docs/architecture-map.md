@@ -190,7 +190,7 @@ renderers consume `DrawCommand` only.
 | Sun CPU raster (`moui_sun_renderer` + `moui_sun`) | **Experimental** (ADR 0023) — no product commitment, not on default composition roots, capability freeze by default |
 | Terminal cell ANSI (`moui_tui_renderer` + `moui_tui` + `moui_terminal_host`) | **Experimental** (`ready=false`) — no pixel claim; semantics-only projection, non-projectable controls degrade to named placeholders; interaction proof is the PTY smoke gate, not a host-window route |
 | Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |
-| Embedded runtime backend routes | Android/iOS are `experimental` (`ready=false`) until matching-device evidence; HarmonyOS is `committed` on matching-device R6 evidence (ADR 0046) |
+| Embedded runtime backend routes | Android/iOS/HarmonyOS are `committed` on recorded matching-target R6 evidence (ADR 0066 / ADR 0067 / ADR 0046); iOS records device rotation as an evidence limitation, not an R6 gap |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |
 
 ## Workspace note

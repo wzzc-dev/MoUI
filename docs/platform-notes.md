@@ -171,10 +171,10 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   auto-detection, and host architecture.
 - [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia composition,
   runtime evidence, and remaining gaps.
-- [Android](android-support.md) (**experimental**) — window-hosted Activity,
-  APK packaging, and matching-device evidence requirements.
-- [iOS](ios-support.md) (**experimental**) — window-hosted UIKit template,
-  simulator packaging, and matching-device evidence requirements.
+- [Android](android-support.md) (**committed**, ADR 0066) — window-hosted
+  Activity, APK packaging, and matching-emulator R6 evidence.
+- [iOS](ios-support.md) (**committed**, ADR 0067) — window-hosted UIKit
+  template, simulator packaging, and matching-simulator R6 evidence.
 - [HarmonyOS](harmonyos-support.md) (**committed**) — window-hosted
   Stage Ability/XComponent template, HAP packaging, and signed-device evidence requirements.
 - [WeChat Mini Program](wechat-support.md) (**experimental**) — Skyline Canvas 2D + wasm-gc,

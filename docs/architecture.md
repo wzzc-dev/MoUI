@@ -183,7 +183,7 @@ workspace.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
   -> neutral platform surface + `moui_skia_renderer` -> `moui_skia`.
-- Android embedded-runtime route (`experimental`): shared app package ->
+- Android embedded-runtime route (`committed`, ADR 0066): shared app package ->
   `examples/<app>/android_window_hosted` composition via
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> shared
@@ -191,7 +191,7 @@ workspace.
   surface binding -> `moui_skia_renderer` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
   the embedded runtime backend owns runtime/session assembly and rendering.
-- iOS embedded-runtime route (`experimental`): shared app package ->
+- iOS embedded-runtime route (`committed`, ADR 0067): shared app package ->
   `examples/<app>/ios_window_hosted` composition via
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> shared embedded-host kernel ->

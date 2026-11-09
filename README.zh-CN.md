@@ -38,11 +38,11 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | Web | **committed** | 产品主线（wasm-gc + WebGPU） |
 | Windows | **committed** | 产品主线（L0–L3 证据完备） |
 | Linux | **committed** | 产品主线（L0–L3 证据完备） |
-| Android | **experimental** | Window 托管路径可编译；暂无可用性/产品承诺 |
-| iOS | **experimental** | 同 Android |
+| Android | **committed** | 匹配模拟器已验证：ANativeWindow CPU-blit Skia present、指针、键盘/IME 文本 + 命名键、resize、应用视口、剪贴板写 + 读（embedder JNI 桥）、AccessibilityNodeProvider 语义、detach/recreate、异步图片（ADR 0066） |
+| iOS | **committed** | 匹配模拟器已验证：CALayer CPU-blit Skia present、指针、键盘/IME 文本 + 删除 + 命名键（Enter 提交）、剪贴板写 + 读（UIPasteboard 桥）、UIAccessibilityElement 语义、detach/recreate、异步图片（ADR 0067） |
 | HarmonyOS | **committed** | 匹配真机 R6 证据已通过（`egl-direct` Skia、输入/IME、resize、剪贴板、无障碍、detach/recreate、异步图片，ADR 0046） |
 
-> Android、iOS 和微信小程序**不是**“仅胶水代码”，但也**不是**产品级已承诺形态，仍为 **experimental**：代码可编译、宿主模拟测试可通过，但在提供真机匹配证据前，不对开发/演示可用性或产品承诺做保证。HarmonyOS 已凭匹配真机 R6 证据进入 **committed**。详见[平台就绪声明](docs/platform-readiness-declaration.md)。
+> Android、iOS 和微信小程序**不是**“仅胶水代码”。Android 已凭匹配模拟器 R6 证据进入 **committed**（ADR 0066）；iOS 已凭匹配模拟器 R6 证据进入 **committed**（ADR 0067）。微信小程序仍为 **experimental**：代码可编译、宿主模拟测试可通过，但在提供真机匹配证据前，不对开发/演示可用性或产品承诺做保证。HarmonyOS 已凭匹配真机 R6 证据进入 **committed**（ADR 0046）。详见[平台就绪声明](docs/platform-readiness-declaration.md)。
 
 运行时管线是显式的：
 
