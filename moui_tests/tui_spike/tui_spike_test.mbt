@@ -95,15 +95,18 @@ test "overlap repair: leaf beats label beats chrome, first leaf keeps the cell" 
 
 ///|
 test "off-viewport nodes are clipped, not folded onto the boundary row" {
-  // The counter's button row sits at y=122 in a 320x80 viewport (5 cells tall).
+  // The counter's button row sits at y=76 in a 320x64 viewport (4 cells tall).
+  // RFC 0007 made leaf text content-sized, which compacted the counter enough
+  // that at 320x80 the row starts *inside* the viewport and is legitimately
+  // painted; 64 is the height where it is fully off-viewport again.
   let report = @tui_spike.project(
     @counter_app.program(),
     320.0,
-    80.0,
+    64.0,
     8.0,
     16.0,
   )
-  println("\n===== counter clipped to 40x5 cells =====")
+  println("\n===== counter clipped to 40x4 cells =====")
   for line in report.lines {
     println(line)
   }
