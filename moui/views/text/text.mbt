@@ -2,21 +2,26 @@
 /// Read-only text: a single-line label by default, an auto-wrapping paragraph
 /// with `wrap=true`.
 ///
-/// Single line (default): the string never breaks; the box grows to the
-/// measured width and renderers clip glyphs to the run frame.
+/// Content-sized by default (RFC 0007): the box is the measured text under the
+/// ambient font, so scaled text and longer translations grow it instead of
+/// clipping. An explicit `width~`/`height~` is a minimum box, not a clamp —
+/// text that does not fit still grows it.
 ///
-/// `wrap=true`: `width` becomes the line width (the incoming layout constraint
-/// may only narrow it), the string flows onto further lines through the shared
-/// `TextSystem` paragraph engine — real font metrics, CJK- and grapheme-safe
-/// breaking, `\n` hard breaks — and the box grows downward with the line
-/// count, so a long paragraph composes with `scroll_view` instead of
-/// overflowing its row.
+/// Single line (default): the string never breaks; renderers clip glyphs to the
+/// run frame.
+///
+/// `wrap=true`: the line width is the incoming layout constraint, or the
+/// explicit `width~` when given (the constraint may only narrow it). The string
+/// flows onto further lines through the shared `TextSystem` paragraph engine —
+/// real font metrics, CJK- and grapheme-safe breaking, `\n` hard breaks — and
+/// the box grows downward with the line count, so a long paragraph composes
+/// with `scroll_view` instead of overflowing its row.
 pub fn[Msg] text(
   text : String,
   role~ : @style.TextRole = Body,
   theme? : @core.Theme,
-  width~ : Double = 160.0,
-  height~ : Double = 32.0,
+  width~ : Double = 0.0,
+  height~ : Double = 0.0,
   align~ : @core.TextAlign = TextCenter,
   wrap~ : Bool = false,
 ) -> @core.View[Msg] {
@@ -44,13 +49,16 @@ impl @core.ViewNode for Text with fn layout(self, context) {
   let resolved_theme = context.effective_theme(pinned=self.theme)
   let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
   if self.wrap {
-    // Multi-line mode: the requested width bounds the line box and the
-    // incoming constraint can only narrow it; the box grows downward with the
-    // wrapped line count. Break points come from the shared paragraph engine
-    // (the same one behind text_field/text_area), so measurement here is the
-    // text system's real metrics — platform font differences and mixed CJK /
-    // ASCII scripts included — never an app-side width estimate.
-    let available = if context.constraints.max.width < self.size.width {
+    // Multi-line mode: an unset width takes the whole incoming constraint; an
+    // explicit width bounds the line box and the constraint can only narrow it.
+    // The box grows downward with the wrapped line count. Break points come
+    // from the shared paragraph engine (the same one behind text_field /
+    // text_area), so measurement here is the text system's real metrics —
+    // platform font differences and mixed CJK / ASCII scripts included — never
+    // an app-side width estimate.
+    let available = if self.size.width <= 0.0 {
+      context.constraints.max.width
+    } else if context.constraints.max.width < self.size.width {
       context.constraints.max.width
     } else {
       self.size.width
@@ -77,12 +85,12 @@ impl @core.ViewNode for Text with fn layout(self, context) {
         direction=context.environment.layout_direction,
       ),
     )
-    // The requested width/height act as a minimum, mirroring Button's `min_size`:
-    // text that fits keeps the requested box, and text that does not fit grows the
-    // box instead of being clipped. Renderers clip glyphs to the TextRun frame, so
-    // a fixed box silently truncated any string whose measured width exceeded it.
-    // That surfaced on Linux, where system fonts are wider than the Windows/macOS
-    // defaults, but the truncation was never platform-specific.
+    // The requested width/height act as a minimum, mirroring Button's `min_size`.
+    // The default is 0x0, so an unsized label is exactly its measured content
+    // (RFC 0007). Renderers clip glyphs to the TextRun frame, so returning a
+    // fixed box verbatim silently truncated any string whose measured width
+    // exceeded it. That surfaced on Linux, where system fonts are wider than the
+    // Windows/macOS defaults, but the truncation was never platform-specific.
     let size = @core.Size::new(
       width=@common.view_max_double(self.size.width, measured.size.width),
       height=@common.view_max_double(self.size.height, measured.size.height),

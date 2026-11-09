@@ -1,6 +1,7 @@
 # RFC 0007: Intrinsic Sizing Defaults for Leaf Controls
 
-Status: Draft (2026-11-01)
+Status: Accepted (2026-11-09) — proposal 1 landed for `text()`; proposals 2
+(buttons/inputs) and the example pixel-size cleanup remain deferred.
 
 Author: plan `docs/plans/done/hot-path-invalidation-boilerplate-convergence.md` (J1)
 
@@ -87,3 +88,16 @@ Accept: `text()` becomes content-sized by default in the next minor, buttons
 follow one minor later, and the example apps drop threaded pixel sizes where
 the box was not intentional. Decline: keep explicit sizing as the universal
 contract and instead document the fixed-box model.
+
+## Decision (2026-11-09)
+
+Accepted for proposal 1 only. `text()` now defaults `width~`/`height~` to
+`0.0`, which under the existing minimum-box semantics
+(`view_max_double(requested, measured)`) is exactly content sizing — no new
+invalidation mechanism and no declaration-schema change were needed, because
+`Text.layout` already keys on `min_size`. In `wrap=true` mode an unset width
+takes the whole incoming constraint instead of collapsing to the 1px floor.
+
+Explicit `width~`/`height~` keep their exact prior semantics, so callers that
+pass sizes are unaffected. Proposals 2 (buttons/inputs) and 3 (containers) are
+unchanged; the example pixel-size cleanup is still deferred.
