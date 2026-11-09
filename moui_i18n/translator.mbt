@@ -32,16 +32,17 @@ pub fn Translator::translate(
 }
 
 ///|
-/// Translates a plural message. English selects `.one` when `count == 1` and
-/// `.other` otherwise; Chinese always selects `.other`. The `count` value is
-/// always available as the `{count}` placeholder.
+/// Translates a plural message using the CLDR cardinal plural category for
+/// the requested locale (see `Locale::plural_category`). When the selected
+/// category variant is absent, the `.other` variant is used. The `count`
+/// value is always available as the `{count}` placeholder.
 pub fn Translator::translate_count(
   self : Translator,
   key : String,
   count : Int32,
   values? : ArrayView[(String, String)],
 ) -> String {
-  let plural_key = key + "." + self.plural_category(count)
+  let plural_key = key + "." + self.locale.plural_category(count).key()
   let interpolation_values : Array[(String, String)] = [
     ("count", count.to_string()),
   ]
@@ -50,7 +51,11 @@ pub fn Translator::translate_count(
       interpolation_values.push(value)
     }
   }
-  match self.lookup(plural_key) {
+  let message = match self.lookup(plural_key) {
+    Some(message) => Some(message)
+    None => self.lookup(key + ".other")
+  }
+  match message {
     Some(message) => interpolate(message, interpolation_values)
     None => "[[" + key + "]]"
   }
@@ -71,17 +76,6 @@ fn Translator::lookup(self : Translator, key : String) -> String? {
     }
   }
   None
-}
-
-///|
-fn Translator::plural_category(self : Translator, count : Int32) -> String {
-  if self.locale.language() == "zh" {
-    "other"
-  } else if self.locale.language() == "en" && count == 1 {
-    "one"
-  } else {
-    "other"
-  }
 }
 
 ///|

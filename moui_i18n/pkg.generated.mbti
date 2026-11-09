@@ -1,11 +1,22 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "wzzc-dev/moui_i18n"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 
 // Errors
 
 // Types and methods
+pub(all) struct CalendarDate {
+  year : Int32
+  month : Int32
+  day : Int32
+}
+pub fn CalendarDate::new(year~ : Int32, month~ : Int32, day~ : Int32) -> Self?
+
 pub struct Catalog {
   messages : Map[String, Map[String, String]]
 }
@@ -18,8 +29,12 @@ pub struct Locale {
 }
 pub fn Locale::canonical(Self) -> String
 pub fn Locale::fallback_candidates(Self) -> Array[String]
+pub fn Locale::format_date(Self, CalendarDate) -> String
+pub fn Locale::format_int(Self, Int64) -> String
+pub fn Locale::format_number(Self, Double, fraction_digits? : Int32) -> String
 pub fn Locale::language(Self) -> String
 pub fn Locale::parse(String) -> Self?
+pub fn Locale::plural_category(Self, Int32) -> PluralCategory
 pub fn Locale::region(Self) -> String?
 pub fn Locale::script(Self) -> String?
 
@@ -29,6 +44,20 @@ pub(all) struct Message {
   value : String
 }
 pub fn Message::new(locale~ : String, key~ : String, value~ : String) -> Self
+
+#derive(Eq, @debug.Debug)
+pub(all) enum PluralCategory {
+  Zero
+  One
+  Two
+  Few
+  Many
+  Other
+}
+pub fn PluralCategory::equal(Self, Self) -> Bool
+pub fn PluralCategory::key(Self) -> String
+pub fn PluralCategory::not_equal(Self, Self) -> Bool
+pub fn PluralCategory::to_repr(Self) -> @debug.Repr
 
 pub struct Translator {
   catalog : Catalog

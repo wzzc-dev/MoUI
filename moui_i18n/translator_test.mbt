@@ -88,3 +88,130 @@ test "Translator selects English and Chinese plural categories" {
     content="[[missing]]",
   )
 }
+
+///|
+test "Translator selects Slavic and Arabic plural variants" {
+  let catalog = @moui_i18n.Catalog::from_entries([
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.one",
+      value="{count} файл",
+    ),
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.few",
+      value="{count} файла",
+    ),
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.many",
+      value="{count} файлов",
+    ),
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.other",
+      value="{count} файла (прочее)",
+    ),
+    @moui_i18n.Message::new(
+      locale="ar",
+      key="files.zero",
+      value="لا ملفات",
+    ),
+    @moui_i18n.Message::new(
+      locale="ar",
+      key="files.one",
+      value="ملف واحد",
+    ),
+    @moui_i18n.Message::new(locale="ar", key="files.two", value="ملفان"),
+    @moui_i18n.Message::new(
+      locale="ar",
+      key="files.few",
+      value="{count} ملفات",
+    ),
+    @moui_i18n.Message::new(
+      locale="ar",
+      key="files.many",
+      value="{count} ملفًا",
+    ),
+    @moui_i18n.Message::new(
+      locale="ar",
+      key="files.other",
+      value="{count} ملف",
+    ),
+  ])
+  let russian = @moui_i18n.Translator::new(
+    catalog~,
+    locale=@moui_i18n.Locale::parse("ru").unwrap(),
+    default_locale=@moui_i18n.Locale::parse("ru").unwrap(),
+  )
+  inspect(russian.translate_count("files", 1), content="1 файл")
+  inspect(russian.translate_count("files", 2), content="2 файла")
+  inspect(russian.translate_count("files", 5), content="5 файлов")
+  inspect(russian.translate_count("files", 21), content="21 файл")
+  inspect(russian.translate_count("files", 112), content="112 файлов")
+  let arabic = @moui_i18n.Translator::new(
+    catalog~,
+    locale=@moui_i18n.Locale::parse("ar").unwrap(),
+    default_locale=@moui_i18n.Locale::parse("ar").unwrap(),
+  )
+  inspect(arabic.translate_count("files", 0), content="لا ملفات")
+  inspect(arabic.translate_count("files", 1), content="ملف واحد")
+  inspect(arabic.translate_count("files", 2), content="ملفان")
+  inspect(arabic.translate_count("files", 3), content="3 ملفات")
+  inspect(arabic.translate_count("files", 11), content="11 ملفًا")
+  inspect(arabic.translate_count("files", 100), content="100 ملف")
+}
+
+///|
+test "Translator falls back to the other variant for sparse plural catalogs" {
+  let catalog = @moui_i18n.Catalog::from_entries([
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.one",
+      value="{count} файл",
+    ),
+    @moui_i18n.Message::new(
+      locale="ru",
+      key="files.other",
+      value="{count} файлов",
+    ),
+  ])
+  let translator = @moui_i18n.Translator::new(
+    catalog~,
+    locale=@moui_i18n.Locale::parse("ru").unwrap(),
+    default_locale=@moui_i18n.Locale::parse("ru").unwrap(),
+  )
+  inspect(translator.translate_count("files", 1), content="1 файл")
+  inspect(translator.translate_count("files", 2), content="2 файлов")
+  inspect(translator.translate_count("files", 5), content="5 файлов")
+  inspect(translator.translate_count("absent", 5), content="[[absent]]")
+}
+
+///|
+test "Translator selects French million variants" {
+  let catalog = @moui_i18n.Catalog::from_entries([
+    @moui_i18n.Message::new(locale="fr", key="views.one", value="{count} vue"),
+    @moui_i18n.Message::new(
+      locale="fr",
+      key="views.many",
+      value="{count} de vues",
+    ),
+    @moui_i18n.Message::new(
+      locale="fr",
+      key="views.other",
+      value="{count} vues",
+    ),
+  ])
+  let translator = @moui_i18n.Translator::new(
+    catalog~,
+    locale=@moui_i18n.Locale::parse("fr").unwrap(),
+    default_locale=@moui_i18n.Locale::parse("fr").unwrap(),
+  )
+  inspect(translator.translate_count("views", 0), content="0 vue")
+  inspect(translator.translate_count("views", 1), content="1 vue")
+  inspect(translator.translate_count("views", 2), content="2 vues")
+  inspect(
+    translator.translate_count("views", 1000000),
+    content="1000000 de vues",
+  )
+}
