@@ -21,6 +21,7 @@ priv struct PackageBuildOptions {
   version : String
   build_number : String
   bundle_id : String?
+  icon : String?
   renderer : String
   release : Bool
   allow_cross : Bool
@@ -49,6 +50,7 @@ fn package_build_usage() -> String {
     #|  --build-number N    Build number recorded in the manifest. Defaults to 1.
     #|  --bundle-id ID      macOS bundle identifier. Defaults to the project
     #|                      bundle id, then dev.wzzc.moui.app.
+    #|  --icon PATH         macOS .icns icon copied into Contents/Resources.
     #|  --renderer NAME     Entrypoint override (auto / skia / wgpu / sun).
     #|  --release           Build a release artifact (default).
     #|  --debug             Build a debug artifact for package inspection.
@@ -82,7 +84,6 @@ fn parse_package_build_args(
   args : Array[String],
   cwd : String,
 ) -> Result[ParsedPackageBuild, String] {
-  let _ = cwd
   let help = Ref(false)
   let json = Ref(false)
   let output_dir : Ref[String?] = Ref(None)
@@ -90,6 +91,7 @@ fn parse_package_build_args(
   let version : Ref[String?] = Ref(None)
   let build_number : Ref[String?] = Ref(None)
   let bundle_id : Ref[String?] = Ref(None)
+  let icon : Ref[String?] = Ref(None)
   let renderer : Ref[String?] = Ref(None)
   let no_build = Ref(false)
   let dry_run = Ref(false)
@@ -141,6 +143,7 @@ fn parse_package_build_args(
       | "--version"
       | "--build-number"
       | "--bundle-id"
+      | "--icon"
       | "--renderer" =>
         match option_value(args, index, inline, flag) {
           Ok((value, next)) => {
@@ -150,6 +153,7 @@ fn parse_package_build_args(
               "--version" => version.val = Some(value)
               "--build-number" => build_number.val = Some(value)
               "--bundle-id" => bundle_id.val = Some(value)
+              "--icon" => icon.val = Some(make_absolute(value, cwd))
               "--renderer" => renderer.val = Some(value)
               _ => ()
             }
@@ -176,6 +180,7 @@ fn parse_package_build_args(
         version: "0.1.0",
         build_number: "1",
         bundle_id: None,
+        icon: None,
         renderer: "auto",
         release: true,
         allow_cross: false,
@@ -217,6 +222,7 @@ fn parse_package_build_args(
       version: version.val.unwrap_or("0.1.0"),
       build_number: build_number.val.unwrap_or("1"),
       bundle_id: bundle_id.val,
+      icon: icon.val,
       renderer: renderer.val.unwrap_or("auto"),
       release: release.val,
       allow_cross: allow_cross.val,
@@ -375,7 +381,7 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
       package_macos_bundle(flow, options, name, dist_root, artifact, json)
     "linux" =>
       package_linux_bundle(flow, options, name, dist_root, artifact, json)
-    "web" => package_web_bundle(flow, options, dist_root, json, cwd)
+    "web" => package_web_bundle(flow, options, name, dist_root, json, cwd)
     _ =>
       failed_outcome(
         "packaging for " + parsed.platform + " is not implemented",
@@ -383,6 +389,57 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
         package_build_usage(),
       )
   }
+}
+
+///|
+/// Depth-limited file search used to find the Skia ICU data table in the
+/// release cache without re-implementing the provider lock resolver.
+fn find_file_under(root : String, name : String, depth : Int32) -> String? {
+  if depth < 0 || !path_is_dir(root) {
+    return None
+  }
+  let entries = @fs.read_dir(root).to_owned() catch { _ => return None }
+  for entry in entries {
+    let child = join_path(root, entry)
+    if path_is_file(child) && base_name(child) == name {
+      return Some(child)
+    }
+    if path_is_dir(child) {
+      match find_file_under(child, name, depth - 1) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Find `icudtl.dat` under the release Skia caches used by the repo and
+/// generated projects. Missing data is a warning-level packaging gap, so the
+/// caller keeps the rest of the bundle.
+fn find_icudtl_data(flow : DesktopFlow) -> String? {
+  let workspace = moon_workspace_root(flow.build_base).unwrap_or("")
+  let roots = [
+    join_path(flow.build_base, "moui_skia/.skia-cache/release"),
+    join_path(flow.app_root, "moui_skia/.skia-cache/release"),
+    if workspace == "" {
+      ""
+    } else {
+      join_path(workspace, "moui_skia/.skia-cache/release")
+    },
+    ".skia-cache/release",
+    "moui_skia/.skia-cache/release",
+  ]
+  for root in roots {
+    if root != "" {
+      match find_file_under(root, "icudtl.dat", 8) {
+        Some(path) => return Some(path)
+        None => ()
+      }
+    }
+  }
+  None
 }
 
 ///|
@@ -434,6 +491,15 @@ fn package_windows_portable(
           }
         }
         None => ()
+      }
+    None => ()
+  }
+  match find_icudtl_data(flow) {
+    Some(path) =>
+      match copy_file(path, join_path(app_dir, "icudtl.dat")) {
+        Ok(_) => runtime_files.push("icudtl.dat")
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
       }
     None => ()
   }
@@ -653,6 +719,24 @@ fn package_macos_bundle(
     Ok(_) => ()
     Err(message) => return failed_outcome(message, json, package_build_usage())
   }
+  let icon_name = match options.icon {
+    Some(path) =>
+      if path_is_file(path) {
+        let file_name = base_name(path)
+        match copy_file(path, join_path(resources_dir, file_name)) {
+          Ok(_) => Some(file_name)
+          Err(message) =>
+            return failed_outcome(message, json, package_build_usage())
+        }
+      } else {
+        return failed_outcome(
+          "macOS icon not found: " + path,
+          json,
+          package_build_usage(),
+        )
+      }
+    None => None
+  }
   let binary_path = join_path(macos_dir, executable)
   match copy_file(artifact, binary_path) {
     Ok(_) => ()
@@ -661,6 +745,11 @@ fn package_macos_bundle(
   match make_executable(binary_path) {
     Ok(_) => ()
     Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let icon_entry = match icon_name {
+    Some(value) =>
+      "  <key>CFBundleIconFile</key>\n  <string>" + value + "</string>\n"
+    None => ""
   }
   let plist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -675,6 +764,7 @@ fn package_macos_bundle(
     name +
     "</string>\n" +
     "  <key>CFBundlePackageType</key>\n  <string>APPL</string>\n" +
+    icon_entry +
     "  <key>CFBundleShortVersionString</key>\n  <string>" +
     options.version +
     "</string>\n" +
@@ -695,6 +785,22 @@ fn package_macos_bundle(
         package_build_usage(),
       )
   }
+  @fs.write_bytes_to_file(
+    join_path(bundle_dir, "Contents/PkgInfo"),
+    @utf8.encode("APPL????", bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write PkgInfo",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_files = ["PkgInfo"]
+  match icon_name {
+    Some(value) => runtime_files.push(value)
+    None => ()
+  }
   let fields : Map[String, Json] = Map([])
   fields["schemaVersion"] = Json::number(1.0)
   fields["platform"] = Json::string("macos")
@@ -706,7 +812,7 @@ fn package_macos_bundle(
   fields["buildNumber"] = Json::string(options.build_number)
   fields["executable"] = Json::string(executable)
   fields["bundleName"] = Json::string(name + ".app")
-  fields["runtimeFiles"] = Json(([] : Array[String]))
+  fields["runtimeFiles"] = Json(runtime_files)
   let manifest = Json::object(fields).stringify(indent=2) + "\n"
   @fs.write_bytes_to_file(manifest_path, @utf8.encode(manifest[:], bom=false)) catch {
     _ =>
@@ -727,14 +833,15 @@ fn package_macos_bundle(
 fn package_web_bundle(
   flow : DesktopFlow,
   options : PackageBuildOptions,
+  name : String,
   dist_root : String,
   json : Bool,
   cwd : String,
 ) -> CliOutcome {
   if options.dry_run {
-    let mut text = "[package] web (dry-run)\n"
+    let mut text = "[package] web app=" + name + " (dry-run)\n"
     text += "  output: " + dist_root + "\n"
-    text += "  files: index.html, *.wasm, runtime.js, .gz/.br siblings, bundle-size.json\n"
+    text += "  files: index.html, *.wasm, runtime.js, .gz/.br siblings, bundle-size.json, moui-package.json\n"
     return stdout_outcome(text)
   }
   let script = match
@@ -772,11 +879,32 @@ fn package_web_bundle(
       package_build_usage(),
     )
   }
-  package_build_outcome(
-    "web",
-    flow.package_path,
-    out_dir,
-    "web bundle written",
-    json,
+  let result_bundle_name = base_name(out_dir)
+  let wasm_name = base_name(flow.package_path) + ".wasm"
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string("web")
+  fields["outputKind"] = Json::string("static-bundle")
+  fields["appName"] = Json::string(name)
+  fields["moonPackage"] = Json::string(flow.package_path)
+  fields["version"] = Json::string(options.version)
+  fields["buildNumber"] = Json::string(options.build_number)
+  fields["executable"] = Json::string(wasm_name)
+  fields["bundleName"] = Json::string(result_bundle_name)
+  fields["runtimeFiles"] = Json(
+    (["index.html", wasm_name, "runtime.js"] : Array[String]),
   )
+  let manifest = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "moui-package.json"),
+    @utf8.encode(manifest[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write moui-package.json",
+        json,
+        package_build_usage(),
+      )
+  }
+  package_build_outcome("web", name, out_dir, "web bundle written", json)
 }

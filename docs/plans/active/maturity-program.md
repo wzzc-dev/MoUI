@@ -82,3 +82,4 @@ Chosen routes:
 | 2026-11-10 | Program plan created; sub-plans and ADR 0068 added. |
 | 2026-11-10 | First slice landed: spring wiring, platform-claim sync, release packaging + Linux bundle, verify provenance/applicationId, and dev transient handoff. `moon test` for core/runtime/native/CLI and `sh scripts/check.sh --profile pr` pass. |
 | 2026-11-10 | DevTools v1 landed: versioned document, native publisher, `moui inspect`, `moui dev --inspect`, and Web endpoints. PR profile passes; socket/NDJSON transport remains the next transport slice. |
+| 2026-11-10 | Packaging depth landed: macOS icon/PkgInfo, Windows `icudtl.dat`, Web package metadata, plus macOS/Linux/Windows packaging tests. |

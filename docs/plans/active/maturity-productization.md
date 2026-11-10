@@ -72,3 +72,4 @@
 |---|---|
 | 2026-11-10 | Plan created; implementation starts with the release flag and bundle id. |
 | 2026-11-10 | `moui package` now defaults to release (`--debug` opt-out), reads the project bundle id, packs a Linux native bundle, and guards host/target mismatches. `moui verify` records build provenance from `build-manifest.json` and uses `android.applicationId`. CLI tests pass (198). |
+| 2026-11-10 | Packaging depth: macOS copies `--icon` + writes `PkgInfo`/`CFBundleIconFile`; Windows copies `icudtl.dat` from the Skia release cache; Web writes `moui-package.json`. Whitebox packaging tests cover macOS/Linux/Windows and the CLI suite is at 206 tests. |

@@ -44,10 +44,13 @@ moui package web .       # static web bundle (gzip/brotli + bundle-size.json)
 `moui package` builds a release artifact by default; pass `--debug` to inspect
 a debug build. Packaging runs on the matching host for macOS/Windows/Linux
 (use `--allow-cross` only when the build output is known to match the target).
-Linux run/build also work directly (`moui run linux .`). Windows builds resolve
-the MSVC toolchain through vswhere and vcvarsall in-process, so sourcing
-`scripts/windows/msvc_env.ps1` first is no longer required (a preset `CC`
-environment is respected).
+macOS accepts `--icon PATH` to copy an `.icns` into `Contents/Resources` and
+write `CFBundleIconFile` + `PkgInfo`. Windows copies `icudtl.dat` from the Skia
+release cache when it is available. Web writes `moui-package.json` beside the
+bundle metadata. Linux run/build also work directly (`moui run linux .`).
+Windows builds resolve the MSVC toolchain through vswhere and vcvarsall
+in-process, so sourcing `scripts/windows/msvc_env.ps1` first is no longer
+required (a preset `CC` environment is respected).
 
 ## Develop With A Watch Loop
 
