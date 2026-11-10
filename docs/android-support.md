@@ -187,6 +187,14 @@ MoUI side: `moui/backend/android/android_clipboard.mbt` +
 ClipboardServices; the window-hosted backend pumps semantics to the
 provider from `about_to_wait` with a generation cursor.
 
+Notifications and notification permission now use the same synchronous JNI
+bridge shape: `android_notifications.mbt` calls the template's
+`HostedActivity` `NotificationManager` / `POST_NOTIFICATIONS` helpers, and
+`app_environment()` wires `NotificationServices` + `PermissionServices`. A
+pending permission request reports `restricted`; the app retries after the
+user responds. Matching-device smoke for the prompt and delivery is still an
+open quality item (not part of the R6 matrix).
+
 With these, every R6 capability is observed on the matching emulator and
 the route is promoted to `committed` (`checks/platforms/android.json`
 `runtimeL3=passed`, ADR 0066). The honest remaining gap is the presenter:
