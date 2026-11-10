@@ -32,13 +32,26 @@ fn macos_dev_bundle_name(flow : DesktopFlow) -> String {
 
 ///|
 fn macos_dev_bundle_id(flow : DesktopFlow, name : String) -> String {
+  // Development launches use a `.dev` identity so a previously packaged build
+  // with the release bundle id cannot own the LaunchServices/notification
+  // record. Include the entrypoint leaf so multiple entrypoints in one project
+  // do not overwrite each other's permission state.
+  let leaf = macos_dev_bundle_component(base_name(flow.package_path)).to_lower()
   match read_project_manifest(flow.app_root) {
     Ok(manifest) =>
       match manifest.bundle_id {
-        Some(value) => value
-        None => "dev.wzzc.moui." + macos_dev_bundle_component(name).to_lower()
+        Some(value) => value + ".dev"
+        None =>
+          "dev.wzzc.moui.dev." +
+          macos_dev_bundle_component(name).to_lower() +
+          "." +
+          leaf
       }
-    Err(_) => "dev.wzzc.moui." + macos_dev_bundle_component(name).to_lower()
+    Err(_) =>
+      "dev.wzzc.moui.dev." +
+      macos_dev_bundle_component(name).to_lower() +
+      "." +
+      leaf
   }
 }
 
@@ -124,6 +137,20 @@ fn prepare_macos_dev_bundle(
   }
   if signing.exit_code != 0 {
     return Err("codesign failed: " + signing.stderr + signing.stdout)
+  }
+  // Directly exec'ing a bundle binary skips LaunchServices registration, and
+  // UserNotifications only resolves a bundle that LaunchServices knows about.
+  // Register the finished bundle before launching it.
+  let registrar = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+  if path_is_file(registrar) {
+    let registered = match
+      process_exec_argv([registrar, "-f", bundle_dir], capture=true) {
+      Ok(value) => value
+      Err(message) => return Err("could not run lsregister: " + message)
+    }
+    if registered.exit_code != 0 {
+      return Err("lsregister failed: " + registered.stderr + registered.stdout)
+    }
   }
   Ok(inner)
 }

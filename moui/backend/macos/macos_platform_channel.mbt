@@ -52,7 +52,10 @@ pub fn dispatch_macos_platform_channel(
         ) {
         1 => Ok("")
         -2 => Error("macOS notification permission is not granted")
-        2 => Error("macOS notification permission is pending; retry after responding")
+        2 =>
+          Error(
+            "macOS notification permission is pending; retry after responding",
+          )
         -1 =>
           Unavailable(
             "macOS notifications require an app bundle; use `moui run macos` or `moui package macos`",

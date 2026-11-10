@@ -492,23 +492,20 @@ async test "run_window_with_workers returns when the window loop finishes" {
 
 ///|
 test "macos service bridge forwards platform channel requests" {
-  let bridge = @macos.macos_service_bridge(
-    system_theme=Light,
-    platform_channel=request => {
-      match request.operation {
-        "permission.request" =>
-          Ok(
-            if request.payload.contains("Camera") {
-              "restricted"
-            } else {
-              "granted"
-            },
-          )
-        "notification.send" => Ok("")
-        _ => Unavailable("unimplemented")
-      }
-    },
-  )
+  let bridge = @macos.macos_service_bridge(system_theme=Light, platform_channel=request => {
+    match request.operation {
+      "permission.request" =>
+        Ok(
+          if request.payload.contains("Camera") {
+            "restricted"
+          } else {
+            "granted"
+          },
+        )
+      "notification.send" => Ok("")
+      _ => Unavailable("unimplemented")
+    }
+  })
   let notifications = bridge.dispatch(
     PlatformChannel(
       @host.PlatformChannelRequest::new(

@@ -97,3 +97,4 @@ Chosen routes:
 | 2026-11-10 | Web notification/permission slice landed via `wzzc-dev/window@0.5.4-0.2.8` (published) + `moui/backend/web/notifications`; Android template host-channel drain remains. |
 | 2026-11-10 | Android notification/permission slice landed via `wzzc-dev/window@0.5.4-0.2.8` (published) + `moui/backend/android/android_notifications.mbt`; matching-device smoke remains. |
 | 2026-11-10 | Showcase Platform workspace now exercises the notification/permission services end to end (request permission, notify, cancel, status counters). |
+| 2026-11-10 | macOS notification delivery moved to `UNUserNotificationCenter`; `moui run macos` now launches an ad-hoc-signed, LaunchServices-registered dev `.app` so notifications and the Dock icon behave like a bundled app. |
