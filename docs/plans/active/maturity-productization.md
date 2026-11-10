@@ -75,3 +75,4 @@
 | 2026-11-10 | Packaging depth: macOS copies `--icon` + writes `PkgInfo`/`CFBundleIconFile`; Windows copies `icudtl.dat` from the Skia release cache; Web writes `moui-package.json`. Whitebox packaging tests cover macOS/Linux/Windows and the CLI suite is at 206 tests. |
 | 2026-11-10 | Mobile release plumbing: `--release` now selects Android `assembleRelease` (with unsigned fallback) and iOS `-O2`; HarmonyOS keeps the project build-profile variant. Signing/store packaging remains host-required. |
 | 2026-11-10 | Verify hardening: probes wait a bounded window before dumping logs, `moui run --verify` writes the same provenance-aware manifest, and the usage text matches the `<app>.<ext>` artifact layout. |
+| 2026-11-10 | Web standalone packaging: when the repo-local `package-web-app.mjs` is absent, the CLI builds release wasm and writes its own flat bundle (index/runtime/wasm/module-path rewrite + `moui-package.json`). A whitebox test covers generated-project layout. |

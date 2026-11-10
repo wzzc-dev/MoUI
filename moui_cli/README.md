@@ -47,10 +47,12 @@ a debug build. Packaging runs on the matching host for macOS/Windows/Linux
 macOS accepts `--icon PATH` to copy an `.icns` into `Contents/Resources` and
 write `CFBundleIconFile` + `PkgInfo`. Windows copies `icudtl.dat` from the Skia
 release cache when it is available. Web writes `moui-package.json` beside the
-bundle metadata. Linux run/build also work directly (`moui run linux .`).
-Windows builds resolve the MSVC toolchain through vswhere and vcvarsall
-in-process, so sourcing `scripts/windows/msvc_env.ps1` first is no longer
-required (a preset `CC` environment is respected).
+bundle metadata; when the repo-local `package-web-app.mjs` is absent (a
+generated project), the CLI falls back to its built-in flat bundle packager.
+Linux run/build also work directly (`moui run linux .`). Windows builds resolve
+the MSVC toolchain through vswhere and vcvarsall in-process, so sourcing
+`scripts/windows/msvc_env.ps1` first is no longer required (a preset `CC`
+environment is respected).
 
 ## Develop With A Watch Loop
 

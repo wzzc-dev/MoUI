@@ -827,6 +827,222 @@ fn package_macos_bundle(
 }
 
 ///|
+/// Standalone web packager used when the repo-local `package-web-app.mjs` is
+/// not present (generated projects). It builds a release wasm artifact and
+/// copies the index/runtime assets with their module paths rewritten for a
+/// flat static bundle. Compression siblings are the repo packager's job.
+fn package_web_bundle_fallback(
+  flow : DesktopFlow,
+  options : PackageBuildOptions,
+  name : String,
+  dist_root : String,
+  json : Bool,
+) -> CliOutcome {
+  let source_root = join_path(flow.build_base, flow.package_path)
+  let index_path = join_path(source_root, "index.html")
+  if !path_is_file(index_path) {
+    return failed_outcome(
+      "web index.html not found: " + index_path,
+      json,
+      package_build_usage(),
+    )
+  }
+  let artifact = if options.no_build {
+    desktop_artifact_path(
+      flow.build_base,
+      flow.package_path,
+      flow.target.target,
+      release=true,
+    )
+  } else {
+    match desktop_build_once(flow, detect_host_platform(), release=true) {
+      Ok(value) => value
+      Err(message) =>
+        return failed_outcome(message, json, package_build_usage())
+    }
+  }
+  if !path_is_file(artifact) {
+    return failed_outcome(
+      "web build artifact not found: " + artifact,
+      json,
+      package_build_usage(),
+    )
+  }
+  let out_dir = join_path(dist_root, base_name(flow.app_root))
+  let wasm_name = base_name(artifact)
+  remove_tree(out_dir)
+  match mkdir_p(out_dir) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  match copy_file(artifact, join_path(out_dir, wasm_name)) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let index_source = @fs.read_file_to_string(index_path) catch {
+    _ =>
+      return failed_outcome(
+        "could not read web index.html",
+        json,
+        package_build_usage(),
+      )
+  }
+  let wasm_url = "./" + wasm_name
+  let index_text = index_source
+    .replace_all(
+      old="../.mooncakes/wzzc-dev/moui_web_renderer/runtime.js",
+      new="./runtime.js",
+    )
+    .replace_all(old="../moui_web_renderer/runtime.js", new="./runtime.js")
+    .replace_all(
+      old="../_build/wasm-gc/debug/build/" + flow.package_path + "/" + wasm_name,
+      new=wasm_url,
+    )
+    .replace_all(
+      old="../_build/wasm-gc/release/build/" +
+        flow.package_path +
+        "/" +
+        wasm_name,
+      new=wasm_url,
+    )
+    .replace_all(
+      old="./_build/wasm-gc/debug/build/" + flow.package_path + "/" + wasm_name,
+      new=wasm_url,
+    )
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "index.html"),
+    @utf8.encode(index_text[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write packaged index.html",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_source = match
+    find_existing_file([
+      join_path(flow.build_base, "moui_web_renderer/runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui_web_renderer/runtime.js",
+      ),
+    ]) {
+    Some(path) => path
+    None =>
+      return failed_outcome(
+        "web runtime.js was not found under the workspace",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_text = @fs.read_file_to_string(runtime_source) catch {
+    _ =>
+      return failed_outcome(
+        "could not read web runtime.js",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_text = runtime_text.replace_all(
+    old="../moui/backend/web/browser_runtime.js",
+    new="./browser_runtime.js",
+  )
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "runtime.js"),
+    @utf8.encode(runtime_text[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write packaged runtime.js",
+        json,
+        package_build_usage(),
+      )
+  }
+  let browser_source = match
+    find_existing_file([
+      join_path(flow.build_base, "moui/backend/web/browser_runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui/backend/web/browser_runtime.js",
+      ),
+    ]) {
+    Some(path) => path
+    None =>
+      return failed_outcome(
+        "web browser_runtime.js was not found under the workspace",
+        json,
+        package_build_usage(),
+      )
+  }
+  match copy_file(browser_source, join_path(out_dir, "browser_runtime.js")) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let runtime_files = [
+    "index.html", wasm_name, "runtime.js", "browser_runtime.js",
+  ]
+  match
+    find_existing_file([
+      join_path(flow.build_base, "moui_web_renderer/canvas2d_runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui_web_renderer/canvas2d_runtime.js",
+      ),
+    ]) {
+    Some(path) =>
+      match copy_file(path, join_path(out_dir, "canvas2d_runtime.js")) {
+        Ok(_) => runtime_files.push("canvas2d_runtime.js")
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+    None => ()
+  }
+  for directory in ["assets", "docs"] {
+    let source = join_path(source_root, directory)
+    if path_is_dir(source) {
+      let target = join_path(out_dir, directory)
+      match mkdir_p(target) {
+        Ok(_) => ()
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+      match copy_tree(source, target) {
+        Ok(_) => ()
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+    }
+  }
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string("web")
+  fields["outputKind"] = Json::string("static-bundle")
+  fields["appName"] = Json::string(name)
+  fields["moonPackage"] = Json::string(flow.package_path)
+  fields["version"] = Json::string(options.version)
+  fields["buildNumber"] = Json::string(options.build_number)
+  fields["executable"] = Json::string(wasm_name)
+  fields["bundleName"] = Json::string(base_name(out_dir))
+  fields["runtimeFiles"] = Json(runtime_files)
+  let manifest = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "moui-package.json"),
+    @utf8.encode(manifest[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write moui-package.json",
+        json,
+        package_build_usage(),
+      )
+  }
+  package_build_outcome(
+    "web", name, out_dir, "web bundle written (standalone fallback)", json,
+  )
+}
+
+///|
 /// The web bundle is produced by the shared Node packager; the CLI locates
 /// it in the workspace (or the installed MoUI package) and streams its
 /// output. The script performs its own release+strip build.
@@ -856,11 +1072,7 @@ fn package_web_bundle(
     ]) {
     Some(path) => path
     None =>
-      return failed_outcome(
-        "package-web-app.mjs was not found; serve the built wasm statically instead (`moui build web` + a static file server)",
-        json,
-        package_build_usage(),
-      )
+      return package_web_bundle_fallback(flow, options, name, dist_root, json)
   }
   let out_dir = join_path(dist_root, base_name(flow.app_root))
   let argv = ["node", script, flow.package_path, "--out", out_dir]

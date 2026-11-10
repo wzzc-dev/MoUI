@@ -165,6 +165,108 @@ test "package Linux writes the launcher and desktop entry" {
 }
 
 ///|
+test "web fallback packager rewrites module paths into a flat bundle" {
+  let root = "/tmp/moui-web-package-test"
+  remove_tree(root)
+  let web_dir = join_path(root, "web_wasm")
+  let build_dir = join_path(root, "_build/wasm-gc/release/build/web_wasm")
+  let runtime_dir = join_path(root, ".mooncakes/wzzc-dev/moui_web_renderer")
+  let browser_dir = join_path(root, ".mooncakes/wzzc-dev/moui/backend/web")
+  for directory in [web_dir, build_dir, runtime_dir, browser_dir] {
+    match mkdir_p(directory) {
+      Ok(_) => ()
+      Err(message) => fail(message)
+    }
+  }
+  let index =
+    #|<!doctype html><script type="module">
+    #|import { bootMouiWasmGcApp } from "../.mooncakes/wzzc-dev/moui_web_renderer/runtime.js";
+    #|bootMouiWasmGcApp({ wasmUrl: new URL("../_build/wasm-gc/debug/build/web_wasm/web_wasm.wasm", import.meta.url) });
+    #|</script>
+  @fs.write_bytes_to_file(
+    join_path(web_dir, "index.html"),
+    @utf8.encode(index[:], bom=false),
+  ) catch {
+    _ => fail("could not write the fake index")
+  }
+  @fs.write_bytes_to_file(
+    join_path(build_dir, "web_wasm.wasm"),
+    @utf8.encode("wasm", bom=false),
+  ) catch {
+    _ => fail("could not write the fake wasm")
+  }
+  @fs.write_bytes_to_file(
+    join_path(runtime_dir, "runtime.js"),
+    @utf8.encode(
+      "import { connectWindowWeb } from \"../moui/backend/web/browser_runtime.js\";\n",
+      bom=false,
+    ),
+  ) catch {
+    _ => fail("could not write the fake runtime")
+  }
+  @fs.write_bytes_to_file(
+    join_path(browser_dir, "browser_runtime.js"),
+    @utf8.encode("export const WEB_INPUT_FLAGS = {};\n", bom=false),
+  ) catch {
+    _ => fail("could not write the fake browser runtime")
+  }
+  @fs.write_bytes_to_file(
+    join_path(runtime_dir, "canvas2d_runtime.js"),
+    @utf8.encode(
+      "export const createCanvas2dImports = () => ({});\n",
+      bom=false,
+    ),
+  ) catch {
+    _ => fail("could not write the fake canvas runtime")
+  }
+  let target : DesktopTarget = {
+    platform: "web",
+    package_path: "web_wasm",
+    target: "wasm-gc",
+  }
+  let flow : DesktopFlow = {
+    app_root: root,
+    build_base: root,
+    package_path: "web_wasm",
+    target,
+  }
+  let options : PackageBuildOptions = {
+    output_dir: None,
+    name: None,
+    version: "1.0.0",
+    build_number: "7",
+    bundle_id: None,
+    icon: None,
+    renderer: "auto",
+    release: true,
+    allow_cross: false,
+    no_build: true,
+    dry_run: false,
+  }
+  let outcome = package_web_bundle_fallback(
+    flow,
+    options,
+    "Demo",
+    join_path(root, "dist"),
+    false,
+  )
+  inspect(outcome.exit_code, content="0")
+  let bundle = join_path(root, "dist/moui-web-package-test")
+  let bundled_index = @fs.read_file_to_string(join_path(bundle, "index.html")) catch {
+    _ => ""
+  }
+  assert_true(bundled_index.contains("./runtime.js"))
+  assert_true(bundled_index.contains("./web_wasm.wasm"))
+  let bundled_runtime = @fs.read_file_to_string(join_path(bundle, "runtime.js")) catch {
+    _ => ""
+  }
+  assert_true(bundled_runtime.contains("./browser_runtime.js"))
+  assert_true(path_is_file(join_path(bundle, "web_wasm.wasm")))
+  assert_true(path_is_file(join_path(bundle, "browser_runtime.js")))
+  assert_true(path_is_file(join_path(bundle, "canvas2d_runtime.js")))
+}
+
+///|
 test "package Windows copies icudtl.dat from the Skia release cache" {
   let root = "/tmp/moui-package-windows-test"
   remove_tree(root)
