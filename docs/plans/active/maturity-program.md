@@ -94,4 +94,5 @@ Chosen routes:
 | 2026-11-10 | iOS signing flags and codesign landed, and the physical-device evidence runbook is documented; `devicectl` probe support remains a follow-up. |
 | 2026-11-10 | W5/W8 partial: `moui test` wraps project test defaults, and a 30-minute create→test→inspect→package tutorial is in `docs/tutorials/30-minute-app.md`. |
 | 2026-11-10 | macOS notification/permission `PlatformChannel` slice landed; Web/Android remain blocked on `window` host imports/templates. |
-| 2026-11-10 | Web notification/permission slice landed via `wzzc-dev/window@0.5.4-0.2.7` (published) + `moui/backend/web/notifications`; Android template host-channel drain remains. |
+| 2026-11-10 | Web notification/permission slice landed via `wzzc-dev/window@0.5.4-0.2.8` (published) + `moui/backend/web/notifications`; Android template host-channel drain remains. |
+| 2026-11-10 | Android notification/permission slice landed via `wzzc-dev/window@0.5.4-0.2.8` (published) + `moui/backend/android/android_notifications.mbt`; matching-device smoke remains. |

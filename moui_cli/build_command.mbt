@@ -562,7 +562,14 @@ fn write_build_manifest(
   options : BuildCommandOptions,
   result : BuildResult,
 ) -> Unit {
-  let dir = join_path(options.build_dir, app.id)
+  let build_dir = if options.build_dir != "" {
+    options.build_dir
+  } else if result.build_dir != "" {
+    result.build_dir
+  } else {
+    default_build_dir(platform, options.workspace_root)
+  }
+  let dir = join_path(build_dir, app.id)
   match mkdir_p(dir) {
     Ok(_) => ()
     Err(_) => return

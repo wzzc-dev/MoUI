@@ -259,9 +259,14 @@ authorization-status query; the OS may still suppress delivery.
 Web implements the same operations through the browser Notification API
 (`moui/backend/web/notifications`, imported by the Web composition root). A
 pending permission prompt reports `restricted`; the app can retry `notify`
-after the user responds. Android notification/permission host handling remains
-a follow-up because the window-hosted template does not yet drain
-`platform-channel` updates into `NotificationManager`.
+after the user responds.
+
+Android implements them through the window-hosted `HostedActivity`
+(`NotificationManager` + `POST_NOTIFICATIONS`) and the
+`moui/backend/android/android_notifications.mbt` JNI bridge. A pending
+`POST_NOTIFICATIONS` request reports `restricted`; the app retries after the
+user responds. The Android host services answer synchronously like the
+clipboard bridge, so no `platform-channel` queue drain is required.
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
 accessibility readiness. It is a high-level reporting API for apps, diagnostics,

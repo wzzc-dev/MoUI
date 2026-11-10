@@ -301,5 +301,57 @@ pub fn app_environment() -> @services.AppEnvironment {
       }
     },
   )
-  @services.AppEnvironment::new(services=@services.AppServices::new(clipboard~))
+  let notifications = @services.NotificationServices::new(
+    notify=request => {
+      if android_notification_send(request.id, request.title, request.body) {
+        @services.ServiceTask::succeed(
+          key="android:notification:send",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="android:notification:send",
+          error=@services.ServiceError::unavailable(
+            "notification permission is pending or denied",
+          ),
+        )
+      }
+    },
+    cancel=id => {
+      if android_notification_cancel(id) {
+        @services.ServiceTask::succeed(
+          key="android:notification:cancel",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="android:notification:cancel",
+          error=@services.ServiceError::unavailable(
+            "notification was not found",
+          ),
+        )
+      }
+    },
+  )
+  let permissions = @services.PermissionServices::new(request=kind => {
+    let status = match kind {
+      Notifications => android_permission_request("Notifications")
+      _ => 2
+    }
+    let result = match status {
+      1 => @services.PermissionStatus::Granted
+      0 => @services.PermissionStatus::Denied
+      _ => @services.PermissionStatus::Restricted
+    }
+    @services.ServiceTask::succeed(
+      key="android:permission:request",
+      value=result,
+    )
+  })
+  @services.AppEnvironment::new(
+    services=@services.AppServices::new(
+      clipboard~,
+      platform=@services.PlatformServices::new(notifications~, permissions~),
+    ),
+  )
 }

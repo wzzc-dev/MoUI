@@ -8,7 +8,7 @@ supported_targets = "+native+wasm-gc+wasm"
 
 import {
   "wzzc-dev/moui@0.6.0",
-  "wzzc-dev/window@0.5.4-0.2.7",
+  "wzzc-dev/window@0.5.4-0.2.8",
 }
 
 readme = "README.mbt.md"
