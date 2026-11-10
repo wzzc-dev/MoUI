@@ -273,8 +273,15 @@ optional `--state PATH` value (default `.moui/dev-state.json`) is exported as
 `Program::with_state_persistence` plus a `ProgramStateTransport` at the
 composition root get a state-preserving restart: the runtime restores the last
 model at startup and rewrites the state file after every committed update.
-This is still restart-based model handoff, deliberately not an in-process hot
-reload. See [TEA program model](tea-program-model.md).
+
+A second opt-in transport (`MOUI_DEV_TRANSIENT_FILE`, default
+`.moui/dev-transient.json`) carries framework-owned transient state: scroll
+offsets, keyboard focus, and the focused text input's caret/selection/
+composition. The runtime flushes a debounced snapshot at frame boundaries and
+restores it without dispatching `on_scroll`/`on_change`. Navigation stays
+app-owned in the model. This is still restart-based — deliberately not an
+in-process hot reload. See [TEA program model](tea-program-model.md) and ADR
+0068.
 
 ### Build, install, and launch
 

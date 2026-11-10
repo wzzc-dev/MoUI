@@ -10,6 +10,7 @@ pub fn runtime(
   initial_section_code~ : Int32 = 0,
   width~ : Double = 1100.0,
   height~ : Double = 680.0,
+  transient_transport~ : @core.ProgramStateTransport? = None,
 ) -> @runtime.AppRuntime {
   let diagnostics_input = diagnostics_input(host_summary, renderer_providers)
   let model = @app.ShowcaseModel::new(diagnostics_input~, route~)
@@ -24,7 +25,12 @@ pub fn runtime(
     Some(host) => model.program_with_route_host(host, environment~)
     None => model.program_with_environment(environment)
   }
-  @runtime.new_program_with_dimensions(program~, width~, height~)
+  @runtime.new_program_with_dimensions(
+    program~,
+    width~,
+    height~,
+    transient_transport~,
+  )
 }
 
 ///|

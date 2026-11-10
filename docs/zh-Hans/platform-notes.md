@@ -48,8 +48,8 @@ platform window event -> Event -> AppRuntime -> DrawCommand -> renderer
 - [macOS](platform-notes-macos.md) — AppKit 宿主、Skia/WGPU 诊断、链接标志和服务桥细节。
 - [Windows](platform-notes-windows.md) — MSVC 工具链、Skia/WGPU 设置、WebView2 自动检测和宿主架构。
 - [Linux](platform-notes-linux.md) — Wayland 宿主、运行时要求、Skia renderer composition、运行时证据和剩余缺口。
-- [Android](../android-support.md)（**experimental**）— window-hosted Activity、APK 打包和 matching-device evidence requirements。
-- [iOS](../ios-support.md)（**experimental**）— window-hosted UIKit template、Simulator 打包和 matching-device evidence requirements。
+- [Android](../android-support.md)（**committed**）— window-hosted Activity、APK 打包和 matching-emulator R6 证据；物理真机观察仍 open。
+- [iOS](../ios-support.md)（**committed**）— window-hosted UIKit template、Simulator 打包和 matching-simulator R6 证据；物理真机和 VoiceOver 观察仍 open。
 - [HarmonyOS](../harmonyos-support.md)（**committed**）— window-hosted Stage Ability/XComponent template、HAP 打包和 matching-device R6 证据。
 
 产品类别摘要：[平台就绪声明](../platform-readiness-declaration.md)。

@@ -8,6 +8,10 @@ fn main {
     } else {
       0
     },
+    transient_transport=match @native_services.dev_transient_transport_path() {
+      Some(path) => Some(@native_services.dev_transient_transport(path))
+      None => None
+    },
   )
   @apphost.run_app("MoUI Showcase", runtime)
   // .render(@render_skia.raster())

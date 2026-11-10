@@ -1,9 +1,9 @@
 # Android Support
 
-Android uses the **embedded runtime backend** route and is currently
-**experimental** (product_class `experimental`, `ready=false`): the code paths
-compile and host-sim tests pass, but no development/demonstration usability or
-product commitment is made without matching-device evidence. `wzzc-dev/window/android` owns the Android lifecycle,
+Android uses the **embedded runtime backend** route and is **committed**
+(product_class `committed`, `ready=true`) on matching-emulator R6 evidence
+(`checks/platforms/android.json` `runtimeL3=passed`, ADR 0066).
+`wzzc-dev/window/android` owns the Android lifecycle,
 surface, and input queue; `moui/backend/android` converts those callbacks into
 the MoUI runtime session, exposes neutral CPU/GPU surface capabilities, and
 owns the platform presenter. The entrypoint supplies `moui_skia_renderer`

@@ -24,6 +24,9 @@ const once = has("--once") || has("--build-only");
 const web = has("--web") || (target || "").startsWith("wasm") || packageName.endsWith("web_wasm");
 const json = has("--json");
 const stateFile = valueOf("--state", path.join(projectRoot, ".moui", "dev-state.json"));
+const transientFile = stateFile.endsWith(".json")
+  ? `${stateFile.slice(0, -5)}-transient.json`
+  : `${stateFile}-transient`;
 const statusFile = path.join(projectRoot, ".moui", "dev-status.json");
 
 const status = { ok: true, phase: "starting", generation: 0, package: packageName, target, error: "", updatedAt: Date.now() };
@@ -111,7 +114,11 @@ async function build(pkg, buildTarget) {
 async function startNative(pkg, buildTarget) {
   await stopChild();
   writeStatus({ phase: "running", ok: true, error: "" });
-  const env = { MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_GENERATION: String(status.generation) };
+  const env = {
+    MOUI_DEV_STATE_FILE: stateFile,
+    MOUI_DEV_TRANSIENT_FILE: transientFile,
+    MOUI_DEV_GENERATION: String(status.generation),
+  };
   child = spawn(moon, ["run", pkg, "--target", buildTarget], { cwd: projectRoot, env: { ...process.env, ...env }, stdio: "inherit" });
   child.once("exit", (code, signal) => {
     if (!stopping) log(`app exited (code=${code ?? "null"}, signal=${signal ?? "none"})`);

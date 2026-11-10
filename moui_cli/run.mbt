@@ -763,6 +763,7 @@ fn run_run(
       run_build_internal(build_options, parsed.platform, host, app, config) {
       Ok(result) => {
         log_info("[run] build succeeded: " + result.output_artifact)
+        write_build_manifest(parsed.platform, app, build_options, result)
         if result.output_artifact != "" {
           result.output_artifact
         } else {

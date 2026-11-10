@@ -168,6 +168,7 @@ fn dev_runner_text() -> String {
     #|const interval = Math.max(150, Number(value("--interval-ms", "500")) || 500);
     #|const port = Math.max(1, Number(value("--port", "3000")) || 3000);
     #|const stateFile = value("--state", path.join(root, ".moui", "dev-state.json"));
+    #|const transientFile = stateFile.endsWith(".json") ? stateFile.slice(0, -5) + "-transient.json" : stateFile + "-transient";
     #|const status = { schemaVersion: 1, ok: true, phase: "starting", generation: 0, package: pkg, target, error: "" };
     #|const update = (patch) => { Object.assign(status, patch, { updatedAt: Date.now() }); fs.mkdirSync(path.join(root, ".moui"), { recursive: true }); fs.writeFileSync(path.join(root, ".moui", "dev-status.json"), JSON.stringify(status, null, 2)); };
     #|const log = (message) => console.log("[moui dev] " + message);
@@ -177,8 +178,8 @@ fn dev_runner_text() -> String {
     #|const client = "(() => { let generation = null; const box = document.createElement('pre'); Object.assign(box.style, {position:'fixed',inset:'12px',zIndex:2147483647,padding:'16px',background:'#2b1111',color:'#ffd6d6',whiteSpace:'pre-wrap',display:'none'}); document.body.appendChild(box); async function poll(){try{const s=await (await fetch('/__moui/status',{cache:'no-store'})).json(); if(generation!==null&&s.ok&&s.generation!==generation) location.reload(); generation=s.generation; box.textContent=s.error||''; box.style.display=s.error?'block':'none';}catch(_){} setTimeout(poll,700)} poll()})();";
     #|const server = web ? http.createServer((req, res) => { const u = new URL(req.url, "http://localhost"); if (u.pathname === "/__moui/status") { res.setHeader("content-type", "application/json"); res.end(JSON.stringify(status)); return; } if (u.pathname === "/__moui/client.js") { res.setHeader("content-type", "text/javascript"); res.end(client); return; } const rel = decodeURIComponent(u.pathname).replace(/^\/+/, "") || "web_wasm/index.html"; const file = path.resolve(root, rel); if ((file !== root && !file.startsWith(root + path.sep)) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end("Not found"); return; } let data = fs.readFileSync(file); if (file.endsWith(".html")) { data = Buffer.from(data.toString().replace(/<head>/i, '<head><script src="/__moui/client.js"></script>')); res.setHeader("content-type", "text/html; charset=utf-8"); } res.end(data); }).listen(port, "127.0.0.1", () => log("web server: http://127.0.0.1:" + port + "/")) : null;
     #|let child = null; let stopping = false; const stop = async () => { if (!child || child.exitCode !== null) return; child.kill("SIGTERM"); await new Promise((resolve) => { const timer = setTimeout(() => { child.kill("SIGKILL"); resolve(); }, 1500); child.once("exit", () => { clearTimeout(timer); resolve(); }); }); child = null; };
-    #|const initial = await build(); if (once) { if (server) server.close(); process.exit(initial ? 0 : 1); } if (initial && !web) { child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }
-    #|let last = files(root); log("watching " + root + " every " + interval + "ms"); const timer = setInterval(async () => { const next = files(root); if (next === last || stopping) return; last = next; await stop(); if (await build() && !web) child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }, interval);
+    #|const initial = await build(); if (once) { if (server) server.close(); process.exit(initial ? 0 : 1); } if (initial && !web) { child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_TRANSIENT_FILE: transientFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }
+    #|let last = files(root); log("watching " + root + " every " + interval + "ms"); const timer = setInterval(async () => { const next = files(root); if (next === last || stopping) return; last = next; await stop(); if (await build() && !web) child = spawn(process.env.MOON || "moon", ["run", pkg, "--target", target], { cwd: root, env: { ...process.env, MOUI_DEV_STATE_FILE: stateFile, MOUI_DEV_TRANSIENT_FILE: transientFile, MOUI_DEV_GENERATION: String(status.generation) }, stdio: "inherit" }); }, interval);
     #|const shutdown = async () => { if (stopping) return; stopping = true; clearInterval(timer); await stop(); if (server) server.close(); process.exit(0); }; process.once("SIGINT", shutdown); process.once("SIGTERM", shutdown);
   )
 }
@@ -469,6 +470,7 @@ fn gitignore_text() -> String {
     #|/artifacts/
     #|/.skia-cache/
     #|.moui/dev-state.json
+    #|.moui/dev-transient.json
     #|.moui/dev-status.json
     #|*.log
     #|*.tmp

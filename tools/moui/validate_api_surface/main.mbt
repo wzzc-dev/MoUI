@@ -299,7 +299,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // HostRuntimeDriver, and the host event adapters to moui/apphost.
       // Runtime keeps only the tree/state engine plus the semantics DTOs; its
       // production interface must not import backend, render, or apphost.
-      max_lines: 787,
+      // AppRuntime::capture_dev_transient / restore_dev_transient (+2 lines):
+      // ADR 0068 transient handoff is a dev-only runtime capability; no new
+      // type or production dependency joins the facade.
+      max_lines: 789,
       max_pub_lines: 534,
       max_pub_all_lines: 19,
       required_tokens: [
@@ -445,9 +448,12 @@ fn package_budgets() -> Array[PackageBudget] {
       // plan §7 touch recognizer — the two-finger pinch/rotation recognizer
       // is a view-side modifier over the §4 id streams; core carries the
       // sample DTO, the recognition state, and the observer modifier.
+      // ViewStateEntry (+1 pub(all)): ADR 0068 exports opaque slot entries so
+      // the dev transport can move transient state without exposing slot
+      // value types.
       max_lines: 2870,
       max_pub_lines: 1219,
-      max_pub_all_lines: 147,
+      max_pub_all_lines: 148,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

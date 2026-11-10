@@ -96,24 +96,40 @@ pub fn[Msg] View::scale(
 }
 
 ///|
+/// Apply a transition. `progress` is the normalized 0..1 position for
+/// progress-driven callers; pass `elapsed_ms` instead to let a spring (or the
+/// fixed duration) drive the sample. When both are provided, `elapsed_ms`
+/// wins.
 pub fn[Msg] View::transition(
   self : View[Msg],
   spec~ : TransitionSpec = TransitionSpec::new(),
   progress~ : Double = 1.0,
+  elapsed_ms? : Double,
   reduced_motion~ : Bool = false,
 ) -> View[Msg] {
-  self.apply_transition_style(spec.sample(progress, reduced_motion~).style)
+  let sample = match elapsed_ms {
+    Some(elapsed) => spec.sample_elapsed(elapsed, reduced_motion~)
+    None => spec.sample(progress, reduced_motion~)
+  }
+  self.apply_transition_style(sample.style)
 }
 
 ///|
+/// Keep content mounted while a presence transition is running. `progress`
+/// is the normalized 0..1 position; `elapsed_ms` opts into duration/spring
+/// sampling and wins when both are provided.
 pub fn[Msg] View::presence(
   self : View[Msg],
   present~ : Bool,
   spec~ : TransitionSpec = TransitionSpec::fade(),
   progress~ : Double = 1.0,
+  elapsed_ms? : Double,
   reduced_motion~ : Bool = false,
 ) -> View[Msg] {
-  let sample = spec.presence(present~, progress~, reduced_motion~)
+  let sample = match elapsed_ms {
+    Some(elapsed) => spec.presence_elapsed(present~, elapsed, reduced_motion~)
+    None => spec.presence(present~, progress~, reduced_motion~)
+  }
   if sample.present {
     self.apply_transition_style(sample.style)
   } else {

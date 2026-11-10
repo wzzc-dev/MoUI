@@ -54,6 +54,41 @@ pub fn ViewStateSlots::empty() -> ViewStateSlots {
 }
 
 ///|
+/// One opaque slot entry: the full declaration key bytes plus the encoded
+/// value. Exporting/importing these entries lets a dev-only transport move
+/// transient state between processes without teaching the runtime any slot's
+/// value type; decoding still requires the original `ViewStateSlot`.
+#derive(Eq, Debug)
+pub(all) struct ViewStateEntry {
+  key : Bytes
+  value : Bytes
+}
+
+///|
+pub extend ViewStateEntry with Debug::{to_repr}
+
+///|
+pub extend ViewStateEntry with Eq::{not_equal, equal}
+
+///|
+pub fn ViewStateSlots::entries(self : ViewStateSlots) -> Array[ViewStateEntry] {
+  let entries : Array[ViewStateEntry] = []
+  self.values.each((key, value) => entries.push({ key: key.bytes, value, }))
+  entries
+}
+
+///|
+pub fn ViewStateSlots::from_entries(
+  entries : Array[ViewStateEntry],
+) -> ViewStateSlots {
+  let values : Map[DeclarationKey, Bytes] = Map([])
+  for entry in entries {
+    values[{ bytes: entry.key, }] = entry.value
+  }
+  { values, }
+}
+
+///|
 /// Read a typed slot, returning the descriptor's initial value when this
 /// element has not written the slot yet.
 pub fn[T : ViewStateValue] ViewStateContext::read_slot(

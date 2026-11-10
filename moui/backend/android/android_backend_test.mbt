@@ -1,5 +1,5 @@
 ///|
-test "android backend reports experimental readiness" {
+test "android backend reports committed readiness" {
   let info = @android.backend_info()
   assert_true(info.host_info.backend == Native)
   inspect(info.capabilities.embedded_surface, content="true")
@@ -10,10 +10,10 @@ test "android backend reports experimental readiness" {
   inspect(info.capabilities.accessibility, content="true")
   inspect(info.capabilities.async_image, content="true")
   inspect(info.services.clipboard, content="true")
-  inspect(info.readiness.ready, content="false")
-  inspect(info.readiness.status, content="experimental")
-  assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("experimental"))
+  inspect(info.readiness.ready, content="true")
+  inspect(info.readiness.status, content="passed")
+  inspect(info.readiness.blocked_by.length(), content="0")
+  assert_true(info.readiness.next_steps.length() >= 1)
   let summary = @android.android_capability_summary()
   inspect(summary.label, content="Android host")
   inspect(summary.window_lifecycle, content="true")

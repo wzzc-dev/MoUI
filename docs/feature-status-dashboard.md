@@ -123,17 +123,21 @@ proof status:
 Intent, owner, and review dates come from `checks/portfolio-governance.json`; product class, readiness, and evidence paths stay owned by `checks/platform-matrix.json`.
 <!-- END GENERATED ROUTE READINESS STATUS -->
 
-HarmonyOS is `committed` on matching-device R6 evidence. Android, iOS, and
-WeChat Mini Program remain `experimental`: their code paths compile and
-host-sim tests pass, but no development/demonstration usability or product
-commitment is made without matching-device evidence. See
+Android is `committed` on matching-emulator R6 evidence (ADR 0066), iOS is
+`committed` on matching-simulator R6 evidence (ADR 0067), and HarmonyOS is
+`committed` on matching-device R6 evidence (ADR 0046). WeChat Mini Program
+remains `experimental`: its code paths compile and host-sim tests pass, but no
+product commitment is made without matching-device evidence. Android/iOS
+physical-device observations and the GPU seven-gate claims remain open quality
+items, not readiness blockers. See
 [platform-readiness-declaration.md](platform-readiness-declaration.md).
 
 The window-hosted path uses `HostCmd` → `EventLoop` → `ApplicationHandler` →
 MoUI adapters. HarmonyOS XComponent callbacks exclusively own surface, pointer,
 resize, and detach. Host-sim coverage is available through
-`sh scripts/window-hosted-hostsim-smoke.sh`; matching-device evidence remains
-pending for Android and iOS.
+`sh scripts/window-hosted-hostsim-smoke.sh`; matching-emulator/simulator
+evidence is recorded for Android and iOS, while physical-device observations
+remain open.
 
 `SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
 the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,

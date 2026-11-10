@@ -216,16 +216,13 @@ pub fn ios_capability_matrix() -> IosBackendCapabilities {
 ///|
 pub fn ios_readiness() -> IosBackendReadiness {
   {
-    ready: false,
-    status: "experimental",
-    blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence",
-      "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
-      "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
-    ],
+    ready: true,
+    status: "passed",
+    blocked_by: [],
     next_steps: [
-      "re-run MoUI Showcase window-hosted smoke on Simulator", "record actualPresenterRoute metal-direct evidence in checks/platforms/ios.json",
-      "land GPU seven-gate claim only after matching-host promotion manifests pass",
+      "keep the matching-simulator Showcase evidence current for pixels, pointer, keyboard/IME, clipboard read/write, accessibility, detach/recreate and async image",
+      "record physical-device build/verify and VoiceOver observations; the simulator is the current evidence boundary",
+      "land the metal-direct GPU seven-gate claim only after matching-host promotion manifests pass",
     ],
   }
 }
@@ -241,7 +238,7 @@ pub fn backend_info() -> IosBackendInfo {
     services: ios_service_capabilities(),
     input: ios_input_capabilities(),
     readiness: ios_readiness(),
-    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
+    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is committed (ready=true, status=passed) on matching-simulator R6 evidence; physical-device/VoiceOver observations and the metal-direct GPU claim remain quality items, not readiness blockers.",
   }
 }
 

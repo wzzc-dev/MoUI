@@ -36,17 +36,23 @@
 
 ## Acceptance
 
-- [ ] `moon test moui/core --target native` covers the persistence builder and
+- [x] `moon test moui/core --target native` covers the persistence builder and
       accessor round-trip.
-- [ ] `moon test moui/runtime --target native` covers restore-on-construct,
+- [x] `moon test moui/runtime --target native` covers restore-on-construct,
       save-on-update, fallback on missing/invalid payload, and no-op when the
       transport or persistence is absent.
-- [ ] `moon test moui/backend/common/services/native --target native` covers
+- [x] `moon test moui/backend/common/services/native --target native` covers
       transport write/read round-trip and unset-path behavior.
-- [ ] `examples/counter` round-trips its model through
+- [x] `examples/counter` round-trips its model through
       `program_with_dev_state()`.
-- [ ] `docs/development.md` and `docs/tea-program-model.md` describe the
+- [x] `docs/development.md` and `docs/tea-program-model.md` describe the
       opt-in contract and the still-true "not in-process" boundary.
-- [ ] `moon info` + committed `pkg.generated.mbti` diffs; static validators
+- [x] `moon info` + committed `pkg.generated.mbti` diffs; static validators
       (`validate-api-surface`, `validate-guidance-consistency`,
       `validate-maintenance-baseline`, `validate-doc-references`) pass.
+
+## Progress
+
+| Date | Note |
+|---|---|
+| 2026-11-10 | Model handoff completed and verified; the separate transient transport (ADR 0068) extends the same opt-in pattern with scroll/focus/caret, without changing this plan's not-in-process boundary. |

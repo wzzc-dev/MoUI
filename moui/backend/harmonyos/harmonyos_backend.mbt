@@ -248,7 +248,7 @@ pub fn backend_info() -> HarmonyOSBackendInfo {
     services: harmonyos_service_capabilities(),
     input: harmonyos_input_capabilities(),
     readiness: harmonyos_readiness(),
-    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until signed-device full L3 smoke and presenter verification close remaining gaps.",
+    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is committed (ready=true, status=passed) on matching-device R6 evidence; the GPU seven-gate claim remains a quality item, not a readiness blocker.",
   }
 }
 

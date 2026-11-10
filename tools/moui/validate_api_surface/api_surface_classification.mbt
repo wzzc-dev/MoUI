@@ -48,6 +48,13 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // SpringSpec / SpringState / spring_progress (+19, including the
       // Debug/Eq/ToJson extend lines): plan spring-animation — spring motion
       // joins the cross-runtime animation protocol types.
+      // TransitionSpec::presence_elapsed (+1): the elapsed-time counterpart of
+      // `presence` so View::presence can run a spring exit without
+      // re-applying the fixed easing curve; plan maturity-dev-loop W7.
+      // ViewStateEntry / entries / from_entries (+5, including the Debug/Eq
+      // extend lines): ADR 0068 exports opaque slot bytes for the dev-only
+      // transient handoff; the type stays in core because it names the
+      // runtime-owned slot storage.
       // GestureEvent / GestureKind / GesturePhase (+14, including the
       // Debug/Eq/ToJson/Show extend lines and View::on_gesture): plan §7 —
       // OS-recognized gesture samples are core event-protocol surface.
@@ -62,7 +69,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // These are cross-runtime TEA composition protocol, the same family as
       // the rest of the Feature/ScopedFeature surface, and nothing is
       // re-exported from the root facade.
-      max_count: 1222,
+      max_count: 1228,
     },
     {
       path: "moui/core/pkg.generated.mbti",

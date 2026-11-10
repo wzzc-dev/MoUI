@@ -64,12 +64,19 @@
 
 ## 路线就绪度
 
-HarmonyOS 为 **`committed`**，匹配真机 R6 证据已记录在 `checks/platforms/harmonyos.json`。Android、iOS 和微信小程序仍为 **`experimental`**（代码路径可编译且 host-sim tests 通过；在匹配设备证据落地前，**不**做任何开发/演示可用性或产品承诺）。权威状态见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
+Android 为 **`committed`**（匹配 emulator R6 证据，ADR 0066），iOS 为
+**`committed`**（匹配 simulator R6 证据，ADR 0067），HarmonyOS 为
+**`committed`**（匹配真机 R6 证据，ADR 0046）。微信小程序仍为
+**`experimental`**：代码路径可编译且 host-sim tests 通过，但在匹配设备证据
+落地前不做产品承诺。Android/iOS 物理真机观察和 GPU seven-gate 仍是开放质量项，
+不是 readiness blocker。权威状态见
+[platform-readiness-declaration.md](../platform-readiness-declaration.md)。
 
 window-hosted 路径使用 `HostCmd` → `EventLoop` → `ApplicationHandler` → MoUI
 adapters。HarmonyOS XComponent callbacks 独占 surface、pointer、resize 和 detach。
-通过 `sh scripts/window-hosted-hostsim-smoke.sh` 提供 host-sim 覆盖；Android 和 iOS
-的 matching-device evidence 仍 pending，HarmonyOS 已通过匹配真机证据。
+通过 `sh scripts/window-hosted-hostsim-smoke.sh` 提供 host-sim 覆盖；Android 的
+匹配 emulator 证据和 iOS 的匹配 simulator 证据已记录，HarmonyOS 已通过匹配真机
+证据；Android/iOS 物理真机观察仍 open。
 
 `SkiaGpuNative` 按 GPU readback elimination plan 第 1 阶段携带未 promoted 的 window-surface source 路径（iOS/macOS Metal、Android Vulkan/GLES、HarmonyOS EGL/GLES、Windows D3D12、Linux Wayland Vulkan）。native worker 在独立线程上证明安全的 `SkPicture`/POD handoff。它的 macOS 分支现在拥有 Ganesh/Metal context 和 drawable presentation，并在本地 first-frame smoke 后发出 `Presented`；剩余平台 worker ownership 和所有 promotion manifest 仍然 pending。第 2 阶段 promotion gate 脚手架具有 L1 package-test 证明：
 

@@ -64,11 +64,13 @@ assert pixel markers and acceptance markers.
 ## L3 Cross-Platform Consistency
 
 Mobile host-channel, IME replacement/selection, semantics action validation,
-renderer selection, and render-worker queue behavior have L1 package-test proof. Mobile L3
-is separate and remains pending until each platform's window-hosted verification
-passes on a matching device or simulator. It requires presentation, actual
-detach, IME, text/image clipboard, accessibility tree/focus/action, and async
-image observations.
+renderer selection, and render-worker queue behavior have L1 package-test proof.
+Android and iOS L3 are recorded as passed on matching-emulator/simulator
+evidence, and HarmonyOS L3 is recorded as passed on a matching device. It
+requires presentation, actual detach, IME, text/image clipboard, accessibility
+tree/focus/action, and async image observations. Android/iOS physical-device
+observations remain open and are recorded as an evidence limitation, not a
+silent gap.
 
 Registered suites cover Android and iOS Counter/Showcase plus HarmonyOS
 Demo/Showcase. GPU promotion is not part of current L1/L2

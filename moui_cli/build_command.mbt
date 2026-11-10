@@ -528,6 +528,37 @@ fn run_build_internal(
 }
 
 ///|
+/// Best-effort build provenance next to the artifact. `moui verify` reads this
+/// instead of assuming a non-fallback build. A missing manifest is reported as
+/// unknown provenance, never silently as `fallbackSkia=false`.
+fn write_build_manifest(
+  platform : String,
+  app : MobileApp,
+  options : BuildCommandOptions,
+  result : BuildResult,
+) -> Unit {
+  let dir = join_path(options.build_dir, app.id)
+  match mkdir_p(dir) {
+    Ok(_) => ()
+    Err(_) => return
+  }
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string(platform)
+  fields["app"] = Json::string(app.id)
+  fields["artifact"] = Json::string(result.output_artifact)
+  fields["fallbackSkia"] = Json::boolean(options.fallback_skia)
+  fields["release"] = Json::boolean(options.release)
+  let text = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(dir, "build-manifest.json"),
+    @utf8.encode(text[:], bom=false),
+  ) catch {
+    _ => ()
+  }
+}
+
+///|
 /// Render the build result as JSON for the `--json` output mode.
 fn build_result_to_json(
   platform : String,
@@ -600,6 +631,7 @@ fn run_build(parsed : ParsedBuild, host : @plan.HostPlatform) -> CliOutcome {
     Ok(r) => r
     Err(message) => return failed_outcome(message, parsed.json, build_usage())
   }
+  write_build_manifest(parsed.platform, app, options, result)
   // 4. Emit output.
   if parsed.json {
     stdout_outcome(

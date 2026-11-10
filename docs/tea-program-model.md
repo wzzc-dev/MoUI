@@ -290,6 +290,14 @@ which `moui dev` sets for every native restart — the runtime:
    committed update, so a dev-loop kill and restart resumes from the last
    update rather than the initial model.
 
-Only the application model crosses the restart. Runtime-slot state (hover,
-focus, caret/selection, scroll) stays transient by design. This is a
-restart-based handoff, not an in-process hot reload.
+Only the application model crosses the restart through that path. Runtime-slot
+state (hover, focus, caret/selection, scroll) stays transient by design.
+
+A second, dev-only `transient_transport` (`MOUI_DEV_TRANSIENT_FILE`, default
+`.moui/dev-transient.json`) carries the framework-owned transient snapshot:
+opaque `ViewStateSlot` entries keyed by stable element paths, keyboard focus,
+and the focused text input's caret/selection/composition. The runtime writes a
+debounced snapshot at frame boundaries and restores it after mount; restoration
+writes runtime fields directly and never dispatches `on_scroll`/`on_change`.
+Navigation remains app-owned in the model. This is still a restart-based
+handoff, not an in-process hot reload (ADR 0068).

@@ -37,12 +37,12 @@ test-scoped package. `moui_tests/tester` stays the smoke recorder.
 
 ## Acceptance
 
-- [ ] `moui_tests/tester` exposes the harness with black-box tests over a
-      local counter-style program.
+- [x] `moui/runtime/test_support` exposes the harness with black-box tests
+      over a local counter-style program.
 - [x] All five app test suites (counter / file_importer / settings /
       mo_desktop / harmonyos_demo) delete their local copies and import
       `wzzc-dev/moui/runtime/test_support` `for "test"`; every suite passes.
-- [ ] `docs/testing.md` points app authors at the harness.
+- [x] `docs/testing.md` points app authors at the harness.
 - [ ] `moon info` + committed tester `pkg.generated.mbti` diff;
       `validate-api-surface`, `validate-maintenance-baseline`,
       `validate-guidance-consistency`, `validate-doc-references` pass.

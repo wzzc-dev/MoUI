@@ -35,14 +35,18 @@ Package distributables:
 
 ```sh
 moui package macos .     # dist/macos/<Name>.app
-moui package windows .   # dist/windows-msvc/<Name>/ with exe + run.cmd
+moui package windows .   # dist/windows/<Name>/ with exe + run.cmd
+moui package linux .     # dist/linux/<Name>/ with binary + run.sh + .desktop
 moui package web .       # static web bundle (gzip/brotli + bundle-size.json)
 ```
 
-Linux run/build work directly (`moui run linux .`); Linux bundle packaging is
-not implemented yet. Windows builds resolve the MSVC toolchain through
-vswhere and vcvarsall in-process, so sourcing `scripts/windows/msvc_env.ps1`
-first is no longer required (a preset `CC` environment is respected).
+`moui package` builds a release artifact by default; pass `--debug` to inspect
+a debug build. Packaging runs on the matching host for macOS/Windows/Linux
+(use `--allow-cross` only when the build output is known to match the target).
+Linux run/build also work directly (`moui run linux .`). Windows builds resolve
+the MSVC toolchain through vswhere and vcvarsall in-process, so sourcing
+`scripts/windows/msvc_env.ps1` first is no longer required (a preset `CC`
+environment is respected).
 
 ## Develop With A Watch Loop
 

@@ -306,6 +306,41 @@ pub fn TransitionStyle::interpolate(
 }
 
 ///|
+/// Interpolate with an already-shaped progress (spring). Unlike
+/// `interpolate`, this does not re-apply easing, and it leaves offset/scale
+/// unclamped so underdamped springs can overshoot. Opacity stays in [0, 1].
+fn TransitionStyle::interpolate_spring(
+  self : TransitionStyle,
+  to : TransitionStyle,
+  progress : Double,
+  reduced_motion~ : Bool,
+) -> TransitionStyle {
+  let p = if reduced_motion { 1.0 } else { progress }
+  {
+    opacity: clamp_double(
+      self.opacity + (to.opacity - self.opacity) * p,
+      0.0,
+      1.0,
+    ),
+    offset: Point::new(
+      x=self.offset.x + (to.offset.x - self.offset.x) * p,
+      y=self.offset.y + (to.offset.y - self.offset.y) * p,
+    ),
+    scale: Point::new(
+      x=self.scale.x + (to.scale.x - self.scale.x) * p,
+      y=self.scale.y + (to.scale.y - self.scale.y) * p,
+    ),
+    foreground: option_interpolate_color(
+      self.foreground,
+      to.foreground,
+      progress=p,
+      easing=Linear,
+      reduced_motion=false,
+    ),
+  }
+}
+
+///|
 pub fn TransitionSpec::new(
   from~ : TransitionStyle = TransitionStyle::identity(),
   to~ : TransitionStyle = TransitionStyle::identity(),
@@ -319,7 +354,8 @@ pub fn TransitionSpec::new(
 /// Drive the transition's progress with spring physics instead of the fixed
 /// duration + easing curve. `duration_ms` / `easing` stay as the fallback for
 /// progress-based callers; the spring's settle estimate governs
-/// `sample_elapsed` / `presence` timing.
+/// `sample_elapsed` / `presence_elapsed` timing. Spring-driven styles are not
+/// re-eased, so underdamped presets can visibly overshoot.
 pub fn TransitionSpec::with_spring(
   self : TransitionSpec,
   spring~ : SpringSpec,
@@ -400,16 +436,60 @@ pub fn TransitionSpec::sample_elapsed(
   elapsed_ms : Double,
   reduced_motion~ : Bool = false,
 ) -> TransitionSample {
-  let elapsed_progress = match self.spring {
-    Some(spring) =>
-      if reduced_motion {
+  match self.spring {
+    Some(spring) => {
+      let progress = if reduced_motion {
         1.0
       } else {
         spring_progress(spring, elapsed_ms)
       }
-    None => animation_progress(elapsed_ms, self.duration_ms)
+      {
+        progress,
+        style: self.from.interpolate_spring(
+          self.to,
+          progress,
+          reduced_motion=false,
+        ),
+        present: true,
+      }
+    }
+    None => {
+      let progress = animation_progress(elapsed_ms, self.duration_ms)
+      self.sample(progress, reduced_motion~)
+    }
   }
-  self.sample(elapsed_progress, reduced_motion~)
+}
+
+///|
+/// Elapsed-time counterpart of `presence`. A spring-driven exit keeps the
+/// content mounted until the spring settles; underdamped springs can overshoot
+/// the destination style instead of being clamped back to a fixed easing
+/// curve.
+pub fn TransitionSpec::presence_elapsed(
+  self : TransitionSpec,
+  present~ : Bool,
+  elapsed_ms : Double,
+  reduced_motion~ : Bool = false,
+) -> TransitionSample {
+  match self.spring {
+    Some(spring) => {
+      let progress = if reduced_motion {
+        1.0
+      } else {
+        spring_progress(spring, elapsed_ms)
+      }
+      let style = if present {
+        self.from.interpolate_spring(self.to, progress, reduced_motion=false)
+      } else {
+        self.to.interpolate_spring(self.from, progress, reduced_motion=false)
+      }
+      { progress, style, present: present || progress < 1.0, }
+    }
+    None => {
+      let progress = animation_progress(elapsed_ms, self.duration_ms)
+      self.presence(present~, progress~, reduced_motion~)
+    }
+  }
 }
 
 ///|

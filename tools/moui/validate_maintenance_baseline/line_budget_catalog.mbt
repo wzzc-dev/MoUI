@@ -168,8 +168,10 @@ fn file_budgets() -> Array[FileBudget] {
       // 383 -> 400 (2026-11-07, §7 + route transitions + RTL step 2): the
       // decode-test, showcase-app, views-facade, and text-helper budget
       // notes, plus this self-referential entry's own growth.
+      // 400 -> 406 (2026-11-10, ADR 0068): the runtime.mbt transient-handoff
+      // note and its self-referential growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 400,
+      max_lines: 406,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -384,7 +386,11 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887, },
     // 470 -> 479 (2026-10-14, TUI output path decision B): the opt-in
     // `set_semantics_frames_enabled` sits beside the `draw_frame` it steers.
-    { path: "moui/runtime/runtime.mbt", max_lines: 479, },
+    // 479 -> 485 (2026-11-10, ADR 0068): `new_program` accepts the optional
+    // dev-only transient transport, restores it once after mount, and
+    // `advance_time` flushes the debounced snapshot. Production behavior is
+    // unchanged when no transport is supplied.
+    { path: "moui/runtime/runtime.mbt", max_lines: 485, },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 587, },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 316, },
     {

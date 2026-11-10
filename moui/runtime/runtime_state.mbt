@@ -54,6 +54,9 @@ priv struct RuntimeState {
   /// layer stack, and surface lifecycle stay valid untouched.
   mut overlay_collected_at_generation : Int32
   mut closed : Bool
+  /// Dev-only transient handoff transport (ADR 0068). None in production.
+  mut dev_transient_transport : @core.ProgramStateTransport?
+  mut dev_transient_last_save_ms : Double
   semantics : SemanticsSubsystem
 }
 
@@ -126,6 +129,8 @@ fn RuntimeState::new_runtime_view_node(
     overlay_input_generation: 0,
     overlay_collected_at_generation: -1,
     closed: false,
+    dev_transient_transport: None,
+    dev_transient_last_save_ms: 0.0,
     semantics: SemanticsSubsystem::new(),
   }
   state.mark_dirty(state.element_tree.id())

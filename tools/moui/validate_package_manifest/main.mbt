@@ -190,8 +190,15 @@ fn validate_manifest_fields(
     if !ascii_lower(executable).has_suffix(".exe") {
       failures.push("Windows executable must end with .exe")
     }
+  } else if platform == "linux" {
+    if output_kind != "native-bundle" {
+      failures.push("Linux outputKind must be 'native-bundle'")
+    }
+    if ascii_lower(executable).has_suffix(".exe") {
+      failures.push("Linux executable must not end with .exe")
+    }
   } else {
-    failures.push("platform must be 'macos' or 'windows'")
+    failures.push("platform must be 'macos', 'windows', or 'linux'")
   }
   failures
 }
