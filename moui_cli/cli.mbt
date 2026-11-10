@@ -45,6 +45,7 @@ fn root_usage() -> String {
     #|  moui doctor [options]
     #|  moui package [options]
     #|  moui dev [package] [options]
+    #|  moui test [package] [options]
     #|  moui inspect [options]
     #|  moui build <platform> <app> [options]
     #|  moui run <platform> <app> [options]
@@ -60,6 +61,8 @@ fn root_usage() -> String {
     #|  package         Package a desktop/web app as a distributable artifact,
     #|                  or plan a unified release manifest (legacy mode).
     #|  dev             Build, watch, and restart a MoUI project.
+    #|  test            Run a project's MoonBit tests (defaults to the app
+    #|                  package).
     #|  inspect         Read the latest DevTools document published by
     #|                  `moui dev --inspect`.
     #|  build           Build an app artifact for any platform (desktop in
@@ -771,6 +774,7 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
           failed_outcome(message, json_requested(args), dev_usage())
       }
     "inspect" => run_inspect(args[1:].to_owned(), cwd)
+    "test" => run_test(args[1:].to_owned(), cwd)
     "run" =>
       match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
         Ok(parsed) => run_run(parsed, cwd, detect_host_platform())

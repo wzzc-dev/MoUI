@@ -1,4 +1,11 @@
-# MoUI Tutorial Skeletons
+# MoUI Tutorials
+
+## Start here
+
+- [Build A 30-Minute MoUI App](tutorials/30-minute-app.md) — create, run,
+  test, inspect, and package one app without leaving the CLI.
+
+## Contributor skeletons
 
 These skeletons keep new examples aligned with the current package boundaries.
 They are intentionally short: copy the shape, then fill in package-local tests

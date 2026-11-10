@@ -238,6 +238,10 @@ the `moui` module rather than the unpublished `moui_tests` module because
 `moui_tests` depends on example modules and the reverse app-test import would
 be a module cycle.
 
+Run app tests through the CLI wrapper when you want the project defaults:
+`moui test` (app package, native target), `moui test --target wasm-gc`, or
+`moui test --json` for a machine-readable envelope.
+
 ### Golden image regression (`moui_tests/golden`)
 
 ```sh

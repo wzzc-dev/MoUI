@@ -105,6 +105,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [roadmap-2026.md](roadmap-2026.md) | `deep` | Year roadmap |
 | [PROPOSAL.md](PROPOSAL.md) | `historical` | Proposals |
 | [tutorials.md](tutorials.md) | `deep` | Tutorials index |
+| [tutorials/30-minute-app.md](tutorials/30-minute-app.md) | `canonical` | Create, test, inspect, and package a first app |
 | [templates.md](templates.md) | `deep` | Template notes |
 | [mo-workbench.md](mo-workbench.md) | `deep` | Mo Workbench |
 
