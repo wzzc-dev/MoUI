@@ -83,3 +83,4 @@ Chosen routes:
 | 2026-11-10 | First slice landed: spring wiring, platform-claim sync, release packaging + Linux bundle, verify provenance/applicationId, and dev transient handoff. `moon test` for core/runtime/native/CLI and `sh scripts/check.sh --profile pr` pass. |
 | 2026-11-10 | DevTools v1 landed: versioned document, native publisher, `moui inspect`, `moui dev --inspect`, and Web endpoints. PR profile passes; socket/NDJSON transport remains the next transport slice. |
 | 2026-11-10 | Packaging depth landed: macOS icon/PkgInfo, Windows `icudtl.dat`, Web package metadata, plus macOS/Linux/Windows packaging tests. |
+| 2026-11-10 | Governance drift check extended in `validate_portfolio_governance`; live Android/iOS experimental claims now fail the PR profile, and the remaining zh-Hans/WeChat drift was fixed. |

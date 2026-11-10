@@ -451,11 +451,26 @@ fn harmonyos_status_conflict(line : String) -> Bool {
 }
 
 ///|
+/// Android and iOS are committed on matching-emulator/simulator evidence
+/// (ADR 0066/0067). Historical release notes are skipped by the directory
+/// filter, so a live Android/iOS line that still says experimental or
+/// ready=false is drift.
+fn mobile_status_conflict(line : String) -> Bool {
+  let lower = line.to_lower()
+  let mobile = lower.contains("android") || lower.contains("ios")
+  let experimental = lower.contains("experimental") ||
+    lower.contains("ready=false")
+  let committed = lower.contains("committed") || lower.contains("ready=true")
+  mobile && experimental && !committed
+}
+
+///|
 fn markdown_scan_skipped_directory(name : String) -> Bool {
   name == "decisions" ||
   name == "plans" ||
   name == "ai-sessions" ||
   name == "release-notes" ||
+  name == "releases" ||
   name == ".git" ||
   name == "_build" ||
   name == "artifacts" ||
@@ -553,6 +568,14 @@ fn validate_document_semantics(
           ":" +
           (index + 1).to_string() +
           ": HarmonyOS is committed; remove the experimental product-class claim",
+        )
+      }
+      if mobile_status_conflict(line) {
+        failures.push(
+          path +
+          ":" +
+          (index + 1).to_string() +
+          ": Android/iOS are committed; remove the experimental or ready=false claim",
         )
       }
     }

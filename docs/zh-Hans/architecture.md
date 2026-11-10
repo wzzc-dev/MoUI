@@ -108,7 +108,7 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::<Platform>)).backend(@platform.entry())`
   -> 中立 platform surface + `moui_skia_renderer` -> `moui_skia`。
-- Android 嵌入运行时路线（`experimental`）：shared app package ->
+- Android 嵌入运行时路线（`committed`，匹配 emulator R6 证据，ADR 0066）：shared app package ->
   `examples/<app>/android_window_hosted` composition，通过
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::Android)).backend(@android.entry())`
   -> `wzzc-dev/window/android` `HostCmd` -> 共享
@@ -116,7 +116,7 @@ HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成�
   surface binding -> `moui_skia_renderer` -> `moui_skia`。
   window template 拥有 Android lifecycle、surface acquisition 和 input；嵌入运行时
   backend 负责 runtime/session 与中立 surface 装配。
-- iOS 嵌入运行时路线（`experimental`）：shared app package ->
+- iOS 嵌入运行时路线（`committed`，匹配 simulator R6 证据，ADR 0067）：shared app package ->
   `examples/<app>/ios_window_hosted` composition，通过
   `@apphost.run_app(...).render_all(@render_skia.from_env(platform=@render_skia.NativeGpuPlatform::IOS)).backend(@ios.entry())`
   -> `wzzc-dev/window/ios` `HostCmd` -> 共享 embedded-host kernel ->

@@ -54,4 +54,5 @@
 | Date | Note |
 |---|---|
 | 2026-11-10 | Plan created; first pass fixes the dashboard, support pages, and backend flags. |
-| 2026-11-10 | English + zh-Hans platform claims, backend readiness, compatibility line, and plan bookkeeping synced; guidance/doc-maintenance/API/platform validators pass. The `validate-platform-claims` prose scanner remains the next slice. |
+| 2026-11-10 | English + zh-Hans platform claims, backend readiness, compatibility line, and plan bookkeeping synced; guidance/doc-maintenance/API/platform validators pass. |
+| 2026-11-10 | Claims drift check landed in `validate_portfolio_governance`: live Android/iOS lines may not say `experimental`/`ready=false`, and historical release notes are skipped. The validator caught and we fixed the last zh-Hans architecture and WeChat wording drift. |
