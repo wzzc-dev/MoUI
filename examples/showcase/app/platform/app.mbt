@@ -30,6 +30,9 @@ pub struct Model {
   probe_action_count : Int32
   probe_submit_count : Int32
   host_label : String
+  notification_id : String
+  notification_count : Int32
+  notification_permission : String
 }
 
 ///|
@@ -48,6 +51,15 @@ pub(all) enum Msg {
   ClearCanvas
   AnimTick
   ShortcutTick
+  Notify
+  CancelNotification
+  RequestNotificationPermission
+  NotificationCompleted(Int32, @services.ServiceTaskResult[Unit])
+  NotificationCancelCompleted(Int32, @services.ServiceTaskResult[Unit])
+  PermissionCompleted(
+    Int32,
+    @services.ServiceTaskResult[@services.PermissionStatus]
+  )
   ProbeTextChanged(String)
   ProbeAction
   ProbeSubmit
@@ -91,6 +103,9 @@ pub fn Model::new(
     probe_action_count: 0,
     probe_submit_count: 0,
     host_label,
+    notification_id: "",
+    notification_count: 0,
+    notification_permission: "unknown",
   }
 }
 
@@ -258,6 +273,180 @@ pub fn update(
         },
         @moui.Effect::none(),
       )
+    RequestNotificationPermission => {
+      let generation = model.next_service
+      (
+        {
+          ..model,
+          pending_service: Some(generation),
+          next_service: generation + 1,
+          last_event: "Requesting notification permission...",
+        },
+        services
+        .platform()
+        .permissions()
+        .request(@services.PermissionKind::Notifications)
+        .effect(map=result => PermissionCompleted(generation, result)),
+      )
+    }
+    Notify => {
+      let generation = model.next_service
+      let id = "showcase-notification-\{generation}"
+      (
+        {
+          ..model,
+          pending_service: Some(generation),
+          next_service: generation + 1,
+          notification_id: id,
+          last_event: "Sending notification...",
+        },
+        services
+        .platform()
+        .notifications()
+        .notify(
+          @services.NotificationRequest::new(
+            id~,
+            title="MoUI Showcase",
+            body="Hello from the platform service probe",
+          ),
+        )
+        .effect(map=result => NotificationCompleted(generation, result)),
+      )
+    }
+    CancelNotification =>
+      if model.notification_id == "" {
+        (
+          { ..model, last_event: "No notification to cancel", },
+          @moui.Effect::none(),
+        )
+      } else {
+        let generation = model.next_service
+        (
+          {
+            ..model,
+            pending_service: Some(generation),
+            next_service: generation + 1,
+            last_event: "Cancelling notification...",
+          },
+          services
+          .platform()
+          .notifications()
+          .cancel(model.notification_id)
+          .effect(map=result => NotificationCancelCompleted(generation, result)),
+        )
+      }
+    NotificationCompleted(generation, result) =>
+      if model.pending_service != Some(generation) {
+        (model, @moui.Effect::none())
+      } else {
+        match result {
+          Success(_) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_count: model.notification_count + 1,
+                last_event: "Notification sent #\{model.notification_count + 1}",
+              },
+              @moui.Effect::none(),
+            )
+          Failure(error) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_id: "",
+                last_event: "Notification unavailable: " + error.message,
+              },
+              @moui.Effect::none(),
+            )
+          Cancelled =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_id: "",
+                last_event: "Notification cancelled by host",
+              },
+              @moui.Effect::none(),
+            )
+        }
+      }
+    NotificationCancelCompleted(generation, result) =>
+      if model.pending_service != Some(generation) {
+        (model, @moui.Effect::none())
+      } else {
+        match result {
+          Success(_) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_id: "",
+                last_event: "Notification cancelled",
+              },
+              @moui.Effect::none(),
+            )
+          Failure(error) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                last_event: "Cancel unavailable: " + error.message,
+              },
+              @moui.Effect::none(),
+            )
+          Cancelled =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                last_event: "Cancel cancelled by host",
+              },
+              @moui.Effect::none(),
+            )
+        }
+      }
+    PermissionCompleted(generation, result) =>
+      if model.pending_service != Some(generation) {
+        (model, @moui.Effect::none())
+      } else {
+        match result {
+          Success(status) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_permission: match status {
+                  @services.PermissionStatus::Granted => "granted"
+                  @services.PermissionStatus::Denied => "denied"
+                  @services.PermissionStatus::Restricted => "restricted"
+                },
+                last_event: "Notification permission ready",
+              },
+              @moui.Effect::none(),
+            )
+          Failure(error) =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                notification_permission: "unavailable",
+                last_event: "Permission unavailable: " + error.message,
+              },
+              @moui.Effect::none(),
+            )
+          Cancelled =>
+            (
+              {
+                ..model,
+                pending_service: None,
+                last_event: "Permission request cancelled",
+              },
+              @moui.Effect::none(),
+            )
+        }
+      }
     ProbeTextChanged(value) =>
       ({ ..model, probe_text: value, }, @moui.Effect::none())
     ProbeAction =>
@@ -287,7 +476,7 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
     [
       text("Host services").title(),
       text(
-        "Timer, window resize, clipboard, file open, and host shortcuts.",
+        "Timer, window resize, clipboard, file open, notifications, and host shortcuts.",
         wrap=true,
       ),
       text("Last: \{model.last_event}"),
@@ -326,6 +515,24 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
             button("Write clipboard", on_click=WriteClipboard),
             button("Read clipboard", on_click=ReadClipboard),
             button("Open file…", on_click=OpenFile),
+          ]),
+        ]),
+      ),
+      card(
+        column([
+          text("Notifications sent: \{model.notification_count}"),
+          text("Permission: \{model.notification_permission}"),
+          text(
+            if model.notification_id == "" {
+              "Active notification: (none)"
+            } else {
+              "Active notification: \{model.notification_id}"
+            },
+          ),
+          row([
+            button("Request permission", on_click=RequestNotificationPermission),
+            button("Notify", on_click=Notify),
+            button("Cancel", on_click=CancelNotification),
           ]),
         ]),
       ),
