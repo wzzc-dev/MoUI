@@ -498,6 +498,16 @@
           ]
         },
         {
+          "name": "golden image regression",
+          "argv": [
+            "moon",
+            "test",
+            "moui_tests/golden",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "native text model tests",
           "argv": [
             "moon",

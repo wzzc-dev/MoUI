@@ -257,11 +257,12 @@ dropped command.
 
 The scenes are geometric only because rasterizing them is pure arithmetic and
 the hashes are host-independent; text and shadow scenes wait for glyph/source
-stability across hosts before their hashes can be checked in. The suite is a
-focused check, not yet a profile gate. When an intentional renderer or
-draw-command change moves a hash, read the actual value from the failing
-test's diff, paste it over the constant in `baselines.mbt`, and record the
-reason in the commit message — the same ratchet flow the maintenance baselines
+stability across hosts before their hashes can be checked in. The suite runs in
+the `pr` profile as `moon test moui_tests/golden --target native`. When an
+intentional renderer or draw-command change moves a hash, read the actual value
+from the failing test's diff, paste it over the constant in `baselines.mbt`, and
+record the reason in the commit message — the same ratchet flow the maintenance
+baselines
 use.
 
 Provider composition and backend common boundary edits use the following minimum loop

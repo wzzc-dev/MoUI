@@ -90,3 +90,4 @@ Chosen routes:
 | 2026-11-10 | Render diagnostics now flow into the runtime-owned sink and the DevTools document/socket response; frame hooks forward `RenderFrameResult.diagnostics`. |
 | 2026-11-10 | Web packaging no longer depends on the repo-local script: the CLI fallback builds release wasm and emits a flat bundle with rewritten module paths. |
 | 2026-11-10 | Android release signing is env-driven and injected into the staged Gradle file; keystores never enter the repo. |
+| 2026-11-10 | W5 partial: the golden image suite is now a `pr` profile step, so deterministic Sun raster regressions block every PR. |
