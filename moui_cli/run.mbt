@@ -850,6 +850,28 @@ fn run_run(
   } else {
     None
   }
+  match verify_result {
+    Some(result) => {
+      let build_dir = default_build_dir(parsed.platform, cwd)
+      let (fallback_skia, provenance) = read_build_provenance(build_dir, app.id)
+      let status = verify_status_from_probe(result)
+      let manifest = verify_manifest_to_json(
+        parsed.platform,
+        app.id,
+        artifact,
+        status,
+        result,
+        fallback_skia,
+        provenance,
+      )
+      let manifest_path = join_path(
+        join_path(build_dir, app.id),
+        "verify-manifest.json",
+      )
+      ignore(write_verify_manifest(manifest_path, manifest))
+    }
+    None => ()
+  }
   // 8. Optional --debug log following (blocking until interrupted).
   if options.debug {
     let _ = follow_logs(parsed.platform, device, options.filter, host)

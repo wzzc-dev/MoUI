@@ -27,7 +27,7 @@ fn verify_usage() -> String {
     #|Usage: moui verify <platform> <app> [options]
     #|
     #|Verify app runtime evidence for the embedded-runtime path.
-    #|Build artifacts must exist under artifacts/<platform>/<app>/ and the
+    #|Build artifacts must exist under artifacts/<platform>/<app>.<ext> and the
     #|device must be connected. The command writes `verify-manifest.json`.
     #|
     #|Arguments:
