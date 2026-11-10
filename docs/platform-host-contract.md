@@ -254,9 +254,14 @@ macOS implements the first `PlatformChannel` slice: `notification.send` /
 `permission.request` returns `granted` for notifications, `restricted` for the
 other permission kinds, and an explicit error for unknown operations. This is a
 best-effort notification authorization boundary, not a synchronous
-authorization-status query; the OS may still suppress delivery. Web and Android
-notification/permission host implementations remain follow-ups (they need the
-`window` host imports/template).
+authorization-status query; the OS may still suppress delivery.
+
+Web implements the same operations through the browser Notification API
+(`moui/backend/web/notifications`, imported by the Web composition root). A
+pending permission prompt reports `restricted`; the app can retry `notify`
+after the user responds. Android notification/permission host handling remains
+a follow-up because the window-hosted template does not yet drain
+`platform-channel` updates into `NotificationManager`.
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
 accessibility readiness. It is a high-level reporting API for apps, diagnostics,

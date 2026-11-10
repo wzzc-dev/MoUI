@@ -7,7 +7,10 @@ fn main {
   let providers = @webgpu_adapter.from_env()
   let runtime = @showcase.runtime(
     host_summary=@web.web_capability_summary(),
-    environment=@web.app_environment(routes~),
+    environment=@web.app_environment(
+      routes~,
+      platform_channel=@web_notifications.platform_channel,
+    ),
     renderer_providers=providers,
     route_host=Some(
       @showcase.route_host(

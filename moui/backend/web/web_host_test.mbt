@@ -105,7 +105,7 @@ test "web service bridge reports unregistered platform channels unavailable" {
         ),
       ),
     ) {
-    Unavailable(message) =>
+    PlatformChannel(Unavailable(message)) =>
       inspect(message, content="platform channel is unavailable: web.missing")
     _ => fail("expected unavailable Web platform channel")
   }

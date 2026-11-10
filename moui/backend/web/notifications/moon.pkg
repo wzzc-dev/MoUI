@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/backend" @host,
+  "wzzc-dev/window/web" @window_web,
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  targets: { },
+)

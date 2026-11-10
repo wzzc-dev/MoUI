@@ -65,4 +65,5 @@ Scope: macOS + Web + Android; notifications and permissions first.
 | Date | Note |
 |---|---|
 | 2026-11-10 | Plan created; onboarding kit and registry seed are next. |
-| 2026-11-10 | macOS notification/permission vertical slice landed: `PlatformChannel` dispatch for `notification.send`/`cancel` and `permission.request`, backed by `NSUserNotificationCenter`; other operations stay explicitly unavailable. Web/Android still need the `window` host import/template and remain follow-ups. |
+| 2026-11-10 | macOS notification/permission vertical slice landed: `PlatformChannel` dispatch for `notification.send`/`cancel` and `permission.request`, backed by `NSUserNotificationCenter`; other operations stay explicitly unavailable. |
+| 2026-11-10 | Web slice landed in `wzzc-dev/window@0.5.4-0.2.7`: `window_web` notification send/cancel/permission imports plus `moui/backend/web/notifications` for the composition root. Android still needs the template to drain `platform-channel` updates into `NotificationManager`. |
