@@ -490,6 +490,47 @@ moon test moui/services --target native
 moon test examples/showcase/app/platform --target native
 ```
 
+## Notifications And Permission
+
+Notifications use the same typed task shape. Request the permission first; a
+host may report `restricted` while a prompt is pending, so retry after the
+user responds.
+
+```moonbit nocheck
+fn notify(
+  services : @services.AppServices,
+  id : String,
+) -> @moui.Effect[LabMsg] {
+  services
+  .platform()
+  .notifications()
+  .notify(
+    @services.NotificationRequest::new(
+      id~,
+      title="Lab",
+      body="Hello from the lab",
+    ),
+  )
+  .effect(map=result => Notified(result))
+}
+```
+
+`permissions().request(@services.PermissionKind::Notifications)` completes with
+`Granted`, `Denied`, or `Restricted`. Keep the request and its result in the
+same generation guard used by other services so a late completion cannot
+overwrite a newer probe. `notifications().cancel(id)` uses the same completion
+shape as `notify`.
+
+Recommended checks:
+
+```sh
+moon test moui/services --target native
+moon test examples/showcase/app/platform --target native
+```
+
+Open Showcase's Platform workspace to exercise permission, notify, and cancel
+on macOS, Web, and Android.
+
 ## Keyboard Commands
 
 Declare discoverable shortcuts as typed `ProgramCommand[Msg]` values with
