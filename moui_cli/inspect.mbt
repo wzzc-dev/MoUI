@@ -3,6 +3,8 @@ priv struct ParsedInspect {
   help : Bool
   json : Bool
   file : String?
+  port : Int32?
+  request_method : String
 }
 
 ///|
@@ -15,6 +17,9 @@ fn inspect_usage() -> String {
     #|Options:
     #|  --file PATH   DevTools document path. Defaults to MOUI_DEVTOOLS_FILE
     #|                or .moui/devtools.json.
+    #|  --port PORT   Connect to the running DevTools socket instead of a file.
+    #|  --method NAME Request method: all (default), snapshot, trace,
+    #|                diagnostics, or ping.
     #|  --json        Print the raw document JSON.
     #|  -h, --help    Show this help.
   )
@@ -28,6 +33,8 @@ fn parse_inspect_args(
   let help = Ref(false)
   let json = Ref(false)
   let file : Ref[String?] = Ref(None)
+  let port : Ref[Int32?] = Ref(None)
+  let request_method = Ref("all")
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
@@ -52,13 +59,41 @@ fn parse_inspect_args(
           }
           Err(message) => return Err(message)
         }
+      "--port" =>
+        match option_value(args, index, inline, name) {
+          Ok((value, next)) =>
+            match parse_int(value) {
+              Ok(number) if number > 0 => {
+                port.val = Some(number)
+                index = next
+                continue
+              }
+              _ => return Err("--port must be a positive integer")
+            }
+          Err(message) => return Err(message)
+        }
+      "--method" =>
+        match option_value(args, index, inline, name) {
+          Ok((value, next)) => {
+            request_method.val = value
+            index = next
+            continue
+          }
+          Err(message) => return Err(message)
+        }
       _ if argument.has_prefix("-") =>
         return Err("unknown option for moui inspect: " + name)
       _ => return Err("moui inspect does not accept positional arguments")
     }
     index += 1
   }
-  Ok({ help: help.val, json: json.val, file: file.val, })
+  Ok({
+    help: help.val,
+    json: json.val,
+    file: file.val,
+    port: port.val,
+    request_method: request_method.val,
+  })
 }
 
 ///|
@@ -111,6 +146,56 @@ fn inspect_document_text(text : String) -> String {
 }
 
 ///|
+fn inspect_read_file(path : String) -> String? {
+  if !@fs.path_exists(path) {
+    return None
+  }
+  let text = @fs.read_file_to_string(path) catch { _ => return None }
+  Some(text)
+}
+
+///|
+fn inspect_default_port(cwd : String) -> Int32? {
+  let path = match @devtools_socket.devtools_port_file_path() {
+    Some(value) => make_absolute(value, cwd)
+    None => make_absolute(".moui/devtools.port", cwd)
+  }
+  if !@fs.path_exists(path) {
+    return None
+  }
+  let text = @fs.read_file_to_string(path) catch { _ => return None }
+  match parse_int(text.trim().to_owned()) {
+    Ok(port) if port > 0 => Some(port)
+    _ => None
+  }
+}
+
+///|
+fn inspect_source_text(parsed : ParsedInspect, cwd : String) -> String? {
+  match parsed.file {
+    Some(path) => inspect_read_file(path)
+    None => {
+      let port = match parsed.port {
+        Some(value) => Some(value)
+        None => inspect_default_port(cwd)
+      }
+      match port {
+        Some(value) =>
+          match
+            @devtools_socket.request(
+              value,
+              request_method=parsed.request_method,
+            ) {
+            Some(text) => Some(text)
+            None => inspect_read_file(inspect_default_path(cwd))
+          }
+        None => inspect_read_file(inspect_default_path(cwd))
+      }
+    }
+  }
+}
+
+///|
 fn run_inspect(args : Array[String], cwd : String) -> CliOutcome {
   let parsed = match parse_inspect_args(args, cwd) {
     Ok(value) => value
@@ -119,23 +204,11 @@ fn run_inspect(args : Array[String], cwd : String) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(inspect_usage())
   }
-  let path = match parsed.file {
+  let text = match inspect_source_text(parsed, cwd) {
     Some(value) => value
-    None => inspect_default_path(cwd)
-  }
-  if !@fs.path_exists(path) {
-    return failed_outcome(
-      "DevTools document not found: " +
-      path +
-      "; run `moui dev --inspect` and wait for the first sample",
-      false,
-      inspect_usage(),
-    )
-  }
-  let text = @fs.read_file_to_string(path) catch {
-    _ =>
+    None =>
       return failed_outcome(
-        "could not read DevTools document: " + path,
+        "DevTools snapshot not found; run `moui dev --inspect` and wait for the first sample",
         false,
         inspect_usage(),
       )

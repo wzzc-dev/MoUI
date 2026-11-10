@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
   "moonbitlang/x/fs",
   "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/runtime",

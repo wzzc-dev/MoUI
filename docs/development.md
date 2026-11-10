@@ -285,9 +285,12 @@ in-process hot reload. See [TEA program model](tea-program-model.md) and ADR
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev
-server exposes `/__moui/devtools` plus its JSON endpoint. The app must install
-`@devtools_publish.install_devtools_publisher(runtime, path~)` at the
-composition root (counter and Showcase macOS do).
+server exposes `/__moui/devtools` plus its JSON endpoint. Native hosts also
+open a loopback DevTools socket (port in `.moui/devtools.port`) and answer
+`snapshot`/`trace`/`diagnostics`/`ping` NDJSON requests; `moui inspect --port`
+uses it directly. The app must install
+`@devtools_socket.install_devtools_socket(runtime, port_file~)` (or the file
+publisher) at the composition root; counter and Showcase macOS do.
 
 ### Build, install, and launch
 

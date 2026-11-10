@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import http from "node:http";
+import net from "node:net";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
@@ -25,6 +26,7 @@ const web = has("--web") || (target || "").startsWith("wasm") || packageName.end
 const json = has("--json");
 const inspect = has("--inspect");
 const devtoolsFile = path.join(projectRoot, ".moui", "devtools.json");
+const devtoolsPortFile = path.join(projectRoot, ".moui", "devtools.port");
 const stateFile = valueOf("--state", path.join(projectRoot, ".moui", "dev-state.json"));
 const transientFile = stateFile.endsWith(".json")
   ? `${stateFile.slice(0, -5)}-transient.json`
@@ -121,7 +123,11 @@ async function startNative(pkg, buildTarget) {
     MOUI_DEV_TRANSIENT_FILE: transientFile,
     MOUI_DEV_GENERATION: String(status.generation),
   };
-  if (inspect) env.MOUI_DEVTOOLS_FILE = devtoolsFile;
+  if (inspect) {
+    env.MOUI_DEVTOOLS_FILE = devtoolsFile;
+    env.MOUI_DEVTOOLS_PORT = "0";
+    env.MOUI_DEVTOOLS_PORT_FILE = devtoolsPortFile;
+  }
   child = spawn(moon, ["run", pkg, "--target", buildTarget], { cwd: projectRoot, env: { ...process.env, ...env }, stdio: "inherit" });
   child.once("exit", (code, signal) => {
     if (!stopping) log(`app exited (code=${code ?? "null"}, signal=${signal ?? "none"})`);
@@ -159,13 +165,53 @@ function serve() {
       return;
     }
     if (url.pathname === "/__moui/devtools.json") {
-      if (!fs.existsSync(devtoolsFile)) {
-        response.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
-        response.end(JSON.stringify({ error: "devtools snapshot not yet available" }));
+      const fallback = () => {
+        if (!fs.existsSync(devtoolsFile)) {
+          response.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
+          response.end(JSON.stringify({ error: "devtools snapshot not yet available" }));
+          return;
+        }
+        response.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+        response.end(fs.readFileSync(devtoolsFile));
+      };
+      let port = 0;
+      try {
+        if (fs.existsSync(devtoolsPortFile)) {
+          port = Number(fs.readFileSync(devtoolsPortFile, "utf8").trim()) || 0;
+        }
+      } catch (_) {
+        port = 0;
+      }
+      if (port <= 0) {
+        fallback();
         return;
       }
-      response.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-      response.end(fs.readFileSync(devtoolsFile));
+      let sent = false;
+      const socket = net.connect(port, "127.0.0.1", () => {
+        socket.write('{"id":1,"method":"all"}\n');
+      });
+      socket.setEncoding("utf8");
+      socket.setTimeout(2000, () => socket.destroy());
+      socket.on("data", (chunk) => {
+        if (sent) return;
+        if (!chunk.includes("\n")) return;
+        sent = true;
+        socket.end();
+        response.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+        response.end(chunk.trim());
+      });
+      socket.on("error", () => {
+        if (!sent) {
+          sent = true;
+          fallback();
+        }
+      });
+      socket.on("close", () => {
+        if (!sent) {
+          sent = true;
+          fallback();
+        }
+      });
       return;
     }
     if (url.pathname === "/__moui/devtools") {

@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
   "wzzc-dev/moui_cli/scaffold_plan" @plan,
+  "wzzc-dev/moui_devtools/socket" @devtools_socket,
 }
 
 supported_targets = "+native"

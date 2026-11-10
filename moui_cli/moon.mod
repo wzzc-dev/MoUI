@@ -8,6 +8,7 @@ preferred_target = "native"
 
 import {
   "moonbitlang/x@0.5.6",
+  "wzzc-dev/moui_devtools@0.6.0",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

@@ -51,3 +51,17 @@ test "devtools publisher writes the document and skips missing snapshots" {
   empty.publish()
   assert_true(!@fs.path_exists("/tmp/moui-devtools-empty-test.json"))
 }
+
+///|
+test "devtools responder answers ping without a snapshot" {
+  let publisher = @publish.DevtoolsPublisher::new(
+    path="",
+    snapshot=() => None,
+    trace=() => None,
+    diagnostics=() => [],
+  )
+  let response = publisher.respond("{\"method\":\"ping\"}")
+  assert_true(response.contains("\"protocolVersion\":1"))
+  let unknown = publisher.respond("{\"method\":\"dispatch\"}")
+  assert_true(unknown.contains("unknown-method"))
+}

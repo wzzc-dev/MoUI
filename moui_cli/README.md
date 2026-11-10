@@ -67,7 +67,10 @@ preserve in-process runtime state.
 
 Pass `--inspect` to publish a read-only DevTools document at
 `.moui/devtools.json`; `moui inspect` prints it, and the Web dev server exposes
-`/__moui/devtools` plus its JSON endpoint.
+`/__moui/devtools` plus its JSON endpoint. On native hosts the app also opens a
+loopback DevTools socket and writes its port to `.moui/devtools.port`;
+`moui inspect --port <port> --method snapshot|trace|diagnostics` queries it
+directly (the file remains the fallback when a socket is unavailable).
 
 ## Create A Project
 

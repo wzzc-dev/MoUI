@@ -62,6 +62,63 @@ pub fn DevtoolsPublisher::publish(self : DevtoolsPublisher) -> Unit {
 }
 
 ///|
+/// Answer one NDJSON DevTools request line. Read-only: unknown methods return
+/// an error instead of dispatching input.
+pub fn DevtoolsPublisher::respond(
+  self : DevtoolsPublisher,
+  line : String,
+) -> String {
+  let parsed = @json.parse(line) catch {
+    _ => return "{\"ok\":false,\"error\":\"parse-error\"}"
+  }
+  let fields = match parsed {
+    Object(fields) => fields
+    _ => return "{\"ok\":false,\"error\":\"request-must-be-an-object\"}"
+  }
+  let request_method = match fields.get("method") {
+    Some(String(value)) => value
+    _ => "all"
+  }
+  match request_method {
+    "ping" => "{\"ok\":true,\"protocolVersion\":1}"
+    "hello" =>
+      "{\"ok\":true,\"protocolVersion\":1,\"methods\":[\"snapshot\",\"trace\",\"diagnostics\",\"ping\"]}"
+    "snapshot" | "all" =>
+      match self.document() {
+        Some(value) => value.to_json_string(indent=0)
+        None => "{\"ok\":false,\"error\":\"snapshot-unavailable\"}"
+      }
+    "trace" =>
+      match self.document() {
+        Some(value) =>
+          match value.trace {
+            Some(trace) => {
+              let result : Map[String, Json] = Map([])
+              result["ok"] = Json::boolean(true)
+              result["result"] = trace.to_json()
+              Json::object(result).stringify(indent=0)
+            }
+            None => "{\"ok\":true,\"result\":null}"
+          }
+        None => "{\"ok\":false,\"error\":\"snapshot-unavailable\"}"
+      }
+    "diagnostics" =>
+      match self.document() {
+        Some(value) => {
+          let result : Map[String, Json] = Map([])
+          result["ok"] = Json::boolean(true)
+          result["result"] = Json::array(
+            value.diagnostics.map(event => event.to_json()),
+          )
+          Json::object(result).stringify(indent=0)
+        }
+        None => "{\"ok\":false,\"error\":\"snapshot-unavailable\"}"
+      }
+    _ => "{\"ok\":false,\"error\":\"unknown-method\"}"
+  }
+}
+
+///|
 /// Path from `MOUI_DEVTOOLS_FILE`; `moui dev --inspect` sets it. A missing
 /// path leaves production starts inert.
 pub fn devtools_file_path() -> String? {
