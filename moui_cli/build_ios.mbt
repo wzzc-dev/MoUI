@@ -24,6 +24,9 @@ priv struct BuildIosOptions {
   fallback_skia : Bool
   prepare_only : Bool
   release : Bool
+  signing_identity : String?
+  provisioning_profile : String?
+  entitlements : String?
 }
 
 ///|
@@ -280,6 +283,26 @@ fn ios_common_compile_flags(
     flags.push("-g")
   }
   flags
+}
+
+///|
+fn ios_codesign_args(
+  identity~ : String,
+  entitlements~ : String?,
+  app~ : String,
+) -> Array[String] {
+  let args = [
+    "codesign", "--force", "--deep", "--timestamp", "--sign", identity,
+  ]
+  match entitlements {
+    Some(path) => {
+      args.push("--entitlements")
+      args.push(path)
+    }
+    None => ()
+  }
+  args.push(app)
+  args
 }
 
 ///|
@@ -806,6 +829,52 @@ fn build_ios(
   }
   if !path_is_dir(final_output) {
     return Err("iOS .app bundle was not produced: " + final_output)
+  }
+  match options.provisioning_profile {
+    Some(path) => {
+      if !path_is_file(path) {
+        return Err("provisioning profile not found: " + path)
+      }
+      match
+        copy_file_atomic(
+          path,
+          join_path(final_output, "embedded.mobileprovision"),
+        ) {
+        Ok(_) => ()
+        Err(message) => return Err(message)
+      }
+    }
+    None => ()
+  }
+  match options.signing_identity {
+    Some(identity) => {
+      if options.entitlements is Some(path) && !path_is_file(path) {
+        return Err("iOS entitlements not found: " + path)
+      }
+      let args = ios_codesign_args(
+        identity~,
+        entitlements=options.entitlements,
+        app=final_output,
+      )
+      match process_exec_argv(args, capture=true) {
+        Ok(result) if result.exit_code == 0 => ()
+        Ok(result) =>
+          return Err(
+            "codesign failed with exit code " +
+            result.exit_code.to_string() +
+            ": " +
+            result.stderr,
+          )
+        Err(message) => return Err(message)
+      }
+      log_info("[moui-window-hosted-ios] codesign identity=" + identity)
+    }
+    None =>
+      if options.sdk == "iphoneos" {
+        log_info(
+          "iOS device build is unsigned; pass --signing-identity and --provisioning-profile before installing it on a device",
+        )
+      }
   }
   log_info("[moui-window-hosted-ios] Wrote " + final_output)
   log_info(

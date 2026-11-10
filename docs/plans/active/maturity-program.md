@@ -91,3 +91,4 @@ Chosen routes:
 | 2026-11-10 | Web packaging no longer depends on the repo-local script: the CLI fallback builds release wasm and emits a flat bundle with rewritten module paths. |
 | 2026-11-10 | Android release signing is env-driven and injected into the staged Gradle file; keystores never enter the repo. |
 | 2026-11-10 | W5 partial: the golden image suite is now a `pr` profile step, so deterministic Sun raster regressions block every PR. |
+| 2026-11-10 | iOS signing flags and codesign landed, and the physical-device evidence runbook is documented; `devicectl` probe support remains a follow-up. |

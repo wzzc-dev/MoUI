@@ -139,14 +139,14 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 56.
+Published documents: 57.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
 | Guides (guides) | 11 |
 | Examples (examples) | 5 |
-| Platforms (platforms) | 16 |
+| Platforms (platforms) | 17 |
 | Architecture & API (architecture-api) | 8 |
 | Contributing (contributing) | 6 |
 | Status & Roadmap (status-roadmap) | 5 |

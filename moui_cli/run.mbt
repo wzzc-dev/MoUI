@@ -274,6 +274,9 @@ fn build_options_from_run_options(
     hvigorw: None,
     ohpm: None,
     signing_config_file: None,
+    signing_identity: None,
+    provisioning_profile: None,
+    entitlements: None,
   }
 }
 

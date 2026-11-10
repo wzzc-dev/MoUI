@@ -485,6 +485,20 @@
     },
     {
       "group": "platforms",
+      "slug": "mobile-device-evidence",
+      "title": "Mobile Device Evidence",
+      "path": "docs/mobile-device-evidence.md",
+      "summary": "Signing, install, and evidence runbook for physical Android and iOS devices.",
+      "keywords": [
+        "Android",
+        "iOS",
+        "signing",
+        "device",
+        "evidence"
+      ]
+    },
+    {
+      "group": "platforms",
       "slug": "harmonyos-support",
       "title": "HarmonyOS Support",
       "path": "docs/harmonyos-support.md",
@@ -1228,6 +1242,20 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/ios-support.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "mobile-device-evidence",
+          "title": "移动真机证据",
+          "summary": "Android/iOS 真机签名、安装与证据记录运行手册。",
+          "keywords": [
+            "Android",
+            "iOS",
+            "签名",
+            "真机",
+            "证据"
+          ],
+          "localizedPath": "docs/zh-Hans/mobile-device-evidence.md"
         },
         {
           "group": "platforms",

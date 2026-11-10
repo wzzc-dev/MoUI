@@ -62,6 +62,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [platform-notes-web.md](platform-notes-web.md) | `deep` | Web |
 | [android-support.md](android-support.md) | `deep` | Android window-hosted route |
 | [ios-support.md](ios-support.md) | `deep` | iOS window-hosted route |
+| [mobile-device-evidence.md](mobile-device-evidence.md) | `canonical` | Signing, install, and evidence runbook for physical Android/iOS devices |
 | [harmonyos-support.md](harmonyos-support.md) | `deep` | HarmonyOS window-hosted route |
 | [wechat-support.md](wechat-support.md) | `deep` | WeChat Mini Program (微信小程序) Skyline Canvas 2D + wasm-gc host |
 | [window-hosted-moui.md](window-hosted-moui.md) | `canonical` | Embedded-runtime event-loop ownership and route |

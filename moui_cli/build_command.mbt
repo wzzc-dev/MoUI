@@ -39,6 +39,9 @@ priv struct BuildCommandOptions {
   hvigorw : String?
   ohpm : String?
   signing_config_file : String?
+  signing_identity : String?
+  provisioning_profile : String?
+  entitlements : String?
 }
 
 ///|
@@ -80,6 +83,9 @@ fn build_usage() -> String {
     #|  --hvigorw PATH               hvigorw executable. Defaults from `moui config`.
     #|  --ohpm PATH                  ohpm executable. Defaults from `moui config`.
     #|  --signing-config-file PATH  HarmonyOS signing config file.
+    #|  --signing-identity ID        iOS codesign identity.
+    #|  --provisioning-profile PATH iOS provisioning profile.
+    #|  --entitlements PATH         iOS entitlements plist for codesign.
     #|  --json                       Emit machine-readable output.
     #|  -h, --help                   Show this help.
   )
@@ -116,6 +122,9 @@ fn parse_build_args(
   let hvigorw : Ref[String?] = Ref(None)
   let ohpm : Ref[String?] = Ref(None)
   let signing_config_file : Ref[String?] = Ref(None)
+  let signing_identity : Ref[String?] = Ref(None)
+  let provisioning_profile : Ref[String?] = Ref(None)
+  let entitlements : Ref[String?] = Ref(None)
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
@@ -157,7 +166,10 @@ fn parse_build_args(
       | "--sdk-home"
       | "--hvigorw"
       | "--ohpm"
-      | "--signing-config-file" =>
+      | "--signing-config-file"
+      | "--signing-identity"
+      | "--provisioning-profile"
+      | "--entitlements" =>
         match option_value(args, index, inline, name) {
           Ok((value, next)) => {
             match name {
@@ -177,6 +189,11 @@ fn parse_build_args(
               "--hvigorw" => hvigorw.val = Some(value)
               "--ohpm" => ohpm.val = Some(value)
               "--signing-config-file" => signing_config_file.val = Some(value)
+              "--signing-identity" => signing_identity.val = Some(value)
+              "--provisioning-profile" =>
+                provisioning_profile.val = Some(make_absolute(value, cwd))
+              "--entitlements" =>
+                entitlements.val = Some(make_absolute(value, cwd))
               _ => ()
             }
             index = next
@@ -264,6 +281,9 @@ fn parse_build_args(
       hvigorw: hvigorw.val,
       ohpm: ohpm.val,
       signing_config_file: signing_config_file.val,
+      signing_identity: signing_identity.val,
+      provisioning_profile: provisioning_profile.val,
+      entitlements: entitlements.val,
     }),
   })
 }
@@ -440,6 +460,9 @@ fn build_ios_options_from_command(
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
     release: options.release,
+    signing_identity: options.signing_identity,
+    provisioning_profile: options.provisioning_profile,
+    entitlements: options.entitlements,
   }
 }
 
