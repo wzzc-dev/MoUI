@@ -491,8 +491,24 @@ async test "run_window_with_workers returns when the window loop finishes" {
 }
 
 ///|
-test "macos platform channel answers permission requests" {
-  let bridge = @macos.macos_service_bridge(system_theme=Light)
+test "macos service bridge forwards platform channel requests" {
+  let bridge = @macos.macos_service_bridge(
+    system_theme=Light,
+    platform_channel=request => {
+      match request.operation {
+        "permission.request" =>
+          Ok(
+            if request.payload.contains("Camera") {
+              "restricted"
+            } else {
+              "granted"
+            },
+          )
+        "notification.send" => Ok("")
+        _ => Unavailable("unimplemented")
+      }
+    },
+  )
   let notifications = bridge.dispatch(
     PlatformChannel(
       @host.PlatformChannelRequest::new(
@@ -529,7 +545,32 @@ test "macos platform channel answers permission requests" {
   )
   match unknown {
     PlatformChannel(Unavailable(message)) =>
-      assert_true(message.contains("not implemented"))
+      assert_true(message.contains("unimplemented"))
+    _ => fail("expected unavailable for an unimplemented operation")
+  }
+}
+
+///|
+test "macos platform channel rejects malformed notification payloads" {
+  let request = @host.PlatformChannelRequest::new(
+    channel="moui.platform",
+    operation="notification.send",
+    payload="{",
+  )
+  match @macos.dispatch_macos_platform_channel(request) {
+    Error(message) => assert_true(message.contains("not valid JSON"))
+    _ => fail("expected an invalid-payload error")
+  }
+}
+
+///|
+test "macos platform channel reports unsupported operations" {
+  let request = @host.PlatformChannelRequest::new(
+    channel="moui.platform",
+    operation="share.open",
+  )
+  match @macos.dispatch_macos_platform_channel(request) {
+    Unavailable(message) => assert_true(message.contains("not implemented"))
     _ => fail("expected unavailable for an unimplemented operation")
   }
 }

@@ -1,13 +1,16 @@
 ///|
+extern "C" fn macos_application_bundle_has_icon() -> Int32 = "moui_macos_application_bundle_has_icon"
+
+///|
 /// How `create_macos_app` should configure the Dock icon for this run.
 priv enum DockIconAction {
-  /// Apply the embedded MoUI Moonbud icon. This is the default for unbundled
-  /// binaries, whose system icon would otherwise be the generic gear.
+  /// Apply the embedded MoUI Moonbud icon. Used for unbundled binaries and
+  /// development bundles that declare no icon of their own.
   ApplyDefaultBranding
   /// Apply the icon stored at this file path (app-declared override).
   ApplyPath(String)
-  /// Leave the Dock icon untouched. Bundled `.app` binaries without an
-  /// override keep the icon declared by their bundle.
+  /// Leave the Dock icon untouched. Bundled `.app` binaries with their own
+  /// icon keep the icon declared by their bundle.
   KeepExisting
 }
 
@@ -15,10 +18,16 @@ priv enum DockIconAction {
 fn macos_dock_icon_action(
   dock_icon_path : String?,
   bundled : Bool,
+  bundle_has_icon~ : Bool = macos_application_bundle_has_icon() != 0,
 ) -> DockIconAction {
   match dock_icon_path {
     Some(path) => ApplyPath(path)
-    None => if bundled { KeepExisting } else { ApplyDefaultBranding }
+    None =>
+      if bundled && bundle_has_icon {
+        KeepExisting
+      } else {
+        ApplyDefaultBranding
+      }
   }
 }
 

@@ -33,14 +33,24 @@ test "dock_icon_action_defaults_by_bundled_state" {
   // so they get the embedded Moonbud branding.
   assert_true(
     dock_icon_action_is(
-      macos_dock_icon_action(None, false),
+      macos_dock_icon_action(None, false, bundle_has_icon=true),
       ApplyDefaultBranding,
     ),
   )
-  // Bundled .app binaries already carry their own bundle icon; do not
-  // override it.
+  // Bundled .app binaries with their own icon keep it.
   assert_true(
-    dock_icon_action_is(macos_dock_icon_action(None, true), KeepExisting),
+    dock_icon_action_is(
+      macos_dock_icon_action(None, true, bundle_has_icon=true),
+      KeepExisting,
+    ),
+  )
+  // Development bundles declare no icon, so they fall back to the embedded
+  // branding instead of a generic Dock tile.
+  assert_true(
+    dock_icon_action_is(
+      macos_dock_icon_action(None, true, bundle_has_icon=false),
+      ApplyDefaultBranding,
+    ),
   )
 }
 

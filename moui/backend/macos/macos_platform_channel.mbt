@@ -44,15 +44,20 @@ pub fn dispatch_macos_platform_channel(
         Some(String(value)) => value
         _ => ""
       }
-      if macos_notification_send(
+      match
+        macos_notification_send(
           @utf8.encode(id[:], bom=false),
           @utf8.encode(title[:], bom=false),
           @utf8.encode(body[:], bom=false),
-        ) !=
-        0 {
-        Ok("")
-      } else {
-        Error("macOS notification delivery failed")
+        ) {
+        1 => Ok("")
+        -2 => Error("macOS notification permission is not granted")
+        2 => Error("macOS notification permission is pending; retry after responding")
+        -1 =>
+          Unavailable(
+            "macOS notifications require an app bundle; use `moui run macos` or `moui package macos`",
+          )
+        _ => Error("macOS notification delivery failed")
       }
     }
     "notification.cancel" => {
@@ -63,10 +68,13 @@ pub fn dispatch_macos_platform_channel(
         String(value) => value
         _ => return Error("notification.cancel payload must be a string")
       }
-      if macos_notification_cancel(@utf8.encode(id[:], bom=false)) != 0 {
-        Ok("")
-      } else {
-        Error("macOS notification cancel failed")
+      match macos_notification_cancel(@utf8.encode(id[:], bom=false)) {
+        1 => Ok("")
+        -1 =>
+          Unavailable(
+            "macOS notifications require an app bundle; use `moui run macos` or `moui package macos`",
+          )
+        _ => Error("macOS notification cancel failed")
       }
     }
     "permission.request" => {
@@ -79,8 +87,12 @@ pub fn dispatch_macos_platform_channel(
       }
       match macos_permission_request(@utf8.encode(kind[:], bom=false)) {
         1 => Ok("granted")
-        2 => Ok("restricted")
-        _ => Ok("denied")
+        0 => Ok("denied")
+        -1 =>
+          Unavailable(
+            "macOS permission requests require an app bundle; use `moui run macos` or `moui package macos`",
+          )
+        _ => Ok("restricted")
       }
     }
     _ =>
