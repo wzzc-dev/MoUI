@@ -21,6 +21,8 @@ pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppR
 
 pub fn backend_info() -> MacosBackendInfo
 
+pub fn dispatch_macos_platform_channel(@backend.PlatformChannelRequest) -> @backend.PlatformChannelResponse
+
 pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @apphost.PlatformEntry
 
 pub fn macos_accessibility_bridge(@apphost.HostRuntimeDriver) -> @accesskit.AccessKitBridge

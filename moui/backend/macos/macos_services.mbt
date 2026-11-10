@@ -234,6 +234,7 @@ pub fn macos_service_bridge(
       @host_services_desktop.menu_command_response(commands, menu(commands))
     },
     set_application_menu=dispatch_macos_application_menu,
+    platform_channel=dispatch_macos_platform_channel,
   ).bridge()
 }
 

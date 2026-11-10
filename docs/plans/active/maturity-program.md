@@ -93,3 +93,4 @@ Chosen routes:
 | 2026-11-10 | W5 partial: the golden image suite is now a `pr` profile step, so deterministic Sun raster regressions block every PR. |
 | 2026-11-10 | iOS signing flags and codesign landed, and the physical-device evidence runbook is documented; `devicectl` probe support remains a follow-up. |
 | 2026-11-10 | W5/W8 partial: `moui test` wraps project test defaults, and a 30-minute create→test→inspect→package tutorial is in `docs/tutorials/30-minute-app.md`. |
+| 2026-11-10 | macOS notification/permission `PlatformChannel` slice landed; Web/Android remain blocked on `window` host imports/templates. |

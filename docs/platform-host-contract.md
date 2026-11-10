@@ -248,6 +248,15 @@ optional foreground/background lifecycle source. These operations use the
 platform backends can add native behavior without importing platform types into
 the app package. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+
+macOS implements the first `PlatformChannel` slice: `notification.send` /
+`notification.cancel` use `NSUserNotificationCenter`, and
+`permission.request` returns `granted` for notifications, `restricted` for the
+other permission kinds, and an explicit error for unknown operations. This is a
+best-effort notification authorization boundary, not a synchronous
+authorization-status query; the OS may still suppress delivery. Web and Android
+notification/permission host implementations remain follow-ups (they need the
+`window` host imports/template).
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
 accessibility readiness. It is a high-level reporting API for apps, diagnostics,

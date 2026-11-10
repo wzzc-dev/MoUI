@@ -65,3 +65,4 @@ Scope: macOS + Web + Android; notifications and permissions first.
 | Date | Note |
 |---|---|
 | 2026-11-10 | Plan created; onboarding kit and registry seed are next. |
+| 2026-11-10 | macOS notification/permission vertical slice landed: `PlatformChannel` dispatch for `notification.send`/`cancel` and `permission.request`, backed by `NSUserNotificationCenter`; other operations stay explicitly unavailable. Web/Android still need the `window` host import/template and remain follow-ups. |
