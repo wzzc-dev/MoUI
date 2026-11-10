@@ -97,9 +97,12 @@ moui build ios my_app --mobile-config "$PWD/moui.mobile.json"
 moui build harmonyos my_app --mobile-config "$PWD/moui.mobile.json"
 ```
 
-Use `--prepare-only` to generate inputs without invoking Gradle, Xcode, or
-hvigor. `--fallback-skia` is packaging-only evidence and does not promote a
-runtime support claim.
+Add `--release` to select the release variant where the platform builder owns
+it: Android runs `assembleRelease` (and picks `app-release.apk` or the unsigned
+fallback), iOS compiles with `-O2`. Signing/notarization and store packaging
+remain host-required; `--prepare-only` generates inputs without invoking
+Gradle, Xcode, or hvigor. `--fallback-skia` is packaging-only evidence and does
+not promote a runtime support claim.
 
 ## Validate Hosts
 

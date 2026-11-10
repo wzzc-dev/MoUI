@@ -23,6 +23,7 @@ priv struct BuildIosOptions {
   output_app : String
   fallback_skia : Bool
   prepare_only : Bool
+  release : Bool
 }
 
 ///|
@@ -251,6 +252,7 @@ fn ios_common_compile_flags(
   moon_home : String,
   window_ios_root : String,
   workspace_root : String,
+  release~ : Bool = false,
 ) -> Array[String] {
   let flags : Array[String] = [
     "-isysroot",
@@ -258,8 +260,6 @@ fn ios_common_compile_flags(
     "-target",
     target_triple,
     "-fobjc-arc",
-    "-O0",
-    "-g",
     "-I" + moon_home + "/include",
     "-I" + window_ios_root,
     "-I" + window_ios_root + "/native/include",
@@ -273,6 +273,12 @@ fn ios_common_compile_flags(
     "-DTARGET_OS_IPHONE=1",
     "-DMBW_IOS_MOONBIT_MAIN=mbw_ios_moonbit_main",
   ]
+  if release {
+    flags.push("-O2")
+  } else {
+    flags.push("-O0")
+    flags.push("-g")
+  }
   flags
 }
 
@@ -514,7 +520,12 @@ fn build_ios(
     workspace_root_abs,
   )
   let common_flags = ios_common_compile_flags(
-    sdk_path, target_triple, moon_home, ios_pkg_root, workspace_root_abs,
+    sdk_path,
+    target_triple,
+    moon_home,
+    ios_pkg_root,
+    workspace_root_abs,
+    release=options.release,
   )
   // 8. Compile every source to <build_dir>/obj/*.o.
   let obj_dir = join_path(build_dir_abs, "obj")

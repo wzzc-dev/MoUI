@@ -21,6 +21,7 @@ priv struct BuildAndroidOptions {
   output_apk : String
   fallback_skia : Bool
   prepare_only : Bool
+  release : Bool
 }
 
 ///|
@@ -471,11 +472,16 @@ fn build_android(
     }),
     workspace_root_abs,
   )
-  // 7. Invoke `gradle :app:assembleDebug` with MBW_* project properties.
+  // 7. Invoke the Gradle assemble task with MBW_* project properties.
+  let gradle_task = if options.release {
+    ":app:assembleRelease"
+  } else {
+    ":app:assembleDebug"
+  }
   let gradle_args = [
     "-p",
     android_project,
-    ":app:assembleDebug",
+    gradle_task,
     "-PmbwWorkspaceRoot=" + workspace_root_abs,
     "-PmbwWindowRoot=" + window_root,
     "-PmbwMoonHome=" + moon_home,
@@ -505,10 +511,19 @@ fn build_android(
     Err(message) => return Err(message)
   }
   // 8. Copy APK to output_apk.
-  let apk_path = join_path(
-    join_path(android_project, "app/build/outputs/apk/debug"),
-    "app-debug.apk",
-  )
+  let apk_stage = if options.release { "release" } else { "debug" }
+  let apk_name = if options.release {
+    "app-release.apk"
+  } else {
+    "app-debug.apk"
+  }
+  let apk_dir = join_path(android_project, "app/build/outputs/apk/" + apk_stage)
+  let apk_path = join_path(apk_dir, apk_name)
+  let apk_path = if !path_is_file(apk_path) && options.release {
+    join_path(apk_dir, "app-release-unsigned.apk")
+  } else {
+    apk_path
+  }
   if !path_is_file(apk_path) {
     return Err("Gradle APK was not found: " + apk_path)
   }

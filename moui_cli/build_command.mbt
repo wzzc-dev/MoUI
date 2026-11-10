@@ -377,6 +377,7 @@ fn build_android_options_from_command(
     output_apk,
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
+    release: options.release,
   }
 }
 
@@ -438,6 +439,7 @@ fn build_ios_options_from_command(
     output_app,
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
+    release: options.release,
   }
 }
 

@@ -85,3 +85,4 @@ Chosen routes:
 | 2026-11-10 | Packaging depth landed: macOS icon/PkgInfo, Windows `icudtl.dat`, Web package metadata, plus macOS/Linux/Windows packaging tests. |
 | 2026-11-10 | Governance drift check extended in `validate_portfolio_governance`; live Android/iOS experimental claims now fail the PR profile, and the remaining zh-Hans/WeChat drift was fixed. |
 | 2026-11-10 | DevTools socket/NDJSON transport landed: loopback TCP server/client, read-only request methods, `moui inspect --port/--method`, and Web proxy; Windows keeps the file fallback. |
+| 2026-11-10 | Mobile release plumbing landed: Android `assembleRelease` and iOS `-O2` behind `--release`; signing/device evidence stays host-gated. |
