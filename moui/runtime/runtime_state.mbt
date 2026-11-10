@@ -57,6 +57,10 @@ priv struct RuntimeState {
   /// Dev-only transient handoff transport (ADR 0068). None in production.
   mut dev_transient_transport : @core.ProgramStateTransport?
   mut dev_transient_last_save_ms : Double
+  /// Dev-only DevTools sampling hook; the composition root installs a
+  /// publisher. None in production.
+  mut devtools_sample_observer : (() -> Unit)?
+  mut devtools_last_sample_ms : Double
   semantics : SemanticsSubsystem
 }
 
@@ -131,6 +135,8 @@ fn RuntimeState::new_runtime_view_node(
     closed: false,
     dev_transient_transport: None,
     dev_transient_last_save_ms: 0.0,
+    devtools_sample_observer: None,
+    devtools_last_sample_ms: 0.0,
     semantics: SemanticsSubsystem::new(),
   }
   state.mark_dirty(state.element_tree.id())

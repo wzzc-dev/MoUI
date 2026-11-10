@@ -14,6 +14,7 @@ so the CLI does not create a separate mobile runtime layer.
 | `moui doctor` | Check selected platform toolchains. |
 | `moui package [platform] [app]` | Package a desktop/web app as a distributable (macOS `.app`, Windows portable folder, web bundle); without positional arguments, print the release-planning inventory. |
 | `moui dev [package]` | Build, watch, restart, and serve a project during development. |
+| `moui inspect` | Read the latest DevTools document published by `moui dev --inspect`. |
 | `moui build <platform> <app>` | Build an artifact for any platform: desktop/web build the entrypoint package in place; Android / iOS / HarmonyOS produce APK / .app / .hap. |
 | `moui run <platform> <app>` | Run an app: desktop builds and launches in place, web serves through the dev runner, mobile builds, installs, and launches on a device or emulator. |
 | `moui devices` | List connected mobile devices, emulators, and the desktop host. |
@@ -60,6 +61,10 @@ appear in the injected error overlay while the watcher keeps running. Use
 The `--state` path is passed to the app as `MOUI_DEV_STATE_FILE` for optional
 file-based model handoff during a restart. V1 restarts processes and does not
 preserve in-process runtime state.
+
+Pass `--inspect` to publish a read-only DevTools document at
+`.moui/devtools.json`; `moui inspect` prints it, and the Web dev server exposes
+`/__moui/devtools` plus its JSON endpoint.
 
 ## Create A Project
 

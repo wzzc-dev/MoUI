@@ -23,6 +23,8 @@ const port = Math.max(1, Number(valueOf("--port", "3000")) || 3000);
 const once = has("--once") || has("--build-only");
 const web = has("--web") || (target || "").startsWith("wasm") || packageName.endsWith("web_wasm");
 const json = has("--json");
+const inspect = has("--inspect");
+const devtoolsFile = path.join(projectRoot, ".moui", "devtools.json");
 const stateFile = valueOf("--state", path.join(projectRoot, ".moui", "dev-state.json"));
 const transientFile = stateFile.endsWith(".json")
   ? `${stateFile.slice(0, -5)}-transient.json`
@@ -119,6 +121,7 @@ async function startNative(pkg, buildTarget) {
     MOUI_DEV_TRANSIENT_FILE: transientFile,
     MOUI_DEV_GENERATION: String(status.generation),
   };
+  if (inspect) env.MOUI_DEVTOOLS_FILE = devtoolsFile;
   child = spawn(moon, ["run", pkg, "--target", buildTarget], { cwd: projectRoot, env: { ...process.env, ...env }, stdio: "inherit" });
   child.once("exit", (code, signal) => {
     if (!stopping) log(`app exited (code=${code ?? "null"}, signal=${signal ?? "none"})`);
@@ -155,6 +158,21 @@ function serve() {
       response.end(clientScript);
       return;
     }
+    if (url.pathname === "/__moui/devtools.json") {
+      if (!fs.existsSync(devtoolsFile)) {
+        response.writeHead(404, { "content-type": "application/json", "cache-control": "no-store" });
+        response.end(JSON.stringify({ error: "devtools snapshot not yet available" }));
+        return;
+      }
+      response.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      response.end(fs.readFileSync(devtoolsFile));
+      return;
+    }
+    if (url.pathname === "/__moui/devtools") {
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+      response.end(`<!doctype html><meta charset="utf-8"><title>MoUI DevTools</title><style>body{margin:0;padding:16px;background:#101418;color:#d7e0ea;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}pre{white-space:pre-wrap}</style><pre id="out">waiting for the first DevTools sample...</pre><script>async function poll(){const out=document.getElementById('out');try{const response=await fetch('/__moui/devtools.json',{cache:'no-store'});if(!response.ok){out.textContent='waiting for the first DevTools sample...';}else{const doc=await response.json();out.textContent=(doc.reportText||'')+'\\n\\n'+(doc.traceText||'')+'\\n\\ndiagnostics: '+((doc.diagnostics||[]).length);}}catch(error){out.textContent=String(error);}setTimeout(poll,1000)}poll();</script>`);
+      return;
+    }
     let relative = decodeURIComponent(url.pathname).replace(/^\/+/, "") || defaultPage;
     for (const staticRoot of staticRoots) {
       const requested = path.resolve(staticRoot, relative);
@@ -172,7 +190,10 @@ function serve() {
     }
     response.writeHead(404); response.end("Not found");
   });
-  server.listen(port, "127.0.0.1", () => log(`web server listening at http://127.0.0.1:${port}/`));
+  server.listen(port, "127.0.0.1", () => {
+    log(`web server listening at http://127.0.0.1:${port}/`);
+    if (inspect) log(`devtools: http://127.0.0.1:${port}/__moui/devtools`);
+  });
   return server;
 }
 
@@ -180,7 +201,7 @@ const pkg = discoverPackage();
 const buildTarget = discoverTarget(pkg);
 writeStatus({ package: pkg, target: buildTarget });
 if (has("--help")) {
-  process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
+  process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
   process.stdout.write("Watches MoonBit inputs, rebuilds incrementally, restarts native apps, and serves Web errors with refresh.\\n");
   process.exit(0);
 }

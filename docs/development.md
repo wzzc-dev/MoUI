@@ -283,6 +283,12 @@ app-owned in the model. This is still restart-based — deliberately not an
 in-process hot reload. See [TEA program model](tea-program-model.md) and ADR
 0068.
 
+Pass `--inspect` to publish a read-only DevTools document to
+`.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev
+server exposes `/__moui/devtools` plus its JSON endpoint. The app must install
+`@devtools_publish.install_devtools_publisher(runtime, path~)` at the
+composition root (counter and Showcase macOS do).
+
 ### Build, install, and launch
 
 `moui run` orchestrates `moui build-*` → install (`adb` / `xcrun simctl` /

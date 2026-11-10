@@ -26,6 +26,7 @@ fn dev_usage() -> String {
     #|  --interval-ms MS         Watch interval. Defaults to 500.
     #|  --port PORT              Web server port. Defaults to 3000.
     #|  --state PATH             Optional state file passed as MOUI_DEV_STATE_FILE.
+    #|  --inspect                Publish a DevTools document for `moui inspect`.
     #|  --runner PATH            Node runner path. Defaults to .moui/dev.mjs or scripts/moui-dev.mjs.
     #|  --web                    Serve Web output and inject the dev client.
     #|  --once, --build-only     Build once and exit.
@@ -69,7 +70,7 @@ fn parse_dev_args(
           Ok(_) => json.val = true
           Err(message) => return Err(message)
         }
-      "--web" | "--once" | "--build-only" =>
+      "--web" | "--once" | "--build-only" | "--inspect" =>
         match flag_without_value(inline, name) {
           Ok(_) => runner_args.push(name)
           Err(message) => return Err(message)

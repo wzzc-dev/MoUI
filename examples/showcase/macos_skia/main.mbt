@@ -13,6 +13,10 @@ fn main {
       None => None
     },
   )
+  match @devtools_publish.devtools_file_path() {
+    Some(path) => @devtools_publish.install_devtools_publisher(runtime, path~)
+    None => ()
+  }
   @apphost.run_app("MoUI Showcase", runtime)
   // .render(@render_skia.raster())
   .render(@render_skia.gpu(platform=MacOS))

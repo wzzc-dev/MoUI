@@ -170,8 +170,9 @@ fn file_budgets() -> Array[FileBudget] {
       // notes, plus this self-referential entry's own growth.
       // 400 -> 406 (2026-11-10, ADR 0068): the runtime.mbt transient-handoff
       // note and its self-referential growth.
+      // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 406,
+      max_lines: 409,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -390,7 +391,9 @@ fn file_budgets() -> Array[FileBudget] {
     // dev-only transient transport, restores it once after mount, and
     // `advance_time` flushes the debounced snapshot. Production behavior is
     // unchanged when no transport is supplied.
-    { path: "moui/runtime/runtime.mbt", max_lines: 485, },
+    // 485 -> 486 (2026-11-10, DevTools v1): `advance_time` also samples the
+    // dev-only DevTools observer at the same frame boundary.
+    { path: "moui/runtime/runtime.mbt", max_lines: 486, },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 587, },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 316, },
     {

@@ -2,6 +2,7 @@ import {
   "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend/macos",
   "wzzc-dev/moui/backend/common/services/native" @native_services,
+  "wzzc-dev/moui_devtools/publish" @devtools_publish,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui/runtime",
   "examples/counter/app" @counter_app,

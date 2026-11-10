@@ -85,6 +85,7 @@ pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> R
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::restore_dev_transient(Self, String) -> Unit
 pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignment) -> Bool
+pub fn AppRuntime::set_devtools_sample_observer(Self, (() -> Unit)?) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit

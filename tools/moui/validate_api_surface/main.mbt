@@ -302,7 +302,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // AppRuntime::capture_dev_transient / restore_dev_transient (+2 lines):
       // ADR 0068 transient handoff is a dev-only runtime capability; no new
       // type or production dependency joins the facade.
-      max_lines: 789,
+      // AppRuntime::set_devtools_sample_observer (+1 line): the dev-only
+      // DevTools sampler hook; the publisher and its transport stay in the
+      // `moui_devtools` addon.
+      max_lines: 790,
       max_pub_lines: 534,
       max_pub_all_lines: 19,
       required_tokens: [

@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_devtools/protocol"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/core/diagnostics",
+  "wzzc-dev/moui_devtools",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct DevtoolsDocument {
+  schema_version : Int32
+  snapshot : @moui_devtools.InspectorReport
+  report_text : String
+  trace : @moui_devtools.DevtoolsTraceReport?
+  trace_text : String?
+  diagnostics : Array[@diagnostics.DiagnosticEvent]
+}
+pub fn DevtoolsDocument::equal(Self, Self) -> Bool
+pub fn DevtoolsDocument::new(schema_version? : Int32, snapshot~ : @moui_devtools.InspectorReport, report_text~ : String, trace~ : @moui_devtools.DevtoolsTraceReport?, trace_text~ : String?, diagnostics~ : Array[@diagnostics.DiagnosticEvent]) -> Self
+pub fn DevtoolsDocument::not_equal(Self, Self) -> Bool
+pub fn DevtoolsDocument::to_json(Self) -> @json.Json
+pub fn DevtoolsDocument::to_json_string(Self, indent? : Int32) -> String
+pub fn DevtoolsDocument::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

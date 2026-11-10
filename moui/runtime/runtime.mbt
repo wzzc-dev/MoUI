@@ -298,6 +298,7 @@ pub fn AppRuntime::set_environment(
 pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
   self.state.advance_time(time_ms)
   self.state.maybe_save_dev_transient()
+  self.state.maybe_sample_devtools()
 }
 
 ///|
