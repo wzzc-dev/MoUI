@@ -161,12 +161,18 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
     session_generation=self.transport.session_generation(),
     service_handler=self.service_handler,
   )
+  let diagnostics_sink = self.driver.diagnostics_sink()
   let frame = @window_frame.WindowFrameState::new(
     renderer~,
     surface_generation~,
-    hooks=@window_frame.WindowFrameHooks::new(request_redraw=() => {
-      self.transport.request_frame()
-    }),
+    hooks=@window_frame.WindowFrameHooks::new(
+      request_redraw=() => self.transport.request_frame(),
+      record_diagnostics=events => {
+        for event in events {
+          diagnostics_sink.push(event)
+        }
+      },
+    ),
   )
   let image = @window_image.WindowImageTasks::new(request_redraw=() => {
     self.transport.request_frame()

@@ -195,7 +195,12 @@ pub fn install_devtools_socket(
       }
     },
     trace=() => None,
-    diagnostics=() => [],
+    diagnostics=() => {
+      match runtime_ref.val {
+        Some(value) => value.diagnostics_sink().snapshot()
+        None => []
+      }
+    },
   )
   match DevtoolsSocketServer::start(publisher) {
     Some(server) => {

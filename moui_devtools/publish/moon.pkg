@@ -12,6 +12,7 @@ import {
 import {
   "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/views",
 } for "test"
 

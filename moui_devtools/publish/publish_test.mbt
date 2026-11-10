@@ -53,6 +53,37 @@ test "devtools publisher writes the document and skips missing snapshots" {
 }
 
 ///|
+test "devtools publisher includes runtime diagnostics" {
+  let root : @core.View[Unit] = @views.text("hello")
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=160.0, height=40.0),
+  )
+  ignore(runtime.layout())
+  runtime.push_diagnostics([
+    @diagnostics.DiagnosticEvent::new(
+      code="render.unsupported",
+      severity=@diagnostics.DiagnosticSeverity::Warning,
+      domain=@diagnostics.DiagnosticDomain::Render,
+      message="unsupported command",
+    ),
+  ])
+  let publisher = @publish.DevtoolsPublisher::new(
+    path="",
+    snapshot=() => Some(runtime.inspector_snapshot()),
+    trace=() => None,
+    diagnostics=() => runtime.diagnostics_sink().snapshot(),
+  )
+  let document = match publisher.document() {
+    Some(value) => value
+    None => fail("expected a DevTools document")
+  }
+  inspect(document.diagnostics.length(), content="1")
+  let response = publisher.respond("{\"method\":\"diagnostics\"}")
+  assert_true(response.contains("render.unsupported"))
+}
+
+///|
 test "devtools responder answers ping without a snapshot" {
   let publisher = @publish.DevtoolsPublisher::new(
     path="",

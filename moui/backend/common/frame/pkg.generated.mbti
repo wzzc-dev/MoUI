@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/common/frame"
 import {
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/render",
 }
 
@@ -17,8 +18,9 @@ pub struct WindowFrameHooks {
   finish_presented : (Bool) -> Unit
   request_redraw : () -> Unit
   sync_ime : () -> Unit
+  record_diagnostics : (Array[@diagnostics.DiagnosticEvent]) -> Unit
 }
-pub fn WindowFrameHooks::new(prepare_frame? : () -> Unit, finish_presented? : (Bool) -> Unit, request_redraw? : () -> Unit, sync_ime? : () -> Unit) -> Self
+pub fn WindowFrameHooks::new(prepare_frame? : () -> Unit, finish_presented? : (Bool) -> Unit, request_redraw? : () -> Unit, sync_ime? : () -> Unit, record_diagnostics? : (Array[@diagnostics.DiagnosticEvent]) -> Unit) -> Self
 
 pub struct WindowFrameState {
   renderer : @render.RendererSession

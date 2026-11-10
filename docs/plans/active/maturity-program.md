@@ -87,3 +87,4 @@ Chosen routes:
 | 2026-11-10 | DevTools socket/NDJSON transport landed: loopback TCP server/client, read-only request methods, `moui inspect --port/--method`, and Web proxy; Windows keeps the file fallback. |
 | 2026-11-10 | Mobile release plumbing landed: Android `assembleRelease` and iOS `-O2` behind `--release`; signing/device evidence stays host-gated. |
 | 2026-11-10 | Verify hardening landed: bounded post-launch wait, `run --verify` manifest writing, and corrected artifact-path usage. |
+| 2026-11-10 | Render diagnostics now flow into the runtime-owned sink and the DevTools document/socket response; frame hooks forward `RenderFrameResult.diagnostics`. |

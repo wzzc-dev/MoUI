@@ -29,13 +29,19 @@ event carries a short message and a stable code, not the full evidence text.
 It is **not** a runtime hot-path log (ADR 0056). A host/tool creates one and
 passes it only to the producers it wants to observe.
 
+The runtime now owns one bounded sink (`AppRuntime::diagnostics_sink()`).
+`WindowFrameState` forwards `RenderFrameResult.diagnostics` through its frame
+hook into that sink, and DevTools reads `snapshot()` when it builds a document.
+The sink copy and the runtime share the same array, so a frame hook never holds
+the runtime.
+
 ## Producers and consumers
 
 | Layer | Producer | Consumer |
 |---|---|---|
 | Host orchestration | renderer selection/rejection, window rejection | DevTools, host log |
 | Runtime | full-damage reason, semantics/action failures | DevTools, Showcase |
-| Render | per-frame `RenderFrameResult.diagnostics` | backend frame owner, DevTools |
+| Render | per-frame `RenderFrameResult.diagnostics` | backend frame hook → runtime sink, DevTools |
 | Text | paragraph/font fallback | text diagnostics |
 | Services | extension unavailable/failure | Agent/MCP, host log |
 

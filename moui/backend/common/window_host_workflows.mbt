@@ -20,11 +20,24 @@ pub fn attach_window_surface(
     renderer.dispose()
     return false
   }
+  let diagnostics_sink = match lifecycle.runtime_slot_lookup(id) {
+    Some(slot) => Some(slot.driver.diagnostics_sink())
+    None => None
+  }
   if !frames.attach(
       id,
       renderer,
       hooks=@window_frame.WindowFrameHooks::new(
         request_redraw=actions.request_redraw,
+        record_diagnostics=events => {
+          match diagnostics_sink {
+            Some(sink) =>
+              for event in events {
+                sink.push(event)
+              }
+            None => ()
+          }
+        },
       ),
     ) {
     ignore(lifecycle.detach_surface(id))

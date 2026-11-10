@@ -61,6 +61,7 @@ priv struct RuntimeState {
   /// publisher. None in production.
   mut devtools_sample_observer : (() -> Unit)?
   mut devtools_last_sample_ms : Double
+  diagnostics : @diagnostics.DiagnosticSink
   semantics : SemanticsSubsystem
 }
 
@@ -137,6 +138,7 @@ fn RuntimeState::new_runtime_view_node(
     dev_transient_last_save_ms: 0.0,
     devtools_sample_observer: None,
     devtools_last_sample_ms: 0.0,
+    diagnostics: @diagnostics.DiagnosticSink::new(capacity=64),
     semantics: SemanticsSubsystem::new(),
   }
   state.mark_dirty(state.element_tree.id())

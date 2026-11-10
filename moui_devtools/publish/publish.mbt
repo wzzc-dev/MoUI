@@ -146,7 +146,12 @@ pub fn install_devtools_publisher(
       }
     },
     trace=() => None,
-    diagnostics=() => [],
+    diagnostics=() => {
+      match runtime_ref.val {
+        Some(value) => value.diagnostics_sink().snapshot()
+        None => []
+      }
+    },
   )
   runtime.set_devtools_sample_observer(Some(() => publisher.publish()))
 }

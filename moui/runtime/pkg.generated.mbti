@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
 }
 
 // Values
@@ -53,6 +54,7 @@ pub fn AppRuntime::anchor_frame(Self, String) -> @core.Rect?
 pub fn AppRuntime::anchor_keys(Self) -> Array[String]
 pub fn AppRuntime::capture_dev_transient(Self) -> String
 pub fn AppRuntime::destroy(Self) -> Unit
+pub fn AppRuntime::diagnostics_sink(Self) -> @diagnostics.DiagnosticSink
 pub fn AppRuntime::dirty_count(Self) -> Int32
 pub fn AppRuntime::dirty_element_ids(Self) -> Array[Int32]
 pub fn AppRuntime::dispatch_action_command(Self, @core.ActionCommand) -> Bool
@@ -63,6 +65,7 @@ pub fn AppRuntime::dispatch_pointer_input(Self, @core.PointerEvent) -> InputDisp
 pub fn AppRuntime::dispatch_presentation_back(Self) -> Bool
 pub fn AppRuntime::dispatch_presentation_escape(Self) -> Bool
 pub fn AppRuntime::dispatch_presentation_host_close(Self) -> Bool
+pub fn AppRuntime::drain_diagnostics(Self) -> Array[@diagnostics.DiagnosticEvent]
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
 pub fn AppRuntime::environment(Self) -> @core.Environment
@@ -81,6 +84,7 @@ pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, en
 pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn AppRuntime::profile_draw_frame(Self, () -> Double) -> ProfiledDrawFrame
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
+pub fn AppRuntime::push_diagnostics(Self, Array[@diagnostics.DiagnosticEvent]) -> Unit
 pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::restore_dev_transient(Self, String) -> Unit
