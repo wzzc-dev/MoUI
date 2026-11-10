@@ -101,10 +101,14 @@ moui build harmonyos my_app --mobile-config "$PWD/moui.mobile.json"
 
 Add `--release` to select the release variant where the platform builder owns
 it: Android runs `assembleRelease` (and picks `app-release.apk` or the unsigned
-fallback), iOS compiles with `-O2`. Signing/notarization and store packaging
-remain host-required; `--prepare-only` generates inputs without invoking
-Gradle, Xcode, or hvigor. `--fallback-skia` is packaging-only evidence and does
-not promote a runtime support claim.
+fallback), iOS compiles with `-O2`. Android release signing reads
+`MOUI_ANDROID_KEYSTORE`, `MOUI_ANDROID_KEYSTORE_PASSWORD`,
+`MOUI_ANDROID_KEY_ALIAS`, and `MOUI_ANDROID_KEY_PASSWORD` from the environment
+and injects a Gradle signing config; without a keystore the build stays
+unsigned. Signing/notarization and store packaging remain host-required;
+`--prepare-only` generates inputs without invoking Gradle, Xcode, or hvigor.
+`--fallback-skia` is packaging-only evidence and does not promote a runtime
+support claim.
 
 ## Validate Hosts
 

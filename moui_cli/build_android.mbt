@@ -128,6 +128,7 @@ fn apply_android_window_hosted_identity(
   app : MobileApp,
   compile_sdk : Int32,
   target_sdk : Int32,
+  release : Bool,
   _renderer : String,
 ) -> Result[Unit, String] {
   let android = match app.android {
@@ -150,6 +151,14 @@ fn apply_android_window_hosted_identity(
     android.min_sdk,
     app.display_name,
   )
+  let patched_gradle = if release {
+    match @env.get_env_var("MOUI_ANDROID_KEYSTORE") {
+      Some(path) if path != "" => patch_android_release_signing(patched_gradle)
+      _ => patched_gradle
+    }
+  } else {
+    patched_gradle
+  }
   match
     write_file_bytes_result(
       app_gradle_path,
@@ -221,6 +230,40 @@ fn patch_android_build_gradle(
     }
   }
   out.join("\n")
+}
+
+///|
+/// Release signing block appended to the staged Gradle file. Secrets come from
+/// the environment so keystores/passwords never enter the repo or CLI history.
+fn android_release_signing_block() -> String {
+  (
+    #|
+    #|// MoUI release signing: secrets come from the environment, never the repo.
+    #|android {
+    #|    signingConfigs {
+    #|        release {
+    #|            storeFile file(System.getenv("MOUI_ANDROID_KEYSTORE"))
+    #|            storePassword System.getenv("MOUI_ANDROID_KEYSTORE_PASSWORD")
+    #|            keyAlias System.getenv("MOUI_ANDROID_KEY_ALIAS")
+    #|            keyPassword System.getenv("MOUI_ANDROID_KEY_PASSWORD")
+    #|        }
+    #|    }
+    #|    buildTypes {
+    #|        release {
+    #|            signingConfig signingConfigs.release
+    #|        }
+    #|    }
+    #|}
+  )
+}
+
+///|
+fn patch_android_release_signing(text : String) -> String {
+  if text.contains("MOUI_ANDROID_KEYSTORE") {
+    text
+  } else {
+    text + "\n" + android_release_signing_block() + "\n"
+  }
 }
 
 ///|
@@ -444,6 +487,7 @@ fn build_android(
       options.app,
       options.compile_sdk,
       options.target_sdk,
+      options.release,
       options.renderer,
     ) {
     Ok(_) => ()

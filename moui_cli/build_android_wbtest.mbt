@@ -251,6 +251,17 @@ test "test_resolve_gradle_command_prefers_workspace_gradlew" {
 }
 
 ///|
+test "android release signing block is env-driven and idempotent" {
+  let block = android_release_signing_block()
+  assert_true(block.contains("MOUI_ANDROID_KEYSTORE"))
+  assert_true(block.contains("signingConfigs"))
+  let once = patch_android_release_signing("android {}\n")
+  assert_true(once.contains("signingConfigs"))
+  let twice = patch_android_release_signing(once)
+  assert_true(twice == once)
+}
+
+///|
 test "test_resolve_gradle_command_returns_err_without_gradlew_or_path" {
   let root = build_android_test_temp_path("gradle-missing")
   remove_tree(root)
