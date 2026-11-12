@@ -101,6 +101,34 @@ fn ElementNode::dispatch_view_event_with_geometry(
   now_ms~ : Double = 0.0,
   focused~ : Bool = false,
 ) -> ElementEventResult {
+  if !environment.enabled {
+    // `.disabled` only sets the child environment; enforce it at the dispatch
+    // funnel so every control (not just Button) is inert. Down/Up and
+    // activation keys are consumed to block click-through; hover/other keys
+    // pass so ancestors can still observe them.
+    let empty = ElementEventResult::empty()
+    match event {
+      Pointer(pointer) =>
+        return if pointer.phase == Down || pointer.phase == Up {
+          { ..empty, captured: true, }
+        } else {
+          empty
+        }
+      Keyboard(key_event) =>
+        return if key_event.pressed &&
+          (
+            key_event.key == "Enter" ||
+            key_event.key == "Space" ||
+            key_event.key == " "
+          ) {
+          { ..empty, captured: true, }
+        } else {
+          empty
+        }
+      TextInput(_) | Gesture(_) | DragDrop(_) => return empty
+      _ => ()
+    }
+  }
   let result = data.event({
     frame,
     child_frames,
