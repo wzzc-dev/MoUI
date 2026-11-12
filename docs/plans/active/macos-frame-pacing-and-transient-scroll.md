@@ -150,6 +150,26 @@ none of those properties today:
 - pre-push validators: window dependency, API surface, generated interfaces,
   maintenance baseline, guidance, doc references
 
+## Design decisions after implementation
+
+- **Shared scroll kinematics was rejected.** `ScrollContainer` moves an
+  authoritative layout offset (wheel direct, fling/rebound for touch), while
+  the richtext editor is a paint-time follower whose offset never enters
+  layout. They share clamping and edge vocabulary, not a motion model; one
+  shared engine would couple two different products. Extract a helper only if
+  a third owner appears.
+- **`ScrollRequest` stays a read-only paint input.** The element computes an
+  effective state from the slot plus a newer request; paint never writes state.
+  The runtime has no pre-paint state hook, and adding one for an idempotent
+  request would enlarge `ViewNode` for no correctness gain.
+- **Generic `scroll_view` settle remains deferred** until a consumer needs the
+  final offset without per-tick rebuilds. The richtext `Element` mode is the
+  reference contract; copying the state machinery now would create an unused
+  second implementation.
+- **Virtual list scoped rebuild is the long-term replacement** for controlled
+  per-tick scrolling: offset stays element-owned and only the windowed subtree
+  rebuilds at frame boundaries. That is a separate architecture slice.
+
 ## Risks
 
 - `CVDisplayLink` is deprecated; keep the pragma and fall back to the timed
