@@ -278,6 +278,13 @@ fn view_picker_click(
   ignore(
     runtime.dispatch_event(
       Pointer(
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Move),
+      ),
+    ),
+  )
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
         @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Up),
       ),
     ),
@@ -1476,5 +1483,108 @@ test "scroll_view child paint_bounds does not spill over earlier siblings" {
     fail(
       "expected search field to remain clickable after the list scrolls (scroll_view child paint_bounds spilled over an earlier sibling)",
     )
+  }
+}
+
+///|
+struct ScrollPickerModel {
+  open : Bool
+  selected : String
+  scroll : @core.Point
+}
+
+///|
+enum ScrollPickerMsg {
+  ScrollPickerOpen(Bool)
+  ScrollPickerSelect(String)
+  ScrollPickerScrolled(@core.Point)
+}
+
+///|
+test "picker opens inside a controlled scroll view" {
+  let received : Array[String] = []
+  let runtime = @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=(
+        {
+          open: false,
+          selected: "one",
+          scroll: @core.Point::new(x=0.0, y=0.0),
+        } : ScrollPickerModel),
+      update=(model, message) => {
+        match message {
+          ScrollPickerOpen(open) => { ..model, open, }
+          ScrollPickerSelect(id) => {
+            received.push(id)
+            { ..model, selected: id, open: false, }
+          }
+          ScrollPickerScrolled(offset) => { ..model, scroll: offset, }
+        }
+      },
+      view=model => {
+        @views.column(
+          [
+            @views.scroll_view(
+              @views.column(
+                [
+                  @views.frame(
+                    @views.picker(
+                      [
+                        @views.picker_item("one", "One"),
+                        @views.picker_item("two", "Two"),
+                      ],
+                      selected=model.selected,
+                      on_select=id => ScrollPickerSelect(id),
+                      expanded=model.open,
+                      on_expanded_change=open => ScrollPickerOpen(open),
+                      placeholder="Pick",
+                      max_height=160.0,
+                    ),
+                    width=200.0,
+                    height=40.0,
+                  ),
+                  @views.spacer(min_length=0.0),
+                ],
+                spacing=0.0,
+              ),
+              width=200.0,
+              height=160.0,
+              offset=model.scroll,
+              on_scroll=Some(offset => ScrollPickerScrolled(offset)),
+            ),
+          ],
+          spacing=0.0,
+        )
+      },
+    ),
+    size=@core.Size::new(width=200.0, height=200.0),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  if !runtime
+    .draw_commands()
+    .any(command => {
+      match command {
+        @core.DrawText(run) => run.text == "Two"
+        _ => false
+      }
+    }) {
+    fail("picker should open inside a controlled scroll view")
   }
 }

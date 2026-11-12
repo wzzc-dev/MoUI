@@ -99,7 +99,7 @@ fn[Msg] picker_control(
     transition=Fade,
     presented=expanded,
   )
-  @presentation.popup_host(trigger, [popup])
+  @presentation.popup_host_fill(trigger, [popup])
 }
 
 ///|
@@ -207,11 +207,19 @@ fn[Msg] picker_trigger_event(
           // already dismissed (click-through); do not reopen the popup.
           @core.ViewEventResult::ignored()
         }
-      } else if ctx.state.read_slot(picker_trigger_press_slot()) {
-        @common.view_event_result(
-          state=Some(ctx.state.without_slot(picker_trigger_press_slot())),
-        )
+      } else if event.phase == Cancel || event.phase == Exit {
+        if ctx.state.read_slot(picker_trigger_press_slot()) {
+          @common.view_event_result(
+            changed=true,
+            captured=true,
+            state=Some(ctx.state.without_slot(picker_trigger_press_slot())),
+          )
+        } else {
+          @core.ViewEventResult::ignored()
+        }
       } else {
+        // Move/Enter between Down and Up must not clear the press latch: a
+        // real pointer stream often includes a move inside the button.
         @core.ViewEventResult::ignored()
       }
     Keyboard(event) =>

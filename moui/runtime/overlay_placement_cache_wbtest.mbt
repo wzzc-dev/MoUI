@@ -618,3 +618,37 @@ test "picker reopens after close repeatedly" {
     }
   }
 }
+
+///|
+test "picker trigger fills a tight frame" {
+  let runtime = AppRuntime::new_view(
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One")],
+            selected="",
+            on_select=_ => (),
+            expanded=false,
+            on_expanded_change=_ => (),
+            placeholder="Pick",
+          ),
+          width=800.0,
+          height=40.0,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    size=@core.Size::new(width=900.0, height=100.0),
+  )
+  ignore(runtime.draw_frame())
+  let picker = c3_required_element(
+    c3_find_element(runtime.state.element_tree.root, "Picker"),
+    "picker element",
+  )
+  let placed = c3_required_placed(
+    c3_find_placed(runtime.state.cached_layout_tree_root(), picker.id),
+    "picker placed",
+  )
+  assert_true(placed.frame.size.width > 700.0)
+}

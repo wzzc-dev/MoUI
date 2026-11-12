@@ -547,6 +547,18 @@ pub fn[Msg] popup_host(
 }
 
 ///|
+/// Control popup host whose base fills the parent-allocated frame instead of
+/// shrinking to its intrinsic size. Use this for form controls such as a picker
+/// that are placed in a `frame(width=..., height=...)`; tooltips and buttons
+/// keep `popup_host`'s base-sized behavior.
+pub fn[Msg] popup_host_fill(
+  base : @core.View[Msg],
+  popups : Array[PresentationSpec[Msg]],
+) -> @core.View[Msg] {
+  overlay_host_with_sizing(base, popups, sizing=BaseFill)
+}
+
+///|
 /// 这个浮层**要不要挂一层屏障子节点**。
 ///
 /// 屏障的职责有两件，任一成立就要挂：
@@ -617,6 +629,8 @@ fn[Msg] deepest_modal_index(
 priv enum OverlayHostSizing {
   ViewportSized
   BaseSized
+  /// Base-owned popup whose trigger fills the parent-allocated space.
+  BaseFill
 }
 
 ///|
@@ -635,7 +649,7 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
   self,
   constraints,
 ) {
-  if self.sizing is BaseSized {
+  if self.sizing is BaseSized || self.sizing is BaseFill {
     // Control popups (tooltip / dropdown / context menu) size to their own
     // content. The host often sits in a narrow control column (e.g. the
     // 34pt Studio icon bar); inheriting that column's tight constraints
@@ -655,17 +669,33 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
 ///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let viewport = ctx.constraints.constrain(ctx.constraints.max)
-  let host_size = if self.sizing is BaseSized {
-    // Base-sized hosts (control popups) size to their base child. The base's
-    // measured size is authoritative: parents may stretch the host's placed
-    // frame, but the popup anchor and the base child must track the control.
-    if ctx.child_sizes.length() > 0 {
-      ctx.child_sizes[0]
-    } else {
-      @core.Size::new(width=0.0, height=0.0)
+  let host_size = match self.sizing {
+    ViewportSized => viewport
+    BaseSized =>
+      // Base-sized hosts (tooltips, buttons) size to their base child. The
+      // base's measured size is authoritative even when a parent frame is
+      // larger.
+      if ctx.child_sizes.length() > 0 {
+        ctx.child_sizes[0]
+      } else {
+        @core.Size::new(width=0.0, height=0.0)
+      }
+    BaseFill => {
+      // Controls such as a picker fill the space their parent allocated. The
+      // base child is still measured intrinsically; its placed frame below is
+      // the host frame, so paint/hit-testing span the same box.
+      let max = ctx.constraints.max
+      if max.width > 0.0 &&
+        max.width < 1.0e9 &&
+        max.height > 0.0 &&
+        max.height < 1.0e9 {
+        max
+      } else if ctx.child_sizes.length() > 0 {
+        ctx.child_sizes[0]
+      } else {
+        @core.Size::new(width=0.0, height=0.0)
+      }
     }
-  } else {
-    viewport
   }
   let frames : Array[@core.Rect] = [
     @core.Rect::new(
@@ -720,20 +750,32 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
   // `HostBase` anchors to the base child's frame: the host's placed frame may
   // be stretched by its parent, but the control the popup belongs to is the
   // base child at the host origin.
-  let host_base_frame = @core.Rect::new(
-    x=context.host_frame.origin.x,
-    y=context.host_frame.origin.y,
-    width=if context.child_sizes.length() > 0 {
-      context.child_sizes[0].width
-    } else {
-      0.0
-    },
-    height=if context.child_sizes.length() > 0 {
-      context.child_sizes[0].height
-    } else {
-      0.0
-    },
-  )
+  let host_base_frame = match self.sizing {
+    BaseFill =>
+      // The placed base is the host frame (the trigger filled its frame).
+      @core.Rect::new(
+        x=context.host_frame.origin.x,
+        y=context.host_frame.origin.y,
+        width=context.host_frame.size.width,
+        height=context.host_frame.size.height,
+      )
+    _ =>
+      // Base-sized hosts anchor to the base child, not a stretched host frame.
+      @core.Rect::new(
+        x=context.host_frame.origin.x,
+        y=context.host_frame.origin.y,
+        width=if context.child_sizes.length() > 0 {
+          context.child_sizes[0].width
+        } else {
+          0.0
+        },
+        height=if context.child_sizes.length() > 0 {
+          context.child_sizes[0].height
+        } else {
+          0.0
+        },
+      )
+  }
   let pairs : Array[(Int32, @core.Rect)] = []
   let mut child_index = 1
   for presentation in self.presentations {

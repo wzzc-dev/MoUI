@@ -11,6 +11,8 @@ pub fn[Msg] overlay_host(@core.View[Msg], Array[PresentationSpec[Msg]]) -> @core
 
 pub fn[Msg] popup_host(@core.View[Msg], Array[PresentationSpec[Msg]]) -> @core.View[Msg]
 
+pub fn[Msg] popup_host_fill(@core.View[Msg], Array[PresentationSpec[Msg]]) -> @core.View[Msg]
+
 // Errors
 
 // Types and methods
