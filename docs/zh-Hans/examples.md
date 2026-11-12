@@ -48,6 +48,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `WindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `WindowRequestQueue` 与 `WindowSceneResolver`；保留 macOS 和 multi-canvas Web route |
 | HarmonyOS Demo | 平台中立 HarmonyOS 交互模型 | `examples/harmonyos_demo/app/` | viewport/tap feedback app model；canonical HarmonyOS composition 与设备证据统一由 Showcase 承担 |
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
+| Disabled Input Demo | disabled 控件输入契约探针 | `examples/disabled_input_demo/app/`、`examples/disabled_input_demo/{macos_skia,selftest}/` | 每个控件都包在 `.disabled(disabled=!model.enabled)` 里：disabled 状态下的点击必须让所有计数器保持为 0，启用后同样的点击才会累加。无头 `selftest` 包派发同一串点击并输出 `disabled_messages=0 enabled_messages=5`，回归门禁对此断言。 |
 | Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于模块根集成包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
 | Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | 覆盖 Material、Carbon、Primer、Fluent、Sickle 主题预览、density/token diagnostics，以及保留的 Web/macOS 入口 |
 | Settings | Settings shell 模式 | `examples/settings/app/` | 表单 section、侧边栏导航、分段主题模式、toggle 偏好，以及可保存状态的 snapshot/restore |
@@ -193,6 +194,21 @@ renderer catalog 噪声的情况下覆盖同一个焦点输入、按钮 dispatch
 ```sh
 moon test examples/button_freeze_probe/app --target native
 moon build examples/button_freeze_probe/macos_skia --target native
+```
+
+## Disabled Input Demo
+
+Disabled Input Demo 锁定 disabled 控件的输入契约：每个控件都包在
+`.disabled(disabled=!model.enabled)` 里，disabled 状态下的点击必须让所有计数器
+保持为 0，启用后同样的点击才会累加。无头 `selftest` 包派发同一串点击并输出
+`disabled_messages=0 enabled_messages=5`，回归门禁对此断言。
+
+聚焦 Disabled Input Demo 检查：
+
+```sh
+moon test examples/disabled_input_demo/app --target native
+moon run examples/disabled_input_demo/selftest --target native
+moon build examples/disabled_input_demo/macos_skia --target native
 ```
 
 ## Code Editor
@@ -651,7 +667,7 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 
 ## Linux 原生
 
-Linux 示例使用 `wzzc-dev/window@0.5.4-0.2.8` Wayland host core。推荐的原生入口导入
+Linux 示例使用 `wzzc-dev/window@0.5.4-0.2.9` Wayland host core。推荐的原生入口导入
 `backend/linux` 与 `moui_skia_renderer`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
 呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：
