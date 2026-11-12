@@ -1,0 +1,16 @@
+import {
+  "wzzc-dev/moui/apphost",
+  "wzzc-dev/moui/backend/macos",
+  "wzzc-dev/moui_skia_renderer" @render_skia,
+  "wzzc-dev/moui/runtime",
+  "examples/disabled_input_demo/app" @disabled_demo,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)

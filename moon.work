@@ -38,6 +38,7 @@ members = [
   "./examples/harmonyos_demo",
   "./examples/button_freeze_probe",
   "./examples/showcase",
+  "./examples/disabled_input_demo",
   "./examples/design_systems",
   "./examples/excel",
   "./examples/pdf_workbench",
