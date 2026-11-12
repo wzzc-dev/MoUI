@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/disabled_input_demo/app"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn probe_view(Model) -> @core.View[Msg]
+
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  enabled : Bool
+  button_clicks : Int32
+  checkbox_changes : Int32
+  toggle_changes : Int32
+  radio_changes : Int32
+  slider_changes : Int32
+  checked : Bool
+  toggled : Bool
+  radio_selected : Bool
+  slider_value : Double
+}
+pub fn Model::new() -> Self
+pub fn Model::with_enabled(Bool) -> Self
+
+pub(all) enum Msg {
+  ToggleEnabled
+  Reset
+  ButtonClicked
+  CheckboxChanged(Bool)
+  ToggleChanged(Bool)
+  RadioChanged(Bool)
+  SliderChanged(Double)
+}
+
+// Type aliases
+
+// Traits
