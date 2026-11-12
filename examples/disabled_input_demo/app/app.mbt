@@ -51,7 +51,7 @@ pub fn Model::with_enabled(enabled : Bool) -> Model {
 ///|
 pub fn update(model : Model, message : Msg) -> Model {
   match message {
-    ToggleEnabled => { ..model, enabled: !model.enabled }
+    ToggleEnabled => { ..model, enabled: !model.enabled, }
     Reset =>
       {
         ..model,
@@ -61,19 +61,11 @@ pub fn update(model : Model, message : Msg) -> Model {
         radio_changes: 0,
         slider_changes: 0,
       }
-    ButtonClicked => { ..model, button_clicks: model.button_clicks + 1 }
+    ButtonClicked => { ..model, button_clicks: model.button_clicks + 1, }
     CheckboxChanged(value) =>
-      {
-        ..model,
-        checked: value,
-        checkbox_changes: model.checkbox_changes + 1,
-      }
+      { ..model, checked: value, checkbox_changes: model.checkbox_changes + 1, }
     ToggleChanged(value) =>
-      {
-        ..model,
-        toggled: value,
-        toggle_changes: model.toggle_changes + 1,
-      }
+      { ..model, toggled: value, toggle_changes: model.toggle_changes + 1, }
     RadioChanged(value) =>
       {
         ..model,
@@ -95,19 +87,28 @@ pub fn update(model : Model, message : Msg) -> Model {
 pub fn probe_view(model : Model) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.button("Click me", on_click=ButtonClicked).disabled(disabled=!model.enabled).frame(
-        width=240.0,
-        height=40.0,
-      ).key("demo-button"),
-      @views.checkbox("Checkbox", checked=model.checked, on_change=value => CheckboxChanged(value)).disabled(
-        disabled=!model.enabled,
-      ).frame(width=240.0, height=40.0).key("demo-checkbox"),
-      @views.toggle("Toggle", model.toggled, on_change=value => ToggleChanged(value)).disabled(
-        disabled=!model.enabled,
-      ).frame(width=240.0, height=40.0).key("demo-toggle"),
-      @views.radio("Radio", model.radio_selected, on_change=value => RadioChanged(value)).disabled(
-        disabled=!model.enabled,
-      ).frame(width=240.0, height=40.0).key("demo-radio"),
+      @views.button("Click me", on_click=ButtonClicked)
+      .disabled(disabled=!model.enabled)
+      .frame(width=240.0, height=40.0)
+      .key("demo-button"),
+      @views.checkbox("Checkbox", checked=model.checked, on_change=value => {
+        CheckboxChanged(value)
+      })
+      .disabled(disabled=!model.enabled)
+      .frame(width=240.0, height=40.0)
+      .key("demo-checkbox"),
+      @views.toggle("Toggle", model.toggled, on_change=value => {
+        ToggleChanged(value)
+      })
+      .disabled(disabled=!model.enabled)
+      .frame(width=240.0, height=40.0)
+      .key("demo-toggle"),
+      @views.radio("Radio", model.radio_selected, on_change=value => {
+        RadioChanged(value)
+      })
+      .disabled(disabled=!model.enabled)
+      .frame(width=240.0, height=40.0)
+      .key("demo-radio"),
       @views.slider(
         model.slider_value,
         min=0.0,
@@ -115,7 +116,10 @@ pub fn probe_view(model : Model) -> @moui.View[Msg] {
         on_change=Some(value => SliderChanged(value)),
         width=240.0,
         height=40.0,
-      ).disabled(disabled=!model.enabled).frame(width=240.0, height=40.0).key("demo-slider"),
+      )
+      .disabled(disabled=!model.enabled)
+      .frame(width=240.0, height=40.0)
+      .key("demo-slider"),
     ],
     spacing=0.0,
   )
@@ -133,7 +137,11 @@ pub fn view(model : Model) -> @moui.View[Msg] {
           ),
           @views.row([
             @views.button(
-              if model.enabled { "Disable controls" } else { "Enable controls" },
+              if model.enabled {
+                "Disable controls"
+              } else {
+                "Enable controls"
+              },
               on_click=ToggleEnabled,
             ),
             @views.button("Reset counters", on_click=Reset),

@@ -585,4 +585,3 @@ impl @core.ViewNode for PickerRow with fn semantics(self) {
     selected=self.is_selected,
   )
 }
-

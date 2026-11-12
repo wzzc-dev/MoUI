@@ -217,8 +217,8 @@
     },
     {
       "path": "moui/runtime/view_runtime_test.mbt",
-      "maxLines": 1450,
-      "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration. Raised 1366->1441 2026-10-23 for pointer-input-parity evidence: long-press timed wake, caret reveal resolved against the placed tree, and the targeted-dispatch ancestor re-place regression."
+      "maxLines": 1600,
+      "reason": "Existing runtime virtual-view integration regression suite after typed semantics migration. Raised 1366->1441 2026-10-23 for pointer-input-parity evidence: long-press timed wake, caret reveal resolved against the placed tree, and the targeted-dispatch ancestor re-place regression. Raised 1441->1600 2026-11-12 for the popup press-latch regression suite: a real Down/Move/Up gesture through a picker popup host inside a controlled scroll view."
     },
     {
       "path": "moui_sun/text/parser_test.mbt",
