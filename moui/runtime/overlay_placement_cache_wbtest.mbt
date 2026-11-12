@@ -540,3 +540,37 @@ test "C3: place cache keys on the view-state revision" {
     msg="the state flip must stay local to the flipped element",
   )
 }
+
+///|
+test "picker reopens after close repeatedly" {
+  let runtime = c3_overlay_fixture()
+  let mut clock_ms = 0.0
+  for _ in 0..<6 {
+    c3_open_picker_popup(runtime)
+    let button = c3_required_rect(
+      c3_text_frame(runtime.draw_commands(), "Pick"),
+      "picker button",
+    )
+    let picker = c3_required_element(
+      c3_find_element(runtime.state.element_tree.root, "Picker"),
+      "picker element",
+    )
+    if !picker.control.view_state.expanded {
+      fail("picker did not open")
+    }
+    c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Up)
+    ignore(runtime.draw_frame())
+    if picker.control.view_state.expanded {
+      fail("picker stayed expanded after button click")
+    }
+    // The exit ghost fades over the theme motion duration; let it finish
+    // before asserting the popup is gone. The clock is absolute, so move it
+    // forward on every iteration.
+    clock_ms = clock_ms + 1000.0
+    runtime.advance_time(clock_ms)
+    ignore(runtime.draw_frame())
+    if c3_text_frame(runtime.draw_commands(), "Two") is Some(_) {
+      fail("picker popup did not close")
+    }
+  }
+}

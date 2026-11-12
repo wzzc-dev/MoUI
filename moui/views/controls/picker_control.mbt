@@ -60,7 +60,7 @@ fn[Msg] picker_control(
         @core.ViewSemanticsActionHandler::activate(ctx => {
           @core.ViewSemanticsActionResult::accepted(
             state=Some({ ..ctx.state, expanded: !ctx.state.expanded, }),
-            dirty=ViewPaintDirty,
+            dirty=ViewLayoutDirty,
           )
         }),
       ]
@@ -262,6 +262,33 @@ fn append_picker_commands(
 }
 
 ///|
+/// Result for a picker open/close transition.
+///
+/// The popup is a real layout child: hiding it removes a child frame and
+/// showing it adds one. Every transition is therefore a layout change, and
+/// keeping that in one helper prevents a close branch from regressing to a
+/// paint-only hint (which leaves the old popup in the place cache).
+fn[Msg] picker_expanded_result(
+  state : @core.ViewStateContext,
+  expanded : Bool,
+  changed~ : Bool,
+  activated~ : Bool = false,
+  focused~ : Bool = false,
+  captured~ : Bool = true,
+  messages~ : Array[Msg] = [],
+) -> @core.ViewEventResult[Msg] {
+  @common.view_event_result(
+    changed~,
+    activated~,
+    focused~,
+    captured~,
+    state=Some({ ..state, expanded, }),
+    dirty=ViewLayoutDirty,
+    messages~,
+  )
+}
+
+///|
 fn[Msg] handle_picker_pointer(
   state : @core.ViewStateContext,
   event : @core.PointerEvent,
@@ -285,39 +312,21 @@ fn[Msg] handle_picker_pointer(
       }
       match hit_id {
         Some(id) =>
-          @common.view_event_result(
+          picker_expanded_result(
+            state,
+            false,
             changed=true,
             activated=true,
             focused=true,
-            captured=true,
-            state=Some({ ..state, expanded: false, }),
-            dirty=ViewLayoutDirty,
             messages=[selected.changed(id)],
           )
         None =>
-          @common.view_event_result(
-            changed=true,
-            focused=true,
-            captured=true,
-            state=Some({ ..state, expanded: false, }),
-            dirty=ViewLayoutDirty,
-          )
+          picker_expanded_result(state, false, changed=true, focused=true)
       }
     } else if event.phase == Up && inside_button {
-      @common.view_event_result(
-        changed=true,
-        focused=true,
-        captured=true,
-        state=Some({ ..state, expanded: false, }),
-        dirty=ViewPaintDirty,
-      )
+      picker_expanded_result(state, false, changed=true, focused=true)
     } else if event.phase == Up {
-      @common.view_event_result(
-        changed=true,
-        captured=true,
-        state=Some({ ..state, expanded: false, }),
-        dirty=ViewPaintDirty,
-      )
+      picker_expanded_result(state, false, changed=true)
     } else if inside_button || inside_popup {
       @common.view_event_result(
         changed=true,
@@ -328,13 +337,7 @@ fn[Msg] handle_picker_pointer(
       @core.ViewEventResult::ignored()
     }
   } else if event.phase == Up && inside_button {
-    @common.view_event_result(
-      changed=true,
-      focused=true,
-      captured=true,
-      state=Some({ ..state, expanded: true, }),
-      dirty=ViewLayoutDirty,
-    )
+    picker_expanded_result(state, true, changed=true, focused=true)
   } else if claim_focus {
     @common.view_event_result(changed=true, focused=true, captured=true)
   } else {
@@ -352,39 +355,23 @@ fn[Msg] handle_picker_keyboard(
   if !event.pressed {
     @core.ViewEventResult::ignored()
   } else if event.key == "Escape" && state.expanded {
-    @common.view_event_result(
-      changed=true,
-      captured=true,
-      state=Some({ ..state, expanded: false, }),
-      dirty=ViewPaintDirty,
-    )
+    picker_expanded_result(state, false, changed=true)
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
       match picker_selected_id_or_first(items, selected.value()) {
         Some(id) =>
-          @common.view_event_result(
+          picker_expanded_result(
+            state,
+            false,
             changed=true,
             activated=true,
-            captured=true,
-            state=Some({ ..state, expanded: false, }),
-            dirty=ViewLayoutDirty,
             messages=[selected.changed(id)],
           )
         None =>
-          @common.view_event_result(
-            changed=true,
-            captured=true,
-            state=Some({ ..state, expanded: false, }),
-            dirty=ViewLayoutDirty,
-          )
+          picker_expanded_result(state, false, changed=true)
       }
     } else {
-      @common.view_event_result(
-        changed=true,
-        captured=true,
-        state=Some({ ..state, expanded: true, }),
-        dirty=ViewPaintDirty,
-      )
+      picker_expanded_result(state, true, changed=true)
     }
   } else {
     @core.ViewEventResult::ignored()
