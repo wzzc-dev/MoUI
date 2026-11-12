@@ -82,6 +82,7 @@ pub(all) struct Model {
   status : String
   preview_status : String
   lesson_id : String
+  lesson_picker_expanded : Bool
   revision : Int32
 }
 pub fn Model::new() -> Self
@@ -91,6 +92,7 @@ pub(all) enum Msg {
   PackageChanged(String)
   SelectFile(PlaygroundFile)
   SelectExample(String)
+  SetLessonPickerExpanded(Bool)
   SetFindQuery(String)
   SetReplaceText(String)
   EditorSelectionChanged(Int32, @core.TextRange?)

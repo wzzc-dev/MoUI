@@ -92,6 +92,8 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
     ToggleHeatMap => { ..model, heat_map: !model.heat_map, }
     SetCellBgColor(color) =>
       model.toggle_format(fmt => { ..fmt, bg_color: color, }, "Cell color")
+    SetNumFormatPickerExpanded(open) =>
+      { ..model, num_format_picker_expanded: open, }
     SetCellFormat(format) =>
       model.toggle_format(
         fmt => { ..fmt, num_format: format, },

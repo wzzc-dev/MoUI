@@ -149,18 +149,22 @@ channels deliberately:
 | `focusable` | The node participates in Tab/pointer focus |
 | `text_input_state` | The node accepts text or IME composition |
 | `place_overlays` | The node positions overlay children after base layout |
-
-**Overlay participation is layout state.** A node whose `place_overlays` adds or
-removes a real child (picker, date picker, menu) must report `ViewLayoutDirty`
-on every open/close transition, not `ViewPaintDirty`: closing removes a child
-frame, and a paint-only hint leaves the old placed child in the place cache.
-Keep transitions in one helper so a new close branch cannot regress the hint.
-This is the same reason mature toolkits keep popups out of the parent's layout
-(Qt top-level popup, Flutter overlay route, SwiftUI presentation); when a popup
-does live in the layout tree, visibility is a layout input.
 | `platform_views` | The node owns a native platform child |
 | `child_*` | Child constraints/environment/style differ from pass-through |
 | `flex_weight` | A parent flex layout must allocate space by weight |
+
+**Prefer presentation popups over layout children.** A control popup should be
+a `popup_host` + `PresentationSpec` surface (picker, date picker, context menu),
+not a child in the trigger's layout. Presentation owns placement, outside/Escape
+dismissal, the top-most dismissal layer, and enter/exit lifecycle; opening and
+closing then do not dirty the parent layout at all. This is the same model as
+Qt's top-level popup, Flutter's overlay route, and SwiftUI presentation.
+
+If a popup must remain a layout child (a rare in-flow dropdown), its
+participation is layout state: every open/close transition must report
+`ViewLayoutDirty`, not `ViewPaintDirty`. A paint-only hint leaves the old placed
+child in the place cache. Keep the transition in one helper so a new close
+branch cannot regress the hint.
 
 ## Identity And Declaration
 

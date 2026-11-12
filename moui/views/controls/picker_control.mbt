@@ -23,6 +23,8 @@ fn PickerOption::label(self : PickerOption) -> String {
 fn[Msg] picker_control(
   items~ : Array[PickerOption],
   selected~ : @core.ControlledValue[String, Msg],
+  expanded~ : Bool,
+  on_expanded_change~ : (Bool) -> Msg,
   placeholder~ : String,
   theme? : @core.Theme,
   style? : @style.PickerStyle,
@@ -32,16 +34,35 @@ fn[Msg] picker_control(
 ) -> @core.View[Msg] {
   let items_snapshot = items.copy()
   let selected_snapshot = selected.value()
-  @core.View::from_node(
-    Picker::{
+  let trigger = @core.View::from_node(
+    PickerTrigger::{
       items: items_snapshot,
       selected: selected_snapshot,
       placeholder,
       theme,
       style,
-      max_height,
+      expanded,
+      on_expanded_change,
+      on_select: id => selected.changed(id),
       kind,
       key,
+    },
+    event=(node, ctx) => picker_trigger_event(node, ctx),
+    semantics_actions=node => {
+      [
+        @core.ViewSemanticsActionHandler::activate(_ctx => {
+          @core.ViewSemanticsActionResult::message(
+            (node.on_expanded_change)(!node.expanded),
+          )
+        }),
+      ]
+    },
+  )
+  let popup_content = @core.View::from_node(
+    PickerPopup::{
+      items: items_snapshot,
+      on_select: id => selected.changed(id),
+      close: on_expanded_change(false),
     },
     children=_node => {
       [
@@ -54,98 +75,63 @@ fn[Msg] picker_control(
         ),
       ]
     },
-    event=(node, ctx) => picker_event(node, ctx, selected),
-    semantics_actions=_node => {
-      [
-        @core.ViewSemanticsActionHandler::activate(ctx => {
-          @core.ViewSemanticsActionResult::accepted(
-            state=Some({ ..ctx.state, expanded: !ctx.state.expanded, }),
-            dirty=ViewLayoutDirty,
-          )
-        }),
-      ]
-    },
+    event=(node, ctx) => picker_popup_event(node, ctx),
   )
+  let popup = @presentation.PresentationSpec::new(
+    id="picker-popup",
+    kind=Popover,
+    content=popup_content,
+    anchor=HostBase,
+    placement=Some(
+      @presentation.PresentationPlacement::new(
+        candidates=[BelowStart, AboveStart],
+        viewport_insets=@core.Insets::all(0.0),
+      ),
+    ),
+    modality=NonModal,
+    dismiss=@presentation.PresentationDismissPolicy::new(
+      outside_tap=true,
+      escape=true,
+      system_back=true,
+      host_close=true,
+      message=Some(on_expanded_change(false)),
+    ),
+    transition=Fade,
+    presented=expanded,
+  )
+  @presentation.popup_host(trigger, [popup])
 }
 
 ///|
-priv struct Picker {
+/// The picker trigger. Opening/closing is app-owned presentation state; the
+/// popup itself lives in `popup_host`, not in this node's child layout.
+priv struct PickerTrigger[Msg] {
   items : Array[PickerOption]
   selected : String
   placeholder : String
   theme : @core.Theme?
   style : @style.PickerStyle?
-  max_height : Double
+  expanded : Bool
+  on_expanded_change : (Bool) -> Msg
+  on_select : (String) -> Msg
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for Picker with fn identity(self) {
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for Picker with fn layout(_self, ctx) {
-  let own = ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0))
-  // The popup is a real child subtree. When collapsed it receives no frame at
-  // all: it is not placed, painted, hit-tested, or exposed to semantics. When
-  // expanded the post-layout placement pass resolves its absolute frame via
-  // `place_overlays`.
-  let child_frames = if ctx.state.expanded {
-    let popup_size = if ctx.child_sizes.length() > 0 {
-      ctx.child_sizes[0]
-    } else {
-      @core.Size::new(width=0.0, height=0.0)
-    }
-    [
-      // Off-screen sentinel: the placement pass always moves it to the
-      // resolved anchor-relative rect, and the sentinel guarantees the
-      // override diff engages even when both coincide on screen.
-      @core.Rect::new(
-        x=0.0,
-        y=-100000.0,
-        width=popup_size.width,
-        height=popup_size.height,
-      ),
-    ]
-  } else {
-    []
-  }
-  @core.ViewLayoutResult::new(size=own, child_frames~)
-}
-
-///|
-impl @core.ViewNode for Picker with fn child_constraints(_self, _constraints) {
-  // The popup sizes to its own content; parent constraints (tight at place
-  // time) must not clamp it.
-  @core.Constraints::unbounded()
-}
-
-///|
-impl @core.ViewNode for Picker with fn place_overlays(_self, context) {
-  if !context.state.expanded {
-    return None
-  }
-  if context.child_sizes.is_empty() {
-    return None
-  }
-  let content_size = context.child_sizes[0]
-  let placement = @presentation.PresentationPlacement::new(
-    candidates=[BelowStart, AboveStart],
-    viewport_insets=@core.Insets::all(0.0),
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
   )
-  let frame = placement.resolve(
-    context.host_frame,
-    context.viewport,
-    content_size,
-    direction=context.layout_direction,
-  )
-  Some([(0, frame)])
 }
 
 ///|
-impl @core.ViewNode for Picker with fn paint(self, ctx) {
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn paint(self, ctx) {
   let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -162,14 +148,14 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
     foreground=resolved_style.foreground,
     background=resolved_style.background,
     corner_radius=resolved_style.radius,
-    expanded=ctx.state.expanded,
+    expanded=self.expanded,
     theme=resolved_theme,
   )
   { ..@core.ViewPaintPlan::empty(), commands, }
 }
 
 ///|
-impl @core.ViewNode for Picker with fn semantics(self) {
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn semantics(self) {
   @core.ViewSemanticsInfo::leaf(
     role=Menu,
     label=self.placeholder,
@@ -178,28 +164,152 @@ impl @core.ViewNode for Picker with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for Picker with fn focusable(_self) {
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn focusable(_self) {
   true
 }
 
 ///|
-fn[Msg] picker_event(
-  node : Picker,
+fn picker_trigger_press_slot() -> @core.ViewStateSlot[Bool] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.picker.trigger-pressed"),
+    initial=false,
+  )
+}
+
+///|
+
+///|
+fn[Msg] picker_trigger_event(
+  node : PickerTrigger[Msg],
   ctx : @core.ViewEventContext,
-  selected : @core.ControlledValue[String, Msg],
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     Pointer(event) =>
-      handle_picker_pointer(
-        ctx.state,
-        event,
-        frame=ctx.frame,
-        popup_frame=ctx.child_frames.get(0),
-        items=node.items,
-        selected~,
-      )
+      if event.phase == Down && ctx.frame.contains(event.position) {
+        @common.view_event_result(
+          changed=true,
+          focused=true,
+          captured=true,
+          state=Some(ctx.state.with_slot(picker_trigger_press_slot(), true)),
+        )
+      } else if event.phase == Up && ctx.frame.contains(event.position) {
+        if ctx.state.read_slot(picker_trigger_press_slot()) {
+          @common.view_event_result(
+            changed=true,
+            focused=true,
+            captured=true,
+            state=Some(ctx.state.without_slot(picker_trigger_press_slot())),
+            messages=[(node.on_expanded_change)(!node.expanded)],
+            dirty=ViewPaintDirty,
+          )
+        } else {
+          // An Up without its own Down belongs to a gesture the popup
+          // already dismissed (click-through); do not reopen the popup.
+          @core.ViewEventResult::ignored()
+        }
+      } else if ctx.state.read_slot(picker_trigger_press_slot()) {
+        @common.view_event_result(
+          state=Some(ctx.state.without_slot(picker_trigger_press_slot())),
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
     Keyboard(event) =>
-      handle_picker_keyboard(ctx.state, event, items=node.items, selected~)
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        if node.expanded {
+          match picker_selected_id_or_first(node.items, node.selected) {
+            Some(id) =>
+              @common.view_event_result(
+                changed=true,
+                focused=true,
+                captured=true,
+                messages=[
+                  (node.on_select)(id),
+                  (node.on_expanded_change)(false),
+                ],
+                dirty=ViewPaintDirty,
+              )
+            None =>
+              @common.view_event_result(
+                changed=true,
+                focused=true,
+                captured=true,
+                messages=[(node.on_expanded_change)(false)],
+                dirty=ViewPaintDirty,
+              )
+          }
+        } else {
+          @common.view_event_result(
+            changed=true,
+            focused=true,
+            captured=true,
+            messages=[(node.on_expanded_change)(true)],
+            dirty=ViewPaintDirty,
+          )
+        }
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+/// The popup content frame: owns item hit-testing and returns both the
+/// selection message and the close message. The rows themselves stay pure
+/// paint/semantics nodes.
+priv struct PickerPopup[Msg] {
+  items : Array[PickerOption]
+  on_select : (String) -> Msg
+  close : Msg
+}
+
+///|
+impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn identity(_self) {
+  @core.ViewIdentity::new(kind="PickerPopup")
+}
+
+///|
+impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn layout(_self, ctx) {
+  let child_size = match ctx.child_sizes.get(0) {
+    Some(size) => size
+    None => @core.Size::new(width=198.0, height=0.0)
+  }
+  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(child_size), child_frames=[
+    @core.Rect::new(
+      x=0.0,
+      y=0.0,
+      width=child_size.width,
+      height=child_size.height,
+    ),
+  ])
+}
+
+///|
+fn[Msg] picker_popup_event(
+  node : PickerPopup[Msg],
+  ctx : @core.ViewEventContext,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    Pointer(event) =>
+      if event.phase == Up && ctx.frame.contains(event.position) {
+        match
+          picker_item_id_at_position(ctx.frame, event.position, node.items) {
+          Some(id) =>
+            @common.view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              messages=[(node.on_select)(id), node.close],
+            )
+          None => @core.ViewEventResult::ignored()
+        }
+      } else if ctx.frame.contains(event.position) {
+        @common.view_event_result(changed=true, captured=true)
+      } else {
+        @core.ViewEventResult::ignored()
+      }
     _ => @core.ViewEventResult::ignored()
   }
 }
@@ -259,123 +369,6 @@ fn append_picker_commands(
       ),
     ),
   )
-}
-
-///|
-/// Result for a picker open/close transition.
-///
-/// The popup is a real layout child: hiding it removes a child frame and
-/// showing it adds one. Every transition is therefore a layout change, and
-/// keeping that in one helper prevents a close branch from regressing to a
-/// paint-only hint (which leaves the old popup in the place cache).
-fn[Msg] picker_expanded_result(
-  state : @core.ViewStateContext,
-  expanded : Bool,
-  changed~ : Bool,
-  activated~ : Bool = false,
-  focused~ : Bool = false,
-  captured~ : Bool = true,
-  messages~ : Array[Msg] = [],
-) -> @core.ViewEventResult[Msg] {
-  @common.view_event_result(
-    changed~,
-    activated~,
-    focused~,
-    captured~,
-    state=Some({ ..state, expanded, }),
-    dirty=ViewLayoutDirty,
-    messages~,
-  )
-}
-
-///|
-fn[Msg] handle_picker_pointer(
-  state : @core.ViewStateContext,
-  event : @core.PointerEvent,
-  frame~ : @core.Rect,
-  popup_frame~ : @core.Rect?,
-  items~ : Array[PickerOption],
-  selected~ : @core.ControlledValue[String, Msg],
-) -> @core.ViewEventResult[Msg] {
-  let inside_button = frame.contains(event.position)
-  let inside_popup = match popup_frame {
-    Some(popup) => popup.contains(event.position)
-    None => false
-  }
-  let claim_focus = event.phase == Down &&
-    (inside_button || (state.expanded && inside_popup))
-  if state.expanded {
-    if event.phase == Up && inside_popup {
-      let hit_id = match popup_frame {
-        Some(popup) => picker_item_id_at_position(popup, event.position, items)
-        None => None
-      }
-      match hit_id {
-        Some(id) =>
-          picker_expanded_result(
-            state,
-            false,
-            changed=true,
-            activated=true,
-            focused=true,
-            messages=[selected.changed(id)],
-          )
-        None =>
-          picker_expanded_result(state, false, changed=true, focused=true)
-      }
-    } else if event.phase == Up && inside_button {
-      picker_expanded_result(state, false, changed=true, focused=true)
-    } else if event.phase == Up {
-      picker_expanded_result(state, false, changed=true)
-    } else if inside_button || inside_popup {
-      @common.view_event_result(
-        changed=true,
-        focused=claim_focus,
-        captured=true,
-      )
-    } else {
-      @core.ViewEventResult::ignored()
-    }
-  } else if event.phase == Up && inside_button {
-    picker_expanded_result(state, true, changed=true, focused=true)
-  } else if claim_focus {
-    @common.view_event_result(changed=true, focused=true, captured=true)
-  } else {
-    @core.ViewEventResult::ignored()
-  }
-}
-
-///|
-fn[Msg] handle_picker_keyboard(
-  state : @core.ViewStateContext,
-  event : @core.KeyboardEvent,
-  items~ : Array[PickerOption],
-  selected~ : @core.ControlledValue[String, Msg],
-) -> @core.ViewEventResult[Msg] {
-  if !event.pressed {
-    @core.ViewEventResult::ignored()
-  } else if event.key == "Escape" && state.expanded {
-    picker_expanded_result(state, false, changed=true)
-  } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
-    if state.expanded {
-      match picker_selected_id_or_first(items, selected.value()) {
-        Some(id) =>
-          picker_expanded_result(
-            state,
-            false,
-            changed=true,
-            activated=true,
-            messages=[selected.changed(id)],
-          )
-        None =>
-          picker_expanded_result(state, false, changed=true)
-      }
-    } else {
-      picker_expanded_result(state, true, changed=true)
-    }
-  } else {
-    @core.ViewEventResult::ignored()
-  }
 }
 
 ///|

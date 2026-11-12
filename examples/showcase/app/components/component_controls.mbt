@@ -177,6 +177,8 @@ fn picker_demo(
           ],
           selected=model.selected_density,
           on_select=value => SelectDensity(value),
+          expanded=model.density_picker_expanded,
+          on_expanded_change=open => SetDensityPickerExpanded(open),
           placeholder="Density",
         ).frame(width=inner, height=40.0),
         wrapped_text(

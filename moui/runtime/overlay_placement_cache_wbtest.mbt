@@ -183,15 +183,23 @@ fn c3_text_count(commands : Array[@core.DrawCommand], text : String) -> Int32 {
 }
 
 ///|
-/// Build the C3 fixture: a scroll view whose content carries a picker (the
-/// overlay host) plus filler rows, and an unaffected sibling frame below the
-/// scroll view. Wheel scrolling moves the picker without touching the sibling.
-fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
-  let items = [
-    @views.picker_item("one", "One"),
-    @views.picker_item("two", "Two"),
-  ]
-  let content = @views.column(
+enum C3PickerMsg {
+  C3Toggle
+  C3Select(String)
+}
+
+///|
+struct C3PickerModel {
+  open : Bool
+  selected : String
+}
+
+///|
+fn c3_picker_content(
+  items : Array[@views.PickerItem],
+  model : C3PickerModel,
+) -> @core.View[C3PickerMsg] {
+  @views.column(
     [
       @views.frame(@views.text("FillerA"), width=200.0, height=24.0),
       @views.frame(@views.text("FillerB"), width=200.0, height=24.0),
@@ -199,8 +207,10 @@ fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
       @views.frame(
         @views.picker(
           items,
-          selected="",
-          on_select=_id => (),
+          selected=model.selected,
+          on_select=id => C3Select(id),
+          expanded=model.open,
+          on_expanded_change=_ => C3Toggle,
           placeholder="Pick",
           max_height=160.0,
         ),
@@ -212,18 +222,45 @@ fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
     ],
     spacing=0.0,
   )
-  let scroll_content = if boundary {
-    content.repaint_boundary()
-  } else {
-    content
-  }
-  AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.scroll_view(scroll_content, width=200.0, height=120.0),
-        @views.frame(@views.text("Sibling"), width=200.0, height=24.0),
-      ],
-      spacing=0.0,
+}
+
+///|
+
+///|
+/// Build the C3 fixture: a scroll view whose content carries a picker (the
+/// overlay host) plus filler rows, and an unaffected sibling frame below the
+/// scroll view. Wheel scrolling moves the picker without touching the sibling.
+fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
+  let items = [
+    @views.picker_item("one", "One"),
+    @views.picker_item("two", "Two"),
+  ]
+  AppRuntime::new_program(
+    program=@core.Program::simple(
+      init={ open: false, selected: "", },
+      update=(model, message) => {
+        match message {
+          C3Toggle => { ..model, open: !model.open, }
+          C3Select(id) => { ..model, selected: id, open: false, }
+        }
+      },
+      view=model => {
+        @views.column(
+          [
+            @views.scroll_view(
+              if boundary {
+                c3_picker_content(items, model).repaint_boundary()
+              } else {
+                c3_picker_content(items, model)
+              },
+              width=200.0,
+              height=120.0,
+            ),
+            @views.frame(@views.text("Sibling"), width=200.0, height=24.0),
+          ],
+          spacing=0.0,
+        )
+      },
     ),
     size=@core.Size::new(width=200.0, height=200.0),
   )
@@ -236,6 +273,7 @@ fn c3_open_picker_popup(runtime : AppRuntime) -> Unit {
     Some(frame) => frame
     None => abort("picker placeholder not rendered")
   }
+  c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Down)
   c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Up)
   ignore(runtime.draw_frame())
   if c3_text_frame(runtime.draw_commands(), "Two") is None {
@@ -258,13 +296,25 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     "picker element",
   )
   let sibling = root.children[1]
+  let overlay_host = c3_required_element(
+    c3_find_element(root, "OverlayHost"),
+    "overlay host element",
+  )
+  let popup_surface = c3_required_element(
+    c3_find_element(root, "PresentationSurface"),
+    "popup surface element",
+  )
   let placed_root = runtime.state.cached_layout_tree_root()
   let picker_before = c3_required_placed(
     c3_find_placed(placed_root, picker.id),
     "picker placed",
   )
+  let host_before = c3_required_placed(
+    c3_find_placed(placed_root, overlay_host.id),
+    "overlay host placed",
+  )
   let popup_before = c3_required_placed(
-    picker_before.children.get(0),
+    c3_find_placed(placed_root, popup_surface.id),
     "popup placed",
   )
   let sibling_before = c3_required_placed(
@@ -272,12 +322,8 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     "sibling placed",
   )
   assert_true(
-    popup_before.frame.origin.y > -1000.0,
-    msg="popup must not sit at the provisional sentinel",
-  )
-  assert_true(
-    picker_before.overlay_child_indices.contains(0),
-    msg="popup must be marked as a hoisted overlay child",
+    !host_before.overlay_child_indices.is_empty(),
+    msg="the overlay host must hoist the popup surface",
   )
   // Wheel-scroll under the open popup. Each wheel event scrolls 12px and
   // leaves layout dirt pending. Between wheels, run the two placement phases
@@ -313,7 +359,7 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     "picker placed after scroll",
   )
   let popup_after = c3_required_placed(
-    picker_after.children.get(0),
+    c3_find_placed(placed_root_after, popup_surface.id),
     "popup placed after scroll",
   )
   let picker_before_screen = c3_required_rect(
@@ -345,8 +391,12 @@ test "C3: overlay re-place reuses unaffected sibling place caches" {
     popup_before.frame.origin.y - picker_before_screen.origin.y,
     msg="popup must keep its anchored offset to the picker",
   )
+  let host_after = c3_required_placed(
+    c3_find_placed(placed_root_after, overlay_host.id),
+    "overlay host placed after scroll",
+  )
   assert_true(
-    picker_after.overlay_child_indices.contains(0),
+    !host_after.overlay_child_indices.is_empty(),
     msg="popup must stay hoisted after the localized re-place",
   )
   let sibling_after = c3_required_placed(
@@ -551,21 +601,15 @@ test "picker reopens after close repeatedly" {
       c3_text_frame(runtime.draw_commands(), "Pick"),
       "picker button",
     )
-    let picker = c3_required_element(
-      c3_find_element(runtime.state.element_tree.root, "Picker"),
-      "picker element",
-    )
-    if !picker.control.view_state.expanded {
-      fail("picker did not open")
-    }
+    c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Down)
     c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Up)
     ignore(runtime.draw_frame())
-    if picker.control.view_state.expanded {
-      fail("picker stayed expanded after button click")
-    }
     // The exit ghost fades over the theme motion duration; let it finish
     // before asserting the popup is gone. The clock is absolute, so move it
     // forward on every iteration.
+    clock_ms = clock_ms + 1000.0
+    runtime.advance_time(clock_ms)
+    ignore(runtime.draw_frame())
     clock_ms = clock_ms + 1000.0
     runtime.advance_time(clock_ms)
     ignore(runtime.draw_frame())

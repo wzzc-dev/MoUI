@@ -81,23 +81,23 @@ impl @core.ViewNode for CustomLayout with fn declaration(self) {
 }
 
 ///|
-impl @core.ViewNode for Picker with fn declaration(self) {
+impl[Msg] @core.ViewNode for PickerTrigger[Msg] with fn declaration(self) {
   @common.view_declaration(
     paint=if self.style is Some(_) {
       Uncacheable
     } else {
       @common.views_theme_channel(
-        @common.view_record_key("Picker.paint", [
+        @common.view_record_key("PickerTrigger.paint", [
           ("items", picker_items_key(self.items)),
           ("selected", @core.DeclarationKey::string(self.selected)),
           ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-          ("max_height", @core.DeclarationKey::double(self.max_height)),
+          ("expanded", @core.DeclarationKey::bool(self.expanded)),
         ]),
         self.theme,
       )
     },
     semantics=@common.view_exact_channel(
-      @common.view_record_key("Picker.semantics", [
+      @common.view_record_key("PickerTrigger.semantics", [
         ("items", picker_items_key(self.items)),
         ("selected", @core.DeclarationKey::string(self.selected)),
         ("placeholder", @core.DeclarationKey::string(self.placeholder)),

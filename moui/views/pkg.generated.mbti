@@ -124,7 +124,7 @@ pub fn[Msg] data_grid_semantics(@core.View[Msg], row_count~ : Int32, column_coun
 
 pub fn data_grid_viewport(first_row~ : Int32, last_row~ : Int32, first_column~ : Int32, last_column~ : Int32, row_count~ : Int32, column_count~ : Int32, overscan_rows? : Int32, overscan_columns? : Int32, freeze? : @data.DataGridFreezePanes) -> @data.DataGridViewport
 
-pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, expanded~ : Bool, on_expanded_change~ : (Bool) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn default_theme() -> @core.Theme
 
@@ -254,7 +254,7 @@ pub fn[Msg] pagination(page~ : Int32, page_count~ : Int32, on_previous~ : Msg, o
 
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, expanded~ : Bool, on_expanded_change~ : (Bool) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @style.PickerItem
 

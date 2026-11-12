@@ -46,6 +46,7 @@ pub(all) struct DesignSystemsModel {
   density : @common.DesignDensity
   custom_enabled : Bool
   selected_component : String
+  component_picker_expanded : Bool
   draft : String
 }
 
@@ -56,6 +57,7 @@ pub(all) enum DesignSystemsMsg {
   SelectVariant(String)
   SelectDensity(String)
   SelectComponent(String)
+  SetComponentPickerExpanded(Bool)
   ToggleCustom
   DraftChanged(String)
 }
@@ -74,6 +76,7 @@ pub fn DesignSystemsModel::new() -> DesignSystemsModel {
     density: Standard,
     custom_enabled: false,
     selected_component: "button",
+    component_picker_expanded: false,
     draft: "Token override",
   }
 }
@@ -89,6 +92,8 @@ pub fn DesignSystemsModel::update(
     SelectVariant(id) => { ..self, variant: design_variant_from_id(id), }
     SelectDensity(id) => { ..self, density: design_density_from_id(id), }
     SelectComponent(id) => { ..self, selected_component: id, }
+    SetComponentPickerExpanded(open) =>
+      { ..self, component_picker_expanded: open, }
     ToggleCustom => { ..self, custom_enabled: !self.custom_enabled, }
     DraftChanged(value) => { ..self, draft: value, }
   }
@@ -526,6 +531,8 @@ fn DesignSystemsModel::component_matrix_panel(
       ],
       selected=self.selected_component,
       on_select=id => SelectComponent(id),
+      expanded=self.component_picker_expanded,
+      on_expanded_change=open => SetComponentPickerExpanded(open),
       max_height=160.0,
     ).frame(width=240.0, height=40.0),
     // Primary + tonal + outline + ghost button variants. The button resolves

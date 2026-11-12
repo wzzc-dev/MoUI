@@ -263,45 +263,115 @@ test "virtual node checkbox controlled event dispatches without core primitive" 
 }
 
 ///|
-test "virtual node picker dispatches overlay selection without core primitive" {
-  let received : Array[String] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    // Column wrapper: a root-level frame stretches to the window constraints,
-    // which would put the picker's own frame under the click point.
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
-    // The window is tall enough for the popup to fit below the anchor: the
-    // placement pass clamps popups into the viewport instead of painting them
-    // beyond the window edge like the old overlay-command popups.
-    size=@core.Size::new(width=200.0, height=160.0),
-    on_message=Some(message => received.push(message)),
-  )
-  ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=Up,
+fn view_picker_click(
+  runtime : @runtime.AppRuntime,
+  x : Double,
+  y : Double,
+) -> Unit {
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Down),
       ),
     ),
   )
-  // Opening re-runs layout (the popup becomes a placed overlay child) and the
-  // relayout completes inside dispatch, so the observable is a pending redraw
-  // at the runtime level rather than a stale per-node dirty flag.
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Up),
+      ),
+    ),
+  )
+}
+
+///|
+
+///|
+enum ViewPickerTestMsg {
+  ViewPickerOpen(Bool)
+  ViewPickerSelect(String)
+  ViewPickerCovered
+  ViewPickerField(String)
+}
+
+///|
+struct ViewPickerTestModel {
+  open : Bool
+  selected : String
+  field : String
+}
+
+///|
+fn view_picker_test_runtime(
+  received : Array[String],
+  extra : (ViewPickerTestModel) -> @core.View[ViewPickerTestMsg],
+  size~ : @core.Size,
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init={
+        open: false,
+        selected: "one",
+        field: "line one\nline two\nline three",
+      },
+      update=(model, message) => {
+        match message {
+          ViewPickerOpen(open) => { ..model, open, }
+          ViewPickerSelect(id) => {
+            received.push(id)
+            { ..model, selected: id, open: false, }
+          }
+          ViewPickerCovered => {
+            received.push("covered")
+            model
+          }
+          ViewPickerField(value) => {
+            received.push("field")
+            { ..model, field: value, }
+          }
+        }
+      },
+      view=model => {
+        @views.column(
+          [
+            @views.frame(
+              @views.picker(
+                [
+                  @views.picker_item("one", "One"),
+                  @views.picker_item("two", "Two"),
+                ],
+                selected=model.selected,
+                on_select=id => ViewPickerSelect(id),
+                expanded=model.open,
+                on_expanded_change=open => ViewPickerOpen(open),
+                placeholder="Pick",
+                max_height=160.0,
+              ),
+              width=200.0,
+              height=40.0,
+            ),
+            extra(model),
+          ],
+          spacing=0.0,
+        )
+      },
+    ),
+    size~,
+  )
+}
+
+///|
+
+///|
+test "virtual node picker dispatches overlay selection without core primitive" {
+  let received : Array[String] = []
+  let runtime = view_picker_test_runtime(
+    received,
+    _ => @views.spacer(min_length=0.0),
+    size=@core.Size::new(width=200.0, height=160.0),
+  )
+  ignore(runtime.draw_frame())
+  view_picker_click(runtime, 12.0, 12.0)
   if !(runtime.needs_paint() || runtime.needs_redraw()) {
     fail("expected opening picker to request a repaint")
   }
@@ -318,14 +388,8 @@ test "virtual node picker dispatches overlay selection without core primitive" {
     fail("expected picker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  // Node order shifted with the wrapper: frame -> picker. The picker keeps
-  // its virtual-node identity across the popup child subtree.
-  match snapshot.view_tree().nodes().get(2) {
-    Some(node) =>
-      if node.kind() != "Picker" {
-        fail("expected picker virtual node identity in inspector")
-      }
-    None => fail("expected picker inspector node")
+  if !snapshot.view_tree().nodes().any(node => node.kind() == "Picker") {
+    fail("expected picker virtual node identity in inspector")
   }
   if snapshot.view_tree().root_kind() != "Flex" {
     fail("expected picker virtual node identity in inspector")
@@ -335,41 +399,20 @@ test "virtual node picker dispatches overlay selection without core primitive" {
 ///|
 test "picker overlay receives pointer events before covered siblings" {
   let received : Array[String] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-        @views.button(
-          "Covered action",
-          on_click="covered",
-          width=200.0,
-          height=120.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
+  let runtime = view_picker_test_runtime(
+    received,
+    _ => {
+      @views.button(
+        "Covered action",
+        on_click=ViewPickerCovered,
+        width=200.0,
+        height=120.0,
+      )
+    },
     size=@core.Size::new(width=200.0, height=160.0),
-    on_message=Some(message => received.push(message)),
   )
   ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=Up,
-      ),
-    ),
-  )
+  view_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
     Pointer(
@@ -386,40 +429,22 @@ test "picker overlay receives pointer events before covered siblings" {
 
 ///|
 test "picker overlay keeps focus off covered text field on pointer down" {
-  // Reproduces playground: expanded picker popup paints over a later sibling
-  // text field. Pointer Down must not focus the covered field (which would move
-  // its caret), and selection Up must still hit the picker overlay.
+  // Reproduces playground: an open picker popup paints over a later sibling
+  // text field. Pointer Down must not focus the covered field, and selection
+  // Up must still hit the picker overlay.
   let received : Array[String] = []
-  let mut field_value = "line one\nline two\nline three"
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-        @views.text_field(
-          field_value,
-          on_input=value => {
-            field_value = value
-            "field"
-          },
-          placeholder="Covered field",
-          width=200.0,
-          height=120.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
+  let runtime = view_picker_test_runtime(
+    received,
+    model => {
+      @views.text_field(
+        model.field,
+        on_input=value => ViewPickerField(value),
+        placeholder="Covered field",
+        width=200.0,
+        height=120.0,
+      )
+    },
     size=@core.Size::new(width=200.0, height=160.0),
-    on_message=Some(message => received.push(message)),
   )
   ignore(runtime.draw_frame())
   // Focus the text field first (click inside it while picker is closed).
@@ -444,14 +469,7 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   }
   let caret_before = runtime.focused_text_input().caret
   // Open picker.
-  runtime.dispatch_event(
-    Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=Up,
-      ),
-    ),
-  )
+  view_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   // Down on the popup (over the covered field). Focus must leave the field so
   // caret placement under the popup cannot run.
@@ -477,50 +495,76 @@ test "picker overlay keeps focus off covered text field on pointer down" {
   if received != ["two"] {
     fail("expected picker overlay selection while covering a text field")
   }
-  // Covered field must not have been edited by the popup click.
-  if field_value != "line one\nline two\nline three" {
-    fail("expected covered text field value to stay unchanged")
+  if runtime.focused_text_input().caret != caret_before &&
+    runtime.focused_text_input().focused {
+    fail("covered field caret must not move under the popup")
   }
-  ignore(caret_before)
+}
+
+///|
+
+///|
+enum ViewDatePickerTestMsg {
+  ViewDatePickerOpen(Bool)
+  ViewDatePickerSelect(@core.DateValue)
+}
+
+///|
+struct ViewDatePickerTestModel {
+  open : Bool
+  selected : @core.DateValue
+}
+
+///|
+fn view_datepicker_test_runtime(
+  received : Array[@core.DateValue],
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=(
+        {
+          open: false,
+          selected: @core.DateValue::new(year=2024, month=1, day=15),
+        } : ViewDatePickerTestModel),
+      update=(model, message) => {
+        match message {
+          ViewDatePickerOpen(open) => { ..model, open, }
+          ViewDatePickerSelect(value) => {
+            received.push(value)
+            { ..model, selected: value, open: false, }
+          }
+        }
+      },
+      view=model => {
+        @views.column(
+          [
+            @views.frame(
+              @views.datepicker(
+                selected=model.selected,
+                on_select=value => ViewDatePickerSelect(value),
+                expanded=model.open,
+                on_expanded_change=open => ViewDatePickerOpen(open),
+                mode=Date,
+                placeholder="Select date",
+              ),
+              width=200.0,
+              height=40.0,
+            ),
+          ],
+          spacing=0.0,
+        )
+      },
+    ),
+    size=@core.Size::new(width=280.0, height=420.0),
+  )
 }
 
 ///|
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    // Column wrapper: a root-level frame stretches to the window constraints,
-    // which would put the datepicker's own frame under the click point.
-    root=@views.column(
-      [
-        @views.frame(
-          @views.datepicker(
-            selected=@core.DateValue::new(year=2024, month=1, day=15),
-            on_select=value => value,
-            mode=Date,
-            placeholder="Select date",
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
-    // The window is tall enough for the calendar panel to fit below the
-    // anchor: the placement pass clamps popups into the viewport instead of
-    // painting them beyond the window edge like the old overlay-command
-    // popups.
-    size=@core.Size::new(width=280.0, height=420.0),
-    on_message=Some(message => received.push(message)),
-  )
+  let runtime = view_datepicker_test_runtime(received)
   ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=Up,
-      ),
-    ),
-  )
+  view_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   runtime.dispatch_event(
     Pointer(
@@ -534,13 +578,8 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
     fail("expected datepicker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  // Node order: column -> frame -> datepicker.
-  match snapshot.view_tree().nodes().get(2) {
-    Some(node) =>
-      if node.kind() != "DatePicker" {
-        fail("expected datepicker virtual node identity in inspector")
-      }
-    None => fail("expected datepicker inspector node")
+  if !snapshot.view_tree().nodes().any(node => node.kind() == "DatePicker") {
+    fail("expected datepicker virtual node identity in inspector")
   }
 }
 

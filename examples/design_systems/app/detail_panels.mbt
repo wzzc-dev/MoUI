@@ -115,6 +115,8 @@ fn DesignSystemsModel::sickle_component_matrix_panel(
         ],
         selected=self.selected_component,
         on_select=id => SelectComponent(id),
+        expanded=self.component_picker_expanded,
+        on_expanded_change=open => SetComponentPickerExpanded(open),
         max_height=160.0,
       ).frame(width=240.0, height=40.0),
       row(

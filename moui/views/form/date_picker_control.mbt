@@ -67,6 +67,8 @@ fn datepicker_view_date_slot() -> @core.ViewStateSlot[DatePickerViewDateState] {
 fn[Msg] date_picker_control(
   selected~ : @core.DateValue,
   mode~ : DatePickerDisplayMode,
+  expanded~ : Bool,
+  on_expanded_change~ : (Bool) -> Msg,
   placeholder~ : String,
   theme? : @core.Theme,
   style? : @style.PickerStyle,
@@ -77,132 +79,102 @@ fn[Msg] date_picker_control(
   key~ : String? = None,
 ) -> @core.View[Msg] {
   let selected_snapshot = selected
-  @core.View::from_node(
-    DatePicker::{
+  let trigger = @core.View::from_node(
+    DatePickerTrigger::{
       selected: selected_snapshot,
       mode,
       placeholder,
       theme,
       style,
-      min_date,
-      max_date,
+      expanded,
+      on_expanded_change,
       kind,
       key,
     },
-    children=_node => {
+    event=(node, ctx) => datepicker_trigger_event(node, ctx),
+    semantics_actions=node => {
       [
-        @core.View::from_node(
-          DatePickerPanel::{
-            selected: selected_snapshot,
-            min_date,
-            max_date,
-            on_select,
-            theme,
-            style,
-          },
-          event=(node, ctx) => datepicker_panel_event(node, ctx),
-        ),
-      ]
-    },
-    event=(node, ctx) => date_picker_event(node, ctx, selected, on_select),
-    semantics_actions=_node => {
-      [
-        @core.ViewSemanticsActionHandler::activate(ctx => {
-          @core.ViewSemanticsActionResult::accepted(
-            state=Some({ ..ctx.state, expanded: !ctx.state.expanded, }),
-            dirty=ViewLayoutDirty,
+        @core.ViewSemanticsActionHandler::activate(_ctx => {
+          @core.ViewSemanticsActionResult::message(
+            (node.on_expanded_change)(!node.expanded),
           )
         }),
       ]
     },
   )
+  let panel = @core.View::from_node(
+    DatePickerPanel::{
+      selected: selected_snapshot,
+      min_date,
+      max_date,
+      on_select,
+      theme,
+      style,
+    },
+    event=(node, ctx) => {
+      let result = datepicker_panel_event(node, ctx)
+      if result.messages.is_empty() {
+        result
+      } else {
+        { ..result, messages: result.messages + [on_expanded_change(false)], }
+      }
+    },
+  )
+  let popup = @presentation.PresentationSpec::new(
+    id="datepicker-popup",
+    kind=Popover,
+    content=panel,
+    anchor=HostBase,
+    placement=Some(
+      @presentation.PresentationPlacement::new(
+        candidates=[BelowStart, AboveStart],
+        viewport_insets=@core.Insets::all(0.0),
+      ),
+    ),
+    modality=NonModal,
+    dismiss=@presentation.PresentationDismissPolicy::new(
+      outside_tap=true,
+      escape=true,
+      system_back=true,
+      host_close=true,
+      message=Some(on_expanded_change(false)),
+    ),
+    transition=Fade,
+    presented=expanded,
+  )
+  @presentation.popup_host(trigger, [popup])
 }
 
 ///|
-priv struct DatePicker {
+/// The datepicker trigger. The calendar panel lives in `popup_host`, not in
+/// this node's child layout, so opening and closing no longer changes parent
+/// layout or its place cache.
+priv struct DatePickerTrigger[Msg] {
   selected : @core.DateValue
   mode : DatePickerDisplayMode
   placeholder : String
   theme : @core.Theme?
   style : @style.PickerStyle?
-  min_date : @core.DateValue?
-  max_date : @core.DateValue?
+  expanded : Bool
+  on_expanded_change : (Bool) -> Msg
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn identity(self) {
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn layout(_self, ctx) {
-  let own = ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0))
-  // The calendar panel is a real child subtree. Collapsed it receives no
-  // frame (not placed, painted, hit-tested, or exposed to semantics);
-  // expanded, the post-layout placement pass resolves its absolute frame.
-  let child_frames = if ctx.state.expanded {
-    let panel_size = if ctx.child_sizes.length() > 0 {
-      ctx.child_sizes[0]
-    } else {
-      @core.Size::new(
-        width=datepicker_popup_width(0.0),
-        height=datepicker_popup_height(),
-      )
-    }
-    [
-      @core.Rect::new(
-        x=0.0,
-        y=-100000.0,
-        width=panel_size.width,
-        height=panel_size.height,
-      ),
-    ]
-  } else {
-    []
-  }
-  @core.ViewLayoutResult::new(size=own, child_frames~)
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+  )
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn child_constraints(
-  _self,
-  _constraints,
-) {
-  // The panel sizes to its own content; parent constraints (tight at place
-  // time) must not clamp it.
-  @core.Constraints::unbounded()
-}
-
-///|
-impl @core.ViewNode for DatePicker with fn place_overlays(_self, context) {
-  if !context.state.expanded {
-    return None
-  }
-  if context.child_sizes.is_empty() {
-    return None
-  }
-  let natural = context.child_sizes[0]
-  let content_size = @core.Size::new(
-    width=@common.view_max_double(natural.width, context.host_frame.size.width),
-    height=natural.height,
-  )
-  let placement = @presentation.PresentationPlacement::new(
-    candidates=[BelowStart, AboveStart],
-    viewport_insets=@core.Insets::all(0.0),
-  )
-  let frame = placement.resolve(
-    context.host_frame,
-    context.viewport,
-    content_size,
-    direction=context.layout_direction,
-  )
-  Some([(0, frame)])
-}
-
-///|
-impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn paint(self, ctx) {
   let resolved_theme = ctx.effective_theme(pinned=self.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -219,14 +191,14 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
     foreground=resolved_style.foreground,
     background=resolved_style.background,
     corner_radius=resolved_style.radius,
-    expanded=ctx.state.expanded,
+    expanded=self.expanded,
     theme=resolved_theme,
   )
   { ..@core.ViewPaintPlan::empty(), commands, }
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn semantics(self) {
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn semantics(self) {
   @core.ViewSemanticsInfo::leaf(
     role=Menu,
     label=self.placeholder,
@@ -235,27 +207,67 @@ impl @core.ViewNode for DatePicker with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn focusable(_self) {
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn focusable(_self) {
   true
 }
 
 ///|
-fn[Msg] date_picker_event(
-  _node : DatePicker,
+fn datepicker_trigger_press_slot() -> @core.ViewStateSlot[Bool] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.date-picker.trigger-pressed"),
+    initial=false,
+  )
+}
+
+///|
+
+///|
+fn[Msg] datepicker_trigger_event(
+  node : DatePickerTrigger[Msg],
   ctx : @core.ViewEventContext,
-  selected : @core.DateValue,
-  _on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     Pointer(event) =>
-      handle_datepicker_pointer(
-        ctx.state,
-        event,
-        frame=ctx.frame,
-        popup_frame=ctx.child_frames.get(0),
-        selected~,
-      )
-    Keyboard(event) => handle_datepicker_keyboard(ctx.state, event, selected~)
+      if event.phase == Down && ctx.frame.contains(event.position) {
+        @common.view_event_result(
+          changed=true,
+          focused=true,
+          captured=true,
+          state=Some(ctx.state.with_slot(datepicker_trigger_press_slot(), true)),
+        )
+      } else if event.phase == Up && ctx.frame.contains(event.position) {
+        if ctx.state.read_slot(datepicker_trigger_press_slot()) {
+          @common.view_event_result(
+            changed=true,
+            focused=true,
+            captured=true,
+            state=Some(ctx.state.without_slot(datepicker_trigger_press_slot())),
+            messages=[(node.on_expanded_change)(!node.expanded)],
+            dirty=ViewPaintDirty,
+          )
+        } else {
+          @core.ViewEventResult::ignored()
+        }
+      } else if ctx.state.read_slot(datepicker_trigger_press_slot()) {
+        @common.view_event_result(
+          state=Some(ctx.state.without_slot(datepicker_trigger_press_slot())),
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    Keyboard(event) =>
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        @common.view_event_result(
+          changed=true,
+          focused=true,
+          captured=true,
+          messages=[(node.on_expanded_change)(!node.expanded)],
+          dirty=ViewPaintDirty,
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
     _ => @core.ViewEventResult::ignored()
   }
 }
@@ -321,63 +333,6 @@ fn append_datepicker_commands(
 }
 
 ///|
-fn[Msg] handle_datepicker_pointer(
-  state : @core.ViewStateContext,
-  event : @core.PointerEvent,
-  frame~ : @core.Rect,
-  popup_frame~ : @core.Rect?,
-  selected~ : @core.DateValue,
-) -> @core.ViewEventResult[Msg] {
-  let main_button_clicked = event.phase == Up && frame.contains(event.position)
-  let panel_hit = match popup_frame {
-    Some(popup) => popup.contains(event.position)
-    None => false
-  }
-  let inside_panel = state.expanded && panel_hit
-  // Panel interactions (month nav, day selection) are handled by the panel
-  // subtree itself; this handler only toggles and closes the popup.
-  let claim_focus = event.phase == Down && frame.contains(event.position)
-  if state.expanded {
-    if main_button_clicked && !inside_panel {
-      @common.view_event_result(
-        changed=true,
-        focused=true,
-        captured=true,
-        state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=ViewLayoutDirty,
-      )
-    } else if event.phase == Up {
-      @common.view_event_result(
-        changed=true,
-        captured=true,
-        state=Some(datepicker_state(state, expanded=false, selected)),
-        dirty=ViewLayoutDirty,
-      )
-    } else if frame.contains(event.position) {
-      @common.view_event_result(
-        changed=true,
-        focused=claim_focus,
-        captured=true,
-      )
-    } else {
-      @core.ViewEventResult::ignored()
-    }
-  } else if main_button_clicked {
-    @common.view_event_result(
-      changed=true,
-      focused=true,
-      captured=true,
-      state=Some(datepicker_state(state, expanded=true, selected)),
-      dirty=ViewLayoutDirty,
-    )
-  } else if claim_focus {
-    @common.view_event_result(changed=true, focused=true, captured=true)
-  } else {
-    @core.ViewEventResult::ignored()
-  }
-}
-
-///|
 /// Panel-local pointer handling. Month navigation keeps the popup open
 /// (`activated=true` stops the parent datepicker from closing it); day
 /// selection deliberately does NOT activate so the parent's close branch also
@@ -399,7 +354,7 @@ fn[Msg] handle_datepicker_panel_pointer(
       activated=true,
       focused=true,
       captured=true,
-      state=Some(datepicker_state(state, expanded=true, next_view)),
+      state=Some(datepicker_panel_state(state, next_view)),
       dirty=ViewPaintDirty,
     )
   } else if datepicker_right_nav_frame(panel_frame).contains(event.position) {
@@ -409,7 +364,7 @@ fn[Msg] handle_datepicker_panel_pointer(
       activated=true,
       focused=true,
       captured=true,
-      state=Some(datepicker_state(state, expanded=true, next_view)),
+      state=Some(datepicker_panel_state(state, next_view)),
       dirty=ViewPaintDirty,
     )
   } else {
@@ -427,7 +382,7 @@ fn[Msg] handle_datepicker_panel_pointer(
             changed=true,
             focused=true,
             captured=true,
-            state=Some(datepicker_state(state, expanded=true, next)),
+            state=Some(datepicker_panel_state(state, next)),
             dirty=ViewPaintDirty,
             messages=datepicker_messages(on_select, next),
           )
@@ -438,33 +393,6 @@ fn[Msg] handle_datepicker_panel_pointer(
       None =>
         @common.view_event_result(changed=true, focused=true, captured=true)
     }
-  }
-}
-
-///|
-fn[Msg] handle_datepicker_keyboard(
-  state : @core.ViewStateContext,
-  event : @core.KeyboardEvent,
-  selected~ : @core.DateValue,
-) -> @core.ViewEventResult[Msg] {
-  if !event.pressed {
-    @core.ViewEventResult::ignored()
-  } else if event.key == "Escape" && state.expanded {
-    @common.view_event_result(
-      changed=true,
-      captured=true,
-      state=Some(datepicker_state(state, expanded=false, selected)),
-      dirty=ViewLayoutDirty,
-    )
-  } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
-    @common.view_event_result(
-      changed=true,
-      captured=true,
-      state=Some(datepicker_state(state, expanded=!state.expanded, selected)),
-      dirty=ViewLayoutDirty,
-    )
-  } else {
-    @core.ViewEventResult::ignored()
   }
 }
 
@@ -480,12 +408,11 @@ fn[Msg] datepicker_messages(
 }
 
 ///|
-fn datepicker_state(
+fn datepicker_panel_state(
   state : @core.ViewStateContext,
-  expanded~ : Bool,
   view_date : @core.DateValue,
 ) -> @core.ViewStateContext {
-  { ..state, expanded, }.with_slot(
+  state.with_slot(
     datepicker_view_date_slot(),
     Month(view_date.year, view_date.month),
   )
@@ -691,13 +618,6 @@ fn datepicker_value_key(value : @core.DateValue) -> @core.DeclarationKey {
     ("minute", @core.DeclarationKey::int(value.minute)),
     ("second", @core.DeclarationKey::int(value.second)),
   ])
-}
-
-///|
-fn datepicker_value_option_key(
-  value : @core.DateValue?,
-) -> @core.DeclarationKey {
-  @core.DeclarationKey::option(value.map(datepicker_value_key))
 }
 
 ///|

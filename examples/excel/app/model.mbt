@@ -24,6 +24,7 @@ pub(all) struct ExcelModel {
   autocomplete_index : Int32
   last_clipboard_text : String
   last_clipboard_from_app : Bool
+  num_format_picker_expanded : Bool
 }
 
 ///|
@@ -72,6 +73,7 @@ pub(all) enum ExcelMsg {
   ToggleHeatMap
   SetCellBgColor(String)
   SetCellFormat(@cell.NumFormat)
+  SetNumFormatPickerExpanded(Bool)
   ClearCell
   AddSheet
   DeleteSheet(Int32)
@@ -193,6 +195,7 @@ pub fn ExcelModel::from_workbook(
     autocomplete_index: 0,
     last_clipboard_text: "",
     last_clipboard_from_app: false,
+    num_format_picker_expanded: false,
   }
 }
 

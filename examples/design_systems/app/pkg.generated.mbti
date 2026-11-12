@@ -44,6 +44,7 @@ pub(all) struct DesignSystemsModel {
   density : @common.DesignDensity
   custom_enabled : Bool
   selected_component : String
+  component_picker_expanded : Bool
   draft : String
 }
 pub fn DesignSystemsModel::new() -> Self
@@ -59,6 +60,7 @@ pub(all) enum DesignSystemsMsg {
   SelectVariant(String)
   SelectDensity(String)
   SelectComponent(String)
+  SetComponentPickerExpanded(Bool)
   ToggleCustom
   DraftChanged(String)
 }

@@ -48,6 +48,12 @@ Verification so far:
   guidance, doc references pass. `validate-window-dependency` still reports the
   pre-existing `examples/momark` pin mismatch (`0.5.4-0.2.5` vs `0.5.4-0.2.8`).
 
+Control-popup follow-up: the picker and date picker now compose
+`popup_host` + `PresentationSpec` instead of owning layout-child popups.
+Opening/closing is presentation state, so it no longer dirties the parent
+layout; outside tap, Escape, focus behavior, and enter/exit ghosts come from the
+shared overlay stack. See ADR 0070 and `docs/custom-control-sdk.md`.
+
 Follow-up landed: `controlled_markdown_session_editor` now takes one
 `MarkdownEditorScrollMode` (`Element` or `App`) instead of the independent
 `scroll_glide` / `on_scroll` / `transient_scroll` knobs, so invalid ownership

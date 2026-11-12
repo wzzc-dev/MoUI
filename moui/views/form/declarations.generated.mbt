@@ -5,24 +5,23 @@
 //   node scripts/generate-view-declarations.mjs
 
 ///|
-impl @core.ViewNode for DatePicker with fn declaration(self) {
+impl[Msg] @core.ViewNode for DatePickerTrigger[Msg] with fn declaration(self) {
   @common.view_declaration(
     paint=if self.style is Some(_) {
       Uncacheable
     } else {
       @common.views_theme_channel(
-        @common.view_record_key("DatePicker.paint", [
+        @common.view_record_key("DatePickerTrigger.paint", [
           ("selected", datepicker_value_key(self.selected)),
           ("mode", datepicker_mode_key(self.mode)),
           ("placeholder", @core.DeclarationKey::string(self.placeholder)),
-          ("min_date", datepicker_value_option_key(self.min_date)),
-          ("max_date", datepicker_value_option_key(self.max_date)),
+          ("expanded", @core.DeclarationKey::bool(self.expanded)),
         ]),
         self.theme,
       )
     },
     semantics=@common.view_exact_channel(
-      @common.view_record_key("DatePicker.semantics", [
+      @common.view_record_key("DatePickerTrigger.semantics", [
         ("selected", datepicker_value_key(self.selected)),
         ("mode", datepicker_mode_key(self.mode)),
         ("placeholder", @core.DeclarationKey::string(self.placeholder)),

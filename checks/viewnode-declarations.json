@@ -656,13 +656,15 @@
       }
     },
     {
-      "node": "DatePicker",
+      "node": "DatePickerTrigger",
       "package": "moui/views/form",
+      "generic": true,
+      "self": "self",
       "declaration": {
         "paint": {
           "kind": "theme_pinned",
           "style_pins_uncacheable": true,
-          "record": "DatePicker.paint",
+          "record": "DatePickerTrigger.paint",
           "fields": [
             {
               "name": "selected",
@@ -682,22 +684,15 @@
               "path": "placeholder"
             },
             {
-              "name": "min_date",
-              "enc": "custom",
-              "fn": "datepicker_value_option_key",
-              "path": "min_date"
-            },
-            {
-              "name": "max_date",
-              "enc": "custom",
-              "fn": "datepicker_value_option_key",
-              "path": "max_date"
+              "name": "expanded",
+              "enc": "bool",
+              "path": "expanded"
             }
           ]
         },
         "semantics": {
           "kind": "exact",
-          "record": "DatePicker.semantics",
+          "record": "DatePickerTrigger.semantics",
           "fields": [
             {
               "name": "selected",
@@ -1163,13 +1158,15 @@
       }
     },
     {
-      "node": "Picker",
+      "node": "PickerTrigger",
       "package": "moui/views/controls",
+      "generic": true,
+      "self": "self",
       "declaration": {
         "paint": {
           "kind": "theme_pinned",
           "style_pins_uncacheable": true,
-          "record": "Picker.paint",
+          "record": "PickerTrigger.paint",
           "fields": [
             {
               "name": "items",
@@ -1188,15 +1185,15 @@
               "path": "placeholder"
             },
             {
-              "name": "max_height",
-              "enc": "double",
-              "path": "max_height"
+              "name": "expanded",
+              "enc": "bool",
+              "path": "expanded"
             }
           ]
         },
         "semantics": {
           "kind": "exact",
-          "record": "Picker.semantics",
+          "record": "PickerTrigger.semantics",
           "fields": [
             {
               "name": "items",

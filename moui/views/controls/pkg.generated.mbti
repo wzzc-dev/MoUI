@@ -85,7 +85,7 @@ pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Doubl
 
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, expanded~ : Bool, on_expanded_change~ : (Bool) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @style.PickerItem
 

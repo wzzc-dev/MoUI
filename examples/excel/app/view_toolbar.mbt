@@ -71,6 +71,8 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
               ],
               selected=number_format_id(format.num_format),
               on_select=id => SetCellFormat(number_format_from_id(id)),
+              expanded=model.num_format_picker_expanded,
+              on_expanded_change=open => SetNumFormatPickerExpanded(open),
             ),
             @views.divider(),
             group_label("Color", theme),

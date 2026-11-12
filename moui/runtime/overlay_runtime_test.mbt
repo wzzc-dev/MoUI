@@ -281,39 +281,94 @@ test "nested overlay hosts dismiss top-most first" {
 }
 
 ///|
-test "closing a picker popup retains a fading ghost then prunes it" {
-  let received : Array[String] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
-    size=@core.Size::new(width=200.0, height=160.0),
-    on_message=Some(message => received.push(message)),
-  )
-  ignore(runtime.draw_frame())
+fn ghost_picker_click(
+  runtime : @runtime.AppRuntime,
+  x : Double,
+  y : Double,
+) -> Unit {
   ignore(
     runtime.dispatch_event(
       Pointer(
-        @core.PointerEvent::new(
-          position=@core.Point::new(x=12.0, y=12.0),
-          phase=Up,
-        ),
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Down),
       ),
     ),
   )
+  ignore(
+    runtime.dispatch_event(
+      Pointer(
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Up),
+      ),
+    ),
+  )
+}
+
+///|
+
+///|
+enum GhostPickerMsg {
+  GhostPickerOpen(Bool)
+  GhostPickerSelect(String)
+}
+
+///|
+struct GhostPickerModel {
+  open : Bool
+  selected : String
+}
+
+///|
+fn ghost_picker_runtime(
+  environment~ : @core.Environment = @core.Environment::neutral(),
+  padding~ : (Double, Double)? = None,
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=({ open: false, selected: "one", } : GhostPickerModel),
+      update=(model, message) => {
+        match message {
+          GhostPickerOpen(open) => { ..model, open, }
+          GhostPickerSelect(id) => { ..model, selected: id, open: false, }
+        }
+      },
+      view=model => {
+        let body = @views.column(
+          [
+            @views.frame(
+              @views.picker(
+                [
+                  @views.picker_item("one", "One"),
+                  @views.picker_item("two", "Two"),
+                  @views.picker_item("three", "Three"),
+                ],
+                selected=model.selected,
+                on_select=id => GhostPickerSelect(id),
+                expanded=model.open,
+                on_expanded_change=open => GhostPickerOpen(open),
+                placeholder="Pick",
+                max_height=160.0,
+              ),
+              width=200.0,
+              height=40.0,
+            ),
+          ],
+          spacing=0.0,
+        )
+        match padding {
+          Some((top, left)) => @views.padding_edges(body, top~, left~)
+          None => body
+        }
+      },
+    ),
+    size=@core.Size::new(width=200.0, height=160.0),
+    environment~,
+  )
+}
+
+///|
+test "closing a picker popup retains a fading ghost then prunes it" {
+  let runtime = ghost_picker_runtime()
+  ignore(runtime.draw_frame())
+  ghost_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   let has_fade = () => {
     runtime
@@ -346,38 +401,9 @@ test "closing a picker popup retains a fading ghost then prunes it" {
 
 ///|
 test "overlay exit ghost follows the theme motion duration" {
-  let received : Array[String] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
-    size=@core.Size::new(width=200.0, height=160.0),
-    on_message=Some(message => received.push(message)),
-  )
+  let runtime = ghost_picker_runtime()
   ignore(runtime.draw_frame())
-  ignore(
-    runtime.dispatch_event(
-      Pointer(
-        @core.PointerEvent::new(
-          position=@core.Point::new(x=12.0, y=12.0),
-          phase=Up,
-        ),
-      ),
-    ),
-  )
+  ghost_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   let has_fade = () => {
     runtime
@@ -428,49 +454,25 @@ fn overlay_text_frame(
 
 ///|
 test "overlay exit ghost keeps its screen placement" {
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.padding_edges(
-      @views.frame(
-        @views.picker(
-          [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-          selected="one",
-          on_select=id => id,
-          placeholder="Pick",
-          max_height=160.0,
-        ),
-        width=200.0,
-        height=40.0,
-      ),
-      top=80.0,
-      left=120.0,
-    ),
-    size=@core.Size::new(width=400.0, height=300.0),
-  )
+  let runtime = ghost_picker_runtime(padding=Some((80.0, 120.0)))
   ignore(runtime.draw_frame())
-  ignore(
-    runtime.dispatch_event(
-      Pointer(
-        @core.PointerEvent::new(
-          position=@core.Point::new(x=132.0, y=92.0),
-          phase=Up,
-        ),
-      ),
-    ),
-  )
+  ghost_picker_click(runtime, 132.0, 92.0)
   ignore(runtime.draw_frame())
   let item = match overlay_text_frame(runtime.draw_commands(), "Two") {
     Some(frame) => frame
     None => abort("popup item was not painted")
   }
-  assert_true(item.origin.x >= 120.0)
-  assert_true(item.origin.y > 0.0)
+  let third = match overlay_text_frame(runtime.draw_commands(), "Three") {
+    Some(frame) => frame
+    None => abort("popup third item was not painted")
+  }
   ignore(
     runtime.dispatch_event(
       Pointer(
         @core.PointerEvent::new(
           position=@core.Point::new(
-            x=item.origin.x + item.size.width / 2.0,
-            y=item.origin.y + item.size.height / 2.0,
+            x=third.origin.x + third.size.width / 2.0,
+            y=third.origin.y + third.size.height / 2.0,
           ),
           phase=Up,
         ),
@@ -478,6 +480,7 @@ test "overlay exit ghost keeps its screen placement" {
     ),
   )
   ignore(runtime.draw_frame())
+  // The trigger now reads "Three", so the only "Two" left is the exit ghost.
   let ghost = match overlay_text_frame(runtime.draw_commands(), "Two") {
     Some(frame) => frame
     None => abort("overlay exit ghost was not painted")
@@ -486,40 +489,57 @@ test "overlay exit ghost keeps its screen placement" {
 }
 
 ///|
-test "reduced motion completes overlay exits immediately" {
-  let received : Array[String] = []
-  let runtime = @runtime.AppRuntime::new_view(
-    root=@views.column(
-      [
-        @views.frame(
-          @views.picker(
-            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-            selected="one",
-            on_select=id => id,
-            placeholder="Pick",
-            max_height=160.0,
-          ),
-          width=200.0,
-          height=40.0,
-        ),
-      ],
-      spacing=0.0,
-    ),
-    size=@core.Size::new(width=200.0, height=160.0),
-    environment=@core.Environment::neutral().with_reduced_motion(true),
-    on_message=Some(message => received.push(message)),
-  )
+test "picker popup dismisses on outside tap and escape" {
+  let runtime = ghost_picker_runtime()
+  let is_open = () => {
+    overlay_text_frame(runtime.draw_commands(), "Two") is Some(_)
+  }
   ignore(runtime.draw_frame())
-  ignore(
-    runtime.dispatch_event(
-      Pointer(
-        @core.PointerEvent::new(
-          position=@core.Point::new(x=12.0, y=12.0),
-          phase=Up,
-        ),
+  ghost_picker_click(runtime, 12.0, 12.0)
+  ignore(runtime.draw_frame())
+  assert_true(is_open())
+  // Outside tap: the non-modal presentation barrier owns the press and sends
+  // the dismissal message.
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=150.0, y=150.0),
+        phase=Down,
       ),
     ),
   )
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=150.0, y=150.0),
+        phase=Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  runtime.advance_time(400.0)
+  ignore(runtime.draw_frame())
+  assert_false(is_open())
+  // Escape: the overlay host's top-most dismissal layer.
+  ghost_picker_click(runtime, 12.0, 12.0)
+  ignore(runtime.draw_frame())
+  assert_true(is_open())
+  ignore(runtime.draw_frame())
+  ignore(runtime.dispatch_presentation_escape())
+  runtime.advance_time(800.0)
+  ignore(runtime.draw_frame())
+  runtime.advance_time(1600.0)
+  ignore(runtime.draw_frame())
+  assert_false(is_open())
+}
+
+///|
+test "reduced motion completes overlay exits immediately" {
+  let runtime = ghost_picker_runtime(
+    environment=@core.Environment::neutral().with_reduced_motion(true),
+  )
+  ignore(runtime.draw_frame())
+  ghost_picker_click(runtime, 12.0, 12.0)
   ignore(runtime.draw_frame())
   let has_fade = () => {
     runtime

@@ -117,6 +117,7 @@ pub(all) struct ComponentGalleryModel {
   password_revealed : Bool
   selected_mode : String
   selected_density : String
+  density_picker_expanded : Bool
   feature_enabled : Bool
   slider_value : Double
   counter : Int32
@@ -138,6 +139,7 @@ pub(all) enum ComponentGalleryMsg {
   SelectPlatform(String)
   SelectMode(String)
   SelectDensity(String)
+  SetDensityPickerExpanded(Bool)
   SampleTextChanged(String)
   SampleNumberChanged(String)
   TogglePasswordReveal

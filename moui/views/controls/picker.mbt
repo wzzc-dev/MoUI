@@ -17,6 +17,8 @@ pub fn[Msg] picker(
   items : Array[@style.PickerItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
+  expanded~ : Bool,
+  on_expanded_change~ : (Bool) -> Msg,
   placeholder~ : String = "Select...",
   theme? : @core.Theme,
   style? : @style.PickerStyle,
@@ -25,6 +27,8 @@ pub fn[Msg] picker(
   picker_control(
     items=picker_options(items),
     selected=@core.ControlledValue::new(value=selected, changed=on_select),
+    expanded~,
+    on_expanded_change~,
     placeholder~,
     theme?,
     style?,

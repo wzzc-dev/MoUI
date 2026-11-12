@@ -191,6 +191,8 @@ fn playground_example_picker(
     items,
     selected=model.lesson_id,
     on_select=id => SelectExample(id),
+    expanded=model.lesson_picker_expanded,
+    on_expanded_change=open => SetLessonPickerExpanded(open),
     placeholder="Examples",
     theme~,
     style~,

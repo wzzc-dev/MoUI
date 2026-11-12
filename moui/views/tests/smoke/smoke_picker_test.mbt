@@ -7,6 +7,8 @@ test "picker smoke" {
     [@views.picker_item("a", "Option A")],
     selected="a",
     on_select=fn(_s) { () },
+    expanded=false,
+    on_expanded_change=fn(_open) { () },
   )
   @common.assert_layouts(view)
   @common.assert_paints(view)
@@ -55,6 +57,8 @@ test "datepicker smoke" {
   let view : @core.View[Unit] = @views.datepicker(
     selected=@core.DateValue::new(year=2024, month=1, day=1),
     on_select=fn(_d) { () },
+    expanded=false,
+    on_expanded_change=fn(_open) { () },
   )
   @common.assert_layouts(view)
   @common.assert_paints(view)

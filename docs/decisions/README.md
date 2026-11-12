@@ -81,6 +81,7 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0067 | [iOS product class raised to `committed`](0067-ios-committed-with-gaps.md) | 2026-11-08 | Accepted |
 | 0068 | [Dev restart keeps framework-owned transient state, not in-process reload](0068-dev-transient-handoff.md) | 2026-11-10 | Accepted |
 | 0069 | [macOS frames follow the display refresh, and paint-time editors own their live scroll](0069-macos-frame-pacing-and-transient-scroll.md) | 2026-11-12 | Accepted |
+| 0070 | [Control popups are presentation surfaces, not layout children](0070-control-popups-are-presentation-surfaces.md) | 2026-11-12 | Accepted |
 
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

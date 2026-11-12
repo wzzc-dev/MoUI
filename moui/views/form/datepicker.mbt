@@ -4,6 +4,8 @@
 pub fn[Msg] datepicker(
   selected~ : @core.DateValue,
   on_select~ : (@core.DateValue) -> Msg,
+  expanded~ : Bool,
+  on_expanded_change~ : (Bool) -> Msg,
   mode~ : @style.DatePickerMode = Date,
   placeholder~ : String = "Select date",
   theme? : @core.Theme,
@@ -16,6 +18,8 @@ pub fn[Msg] datepicker(
   date_picker_control(
     selected~,
     mode=datepicker_mode_to_view_mode(mode),
+    expanded~,
+    on_expanded_change~,
     placeholder~,
     theme?,
     style?,

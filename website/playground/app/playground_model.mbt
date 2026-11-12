@@ -14,6 +14,7 @@ pub(all) enum Msg {
   PackageChanged(String)
   SelectFile(PlaygroundFile)
   SelectExample(String)
+  SetLessonPickerExpanded(Bool)
   SetFindQuery(String)
   SetReplaceText(String)
   EditorSelectionChanged(Int32, @text.TextRange?)
@@ -41,6 +42,7 @@ pub(all) struct Model {
   status : String
   preview_status : String
   lesson_id : String
+  lesson_picker_expanded : Bool
   revision : Int32
 }
 
@@ -58,6 +60,7 @@ pub fn Model::new() -> Model {
     status: "Ready",
     preview_status: "Preview is idle",
     lesson_id: "01-hello-world",
+    lesson_picker_expanded: false,
     revision: 0,
   }
 }
@@ -86,6 +89,7 @@ pub fn update(model : Model, message : Msg) -> Model {
         revision: model.revision + 1,
       }
     SelectFile(file) => { ..model, active_file: file, show_find: false, }
+    SetLessonPickerExpanded(open) => { ..model, lesson_picker_expanded: open, }
     SelectExample(id) =>
       {
         ..model,

@@ -108,6 +108,7 @@ pub(all) struct ComponentGalleryModel {
   password_revealed : Bool
   selected_mode : String
   selected_density : String
+  density_picker_expanded : Bool
   feature_enabled : Bool
   slider_value : Double
   counter : Int32
@@ -127,6 +128,7 @@ pub(all) enum ComponentGalleryMsg {
   SelectPlatform(String)
   SelectMode(String)
   SelectDensity(String)
+  SetDensityPickerExpanded(Bool)
   SampleTextChanged(String)
   SampleNumberChanged(String)
   TogglePasswordReveal
@@ -285,6 +287,7 @@ pub fn ComponentGalleryModel::new(
     password_revealed: false,
     selected_mode: "canvas",
     selected_density: "regular",
+    density_picker_expanded: false,
     feature_enabled: true,
     slider_value: 0.66,
     counter: 0,
@@ -371,6 +374,8 @@ pub fn update(
       }
     SelectMode(id) => { ..model, selected_mode: id, }
     SelectDensity(id) => { ..model, selected_density: id, }
+    SetDensityPickerExpanded(open) =>
+      { ..model, density_picker_expanded: open, }
     SampleTextChanged(value) => { ..model, sample_text: value, }
     SampleNumberChanged(value) => { ..model, sample_number: value, }
     TogglePasswordReveal =>
@@ -426,6 +431,7 @@ pub fn update(
         password_revealed: false,
         selected_mode: "canvas",
         selected_density: "regular",
+        density_picker_expanded: false,
         feature_enabled: true,
         slider_value: 0.66,
         counter: 0,
