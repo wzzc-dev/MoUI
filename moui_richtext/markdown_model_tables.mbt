@@ -146,6 +146,7 @@ fn markdown_table_row_text(row : Array[@md.TableCell]) -> String {
 fn markdown_table_preview(
   block : MarkdownBlock,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette,
 ) -> RichTextTable? {
   match block.kind {
     Table => {
@@ -162,7 +163,7 @@ fn markdown_table_preview(
         for cell in markdown_table_cell_ranges_for_line(source_line) {
           cells.push({
             text: cell.text,
-            runs: markdown_table_cell_runs(cell.text, base),
+            runs: markdown_table_cell_runs(cell.text, base, palette~),
             header: index == 0,
             align: markdown_table_alignment_at(aligns, cells.length()),
             source_range: Some({
@@ -178,9 +179,9 @@ fn markdown_table_preview(
         rows,
         row_height: base.size * 1.9,
         cell_padding: @core.Insets::symmetric(horizontal=8.0, vertical=5.0),
-        border: @core.Color::black().multiply_alpha(0.16),
+        border: palette.table_border,
         header_background: Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.08, g=0.12, b=0.16, a=0.06)),
+          @core.Brush::solid(palette.table_header_background),
         ),
       })
     }
@@ -198,6 +199,7 @@ fn markdown_table_preview(
 fn markdown_table_cell_runs(
   cell_text : String,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette,
 ) -> Array[RichTextRun] {
   if cell_text == "" {
     return []
@@ -225,8 +227,8 @@ fn markdown_table_cell_runs(
       },
       visual_text=if inline.kind is Plain { None } else { Some(inline.text) },
       font=Some(markdown_inline_font(inline.kind, base)),
-      color=markdown_inline_color(inline.kind),
-      background=markdown_inline_background(inline.kind),
+      color=markdown_inline_color(inline.kind, palette~),
+      background=markdown_inline_background(inline.kind, palette~),
       decoration=markdown_inline_decoration(inline.kind),
       source_range=range,
     )

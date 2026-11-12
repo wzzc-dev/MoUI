@@ -2308,11 +2308,28 @@ fn markdown_editor_blocks_to_rich_text(
   blocks : Array[MarkdownEditorBlock],
   base : @core.FontSpec,
   base_dir~ : String? = None,
+  palette~ : MarkdownRichTextPalette? = None,
+  palette_key~ : String? = None,
 ) -> RichTextDocument {
+  let palette_key = match palette_key {
+    Some(key) => key
+    None =>
+      match palette {
+        Some(palette) => palette.cache_key()
+        None => "palette:default-light"
+      }
+  }
   let rich_blocks : Array[RichTextBlock] = []
   for block in blocks {
     rich_blocks.push(
-      markdown_editor_block_to_rich_text(source, block, base, base_dir~),
+      markdown_editor_block_to_rich_text(
+        source,
+        block,
+        base,
+        base_dir~,
+        palette~,
+        palette_key=Some(palette_key),
+      ),
     )
   }
   RichTextDocument::new(blocks=rich_blocks)
@@ -2324,18 +2341,30 @@ fn markdown_editor_block_to_rich_text(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   base_dir~ : String? = None,
+  palette~ : MarkdownRichTextPalette? = None,
+  palette_key~ : String? = None,
 ) -> RichTextBlock {
+  let palette_key = match palette_key {
+    Some(key) => key
+    None =>
+      match palette {
+        Some(palette) => palette.cache_key()
+        None => "palette:default-light"
+      }
+  }
   markdown_editor_block_to_rich_text_with_cache(
     source,
     editor_block,
     base,
     base_dir~,
+    palette_key~,
     build=(source, editor_block, base, base_dir) => {
       markdown_editor_block_to_rich_text_uncached(
         source,
         editor_block,
         base,
         base_dir~,
+        palette~,
       )
     },
   )
@@ -2347,8 +2376,14 @@ fn markdown_editor_block_to_rich_text_uncached(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   base_dir~ : String?,
+  palette~ : MarkdownRichTextPalette? = None,
 ) -> RichTextBlock {
-  let block = markdown_block_to_rich_text(editor_block.block, base, base_dir~)
+  let block = markdown_block_to_rich_text(
+    editor_block.block,
+    base,
+    base_dir~,
+    palette~,
+  )
   let rich_block = {
     ..block,
     runs: markdown_editor_runs_with_source_ranges(

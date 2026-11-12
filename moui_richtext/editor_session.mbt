@@ -231,6 +231,11 @@ pub(all) struct MarkdownDocumentSession {
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
+  // Presentation palette baked into rich-text blocks. Kept on the session so
+  // every editor/preview call site sees the same colors without threading a
+  // palette through the whole event/paint chain; the conversion cache key
+  // includes its digest, so changing it re-projects blocks.
+  rich_text_palette : MarkdownRichTextPalette?
 }
 
 ///|
@@ -610,6 +615,7 @@ pub fn MarkdownDocumentSession::snapshot(
       materialized,
       base,
       base_dir~,
+      palette=self.rich_text_palette,
     ),
     line_count: self.line_count,
     word_count: self.word_count,
@@ -634,6 +640,7 @@ fn markdown_editor_session_reveal_html_block_source(
   block : RichTextBlock,
   selection : MarkdownEditorSelection,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette? = None,
 ) -> RichTextBlock {
   let anchor = match markdown_editor_active_selection(selection.selection) {
     Some(range) => range.start
@@ -651,7 +658,11 @@ fn markdown_editor_session_reveal_html_block_source(
   }
   match editor_block.block.kind {
     HtmlBlock => {
-      let raw = markdown_html_raw_block_rich_text(editor_block.block.text, base)
+      let raw = markdown_html_raw_block_rich_text(
+        editor_block.block.text,
+        base,
+        palette=markdown_rich_text_palette_or_light(palette),
+      )
       {
         ..raw,
         runs: markdown_editor_runs_with_source_ranges(
@@ -685,6 +696,7 @@ pub fn MarkdownDocumentSession::rich_text(
       materialized,
       base,
       base_dir~,
+      palette=self.rich_text_palette,
     )
     // The rendered html gallery hides the block source, so the block under
     // the caret collapses to its raw markup in place, like a code block.
@@ -697,6 +709,7 @@ pub fn MarkdownDocumentSession::rich_text(
           block,
           selection,
           base,
+          palette=self.rich_text_palette,
         ),
       )
     }
@@ -726,6 +739,11 @@ pub fn MarkdownDocumentSession::rich_text_window(
   overscan~ : Double = 320.0,
   content_width~ : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
+  let palette = self.rich_text_palette
+  let palette_key = match palette {
+    Some(palette) => palette.cache_key()
+    None => "palette:default-light"
+  }
   let range = markdown_document_window_range(
     self,
     base,
@@ -859,9 +877,12 @@ pub fn MarkdownDocumentSession::rich_text_window(
               editor_block,
               base,
               base_dir~,
+              palette~,
+              palette_key=Some(palette_key),
             ),
             selection,
             base,
+            palette~,
           )
         },
       )
@@ -1266,6 +1287,7 @@ fn markdown_document_session_apply_in_line_edit(
     dirty_range: dirty,
     height_index,
     layout_cache: None,
+    rich_text_palette: session.rich_text_palette,
   })
 }
 
@@ -1899,7 +1921,21 @@ pub fn MarkdownDocumentSession::replace_source(
     source_length=session.source_length,
     source_digest=session.source_digest,
   )
-  session
+  { ..session, rich_text_palette: self.rich_text_palette, }
+}
+
+///|
+/// Attach the presentation palette used when projecting this document into
+/// rich text. The palette is not part of the document model: edits keep it
+/// (the incremental/full apply paths inherit it from `previous`), and a
+/// theme switch replaces it without changing the text, identity, or layout
+/// cache. The next rich-text projection reuses or rebuilds blocks through a
+/// cache key that includes the palette digest.
+pub fn MarkdownDocumentSession::with_rich_text_palette(
+  self : MarkdownDocumentSession,
+  palette : MarkdownRichTextPalette?,
+) -> MarkdownDocumentSession {
+  { ..self, rich_text_palette: palette, }
 }
 
 ///|
@@ -3539,6 +3575,10 @@ fn markdown_document_session_from_blocks(
     dirty_range,
     height_index,
     layout_cache: None,
+    rich_text_palette: match previous {
+      Some(prev) => prev.rich_text_palette
+      None => None
+    },
   }
 }
 

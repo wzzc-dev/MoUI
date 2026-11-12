@@ -392,8 +392,10 @@ fn markdown_editor_block_conversion_key(
   source_slice : String,
   base : @core.FontSpec,
   base_dir~ : String?,
+  palette_key~ : String,
 ) -> String {
   rich_text_cache_join_key([
+    palette_key,
     rich_text_cache_font_key(base),
     base_dir.unwrap_or(""),
     markdown_editor_block_key(editor_block.block),
@@ -538,6 +540,7 @@ fn markdown_editor_block_to_rich_text_with_cache(
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
   base_dir~ : String?,
+  palette_key~ : String,
   build~ : (String, MarkdownEditorBlock, @core.FontSpec, String?) -> RichTextBlock,
 ) -> RichTextBlock {
   let content = markdown_editor_run_source_content(source, editor_block)
@@ -552,6 +555,7 @@ fn markdown_editor_block_to_rich_text_with_cache(
     source_slice,
     base,
     base_dir~,
+    palette_key~,
   )
   match rich_text_block_conversions.get(key) {
     Some(entry) =>
