@@ -98,6 +98,21 @@ pub fn[Msg] controlled_markdown_editor(
 }
 
 ///|
+/// Who owns a markdown editor's live scroll offset.
+///
+/// `Element` is the default: wheel/drag/fling move the element's own slot and
+/// the app receives at most one settled offset per gesture. `App` keeps the
+/// previous contract for callers that need the offset while the gesture is in
+/// flight; `on_scroll = None` is a static glide driven from outside.
+///
+/// The two variants keep valid states expressible: there is no way to ask for
+/// element ownership and a per-tick app callback at the same time.
+pub(all) enum MarkdownEditorScrollMode[Msg] {
+  Element(MarkdownScrollGlide, ((Double) -> Msg)?)
+  App(MarkdownScrollGlide, ((Double, Double) -> Msg)?)
+}
+
+///|
 pub fn[Msg] controlled_markdown_session_editor(
   session~ : MarkdownDocumentSession,
   selection~ : MarkdownEditorSelection,
@@ -119,21 +134,29 @@ pub fn[Msg] controlled_markdown_session_editor(
   on_prefix_click~ : ((Int32) -> Msg)? = None,
   on_command_click~ : ((Int32) -> Msg)? = None,
   accepts_tab_input~ : Bool = true,
-  scroll_glide~ : MarkdownScrollGlide = MarkdownScrollGlide::settled(0.0),
-  on_scroll~ : ((Double, Double) -> Msg)? = None,
+  /// Element-owned by default. `Element` reports one settled offset per
+  /// gesture; `App` keeps the per-tick contract (or a static glide when its
+  /// handler is `None`).
+  scroll_mode~ : MarkdownEditorScrollMode[Msg] = Element(
+    MarkdownScrollGlide::settled(0.0),
+    None,
+  ),
   /// Programmatic scroll target. The element applies a newer id once and keeps
   /// the live offset in its own state slot afterward.
   scroll_request~ : @core.ScrollRequest? = None,
-  /// Reports the offset once after a transient scroll gesture settles. The app
-  /// gets one message per gesture, not one per wheel tick.
-  on_scroll_settled~ : ((Double) -> Msg)? = None,
-  /// Keep the live glide in the element's state slot instead of the caller's
-  /// view state. The app should not pass `on_scroll` in this mode.
-  transient_scroll~ : Bool = false,
   visible_viewport_height~ : Double = 0.0,
   visible_overscan~ : Double = 320.0,
   key~ : String? = None,
 ) -> @core.View[Msg] {
+  let (scroll_glide, on_scroll, on_scroll_settled, transient_scroll) : (
+    MarkdownScrollGlide,
+    ((Double, Double) -> Msg)?,
+    ((Double) -> Msg)?,
+    Bool,
+  ) = match scroll_mode {
+    Element(seed, on_settled) => (seed, None, on_settled, true)
+    App(glide, on_scroll) => (glide, on_scroll, None, false)
+  }
   controlled_markdown_session_editor_snapshot(
     session~,
     selection~,

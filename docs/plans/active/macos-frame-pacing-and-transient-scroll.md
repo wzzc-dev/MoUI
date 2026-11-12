@@ -47,6 +47,11 @@ Verification so far:
   guidance, doc references pass. `validate-window-dependency` still reports the
   pre-existing `examples/momark` pin mismatch (`0.5.4-0.2.5` vs `0.5.4-0.2.8`).
 
+Follow-up landed: `controlled_markdown_session_editor` now takes one
+`MarkdownEditorScrollMode` (`Element` or `App`) instead of the independent
+`scroll_glide` / `on_scroll` / `transient_scroll` knobs, so invalid ownership
+combinations are no longer expressible.
+
 Deferred with rationale:
 
 - Generic `scroll_view` settle notification (P1.1): no production consumer;

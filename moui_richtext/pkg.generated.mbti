@@ -13,7 +13,7 @@ pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
 
 pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, scroll_glide? : MarkdownScrollGlide, on_scroll? : ((Double, Double) -> Msg)?, scroll_request? : @core.ScrollRequest?, on_scroll_settled? : ((Double) -> Msg)?, transient_scroll? : Bool, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, accepts_tab_input? : Bool, scroll_mode? : MarkdownEditorScrollMode[Msg], scroll_request? : @core.ScrollRequest?, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, input_transform? : ((String, Int32, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int32, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -497,6 +497,11 @@ type MarkdownEditorRunSourceRange
 pub fn MarkdownEditorRunSourceRange::equal(Self, Self) -> Bool
 pub fn MarkdownEditorRunSourceRange::not_equal(Self, Self) -> Bool
 pub fn MarkdownEditorRunSourceRange::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MarkdownEditorScrollMode[Msg] {
+  Element(MarkdownScrollGlide, ((Double) -> Msg)?)
+  App(MarkdownScrollGlide, ((Double, Double) -> Msg)?)
+}
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownEditorSelection {

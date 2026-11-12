@@ -104,7 +104,7 @@ fn glide_test_runtime(glide : MarkdownScrollGlide) -> @runtime.AppRuntime {
         placeholder_color=@core.Color::black(),
         background=@core.Brush::solid(@core.Color::white()),
         cursor_color=@core.Color::black(),
-        scroll_glide=glide,
+        scroll_mode=App(glide, None),
         visible_viewport_height=400.0,
         visible_overscan=0.0,
       )
