@@ -408,7 +408,7 @@ pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Doubl
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem]) -> @data.TreeItem
+pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?) -> @data.TreeItem
 
 pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
