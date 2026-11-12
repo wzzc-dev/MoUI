@@ -3,10 +3,7 @@ fn click(runtime : @runtime.AppRuntime, x : Double, y : Double) -> Unit {
   ignore(
     runtime.dispatch_event(
       Pointer(
-        @core.PointerEvent::new(
-          position=@core.Point::new(x~, y~),
-          phase=Down,
-        ),
+        @core.PointerEvent::new(position=@core.Point::new(x~, y~), phase=Down),
       ),
     ),
   )

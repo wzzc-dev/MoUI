@@ -68,6 +68,7 @@ entrypoint supplies the program and renderer provider. Run
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent runtimes through the module-root integration facade, with retained macOS and Web routes |
 | HarmonyOS Demo | Standalone HarmonyOS app model | `examples/harmonyos_demo/app/` | Platform-neutral viewport/tap feedback; platform probing belongs to Showcase/tester |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal button/filter repro with a retained macOS Skia entrypoint |
+| Disabled Input Demo | Disabled-control input contract probe | `examples/disabled_input_demo/app/`, `examples/disabled_input_demo/{macos_skia,selftest}/` | Every control is wrapped in `.disabled(disabled=!model.enabled)`: taps on disabled controls must leave every counter at zero, and enabling them makes the same taps increment. The headless selftest prints `disabled_messages=0 enabled_messages=5` for the regression gate. |
 | Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | Strict TEA root over Components, Patterns, Platform, and pure diagnostic DTOs; module-root integration adapts runtime/render facts. The Platform workspace probes clipboard, file dialogs, notifications, and notification permission. Showcase alone covers all 14 canonical routes. |
 | Design Systems | Addon diagnostic theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | Source-mapped design-system diagnostics with retained Web and macOS Skia entrypoints |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
@@ -221,6 +222,23 @@ Focused Button Freeze Probe checks:
 ```sh
 moon test examples/button_freeze_probe/app --target native
 moon build examples/button_freeze_probe/macos_skia --target native
+```
+
+## Disabled Input Demo
+
+Disabled Input Demo pins the disabled-control input contract: every control is
+wrapped in `.disabled(disabled=!model.enabled)`, so taps on a disabled control
+must leave all counters at zero, while enabling them makes the same taps
+increment. The headless `selftest` package dispatches the same tap sequence and
+prints `disabled_messages=0 enabled_messages=5`, which the regression gate
+asserts.
+
+Focused Disabled Input Demo checks:
+
+```sh
+moon test examples/disabled_input_demo/app --target native
+moon run examples/disabled_input_demo/selftest --target native
+moon build examples/disabled_input_demo/macos_skia --target native
 ```
 
 ## Code Editor
@@ -759,7 +777,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.2.8` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.2.9` Wayland host core. The
 recommended native entrypoints compose `backend/linux` with `moui_skia_renderer` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:
