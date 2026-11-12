@@ -18,6 +18,8 @@ fn hot_path_metrics_reset() -> Unit {
   hot_path_block_wrap_cache_hits.val = 0
   hot_path_block_fingerprints_built.val = 0
   hot_path_height_metrics_recomputed.val = 0
+  hot_path_line_metrics_cache_hits.val = 0
+  hot_path_line_metrics_builds.val = 0
 }
 
 ///|
