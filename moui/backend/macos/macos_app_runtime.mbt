@@ -189,6 +189,7 @@ async fn launch_macos_app_async_pump(
   window_requests~ : @host.WindowRequests = @window_lifecycle.WindowRequestQueue::new().requests(),
   frame_interval_ms~ : Int32 = 8,
 ) -> Unit {
+  macos_request_frame_clock()
   let (event_loop, app) = create_macos_app(
     title,
     runtime,
@@ -199,25 +200,51 @@ async fn launch_macos_app_async_pump(
   )
   if smoke_options.first_frame_smoke_auto_exit {
     run_async_pump_until_first_present(event_loop, app, frame_interval_ms)
+    macos_stop_frame_clock()
     return ()
   }
+  // A bounded wait on the display clock. The wait normally ends on the next
+  // refresh (8.3 ms at 120 Hz, 16.7 ms at 60 Hz); the timeout only keeps a
+  // stopped or occluded display from stalling the host.
+  let active_wait_ms = 20
   while !event_loop.exiting() {
+    // Process input and due events before waiting, so pointer/keyboard latency
+    // does not include the refresh wait. The redraw pass then starts on the
+    // refresh boundary instead of an arbitrary timer phase.
     match event_loop.pump_app_events(Some(0), app) {
-      Exit(_) => return ()
+      Exit(_) => {
+        macos_stop_frame_clock()
+        return ()
+      }
       Continue => ()
     }
-    // Frame pacing: while the runtime still owes a frame (an animation is
-    // ticking — scroll glides, overlay fades) or a sub-frame timer
-    // subscription is live, keep polling tight so timer fires and redraw
-    // requests are serviced without waiting out the idle sleep. Idle frames
-    // sleep the full interval so sibling async tasks (remote images, IO)
-    // keep their turn.
-    if app.core.driver.runtime.needs_redraw() || macos_timer_sub_frame_active() {
-      @async.sleep(1)
-    } else {
-      @async.sleep(frame_interval_ms)
+    let frame_owed = app.core.driver.runtime.needs_redraw() ||
+      macos_timer_sub_frame_active() ||
+      macos_any_runtime_slot_needs_redraw(app.core.lifecycle)
+    let action = macos_frame_wait_action(
+      frame_owed~,
+      vsync_available=macos_frame_clock_is_running(),
+      pacing_enabled=macos_frame_pacing_enabled(),
+    )
+    match action {
+      WaitForVsync => {
+        ignore(@window_macos.host_wait_for_vsync(active_wait_ms))
+        match event_loop.pump_app_events(Some(0), app) {
+          Exit(_) => {
+            macos_stop_frame_clock()
+            return ()
+          }
+          Continue => ()
+        }
+      }
+      SleepActive =>
+        // No display clock (headless, or the escape hatch is off): keep the
+        // previous tight poll so animations still advance.
+        @async.sleep(1)
+      SleepIdle => @async.sleep(frame_interval_ms)
     }
   }
+  macos_stop_frame_clock()
 }
 
 ///|
@@ -353,12 +380,16 @@ async fn run_async_pump_until_first_present(
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {
     match event_loop.pump_app_events(Some(1), app) {
-      Exit(_) => return ()
+      Exit(_) => {
+        macos_stop_frame_clock()
+        return ()
+      }
       Continue => ()
     }
     remaining = remaining - 1
     @async.sleep(frame_interval_ms)
   }
+  macos_stop_frame_clock()
   if app.core.first_frame_smoke_auto_exit {
     println(
       "macOS renderer first-frame smoke did not present before pump limit",

@@ -78,6 +78,15 @@ side work on the same thread as the AppKit event pump. It lets
 `examples/mo_workbench/macos_skia` interleave the Skia window pump with its
 owned Pi JSONL transport worker.
 
+The async pump is display-refresh paced: it processes input first, waits on the
+window backend's `CVDisplayLink` clock when any open runtime slot owes a frame,
+then pumps the redraw on the refresh boundary; idle keeps the timed sleep. The
+clock callback only signals a semaphore and never enters MoonBit. Set
+`MOUI_MACOS_FRAME_PACING=0` to fall back to the old timed polling when a
+synchronous GPU present already waits on the display. `MOUI_FRAME_LOG=1` prints
+present-to-present p50/p95/max and the count of frames that missed a refresh
+every five seconds.
+
 **Never join the window pump with `@async.all([window, ...workers])`.**
 `@async.all` waits for *every* sibling, and entrypoint workers are almost always
 `while true { queue.get() }` loops. Closing the window then returns only the

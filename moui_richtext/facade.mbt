@@ -121,6 +121,15 @@ pub fn[Msg] controlled_markdown_session_editor(
   accepts_tab_input~ : Bool = true,
   scroll_glide~ : MarkdownScrollGlide = MarkdownScrollGlide::settled(0.0),
   on_scroll~ : ((Double, Double) -> Msg)? = None,
+  /// Programmatic scroll target. The element applies a newer id once and keeps
+  /// the live offset in its own state slot afterward.
+  scroll_request~ : @core.ScrollRequest? = None,
+  /// Reports the offset once after a transient scroll gesture settles. The app
+  /// gets one message per gesture, not one per wheel tick.
+  on_scroll_settled~ : ((Double) -> Msg)? = None,
+  /// Keep the live glide in the element's state slot instead of the caller's
+  /// view state. The app should not pass `on_scroll` in this mode.
+  transient_scroll~ : Bool = false,
   visible_viewport_height~ : Double = 0.0,
   visible_overscan~ : Double = 320.0,
   key~ : String? = None,
@@ -148,6 +157,9 @@ pub fn[Msg] controlled_markdown_session_editor(
     accepts_tab_input~,
     scroll_glide~,
     on_scroll~,
+    scroll_request~,
+    on_scroll_settled~,
+    transient_scroll~,
     visible_viewport_height~,
     visible_overscan~,
     key~,
@@ -178,6 +190,9 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
   accepts_tab_input~ : Bool,
   scroll_glide~ : MarkdownScrollGlide,
   on_scroll~ : ((Double, Double) -> Msg)?,
+  scroll_request~ : @core.ScrollRequest?,
+  on_scroll_settled~ : ((Double) -> Msg)?,
+  transient_scroll~ : Bool,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
   key~ : String?,
@@ -201,35 +216,59 @@ fn[Msg] controlled_markdown_session_editor_snapshot(
       base_dir,
       accepts_tab_input,
       scroll_glide,
+      scroll_request,
+      transient_scroll,
       visible_viewport_height,
       visible_overscan,
       key,
     },
     event=(node, ctx) => {
-      markdown_session_editor_event(
-        ctx,
-        session=node.session,
-        selection=node.selection,
-        on_transaction~,
-        font=node.font,
-        source_mode=node.source_mode,
-        focus_mode=node.focus_mode,
-        base_dir=node.base_dir,
-        on_selection_change~,
-        on_prefix_click~,
-        on_command_click~,
-        accepts_tab_input=node.accepts_tab_input,
-        // Hit-testing and visual caret moves use the same frame-local offset
-        // as paint. A retained paint may have published a measurement delta
-        // before the app rebuilds its glide, so include that pending delta.
-        visible_scroll_y=node.scroll_glide.display_offset(
-          ctx.now_ms,
-          compensation=markdown_scroll_peek_geometry_compensation(),
-        ),
-        on_scroll~,
-        visible_viewport_height=node.visible_viewport_height,
-        visible_overscan=node.visible_overscan,
-      )
+      if node.transient_scroll {
+        markdown_session_editor_event_transient(
+          ctx,
+          session=node.session,
+          selection=node.selection,
+          on_transaction~,
+          font=node.font,
+          source_mode=node.source_mode,
+          focus_mode=node.focus_mode,
+          base_dir=node.base_dir,
+          on_selection_change~,
+          on_prefix_click~,
+          on_command_click~,
+          accepts_tab_input=node.accepts_tab_input,
+          seed_glide=node.scroll_glide,
+          scroll_request=node.scroll_request,
+          on_scroll_settled~,
+          visible_viewport_height=node.visible_viewport_height,
+          visible_overscan=node.visible_overscan,
+        )
+      } else {
+        markdown_session_editor_event(
+          ctx,
+          session=node.session,
+          selection=node.selection,
+          on_transaction~,
+          font=node.font,
+          source_mode=node.source_mode,
+          focus_mode=node.focus_mode,
+          base_dir=node.base_dir,
+          on_selection_change~,
+          on_prefix_click~,
+          on_command_click~,
+          accepts_tab_input=node.accepts_tab_input,
+          // Hit-testing and visual caret moves use the same frame-local offset
+          // as paint. A retained paint may have published a measurement delta
+          // before the app rebuilds its glide, so include that pending delta.
+          visible_scroll_y=node.scroll_glide.display_offset(
+            ctx.now_ms,
+            compensation=markdown_scroll_peek_geometry_compensation(),
+          ),
+          on_scroll~,
+          visible_viewport_height=node.visible_viewport_height,
+          visible_overscan=node.visible_overscan,
+        )
+      }
     },
     text_command=(node, ctx, intent, paste_text) => {
       markdown_session_editor_command(
@@ -284,8 +323,14 @@ priv struct MarkdownSessionEditorViewNode {
   base_dir : String?
   accepts_tab_input : Bool
   /// The scroll transition to draw: evaluated at paint/event time from the
-  /// runtime animation clock, never resolved into a stored offset.
+  /// runtime animation clock, never resolved into a stored offset. In
+  /// transient mode this is only the seed for the element-owned slot.
   scroll_glide : MarkdownScrollGlide
+  /// Programmatic target, applied once per id by the element.
+  scroll_request : @core.ScrollRequest?
+  /// When set, the live glide lives in the element slot and wheel input does
+  /// not reach the app per tick.
+  transient_scroll : Bool
   visible_viewport_height : Double
   visible_overscan : Double
   key : String?
@@ -353,6 +398,21 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn declaration(self) 
           ),
         ),
         (
+          "scroll_request",
+          @core.DeclarationKey::option(
+            self.scroll_request.map(request => {
+              @core.DeclarationKey::record(
+                type_tag="moui_richtext.ScrollRequest.v1",
+                fields=[
+                  ("id", @core.DeclarationKey::int(request.id)),
+                  ("y", @core.DeclarationKey::double(request.offset.y)),
+                ],
+              )
+            }),
+          ),
+        ),
+        ("transient_scroll", @core.DeclarationKey::bool(self.transient_scroll)),
+        (
           "viewport_height",
           @core.DeclarationKey::double(self.visible_viewport_height),
         ),
@@ -380,6 +440,46 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
   // message. Include that pending delta in the frame-local offset so a
   // geometry commit cannot move content backward for one frame.
   let pending_geometry_compensation = markdown_scroll_peek_geometry_compensation()
+  let transient_state = if self.transient_scroll {
+    let content_width = rich_text_editor_content_rect(ctx.frame).size.width
+    let max_scroll = markdown_session_max_scroll_y(
+      self.session,
+      self.font,
+      source_mode=self.source_mode,
+      self.visible_viewport_height,
+      content_width,
+    )
+    Some(
+      markdown_session_effective_scroll_state(
+        ctx.state.read_slot(markdown_session_scroll_state_slot()),
+        self.scroll_glide,
+        self.scroll_request,
+        max_scroll~,
+      ),
+    )
+  } else {
+    None
+  }
+  let (displayed_y, animating) = match transient_state {
+    Some(state) =>
+      (
+        state.glide.display_offset(
+          ctx.now_ms,
+          compensation=pending_geometry_compensation,
+          scale=ctx.environment.scale_factor,
+        ),
+        state.glide.is_animating(ctx.now_ms) || state.settle_pending,
+      )
+    None =>
+      (
+        self.scroll_glide.display_offset(
+          ctx.now_ms,
+          compensation=pending_geometry_compensation,
+          scale=ctx.environment.scale_factor,
+        ),
+        self.scroll_glide.is_animating(ctx.now_ms),
+      )
+  }
   let (plan, geometry_compensation) = markdown_session_editor_paint(
     ctx,
     session=self.session,
@@ -396,11 +496,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
     source_mode=self.source_mode,
     focus_mode=self.focus_mode,
     base_dir=self.base_dir,
-    visible_scroll_y=self.scroll_glide.display_offset(
-      ctx.now_ms,
-      compensation=pending_geometry_compensation,
-      scale=ctx.environment.scale_factor,
-    ),
+    visible_scroll_y=displayed_y,
     visible_viewport_height=self.visible_viewport_height,
     visible_overscan=self.visible_overscan,
   )
@@ -408,9 +504,10 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
   // measurement compensation; mutating this transient view node as well
   // would apply the same delta a second time when the app consumes it.
   ignore(geometry_compensation)
+  markdown_scroll_publish_painted_offset(displayed_y)
   // Keep the host's animation-driven redraw loop alive until the glide
   // settles; the runtime stops ticking once this reports false.
-  { ..plan, animating: self.scroll_glide.is_animating(ctx.now_ms), }
+  { ..plan, animating, }
 }
 
 ///|
@@ -418,6 +515,31 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
   self,
   ctx,
 ) {
+  let visible_scroll_y = if self.transient_scroll {
+    let content_width = rich_text_editor_content_rect(ctx.frame).size.width
+    let max_scroll = markdown_session_max_scroll_y(
+      self.session,
+      self.font,
+      source_mode=self.source_mode,
+      self.visible_viewport_height,
+      content_width,
+    )
+    let state = markdown_session_effective_scroll_state(
+      ctx.state.read_slot(markdown_session_scroll_state_slot()),
+      self.scroll_glide,
+      self.scroll_request,
+      max_scroll~,
+    )
+    state.glide.display_offset(
+      ctx.now_ms,
+      compensation=markdown_scroll_peek_geometry_compensation(),
+    )
+  } else {
+    self.scroll_glide.display_offset(
+      ctx.now_ms,
+      compensation=markdown_scroll_peek_geometry_compensation(),
+    )
+  }
   Some(
     markdown_session_input_state(
       text=self.session.source(),
@@ -429,10 +551,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn text_input_state(
       source_mode=self.source_mode,
       focus_mode=self.focus_mode,
       base_dir=self.base_dir,
-      visible_scroll_y=self.scroll_glide.display_offset(
-        ctx.now_ms,
-        compensation=markdown_scroll_peek_geometry_compensation(),
-      ),
+      visible_scroll_y~,
       visible_viewport_height=self.visible_viewport_height,
       visible_overscan=self.visible_overscan,
       text_system=ctx.text_system,

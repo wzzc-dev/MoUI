@@ -47,6 +47,21 @@ let markdown_scroll_geometry_compensation : Ref[Double] = Ref(0.0)
 let markdown_scroll_last_frame_time : Ref[Double] = Ref(0.0)
 
 ///|
+let markdown_scroll_last_painted_offset_value : Ref[Double] = Ref(0.0)
+
+///|
+/// Record the offset used by the most recent editor paint. Diagnostic for tests
+/// and frame logs; it is not app state and must not drive layout or input.
+pub fn markdown_scroll_publish_painted_offset(offset_y : Double) -> Unit {
+  markdown_scroll_last_painted_offset_value.val = offset_y
+}
+
+///|
+pub fn markdown_scroll_peek_painted_offset() -> Double {
+  markdown_scroll_last_painted_offset_value.val
+}
+
+///|
 /// Record the runtime clock used by the most recent paint. App-level view
 /// construction has no paint context, so this is the only safe timestamp to
 /// use when it must apply a measurement compensation between frames.

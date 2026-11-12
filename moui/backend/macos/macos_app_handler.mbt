@@ -81,6 +81,10 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
           )
           self.sync_accessibility_window(window_id)
           window.request_redraw()
+          // The async pump opts into display-refresh pacing before the window
+          // exists; bind the clock to this window's screen now. A headless or
+          // clockless host returns false and the pump keeps its timed sleep.
+          ignore(macos_start_frame_clock(window))
           self.drain_window_requests(event_loop)
           // The primary window is ready and the app has finished launching,
           // so the default macOS menu bar is already installed. Invoke the
@@ -324,6 +328,7 @@ fn MacosNativeHostBackend::finish_presented_window(
   window_id : @host.WindowId,
   runtime_slot : @window_lifecycle.WindowRuntimeSlot,
 ) -> Bool {
+  macos_frame_log_record(macos_perf_now_ms())
   if self.record_native_ime_runtime_smoke(window_id) {
     true
   } else if @apphost.finish_first_frame_smoke_auto_exit(
