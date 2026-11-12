@@ -311,131 +311,105 @@ fn[Msg] button_event(
   ctx : @core.ViewEventContext,
   on_click : Msg?,
 ) -> @core.ViewEventResult[Msg] {
-  if !ctx.environment.enabled {
-    // A disabled control still owns its hit area: consume pointer input and
-    // activation keys so the click neither reaches the button nor falls
-    // through to a parent action. Other keys remain available to shortcuts.
-    match ctx.event {
-      Pointer(_) =>
-        @common.view_event_result(
-          changed=true,
-          captured=true,
-          dirty=ViewPaintDirty,
+  match ctx.event {
+    // Primary button only: right-button presses now reach the view tree for
+    // per-target context menus and must not press or activate the button.
+    Pointer(event) if event.button == 0 => {
+      let inside = ctx.frame.contains(event.position)
+      // A stale-hover Exit re-dispatches positionally and can carry a
+      // position that is still inside this button; such an Exit must not
+      // clear press/hover, or the terminating Up never activates.
+      let exit_inside = event.phase == Exit && inside
+      let current = if ctx.state.pressed {
+        @core.PressableState::Pressed
+      } else if ctx.state.hovered {
+        Hovered
+      } else {
+        Normal
+      }
+      let next = if exit_inside {
+        current
+      } else {
+        @common.pressable_next_state(current, inside, event.phase)
+      }
+      let activated = event.phase == Up && inside && current == Pressed
+      let changed = next != current || activated
+      // A stale-hover Exit carries the current pointer position; when it
+      // lands inside the button the pointer never left, so press/hover must
+      // survive it (synthetic Exit cascades re-dispatch positionally and can
+      // otherwise clear a button the pointer is still on).
+      let is_instant_clear = event.phase == Exit &&
+        current != Normal &&
+        !inside &&
+        !exit_inside
+      let next_state = if is_instant_clear {
+        @common.pressable_state_with_transition(
+          ctx.state,
+          current,
+          next,
+          ctx.now_ms,
+          control="button",
+        ).without_slot(@common.pressable_transition_slot("button"))
+      } else if changed {
+        @common.pressable_state_with_transition(
+          ctx.state,
+          current,
+          next,
+          ctx.now_ms,
+          control="button",
         )
-      Keyboard(event) =>
-        if event.pressed &&
-          (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+      } else {
+        ctx.state
+      }
+      match (activated, on_click) {
+        (true, Some(message)) =>
           @common.view_event_result(
-            changed=true,
+            changed~,
+            activated=true,
             captured=true,
+            state=Some(next_state),
+            dirty=ViewPaintDirty,
+            messages=[message],
+          )
+        (true, None) =>
+          @common.view_event_result(
+            changed~,
+            captured=true,
+            state=Some(next_state),
             dirty=ViewPaintDirty,
           )
-        } else {
-          @core.ViewEventResult::ignored()
-        }
-      _ => @core.ViewEventResult::ignored()
-    }
-  } else {
-    match ctx.event {
-      // Primary button only: right-button presses now reach the view tree for
-      // per-target context menus and must not press or activate the button.
-      Pointer(event) if event.button == 0 => {
-        let inside = ctx.frame.contains(event.position)
-        // A stale-hover Exit re-dispatches positionally and can carry a
-        // position that is still inside this button; such an Exit must not
-        // clear press/hover, or the terminating Up never activates.
-        let exit_inside = event.phase == Exit && inside
-        let current = if ctx.state.pressed {
-          @core.PressableState::Pressed
-        } else if ctx.state.hovered {
-          Hovered
-        } else {
-          Normal
-        }
-        let next = if exit_inside {
-          current
-        } else {
-          @common.pressable_next_state(current, inside, event.phase)
-        }
-        let activated = event.phase == Up && inside && current == Pressed
-        let changed = next != current || activated
-        // A stale-hover Exit carries the current pointer position; when it
-        // lands inside the button the pointer never left, so press/hover must
-        // survive it (synthetic Exit cascades re-dispatch positionally and can
-        // otherwise clear a button the pointer is still on).
-        let is_instant_clear = event.phase == Exit &&
-          current != Normal &&
-          !inside &&
-          !exit_inside
-        let next_state = if is_instant_clear {
-          @common.pressable_state_with_transition(
-            ctx.state,
-            current,
-            next,
-            ctx.now_ms,
-            control="button",
-          ).without_slot(@common.pressable_transition_slot("button"))
-        } else if changed {
-          @common.pressable_state_with_transition(
-            ctx.state,
-            current,
-            next,
-            ctx.now_ms,
-            control="button",
+        (false, _) =>
+          @common.view_event_result(
+            changed~,
+            captured=inside || changed,
+            state=if changed { Some(next_state) } else { None },
+            dirty=if changed { ViewPaintDirty } else { ViewClean },
           )
-        } else {
-          ctx.state
-        }
-        match (activated, on_click) {
-          (true, Some(message)) =>
+      }
+    }
+    Keyboard(event) =>
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        match on_click {
+          Some(message) =>
             @common.view_event_result(
-              changed~,
+              changed=true,
               activated=true,
               captured=true,
-              state=Some(next_state),
               dirty=ViewPaintDirty,
               messages=[message],
             )
-          (true, None) =>
+          None =>
             @common.view_event_result(
-              changed~,
+              changed=true,
+              activated=true,
               captured=true,
-              state=Some(next_state),
               dirty=ViewPaintDirty,
             )
-          (false, _) =>
-            @common.view_event_result(
-              changed~,
-              captured=inside || changed,
-              state=if changed { Some(next_state) } else { None },
-              dirty=if changed { ViewPaintDirty } else { ViewClean },
-            )
         }
+      } else {
+        @core.ViewEventResult::ignored()
       }
-      Keyboard(event) =>
-        if event.pressed &&
-          (event.key == "Enter" || event.key == "Space" || event.key == " ") {
-          match on_click {
-            Some(message) =>
-              @common.view_event_result(
-                changed=true,
-                activated=true,
-                captured=true,
-                dirty=ViewPaintDirty,
-                messages=[message],
-              )
-            None =>
-              @common.view_event_result(
-                changed=true,
-                activated=true,
-                captured=true,
-                dirty=ViewPaintDirty,
-              )
-          }
-        } else {
-          @core.ViewEventResult::ignored()
-        }
-      _ => @core.ViewEventResult::ignored()
-    }
+    _ => @core.ViewEventResult::ignored()
   }
 }
