@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_cli"
 
-version = "0.6.0"
+version = "0.6.1"
 
 readme = "README.md"
 
@@ -8,7 +8,7 @@ preferred_target = "native"
 
 import {
   "moonbitlang/x@0.5.6",
-  "wzzc-dev/moui_devtools@0.6.0",
+  "wzzc-dev/moui_devtools@0.6.1",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"
