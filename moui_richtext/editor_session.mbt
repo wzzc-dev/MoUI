@@ -1044,7 +1044,14 @@ fn markdown_document_session_apply_in_line_edit(
     return None
   }
   let editor_block = session.editor_blocks[cluster.start_index]
-  if !(editor_block.block.kind is Paragraph) {
+  let table_edit = editor_block.block.kind is Table
+  if !(editor_block.block.kind is Paragraph) && !table_edit {
+    return None
+  }
+  // A table's row/column structure is the pipe layout; a cell-text edit that
+  // does not add or remove a pipe keeps that structure exactly.
+  if table_edit &&
+    (transaction.replacement.contains("|") || transaction.deleted.contains("|")) {
     return None
   }
   let edit_start = transaction.edit_range.start
@@ -1071,7 +1078,8 @@ fn markdown_document_session_apply_in_line_edit(
   // The splice below assumes the block text is the block's own source
   // slice; paragraph blocks are built that way (shell and full parse
   // alike). Anything else falls back to the re-parse.
-  if markdown_editor_text_length(editor_block.block.text) !=
+  if !table_edit &&
+    markdown_editor_text_length(editor_block.block.text) !=
     editor_block.content_range.end - editor_block.content_range.start {
     return None
   }
@@ -1109,14 +1117,15 @@ fn markdown_document_session_apply_in_line_edit(
       markdown_editor_text_length(pre_line),
     )
   let post_view = post_line.exact_view(start=0, end=post_line.length())
-  if markdown_editor_line_text_is_blank(post_view) {
+  if !table_edit && markdown_editor_line_text_is_blank(post_view) {
     return None
   }
-  if markdown_editor_shell_line_may_open_fence(post_view) &&
+  if !table_edit &&
+    markdown_editor_shell_line_may_open_fence(post_view) &&
     markdown_editor_opening_code_fence_marker(post_view) is Some(_) {
     return None
   }
-  if markdown_editor_shell_line_may_open_html(post_view) {
+  if !table_edit && markdown_editor_shell_line_may_open_html(post_view) {
     let probe : Array[MarkdownLine] = [
       { text: post_view, start: line_start, end: line_end, },
     ]
@@ -1124,16 +1133,39 @@ fn markdown_document_session_apply_in_line_edit(
       return None
     }
   }
-  if markdown_editor_setext_underline_level(post_view) is Some(_) {
+  if !table_edit && markdown_editor_setext_underline_level(post_view) is Some(_) {
     return None
   }
-  if !(markdown_editor_shell_structural_kind(post_view) is None) {
+  if !table_edit && !(markdown_editor_shell_structural_kind(post_view) is None) {
     return None
   }
   let old_source_start = editor_block.source_range.start
   let old_source_end = editor_block.source_range.end
   let content_start = editor_block.content_range.start
   let content_end = editor_block.content_range.end
+  // A table block stores normalized preview text, not its source slice, so a
+  // cell edit cannot splice `block.text`. Re-parse just the table's new source
+  // slice before mutating the store; a failed parse falls back cleanly.
+  let parsed_table : MarkdownEditorBlock? = if table_edit {
+    let table_source = markdown_editor_substring(
+      transaction.source,
+      old_source_start,
+      old_source_end + delta,
+    )
+    let mut parsed : MarkdownEditorBlock? = None
+    for editor in parse_markdown_editor_blocks(table_source) {
+      if editor.block.kind is Table {
+        parsed = Some(editor)
+        break
+      }
+    }
+    match parsed {
+      Some(_) => parsed
+      None => return None
+    }
+  } else {
+    None
+  }
   // Advance the live text store first: every read below (probes, splices)
   // sees the post-edit text, same contract as the region re-parse path.
   session.text_store.edit(transaction.edit_range, transaction.replacement)
@@ -1141,23 +1173,31 @@ fn markdown_document_session_apply_in_line_edit(
   // Splice the text into the block and shift its absolute ranges. The
   // block drops its inline runs (shell shape, matching the open path):
   // the visible window re-parses whatever lines it renders.
-  let offset_in_text = edit_start - content_start
-  let edit_end_in_text = edit_end - content_start
-  let next_text = markdown_editor_substring(
-      editor_block.block.text,
-      0,
-      offset_in_text,
-    ) +
-    transaction.replacement +
-    markdown_editor_substring(
-      editor_block.block.text,
-      edit_end_in_text,
-      markdown_editor_text_length(editor_block.block.text),
-    )
-  session.editor_blocks[cluster.start_index] = {
-    block: { ..editor_block.block, text: next_text, inlines: [], },
-    source_range: { start: old_source_start, end: old_source_end + delta, },
-    content_range: { start: content_start, end: content_end + delta, },
+  session.editor_blocks[cluster.start_index] = if table_edit {
+    {
+      block: parsed_table.unwrap().block,
+      source_range: { start: old_source_start, end: old_source_end + delta, },
+      content_range: { start: content_start, end: content_end + delta, },
+    }
+  } else {
+    let offset_in_text = edit_start - content_start
+    let edit_end_in_text = edit_end - content_start
+    let next_text = markdown_editor_substring(
+        editor_block.block.text,
+        0,
+        offset_in_text,
+      ) +
+      transaction.replacement +
+      markdown_editor_substring(
+        editor_block.block.text,
+        edit_end_in_text,
+        markdown_editor_text_length(editor_block.block.text),
+      )
+    {
+      block: { ..editor_block.block, text: next_text, inlines: [], },
+      source_range: { start: old_source_start, end: old_source_end + delta, },
+      content_range: { start: content_start, end: content_end + delta, },
+    }
   }
   // Maintain the document line index in place: line starts after the edit
   // shift by the delta (the edit cannot add or remove a line, and no line
@@ -1336,6 +1376,23 @@ fn markdown_document_session_apply_incremental(
         transaction,
         deleted,
       )
+      let delta = markdown_editor_text_length(transaction.replacement) -
+        markdown_editor_text_length(deleted)
+      // Structure-preserving fast path first: a same-line edit inside one
+      // paragraph or one table block is provably local, even though a table
+      // cluster is otherwise refused by the stitcher below (its rows depend
+      // on pipe counts). The helper rejects newlines, line-start edits, and
+      // table edits that touch a pipe.
+      match
+        markdown_document_session_apply_in_line_edit(
+          session,
+          transaction,
+          cluster,
+          delta~,
+        ) {
+        Some(next) => return Some(next)
+        None => ()
+      }
       guard markdown_document_newlines_safe(
           transaction,
           deleted,
@@ -1349,23 +1406,6 @@ fn markdown_document_session_apply_incremental(
         hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
           1
         return None
-      }
-      let delta = markdown_editor_text_length(transaction.replacement) -
-        markdown_editor_text_length(deleted)
-      // Structure-preserving fast path: an edit strictly inside one line of
-      // a single paragraph block reproduces the region re-parse without
-      // walking the region — the keystroke path on documents whose text
-      // collapses into one huge block. Insertions and same-line deletions
-      // both qualify; the helper rejects newlines and line-start edits.
-      match
-        markdown_document_session_apply_in_line_edit(
-          session,
-          transaction,
-          cluster,
-          delta~,
-        ) {
-        Some(next) => return Some(next)
-        None => ()
       }
       let region_end = if cluster.end_index >=
         session.editor_blocks.length() - 1 {
