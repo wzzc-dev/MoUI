@@ -241,7 +241,7 @@ fn c3_overlay_fixture(boundary~ : Bool = false) -> AppRuntime {
       update=(model, message) => {
         match message {
           C3Toggle => { ..model, open: !model.open, }
-          C3Select(id) => { ..model, selected: id, open: false, }
+          C3Select(id) => { selected: id, open: false, }
         }
       },
       view=model => {
@@ -661,7 +661,7 @@ test "picker popup matches the trigger width" {
       update=(model, message) => {
         match message {
           C3Toggle => { ..model, open: !model.open, }
-          C3Select(id) => { ..model, selected: id, open: false, }
+          C3Select(id) => { selected: id, open: false, }
         }
       },
       view=model => {

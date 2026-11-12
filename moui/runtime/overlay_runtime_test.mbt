@@ -327,7 +327,7 @@ fn ghost_picker_runtime(
       update=(model, message) => {
         match message {
           GhostPickerOpen(open) => { ..model, open, }
-          GhostPickerSelect(id) => { ..model, selected: id, open: false, }
+          GhostPickerSelect(id) => { selected: id, open: false, }
         }
       },
       view=model => {

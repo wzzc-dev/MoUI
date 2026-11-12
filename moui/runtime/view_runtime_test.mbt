@@ -538,7 +538,7 @@ fn view_datepicker_test_runtime(
           ViewDatePickerOpen(open) => { ..model, open, }
           ViewDatePickerSelect(value) => {
             received.push(value)
-            { ..model, selected: value, open: false, }
+            { selected: value, open: false, }
           }
         }
       },
