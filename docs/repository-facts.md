@@ -47,6 +47,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/harmonyos_demo |
 | ./examples/button_freeze_probe |
 | ./examples/showcase |
+| ./examples/disabled_input_demo |
 | ./examples/design_systems |
 | ./examples/excel |
 | ./examples/pdf_workbench |
@@ -110,6 +111,7 @@ This file is generated from repository manifests and validator reports.
 | HarmonyOS Demo | examples/harmonyos_demo | no |
 | Button Freeze Probe | examples/button_freeze_probe | no |
 | Showcase | examples/showcase | yes |
+| Disabled Input Demo | examples/disabled_input_demo | no |
 | Design Systems | examples/design_systems | no |
 | Excel Viewer | examples/excel | yes |
 | PDF Workbench | examples/pdf_workbench | no |

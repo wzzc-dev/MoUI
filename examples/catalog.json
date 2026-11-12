@@ -38,6 +38,12 @@
       "featured": false
     },
     {
+      "id": "disabled_input_demo",
+      "path": "examples/disabled_input_demo",
+      "title": "Disabled Input Demo",
+      "featured": false
+    },
+    {
       "id": "showcase",
       "path": "examples/showcase",
       "title": "Showcase",
