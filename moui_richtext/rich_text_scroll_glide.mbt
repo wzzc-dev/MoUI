@@ -50,6 +50,9 @@ let markdown_scroll_last_frame_time : Ref[Double] = Ref(0.0)
 let markdown_scroll_last_painted_offset_value : Ref[Double] = Ref(0.0)
 
 ///|
+let markdown_scroll_last_painted_animating : Ref[Bool] = Ref(false)
+
+///|
 /// Record the offset used by the most recent editor paint. Diagnostic for tests
 /// and frame logs; it is not app state and must not drive layout or input.
 pub fn markdown_scroll_publish_painted_offset(offset_y : Double) -> Unit {
@@ -59,6 +62,19 @@ pub fn markdown_scroll_publish_painted_offset(offset_y : Double) -> Unit {
 ///|
 pub fn markdown_scroll_peek_painted_offset() -> Double {
   markdown_scroll_last_painted_offset_value.val
+}
+
+///|
+/// Record whether the most recent editor paint is mid-animation. Scroll
+/// decorations (the MoMark thumb) read this at paint time so they can follow
+/// the owner frame by frame without app-owned scroll state.
+pub fn markdown_scroll_publish_painted_animating(animating : Bool) -> Unit {
+  markdown_scroll_last_painted_animating.val = animating
+}
+
+///|
+pub fn markdown_scroll_peek_painted_animating() -> Bool {
+  markdown_scroll_last_painted_animating.val
 }
 
 ///|

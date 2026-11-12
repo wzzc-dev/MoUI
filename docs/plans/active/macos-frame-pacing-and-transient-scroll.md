@@ -35,7 +35,8 @@ Landed:
   is unchanged.
 - MoMark: live glide removed from the app model; `EditorScrollSettled` is the
   only per-gesture update; document switches issue a reset request; the
-  indicator uses the settled offset in v1. MoMark tests: 2593/2593.
+  indicator follows the editor's paint snapshot while animating (live thumb,
+  no app state). MoMark tests: 2593/2593.
 
 Verification so far:
 

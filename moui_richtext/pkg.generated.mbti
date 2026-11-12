@@ -91,11 +91,15 @@ pub fn markdown_scroll_peek_frame_time() -> Double
 
 pub fn markdown_scroll_peek_geometry_compensation() -> Double
 
+pub fn markdown_scroll_peek_painted_animating() -> Bool
+
 pub fn markdown_scroll_peek_painted_offset() -> Double
 
 pub fn markdown_scroll_publish_frame_time(Double) -> Unit
 
 pub fn markdown_scroll_publish_geometry_compensation(Double) -> Unit
+
+pub fn markdown_scroll_publish_painted_animating(Bool) -> Unit
 
 pub fn markdown_scroll_publish_painted_offset(Double) -> Unit
 

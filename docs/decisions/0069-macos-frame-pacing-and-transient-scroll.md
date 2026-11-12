@@ -53,9 +53,10 @@ glide lived in the app model.
 - A synchronous Metal present may already block on the drawable; the escape
   hatch and present-to-present metrics decide whether the extra wait is a win on
   a given route.
-- The MoMark indicator updates at settle in v1. A live thumb would need the
-  offset to move into the editor's paint or a retained-layer prototype; that is
-  a separate product decision.
+- The MoMark indicator follows the editor's frame-local scroll snapshot while
+  the owner is animating. It stays live without app-owned scroll state; a
+  multi-editor surface would need a per-element observation handle instead of
+  the process-wide paint snapshot.
 - Generic `scroll_view` settle notifications, completion-wake/two-in-flight
   submission, and retained-layer scrolling remain follow-ups with their own
   evidence gates.

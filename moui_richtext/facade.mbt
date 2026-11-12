@@ -528,6 +528,7 @@ impl @core.ViewNode for MarkdownSessionEditorViewNode with fn paint(self, ctx) {
   // would apply the same delta a second time when the app consumes it.
   ignore(geometry_compensation)
   markdown_scroll_publish_painted_offset(displayed_y)
+  markdown_scroll_publish_painted_animating(animating)
   // Keep the host's animation-driven redraw loop alive until the glide
   // settles; the runtime stops ticking once this reports false.
   { ..plan, animating, }
