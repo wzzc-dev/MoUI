@@ -113,7 +113,14 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       if self.animfocus.active_animations {
         self.dirty.needs_paint = true
         self.dirty.needs_redraw = true
-        self.mark_dirty(self.element_tree.id())
+        let animating_ids = self.render_tree.animating_element_ids()
+        if animating_ids.length() == 0 {
+          self.mark_dirty(self.element_tree.id())
+        } else {
+          for id in animating_ids {
+            self.mark_dirty(id)
+          }
+        }
         // A hold produces no pointer sample of its own, so a recognizer that
         // completes on elapsed time would have nothing to re-evaluate. Re-emit
         // the pressed position as a `Move` while the frame latch is held and a

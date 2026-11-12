@@ -266,6 +266,36 @@ priv struct RenderTree {
 }
 
 ///|
+/// The deepest nodes that reported an animation sample. A parent folds its
+/// descendants' `animating` flag, so collecting every flagged node would always
+/// include the root and force a full-window damage; the leaf-most flagged node
+/// is the subtree that actually needs repainting.
+fn RenderTree::animating_element_ids(self : RenderTree) -> Array[ElementId] {
+  let ids : Array[ElementId] = []
+  let _ = self.root.collect_animating_element_ids(ids)
+  ids
+}
+
+///|
+fn RenderNode::collect_animating_element_ids(
+  self : RenderNode,
+  out : Array[ElementId],
+) -> Bool {
+  let mut descendant_animating = false
+  for child in self.children {
+    if child.collect_animating_element_ids(out) {
+      descendant_animating = true
+    }
+  }
+  if self.animating && !descendant_animating {
+    out.push(self.element_id)
+    true
+  } else {
+    descendant_animating
+  }
+}
+
+///|
 priv struct PlatformNode {
   placements : Array[PlatformViewPlacement]
   /// Frame in the parent's child-coordinate space, matching `PlacedNode`.
