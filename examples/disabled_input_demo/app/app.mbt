@@ -109,7 +109,7 @@ pub fn probe_view(model : Model) -> @moui.View[Msg] {
         disabled=!model.enabled,
       ).frame(width=240.0, height=40.0).key("demo-radio"),
       @views.slider(
-        0.5,
+        model.slider_value,
         min=0.0,
         max=1.0,
         on_change=Some(value => SliderChanged(value)),
