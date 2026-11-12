@@ -827,17 +827,25 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
         // an overlay child so hit-testing sees it outside the host frame;
         // otherwise a control popup's outside-tap area is clipped to the
         // trigger and clicks beside it fall through to the background.
-        pairs.push(
-          (
-            child_index,
-            @core.Rect::new(
-              x=viewport_rect.origin.x,
-              y=viewport_rect.origin.y,
-              width=viewport_rect.size.width,
-              height=viewport_rect.size.height,
+        //
+        // A viewport-sized host already spans the viewport, so its barrier
+        // stays in-flow. Hoisting it there is not free: the runtime treats
+        // in-flow siblings under a reached overlay child as covered even when
+        // the overlay passed the event through (non-modal barriers only
+        // consume `Down`), so a toast would kill hover under the whole app.
+        if self.sizing is BaseSized || self.sizing is BaseFill {
+          pairs.push(
+            (
+              child_index,
+              @core.Rect::new(
+                x=viewport_rect.origin.x,
+                y=viewport_rect.origin.y,
+                width=viewport_rect.size.width,
+                height=viewport_rect.size.height,
+              ),
             ),
-          ),
-        )
+          )
+        }
         child_index = child_index + 1
       }
       let measured = if child_index < context.child_sizes.length() {
