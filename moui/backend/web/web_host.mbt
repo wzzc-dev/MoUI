@@ -143,6 +143,9 @@ pub fn web_service_bridge(
     )
   },
   async_queue~ : @window_services.ServiceAsyncQueue? = None,
+  platform_channel~ : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse = request => {
+    Unavailable("platform channel is unavailable: " + request.channel)
+  },
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -229,7 +232,7 @@ pub fn web_service_bridge(
           Unavailable(
             "binary file writing is unavailable on Web until binary browser downloads are wired",
           )
-        PlatformChannel(_) => Unavailable(request.unavailable_message())
+        PlatformChannel(request) => PlatformChannel(platform_channel(request))
         _ => Unavailable(request.unavailable_message())
       }
     },
@@ -239,6 +242,9 @@ pub fn web_service_bridge(
 ///|
 pub fn web_app_services(
   system_theme~ : @core.ColorScheme = Light,
+  platform_channel~ : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse = request => {
+    Unavailable("platform channel is unavailable: " + request.channel)
+  },
 ) -> @services.AppServices {
   let async_queue = web_async_host_service_queue()
   @window_services.app_services(
@@ -253,6 +259,7 @@ pub fn web_app_services(
       settings_available=true,
       settings=dispatch_web_settings,
       async_queue=Some(async_queue),
+      platform_channel~,
     ),
     async_queue=Some(async_queue),
   )
@@ -263,9 +270,12 @@ pub fn web_app_services(
 /// passed to `WebAppOptions` so browser history events reach the same Program.
 pub fn app_environment(
   routes~ : @services.RouteSource = @services.RouteSource::new(),
+  platform_channel~ : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse = request => {
+    Unavailable("platform channel is unavailable: " + request.channel)
+  },
 ) -> @services.AppEnvironment {
   @services.AppEnvironment::new(
-    services=web_app_services(),
+    services=web_app_services(platform_channel~),
     timer=Some(web_timer_source()),
     routes=Some(routes),
   )

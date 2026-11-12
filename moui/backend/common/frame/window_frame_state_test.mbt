@@ -9,6 +9,38 @@ fn frame_test_renderer(disposals : Ref[Int32]) -> @render.RendererSession {
 }
 
 ///|
+test "window frame state forwards result diagnostics to the hook" {
+  let captured : Array[@diagnostics.DiagnosticEvent] = []
+  let state = @frame.WindowFrameState::new(
+    renderer=frame_test_renderer(Ref(0)),
+    hooks=@frame.WindowFrameHooks::new(record_diagnostics=events => {
+      captured.append(events)
+    }),
+  )
+  let frame = @core.DrawFrame::new(
+    commands=[],
+    damage=@core.DamageRegion::full("diagnostics test"),
+  )
+  guard state.prepare_submission(frame) is Some(_) else {
+    fail("expected a submission")
+  }
+  let event = @diagnostics.DiagnosticEvent::new(
+    code="render.unsupported",
+    severity=@diagnostics.DiagnosticSeverity::Warning,
+    domain=@diagnostics.DiagnosticDomain::Render,
+    message="unsupported command",
+  )
+  ignore(
+    state.finish_submission(
+      @render.RenderFrameResult::new(presented=true, diagnostics=[event]),
+      [],
+    ),
+  )
+  inspect(captured.length(), content="1")
+  inspect(captured[0].code, content="render.unsupported")
+}
+
+///|
 test "window frame state coalesces pending frames and ignores late completion after dispose" {
   let redraws = Ref(0)
   let ime_syncs = Ref(0)

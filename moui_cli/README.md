@@ -14,6 +14,8 @@ so the CLI does not create a separate mobile runtime layer.
 | `moui doctor` | Check selected platform toolchains. |
 | `moui package [platform] [app]` | Package a desktop/web app as a distributable (macOS `.app`, Windows portable folder, web bundle); without positional arguments, print the release-planning inventory. |
 | `moui dev [package]` | Build, watch, restart, and serve a project during development. |
+| `moui test [package]` | Run a project's MoonBit tests (defaults to the `app` package). |
+| `moui inspect` | Read the latest DevTools document published by `moui dev --inspect`. |
 | `moui build <platform> <app>` | Build an artifact for any platform: desktop/web build the entrypoint package in place; Android / iOS / HarmonyOS produce APK / .app / .hap. |
 | `moui run <platform> <app>` | Run an app: desktop builds and launches in place, web serves through the dev runner, mobile builds, installs, and launches on a device or emulator. |
 | `moui devices` | List connected mobile devices, emulators, and the desktop host. |
@@ -35,14 +37,23 @@ Package distributables:
 
 ```sh
 moui package macos .     # dist/macos/<Name>.app
-moui package windows .   # dist/windows-msvc/<Name>/ with exe + run.cmd
+moui package windows .   # dist/windows/<Name>/ with exe + run.cmd
+moui package linux .     # dist/linux/<Name>/ with binary + run.sh + .desktop
 moui package web .       # static web bundle (gzip/brotli + bundle-size.json)
 ```
 
-Linux run/build work directly (`moui run linux .`); Linux bundle packaging is
-not implemented yet. Windows builds resolve the MSVC toolchain through
-vswhere and vcvarsall in-process, so sourcing `scripts/windows/msvc_env.ps1`
-first is no longer required (a preset `CC` environment is respected).
+`moui package` builds a release artifact by default; pass `--debug` to inspect
+a debug build. Packaging runs on the matching host for macOS/Windows/Linux
+(use `--allow-cross` only when the build output is known to match the target).
+macOS accepts `--icon PATH` to copy an `.icns` into `Contents/Resources` and
+write `CFBundleIconFile` + `PkgInfo`. Windows copies `icudtl.dat` from the Skia
+release cache when it is available. Web writes `moui-package.json` beside the
+bundle metadata; when the repo-local `package-web-app.mjs` is absent (a
+generated project), the CLI falls back to its built-in flat bundle packager.
+Linux run/build also work directly (`moui run linux .`). Windows builds resolve
+the MSVC toolchain through vswhere and vcvarsall in-process, so sourcing
+`scripts/windows/msvc_env.ps1` first is no longer required (a preset `CC`
+environment is respected).
 
 ## Develop With A Watch Loop
 
@@ -56,6 +67,13 @@ appear in the injected error overlay while the watcher keeps running. Use
 The `--state` path is passed to the app as `MOUI_DEV_STATE_FILE` for optional
 file-based model handoff during a restart. V1 restarts processes and does not
 preserve in-process runtime state.
+
+Pass `--inspect` to publish a read-only DevTools document at
+`.moui/devtools.json`; `moui inspect` prints it, and the Web dev server exposes
+`/__moui/devtools` plus its JSON endpoint. On native hosts the app also opens a
+loopback DevTools socket and writes its port to `.moui/devtools.port`;
+`moui inspect --port <port> --method snapshot|trace|diagnostics` queries it
+directly (the file remains the fallback when a socket is unavailable).
 
 ## Create A Project
 
@@ -82,9 +100,19 @@ moui build ios my_app --mobile-config "$PWD/moui.mobile.json"
 moui build harmonyos my_app --mobile-config "$PWD/moui.mobile.json"
 ```
 
-Use `--prepare-only` to generate inputs without invoking Gradle, Xcode, or
-hvigor. `--fallback-skia` is packaging-only evidence and does not promote a
-runtime support claim.
+Add `--release` to select the release variant where the platform builder owns
+it: Android runs `assembleRelease` (and picks `app-release.apk` or the unsigned
+fallback), iOS compiles with `-O2`. Android release signing reads
+`MOUI_ANDROID_KEYSTORE`, `MOUI_ANDROID_KEYSTORE_PASSWORD`,
+`MOUI_ANDROID_KEY_ALIAS`, and `MOUI_ANDROID_KEY_PASSWORD` from the environment
+and injects a Gradle signing config; without a keystore the build stays
+unsigned. iOS device builds take `--signing-identity`,
+`--provisioning-profile`, and optional `--entitlements`; the CLI embeds the
+profile and runs `codesign`. Signing/notarization and store packaging remain
+host-required; `--prepare-only` generates inputs without invoking Gradle,
+Xcode, or hvigor. `--fallback-skia` is packaging-only evidence and does not
+promote a runtime support claim. The physical-device runbook lives in
+`docs/mobile-device-evidence.md`.
 
 ## Validate Hosts
 

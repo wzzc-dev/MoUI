@@ -17,8 +17,8 @@ OS 产品完成度。
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
 | **Windows** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Win32 运行时 smoke + Showcase 首帧（`checks/platforms/windows.json` `runtimeL3=passed`，2026-08-29，ADR 0031） | — |
 | **Linux** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；匹配宿主 Wayland 运行时 smoke + Showcase 首帧（`checks/platforms/linux.json` `runtimeL3=passed`，2026-08-30，ADR 0032） | — |
-| **Android** | **experimental** | `ready=false`：window-hosted template + session 可编译且 host-sim tests 通过，但不做任何开发/演示可用性或产品承诺；`status=experimental` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim；可用性承诺 |
-| **iOS** | **experimental** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim；可用性承诺 |
+| **Android** | **committed** | `ready=true`：window-hosted template + session 在匹配 emulator 上通过 R6 证据（`checks/platforms/android.json` `runtimeL3=passed`，ADR 0066） | `HostCmd` host-sim 和 MoUI adapter tests 通过；emulator 呈现/输入/生命周期/服务证据 | 物理真机 build/verify；GPU seven-gate claim |
+| **iOS** | **committed** | `ready=true`：window-hosted template + session 在匹配 simulator 上通过 R6 证据（`checks/platforms/ios.json` `runtimeL3=passed`，ADR 0067） | `HostCmd` host-sim 和 MoUI adapter tests 通过；simulator 呈现/输入/生命周期/服务证据 | 物理真机 build/verify 和 VoiceOver evidence；GPU seven-gate claim |
 | **HarmonyOS** | **committed** | 产品主线可用 | L0–L2 PR/real Skia；签名真机 HAP 的 `egl-direct` 呈现、输入/IME、resize、剪贴板读写、ArkUI 无障碍、surface detach/recreate 和异步图片证据（`checks/platforms/harmonyos.json` `runtimeL3=passed`，2026-10-30，ADR 0046） | GPU seven-gate claim |
 
 ### Linux RISC-V64 架构变体
@@ -48,14 +48,15 @@ Skia Raster static provider。
 
 | 维度 | 含义 |
 |------|------|
-| 宿主可用性 (`ready`) | 仅当开发/演示可以依赖 window-hosted template + MoUI session 时为 `true`（对齐 Linux：代码完整可用）；`experimental` 平台在匹配设备证据落地前为 `false` |
-| 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only；移动端 product_class `experimental` 刻意低于 `runtime_partial` |
+| 宿主可用性 (`ready`) | 仅当开发/演示可以依赖 window-hosted template + MoUI session 时为 `true`（对齐 Linux：代码完整可用）；尚未 committed 的实验性平台在匹配宿主证据落地前为 `false` |
+| 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only；移动端 committed 平台必须有匹配 emulator/simulator/device 的 R6 证据 |
 | 产品完整承诺 | L3 全绿 + `actualPresenterRoute` verified + GPU seven-gate claimed |
 
-移动端 product_class `experimental` 的含义是：代码路径可编译且 host-sim
-tests 通过，但在匹配设备 presenter/service 证据记录之前，**不**做任何
-开发/演示可用性或产品承诺。这是对先前 `runtime_partial` 声明的**降级**
-（见 ADR 0021）；它**不是**宣称后端不可用。
+Android、iOS 和 HarmonyOS 的 product_class 均为 `committed`：Android 使用匹配
+emulator 的 R6 证据（ADR 0066），iOS 使用匹配 simulator 的 R6 证据（ADR 0067），
+HarmonyOS 使用匹配真机的 R6 证据（ADR 0046）。物理真机 Android/iOS 观察、
+VoiceOver 和 GPU seven-gate 仍是质量项，不是 readiness blocker；在证据落地前
+不得把它们写成已通过。
 
 结构化状态源：`checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`。
 **无新证据时不得抬高** `runtimeL3` / `actualPresenterRoute`。
@@ -364,8 +365,8 @@ sh scripts/window-hosted-hostsim-smoke.sh
 
 | 平台 | 当前证据 | 剩余工作 |
 |------|--------|------|
-| Android | host-sim 和 package checks | matching-device presentation、input、lifecycle 和 service evidence |
-| iOS | host-sim 和 package checks | matching simulator/device presentation、input、lifecycle 和 service evidence |
+| Android | 匹配 emulator 的 R6 证据（`checks/platforms/android.json`，ADR 0066） | 物理真机 build/verify；vulkan-direct GPU seven-gate |
+| iOS | 匹配 simulator 的 R6 证据（`checks/platforms/ios.json`，ADR 0067） | 物理真机 build/verify 和 VoiceOver；metal-direct GPU seven-gate |
 | HarmonyOS | host-sim 和 package checks | signed-device presentation、input、lifecycle 和 service evidence |
 
 对应 target 可用时，在 `scripts/window-hosted-vm-smoke.sh` 上设置一个

@@ -23,6 +23,10 @@ priv struct BuildIosOptions {
   output_app : String
   fallback_skia : Bool
   prepare_only : Bool
+  release : Bool
+  signing_identity : String?
+  provisioning_profile : String?
+  entitlements : String?
 }
 
 ///|
@@ -251,6 +255,7 @@ fn ios_common_compile_flags(
   moon_home : String,
   window_ios_root : String,
   workspace_root : String,
+  release~ : Bool = false,
 ) -> Array[String] {
   let flags : Array[String] = [
     "-isysroot",
@@ -258,8 +263,6 @@ fn ios_common_compile_flags(
     "-target",
     target_triple,
     "-fobjc-arc",
-    "-O0",
-    "-g",
     "-I" + moon_home + "/include",
     "-I" + window_ios_root,
     "-I" + window_ios_root + "/native/include",
@@ -273,7 +276,33 @@ fn ios_common_compile_flags(
     "-DTARGET_OS_IPHONE=1",
     "-DMBW_IOS_MOONBIT_MAIN=mbw_ios_moonbit_main",
   ]
+  if release {
+    flags.push("-O2")
+  } else {
+    flags.push("-O0")
+    flags.push("-g")
+  }
   flags
+}
+
+///|
+fn ios_codesign_args(
+  identity~ : String,
+  entitlements~ : String?,
+  app~ : String,
+) -> Array[String] {
+  let args = [
+    "codesign", "--force", "--deep", "--timestamp", "--sign", identity,
+  ]
+  match entitlements {
+    Some(path) => {
+      args.push("--entitlements")
+      args.push(path)
+    }
+    None => ()
+  }
+  args.push(app)
+  args
 }
 
 ///|
@@ -514,7 +543,12 @@ fn build_ios(
     workspace_root_abs,
   )
   let common_flags = ios_common_compile_flags(
-    sdk_path, target_triple, moon_home, ios_pkg_root, workspace_root_abs,
+    sdk_path,
+    target_triple,
+    moon_home,
+    ios_pkg_root,
+    workspace_root_abs,
+    release=options.release,
   )
   // 8. Compile every source to <build_dir>/obj/*.o.
   let obj_dir = join_path(build_dir_abs, "obj")
@@ -795,6 +829,52 @@ fn build_ios(
   }
   if !path_is_dir(final_output) {
     return Err("iOS .app bundle was not produced: " + final_output)
+  }
+  match options.provisioning_profile {
+    Some(path) => {
+      if !path_is_file(path) {
+        return Err("provisioning profile not found: " + path)
+      }
+      match
+        copy_file_atomic(
+          path,
+          join_path(final_output, "embedded.mobileprovision"),
+        ) {
+        Ok(_) => ()
+        Err(message) => return Err(message)
+      }
+    }
+    None => ()
+  }
+  match options.signing_identity {
+    Some(identity) => {
+      if options.entitlements is Some(path) && !path_is_file(path) {
+        return Err("iOS entitlements not found: " + path)
+      }
+      let args = ios_codesign_args(
+        identity~,
+        entitlements=options.entitlements,
+        app=final_output,
+      )
+      match process_exec_argv(args, capture=true) {
+        Ok(result) if result.exit_code == 0 => ()
+        Ok(result) =>
+          return Err(
+            "codesign failed with exit code " +
+            result.exit_code.to_string() +
+            ": " +
+            result.stderr,
+          )
+        Err(message) => return Err(message)
+      }
+      log_info("[moui-window-hosted-ios] codesign identity=" + identity)
+    }
+    None =>
+      if options.sdk == "iphoneos" {
+        log_info(
+          "iOS device build is unsigned; pass --signing-identity and --provisioning-profile before installing it on a device",
+        )
+      }
   }
   log_info("[moui-window-hosted-ios] Wrote " + final_output)
   log_info(

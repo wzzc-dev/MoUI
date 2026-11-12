@@ -46,23 +46,23 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 787,
-      "public_declarations": 515,
+      "lines": 794,
+      "public_declarations": 521,
       "pub_all_declarations": 19
     },
     {
       "label": "apphost facade",
       "path": "moui/apphost/pkg.generated.mbti",
-      "lines": 189,
-      "public_declarations": 94,
+      "lines": 191,
+      "public_declarations": 95,
       "pub_all_declarations": 5
     },
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2842,
-      "public_declarations": 1210,
-      "pub_all_declarations": 147
+      "lines": 2854,
+      "public_declarations": 1216,
+      "pub_all_declarations": 148
     },
     {
       "label": "views facade",
@@ -165,7 +165,7 @@
     {
       "label": "backend common frame owner",
       "path": "moui/backend/common/frame/pkg.generated.mbti",
-      "lines": 57,
+      "lines": 59,
       "public_declarations": 22,
       "pub_all_declarations": 0
     },

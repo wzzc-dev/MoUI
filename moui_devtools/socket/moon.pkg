@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_devtools/publish",
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "devtools_socket.c" ],
+)

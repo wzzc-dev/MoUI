@@ -66,9 +66,10 @@ moui run macos .
 moui run windows .
 moui run linux .
 
-# Or package the app as a distributable:
+# Or package the app as a distributable (release build by default):
 moui package macos .     # -> dist/macos/<Name>.app
-moui package windows .   # -> dist/windows-msvc/<Name>/ (exe + run.cmd)
+moui package windows .   # -> dist/windows/<Name>/ (exe + run.cmd)
+moui package linux .     # -> dist/linux/<Name>/ (binary + run.sh + .desktop)
 
 # Direct moon invocation still works:
 # moon run macos_skia --target native

@@ -95,7 +95,7 @@ and local workspace members resolve from `moon.work`. The exact list is generate
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.4-0.2.6",
+  "wzzc-dev/window@0.5.4-0.2.8",
   "wzzc-dev/moui@0.2.2",
   "wzzc-dev/moui_skia@0.2.1",
 }
@@ -105,7 +105,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.2.6` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.2.8` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -273,8 +273,24 @@ optional `--state PATH` value (default `.moui/dev-state.json`) is exported as
 `Program::with_state_persistence` plus a `ProgramStateTransport` at the
 composition root get a state-preserving restart: the runtime restores the last
 model at startup and rewrites the state file after every committed update.
-This is still restart-based model handoff, deliberately not an in-process hot
-reload. See [TEA program model](tea-program-model.md).
+
+A second opt-in transport (`MOUI_DEV_TRANSIENT_FILE`, default
+`.moui/dev-transient.json`) carries framework-owned transient state: scroll
+offsets, keyboard focus, and the focused text input's caret/selection/
+composition. The runtime flushes a debounced snapshot at frame boundaries and
+restores it without dispatching `on_scroll`/`on_change`. Navigation stays
+app-owned in the model. This is still restart-based — deliberately not an
+in-process hot reload. See [TEA program model](tea-program-model.md) and ADR
+0068.
+
+Pass `--inspect` to publish a read-only DevTools document to
+`.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev
+server exposes `/__moui/devtools` plus its JSON endpoint. Native hosts also
+open a loopback DevTools socket (port in `.moui/devtools.port`) and answer
+`snapshot`/`trace`/`diagnostics`/`ping` NDJSON requests; `moui inspect --port`
+uses it directly. The app must install
+`@devtools_socket.install_devtools_socket(runtime, port_file~)` (or the file
+publisher) at the composition root; counter and Showcase macOS do.
 
 ### Build, install, and launch
 

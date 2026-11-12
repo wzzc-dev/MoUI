@@ -39,6 +39,9 @@ priv struct BuildCommandOptions {
   hvigorw : String?
   ohpm : String?
   signing_config_file : String?
+  signing_identity : String?
+  provisioning_profile : String?
+  entitlements : String?
 }
 
 ///|
@@ -80,6 +83,9 @@ fn build_usage() -> String {
     #|  --hvigorw PATH               hvigorw executable. Defaults from `moui config`.
     #|  --ohpm PATH                  ohpm executable. Defaults from `moui config`.
     #|  --signing-config-file PATH  HarmonyOS signing config file.
+    #|  --signing-identity ID        iOS codesign identity.
+    #|  --provisioning-profile PATH iOS provisioning profile.
+    #|  --entitlements PATH         iOS entitlements plist for codesign.
     #|  --json                       Emit machine-readable output.
     #|  -h, --help                   Show this help.
   )
@@ -116,6 +122,9 @@ fn parse_build_args(
   let hvigorw : Ref[String?] = Ref(None)
   let ohpm : Ref[String?] = Ref(None)
   let signing_config_file : Ref[String?] = Ref(None)
+  let signing_identity : Ref[String?] = Ref(None)
+  let provisioning_profile : Ref[String?] = Ref(None)
+  let entitlements : Ref[String?] = Ref(None)
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
@@ -157,7 +166,10 @@ fn parse_build_args(
       | "--sdk-home"
       | "--hvigorw"
       | "--ohpm"
-      | "--signing-config-file" =>
+      | "--signing-config-file"
+      | "--signing-identity"
+      | "--provisioning-profile"
+      | "--entitlements" =>
         match option_value(args, index, inline, name) {
           Ok((value, next)) => {
             match name {
@@ -177,6 +189,11 @@ fn parse_build_args(
               "--hvigorw" => hvigorw.val = Some(value)
               "--ohpm" => ohpm.val = Some(value)
               "--signing-config-file" => signing_config_file.val = Some(value)
+              "--signing-identity" => signing_identity.val = Some(value)
+              "--provisioning-profile" =>
+                provisioning_profile.val = Some(make_absolute(value, cwd))
+              "--entitlements" =>
+                entitlements.val = Some(make_absolute(value, cwd))
               _ => ()
             }
             index = next
@@ -264,6 +281,9 @@ fn parse_build_args(
       hvigorw: hvigorw.val,
       ohpm: ohpm.val,
       signing_config_file: signing_config_file.val,
+      signing_identity: signing_identity.val,
+      provisioning_profile: provisioning_profile.val,
+      entitlements: entitlements.val,
     }),
   })
 }
@@ -377,6 +397,7 @@ fn build_android_options_from_command(
     output_apk,
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
+    release: options.release,
   }
 }
 
@@ -438,6 +459,10 @@ fn build_ios_options_from_command(
     output_app,
     fallback_skia: options.fallback_skia,
     prepare_only: options.prepare_only,
+    release: options.release,
+    signing_identity: options.signing_identity,
+    provisioning_profile: options.provisioning_profile,
+    entitlements: options.entitlements,
   }
 }
 
@@ -528,6 +553,44 @@ fn run_build_internal(
 }
 
 ///|
+/// Best-effort build provenance next to the artifact. `moui verify` reads this
+/// instead of assuming a non-fallback build. A missing manifest is reported as
+/// unknown provenance, never silently as `fallbackSkia=false`.
+fn write_build_manifest(
+  platform : String,
+  app : MobileApp,
+  options : BuildCommandOptions,
+  result : BuildResult,
+) -> Unit {
+  let build_dir = if options.build_dir != "" {
+    options.build_dir
+  } else if result.build_dir != "" {
+    result.build_dir
+  } else {
+    default_build_dir(platform, options.workspace_root)
+  }
+  let dir = join_path(build_dir, app.id)
+  match mkdir_p(dir) {
+    Ok(_) => ()
+    Err(_) => return
+  }
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string(platform)
+  fields["app"] = Json::string(app.id)
+  fields["artifact"] = Json::string(result.output_artifact)
+  fields["fallbackSkia"] = Json::boolean(options.fallback_skia)
+  fields["release"] = Json::boolean(options.release)
+  let text = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(dir, "build-manifest.json"),
+    @utf8.encode(text[:], bom=false),
+  ) catch {
+    _ => ()
+  }
+}
+
+///|
 /// Render the build result as JSON for the `--json` output mode.
 fn build_result_to_json(
   platform : String,
@@ -600,6 +663,7 @@ fn run_build(parsed : ParsedBuild, host : @plan.HostPlatform) -> CliOutcome {
     Ok(r) => r
     Err(message) => return failed_outcome(message, parsed.json, build_usage())
   }
+  write_build_manifest(parsed.platform, app, options, result)
   // 4. Emit output.
   if parsed.json {
     stdout_outcome(

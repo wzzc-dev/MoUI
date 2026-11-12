@@ -68,7 +68,7 @@ entrypoint supplies the program and renderer provider. Run
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent runtimes through the module-root integration facade, with retained macOS and Web routes |
 | HarmonyOS Demo | Standalone HarmonyOS app model | `examples/harmonyos_demo/app/` | Platform-neutral viewport/tap feedback; platform probing belongs to Showcase/tester |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal button/filter repro with a retained macOS Skia entrypoint |
-| Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | Strict TEA root over Components, Patterns, Platform, and pure diagnostic DTOs; module-root integration adapts runtime/render facts. Showcase alone covers all 14 canonical routes. |
+| Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | Strict TEA root over Components, Patterns, Platform, and pure diagnostic DTOs; module-root integration adapts runtime/render facts. The Platform workspace probes clipboard, file dialogs, notifications, and notification permission. Showcase alone covers all 14 canonical routes. |
 | Design Systems | Addon diagnostic theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | Source-mapped design-system diagnostics with retained Web and macOS Skia entrypoints |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
@@ -759,7 +759,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.2.6` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.2.8` Wayland host core. The
 recommended native entrypoints compose `backend/linux` with `moui_skia_renderer` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:

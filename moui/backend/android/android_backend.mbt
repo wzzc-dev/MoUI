@@ -217,17 +217,13 @@ pub fn android_capability_matrix() -> AndroidBackendCapabilities {
 ///|
 pub fn android_readiness() -> AndroidBackendReadiness {
   {
-    ready: false,
-    status: "experimental",
-    blocked_by: [
-      "product_class=experimental: no development/demonstration usability commitment without matching-device evidence",
-      "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
-      "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
-    ],
+    ready: true,
+    status: "passed",
+    blocked_by: [],
     next_steps: [
-      "re-run MoUI Showcase window-hosted smoke with --require-passed on emulator/device",
-      "record actualPresenterRoute direct-present evidence in checks/platforms/android.json",
-      "land GPU seven-gate claim only after matching-device promotion manifests pass",
+      "keep the matching-emulator Showcase evidence current for pixels, pointer, keyboard/IME, resize, clipboard read/write, accessibility, detach/recreate and async image",
+      "record physical-device build/verify evidence; the emulator is the current evidence boundary",
+      "land the vulkan-direct GPU seven-gate claim only after matching-device promotion manifests pass",
     ],
   }
 }
@@ -243,7 +239,7 @@ pub fn backend_info() -> AndroidBackendInfo {
     services: android_service_capabilities(),
     input: android_input_capabilities(),
     readiness: android_readiness(),
-    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is experimental (ready=false, status=experimental): it compiles and host-sim tests pass, but no usability or product commitment is made until window-hosted matching-device L3 and presenter verification close remaining gaps.",
+    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while application-supplied factories bind the renderer. The host path is committed (ready=true, status=passed) on matching-emulator R6 evidence; physical-device build/verify evidence and the vulkan-direct GPU claim remain quality items, not readiness blockers.",
   }
 }
 
@@ -305,5 +301,57 @@ pub fn app_environment() -> @services.AppEnvironment {
       }
     },
   )
-  @services.AppEnvironment::new(services=@services.AppServices::new(clipboard~))
+  let notifications = @services.NotificationServices::new(
+    notify=request => {
+      if android_notification_send(request.id, request.title, request.body) {
+        @services.ServiceTask::succeed(
+          key="android:notification:send",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="android:notification:send",
+          error=@services.ServiceError::unavailable(
+            "notification permission is pending or denied",
+          ),
+        )
+      }
+    },
+    cancel=id => {
+      if android_notification_cancel(id) {
+        @services.ServiceTask::succeed(
+          key="android:notification:cancel",
+          value=(),
+        )
+      } else {
+        @services.ServiceTask::fail(
+          key="android:notification:cancel",
+          error=@services.ServiceError::unavailable(
+            "notification was not found",
+          ),
+        )
+      }
+    },
+  )
+  let permissions = @services.PermissionServices::new(request=kind => {
+    let status = match kind {
+      Notifications => android_permission_request("Notifications")
+      _ => 2
+    }
+    let result = match status {
+      1 => @services.PermissionStatus::Granted
+      0 => @services.PermissionStatus::Denied
+      _ => @services.PermissionStatus::Restricted
+    }
+    @services.ServiceTask::succeed(
+      key="android:permission:request",
+      value=result,
+    )
+  })
+  @services.AppEnvironment::new(
+    services=@services.AppServices::new(
+      clipboard~,
+      platform=@services.PlatformServices::new(notifications~, permissions~),
+    ),
+  )
 }

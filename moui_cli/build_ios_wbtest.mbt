@@ -55,3 +55,43 @@ test "test_xcode_version_string_returns_empty_when_unavailable" {
   let _ = xcode_version_string()
   assert_true(true)
 }
+
+///|
+test "test_ios_codesign_args_include_identity_and_entitlements" {
+  let args = ios_codesign_args(
+    identity="Apple Development: Demo",
+    entitlements=Some("/tmp/demo.entitlements"),
+    app="/tmp/Demo.app",
+  )
+  assert_true(args.contains("--sign"))
+  assert_true(args.contains("Apple Development: Demo"))
+  assert_true(args.contains("--entitlements"))
+  assert_true(args.contains("/tmp/demo.entitlements"))
+  inspect(args[args.length() - 1], content="/tmp/Demo.app")
+}
+
+///|
+test "test_build_parser_records_ios_signing_flags" {
+  let parsed = match
+    parse_build_args(
+      [
+        "ios", "demo", "--signing-identity", "Apple Development: Demo", "--provisioning-profile",
+        "demo.mobileprovision", "--entitlements", "demo.entitlements",
+      ],
+      "/tmp",
+      detect_host_platform(),
+    ) {
+    Ok(value) => value
+    Err(message) => fail(message)
+  }
+  let options = match parsed.options {
+    Some(value) => value
+    None => fail("expected build options")
+  }
+  inspect(options.signing_identity.unwrap(), content="Apple Development: Demo")
+  inspect(
+    options.provisioning_profile.unwrap(),
+    content="/tmp/demo.mobileprovision",
+  )
+  inspect(options.entitlements.unwrap(), content="/tmp/demo.entitlements")
+}

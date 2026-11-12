@@ -43,6 +43,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   size~ : @core.Size,
   environment~ : @core.Environment = @core.Environment::neutral(),
   state_transport~ : @core.ProgramStateTransport? = None,
+  transient_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
   let model = Ref(
@@ -180,6 +181,16 @@ pub fn[Model, Msg] AppRuntime::new_program(
     destroy_program_runtime_fn: Ref(() => ()),
   }
   runtime_ref.val = Some(runtime)
+  match transient_transport {
+    Some(transport) => {
+      runtime.state.dev_transient_transport = Some(transport)
+      match transport.read() {
+        Some(payload) => runtime.restore_dev_transient(payload)
+        None => ()
+      }
+    }
+    None => ()
+  }
   runtime.state.set_root_builder(() => {
     adapt_view_for_runtime(
       program.runtime_view(
@@ -219,8 +230,15 @@ pub fn[Model, Msg] new_program(
   size~ : @core.Size,
   environment~ : @core.Environment = @core.Environment::neutral(),
   state_transport~ : @core.ProgramStateTransport? = None,
+  transient_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
-  AppRuntime::new_program(program~, size~, environment~, state_transport~)
+  AppRuntime::new_program(
+    program~,
+    size~,
+    environment~,
+    state_transport~,
+    transient_transport~,
+  )
 }
 
 ///|
@@ -230,12 +248,14 @@ pub fn[Model, Msg] new_program_with_dimensions(
   height~ : Double,
   environment~ : @core.Environment = @core.Environment::neutral(),
   state_transport~ : @core.ProgramStateTransport? = None,
+  transient_transport~ : @core.ProgramStateTransport? = None,
 ) -> AppRuntime {
   AppRuntime::new_program(
     program~,
     size=@core.Size::new(width~, height~),
     environment~,
     state_transport~,
+    transient_transport~,
   )
 }
 
@@ -277,6 +297,8 @@ pub fn AppRuntime::set_environment(
 ///|
 pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
   self.state.advance_time(time_ms)
+  self.state.maybe_save_dev_transient()
+  self.state.maybe_sample_devtools()
 }
 
 ///|

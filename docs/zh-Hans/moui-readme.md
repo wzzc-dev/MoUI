@@ -14,13 +14,14 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | Web | **committed** | 产品主线（wasm-gc + WebGPU） |
 | Windows | **committed** | 产品主线（L0-L3 证据） |
 | Linux | **committed** | 产品主线（L0-L3 证据） |
-| Android | **experimental** | window-hosted 路径可编译；尚无可用性/产品承诺 |
-| iOS | **experimental** | 同 Android |
+| Android | **committed** | 匹配 emulator 验证：ANativeWindow CPU-blit Skia 呈现、指针、键盘/IME、resize、剪贴板读写、无障碍、detach/recreate、异步图片（ADR 0066） |
+| iOS | **committed** | 匹配 simulator 验证：CALayer CPU-blit Skia 呈现、指针、键盘/IME、剪贴板读写、无障碍、detach/recreate、异步图片（ADR 0067） |
 | HarmonyOS | **committed** | 真机验证通过：`egl-direct` Skia 呈现、指针、键盘/IME、resize、应用视口、剪贴板读写、ArkUI 无障碍、detach/recreate、异步图片（ADR 0046） |
 
-Mobile **不是**“只有未接线的胶水层”，但也**尚未**做出产品承诺。它是
-**实验性**的：代码可编译且 host-sim tests 通过，但在匹配设备证据落地前，
-不做任何开发/演示可用性或产品承诺。参见[平台就绪声明](../platform-readiness-declaration.md)。
+Mobile **不是**“只有未接线的胶水层”。Android 基于匹配 emulator 的 R6 证据、
+iOS 基于匹配 simulator 的 R6 证据、HarmonyOS 基于匹配真机的 R6 证据，均为
+**committed**。物理真机 Android/iOS 观察、VoiceOver 和 GPU seven-gate 仍是
+开放质量项，不是 readiness blocker。参见[平台就绪声明](../platform-readiness-declaration.md)。
 
 runtime 管线是显式的：
 

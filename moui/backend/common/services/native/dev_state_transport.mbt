@@ -32,3 +32,21 @@ pub fn dev_state_transport(path : String) -> @core.ProgramStateTransport {
     },
   )
 }
+
+///|
+/// Dev-loop transient state file path from `MOUI_DEV_TRANSIENT_FILE`.
+/// `moui dev` sets both the model and transient files; a missing transient
+/// path keeps production starts idle.
+pub fn dev_transient_transport_path() -> String? {
+  match @env.get_env_var("MOUI_DEV_TRANSIENT_FILE") {
+    Some(path) => if path != "" { Some(path) } else { None }
+    None => None
+  }
+}
+
+///|
+/// File-backed transport for the framework-owned transient handoff. It reuses
+/// the model transport's best-effort file behavior.
+pub fn dev_transient_transport(path : String) -> @core.ProgramStateTransport {
+  dev_state_transport(path)
+}

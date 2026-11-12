@@ -62,6 +62,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [platform-notes-web.md](platform-notes-web.md) | `deep` | Web |
 | [android-support.md](android-support.md) | `deep` | Android window-hosted route |
 | [ios-support.md](ios-support.md) | `deep` | iOS window-hosted route |
+| [mobile-device-evidence.md](mobile-device-evidence.md) | `canonical` | Signing, install, and evidence runbook for physical Android/iOS devices |
 | [harmonyos-support.md](harmonyos-support.md) | `deep` | HarmonyOS window-hosted route |
 | [wechat-support.md](wechat-support.md) | `deep` | WeChat Mini Program (微信小程序) Skyline Canvas 2D + wasm-gc host |
 | [window-hosted-moui.md](window-hosted-moui.md) | `canonical` | Embedded-runtime event-loop ownership and route |
@@ -104,6 +105,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [roadmap-2026.md](roadmap-2026.md) | `deep` | Year roadmap |
 | [PROPOSAL.md](PROPOSAL.md) | `historical` | Proposals |
 | [tutorials.md](tutorials.md) | `deep` | Tutorials index |
+| [tutorials/30-minute-app.md](tutorials/30-minute-app.md) | `canonical` | Create, test, inspect, and package a first app |
 | [templates.md](templates.md) | `deep` | Template notes |
 | [mo-workbench.md](mo-workbench.md) | `deep` | Mo Workbench |
 

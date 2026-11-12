@@ -1,9 +1,9 @@
 # iOS Support
 
-iOS uses the **embedded runtime backend** route and is currently
-**experimental** (product_class `experimental`, `ready=false`): the code paths
-compile and host-sim tests pass, but no development/demonstration usability or
-product commitment is made without matching-simulator/device evidence. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
+iOS uses the **embedded runtime backend** route and is **committed**
+(product_class `committed`, `ready=true`) on matching-simulator R6 evidence
+(`checks/platforms/ios.json` `runtimeL3=passed`, ADR 0067).
+`wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
 input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
 exposes the neutral UIKit/Metal presenter surface. The entrypoint supplies
 `moui_skia_renderer` providers with an explicit iOS platform policy; the

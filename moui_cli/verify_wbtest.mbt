@@ -138,7 +138,13 @@ test "test_verify_manifest_to_json_emits_schema_and_generated_by" {
     ],
   }
   let json = verify_manifest_to_json(
-    "android", "demo", "/tmp/demo.apk", "failed", probe,
+    "android",
+    "demo",
+    "/tmp/demo.apk",
+    "failed",
+    probe,
+    Some(false),
+    "build-manifest",
   )
   let text = json.stringify(indent=2)
   assert_true(text.contains("\"schemaVersion\": 1"))
@@ -160,10 +166,34 @@ test "test_verify_manifest_to_json_emits_schema_and_generated_by" {
 test "test_verify_manifest_to_json_emits_passed_when_ok" {
   let probe : ProbeResult = { ok: true, observations: [], }
   let json = verify_manifest_to_json(
-    "ios", "demo", "/tmp/demo.app", "passed", probe,
+    "ios",
+    "demo",
+    "/tmp/demo.app",
+    "passed",
+    probe,
+    Some(false),
+    "build-manifest",
   )
   let text = json.stringify(indent=2)
   assert_true(text.contains("\"status\": \"passed\""))
+}
+
+///|
+test "test_verify_manifest_reports_unknown_provenance_without_false_claim" {
+  let probe : ProbeResult = { ok: true, observations: [], }
+  let json = verify_manifest_to_json(
+    "android",
+    "demo",
+    "/tmp/demo.apk",
+    "passed",
+    probe,
+    None,
+    "unknown",
+  )
+  let text = json.stringify(indent=2)
+  assert_true(text.contains("\"provenance\": \"unknown\""))
+  assert_true(text.contains("\"fallbackSkia\": null"))
+  assert_true(text.contains("build provenance unknown"))
 }
 
 ///|

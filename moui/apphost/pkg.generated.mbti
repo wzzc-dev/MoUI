@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/common",
   "wzzc-dev/moui/runtime",
@@ -88,6 +89,7 @@ pub(all) struct HostRuntimeDriver {
   mut frame_time_ms : Double
 }
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::diagnostics_sink(Self) -> @diagnostics.DiagnosticSink
 pub fn HostRuntimeDriver::dispatch(Self, @backend.Event) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @backend.HostServiceBridge) -> @backend.EventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @core.CommandIntent, @backend.HostServiceBridge) -> @backend.EventResult

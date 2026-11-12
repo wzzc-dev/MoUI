@@ -2325,6 +2325,7 @@ pub fn TransitionSpec::fade(from_opacity? : Double, to_opacity? : Double, durati
 pub fn TransitionSpec::new(from? : TransitionStyle, to? : TransitionStyle, duration_ms? : Double, easing? : Easing) -> Self
 pub fn TransitionSpec::not_equal(Self, Self) -> Bool
 pub fn TransitionSpec::presence(Self, present~ : Bool, progress~ : Double, reduced_motion? : Bool) -> TransitionSample
+pub fn TransitionSpec::presence_elapsed(Self, present~ : Bool, Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::sample(Self, Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::sample_elapsed(Self, Double, reduced_motion? : Bool) -> TransitionSample
 pub fn TransitionSpec::scale(from_scale? : Double, to_scale? : Double, duration_ms? : Double, easing? : Easing) -> Self
@@ -2428,7 +2429,7 @@ pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
 pub fn[Msg] View::place_overlays(Self[Msg], OverlayPlacementContext) -> Array[(Int32, Rect)]?
 pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[PlatformViewPlacement]
-pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, elapsed_ms? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::semantic_id(Self[Msg], String) -> Self[Msg]
@@ -2458,7 +2459,7 @@ pub fn[Msg] View::text_command_result(Self[Msg], ViewEventContext, CommandIntent
 pub fn[Msg] View::text_input_state(Self[Msg], ViewPaintContext) -> TextInputState?
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, elapsed_ms? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::traps_focus(Self[Msg]) -> Bool
 
 pub struct ViewBuilderCache[Msg] {
@@ -2752,6 +2753,15 @@ pub fn ViewStateContext::to_repr(Self) -> @debug.Repr
 pub fn[T : ViewStateValue] ViewStateContext::with_slot(Self, ViewStateSlot[T], T) -> Self
 pub fn[T] ViewStateContext::without_slot(Self, ViewStateSlot[T]) -> Self
 
+#derive(Eq, @debug.Debug)
+pub(all) struct ViewStateEntry {
+  key : Bytes
+  value : Bytes
+}
+pub fn ViewStateEntry::equal(Self, Self) -> Bool
+pub fn ViewStateEntry::not_equal(Self, Self) -> Bool
+pub fn ViewStateEntry::to_repr(Self) -> @debug.Repr
+
 pub struct ViewStateSlot[T] {
   // private fields
 }
@@ -2762,7 +2772,9 @@ pub struct ViewStateSlots {
   // private fields
 }
 pub fn ViewStateSlots::empty() -> Self
+pub fn ViewStateSlots::entries(Self) -> Array[ViewStateEntry]
 pub fn ViewStateSlots::equal(Self, Self) -> Bool
+pub fn ViewStateSlots::from_entries(Array[ViewStateEntry]) -> Self
 pub fn ViewStateSlots::not_equal(Self, Self) -> Bool
 pub fn ViewStateSlots::to_repr(Self) -> @debug.Repr
 

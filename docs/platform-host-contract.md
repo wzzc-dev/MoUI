@@ -248,6 +248,25 @@ optional foreground/background lifecycle source. These operations use the
 platform backends can add native behavior without importing platform types into
 the app package. Backends can report unavailable services without
 pretending that app code can call platform APIs directly.
+
+macOS implements the first `PlatformChannel` slice: `notification.send` /
+`notification.cancel` use `NSUserNotificationCenter`, and
+`permission.request` returns `granted` for notifications, `restricted` for the
+other permission kinds, and an explicit error for unknown operations. This is a
+best-effort notification authorization boundary, not a synchronous
+authorization-status query; the OS may still suppress delivery.
+
+Web implements the same operations through the browser Notification API
+(`moui/backend/web/notifications`, imported by the Web composition root). A
+pending permission prompt reports `restricted`; the app can retry `notify`
+after the user responds.
+
+Android implements them through the window-hosted `HostedActivity`
+(`NotificationManager` + `POST_NOTIFICATIONS`) and the
+`moui/backend/android/android_notifications.mbt` JNI bridge. A pending
+`POST_NOTIFICATIONS` request reports `restricted`; the app retries after the
+user responds. The Android host services answer synchronously like the
+clipboard bridge, so no `platform-channel` queue drain is required.
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
 accessibility readiness. It is a high-level reporting API for apps, diagnostics,

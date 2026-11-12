@@ -77,7 +77,20 @@ fn run_run_desktop(
       run_usage(),
     )
   }
-  let argv = [artifact]
+  let launch_path = if parsed.platform == "macos" {
+    match prepare_macos_dev_bundle(flow, artifact) {
+      Ok(value) => value
+      Err(message) =>
+        return failed_outcome(
+          "could not prepare macOS app bundle: " + message,
+          parsed.json,
+          run_usage(),
+        )
+    }
+  } else {
+    artifact
+  }
+  let argv = [launch_path]
   for argument in options.custom_args {
     argv.push(argument)
   }

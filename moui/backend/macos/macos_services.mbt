@@ -212,6 +212,7 @@ pub fn macos_service_bridge(
   binary_file~ : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   settings~ : (@host.HostSettingsRequest) -> @host.HostServiceResponse = dispatch_macos_settings,
   menu~ : (Array[@core.ActionCommand]) -> Int32 = dispatch_macos_menu,
+  platform_channel~ : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse = dispatch_macos_platform_channel,
 ) -> @host.HostServiceBridge {
   @host_services_desktop.DesktopHostServices::new(
     capabilities=@host.HostServiceCapabilities::new(
@@ -234,6 +235,7 @@ pub fn macos_service_bridge(
       @host_services_desktop.menu_command_response(commands, menu(commands))
     },
     set_application_menu=dispatch_macos_application_menu,
+    platform_channel=Some(platform_channel),
   ).bridge()
 }
 

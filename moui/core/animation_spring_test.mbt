@@ -135,3 +135,48 @@ test "spring state carries velocity across a target change" {
   }
   assert_true(finished.settled(target=0.0))
 }
+
+///|
+test "spring-driven transition overshoots scale before settling" {
+  let spec = @core.TransitionSpec::scale(from_scale=0.96, to_scale=1.0).with_spring(
+    spring=@core.SpringSpec::bouncy(),
+  )
+  let mut peak = 0.0
+  for step in 0..<200 {
+    let sample = spec.sample_elapsed(step.to_double() * 5.0)
+    if sample.style.scale.x > peak {
+      peak = sample.style.scale.x
+    }
+  }
+  // A bouncy spring must actually move past the destination; clamping the
+  // spring progress back through the fixed easing curve would hide this.
+  assert_true(peak > 1.0)
+  let settled = spec.sample_elapsed(10_000.0)
+  inspect(settled.style.scale.x == 1.0, content="true")
+  inspect(settled.progress == 1.0, content="true")
+}
+
+///|
+test "spring-driven presence keeps exiting content until settled" {
+  let spec = @core.TransitionSpec::fade().with_spring(
+    spring=@core.SpringSpec::bouncy(),
+  )
+  let early = spec.presence_elapsed(present=false, 0.0)
+  assert_true(early.present)
+  assert_true(early.progress < 0.01)
+  let late = spec.presence_elapsed(present=false, 10_000.0)
+  assert_true(!late.present)
+  inspect(late.style.opacity == 0.0, content="true")
+}
+
+///|
+test "spring-driven opacity stays within the valid range" {
+  let spec = @core.TransitionSpec::fade().with_spring(
+    spring=@core.SpringSpec::bouncy(),
+  )
+  for step in 0..<200 {
+    let sample = spec.sample_elapsed(step.to_double() * 5.0)
+    assert_true(sample.style.opacity >= 0.0)
+    assert_true(sample.style.opacity <= 1.0)
+  }
+}

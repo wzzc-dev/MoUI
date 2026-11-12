@@ -8,7 +8,25 @@ fn main {
     } else {
       0
     },
+    transient_transport=match @native_services.dev_transient_transport_path() {
+      Some(path) => Some(@native_services.dev_transient_transport(path))
+      None => None
+    },
   )
+  match @devtools_socket.devtools_port_file_path() {
+    Some(port_file) =>
+      @devtools_socket.install_devtools_socket(
+        runtime,
+        port_file~,
+        file_path=@devtools_publish.devtools_file_path(),
+      )
+    None =>
+      match @devtools_publish.devtools_file_path() {
+        Some(path) =>
+          @devtools_publish.install_devtools_publisher(runtime, path~)
+        None => ()
+      }
+  }
   @apphost.run_app("MoUI Showcase", runtime)
   // .render(@render_skia.raster())
   .render(@render_skia.gpu(platform=MacOS))

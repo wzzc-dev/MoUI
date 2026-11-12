@@ -1,9 +1,9 @@
 # Android Support
 
-Android uses the **embedded runtime backend** route and is currently
-**experimental** (product_class `experimental`, `ready=false`): the code paths
-compile and host-sim tests pass, but no development/demonstration usability or
-product commitment is made without matching-device evidence. `wzzc-dev/window/android` owns the Android lifecycle,
+Android uses the **embedded runtime backend** route and is **committed**
+(product_class `committed`, `ready=true`) on matching-emulator R6 evidence
+(`checks/platforms/android.json` `runtimeL3=passed`, ADR 0066).
+`wzzc-dev/window/android` owns the Android lifecycle,
 surface, and input queue; `moui/backend/android` converts those callbacks into
 the MoUI runtime session, exposes neutral CPU/GPU surface capabilities, and
 owns the platform presenter. The entrypoint supplies `moui_skia_renderer`
@@ -186,6 +186,14 @@ MoUI side: `moui/backend/android/android_clipboard.mbt` +
 `android_accessibility.mbt` bind the bridges; `app_environment()` wires
 ClipboardServices; the window-hosted backend pumps semantics to the
 provider from `about_to_wait` with a generation cursor.
+
+Notifications and notification permission now use the same synchronous JNI
+bridge shape: `android_notifications.mbt` calls the template's
+`HostedActivity` `NotificationManager` / `POST_NOTIFICATIONS` helpers, and
+`app_environment()` wires `NotificationServices` + `PermissionServices`. A
+pending permission request reports `restricted`; the app retries after the
+user responds. Matching-device smoke for the prompt and delivery is still an
+open quality item (not part of the R6 matrix).
 
 With these, every R6 capability is observed on the matching emulator and
 the route is promoted to `committed` (`checks/platforms/android.json`

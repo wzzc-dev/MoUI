@@ -5,14 +5,15 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/core/diagnostics",
 }
 
 // Values
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
-pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> AppRuntime
+pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?, transient_transport? : @core.ProgramStateTransport?) -> AppRuntime
 
-pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> AppRuntime
+pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?, transient_transport? : @core.ProgramStateTransport?) -> AppRuntime
 
 pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
 
@@ -51,7 +52,9 @@ pub fn AppRuntime::action_commands(Self) -> Array[@core.ActionCommand]
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
 pub fn AppRuntime::anchor_frame(Self, String) -> @core.Rect?
 pub fn AppRuntime::anchor_keys(Self) -> Array[String]
+pub fn AppRuntime::capture_dev_transient(Self) -> String
 pub fn AppRuntime::destroy(Self) -> Unit
+pub fn AppRuntime::diagnostics_sink(Self) -> @diagnostics.DiagnosticSink
 pub fn AppRuntime::dirty_count(Self) -> Int32
 pub fn AppRuntime::dirty_element_ids(Self) -> Array[Int32]
 pub fn AppRuntime::dispatch_action_command(Self, @core.ActionCommand) -> Bool
@@ -62,6 +65,7 @@ pub fn AppRuntime::dispatch_pointer_input(Self, @core.PointerEvent) -> InputDisp
 pub fn AppRuntime::dispatch_presentation_back(Self) -> Bool
 pub fn AppRuntime::dispatch_presentation_escape(Self) -> Bool
 pub fn AppRuntime::dispatch_presentation_host_close(Self) -> Bool
+pub fn AppRuntime::drain_diagnostics(Self) -> Array[@diagnostics.DiagnosticEvent]
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
 pub fn AppRuntime::environment(Self) -> @core.Environment
@@ -75,14 +79,17 @@ pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
-pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?) -> Self
+pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?, transient_transport? : @core.ProgramStateTransport?) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn AppRuntime::profile_draw_frame(Self, () -> Double) -> ProfiledDrawFrame
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
+pub fn AppRuntime::push_diagnostics(Self, Array[@diagnostics.DiagnosticEvent]) -> Unit
 pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
+pub fn AppRuntime::restore_dev_transient(Self, String) -> Unit
 pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignment) -> Bool
+pub fn AppRuntime::set_devtools_sample_observer(Self, (() -> Unit)?) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
 pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit

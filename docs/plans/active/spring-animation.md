@@ -33,13 +33,13 @@
 
 ## Acceptance
 
-- [ ] Physics tests: ζ ≥ 1 curves are monotone and settle to exactly 1;
+- [x] Physics tests: ζ ≥ 1 curves are monotone and settle to exactly 1;
       ζ < 1 overshoots past 1 then returns; `advance` integrates deterministically
       for fixed frames and preserves velocity across a target change; settled
       detection holds at the target; `sample_elapsed` with a spring reaches
       the destination style and respects reduced motion.
-- [ ] `moui/animation` re-exports the new types.
-- [ ] `docs/canvas-and-custom-paint.md` animation section and the
+- [x] `moui/animation` re-exports the new types.
+- [x] `docs/canvas-and-custom-paint.md` animation section and the
       `View::transition` row in `docs/view-catalog.md` mention springs.
 - [ ] `moon info` + committed mbti diffs; api-surface budgets ratcheted with
       justification; static validators pass.

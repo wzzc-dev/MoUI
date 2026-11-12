@@ -374,6 +374,15 @@ pub fn HostRuntimeDriver::request_redraw(self : HostRuntimeDriver) -> Unit {
 }
 
 ///|
+/// The runtime-owned bounded diagnostics sink, shared with frame hooks that
+/// forward renderer-frame diagnostics.
+pub fn HostRuntimeDriver::diagnostics_sink(
+  self : HostRuntimeDriver,
+) -> @diagnostics.DiagnosticSink {
+  self.runtime.diagnostics_sink()
+}
+
+///|
 pub fn HostRuntimeDriver::set_redraw_scheduler(
   self : HostRuntimeDriver,
   schedule_redraw : () -> Unit,

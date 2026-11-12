@@ -1,8 +1,8 @@
 # WeChat Mini Program Support
 
 WeChat Mini Program support is an **experimental** Canvas 2D WebAssembly
-route (product_class `experimental`, `ready=false`). Unlike Android, iOS, and
-HarmonyOS, it does not use the native mobile
+route (product_class `experimental`, `ready=false`).
+Unlike the committed Android, iOS, and HarmonyOS routes, it does not use the native mobile
 `window` event loop: the Mini Program template calls the canvas host callbacks
 directly. The code paths compile, but no development/demonstration usability
 or product commitment is made until real Mini Program pixel smoke,

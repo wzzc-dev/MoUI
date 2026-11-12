@@ -150,6 +150,36 @@ matching window's redraw, while stale or disposed tokens are ignored. The real
 Skia smoke records matching-host async second-frame evidence only when the
 token completion and repaint markers are present.
 
+## Notifications And Permission
+
+macOS notification delivery uses `UNUserNotificationCenter` (not the deprecated
+`NSUserNotificationCenter`). The backend's `PlatformChannel` handles
+`notification.send`, `notification.cancel`, and
+`permission.request(Notifications)`; other permission kinds stay `restricted`.
+The delegate presents banners, list entries, and sound while the app is
+foreground.
+
+Notification identity is bundle-based:
+
+- A bare `moon run` binary has no bundle identifier. The bridge reports an
+  explicit `Unavailable` result instead of claiming delivery; macOS would drop
+  the request silently.
+- `moui run macos` creates a minimal development `.app` under
+  `_build/moui-run/`, ad-hoc signs it, registers it with LaunchServices, and
+  executes the inner binary. The development identifier is
+  `dev.wzzc.moui.dev.<product>.<entrypoint>`, or `<manifest-id>.dev` when
+  `moui.project.json` declares a bundle id. The `.dev` suffix keeps a packaged
+  build with the release identifier from owning the notification record.
+- `moui package macos` emits a `.app` bundle. Sign it (and notarize it for
+  distribution) so the system accepts its notification identity.
+- Directly executing an unregistered bundle may not appear in System Settings.
+  Launch it through `open` or let `moui run macos` register the dev bundle.
+
+The first `permission.request` triggers the system prompt and completes with
+`restricted` while the response is pending. Query again after responding to
+observe `granted` or `denied`. `notification.send` returns an explicit error
+when permission is denied or still pending.
+
 ## Application Icon (Dock)
 
 Unbundled macOS binaries (everything launched through `moon run`/`moon build`
@@ -160,8 +190,11 @@ backend applies an application-wide icon automatically:
   (`moui/backend/macos/macos_branding_icon.mbt`, generated from
   `resource/branding/moonbud-mascot-100.png` by
   `scripts/generate-macos-branding-icon.mjs`).
-- Bundled `.app` binaries keep their bundle-declared icon unless an override
-  is set, so packaging MoUI apps with `Info.plist` icons is not affected.
+- Bundled `.app` binaries with a `CFBundleIconFile` or `CFBundleIconName`
+  keep the bundle-declared icon, so packaging MoUI apps with `Info.plist`
+  icons is not affected.
+- Development bundles created by `moui run macos` declare no icon, so they
+  fall back to the embedded Moonbud icon instead of a generic Dock tile.
 
 Pass `MacosHostAppOptions::new(dock_icon_path=Some(path))` at the composition
 root to use a custom image file (anything `NSImage` decodes). The icon is
@@ -202,10 +235,10 @@ link: {
 ```
 
 The host and binding packages declare their own link flags for AppKit,
-CoreText, WebKit, and Skia symbols. Missing `_objc_msgSend`,
-`___CFConstantStringClassReference`, `CAMetalLayer`, or Skia Ganesh symbols
-usually means the prebuild `link_configs` did not apply or `tcc -run` was not
-disabled.
+UserNotifications, CoreText, WebKit, and Skia symbols. Missing `_objc_msgSend`,
+`___CFConstantStringClassReference`, `CAMetalLayer`, `UNUserNotificationCenter`,
+or Skia Ganesh symbols usually means the prebuild `link_configs` did not apply
+or `tcc -run` was not disabled.
 
 Use `moon run <package> --target native --dry-run -v` to inspect the final
 `cc` command and confirm AppKit/Metal/Skia flags are present. If `moon build`

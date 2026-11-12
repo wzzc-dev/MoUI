@@ -27,6 +27,12 @@ pub fn android_clipboard_write_text(String) -> Bool
 
 pub fn android_input_capabilities() -> @backend.HostInputCapabilities
 
+pub fn android_notification_cancel(String) -> Bool
+
+pub fn android_notification_send(String, String, String) -> Bool
+
+pub fn android_permission_request(String) -> Int32
+
 pub fn android_readiness() -> AndroidBackendReadiness
 
 pub fn android_service_capabilities() -> @backend.HostServiceCapabilities

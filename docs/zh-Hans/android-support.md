@@ -1,6 +1,6 @@
 # Android 支持
 
-Android 使用**嵌入运行时后端**路径，目前状态为 **experimental**（product_class `experimental`，`ready=false`）：代码路径可编译且 host-sim tests 通过，但在匹配设备证据落地前，不做任何开发/演示可用性或产品承诺。
+Android 使用**嵌入运行时后端**路径，状态为 **committed**（product_class `committed`，`ready=true`），基于匹配 emulator 的 R6 证据（`checks/platforms/android.json` `runtimeL3=passed`，ADR 0066）。
 `wzzc-dev/window/android` 拥有 Android 生命周期、Surface 与输入队列；
 `moui/backend/android` 将这些回调转换为 MoUI runtime session，
 `moui_skia_renderer` 提供呈现器。
@@ -104,5 +104,7 @@ detach/recreate、IME、剪贴板、无障碍与异步图片观察。实际 pres
 
 ## 状态
 
-该路径可用于开发与模板集成，但尚不是完整 Android 产品结论。证据边界见
-`docs/platform-readiness-declaration.md` 与 `docs/window-hosted-moui.md`。
+该路径可用于开发与模板集成，并携带完整的匹配 emulator R6 证据；物理真机
+build/verify 和 vulkan-direct GPU 七门禁仍是开放质量项，不是 readiness
+blocker。证据边界见 `docs/platform-readiness-declaration.md` 与
+`docs/window-hosted-moui.md`。

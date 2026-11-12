@@ -104,6 +104,81 @@ test "stale service completion cannot overwrite the active operation" {
 }
 
 ///|
+test "notification actions use typed service tasks" {
+  let fake = @services.FakeAppServices::new()
+  let (_, notify_effect) = @platform.update(
+    @platform.Model::new(),
+    Notify,
+    services=fake.services(),
+  )
+  inspect(@runtime.effect_plan_summary(notify_effect).task_count(), content="1")
+  let (_, permission_effect) = @platform.update(
+    @platform.Model::new(),
+    RequestNotificationPermission,
+    services=fake.services(),
+  )
+  inspect(
+    @runtime.effect_plan_summary(permission_effect).task_count(),
+    content="1",
+  )
+}
+
+///|
+test "notification completion advances count and cancel clears the id" {
+  let (sent, _) = @platform.update(@platform.Model::new(), Notify)
+  assert_true(sent.notification_id != "")
+  let (completed, _) = @platform.update(
+    sent,
+    NotificationCompleted(1, Success(())),
+  )
+  inspect(completed.notification_count, content="1")
+  assert_eq(completed.pending_service, None)
+  let (cancelling, _) = @platform.update(completed, CancelNotification)
+  assert_eq(cancelling.pending_service, Some(2))
+  let (cancelled, _) = @platform.update(
+    cancelling,
+    NotificationCancelCompleted(2, Success(())),
+  )
+  inspect(cancelled.notification_id, content="")
+  inspect(cancelled.last_event, content="Notification cancelled")
+}
+
+///|
+test "notification failure clears the active id" {
+  let (sent, _) = @platform.update(@platform.Model::new(), Notify)
+  assert_true(sent.notification_id != "")
+  let (failed, _) = @platform.update(
+    sent,
+    NotificationCompleted(
+      1,
+      Failure(@services.ServiceError::unavailable("notifications")),
+    ),
+  )
+  inspect(failed.notification_id, content="")
+  inspect(failed.notification_count, content="0")
+  assert_true(failed.last_event.contains("Notification unavailable"))
+}
+
+///|
+test "permission completion records the host status" {
+  let (requested, _) = @platform.update(
+    @platform.Model::new(),
+    RequestNotificationPermission,
+  )
+  assert_eq(requested.pending_service, Some(1))
+  let (granted, _) = @platform.update(
+    requested,
+    PermissionCompleted(1, Success(@services.PermissionStatus::Granted)),
+  )
+  inspect(granted.notification_permission, content="granted")
+  let (denied, _) = @platform.update(
+    requested,
+    PermissionCompleted(1, Success(@services.PermissionStatus::Denied)),
+  )
+  inspect(denied.notification_permission, content="denied")
+}
+
+///|
 test "probe actions update counters" {
   let model = @platform.Model::new(route="mobile-service-probe")
   let (acted, _) = @platform.update(model, ProbeAction)

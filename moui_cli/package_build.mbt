@@ -21,7 +21,10 @@ priv struct PackageBuildOptions {
   version : String
   build_number : String
   bundle_id : String?
+  icon : String?
   renderer : String
+  release : Bool
+  allow_cross : Bool
   no_build : Bool
   dry_run : Bool
 }
@@ -33,11 +36,10 @@ fn package_build_usage() -> String {
     #|
     #|Produce a distributable artifact for a desktop or web target:
     #|windows -> portable folder with run.cmd, macos -> .app bundle,
-    #|web -> static web bundle. Linux packaging is not implemented; use
-    #|`moui build linux` and run the raw executable.
+    #|linux -> native bundle with run.sh and .desktop, web -> static web bundle.
     #|
     #|Arguments:
-    #|  platform     Target platform: macos, windows, or web.
+    #|  platform     Target platform: macos, windows, linux, or web.
     #|  app          Project directory holding the entrypoint packages (or
     #|               the entrypoint package itself).
     #|
@@ -46,8 +48,13 @@ fn package_build_usage() -> String {
     #|  --name NAME         App display name. Defaults from the project id.
     #|  --version VERSION   Version recorded in the manifest. Defaults to 0.1.0.
     #|  --build-number N    Build number recorded in the manifest. Defaults to 1.
-    #|  --bundle-id ID      macOS bundle identifier. Defaults to dev.wzzc.moui.app.
+    #|  --bundle-id ID      macOS bundle identifier. Defaults to the project
+    #|                      bundle id, then dev.wzzc.moui.app.
+    #|  --icon PATH         macOS .icns icon copied into Contents/Resources.
     #|  --renderer NAME     Entrypoint override (auto / skia / wgpu / sun).
+    #|  --release           Build a release artifact (default).
+    #|  --debug             Build a debug artifact for package inspection.
+    #|  --allow-cross       Skip the host/target guard (advanced).
     #|  --no-build          Package the existing build output without rebuilding.
     #|  --dry-run           Print the planned layout and manifest without writing.
     #|  --json              Emit machine-readable output.
@@ -77,7 +84,6 @@ fn parse_package_build_args(
   args : Array[String],
   cwd : String,
 ) -> Result[ParsedPackageBuild, String] {
-  let _ = cwd
   let help = Ref(false)
   let json = Ref(false)
   let output_dir : Ref[String?] = Ref(None)
@@ -85,9 +91,12 @@ fn parse_package_build_args(
   let version : Ref[String?] = Ref(None)
   let build_number : Ref[String?] = Ref(None)
   let bundle_id : Ref[String?] = Ref(None)
+  let icon : Ref[String?] = Ref(None)
   let renderer : Ref[String?] = Ref(None)
   let no_build = Ref(false)
   let dry_run = Ref(false)
+  let release = Ref(true)
+  let allow_cross = Ref(false)
   let positional : Array[String] = []
   let mut index = 0
   while index < args.length() {
@@ -114,11 +123,27 @@ fn parse_package_build_args(
             }
           Err(message) => return Err(message)
         }
+      "--release" | "--debug" =>
+        match flag_without_value(inline, flag) {
+          Ok(_) =>
+            match flag {
+              "--release" => release.val = true
+              "--debug" => release.val = false
+              _ => ()
+            }
+          Err(message) => return Err(message)
+        }
+      "--allow-cross" =>
+        match flag_without_value(inline, flag) {
+          Ok(_) => allow_cross.val = true
+          Err(message) => return Err(message)
+        }
       "--output"
       | "--name"
       | "--version"
       | "--build-number"
       | "--bundle-id"
+      | "--icon"
       | "--renderer" =>
         match option_value(args, index, inline, flag) {
           Ok((value, next)) => {
@@ -128,6 +153,7 @@ fn parse_package_build_args(
               "--version" => version.val = Some(value)
               "--build-number" => build_number.val = Some(value)
               "--bundle-id" => bundle_id.val = Some(value)
+              "--icon" => icon.val = Some(make_absolute(value, cwd))
               "--renderer" => renderer.val = Some(value)
               _ => ()
             }
@@ -154,7 +180,10 @@ fn parse_package_build_args(
         version: "0.1.0",
         build_number: "1",
         bundle_id: None,
+        icon: None,
         renderer: "auto",
+        release: true,
+        allow_cross: false,
         no_build: false,
         dry_run: false,
       },
@@ -168,23 +197,18 @@ fn parse_package_build_args(
   }
   let platform = positional[0]
   let app = positional[1]
-  if platform == "linux" {
-    return Err(
-      "Linux packaging is not implemented; use `moui build linux <app>` and run the raw executable, or `moui package linux --help` after support lands",
-    )
-  }
   if platform == "android" || platform == "ios" || platform == "harmonyos" {
     return Err(
       "mobile artifacts are produced by `moui build " +
       platform +
-      "` and verified with `moui verify`; moui package supports macos, windows, and web",
+      "` and verified with `moui verify`; moui package supports macos, windows, linux, and web",
     )
   }
   if !desktop_platform_supported(platform) {
     return Err(
       "unsupported platform for moui package: " +
       platform +
-      " (expected macos, windows, or web)",
+      " (expected macos, windows, linux, or web)",
     )
   }
   Ok({
@@ -198,7 +222,10 @@ fn parse_package_build_args(
       version: version.val.unwrap_or("0.1.0"),
       build_number: build_number.val.unwrap_or("1"),
       bundle_id: bundle_id.val,
+      icon: icon.val,
       renderer: renderer.val.unwrap_or("auto"),
+      release: release.val,
+      allow_cross: allow_cross.val,
       no_build: no_build.val,
       dry_run: dry_run.val,
     },
@@ -301,6 +328,20 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
   }
   let json = parsed.json
   let options = parsed.options
+  let host = detect_host_platform()
+  if !options.allow_cross &&
+    parsed.platform != "web" &&
+    parsed.platform != host.name() {
+    return failed_outcome(
+      "cannot package " +
+      parsed.platform +
+      " on a " +
+      host.name() +
+      " host; run on a matching host or pass --allow-cross",
+      json,
+      package_build_usage(),
+    )
+  }
   let flow = match
     resolve_desktop_flow(
       cwd,
@@ -324,10 +365,10 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
       flow.build_base,
       flow.package_path,
       flow.target.target,
-      release=parsed.platform == "web",
+      release=options.release,
     )
   } else {
-    match desktop_build_once(flow, detect_host_platform()) {
+    match desktop_build_once(flow, host, release=options.release) {
       Ok(value) => value
       Err(message) =>
         return failed_outcome(message, json, package_build_usage())
@@ -338,7 +379,9 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
       package_windows_portable(flow, options, name, dist_root, artifact, json)
     "macos" =>
       package_macos_bundle(flow, options, name, dist_root, artifact, json)
-    "web" => package_web_bundle(flow, options, dist_root, json, cwd)
+    "linux" =>
+      package_linux_bundle(flow, options, name, dist_root, artifact, json)
+    "web" => package_web_bundle(flow, options, name, dist_root, json, cwd)
     _ =>
       failed_outcome(
         "packaging for " + parsed.platform + " is not implemented",
@@ -346,6 +389,57 @@ fn run_package_build(args : Array[String], cwd : String) -> CliOutcome {
         package_build_usage(),
       )
   }
+}
+
+///|
+/// Depth-limited file search used to find the Skia ICU data table in the
+/// release cache without re-implementing the provider lock resolver.
+fn find_file_under(root : String, name : String, depth : Int32) -> String? {
+  if depth < 0 || !path_is_dir(root) {
+    return None
+  }
+  let entries = @fs.read_dir(root).to_owned() catch { _ => return None }
+  for entry in entries {
+    let child = join_path(root, entry)
+    if path_is_file(child) && base_name(child) == name {
+      return Some(child)
+    }
+    if path_is_dir(child) {
+      match find_file_under(child, name, depth - 1) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Find `icudtl.dat` under the release Skia caches used by the repo and
+/// generated projects. Missing data is a warning-level packaging gap, so the
+/// caller keeps the rest of the bundle.
+fn find_icudtl_data(flow : DesktopFlow) -> String? {
+  let workspace = moon_workspace_root(flow.build_base).unwrap_or("")
+  let roots = [
+    join_path(flow.build_base, "moui_skia/.skia-cache/release"),
+    join_path(flow.app_root, "moui_skia/.skia-cache/release"),
+    if workspace == "" {
+      ""
+    } else {
+      join_path(workspace, "moui_skia/.skia-cache/release")
+    },
+    ".skia-cache/release",
+    "moui_skia/.skia-cache/release",
+  ]
+  for root in roots {
+    if root != "" {
+      match find_file_under(root, "icudtl.dat", 8) {
+        Some(path) => return Some(path)
+        None => ()
+      }
+    }
+  }
+  None
 }
 
 ///|
@@ -400,6 +494,15 @@ fn package_windows_portable(
       }
     None => ()
   }
+  match find_icudtl_data(flow) {
+    Some(path) =>
+      match copy_file(path, join_path(app_dir, "icudtl.dat")) {
+        Ok(_) => runtime_files.push("icudtl.dat")
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+    None => ()
+  }
   let run_cmd = [
       "@echo off",
       "setlocal",
@@ -448,6 +551,120 @@ fn package_windows_portable(
 }
 
 ///|
+/// Linux native bundle: the executable plus a launcher, a desktop entry, and
+/// the schema-1 package manifest. AppImage/deb packaging is a later slice.
+fn package_linux_bundle(
+  flow : DesktopFlow,
+  options : PackageBuildOptions,
+  name : String,
+  dist_root : String,
+  artifact : String,
+  json : Bool,
+) -> CliOutcome {
+  let app_dir = join_path(dist_root, name)
+  let executable = base_name(artifact)
+  let executable = if executable.has_suffix(".exe") {
+    executable[:executable.length() - 4].to_owned()
+  } else {
+    executable
+  }
+  let manifest_path = join_path(app_dir, "moui-package.json")
+  if options.dry_run {
+    let mut text = "[package] linux app=" + name + " (dry-run)\n"
+    text += "  output: " + app_dir + "\n"
+    text += "  files: " +
+      executable +
+      ", run.sh, " +
+      name +
+      ".desktop, moui-package.json\n"
+    return stdout_outcome(text)
+  }
+  if !path_is_file(artifact) {
+    return failed_outcome(
+      "build artifact not found: " + artifact,
+      json,
+      package_build_usage(),
+    )
+  }
+  remove_tree(app_dir)
+  match mkdir_p(app_dir) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let binary_path = join_path(app_dir, executable)
+  match copy_file(artifact, binary_path) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  match make_executable(binary_path) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let run_sh = "#!/bin/sh\n" +
+    "DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n" +
+    "exec \"$DIR/" +
+    executable +
+    "\" \"$@\"\n"
+  let run_sh_path = join_path(app_dir, "run.sh")
+  @fs.write_bytes_to_file(run_sh_path, @utf8.encode(run_sh[:], bom=false)) catch {
+    _ =>
+      return failed_outcome(
+        "could not write run.sh",
+        json,
+        package_build_usage(),
+      )
+  }
+  match make_executable(run_sh_path) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let desktop_name = name + ".desktop"
+  let desktop_entry = "[Desktop Entry]\n" +
+    "Type=Application\n" +
+    "Name=" +
+    name +
+    "\n" +
+    "Exec=" +
+    executable +
+    "\n" +
+    "Terminal=false\n" +
+    "Categories=Utility;\n"
+  @fs.write_bytes_to_file(
+    join_path(app_dir, desktop_name),
+    @utf8.encode(desktop_entry[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write " + desktop_name,
+        json,
+        package_build_usage(),
+      )
+  }
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string("linux")
+  fields["outputKind"] = Json::string("native-bundle")
+  fields["appName"] = Json::string(name)
+  fields["moonPackage"] = Json::string(flow.package_path)
+  fields["version"] = Json::string(options.version)
+  fields["buildNumber"] = Json::string(options.build_number)
+  fields["executable"] = Json::string(executable)
+  fields["bundleName"] = Json::string(name)
+  fields["runtimeFiles"] = Json((["run.sh", desktop_name] : Array[String]))
+  let manifest = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(manifest_path, @utf8.encode(manifest[:], bom=false)) catch {
+    _ =>
+      return failed_outcome(
+        "could not write moui-package.json",
+        json,
+        package_build_usage(),
+      )
+  }
+  let note = validate_package_manifest(manifest_path, "linux", flow.build_base)
+  package_build_outcome("linux", name, app_dir, note, json)
+}
+
+///|
 fn package_macos_bundle(
   flow : DesktopFlow,
   options : PackageBuildOptions,
@@ -456,7 +673,18 @@ fn package_macos_bundle(
   artifact : String,
   json : Bool,
 ) -> CliOutcome {
-  let bundle_id = options.bundle_id.unwrap_or("dev.wzzc.moui.app")
+  let bundle_id = match options.bundle_id {
+    Some(value) => value
+    None =>
+      match read_project_manifest(flow.app_root) {
+        Ok(manifest) =>
+          match manifest.bundle_id {
+            Some(value) => value
+            None => "dev.wzzc.moui.app"
+          }
+        Err(_) => "dev.wzzc.moui.app"
+      }
+  }
   let bundle_dir = join_path(dist_root, name + ".app")
   let macos_dir = join_path(bundle_dir, "Contents/MacOS")
   let resources_dir = join_path(bundle_dir, "Contents/Resources")
@@ -491,6 +719,24 @@ fn package_macos_bundle(
     Ok(_) => ()
     Err(message) => return failed_outcome(message, json, package_build_usage())
   }
+  let icon_name = match options.icon {
+    Some(path) =>
+      if path_is_file(path) {
+        let file_name = base_name(path)
+        match copy_file(path, join_path(resources_dir, file_name)) {
+          Ok(_) => Some(file_name)
+          Err(message) =>
+            return failed_outcome(message, json, package_build_usage())
+        }
+      } else {
+        return failed_outcome(
+          "macOS icon not found: " + path,
+          json,
+          package_build_usage(),
+        )
+      }
+    None => None
+  }
   let binary_path = join_path(macos_dir, executable)
   match copy_file(artifact, binary_path) {
     Ok(_) => ()
@@ -499,6 +745,11 @@ fn package_macos_bundle(
   match make_executable(binary_path) {
     Ok(_) => ()
     Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let icon_entry = match icon_name {
+    Some(value) =>
+      "  <key>CFBundleIconFile</key>\n  <string>" + value + "</string>\n"
+    None => ""
   }
   let plist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
     "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -513,6 +764,7 @@ fn package_macos_bundle(
     name +
     "</string>\n" +
     "  <key>CFBundlePackageType</key>\n  <string>APPL</string>\n" +
+    icon_entry +
     "  <key>CFBundleShortVersionString</key>\n  <string>" +
     options.version +
     "</string>\n" +
@@ -533,6 +785,22 @@ fn package_macos_bundle(
         package_build_usage(),
       )
   }
+  @fs.write_bytes_to_file(
+    join_path(bundle_dir, "Contents/PkgInfo"),
+    @utf8.encode("APPL????", bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write PkgInfo",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_files = ["PkgInfo"]
+  match icon_name {
+    Some(value) => runtime_files.push(value)
+    None => ()
+  }
   let fields : Map[String, Json] = Map([])
   fields["schemaVersion"] = Json::number(1.0)
   fields["platform"] = Json::string("macos")
@@ -544,7 +812,7 @@ fn package_macos_bundle(
   fields["buildNumber"] = Json::string(options.build_number)
   fields["executable"] = Json::string(executable)
   fields["bundleName"] = Json::string(name + ".app")
-  fields["runtimeFiles"] = Json(([] : Array[String]))
+  fields["runtimeFiles"] = Json(runtime_files)
   let manifest = Json::object(fields).stringify(indent=2) + "\n"
   @fs.write_bytes_to_file(manifest_path, @utf8.encode(manifest[:], bom=false)) catch {
     _ =>
@@ -559,20 +827,237 @@ fn package_macos_bundle(
 }
 
 ///|
+/// Standalone web packager used when the repo-local `package-web-app.mjs` is
+/// not present (generated projects). It builds a release wasm artifact and
+/// copies the index/runtime assets with their module paths rewritten for a
+/// flat static bundle. Compression siblings are the repo packager's job.
+fn package_web_bundle_fallback(
+  flow : DesktopFlow,
+  options : PackageBuildOptions,
+  name : String,
+  dist_root : String,
+  json : Bool,
+) -> CliOutcome {
+  let source_root = join_path(flow.build_base, flow.package_path)
+  let index_path = join_path(source_root, "index.html")
+  if !path_is_file(index_path) {
+    return failed_outcome(
+      "web index.html not found: " + index_path,
+      json,
+      package_build_usage(),
+    )
+  }
+  let artifact = if options.no_build {
+    desktop_artifact_path(
+      flow.build_base,
+      flow.package_path,
+      flow.target.target,
+      release=true,
+    )
+  } else {
+    match desktop_build_once(flow, detect_host_platform(), release=true) {
+      Ok(value) => value
+      Err(message) =>
+        return failed_outcome(message, json, package_build_usage())
+    }
+  }
+  if !path_is_file(artifact) {
+    return failed_outcome(
+      "web build artifact not found: " + artifact,
+      json,
+      package_build_usage(),
+    )
+  }
+  let out_dir = join_path(dist_root, base_name(flow.app_root))
+  let wasm_name = base_name(artifact)
+  remove_tree(out_dir)
+  match mkdir_p(out_dir) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  match copy_file(artifact, join_path(out_dir, wasm_name)) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let index_source = @fs.read_file_to_string(index_path) catch {
+    _ =>
+      return failed_outcome(
+        "could not read web index.html",
+        json,
+        package_build_usage(),
+      )
+  }
+  let wasm_url = "./" + wasm_name
+  let index_text = index_source
+    .replace_all(
+      old="../.mooncakes/wzzc-dev/moui_web_renderer/runtime.js",
+      new="./runtime.js",
+    )
+    .replace_all(old="../moui_web_renderer/runtime.js", new="./runtime.js")
+    .replace_all(
+      old="../_build/wasm-gc/debug/build/" + flow.package_path + "/" + wasm_name,
+      new=wasm_url,
+    )
+    .replace_all(
+      old="../_build/wasm-gc/release/build/" +
+        flow.package_path +
+        "/" +
+        wasm_name,
+      new=wasm_url,
+    )
+    .replace_all(
+      old="./_build/wasm-gc/debug/build/" + flow.package_path + "/" + wasm_name,
+      new=wasm_url,
+    )
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "index.html"),
+    @utf8.encode(index_text[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write packaged index.html",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_source = match
+    find_existing_file([
+      join_path(flow.build_base, "moui_web_renderer/runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui_web_renderer/runtime.js",
+      ),
+    ]) {
+    Some(path) => path
+    None =>
+      return failed_outcome(
+        "web runtime.js was not found under the workspace",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_text = @fs.read_file_to_string(runtime_source) catch {
+    _ =>
+      return failed_outcome(
+        "could not read web runtime.js",
+        json,
+        package_build_usage(),
+      )
+  }
+  let runtime_text = runtime_text.replace_all(
+    old="../moui/backend/web/browser_runtime.js",
+    new="./browser_runtime.js",
+  )
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "runtime.js"),
+    @utf8.encode(runtime_text[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write packaged runtime.js",
+        json,
+        package_build_usage(),
+      )
+  }
+  let browser_source = match
+    find_existing_file([
+      join_path(flow.build_base, "moui/backend/web/browser_runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui/backend/web/browser_runtime.js",
+      ),
+    ]) {
+    Some(path) => path
+    None =>
+      return failed_outcome(
+        "web browser_runtime.js was not found under the workspace",
+        json,
+        package_build_usage(),
+      )
+  }
+  match copy_file(browser_source, join_path(out_dir, "browser_runtime.js")) {
+    Ok(_) => ()
+    Err(message) => return failed_outcome(message, json, package_build_usage())
+  }
+  let runtime_files = [
+    "index.html", wasm_name, "runtime.js", "browser_runtime.js",
+  ]
+  match
+    find_existing_file([
+      join_path(flow.build_base, "moui_web_renderer/canvas2d_runtime.js"),
+      join_path(
+        flow.build_base,
+        ".mooncakes/wzzc-dev/moui_web_renderer/canvas2d_runtime.js",
+      ),
+    ]) {
+    Some(path) =>
+      match copy_file(path, join_path(out_dir, "canvas2d_runtime.js")) {
+        Ok(_) => runtime_files.push("canvas2d_runtime.js")
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+    None => ()
+  }
+  for directory in ["assets", "docs"] {
+    let source = join_path(source_root, directory)
+    if path_is_dir(source) {
+      let target = join_path(out_dir, directory)
+      match mkdir_p(target) {
+        Ok(_) => ()
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+      match copy_tree(source, target) {
+        Ok(_) => ()
+        Err(message) =>
+          return failed_outcome(message, json, package_build_usage())
+      }
+    }
+  }
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string("web")
+  fields["outputKind"] = Json::string("static-bundle")
+  fields["appName"] = Json::string(name)
+  fields["moonPackage"] = Json::string(flow.package_path)
+  fields["version"] = Json::string(options.version)
+  fields["buildNumber"] = Json::string(options.build_number)
+  fields["executable"] = Json::string(wasm_name)
+  fields["bundleName"] = Json::string(base_name(out_dir))
+  fields["runtimeFiles"] = Json(runtime_files)
+  let manifest = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "moui-package.json"),
+    @utf8.encode(manifest[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write moui-package.json",
+        json,
+        package_build_usage(),
+      )
+  }
+  package_build_outcome(
+    "web", name, out_dir, "web bundle written (standalone fallback)", json,
+  )
+}
+
+///|
 /// The web bundle is produced by the shared Node packager; the CLI locates
 /// it in the workspace (or the installed MoUI package) and streams its
 /// output. The script performs its own release+strip build.
 fn package_web_bundle(
   flow : DesktopFlow,
   options : PackageBuildOptions,
+  name : String,
   dist_root : String,
   json : Bool,
   cwd : String,
 ) -> CliOutcome {
   if options.dry_run {
-    let mut text = "[package] web (dry-run)\n"
+    let mut text = "[package] web app=" + name + " (dry-run)\n"
     text += "  output: " + dist_root + "\n"
-    text += "  files: index.html, *.wasm, runtime.js, .gz/.br siblings, bundle-size.json\n"
+    text += "  files: index.html, *.wasm, runtime.js, .gz/.br siblings, bundle-size.json, moui-package.json\n"
     return stdout_outcome(text)
   }
   let script = match
@@ -587,11 +1072,7 @@ fn package_web_bundle(
     ]) {
     Some(path) => path
     None =>
-      return failed_outcome(
-        "package-web-app.mjs was not found; serve the built wasm statically instead (`moui build web` + a static file server)",
-        json,
-        package_build_usage(),
-      )
+      return package_web_bundle_fallback(flow, options, name, dist_root, json)
   }
   let out_dir = join_path(dist_root, base_name(flow.app_root))
   let argv = ["node", script, flow.package_path, "--out", out_dir]
@@ -610,11 +1091,32 @@ fn package_web_bundle(
       package_build_usage(),
     )
   }
-  package_build_outcome(
-    "web",
-    flow.package_path,
-    out_dir,
-    "web bundle written",
-    json,
+  let result_bundle_name = base_name(out_dir)
+  let wasm_name = base_name(flow.package_path) + ".wasm"
+  let fields : Map[String, Json] = Map([])
+  fields["schemaVersion"] = Json::number(1.0)
+  fields["platform"] = Json::string("web")
+  fields["outputKind"] = Json::string("static-bundle")
+  fields["appName"] = Json::string(name)
+  fields["moonPackage"] = Json::string(flow.package_path)
+  fields["version"] = Json::string(options.version)
+  fields["buildNumber"] = Json::string(options.build_number)
+  fields["executable"] = Json::string(wasm_name)
+  fields["bundleName"] = Json::string(result_bundle_name)
+  fields["runtimeFiles"] = Json(
+    (["index.html", wasm_name, "runtime.js"] : Array[String]),
   )
+  let manifest = Json::object(fields).stringify(indent=2) + "\n"
+  @fs.write_bytes_to_file(
+    join_path(out_dir, "moui-package.json"),
+    @utf8.encode(manifest[:], bom=false),
+  ) catch {
+    _ =>
+      return failed_outcome(
+        "could not write moui-package.json",
+        json,
+        package_build_usage(),
+      )
+  }
+  package_build_outcome("web", name, out_dir, "web bundle written", json)
 }

@@ -49,7 +49,7 @@ function linuxGlibFlags(config) {
 }
 
 const macosBackendHostFlags =
-  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz -Wl,-dead_strip -Wl,-x";
+  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework UserNotifications -framework CoreGraphics -framework CoreFoundation -lz -Wl,-dead_strip -Wl,-x";
 const linuxBackendHostFlags = "-lz";
 const androidBackendHostFlags = "-landroid -llog";
 const windowsBackendHostLibs = [

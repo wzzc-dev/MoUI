@@ -21,6 +21,8 @@ pub fn application_menu_on_ready(Array[@services.ApplicationMenu], @runtime.AppR
 
 pub fn backend_info() -> MacosBackendInfo
 
+pub fn dispatch_macos_platform_channel(@backend.PlatformChannelRequest) -> @backend.PlatformChannelResponse
+
 pub fn entry(options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions) -> @apphost.PlatformEntry
 
 pub fn macos_accessibility_bridge(@apphost.HostRuntimeDriver) -> @accesskit.AccessKitBridge
@@ -43,7 +45,7 @@ pub fn macos_native_view_handle(@wzzc-dev/window/macos.Window) -> UInt64?
 
 pub fn macos_perf_now_ms() -> Double
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int32) -> @backend.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int32, platform_channel? : (@backend.PlatformChannelRequest) -> @backend.PlatformChannelResponse) -> @backend.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 

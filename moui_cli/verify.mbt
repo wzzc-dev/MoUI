@@ -27,7 +27,7 @@ fn verify_usage() -> String {
     #|Usage: moui verify <platform> <app> [options]
     #|
     #|Verify app runtime evidence for the embedded-runtime path.
-    #|Build artifacts must exist under artifacts/<platform>/<app>/ and the
+    #|Build artifacts must exist under artifacts/<platform>/<app>.<ext> and the
     #|device must be connected. The command writes `verify-manifest.json`.
     #|
     #|Arguments:
@@ -142,6 +142,34 @@ fn find_verify_artifact(
 }
 
 ///|
+/// Read the mobile build provenance written next to the artifact. A missing
+/// or unreadable manifest is reported as unknown; callers must not turn that
+/// into `fallbackSkia=false`.
+fn read_build_provenance(
+  build_dir : String,
+  app_id : String,
+) -> (Bool?, String) {
+  let path = join_path(join_path(build_dir, app_id), "build-manifest.json")
+  if !path_is_file(path) {
+    return (None, "unknown")
+  }
+  let text = @fs.read_file_to_string(path) catch {
+    _ => return (None, "unknown")
+  }
+  let parsed = @json.parse(text) catch { _ => return (None, "unknown") }
+  let fields = match parsed {
+    Object(fields) => fields
+    _ => return (None, "unknown")
+  }
+  let fallback = match fields.get("fallbackSkia") {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+  (fallback, "build-manifest")
+}
+
+///|
 /// Render the canonical window-hosted verify manifest as JSON.
 fn verify_manifest_to_json(
   platform : String,
@@ -149,6 +177,8 @@ fn verify_manifest_to_json(
   artifact : String,
   status : String,
   probe : ProbeResult,
+  fallback_skia : Bool?,
+  provenance : String,
 ) -> Json {
   let fields : Map[String, Json] = Map([])
   fields["schemaVersion"] = Json::number(1.0)
@@ -158,7 +188,11 @@ fn verify_manifest_to_json(
   fields["app"] = Json::string(app_id)
   fields["status"] = Json::string(status)
   let build_fields : Map[String, Json] = Map([])
-  build_fields["fallbackSkia"] = Json::boolean(false)
+  build_fields["provenance"] = Json::string(provenance)
+  build_fields["fallbackSkia"] = match fallback_skia {
+    Some(value) => Json::boolean(value)
+    None => Json::null()
+  }
   build_fields["artifact"] = Json::string(artifact)
   build_fields["command"] = Json::string(
     "moui_cli verify " + platform + " " + app_id,
@@ -175,9 +209,15 @@ fn verify_manifest_to_json(
     observations.push(Json::object(obs_fields))
   }
   fields["observations"] = Json::array(observations)
-  fields["evidenceBoundary"] = Json::string(
-    "non-fallback matching-host smoke evidence; fallback builds are packaging only",
-  )
+  let evidence_boundary = match fallback_skia {
+    Some(false) =>
+      "non-fallback matching-host smoke evidence; fallback builds are packaging only"
+    Some(true) =>
+      "fallback-Skia build; packaging-only evidence, not a runtime support claim"
+    None =>
+      "build provenance unknown; fallback status is not claimed; rerun `moui build` or `moui run` to record it"
+  }
+  fields["evidenceBoundary"] = Json::string(evidence_boundary)
   Json::object(fields)
 }
 
@@ -288,20 +328,27 @@ fn run_verify(parsed : ParsedVerify, host : @plan.HostPlatform) -> CliOutcome {
     Err(message) => return failed_outcome(message, parsed.json, verify_usage())
   }
   // 4. Run the probe.
+  let android_bundle_id = match app.android {
+    Some(android) => android.application_id
+    None => app.id
+  }
   let probe = match parsed.platform {
-    "android" => probe_android(device, app.id, app.id, host, 30)
+    "android" => probe_android(device, app.id, android_bundle_id, host, 30)
     "ios" => probe_ios(device, app.id, host, 30)
     "harmonyos" => probe_harmonyos(device, app.id, app.id, host, 30)
     _ => { ok: false, observations: [], }
   }
   let status = verify_status_from_probe(probe)
-  // 5. Write the manifest.
+  // 5. Write the manifest with the recorded build provenance.
+  let (fallback_skia, provenance) = read_build_provenance(build_dir, app.id)
   let manifest = verify_manifest_to_json(
     parsed.platform,
     app.id,
     artifact,
     status,
     probe,
+    fallback_skia,
+    provenance,
   )
   let manifest_path = match options.output_path {
     Some(p) => p

@@ -21,6 +21,7 @@ priv struct BuildAndroidOptions {
   output_apk : String
   fallback_skia : Bool
   prepare_only : Bool
+  release : Bool
 }
 
 ///|
@@ -127,6 +128,7 @@ fn apply_android_window_hosted_identity(
   app : MobileApp,
   compile_sdk : Int32,
   target_sdk : Int32,
+  release : Bool,
   _renderer : String,
 ) -> Result[Unit, String] {
   let android = match app.android {
@@ -149,6 +151,14 @@ fn apply_android_window_hosted_identity(
     android.min_sdk,
     app.display_name,
   )
+  let patched_gradle = if release {
+    match @env.get_env_var("MOUI_ANDROID_KEYSTORE") {
+      Some(path) if path != "" => patch_android_release_signing(patched_gradle)
+      _ => patched_gradle
+    }
+  } else {
+    patched_gradle
+  }
   match
     write_file_bytes_result(
       app_gradle_path,
@@ -220,6 +230,40 @@ fn patch_android_build_gradle(
     }
   }
   out.join("\n")
+}
+
+///|
+/// Release signing block appended to the staged Gradle file. Secrets come from
+/// the environment so keystores/passwords never enter the repo or CLI history.
+fn android_release_signing_block() -> String {
+  (
+    #|
+    #|// MoUI release signing: secrets come from the environment, never the repo.
+    #|android {
+    #|    signingConfigs {
+    #|        release {
+    #|            storeFile file(System.getenv("MOUI_ANDROID_KEYSTORE"))
+    #|            storePassword System.getenv("MOUI_ANDROID_KEYSTORE_PASSWORD")
+    #|            keyAlias System.getenv("MOUI_ANDROID_KEY_ALIAS")
+    #|            keyPassword System.getenv("MOUI_ANDROID_KEY_PASSWORD")
+    #|        }
+    #|    }
+    #|    buildTypes {
+    #|        release {
+    #|            signingConfig signingConfigs.release
+    #|        }
+    #|    }
+    #|}
+  )
+}
+
+///|
+fn patch_android_release_signing(text : String) -> String {
+  if text.contains("MOUI_ANDROID_KEYSTORE") {
+    text
+  } else {
+    text + "\n" + android_release_signing_block() + "\n"
+  }
 }
 
 ///|
@@ -443,6 +487,7 @@ fn build_android(
       options.app,
       options.compile_sdk,
       options.target_sdk,
+      options.release,
       options.renderer,
     ) {
     Ok(_) => ()
@@ -471,11 +516,16 @@ fn build_android(
     }),
     workspace_root_abs,
   )
-  // 7. Invoke `gradle :app:assembleDebug` with MBW_* project properties.
+  // 7. Invoke the Gradle assemble task with MBW_* project properties.
+  let gradle_task = if options.release {
+    ":app:assembleRelease"
+  } else {
+    ":app:assembleDebug"
+  }
   let gradle_args = [
     "-p",
     android_project,
-    ":app:assembleDebug",
+    gradle_task,
     "-PmbwWorkspaceRoot=" + workspace_root_abs,
     "-PmbwWindowRoot=" + window_root,
     "-PmbwMoonHome=" + moon_home,
@@ -505,10 +555,19 @@ fn build_android(
     Err(message) => return Err(message)
   }
   // 8. Copy APK to output_apk.
-  let apk_path = join_path(
-    join_path(android_project, "app/build/outputs/apk/debug"),
-    "app-debug.apk",
-  )
+  let apk_stage = if options.release { "release" } else { "debug" }
+  let apk_name = if options.release {
+    "app-release.apk"
+  } else {
+    "app-debug.apk"
+  }
+  let apk_dir = join_path(android_project, "app/build/outputs/apk/" + apk_stage)
+  let apk_path = join_path(apk_dir, apk_name)
+  let apk_path = if !path_is_file(apk_path) && options.release {
+    join_path(apk_dir, "app-release-unsigned.apk")
+  } else {
+    apk_path
+  }
   if !path_is_file(apk_path) {
     return Err("Gradle APK was not found: " + apk_path)
   }

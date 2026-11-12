@@ -4,6 +4,7 @@ pub struct WindowFrameHooks {
   finish_presented : (Bool) -> Unit
   request_redraw : () -> Unit
   sync_ime : () -> Unit
+  record_diagnostics : (Array[@diagnostics.DiagnosticEvent]) -> Unit
 }
 
 ///|
@@ -12,8 +13,15 @@ pub fn WindowFrameHooks::new(
   finish_presented~ : (Bool) -> Unit = _ => (),
   request_redraw~ : () -> Unit = () => (),
   sync_ime~ : () -> Unit = () => (),
+  record_diagnostics~ : (Array[@diagnostics.DiagnosticEvent]) -> Unit = _ => (),
 ) -> WindowFrameHooks {
-  { prepare_frame, finish_presented, request_redraw, sync_ime, }
+  {
+    prepare_frame,
+    finish_presented,
+    request_redraw,
+    sync_ime,
+    record_diagnostics,
+  }
 }
 
 ///|
@@ -84,6 +92,7 @@ pub fn WindowFrameState::finish_submission(
     return false
   }
   guard self.current_token is Some(token) else { return false }
+  (self.hooks.record_diagnostics)(result.diagnostics)
   let accepted = completions.filter(completion => completion.token() == token)
   let terminal = @render.render_present_completions_have_terminal(accepted)
   let presented = @render.render_present_completions_have_presented(accepted) ||

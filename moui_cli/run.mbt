@@ -274,6 +274,9 @@ fn build_options_from_run_options(
     hvigorw: None,
     ohpm: None,
     signing_config_file: None,
+    signing_identity: None,
+    provisioning_profile: None,
+    entitlements: None,
   }
 }
 
@@ -763,6 +766,7 @@ fn run_run(
       run_build_internal(build_options, parsed.platform, host, app, config) {
       Ok(result) => {
         log_info("[run] build succeeded: " + result.output_artifact)
+        write_build_manifest(parsed.platform, app, build_options, result)
         if result.output_artifact != "" {
           result.output_artifact
         } else {
@@ -848,6 +852,28 @@ fn run_run(
     Some(result)
   } else {
     None
+  }
+  match verify_result {
+    Some(result) => {
+      let build_dir = default_build_dir(parsed.platform, cwd)
+      let (fallback_skia, provenance) = read_build_provenance(build_dir, app.id)
+      let status = verify_status_from_probe(result)
+      let manifest = verify_manifest_to_json(
+        parsed.platform,
+        app.id,
+        artifact,
+        status,
+        result,
+        fallback_skia,
+        provenance,
+      )
+      let manifest_path = join_path(
+        join_path(build_dir, app.id),
+        "verify-manifest.json",
+      )
+      ignore(write_verify_manifest(manifest_path, manifest))
+    }
+    None => ()
   }
   // 8. Optional --debug log following (blocking until interrupted).
   if options.debug {

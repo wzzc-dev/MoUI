@@ -181,6 +181,28 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
 }
 
 ///|
+/// Give the launched app a bounded window to emit its startup observations
+/// before the probe dumps logs. Capped at three seconds so verification stays
+/// interactive even when the caller passes the full smoke timeout.
+fn probe_wait_after_launch(
+  platform : String,
+  device : Device,
+  timeout_seconds : Int32,
+) -> Unit {
+  let wait = if timeout_seconds > 3 { 3 } else { timeout_seconds }
+  if wait <= 0 {
+    return
+  }
+  let argv = match platform {
+    "android" => ["adb", "-s", device.id, "shell", "sleep", wait.to_string()]
+    "ios" => ["sleep", wait.to_string()]
+    "harmonyos" => ["hdc", "-t", device.id, "shell", "sleep", wait.to_string()]
+    _ => return
+  }
+  ignore(process_exec_argv(argv, capture=true))
+}
+
+///|
 /// Probe an Android device by launching the app and capturing logcat for
 /// `timeout_seconds`. The caller is responsible for ensuring `adb` is on
 /// PATH and the device is connected.
@@ -192,7 +214,6 @@ fn probe_android(
   timeout_seconds : Int32,
 ) -> ProbeResult {
   let _ = host
-  let _ = timeout_seconds
   let adb = match find_in_path("adb", detect_host_platform()) {
     Some(path) => path
     None =>
@@ -236,6 +257,7 @@ fn probe_android(
       }
   }
   let _ = app_id
+  probe_wait_after_launch("android", device, timeout_seconds)
   // Capture logcat for the timeout window.
   let logcat_argv = [
     adb,
@@ -299,7 +321,6 @@ fn probe_ios(
         ],
       }
   }
-  let _ = timeout_seconds
   // Launch the app on the simulator.
   match
     process_exec_argv(
@@ -320,6 +341,7 @@ fn probe_ios(
         ],
       }
   }
+  probe_wait_after_launch("ios", device, timeout_seconds)
   // Spawn log show for the last 30s of system logs.
   let log_argv = [
     "log",
@@ -349,7 +371,6 @@ fn probe_harmonyos(
   timeout_seconds : Int32,
 ) -> ProbeResult {
   let _ = host
-  let _ = timeout_seconds
   let hdc = match find_in_path("hdc", detect_host_platform()) {
     Some(path) => path
     None =>
@@ -398,6 +419,7 @@ fn probe_harmonyos(
         ],
       }
   }
+  probe_wait_after_launch("harmonyos", device, timeout_seconds)
   // Capture hilog for the last 30s.
   let hilog_argv = [
     hdc,

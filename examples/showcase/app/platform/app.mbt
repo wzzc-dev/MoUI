@@ -30,6 +30,9 @@ pub struct Model {
   probe_action_count : Int32
   probe_submit_count : Int32
   host_label : String
+  notification_id : String
+  notification_count : Int32
+  notification_permission : String
 }
 
 ///|
@@ -48,6 +51,15 @@ pub(all) enum Msg {
   ClearCanvas
   AnimTick
   ShortcutTick
+  Notify
+  CancelNotification
+  RequestNotificationPermission
+  NotificationCompleted(Int32, @services.ServiceTaskResult[Unit])
+  NotificationCancelCompleted(Int32, @services.ServiceTaskResult[Unit])
+  PermissionCompleted(
+    Int32,
+    @services.ServiceTaskResult[@services.PermissionStatus]
+  )
   ProbeTextChanged(String)
   ProbeAction
   ProbeSubmit
@@ -91,6 +103,9 @@ pub fn Model::new(
     probe_action_count: 0,
     probe_submit_count: 0,
     host_label,
+    notification_id: "",
+    notification_count: 0,
+    notification_permission: "unknown",
   }
 }
 
@@ -258,6 +273,21 @@ pub fn update(
         },
         @moui.Effect::none(),
       )
+    RequestNotificationPermission => start_permission_request(model, services)
+    Notify => start_notification(model, services)
+    CancelNotification => start_notification_cancel(model, services)
+    NotificationCompleted(generation, result) =>
+      (complete_notification(model, generation, result), @moui.Effect::none())
+    NotificationCancelCompleted(generation, result) =>
+      (
+        complete_notification_cancel(model, generation, result),
+        @moui.Effect::none(),
+      )
+    PermissionCompleted(generation, result) =>
+      (
+        complete_permission_request(model, generation, result),
+        @moui.Effect::none(),
+      )
     ProbeTextChanged(value) =>
       ({ ..model, probe_text: value, }, @moui.Effect::none())
     ProbeAction =>
@@ -287,7 +317,7 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
     [
       text("Host services").title(),
       text(
-        "Timer, window resize, clipboard, file open, and host shortcuts.",
+        "Timer, window resize, clipboard, file open, notifications, and host shortcuts.",
         wrap=true,
       ),
       text("Last: \{model.last_event}"),
@@ -329,6 +359,7 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
           ]),
         ]),
       ),
+      notification_card(model),
       text(
         "Keyboard: entrypoint installs ActionCommandMap (meta/ctrl+T → Activate).",
       ),
