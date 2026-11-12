@@ -132,3 +132,10 @@ test "macOS platform view sync brackets native overlay transitions" {
 test "macOS accessibility adapter exposes content-view children to AppKit" {
   assert_eq(macos_accessibility_view_adapter_test(), 1)
 }
+
+///|
+test "macos host options carry the native window background" {
+  let color = @core.Color::rgba(r=0.1, g=0.2, b=0.3, a=1.0)
+  let options = MacosHostAppOptions::new(window_background=Some(color))
+  assert_true(options.window_background() == Some(color))
+}
