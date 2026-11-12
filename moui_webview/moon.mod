@@ -12,7 +12,7 @@ preferred_target = "native"
 
 import {
   "wzzc-dev/moui@0.6.0",
-  "wzzc-dev/window@0.5.4-0.2.8",
+  "wzzc-dev/window@0.5.4-0.2.9",
 }
 
 readme = "README.mbt.md"
