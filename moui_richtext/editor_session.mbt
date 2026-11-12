@@ -1352,21 +1352,20 @@ fn markdown_document_session_apply_incremental(
       }
       let delta = markdown_editor_text_length(transaction.replacement) -
         markdown_editor_text_length(deleted)
-      // Structure-preserving fast path: a pure insertion strictly inside
-      // one line of a single paragraph block reproduces the region
-      // re-parse without walking the region — the keystroke path on
-      // documents whose text collapses into one huge block.
-      if deleted == "" {
-        match
-          markdown_document_session_apply_in_line_edit(
-            session,
-            transaction,
-            cluster,
-            delta~,
-          ) {
-          Some(next) => return Some(next)
-          None => ()
-        }
+      // Structure-preserving fast path: an edit strictly inside one line of
+      // a single paragraph block reproduces the region re-parse without
+      // walking the region — the keystroke path on documents whose text
+      // collapses into one huge block. Insertions and same-line deletions
+      // both qualify; the helper rejects newlines and line-start edits.
+      match
+        markdown_document_session_apply_in_line_edit(
+          session,
+          transaction,
+          cluster,
+          delta~,
+        ) {
+        Some(next) => return Some(next)
+        None => ()
       }
       let region_end = if cluster.end_index >=
         session.editor_blocks.length() - 1 {

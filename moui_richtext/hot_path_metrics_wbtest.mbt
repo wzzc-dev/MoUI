@@ -88,7 +88,8 @@ test "hot path: backspace into the previous cluster still avoids full parse" {
     ),
   )
   inspect(hot_path_full_parse_count.val, content="0")
-  inspect(hot_path_region_reparse_count.val, content="1")
+  inspect(hot_path_region_reparse_count.val, content="0")
+  inspect(hot_path_in_line_apply_count.val, content="1")
   let full = MarkdownDocumentSession::new(next.source())
   inspect(next.blocks.length(), content=full.blocks.length().to_string())
 }
