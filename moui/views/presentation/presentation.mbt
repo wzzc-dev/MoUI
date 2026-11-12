@@ -200,6 +200,8 @@ pub struct PresentationSpec[Msg] {
   host_policy : PresentationHostPolicy
   transition : PresentationTransition
   presented : Bool
+  /// Popup content at least as wide as the anchor (picker-style controls).
+  match_anchor_width : Bool
 }
 
 ///|
@@ -216,6 +218,7 @@ pub fn[Msg] PresentationSpec::new(
   host_policy~ : PresentationHostPolicy = ViewOnly,
   transition~ : PresentationTransition = Fade,
   presented~ : Bool = true,
+  match_anchor_width~ : Bool = false,
 ) -> PresentationSpec[Msg] {
   let resolved_placement = placement.unwrap_or(PresentationPlacement::new())
   {
@@ -229,6 +232,7 @@ pub fn[Msg] PresentationSpec::new(
     host_policy,
     transition,
     presented,
+    match_anchor_width,
   }
 }
 
@@ -488,6 +492,13 @@ pub fn[Msg] PresentationSpec::presented(self : PresentationSpec[Msg]) -> Bool {
 }
 
 ///|
+pub fn[Msg] PresentationSpec::match_anchor_width(
+  self : PresentationSpec[Msg],
+) -> Bool {
+  self.match_anchor_width
+}
+
+///|
 pub fn[Msg] PresentationDismissPolicy::allows_outside_tap(
   self : PresentationDismissPolicy[Msg],
 ) -> Bool {
@@ -667,6 +678,24 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn child_constraints(
 }
 
 ///|
+
+///|
+fn[Msg] presentation_content_size(
+  presentation : PresentationSpec[Msg],
+  measured : @core.Size,
+  anchor_width : Double,
+) -> @core.Size {
+  if presentation.match_anchor_width {
+    @core.Size::new(
+      width=@common.view_max_double(measured.width, anchor_width),
+      height=measured.height,
+    )
+  } else {
+    measured
+  }
+}
+
+///|
 impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
   let viewport = ctx.constraints.constrain(ctx.constraints.max)
   let host_size = match self.sizing {
@@ -696,6 +725,16 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
         @core.Size::new(width=0.0, height=0.0)
       }
     }
+  }
+  let anchor_width = match self.sizing {
+    BaseFill => host_size.width
+    BaseSized =>
+      if ctx.child_sizes.length() > 0 {
+        ctx.child_sizes[0].width
+      } else {
+        0.0
+      }
+    ViewportSized => viewport.width
   }
   let frames : Array[@core.Rect] = [
     @core.Rect::new(
@@ -727,12 +766,15 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn layout(self, ctx) {
       // Placement is provisional: sizes are final, origins are placeholders.
       // The runtime's post-layout placement pass resolves anchors and assigns
       // the absolute frame via `place_overlays`.
+      let content_size = presentation_content_size(
+        presentation, measured, anchor_width,
+      )
       frames.push(
         @core.Rect::new(
           x=0.0,
           y=0.0,
-          width=measured.width,
-          height=measured.height,
+          width=content_size.width,
+          height=content_size.height,
         ),
       )
       child_index = child_index + 1
@@ -803,6 +845,11 @@ impl[Msg] @core.ViewNode for OverlayHostNode[Msg] with fn place_overlays(
       } else {
         @core.Size::new(width=0.0, height=0.0)
       }
+      let measured = presentation_content_size(
+        presentation,
+        measured,
+        host_base_frame.size.width,
+      )
       let anchor_frame = presentation_anchor_frame(
         presentation.anchor,
         viewport_rect,
@@ -1064,13 +1111,12 @@ impl[Msg] @core.ViewNode for PresentationSurfaceGuard[Msg] with fn layout(
     Some(size) => size
     None => @core.Size::new(width=0.0, height=0.0)
   }
-  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(child_size), child_frames=[
-    @core.Rect::new(
-      x=0.0,
-      y=0.0,
-      width=child_size.width,
-      height=child_size.height,
-    ),
+  // The surface is the content box: when the host expands it (anchor-width
+  // matching), the content fills the expanded width rather than staying at its
+  // intrinsic measure.
+  let size = ctx.constraints.constrain(child_size)
+  @core.ViewLayoutResult::new(size~, child_frames=[
+    @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
   ])
 }
 

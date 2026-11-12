@@ -652,3 +652,59 @@ test "picker trigger fills a tight frame" {
   )
   assert_true(placed.frame.size.width > 700.0)
 }
+
+///|
+test "picker popup matches the trigger width" {
+  let runtime = AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=({ open: false, selected: "", } : C3PickerModel),
+      update=(model, message) => {
+        match message {
+          C3Toggle => { ..model, open: !model.open, }
+          C3Select(id) => { ..model, selected: id, open: false, }
+        }
+      },
+      view=model => {
+        @views.column(
+          [
+            @views.frame(
+              @views.picker(
+                [
+                  @views.picker_item("one", "One"),
+                  @views.picker_item("two", "Two"),
+                ],
+                selected=model.selected,
+                on_select=id => C3Select(id),
+                expanded=model.open,
+                on_expanded_change=_ => C3Toggle,
+                placeholder="Pick",
+                max_height=160.0,
+              ),
+              width=800.0,
+              height=40.0,
+            ),
+          ],
+          spacing=0.0,
+        )
+      },
+    ),
+    size=@core.Size::new(width=900.0, height=200.0),
+  )
+  ignore(runtime.draw_frame())
+  let button = c3_required_rect(
+    c3_text_frame(runtime.draw_commands(), "Pick"),
+    "picker button",
+  )
+  c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Down)
+  c3_pointer(runtime, button.origin.x + 10.0, button.origin.y + 10.0, Up)
+  ignore(runtime.draw_frame())
+  let popup = c3_required_element(
+    c3_find_element(runtime.state.element_tree.root, "PickerPopup"),
+    "picker popup element",
+  )
+  let placed = c3_required_placed(
+    c3_find_placed(runtime.state.cached_layout_tree_root(), popup.id),
+    "picker popup placed",
+  )
+  assert_true(placed.frame.size.width > 700.0)
+}

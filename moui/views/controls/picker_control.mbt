@@ -58,22 +58,34 @@ fn[Msg] picker_control(
       ]
     },
   )
+  let popup_theme = theme.unwrap_or(@core.Theme::neutral())
+  let popup_style = match style {
+    Some(value) => value
+    None => @style.PickerStyle::default(theme=popup_theme)
+  }
   let popup_content = @core.View::from_node(
     PickerPopup::{
       items: items_snapshot,
       on_select: id => selected.changed(id),
       close: on_expanded_change(false),
+      theme: popup_theme,
+      style: popup_style,
+      max_height,
     },
     children=_node => {
-      [
-        picker_popup_view(
-          items=items_snapshot,
-          selected=selected_snapshot,
-          theme?,
-          style?,
-          max_height~,
-        ),
-      ]
+      let rows : Array[@core.View[Msg]] = []
+      for item in items_snapshot {
+        rows.push(
+          @core.View::from_node(PickerRow::{
+            label: item.label(),
+            is_selected: item.id() == selected_snapshot,
+            width: 0.0,
+            theme: popup_theme,
+            foreground: popup_style.foreground,
+          }),
+        )
+      }
+      rows
     },
     event=(node, ctx) => picker_popup_event(node, ctx),
   )
@@ -98,6 +110,7 @@ fn[Msg] picker_control(
     ),
     transition=Fade,
     presented=expanded,
+    match_anchor_width=true,
   )
   @presentation.popup_host_fill(trigger, [popup])
 }
@@ -271,6 +284,9 @@ priv struct PickerPopup[Msg] {
   items : Array[PickerOption]
   on_select : (String) -> Msg
   close : Msg
+  theme : @core.Theme
+  style : @style.PickerStyle
+  max_height : Double
 }
 
 ///|
@@ -279,19 +295,61 @@ impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn identity(_self) {
 }
 
 ///|
-impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn layout(_self, ctx) {
-  let child_size = match ctx.child_sizes.get(0) {
-    Some(size) => size
-    None => @core.Size::new(width=198.0, height=0.0)
+impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn layout(self, ctx) {
+  // The host resolves a width (at least the trigger width via
+  // `match_anchor_width`); fill it and stack the rows at that width.
+  let max_width = ctx.constraints.max.width
+  let width = if max_width > 0.0 && max_width < 1.0e9 {
+    max_width
+  } else {
+    198.0
   }
-  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(child_size), child_frames=[
-    @core.Rect::new(
-      x=0.0,
-      y=0.0,
-      width=child_size.width,
-      height=child_size.height,
+  let height = @common.view_min_double(
+    self.max_height,
+    self.items.length().to_double() * picker_item_height(),
+  )
+  let frames : Array[@core.Rect] = []
+  for index in 0..<self.items.length() {
+    frames.push(
+      @core.Rect::new(
+        x=0.0,
+        y=index.to_double() * picker_item_height(),
+        width~,
+        height=picker_item_height(),
+      ),
+    )
+  }
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+    child_frames=frames,
+  )
+}
+
+///|
+impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn paint(self, ctx) {
+  let theme = ctx.effective_theme(pinned=Some(self.theme))
+  let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=self.style.radius)
+  let shadow = @style.views_ambient_control_theme(theme).surface.overlay_shadow.unwrap_or(
+    theme.shadow_scale.md,
+  )
+  let commands : Array[@core.DrawCommand] = [
+    @core.DrawCommand::DrawShadow(
+      @core.ShadowSpec::new(
+        rect=rounded,
+        color=shadow.color,
+        offset=shadow.offset,
+        blur_radius=shadow.blur_radius,
+        spread=shadow.spread,
+      ),
     ),
-  ])
+    @core.DrawCommand::FillRoundedRectBrush(rounded, self.style.background),
+  ]
+  { ..@core.ViewPaintPlan::empty(), commands, }
+}
+
+///|
+impl[Msg] @core.ViewNode for PickerPopup[Msg] with fn semantics(_self) {
+  @core.ViewSemanticsInfo::container(composition=Boundary, role=Menu)
 }
 
 ///|

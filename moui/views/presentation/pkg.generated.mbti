@@ -121,6 +121,7 @@ pub struct PresentationSpec[Msg] {
   host_policy : PresentationHostPolicy
   transition : PresentationTransition
   presented : Bool
+  match_anchor_width : Bool
 }
 pub fn[Msg] PresentationSpec::anchor(Self[Msg]) -> PresentationAnchor
 pub fn[Msg] PresentationSpec::content(Self[Msg]) -> @core.View[Msg]
@@ -128,8 +129,9 @@ pub fn[Msg] PresentationSpec::dismiss_policy(Self[Msg]) -> PresentationDismissPo
 pub fn[Msg] PresentationSpec::host_policy(Self[Msg]) -> PresentationHostPolicy
 pub fn[Msg] PresentationSpec::id(Self[Msg]) -> String
 pub fn[Msg] PresentationSpec::kind(Self[Msg]) -> PresentationKind
+pub fn[Msg] PresentationSpec::match_anchor_width(Self[Msg]) -> Bool
 pub fn[Msg] PresentationSpec::modality(Self[Msg]) -> PresentationModality
-pub fn[Msg] PresentationSpec::new(id~ : String, kind~ : PresentationKind, content~ : @core.View[Msg], anchor? : PresentationAnchor, placement? : PresentationPlacement?, modality? : PresentationModality, dismiss? : PresentationDismissPolicy[Msg], host_policy? : PresentationHostPolicy, transition? : PresentationTransition, presented? : Bool) -> Self[Msg]
+pub fn[Msg] PresentationSpec::new(id~ : String, kind~ : PresentationKind, content~ : @core.View[Msg], anchor? : PresentationAnchor, placement? : PresentationPlacement?, modality? : PresentationModality, dismiss? : PresentationDismissPolicy[Msg], host_policy? : PresentationHostPolicy, transition? : PresentationTransition, presented? : Bool, match_anchor_width? : Bool) -> Self[Msg]
 pub fn[Msg] PresentationSpec::placement(Self[Msg]) -> PresentationPlacement
 pub fn[Msg] PresentationSpec::presented(Self[Msg]) -> Bool
 pub fn[Msg] PresentationSpec::transition(Self[Msg]) -> PresentationTransition
