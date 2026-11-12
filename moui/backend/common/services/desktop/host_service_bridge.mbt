@@ -14,7 +14,7 @@ pub struct DesktopHostServices {
   set_application_menu : (Array[@host.HostApplicationMenu]) -> @host.HostServiceResponse
   list_directory : (String) -> @host.HostServiceResponse
   delete_file : (String) -> @host.HostServiceResponse
-  platform_channel : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse
+  platform_channel : ((@host.PlatformChannelRequest) -> @host.PlatformChannelResponse)?
 }
 
 ///|
@@ -33,9 +33,7 @@ pub fn DesktopHostServices::new(
   binary_file~ : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = @host_services_native.dispatch_binary_file,
   list_directory~ : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_list_directory,
   delete_file~ : (String) -> @host.HostServiceResponse = @host_services_native.dispatch_delete_file,
-  platform_channel~ : (@host.PlatformChannelRequest) -> @host.PlatformChannelResponse = _ => {
-    Unavailable("platform channel is unavailable")
-  },
+  platform_channel~ : ((@host.PlatformChannelRequest) -> @host.PlatformChannelResponse)? = None,
 ) -> DesktopHostServices {
   {
     capabilities,
@@ -77,7 +75,13 @@ pub fn DesktopHostServices::bridge(
       ListDirectory(path) => (self.list_directory)(path)
       DeleteFile(path) => (self.delete_file)(path)
       PlatformChannel(request) =>
-        PlatformChannel((self.platform_channel)(request))
+        match self.platform_channel {
+          Some(handler) => PlatformChannel(handler(request))
+          None =>
+            Unavailable(
+              @host.HostServiceRequest::PlatformChannel(request).unavailable_message(),
+            )
+        }
     }
   })
 }
