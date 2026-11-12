@@ -14,6 +14,12 @@ fn ElementNode::find_focusable_at(
   node_to_screen~ : Transform2D = Transform2D::identity(),
   clip~ : Rect? = None,
 ) -> ElementId? {
+  // A disabled subtree is inert for focus as well as input. `.disabled`
+  // overlays disabled=true on the modifier node; skipping here keeps its
+  // child control out of click-focus and Tab traversal.
+  if self.view_node.semantics().disabled == Some(true) {
+    return None
+  }
   let own_screen_frame = render.screen_frame(node_to_screen)
   let child_clip : Rect? = if render.clips_children {
     Some(runtime_clip_intersection(clip, own_screen_frame))
@@ -116,6 +122,9 @@ fn ElementNode::focusable_ids(
   self : ElementNode,
   ids : Array[ElementId],
 ) -> Unit {
+  if self.view_node.semantics().disabled == Some(true) {
+    return
+  }
   if self.view_node.focusable() {
     ids.push(self.id)
   }
