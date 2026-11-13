@@ -481,7 +481,7 @@ test "vertical caret movement steps onto the visible blank line" {
   // The first and last blank lines are separators with no line box at all;
   // only the middle one is an empty writing line.
   debug_inspect(document.blocks[1].line_height, content="Some(0)")
-  debug_inspect(document.blocks[2].line_height, content="Some(24.8)")
+  debug_inspect(document.blocks[2].line_height, content="Some(26.4)")
   debug_inspect(document.blocks[3].line_height, content="Some(0)")
   // Down from the end of the first paragraph: over the separator, onto the
   // writing line (offset 5), then into the second paragraph.
@@ -522,13 +522,13 @@ test "vertical caret movement steps onto the visible blank line" {
   inspect(up_steps[1], content="3")
   inspect(document.blocks[1].inset.top, content="6.4")
   inspect(document.blocks[2].inset.bottom, content="6.4")
-  // The run is separator + writing line + separator: 0.4em + 1.55em + 0.4em
-  // plus the spacing the writing line carries, i.e. 2.75em, which with the
-  // paragraph's own 0.4em inset is Typora's 3.15em gap for three blank lines.
+  // The run is separator + writing line + separator: 0.4em + 1.65em + 0.4em
+  // plus the spacing the writing line carries, i.e. 2.85em, which with the
+  // paragraph's own 0.5em inset is a 3.35em gap for three blank lines.
   assert_true(
     blank_gap_height_matches(
       markdown_editor_blank_gap_run_height(document, base, text_system, 640.0),
-      2.75,
+      2.85,
       16.0,
     ),
   )
@@ -572,17 +572,18 @@ test "blank line runs alternate separator and visible empty line" {
   // Typora's paragraph model spends one blank line on the paragraph break and
   // one more on each empty line it shows, so the space between two blocks grows
   // in steps and only every second blank line is a visible, addressable line.
-  // Measured in its stock Github theme, paragraph-to-paragraph is 2.34em for
-  // one blank line and 4.72em for three; MoMark measures 2.35em and 4.7em.
+  // Typora's stock Github theme measures paragraph-to-paragraph at 2.34em for
+  // one blank line and 4.72em for three; MoMark's 1.65em body leading runs a
+  // step airier at 2.55em and 5.0em by design.
   let base = @core.FontSpec::new(size=16.0)
   let text_system = @core.TextSystem::fallback()
   // One, three, and five blank lines: separator, separator + line, twice that.
-  let run_em : Array[Double] = [0.4, 2.75, 5.1]
+  let run_em : Array[Double] = [0.4, 2.85, 5.3]
   let visible_lines : Array[Int32] = [0, 1, 2]
   // Paragraph-to-paragraph distance: the line box plus the paragraph's own
   // 0.4em inset plus the run. Typora measures 2.34em for one blank line and
   // 4.72em for three in the same reference document.
-  let rhythm_em : Array[Double] = [2.35, 4.7, 7.05]
+  let rhythm_em : Array[Double] = [2.55, 5.0, 7.45]
   let sources = ["123\n\n456", "123\n\n\n\n456", "123\n\n\n\n\n\n456"]
   for index, source in sources {
     let document = markdown_editor_format_for_selection(
@@ -664,7 +665,7 @@ test "blank lines are pointer targets and the caret line stays a writing line" {
   )
   debug_inspect(active.blocks[1].line_height, content="Some(0)")
   debug_inspect(active.blocks[1].inset.top, content="6.4")
-  debug_inspect(active.blocks[2].line_height, content="Some(24.8)")
+  debug_inspect(active.blocks[2].line_height, content="Some(26.4)")
   // The caret's line stands in for the blank line it occupies, so it takes
   // the writing line instead of that blank line's 1.2em increment. Carrying
   // both would leave the caret one increment too low, and the line would jump

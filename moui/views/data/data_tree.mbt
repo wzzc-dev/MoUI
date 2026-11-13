@@ -108,7 +108,7 @@ fn[Msg] tree_row(
         variant=Ghost,
         theme~,
         width=toggle_width,
-        height=28.0,
+        height=26.0,
       )
     None =>
       @text.text(
@@ -116,7 +116,7 @@ fn[Msg] tree_row(
         role=Caption,
         theme~,
         width=toggle_width,
-        height=28.0,
+        height=26.0,
       )
   }
   // The label is left-aligned and stretches over the rest of the row: a
@@ -133,9 +133,26 @@ fn[Msg] tree_row(
         size=14.0,
         color=item.icon_color.unwrap_or(theme.palette.muted),
       )
-    None => @text.text("", width=0.0, height=28.0)
+    None => @text.text("", width=0.0, height=26.0)
   }
+  // Ignored entries (dot-directories and friends) read one step quieter than
+  // active rows, Winc-style; a selected row keeps its emphasis.
+  let dim_label = item.dimmed && !selected
   let label_view = match on_select {
+    Some(handler) if dim_label => {
+      // A button paints its label from the control theme (which does not
+      // follow palette overrides), so a dimmed row renders its label as
+      // muted text with the select handler attached directly.
+      @text.text(
+        item.label,
+        role=Body,
+        theme~,
+        width=label_width,
+        height=26.0,
+      )
+      .foreground(theme.palette.muted)
+      .on_tap(handler(item.id))
+    }
     Some(handler) =>
       @button.button(
         item.label,
@@ -143,11 +160,23 @@ fn[Msg] tree_row(
         variant=if selected { Tonal } else { Ghost },
         theme~,
         width=label_width,
-        height=28.0,
+        height=26.0,
         label_align=TextStart,
       )
-    None =>
-      @text.text(item.label, role=Body, theme~, width=label_width, height=28.0)
+    None => {
+      let label = @text.text(
+        item.label,
+        role=Body,
+        theme~,
+        width=label_width,
+        height=26.0,
+      )
+      if dim_label {
+        label.foreground(theme.palette.muted)
+      } else {
+        label
+      }
+    }
   }
   // Depth is a left padding, not a spacer child: a spacer with weight 0 still
   // absorbed the row's slack here, which pushed the label to the right edge and

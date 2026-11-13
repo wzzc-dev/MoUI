@@ -84,7 +84,7 @@ fn plain_rich_text_caret_rect(
     x=content.origin.x + width,
     y=content.origin.y + 4.0,
     width=1.5,
-    height=max_double(10.0, font.size * 1.55 - 8.0),
+    height=max_double(10.0, font.size * 1.65 - 8.0),
   )
 }
 
@@ -143,7 +143,7 @@ fn rich_text_vertical_target_offset(
     let line_height = if caret_rect.size.height > 0.0 {
       caret_rect.size.height
     } else {
-      max_double(10.0, base_font.size * 1.55 - 8.0)
+      max_double(10.0, base_font.size * 1.65 - 8.0)
     }
     let target_y = if up {
       caret_rect.origin.y - line_height * 0.5
@@ -891,7 +891,7 @@ fn rich_text_document_caret_rect(
     x=content.origin.x,
     y=content.origin.y + 4.0,
     width=1.5,
-    height=max_double(10.0, base_font.size * 1.55 - 8.0),
+    height=max_double(10.0, base_font.size * 1.65 - 8.0),
   )
   for block in document.blocks {
     let line_height = rich_text_block_line_height(
@@ -1713,7 +1713,7 @@ fn rich_text_cursor_rect_at(
     x~,
     y=frame.origin.y + 4.0,
     width=1.5,
-    height=max_double(10.0, font.size * 1.55 - 8.0),
+    height=max_double(10.0, font.size * 1.65 - 8.0),
   )
 }
 

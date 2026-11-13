@@ -774,7 +774,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
   // taller than the viewport. `top_padding` absorbs their height, so
   // `content_rect` places the remaining lines exactly where the full layout
   // would have, and every consumer keeps working unchanged.
-  let line_step = base.size * 1.55
+  let line_step = base.size * 1.65
   // DISABLED: the slice aborts the momark zen-mode editing test
   // (editor_app_writing_modes_runtime_wbtest.mbt:222) deterministically. The
   // helper, its tests and the clip decision below are in place; re-enable by
@@ -2191,7 +2191,7 @@ fn markdown_document_block_needs_line_window(
 /// and every per-line stage runs over all of it.
 ///
 /// Only the height index is available before the band is measured, so the line
-/// step is estimated from the font — the same `size * 1.55` convention
+/// step is estimated from the font — the same `size * 1.65` convention
 /// `markdown_document_block_geometry` falls back to — and a screenful of lines
 /// is left unclipped above the band to absorb the estimate. The measured
 /// heights feed back through the existing geometry path, so the estimate only
@@ -2222,7 +2222,7 @@ fn markdown_document_clip_lines_for_window(
     ) {
     return whole
   }
-  let line_step = base.size * 1.55
+  let line_step = base.size * 1.65
   if line_step <= 0.0 {
     return whole
   }
@@ -2256,7 +2256,7 @@ fn markdown_document_gallery_block_heights(
     let estimated = if index < session.height_index.blocks.length() {
       session.height_index.blocks[index].visual_height_units * base.size
     } else {
-      base.size * 1.55
+      base.size * 1.65
     }
     if editor_block.block.kind is HtmlBlock &&
       markdown_block_view_project(editor_block.block, base, base_dir=None)
@@ -2396,7 +2396,7 @@ fn markdown_document_block_geometry(
               session.height_index.blocks
               .get(index)
               .map(metric => metric.visual_height_units * base.size)
-              .unwrap_or(base.size * 1.55),
+              .unwrap_or(base.size * 1.65),
             )
         }
     }
@@ -2500,7 +2500,7 @@ fn markdown_document_scroll_geometry_rebase(
         session.height_index.blocks
         .get(index)
         .map(metric => metric.visual_height_units * base.size)
-        .unwrap_or(base.size * 1.55)
+        .unwrap_or(base.size * 1.65)
     }
     // Route every recomputed height through the point update so the Fenwick
     // tree stays in lockstep with `heights`. When the block count changed we
@@ -2592,7 +2592,7 @@ fn markdown_document_block_height_at(
       session.height_index.blocks
       .get(index)
       .map(metric => metric.visual_height_units * base.size)
-      .unwrap_or(base.size * 1.55)
+      .unwrap_or(base.size * 1.65)
   }
 }
 
@@ -3300,7 +3300,7 @@ fn markdown_document_estimated_line_height_units(
     | UnorderedListItem
     | TaskListItem(_)
     | OrderedListItem(_)
-    | Blockquote => 1.55
+    | Blockquote => 1.65
   }
 }
 
@@ -3317,7 +3317,7 @@ fn markdown_document_estimated_inset_units(
       { top: 0.14, right: 0.0, bottom: 0.14, left: 0.86, }
     HtmlBlock => { top: 0.29, right: 0.71, bottom: 0.29, left: 0.71, }
     FrontMatter => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71, }
-    Paragraph => { top: 0.0, right: 0.0, bottom: 0.4, left: 0.0, }
+    Paragraph => { top: 0.0, right: 0.0, bottom: 0.5, left: 0.0, }
     UnorderedListItem | TaskListItem(_) | OrderedListItem(_) | HorizontalRule =>
       @core.Insets::symmetric()
   }

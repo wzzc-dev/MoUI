@@ -51,7 +51,7 @@ pub fn markdown_block_to_rich_text(
           palette~,
         ),
         prefix="• ",
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         // Typora-style breathing room between list items; the last item of
         // a list gets paragraph spacing from the following blank-gap block.
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
@@ -69,7 +69,7 @@ pub fn markdown_block_to_rich_text(
         // the lane width instead of this glyph.
         prefix=" ",
         marker=Some(TaskCheckbox(checked)),
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     OrderedListItem(number) =>
@@ -81,7 +81,7 @@ pub fn markdown_block_to_rich_text(
           palette~,
         ),
         prefix="\{number}. ",
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     Blockquote =>
@@ -101,7 +101,7 @@ pub fn markdown_block_to_rich_text(
           ),
         ),
         inset={ top: 6.0, right: 0.0, bottom: 6.0, left: 14.0, },
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         corner_radius=4.0,
       )
     CodeBlock =>
@@ -203,9 +203,9 @@ pub fn markdown_block_to_rich_text(
           base_dir~,
           palette~,
         ),
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         // Paragraph spacing below for readability between blocks.
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0, },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.5, left: 0.0, },
       )
   }
 }

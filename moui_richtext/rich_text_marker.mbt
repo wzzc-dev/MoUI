@@ -23,7 +23,7 @@ fn rich_text_block_marker_lane(
   text_system : @core.TextSystem,
 ) -> Double {
   match block.marker {
-    Some(_) => font.size * 1.55
+    Some(_) => font.size * 1.65
     None => rich_text_width(block.prefix, font, text_system)
   }
 }
