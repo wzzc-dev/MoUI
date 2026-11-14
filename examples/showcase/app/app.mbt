@@ -38,6 +38,12 @@ pub fn ShowcaseModel::program(
 }
 
 ///|
+/// Zero-argument entrypoint for tooling (`moui screenshot`) and tests.
+pub fn program() -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
+  ShowcaseModel::new().program()
+}
+
+///|
 pub fn ShowcaseModel::program_with_environment(
   self : ShowcaseModel,
   environment : @services.AppEnvironment,

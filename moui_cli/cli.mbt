@@ -49,6 +49,7 @@ fn root_usage() -> String {
     #|  moui inspect [options]
     #|  moui build <platform> <app> [options]
     #|  moui run <platform> <app> [options]
+    #|  moui screenshot [project] [options]
     #|  moui devices [options]
     #|  moui verify <platform> <app> [options]
     #|  moui config <action> [args]
@@ -70,6 +71,8 @@ fn root_usage() -> String {
     #|  run             Run an app: desktop builds and launches in place,
     #|                  web serves through the dev runner, mobile builds,
     #|                  installs, and launches on a device or emulator.
+    #|  screenshot      Render an app to a PNG with an offscreen renderer
+    #|                  (no window or display required).
     #|  devices         List connected mobile devices, emulators, and the
     #|                  desktop host.
     #|  verify          Verify embedded-runtime evidence.
@@ -775,6 +778,7 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
       }
     "inspect" => run_inspect(args[1:].to_owned(), cwd)
     "test" => run_test(args[1:].to_owned(), cwd)
+    "screenshot" => run_screenshot(args[1:].to_owned(), cwd)
     "run" =>
       match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
         Ok(parsed) => run_run(parsed, cwd, detect_host_platform())

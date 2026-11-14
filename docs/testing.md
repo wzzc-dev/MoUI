@@ -334,6 +334,10 @@ previews. `--website` writes `resource/screenshots/website/gallery-*.webp` with
 them into `website/web_wasm/assets/screenshots` and refresh the generated asset
 map.
 
+The same offscreen path is exposed to projects as `moui screenshot [project]`
+(see [development.md](development.md#headless-screenshots)); it renders the app
+package's `program()` once and encodes the PNG in the CLI.
+
 Provider composition and backend common boundary edits use the following minimum loop
 before broader profiles:
 
