@@ -118,6 +118,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [markdown-scroll-layer-spacing](done/markdown-scroll-layer-spacing.md) | Seed retained paint-layer bounds with the layer frame so cached rich-text commands keep their local coordinates invariant and headings no longer drift while scrolling across the viewport origin |
 | [visual-quality](done/visual-quality.md) | Default-theme visual baseline: Desktop preset metrics/typography, control craft, typography + icon expression, materials/motion defaults, and a `visual` gate with a per-control state matrix, rendered previews, and gallery-derived README/website screenshots. **Complete 2026-11-13**; the human blind-review gate is explicitly waived by the agent and remains available for a later real review |
 | [mature-framework-parity-optimizations](done/mature-framework-parity-optimizations.md) | Close the six gaps from the Flutter/SwiftUI/Compose/Qt/iced comparison: declaration cache, placement-level damage, retained-payload replay, Feature skipping (RFC 0008), RFC 0007 intrinsic sizing, CLDR i18n — released as `0.6.0` |
 | [architecture-priority-execution](done/architecture-priority-execution.md) | Completed the three 2026-11 architecture reviews as one evidence-gated program: cache/damage correctness, leaf-only memoization, content-coordinate scrolling, Feature-first component boundary, gesture/control extension, route/release/doc governance, and transient-scroll/damage localization (N5) |
