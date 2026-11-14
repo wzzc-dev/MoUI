@@ -7,8 +7,8 @@ preferred_target = "wasm-gc"
 supported_targets = "wasm-gc"
 
 import {
-  "wzzc-dev/moui@0.6.1",
-  "wzzc-dev/moui_3d@0.6.1",
+  "wzzc-dev/moui@0.6.2",
+  "wzzc-dev/moui_3d@0.6.2",
 }
 
 license = "Apache-2.0"

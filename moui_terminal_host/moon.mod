@@ -1,15 +1,15 @@
 name = "wzzc-dev/moui_terminal_host"
 
-version = "0.6.1"
+version = "0.6.2"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.6.1",
-  "wzzc-dev/moui_tui@0.6.1",
-  "wzzc-dev/moui_tui_renderer@0.6.1",
+  "wzzc-dev/moui@0.6.2",
+  "wzzc-dev/moui_tui@0.6.2",
+  "wzzc-dev/moui_tui_renderer@0.6.2",
 }
 
 repository = "https://github.com/wzzc-dev/MoUI.git"

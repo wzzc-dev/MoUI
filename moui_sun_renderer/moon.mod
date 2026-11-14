@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_sun_renderer"
 
-version = "0.6.1"
+version = "0.6.2"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.6.1",
-  "wzzc-dev/moui_sun@0.6.1",
+  "wzzc-dev/moui@0.6.2",
+  "wzzc-dev/moui_sun@0.6.2",
   "mizchi/image@0.4.3",
   "moonbitlang/x@0.5.6",
 }
