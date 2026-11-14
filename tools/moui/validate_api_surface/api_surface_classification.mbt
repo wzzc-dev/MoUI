@@ -69,7 +69,16 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // These are cross-runtime TEA composition protocol, the same family as
       // the rest of the Feature/ScopedFeature surface, and nothing is
       // re-exported from the root facade.
-      max_count: 1228,
+      // Desktop preset / LayoutScale (+14): ADR 0071 — the size-only layout
+      // scale and its preset constructors are cross-runtime protocol data
+      // (themes resolve in core, renderers consume), the same family as the
+      // spacing/radius/typography scales.
+      // FontFeature + FontSpec spacing/feature helpers (+8): the typography
+      // slice of ADR 0071; text-shaping protocol data, same family as
+      // FontVariation/FontSpec.
+      // GradientStop / GradientAxis / StopsGradientSpec + helpers (+16):
+      // V3 gradient primitives; renderer-neutral paint protocol data.
+      max_count: 1278,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -103,7 +112,8 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // app-facing 视图构造词汇。
       // refresh_indicator +1：pull-to-refresh surface 同上。
       // color_picker +2：token-grid picker 与默认色板 ramp 同上。
-      max_count: 143,
+      // material + scroll_edge：V3 材质/滚动边缘的 app-facing 构造面。
+      max_count: 145,
     },
     {
       path: "moui/views/pkg.generated.mbti",
@@ -240,10 +250,10 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",
     "Environment", "Feedback", "Feature", "Filter", "Focus", "Font", "FormValidationTheme",
     "Frame", "Gesture", "Image", "Insets", "InteractionState", "Key", "Keyboard",
-    "Layer", "Layout", "LinearGradient", "MainAxis", "Motion", "Navigation", "Path",
-    "PickerTheme", "PlatformView", "Point", "Pointer", "Program", "Progress", "RadialGradient",
-    "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantic",
-    "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
+    "Gradient", "Layer", "Layout", "LinearGradient", "MainAxis", "Motion", "Navigation",
+    "Path", "PickerTheme", "PlatformView", "Point", "Pointer", "Program", "Progress",
+    "RadialGradient", "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll",
+    "Semantic", "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
     "View", "VisualStyle", "TaskScope", "CancelToken", "Spring",
   ]

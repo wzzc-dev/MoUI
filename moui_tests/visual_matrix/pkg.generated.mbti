@@ -1,0 +1,17 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tests/visual_matrix"
+
+// Values
+
+// Errors
+
+// Types and methods
+type MatrixControl
+
+type MatrixFrame
+
+type MatrixRenderer
+
+// Type aliases
+
+// Traits

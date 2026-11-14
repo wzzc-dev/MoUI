@@ -60,9 +60,13 @@ pub fn replace_text_range(String, TextRange, String) -> String
 
 pub fn replace_text_range_edit(text~ : String, TextRange, String) -> (String, String, Int32)
 
+pub fn resolve_desktop_theme(ThemeSpec, ColorScheme, system_accent? : Color) -> Theme
+
 pub fn resolve_minimal_theme(ThemeSpec, ColorScheme) -> Theme
 
 pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme
+
+pub fn resolve_theme_with_accent(ThemeSpec, ColorScheme, Color?) -> Theme
 
 pub fn selected_text(String, TextRange?) -> String
 
@@ -235,13 +239,17 @@ pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
   RadialGradient(RadialGradientSpec)
+  StopsGradient(StopsGradientSpec)
 }
+pub fn Brush::conic(center~ : Point, stops~ : Array[GradientStop], angle_degrees? : Double, oklab? : Bool) -> Self
 pub fn Brush::equal(Self, Self) -> Bool
 pub fn Brush::fallback_color(Self) -> Color
 pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
+pub fn Brush::linear_stops(start~ : Point, end~ : Point, stops~ : Array[GradientStop], oklab? : Bool) -> Self
 pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::not_equal(Self, Self) -> Bool
 pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
+pub fn Brush::radial_stops(center~ : Point, radius~ : Double, stops~ : Array[GradientStop], oklab? : Bool) -> Self
 pub fn Brush::solid(Color) -> Self
 pub fn Brush::to_json(Self) -> @json.Json
 pub fn Brush::to_repr(Self) -> @debug.Repr
@@ -276,8 +284,10 @@ pub fn Color::black() -> Self
 pub fn Color::blue() -> Self
 pub fn Color::darken(Self, Double) -> Self
 pub fn Color::equal(Self, Self) -> Bool
+pub fn Color::from_argb(UInt32) -> Self
 pub fn Color::gray() -> Self
 pub fn Color::lerp(Self, Self, Double) -> Self
+pub fn Color::lerp_oklab(Self, Self, Double) -> Self
 pub fn Color::lighten(Self, Double) -> Self
 pub fn Color::mix(Self, Self, Double) -> Self
 pub fn Color::multiply_alpha(Self, Double) -> Self
@@ -285,6 +295,7 @@ pub fn Color::not_equal(Self, Self) -> Bool
 pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::to_json(Self) -> @json.Json
 pub fn Color::to_repr(Self) -> @debug.Repr
+pub fn Color::transparent() -> Self
 pub fn Color::white() -> Self
 pub fn Color::with_alpha(Self, Double) -> Self
 
@@ -339,6 +350,7 @@ pub(all) struct ColorPalette {
   scrim : Color
 }
 pub fn ColorPalette::dark() -> Self
+pub fn ColorPalette::desktop(ColorScheme) -> Self
 pub fn ColorPalette::equal(Self, Self) -> Bool
 pub fn ColorPalette::from_seed(primary~ : Color, ColorScheme, foreground? : Color, background? : Color, surface? : Color, surface_variant? : Color, outline? : Color, muted? : Color) -> Self
 pub fn ColorPalette::light() -> Self
@@ -687,6 +699,7 @@ pub fn EffectDescriptor::to_repr(Self) -> @debug.Repr
 pub(all) struct Environment {
   theme_spec : ThemeSpec
   system_scheme : ColorScheme
+  system_accent : Color?
   theme : Theme
   scale_factor : Double
   text_scale : Double
@@ -710,6 +723,7 @@ pub fn Environment::with_layout_direction(Self, LayoutDirection) -> Self
 pub fn Environment::with_locale(Self, String) -> Self
 pub fn Environment::with_reduced_motion(Self, Bool) -> Self
 pub fn Environment::with_scale_factor(Self, Double) -> Self
+pub fn Environment::with_system_accent(Self, Color?) -> Self
 pub fn Environment::with_system_scheme(Self, ColorScheme) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
@@ -821,21 +835,38 @@ pub fn FontFamilyStack::to_repr(Self) -> @debug.Repr
 pub fn FontFamilyStack::with_fallback(Self, FontFamily) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct FontFeature {
+  tag : String
+  value : Int32
+}
+pub fn FontFeature::equal(Self, Self) -> Bool
+pub fn FontFeature::new(tag~ : String, value? : Int32) -> Self
+pub fn FontFeature::not_equal(Self, Self) -> Bool
+pub fn FontFeature::to_json(Self) -> @json.Json
+pub fn FontFeature::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct FontSpec {
   families : FontFamilyStack
   size : Double
   weight : Int32
   style : FontStyle
   variations : Array[FontVariation]
+  line_height : Double?
+  letter_spacing : Double?
+  features : Array[FontFeature]
 }
 pub fn FontSpec::css_family(Self) -> String
 pub fn FontSpec::css_style(Self) -> String
 pub fn FontSpec::equal(Self, Self) -> Bool
-pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int32, style? : FontStyle, variations? : Array[FontVariation]) -> Self
+pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int32, style? : FontStyle, variations? : Array[FontVariation], line_height? : Double, letter_spacing? : Double, features? : Array[FontFeature]) -> Self
 pub fn FontSpec::not_equal(Self, Self) -> Bool
 pub fn FontSpec::to_json(Self) -> @json.Json
 pub fn FontSpec::to_repr(Self) -> @debug.Repr
 pub fn FontSpec::variation_value(Self, String) -> Double?
+pub fn FontSpec::with_feature(Self, tag~ : String, value? : Int32) -> Self
+pub fn FontSpec::with_letter_spacing(Self, Double?) -> Self
+pub fn FontSpec::with_line_height(Self, Double?) -> Self
 pub fn FontSpec::with_variation(Self, axis~ : String, value~ : Double) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
@@ -911,6 +942,28 @@ pub fn GesturePhase::equal(Self, Self) -> Bool
 pub fn GesturePhase::not_equal(Self, Self) -> Bool
 pub fn GesturePhase::to_json(Self) -> @json.Json
 pub fn GesturePhase::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum GradientAxis {
+  LinearAxis(Point, Point)
+  RadialAxis(Point, Double)
+  ConicAxis(Point, Double)
+}
+pub fn GradientAxis::equal(Self, Self) -> Bool
+pub fn GradientAxis::not_equal(Self, Self) -> Bool
+pub fn GradientAxis::to_json(Self) -> @json.Json
+pub fn GradientAxis::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct GradientStop {
+  color : Color
+  at : Double
+}
+pub fn GradientStop::equal(Self, Self) -> Bool
+pub fn GradientStop::new(color~ : Color, at~ : Double) -> Self
+pub fn GradientStop::not_equal(Self, Self) -> Bool
+pub fn GradientStop::to_json(Self) -> @json.Json
+pub fn GradientStop::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum ImageFit {
@@ -1067,6 +1120,22 @@ pub fn LayoutResult::equal(Self, Self) -> Bool
 pub fn LayoutResult::not_equal(Self, Self) -> Bool
 pub fn LayoutResult::to_json(Self) -> @json.Json
 pub fn LayoutResult::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct LayoutScale {
+  control_height : Double
+  control_padding_x : Double
+  row_height : Double
+  card_padding : Double
+  overlay_padding : Double
+  dialog_padding : Double
+}
+pub fn LayoutScale::default() -> Self
+pub fn LayoutScale::desktop() -> Self
+pub fn LayoutScale::equal(Self, Self) -> Bool
+pub fn LayoutScale::not_equal(Self, Self) -> Bool
+pub fn LayoutScale::to_json(Self) -> @json.Json
+pub fn LayoutScale::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct LinearGradientSpec {
@@ -1309,6 +1378,7 @@ pub(all) struct RadiusScale {
   pill : Double
 }
 pub fn RadiusScale::default() -> Self
+pub fn RadiusScale::desktop() -> Self
 pub fn RadiusScale::equal(Self, Self) -> Bool
 pub fn RadiusScale::not_equal(Self, Self) -> Bool
 pub fn RadiusScale::to_json(Self) -> @json.Json
@@ -1796,6 +1866,7 @@ pub(all) struct ShadowScale {
   lg : ShadowStyle
 }
 pub fn ShadowScale::default(scheme? : ColorScheme) -> Self
+pub fn ShadowScale::desktop(scheme? : ColorScheme) -> Self
 pub fn ShadowScale::equal(Self, Self) -> Bool
 pub fn ShadowScale::not_equal(Self, Self) -> Bool
 pub fn ShadowScale::to_json(Self) -> @json.Json
@@ -1882,6 +1953,21 @@ pub fn SpringState::to_json(Self) -> @json.Json
 pub fn SpringState::to_repr(Self) -> @debug.Repr
 pub fn SpringState::value(Self) -> Double
 pub fn SpringState::velocity(Self) -> Double
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct StopsGradientSpec {
+  axis : GradientAxis
+  stops : Array[GradientStop]
+  oklab : Bool
+}
+pub fn StopsGradientSpec::color_at(Self, Double) -> Color
+pub fn StopsGradientSpec::edge_colors(Self) -> (Color, Color)
+pub fn StopsGradientSpec::equal(Self, Self) -> Bool
+pub fn StopsGradientSpec::new(axis~ : GradientAxis, stops~ : Array[GradientStop], oklab? : Bool) -> Self
+pub fn StopsGradientSpec::not_equal(Self, Self) -> Bool
+pub fn StopsGradientSpec::srgb_stops(Self, resolution? : Int32) -> Array[GradientStop]
+pub fn StopsGradientSpec::to_json(Self) -> @json.Json
+pub fn StopsGradientSpec::to_repr(Self) -> @debug.Repr
 
 pub struct Subscription[Msg] {
   // private fields
@@ -2215,6 +2301,7 @@ pub(all) struct Theme {
   palette : ColorPalette
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
+  layout_scale : LayoutScale
   typography : TypographyScale
   shadow_scale : ShadowScale
   motion : MotionScale
@@ -2226,6 +2313,7 @@ pub fn Theme::not_equal(Self, Self) -> Bool
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
 pub fn Theme::to_json(Self) -> @json.Json
 pub fn Theme::to_repr(Self) -> @debug.Repr
+pub fn Theme::with_layout_scale(Self, LayoutScale) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
@@ -2250,6 +2338,7 @@ pub fn ThemeDensity::to_repr(Self) -> @debug.Repr
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum ThemePreset {
   Minimal
+  Desktop
   Material
   Carbon
   Primer
@@ -2270,6 +2359,8 @@ pub(all) struct ThemeSpec {
   reduced_motion : Bool
 }
 pub fn ThemeSpec::default() -> Self
+pub fn ThemeSpec::desktop_dark() -> Self
+pub fn ThemeSpec::desktop_light() -> Self
 pub fn ThemeSpec::equal(Self, Self) -> Bool
 pub fn ThemeSpec::minimal_dark() -> Self
 pub fn ThemeSpec::minimal_light() -> Self
@@ -2366,6 +2457,7 @@ pub(all) struct TypographyScale {
   control : FontSpec
 }
 pub fn TypographyScale::default() -> Self
+pub fn TypographyScale::desktop() -> Self
 pub fn TypographyScale::equal(Self, Self) -> Bool
 pub fn TypographyScale::not_equal(Self, Self) -> Bool
 pub fn TypographyScale::to_json(Self) -> @json.Json

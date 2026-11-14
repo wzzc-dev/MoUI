@@ -230,11 +230,31 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     Circle => knob / 2.0
     Rounded => @common.view_min_double(knob / 2.0, resolved_style.radius)
   }
-  let foreground_color = self.foreground.unwrap_or(resolved_style.foreground)
-  let track_background = self.background.unwrap_or(resolved_style.background)
-  let thumb_color = self.foreground.unwrap_or(resolved_style.thumb_color)
+  let disabled = ctx.state.disabled || !ctx.environment.enabled
+  let dim = if disabled { 0.38 } else { 1.0 }
+  let foreground_color = self.foreground
+    .unwrap_or(resolved_style.foreground)
+    .multiply_alpha(dim)
+  let track_background = self.background
+    .unwrap_or(resolved_style.background)
+    .multiply_alpha(dim)
+  let thumb_color = self.foreground
+    .unwrap_or(resolved_style.thumb_color)
+    .multiply_alpha(dim)
   let frame = ctx.frame
-  let focused = ctx.focused
+  let focused = ctx.focused && !disabled
+  let transparent = @core.Color::transparent()
+  let (halo_color, animating) = if disabled {
+    (transparent, false)
+  } else {
+    @common.pressable_transition_color(
+      ctx,
+      control="slider",
+      normal=transparent,
+      hovered=resolved_theme.palette.foreground.multiply_alpha(0.06),
+      pressed=resolved_theme.palette.foreground.multiply_alpha(0.10),
+    )
+  }
   let thumb_size = knob + (if focused { 3.0 } else { 0.0 })
   let ring_color = match resolved_theme.scheme {
     Light => @core.Color::white().with_alpha(0.92)
@@ -258,11 +278,31 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
     ),
     radius=thumb_radius,
   )
-  @core.ViewPaintPlan::commands([
+  let commands : Array[@core.DrawCommand] = []
+  // Hover/press feedback is a halo under the thumb: it reads at any track
+  // length without moving the knob or changing the track fill.
+  if halo_color.a > 0.0 {
+    let halo_side = thumb_size + 10.0
+    let halo_rect = @core.Rect::new(
+      x=knob_x + thumb_size / 2.0 - halo_side / 2.0,
+      y=frame.origin.y + (frame.size.height - halo_side) / 2.0,
+      width=halo_side,
+      height=halo_side,
+    )
+    commands.push(
+      FillRoundedRectBrush(
+        @core.RoundedRect::new(rect=halo_rect, radius=halo_side / 2.0),
+        @core.Brush::solid(halo_color),
+      ),
+    )
+  }
+  commands.push(
     FillRoundedRectBrush(
       @core.RoundedRect::new(rect=track, radius=track_radius),
       @core.Brush::solid(track_background),
     ),
+  )
+  commands.push(
     FillRoundedRectBrush(
       @core.RoundedRect::new(
         rect=@core.Rect::new(
@@ -275,13 +315,28 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
       ),
       @core.Brush::solid(foreground_color),
     ),
+  )
+  commands.push(
     FillRoundedRectBrush(thumb_rect, @core.Brush::solid(thumb_color)),
+  )
+  commands.push(
     StrokeRoundedRectBrush(
       thumb_rect,
-      @core.Brush::solid(ring_color),
+      @core.Brush::solid(
+        if disabled {
+          ring_color.multiply_alpha(dim)
+        } else {
+          ring_color
+        },
+      ),
       ring_width,
     ),
-  ])
+  )
+  if animating {
+    @core.ViewPaintPlan::animating_commands(commands)
+  } else {
+    @core.ViewPaintPlan::commands(commands)
+  }
 }
 
 ///|

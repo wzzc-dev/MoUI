@@ -294,6 +294,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("platform.website.line3", GeneratedI18nMessage::Text("Web entrypoint.")),
       ("platform.website.title", GeneratedI18nMessage::Text("MoUI Website")),
       ("showcase.android.title", GeneratedI18nMessage::Text("Android Showcase")),
+      ("showcase.gallery.title", GeneratedI18nMessage::Text("Gallery")),
       ("showcase.status.source", GeneratedI18nMessage::Text("Source preview")),
       ("showcase.webview.title", GeneratedI18nMessage::Text("WebView Demo")),
       ("tutorial.concept.model", GeneratedI18nMessage::Text("Model")),
@@ -415,6 +416,14 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "showcase.android.subtitle",
         GeneratedI18nMessage::Text("Showcase mobile workspace on Android"),
+      ),
+      (
+        "showcase.gallery.subtitle",
+        GeneratedI18nMessage::Text("Desktop preset default look"),
+      ),
+      (
+        "showcase.status.generated",
+        GeneratedI18nMessage::Text("Generated preview"),
       ),
       (
         "showcase.webview.subtitle",
@@ -850,6 +859,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("platform.website.line3", GeneratedI18nMessage::Text("Web 入口中。")),
       ("platform.website.title", GeneratedI18nMessage::Text("MoUI 官网")),
       ("showcase.android.title", GeneratedI18nMessage::Text("Android 案例")),
+      (
+        "showcase.gallery.title",
+        GeneratedI18nMessage::Text("Gallery 默认皮肤"),
+      ),
       ("showcase.status.source", GeneratedI18nMessage::Text("源码预览")),
       ("showcase.webview.title", GeneratedI18nMessage::Text("WebView 演示")),
       ("tutorial.concept.model", GeneratedI18nMessage::Text("模型")),
@@ -966,6 +979,11 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "showcase.android.subtitle",
         GeneratedI18nMessage::Text("在 Android 上展示移动端工作区"),
       ),
+      (
+        "showcase.gallery.subtitle",
+        GeneratedI18nMessage::Text("Desktop preset 默认界面"),
+      ),
+      ("showcase.status.generated", GeneratedI18nMessage::Text("生成预览")),
       (
         "showcase.webview.subtitle",
         GeneratedI18nMessage::Text("原生平台 WebView 外壳"),

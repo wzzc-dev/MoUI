@@ -269,6 +269,75 @@ record the reason in the commit message — the same ratchet flow the maintenanc
 baselines
 use.
 
+### Control-state matrix (`moui_tests/visual_matrix`)
+
+```sh
+node scripts/visual-control-matrix.mjs
+```
+
+Renders every interactive control (`button`, `text_field`, `checkbox`,
+`radio`, `toggle`, `slider`) at `default / hover / pressed / focused /
+disabled` in both the Desktop light and dark schemes through the offscreen
+raster path, and writes one PNG per cell plus `report.json` under
+`artifacts/visual-matrix/`.
+
+The gate fails on three conditions:
+
+- `missing_states`: an expected state paints a command list identical to the
+  resting state, i.e. the control has no visual response for a state its token
+  model claims to support;
+- `blank`: a control paints no commands at all;
+- `missing_transitions`: a control that declares a hover/press transition does
+  not blend at half duration (compared with both the resting and terminal
+  commands), or the same paint under reduced motion does not equal the
+  terminal commands.
+
+State detection compares draw commands, not pixels, so a color-only change
+counts even though the bare test host has no glyphs (the matrix PNGs use the
+Sun fallback face). Expected states and transitions live in the tool's
+`matrix_controls()` manifest next to each control's design intent. The script
+runs in the `visual` profile.
+
+Per-control doc sheets are generated from the same cells:
+
+```sh
+node scripts/generate-control-previews.mjs         # write docs/assets/controls/*.png
+node scripts/generate-control-previews.mjs --check # fail on drift
+```
+
+One sheet per control: top row light, bottom row dark; left to right
+default/hover/pressed/focused/disabled. The sheets are Skia-rendered (real
+glyphs) and committed; `docs/view-catalog.md` links them and the website sync
+copies `docs/assets/**` into the generated docs tree. `--check` decodes the
+checked-in PNG and compares pixels, so it is robust to encoder/zlib
+differences. Hosts without a Skia build (the `visual` profile disables the
+immutable prebuild) print `control previews: skipped` and keep the matrix gate
+as the hard check; a Skia-capable developer machine verifies the sheets.
+
+### Gallery screenshots (`moui_tests/gallery_screenshots`)
+
+The README and homepage screenshots are renders, not manual captures. The tool
+mounts `examples/gallery/app` at its published window size (1080×820), paints
+it through Skia at 2×, and replaces the runtime's leading white clear with the
+theme background so both schemes stay honest:
+
+```sh
+node scripts/generate-gallery-screenshots.mjs         # resource/screenshots/gallery-{light,dark}.png
+node scripts/generate-gallery-screenshots.mjs --check # fail on drift (visual profile)
+node scripts/generate-gallery-screenshots.mjs --website # also refresh the WebP copies
+```
+
+`--check` compares decoded pixels against the committed PNGs and prints
+`gallery screenshots: skipped` on hosts without Skia, matching the control
+previews. `--website` writes `resource/screenshots/website/gallery-*.webp` with
+`cwebp`; run `node scripts/gen-website-showcase-assets.mjs` afterwards to copy
+them into `website/web_wasm/assets/screenshots` and refresh the generated asset
+map.
+
+The same offscreen path is exposed to projects as `moui screenshot [project]`
+(see [development.md](development.md#headless-screenshots)); it renders the app
+package's `program()` once and encodes the PNG in the CLI.
+
 Provider composition and backend common boundary edits use the following minimum loop
 before broader profiles:
 

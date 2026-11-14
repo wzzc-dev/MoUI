@@ -292,6 +292,32 @@ uses it directly. The app must install
 `@devtools_socket.install_devtools_socket(runtime, port_file~)` (or the file
 publisher) at the composition root; counter and Showcase macOS do.
 
+### Headless screenshots
+
+`moui screenshot [project]` renders one frame of the app package's `program()`
+through the offscreen Skia renderer and writes a PNG without opening a window or
+requiring a display:
+
+```sh
+moui screenshot . --out gallery.png
+moui screenshot examples/gallery --width 1080 --height 820 --scale 2
+moui screenshot . --scheme dark --renderer sun --json
+```
+
+The app package must expose `pub fn program() -> @moui.Program[Model, Msg]`
+(generated projects and Gallery do) and the project module must already depend
+on the selected renderer (`moui new` desktop projects include
+`wzzc-dev/moui_skia_renderer`; `--renderer sun` also needs
+`wzzc-dev/moui_sun_renderer`). `--width`/`--height` are logical DIPs,
+`--scale` controls pixel density, and `--scheme` only changes the runtime
+environment for apps that read it — an app that pins its own theme ignores it.
+
+The command writes a temporary `moui_screenshot_tmp` package inside the project
+module, runs it with `moon`, then removes it (`--keep-temp` keeps it). The PNG
+contains MoUI's painted content only: window chrome, WebViews, and platform
+child views are outside the offscreen frame. Repository-level screenshot gates
+(control matrix, gallery freshness) still live in `docs/testing.md`.
+
 ### Build, install, and launch
 
 `moui run` orchestrates `moui build-*` → install (`adb` / `xcrun simctl` /

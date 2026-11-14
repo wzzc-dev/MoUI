@@ -203,6 +203,21 @@ fn translate_brush(brush : @core.Brush, offset : Point) -> @core.Brush {
         ..gradient,
         center: translate_point(gradient.center, offset),
       })
+    StopsGradient(spec) =>
+      StopsGradient({
+        ..spec,
+        axis: match spec.axis {
+          @core.LinearAxis(start, end) =>
+            @core.LinearAxis(
+              translate_point(start, offset),
+              translate_point(end, offset),
+            )
+          @core.RadialAxis(center, radius) =>
+            @core.RadialAxis(translate_point(center, offset), radius)
+          @core.ConicAxis(center, angle) =>
+            @core.ConicAxis(translate_point(center, offset), angle)
+        },
+      })
   }
 }
 

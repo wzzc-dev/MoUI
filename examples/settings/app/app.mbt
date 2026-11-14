@@ -734,9 +734,9 @@ fn preferences_form(model : PreferencesSection) -> @moui.View[PreferencesMsg] {
 ///|
 fn SettingsModel::resolved_theme(self : SettingsModel) -> @moui.Theme {
   if self.preferences.theme_mode == "dark" {
-    @views.dark_theme()
+    @views.desktop_dark_theme()
   } else {
-    @views.light_theme()
+    @views.desktop_light_theme()
   }
 }
 

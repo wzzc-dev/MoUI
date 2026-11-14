@@ -138,6 +138,12 @@
       "path": "examples/tui_layers",
       "title": "TUI Layers",
       "featured": false
+    },
+    {
+      "id": "gallery",
+      "path": "examples/gallery",
+      "title": "Visual Gallery",
+      "featured": false
     }
   ]
 }

@@ -96,6 +96,16 @@ function Download-File {
 function Expand-ZipArchive {
   param([Parameter(Mandatory = $true)][string] $Archive, [Parameter(Mandatory = $true)][string] $Destination)
   New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+  # Windows runners ship bsdtar; prefer it over Expand-Archive, whose
+  # ExtractToDirectory overload breaks on some PowerShell/.NET image updates.
+  $tar = Get-Command tar.exe -ErrorAction SilentlyContinue
+  if ($null -ne $tar) {
+    & $tar.Source -xf $Archive -C $Destination
+    if ($LASTEXITCODE -ne 0) {
+      throw "tar extraction failed for $Archive (exit $LASTEXITCODE)"
+    }
+    return
+  }
   Expand-Archive -LiteralPath $Archive -DestinationPath $Destination -Force
 }
 

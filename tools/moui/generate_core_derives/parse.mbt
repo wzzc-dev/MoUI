@@ -49,7 +49,7 @@ fn canonical_trait_order() -> Array[String] {
 
 ///|
 let derive_source_files : Array[String] = [
-  "moui/core/paint.mbt", "moui/core/semantics.mbt", "moui/core/theme.mbt",
+  "moui/core/paint.mbt", "moui/core/gradient.mbt", "moui/core/semantics.mbt", "moui/core/theme.mbt",
 ]
 
 ///|

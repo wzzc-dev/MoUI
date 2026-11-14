@@ -337,6 +337,22 @@ fn visual_gradient(brush : @core.Brush) -> @core.LinearGradientSpec {
         start_color=gradient.center_color,
         end_color=gradient.edge_color,
       )
+    StopsGradient(spec) => {
+      let (first, last) = spec.edge_colors()
+      let (start, end) = match spec.axis {
+        @core.LinearAxis(start, end) => (start, end)
+        @core.RadialAxis(center, radius) =>
+          (center, @core.Point::new(x=center.x + radius.max(1.0), y=center.y))
+        @core.ConicAxis(center, _) =>
+          (center, @core.Point::new(x=center.x + 1.0, y=center.y))
+      }
+      @core.LinearGradientSpec::new(
+        start~,
+        end~,
+        start_color=first,
+        end_color=last,
+      )
+    }
   }
 }
 

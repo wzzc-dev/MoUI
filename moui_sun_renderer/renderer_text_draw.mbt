@@ -203,6 +203,13 @@ fn SunRasterRenderer::draw_text(
   guard run.frame.size.width > 0.0 && run.frame.size.height > 0.0 else {
     return
   }
+  // No registered face: the placeholder draws in the run's coordinate space
+  // and the canvas transform applies once. Transforming the run first would
+  // scale it a second time and push the glyphs off the frame.
+  if self.resolved_faces(run.font).is_empty() {
+    self.draw_text_placeholder(run, opacity)
+    return
+  }
   let device_run = sun_transformed_text_run(self.canvas.get_transform(), run)
   self.canvas.save()
   self.canvas.intersect_clip_rect(
@@ -234,6 +241,9 @@ fn sun_transformed_text_run(
       size=run.font.size * font_scale,
       weight=run.font.weight,
       style=run.font.style,
+      line_height?=run.font.line_height.map(value => value * font_scale),
+      letter_spacing?=run.font.letter_spacing.map(value => value * font_scale),
+      features=run.font.features,
     ),
     color=run.color,
     align=run.align,
@@ -459,8 +469,9 @@ fn sun_text_layout_config(
   @sun_text.LayoutConfig::new(
     max_width=max_width.max(0.0),
     font_size=font.size,
-    line_height=(font.size * 1.2).max(1.0),
+    line_height=font.line_height.unwrap_or((font.size * 1.2).max(1.0)),
     alignment=Left,
+    letter_spacing=font.letter_spacing.unwrap_or(0.0),
   )
 }
 

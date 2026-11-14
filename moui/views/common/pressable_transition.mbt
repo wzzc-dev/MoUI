@@ -128,6 +128,66 @@ pub fn pressable_state_with_transition(
 }
 
 ///|
+/// Resolve an animated hover/press color for a control. Returns the color to
+/// paint and whether a transition is still in flight, so the paint plan can
+/// request another frame.
+///
+/// The duration is capped at 150 ms (`fast_ms` is 120 today) and reduced
+/// motion snaps to the terminal color. `now_ms == 0` means the host clock has
+/// not started yet: paint the from-state and keep animating so the first real
+/// tick can advance instead of flashing the terminal color.
+pub fn pressable_transition_color(
+  ctx : @core.ViewPaintContext,
+  control~ : String,
+  normal~ : @core.Color,
+  hovered~ : @core.Color,
+  pressed~ : @core.Color,
+) -> (@core.Color, Bool) {
+  let duration_ms = ctx.environment.theme.motion.fast_ms.min(150.0)
+  let current = if ctx.state.pressed {
+    @core.PressableState::Pressed
+  } else if ctx.state.hovered {
+    @core.PressableState::Hovered
+  } else {
+    @core.PressableState::Normal
+  }
+  let color_for = fn(state : @core.PressableState) {
+    match state {
+      @core.PressableState::Normal => normal
+      @core.PressableState::Hovered => hovered
+      @core.PressableState::Pressed => pressed
+    }
+  }
+  if ctx.environment.reduced_motion || duration_ms <= 0.0 {
+    return (color_for(current), false)
+  }
+  match pressable_transition(ctx.state, control~) {
+    None => (color_for(current), false)
+    Some((from_state, start_ms)) =>
+      if ctx.now_ms <= 0.0 {
+        (color_for(from_state), true)
+      } else {
+        let progress = (ctx.now_ms - start_ms) / duration_ms
+        if progress >= 1.0 {
+          (color_for(current), false)
+        } else if progress <= 0.0 {
+          (color_for(from_state), true)
+        } else {
+          (
+            @core.animated_color(
+              from=color_for(from_state),
+              to=color_for(current),
+              progress~,
+              easing=ctx.environment.theme.motion.easing,
+            ),
+            true,
+          )
+        }
+      }
+  }
+}
+
+///|
 /// Pure pressable state machine: the next visual state for a pressable
 /// control given the current state, whether the pointer is inside the
 /// control's frame, and the pointer phase.

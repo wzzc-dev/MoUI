@@ -33,7 +33,7 @@ pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
     RoundedRect =>
       "Sun raster renders rounded rect fills and strokes through moui_sun/graphics rounded path helpers."
     Gradient =>
-      "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence exists through PaintShader linear and radial gradient mapping."
+      "Sun raster maps MoUI linear, radial and conic brushes with any number of stops to moui_sun PaintShader (linear/radial/sweep stop shaders); Oklab stop lists are expanded to sRGB samples before shading, and renderer-local pixel tests cover multi-stop and conic output."
     Shadow =>
       "Sun raster renders shadows by filling the rounded-rect shadow shape using SDF on an offscreen pixmap, applying separable box blur, and compositing onto the main canvas, producing real soft-shadow falloff that respects corner radius, blur_radius, and spread."
     Text =>
@@ -55,7 +55,7 @@ pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
     PathVector =>
       "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
     ShaderEffect =>
-      "Sun raster implements checker shader-effect builtin with canvas-level tile rendering; vignette builtin uses concentric fill_circle calls for circular falloff; unknown builtins fall back to the spec fallback brush with an unsupported-command diagnostic."
+      "Sun raster implements checker shader-effect builtin with canvas-level tile rendering; vignette builtin uses concentric fill_circle calls for circular falloff; backdrop-blur copies the already-painted pixmap, runs the three-pass box blur, redraws it through a rectangular clip and tones it with the fallback brush (rounded corners are Skia/host work). Unknown builtins fall back to the spec fallback brush with an unsupported-command diagnostic."
     TextShaping =>
       "Sun raster text uses moui_sun/text FontFace, LayoutConfig, rasterize_text_face, and ShapingBuffer-backed layout metadata for font-metric baseline/height, direction/script-aware shaping inputs, paragraph metadata, and requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, paragraph metadata, and frame-clipped text rendering."
     EmojiText =>

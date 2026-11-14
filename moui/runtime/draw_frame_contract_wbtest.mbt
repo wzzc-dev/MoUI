@@ -25,6 +25,36 @@ test "runtime draw frame separates clear color from content commands" {
 }
 
 ///|
+test "runtime frame clear follows the root-scoped dark theme" {
+  let dark_environment = @core.Environment::neutral()
+    .with_theme_spec(@core.ThemeSpec::default().with_preset(@core.Desktop))
+    .with_system_scheme(@core.Dark)
+  let background = dark_environment.theme.palette.background
+  assert_false(background == @core.Color::white())
+  // The gallery pattern: a light runtime environment whose root view scopes a
+  // dark theme. The frame clear must follow the scoped theme, not the host.
+  let root : @core.View[Unit] = runtime_wb_fixture_view(
+    identity=() => @core.ViewIdentity::new(kind="DrawFrameDarkClear"),
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width=12.0, height=8.0)),
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+  ).theme(dark_environment.theme)
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=12.0, height=8.0),
+  )
+  let frame = runtime.draw_frame()
+  assert_true(frame.clear_color == background)
+  match runtime.draw_commands()[0] {
+    Clear(color) => assert_true(color == background)
+    _ => fail("expected the legacy frame to start with a clear")
+  }
+}
+
+///|
 test "runtime draw frame exposes view overlay paint bounds" {
   let overlay = @core.Rect::new(x=20.0, y=14.0, width=30.0, height=20.0)
   let root : @core.View[Unit] = runtime_wb_fixture_view(

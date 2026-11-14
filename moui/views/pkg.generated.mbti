@@ -132,6 +132,12 @@ pub fn description_item(String, String) -> @data.DescriptionItem
 
 pub fn[Msg] description_list(Array[@data.DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
 
+pub fn desktop_dark_theme() -> @core.Theme
+
+pub fn desktop_light_theme() -> @core.Theme
+
+pub fn desktop_theme_spec(scheme? : @core.ColorScheme) -> @core.ThemeSpec
+
 pub fn[Msg] detail_panel(String, Array[@data.DescriptionItem], subtitle? : String, action? : @controls.StateViewAction[Msg]?, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : @controls.StateViewAction[Msg]?, secondary_action? : @controls.StateViewAction[Msg]?, dismiss_action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -202,6 +208,8 @@ pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int32, row_spacing? : Double
 
 pub fn[Msg] icon(@style.IconName, size? : Double, color? : @core.Color, weight? : Double) -> @core.View[Msg]
 
+pub fn[Msg] icon_svg(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, accessibility_label? : String) -> @core.View[Msg]
 
 pub fn[Msg] inline_error(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, width? : Double) -> @core.View[Msg]
@@ -218,7 +226,19 @@ pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
+pub fn lucide_has(String) -> Bool
+
+pub fn[Msg] lucide_icon(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
+pub fn lucide_icon_names() -> Array[String]
+
+pub fn lucide_icon_path_data(String) -> String?
+
+pub fn lucide_icon_version() -> String
+
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] material(width~ : Double, height~ : Double, blur_radius? : Double, corner_radius? : Double, tint? : @core.Color, theme? : @core.Theme, label? : String) -> @core.View[Msg]
 
 pub fn[Msg] measured_canvas(measure~ : (@core.Constraints, @core.TextSystem) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
 
@@ -229,6 +249,8 @@ pub fn[Msg] menu_button(String, on_click? : Msg, variant? : @style.ButtonVariant
 pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> @controls.MenuItem[Msg]
 
 pub fn minimal_control_theme_set(@core.Theme) -> @style.ControlThemeSet
+
+pub fn minimal_theme_spec(scheme? : @core.ColorScheme) -> @core.ThemeSpec
 
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> @navigation.NavigationDestination[Msg]
 
@@ -326,6 +348,8 @@ pub fn[Msg] router_stack(@navigation.RouterState, Array[@navigation.NavigationDe
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : @style.MainAlign, align? : @style.CrossAlign) -> @core.View[Msg]
 
+pub fn[Msg] scroll_edge(@core.View[Msg], width~ : Double, height~ : Double, fade_height? : Double, color? : @core.Color, theme? : @core.Theme, top? : Bool, bottom? : Bool) -> @core.View[Msg]
+
 pub fn scroll_to_index(request_id~ : Int32, index~ : Int32, item_height? : Double, spacing? : Double) -> @core.ScrollRequest
 
 pub fn scroll_to_key(request_id~ : Int32, metrics~ : @data.VariableListMetrics, key~ : String, inset? : Double) -> @core.ScrollRequest?
@@ -347,6 +371,12 @@ pub fn[Msg] selectable_list(Array[@data.SelectableListItem[Msg]], selected? : St
 pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> @data.SelectableListItem[Msg]
 
 pub fn[Msg] selection_toolbar(selected_count~ : Int32, total_count? : Int32, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] sf_symbol_icon(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
+pub fn sf_symbol_lucide_mappings() -> Array[(String, String)]
+
+pub fn sf_symbol_lucide_name(String) -> String?
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
@@ -396,7 +426,9 @@ pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String
 
 pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, style? : @style.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, layout_scale? : @core.LayoutScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+
+pub fn theme_from_spec(@core.ThemeSpec, system_scheme? : @core.ColorScheme) -> @core.Theme
 
 pub fn[Msg] toast(String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
@@ -408,7 +440,7 @@ pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Doubl
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?) -> @data.TreeItem
+pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?, dimmed? : Bool) -> @data.TreeItem
 
 pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -574,6 +606,8 @@ pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
 
+pub using @core {type LayoutScale}
+
 pub using @style {type MainAlign}
 
 pub using @controls {type MenuItem}
@@ -683,6 +717,10 @@ pub using @style {type TextFieldVariant}
 pub using @style {type TextRole}
 
 pub using @style {type TextStyle}
+
+pub using @core {type ThemePreset}
+
+pub using @core {type ThemeSpec}
 
 pub using @style {type ThumbShape}
 

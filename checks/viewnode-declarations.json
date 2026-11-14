@@ -1547,6 +1547,112 @@
       "generic": true,
       "self": "_self",
       "declaration": "constant"
+    },
+    {
+      "node": "SvgIcon",
+      "package": "moui/views/icon",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "bare": {
+            "enc": "double",
+            "path": "size"
+          }
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "SvgIcon.paint",
+          "fields": [
+            {
+              "name": "markup",
+              "enc": "string",
+              "path": "markup"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            },
+            {
+              "name": "size",
+              "enc": "double",
+              "path": "size"
+            },
+            {
+              "name": "color",
+              "enc": "color",
+              "path": "color"
+            },
+            {
+              "name": "stroke_width",
+              "enc": "double",
+              "path": "stroke_width"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "label"
+          }
+        }
+      }
+    },
+    {
+      "node": "BackdropBlur",
+      "package": "moui/views/container",
+      "declaration": {
+        "layout": {
+          "kind": "exact",
+          "record": "BackdropBlur.layout",
+          "fields": [
+            {
+              "name": "width",
+              "enc": "double",
+              "path": "width"
+            },
+            {
+              "name": "height",
+              "enc": "double",
+              "path": "height"
+            }
+          ]
+        },
+        "paint": {
+          "kind": "exact",
+          "record": "BackdropBlur.paint",
+          "fields": [
+            {
+              "name": "blur",
+              "enc": "double",
+              "path": "blur_radius"
+            },
+            {
+              "name": "radius",
+              "enc": "double",
+              "path": "corner_radius"
+            },
+            {
+              "name": "tint",
+              "enc": "color",
+              "path": "tint"
+            },
+            {
+              "name": "label",
+              "enc": "string",
+              "path": "label"
+            }
+          ]
+        },
+        "semantics": {
+          "kind": "exact",
+          "bare": {
+            "enc": "string",
+            "path": "label"
+          }
+        }
+      }
     }
   ]
 }

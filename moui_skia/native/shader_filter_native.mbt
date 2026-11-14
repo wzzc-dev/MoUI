@@ -292,3 +292,155 @@ fn skia_float_array_is_finite(values : Array[Float]) -> Bool {
   }
   finite
 }
+
+///|
+/// Multi-stop linear gradient. `colors` is a little-endian ARGB `UInt32`
+/// array (4 bytes per stop), `positions` a little-endian `f64` array (8 bytes
+/// per stop); `count` must match both.
+#borrow(colors, positions)
+extern "C" fn native_shader_linear_gradient_stops(
+  x0 : Float,
+  y0 : Float,
+  x1 : Float,
+  y1 : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode : Int32,
+  oklab : Int32,
+) -> ShaderHandle = "moonbit_skia_shader_linear_gradient_stops"
+
+///|
+#borrow(colors, positions)
+extern "C" fn native_shader_radial_gradient_stops(
+  center_x : Float,
+  center_y : Float,
+  radius : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode : Int32,
+  oklab : Int32,
+) -> ShaderHandle = "moonbit_skia_shader_radial_gradient_stops"
+
+///|
+#borrow(colors, positions)
+extern "C" fn native_shader_sweep_gradient_stops(
+  center_x : Float,
+  center_y : Float,
+  start_angle : Float,
+  end_angle : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode : Int32,
+  oklab : Int32,
+) -> ShaderHandle = "moonbit_skia_shader_sweep_gradient_stops"
+
+///|
+pub fn Shader::linear_gradient_stops(
+  start : @skia.Point,
+  end : @skia.Point,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  if !start.is_finite() ||
+    !end.is_finite() ||
+    start.distance_to_squared(end) <= 0.0 ||
+    count < 2 {
+    None
+  } else {
+    Shader::from_handle(
+      native_shader_linear_gradient_stops(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        colors,
+        positions,
+        count,
+        tile_mode.to_skia_ordinal(),
+        if oklab {
+          1
+        } else {
+          0
+        },
+      ),
+    )
+  }
+}
+
+///|
+pub fn Shader::radial_gradient_stops(
+  center : @skia.Point,
+  radius : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  if !center.is_finite() ||
+    !skia_scalar_is_finite(radius) ||
+    radius <= 0.0 ||
+    count < 2 {
+    None
+  } else {
+    Shader::from_handle(
+      native_shader_radial_gradient_stops(
+        center.x,
+        center.y,
+        radius,
+        colors,
+        positions,
+        count,
+        tile_mode.to_skia_ordinal(),
+        if oklab {
+          1
+        } else {
+          0
+        },
+      ),
+    )
+  }
+}
+
+///|
+pub fn Shader::sweep_gradient_stops(
+  center : @skia.Point,
+  start_angle : Float,
+  end_angle : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  if !center.is_finite() ||
+    !skia_scalar_is_finite(start_angle) ||
+    !skia_scalar_is_finite(end_angle) ||
+    count < 2 {
+    None
+  } else {
+    Shader::from_handle(
+      native_shader_sweep_gradient_stops(
+        center.x,
+        center.y,
+        start_angle,
+        end_angle,
+        colors,
+        positions,
+        count,
+        tile_mode.to_skia_ordinal(),
+        if oklab {
+          1
+        } else {
+          0
+        },
+      ),
+    )
+  }
+}

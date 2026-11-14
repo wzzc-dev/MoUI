@@ -1,7 +1,10 @@
 import {
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/compress/zlib",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
+  "moonbitlang/core/string" @strconv,
   "moonbitlang/x/fs",
   "wzzc-dev/moui_cli/scaffold_plan" @plan,
   "wzzc-dev/moui_devtools/socket" @devtools_socket,
@@ -10,6 +13,7 @@ import {
 supported_targets = "+native"
 
 options(
+  "allow-experimental-packages": true,
   "native-stub": [ "native_fs.c", "native_process.c" ],
   "pre-build": [
     {

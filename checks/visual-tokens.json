@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "description": "Raw @core.Color construction count in moui/views paint sources. Ratchet: only lower or move into a token provider; raising requires an explicit --update and review.",
+  "total": 38,
+  "files": {
+    "moui/views/common/view_control_helpers.mbt": 2,
+    "moui/views/controls/color_picker.mbt": 18,
+    "moui/views/controls/scroll_view_layout.mbt": 1,
+    "moui/views/form/date_picker_control.mbt": 1,
+    "moui/views/navigation/_helpers.mbt": 1,
+    "moui/views/presentation/presentation.mbt": 2,
+    "moui/views/slider/range_slider.mbt": 1,
+    "moui/views/slider/slider.mbt": 1,
+    "moui/views/style/control_style.mbt": 4,
+    "moui/views/style/control_theme_set.mbt": 5,
+    "moui/views/style/control_theme_tokens.mbt": 1,
+    "moui/views/style/style_api.mbt": 1
+  }
+}

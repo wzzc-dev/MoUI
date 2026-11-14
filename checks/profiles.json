@@ -87,6 +87,13 @@
           ]
         },
         {
+          "name": "visual token ratchet",
+          "argv": [
+            "node",
+            "scripts/validate-visual-tokens.mjs"
+          ]
+        },
+        {
           "name": "doc references",
           "argv": [
             "node",
@@ -1209,6 +1216,69 @@
             "moon",
             "build",
             "examples/showcase/windows_skia",
+            "--target",
+            "native"
+          ]
+        }
+      ]
+    },
+    "visual": {
+      "description": "Default-look gate: token discipline, deterministic golden scenes, and the gallery app's Desktop preset smoke.",
+      "steps": [
+        {
+          "name": "icon set freshness",
+          "argv": [
+            "node",
+            "scripts/generate-icon-set.mjs",
+            "--check"
+          ]
+        },
+        {
+          "name": "visual token ratchet",
+          "argv": [
+            "node",
+            "scripts/validate-visual-tokens.mjs"
+          ]
+        },
+        {
+          "name": "control state matrix",
+          "argv": [
+            "node",
+            "scripts/visual-control-matrix.mjs"
+          ]
+        },
+        {
+          "name": "control preview freshness",
+          "argv": [
+            "node",
+            "scripts/generate-control-previews.mjs",
+            "--check"
+          ]
+        },
+        {
+          "name": "gallery screenshot freshness",
+          "argv": [
+            "node",
+            "scripts/generate-gallery-screenshots.mjs",
+            "--check"
+          ]
+        },
+        {
+          "name": "golden image regression",
+          "argv": [
+            "moon",
+            "test",
+            "moui_tests/golden",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "gallery app tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/gallery/app",
             "--target",
             "native"
           ]

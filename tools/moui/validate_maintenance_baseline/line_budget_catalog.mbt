@@ -73,8 +73,11 @@ fn file_budgets() -> Array[FileBudget] {
       // 412 -> 497 (2026-11-07, §7): OS-recognized gesture decode evidence
       // for pinch/rotation/pan/double-tap/pressure with phase and unit
       // conversion.
+      // 497 -> 513 (2026-11-13, visual-quality V3 accent): window
+      // AccentColorChanged maps to the host accent event and stays out of
+      // core app messages.
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 497,
+      max_lines: 513,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
@@ -171,8 +174,10 @@ fn file_budgets() -> Array[FileBudget] {
       // 400 -> 406 (2026-11-10, ADR 0068): the runtime.mbt transient-handoff
       // note and its self-referential growth.
       // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
+      // 409 -> 412 (2026-11-13, visual-quality V3 accent): the window
+      // accent decode-test note and this entry's self-referential growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 409,
+      max_lines: 414,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

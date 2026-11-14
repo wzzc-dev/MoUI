@@ -20,6 +20,34 @@ declaration (verified 2026-10-27 from the unpacked dependency cache,
 `svg-component`, `zlib-component`, `brotli-component`) declare no license field;
 their parent packages do.
 
+## Icon data
+
+`resource/icons/lucide.json` vendors a subset of
+[Lucide](https://lucide.dev) from `lucide-static` v1.72.0 and is licensed ISC.
+The shapes are converted to SVG path `d` data at vendoring time; the UI draws
+them through `@views.lucide_icon` (`icon_svg` under the hood). Regenerate the
+MoonBit table with `node scripts/generate-icon-set.mjs`.
+
+```text
+ISC License
+
+Copyright (c) for portions of Lucide are held by Cole Bemis 2013-2022 as part
+of Feather (MIT). All other copyright (c) for Lucide are held by Lucide
+Contributors 2022.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+```
+
 ## Skia
 
 `moui_skia` contains MoonBit and native stub/binding code for integrating with

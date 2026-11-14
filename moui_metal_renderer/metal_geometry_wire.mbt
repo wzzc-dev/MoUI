@@ -352,6 +352,35 @@ fn metal_brush_payload(
         color0: gradient.center_color.multiply_alpha(opacity),
         color1: gradient.edge_color.multiply_alpha(opacity),
       }
+    @core.StopsGradient(spec) => {
+      let (first, last) = spec.edge_colors()
+      match spec.axis {
+        @core.LinearAxis(start, end) =>
+          MetalBrushPayload::{
+            kind: metal_brush_linear,
+            start,
+            end,
+            color0: first.multiply_alpha(opacity),
+            color1: last.multiply_alpha(opacity),
+          }
+        @core.RadialAxis(center, radius) =>
+          MetalBrushPayload::{
+            kind: metal_brush_radial,
+            start: center,
+            end: @core.Point::new(x=radius.max(1.0), y=0.0),
+            color0: first.multiply_alpha(opacity),
+            color1: last.multiply_alpha(opacity),
+          }
+        @core.ConicAxis(center, _) =>
+          MetalBrushPayload::{
+            kind: metal_brush_linear,
+            start: center,
+            end: @core.Point::new(x=center.x + 1.0, y=center.y),
+            color0: first.multiply_alpha(opacity),
+            color1: last.multiply_alpha(opacity),
+          }
+      }
+    }
   }
 }
 

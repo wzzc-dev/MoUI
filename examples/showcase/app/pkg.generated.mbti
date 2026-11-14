@@ -19,6 +19,8 @@ pub fn global_catalog_groups() -> Array[CatalogGroup]
 
 pub fn global_catalog_items() -> Array[CatalogItem]
 
+pub fn program() -> @core.Program[ShowcaseModel, ShowcaseMsg]
+
 // Errors
 
 // Types and methods

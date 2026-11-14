@@ -148,23 +148,24 @@ test "website showcases lazy grid renders visible screenshots only" {
     .test_runtime(width=1180.0, height=760.0)
     .draw_commands()
   let showcase_titles = [
-    "Showcase", "iOS Showcase", "HarmonyOS Showcase", "Markdown Editor", "Mo Workbench",
-    "Excel Viewer", "WebView Demo", "Android Showcase",
+    "Gallery", "Showcase", "iOS Showcase", "HarmonyOS Showcase", "Markdown Editor",
+    "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Showcase",
   ]
   let visible_titles = showcase_titles.filter(title => has_text(commands, title))
   assert_true(visible_titles.length() > 0)
   assert_true(visible_titles.length() < showcase_titles.length())
   let screenshot_sources = [
-    "assets/screenshots/showcase.webp", "assets/screenshots/ios-componentgallery.webp",
-    "assets/screenshots/harmonyos-componentgallery.webp", "assets/screenshots/markdown_editor.webp",
-    "assets/screenshots/mo_workbench.webp", "assets/screenshots/excel.webp", "assets/screenshots/webview.webp",
-    "assets/screenshots/android-componentgallery.webp",
+    "assets/screenshots/gallery-light.webp", "assets/screenshots/showcase.webp",
+    "assets/screenshots/ios-componentgallery.webp", "assets/screenshots/harmonyos-componentgallery.webp",
+    "assets/screenshots/markdown_editor.webp", "assets/screenshots/mo_workbench.webp",
+    "assets/screenshots/excel.webp", "assets/screenshots/webview.webp", "assets/screenshots/android-componentgallery.webp",
   ]
   let visible_sources = screenshot_sources.filter(source => {
     has_image_source(commands, source)
   })
   assert_true(visible_sources.length() > 0)
   assert_true(visible_sources.length() < screenshot_sources.length())
+  assert_true(has_text(commands, "Generated preview"))
   assert_true(has_text(commands, "Archived preview"))
   assert_true(has_text(commands, "Evidence pending"))
 }
@@ -180,7 +181,7 @@ test "website showcases scroll their virtual grid without a duplicate page headi
   assert_true(
     has_text(commands, "Click any screenshot to open its source on GitHub."),
   )
-  let image = image_frame(commands, "assets/screenshots/showcase.webp").unwrap()
+  let image = image_frame(commands, "assets/screenshots/gallery-light.webp").unwrap()
   assert_false(
     has_image_source(
       commands, "assets/screenshots/android-componentgallery.webp",
@@ -220,6 +221,14 @@ test "website resets showcase grid scroll when returning to the route" {
 ///|
 test "website showcase cards link to their owning source entrypoints" {
   let entries = website_showcase_entries()
+  assert_true(
+    entries.any(entry => {
+      entry.slug == "gallery-light" &&
+      entry.source_url ==
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/gallery/app" &&
+      entry.status_key == "showcase.status.generated"
+    }),
+  )
   assert_true(
     entries.any(entry => {
       entry.slug == "showcase" &&

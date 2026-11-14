@@ -66,6 +66,11 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 <div align="center">
 
+  <img src="resource/screenshots/gallery-light.png" width="48%" alt="Gallery — Desktop preset, light"/>
+  <img src="resource/screenshots/gallery-dark.png" width="48%" alt="Gallery — Desktop preset, dark"/>
+
+  <br/><br/>
+
   <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
   <a href="https://github.com/wzzc-dev/MoMark">
     <img src="resource/screenshots/markdown_editor.png" width="48%" alt="MoMark — Typora-style WYSIWYG Markdown editor"/>
@@ -89,6 +94,10 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   <br/><br/>
 
 </div>
+
+The first row is rendered from `examples/gallery` with stock controls only. Regenerate it with
+`node scripts/generate-gallery-screenshots.mjs` (add `--website` to refresh the WebP copies used
+by the homepage); `--check` fails when the committed PNGs drift from the Desktop preset.
 
 ## Quick Start
 
