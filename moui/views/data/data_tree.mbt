@@ -31,6 +31,18 @@ pub fn[Msg] tree_view(
 }
 
 ///|
+pub fn tree_item(
+  id~ : String,
+  label~ : String,
+  children~ : Array[TreeItem] = [],
+  icon~ : @style.IconName? = None,
+  icon_color~ : @core.Color? = None,
+  dimmed~ : Bool = false,
+) -> TreeItem {
+  { id, label, children, icon, icon_color, dimmed, }
+}
+
+///|
 fn[Msg] append_tree_rows(
   rows : Array[@core.View[Msg]],
   item : TreeItem,
@@ -74,131 +86,4 @@ fn[Msg] append_tree_rows(
       )
     }
   }
-}
-
-///|
-fn[Msg] tree_row(
-  item : TreeItem,
-  depth~ : Int32,
-  expanded~ : Bool,
-  selected~ : Bool,
-  on_select~ : ((String) -> Msg)?,
-  on_toggle~ : ((String) -> Msg)?,
-  on_secondary_tap~ : ((String) -> Msg)?,
-  theme~ : @core.Theme,
-  width~ : Double,
-) -> @core.View[Msg] {
-  let indent = depth.to_double() * 16.0
-  // Real disclosure glyphs, not ASCII 'v'/'>': a filled triangle reads as a
-  // control at caption size, and the app's other fold buttons use them too.
-  let toggle_label = if item.children.length() == 0 {
-    ""
-  } else if expanded {
-    "▾"
-  } else {
-    "▸"
-  }
-  let toggle_width = 20.0
-  let icon_width = if item.icon is Some(_) { 22.0 } else { 0.0 }
-  let toggle = match on_toggle {
-    Some(handler) =>
-      @button.button(
-        toggle_label,
-        on_click=handler(item.id),
-        variant=Ghost,
-        theme~,
-        width=toggle_width,
-        height=26.0,
-      )
-    None =>
-      @text.text(
-        toggle_label,
-        role=Caption,
-        theme~,
-        width=toggle_width,
-        height=26.0,
-      )
-  }
-  // The label is left-aligned and stretches over the rest of the row: a
-  // centered label inside a wide box left a gap after the disclosure glyph and
-  // made every row's text float, which is what made the tree read as ragged.
-  let label_width = @common.view_max_double(
-    40.0,
-    width - indent - 26.0 - icon_width,
-  )
-  let icon_view = match item.icon {
-    Some(name) =>
-      @icon.icon(
-        name,
-        size=14.0,
-        color=item.icon_color.unwrap_or(theme.palette.muted),
-      )
-    None => @text.text("", width=0.0, height=26.0)
-  }
-  // Ignored entries (dot-directories and friends) read one step quieter than
-  // active rows, Winc-style; a selected row keeps its emphasis.
-  let dim_label = item.dimmed && !selected
-  let label_view = match on_select {
-    Some(handler) if dim_label => {
-      // A button paints its label from the control theme (which does not
-      // follow palette overrides), so a dimmed row renders its label as
-      // muted text with the select handler attached directly.
-      @text.text(
-        item.label,
-        role=Body,
-        theme~,
-        width=label_width,
-        height=26.0,
-      )
-      .foreground(theme.palette.muted)
-      .on_tap(handler(item.id))
-    }
-    Some(handler) =>
-      @button.button(
-        item.label,
-        on_click=handler(item.id),
-        variant=if selected { Tonal } else { Ghost },
-        theme~,
-        width=label_width,
-        height=26.0,
-        label_align=TextStart,
-      )
-    None => {
-      let label = @text.text(
-        item.label,
-        role=Body,
-        theme~,
-        width=label_width,
-        height=26.0,
-      )
-      if dim_label {
-        label.foreground(theme.palette.muted)
-      } else {
-        label
-      }
-    }
-  }
-  // Depth is a left padding, not a spacer child: a spacer with weight 0 still
-  // absorbed the row's slack here, which pushed the label to the right edge and
-  // left a gap after the disclosure glyph.
-  let row_body = @layout.padding_edges(
-    @layout.row([toggle, icon_view, label_view], spacing=2.0, align=Center),
-    left=indent,
-  )
-  // Right-click target coverage spans the whole row (glyph + label), not just
-  // the label button: the row modifier only reacts to button 1, so primary
-  // taps on the toggle/label children keep working unchanged.
-  let row_view = match on_secondary_tap {
-    Some(handler) => row_body.on_secondary_tap(handler(item.id))
-    None => row_body
-  }
-  // The row carries the item id as its identity: tree rows come and go with
-  // collapse/expand, and without a key the reconciler matches them by position,
-  // so focus and selection would follow the slot instead of the item.
-  row_view
-  .key("tree-" + item.id)
-  .semantics_role(TreeItem)
-  .semantics_expanded(expanded~)
-  .semantics_selected(selected~)
-  .accessibility_label(item.label)
 }

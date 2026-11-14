@@ -12,15 +12,3 @@ pub struct TreeItem {
   /// the label renders in the muted color unless the row is selected.
   dimmed : Bool
 }
-
-///|
-pub fn tree_item(
-  id~ : String,
-  label~ : String,
-  children~ : Array[TreeItem] = [],
-  icon~ : @style.IconName? = None,
-  icon_color~ : @core.Color? = None,
-  dimmed~ : Bool = false,
-) -> TreeItem {
-  { id, label, children, icon, icon_color, dimmed, }
-}
