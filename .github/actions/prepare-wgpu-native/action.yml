@@ -1,0 +1,37 @@
+name: Prepare wgpu-native
+description: >
+  Pre-extract the wgpu-native Windows archive with bsdtar and export
+  MBT_WGPU_NATIVE_ROOT. PowerShell's Expand-Archive currently fails on the
+  Windows runner image with an ExtractToDirectory overload error, which breaks
+  the Milky2018/wgpu_mbt prebuild before any MoUI code runs.
+
+runs:
+  using: composite
+  steps:
+    - name: Extract wgpu-native with tar
+      shell: pwsh
+      run: |
+        $ProgressPreference = "SilentlyContinue"
+        $version = "v29.0.1.1"
+        $archive = "wgpu-windows-x86_64-msvc-release.zip"
+        $sha256 = "7e67d7445c42aeb85e30f88930fd8d7d83ee769e3390aeb1ada75ebf3cf78132"
+        $url = "https://github.com/gfx-rs/wgpu-native/releases/download/$version/$archive"
+        $zip = Join-Path $env:RUNNER_TEMP $archive
+        if (!(Test-Path -LiteralPath $zip)) {
+          Invoke-WebRequest -Uri $url -OutFile $zip
+        }
+        $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+        if ($actual -ne $sha256) {
+          throw "wgpu-native archive SHA256 mismatch: expected $sha256, got $actual"
+        }
+        $root = Join-Path $env:RUNNER_TEMP "wgpu-native-$version"
+        Remove-Item -Recurse -Force $root -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force -Path $root | Out-Null
+        tar.exe -xf $zip -C $root
+        if ($LASTEXITCODE -ne 0) {
+          throw "tar extraction failed for $zip (exit $LASTEXITCODE)"
+        }
+        if (!(Test-Path -LiteralPath (Join-Path $root "lib/wgpu_native.lib"))) {
+          throw "wgpu-native extraction is missing lib/wgpu_native.lib"
+        }
+        "MBT_WGPU_NATIVE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Append

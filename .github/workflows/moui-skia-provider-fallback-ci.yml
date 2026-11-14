@@ -36,6 +36,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Prepare wgpu-native
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/prepare-wgpu-native
+
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
