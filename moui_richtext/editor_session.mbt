@@ -231,6 +231,11 @@ pub(all) struct MarkdownDocumentSession {
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
+  // Presentation palette baked into rich-text blocks. Kept on the session so
+  // every editor/preview call site sees the same colors without threading a
+  // palette through the whole event/paint chain; the conversion cache key
+  // includes its digest, so changing it re-projects blocks.
+  rich_text_palette : MarkdownRichTextPalette?
 }
 
 ///|
@@ -610,6 +615,7 @@ pub fn MarkdownDocumentSession::snapshot(
       materialized,
       base,
       base_dir~,
+      palette=self.rich_text_palette,
     ),
     line_count: self.line_count,
     word_count: self.word_count,
@@ -634,6 +640,7 @@ fn markdown_editor_session_reveal_html_block_source(
   block : RichTextBlock,
   selection : MarkdownEditorSelection,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette? = None,
 ) -> RichTextBlock {
   let anchor = match markdown_editor_active_selection(selection.selection) {
     Some(range) => range.start
@@ -651,7 +658,11 @@ fn markdown_editor_session_reveal_html_block_source(
   }
   match editor_block.block.kind {
     HtmlBlock => {
-      let raw = markdown_html_raw_block_rich_text(editor_block.block.text, base)
+      let raw = markdown_html_raw_block_rich_text(
+        editor_block.block.text,
+        base,
+        palette=markdown_rich_text_palette_or_light(palette),
+      )
       {
         ..raw,
         runs: markdown_editor_runs_with_source_ranges(
@@ -685,6 +696,7 @@ pub fn MarkdownDocumentSession::rich_text(
       materialized,
       base,
       base_dir~,
+      palette=self.rich_text_palette,
     )
     // The rendered html gallery hides the block source, so the block under
     // the caret collapses to its raw markup in place, like a code block.
@@ -697,6 +709,7 @@ pub fn MarkdownDocumentSession::rich_text(
           block,
           selection,
           base,
+          palette=self.rich_text_palette,
         ),
       )
     }
@@ -726,6 +739,11 @@ pub fn MarkdownDocumentSession::rich_text_window(
   overscan~ : Double = 320.0,
   content_width~ : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
+  let palette = self.rich_text_palette
+  let palette_key = match palette {
+    Some(palette) => palette.cache_key()
+    None => "palette:default-light"
+  }
   let range = markdown_document_window_range(
     self,
     base,
@@ -756,7 +774,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
   // taller than the viewport. `top_padding` absorbs their height, so
   // `content_rect` places the remaining lines exactly where the full layout
   // would have, and every consumer keeps working unchanged.
-  let line_step = base.size * 1.55
+  let line_step = base.size * 1.65
   // DISABLED: the slice aborts the momark zen-mode editing test
   // (editor_app_writing_modes_runtime_wbtest.mbt:222) deterministically. The
   // helper, its tests and the clip decision below are in place; re-enable by
@@ -859,9 +877,12 @@ pub fn MarkdownDocumentSession::rich_text_window(
               editor_block,
               base,
               base_dir~,
+              palette~,
+              palette_key=Some(palette_key),
             ),
             selection,
             base,
+            palette~,
           )
         },
       )
@@ -876,8 +897,16 @@ pub fn MarkdownDocumentSession::rich_text_window(
       document,
       selection,
     )
+    let (leading_blank_gap_offset, document_has_content) = markdown_document_window_blank_gap_context(
+      self,
+      range.visible_start,
+    )
     let collapsed = markdown_editor_collapse_inactive_blank_gaps(
-      revealed, selection, base,
+      revealed,
+      selection,
+      base,
+      leading_blank_gap_offset~,
+      document_has_content=Some(document_has_content),
     )
     if focus_mode {
       markdown_editor_dim_inactive_blocks(collapsed, selection)
@@ -1023,7 +1052,14 @@ fn markdown_document_session_apply_in_line_edit(
     return None
   }
   let editor_block = session.editor_blocks[cluster.start_index]
-  if !(editor_block.block.kind is Paragraph) {
+  let table_edit = editor_block.block.kind is Table
+  if !(editor_block.block.kind is Paragraph) && !table_edit {
+    return None
+  }
+  // A table's row/column structure is the pipe layout; a cell-text edit that
+  // does not add or remove a pipe keeps that structure exactly.
+  if table_edit &&
+    (transaction.replacement.contains("|") || transaction.deleted.contains("|")) {
     return None
   }
   let edit_start = transaction.edit_range.start
@@ -1050,7 +1086,8 @@ fn markdown_document_session_apply_in_line_edit(
   // The splice below assumes the block text is the block's own source
   // slice; paragraph blocks are built that way (shell and full parse
   // alike). Anything else falls back to the re-parse.
-  if markdown_editor_text_length(editor_block.block.text) !=
+  if !table_edit &&
+    markdown_editor_text_length(editor_block.block.text) !=
     editor_block.content_range.end - editor_block.content_range.start {
     return None
   }
@@ -1088,14 +1125,15 @@ fn markdown_document_session_apply_in_line_edit(
       markdown_editor_text_length(pre_line),
     )
   let post_view = post_line.exact_view(start=0, end=post_line.length())
-  if markdown_editor_line_text_is_blank(post_view) {
+  if !table_edit && markdown_editor_line_text_is_blank(post_view) {
     return None
   }
-  if markdown_editor_shell_line_may_open_fence(post_view) &&
+  if !table_edit &&
+    markdown_editor_shell_line_may_open_fence(post_view) &&
     markdown_editor_opening_code_fence_marker(post_view) is Some(_) {
     return None
   }
-  if markdown_editor_shell_line_may_open_html(post_view) {
+  if !table_edit && markdown_editor_shell_line_may_open_html(post_view) {
     let probe : Array[MarkdownLine] = [
       { text: post_view, start: line_start, end: line_end, },
     ]
@@ -1103,16 +1141,39 @@ fn markdown_document_session_apply_in_line_edit(
       return None
     }
   }
-  if markdown_editor_setext_underline_level(post_view) is Some(_) {
+  if !table_edit && markdown_editor_setext_underline_level(post_view) is Some(_) {
     return None
   }
-  if !(markdown_editor_shell_structural_kind(post_view) is None) {
+  if !table_edit && !(markdown_editor_shell_structural_kind(post_view) is None) {
     return None
   }
   let old_source_start = editor_block.source_range.start
   let old_source_end = editor_block.source_range.end
   let content_start = editor_block.content_range.start
   let content_end = editor_block.content_range.end
+  // A table block stores normalized preview text, not its source slice, so a
+  // cell edit cannot splice `block.text`. Re-parse just the table's new source
+  // slice before mutating the store; a failed parse falls back cleanly.
+  let parsed_table : MarkdownEditorBlock? = if table_edit {
+    let table_source = markdown_editor_substring(
+      transaction.source,
+      old_source_start,
+      old_source_end + delta,
+    )
+    let mut parsed : MarkdownEditorBlock? = None
+    for editor in parse_markdown_editor_blocks(table_source) {
+      if editor.block.kind is Table {
+        parsed = Some(editor)
+        break
+      }
+    }
+    match parsed {
+      Some(_) => parsed
+      None => return None
+    }
+  } else {
+    None
+  }
   // Advance the live text store first: every read below (probes, splices)
   // sees the post-edit text, same contract as the region re-parse path.
   session.text_store.edit(transaction.edit_range, transaction.replacement)
@@ -1120,23 +1181,31 @@ fn markdown_document_session_apply_in_line_edit(
   // Splice the text into the block and shift its absolute ranges. The
   // block drops its inline runs (shell shape, matching the open path):
   // the visible window re-parses whatever lines it renders.
-  let offset_in_text = edit_start - content_start
-  let edit_end_in_text = edit_end - content_start
-  let next_text = markdown_editor_substring(
-      editor_block.block.text,
-      0,
-      offset_in_text,
-    ) +
-    transaction.replacement +
-    markdown_editor_substring(
-      editor_block.block.text,
-      edit_end_in_text,
-      markdown_editor_text_length(editor_block.block.text),
-    )
-  session.editor_blocks[cluster.start_index] = {
-    block: { ..editor_block.block, text: next_text, inlines: [], },
-    source_range: { start: old_source_start, end: old_source_end + delta, },
-    content_range: { start: content_start, end: content_end + delta, },
+  session.editor_blocks[cluster.start_index] = if table_edit {
+    {
+      block: parsed_table.unwrap().block,
+      source_range: { start: old_source_start, end: old_source_end + delta, },
+      content_range: { start: content_start, end: content_end + delta, },
+    }
+  } else {
+    let offset_in_text = edit_start - content_start
+    let edit_end_in_text = edit_end - content_start
+    let next_text = markdown_editor_substring(
+        editor_block.block.text,
+        0,
+        offset_in_text,
+      ) +
+      transaction.replacement +
+      markdown_editor_substring(
+        editor_block.block.text,
+        edit_end_in_text,
+        markdown_editor_text_length(editor_block.block.text),
+      )
+    {
+      block: { ..editor_block.block, text: next_text, inlines: [], },
+      source_range: { start: old_source_start, end: old_source_end + delta, },
+      content_range: { start: content_start, end: content_end + delta, },
+    }
   }
   // Maintain the document line index in place: line starts after the edit
   // shift by the delta (the edit cannot add or remove a line, and no line
@@ -1266,6 +1335,7 @@ fn markdown_document_session_apply_in_line_edit(
     dirty_range: dirty,
     height_index,
     layout_cache: None,
+    rich_text_palette: session.rich_text_palette,
   })
 }
 
@@ -1314,6 +1384,23 @@ fn markdown_document_session_apply_incremental(
         transaction,
         deleted,
       )
+      let delta = markdown_editor_text_length(transaction.replacement) -
+        markdown_editor_text_length(deleted)
+      // Structure-preserving fast path first: a same-line edit inside one
+      // paragraph or one table block is provably local, even though a table
+      // cluster is otherwise refused by the stitcher below (its rows depend
+      // on pipe counts). The helper rejects newlines, line-start edits, and
+      // table edits that touch a pipe.
+      match
+        markdown_document_session_apply_in_line_edit(
+          session,
+          transaction,
+          cluster,
+          delta~,
+        ) {
+        Some(next) => return Some(next)
+        None => ()
+      }
       guard markdown_document_newlines_safe(
           transaction,
           deleted,
@@ -1327,24 +1414,6 @@ fn markdown_document_session_apply_incremental(
         hot_path_incremental_fallback_count.val = hot_path_incremental_fallback_count.val +
           1
         return None
-      }
-      let delta = markdown_editor_text_length(transaction.replacement) -
-        markdown_editor_text_length(deleted)
-      // Structure-preserving fast path: a pure insertion strictly inside
-      // one line of a single paragraph block reproduces the region
-      // re-parse without walking the region — the keystroke path on
-      // documents whose text collapses into one huge block.
-      if deleted == "" {
-        match
-          markdown_document_session_apply_in_line_edit(
-            session,
-            transaction,
-            cluster,
-            delta~,
-          ) {
-          Some(next) => return Some(next)
-          None => ()
-        }
       }
       let region_end = if cluster.end_index >=
         session.editor_blocks.length() - 1 {
@@ -1899,7 +1968,21 @@ pub fn MarkdownDocumentSession::replace_source(
     source_length=session.source_length,
     source_digest=session.source_digest,
   )
-  session
+  { ..session, rich_text_palette: self.rich_text_palette, }
+}
+
+///|
+/// Attach the presentation palette used when projecting this document into
+/// rich text. The palette is not part of the document model: edits keep it
+/// (the incremental/full apply paths inherit it from `previous`), and a
+/// theme switch replaces it without changing the text, identity, or layout
+/// cache. The next rich-text projection reuses or rebuilds blocks through a
+/// cache key that includes the palette digest.
+pub fn MarkdownDocumentSession::with_rich_text_palette(
+  self : MarkdownDocumentSession,
+  palette : MarkdownRichTextPalette?,
+) -> MarkdownDocumentSession {
+  { ..self, rich_text_palette: palette, }
 }
 
 ///|
@@ -2116,7 +2199,7 @@ fn markdown_document_block_needs_line_window(
 /// and every per-line stage runs over all of it.
 ///
 /// Only the height index is available before the band is measured, so the line
-/// step is estimated from the font — the same `size * 1.55` convention
+/// step is estimated from the font — the same `size * 1.65` convention
 /// `markdown_document_block_geometry` falls back to — and a screenful of lines
 /// is left unclipped above the band to absorb the estimate. The measured
 /// heights feed back through the existing geometry path, so the estimate only
@@ -2147,7 +2230,7 @@ fn markdown_document_clip_lines_for_window(
     ) {
     return whole
   }
-  let line_step = base.size * 1.55
+  let line_step = base.size * 1.65
   if line_step <= 0.0 {
     return whole
   }
@@ -2181,7 +2264,7 @@ fn markdown_document_gallery_block_heights(
     let estimated = if index < session.height_index.blocks.length() {
       session.height_index.blocks[index].visual_height_units * base.size
     } else {
-      base.size * 1.55
+      base.size * 1.65
     }
     if editor_block.block.kind is HtmlBlock &&
       markdown_block_view_project(editor_block.block, base, base_dir=None)
@@ -2321,7 +2404,7 @@ fn markdown_document_block_geometry(
               session.height_index.blocks
               .get(index)
               .map(metric => metric.visual_height_units * base.size)
-              .unwrap_or(base.size * 1.55),
+              .unwrap_or(base.size * 1.65),
             )
         }
     }
@@ -2425,7 +2508,7 @@ fn markdown_document_scroll_geometry_rebase(
         session.height_index.blocks
         .get(index)
         .map(metric => metric.visual_height_units * base.size)
-        .unwrap_or(base.size * 1.55)
+        .unwrap_or(base.size * 1.65)
     }
     // Route every recomputed height through the point update so the Fenwick
     // tree stays in lockstep with `heights`. When the block count changed we
@@ -2517,7 +2600,7 @@ fn markdown_document_block_height_at(
       session.height_index.blocks
       .get(index)
       .map(metric => metric.visual_height_units * base.size)
-      .unwrap_or(base.size * 1.55)
+      .unwrap_or(base.size * 1.65)
   }
 }
 
@@ -3225,7 +3308,7 @@ fn markdown_document_estimated_line_height_units(
     | UnorderedListItem
     | TaskListItem(_)
     | OrderedListItem(_)
-    | Blockquote => 1.55
+    | Blockquote => 1.65
   }
 }
 
@@ -3242,7 +3325,7 @@ fn markdown_document_estimated_inset_units(
       { top: 0.14, right: 0.0, bottom: 0.14, left: 0.86, }
     HtmlBlock => { top: 0.29, right: 0.71, bottom: 0.29, left: 0.71, }
     FrontMatter => { top: 0.43, right: 0.71, bottom: 0.43, left: 0.71, }
-    Paragraph => { top: 0.0, right: 0.0, bottom: 0.4, left: 0.0, }
+    Paragraph => { top: 0.0, right: 0.0, bottom: 0.5, left: 0.0, }
     UnorderedListItem | TaskListItem(_) | OrderedListItem(_) | HorizontalRule =>
       @core.Insets::symmetric()
   }
@@ -3539,6 +3622,10 @@ fn markdown_document_session_from_blocks(
     dirty_range,
     height_index,
     layout_cache: None,
+    rich_text_palette: match previous {
+      Some(prev) => prev.rich_text_palette
+      None => None
+    },
   }
 }
 

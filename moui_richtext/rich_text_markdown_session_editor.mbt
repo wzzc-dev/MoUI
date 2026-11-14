@@ -762,7 +762,7 @@ fn[Msg] markdown_session_scroll_event(
 /// one exception: they render collapsed (a 0.4em separator vs a full writing
 /// line, see `markdown_editor_collapse_inactive_blank_gaps`), which is
 /// structural WYSIWYG geometry rather than a transient reveal. Measuring
-/// the uncollapsed block overstates every paragraph separator by ~1.55em
+/// the uncollapsed block overstates every paragraph separator by ~1.65em
 /// (≈26px at 17px body text); the spurious growth above the anchor is then
 /// published as geometry compensation, and the next wheel event re-keys
 /// from the shifted offset — scrolling up through blanks reads as a small
@@ -1251,7 +1251,7 @@ fn markdown_session_estimated_caret_rect(
     x=content.origin.x + inset_x,
     y=content.origin.y + source_y - scroll_y + 4.0,
     width=1.5,
-    height=max_double(10.0, font.size * 1.55 - 8.0),
+    height=max_double(10.0, font.size * 1.65 - 8.0),
   )
 }
 

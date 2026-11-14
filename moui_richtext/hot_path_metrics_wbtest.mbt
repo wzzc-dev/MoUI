@@ -18,6 +18,8 @@ fn hot_path_metrics_reset() -> Unit {
   hot_path_block_wrap_cache_hits.val = 0
   hot_path_block_fingerprints_built.val = 0
   hot_path_height_metrics_recomputed.val = 0
+  hot_path_line_metrics_cache_hits.val = 0
+  hot_path_line_metrics_builds.val = 0
 }
 
 ///|
@@ -88,7 +90,8 @@ test "hot path: backspace into the previous cluster still avoids full parse" {
     ),
   )
   inspect(hot_path_full_parse_count.val, content="0")
-  inspect(hot_path_region_reparse_count.val, content="1")
+  inspect(hot_path_region_reparse_count.val, content="0")
+  inspect(hot_path_in_line_apply_count.val, content="1")
   let full = MarkdownDocumentSession::new(next.source())
   inspect(next.blocks.length(), content=full.blocks.length().to_string())
 }
@@ -912,4 +915,19 @@ test "hot path: appending to an unclosed fence stays incremental" {
   assert_eq(hot_path_incremental_fallback_count.val, 0)
   assert_eq(hot_path_region_reparse_count.val, 1)
   hot_path_assert_matches_scratch(session, next)
+}
+
+///|
+test "hot path: table cell typing stays on the in-line fast path" {
+  let source = "| A | B |\n| --- | --- |\n| x | y |\n"
+  let session = MarkdownDocumentSession::new(source)
+  hot_path_metrics_reset()
+  let tx = MarkdownEditTransaction::from_sources(
+    source, "| A | B |\n| --- | --- |\n| xx | y |\n",
+  )
+  let next = session.apply(tx)
+  inspect(hot_path_full_parse_count.val, content="0")
+  inspect(hot_path_region_reparse_count.val, content="0")
+  inspect(hot_path_in_line_apply_count.val, content="1")
+  assert_true(next.editor_blocks[0].block.text.contains("xx"))
 }

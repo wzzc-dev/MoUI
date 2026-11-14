@@ -38,40 +38,24 @@ pub struct CodeHighlightSpan {
 }
 
 ///|
-/// Resolve a token kind to a display color. Colors are tuned to read well on
-/// both light and dark surfaces.
-fn code_highlight_color(kind : CodeHighlightToken) -> @core.Color {
+/// Resolve a token kind to a display color from the active markdown palette.
+fn code_highlight_color(
+  kind : CodeHighlightToken,
+  palette~ : MarkdownRichTextPalette,
+) -> @core.Color {
   match kind {
     // Plain text uses the run's inherited color (caller decides), so signal
     // that with a sentinel that callers translate to None.
     CodePlain => @core.Color::black()
-    CodeKeyword =>
-      // Indigo.
-      @core.Color::rgba(r=0.36, g=0.32, b=0.78, a=1.0)
-    CodeString =>
-      // Green.
-      @core.Color::rgba(r=0.20, g=0.62, b=0.36, a=1.0)
-    CodeComment =>
-      // Muted grey.
-      @core.Color::rgba(r=0.45, g=0.48, b=0.52, a=1.0)
-    CodeNumber =>
-      // Amber.
-      @core.Color::rgba(r=0.78, g=0.52, b=0.18, a=1.0)
-    CodeFunction =>
-      // Blue.
-      @core.Color::rgba(r=0.27, g=0.42, b=0.70, a=1.0)
-    CodeType =>
-      // Teal.
-      @core.Color::rgba(r=0.22, g=0.77, b=0.62, a=1.0)
-    CodeOperator =>
-      // Red.
-      @core.Color::rgba(r=0.87, g=0.33, b=0.33, a=1.0)
-    CodeAnnotation =>
-      // Magenta.
-      @core.Color::rgba(r=0.76, g=0.32, b=0.62, a=1.0)
-    CodeEscape =>
-      // Purple.
-      @core.Color::rgba(r=0.67, g=0.29, b=0.91, a=1.0)
+    CodeKeyword => palette.syntax_keyword
+    CodeString => palette.syntax_string
+    CodeComment => palette.syntax_comment
+    CodeNumber => palette.syntax_number
+    CodeFunction => palette.syntax_function
+    CodeType => palette.syntax_type
+    CodeOperator => palette.syntax_operator
+    CodeAnnotation => palette.syntax_annotation
+    CodeEscape => palette.syntax_escape
   }
 }
 

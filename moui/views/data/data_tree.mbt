@@ -99,6 +99,7 @@ fn[Msg] tree_row(
     "▸"
   }
   let toggle_width = 20.0
+  let icon_width = if item.icon is Some(_) { 22.0 } else { 0.0 }
   let toggle = match on_toggle {
     Some(handler) =>
       @button.button(
@@ -107,7 +108,7 @@ fn[Msg] tree_row(
         variant=Ghost,
         theme~,
         width=toggle_width,
-        height=30.0,
+        height=26.0,
       )
     None =>
       @text.text(
@@ -115,32 +116,73 @@ fn[Msg] tree_row(
         role=Caption,
         theme~,
         width=toggle_width,
-        height=30.0,
+        height=26.0,
       )
   }
   // The label is left-aligned and stretches over the rest of the row: a
   // centered label inside a wide box left a gap after the disclosure glyph and
   // made every row's text float, which is what made the tree read as ragged.
-  let label_width = @common.view_max_double(40.0, width - indent - 26.0)
+  let label_width = @common.view_max_double(
+    40.0,
+    width - indent - 26.0 - icon_width,
+  )
+  let icon_view = match item.icon {
+    Some(name) =>
+      @icon.icon(
+        name,
+        size=14.0,
+        color=item.icon_color.unwrap_or(theme.palette.muted),
+      )
+    None => @text.text("", width=0.0, height=26.0)
+  }
+  // Ignored entries (dot-directories and friends) read one step quieter than
+  // active rows, Winc-style; a selected row keeps its emphasis.
+  let dim_label = item.dimmed && !selected
   let label_view = match on_select {
+    Some(handler) if dim_label => {
+      // A button paints its label from the control theme (which does not
+      // follow palette overrides), so a dimmed row renders its label as
+      // muted text with the select handler attached directly.
+      @text.text(
+        item.label,
+        role=Body,
+        theme~,
+        width=label_width,
+        height=26.0,
+      )
+      .foreground(theme.palette.muted)
+      .on_tap(handler(item.id))
+    }
     Some(handler) =>
       @button.button(
         item.label,
         on_click=handler(item.id),
-        variant=if selected { Primary } else { Ghost },
+        variant=if selected { Tonal } else { Ghost },
         theme~,
         width=label_width,
-        height=30.0,
+        height=26.0,
         label_align=TextStart,
       )
-    None =>
-      @text.text(item.label, role=Body, theme~, width=label_width, height=30.0)
+    None => {
+      let label = @text.text(
+        item.label,
+        role=Body,
+        theme~,
+        width=label_width,
+        height=26.0,
+      )
+      if dim_label {
+        label.foreground(theme.palette.muted)
+      } else {
+        label
+      }
+    }
   }
   // Depth is a left padding, not a spacer child: a spacer with weight 0 still
   // absorbed the row's slack here, which pushed the label to the right edge and
   // left a gap after the disclosure glyph.
   let row_body = @layout.padding_edges(
-    @layout.row([toggle, label_view], spacing=2.0, align=Center),
+    @layout.row([toggle, icon_view, label_view], spacing=2.0, align=Center),
     left=indent,
   )
   // Right-click target coverage spans the whole row (glyph + label), not just

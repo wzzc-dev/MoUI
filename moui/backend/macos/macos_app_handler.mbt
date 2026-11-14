@@ -21,7 +21,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
     .with_surface_size(
       @window_input.core_size_to_window_surface_size(self.core.runtime.size()),
     )
-    .with_visible(!self.show_after_first_present)
+    .with_visible(false)
     .with_platform_attributes(platform)
   let attributes = match self.min_window_size {
     Some(min) => base_attributes.with_min_inner_size(Logical(min))
@@ -38,6 +38,23 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
   }
   match window {
     Some(window) => {
+      // Paint the frame color into the native window before it becomes
+      // visible. With show_after_first_present=false the window is shown
+      // immediately afterwards; with true the existing first-present path
+      // reveals it later.
+      match self.window_background {
+        Some(color) =>
+          window.set_background_color(
+            r=color.r,
+            g=color.g,
+            b=color.b,
+            a=color.a,
+          )
+        None => ()
+      }
+      if !self.show_after_first_present {
+        window.set_visible(true)
+      }
       let metrics = @window_input.make_surface_metrics(
         window.surface_size(),
         scale_factor=window.scale_factor(),

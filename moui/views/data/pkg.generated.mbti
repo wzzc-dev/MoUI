@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
@@ -53,7 +54,7 @@ pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int3
 
 pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColumn
 
-pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
+pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?, dimmed? : Bool) -> TreeItem
 
 pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -277,6 +278,9 @@ pub struct TreeItem {
   id : String
   label : String
   children : Array[TreeItem]
+  icon : @style.IconName?
+  icon_color : @core.Color?
+  dimmed : Bool
 }
 
 pub struct VariableListAnchor {

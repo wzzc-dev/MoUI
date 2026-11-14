@@ -3,7 +3,9 @@ pub fn markdown_block_to_rich_text(
   block : MarkdownBlock,
   base : @core.FontSpec,
   base_dir~ : String? = None,
+  palette~ : MarkdownRichTextPalette? = None,
 ) -> RichTextBlock {
+  let palette = markdown_rich_text_palette_or_light(palette)
   match block.kind {
     Heading(level) => {
       let font = {
@@ -29,7 +31,12 @@ pub fn markdown_block_to_rich_text(
         }
       }
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          font,
+          base_dir~,
+          palette~,
+        ),
         font=Some(font),
         line_height=Some(base.size * markdown_heading_line_height_scale(level)),
         inset~,
@@ -37,54 +44,70 @@ pub fn markdown_block_to_rich_text(
     }
     UnorderedListItem =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          base,
+          base_dir~,
+          palette~,
+        ),
         prefix="• ",
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         // Typora-style breathing room between list items; the last item of
         // a list gets paragraph spacing from the following blank-gap block.
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     TaskListItem(checked) =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          base,
+          base_dir~,
+          palette~,
+        ),
         // One placeholder char keeps prefix-indexed caret, selection, and
         // hit-test arithmetic intact; the painter draws the vector checkbox at
         // the lane width instead of this glyph.
         prefix=" ",
         marker=Some(TaskCheckbox(checked)),
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     OrderedListItem(number) =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          base,
+          base_dir~,
+          palette~,
+        ),
         prefix="\{number}. ",
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.25, left: 0.0, },
       )
     Blockquote =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
-        color=Some(@core.Color::black().multiply_alpha(0.82)),
-        background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.05)),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          base,
+          base_dir~,
+          palette~,
         ),
+        color=Some(palette.quote_text),
+        background=Some(@core.Brush::solid(palette.quote_background)),
         border_left=Some(
           @core.BorderStyle::new(
-            brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.32)),
+            brush=@core.Brush::solid(palette.quote_border),
             width=4.0,
           ),
         ),
         inset={ top: 6.0, right: 0.0, bottom: 6.0, left: 14.0, },
-        line_height=Some(base.size * 1.55),
+        line_height=Some(base.size * 1.65),
         corner_radius=4.0,
       )
     CodeBlock =>
       RichTextBlock::new(
-        runs=markdown_code_block_runs(block, base),
-        background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.06)),
-        ),
+        runs=markdown_code_block_runs(block, base, palette~),
+        background=Some(@core.Brush::solid(palette.code_background)),
         inset={ top: 12.0, right: 14.0, bottom: 0.0, left: 14.0, },
         // 1.3x the base font is 1.4x the 0.92 code font, so descenders in code
         // stay inside the line box the painter clips to.
@@ -105,10 +128,8 @@ pub fn markdown_block_to_rich_text(
             }),
           ),
         ],
-        table=markdown_table_preview(block, base),
-        background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.08, g=0.12, b=0.16, a=0.05)),
-        ),
+        table=markdown_table_preview(block, base, palette~),
+        background=Some(@core.Brush::solid(palette.table_background)),
         inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
         line_height=Some(base.size * 1.35),
         corner_radius=6.0,
@@ -120,20 +141,23 @@ pub fn markdown_block_to_rich_text(
             text="[^" + label + "]: ",
             visual_text=Some(label),
             font=Some({ ..base, size: base.size * 0.78, weight: 700, }),
-            color=Some(@core.Color::black().multiply_alpha(0.58)),
+            color=Some(palette.footnote_label_text),
             background=Some(
-              @core.Brush::solid(
-                @core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08),
-              ),
+              @core.Brush::solid(palette.footnote_label_background),
             ),
             background_radius=4.0,
           ),
-          ..markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
+          ..markdown_inlines_to_rich_text(
+            block.inlines,
+            base,
+            base_dir~,
+            palette~,
+          ),
         ],
-        color=Some(@core.Color::black().multiply_alpha(0.82)),
+        color=Some(palette.footnote_text),
         border_left=Some(
           @core.BorderStyle::new(
-            brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.22)),
+            brush=@core.Brush::solid(palette.footnote_border),
             width=3.0,
           ),
         ),
@@ -151,7 +175,7 @@ pub fn markdown_block_to_rich_text(
             line_height=Some(base.size * 1.45),
             line_align=projection.line_align,
           )
-        None => markdown_html_raw_block_rich_text(block.text, base)
+        None => markdown_html_raw_block_rich_text(block.text, base, palette~)
       }
     FrontMatter =>
       RichTextBlock::new(
@@ -163,22 +187,25 @@ pub fn markdown_block_to_rich_text(
               families: @core.FontFamilyStack::monospace(),
               size: base.size * 0.9,
             }),
-            color=Some(@core.Color::black().multiply_alpha(0.74)),
+            color=Some(palette.front_matter_text),
           ),
         ],
-        background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.20, g=0.28, b=0.36, a=0.07)),
-        ),
+        background=Some(@core.Brush::solid(palette.front_matter_background)),
         inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
         line_height=Some(base.size * 1.25),
         corner_radius=6.0,
       )
     Paragraph =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
-        line_height=Some(base.size * 1.55),
+        runs=markdown_inlines_to_rich_text(
+          block.inlines,
+          base,
+          base_dir~,
+          palette~,
+        ),
+        line_height=Some(base.size * 1.65),
         // Paragraph spacing below for readability between blocks.
-        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0, },
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.5, left: 0.0, },
       )
   }
 }
@@ -190,6 +217,7 @@ pub fn markdown_block_to_rich_text(
 fn markdown_html_raw_block_rich_text(
   html : String,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette,
 ) -> RichTextBlock {
   RichTextBlock::new(
     runs=[
@@ -200,12 +228,10 @@ fn markdown_html_raw_block_rich_text(
           families: @core.FontFamilyStack::monospace(),
           size: base.size * 0.9,
         }),
-        color=Some(@core.Color::black().multiply_alpha(0.7)),
+        color=Some(palette.html_text),
       ),
     ],
-    background=Some(
-      @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
-    ),
+    background=Some(@core.Brush::solid(palette.html_background)),
     inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0, },
     // ~1.67x the monospace run size (editor-style leading) so multi-line
     // markup reads line by line instead of stacking on itself.
@@ -218,6 +244,7 @@ fn markdown_html_raw_block_rich_text(
 fn markdown_code_block_runs(
   block : MarkdownBlock,
   base : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette,
 ) -> Array[RichTextRun] {
   let font = {
     ..base,
@@ -231,7 +258,7 @@ fn markdown_code_block_runs(
           text=language,
           font=Some({ ..font, size: base.size * 0.78, weight: 700, }),
           visual_text=Some(language),
-          color=Some(@core.Color::black().multiply_alpha(0.56)),
+          color=Some(palette.code_language_text),
         ),
         RichTextRun::new(text="\n", font=Some(font)),
       ]
@@ -242,7 +269,7 @@ fn markdown_code_block_runs(
           let color = if span.kind is CodePlain {
             None
           } else {
-            Some(code_highlight_color(span.kind))
+            Some(code_highlight_color(span.kind, palette~))
           }
           runs.push(RichTextRun::new(text=span.text, font=Some(font), color~))
         }
@@ -289,6 +316,7 @@ fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
   base_dir~ : String? = None,
+  palette~ : MarkdownRichTextPalette,
 ) -> Array[RichTextRun] {
   let runs : Array[RichTextRun] = []
   for span in inlines {
@@ -299,8 +327,8 @@ fn markdown_inlines_to_rich_text(
         image_source=markdown_inline_image_source(span, base_dir~),
         image_size=markdown_inline_image_size(span, base, base_dir~),
         font=Some(markdown_inline_font(span.kind, base)),
-        color=markdown_inline_color(span.kind),
-        background=markdown_inline_background(span.kind),
+        color=markdown_inline_color(span.kind, palette~),
+        background=markdown_inline_background(span.kind, palette~),
         decoration=markdown_inline_decoration(span.kind),
       ),
     )
@@ -466,25 +494,28 @@ fn markdown_inline_font(
 ///|
 /// Inline run colors. Links/autolinks render in Typora's blue so they read as
 /// actionable; everything else inherits the block foreground (None).
-fn markdown_inline_color(kind : MarkdownInlineKind) -> @core.Color? {
+fn markdown_inline_color(
+  kind : MarkdownInlineKind,
+  palette~ : MarkdownRichTextPalette,
+) -> @core.Color? {
   match kind {
-    Link | Autolink => Some(@core.Color::rgba(r=0.13, g=0.45, b=0.94, a=1.0))
+    Link | Autolink => Some(palette.link)
     _ => None
   }
 }
 
 ///|
-fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
+fn markdown_inline_background(
+  kind : MarkdownInlineKind,
+  palette~ : MarkdownRichTextPalette,
+) -> @core.Brush? {
   match kind {
-    Code => Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)))
-    Image =>
-      Some(@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08)))
+    Code => Some(@core.Brush::solid(palette.inline_code_background))
+    Image => Some(@core.Brush::solid(palette.image_background))
     FootnoteReference =>
-      Some(@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.4, b=0.7, a=0.08)))
-    HtmlInline =>
-      Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.06)))
-    Highlight =>
-      Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.83, b=0.2, a=0.4)))
+      Some(@core.Brush::solid(palette.footnote_reference_background))
+    HtmlInline => Some(@core.Brush::solid(palette.html_inline_background))
+    Highlight => Some(@core.Brush::solid(palette.highlight_background))
     Plain | Bold | Italic | Strikethrough | Link | Autolink => None
   }
 }

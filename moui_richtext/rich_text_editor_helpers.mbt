@@ -766,6 +766,102 @@ pub fn rich_text_document_height(
 }
 
 ///|
+/// One block's line metrics: heights and widths share the same split/measure
+/// work. The paint pass, selection rects, and caret lookup all ask for the
+/// same visible block within one frame; a small identity-keyed cache keeps
+/// that work to one build instead of three or four.
+priv struct RichTextLineMetricsEntry {
+  runs : Array[RichTextRun]
+  font : @core.FontSpec
+  block_font : @core.FontSpec?
+  width : Double
+  prefix : String
+  line_height : Double
+  heights : Array[Double]
+  widths : Array[Double]
+}
+
+///|
+let rich_text_line_metrics_cache : Ref[Array[RichTextLineMetricsEntry]] = Ref([])
+
+///|
+fn rich_text_line_metrics_entry_matches(
+  entry : RichTextLineMetricsEntry,
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  available_width : Double,
+) -> Bool {
+  physical_equal(entry.runs, block.runs) &&
+  entry.font == base_font &&
+  entry.block_font == block.font &&
+  entry.width == available_width &&
+  entry.prefix == block.prefix &&
+  entry.line_height == block.line_height.unwrap_or(-1.0)
+}
+
+///|
+fn rich_text_block_line_metrics(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width : Double,
+) -> (Array[Double], Array[Double]) {
+  let cache = rich_text_line_metrics_cache.val
+  for entry in cache {
+    if rich_text_line_metrics_entry_matches(
+        entry, block, base_font, available_width,
+      ) {
+      hot_path_line_metrics_cache_hits.val = hot_path_line_metrics_cache_hits.val +
+        1
+      return (entry.heights, entry.widths)
+    }
+  }
+  hot_path_line_metrics_builds.val = hot_path_line_metrics_builds.val + 1
+  let heights = rich_text_block_line_heights_uncached(
+    block, base_font, text_system, available_width,
+  )
+  let widths = rich_text_block_line_widths_uncached(
+    block, base_font, text_system, available_width,
+  )
+  if cache.length() >= 128 {
+    cache.clear()
+  }
+  cache.push({
+    runs: block.runs,
+    font: base_font,
+    block_font: block.font,
+    width: available_width,
+    prefix: block.prefix,
+    line_height: block.line_height.unwrap_or(-1.0),
+    heights,
+    widths,
+  })
+  (heights, widths)
+}
+
+///|
+fn rich_text_block_line_heights(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width : Double,
+) -> Array[Double] {
+  rich_text_block_line_metrics(block, base_font, text_system, available_width).0
+}
+
+///|
+fn rich_text_block_line_widths(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width : Double,
+) -> Array[Double] {
+  rich_text_block_line_metrics(block, base_font, text_system, available_width).1
+}
+
+///|
+
+///|
 fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
@@ -806,7 +902,7 @@ fn rich_text_block_line_height(
 /// Return the height of each explicit visual line. Image galleries use this
 /// rather than a single fixed line height so percentage-sized images can grow
 /// with their content column without overlapping following rows.
-fn rich_text_block_line_heights(
+fn rich_text_block_line_heights_uncached(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -839,7 +935,7 @@ fn rich_text_block_line_heights(
 /// Return the drawn width of each explicit visual line. The result includes a
 /// list prefix when one is present, so line alignment remains correct for all
 /// block kinds even though galleries normally have no prefix.
-fn rich_text_block_line_widths(
+fn rich_text_block_line_widths_uncached(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,

@@ -72,3 +72,11 @@ let hot_path_block_fingerprints_built : Ref[Int32] = Ref(0)
 /// metrics are reused (their heights depend on unchanged content), so
 /// this counts only window blocks.
 let hot_path_height_metrics_recomputed : Ref[Int32] = Ref(0)
+
+///|
+/// Block line metrics (heights + widths) served from the per-frame cache.
+let hot_path_line_metrics_cache_hits : Ref[Int32] = Ref(0)
+
+///|
+/// Block line metrics built by splitting/measuring a block.
+let hot_path_line_metrics_builds : Ref[Int32] = Ref(0)

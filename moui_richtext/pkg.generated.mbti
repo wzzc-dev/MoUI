@@ -17,7 +17,7 @@ pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSessio
 
 pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int32, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int32) -> Msg)?, on_command_click? : ((Int32) -> Msg)?, input_transform? : ((String, Int32, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, on_scroll? : ((Double) -> Msg)?, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int32, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
+pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?, palette? : MarkdownRichTextPalette?) -> RichTextBlock
 
 pub let markdown_block_views : Array[MarkdownBlockView]
 
@@ -325,6 +325,7 @@ pub(all) struct MarkdownDocumentSession {
   dirty_range : MarkdownDocumentDirtyRange?
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
+  rich_text_palette : MarkdownRichTextPalette?
 }
 pub fn MarkdownDocumentSession::apply(Self, MarkdownEditTransaction) -> Self
 pub fn MarkdownDocumentSession::equal(Self, Self) -> Bool
@@ -340,6 +341,7 @@ pub fn MarkdownDocumentSession::source_offset_y(Self, Int32, base? : @core.FontS
 pub fn MarkdownDocumentSession::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentSession::to_repr(Self) -> @debug.Repr
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
+pub fn MarkdownDocumentSession::with_rich_text_palette(Self, MarkdownRichTextPalette?) -> Self
 
 pub(all) struct MarkdownDocumentTextStore {
   segments : @ref.Ref[Array[MarkdownTextSegment]]
@@ -619,6 +621,48 @@ pub(all) struct MarkdownReferenceContext {
 pub fn MarkdownReferenceContext::equal(Self, Self) -> Bool
 pub fn MarkdownReferenceContext::not_equal(Self, Self) -> Bool
 pub fn MarkdownReferenceContext::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct MarkdownRichTextPalette {
+  link : @core.Color
+  inline_code_background : @core.Color
+  image_background : @core.Color
+  footnote_reference_background : @core.Color
+  html_inline_background : @core.Color
+  highlight_background : @core.Color
+  quote_text : @core.Color
+  quote_background : @core.Color
+  quote_border : @core.Color
+  code_background : @core.Color
+  code_language_text : @core.Color
+  table_background : @core.Color
+  table_border : @core.Color
+  table_header_background : @core.Color
+  footnote_text : @core.Color
+  footnote_label_text : @core.Color
+  footnote_label_background : @core.Color
+  footnote_border : @core.Color
+  front_matter_background : @core.Color
+  front_matter_text : @core.Color
+  html_background : @core.Color
+  html_text : @core.Color
+  syntax_keyword : @core.Color
+  syntax_string : @core.Color
+  syntax_comment : @core.Color
+  syntax_number : @core.Color
+  syntax_function : @core.Color
+  syntax_type : @core.Color
+  syntax_operator : @core.Color
+  syntax_annotation : @core.Color
+  syntax_escape : @core.Color
+}
+pub fn MarkdownRichTextPalette::cache_key(Self) -> String
+pub fn MarkdownRichTextPalette::dark() -> Self
+pub fn MarkdownRichTextPalette::equal(Self, Self) -> Bool
+pub fn MarkdownRichTextPalette::light() -> Self
+pub fn MarkdownRichTextPalette::not_equal(Self, Self) -> Bool
+pub fn MarkdownRichTextPalette::to_json(Self) -> @json.Json
+pub fn MarkdownRichTextPalette::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownScrollGlide {

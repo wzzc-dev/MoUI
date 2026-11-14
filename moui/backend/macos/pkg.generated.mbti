@@ -89,8 +89,9 @@ pub struct MacosHostAppOptions {
   // private fields
 }
 pub fn MacosHostAppOptions::dock_icon_path(Self) -> String?
-pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?, window_drag? : @services.WindowDragRegionSource?, dock_icon_path? : String?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, show_after_first_present? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?, frame_clock? : (() -> Double)?, window_drag? : @services.WindowDragRegionSource?, window_background? : @wzzc-dev/moui/core.Color?, dock_icon_path? : String?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@backend.PlatformViewPlugin]
+pub fn MacosHostAppOptions::window_background(Self) -> @wzzc-dev/moui/core.Color?
 
 pub struct MacosHostSmokeOptions {
   // private fields

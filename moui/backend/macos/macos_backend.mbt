@@ -57,6 +57,9 @@ pub struct MacosHostAppOptions {
   /// same source handed to `app_environment`; leave unset when the app draws a
   /// conventional title bar.
   priv window_drag : @services.WindowDragRegionSource?
+  /// Native window background applied before the window is shown, so the
+  /// first frame never flashes AppKit's default white.
+  priv window_background : @core.Color?
   /// File path of the icon shown in the Dock (and the About panel). `None`
   /// keeps the platform default: bundled `.app` binaries use their bundle
   /// icon, and unbundled binaries get the embedded MoUI Moonbud icon instead
@@ -107,6 +110,7 @@ struct MacosNativeHostBackend {
   /// App-declared window drag band plus the revision already pushed to AppKit.
   /// `None` keeps hosts without a drag region free of native calls.
   window_drag : @services.WindowDragRegionSource?
+  window_background : @core.Color?
   mut window_drag_applied : Int32?
   /// Surface the revision was pushed to. A drag band is per-surface state, so
   /// a different target window must receive its own push even when the
@@ -179,6 +183,7 @@ pub fn MacosHostAppOptions::new(
   min_window_size~ : @dpi.LogicalSize? = None,
   frame_clock~ : (() -> Double)? = None,
   window_drag~ : @services.WindowDragRegionSource? = None,
+  window_background~ : @core.Color? = None,
   dock_icon_path~ : String? = None,
 ) -> MacosHostAppOptions {
   {
@@ -192,8 +197,16 @@ pub fn MacosHostAppOptions::new(
     min_window_size,
     frame_clock,
     window_drag,
+    window_background,
     dock_icon_path,
   }
+}
+
+///|
+pub fn MacosHostAppOptions::window_background(
+  self : MacosHostAppOptions,
+) -> @core.Color? {
+  self.window_background
 }
 
 ///|

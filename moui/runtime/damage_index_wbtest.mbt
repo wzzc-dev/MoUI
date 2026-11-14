@@ -104,3 +104,28 @@ test "DamageIndex shared ids resolve to the outermost node" {
   let owner_bounds = index.damage_bounds(ElementId::new(7)).unwrap()
   assert_eq(owner_bounds.size.height, 80.0)
 }
+
+///|
+test "animating element ids keep the deepest animating node" {
+  let leaf = {
+    ..damage_index_node(3, Rect::new(x=12.0, y=0.0, width=8.0, height=8.0)),
+    animating: true,
+  }
+  let mid = {
+    ..damage_index_node(2, Rect::new(x=10.0, y=0.0, width=40.0, height=40.0)),
+    animating: true,
+    children: [leaf],
+  }
+  let root = {
+    ..damage_index_node(
+      1,
+      Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+      is_repaint_boundary=true,
+    ),
+    animating: true,
+    children: [mid],
+  }
+  let ids = ({ root, } : RenderTree).animating_element_ids()
+  inspect(ids.length(), content="1")
+  assert_true(ids[0] == ElementId::new(3))
+}
