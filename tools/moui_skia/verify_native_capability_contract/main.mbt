@@ -845,6 +845,85 @@ fn read_smoke_source(path : String) -> Result[String, String] {
 }
 
 ///|
+fn parent_directory(path : String) -> String {
+  let mut end = path.length()
+  while end > 0 && (path[end - 1] == '/' || path[end - 1] == '\\') {
+    end = end - 1
+  }
+  let mut index = end
+  while index > 0 && path[index - 1] != '/' && path[index - 1] != '\\' {
+    index = index - 1
+  }
+  if index == 0 {
+    "."
+  } else {
+    path[:index - 1].to_owned()
+  }
+}
+
+///|
+/// Platform configure scripts regenerate `native/moon.pkg` for real-Skia
+/// builds. They are hand-maintained copies of the target map, so keep them in
+/// lockstep with the manifest: every native/fallback file must appear quoted.
+fn verify_configure_script_coverage(
+  native_dir : String,
+  native_files : Map[String, String],
+  fallback_files : Map[String, String],
+) -> Result[Unit, String] {
+  let scripts = [
+    "configure-macos-native-pkg.sh", "configure-linux-native-pkg.sh", "configure-windows-native-pkg.ps1",
+    "configure-windows-msvc-native-pkg.ps1",
+  ]
+  let scripts_root = parent_directory(native_dir) + "/scripts"
+  for script in scripts {
+    let path = @tools.join_path(scripts_root, script)
+    let text = match
+      @tools.read_required_text(path, "native package configure script") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    // The legacy Windows template intentionally omits Skia/Paragraph pairs;
+    // every other platform template must cover every manifest pair.
+    let require_all = script != "configure-windows-native-pkg.ps1"
+    let missing : Array[String] = []
+    for native_file in native_files.keys() {
+      let fallback_file = native_file.replace_all(
+        old="_native.mbt",
+        new="_unavailable.mbt",
+      )
+      if !fallback_files.contains(fallback_file) {
+        continue
+      }
+      let has_native = text.contains("\"" + native_file + "\"")
+      let has_fallback = text.contains("\"" + fallback_file + "\"")
+      if has_native != has_fallback {
+        return Err(
+          "native package configure script pairs are incomplete: " +
+          script +
+          ": " +
+          native_file +
+          "/" +
+          fallback_file,
+        )
+      }
+      if require_all && !has_native {
+        missing.push(native_file)
+        missing.push(fallback_file)
+      }
+    }
+    if !missing.is_empty() {
+      return Err(
+        "native package configure script is missing target entries: " +
+        script +
+        ": " +
+        @tools.comma_join(missing),
+      )
+    }
+  }
+  Ok(())
+}
+
+///|
 fn verify_native_capability_contract(
   options : CliOptions,
 ) -> Result[String, String] {
@@ -898,7 +977,14 @@ fn verify_native_capability_contract(
       manifest, ownership, status, target_entries, native_files, fallback_files,
       smoke_source,
     ) {
-    Ok(_) => Ok("Verified native capability contract in " + manifest_path)
+    Ok(_) =>
+      match
+        verify_configure_script_coverage(
+          native_dir, native_files, fallback_files,
+        ) {
+        Ok(_) => Ok("Verified native capability contract in " + manifest_path)
+        Err(message) => Err(message)
+      }
     Err(message) => Err(message)
   }
 }

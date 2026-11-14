@@ -495,3 +495,19 @@ test "host decodes trackpad gesture window events into gesture samples" {
     _ => fail("expected core gesture app event")
   }
 }
+
+///|
+test "window accent color change maps to host accent event" {
+  let event = @input.window_event_to_host(
+    AccentColorChanged(0xFF3366CCU),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(AccentColorChanged(argb)) => assert_true(argb == 0xFF3366CCU)
+    _ => fail("expected host accent event")
+  }
+  match event.unwrap().to_core() {
+    None => ()
+    Some(_) => fail("accent changes are handled by the host runtime driver")
+  }
+}

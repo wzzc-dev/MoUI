@@ -385,3 +385,169 @@ test "skia renderer paints shader gradient and vignette pixels" {
     ),
   )
 }
+
+///|
+test "skia renderer paints multi-stop linear gradient pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=40.0, height=12.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=0.0, y=0.0, width=40.0, height=12.0),
+      ),
+      @core.Brush::linear_stops(
+        start=@core.Point::new(x=0.0, y=0.0),
+        end=@core.Point::new(x=40.0, y=0.0),
+        stops=[
+          @core.GradientStop::new(
+            color=@core.Color::rgba(r=1.0, g=0.0, b=0.0),
+            at=0.0,
+          ),
+          @core.GradientStop::new(
+            color=@core.Color::rgba(r=0.0, g=1.0, b=0.0),
+            at=0.5,
+          ),
+          @core.GradientStop::new(
+            color=@core.Color::rgba(r=0.0, g=0.0, b=1.0),
+            at=1.0,
+          ),
+        ],
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia multi-stop render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=2.0, y=4.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 180 && g < 100 && b < 100,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=18.0, y=4.0, width=4.0, height=4.0),
+      (_r, g, _b, a) => a > 0 && g > 150,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=34.0, y=4.0, width=4.0, height=4.0),
+      (r, _g, b, a) => a > 0 && b > 180 && r < 100,
+    ),
+  )
+}
+
+///|
+test "skia renderer paints conic gradient pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=40.0, height=40.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=0.0, y=0.0, width=40.0, height=40.0),
+      ),
+      @core.Brush::conic(center=@core.Point::new(x=20.0, y=20.0), stops=[
+        @core.GradientStop::new(
+          color=@core.Color::rgba(r=1.0, g=0.0, b=0.0),
+          at=0.0,
+        ),
+        @core.GradientStop::new(
+          color=@core.Color::rgba(r=0.0, g=1.0, b=0.0),
+          at=0.5,
+        ),
+        @core.GradientStop::new(
+          color=@core.Color::rgba(r=0.0, g=0.0, b=1.0),
+          at=1.0,
+        ),
+      ]),
+    ),
+  ]) catch {
+    err => fail("expected Skia conic render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  // Sweep starts at 12 o'clock (red) and reaches green halfway round.
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=23.0, y=3.0, width=4.0, height=4.0),
+      (r, g, _b, a) => a > 0 && r > 170 && g < 130,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=18.0, y=33.0, width=4.0, height=4.0),
+      (_r, g, _b, a) => a > 0 && g > 140,
+    ),
+  )
+}
+
+///|
+test "skia renderer blurs the backdrop inside a material frame" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=40.0, height=20.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      @core.Color::rgba(r=0.0, g=0.0, b=0.0),
+    ),
+    DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="backdrop-blur",
+        frame=@core.Rect::new(x=10.0, y=2.0, width=20.0, height=16.0),
+        uniforms=[3.0, 4.0],
+        fallback=@core.Brush::solid(@core.Color::transparent()),
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia backdrop blur render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=17.0, y=8.0, width=6.0, height=4.0),
+      (r, _g, _b, a) => a > 0 && r > 40 && r < 215,
+    ),
+  )
+}

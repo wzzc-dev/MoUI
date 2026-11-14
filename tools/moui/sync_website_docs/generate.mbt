@@ -280,6 +280,8 @@ fn website_readme_screenshot_url(asset : String) -> String {
 fn website_readme_markdown_content(content : String) -> String {
   let mut rewritten = content
   let screenshots = [
+    ("gallery-light.png", "gallery-light"),
+    ("gallery-dark.png", "gallery-dark"),
     ("showcase.png", "showcase"),
     ("mo_workbench.png", "mo_workbench"),
     ("excel.png", "excel"),
@@ -508,6 +510,13 @@ fn sync_or_check(
       }
     }
   }
+  match sync_docs_assets(repo_root, out_dir, check) {
+    Ok(_) => ()
+    Err(asset_failures) =>
+      for message in asset_failures {
+        failures.push(message)
+      }
+  }
   let expected = expected_md_names(files, out_dir)
   let locale_names : Array[String] = []
   for locale in validated.locales {
@@ -538,7 +547,8 @@ fn sync_or_check(
           }
         }
       }
-      if !validated.locales.is_empty() &&
+      if name != "assets" &&
+        !validated.locales.is_empty() &&
         is_valid_locale_tag(name) &&
         @tools.directory_exists(@tools.join_path(out_dir, name)) &&
         !array_contains(locale_names, name) {
@@ -589,5 +599,102 @@ fn sync_or_check(
     Ok(())
   } else {
     Err(failures)
+  }
+}
+
+///|
+/// Copy `docs/assets/**` into the generated docs tree so relative image links
+/// in synced markdown resolve on the website. `--check` compares bytes.
+fn sync_docs_assets(
+  repo_root : String,
+  out_dir : String,
+  check : Bool,
+) -> Result[Unit, Array[String]] {
+  let source_root = @tools.resolve_path(repo_root, "docs/assets")
+  if !@tools.directory_exists(source_root) {
+    return Ok(())
+  }
+  let failures : Array[String] = []
+  let files : Array[String] = []
+  collect_docs_asset_files(source_root, "", files, failures)
+  for relative in files {
+    let source = @tools.join_path(source_root, relative)
+    let target = @tools.join_path(@tools.join_path(out_dir, "assets"), relative)
+    let source_bytes = @fs.read_file_to_bytes(source) catch {
+      _ => {
+        failures.push("website asset unreadable: " + source)
+        continue
+      }
+    }
+    if check {
+      if !@tools.file_exists(target) {
+        failures.push(
+          "website asset missing: " + relative_to_repo(repo_root, target),
+        )
+      } else {
+        let existing = @fs.read_file_to_bytes(target) catch {
+          _ => {
+            failures.push(
+              "website asset unreadable: " + relative_to_repo(repo_root, target),
+            )
+            continue
+          }
+        }
+        if existing != source_bytes {
+          failures.push(
+            "website asset stale: " + relative_to_repo(repo_root, target),
+          )
+        }
+      }
+    } else {
+      match mkdir_p(parent_dir(target)) {
+        Ok(_) => ()
+        Err(message) => {
+          failures.push(message)
+          continue
+        }
+      }
+      @fs.write_bytes_to_file(target, source_bytes) catch {
+        _ => failures.push("could not write website asset: " + target)
+      }
+    }
+  }
+  if failures.is_empty() {
+    Ok(())
+  } else {
+    Err(failures)
+  }
+}
+
+///|
+fn collect_docs_asset_files(
+  root : String,
+  relative : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let directory = if relative == "" {
+    root
+  } else {
+    @tools.join_path(root, relative)
+  }
+  let names : Array[String] = @fs.read_dir(directory).to_owned() catch {
+    _ => {
+      failures.push("website asset directory unreadable: " + directory)
+      []
+    }
+  }
+  for name in names {
+    let child_relative = if relative == "" {
+      name
+    } else {
+      relative + "/" + name
+    }
+    let child = @tools.join_path(root, child_relative)
+    if @tools.directory_exists(child) {
+      collect_docs_asset_files(root, child_relative, files, failures)
+    } else {
+      files.push(child_relative)
+    }
   }
 }

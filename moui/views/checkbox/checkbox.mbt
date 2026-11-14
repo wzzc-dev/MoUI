@@ -126,6 +126,19 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
   let resolved_foreground = self.foreground.unwrap_or(cc.foreground)
   let resolved_check_color = self.check_color.unwrap_or(cc.selected_color)
   let resolved_box_size = self.box_size.unwrap_or(cc.control_size)
+  let disabled = ctx.state.disabled || !ctx.environment.enabled
+  let transparent = @core.Color::transparent()
+  let (state_overlay, animating) = if disabled {
+    (transparent, false)
+  } else {
+    @common.pressable_transition_color(
+      ctx,
+      control="checkbox",
+      normal=transparent,
+      hovered=resolved_foreground.multiply_alpha(0.06),
+      pressed=resolved_foreground.multiply_alpha(0.10),
+    )
+  }
   let commands : Array[@core.DrawCommand] = []
   append_checkbox_commands(
     commands,
@@ -140,8 +153,14 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
     frame=ctx.frame,
     theme=resolved_theme,
     focused=ctx.focused,
+    state_overlay~,
+    disabled~,
   )
-  @core.ViewPaintPlan::commands(commands)
+  if animating {
+    @core.ViewPaintPlan::animating_commands(commands)
+  } else {
+    @core.ViewPaintPlan::commands(commands)
+  }
 }
 
 ///|
@@ -211,7 +230,30 @@ fn append_checkbox_commands(
   frame~ : @core.Rect,
   theme~ : @core.Theme,
   focused~ : Bool,
+  state_overlay~ : @core.Color,
+  disabled~ : Bool,
 ) -> Unit {
+  let foreground = if disabled {
+    foreground.multiply_alpha(0.38)
+  } else {
+    foreground
+  }
+  let check_color = if disabled {
+    check_color.multiply_alpha(0.42)
+  } else {
+    check_color
+  }
+  // Interaction layer behind the whole row: the box itself is too small for a
+  // visible hover without changing its geometry. The color is pre-blended by
+  // the caller so hover/press transitions animate here.
+  if state_overlay.a > 0.0 {
+    commands.push(
+      FillRoundedRect(
+        @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+        state_overlay,
+      ),
+    )
+  }
   let box_side = size.width
   let box_y = frame.origin.y +
     @common.view_max_double(0.0, (frame.size.height - box_side) / 2.0)
@@ -226,6 +268,23 @@ fn append_checkbox_commands(
     Square => theme.radius_scale.sm
   }
   let box = @core.RoundedRect::new(rect=box_rect, radius=box_radius)
+  if focused && !disabled {
+    commands.push(
+      StrokeRoundedRect(
+        @core.RoundedRect::new(
+          rect=@core.Rect::new(
+            x=box_rect.origin.x - 3.0,
+            y=box_rect.origin.y - 3.0,
+            width=box_side + 6.0,
+            height=box_side + 6.0,
+          ),
+          radius=box_radius + 3.0,
+        ),
+        theme.palette.focus,
+        2.0,
+      ),
+    )
+  }
   if checked {
     match check_style {
       Checkmark => {
@@ -236,7 +295,11 @@ fn append_checkbox_commands(
               text="✓",
               frame=box_rect,
               font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
-              color=theme.palette.on_primary,
+              color=if disabled {
+                theme.palette.on_primary.multiply_alpha(0.6)
+              } else {
+                theme.palette.on_primary
+              },
             ),
           ),
         )
@@ -258,7 +321,13 @@ fn append_checkbox_commands(
       }
     }
   } else {
-    let outline = if focused { check_color } else { theme.palette.outline }
+    let outline = if disabled {
+      theme.palette.muted
+    } else if focused {
+      check_color
+    } else {
+      theme.palette.outline
+    }
     commands.push(StrokeRoundedRect(box, outline, 2.0))
   }
   commands.push(

@@ -459,9 +459,22 @@ fn package_budgets() -> Array[PackageBudget] {
       // ViewStateEntry (+1 pub(all)): ADR 0068 exports opaque slot entries so
       // the dev transport can move transient state without exposing slot
       // value types.
-      max_lines: 2870,
-      max_pub_lines: 1219,
-      max_pub_all_lines: 148,
+      // Desktop preset / LayoutScale (+11 lines, +11 pub, +1 pub(all)):
+      // ADR 0071 — the size-only layout scale (control height/padding, row,
+      // card/overlay/dialog padding), its default/desktop constructors, the
+      // Theme accessor, and the desktop typography/radius/shadow/palette
+      // constructors the preset resolver composes. The size values are
+      // neutral protocol data, not control style tokens.
+      // FontFeature (+8 pub): ADR 0071 typography slice.
+      // GradientStop/GradientAxis/StopsGradientSpec + helpers (+14 lines,
+      // +14 pub, +2 pub(all)): V3 gradient primitives, paint protocol data.
+      // System accent (+1 line, +4 pub): `Environment.system_accent` plus
+      // `with_system_accent`, `resolve_theme_with_accent`, and
+      // `Color::from_argb` carry the host-reported OS accent as an additive
+      // environment input; `resolve_desktop_theme` gains an optional argument.
+      max_lines: 2946,
+      max_pub_lines: 1270,
+      max_pub_all_lines: 155,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
@@ -547,8 +560,15 @@ fn package_budgets() -> Array[PackageBudget] {
       // 709 -> 713 / 341 -> 343 (+2 declarations, +4 lines): `color_picker`
       // and `color_picker_default_swatches` join the facade — the token-grid
       // picker is app-facing vocabulary.
-      max_lines: 713,
-      max_pub_lines: 343,
+      // 713 -> 730 / 343 -> 349 (+5 declarations, +17 lines): ADR 0071 —
+      // `desktop_light_theme` / `desktop_dark_theme` expose the first-party
+      // preset, and `minimal_theme_spec` / `desktop_theme_spec` /
+      // `theme_from_spec` give apps the resolver-driven path so a system
+      // scheme change keeps the preset.
+      // 730 -> 751 (+11 declarations): icon_svg/Lucide/SF bridge, plus
+      // `material` and `scroll_edge` from the V3 material slice.
+      max_lines: 751,
+      max_pub_lines: 359,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
@@ -575,7 +595,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // +1 line: Event::Gesture carries the core gesture sample through the
       // shared host event model (plan §7), so platform decode layers have one
       // host event type to land OS-recognized gestures on.
-      max_lines: 703,
+      // +1 line: Event::AccentColorChanged(UInt32) carries the host system
+      // accent (packed 0xAARRGGBB) to the apphost driver.
+      max_lines: 704,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [

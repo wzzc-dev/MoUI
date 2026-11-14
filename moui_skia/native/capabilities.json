@@ -209,6 +209,17 @@
       "non_smoke_rationale": ""
     },
     {
+      "id": "native.backdrop-blur",
+      "area": "Canvas",
+      "native_file": "backdrop_blur_native.mbt",
+      "unavailable_file": "backdrop_blur_unavailable.mbt",
+      "handles": [
+        "Canvas"
+      ],
+      "smoke_markers": [],
+      "non_smoke_rationale": "Backdrop blur consumes already-painted canvas pixels through a Canvas method; its native and fallback paths are covered by renderer pixel tests rather than a native smoke marker."
+    },
+    {
       "id": "native.picture",
       "area": "Canvas",
       "native_file": "picture_native.mbt",

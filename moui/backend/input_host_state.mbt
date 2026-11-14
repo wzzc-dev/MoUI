@@ -92,6 +92,9 @@ pub(all) enum Event {
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
+  /// Host system accent color, packed 0xAARRGGBB sRGB. Desktop drives an
+  /// `Environment::with_system_accent` rebuild; other hosts leave it unset.
+  AccentColorChanged(UInt32)
   Command(@core.CommandIntent)
   Gesture(@core.GestureEvent)
   RedrawRequested
@@ -193,6 +196,7 @@ pub fn Event::to_core(self : Event) -> @core.AppEvent? {
     TextInput(event) => Some(TextInput(event))
     DragDrop(event) => Some(DragDrop(event))
     ThemeChanged(_) => None
+    AccentColorChanged(_) => None
     Command(_) => None
     Gesture(event) => Some(Gesture(event))
     RedrawRequested => Some(Redraw(Explicit))

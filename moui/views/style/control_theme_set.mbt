@@ -113,16 +113,21 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
     font: typography.body,
     appearance: Outline,
   }
+  let layout = theme.layout_scale
   let surface = {
     base_padding: spacing.md,
-    raised_padding: spacing.lg,
-    overlay_padding: spacing.md,
+    raised_padding: layout.card_padding,
+    overlay_padding: layout.overlay_padding,
     base_radius: radius.md,
     raised_radius: radius.lg,
     overlay_radius: radius.lg,
+    // Elevation flows from the theme's shadow scale so a preset can lift
+    // cards/popovers without overriding control tokens. Minimal's `sm` is a
+    // near-invisible hairline and `md` a soft mid shadow; Desktop's are the
+    // tuned card/popover pair.
     base_shadow: None,
-    raised_shadow: None,
-    overlay_shadow: None,
+    raised_shadow: Some(theme.shadow_scale.sm),
+    overlay_shadow: Some(theme.shadow_scale.md),
   }
   let choice_control = {
     foreground: palette.foreground,
@@ -224,12 +229,16 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
 
 ///|
 fn minimal_state_layer(palette : @core.ColorPalette) -> StateLayerTokens {
+  // State layers overlay the *foreground* tone, not the brand color: a hover
+  // on a ghost button or a list row must read as a neutral tint, otherwise
+  // every hover in a branded theme turns brand-colored. Selected rows still
+  // read as selected through the heavier alpha and the control's own token.
   {
-    color: palette.primary,
-    hover_alpha: 0.08,
-    focus_alpha: 0.12,
-    pressed_alpha: 0.12,
-    dragged_alpha: 0.16,
+    color: palette.foreground,
+    hover_alpha: 0.06,
+    focus_alpha: 0.10,
+    pressed_alpha: 0.10,
+    dragged_alpha: 0.14,
     selected_alpha: 0.10,
     disabled_alpha: 0.38,
   }

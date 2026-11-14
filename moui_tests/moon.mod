@@ -19,6 +19,7 @@ import {
   "moonbitlang/quickcheck@0.15.0",
   "moonbitlang/x@0.5.6",
   "examples/counter@0.1.0",
+  "examples/gallery@0.1.0",
   "examples/showcase@0.1.0",
   "examples/terminal@0.1.0",
   "examples/tui_layers@0.1.0",

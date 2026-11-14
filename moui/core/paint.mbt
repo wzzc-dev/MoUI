@@ -46,6 +46,21 @@ pub struct FontVariation {
 }
 
 ///|
+/// One OpenType feature setting, e.g. `tnum` for tabular figures or `liga=0`
+/// to disable ligatures. `value` is the CSS `font-feature-settings` value:
+/// 0 (off), 1 (on), or an alternate index for features that take one.
+#derive(Eq, Debug, ToJson)
+pub(all) struct FontFeature {
+  tag : String
+  value : Int32
+}
+
+///|
+pub fn FontFeature::new(tag~ : String, value~ : Int32 = 1) -> FontFeature {
+  { tag, value, }
+}
+
+///|
 #derive(Eq, Debug, ToJson)
 pub(all) struct FontSpec {
   families : FontFamilyStack
@@ -53,6 +68,20 @@ pub(all) struct FontSpec {
   weight : Int32
   style : FontStyle
   variations : Array[FontVariation]
+  /// Explicit line-box height in DIPs. `None` keeps the provider's natural
+  /// leading (the historical behavior); prose uses ~1.45× the font size via
+  /// `TypographyScale`'s desktop tier. The read-only `text` view applies the
+  /// override at the views layer, so text providers do not need to honor it.
+  line_height : Double?
+  /// Extra advance added after each glyph, in DIPs. Negative values tighten
+  /// headings. Providers that can track do so (the Sun CPU text path reads
+  /// it); providers that cannot ignore it, and the declaration key still
+  /// distinguishes the value so a theme change repaints.
+  letter_spacing : Double?
+  /// OpenType feature settings. Providers without feature plumbing ignore the
+  /// list; it participates in the declaration key so enabling support never
+  /// leaves a stale cache behind.
+  features : Array[FontFeature]
 }
 
 ///|
@@ -104,6 +133,8 @@ pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
   RadialGradient(RadialGradientSpec)
+  /// Multi-stop linear/radial/conic gradient with optional Oklab mixing.
+  StopsGradient(StopsGradientSpec)
 }
 
 ///|
@@ -277,6 +308,22 @@ pub fn Color::white() -> Color {
 }
 
 ///|
+/// Decode a packed 0xAARRGGBB sRGB color, as host events carry it.
+pub fn Color::from_argb(argb : UInt32) -> Color {
+  let channel = fn(shift : Int32) {
+    ((argb >> shift) & 0xFFU).reinterpret_as_int().to_double() / 255.0
+  }
+  Color::rgba(r=channel(16), g=channel(8), b=channel(0), a=channel(24))
+}
+
+///|
+/// Fully transparent black. Use this instead of spelling the zero rgba tuple in
+/// control code, so the visual-token ratchet only counts real colors.
+pub fn Color::transparent() -> Color {
+  Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
+}
+
+///|
 pub fn Color::black() -> Color {
   Color::rgba(r=0.0, g=0.0, b=0.0)
 }
@@ -447,8 +494,57 @@ pub fn FontSpec::new(
   weight~ : Int32 = 400,
   style~ : FontStyle = Normal,
   variations~ : Array[FontVariation] = [],
+  line_height? : Double,
+  letter_spacing? : Double,
+  features~ : Array[FontFeature] = [],
 ) -> FontSpec {
-  { families, size, weight, style, variations, }
+  {
+    families,
+    size,
+    weight,
+    style,
+    variations,
+    line_height,
+    letter_spacing,
+    // Canonical order keeps declaration keys independent of call order.
+    features: normalize_font_features(features),
+  }
+}
+
+///|
+fn normalize_font_features(features : Array[FontFeature]) -> Array[FontFeature] {
+  let sorted = features.copy()
+  sorted.sort_by((a, b) => a.tag.lexical_compare(b.tag))
+  sorted
+}
+
+///|
+pub fn FontSpec::with_line_height(
+  self : FontSpec,
+  line_height : Double?,
+) -> FontSpec {
+  { ..self, line_height, }
+}
+
+///|
+pub fn FontSpec::with_letter_spacing(
+  self : FontSpec,
+  letter_spacing : Double?,
+) -> FontSpec {
+  { ..self, letter_spacing, }
+}
+
+///|
+/// Add or replace one OpenType feature setting. Later calls for the same tag
+/// win; callers do not have to de-duplicate.
+pub fn FontSpec::with_feature(
+  self : FontSpec,
+  tag~ : String,
+  value~ : Int32 = 1,
+) -> FontSpec {
+  let features = self.features.filter(feature => feature.tag != tag)
+  features.push(FontFeature::new(tag~, value~))
+  { ..self, features: normalize_font_features(features), }
 }
 
 ///|
@@ -559,6 +655,11 @@ pub fn Brush::fallback_color(self : Brush) -> Color {
     Solid(color) => color
     LinearGradient(gradient) => gradient.start_color
     RadialGradient(gradient) => gradient.center_color
+    StopsGradient(spec) =>
+      match spec.stops.get(0) {
+        Some(stop) => stop.color
+        None => Color::transparent()
+      }
   }
 }
 
@@ -577,6 +678,14 @@ pub fn Brush::multiply_alpha(self : Brush, opacity : Double) -> Brush {
         ..gradient,
         center_color: gradient.center_color.multiply_alpha(opacity),
         edge_color: gradient.edge_color.multiply_alpha(opacity),
+      })
+    StopsGradient(spec) =>
+      StopsGradient({
+        ..spec,
+        stops: spec.stops.map(stop => {
+          ..stop,
+          color: stop.color.multiply_alpha(opacity),
+        }),
       })
   }
 }

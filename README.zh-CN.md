@@ -67,6 +67,11 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 <div align="center">
 
+  <img src="resource/screenshots/gallery-light.png" width="48%" alt="Gallery — Desktop preset 亮色"/>
+  <img src="resource/screenshots/gallery-dark.png" width="48%" alt="Gallery — Desktop preset 暗色"/>
+
+  <br/><br/>
+
   <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
   <a href="https://github.com/wzzc-dev/MoMark">
     <img src="resource/screenshots/markdown_editor.png" width="48%" alt="MoMark — 所见即所得 Markdown 编辑器"/>
@@ -90,6 +95,12 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   <br/><br/>
 
 </div>
+
+第一行由 `examples/gallery` 以 stock 控件离屏渲染。重新生成：
+`node scripts/generate-gallery-screenshots.mjs`；加 `--website` 同时刷新首页用
+WebP，`--check` 在入库 PNG 与 Desktop preset 漂移时失败。
+
+## 快速开始
 
 ## 快速开始
 

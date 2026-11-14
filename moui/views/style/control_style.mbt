@@ -481,30 +481,13 @@ pub fn ButtonStyle::ghost(theme? : @core.Theme) -> ButtonStyle {
 ///|
 pub fn TextFieldStyle::filled(theme? : @core.Theme) -> TextFieldStyle {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let normal = control_state(
-    foreground=resolved_theme.palette.foreground,
-    background=@core.Brush::solid(resolved_theme.palette.surface),
-    border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        resolved_theme.palette.outline.multiply_alpha(0.85),
-      ),
-      width=1.0,
-    ),
-    radius=resolved_theme.radius_scale.md,
-  )
-  let focused = control_state(
-    foreground=resolved_theme.palette.foreground,
-    background=@core.Brush::solid(resolved_theme.palette.surface),
-    border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(resolved_theme.palette.primary),
-      width=2.0,
-    ),
-    radius=resolved_theme.radius_scale.md,
-  )
+  // Project all three states from the control theme set: `disabled` used to
+  // alias `normal`, so a disabled input painted exactly like a resting one.
+  let set = views_ambient_control_theme(resolved_theme).text_field
   {
-    normal,
-    focused,
-    disabled: normal,
+    normal: set.normal.resolve(),
+    focused: set.focused.resolve(),
+    disabled: set.disabled.resolve(),
     placeholder_color: resolved_theme.palette.muted,
     cursor_color: resolved_theme.palette.primary,
     font: resolved_theme.typography.body,

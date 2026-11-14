@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/common",
+  "wzzc-dev/moui_skia_renderer",
+  "wzzc-dev/moui_sun_renderer",
+}
+
+supported_targets = "+native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

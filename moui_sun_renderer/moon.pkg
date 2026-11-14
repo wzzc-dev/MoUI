@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
   "mizchi/image",
+  "moonbitlang/core/math",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/core/diagnostics",
   "wzzc-dev/moui/render",

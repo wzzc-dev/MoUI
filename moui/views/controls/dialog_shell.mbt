@@ -11,7 +11,7 @@ pub fn[Msg] dialog(
   height~ : Double = 280.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let panel_padding = resolved_theme.spacing_scale.lg
+  let panel_padding = resolved_theme.layout_scale.dialog_padding
   let section_spacing = resolved_theme.spacing_scale.md
   let content_width = @common.view_max_double(
     180.0,
@@ -27,7 +27,6 @@ pub fn[Msg] dialog(
           variant=Ghost,
           theme=resolved_theme,
           width=dialog_action_width(action.label),
-          height=36.0,
         ),
       )
     None => ()
@@ -41,7 +40,6 @@ pub fn[Msg] dialog(
           variant=Primary,
           theme=resolved_theme,
           width=dialog_action_width(action.label),
-          height=36.0,
         ),
       )
     None => ()

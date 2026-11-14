@@ -18,6 +18,7 @@ so the CLI does not create a separate mobile runtime layer.
 | `moui inspect` | Read the latest DevTools document published by `moui dev --inspect`. |
 | `moui build <platform> <app>` | Build an artifact for any platform: desktop/web build the entrypoint package in place; Android / iOS / HarmonyOS produce APK / .app / .hap. |
 | `moui run <platform> <app>` | Run an app: desktop builds and launches in place, web serves through the dev runner, mobile builds, installs, and launches on a device or emulator. |
+| `moui screenshot [project]` | Render an app to a PNG through an offscreen renderer; no window or display is opened. |
 | `moui devices` | List connected mobile devices, emulators, and the desktop host. |
 | `moui verify <platform> <app>` | Verify generated embedded-runtime evidence. |
 | `moui config <action>` | Read or update CLI configuration. |
@@ -54,6 +55,35 @@ Linux run/build also work directly (`moui run linux .`). Windows builds resolve
 the MSVC toolchain through vswhere and vcvarsall in-process, so sourcing
 `scripts/windows/msvc_env.ps1` first is no longer required (a preset `CC`
 environment is respected).
+
+## Capture A Screenshot
+
+`moui screenshot` mounts the app package's `program()` in an offscreen runtime,
+paints one frame through Skia (or Sun), and writes a PNG. It never opens a
+window, so it works over SSH and in CI on a host that can build the project.
+
+```sh
+moui screenshot . --out gallery.png
+moui screenshot examples/gallery --width 1080 --height 820 --scale 2
+moui screenshot . --scheme dark --renderer sun --json
+```
+
+The project's app package must expose
+`pub fn program() -> @moui.Program[Model, Msg]` (the `moui new` templates do).
+The renderer dependency must already be in the project module: `moui new`
+desktop projects include `wzzc-dev/moui_skia_renderer`; `--renderer sun` needs
+`wzzc-dev/moui_sun_renderer`.
+
+Options: `--app PACKAGE` (default `app`), `--out PATH` (default
+`moui-screenshot.png`), `--width`/`--height` (logical DIPs, default 1080x720),
+`--scale` (default 2.0), `--scheme light|dark|system` (runtime environment only;
+apps that pin their own theme ignore it), `--renderer skia|sun`, and
+`--keep-temp` for debugging the generated render package.
+
+The command writes a temporary `moui_screenshot_tmp` package inside the project
+module, runs it with `moon`, and removes it afterwards. The PNG contains MoUI's
+painted content only: native window chrome, WebViews, and platform child views
+are not part of the offscreen frame.
 
 ## Develop With A Watch Loop
 

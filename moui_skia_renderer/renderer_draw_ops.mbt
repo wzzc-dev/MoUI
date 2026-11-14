@@ -418,6 +418,7 @@ fn SkiaRasterRenderer::draw_shader_effect(
     "checker" => self.draw_checker_effect(canvas, spec)
     "linear-gradient-debug" => self.draw_linear_gradient_debug(canvas, spec)
     "vignette" => self.draw_vignette_effect(canvas, spec)
+    "backdrop-blur" => self.draw_backdrop_blur_effect(canvas, spec)
     _ => {
       self.draw_brush_rect(canvas, spec.frame, spec.fallback)
       self.record_unsupported_command(
@@ -426,6 +427,33 @@ fn SkiaRasterRenderer::draw_shader_effect(
       )
     }
   }
+}
+
+///|
+fn SkiaRasterRenderer::draw_backdrop_blur_effect(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  spec : @core.ShaderEffectSpec,
+) -> Unit {
+  let blur = spec.uniforms.get(0).unwrap_or(16.0)
+  let radius = spec.uniforms.get(1).unwrap_or(0.0)
+  let tint = spec.fallback.fallback_color()
+  let frame = spec.frame
+  let blurred = canvas.draw_backdrop_blur(
+    Float::from_double(frame.origin.x),
+    Float::from_double(frame.origin.y),
+    Float::from_double(frame.size.width),
+    Float::from_double(frame.size.height),
+    radius=Float::from_double(radius),
+    blur=Float::from_double(blur),
+    tint=skia_color(tint),
+  )
+  if !blurred {
+    self.record_unsupported_command(
+      "DrawShaderEffect", "backdrop-blur found no readable raster backdrop; tint fallback painted",
+    )
+  }
+  let _ = self
 }
 
 ///|
@@ -476,7 +504,105 @@ fn skia_brush_shader(brush : @core.Brush) -> @skia_native.Shader? {
         skia_color(gradient.center_color),
         skia_color(gradient.edge_color),
       )
+    StopsGradient(spec) => skia_stops_gradient_shader(spec)
   }
+}
+
+///|
+fn skia_stops_gradient_shader(
+  spec : @core.StopsGradientSpec,
+) -> @skia_native.Shader? {
+  // Skia interpolates Oklab natively; pass the raw stops and the flag.
+  let stops = spec.stops
+  if stops.length() < 2 {
+    return None
+  }
+  let (colors, positions) = skia_gradient_stop_payload(stops)
+  let count = stops.length()
+  match spec.axis {
+    @core.LinearAxis(start, end) =>
+      @skia_native.Shader::linear_gradient_stops(
+        skia_point(start),
+        skia_point(end),
+        colors,
+        positions,
+        count,
+        oklab=spec.oklab,
+      )
+    @core.RadialAxis(center, radius) =>
+      @skia_native.Shader::radial_gradient_stops(
+        skia_point(center),
+        Float::from_double(radius),
+        colors,
+        positions,
+        count,
+        oklab=spec.oklab,
+      )
+    @core.ConicAxis(center, angle_degrees) => {
+      // Skia's sweep runs 0..360 degrees from +x; feed it a rotated, evenly
+      // sampled stop ring so the CSS "12 o'clock, clockwise" angle lands on the
+      // same seam on every Skia version.
+      let conic_stops = skia_conic_stops(spec, angle_degrees~)
+      let (conic_colors, conic_positions) = skia_gradient_stop_payload(
+        conic_stops,
+      )
+      @skia_native.Shader::sweep_gradient_stops(
+        skia_point(center),
+        Float::from_double(0.0),
+        Float::from_double(360.0),
+        conic_colors,
+        conic_positions,
+        conic_stops.length(),
+      )
+    }
+  }
+}
+
+///|
+/// Rotate a conic stop list into Skia's +x, clockwise sweep space. Sampling
+/// (rather than shifting positions) keeps Oklab interpolation correct at the
+/// wrap seam.
+fn skia_conic_stops(
+  spec : @core.StopsGradientSpec,
+  angle_degrees~ : Double,
+  resolution~ : Int32 = 90,
+) -> Array[@core.GradientStop] {
+  let steps = resolution.max(8)
+  let shift = (90.0 - angle_degrees) / 360.0
+  let stops : Array[@core.GradientStop] = []
+  for index in 0..<=steps {
+    let p = index.to_double() / steps.to_double()
+    let mut css = p + shift
+    while css >= 1.0 {
+      css = css - 1.0
+    }
+    while css < 0.0 {
+      css = css + 1.0
+    }
+    stops.push(@core.GradientStop::new(color=spec.color_at(css), at=p))
+  }
+  stops
+}
+
+///|
+/// Encode stops for the native shader: little-endian ARGB `UInt32` colors and
+/// little-endian `f64` positions.
+fn skia_gradient_stop_payload(
+  stops : Array[@core.GradientStop],
+) -> (Bytes, Bytes) {
+  let colors : Array[Byte] = []
+  let positions : Array[Byte] = []
+  for stop in stops {
+    let argb = skia_color(stop.color).argb().reinterpret_as_int()
+    colors.push((argb & 0xFF).to_byte())
+    colors.push(((argb >> 8) & 0xFF).to_byte())
+    colors.push(((argb >> 16) & 0xFF).to_byte())
+    colors.push(((argb >> 24) & 0xFF).to_byte())
+    for byte in stop.at.reinterpret_as_uint64().to_le_bytes() {
+      positions.push(byte)
+    }
+  }
+  (Bytes::from_array(colors), Bytes::from_array(positions))
 }
 
 ///|
@@ -716,6 +842,7 @@ fn skia_shader_effect_colors(
     Solid(color) => (color, color)
     LinearGradient(gradient) => (gradient.start_color, gradient.end_color)
     RadialGradient(gradient) => (gradient.center_color, gradient.edge_color)
+    StopsGradient(spec) => spec.edge_colors()
   }
 }
 

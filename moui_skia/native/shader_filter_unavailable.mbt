@@ -96,3 +96,65 @@ pub fn MaskFilter::is_available(self : MaskFilter) -> Bool {
   ignore(self)
   false
 }
+
+///|
+pub fn Shader::linear_gradient_stops(
+  start : @skia.Point,
+  end : @skia.Point,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  ignore(start)
+  ignore(end)
+  ignore(colors)
+  ignore(positions)
+  ignore(count)
+  ignore(tile_mode)
+  ignore(oklab)
+  None
+}
+
+///|
+pub fn Shader::radial_gradient_stops(
+  center : @skia.Point,
+  radius : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  ignore(center)
+  ignore(radius)
+  ignore(colors)
+  ignore(positions)
+  ignore(count)
+  ignore(tile_mode)
+  ignore(oklab)
+  None
+}
+
+///|
+pub fn Shader::sweep_gradient_stops(
+  center : @skia.Point,
+  start_angle : Float,
+  end_angle : Float,
+  colors : Bytes,
+  positions : Bytes,
+  count : Int32,
+  tile_mode~ : @skia.TileMode = Clamp,
+  oklab~ : Bool = false,
+) -> Shader? {
+  ignore(center)
+  ignore(start_angle)
+  ignore(end_angle)
+  ignore(colors)
+  ignore(positions)
+  ignore(count)
+  ignore(tile_mode)
+  ignore(oklab)
+  None
+}

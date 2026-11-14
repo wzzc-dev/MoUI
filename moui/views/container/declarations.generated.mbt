@@ -28,3 +28,26 @@ impl @core.ViewNode for SpacerViewNode with fn declaration(self) {
     ]),
   )
 }
+
+///|
+impl @core.ViewNode for BackdropBlur with fn declaration(self) {
+  @common.view_declaration(
+    layout=@common.view_exact_channel(
+      @common.view_record_key("BackdropBlur.layout", [
+        ("width", @core.DeclarationKey::double(self.width)),
+        ("height", @core.DeclarationKey::double(self.height)),
+      ]),
+    ),
+    paint=@common.view_exact_channel(
+      @common.view_record_key("BackdropBlur.paint", [
+        ("blur", @core.DeclarationKey::double(self.blur_radius)),
+        ("radius", @core.DeclarationKey::double(self.corner_radius)),
+        ("tint", @common.view_color_key(self.tint)),
+        ("label", @core.DeclarationKey::string(self.label)),
+      ]),
+    ),
+    semantics=@common.view_exact_channel(
+      @core.DeclarationKey::string(self.label),
+    ),
+  )
+}

@@ -208,6 +208,22 @@
     },
     {
       "group": "guides",
+      "slug": "design-metrics",
+      "title": "Design Metrics",
+      "path": "docs/design-metrics.md",
+      "summary": "Default type, radius, layout, elevation, state-layer and motion metrics per preset, with the validation files that assert them.",
+      "keywords": [
+        "design",
+        "metrics",
+        "tokens",
+        "typography",
+        "layout",
+        "desktop",
+        "preset"
+      ]
+    },
+    {
+      "group": "guides",
       "slug": "text-system",
       "title": "Text System",
       "path": "docs/text-system.md",
@@ -820,31 +836,31 @@
       "groups": [
         {
           "id": "get-started",
-          "title": "入门"
+          "title": "\u5165\u95e8"
         },
         {
           "id": "guides",
-          "title": "指南"
+          "title": "\u6307\u5357"
         },
         {
           "id": "examples",
-          "title": "示例"
+          "title": "\u793a\u4f8b"
         },
         {
           "id": "platforms",
-          "title": "平台"
+          "title": "\u5e73\u53f0"
         },
         {
           "id": "architecture-api",
-          "title": "架构与 API"
+          "title": "\u67b6\u6784\u4e0e API"
         },
         {
           "id": "contributing",
-          "title": "参与贡献"
+          "title": "\u53c2\u4e0e\u8d21\u732e"
         },
         {
           "id": "status-roadmap",
-          "title": "状态与路线图"
+          "title": "\u72b6\u6001\u4e0e\u8def\u7ebf\u56fe"
         }
       ],
       "entries": [
@@ -852,7 +868,7 @@
           "group": "get-started",
           "slug": "moui-readme",
           "title": "MoUI README",
-          "summary": "MoUI MoUI README的公开文档。",
+          "summary": "MoUI MoUI README\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
             "MoUI README",
             "MoUI",
@@ -863,10 +879,10 @@
         {
           "group": "get-started",
           "slug": "getting-started",
-          "title": "快速开始",
-          "summary": "MoUI 快速开始的公开文档。",
+          "title": "\u5feb\u901f\u5f00\u59cb",
+          "summary": "MoUI \u5feb\u901f\u5f00\u59cb\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "快速开始",
+            "\u5feb\u901f\u5f00\u59cb",
             "MoUI",
             "MoonBit"
           ],
@@ -875,10 +891,10 @@
         {
           "group": "get-started",
           "slug": "moui-app-package-boundary",
-          "title": "应用包边界",
-          "summary": "MoUI 应用包边界的公开文档。",
+          "title": "\u5e94\u7528\u5305\u8fb9\u754c",
+          "summary": "MoUI \u5e94\u7528\u5305\u8fb9\u754c\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "应用包边界",
+            "\u5e94\u7528\u5305\u8fb9\u754c",
             "MoUI",
             "MoonBit"
           ],
@@ -887,10 +903,10 @@
         {
           "group": "get-started",
           "slug": "tea-program-model",
-          "title": "TEA 程序模型",
-          "summary": "MoUI TEA 程序模型的公开文档。",
+          "title": "TEA \u7a0b\u5e8f\u6a21\u578b",
+          "summary": "MoUI TEA \u7a0b\u5e8f\u6a21\u578b\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "TEA 程序模型",
+            "TEA \u7a0b\u5e8f\u6a21\u578b",
             "MoUI",
             "MoonBit"
           ],
@@ -899,10 +915,10 @@
         {
           "group": "get-started",
           "slug": "tutorials",
-          "title": "教程",
-          "summary": "MoUI 教程的公开文档。",
+          "title": "\u6559\u7a0b",
+          "summary": "MoUI \u6559\u7a0b\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "教程",
+            "\u6559\u7a0b",
             "MoUI",
             "MoonBit"
           ],
@@ -911,13 +927,13 @@
         {
           "group": "guides",
           "slug": "addon-package-guide",
-          "title": "Addon Package 指南",
-          "summary": "如何构建、校验并发布第三方 MoUI addon 模块：自定义控件、领域辅助与服务契约。",
+          "title": "Addon Package \u6307\u5357",
+          "summary": "\u5982\u4f55\u6784\u5efa\u3001\u6821\u9a8c\u5e76\u53d1\u5e03\u7b2c\u4e09\u65b9 MoUI addon \u6a21\u5757\uff1a\u81ea\u5b9a\u4e49\u63a7\u4ef6\u3001\u9886\u57df\u8f85\u52a9\u4e0e\u670d\u52a1\u5951\u7ea6\u3002",
           "keywords": [
             "addon",
             "package",
-            "发布",
-            "第三方",
+            "\u53d1\u5e03",
+            "\u7b2c\u4e09\u65b9",
             "mooncakes"
           ],
           "localizedPath": "docs/zh-Hans/addon-package-guide.md"
@@ -925,10 +941,10 @@
         {
           "group": "guides",
           "slug": "views-api-guide",
-          "title": "Views API 指南",
-          "summary": "MoUI Views API 指南的公开文档。",
+          "title": "Views API \u6307\u5357",
+          "summary": "MoUI Views API \u6307\u5357\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Views API 指南",
+            "Views API \u6307\u5357",
             "MoUI",
             "MoonBit"
           ],
@@ -937,10 +953,10 @@
         {
           "group": "guides",
           "slug": "view-catalog",
-          "title": "视图目录",
-          "summary": "MoUI 视图目录的公开文档。",
+          "title": "\u89c6\u56fe\u76ee\u5f55",
+          "summary": "MoUI \u89c6\u56fe\u76ee\u5f55\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "视图目录",
+            "\u89c6\u56fe\u76ee\u5f55",
             "MoUI",
             "MoonBit"
           ],
@@ -949,12 +965,12 @@
         {
           "group": "guides",
           "slug": "custom-control-sdk",
-          "title": "自定义控件 SDK",
-          "summary": "使用显式声明、语义、焦点、IME、RTL 和 golden fixture 构建包内可复用 ViewNode 控件。",
+          "title": "\u81ea\u5b9a\u4e49\u63a7\u4ef6 SDK",
+          "summary": "\u4f7f\u7528\u663e\u5f0f\u58f0\u660e\u3001\u8bed\u4e49\u3001\u7126\u70b9\u3001IME\u3001RTL \u548c golden fixture \u6784\u5efa\u5305\u5185\u53ef\u590d\u7528 ViewNode \u63a7\u4ef6\u3002",
           "keywords": [
-            "自定义控件",
+            "\u81ea\u5b9a\u4e49\u63a7\u4ef6",
             "ViewNode",
-            "语义",
+            "\u8bed\u4e49",
             "IME",
             "RTL"
           ],
@@ -963,10 +979,10 @@
         {
           "group": "guides",
           "slug": "button-styling-guide",
-          "title": "按钮样式指南",
-          "summary": "MoUI 按钮样式指南的公开文档。",
+          "title": "\u6309\u94ae\u6837\u5f0f\u6307\u5357",
+          "summary": "MoUI \u6309\u94ae\u6837\u5f0f\u6307\u5357\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "按钮样式指南",
+            "\u6309\u94ae\u6837\u5f0f\u6307\u5357",
             "MoUI",
             "MoonBit"
           ],
@@ -975,10 +991,10 @@
         {
           "group": "guides",
           "slug": "visual-theme-system",
-          "title": "视觉主题系统",
-          "summary": "MoUI 视觉主题系统的公开文档。",
+          "title": "\u89c6\u89c9\u4e3b\u9898\u7cfb\u7edf",
+          "summary": "MoUI \u89c6\u89c9\u4e3b\u9898\u7cfb\u7edf\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "视觉主题系统",
+            "\u89c6\u89c9\u4e3b\u9898\u7cfb\u7edf",
             "MoUI",
             "MoonBit"
           ],
@@ -986,11 +1002,27 @@
         },
         {
           "group": "guides",
-          "slug": "text-system",
-          "title": "文本系统",
-          "summary": "MoUI 文本系统的公开文档。",
+          "slug": "design-metrics",
+          "title": "\u8bbe\u8ba1\u5ea6\u91cf",
+          "summary": "\u5404 preset \u7684\u9ed8\u8ba4\u5b57\u9636\u3001\u5706\u89d2\u3001\u5e03\u5c40\u3001\u5c42\u7ea7\u3001\u72b6\u6001\u5c42\u4e0e\u52a8\u6001\u5ea6\u91cf,\u4ee5\u53ca\u65ad\u8a00\u5b83\u4eec\u7684\u6821\u9a8c\u6587\u4ef6\u3002",
           "keywords": [
-            "文本系统",
+            "\u8bbe\u8ba1",
+            "\u5ea6\u91cf",
+            "token",
+            "\u6392\u7248",
+            "\u5e03\u5c40",
+            "\u684c\u9762",
+            "preset"
+          ],
+          "localizedPath": "docs/zh-Hans/design-metrics.md"
+        },
+        {
+          "group": "guides",
+          "slug": "text-system",
+          "title": "\u6587\u672c\u7cfb\u7edf",
+          "summary": "MoUI \u6587\u672c\u7cfb\u7edf\u7684\u516c\u5f00\u6587\u6863\u3002",
+          "keywords": [
+            "\u6587\u672c\u7cfb\u7edf",
             "MoUI",
             "MoonBit"
           ],
@@ -999,10 +1031,10 @@
         {
           "group": "guides",
           "slug": "non-render-component-cookbook",
-          "title": "非渲染组件手册",
-          "summary": "MoUI 非渲染组件手册的公开文档。",
+          "title": "\u975e\u6e32\u67d3\u7ec4\u4ef6\u624b\u518c",
+          "summary": "MoUI \u975e\u6e32\u67d3\u7ec4\u4ef6\u624b\u518c\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "非渲染组件手册",
+            "\u975e\u6e32\u67d3\u7ec4\u4ef6\u624b\u518c",
             "MoUI",
             "MoonBit"
           ],
@@ -1011,10 +1043,10 @@
         {
           "group": "guides",
           "slug": "canvas-and-custom-paint",
-          "title": "画布与自定义绘制",
-          "summary": "MoUI 画布与自定义绘制的公开文档。",
+          "title": "\u753b\u5e03\u4e0e\u81ea\u5b9a\u4e49\u7ed8\u5236",
+          "summary": "MoUI \u753b\u5e03\u4e0e\u81ea\u5b9a\u4e49\u7ed8\u5236\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "画布与自定义绘制",
+            "\u753b\u5e03\u4e0e\u81ea\u5b9a\u4e49\u7ed8\u5236",
             "MoUI",
             "MoonBit"
           ],
@@ -1023,10 +1055,10 @@
         {
           "group": "guides",
           "slug": "app-templates",
-          "title": "应用模板",
-          "summary": "MoUI 应用模板的公开文档。",
+          "title": "\u5e94\u7528\u6a21\u677f",
+          "summary": "MoUI \u5e94\u7528\u6a21\u677f\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "应用模板",
+            "\u5e94\u7528\u6a21\u677f",
             "MoUI",
             "MoonBit"
           ],
@@ -1035,10 +1067,10 @@
         {
           "group": "guides",
           "slug": "templates",
-          "title": "包与插件模板",
-          "summary": "MoUI 包与插件模板的公开文档。",
+          "title": "\u5305\u4e0e\u63d2\u4ef6\u6a21\u677f",
+          "summary": "MoUI \u5305\u4e0e\u63d2\u4ef6\u6a21\u677f\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "包与插件模板",
+            "\u5305\u4e0e\u63d2\u4ef6\u6a21\u677f",
             "MoUI",
             "MoonBit"
           ],
@@ -1047,10 +1079,10 @@
         {
           "group": "examples",
           "slug": "examples",
-          "title": "示例",
-          "summary": "MoUI 示例的公开文档。",
+          "title": "\u793a\u4f8b",
+          "summary": "MoUI \u793a\u4f8b\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "示例",
+            "\u793a\u4f8b",
             "MoUI",
             "MoonBit"
           ],
@@ -1060,25 +1092,25 @@
           "group": "examples",
           "slug": "moui-studio",
           "title": "MoUI Studio",
-          "summary": "MoUI 的中英双语 IDE：一份语句级 IR 支撑设计/积木/代码三视图，显式双轨——解释轨沙箱执行，编译轨真跑 moon check/build。",
+          "summary": "MoUI \u7684\u4e2d\u82f1\u53cc\u8bed IDE\uff1a\u4e00\u4efd\u8bed\u53e5\u7ea7 IR \u652f\u6491\u8bbe\u8ba1/\u79ef\u6728/\u4ee3\u7801\u4e09\u89c6\u56fe\uff0c\u663e\u5f0f\u53cc\u8f68\u2014\u2014\u89e3\u91ca\u8f68\u6c99\u7bb1\u6267\u884c\uff0c\u7f16\u8bd1\u8f68\u771f\u8dd1 moon check/build\u3002",
           "keywords": [
             "MoUI Studio",
             "IDE",
-            "可视化编程",
-            "双轨",
-            "真编译",
+            "\u53ef\u89c6\u5316\u7f16\u7a0b",
+            "\u53cc\u8f68",
+            "\u771f\u7f16\u8bd1",
             "MoonBit",
-            "积木"
+            "\u79ef\u6728"
           ],
           "localizedPath": "docs/zh-Hans/moui-studio.md"
         },
         {
           "group": "examples",
           "slug": "showcases",
-          "title": "案例展示",
-          "summary": "MoUI 案例展示的公开文档。",
+          "title": "\u6848\u4f8b\u5c55\u793a",
+          "summary": "MoUI \u6848\u4f8b\u5c55\u793a\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "案例展示",
+            "\u6848\u4f8b\u5c55\u793a",
             "MoUI",
             "MoonBit"
           ],
@@ -1087,10 +1119,10 @@
         {
           "group": "examples",
           "slug": "markdown-editor",
-          "title": "Markdown 编辑器",
-          "summary": "MoUI Markdown 编辑器的公开文档。",
+          "title": "Markdown \u7f16\u8f91\u5668",
+          "summary": "MoUI Markdown \u7f16\u8f91\u5668\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Markdown 编辑器",
+            "Markdown \u7f16\u8f91\u5668",
             "MoUI",
             "MoonBit"
           ],
@@ -1100,7 +1132,7 @@
           "group": "examples",
           "slug": "mo-workbench",
           "title": "Mo Workbench",
-          "summary": "MoUI Mo Workbench的公开文档。",
+          "summary": "MoUI Mo Workbench\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
             "Mo Workbench",
             "MoUI",
@@ -1111,10 +1143,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes",
-          "title": "平台说明",
-          "summary": "MoUI 平台说明的公开文档。",
+          "title": "\u5e73\u53f0\u8bf4\u660e",
+          "summary": "MoUI \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "平台说明",
+            "\u5e73\u53f0\u8bf4\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1123,10 +1155,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes-web",
-          "title": "Web 平台说明",
-          "summary": "MoUI Web 平台说明的公开文档。",
+          "title": "Web \u5e73\u53f0\u8bf4\u660e",
+          "summary": "MoUI Web \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Web 平台说明",
+            "Web \u5e73\u53f0\u8bf4\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1135,10 +1167,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes-macos",
-          "title": "macOS 平台说明",
-          "summary": "MoUI macOS 平台说明的公开文档。",
+          "title": "macOS \u5e73\u53f0\u8bf4\u660e",
+          "summary": "MoUI macOS \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "macOS 平台说明",
+            "macOS \u5e73\u53f0\u8bf4\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1147,10 +1179,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes-windows",
-          "title": "Windows 平台说明",
-          "summary": "MoUI Windows 平台说明的公开文档。",
+          "title": "Windows \u5e73\u53f0\u8bf4\u660e",
+          "summary": "MoUI Windows \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Windows 平台说明",
+            "Windows \u5e73\u53f0\u8bf4\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1159,10 +1191,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes-linux",
-          "title": "Linux 平台说明",
-          "summary": "MoUI Linux 平台说明的公开文档。",
+          "title": "Linux \u5e73\u53f0\u8bf4\u660e",
+          "summary": "MoUI Linux \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Linux 平台说明",
+            "Linux \u5e73\u53f0\u8bf4\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1171,10 +1203,10 @@
         {
           "group": "platforms",
           "slug": "platform-notes-wechat",
-          "title": "微信小程序平台说明",
-          "summary": "微信小程序 Skyline、Canvas 2D、WebAssembly 与平台集成说明。",
+          "title": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u5e73\u53f0\u8bf4\u660e",
+          "summary": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f Skyline\u3001Canvas 2D\u3001WebAssembly \u4e0e\u5e73\u53f0\u96c6\u6210\u8bf4\u660e\u3002",
           "keywords": [
-            "微信小程序",
+            "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
             "Skyline",
             "Canvas 2D",
             "WebAssembly"
@@ -1184,10 +1216,10 @@
         {
           "group": "platforms",
           "slug": "platform-host-contract",
-          "title": "平台宿主契约",
-          "summary": "MoUI 平台宿主契约的公开文档。",
+          "title": "\u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6",
+          "summary": "MoUI \u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "平台宿主契约",
+            "\u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6",
             "MoUI",
             "MoonBit"
           ],
@@ -1196,10 +1228,10 @@
         {
           "group": "platforms",
           "slug": "window-hosted-moui",
-          "title": "Window 托管的 MoUI",
-          "summary": "Android、iOS 和 HarmonyOS 的 window-hosted 生命周期、Surface、输入与验证路径。",
+          "title": "Window \u6258\u7ba1\u7684 MoUI",
+          "summary": "Android\u3001iOS \u548c HarmonyOS \u7684 window-hosted \u751f\u547d\u5468\u671f\u3001Surface\u3001\u8f93\u5165\u4e0e\u9a8c\u8bc1\u8def\u5f84\u3002",
           "keywords": [
-            "移动端",
+            "\u79fb\u52a8\u7aef",
             "window",
             "Android",
             "iOS",
@@ -1210,10 +1242,10 @@
         {
           "group": "platforms",
           "slug": "platform-readiness-declaration",
-          "title": "平台就绪度声明",
-          "summary": "MoUI 平台就绪度声明的公开文档。",
+          "title": "\u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e",
+          "summary": "MoUI \u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "平台就绪度声明",
+            "\u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e",
             "MoUI",
             "MoonBit"
           ],
@@ -1222,10 +1254,10 @@
         {
           "group": "platforms",
           "slug": "android-support",
-          "title": "Android 支持",
-          "summary": "MoUI Android 支持的公开文档。",
+          "title": "Android \u652f\u6301",
+          "summary": "MoUI Android \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "Android 支持",
+            "Android \u652f\u6301",
             "MoUI",
             "MoonBit"
           ],
@@ -1234,10 +1266,10 @@
         {
           "group": "platforms",
           "slug": "ios-support",
-          "title": "iOS 支持",
-          "summary": "MoUI iOS 支持的公开文档。",
+          "title": "iOS \u652f\u6301",
+          "summary": "MoUI iOS \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "iOS 支持",
+            "iOS \u652f\u6301",
             "MoUI",
             "MoonBit"
           ],
@@ -1246,24 +1278,24 @@
         {
           "group": "platforms",
           "slug": "mobile-device-evidence",
-          "title": "移动真机证据",
-          "summary": "Android/iOS 真机签名、安装与证据记录运行手册。",
+          "title": "\u79fb\u52a8\u771f\u673a\u8bc1\u636e",
+          "summary": "Android/iOS \u771f\u673a\u7b7e\u540d\u3001\u5b89\u88c5\u4e0e\u8bc1\u636e\u8bb0\u5f55\u8fd0\u884c\u624b\u518c\u3002",
           "keywords": [
             "Android",
             "iOS",
-            "签名",
-            "真机",
-            "证据"
+            "\u7b7e\u540d",
+            "\u771f\u673a",
+            "\u8bc1\u636e"
           ],
           "localizedPath": "docs/zh-Hans/mobile-device-evidence.md"
         },
         {
           "group": "platforms",
           "slug": "harmonyos-support",
-          "title": "HarmonyOS 支持",
-          "summary": "MoUI HarmonyOS 支持的公开文档。",
+          "title": "HarmonyOS \u652f\u6301",
+          "summary": "MoUI HarmonyOS \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "HarmonyOS 支持",
+            "HarmonyOS \u652f\u6301",
             "MoUI",
             "MoonBit"
           ],
@@ -1272,23 +1304,23 @@
         {
           "group": "platforms",
           "slug": "wechat-support",
-          "title": "微信小程序支持",
-          "summary": "微信小程序 Canvas 2D WebAssembly 支持范围、当前状态和待补齐的运行时证据。",
+          "title": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u652f\u6301",
+          "summary": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f Canvas 2D WebAssembly \u652f\u6301\u8303\u56f4\u3001\u5f53\u524d\u72b6\u6001\u548c\u5f85\u8865\u9f50\u7684\u8fd0\u884c\u65f6\u8bc1\u636e\u3002",
           "keywords": [
-            "微信小程序",
+            "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
             "Canvas 2D",
             "WebAssembly",
-            "运行时"
+            "\u8fd0\u884c\u65f6"
           ],
           "localizedPath": "docs/zh-Hans/wechat-support.md"
         },
         {
           "group": "platforms",
           "slug": "gpu-promotion-runbook",
-          "title": "GPU 推进运行手册",
-          "summary": "MoUI GPU 推进运行手册的公开文档。",
+          "title": "GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c",
+          "summary": "MoUI GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "GPU 推进运行手册",
+            "GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c",
             "MoUI",
             "MoonBit"
           ],
@@ -1297,10 +1329,10 @@
         {
           "group": "platforms",
           "slug": "renderer-capability-report",
-          "title": "渲染器能力报告",
-          "summary": "MoUI 渲染器能力报告的公开文档。",
+          "title": "\u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a",
+          "summary": "MoUI \u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "渲染器能力报告",
+            "\u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a",
             "MoUI",
             "MoonBit"
           ],
@@ -1309,23 +1341,23 @@
         {
           "group": "platforms",
           "slug": "3d-capability-report",
-          "title": "3D 能力报告",
-          "summary": "实验性 3D viewer 能力、渲染路线和当前呈现证据。",
+          "title": "3D \u80fd\u529b\u62a5\u544a",
+          "summary": "\u5b9e\u9a8c\u6027 3D viewer \u80fd\u529b\u3001\u6e32\u67d3\u8def\u7ebf\u548c\u5f53\u524d\u5448\u73b0\u8bc1\u636e\u3002",
           "keywords": [
-            "3D 能力报告",
+            "3D \u80fd\u529b\u62a5\u544a",
             "WebGPU",
             "WGPU",
-            "能力"
+            "\u80fd\u529b"
           ],
           "localizedPath": "docs/zh-Hans/3d-capability-report.md"
         },
         {
           "group": "architecture-api",
           "slug": "architecture",
-          "title": "架构",
-          "summary": "MoUI 架构的公开文档。",
+          "title": "\u67b6\u6784",
+          "summary": "MoUI \u67b6\u6784\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "架构",
+            "\u67b6\u6784",
             "MoUI",
             "MoonBit"
           ],
@@ -1334,25 +1366,25 @@
         {
           "group": "architecture-api",
           "slug": "diagnostics",
-          "title": "诊断",
-          "summary": "共享 DiagnosticEvent 信封、调用方拥有的有界 sink，以及生产者/消费者映射。",
+          "title": "\u8bca\u65ad",
+          "summary": "\u5171\u4eab DiagnosticEvent \u4fe1\u5c01\u3001\u8c03\u7528\u65b9\u62e5\u6709\u7684\u6709\u754c sink\uff0c\u4ee5\u53ca\u751f\u4ea7\u8005/\u6d88\u8d39\u8005\u6620\u5c04\u3002",
           "keywords": [
-            "诊断",
+            "\u8bca\u65ad",
             "DiagnosticEvent",
-            "可观测性",
-            "降级"
+            "\u53ef\u89c2\u6d4b\u6027",
+            "\u964d\u7ea7"
           ],
           "localizedPath": "docs/zh-Hans/diagnostics.md"
         },
         {
           "group": "architecture-api",
           "slug": "task-lifecycle",
-          "title": "任务生命周期",
-          "summary": "Effect、Subscription、ServiceTask、image request 与 renderer session 的所有权、取消与 teardown 顺序。",
+          "title": "\u4efb\u52a1\u751f\u547d\u5468\u671f",
+          "summary": "Effect\u3001Subscription\u3001ServiceTask\u3001image request \u4e0e renderer session \u7684\u6240\u6709\u6743\u3001\u53d6\u6d88\u4e0e teardown \u987a\u5e8f\u3002",
           "keywords": [
-            "任务",
-            "取消",
-            "生命周期",
+            "\u4efb\u52a1",
+            "\u53d6\u6d88",
+            "\u751f\u547d\u5468\u671f",
             "Effect",
             "Subscription"
           ],
@@ -1361,10 +1393,10 @@
         {
           "group": "architecture-api",
           "slug": "architecture-map",
-          "title": "架构地图",
-          "summary": "MoUI 架构地图的公开文档。",
+          "title": "\u67b6\u6784\u5730\u56fe",
+          "summary": "MoUI \u67b6\u6784\u5730\u56fe\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "架构地图",
+            "\u67b6\u6784\u5730\u56fe",
             "MoUI",
             "MoonBit"
           ],
@@ -1373,10 +1405,10 @@
         {
           "group": "architecture-api",
           "slug": "agent-semantics",
-          "title": "已提交语义与 Agent 操作",
-          "summary": "已提交语义快照、稳定身份、generation 校验的 typed action 与默认 MCP 边界。",
+          "title": "\u5df2\u63d0\u4ea4\u8bed\u4e49\u4e0e Agent \u64cd\u4f5c",
+          "summary": "\u5df2\u63d0\u4ea4\u8bed\u4e49\u5feb\u7167\u3001\u7a33\u5b9a\u8eab\u4efd\u3001generation \u6821\u9a8c\u7684 typed action \u4e0e\u9ed8\u8ba4 MCP \u8fb9\u754c\u3002",
           "keywords": [
-            "语义",
+            "\u8bed\u4e49",
             "Agent",
             "MCP",
             "generation"
@@ -1386,10 +1418,10 @@
         {
           "group": "architecture-api",
           "slug": "api-surface",
-          "title": "API 表面",
-          "summary": "MoUI API 表面的公开文档。",
+          "title": "API \u8868\u9762",
+          "summary": "MoUI API \u8868\u9762\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "API 表面",
+            "API \u8868\u9762",
             "MoUI",
             "MoonBit"
           ],
@@ -1398,10 +1430,10 @@
         {
           "group": "architecture-api",
           "slug": "compatibility-policy",
-          "title": "兼容性策略",
-          "summary": "MoUI 已发布包的 SemVer、废弃、质量等级与外部消费者校验。",
+          "title": "\u517c\u5bb9\u6027\u7b56\u7565",
+          "summary": "MoUI \u5df2\u53d1\u5e03\u5305\u7684 SemVer\u3001\u5e9f\u5f03\u3001\u8d28\u91cf\u7b49\u7ea7\u4e0e\u5916\u90e8\u6d88\u8d39\u8005\u6821\u9a8c\u3002",
           "keywords": [
-            "兼容性策略",
+            "\u517c\u5bb9\u6027\u7b56\u7565",
             "MoUI",
             "MoonBit"
           ],
@@ -1411,7 +1443,7 @@
           "group": "architecture-api",
           "slug": "moui-skia-readme",
           "title": "moui_skia README",
-          "summary": "MoUI moui_skia README的公开文档。",
+          "summary": "MoUI moui_skia README\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
             "moui_skia README",
             "MoUI",
@@ -1422,10 +1454,10 @@
         {
           "group": "contributing",
           "slug": "development",
-          "title": "开发",
-          "summary": "MoUI 开发的公开文档。",
+          "title": "\u5f00\u53d1",
+          "summary": "MoUI \u5f00\u53d1\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "开发",
+            "\u5f00\u53d1",
             "MoUI",
             "MoonBit"
           ],
@@ -1434,8 +1466,8 @@
         {
           "group": "contributing",
           "slug": "vendor-workflow",
-          "title": "Vendor 工作流",
-          "summary": "在开发 MoMark 或 MoUI Studio 时本地 vendor MoUI，并把框架改动作为 MoUI PR 提回。",
+          "title": "Vendor \u5de5\u4f5c\u6d41",
+          "summary": "\u5728\u5f00\u53d1 MoMark \u6216 MoUI Studio \u65f6\u672c\u5730 vendor MoUI\uff0c\u5e76\u628a\u6846\u67b6\u6539\u52a8\u4f5c\u4e3a MoUI PR \u63d0\u56de\u3002",
           "keywords": [
             "vendor",
             "MoMark",
@@ -1447,10 +1479,10 @@
         {
           "group": "contributing",
           "slug": "testing",
-          "title": "测试",
-          "summary": "MoUI 测试的公开文档。",
+          "title": "\u6d4b\u8bd5",
+          "summary": "MoUI \u6d4b\u8bd5\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "测试",
+            "\u6d4b\u8bd5",
             "MoUI",
             "MoonBit"
           ],
@@ -1459,10 +1491,10 @@
         {
           "group": "contributing",
           "slug": "maintenance",
-          "title": "维护",
-          "summary": "MoUI 维护的公开文档。",
+          "title": "\u7ef4\u62a4",
+          "summary": "MoUI \u7ef4\u62a4\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "维护",
+            "\u7ef4\u62a4",
             "MoUI",
             "MoonBit"
           ],
@@ -1471,10 +1503,10 @@
         {
           "group": "contributing",
           "slug": "release-readiness",
-          "title": "发布就绪度",
-          "summary": "MoUI 发布就绪度的公开文档。",
+          "title": "\u53d1\u5e03\u5c31\u7eea\u5ea6",
+          "summary": "MoUI \u53d1\u5e03\u5c31\u7eea\u5ea6\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "发布就绪度",
+            "\u53d1\u5e03\u5c31\u7eea\u5ea6",
             "MoUI",
             "MoonBit"
           ],
@@ -1483,12 +1515,12 @@
         {
           "group": "status-roadmap",
           "slug": "compatibility-matrix",
-          "title": "兼容矩阵",
-          "summary": "0.4.x 模块 intent、发布阶段与精确基础 pin。",
+          "title": "\u517c\u5bb9\u77e9\u9635",
+          "summary": "0.4.x \u6a21\u5757 intent\u3001\u53d1\u5e03\u9636\u6bb5\u4e0e\u7cbe\u786e\u57fa\u7840 pin\u3002",
           "keywords": [
-            "兼容",
-            "发布线",
-            "模块",
+            "\u517c\u5bb9",
+            "\u53d1\u5e03\u7ebf",
+            "\u6a21\u5757",
             "pin"
           ],
           "localizedPath": "docs/zh-Hans/compatibility-matrix.md"
@@ -1496,10 +1528,10 @@
         {
           "group": "contributing",
           "slug": "ai-collaboration",
-          "title": "AI 协作",
-          "summary": "MoUI AI 协作的公开文档。",
+          "title": "AI \u534f\u4f5c",
+          "summary": "MoUI AI \u534f\u4f5c\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "AI 协作",
+            "AI \u534f\u4f5c",
             "MoUI",
             "MoonBit"
           ],
@@ -1508,10 +1540,10 @@
         {
           "group": "status-roadmap",
           "slug": "repository-facts",
-          "title": "仓库事实",
-          "summary": "MoUI 仓库事实的公开文档。",
+          "title": "\u4ed3\u5e93\u4e8b\u5b9e",
+          "summary": "MoUI \u4ed3\u5e93\u4e8b\u5b9e\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "仓库事实",
+            "\u4ed3\u5e93\u4e8b\u5b9e",
             "MoUI",
             "MoonBit"
           ],
@@ -1520,10 +1552,10 @@
         {
           "group": "status-roadmap",
           "slug": "feature-proof-matrix",
-          "title": "功能证明矩阵",
-          "summary": "MoUI 功能证明矩阵的公开文档。",
+          "title": "\u529f\u80fd\u8bc1\u660e\u77e9\u9635",
+          "summary": "MoUI \u529f\u80fd\u8bc1\u660e\u77e9\u9635\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "功能证明矩阵",
+            "\u529f\u80fd\u8bc1\u660e\u77e9\u9635",
             "MoUI",
             "MoonBit"
           ],
@@ -1532,10 +1564,10 @@
         {
           "group": "status-roadmap",
           "slug": "feature-status-dashboard",
-          "title": "功能状态面板",
-          "summary": "MoUI 功能状态面板的公开文档。",
+          "title": "\u529f\u80fd\u72b6\u6001\u9762\u677f",
+          "summary": "MoUI \u529f\u80fd\u72b6\u6001\u9762\u677f\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "功能状态面板",
+            "\u529f\u80fd\u72b6\u6001\u9762\u677f",
             "MoUI",
             "MoonBit"
           ],
@@ -1544,10 +1576,10 @@
         {
           "group": "status-roadmap",
           "slug": "roadmap-2026",
-          "title": "2026 路线图",
-          "summary": "MoUI 2026 路线图的公开文档。",
+          "title": "2026 \u8def\u7ebf\u56fe",
+          "summary": "MoUI 2026 \u8def\u7ebf\u56fe\u7684\u516c\u5f00\u6587\u6863\u3002",
           "keywords": [
-            "2026 路线图",
+            "2026 \u8def\u7ebf\u56fe",
             "MoUI",
             "MoonBit"
           ],

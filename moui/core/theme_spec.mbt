@@ -7,14 +7,18 @@
 /// rebuild the palette/surfaces/shadows.
 
 ///|
-/// Which design-system preset the user selected. `core` only resolves
-/// `Minimal` itself; branded presets (Material/Carbon/Primer/Fluent) are
-/// resolved by the `moui_theme` addon, which produces a complete `@core.Theme`
-/// (including `components`). The enum lives in `core` so `Environment` can
-/// record the user's choice without `core` depending on the addon.
+/// Which design-system preset the user selected. `core` resolves `Minimal` and
+/// `Desktop` itself; branded presets (Material/Carbon/Primer/Fluent) are
+/// resolved by the `moui_theme` addon, which produces a complete `@core.Theme`.
+/// The enum lives in `core` so `Environment` can record the user's choice
+/// without `core` depending on the addon, and so the views-side control theme
+/// resolver can pick the matching `ControlThemeSet`.
 #derive(Eq, Debug, ToJson)
 pub(all) enum ThemePreset {
   Minimal
+  /// First-party desktop preset: brand accent, compact control metrics,
+  /// softer radii and layered elevation. See `resolve_desktop_theme`.
+  Desktop
   Material
   Carbon
   Primer
@@ -135,6 +139,18 @@ pub fn ThemeSpec::minimal_light() -> ThemeSpec {
 /// Minimal-dark spec (forced dark, used by the legacy `dark_theme()` helper).
 pub fn ThemeSpec::minimal_dark() -> ThemeSpec {
   { ..ThemeSpec::default(), preset: Minimal, color_mode: Dark, }
+}
+
+///|
+/// Desktop-light spec (forced light). Pair with `resolve_desktop_theme`.
+pub fn ThemeSpec::desktop_light() -> ThemeSpec {
+  { ..ThemeSpec::default(), preset: Desktop, color_mode: Light, }
+}
+
+///|
+/// Desktop-dark spec (forced dark). Pair with `resolve_desktop_theme`.
+pub fn ThemeSpec::desktop_dark() -> ThemeSpec {
+  { ..ThemeSpec::default(), preset: Desktop, color_mode: Dark, }
 }
 
 ///|

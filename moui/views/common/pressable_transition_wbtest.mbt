@@ -139,3 +139,132 @@ test "pressable transition slot records start on state change only" {
     Some((@core.PressableState::Normal, 50.0)),
   )
 }
+
+///|
+fn pressable_color_test_context(
+  state : @core.ViewStateContext,
+  now_ms : Double,
+  environment~ : @core.Environment,
+) -> @core.ViewPaintContext {
+  {
+    frame: @core.Rect::new(x=0.0, y=0.0, width=40.0, height=20.0),
+    child_frames: [],
+    focused: false,
+    state,
+    text_control: {
+      caret: 0,
+      selection: None,
+      text_selection_anchor: None,
+      text_selection_origin: None,
+      composition: None,
+      composition_cursor: None,
+      undo_stack: [],
+      redo_stack: [],
+      goal_column: None,
+      reveal: None,
+    },
+    environment,
+    style: @core.ViewStyle::empty(),
+    text_system: @core.TextSystem::fallback(),
+    now_ms,
+  }
+}
+
+///|
+test "pressable transition color blends mid-flight and snaps under reduced motion" {
+  let rest : @core.ViewStateContext = {
+    focused: false,
+    hovered: false,
+    pressed: false,
+    selected: false,
+    checked: false,
+    expanded: false,
+    disabled: false,
+    slots: @core.ViewStateSlots::empty(),
+  }
+  let normal = @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
+  let hovered = @core.Color::rgba(r=0.2, g=0.4, b=0.8, a=1.0)
+  let pressed = @core.Color::rgba(r=0.1, g=0.2, b=0.4, a=1.0)
+  let environment = @core.Environment::neutral()
+  let recorded = pressable_state_with_transition(
+    rest,
+    @core.PressableState::Normal,
+    @core.PressableState::Hovered,
+    0.0,
+    control="probe",
+  )
+  let (mid, animating) = pressable_transition_color(
+    pressable_color_test_context(recorded, 60.0, environment~),
+    control="probe",
+    normal~,
+    hovered~,
+    pressed~,
+  )
+  assert_true(animating)
+  assert_true(mid != normal)
+  assert_true(mid != hovered)
+
+  let reduced_environment = environment.with_reduced_motion(true)
+  let (snapped, still_animating) = pressable_transition_color(
+    pressable_color_test_context(
+      recorded,
+      60.0,
+      environment=reduced_environment,
+    ),
+    control="probe",
+    normal~,
+    hovered~,
+    pressed~,
+  )
+  assert_false(still_animating)
+  assert_true(snapped == hovered)
+
+  // No recorded transition: paint the terminal color.
+  let settled = { ..rest, hovered: true, }
+  let (terminal, idle) = pressable_transition_color(
+    pressable_color_test_context(settled, 60.0, environment~),
+    control="probe",
+    normal~,
+    hovered~,
+    pressed~,
+  )
+  assert_false(idle)
+  assert_true(terminal == hovered)
+}
+
+///|
+test "pressable transition duration is capped at 150 ms" {
+  let rest : @core.ViewStateContext = {
+    focused: false,
+    hovered: false,
+    pressed: false,
+    selected: false,
+    checked: false,
+    expanded: false,
+    disabled: false,
+    slots: @core.ViewStateSlots::empty(),
+  }
+  let recorded = pressable_state_with_transition(
+    rest,
+    @core.PressableState::Normal,
+    @core.PressableState::Hovered,
+    0.0,
+    control="slow",
+  )
+  let base = @core.Theme::neutral()
+  let slow_motion = { ..base.motion, fast_ms: 500.0, }
+  let slow_environment = @core.Environment::neutral().with_theme(
+    base.with_motion(slow_motion),
+  )
+  let (color, animating) = pressable_transition_color(
+    pressable_color_test_context(recorded, 160.0, environment=slow_environment),
+    control="slow",
+    normal=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+    hovered=@core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
+    pressed=@core.Color::rgba(r=0.5, g=0.0, b=0.0, a=1.0),
+  )
+  // 500 ms would still be mid-flight at 160 ms; the 150 ms cap means the
+  // transition has settled.
+  assert_false(animating)
+  assert_true(color == @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0))
+}

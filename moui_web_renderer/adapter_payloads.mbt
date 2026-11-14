@@ -89,6 +89,19 @@ fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
         start_color: gradient.center_color,
         end_color: gradient.edge_color,
       }
+    StopsGradient(spec) => {
+      // The WebGPU host payload carries two colors; multi-stop brushes fall
+      // back to their endpoint colors there (Skia/Sun render the full list).
+      let (first, last) = spec.edge_colors()
+      let (start, end) = match spec.axis {
+        @core.LinearAxis(start, end) => (start, end)
+        @core.RadialAxis(center, radius) =>
+          (center, @core.Point::new(x=center.x + radius.max(1.0), y=center.y))
+        @core.ConicAxis(center, _) =>
+          (center, @core.Point::new(x=center.x + 1.0, y=center.y))
+      }
+      { start, end, start_color: first, end_color: last, }
+    }
   }
 }
 
@@ -114,6 +127,19 @@ fn rounded_brush_host_payload(
     LinearGradient(_) => LinearGradientPayload(brush_payload(brush, frame))
     RadialGradient(gradient) =>
       RadialGradientPayload(radial_brush_payload(gradient))
+    StopsGradient(spec) =>
+      match spec.axis {
+        @core.RadialAxis(center, radius) => {
+          let (first, last) = spec.edge_colors()
+          RadialGradientPayload({
+            center,
+            radius: radius.max(1.0),
+            center_color: first,
+            edge_color: last,
+          })
+        }
+        _ => LinearGradientPayload(brush_payload(brush, frame))
+      }
   }
 }
 

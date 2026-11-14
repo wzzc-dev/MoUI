@@ -48,6 +48,7 @@
   };
 
   const SHOWCASES = [
+    ["Gallery", "assets/screenshots/gallery-light.webp"],
     ["Showcase", "assets/screenshots/showcase.webp"],
     ["Markdown Editor", "assets/screenshots/markdown_editor.webp"],
     ["Mo Workbench", "assets/screenshots/mo_workbench.webp"],

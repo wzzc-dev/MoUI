@@ -1,4 +1,12 @@
 ///|
+/// Vertical navigation list. Rows read as list rows, not as a stack of
+/// centered buttons: the label is left-aligned and the selected row uses the
+/// tonal (accent-tinted) variant instead of a solid primary fill, so a
+/// sidebar stays legible next to the content it navigates.
+///
+/// Row height and panel padding come from `theme.layout_scale`, so the
+/// Desktop preset (30 px rows, 8 px inset) and Minimal (34/12) keep their own
+/// metrics without a per-call override.
 pub fn[Msg] sidebar(
   title : String,
   items : Array[SidebarItem[Msg]],
@@ -8,10 +16,9 @@ pub fn[Msg] sidebar(
   height~ : Double = 320.0,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
-  let inner_width = @common.view_max_double(
-    96.0,
-    width - resolved_theme.spacing_scale.md * 2.0,
-  )
+  let layout = resolved_theme.layout_scale
+  let panel_padding = layout.overlay_padding
+  let inner_width = @common.view_max_double(96.0, width - panel_padding * 2.0)
   let rows : Array[@core.View[Msg]] = [
     @text.text(
       title,
@@ -23,7 +30,7 @@ pub fn[Msg] sidebar(
   ]
   for item in items {
     let variant = if item.id == selected {
-      @style.ButtonVariant::Primary
+      @style.ButtonVariant::Tonal
     } else {
       Ghost
     }
@@ -34,7 +41,8 @@ pub fn[Msg] sidebar(
         variant~,
         theme=resolved_theme,
         width=inner_width,
-        height=34.0,
+        height=layout.row_height,
+        label_align=@core.TextStart,
       )
       .disabled(disabled=!item.enabled)
       .semantics_selected(selected=item.id == selected)
@@ -42,11 +50,11 @@ pub fn[Msg] sidebar(
     )
   }
   @container.container(
-    @layout.column(rows, spacing=resolved_theme.spacing_scale.sm, align=Start),
+    @layout.column(rows, spacing=resolved_theme.spacing_scale.xs, align=Start),
     width~,
     height~,
     variant=Base,
     theme=resolved_theme,
-    padding=resolved_theme.spacing_scale.md,
+    padding=panel_padding,
   ).semantics_role(List)
 }

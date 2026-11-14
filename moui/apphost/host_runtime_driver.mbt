@@ -70,6 +70,14 @@ pub fn HostRuntimeDriver::dispatch(
       )
       self.request_redraw_if_needed()
     }
+    AccentColorChanged(argb) => {
+      self.runtime.set_environment(
+        self.runtime
+        .environment()
+        .with_system_accent(Some(@core.Color::from_argb(argb))),
+      )
+      self.request_redraw_if_needed()
+    }
     Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()

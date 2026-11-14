@@ -29,7 +29,7 @@ fn skia_feature_note(feature : @render.RendererFeature) -> String {
     RoundedRect =>
       "Skia raster renders rounded rect fills, strokes, and solid rounded brushes in the real native renderer pixel smoke."
     Gradient =>
-      "Skia raster renders linear-gradient and radial-gradient fills and strokes for rounded rects and paths; linear gradients have real native renderer pixel smoke coverage and radial brushes have renderer-local guarded pixel coverage."
+      "Skia raster renders two-color and multi-stop linear/radial gradient fills and strokes plus conic (sweep) brushes for rounded rects and paths; Oklab interpolation uses Skia's native kOKLab gradient interpolation, and renderer-local pixel tests cover multi-stop and conic output."
     Shadow =>
       "Skia raster renders soft rounded shadows through moui_skia MaskFilter blur and real native renderer pixel smoke coverage."
     Text =>

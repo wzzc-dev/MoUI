@@ -89,6 +89,32 @@ pub(all) struct RadiusScale {
 }
 
 ///|
+/// Layout metrics for controls and surface composites: sizes only, no colors
+/// and no variant vocabulary. `core` owns this next to the spacing/radius
+/// scales so a preset can move control heights, row heights and container
+/// padding together, and so composites that resolve tokens at construction
+/// time (card, sidebar, dialog) see the same values as leaf controls.
+///
+/// Branded design systems may override it through `Theme::with_layout_scale`.
+/// Density scaling applies to every field in the resolver, the same way it
+/// applies to `SpacingScale`.
+#derive(Eq, Debug, ToJson)
+pub(all) struct LayoutScale {
+  /// Default height of a single-line control (button, text field).
+  control_height : Double
+  /// Horizontal padding inside a control, from the text/icon edge to the box.
+  control_padding_x : Double
+  /// Height of one list/sidebar row.
+  row_height : Double
+  /// Padding inside a raised surface (card).
+  card_padding : Double
+  /// Padding inside an overlay surface (popover, menu, tooltip panel).
+  overlay_padding : Double
+  /// Padding inside a dialog panel.
+  dialog_padding : Double
+}
+
+///|
 #derive(Eq, Debug, ToJson)
 pub(all) struct TypographyScale {
   /// Largest tier; page-level display numbers or hero headlines.
@@ -173,18 +199,20 @@ pub(all) enum ContentSizeCategory {
 ///|
 /// Resolved, drawable neutral theme. A `Theme` is the output of
 /// `resolve_theme(spec, system_scheme)`: it carries the palette, all scale
-/// tiers, surfaces, and motion — the **neutral** theme base. Concrete
-/// control theme tokens (`ButtonTheme`, `TextFieldTheme`, …) are **not** on
-/// `Theme`; they live in `moui/views` as `ControlThemeSet` (ADR 0017) so
-/// `core` carries no control vocabulary. Controls read a `ControlThemeSet`
-/// resolved views-side from this neutral `Theme` at paint time; `style?` on
-/// a control constructor is a one-shot override.
+/// tiers (including the size-only `LayoutScale`), surfaces, and motion — the
+/// **neutral** theme base. Concrete control theme tokens (`ButtonTheme`,
+/// `TextFieldTheme`, …) are **not** on `Theme`; they live in `moui/views` as
+/// `ControlThemeSet` (ADR 0017) so `core` carries no control vocabulary.
+/// Controls read a `ControlThemeSet` resolved views-side from this neutral
+/// `Theme` at paint time; `style?` on a control constructor is a one-shot
+/// override.
 #derive(Eq, Debug, ToJson)
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
+  layout_scale : LayoutScale
   typography : TypographyScale
   shadow_scale : ShadowScale
   motion : MotionScale
@@ -201,6 +229,9 @@ pub(all) struct Theme {
 pub(all) struct Environment {
   theme_spec : ThemeSpec
   system_scheme : ColorScheme
+  /// Host-reported system accent color (macOS `NSColor.controlAccentColor`).
+  /// The Desktop preset uses it when the app did not pin `ThemeSpec.seed`.
+  system_accent : Color?
   theme : Theme
   scale_factor : Double
   text_scale : Double
@@ -361,6 +392,29 @@ pub fn ColorPalette::dark() -> ColorPalette {
   ColorPalette::from_seed(primary=Color::rgba(r=0.953, g=0.953, b=0.953), Dark)
 }
 
+///|
+/// Desktop preset palette: the neutral zinc ramp with a brand accent in place
+/// of the monochrome Minimal primary.
+///
+/// The accent is the fallback until hosts report the OS accent color; apps can
+/// still seed their own through `ThemeSpec.seed`. Contrast: the light accent
+/// keeps white label text at 4.77:1, and the dark accent carries near-black
+/// label text at 6.38:1, so filled buttons stay AA at the 13 px control size.
+pub fn ColorPalette::desktop(scheme : ColorScheme) -> ColorPalette {
+  match scheme {
+    Light =>
+      ColorPalette::from_seed(
+        primary=Color::rgba(r=29.0 / 255.0, g=111.0 / 255.0, b=224.0 / 255.0),
+        Light,
+      )
+    Dark =>
+      ColorPalette::from_seed(
+        primary=Color::rgba(r=96.0 / 255.0, g=165.0 / 255.0, b=250.0 / 255.0),
+        Dark,
+      )
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Scale defaults
 // ---------------------------------------------------------------------------
@@ -375,6 +429,88 @@ pub fn RadiusScale::default() -> RadiusScale {
   // shadcn/minimal: sharp, small radii. Controls read as crisp rectangles,
   // not soft pills. `pill` retained for chips/badges that need full rounding.
   { sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0, }
+}
+
+///|
+pub fn RadiusScale::desktop() -> RadiusScale {
+  // Desktop preset: softer than Minimal, still restrained. `lg` carries cards
+  // and dialogs; `md` carries controls and inputs.
+  { sm: 4.0, md: 8.0, lg: 12.0, pill: 999.0, }
+}
+
+///|
+pub fn LayoutScale::default() -> LayoutScale {
+  // Minimal (0.6.x) metrics, kept unchanged so existing apps and example
+  // assertions do not move. New work targets `LayoutScale::desktop`.
+  {
+    control_height: 40.0,
+    control_padding_x: 16.0,
+    row_height: 34.0,
+    card_padding: 24.0,
+    overlay_padding: 12.0,
+    dialog_padding: 16.0,
+  }
+}
+
+///|
+pub fn LayoutScale::desktop() -> LayoutScale {
+  // Desktop preset: compact control heights and container padding. These are
+  // the sizes README/website screenshots are judged against.
+  {
+    control_height: 32.0,
+    control_padding_x: 12.0,
+    row_height: 30.0,
+    card_padding: 16.0,
+    overlay_padding: 8.0,
+    dialog_padding: 20.0,
+  }
+}
+
+///|
+pub fn TypographyScale::desktop() -> TypographyScale {
+  let label = FontSpec::new(size=13.0, weight=550, line_height=16.9)
+  {
+    display: FontSpec::new(size=32.0, weight=650, line_height=35.8),
+    headline: FontSpec::new(size=24.0, weight=650, line_height=28.8),
+    title: FontSpec::new(size=18.0, weight=600, line_height=23.4),
+    subtitle: FontSpec::new(size=15.0, weight=600, line_height=20.3),
+    body: FontSpec::new(size=14.0, weight=400, line_height=20.3),
+    label,
+    caption: FontSpec::new(size=12.0, weight=400, line_height=16.2),
+    overline: FontSpec::new(size=11.0, weight=600, line_height=14.3),
+    control: label,
+  }
+}
+
+///|
+pub fn ShadowScale::desktop(scheme~ : ColorScheme = Light) -> ShadowScale {
+  // Desktop preset: single-layer elevation tuned per layer. Cards get a
+  // hairline lift, popovers a mid shadow, dialogs a deep one. The paint model
+  // carries one shadow per layer for now, so each tier is one well-tuned
+  // shadow rather than a stacked pair.
+  let (sm_alpha, md_alpha, lg_alpha) = match scheme {
+    Light => (0.05, 0.10, 0.18)
+    Dark => (0.28, 0.38, 0.52)
+  }
+  {
+    sm: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=sm_alpha),
+      offset=Point::new(x=0.0, y=1.0),
+      blur_radius=2.0,
+    ),
+    md: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=md_alpha),
+      offset=Point::new(x=0.0, y=8.0),
+      blur_radius=24.0,
+      spread=-6.0,
+    ),
+    lg: ShadowStyle::new(
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=lg_alpha),
+      offset=Point::new(x=0.0, y=12.0),
+      blur_radius=32.0,
+      spread=-8.0,
+    ),
+  }
 }
 
 ///|
@@ -482,6 +618,14 @@ pub fn Theme::with_radius_scale(
 }
 
 ///|
+pub fn Theme::with_layout_scale(
+  self : Theme,
+  layout_scale : LayoutScale,
+) -> Theme {
+  { ..self, layout_scale, }
+}
+
+///|
 pub fn Theme::with_typography(
   self : Theme,
   typography : TypographyScale,
@@ -531,6 +675,7 @@ pub fn Environment::neutral() -> Environment {
   {
     theme_spec: spec,
     system_scheme: Light,
+    system_accent: None,
     theme,
     scale_factor: 1.0,
     text_scale: 1.0,
@@ -564,8 +709,28 @@ pub fn Environment::with_system_scheme(
   self : Environment,
   system_scheme : ColorScheme,
 ) -> Environment {
-  let theme = resolve_theme(self.theme_spec, system_scheme)
+  let theme = resolve_theme_with_accent(
+    self.theme_spec,
+    system_scheme,
+    self.system_accent,
+  )
   { ..self, system_scheme, theme, }
+}
+
+///|
+/// Replace the host-reported system accent color and rebuild the full theme.
+/// The Desktop preset uses it when the app did not set `ThemeSpec.seed`;
+/// Minimal keeps its monochrome identity. `None` clears a previous host value.
+pub fn Environment::with_system_accent(
+  self : Environment,
+  system_accent : Color?,
+) -> Environment {
+  let theme = resolve_theme_with_accent(
+    self.theme_spec,
+    self.system_scheme,
+    system_accent,
+  )
+  { ..self, system_accent, theme, }
 }
 
 ///|
@@ -576,8 +741,21 @@ pub fn Environment::with_theme_spec(
   self : Environment,
   theme_spec : ThemeSpec,
 ) -> Environment {
-  let theme = resolve_theme(theme_spec, self.system_scheme)
-  { ..self, theme_spec, theme, }
+  let theme = resolve_theme_with_accent(
+    theme_spec,
+    self.system_scheme,
+    self.system_accent,
+  )
+  // Keep the environment's derived accessibility flags in sync with the spec:
+  // controls read `environment.reduced_motion` even when their theme is pinned,
+  // so a stale field would keep animations running under reduce-motion.
+  {
+    ..self,
+    theme_spec,
+    theme,
+    reduced_motion: theme_spec.reduced_motion,
+    accessibility_contrast: theme_spec.contrast,
+  }
 }
 
 ///|

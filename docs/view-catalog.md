@@ -25,6 +25,27 @@ advanced rendering, text diagnostics, interaction diagnostics, and reusable
 examples are kept as focused diagnostic destinations rather than top-level
 catalog rows.
 
+## Control previews
+
+Every stateful control has a render sheet under
+[`assets/controls/`](assets/controls/):
+
+- top row: Desktop **light**; bottom row: Desktop **dark**;
+- left to right: **default, hover, pressed, focused, disabled**.
+
+The sheets are rendered offscreen by the control-state matrix
+(`moui_tests/visual_matrix`) through the Skia raster renderer, so they use real
+glyphs. They are written by:
+
+```sh
+node scripts/generate-control-previews.mjs         # regenerate
+node scripts/generate-control-previews.mjs --check # fail on drift
+```
+
+`--profile visual` runs the matrix and the preview drift check, so a control
+whose preview no longer matches its paint fails before the docs ship. Hosts
+without a Skia build skip the pixel comparison (the matrix gate still runs).
+
 ## Authoring new controls (boilerplate reduction)
 
 Three mechanisms cut the boilerplate every new control used to repeat:
@@ -291,6 +312,9 @@ experimental (`ready=false`).
 | `text` | `views/views.mbt` | Font/foreground modifiers | Text role through core | `views/tests/smoke` | Showcase, MoMark | Basic label primitive. Opt-in `wrap` turns the box into an auto-wrapping paragraph: the requested width bounds the line box (constraints may only narrow it), breaks come from the shared `TextSystem` paragraph engine (CJK/grapheme-safe, `\n` hard breaks), and the box grows downward, so long text composes with `scroll_view` instead of overflowing. |
 | `image` | `views/views.mbt` | Modifier-based | Image draw intent | `views/tests/smoke` | Showcase | Renderer image support is tracked in the capability report; Showcase Interaction Lab covers ready/loading/failed lifecycle states. This view always draws the whole source — `src_rect` is not a style here. To blit one cell of a sprite or tile atlas, build `@core.ImageRun` with `src_rect` (source pixel coordinates, `fit` ignored) and submit it through `PaintContext.draw_image` from a `canvas`. |
 | `icon` | `views/views.mbt` | Modifier-based | Image role through core | `views/tests/smoke` | Showcase | Icon glyph primitive sized by `IconName`, with optional color/weight overrides. |
+| `icon_svg` | `views/icon/svg_icon.mbt` | Modifier-based | Image role through core | `views/icon` wbtest | Gallery | Arbitrary SVG icon: parses `<path>` data (absolute/relative, smooth curves, arcs→cubics) and strokes it at the requested size. Use for Lucide/Tabler/Heroicons/brand marks; `IconName` stays the built-in fallback set. |
+| `lucide_icon` | `views/icon/icon_sets.mbt` | Modifier-based | Image role through core | `views/icon` wbtest | Gallery | Vendored Lucide subset (`resource/icons/lucide.json`, 103 icons, ISC): draws by name, unknown names paint nothing. Generated table via `node scripts/generate-icon-set.mjs`. |
+| `sf_symbol_icon` | `views/icon/icon_sets.mbt` | Modifier-based | Image role through core | `views/icon` wbtest | Gallery | SF Symbols name → Lucide adapter (`sf_symbol_lucide_name`, enumerable mapping); native Apple artwork needs a macOS host service and is a follow-up. |
 | `web_view` | `views/web_view.mbt` | Host native WebView | WebView role through core | `views/tests/smoke`, WebView Demo app tests | WebView Demo | Controlled native WebView primitive. The composition root creates a `WebViewHost` and `WebViewController`; navigation uses `controller.navigate(url)` and controller tasks cover reload, stop, back, forward, JSON bridge messages, request/response, and disposal. Validated `WebViewEvent` values return through the program effect/subscription path. |
 | `canvas` | `views/canvas.mbt` | Modifier-based | Group | `views/tests/smoke` | Showcase Platform and Diagnostics workspaces | Pure drawing view (`measure` + `draw` with `PaintContext`). No children. See [Canvas and custom paint](canvas-and-custom-paint.md). |
 | `custom_layout` / `custom_children_layout` | `views/views.mbt` | N/A | Group / child semantics | `views/tests/smoke` | PDF Workbench; MoMark surface; Showcase | Custom measure/paint and multi-child layout delegates for advanced controls. |
@@ -299,13 +323,13 @@ experimental (`ready=false`).
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `button` | `views/button.mbt` | ButtonStyle | Button | `views/tests/smoke` | All examples | Main activation primitive. |
+| `button` | `views/button.mbt` | ButtonStyle | Button | `views/tests/smoke` | All examples | Main activation primitive. ([preview](assets/controls/button.png)) |
 | `shortcut_button` | `views/button.mbt` | ButtonStyle/surface/text | Button with shortcut description | `views/tests/smoke` | Showcase Interaction Lab | Composes a regular button, visible shortcut label, `View::keyboard_shortcut`, and shortcut semantics so app-owned keyboard shortcuts stay discoverable and dispatch through the typed message loop. |
 | `menu_button` | `views/control_focus_overlay.mbt` | ButtonStyle | Menu | `views/tests/smoke` | Showcase | Button wrapper with menu semantics. |
-| `checkbox` | `views/views.mbt` | ChoiceControlStyle with direct font/color/size overrides | Checkbox | `views/tests/smoke` | Showcase Todo pattern | TEA-first boolean control. Component-local state should be projected into explicit values and typed `on_change` messages before crossing the public `views` API boundary. |
-| `toggle` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/tests/smoke` | Showcase | TEA-first switch control. |
-| `radio` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Radio | `views/tests/smoke` | Showcase | TEA-first single-option primitive. |
-| `text_field` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`, core input tests | Showcase, MoMark | TEA-first text input. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. |
+| `checkbox` | `views/views.mbt` | ChoiceControlStyle with direct font/color/size overrides | Checkbox | `views/tests/smoke` | Showcase Todo pattern | TEA-first boolean control. Component-local state should be projected into explicit values and typed `on_change` messages before crossing the public `views` API boundary. ([preview](assets/controls/checkbox.png)) |
+| `toggle` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/tests/smoke` | Showcase | TEA-first switch control. ([preview](assets/controls/toggle.png)) |
+| `radio` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Radio | `views/tests/smoke` | Showcase | TEA-first single-option primitive. ([preview](assets/controls/radio.png)) |
+| `text_field` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Text field | `views/tests/smoke`, core input tests | Showcase, MoMark | TEA-first text input. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. ([preview](assets/controls/text_field.png)) |
 | `searchbar` | `views/views.mbt`, `views/text_input_controls.mbt` | TextFieldStyle | Search field | `views/tests/smoke` | Showcase | TEA-first text input specialized for filtering and clear actions. |
 | `picker` | `views/views.mbt` | PickerStyle | Picker | `views/tests/smoke` | Showcase | TEA-first option picker whose popup is a real overlay subtree: placed by the runtime placement pass (flips and clamps to the viewport), hoisted above ancestor clips, and exposed to semantics/Escape via the layer stack. |
 | `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `views/tests/smoke` | Showcase | TEA-first date picker whose calendar panel is a real overlay subtree placed by the runtime placement pass (flips and clamps to the viewport) with min/max range enforcement; per-day cell semantics remain follow-up. |
@@ -314,7 +338,7 @@ experimental (`ready=false`).
 | `radio_group` / `checkbox_group` | `views/choice_groups.mbt` | ChoiceControlStyle | Group with radio/checkbox children | `views/tests/smoke` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
 | `segmented_control` | `views/choice_segmented.mbt` | ButtonStyle/SurfaceStyle | Tab-like group | `views/tests/smoke` | Showcase Controls | Controlled single-selection segmented buttons. |
 | `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_chips.mbt` | SurfaceStyle/ButtonStyle | Button or text roles | `views/tests/smoke` | Showcase Controls | Compact selection and labeling controls. |
-| `slider` | `views/control_slider.mbt` | SliderStyle with direct color overrides, optional `on_change` | Slider | `views/tests/smoke` | Showcase | Custom painted scalar control with TEA-controlled drag updates through `on_change`; drag mapping uses the declared control width so model rebuilds during a drag do not compound translation. |
+| `slider` | `views/control_slider.mbt` | SliderStyle with direct color overrides, optional `on_change` | Slider | `views/tests/smoke` | Showcase | Custom painted scalar control with TEA-controlled drag updates through `on_change`; drag mapping uses the declared control width so model rebuilds during a drag do not compound translation. ([preview](assets/controls/slider.png)) |
 | `range_slider` | `views/slider/range_slider.mbt` | SliderStyle with direct color overrides, optional `on_change` | Slider | `views/slider` tests + `views/tests/smoke` | follow-up | Two-thumb range control over a `SliderRange` (start/end); the nearest thumb takes the press and drags cannot cross, with the held thumb kept in a runtime-owned slot so model rebuilds mid-drag do not drop the gesture. Semantics actions act on the start bound; a per-bound numeric surface is follow-up. |
 | `carousel` | `views/controls/carousel.mbt` | Ambient theme palette (primary/outline dots) | ScrollView | `views/controls` tests | follow-up | Swipeable page surface over an app-declared page count and builder: a horizontal drag pulls the windowed neighbor pages in paint-only (bounded by the pages that exist) and a release past a third of the viewport flips one page; dots indicator up to ten pages, semantics report `page N of M` and scroll actions flip pages. RTL paging and drag-velocity flicks are follow-up. |
 | `color_picker` | `views/controls/color_picker.mbt` | Contrast rings over swatch colors (theme-independent) | Group | `views/controls` tests | follow-up | Token-grid picker: an app-declared swatch ramp laid out `columns` per row, tap-to-select with a contrast ring that widens on the selection, per-swatch button semantics carrying the selection state and the `#rrggbb` description. A hue/saturation field with pointer-drag color mapping is follow-up. |
@@ -379,6 +403,8 @@ experimental (`ready=false`).
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `container` / `card` | `views/views.mbt` | SurfaceStyle | Group through child | `views/tests/smoke` | Counter, Showcase, MoMark | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
+| `material` | `views/container/material.mbt` | Modifier-based | Image role through core | `views/container` test | — | Frosted backdrop panel: emits the `backdrop-blur` shader effect (Skia raster blurs the painted backdrop inside a rounded clip; Sun blurs through a rectangular clip; other renderers paint the tint). Default tint = theme surface @65%. |
+| `scroll_edge` | `views/scroll_edge.mbt` | Modifier-based | Image role through core | `views` test | — | Places content plus top/bottom linear-gradient fades via `stage`/`place`; the renderer-neutral toolbar-over-content scroll affordance. |
 | `empty` | `views/views.mbt` | N/A | None | `views/tests/smoke` | Showcase | Zero-size placeholder leaf for optional/slot composition. |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/descriptor_helpers_test.mbt`, `views/tests/smoke`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from `action_item` descriptors, buttons, text, and surfaces. |
 | `command_palette` | `views/views.mbt` | ButtonStyle/text/surface | Menu | `views/tests/smoke`, `core/program_command_test.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@views.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |

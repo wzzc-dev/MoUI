@@ -232,6 +232,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Prepare wgpu-native
+        uses: ./.github/actions/prepare-wgpu-native
+
       - name: Set up vcpkg zlib
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib -InstallWebView2

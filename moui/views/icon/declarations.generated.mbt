@@ -21,3 +21,22 @@ impl @core.ViewNode for Icon with fn declaration(self) {
     ),
   )
 }
+
+///|
+impl @core.ViewNode for SvgIcon with fn declaration(self) {
+  @common.view_declaration(
+    layout=@common.view_exact_channel(@core.DeclarationKey::double(self.size)),
+    paint=@common.view_exact_channel(
+      @common.view_record_key("SvgIcon.paint", [
+        ("markup", @core.DeclarationKey::string(self.markup)),
+        ("label", @core.DeclarationKey::string(self.label)),
+        ("size", @core.DeclarationKey::double(self.size)),
+        ("color", @common.view_color_key(self.color)),
+        ("stroke_width", @core.DeclarationKey::double(self.stroke_width)),
+      ]),
+    ),
+    semantics=@common.view_exact_channel(
+      @core.DeclarationKey::string(self.label),
+    ),
+  )
+}
