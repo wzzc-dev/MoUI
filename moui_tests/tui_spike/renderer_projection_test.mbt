@@ -90,8 +90,10 @@ test "the shipped renderer projects the layers demo into readable rows" {
     name in ["src", "core", "runtime", "program.mbt", "view.mbt", "runtime.mbt"] {
     assert_true(grid.contains(name))
   }
-  // 树尾和列表尾同理:视口外的节点被裁掉,不挤进边框行。
-  assert_false(grid.contains("moon.mod"))
+  // 树尾在 30 行视口内已全部可见:紧凑排版后十个节点都放得下,所以这里
+  // 改成正向判据。裁切仍由左栏列表(Shadows/Vellum 不可见)和 offscreen
+  // 计数承担,不会因为这条放宽而失去覆盖。
+  assert_true(grid.contains("moon.mod"))
   // 双栏必须同屏共存:存在同时带左栏条目和右栏折叠标记的一行。
   let mut side_by_side = false
   for line in lines {
