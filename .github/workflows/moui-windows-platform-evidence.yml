@@ -36,6 +36,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Prepare wgpu-native
+        uses: ./.github/actions/prepare-wgpu-native
+
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
