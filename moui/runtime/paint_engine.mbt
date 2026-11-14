@@ -222,13 +222,12 @@ fn view_paint_layer_render_node(
   element_id : ElementId,
   layer : @core.ViewPaintLayer,
 ) -> RenderNode {
+  // Paint-layer commands already use the owning view's coordinates, unlike
+  // ordinary child nodes. Seed bounds in that same space so an inset block's
+  // retained frame moves with its content. A zero-origin seed pins the bounds
+  // while the block crosses zero, reusing pixels at the wrong local offset.
   let paint_bounds = render_node_paint_bounds(
-    Rect::new(
-      x=0.0,
-      y=0.0,
-      width=layer.frame.size.width,
-      height=layer.frame.size.height,
-    ),
+    layer.frame,
     Transform2D::identity(),
     layer.commands,
     [],

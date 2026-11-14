@@ -149,12 +149,17 @@ fn markdown_editor_collapse_inactive_blank_gaps(
   document : RichTextDocument,
   selection : MarkdownEditorSelection,
   base_font : @core.FontSpec,
+  leading_blank_gap_offset~ : Int32 = 0,
+  document_has_content~ : Bool? = None,
 ) -> RichTextDocument {
   let margin = base_font.size * markdown_editor_blank_gap_line_height_scale()
   let source = document.blocks
   // A document whose blocks are all blank lines is a plain writing surface,
   // so every one of them stays a writing line and the caret always has a line.
-  let has_content = source.any(block => !rich_text_block_is_blank_gap(block))
+  let has_content = match document_has_content {
+    Some(has_content) => has_content
+    None => source.any(block => !rich_text_block_is_blank_gap(block))
+  }
   let blocks : Array[RichTextBlock] = []
   let mut index = 0
   while index < source.length() {
@@ -164,10 +169,11 @@ fn markdown_editor_collapse_inactive_blank_gaps(
       continue
     }
     let run_end = markdown_editor_blank_gap_run_end(source, index)
+    let run_start = if index == 0 { -leading_blank_gap_offset } else { index }
     for offset = index; offset < run_end; offset = offset + 1 {
       let gap = source[offset]
       let writing_line = !has_content ||
-        markdown_editor_blank_gap_is_writing_line(offset, index) ||
+        markdown_editor_blank_gap_is_writing_line(offset, run_start) ||
         markdown_editor_gap_selection_active(gap, selection)
       if writing_line {
         // A full empty line box plus the paragraph spacing that follows it,

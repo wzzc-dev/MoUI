@@ -897,8 +897,16 @@ pub fn MarkdownDocumentSession::rich_text_window(
       document,
       selection,
     )
+    let (leading_blank_gap_offset, document_has_content) = markdown_document_window_blank_gap_context(
+      self,
+      range.visible_start,
+    )
     let collapsed = markdown_editor_collapse_inactive_blank_gaps(
-      revealed, selection, base,
+      revealed,
+      selection,
+      base,
+      leading_blank_gap_offset~,
+      document_has_content=Some(document_has_content),
     )
     if focus_mode {
       markdown_editor_dim_inactive_blocks(collapsed, selection)
