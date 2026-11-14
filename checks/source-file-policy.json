@@ -132,8 +132,8 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 3050,
-      "reason": "Existing rich-text source mapping algorithms."
+      "maxLines": 3100,
+      "reason": "Existing rich-text source mapping algorithms. Raised 3050->3100 2026-11-14 (one 25-line quantum, measured 3077) for the palette-aware markdown projection and retained-layer view-coordinate mapping used by the visual-quality and scroll-spacing work."
     },
     {
       "path": "moui_wgpu_renderer/native_renderer.mbt",
@@ -197,8 +197,8 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 4275,
-      "reason": "Existing rich-text editor session state machine. Quantized 4250->4275 2026-11-06 (measured 4253) for the formatting-only `#derive` migration to MoonBit 0.10.20."
+      "maxLines": 4350,
+      "reason": "Existing rich-text editor session state machine. Quantized 4250->4275 2026-11-06 (measured 4253) for the formatting-only `#derive` migration to MoonBit 0.10.20. Raised 4275->4350 2026-11-14 (three 25-line quanta, measured 4340) for the markdown palette session state, per-block line-metric cache, and table/local-edit fast paths landed with the visual-quality baseline."
     },
     {
       "path": "scripts/record-web-runtime-presentation.mjs",
@@ -247,8 +247,8 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1700,
-      "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders. Raised 1689->1690: formatting/comment drift from the markdown-editor slices."
+      "maxLines": 1800,
+      "reason": "Existing shared rich-text editor algorithms plus canonical declaration-key encoders. Raised 1689->1690: formatting/comment drift from the markdown-editor slices. Raised 1700->1800 2026-11-14 (four 25-line quanta, measured 1788) for the palette-aware block conversion cache key and line-metric/scroll-spacing helpers."
     },
     {
       "path": "moui_richtext/markdown_html_image_gallery.mbt",
