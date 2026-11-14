@@ -64,13 +64,16 @@ impl @core.ViewNode for Text with fn layout(self, context) {
       self.size.width
     }
     let wrap_width = if available < 1.0 { 1.0 } else { available }
-    let paragraph = context.text_system.layout_paragraph(
-      @core.TextLayoutInput::new(
-        text=self.text,
-        font~,
-        max_width=wrap_width,
-        direction=context.environment.layout_direction,
+    let paragraph = text_apply_line_height(
+      context.text_system.layout_paragraph(
+        @core.TextLayoutInput::new(
+          text=self.text,
+          font~,
+          max_width=wrap_width,
+          direction=context.environment.layout_direction,
+        ),
       ),
+      font.line_height,
     )
     let size = @core.Size::new(
       width=wrap_width,
@@ -117,13 +120,16 @@ impl @core.ViewNode for Text with fn paint(self, context) {
     // constraint changes opens and closes here, and no surface-wide Clear is
     // ever emitted — either would erase views drawn before this one.
     let commands : Array[@core.DrawCommand] = []
-    let paragraph = context.text_system.layout_paragraph(
-      @core.TextLayoutInput::new(
-        text=self.text,
-        font~,
-        max_width=context.frame.size.width,
-        direction=context.environment.layout_direction,
+    let paragraph = text_apply_line_height(
+      context.text_system.layout_paragraph(
+        @core.TextLayoutInput::new(
+          text=self.text,
+          font~,
+          max_width=context.frame.size.width,
+          direction=context.environment.layout_direction,
+        ),
       ),
+      font.line_height,
     )
     commands.push(PushClip(context.frame))
     let chars = self.text.to_array()
@@ -167,6 +173,75 @@ impl @core.ViewNode for Text with fn paint(self, context) {
 }
 
 ///|
+/// Re-flow a paragraph's line boxes onto an explicit line height. The provider
+/// keeps its natural leading; this only moves each line box and grows the
+/// paragraph, centering the glyph box inside the new line box. Caret rects
+/// move with their line so selection stays on the glyphs.
+fn text_apply_line_height(
+  paragraph : @core.TextParagraphLayoutResult,
+  line_height : Double?,
+) -> @core.TextParagraphLayoutResult {
+  let requested = match line_height {
+    Some(value) => value
+    None => return paragraph
+  }
+  if requested <= 0.0 || paragraph.lines.is_empty() {
+    return paragraph
+  }
+  let lines : Array[@core.TextParagraphLineMetrics] = []
+  // (original_top, original_bottom, shift, new_height) per line, for carets.
+  let line_shifts : Array[(Double, Double, Double, Double)] = []
+  let mut line_top = 0.0
+  for line in paragraph.lines {
+    let leading = (requested - line.size.height) / 2.0
+    let shift = line_top - line.origin.y + leading
+    lines.push({
+      ..line,
+      origin: @core.Point::new(x=line.origin.x, y=line_top + leading),
+      baseline: line.baseline + shift,
+    })
+    line_shifts.push(
+      (line.origin.y, line.origin.y + line.size.height, shift, requested),
+    )
+    line_top = line_top + requested
+  }
+  let caret_rects : Array[@core.Rect] = []
+  for caret in paragraph.caret_rects {
+    let mut shift = 0.0
+    let mut height = caret.size.height
+    for entry in line_shifts {
+      if caret.origin.y >= entry.0 && caret.origin.y < entry.1 {
+        shift = entry.2
+        height = entry.3
+        break
+      }
+    }
+    caret_rects.push(
+      @core.Rect::new(
+        x=caret.origin.x,
+        y=caret.origin.y + shift,
+        width=caret.size.width,
+        height~,
+      ),
+    )
+  }
+  {
+    ..paragraph,
+    size: @core.Size::new(
+      width=paragraph.size.width,
+      height=paragraph.lines.length().to_double() * requested,
+    ),
+    baseline: if lines.is_empty() {
+      paragraph.baseline
+    } else {
+      lines[0].baseline
+    },
+    lines,
+    caret_rects,
+  }
+}
+
+///|
 impl @core.ViewNode for Text with fn semantics(self) {
   @core.ViewSemanticsInfo::leaf(role=Text, label=self.text, value=self.text)
 }
@@ -181,7 +256,7 @@ pub fn[Msg] text_field(
   theme? : @core.Theme,
   style? : @style.TextFieldStyle,
   width~ : Double = 240.0,
-  height~ : Double = 40.0,
+  height? : Double,
 ) -> @core.View[Msg] {
   // Style is resolved ambient-ly inside the control (an explicit theme?
   // overrides ctx.environment.theme) so the field tracks dark-mode / a11y
@@ -190,7 +265,7 @@ pub fn[Msg] text_field(
     value~,
     on_input~,
     placeholder~,
-    size=@core.Size::new(width~, height~),
+    size=@core.Size::new(width~, height=height.unwrap_or(0.0)),
     theme?,
     variant~,
     style?,

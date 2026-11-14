@@ -17,6 +17,8 @@ pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, backgr
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
+pub fn[Msg] material(width~ : Double, height~ : Double, blur_radius? : Double, corner_radius? : Double, tint? : @core.Color, theme? : @core.Theme, label? : String) -> @core.View[Msg]
+
 pub fn[Msg] padding_layout(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]

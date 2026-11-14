@@ -13,7 +13,7 @@ pub using @button {button, shortcut_button}
 pub using @canvas {canvas, animated_canvas, measured_canvas}
 
 ///|
-pub using @container {container, card, center, empty, spacer}
+pub using @container {container, card, center, empty, spacer, material}
 
 ///|
 pub using @checkbox {checkbox, checkbox_control}
@@ -25,7 +25,6 @@ pub using @divider {divider}
 pub using @image {image}
 
 ///|
-pub using @icon {icon}
 
 ///|
 pub using @text {text, text_field, text_area}

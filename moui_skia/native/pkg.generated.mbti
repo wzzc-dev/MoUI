@@ -43,6 +43,7 @@ pub fn Canvas::concat(Self, @moui_skia.Matrix) -> Unit
 pub fn Canvas::device_clip_bounds(Self) -> @moui_skia.IRect?
 pub fn Canvas::discard(Self) -> Unit
 pub fn Canvas::draw_arc(Self, @moui_skia.Rect, Float, Float, Bool, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_backdrop_blur(Self, Float, Float, Float, Float, radius? : Float, blur? : Float, tint~ : @moui_skia.Color) -> Bool
 pub fn Canvas::draw_circle(Self, @moui_skia.Point, Float, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_color(Self, @moui_skia.Color, blend_mode? : @moui_skia.BlendMode) -> Unit
 pub fn Canvas::draw_drrect(Self, @moui_skia.RRect, @moui_skia.RRect, @moui_skia.Paint) -> Unit
@@ -576,7 +577,10 @@ pub(all) struct Shader {
 pub fn Shader::color(@moui_skia.Color) -> Self?
 pub fn Shader::is_available(Self) -> Bool
 pub fn Shader::linear_gradient(@moui_skia.Point, @moui_skia.Point, @moui_skia.Color, @moui_skia.Color, tile_mode? : @moui_skia.TileMode) -> Self?
+pub fn Shader::linear_gradient_stops(@moui_skia.Point, @moui_skia.Point, Bytes, Bytes, Int32, tile_mode? : @moui_skia.TileMode, oklab? : Bool) -> Self?
 pub fn Shader::radial_gradient(@moui_skia.Point, Float, @moui_skia.Color, @moui_skia.Color, tile_mode? : @moui_skia.TileMode) -> Self?
+pub fn Shader::radial_gradient_stops(@moui_skia.Point, Float, Bytes, Bytes, Int32, tile_mode? : @moui_skia.TileMode, oklab? : Bool) -> Self?
+pub fn Shader::sweep_gradient_stops(@moui_skia.Point, Float, Float, Bytes, Bytes, Int32, tile_mode? : @moui_skia.TileMode, oklab? : Bool) -> Self?
 
 pub(all) struct ShapedTextRun {
   // private fields

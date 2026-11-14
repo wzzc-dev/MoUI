@@ -22,6 +22,7 @@ pub(all) enum Event {
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
+  AccentColorChanged(UInt32)
   Command(@core.CommandIntent)
   Gesture(@core.GestureEvent)
   RedrawRequested

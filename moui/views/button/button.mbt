@@ -4,6 +4,11 @@
 /// `label_align` positions the label inside the button frame. It defaults to
 /// center, the usual button look; a list row that has to read as a column of
 /// left-aligned labels (a tree row, a menu row) passes `TextStart`.
+///
+/// `width`/`height` are optional overrides. Omitted, the button hugs its
+/// content horizontally and takes `theme.layout_scale.control_height`
+/// vertically, so a preset (Minimal 40, Desktop 32) moves every control
+/// together without each call site hardcoding a size.
 pub fn[Msg] button(
   text : String,
   on_click? : Msg,
@@ -11,14 +16,17 @@ pub fn[Msg] button(
   theme? : @core.Theme,
   style? : @style.ButtonStyle,
   icon~ : @style.IconName? = None,
-  width~ : Double = 100.0,
-  height~ : Double = 40.0,
+  width? : Double,
+  height? : Double,
   label_align~ : @core.TextAlign = TextCenter,
 ) -> @core.View[Msg] {
   button_control(
     text~,
     variant~,
-    min_size=@core.Size::new(width~, height~),
+    min_size=@core.Size::new(
+      width=width.unwrap_or(0.0),
+      height=height.unwrap_or(0.0),
+    ),
     theme?,
     style?,
     leading_icon=icon,
@@ -90,9 +98,9 @@ impl @core.ViewNode for Button with fn identity(self) {
 ///|
 impl @core.ViewNode for Button with fn layout(self, ctx) {
   let resolved_theme = ctx.effective_theme(pinned=self.theme)
+  let layout = resolved_theme.layout_scale
   let font = resolved_theme.typography.control
-  let padding_horizontal = resolved_theme.spacing_scale.lg
-  let padding_vertical = resolved_theme.spacing_scale.sm
+  let padding_horizontal = layout.control_padding_x
   let icon_size = font.size
   let icon_gap = padding_horizontal * 0.5
   let icon_block_width = match self.leading_icon {
@@ -102,12 +110,21 @@ impl @core.ViewNode for Button with fn layout(self, ctx) {
   let measured = ctx.text_system.measure_text(
     @core.TextLayoutInput::new(text=self.text, font~),
   )
+  let min_height = if self.min_size.height > 0.0 {
+    self.min_size.height
+  } else {
+    layout.control_height
+  }
+  let padding_vertical = @common.view_max_double(
+    4.0,
+    (min_height - measured.size.height) / 2.0,
+  )
   let content_width = @common.view_max_double(
     self.min_size.width,
     icon_block_width + measured.size.width + padding_horizontal * 2.0,
   )
   let content_height = @common.view_max_double(
-    self.min_size.height,
+    min_height,
     measured.size.height + padding_vertical * 2.0,
   )
   @core.ViewLayoutResult::new(
@@ -125,26 +142,34 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
     None =>
       self.variant.style(@style.views_ambient_control_theme(resolved_theme))
   }
-  let normal = resolved_style.normal
+  let disabled_mode = ctx.state.disabled || !ctx.environment.enabled
+  let normal = if disabled_mode {
+    resolved_style.disabled
+  } else {
+    resolved_style.normal
+  }
   let hovered = resolved_style.hovered
   let pressed = resolved_style.pressed
   let font = resolved_theme.typography.control
   let foreground = normal.foreground
-  let padding_horizontal = resolved_theme.spacing_scale.lg
+  let padding_horizontal = resolved_theme.layout_scale.control_padding_x
   let icon_size = font.size
   let icon_gap = padding_horizontal * 0.5
   let icon_block_width = match self.leading_icon {
     Some(_) => icon_size + icon_gap
     None => 0.0
   }
-  let transition_duration_ms = resolved_theme.motion.fast_ms
+  // Design contract: hover/press transitions stay at or below 150 ms.
+  let transition_duration_ms = resolved_theme.motion.fast_ms.min(150.0)
   let transition_easing = resolved_theme.motion.easing
-  let current_state = if ctx.state.pressed {
+  let current_state = if disabled_mode {
+    @core.PressableState::Normal
+  } else if ctx.state.pressed {
     @core.PressableState::Pressed
   } else if ctx.state.hovered {
-    Hovered
+    @core.PressableState::Hovered
   } else {
-    Normal
+    @core.PressableState::Normal
   }
   let transition = @common.pressable_transition(ctx.state, control="button")
   let (background_brush, animating) = match transition {
@@ -241,6 +266,20 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
     normal.shadow,
     normal.radius,
   )
+  // Keyboard focus is a ring, not a fill: the state layer alone is too subtle
+  // at control sizes, and a ring does not change the button's box.
+  if ctx.focused && !disabled_mode {
+    commands.push(
+      StrokeRoundedRect(
+        @core.RoundedRect::new(
+          rect=ctx.frame.inset(@core.Insets::all(1.0)),
+          radius=normal.radius,
+        ),
+        resolved_theme.palette.focus,
+        2.0,
+      ),
+    )
+  }
   let text_origin_x = ctx.frame.origin.x + padding_horizontal + icon_block_width
   let text_frame = @core.Rect::new(
     x=text_origin_x,

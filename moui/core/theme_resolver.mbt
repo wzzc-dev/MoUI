@@ -19,10 +19,25 @@
 /// `resolve_minimal_theme` and then replace the palette themselves. Component
 /// themes are resolved views-side as a `ControlThemeSet`.
 pub fn resolve_theme(spec : ThemeSpec, system_scheme : ColorScheme) -> Theme {
-  // `core` only owns Minimal. Branded presets are resolved by the addon; if a
-  // branded spec reaches here (e.g. the addon is not linked), fall back to
-  // Minimal so the app still renders.
-  resolve_minimal_theme(spec, system_scheme)
+  resolve_theme_with_accent(spec, system_scheme, None)
+}
+
+///|
+/// Resolve a spec with a host-reported system accent color. The Desktop preset
+/// uses the accent when the app did not pin `ThemeSpec.seed`; Minimal keeps its
+/// monochrome identity. This is the resolver path a host accent event drives.
+pub fn resolve_theme_with_accent(
+  spec : ThemeSpec,
+  system_scheme : ColorScheme,
+  system_accent : Color?,
+) -> Theme {
+  // `core` owns Minimal and Desktop. Branded presets are resolved by the
+  // addon; if a branded spec reaches here (e.g. the addon is not linked), fall
+  // back to Minimal so the app still renders.
+  match spec.preset {
+    Desktop => resolve_desktop_theme(spec, system_scheme, system_accent?)
+    _ => resolve_minimal_theme(spec, system_scheme)
+  }
 }
 
 ///|
@@ -36,13 +51,46 @@ pub fn resolve_minimal_theme(
   spec : ThemeSpec,
   system_scheme : ColorScheme,
 ) -> Theme {
+  resolve_preset_theme(spec, system_scheme, preset=Minimal)
+}
+
+///|
+/// Resolve the Desktop preset: the neutral zinc ramp with a brand accent,
+/// compact control metrics, softer radii and layered elevation. Pair it with
+/// the views-side control theme set resolved from this theme (the views
+/// resolver dispatches on `ThemeSpec.preset`).
+pub fn resolve_desktop_theme(
+  spec : ThemeSpec,
+  system_scheme : ColorScheme,
+  system_accent? : Color,
+) -> Theme {
+  resolve_preset_theme(spec, system_scheme, preset=Desktop, system_accent?)
+}
+
+///|
+/// Shared preset assembly. Presets differ only in palette and scale defaults;
+/// density, contrast, motion and surface derivation stay identical so every
+/// preset honours the same accessibility post-processing.
+fn resolve_preset_theme(
+  spec : ThemeSpec,
+  system_scheme : ColorScheme,
+  preset~ : ThemePreset,
+  system_accent? : Color,
+) -> Theme {
   let scheme = spec.resolve_scheme(system_scheme)
   let palette = match spec.seed {
+    // An app-pinned seed is a deliberate brand choice and wins over the host.
     Some(seed) => ColorPalette::from_seed(primary=seed, scheme)
     None =>
-      match scheme {
-        Light => ColorPalette::light()
-        Dark => ColorPalette::dark()
+      match (preset, system_accent) {
+        (Desktop, Some(accent)) =>
+          ColorPalette::from_seed(primary=accent, scheme)
+        (Desktop, None) => ColorPalette::desktop(scheme)
+        _ =>
+          match scheme {
+            Light => ColorPalette::light()
+            Dark => ColorPalette::dark()
+          }
       }
   }
   // High-contrast override: pure black/white surfaces with thick outlines.
@@ -51,9 +99,22 @@ pub fn resolve_minimal_theme(
     Standard => palette
   }
   let spacing_scale = apply_density(SpacingScale::default(), spec.density)
-  let radius_scale = RadiusScale::default()
-  let typography = TypographyScale::default()
-  let shadow_scale = ShadowScale::default(scheme~)
+  let (radius_scale, layout_scale, typography, shadow_scale) = match preset {
+    Desktop =>
+      (
+        RadiusScale::desktop(),
+        apply_layout_density(LayoutScale::desktop(), spec.density),
+        TypographyScale::desktop(),
+        ShadowScale::desktop(scheme~),
+      )
+    _ =>
+      (
+        RadiusScale::default(),
+        apply_layout_density(LayoutScale::default(), spec.density),
+        TypographyScale::default(),
+        ShadowScale::default(scheme~),
+      )
+  }
   let motion = match spec.reduced_motion {
     true =>
       { ..MotionScale::default(), fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0, }
@@ -65,6 +126,7 @@ pub fn resolve_minimal_theme(
     palette,
     spacing_scale,
     radius_scale,
+    layout_scale,
     typography,
     shadow_scale,
     motion,
@@ -81,6 +143,22 @@ fn apply_density(base : SpacingScale, density : ThemeDensity) -> SpacingScale {
     md: base.md * m,
     lg: base.lg * m,
     xl: base.xl * m,
+  }
+}
+
+///|
+fn apply_layout_density(
+  base : LayoutScale,
+  density : ThemeDensity,
+) -> LayoutScale {
+  let m = density.multiplier()
+  {
+    control_height: base.control_height * m,
+    control_padding_x: base.control_padding_x * m,
+    row_height: base.row_height * m,
+    card_padding: base.card_padding * m,
+    overlay_padding: base.overlay_padding * m,
+    dialog_padding: base.dialog_padding * m,
   }
 }
 

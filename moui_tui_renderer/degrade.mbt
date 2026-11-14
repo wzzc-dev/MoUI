@@ -88,7 +88,9 @@ pub fn DegradeLog::clear(self : DegradeLog) -> Unit {
 ///|
 fn brush_is_gradient(brush : @core.Brush) -> Bool {
   match brush {
-    @core.LinearGradient(_) | @core.RadialGradient(_) => true
+    @core.LinearGradient(_)
+    | @core.RadialGradient(_)
+    | @core.StopsGradient(_) => true
     @core.Solid(_) => false
   }
 }

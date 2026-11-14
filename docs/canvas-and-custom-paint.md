@@ -86,6 +86,58 @@ transition helpers and Showcase motion cards).
 | `examples/showcase` Advanced Rendering | Layers, blend, filter, shader, path, transform |
 | `examples/pdf_workbench` | `custom_layout` page bitmaps |
 
+## Multi-stop and conic brushes
+
+`@core.Brush` carries two-color linear/radial gradients plus a richer
+`StopsGradient` variant:
+
+```moonbit
+let stops = [
+  @core.GradientStop::new(color=red, at=0.0),
+  @core.GradientStop::new(color=green, at=0.5),
+  @core.GradientStop::new(color=blue, at=1.0),
+]
+// Linear / radial axes use the same stop list.
+let linear = @core.Brush::linear_stops(
+  start=@core.Point::new(x=0.0, y=0.0),
+  end=@core.Point::new(x=240.0, y=0.0),
+  stops~,
+  oklab=true,
+)
+// Conic angles are CSS-style: degrees clockwise from 12 o'clock.
+let conic = @core.Brush::conic(
+  center=@core.Point::new(x=120.0, y=120.0),
+  stops~,
+  angle_degrees=45.0,
+)
+```
+
+`oklab=true` mixes adjacent stops in Oklab (keeping saturation through the
+midpoint). Skia interpolates that natively; Sun expands the list to sRGB
+samples. `StopsGradientSpec::color_at(t)` samples the gradient in app code, and
+`srgb_stops()` returns a renderer-ready sRGB list.
+
+## Materials and scroll edges
+
+`@views.material(width, height, blur_radius=16, corner_radius=12, tint?)`
+paints a frosted backdrop panel. It emits the `backdrop-blur` shader effect:
+renderers that can read their own pixels (Skia raster, Sun CPU) blur what was
+already painted and tone it; the others paint the tint alone as the documented
+degradation. `tint` defaults to the theme surface at 65%.
+
+```moonbit
+// A floating glass toolbar over a scrolling list.
+@views.material(width=320.0, height=44.0, blur_radius=20.0, corner_radius=22.0)
+```
+
+`@views.scroll_edge(child, width, height, fade_height=24, color?)` fades the
+content under the top/bottom edge with linear gradients — the renderer-neutral
+way to make a toolbar-over-content scroll affordance.
+
+Native macOS `NSVisualEffectView` vibrancy is declared as a host capability but
+not implemented yet; see
+[platform-readiness-declaration.md](platform-readiness-declaration.md#visual-material--host-vibrancy).
+
 Renderer capability status (gradients, filters, text shaping, …) lives in
 `docs/renderer-capability-report.md`, not in the view catalog.
 

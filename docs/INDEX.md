@@ -39,12 +39,14 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [agent-semantics.md](agent-semantics.md) | `canonical` | Committed semantics, generations, typed Agent actions, and MCP surface |
 | [plans/active/native-accessibility.md](plans/active/native-accessibility.md) | `map` | Native accessibility adapters, Probe work graph, and evidence rollout |
 | [plans/active/pointer-input-parity.md](plans/active/pointer-input-parity.md) | `map` | Gesture, touch selection, multi-pointer, scroll rebound and RTL parity work graph |
+| [plans/done/visual-quality.md](plans/done/visual-quality.md) | `map` | Default visual baseline: Desktop preset, control craft, expression, motion, and a visual gate |
 | [canvas-and-custom-paint.md](canvas-and-custom-paint.md) | `canonical` | Custom paint / canvas |
 | [non-render-component-cookbook.md](non-render-component-cookbook.md) | `canonical` | Host services from app code |
 | [button-styling-guide.md](button-styling-guide.md) | `canonical` | Button colors / styles pipeline |
 | [text-system.md](text-system.md) | `deep` | Text architecture |
 | [internationalization.md](internationalization.md) | `canonical` | Message catalogs, locale selection, and bilingual docs workflow |
 | [visual-theme-system.md](visual-theme-system.md) | `deep` | Theme system |
+| [design-metrics.md](design-metrics.md) | `canonical` | Default type/radius/layout/elevation metrics per preset |
 | [markdown-editor.md](markdown-editor.md) | `shallow` | Markdown editor: external MoMark repository and MoUI-side richtext/markdown pieces |
 | [vendor-workflow.md](vendor-workflow.md) | `canonical` | Local vendor checkout → MoUI PR workflow for MoMark and MoUI Studio |
 | [../examples/mo_desktop/ARCHITECTURE.md](../examples/mo_desktop/ARCHITECTURE.md) | `deep` | Desktop shell example: windows, registry, persistence, session flow |

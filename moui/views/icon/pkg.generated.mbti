@@ -17,6 +17,24 @@ pub fn icon_scale_point(@core.Point, Double, Double, Double) -> @core.Point
 
 pub fn icon_scale_verbs(Array[@core.PathVerb], Double, Double, Double) -> Array[@core.PathVerb]
 
+pub fn[Msg] icon_svg(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
+pub fn lucide_has(String) -> Bool
+
+pub fn[Msg] lucide_icon(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
+pub fn lucide_icon_names() -> Array[String]
+
+pub fn lucide_icon_path_data(String) -> String?
+
+pub fn lucide_icon_version() -> String
+
+pub fn[Msg] sf_symbol_icon(String, size? : Double, color? : @core.Color, stroke_width? : Double, label? : String) -> @core.View[Msg]
+
+pub fn sf_symbol_lucide_mappings() -> Array[(String, String)]
+
+pub fn sf_symbol_lucide_name(String) -> String?
+
 // Errors
 
 // Types and methods

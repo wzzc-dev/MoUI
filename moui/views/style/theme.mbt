@@ -8,6 +8,15 @@ pub using @core {type ColorPalette}
 pub using @core {type TypographyScale}
 
 ///|
+pub using @core {type LayoutScale}
+
+///|
+pub using @core {type ThemeSpec}
+
+///|
+pub using @core {type ThemePreset}
+
+///|
 /// Minimal light theme. Resolved from a `ThemeSpec` so the full palette
 /// (on*/container matrix) and scales are derived consistently with the
 /// resolver path used by host `ThemeChanged` events. Concrete control tokens
@@ -21,6 +30,57 @@ pub fn light_theme() -> @core.Theme {
 /// Minimal dark theme. Mirrors `light_theme` via the resolver.
 pub fn dark_theme() -> @core.Theme {
   @core.resolve_minimal_theme(@core.ThemeSpec::minimal_dark(), Dark)
+}
+
+///|
+/// Desktop light theme: brand accent, compact control metrics, softer radii
+/// and layered elevation. This is the preset README/website screenshots are
+/// judged against; `light_theme()` stays Minimal for compatibility.
+pub fn desktop_light_theme() -> @core.Theme {
+  @core.resolve_desktop_theme(@core.ThemeSpec::desktop_light(), Light)
+}
+
+///|
+/// Desktop dark theme. Mirrors `desktop_light_theme` via the resolver.
+pub fn desktop_dark_theme() -> @core.Theme {
+  @core.resolve_desktop_theme(@core.ThemeSpec::desktop_dark(), Dark)
+}
+
+///|
+/// Minimal theme spec for hosts that resolve through `Environment`: pass it to
+/// `Environment::neutral().with_theme_spec(...)` so a system scheme change
+/// rebuilds the same preset instead of falling back to the default.
+pub fn minimal_theme_spec(
+  scheme~ : @core.ColorScheme = Light,
+) -> @core.ThemeSpec {
+  match scheme {
+    Light => @core.ThemeSpec::minimal_light()
+    Dark => @core.ThemeSpec::minimal_dark()
+  }
+}
+
+///|
+/// Desktop theme spec. This is the resolver-driven counterpart of
+/// `desktop_light_theme()` / `desktop_dark_theme()`: a host that stores a
+/// `ThemeSpec` on the environment keeps the Desktop preset across system
+/// scheme changes.
+pub fn desktop_theme_spec(
+  scheme~ : @core.ColorScheme = Light,
+) -> @core.ThemeSpec {
+  match scheme {
+    Light => @core.ThemeSpec::desktop_light()
+    Dark => @core.ThemeSpec::desktop_dark()
+  }
+}
+
+///|
+/// Resolve the theme a `ThemeSpec` describes against a system scheme. Kept as
+/// a views-level entry so apps do not need to reach into `core`.
+pub fn theme_from_spec(
+  spec : @core.ThemeSpec,
+  system_scheme~ : @core.ColorScheme = Light,
+) -> @core.Theme {
+  @core.resolve_theme(spec, system_scheme)
 }
 
 ///|
@@ -42,6 +102,7 @@ pub fn theme(
   palette? : @core.ColorPalette,
   spacing_scale? : @core.SpacingScale,
   radius_scale? : @core.RadiusScale,
+  layout_scale? : @core.LayoutScale,
   typography? : @core.TypographyScale,
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
@@ -65,6 +126,10 @@ pub fn theme(
   }
   match radius_scale {
     Some(value) => base_theme = base_theme.with_radius_scale(value)
+    None => ()
+  }
+  match layout_scale {
+    Some(value) => base_theme = base_theme.with_layout_scale(value)
     None => ()
   }
   match typography {

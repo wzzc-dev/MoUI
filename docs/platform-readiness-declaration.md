@@ -15,6 +15,14 @@
 Tier, L0-L3 evidence, and `product_class`/`ready` are independent. Source: `checks/platform-matrix.json`; actual observations remain in `checks/platforms/*.json`.
 <!-- END GENERATED PLATFORM TIER MATRIX -->
 
+## Visual Material / Host Vibrancy
+
+| Layer | Status | Evidence |
+|---|---|---|
+| Cross-platform material | **ready** | `@views.material` emits the `backdrop-blur` shader effect plus a tint. Skia raster copies the already-painted raster backdrop, blurs it through an image filter inside a rounded clip, then tones it (`renderer_local` pixel test "skia renderer blurs the backdrop inside a material frame"). Sun CPU raster blurs the backdrop pixmap with its three-pass box filter and redraws it through a rectangular clip (rounded corners are Skia/host work; pixel test "sun renderer blurs the backdrop inside a material frame"). Web/WGPU/Metal/TUI render the tint fallback and report the unknown effect through their normal fallback diagnostics. |
+| Scroll edge fade | **ready** | `@views.scroll_edge` composes the content with top/bottom gradient overlays over `stage`/`place`; renderer-neutral and covered by `moui/views/scroll_edge_test.mbt` plus the gradient pixel tests. |
+| macOS `NSVisualEffectView` vibrancy | **declared, not implemented** | The native material is the preferred host presentation on macOS (system vibrancy sampling the window, including under web views). It needs an AppKit host service in the `window` submodule and a host-capability event; until that ships, `ready=false` for the host capability and `material` uses the Skia backdrop blur. This row must not be raised without matching-device evidence. |
+
 ## Route Portfolio And Ownership
 
 <!-- BEGIN GENERATED ROUTE READINESS STATUS -->

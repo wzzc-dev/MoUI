@@ -20,7 +20,19 @@ impl @core.ViewNode for SingleLineTextInput with fn identity(self) {
 
 ///|
 impl @core.ViewNode for SingleLineTextInput with fn layout(self, ctx) {
-  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(self.size))
+  // A zero height means "use the theme's control height", so presets move
+  // every input together. An explicit height still wins for dense rows.
+  let resolved_theme = ctx.effective_theme(pinned=self.theme)
+  let height = if self.size.height > 0.0 {
+    self.size.height
+  } else {
+    resolved_theme.layout_scale.control_height
+  }
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(
+      @core.Size::new(width=self.size.width, height~),
+    ),
+  )
 }
 
 ///|
@@ -30,8 +42,44 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
     Some(value) => value
     None => self.variant.style(resolved_theme)
   }
-  let normal = resolved_style.normal
+  let disabled_mode = ctx.state.disabled || !ctx.environment.enabled
+  let normal = if disabled_mode {
+    resolved_style.disabled
+  } else {
+    resolved_style.normal
+  }
   let focused = resolved_style.focused
+  let focused_state = ctx.focused && !disabled_mode
+  let mut animating = false
+  // Hover lifts the outline to full strength instead of adding a fill: an
+  // input's surface should stay stable while the pointer crosses it.
+  let input_border = if focused_state {
+    focused.border
+  } else {
+    match normal.border {
+      Some(value) => {
+        let (border_color, border_animating) = if disabled_mode {
+          (@common.pressable_state_color(value.brush), false)
+        } else {
+          @common.pressable_transition_color(
+            ctx,
+            control="text_field",
+            normal=@common.pressable_state_color(value.brush),
+            hovered=resolved_theme.palette.outline,
+            pressed=resolved_theme.palette.outline,
+          )
+        }
+        animating = border_animating
+        Some(
+          @core.BorderStyle::new(
+            brush=@core.Brush::solid(border_color),
+            width=value.width,
+          ),
+        )
+      }
+      None => None
+    }
+  }
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
   if self.search_bar {
@@ -44,12 +92,12 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
       foreground=normal.foreground,
       placeholder_color=resolved_style.placeholder_color,
       background=normal.background,
-      border=normal.border,
+      border=input_border,
       focused_border=focused.border,
       cursor_color=resolved_style.cursor_color,
       corner_radius=normal.radius,
       frame=ctx.frame,
-      focused=ctx.focused,
+      focused=focused_state,
       control=ctx.text_control,
       text_system=ctx.text_system,
       theme=resolved_theme,
@@ -66,12 +114,12 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
       foreground=normal.foreground,
       placeholder_color=resolved_style.placeholder_color,
       background=normal.background,
-      border=normal.border,
+      border=input_border,
       focused_border=focused.border,
       cursor_color=resolved_style.cursor_color,
       corner_radius=normal.radius,
       frame=ctx.frame,
-      focused=ctx.focused,
+      focused=focused_state,
       control=ctx.text_control,
       text_system=ctx.text_system,
       theme=resolved_theme,
@@ -90,7 +138,7 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
     post_commands: [],
     overlay_commands,
     repaint_boundary: false,
-    animating: false,
+    animating,
   }
 }
 

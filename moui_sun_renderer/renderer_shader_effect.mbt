@@ -122,5 +122,6 @@ fn sun_shader_effect_colors(
     Solid(color) => (color, color)
     LinearGradient(gradient) => (gradient.start_color, gradient.end_color)
     RadialGradient(gradient) => (gradient.center_color, gradient.edge_color)
+    StopsGradient(spec) => spec.edge_colors()
   }
 }

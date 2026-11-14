@@ -50,6 +50,7 @@ lifecycle、surface creation 和 input，MoUI 入口负责 program 和 renderer 
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、重复点击计数器、primary/tonal 按钮对比，以及保留的 macOS Skia 入口 |
 | Disabled Input Demo | disabled 控件输入契约探针 | `examples/disabled_input_demo/app/`、`examples/disabled_input_demo/{macos_skia,selftest}/` | 每个控件都包在 `.disabled(disabled=!model.enabled)` 里：disabled 状态下的点击必须让所有计数器保持为 0，启用后同样的点击才会累加。无头 `selftest` 包派发同一串点击并输出 `disabled_messages=0 enabled_messages=5`，回归门禁对此断言。 |
 | Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 根 TEA shell；Components/Patterns/Platform 保持 app-safe，Diagnostics 接收中立 DTO，runtime/render 适配位于模块根集成包。Showcase 是唯一覆盖完整 14 路矩阵的示例。 |
+| Gallery | Desktop preset 的默认外观参考界面 | `examples/gallery/app/`、`examples/gallery/macos_skia/` | 只用 stock 控件（无 example 私有颜色/字体/圆角）：排版 specimen、按钮变体、表单控件、stat card、sidebar/surface、图标。README/website 截图与视觉门禁均取自这里；用 `node scripts/generate-gallery-screenshots.mjs` 重新生成（`--check` 已进 visual profile） |
 | Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia}/` | 覆盖 Material、Carbon、Primer、Fluent、Sickle 主题预览、density/token diagnostics，以及保留的 Web/macOS 入口 |
 | Settings | Settings shell 模式 | `examples/settings/app/` | 表单 section、侧边栏导航、分段主题模式、toggle 偏好，以及可保存状态的 snapshot/restore |
 | Data Table | 面向操作型数据浏览器的模式 | `examples/data_table/app/` | 搜索/过滤 toolbar 模式、状态 chip、`ColumnVisibilityState`、带 `DataSortState` 的可排序表头、应用拥有的列宽/列顺序状态、带 `SelectionState` 的行选择、选择 toolbar 操作、树过滤器、loading/error/empty 状态、`PaginationState`、公开 `pagination` 和 `detail_panel`、model-level filtering 与 data slicing |
@@ -667,7 +668,7 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 
 ## Linux 原生
 
-Linux 示例使用 `wzzc-dev/window@0.5.4-0.2.9` Wayland host core。推荐的原生入口导入
+Linux 示例使用 `wzzc-dev/window@0.5.4-0.2.10` Wayland host core。推荐的原生入口导入
 `backend/linux` 与 `moui_skia_renderer`，通过 AppBuilder 组合后由中立 Wayland `wl_shm` presenter
 呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：

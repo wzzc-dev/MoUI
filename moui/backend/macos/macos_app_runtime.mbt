@@ -258,10 +258,20 @@ fn create_macos_app(
 ) -> (@window_macos.EventLoop, MacosNativeHostBackend) {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
+  let mut environment = services.environment_with_system_theme(
+    runtime.environment(),
+  )
+  // Seed the Desktop preset's accent from the host before the first frame;
+  // later accent changes arrive as `AccentColorChanged` window events.
+  match event_loop.system_accent_color() {
+    Some(argb) =>
+      environment = environment.with_system_accent(
+        Some(@core.Color::from_argb(argb)),
+      )
+    None => ()
+  }
   runtime.set_environment(
-    macos_environment_with_accessibility_settings(
-      services.environment_with_system_theme(runtime.environment()),
-    ),
+    macos_environment_with_accessibility_settings(environment),
   )
   let app = MacosNativeHostBackend::{
     core: @window_host.DesktopNativeHostBackendCore::new(

@@ -55,6 +55,8 @@ pub fn pressable_state_with_transition(@core.ViewStateContext, @core.PressableSt
 
 pub fn pressable_transition(@core.ViewStateContext, control~ : String) -> (@core.PressableState, Double)?
 
+pub fn pressable_transition_color(@core.ViewPaintContext, control~ : String, normal~ : @core.Color, hovered~ : @core.Color, pressed~ : @core.Color) -> (@core.Color, Bool)
+
 pub fn pressable_transition_slot(String) -> @core.ViewStateSlot[PressableTransition]
 
 pub fn push_clip(PaintContext, @core.Rect) -> Unit
@@ -100,6 +102,8 @@ pub fn[Msg] view_event_result(changed? : Bool, activated? : Bool, focused? : Boo
 pub fn view_exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel
 
 pub fn view_font_family_key(@core.FontFamily) -> @core.DeclarationKey
+
+pub fn view_font_feature_key(@core.FontFeature) -> @core.DeclarationKey
 
 pub fn view_font_key(@core.FontSpec) -> @core.DeclarationKey
 

@@ -701,6 +701,7 @@ fn brush_fallback_color(brush : @core.Brush) -> @core.Color {
     Solid(color) => color
     LinearGradient(gradient) => gradient.start_color
     RadialGradient(gradient) => gradient.center_color
+    StopsGradient(spec) => spec.edge_colors().0
   }
 }
 

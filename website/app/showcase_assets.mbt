@@ -9,6 +9,8 @@ fn showcase_image_source(slug : String) -> String {
     "android-componentgallery" =>
       "assets/screenshots/android-componentgallery.webp"
     "excel" => "assets/screenshots/excel.webp"
+    "gallery-dark" => "assets/screenshots/gallery-dark.webp"
+    "gallery-light" => "assets/screenshots/gallery-light.webp"
     "harmonyos-componentgallery" =>
       "assets/screenshots/harmonyos-componentgallery.webp"
     "ios-componentgallery" => "assets/screenshots/ios-componentgallery.webp"

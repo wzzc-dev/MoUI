@@ -378,9 +378,9 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
   let commands : Array[DrawCommand] = Array(
     capacity=self.stats.last_command_count.max(64),
   )
-  commands.push(Clear(Color::white()))
   self.rebuild_if_possible()
   self.ensure_render_tree()
+  commands.push(Clear(self.frame_background()))
   self.render_tree.root.collect_legacy_draw_commands(commands)
   self.append_exiting_overlay_commands(commands)
   self.stats.last_command_count = commands.length()
@@ -410,6 +410,15 @@ fn RuntimeState::frame_semantics_payload(
 }
 
 ///|
+/// Page backdrop for this frame. A root view may scope its own theme
+/// (`.theme(dark_theme())`) without changing the runtime environment; the
+/// scoped value is what the whole surface renders against, so the frame clear
+/// must follow it rather than the host environment.
+fn RuntimeState::frame_background(self : RuntimeState) -> Color {
+  self.element_tree.root.view_node.child_environment(self.environment).theme.palette.background
+}
+
+///|
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.stats.draw_command_build_count = self.stats.draw_command_build_count + 1
   let semantics = self.frame_semantics_payload()
@@ -431,7 +440,9 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   let clear_color = if transparent_platform_frame {
     Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   } else {
-    Color::white()
+    // The frame clear is the page backdrop: a theme without an opaque root
+    // background must still clear to its palette background, not white.
+    self.frame_background()
   }
   self.stats.last_command_count = commands.length()
   // Ship the union of damage across every paint pass since the last frame
@@ -477,7 +488,7 @@ fn platform_view_covers_surface(
 fn RuntimeState::cached_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
-  let commands : Array[DrawCommand] = [Clear(Color::white())]
+  let commands : Array[DrawCommand] = [Clear(self.frame_background())]
   self.render_tree.root.collect_legacy_draw_commands(commands)
   commands
 }

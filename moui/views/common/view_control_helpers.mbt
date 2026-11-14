@@ -69,6 +69,22 @@ pub fn view_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
     ("size", @core.DeclarationKey::double(font.size)),
     ("weight", @core.DeclarationKey::int(font.weight)),
     (
+      "line_height",
+      @core.DeclarationKey::option(
+        font.line_height.map(@core.DeclarationKey::double),
+      ),
+    ),
+    (
+      "letter_spacing",
+      @core.DeclarationKey::option(
+        font.letter_spacing.map(@core.DeclarationKey::double),
+      ),
+    ),
+    (
+      "features",
+      @core.DeclarationKey::array(font.features.map(view_font_feature_key)),
+    ),
+    (
       "style",
       @core.DeclarationKey::int(
         match font.style {
@@ -77,6 +93,16 @@ pub fn view_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
         },
       ),
     ),
+  ])
+}
+
+///|
+pub fn view_font_feature_key(
+  feature : @core.FontFeature,
+) -> @core.DeclarationKey {
+  view_record_key("FontFeature", [
+    ("tag", @core.DeclarationKey::string(feature.tag)),
+    ("value", @core.DeclarationKey::int(feature.value)),
   ])
 }
 
@@ -150,6 +176,43 @@ pub fn view_brush_key(value : @core.Brush) -> @core.DeclarationKey {
         ("radius", @core.DeclarationKey::double(spec.radius)),
         ("center_color", view_color_key(spec.center_color)),
         ("edge_color", view_color_key(spec.edge_color)),
+      ])
+    StopsGradient(spec) =>
+      view_record_key("Brush.StopsGradient", [
+        ("axis", view_gradient_axis_key(spec.axis)),
+        (
+          "stops",
+          @core.DeclarationKey::array(
+            spec.stops.map(stop => {
+              view_record_key("GradientStop", [
+                ("at", @core.DeclarationKey::double(stop.at)),
+                ("color", view_color_key(stop.color)),
+              ])
+            }),
+          ),
+        ),
+        ("oklab", @core.DeclarationKey::bool(spec.oklab)),
+      ])
+  }
+}
+
+///|
+fn view_gradient_axis_key(axis : @core.GradientAxis) -> @core.DeclarationKey {
+  match axis {
+    @core.LinearAxis(start, end) =>
+      view_record_key("GradientAxis.Linear", [
+        ("start", view_point_key(start)),
+        ("end", view_point_key(end)),
+      ])
+    @core.RadialAxis(center, radius) =>
+      view_record_key("GradientAxis.Radial", [
+        ("center", view_point_key(center)),
+        ("radius", @core.DeclarationKey::double(radius)),
+      ])
+    @core.ConicAxis(center, angle) =>
+      view_record_key("GradientAxis.Conic", [
+        ("center", view_point_key(center)),
+        ("angle", @core.DeclarationKey::double(angle)),
       ])
   }
 }

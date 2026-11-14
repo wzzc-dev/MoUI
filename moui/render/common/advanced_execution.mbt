@@ -674,6 +674,32 @@ fn brush_to_path_payload(brush : @core.Brush) -> PathBrushPayload {
         color0: gradient.center_color,
         color1: gradient.edge_color,
       }
+    StopsGradient(spec) => {
+      // The GPU diagnostics payload carries two colors; multi-stop and conic
+      // brushes degrade to their endpoint colors there. Skia/Sun render the
+      // full stop list.
+      let (first, last) = spec.edge_colors()
+      match spec.axis {
+        @core.LinearAxis(start, end) =>
+          { kind: 0.0, start, end, color0: first, color1: last, }
+        @core.RadialAxis(center, radius) =>
+          {
+            kind: 1.0,
+            start: center,
+            end: @core.Point::new(x=radius.max(1.0), y=0.0),
+            color0: first,
+            color1: last,
+          }
+        @core.ConicAxis(center, _) =>
+          {
+            kind: 1.0,
+            start: center,
+            end: @core.Point::new(x=1.0, y=0.0),
+            color0: first,
+            color1: last,
+          }
+      }
+    }
   }
 }
 

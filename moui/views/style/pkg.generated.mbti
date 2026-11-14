@@ -14,15 +14,25 @@ pub fn dark_theme() -> @core.Theme
 
 pub fn default_theme() -> @core.Theme
 
+pub fn desktop_dark_theme() -> @core.Theme
+
+pub fn desktop_light_theme() -> @core.Theme
+
+pub fn desktop_theme_spec(scheme? : @core.ColorScheme) -> @core.ThemeSpec
+
 pub fn environment(theme? : @core.Theme) -> @core.Environment
 
 pub fn light_theme() -> @core.Theme
 
 pub fn minimal_control_theme_set(@core.Theme) -> ControlThemeSet
 
+pub fn minimal_theme_spec(scheme? : @core.ColorScheme) -> @core.ThemeSpec
+
 pub fn new_control_state_style(foreground~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle, radius? : Double, shadow? : @core.ShadowStyle, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> ControlStateStyle
 
-pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, layout_scale? : @core.LayoutScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+
+pub fn theme_from_spec(@core.ThemeSpec, system_scheme? : @core.ColorScheme) -> @core.Theme
 
 pub fn views_ambient_control_theme(@core.Theme) -> ControlThemeSet
 
@@ -863,6 +873,12 @@ pub fn ToneTokens::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub using @core {type ColorPalette}
+
+pub using @core {type LayoutScale}
+
+pub using @core {type ThemePreset}
+
+pub using @core {type ThemeSpec}
 
 pub using @core {type TypographyScale}
 

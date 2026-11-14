@@ -11,6 +11,13 @@ priv struct WebsiteShowcaseEntry {
 fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
   [
     {
+      slug: "gallery-light",
+      title_key: "showcase.gallery.title",
+      subtitle_key: "showcase.gallery.subtitle",
+      status_key: "showcase.status.generated",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/gallery/app",
+    },
+    {
       slug: "showcase",
       title_key: "showcase.showcase.title",
       subtitle_key: "showcase.showcase.subtitle",

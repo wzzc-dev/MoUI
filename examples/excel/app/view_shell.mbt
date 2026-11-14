@@ -1,7 +1,7 @@
 ///|
 fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
   let model = self.model
-  let theme = @views.light_theme()
+  let theme = @views.desktop_light_theme()
   let shell = @views.column(
     [
       build_toolbar(model, theme),

@@ -52,6 +52,43 @@ fn declaration_brush(value : Brush) -> DeclarationKey {
         ("center_color", declaration_color(spec.center_color)),
         ("edge_color", declaration_color(spec.edge_color)),
       ])
+    StopsGradient(spec) =>
+      DeclarationKey::record(type_tag="Brush.StopsGradient", fields=[
+        ("axis", declaration_gradient_axis(spec.axis)),
+        (
+          "stops",
+          DeclarationKey::array(
+            spec.stops.map(stop => {
+              DeclarationKey::record(type_tag="GradientStop", fields=[
+                ("at", DeclarationKey::double(stop.at)),
+                ("color", declaration_color(stop.color)),
+              ])
+            }),
+          ),
+        ),
+        ("oklab", DeclarationKey::bool(spec.oklab)),
+      ])
+  }
+}
+
+///|
+fn declaration_gradient_axis(axis : GradientAxis) -> DeclarationKey {
+  match axis {
+    LinearAxis(start, end) =>
+      DeclarationKey::record(type_tag="GradientAxis.Linear", fields=[
+        ("start", declaration_point(start)),
+        ("end", declaration_point(end)),
+      ])
+    RadialAxis(center, radius) =>
+      DeclarationKey::record(type_tag="GradientAxis.Radial", fields=[
+        ("center", declaration_point(center)),
+        ("radius", DeclarationKey::double(radius)),
+      ])
+    ConicAxis(center, angle_degrees) =>
+      DeclarationKey::record(type_tag="GradientAxis.Conic", fields=[
+        ("center", declaration_point(center)),
+        ("angle_degrees", DeclarationKey::double(angle_degrees)),
+      ])
   }
 }
 

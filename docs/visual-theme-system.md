@@ -16,8 +16,12 @@ adapters that produce the same `@core.Theme`:
   secondary, tertiary, error, surface/on_surface/on_surface_variant, semantic
   success/warning/danger/info with on-colors, outline/outline_variant, focus,
   scrim) so a branded system does not need to derive roles ad hoc.
-- `Theme` is a token record for scheme, palette, spacing, radius, typography,
-  shadow, motion, and surfaces — **no control vocabulary** (ADR 0017).
+- `Theme` is a token record for scheme, palette, spacing, radius,
+  `layout_scale` (size-only control/row/container metrics), typography, shadow,
+  motion, and surfaces — **no control vocabulary** (ADR 0017). The neutral
+  `LayoutScale` gives control heights, row heights and container padding one
+  owner so presets move them together; see
+  [design-metrics.md](design-metrics.md) and ADR 0071.
   Control tokens live in `@views.ControlThemeSet` (`button`, `text_field`,
   `surface`, `choice_control`, `progress`, `slider`, `picker`, `feedback`,
   `badge`, `form_validation`), each storing `ControlStateTokens` resolved to
@@ -27,7 +31,10 @@ adapters that produce the same `@core.Theme`:
   `control_set.button.primary`, `theme.typography.body`,
   `theme.spacing_scale.sm`, and `theme.radius_scale.md`.
 - `@views.light_theme()` / `@views.dark_theme()` resolve the Minimal preset
-  via `resolve_minimal_theme`. `@views.theme(...)` composes whole token groups
+  via `resolve_minimal_theme`; `@views.desktop_light_theme()` /
+  `desktop_dark_theme()` resolve the first-party Desktop preset (brand accent,
+  compact metrics, softer radii, layered elevation) via
+  `resolve_desktop_theme`. `@views.theme(...)` composes whole token groups
   over an optional base. The ambient `ControlThemeSet` is built by
   `minimal_control_theme_set(theme)` and carried through the view
   environment alongside the `Theme`.

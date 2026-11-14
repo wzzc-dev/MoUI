@@ -343,6 +343,21 @@ fn webgpu_offset_brush(
         ..spec,
         center: webgpu_offset_point(spec.center, dx~, dy~),
       })
+    StopsGradient(spec) =>
+      StopsGradient({
+        ..spec,
+        axis: match spec.axis {
+          @core.LinearAxis(start, end) =>
+            @core.LinearAxis(
+              webgpu_offset_point(start, dx~, dy~),
+              webgpu_offset_point(end, dx~, dy~),
+            )
+          @core.RadialAxis(center, radius) =>
+            @core.RadialAxis(webgpu_offset_point(center, dx~, dy~), radius)
+          @core.ConicAxis(center, angle) =>
+            @core.ConicAxis(webgpu_offset_point(center, dx~, dy~), angle)
+        },
+      })
   }
 }
 

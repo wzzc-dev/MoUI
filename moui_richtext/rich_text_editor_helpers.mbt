@@ -599,6 +599,7 @@ fn declaration_brush_key(value : @core.Brush) -> @core.DeclarationKey {
         ("center_color", declaration_color_key(spec.center_color)),
         ("edge_color", declaration_color_key(spec.edge_color)),
       ])
+    StopsGradient(spec) => rich_text_stops_gradient_declaration_key(spec)
   }
 }
 
@@ -1533,6 +1534,7 @@ fn rich_text_brush_key(brush : @core.Brush) -> String {
       "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{rich_text_color_key(spec.start_color)},\{rich_text_color_key(spec.end_color)}"
     RadialGradient(spec) =>
       "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{rich_text_color_key(spec.center_color)},\{rich_text_color_key(spec.edge_color)}"
+    StopsGradient(spec) => rich_text_stops_gradient_key(spec)
   }
 }
 

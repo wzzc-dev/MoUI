@@ -451,6 +451,51 @@ fn sun_brush_paint(
           end_color=sun_color(gradient.edge_color),
         ),
       )
+    StopsGradient(spec) => {
+      let stops = spec
+        .srgb_stops()
+        .map(stop => {
+          @sun_graphics.PaintGradientStop::new(
+            offset=stop.at,
+            color=sun_color(stop.color),
+          )
+        })
+      let (first, _) = spec.edge_colors()
+      let base = paint.set_color(sun_color(first))
+      match spec.axis {
+        @core.LinearAxis(start, end) =>
+          base.set_shader(
+            @sun_graphics.PaintShader::linear_gradient_stops(
+              x0=start.x,
+              y0=start.y,
+              x1=end.x,
+              y1=end.y,
+              stops~,
+            ),
+          )
+        @core.RadialAxis(center, radius) =>
+          base.set_shader(
+            @sun_graphics.PaintShader::radial_gradient_stops(
+              cx=center.x,
+              cy=center.y,
+              radius~,
+              stops~,
+            ),
+          )
+        @core.ConicAxis(center, angle_degrees) => {
+          let start_angle = angle_degrees * @math.PI / 180.0 - @math.PI / 2.0
+          base.set_shader(
+            @sun_graphics.PaintShader::sweep_gradient_stops(
+              cx=center.x,
+              cy=center.y,
+              start_angle~,
+              sweep_angle=2.0 * @math.PI,
+              stops~,
+            ),
+          )
+        }
+      }
+    }
   }
 }
 
@@ -592,6 +637,7 @@ fn SunRasterRenderer::draw_shader_effect(
       )
     "vignette" =>
       self.draw_vignette_effect(frame, spec.fallback, spec.uniforms, opacity)
+    "backdrop-blur" => self.draw_backdrop_blur_effect(frame, spec, opacity)
     _ => {
       let fallback_paint = sun_brush_paint(spec.fallback, opacity)
       self.canvas.fill_rect(

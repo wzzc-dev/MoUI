@@ -42,6 +42,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_tui |
 | ./moui_text_providers |
 | ./examples/counter |
+| ./examples/gallery |
 | ./examples/custom_control |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
@@ -78,9 +79,9 @@ This file is generated from repository manifests and validator reports.
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 794 | 521 | 19 |
 | apphost facade (moui/apphost/pkg.generated.mbti) | 191 | 95 | 5 |
-| core (moui/core/pkg.generated.mbti) | 2854 | 1216 | 148 |
-| views facade (moui/views/pkg.generated.mbti) | 713 | 340 | 1 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 703 | 268 | 44 |
+| core (moui/core/pkg.generated.mbti) | 2946 | 1263 | 153 |
+| views facade (moui/views/pkg.generated.mbti) | 751 | 359 | 1 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 704 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
 | render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
@@ -106,6 +107,7 @@ This file is generated from repository manifests and validator reports.
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
 | Counter | examples/counter | no |
+| Visual Gallery | examples/gallery | no |
 | Custom Control | examples/custom_control | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |
@@ -141,12 +143,12 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 57.
+Published documents: 58.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
-| Guides (guides) | 11 |
+| Guides (guides) | 12 |
 | Examples (examples) | 5 |
 | Platforms (platforms) | 17 |
 | Architecture & API (architecture-api) | 8 |
