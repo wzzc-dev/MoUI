@@ -532,6 +532,10 @@ pub using @style {type ControlThemeSet}
 
 pub using @style {type CrossAlign}
 
+pub using @core {type CursorIcon}
+
+pub using @core {type CursorStyle}
+
 pub using @data {type DataFilter}
 
 pub using @data {type DataGridCell}

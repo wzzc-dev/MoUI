@@ -179,6 +179,7 @@ pub(all) struct AnyModifier[Msg] {
   focusable : Bool
   focus_trap : Bool
   flex_weight : Double
+  pointer_cursor : CursorStyle
 }
 
 #derive(Eq, @debug.Debug, @json.ToJson)
@@ -450,6 +451,59 @@ pub fn CrossAxisAlignment::equal(Self, Self) -> Bool
 pub fn CrossAxisAlignment::not_equal(Self, Self) -> Bool
 pub fn CrossAxisAlignment::to_json(Self) -> @json.Json
 pub fn CrossAxisAlignment::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CursorIcon {
+  CursorDefault
+  CursorContextMenu
+  CursorHelp
+  CursorProgress
+  CursorWait
+  CursorCell
+  CursorVerticalText
+  CursorAlias
+  CursorCopy
+  CursorNoDrop
+  CursorGrab
+  CursorGrabbing
+  CursorEResize
+  CursorNResize
+  CursorNeResize
+  CursorNwResize
+  CursorSResize
+  CursorSeResize
+  CursorSwResize
+  CursorWResize
+  CursorEwResize
+  CursorNsResize
+  CursorNeswResize
+  CursorNwseResize
+  CursorColResize
+  CursorRowResize
+  CursorAllScroll
+  CursorZoomIn
+  CursorZoomOut
+  CursorPointer
+  CursorText
+  CursorCrosshair
+  CursorMove
+  CursorNotAllowed
+}
+pub fn CursorIcon::equal(Self, Self) -> Bool
+pub fn CursorIcon::not_equal(Self, Self) -> Bool
+pub fn CursorIcon::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CursorStyle {
+  Inherit
+  Default
+  Icon(CursorIcon)
+}
+pub fn CursorStyle::equal(Self, Self) -> Bool
+pub fn CursorStyle::icon(Self) -> CursorIcon
+pub fn CursorStyle::is_inherit(Self) -> Bool
+pub fn CursorStyle::not_equal(Self, Self) -> Bool
+pub fn CursorStyle::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
@@ -2480,6 +2534,7 @@ pub fn[Msg] View::child_style(Self[Msg], ViewStyle) -> ViewStyle
 pub fn[Msg] View::children(Self[Msg]) -> Array[Self[Msg]]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::cursor(Self[Msg], CursorStyle) -> Self[Msg]
 pub fn[Msg] View::declaration(Self[Msg]) -> ViewDeclaration
 pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
 pub fn[Msg] View::dispatch_semantics_action(Self[Msg], ViewSemanticsActionContext, SemanticsAction) -> ViewSemanticsActionResult[Msg]
@@ -2521,6 +2576,7 @@ pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
 pub fn[Msg] View::place_overlays(Self[Msg], OverlayPlacementContext) -> Array[(Int32, Rect)]?
 pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[PlatformViewPlacement]
+pub fn[Msg] View::pointer_cursor(Self[Msg]) -> CursorStyle
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, elapsed_ms? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
@@ -2932,6 +2988,7 @@ pub(open) trait ViewNode {
   fn focus_trap(Self) -> Bool = _
   fn keyboard_policy(Self) -> KeyboardPolicy = _
   fn flex_weight(Self) -> Double = _
+  fn pointer_cursor(Self) -> CursorStyle = _
 }
 
 pub(open) trait ViewStateValue {

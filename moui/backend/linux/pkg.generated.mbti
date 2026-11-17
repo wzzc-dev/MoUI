@@ -44,6 +44,12 @@ pub fn linux_surface_metrics_for_content(@wzzc-dev/moui/core.SurfaceMetrics, Lin
 
 pub fn linux_timer_source() -> @services.TimerSource
 
+pub fn linux_titlebar_button_at(Double, @wzzc-dev/moui/core.Point) -> LinuxTitlebarButton?
+
+pub fn linux_titlebar_button_slot_rect(Double, Int32) -> @wzzc-dev/moui/core.Rect
+
+pub fn linux_titlebar_pointer_action(LinuxClientDecorationState, Double, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.PointerPhase, Int32, LinuxTitlebarButton?) -> LinuxTitlebarAction
+
 pub fn readiness() -> LinuxBackendReadiness
 
 pub fn scaffold_input_host() -> @input.InputState
@@ -151,7 +157,7 @@ pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, window_controls? : @services.WindowControlSource?) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields
@@ -171,6 +177,28 @@ pub fn LinuxNativeHostBackend::standard_key_binding(Self, @wzzc-dev/window/linux
 pub fn LinuxNativeHostBackend::suspended(Self, @wzzc-dev/window/linux.ActiveEventLoop) -> Unit
 pub fn LinuxNativeHostBackend::window_event(Self, @wzzc-dev/window/linux.ActiveEventLoop, @wzzc-dev/window/core.WindowId, @wzzc-dev/window/core.WindowEvent) -> Unit
 pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
+
+#derive(Eq, @debug.Debug)
+pub(all) enum LinuxTitlebarAction {
+  Pass
+  Consume
+  Drag
+  Press(LinuxTitlebarButton)
+  Activate(LinuxTitlebarButton)
+}
+pub fn LinuxTitlebarAction::equal(Self, Self) -> Bool
+pub fn LinuxTitlebarAction::not_equal(Self, Self) -> Bool
+pub fn LinuxTitlebarAction::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum LinuxTitlebarButton {
+  Close
+  Minimize
+  Maximize
+}
+pub fn LinuxTitlebarButton::equal(Self, Self) -> Bool
+pub fn LinuxTitlebarButton::not_equal(Self, Self) -> Bool
+pub fn LinuxTitlebarButton::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

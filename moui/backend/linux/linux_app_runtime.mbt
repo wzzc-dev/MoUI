@@ -155,6 +155,8 @@ fn create_linux_app(
     atspi_state: LinuxAtspiHostState::new(),
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
+    window_controls: options.window_controls,
+    titlebar_press: None,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @apphost.install_platform_view_plugins(options.platform_view_plugins, (

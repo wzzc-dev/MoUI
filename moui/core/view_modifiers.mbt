@@ -504,6 +504,30 @@ pub fn[Msg] View::on_hover(
 }
 
 ///|
+/// Declare the pointer cursor for the region this view occupies.
+///
+/// The declaration is resolved by the runtime against the pointer's hit chain:
+/// the innermost declaration wins, `Inherit` keeps walking outward to the
+/// nearest ancestor that declares a shape, and `Default` forces the arrow
+/// without consulting ancestors. Resolution is read-only — a pointer move that
+/// crosses a declaration never dirties layout, paint, or semantics — and the
+/// host is told only when the resolved shape changes.
+///
+/// Like `on_hover`, this is transparent: no semantics role, no focus stop, no
+/// pointer capture. Declare it on the hit area (an 8px splitter gutter, a link,
+/// a canvas) and let the framework reset it when the pointer leaves, the
+/// declaring view unmounts, or the window loses focus. While a press is active
+/// the style of the pressed element is kept, so a splitter drag that leaves the
+/// gutter keeps its resize cursor.
+///
+/// ```moonbit nocheck
+/// @views.container(..).cursor(@core.CursorStyle::Icon(@core.CursorIcon::ColResize))
+/// ```
+pub fn[Msg] View::cursor(self : View[Msg], style : CursorStyle) -> View[Msg] {
+  self.apply_modifier(CursorModifier::{ style, }.to_any_modifier())
+}
+
+///|
 pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,

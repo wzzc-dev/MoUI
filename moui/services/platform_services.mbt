@@ -513,6 +513,10 @@ pub struct PlatformServices {
   /// window dragging keep the unwired default, whose declarations are simply
   /// never applied.
   window_drag_value : WindowDragRegionSource
+  /// Non-optional for the same reason as `window_drag_value`: app chrome can
+  /// call window-control intents unconditionally, and an unhosted source simply
+  /// reports no capabilities.
+  window_controls_value : WindowControlSource
 }
 
 ///|
@@ -526,6 +530,7 @@ pub fn PlatformServices::new(
   window_state~ : WindowStateServices = WindowStateServices::new(),
   lifecycle~ : AppLifecycleSource? = None,
   window_drag~ : WindowDragRegionSource = WindowDragRegionSource::new(),
+  window_controls~ : WindowControlSource = WindowControlSource::unavailable(),
 ) -> PlatformServices {
   {
     notifications_value: notifications,
@@ -537,6 +542,7 @@ pub fn PlatformServices::new(
     window_state_value: window_state,
     lifecycle_value: lifecycle,
     window_drag_value: window_drag,
+    window_controls_value: window_controls,
   }
 }
 
@@ -593,6 +599,16 @@ pub fn PlatformServices::lifecycle(
   self : PlatformServices,
 ) -> AppLifecycleSource? {
   self.lifecycle_value
+}
+
+///|
+/// Window controls (minimize/maximize/fullscreen/decorations) plus the
+/// capabilities the current host reports. Unhosted sources expose no
+/// capabilities so chrome can degrade honestly.
+pub fn PlatformServices::window_controls(
+  self : PlatformServices,
+) -> WindowControlSource {
+  self.window_controls_value
 }
 
 ///|

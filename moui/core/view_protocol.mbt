@@ -774,6 +774,15 @@ pub fn[Msg] View::keyboard_policy(self : View[Msg]) -> KeyboardPolicy {
 }
 
 ///|
+/// The pointer cursor this view declares for its own frame. `Inherit` means the
+/// view defers to an ancestor; the runtime resolves the chain under the pointer.
+/// Sampled live (not frozen at construction like identity/declaration) because a
+/// declaration change must reach the host without a remount.
+pub fn[Msg] View::pointer_cursor(self : View[Msg]) -> CursorStyle {
+  self.adapter.node.pointer_cursor()
+}
+
+///|
 pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
   self.adapter.focusable_snapshot
 }

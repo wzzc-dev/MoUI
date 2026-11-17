@@ -113,6 +113,13 @@ fn MacosNativeHostBackend::drain_window_requests(
   self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
 ) -> Unit {
+  // App-declared window-control intents become logical requests before the
+  // queue is drained, so one tick both enqueues and applies them.
+  @window_host.sync_window_controls(
+    self.window_controls,
+    self.core.lifecycle,
+    @services.WindowControlCapabilities::all(),
+  )
   self.core.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
@@ -322,6 +329,7 @@ fn MacosNativeHostBackend::dispose_window(
     self.core.images,
     self.core.services,
     window_id,
+    input=self.core.input,
   )
   ignore(self.core.platform_slots.remove_host(window_id))
 }
@@ -366,6 +374,20 @@ fn MacosNativeHostBackend::macos_surface_actions(
     },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },
+    set_maximized=fn(maximized) { window.set_maximized(maximized) },
+    set_fullscreen=fn(fullscreen) {
+      window.set_fullscreen(
+        if fullscreen {
+          Some(Borderless(None))
+        } else {
+          None
+        },
+      )
+    },
+    set_decorations=fn(decorated) { window.set_decorations(decorated) },
+    set_cursor=fn(icon) {
+      window.set_cursor_icon(@window_host.cursor_icon_to_window(icon))
+    },
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {

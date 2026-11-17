@@ -308,8 +308,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // AppRuntime::diagnostics_sink / push_diagnostics / drain_diagnostics
       // (+4 lines): the bounded renderer-frame diagnostics sink and its reader;
       // DevTools providers read snapshot() without owning the runtime.
-      max_lines: 794,
-      max_pub_lines: 534,
+      // Cursor projection: AppRuntime::pointer_cursor (+1 line) forwards the
+      // runtime-resolved pointer style to the host pump.
+      max_lines: 795,
+      max_pub_lines: 535,
       max_pub_all_lines: 19,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
@@ -342,8 +344,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // backend, and render; runtime/backend/render must not import it.
       // HostRuntimeDriver::diagnostics_sink (+2 lines) forwards the
       // runtime-owned sink to window frame hooks.
-      max_lines: 191,
-      max_pub_lines: 99,
+      // Cursor projection: HostRuntimeDriver::pointer_cursor (+1 line) is the
+      // driver-owned read the window workflows use.
+      max_lines: 192,
+      max_pub_lines: 100,
       max_pub_all_lines: 5,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/runtime\"", "\"wzzc-dev/moui/backend\"",
@@ -472,8 +476,14 @@ fn package_budgets() -> Array[PackageBudget] {
       // `with_system_accent`, `resolve_theme_with_accent`, and
       // `Color::from_argb` carry the host-reported OS accent as an additive
       // environment input; `resolve_desktop_theme` gains an optional argument.
-      max_lines: 2946,
-      max_pub_lines: 1270,
+      // Cursor style API (issue #25): CursorIcon (+37 lines: 34 neutral
+      // variants that mirror the platform icon set plus Debug/Eq), CursorStyle
+      // (+7), CursorStyle::icon / is_inherit (+2), View::cursor /
+      // View::pointer_cursor (+2), AnyModifier::pointer_cursor and the
+      // ViewNode trait hook (+4). Cross-runtime pointer presentation is core
+      // protocol data, the same family as PointerEvent/PointerPhase.
+      max_lines: 3003,
+      max_pub_lines: 1273,
       max_pub_all_lines: 155,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -567,8 +577,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // scheme change keeps the preset.
       // 730 -> 751 (+11 declarations): icon_svg/Lucide/SF bridge, plus
       // `material` and `scroll_edge` from the V3 material slice.
-      max_lines: 751,
-      max_pub_lines: 359,
+      // 751 -> 755 / 359 -> 361: `CursorStyle` and `CursorIcon` join the
+      // facade (issue #25) so app code can name a pointer shape without
+      // importing a platform package.
+      max_lines: 755,
+      max_pub_lines: 361,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
@@ -597,7 +610,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // host event type to land OS-recognized gestures on.
       // +1 line: Event::AccentColorChanged(UInt32) carries the host system
       // accent (packed 0xAARRGGBB) to the apphost driver.
-      max_lines: 704,
+      // Window chrome controls (issue #24): Maximize/Restore/SetFullscreen/
+      // SetDecorationsWindow join WindowRequest (+2 lines) and WindowRecord
+      // gains observed maximized/fullscreen state (+2). Both are logical window
+      // state transitions, i.e. exactly what this layer owns.
+      max_lines: 710,
       max_pub_lines: 268,
       max_pub_all_lines: 55,
       required_tokens: [

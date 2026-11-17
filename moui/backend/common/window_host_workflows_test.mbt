@@ -44,6 +44,10 @@ fn workflow_test_actions(
     sync_observed_resize=metrics => metrics,
     set_minimized=_ => (),
     set_visible=_ => (),
+    set_maximized=_ => (),
+    set_fullscreen=_ => (),
+    set_decorations=_ => (),
+    set_cursor=_ => (),
     request_redraw=() => (),
     request_ime_update=_ => (),
     drop=() => trace.push("native-surface"),
@@ -154,8 +158,9 @@ test "last window close follows owner teardown order exactly once" {
     ),
   )
   trace.clear()
-  @common.dispose_window(lifecycle, frames, images, services, id)
-  @common.dispose_window(lifecycle, frames, images, services, id)
+  let input = @window_input.WindowInputState::new()
+  @common.dispose_window(lifecycle, frames, images, services, id, input~)
+  @common.dispose_window(lifecycle, frames, images, services, id, input~)
   assert_eq(trace, [
     "image-cancel", "services", "renderer", "platform-views", "native-surface",
   ])
@@ -197,7 +202,8 @@ test "closing one of two windows preserves the other owners and services" {
       workflow_test_actions(second_trace),
     ),
   )
-  @common.dispose_window(lifecycle, frames, images, services, first)
+  let input = @window_input.WindowInputState::new()
+  @common.dispose_window(lifecycle, frames, images, services, first, input~)
   assert_true(services.is_open())
   inspect(frames.count(), content="1")
   inspect(images.count(), content="1")

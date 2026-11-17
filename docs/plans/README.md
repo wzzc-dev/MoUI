@@ -57,6 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [cursor-and-window-chrome](active/cursor-and-window-chrome.md) | Issue #25 cursor style API and issue #24 window chrome controls: view-declared pointer shapes resolved through the runtime hit chain and pushed to the host once per change; maximize/restore/fullscreen/decorations requests plus honest per-host capability reporting and interactive Linux CSD |
 | [maturity-program](active/maturity-program.md) | Umbrella program for closing the external-adopter loop: developer loop (transient handoff + DevTools), productization correctness, ecosystem seed, and governance truth, followed by public-quality and 1.0-readiness phases |
 | [maturity-dev-loop](active/maturity-dev-loop.md) | `moui dev` transient handoff (scroll/focus/caret), DevTools read-only protocol/server/client, and diagnostics forwarding |
 | [maturity-productization](active/maturity-productization.md) | Release packaging, Linux native bundle, bundle identity, `moui verify` provenance, mobile release/signing, and physical-device evidence |

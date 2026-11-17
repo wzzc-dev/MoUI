@@ -677,6 +677,10 @@ priv struct AnimFocusState {
   /// the subtree keeps animating so a recognizer that completes on elapsed time
   /// can fire while a finger holds still. Absent key means not pressed.
   pointer_presses : Map[Int32, Point]
+  /// Cursor frozen by the press on each stream (set on `Down`, cleared on
+  /// `Up`/`Cancel`). Keeps a drag cursor stable while the pointer travels out of
+  /// the declaring region.
+  press_cursor : Map[Int32, @core.CursorStyle]
   /// Per-pointer recognizer ownership for the current press stream. This is
   /// transient input state, not component state: it exists only to arbitrate
   /// competing tap/long-press/drag/scroll recognizers and is discarded when the
@@ -773,6 +777,7 @@ fn AnimFocusState::new() -> AnimFocusState {
     semantic_focused: None,
     pointer_captures: Map([]),
     pointer_presses: Map([]),
+    press_cursor: Map([]),
     gesture_arena: PointerGestureArena::new(),
     active_focus_trap: None,
     saved_focus_key: None,

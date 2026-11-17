@@ -74,8 +74,22 @@ test "window host sequence: open, present, close with stale and cross-window int
 
   // close (first): teardown follows the owner order exactly once; duplicate
   // dispose calls are no-ops. The shared services stay open (second lives).
-  @common.dispose_window(lifecycle, frames, images, services, first)
-  @common.dispose_window(lifecycle, frames, images, services, first)
+  @common.dispose_window(
+    lifecycle,
+    frames,
+    images,
+    services,
+    first,
+    input=@window_input.WindowInputState::new(),
+  )
+  @common.dispose_window(
+    lifecycle,
+    frames,
+    images,
+    services,
+    first,
+    input=@window_input.WindowInputState::new(),
+  )
   assert_eq(trace, [
     "renderer", "image-cancel", "renderer", "platform-views", "native-surface",
   ])
@@ -102,7 +116,14 @@ test "window host sequence: open, present, close with stale and cross-window int
 
   // close (second, last window): shared services dispose before the renderer
   // session, per the contract order.
-  @common.dispose_window(lifecycle, frames, images, services, second)
+  @common.dispose_window(
+    lifecycle,
+    frames,
+    images,
+    services,
+    second,
+    input=@window_input.WindowInputState::new(),
+  )
   assert_eq(trace, [
     "renderer", "image-cancel", "renderer", "platform-views", "native-surface", "services",
     "renderer", "platform-views", "native-surface",

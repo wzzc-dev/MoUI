@@ -29,9 +29,54 @@ fn LinuxNativeHostBackend::dispatch_host_event(
   window_id : @host.WindowId,
   host_event : @host.Event,
 ) -> Unit {
-  let decorations = match self.core.platform_slots.lookup_host(window_id) {
+  let slot = self.core.platform_slots.lookup_host(window_id)
+  let decorations = match slot {
     Some(slot) => slot.extra
     None => LinuxClientDecorationState::new(active=false)
+  }
+  // Client-side decorations own the titlebar band: buttons issue window
+  // requests, the body starts a native window move, and scroll over the band is
+  // swallowed instead of scrolling content that is not under the pointer.
+  // Before this, every event in the band was dropped while the painted buttons
+  // stayed visible (issue #24).
+  match (slot, host_event) {
+    (Some(slot), Pointer(pointer)) =>
+      if decorations.active && pointer.position.y < decorations.titlebar_height {
+        let content_width = linux_window_surface_metrics(slot.window).logical_size.width
+        match
+          linux_titlebar_pointer_action(
+            decorations,
+            content_width,
+            pointer.position,
+            pointer.phase,
+            pointer.button,
+            self.titlebar_press,
+          ) {
+          Pass => ()
+          Consume => return
+          Drag => {
+            self.titlebar_press = None
+            slot.window.drag_window() catch {
+              _ => ()
+            }
+            return
+          }
+          Press(button) => {
+            self.titlebar_press = Some(button)
+            return
+          }
+          Activate(button) => {
+            self.titlebar_press = None
+            self.activate_titlebar_button(window_id, button)
+            return
+          }
+        }
+      }
+    (Some(_), Scroll(scroll)) =>
+      if decorations.active && scroll.position.y < decorations.titlebar_height {
+        return
+      }
+    _ => ()
   }
   @window_host.dispatch_host_event(
     self.core.lifecycle,
@@ -46,10 +91,39 @@ fn LinuxNativeHostBackend::dispatch_host_event(
 }
 
 ///|
+/// Turn a completed client-side-decoration button press into a window request.
+fn LinuxNativeHostBackend::activate_titlebar_button(
+  self : LinuxNativeHostBackend,
+  window_id : @host.WindowId,
+  button : LinuxTitlebarButton,
+) -> Unit {
+  let queue = self.core.lifecycle.requests()
+  match button {
+    Close => queue.push(CloseWindow(window_id))
+    Minimize => queue.push(MinimizeWindow(window_id))
+    Maximize =>
+      match self.core.lifecycle.window_registry().lookup(window_id) {
+        Some(record) =>
+          if record.maximized {
+            queue.push(RestoreWindow(window_id))
+          } else {
+            queue.push(MaximizeWindow(window_id))
+          }
+        None => ()
+      }
+  }
+}
+
+///|
 fn LinuxNativeHostBackend::drain_window_requests(
   self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
 ) -> Unit {
+  @window_host.sync_window_controls(
+    self.window_controls,
+    self.core.lifecycle,
+    @services.WindowControlCapabilities::all(),
+  )
   self.core.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
@@ -267,6 +341,7 @@ fn LinuxNativeHostBackend::dispose_window(
     self.core.images,
     self.core.services,
     window_id,
+    input=self.core.input,
   )
   ignore(self.core.platform_slots.remove_host(window_id))
 }
@@ -310,6 +385,20 @@ fn LinuxNativeHostBackend::linux_surface_actions(
     },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },
+    set_maximized=fn(maximized) { window.set_maximized(maximized) },
+    set_fullscreen=fn(fullscreen) {
+      window.set_fullscreen(
+        if fullscreen {
+          Some(Borderless(None))
+        } else {
+          None
+        },
+      )
+    },
+    set_decorations=fn(decorated) { window.set_decorations(decorated) },
+    set_cursor=fn(icon) {
+      window.set_cursor_icon(@window_host.cursor_icon_to_window(icon))
+    },
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
