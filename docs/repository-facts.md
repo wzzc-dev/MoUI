@@ -41,6 +41,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_sun |
 | ./moui_tui |
 | ./moui_text_providers |
+| ./examples/chrome_demo |
 | ./examples/counter |
 | ./examples/gallery |
 | ./examples/custom_control |
@@ -81,7 +82,7 @@ This file is generated from repository manifests and validator reports.
 | apphost facade (moui/apphost/pkg.generated.mbti) | 192 | 96 | 5 |
 | core (moui/core/pkg.generated.mbti) | 3003 | 1273 | 155 |
 | views facade (moui/views/pkg.generated.mbti) | 755 | 361 | 1 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 710 | 268 | 44 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 712 | 269 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
 | render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
@@ -93,7 +94,7 @@ This file is generated from repository manifests and validator reports.
 | native metal renderer (moui_metal_renderer/pkg.generated.mbti) | 57 | 13 | 0 |
 | native text protocol (moui_text_providers/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 | backend common (moui/backend/common/pkg.generated.mbti) | 87 | 23 | 2 |
-| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 317 | 181 | 7 |
+| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 319 | 182 | 7 |
 | backend common frame owner (moui/backend/common/frame/pkg.generated.mbti) | 59 | 22 | 0 |
 | backend common image owner (moui/backend/common/image/pkg.generated.mbti) | 50 | 22 | 0 |
 | backend common input owner (moui/backend/common/input/pkg.generated.mbti) | 186 | 69 | 7 |
@@ -106,6 +107,7 @@ This file is generated from repository manifests and validator reports.
 | 3D Viewer | examples/three_d_viewer | no |
 | 3D Physics Viewer | examples/three_d_physics_viewer | no |
 | Agent Counter | examples/agent_counter | no |
+| Chrome Demo | examples/chrome_demo | no |
 | Counter | examples/counter | no |
 | Visual Gallery | examples/gallery | no |
 | Custom Control | examples/custom_control | no |

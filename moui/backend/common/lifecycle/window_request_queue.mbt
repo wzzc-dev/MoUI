@@ -241,3 +241,22 @@ fn WindowRequestQueue::remove_completion_handler(
   self.completion_handlers = remaining
   removed
 }
+
+///|
+/// Resolve the request port a backend hands its lifecycle.
+///
+/// A composition root that never called `AppBuilder::window_requests` provides
+/// the unavailable port, whose pushes vanish. Backends substitute their own
+/// queue in that case so app-driven window requests — window-control intents,
+/// client-decoration buttons, runtime close requests — still reach the
+/// platform instead of being silently dropped.
+pub fn effective_window_requests(
+  requested : @backend_host.WindowRequests,
+  fallback : @backend_host.WindowRequests,
+) -> @backend_host.WindowRequests {
+  if requested.is_unavailable() {
+    fallback
+  } else {
+    requested
+  }
+}

@@ -8,6 +8,7 @@ pub struct WindowRequests {
   drain_fn : () -> Array[WindowRequest]
   record_result_fn : (WindowRequest, WindowRequestResult) -> Unit
   subscribe_completed_fn : ((WindowRequestCompletion) -> Unit) -> () -> Unit
+  priv unavailable : Bool
 }
 
 ///|
@@ -25,6 +26,7 @@ pub fn WindowRequests::new(
   subscribe_completed~ : ((WindowRequestCompletion) -> Unit) -> () -> Unit = _handle => {
     () => ()
   },
+  unavailable~ : Bool = false,
 ) -> WindowRequests {
   {
     push_fn: push,
@@ -33,12 +35,21 @@ pub fn WindowRequests::new(
     drain_fn: drain,
     record_result_fn: record_result,
     subscribe_completed_fn: subscribe_completed,
+    unavailable,
   }
 }
 
 ///|
 pub fn WindowRequests::unavailable() -> WindowRequests {
-  WindowRequests::new()
+  WindowRequests::new(unavailable=true)
+}
+
+///|
+/// True for the port a composition root left unwired. Backends treat it as
+/// "install your own request queue" instead of silently dropping every
+/// app-driven window request (window controls, CSD buttons, close requests).
+pub fn WindowRequests::is_unavailable(self : WindowRequests) -> Bool {
+  self.unavailable
 }
 
 ///|

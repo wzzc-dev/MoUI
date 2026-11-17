@@ -34,8 +34,11 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       // command facade gain maximize/restore/fullscreen/decorations helpers,
       // the registry records observed maximized/fullscreen, and the lifecycle
       // exposes its request port: +11 lines / +11 pub.
+      // +1 pub: effective_window_requests resolves the launch port against a
+      // backend-owned fallback queue, the counterpart of the
+      // WindowRequests::is_unavailable marker.
       max_lines: 331,
-      max_pub_lines: 181,
+      max_pub_lines: 182,
       max_pub_all_lines: 10,
       required_tokens: [
         "pub struct WindowLifecycle", "pub struct EmbeddedLifecycle", "pub struct WindowRegistry",
