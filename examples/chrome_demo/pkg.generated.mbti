@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/chrome_demo"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Model
+
+pub(all) enum Msg {
+  SplitDrag(@core.DragGestureEvent)
+  Maximize
+  Restore
+  ToggleFullscreen
+  Refresh
+}
+
+// Type aliases
+
+// Traits

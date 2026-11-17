@@ -251,3 +251,45 @@ and scroll input silently dropped.
 - Linux CSD input has no matching-host Wayland evidence in this change; the
   behaviour is unit-tested and the runtime claim stays "implemented, needs
   matching-host smoke".
+
+## Runtime evidence (X11/Xvfb, 2026-11-17)
+
+A dedicated example (`examples/chrome_demo`) exercised both features on a real
+X11 desktop (Xvfb :99 1920x1080 + openbox), Sun CPU renderer, pinned window
+crate `ac1d810`:
+
+- Hover declarations (pointer/text/grabbing zones), a `CursorColResize`
+  splitter dragged 320→200 with live layout reflow, and Maximize / Restore /
+  Fullscreen through `services.WindowControlSource` — geometry and the
+  observed-state label flipped correctly each time (PNG stills + native-cursor
+  MP4 under `artifacts/`, uncommitted).
+
+Findings that changed code in this branch:
+
+- **Unwired request port dropped app-driven window requests.** A composition
+  root that skips `AppBuilder::window_requests` hands the lifecycle the
+  unavailable port, whose pushes vanish — window-control intents and CSD
+  button requests never reached the platform (observed at runtime, then fixed).
+  Fix: `WindowRequests::is_unavailable()` marker plus
+  `effective_window_requests`, and the Linux entry installs a backend-owned
+  `WindowRequestQueue` when the port is unwired. Unit-tested; the demo now
+  wires the queue explicitly as well.
+- Renderer prebuilds: `wgpu-native v29.0.1.1` and the pinned Skia release both
+  download and extract locally through the network proxy (plus an `unzip`
+  shim and `MBT_WGPU_NATIVE_CACHE_DIR` pointing inside the workspace). No
+  repository file depends on those overrides.
+
+Recorded, not fixed here:
+
+- **Upstream window crate (`ac1d810`): Linux never applies
+  `Window::set_cursor_icon` natively.** `native_x11.c` has no cursor code at
+  all; `native_wayland.c` only sets DEFAULT on pointer enter and edge-resize
+  shapes from C-side geometry. The MoUI chain (declaration → resolution →
+  session dedup → `Window::set_cursor_icon`) is verified up to that boundary;
+  visible shape switching on Linux needs an upstream fix (macOS/Windows/Web
+  apply natively). X11 evidence therefore shows the arrow cursor throughout
+  and must not be read as a cursor-shape failure of the MoUI layer.
+- `validate-renderer-capability-consistency.mjs` belongs to the `pr` profile
+  and runs on the macOS CI runner. On Linux it stops at
+  `moui_metal_renderer`'s Objective-C++ stubs (`cc1objplus` unavailable), so
+  the Linux-side local run cannot complete regardless of this branch.

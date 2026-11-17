@@ -74,8 +74,8 @@
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 710,
-      "public_declarations": 268,
+      "lines": 712,
+      "public_declarations": 269,
       "pub_all_declarations": 44
     },
     {
@@ -158,8 +158,8 @@
     {
       "label": "backend common lifecycle owner",
       "path": "moui/backend/common/lifecycle/pkg.generated.mbti",
-      "lines": 317,
-      "public_declarations": 181,
+      "lines": 319,
+      "public_declarations": 182,
       "pub_all_declarations": 7
     },
     {

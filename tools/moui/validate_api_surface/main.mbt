@@ -614,8 +614,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // SetDecorationsWindow join WindowRequest (+2 lines) and WindowRecord
       // gains observed maximized/fullscreen state (+2). Both are logical window
       // state transitions, i.e. exactly what this layer owns.
-      max_lines: 710,
-      max_pub_lines: 268,
+      // +1 line / +1 pub: WindowRequests::is_unavailable lets backends detect
+      // an unwired composition-root port and install their own request queue,
+      // so app-driven window requests cannot vanish silently.
+      max_lines: 712,
+      max_pub_lines: 269,
       max_pub_all_lines: 55,
       required_tokens: [
         "pub(all) enum Event", "pub(all) struct WindowId", "pub struct WindowRequests",

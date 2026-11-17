@@ -115,7 +115,10 @@ fn file_budgets() -> Array[FileBudget] {
     {
       path: "moui/backend/common/lifecycle/window_request_queue.mbt",
       // Issue #24: maximize/restore/fullscreen/decorations queue helpers.
-      max_lines: 243,
+      // +19: effective_window_requests resolves an unwired composition-root
+      // port (WindowRequests::is_unavailable) against a backend-owned queue,
+      // so app-driven window requests cannot vanish silently.
+      max_lines: 262,
     },
     {
       path: "moui/backend/common/lifecycle/window_platform_map.mbt",
@@ -184,8 +187,10 @@ fn file_budgets() -> Array[FileBudget] {
       // accent decode-test note and this entry's self-referential growth.
       // 414 -> 420 (issue #24): the window-chrome line-budget notes above and
       // this entry's own growth.
+      // 422 -> 425 -> 427 (issue #24 follow-up): the effective_window_requests
+      // note above and this entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 422,
+      max_lines: 427,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

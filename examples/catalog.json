@@ -8,6 +8,12 @@
       "featured": false
     },
     {
+      "id": "chrome_demo",
+      "path": "examples/chrome_demo",
+      "title": "Chrome Demo",
+      "featured": false
+    },
+    {
       "id": "counter",
       "path": "examples/counter",
       "title": "Counter",

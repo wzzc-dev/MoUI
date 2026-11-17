@@ -12,6 +12,8 @@ import {
 // Values
 pub fn drain_to_runtime_slots(WindowCommands, WindowRegistry, WindowRuntimeSlots) -> Array[@backend.WindowRequestCompletion]
 
+pub fn effective_window_requests(@backend.WindowRequests, @backend.WindowRequests) -> @backend.WindowRequests
+
 pub fn resolve_open_request(WindowRegistry, @backend.WindowOpenRequest, WindowSceneResolver) -> WindowOpenResolution
 
 // Errors

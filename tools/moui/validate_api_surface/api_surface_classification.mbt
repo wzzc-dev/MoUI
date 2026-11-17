@@ -175,7 +175,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/backend/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 268,
+      // +1: WindowRequests::is_unavailable, the unwired-port marker backends
+      // use to install their own request queue (see backend budget note).
+      max_count: 269,
     },
     {
       path: "moui/backend/pkg.generated.mbti",
