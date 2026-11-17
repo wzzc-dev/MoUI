@@ -34,6 +34,9 @@ pub(all) struct AnyModifier[Msg] {
   focus_trap : Bool
   /// Flex weight contributed by this modifier.
   flex_weight : Double
+  /// Pointer cursor declared by this modifier. `Inherit` (the default) defers
+  /// to the nearest ancestor; the runtime resolves it against the hit chain.
+  pointer_cursor : CursorStyle
 }
 
 ///|
@@ -63,6 +66,7 @@ pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
     focusable: false,
     focus_trap: false,
     flex_weight: 0.0,
+    pointer_cursor: Inherit,
   }
 }
 

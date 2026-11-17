@@ -95,10 +95,14 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/common/lifecycle/window_requests_test.mbt",
       max_lines: 385,
     },
-    { path: "moui/backend/window_lifecycle.mbt", max_lines: 182, },
+    // Issue #24: observed maximized/fullscreen record state and four window
+    // chrome request variants.
+    { path: "moui/backend/window_lifecycle.mbt", max_lines: 205, },
     {
       path: "moui/backend/common/lifecycle/window_registry.mbt",
-      max_lines: 325,
+      // Issue #24: maximize/restore/fullscreen request application plus the
+      // observed-state setters and their restore helper.
+      max_lines: 371,
     },
     {
       path: "moui/backend/common/lifecycle/window_scene_resolution.mbt",
@@ -110,13 +114,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/lifecycle/window_request_queue.mbt",
-      max_lines: 210,
+      // Issue #24: maximize/restore/fullscreen/decorations queue helpers.
+      max_lines: 243,
     },
     {
       path: "moui/backend/common/lifecycle/window_platform_map.mbt",
       max_lines: 109,
     },
-    { path: "moui/backend/web/host_runtime.mbt", max_lines: 484, },
+    // Issue #24: window-control options plus the three chrome projections.
+    { path: "moui/backend/web/host_runtime.mbt", max_lines: 514, },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620, },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240, },
     { path: "moui/backend/web/web_host.mbt", max_lines: 500, },
@@ -176,8 +182,10 @@ fn file_budgets() -> Array[FileBudget] {
       // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
       // 409 -> 412 (2026-11-13, visual-quality V3 accent): the window
       // accent decode-test note and this entry's self-referential growth.
+      // 414 -> 420 (issue #24): the window-chrome line-budget notes above and
+      // this entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 414,
+      max_lines: 422,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

@@ -305,6 +305,7 @@ fn create_macos_app(
     }),
     min_window_size: options.min_window_size,
     window_drag: options.window_drag,
+    window_controls: options.window_controls,
     window_background: options.window_background,
     window_drag_applied: None,
     window_drag_window: None,

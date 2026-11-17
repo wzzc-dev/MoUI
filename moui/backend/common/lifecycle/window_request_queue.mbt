@@ -125,6 +125,40 @@ pub fn WindowRequestQueue::set_primary_window(
 }
 
 ///|
+pub fn WindowRequestQueue::maximize_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.push(MaximizeWindow(id))
+}
+
+///|
+pub fn WindowRequestQueue::restore_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.push(RestoreWindow(id))
+}
+
+///|
+pub fn WindowRequestQueue::set_fullscreen_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+  fullscreen : Bool,
+) -> Unit {
+  self.push(SetFullscreenWindow(id, fullscreen))
+}
+
+///|
+pub fn WindowRequestQueue::set_decorations_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+  decorations : Bool,
+) -> Unit {
+  self.push(SetDecorationsWindow(id, decorations))
+}
+
+///|
 pub fn WindowRequestQueue::drain(
   self : WindowRequestQueue,
 ) -> Array[@backend_host.WindowRequest] {

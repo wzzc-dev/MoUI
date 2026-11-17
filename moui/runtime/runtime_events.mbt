@@ -346,12 +346,26 @@ fn RuntimeState::dispatch_pointer_event(
   // `Exit` must not clear it: hover can leave a control while the press
   // continues).
   match event.phase {
-    Down => self.animfocus.pointer_presses[event.id] = event.position
+    Down => {
+      self.animfocus.pointer_presses[event.id] = event.position
+      // Freeze the cursor of the pressed region for the duration of the press:
+      // a splitter drag that leaves its 8px gutter keeps the resize cursor
+      // instead of flickering back to the arrow, and the style cannot drift
+      // with the moving sample above.
+      if event.id == primary_pointer_id {
+        self.animfocus.press_cursor[event.id] = self.resolve_cursor_at(
+          event.position,
+        )
+      }
+    }
     Move =>
       if self.animfocus.pointer_presses.contains(event.id) {
         self.animfocus.pointer_presses[event.id] = event.position
       }
-    Up | Cancel => self.animfocus.pointer_presses.remove(event.id)
+    Up | Cancel => {
+      self.animfocus.pointer_presses.remove(event.id)
+      self.animfocus.press_cursor.remove(event.id)
+    }
     _ => ()
   }
   // Focus, like hover, has one owner: the primary stream. A second finger

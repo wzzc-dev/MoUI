@@ -484,6 +484,16 @@ pub fn HostRuntimeDriver::focused_text_input(
 }
 
 ///|
+/// The pointer cursor the view tree resolves for the current pointer, ready for
+/// the host to project. `Default` when nothing is declared under the pointer, or
+/// before the first pointer sample.
+pub fn HostRuntimeDriver::pointer_cursor(
+  self : HostRuntimeDriver,
+) -> @core.CursorStyle {
+  self.runtime.pointer_cursor()
+}
+
+///|
 pub fn HostRuntimeDriver::size(self : HostRuntimeDriver) -> @core.Size {
   self.runtime.size()
 }

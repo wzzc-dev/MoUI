@@ -625,6 +625,8 @@ pub(all) struct WindowRecord {
   metrics : @core.SurfaceMetrics
   phase : WindowLifecyclePhase
   primary : Bool
+  maximized : Bool
+  fullscreen : Bool
 }
 pub fn WindowRecord::equal(Self, Self) -> Bool
 pub fn WindowRecord::new(id~ : WindowId, title~ : String, scene? : WindowScene, metrics~ : @core.SurfaceMetrics, phase? : WindowLifecyclePhase, primary? : Bool) -> Self
@@ -641,6 +643,10 @@ pub(all) enum WindowRequest {
   MinimizeWindow(WindowId)
   ShowWindow(WindowId)
   SetPrimaryWindow(WindowId)
+  MaximizeWindow(WindowId)
+  RestoreWindow(WindowId)
+  SetFullscreenWindow(WindowId, Bool)
+  SetDecorationsWindow(WindowId, Bool)
 }
 pub fn WindowRequest::equal(Self, Self) -> Bool
 pub fn WindowRequest::not_equal(Self, Self) -> Bool

@@ -120,6 +120,7 @@ pub fn WindowCommands::drain_to_registry(Self, WindowRegistry) -> Array[@backend
 pub fn WindowCommands::drain_with_handler(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Array[@backend.WindowRequestCompletion]
 pub fn WindowCommands::focus(Self, @backend.WindowId) -> Unit
 pub fn WindowCommands::is_empty(Self) -> Bool
+pub fn WindowCommands::maximize(Self, @backend.WindowId) -> Unit
 pub fn WindowCommands::minimize(Self, @backend.WindowId) -> Unit
 pub fn WindowCommands::new(queue? : WindowRequestQueue) -> Self
 pub fn WindowCommands::open(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
@@ -128,6 +129,9 @@ pub fn WindowCommands::pending_count(Self) -> Int32
 pub fn WindowCommands::queue(Self) -> WindowRequestQueue
 pub fn WindowCommands::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
 pub fn WindowCommands::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
+pub fn WindowCommands::restore(Self, @backend.WindowId) -> Unit
+pub fn WindowCommands::set_decorations(Self, @backend.WindowId, Bool) -> Unit
+pub fn WindowCommands::set_fullscreen(Self, @backend.WindowId, Bool) -> Unit
 pub fn WindowCommands::set_primary(Self, @backend.WindowId) -> Unit
 pub fn WindowCommands::show(Self, @backend.WindowId) -> Unit
 
@@ -150,6 +154,7 @@ pub fn WindowLifecycle::open_resolution(Self, @backend.WindowOpenRequest) -> Win
 pub fn WindowLifecycle::register_primary_runtime_slot(Self, @backend.WindowId, @apphost.HostRuntimeDriver) -> Unit
 pub fn WindowLifecycle::register_runtime_slot(Self, WindowRuntimeSlot) -> Bool
 pub fn WindowLifecycle::request_exit(Self, Int32) -> Unit
+pub fn WindowLifecycle::requests(Self) -> @backend.WindowRequests
 pub fn WindowLifecycle::rollback_window_record(Self, @backend.WindowId) -> Unit
 pub fn WindowLifecycle::runtime_slot_lookup(Self, @backend.WindowId) -> WindowRuntimeSlot?
 pub fn WindowLifecycle::runtime_slots(Self) -> WindowRuntimeSlots
@@ -185,6 +190,8 @@ pub fn WindowRegistry::primary_window(Self) -> @backend.WindowRecord?
 pub fn WindowRegistry::remove_closed(Self) -> Int32
 pub fn WindowRegistry::request_close(Self, @backend.WindowId) -> Bool
 pub fn WindowRegistry::resize(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Bool
+pub fn WindowRegistry::set_fullscreen(Self, @backend.WindowId, Bool) -> Bool
+pub fn WindowRegistry::set_maximized(Self, @backend.WindowId, Bool) -> Bool
 pub fn WindowRegistry::set_primary(Self, @backend.WindowId) -> Bool
 pub fn WindowRegistry::show(Self, @backend.WindowId) -> Bool
 
@@ -200,6 +207,7 @@ pub fn WindowRequestQueue::drain_completed(Self) -> Array[@backend.WindowRequest
 pub fn WindowRequestQueue::drain_with_handler(Self, (@backend.WindowRequest) -> @backend.WindowRequestResult) -> Array[@backend.WindowRequestCompletion]
 pub fn WindowRequestQueue::focus_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::is_empty(Self) -> Bool
+pub fn WindowRequestQueue::maximize_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::minimize_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::new() -> Self
 pub fn WindowRequestQueue::open_window(Self, title~ : String, scene? : @backend.WindowScene, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, primary? : Bool) -> Unit
@@ -208,6 +216,9 @@ pub fn WindowRequestQueue::push(Self, @backend.WindowRequest) -> Unit
 pub fn WindowRequestQueue::record_result(Self, @backend.WindowRequest, @backend.WindowRequestResult) -> Unit
 pub fn WindowRequestQueue::requests(Self) -> @backend.WindowRequests
 pub fn WindowRequestQueue::resize_window(Self, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
+pub fn WindowRequestQueue::restore_window(Self, @backend.WindowId) -> Unit
+pub fn WindowRequestQueue::set_decorations_window(Self, @backend.WindowId, Bool) -> Unit
+pub fn WindowRequestQueue::set_fullscreen_window(Self, @backend.WindowId, Bool) -> Unit
 pub fn WindowRequestQueue::set_primary_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::show_window(Self, @backend.WindowId) -> Unit
 pub fn WindowRequestQueue::subscribe_completed(Self, (@backend.WindowRequestCompletion) -> Unit) -> () -> Unit
@@ -288,6 +299,10 @@ pub(all) struct WindowSurfaceActions {
   sync_observed_resize : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics
   set_minimized : (Bool) -> Unit
   set_visible : (Bool) -> Unit
+  set_maximized : (Bool) -> Unit
+  set_fullscreen : (Bool) -> Unit
+  set_decorations : (Bool) -> Unit
+  set_cursor : (@wzzc-dev/moui/core.CursorIcon) -> Unit
   request_redraw : () -> Unit
   request_ime_update : (@input.TextInputSessionAction) -> Unit
   set_drag_region : (@wzzc-dev/moui/core.Rect?) -> Unit
@@ -295,7 +310,7 @@ pub(all) struct WindowSurfaceActions {
   native_view_handle : () -> UInt64?
   dispose_platform_views : () -> Unit
 }
-pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, sync_observed_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@input.TextInputSessionAction) -> Unit, set_drag_region? : (@wzzc-dev/moui/core.Rect?) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
+pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, sync_observed_resize~ : (@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, set_maximized~ : (Bool) -> Unit, set_fullscreen~ : (Bool) -> Unit, set_decorations~ : (Bool) -> Unit, set_cursor~ : (@wzzc-dev/moui/core.CursorIcon) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@input.TextInputSessionAction) -> Unit, set_drag_region? : (@wzzc-dev/moui/core.Rect?) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
 
 // Type aliases
 

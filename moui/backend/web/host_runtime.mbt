@@ -31,6 +31,7 @@ struct WebApp {
   platform_slots : WebWindowPlatformSlots
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
+  window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -61,6 +62,8 @@ pub(all) struct WebAppOptions {
   event_sources : @apphost.HostPlatformEventSources?
   route_source : @services.RouteSource?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
+  /// App-facing window controls. Browser tabs expose fullscreen only.
+  window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -129,6 +132,7 @@ fn run_app_internal(
     platform_slots: WebWindowPlatformSlots::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
+    window_controls: options.window_controls,
   }
   web_active_app.val = Some(app)
   @apphost.install_platform_view_plugins(options.platform_view_plugins, (
@@ -182,8 +186,15 @@ pub fn WebAppOptions::new(
   event_sources~ : @apphost.HostPlatformEventSources? = None,
   route_source~ : @services.RouteSource? = None,
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
+  window_controls~ : @services.WindowControlSource? = None,
 ) -> WebAppOptions {
-  { scene_resolver, event_sources, route_source, platform_view_plugins, }
+  {
+    scene_resolver,
+    event_sources,
+    route_source,
+    platform_view_plugins,
+    window_controls,
+  }
 }
 
 ///|
@@ -409,6 +420,24 @@ fn WebApp::web_surface_actions(
     },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },
+    // Browser windows are page tabs: the upstream web backend intentionally
+    // makes minimize/maximize/decorations no-ops, so capabilities report false
+    // for them and these closures never run in practice. Fullscreen is real
+    // (the Element Fullscreen API).
+    set_maximized=fn(maximized) { window.set_maximized(maximized) },
+    set_fullscreen=fn(fullscreen) {
+      window.set_fullscreen(
+        if fullscreen {
+          Some(Borderless(None))
+        } else {
+          None
+        },
+      )
+    },
+    set_decorations=fn(decorated) { window.set_decorations(decorated) },
+    set_cursor=fn(icon) {
+      window.set_cursor_icon(@window_host.cursor_icon_to_window(icon))
+    },
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {
@@ -463,6 +492,7 @@ fn WebApp::dispose_window(self : WebApp, window_id : @host.WindowId) -> Unit {
     self.images,
     self.services,
     window_id,
+    input=self.input,
   )
   ignore(self.platform_slots.remove_host(window_id))
   if self.lifecycle.runtime_slots_empty() {

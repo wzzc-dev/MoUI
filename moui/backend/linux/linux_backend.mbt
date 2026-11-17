@@ -88,6 +88,8 @@ pub struct LinuxHostAppOptions {
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
+  /// App-facing window controls; `None` keeps control intents a no-op.
+  priv window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -131,6 +133,9 @@ struct LinuxNativeHostBackend {
   atspi_state : LinuxAtspiHostState
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
+  window_controls : @services.WindowControlSource?
+  /// Titlebar button pressed on the CSD band, waiting for its release.
+  mut titlebar_press : LinuxTitlebarButton?
 }
 
 ///|
@@ -155,6 +160,7 @@ pub fn LinuxHostAppOptions::new(
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar~ : Bool = false,
   platform_attributes~ : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  window_controls~ : @services.WindowControlSource? = None,
 ) -> LinuxHostAppOptions {
   {
     scene_resolver,
@@ -162,6 +168,7 @@ pub fn LinuxHostAppOptions::new(
     platform_view_plugins,
     transparent_titlebar,
     platform_attributes,
+    window_controls,
   }
 }
 

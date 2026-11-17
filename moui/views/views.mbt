@@ -374,6 +374,12 @@ pub using @popover {
 }
 
 ///|
+/// Pointer-cursor vocabulary for `.cursor(...)` modifiers. `CursorStyle`'s
+/// `Icon` variant carries the upstream `window` icon type, so apps that need to
+/// name a concrete shape read `CursorIcon` from the root facade.
+pub using @core {type CursorStyle, type CursorIcon}
+
+///|
 /// Command types re-exported from core for the menu/command entrypoints.
 pub using @core {
   type ActionCommand,

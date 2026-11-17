@@ -259,14 +259,9 @@ fn append_linux_titlebar_button(
   index_from_right~ : Int32,
   color~ : @core.Color,
 ) -> Unit {
-  let slot = 28.0
-  let gap = 8.0
+  let slot = linux_titlebar_button_slot_rect(width, index_from_right)
   let size = 12.0
-  let left = width -
-    gap -
-    (index_from_right + 1).to_double() * slot -
-    index_from_right.to_double() * gap +
-    (slot - size) / 2.0
+  let left = slot.origin.x + (28.0 - size) / 2.0
   commands.push(
     FillRoundedRect(
       @core.RoundedRect::new(
@@ -286,3 +281,136 @@ fn linux_client_decoration_state(
 }
 
 ///|
+
+///|
+/// One of the client-side-decoration titlebar buttons.
+#derive(Eq, Debug)
+pub(all) enum LinuxTitlebarButton {
+  Close
+  Minimize
+  Maximize
+}
+
+///|
+pub extend LinuxTitlebarButton with Debug::{to_repr}
+
+///|
+pub extend LinuxTitlebarButton with Eq::{not_equal, equal}
+
+///|
+/// The slot rectangle of a titlebar button, in content-surface logical
+/// coordinates.
+///
+/// Painting and hit testing must agree, so both read this: the visible dot is
+/// centered in a 28pt slot, but the whole slot is clickable (an OS control that
+/// only responds to the 12pt dot is a discoverability regression).
+pub fn linux_titlebar_button_slot_rect(
+  window_width : Double,
+  index_from_right : Int32,
+) -> @core.Rect {
+  let slot_width = 28.0
+  let gap = 8.0
+  let left = window_width -
+    gap -
+    (index_from_right + 1).to_double() * slot_width -
+    index_from_right.to_double() * gap
+  @core.Rect::new(x=left, y=0.0, width=slot_width, height=32.0)
+}
+
+///|
+/// Which titlebar button contains `point`, if any. Slots are ordered from the
+/// right: close, maximize, minimize.
+pub fn linux_titlebar_button_at(
+  window_width : Double,
+  point : @core.Point,
+) -> LinuxTitlebarButton? {
+  if point.y < 0.0 || point.y >= 32.0 {
+    return None
+  }
+  let candidates : Array[(Int32, LinuxTitlebarButton)] = [
+    (0, LinuxTitlebarButton::Close),
+    (1, LinuxTitlebarButton::Minimize),
+    (2, LinuxTitlebarButton::Maximize),
+  ]
+  for candidate in candidates {
+    let (index, button) = candidate
+    let slot = linux_titlebar_button_slot_rect(window_width, index)
+    if point.x >= slot.origin.x && point.x < slot.origin.x + slot.size.width {
+      return Some(button)
+    }
+  }
+  None
+}
+
+///|
+/// What a pointer event inside the client-side-decoration titlebar band should
+/// do.
+///
+/// Before this existed the whole band silently dropped pointer and scroll
+/// input, so the painted buttons looked live and did nothing (issue #24). The
+/// band is window chrome the framework draws, therefore the framework owns its
+/// hit testing: a button press becomes a window request, a body press starts a
+/// native window drag, and scroll is swallowed instead of scrolling content
+/// that is not under the pointer.
+#derive(Eq, Debug)
+pub(all) enum LinuxTitlebarAction {
+  /// Not a titlebar event: deliver it to the app content (rebased).
+  Pass
+  /// Consumed by the chrome; nothing reaches the app.
+  Consume
+  /// Start a native window move gesture.
+  Drag
+  /// The press landed on a button; remember it for the matching release.
+  Press(LinuxTitlebarButton)
+  /// The release completed a button press; issue the window request.
+  Activate(LinuxTitlebarButton)
+}
+
+///|
+pub extend LinuxTitlebarAction with Debug::{to_repr}
+
+///|
+pub extend LinuxTitlebarAction with Eq::{not_equal, equal}
+
+///|
+/// Classify a pointer event against the CSD titlebar band.
+///
+/// `position` is in surface (window) coordinates, i.e. it still includes the
+/// titlebar offset. `button` is the mouse button; only the primary button
+/// drives chrome, everything else passes through rebased so apps can still use
+/// the band for secondary clicks.
+pub fn linux_titlebar_pointer_action(
+  decorations : LinuxClientDecorationState,
+  content_width : Double,
+  position : @core.Point,
+  phase : @core.PointerPhase,
+  button : Int32,
+  pressed_button : LinuxTitlebarButton?,
+) -> LinuxTitlebarAction {
+  if !decorations.active || position.y >= decorations.titlebar_height {
+    return Pass
+  }
+  if button != 0 && phase != Exit {
+    return Consume
+  }
+  match phase {
+    Down =>
+      match linux_titlebar_button_at(content_width, position) {
+        Some(button) => Press(button)
+        None => Drag
+      }
+    Up =>
+      match
+        (linux_titlebar_button_at(content_width, position), pressed_button) {
+        (Some(hit), Some(pressed)) =>
+          if hit == pressed {
+            Activate(hit)
+          } else {
+            Consume
+          }
+        (None, Some(_)) => Consume
+        _ => Consume
+      }
+    Move | Cancel | Exit => Consume
+  }
+}

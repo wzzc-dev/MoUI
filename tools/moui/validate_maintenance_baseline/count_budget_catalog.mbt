@@ -47,8 +47,10 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // family now owned by backend/common/lifecycle; +2 for the shared
       // desktop host-core records (DesktopSurfaceBinding /
       // DesktopNativeHostBackendCore, hot-path-invalidation I1) whose mut
-      // fields the three desktop backends drive.
-      max_count: 110,
+      // fields the three desktop backends drive. +2 for the Linux CSD titlebar
+      // hit-test types (issue #24) — the painted chrome and its clickable
+      // regions must share one public geometry contract.
+      max_count: 112,
     },
     {
       kind: "pub(all)",

@@ -8,8 +8,13 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       // I1: DesktopSurfaceBinding[W] + DesktopNativeHostBackendCore[W, Extra]
       // moved the desktop backends' shared struct/construction surface here.
       // ADR 0059 adds the apphost import line (79) and forbids direct runtime.
-      max_lines: 79,
-      max_pub_lines: 18,
+      // Cursor projection adds the `wzzc-dev/window/core` import line, the
+      // `cursor_icon_to_window` mapping table (+2 lines with its doc block) and
+      // the two cursor sync workflows (+3): 79 -> 84 / 18 -> 21.
+      // Window chrome controls (issue #24): apply_window_control_requests +
+      // sync_window_controls (+2 declarations, +3 lines): 84 -> 87 / 21 -> 23.
+      max_lines: 87,
+      max_pub_lines: 23,
       max_pub_all_lines: 2,
       required_tokens: [
         "\"wzzc-dev/moui/apphost\"", "pub fn attach_window_surface", "pub fn dispatch_host_event",
@@ -24,8 +29,13 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       label: "backend common lifecycle owner",
       path: "moui/backend/common/lifecycle/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common/lifecycle\"",
-      max_lines: 320,
-      max_pub_lines: 170,
+      // Issue #24 chrome controls: WindowSurfaceActions gains
+      // set_maximized/set_fullscreen/set_decorations, the request queue and
+      // command facade gain maximize/restore/fullscreen/decorations helpers,
+      // the registry records observed maximized/fullscreen, and the lifecycle
+      // exposes its request port: +11 lines / +11 pub.
+      max_lines: 331,
+      max_pub_lines: 181,
       max_pub_all_lines: 10,
       required_tokens: [
         "pub struct WindowLifecycle", "pub struct EmbeddedLifecycle", "pub struct WindowRegistry",
@@ -67,8 +77,10 @@ fn backend_common_package_budgets() -> Array[PackageBudget] {
       label: "backend common input owner",
       path: "moui/backend/common/input/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/common/input\"",
-      max_lines: 175,
-      max_pub_lines: 61,
+      // Cursor projection: CursorSession (+8 lines) and the three
+      // WindowInputState cursor helpers (+5): 175 -> 186 / 61 -> 69.
+      max_lines: 186,
+      max_pub_lines: 69,
       max_pub_all_lines: 7,
       required_tokens: [
         "pub struct WindowInputState", "pub(all) struct TextInputSession", "pub fn transform_cross_platform_event",
