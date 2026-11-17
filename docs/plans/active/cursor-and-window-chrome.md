@@ -31,8 +31,8 @@ Rules that follow from the table:
    intent only; the runtime resolves it against the current hit chain and the
    host pushes the result at most once per change.
 2. **Surface actions take resolved values**, never `Inherit` or "please ask the
-   view tree". `WindowSurfaceActions.set_cursor` receives a final
-   `CursorStyle` whose only variants left are `Default` and `Icon`.
+   view tree". `WindowSurfaceActions.set_cursor` receives the resolved
+   `CursorIcon` (the runtime never hands a host an unresolved style).
 3. **Requests are window-lifecycle states**; actions are the projection. A
    request that has no active platform window is rejected by the existing
    `apply_platform_window_request` path instead of silently doing nothing.
