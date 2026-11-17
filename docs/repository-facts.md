@@ -77,11 +77,11 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 25 | 5 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 794 | 521 | 19 |
-| apphost facade (moui/apphost/pkg.generated.mbti) | 191 | 95 | 5 |
-| core (moui/core/pkg.generated.mbti) | 2946 | 1263 | 153 |
-| views facade (moui/views/pkg.generated.mbti) | 751 | 359 | 1 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 704 | 268 | 44 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 795 | 522 | 19 |
+| apphost facade (moui/apphost/pkg.generated.mbti) | 192 | 96 | 5 |
+| core (moui/core/pkg.generated.mbti) | 3003 | 1273 | 155 |
+| views facade (moui/views/pkg.generated.mbti) | 755 | 361 | 1 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 710 | 268 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
 | render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
@@ -92,11 +92,11 @@ This file is generated from repository manifests and validator reports.
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 119 | 55 | 2 |
 | native metal renderer (moui_metal_renderer/pkg.generated.mbti) | 57 | 13 | 0 |
 | native text protocol (moui_text_providers/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
-| backend common (moui/backend/common/pkg.generated.mbti) | 79 | 18 | 2 |
-| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 302 | 170 | 7 |
+| backend common (moui/backend/common/pkg.generated.mbti) | 87 | 23 | 2 |
+| backend common lifecycle owner (moui/backend/common/lifecycle/pkg.generated.mbti) | 317 | 181 | 7 |
 | backend common frame owner (moui/backend/common/frame/pkg.generated.mbti) | 59 | 22 | 0 |
 | backend common image owner (moui/backend/common/image/pkg.generated.mbti) | 50 | 22 | 0 |
-| backend common input owner (moui/backend/common/input/pkg.generated.mbti) | 175 | 61 | 7 |
+| backend common input owner (moui/backend/common/input/pkg.generated.mbti) | 186 | 69 | 7 |
 | backend common services owner (moui/backend/common/services/pkg.generated.mbti) | 48 | 22 | 0 |
 
 ## Workspace Examples
