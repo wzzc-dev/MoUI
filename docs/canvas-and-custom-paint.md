@@ -30,7 +30,7 @@ fn swatch() -> @moui.View[Msg] {
     draw=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @graphics.RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.StrokeCap::RoundedRect::new(rect=frame, radius=12.0),
         @graphics.Brush::solid(@graphics.Color::rgba(r=0.2, g=0.45, b=0.9)),
       )
     },
@@ -54,6 +54,67 @@ canvas(measure~, draw~)
 ```
 
 See `examples/showcase/app/platform` for a runnable drag-to-draw card.
+
+### Continuous pointer and keyboard streams
+
+`on_drag` waits for drag slop and `on_tap_with_frame` only fires on a completed
+tap. A canvas that tracks hover, wheel input, or a release outside its frame
+should use the raw observer instead:
+
+```moonbit nocheck
+canvas(measure~, draw~)
+  .on_pointer((event, frame) => CanvasPointer(event, frame))
+  .on_keyboard_input(
+    key_handler=event => CanvasKey(event),
+    text_input_handler=event => CanvasTextInput(event),
+  )
+```
+
+`on_pointer` forwards every `PointerEvent` (Move/Down/Up/Cancel/Exit and wheel
+deltas) plus the child frame; `Down` captures the pointer, and the runtime's
+geometry hit focuses the nearest focusable wrapper (pair with `on_key`).
+`on_key` makes the element focusable and forwards `KeyboardEvent` only while it
+is focused. When the canvas also accepts IME, use one combined
+`on_keyboard_input(key_handler=…, text_input_handler=…)` wrapper instead of
+stacking separate focusable observers, so keyboard and `TextInputEvent` streams
+reach the same element. Neither modifier adds semantics or changes press state
+— the app owns interpretation. The p5 example (`examples/p5_sketch`) uses this pair to
+drive `mouseX`/`mouseMoved`/`mouseWheel` and p5 key callbacks.
+
+## Offscreen RGBA buffers
+
+`@graphics.RgbaImage` is a writable, renderer-neutral RGBA8 buffer for
+procedural textures, thumbnails, and pixel editing:
+
+```moonbit nocheck
+let image = @graphics.RgbaImage::new(width=64, height=64)
+image.set(0, 0, @graphics.Color::rgba(r=1.0, g=0.0, b=0.5))
+let pixel = image.get(0, 0)
+image.pixels[4] = (255 : Byte)
+```
+
+It is straight (non-premultiplied) row-major RGBA and has no renderer
+dependency. To paint it, wrap the bytes in a renderer-decodable source (the p5
+adapter encodes a PNG data URI) and emit `ImageRun`/`DrawImage`; Skia and Sun
+decode PNG data URIs, and the browser image loader accepts the same source.
+
+## Path stroke caps and joins
+
+`PathSpec` carries optional stroke-cap/join hints; `None` keeps the renderer
+default:
+
+```moonbit nocheck
+let spec = @graphics.PathSpec::new(
+  verbs~,
+  stroke=Some(@graphics.Brush::solid(@graphics.Color::black())),
+  stroke_width=2.0,
+  stroke_cap=Some(@graphics.StrokeCap::Round),
+  stroke_join=Some(@graphics.StrokeJoin::Bevel),
+)
+```
+
+Skia and Sun honor both fields. Other renderers may keep their backend default
+until their path pipeline consumes the hints.
 
 ## Animation
 

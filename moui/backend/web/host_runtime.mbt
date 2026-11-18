@@ -118,7 +118,15 @@ fn run_app_internal(
   let app = WebApp::{
     title,
     runtime,
-    driver: @apphost.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @apphost.HostRuntimeDriver::new(
+      runtime~,
+      schedule_redraw=() => (),
+      // Real monotonic clock: without it `begin_redraw` advances a synthetic
+      // 16ms step, so at anything below 60fps animations play in slow motion
+      // (a 26fps intro would take ~48s per 20s loop). Paint-time animation
+      // then runs in real time on any refresh rate.
+      frame_clock=Some(() => web_timer_now_ms().to_double()),
+    ),
     services: @window_services.WindowServiceState::new(bridge=services),
     async_services,
     lifecycle,

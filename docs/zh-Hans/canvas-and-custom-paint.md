@@ -30,7 +30,7 @@ fn swatch() -> @moui.View[Msg] {
     draw=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @graphics.RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.StrokeCap::RoundedRect::new(rect=frame, radius=12.0),
         @graphics.Brush::solid(@graphics.Color::rgba(r=0.2, g=0.45, b=0.9)),
       )
     },
@@ -54,6 +54,63 @@ canvas(measure~, draw~)
 ```
 
 可运行的拖拽绘制卡片见 `examples/showcase/app/platform`。
+
+### 连续指针与键盘流
+
+`on_drag` 要等拖拽阈值，`on_tap_with_frame` 只在点击完成时触发。需要跟踪
+hover、滚轮、或在 frame 外 release 的 canvas，应使用原始 observer：
+
+```moonbit nocheck
+canvas(measure~, draw~)
+  .on_pointer((event, frame) => CanvasPointer(event, frame))
+  .on_keyboard_input(
+    key_handler=event => CanvasKey(event),
+    text_input_handler=event => CanvasTextInput(event),
+  )
+```
+
+`on_pointer` 转发每个 `PointerEvent`（Move/Down/Up/Cancel/Exit 和滚轮增量）
+及 child frame；`Down` 捕获指针，几何命中的最近 focusable wrapper 获得焦点
+（与 `on_key` 配对）。`on_key` 让元素可聚焦，并只在聚焦时转发 `KeyboardEvent`。需要 IME 时改用
+一个组合的 `on_keyboard_input(key_handler=…, text_input_handler=…)`，不要
+叠两个 focusable observer，否则键盘和 `TextInputEvent` 会被路由到不同的
+wrapper。两者都不加语义、不改变按压状态，解释权归应用。
+p5 示例（`examples/p5_sketch`）用这对 modifier 驱动 `mouseX`/
+`mouseMoved`/`mouseWheel` 和 p5 键盘回调。
+
+## 离屏 RGBA buffer
+
+`@graphics.RgbaImage` 是可写的、renderer-neutral 的 RGBA8 buffer，适合程序化
+纹理、缩略图和逐像素编辑：
+
+```moonbit nocheck
+let image = @graphics.RgbaImage::new(width=64, height=64)
+image.set(0, 0, @graphics.Color::rgba(r=1.0, g=0.0, b=0.5))
+let pixel = image.get(0, 0)
+image.pixels[4] = (255 : Byte)
+```
+
+像素是 straight（非预乘）、逐行 RGBA，不依赖 renderer。要绘制时，把字节包装
+成 renderer 可解码的 source（p5 adapter 编码为 PNG data URI）并发出
+`ImageRun`/`DrawImage`；Skia 与 Sun 都支持 PNG data URI，浏览器图片加载器也
+接受同一 source。
+
+## 路径 stroke cap / join
+
+`PathSpec` 可选携带 stroke cap/join；`None` 保持 renderer 默认值：
+
+```moonbit nocheck
+let spec = @graphics.PathSpec::new(
+  verbs~,
+  stroke=Some(@graphics.Brush::solid(@graphics.Color::black())),
+  stroke_width=2.0,
+  stroke_cap=Some(@graphics.StrokeCap::Round),
+  stroke_join=Some(@graphics.StrokeJoin::Bevel),
+)
+```
+
+Skia 与 Sun 会消费这两个字段；其他 renderer 在各自 path 管线接入前可能仍用
+后端默认值。
 
 ## 动画
 

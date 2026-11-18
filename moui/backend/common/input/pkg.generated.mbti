@@ -84,7 +84,7 @@ pub fn InputState::coordinate_policy(Self) -> @backend.HostCoordinatePolicy
 pub fn InputState::focus(Self) -> Unit
 pub fn InputState::focus_event(Self, focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> @backend.Event?
 pub fn InputState::insert_text(Self, String) -> @backend.Event?
-pub fn InputState::keyboard_event(Self, key~ : String, text? : String?, pressed? : Bool, repeat? : Bool) -> @backend.Event?
+pub fn InputState::keyboard_event(Self, key~ : String, code? : String, text? : String?, pressed? : Bool, repeat? : Bool) -> @backend.Event?
 pub fn InputState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : @backend.HostInputContract) -> Self
 pub fn InputState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> @backend.Event?

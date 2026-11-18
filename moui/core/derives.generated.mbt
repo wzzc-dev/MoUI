@@ -207,6 +207,24 @@ pub extend PathVerb with Eq::{not_equal, equal}
 pub extend PathVerb with ToJson::{to_json}
 
 ///|
+pub extend StrokeCap with Debug::{to_repr}
+
+///|
+pub extend StrokeCap with Eq::{not_equal, equal}
+
+///|
+pub extend StrokeCap with ToJson::{to_json}
+
+///|
+pub extend StrokeJoin with Debug::{to_repr}
+
+///|
+pub extend StrokeJoin with Eq::{not_equal, equal}
+
+///|
+pub extend StrokeJoin with ToJson::{to_json}
+
+///|
 pub extend PathSpec with Debug::{to_repr}
 
 ///|

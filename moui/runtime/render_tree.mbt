@@ -154,6 +154,8 @@ fn translate_draw_command(command : DrawCommand, offset : Point) -> DrawCommand 
     PushRoundedClip(rounded) =>
       PushRoundedClip(translate_rounded(rounded, offset))
     PopRoundedClip => PopRoundedClip
+    PushPathClip(path) => PushPathClip(translate_path(path, offset))
+    PopPathClip => PopPathClip
     PushTransform(transform) => PushTransform(transform)
     PopTransform => PopTransform
     PushOpacity(opacity) => PushOpacity(opacity)

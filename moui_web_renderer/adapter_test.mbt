@@ -101,6 +101,8 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
       font: @core.FontSpec::new(size=14.0),
       color: @core.Color::black(),
       align: TextCenter,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   renderer.dispose()
@@ -564,6 +566,8 @@ test "wgpu web command bridge preserves full draw command parity order" {
         font: @core.FontSpec::new(size=14.0),
         color: @core.Color::black(),
         align: TextStart,
+        stroke_color: None,
+        stroke_width: 0.0,
       }),
       DrawImage({
         source: "logo.png",

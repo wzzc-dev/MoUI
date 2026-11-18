@@ -23,6 +23,8 @@ pub fn draw_commands_to_host_calls(
       DrawPath(path) => calls.push(DrawPath(path))
       PushClip(rect) => calls.push(PushClip(rect))
       PopClip => calls.push(PopClip)
+      PushPathClip(spec) => calls.push(PushClip(webgpu_path_clip_bounds(spec)))
+      PopPathClip => calls.push(PopClip)
       PushRoundedClip(rect) => calls.push(PushRoundedClip(rect))
       PopRoundedClip => calls.push(PopRoundedClip)
       PushTransform(transform) => calls.push(PushTransform(transform))
@@ -356,6 +358,18 @@ fn submit_draw_path(
 ///|
 /// Tessellate, hand the mesh to the host once, then draw it by handle. The
 /// transfer happens here and nowhere else for this path.
+
+///|
+/// WebGPU has no path-clip primitive here yet; a path clip degrades to its
+/// bounding rect at the host-call boundary.
+fn webgpu_path_clip_bounds(path : @core.PathSpec) -> @core.Rect {
+  match path.shape_bounds() {
+    Some(bounds) => bounds
+    None => @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
+  }
+}
+
+///|
 fn submit_uploaded_path_mesh(
   renderer : HostWebGpuRenderer,
   path : @core.PathSpec,

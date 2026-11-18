@@ -98,3 +98,20 @@ test "path mesh cache frame counter only moves on present" {
   }
   assert_eq(used_at, 2)
 }
+
+///|
+test "path mesh cache hits when only the paint changes" {
+  let cache = WebGpuPathMeshCache::new(4)
+  let path = path_mesh_test_triangle(0.0)
+  assert_true(cache.record(path, 7) is None)
+  // Same geometry with a different brush: the mesh is pure geometry, so a
+  // color/alpha animation must keep the uploaded mesh.
+  let repainted = @core.PathSpec::new(
+    verbs=path.verbs,
+    fill=Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0))),
+    stroke=None,
+    stroke_width=3.0,
+  )
+  assert_eq(cache.find(repainted), Some(7))
+  assert_eq(cache.entries.length(), 1)
+}

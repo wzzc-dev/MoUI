@@ -465,6 +465,45 @@ pub fn[Msg] View::on_tap_with_frame(
 }
 
 ///|
+/// Raw pointer observer: forwards every `PointerEvent` plus the child frame.
+///
+/// Use this for canvas/custom-drawn surfaces that need continuous hover,
+/// exact press/release phases, or wheel deltas. `on_drag_with_frame` only
+/// starts after drag slop and `on_tap_with_frame` only fires on a completed
+/// tap, so neither can drive a p5-style `mouseX`/`mouseMoved` stream.
+pub fn[Msg] View::on_pointer(
+  self : View[Msg],
+  handler : (PointerEvent, Rect) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnPointerModifier::{ handler, }.to_any_modifier())
+}
+
+///|
+/// Raw keyboard observer. Makes the element focusable and forwards every
+/// `KeyboardEvent` while it is focused. Pair with `on_pointer` when a press
+/// should focus the surface.
+pub fn[Msg] View::on_key(
+  self : View[Msg],
+  handler : (KeyboardEvent) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnKeyModifier::{ handler, }.to_any_modifier())
+}
+
+///|
+/// Combined keyboard + IME observer. Use this instead of stacking `on_key`
+/// with a separate text-input observer: the combined modifier is one focusable
+/// wrapper, so keyboard and `TextInputEvent` streams reach the same element.
+pub fn[Msg] View::on_keyboard_input(
+  self : View[Msg],
+  key_handler~ : (KeyboardEvent) -> Msg,
+  text_input_handler~ : (TextInputEvent) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(
+    OnKeyboardInputModifier::{ key_handler, text_input_handler, }.to_any_modifier(),
+  )
+}
+
+///|
 /// Secondary (right-button) tap with hit-test geometry: hands the pointer
 /// position plus the child frame, so a context-menu host can hit-test *which*
 /// item the menu belongs to.

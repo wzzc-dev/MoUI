@@ -51,6 +51,23 @@ fn SunRasterRenderer::render_command(
       )
     }
     PopClip => self.pop_canvas_scope(canvas_scopes, opacity_stack, Clip)
+    PushPathClip(spec) => {
+      self.canvas.save()
+      canvas_scopes.push(Clip)
+      // The software canvas only stores a rect clip; path clips degrade to
+      // their bounds until the rasterizer grows a mask scope.
+      match spec.shape_bounds() {
+        Some(bounds) =>
+          self.canvas.intersect_clip_rect(
+            sun_transformed_rect_bounds(self.canvas.get_transform(), bounds),
+          )
+        None =>
+          self.canvas.intersect_clip_rect(
+            @sun_graphics.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+          )
+      }
+    }
+    PopPathClip => self.pop_canvas_scope(canvas_scopes, opacity_stack, Clip)
     PushRoundedClip(rounded) => {
       self.rounded_clip_stack.push(rounded)
       rounded_clip_transform_stack.push(self.canvas.get_transform())
@@ -318,7 +335,13 @@ fn SunRasterRenderer::draw_path(
     Some(brush) =>
       self.canvas.stroke_path(
         sun_path,
-        sun_brush_stroke_paint(brush, path.stroke_width, opacity),
+        sun_brush_stroke_paint(
+          brush,
+          path.stroke_width,
+          opacity,
+          cap=path.stroke_cap,
+          join=path.stroke_join,
+        ),
       )
     None => ()
   }
@@ -500,16 +523,47 @@ fn sun_brush_paint(
 }
 
 ///|
+fn sun_stroke_cap(cap : @core.StrokeCap) -> @sun_graphics.StrokeCap {
+  match cap {
+    @core.Butt => @sun_graphics.Butt
+    @core.Round => @sun_graphics.Round
+    @core.Square => @sun_graphics.Square
+  }
+}
+
+///|
+fn sun_stroke_join(join : @core.StrokeJoin) -> @sun_graphics.StrokeJoin {
+  match join {
+    @core.Miter => @sun_graphics.Miter
+    @core.Round => @sun_graphics.Round
+    @core.Bevel => @sun_graphics.Bevel
+  }
+}
+
+///|
 fn sun_brush_stroke_paint(
   brush : @core.Brush,
   width : Double,
   opacity : Double,
+  cap~ : @core.StrokeCap? = None,
+  join~ : @core.StrokeJoin? = None,
 ) -> @sun_graphics.Paint {
-  sun_brush_paint(brush, opacity)
-  .set_style(Stroke)
-  .set_stroke_width(width)
-  .set_stroke_cap(Round)
-  .set_stroke_join(Round)
+  let paint = sun_brush_paint(brush, opacity)
+    .set_style(Stroke)
+    .set_stroke_width(width)
+    .set_stroke_cap(
+      match cap {
+        Some(cap) => sun_stroke_cap(cap)
+        None => Round
+      },
+    )
+    .set_stroke_join(
+      match join {
+        Some(join) => sun_stroke_join(join)
+        None => Round
+      },
+    )
+  paint
 }
 
 ///|
@@ -833,5 +887,13 @@ fn sun_blend_mode(mode : @core.BlendMode) -> @sun_graphics.BlendMode {
     Overlay => Overlay
     Darken => Darken
     Lighten => Lighten
+    Add => Add
+    Difference => Difference
+    Exclusion => Exclusion
+    HardLight => HardLight
+    SoftLight => SoftLight
+    ColorDodge => ColorDodge
+    ColorBurn => ColorBurn
+    Source => Source
   }
 }

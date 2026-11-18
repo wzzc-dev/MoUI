@@ -221,3 +221,113 @@ test "on_hover clears hover on Cancel" {
   assert_eq(cancel.messages, [false])
   assert_true(!cancelled.state.hovered)
 }
+
+///|
+test "on_pointer forwards every phase with child-frame geometry" {
+  let modifier = OnPointerModifier::{
+    handler: fn(event, frame) {
+      let local_x = event.position.x - frame.origin.x
+      let local_y = event.position.y - frame.origin.y
+      let phase = match event.phase {
+        Move => "Move"
+        Down => "Down"
+        Up => "Up"
+        Cancel => "Cancel"
+        Exit => "Exit"
+      }
+      "phase=\{phase} at (\{local_x},\{local_y}) wheel=\{event.wheel_delta.y}"
+    },
+  }.to_any_modifier()
+  assert_true(modifier.identity_kind == "OnPointer")
+  assert_true(!modifier.focusable)
+  let hover = (modifier.event)(
+    tap_with_frame_test_context(
+      Pointer(PointerEvent::new(position=Point::new(x=10.0, y=5.0), phase=Move)),
+    ),
+  )
+  assert_eq(hover.messages, ["phase=Move at (10,5) wheel=0"])
+  assert_false(hover.captured)
+  let down = (modifier.event)(
+    tap_with_frame_test_context(
+      Pointer(
+        PointerEvent::new(
+          position=Point::new(x=10.0, y=5.0),
+          phase=Down,
+          button=0,
+        ),
+      ),
+    ),
+  )
+  assert_eq(down.messages, ["phase=Down at (10,5) wheel=0"])
+  // The raw observer never claims focus; geometry hit-testing focuses the
+  // nearest focusable wrapper (e.g. `on_key`) so keyboard events reach it.
+  assert_false(down.focused)
+  assert_true(down.captured)
+  let wheel = (modifier.event)(
+    tap_with_frame_test_context(
+      Pointer(
+        PointerEvent::new(
+          position=Point::new(x=10.0, y=5.0),
+          phase=Move,
+          wheel_delta=Point::new(x=0.0, y=12.0),
+        ),
+      ),
+    ),
+  )
+  assert_eq(wheel.messages, ["phase=Move at (10,5) wheel=12"])
+}
+
+///|
+test "on_key forwards only while focused and is focusable" {
+  let modifier = OnKeyModifier::{ handler: event => event.key, }.to_any_modifier()
+  assert_true(modifier.identity_kind == "OnKey")
+  assert_true(modifier.focusable)
+  let unfocused = (modifier.event)(
+    tap_with_frame_test_context(Keyboard(KeyboardEvent::new(key="a"))),
+  )
+  assert_true(unfocused.messages.is_empty())
+  let focused_context = {
+    ..tap_with_frame_test_context(Keyboard(KeyboardEvent::new(key="a"))),
+    focused: true,
+  }
+  let focused = (modifier.event)(focused_context)
+  assert_eq(focused.messages, ["a"])
+  assert_true(focused.captured)
+}
+
+///|
+test "on_keyboard_input forwards keyboard and text input on one focusable wrapper" {
+  let modifier = OnKeyboardInputModifier::{
+    key_handler: event => "key:" + event.key,
+    text_input_handler: event => {
+      match event {
+        InsertText(text) => "text:" + text
+        CompositionStart => "composition:start"
+        CompositionEnd(text) => "composition:end:" + text
+        _ => "other"
+      }
+    },
+  }.to_any_modifier()
+  assert_true(modifier.identity_kind == "OnKeyboardInput")
+  assert_true(modifier.focusable)
+  let unfocused = (modifier.event)(
+    tap_with_frame_test_context(Keyboard(KeyboardEvent::new(key="a"))),
+  )
+  assert_true(unfocused.messages.is_empty())
+  let focused = {
+    ..tap_with_frame_test_context(Keyboard(KeyboardEvent::new(key="a"))),
+    focused: true,
+  }
+  let key = (modifier.event)(focused)
+  assert_eq(key.messages, ["key:a"])
+  let text = (modifier.event)({
+    ..focused,
+    event: TextInput(InsertText("日")),
+  })
+  assert_eq(text.messages, ["text:日"])
+  let start = (modifier.event)({
+    ..focused,
+    event: TextInput(CompositionStart),
+  })
+  assert_eq(start.messages, ["composition:start"])
+}

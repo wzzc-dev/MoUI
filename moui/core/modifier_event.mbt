@@ -642,3 +642,148 @@ fn[Msg] handle_keyboard_shortcut_modifier(
     _ => ViewEventResult::ignored()
   }
 }
+
+///|
+/// Raw pointer stream observer with hit-test geometry.
+///
+/// `on_drag_with_frame` deliberately waits for drag slop and `on_tap_with_frame`
+/// only fires on a completed tap. Canvas/custom-drawn surfaces that track a
+/// cursor need every `Move`, the exact `Down`/`Up` phases (including outside
+/// release), and wheel deltas. This modifier is the transparent escape hatch:
+/// it reports every `PointerEvent` with the child frame, never owns press
+/// state, and lets the app decide how to interpret the stream.
+///
+/// Transparent like `on_secondary_tap_with_frame`: no semantics role and no
+/// focus stop; a pointer observer must not turn a container into a Button.
+priv struct OnPointerModifier[Msg] {
+  handler : (PointerEvent, Rect) -> Msg
+}
+
+///|
+fn[Msg] OnPointerModifier::to_any_modifier(
+  self : OnPointerModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnPointer",
+    event: fn(ctx) {
+      match ctx.event {
+        Pointer(event) => {
+          let frame = match ctx.child_frames {
+            [child, ..] => child
+            [] => ctx.frame
+          }
+          {
+            changed: true,
+            activated: false,
+            // Do not claim focus from the observer: the runtime's geometry
+            // hit already focuses the nearest focusable wrapper (for example
+            // a paired `on_key`), and claiming this inner element would route
+            // keyboard events past that wrapper.
+            focused: false,
+            captured: event.phase == Down,
+            state: None,
+            text_control: None,
+            dirty: ViewPaintDirty,
+            messages: [handler(event, frame)],
+          }
+        }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}
+
+///|
+/// Raw keyboard observer. The element becomes focusable so keyboard events
+/// reach it after a pointer press (pair with `on_pointer`) or tab traversal.
+/// Every event, including repeats, is forwarded; the app owns key-down state
+/// and repeat handling.
+priv struct OnKeyModifier[Msg] {
+  handler : (KeyboardEvent) -> Msg
+}
+
+///|
+fn[Msg] OnKeyModifier::to_any_modifier(
+  self : OnKeyModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnKey",
+    focusable: true,
+    event: fn(ctx) {
+      match ctx.event {
+        Keyboard(event) =>
+          if ctx.focused {
+            {
+              changed: true,
+              activated: false,
+              focused: false,
+              captured: true,
+              state: None,
+              text_control: None,
+              dirty: ViewPaintDirty,
+              messages: [handler(event)],
+            }
+          } else {
+            ViewEventResult::ignored()
+          }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}
+
+///|
+/// Combined keyboard + IME observer. One focusable modifier owns both streams
+/// so composing `on_key` and a text-input observer cannot route keyboard
+/// events to a wrapper that ignores them (and vice versa).
+priv struct OnKeyboardInputModifier[Msg] {
+  key_handler : (KeyboardEvent) -> Msg
+  text_input_handler : (TextInputEvent) -> Msg
+}
+
+///|
+fn[Msg] OnKeyboardInputModifier::to_any_modifier(
+  self : OnKeyboardInputModifier[Msg],
+) -> AnyModifier[Msg] {
+  let key_handler = self.key_handler
+  let text_input_handler = self.text_input_handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnKeyboardInput",
+    focusable: true,
+    event: fn(ctx) {
+      if !ctx.focused {
+        return ViewEventResult::ignored()
+      }
+      match ctx.event {
+        Keyboard(event) =>
+          {
+            changed: true,
+            activated: false,
+            focused: false,
+            captured: true,
+            state: None,
+            text_control: None,
+            dirty: ViewPaintDirty,
+            messages: [key_handler(event)],
+          }
+        TextInput(event) =>
+          {
+            changed: true,
+            activated: false,
+            focused: false,
+            captured: true,
+            state: None,
+            text_control: None,
+            dirty: ViewPaintDirty,
+            messages: [text_input_handler(event)],
+          }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}

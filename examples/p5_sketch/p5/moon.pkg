@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/math" @cmath,
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/compress/zlib",
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
+}
+
+supported_targets = "+native+js+wasm-gc+wasm"
+
+options(
+  "allow-experimental-packages": true,
+  targets: { "png_file_test.mbt": [ "native" ] },
+)

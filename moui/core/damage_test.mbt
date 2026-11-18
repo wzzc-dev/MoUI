@@ -73,3 +73,19 @@ test "draw frame semantics payload is opt-in and copy-protected" {
   )
   assert_true(frame != plain)
 }
+
+///|
+test "path clip bounds follow the path geometry" {
+  let spec = @core.PathSpec::new(verbs=[
+    @core.MoveTo(@core.Point::new(x=2.0, y=3.0)),
+    @core.LineTo(@core.Point::new(x=18.0, y=3.0)),
+    @core.LineTo(@core.Point::new(x=3.0, y=21.0)),
+    @core.Close,
+  ])
+  let bounds = @core.PushPathClip(spec).bounds().unwrap()
+  inspect(bounds.origin.x, content="2")
+  inspect(bounds.origin.y, content="3")
+  inspect(bounds.size.width, content="16")
+  inspect(bounds.size.height, content="18")
+  assert_true(@core.PopPathClip.bounds() is None)
+}

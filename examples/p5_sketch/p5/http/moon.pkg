@@ -1,0 +1,7 @@
+import {
+  "examples/p5_sketch/p5",
+  "moonbitlang/async",
+  "moonbitlang/async/http" @async_http,
+}
+
+supported_targets = "native"

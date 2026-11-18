@@ -70,8 +70,8 @@ pub fn plan_renderer_command_fallbacks(
   let mut filter_depth = 0
   for index, command in commands {
     match command {
-      PushClip(_) => clip_depth = clip_depth + 1
-      PopClip =>
+      PushClip(_) | PushPathClip(_) => clip_depth = clip_depth + 1
+      PopClip | PopPathClip =>
         if clip_depth <= 0 {
           fallbacks.push(
             renderer_command_fallback(
@@ -79,7 +79,7 @@ pub fn plan_renderer_command_fallbacks(
               feature=Clip,
               command="PopClip",
               kind=UnbalancedPop,
-              reason="PopClip has no matching PushClip",
+              reason="clip pop has no matching push",
             ),
           )
         } else {

@@ -298,6 +298,17 @@ fn native_blend_mode_code(mode : @core.BlendMode) -> Double {
     Overlay => 3.0
     Darken => 4.0
     Lighten => 5.0
+    // The fixed-function blend factors behind codes 1-5 cannot express the
+    // separable modes; they degrade to source-over until the advanced
+    // pipeline grows the shader math (Skia/Sun/Canvas2D implement them).
+    Add => 0.0
+    Difference => 0.0
+    Exclusion => 0.0
+    HardLight => 0.0
+    SoftLight => 0.0
+    ColorDodge => 0.0
+    ColorBurn => 0.0
+    Source => 0.0
   }
 }
 

@@ -186,6 +186,7 @@ fn webgpu_offset_draw_command(
   match command {
     Clear(_)
     | PopClip
+    | PopPathClip
     | PopRoundedClip
     | PopTransform
     | PopOpacity
@@ -226,6 +227,8 @@ fn webgpu_offset_draw_command(
     DrawImage(run) =>
       DrawImage({ ..run, frame: webgpu_offset_rect(run.frame, dx~, dy~), })
     PushClip(rect) => PushClip(webgpu_offset_rect(rect, dx~, dy~))
+    PushPathClip(spec) =>
+      PushClip(webgpu_offset_rect(webgpu_path_clip_bounds(spec), dx~, dy~))
     PushRoundedClip(rect) =>
       PushRoundedClip(webgpu_offset_rounded_rect(rect, dx~, dy~))
     PushTransform(transform) =>

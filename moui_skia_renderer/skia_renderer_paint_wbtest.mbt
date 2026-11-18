@@ -551,3 +551,214 @@ test "skia renderer blurs the backdrop inside a material frame" {
     ),
   )
 }
+
+///|
+test "skia renderer clips to a path, not its bounding box" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=32.0, height=32.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let triangle = @core.PathSpec::new(verbs=[
+    @core.MoveTo(@core.Point::new(x=0.0, y=0.0)),
+    @core.LineTo(@core.Point::new(x=16.0, y=0.0)),
+    @core.LineTo(@core.Point::new(x=0.0, y=16.0)),
+    @core.Close,
+  ])
+  renderer.render([
+    Clear(@core.Color::white()),
+    PushPathClip(triangle),
+    FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=32.0, height=32.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
+    ),
+    PopPathClip,
+  ]) catch {
+    err => fail("expected Skia path-clip render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=4.0, y=4.0, width=2.0, height=2.0),
+      (r, g, b, a) => a > 0 && r > 200 && g < 60 && b < 60,
+    ),
+  )
+  // Inside the bounding box but outside the triangle: the rect clip
+  // approximation would have painted this red.
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=14.0, y=14.0, width=2.0, height=2.0),
+      (r, g, b, a) => a > 0 && r > 200 && g > 200 && b > 200,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=24.0, y=24.0, width=2.0, height=2.0),
+      (r, g, b, a) => a > 0 && r > 200 && g > 200 && b > 200,
+    ),
+  )
+}
+
+///|
+test "skia renderer strokes text under the fill" {
+  guard skia_test_native_text_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=64.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    DrawText(
+      @core.TextRun::new(
+        text="Slim",
+        frame=@core.Rect::new(x=2.0, y=2.0, width=56.0, height=12.0),
+        font=@core.FontSpec::new(size=10.0, weight=400),
+        color=@core.Color::black(),
+        align=TextStart,
+        stroke_color=Some(@core.Color::rgba(r=1.0, g=0.8, b=0.0)),
+        stroke_width=3.0,
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia stroke-text render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  // The 3px yellow outline is drawn under the black fill, so glyph edge
+  // pixels pick it up even where the fill covers the glyph interior.
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=2.0, y=2.0, width=56.0, height=12.0),
+      (r, g, b, a) => a > 0 && r > 180 && g > 140 && b < 110,
+    ),
+  )
+  // A zero-width stroke is fill-only and must not record anything unsupported.
+  let plain = SkiaPresentTarget::new(description="test", present=_ => true)
+  let fill_only = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=64.0, height=16.0),
+    ),
+    plain,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  fill_only.render([
+    Clear(@core.Color::white()),
+    DrawText(
+      @core.TextRun::new(
+        text="Slim",
+        frame=@core.Rect::new(x=2.0, y=2.0, width=56.0, height=12.0),
+        font=@core.FontSpec::new(size=10.0, weight=400),
+        color=@core.Color::black(),
+        align=TextStart,
+        stroke_color=Some(@core.Color::black()),
+        stroke_width=0.0,
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia zero-width stroke render: \{err.message()}")
+  }
+  assert_true(fill_only.unsupported_command_count() == 0)
+}
+
+///|
+test "skia renderer blends layers with difference" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=32.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    PushLayer(@core.LayerSpec::new(blend_mode=Difference)),
+    FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
+    ),
+    PopLayer,
+  ]) catch {
+    err => fail("expected Skia difference render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  // |white - red| = cyan inside the layer; the untouched right half stays white.
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=4.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => a > 0 && r < 80 && g > 180 && b > 180,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => a > 0 && r > 200 && g > 200 && b > 200,
+    ),
+  )
+}
+
+///|
+test "skia renderer source layer replaces color and alpha" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=32.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    Clear(@core.Color::white()),
+    FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0),
+    ),
+    PushLayer(@core.LayerSpec::new(blend_mode=Source)),
+    FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::rgba(r=0.0, g=0.0, b=1.0, a=0.5),
+    ),
+    PopLayer,
+  ]) catch {
+    err => fail("expected Skia source render: \{err.message()}")
+  }
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  // Source-over would leave red in the result (r~=b~=127 after premultiply);
+  // Src replaces the pixel with exactly the half-transparent blue, including
+  // the alpha channel (premultiplied readback: r=g=0, b~=a~=128).
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=4.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => a > 100 && a < 160 && r < 40 && g < 40 && b > 100,
+    ),
+  )
+}
