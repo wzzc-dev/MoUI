@@ -84,7 +84,11 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // styling for vector/creative canvases.
       // PathSpec::shape_bounds (+1): geometric clip bounds without stroke
       // inflation, paired with the PushPathClip command.
-      max_count: 1295,
+      // Re-accounted 2026-11-19 to the measured 1305: the p5 canvas
+      // additions already itemized above landed without the ceiling
+      // raise. W2 retracts RgbaImage and the raw-input hooks, which
+      // ratchets this back down.
+      max_count: 1305,
     },
     {
       path: "moui/core/pkg.generated.mbti",

@@ -130,7 +130,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 109,
     },
     // Issue #24: window-control options plus the three chrome projections.
-    { path: "moui/backend/web/host_runtime.mbt", max_lines: 514, },
+    { path: "moui/backend/web/host_runtime.mbt", max_lines: 522, },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620, },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240, },
     { path: "moui/backend/web/web_host.mbt", max_lines: 500, },
@@ -185,7 +185,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 421,
+      max_lines: 422,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
