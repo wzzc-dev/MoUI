@@ -38,12 +38,14 @@ files and ratchets are deliberately absent from
 `checks/source-file-policy.json` and a studio submodule bump never
 re-baselines the main repo's budgets (2026-10-16 owner decision).
 
-The workspace test sweep follows the same split: the baseline job runs
-`node scripts/run-workspace-tests.mjs`, which derives every member from
-`moon.work` and skips `moui_studio`. Studio package tests — including the
-wasm-plugin E2E that needs the Rust-built fixture — run in
+The workspace test sweep follows the same split: the PR gate job runs
+`node scripts/run-workspace-tests.mjs` right after the native profile, which
+derives every member from `moon.work` and skips `moui_studio`. Running it in the
+same job is deliberate: the sweep reuses the `_build` the profile already
+produced instead of compiling all 316 packages a second time. Studio package
+tests — including the wasm-plugin E2E that needs the Rust-built fixture — run in
 `wzzc-dev/moui_studio` CI, so a fresh main-repo checkout never needs a Rust
-toolchain to pass the baseline.
+toolchain to pass the sweep.
 
 `checks/source-file-policy.json` ceilings are quantum values, not snapshots: every
 `ratchets[].maxLines` must be a multiple of `logic.budgetStepLines` (25 lines).
@@ -60,15 +62,16 @@ that should stay synchronized with the catalog include:
 node scripts/lint-scripts.mjs --profile pr
 node scripts/validate-check-profiles.mjs
 node scripts/validate-portfolio-governance.mjs
-moon test tools/moui/validate_portfolio_governance --target native
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-viewnode-declaration-coverage.mjs   # ViewNode struct fields are keyed or exempt (ADR 0034, P17)
-moon test tools/moui/validate_viewnode_declaration_coverage --target native
+moon -C tools test --target native                        # every tools/moui package in one process
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-doc-budget.mjs
+node scripts/validate-tool-test-coverage.mjs
 node scripts/validate-backend-renderer-boundary.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-backend-common-boundary.mjs
@@ -117,6 +120,13 @@ moon test examples/showcase/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 node scripts/validate-web-runtime-handoff.mjs
 ```
+
+Documentation is budgeted separately: `node scripts/validate-doc-budget.mjs` counts
+Markdown lines under the roots declared in `checks/doc-budget.json` (`docs/` only)
+and fails above `maxLines`. The generated `website/web_wasm/docs/` mirror and
+`memories/repo` are outside the roots, so the number a contributor has to cut is
+the number they actually maintain. The ceiling is a ratchet: session logs and
+retired plans get folded or deleted instead of raising it.
 
 Design Systems is addon diagnostic coverage. Use
 `sh scripts/check.sh --profile theme` when changing `moui_theme` or
@@ -506,9 +516,28 @@ sh scripts/check.sh --profile theme
 sh scripts/check.sh --profile full
 ```
 
-CI profile jobs use the shell wrapper to express gate intent:
-`ci.yml` runs `sh scripts/check.sh --profile pr` for the PR profile gate and
-`sh scripts/check.sh --profile platform` for Linux platform contracts. The
+CI profile jobs use the shell wrapper to express gate intent. The `pr` profile is
+composite: `pr-static` (host-independent guards, MoonBit tool tests, script lint)
+followed by `pr-native` (format check, `moon check`, generated-interface drift,
+the package test matrix, and the Web wasm-gc builds). Locally
+`sh scripts/check.sh --profile pr` runs both halves in order; `ci.yml` splits them
+across runners — `pr-static` on `ubuntu-24.04`, `pr-native` plus the workspace
+sweep on macOS — so a pull request pays for one compile graph, on the only runner
+that resolves the mainline Skia bindings, instead of three (baseline `moon check`,
+profile compile, sweep compile). A composite profile may declare `steps: []` when
+`includes` delegates every step; `validate-check-profiles` enforces that.
+
+Two cost rules in `ci.yml` are easy to undo by accident:
+
+- a pull request whose changed paths are all documentation (`docs/`, `memories/`,
+  `website/web_wasm/docs/`, or any `*.md`) skips the compile jobs; the static
+  guards still run because they are what validates documentation.
+- `macos-packaging` and `benchmark-scaffold` are landing checks: they are
+  push/dispatch-only and never run on a pull request. Their failure modes (bundle
+  layout, structural build counters) do not change in a review.
+
+`ci.yml` also runs `sh scripts/check.sh --profile platform` for Linux platform
+contracts. The
 Windows MSVC job keeps its MSVC/build/package steps explicit and only verifies
 the PowerShell wrapper can parse the PR profile with:
 
@@ -610,6 +639,12 @@ Proof levels:
 - **L2** (every PR and push-to-main, `moui-renderer-real-skia-ci.yml`): real Skia runtime
   behavior on macOS/Linux/Windows matching hosts.
 - **L3** (`feature-proof-summary.yml`): all required L1 and L2 passed.
+
+`macos-packaging` and `benchmark-scaffold` are push/dispatch-only, so on a pull
+request their L1 entries are recorded as by-design skips instead of gaps; the
+same applies to the compile jobs on a docs-only change. The generator receives
+`--event` and `--docs-only` from the summary workflow for exactly that
+distinction, so a real failure still fails the summary.
 
 ## Smoke
 

@@ -6,8 +6,10 @@ usage() {
 Usage: scripts/linux-platform-evidence.sh [options]
 
 Collects Linux platform runtime evidence by:
-1. Configuring the repository for real Skia linking (release provider)
-2. Building the Showcase and first-frame smoke test with release Skia
+1. Resolving the release Skia provider
+2. Building the Showcase and first-frame smoke test; the moui_skia/build.mbtx
+   prebuild compiles the Skia C++ stub and emits the final link config, so no
+   package files are patched
 3. Starting a headless Weston Wayland compositor
 4. Running raster, GPU, and automatic-fallback first-frame smokes
 5. Collecting evidence logs under artifacts/platform-evidence/linux/
@@ -80,7 +82,7 @@ fi
 mkdir -p "$resolved_log_dir"
 
 #
-# Step 1: Fetch release Skia and configure native/moon.pkg
+# Step 1: Fetch the release Skia provider
 #
 echo "=== Step 1: Fetch release Skia provider ===" | tee -a "$preflight_log"
 fetch_args=(
@@ -112,136 +114,52 @@ if [[ -z "$skia_include" || -z "$skia_lib_dir" || -z "$skia_lib" ]]; then
 fi
 
 #
-# Step 2: Configure native/moon.pkg via configure-linux-native-pkg.sh
+# Step 2: Export the Skia provider environment
 #
-echo "=== Step 2: Configure moui_skia/native/moon.pkg ===" | tee -a "$preflight_log"
-configure_args=(
-  --skia-include "$skia_include"
-  --skia-lib-dir "$skia_lib_dir"
-  --skia-lib "$skia_lib"
-  --link-mode "$skia_link_mode"
-)
+echo "=== Step 2: Export Skia provider environment ===" | tee -a "$preflight_log"
+# moui_skia/build.mbtx reads the provider paths from the environment, compiles
+# native/*.cpp itself (no mbt stub-cc-flags), and emits the final link config,
+# so example packages need no hand-written Skia flags.
+export MOUI_SKIA_PLATFORM=linux
+export MOUI_SKIA_SKIA_INCLUDE="$skia_include"
+export MOUI_SKIA_SKIA_LIB_DIR="$skia_lib_dir"
+export MOUI_SKIA_LINK_MODE="$skia_link_mode"
+export MOUI_SKIA_STUB_MODE=build
+export MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1
 if [[ $enable_skparagraph -eq 1 ]]; then
-  configure_args+=(--enable-skparagraph)
+  export MOUI_SKIA_ENABLE_SKPARAGRAPH=1
 fi
 if [[ $require_skparagraph -eq 1 ]]; then
-  configure_args+=(--require-skparagraph)
+  export MOUI_SKIA_REQUIRE_SKPARAGRAPH=1
 fi
-
-bash "$skia_repo/scripts/configure-linux-native-pkg.sh" \
-  "${configure_args[@]}" \
-  --write >/dev/null
-
-echo "  Configured moui_skia/native/moon.pkg" | tee -a "$preflight_log"
-
-# Compute Skia link flags for example packages by reading generated output
-generated_output="$(bash "$skia_repo/scripts/configure-linux-native-pkg.sh" \
-  "${configure_args[@]}")"
-
-linux_link_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"cc-link-flags": "\(.*\)",/\1/p')"
-linux_stub_cc_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"stub-cc-flags": "\(.*\)",/\1/p')"
-
-echo "  Skia link flags: $linux_link_flags
-  Stub CC flags: $linux_stub_cc_flags" | tee -a "$preflight_log"
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA
+unset MOUI_SKIA_STUB_LIB
+{
+  echo "  MOUI_SKIA_PLATFORM=$MOUI_SKIA_PLATFORM"
+  echo "  MOUI_SKIA_SKIA_INCLUDE=$MOUI_SKIA_SKIA_INCLUDE"
+  echo "  MOUI_SKIA_SKIA_LIB_DIR=$MOUI_SKIA_SKIA_LIB_DIR"
+  echo "  MOUI_SKIA_LINK_MODE=$MOUI_SKIA_LINK_MODE"
+  echo "  MOUI_SKIA_STUB_MODE=$MOUI_SKIA_STUB_MODE"
+  echo "  MOUI_SKIA_ENABLE_SKPARAGRAPH=${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+  echo "  MOUI_SKIA_REQUIRE_SKPARAGRAPH=${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
+} | tee -a "$preflight_log"
 
 #
-# Step 3: Configure package moon.pkg files for example targets
+# Step 3: Build showcase and first-frame smoke test
 #
-echo "=== Step 3: Configure example package moon.pkg files ===" | tee -a "$preflight_log"
-
-showcase_pkg="$REPO_ROOT/examples/showcase/linux_skia/moon.pkg"
-showcase_backup="$showcase_pkg.moui-evidence.bak"
-cp "$showcase_pkg" "$showcase_backup"
-
-cat > "$showcase_pkg" <<PKGEOF
-import {
-  "wzzc-dev/moui/apphost",
-  "wzzc-dev/moui/backend/linux" @linux_backend,
-  "wzzc-dev/moui_skia_renderer" @render_skia,
-  "examples/showcase",
-}
-
-supported_targets = "native"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "native": {
-      "stub-cc-flags": "$linux_stub_cc_flags",
-      "cc-link-flags": "$linux_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-PKGEOF
-echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
-
-# Also configure the first-frame smoke test moon.pkg
-first_frame_pkg="$REPO_ROOT/moui_tests/tester/linux_skia_first_frame_smoke/moon.pkg"
-first_frame_backup="$first_frame_pkg.moui-evidence.bak"
-cp "$first_frame_pkg" "$first_frame_backup"
-
-cat > "$first_frame_pkg" <<PKGEOF
-import {
-  "wzzc-dev/moui/apphost",
-  "wzzc-dev/moui/backend/linux",
-  "wzzc-dev/moui_skia_renderer" @render_skia,
-  "wzzc-dev/moui_tests/tester/fixtures/text_input_app" @fixture,
-}
-
-supported_targets = "native"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "native": {
-      "stub-cc-flags": "$linux_stub_cc_flags",
-      "cc-link-flags": "$linux_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-PKGEOF
-echo "  Wrote $first_frame_pkg" | tee -a "$preflight_log"
-
-restore_packages() {
-  if [[ -f "$showcase_backup" ]]; then
-    cp "$showcase_backup" "$showcase_pkg"
-    rm -f "$showcase_backup"
-    echo "Restored $showcase_pkg"
-  fi
-  if [[ -f "$first_frame_backup" ]]; then
-    cp "$first_frame_backup" "$first_frame_pkg"
-    rm -f "$first_frame_backup"
-    echo "Restored $first_frame_pkg"
-  fi
-  cd "$REPO_ROOT"
-  git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true
-}
-trap restore_packages EXIT
-
-#
-# Step 4: Build showcase and first-frame smoke test
-#
-echo "=== Step 4: Build targets ===" | tee -a "$preflight_log"
+echo "=== Step 3: Build targets ===" | tee -a "$preflight_log"
 
 cd "$REPO_ROOT"
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  moon build examples/showcase/linux_skia --target native 2>&1 | tee -a "$preflight_log"
+moon build examples/showcase/linux_skia --target native 2>&1 | tee -a "$preflight_log"
 echo "  Built examples/showcase/linux_skia" | tee -a "$preflight_log"
 
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  moon build moui_tests/tester/linux_skia_first_frame_smoke --target native 2>&1 | tee -a "$preflight_log"
+moon build moui_tests/tester/linux_skia_first_frame_smoke --target native 2>&1 | tee -a "$preflight_log"
 echo "  Built moui_tests/tester/linux_skia_first_frame_smoke" | tee -a "$preflight_log"
 
 #
-# Step 5: Start Weston headless
+# Step 4: Start Weston headless
 #
-echo "=== Step 5: Start headless Weston compositor ===" | tee -a "$preflight_log"
+echo "=== Step 4: Start headless Weston compositor ===" | tee -a "$preflight_log"
 
 weston_socket="moui-linux-evidence"
 if command -v weston >/dev/null 2>&1; then
@@ -273,16 +191,16 @@ cleanup_weston() {
     wait "$weston_pid" 2>/dev/null || true
   fi
 }
-trap 'cleanup_weston; restore_packages' EXIT
+trap cleanup_weston EXIT
 
 FIRST_FRAME_MARKER="Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke"
 FIRST_FRAME_TIMEOUT_SECONDS="${MOUI_LINUX_FIRST_FRAME_TIMEOUT_SECONDS:-60}"
 gpu_first_frame_status="passed"
 
 #
-# Step 6: Run raster, GPU, and automatic-fallback first-frame smoke tests
+# Step 5: Run raster, GPU, and automatic-fallback first-frame smoke tests
 #
-echo "=== Step 6: Run renderer-mode first-frame smoke tests ===" | tee -a "$preflight_log"
+echo "=== Step 5: Run renderer-mode first-frame smoke tests ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
 
 gpu_surface_available() {
@@ -304,7 +222,6 @@ run_first_frame_mode() {
     MOUI_FIRST_FRAME_EXIT=1 \
       MOUI_SKIA_RENDERER="$mode" \
       MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
       timeout --signal=TERM --kill-after=10s "${FIRST_FRAME_TIMEOUT_SECONDS}s" \
         moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
           > "$output" 2>&1 || rc=$?
@@ -315,7 +232,6 @@ run_first_frame_mode() {
     MOUI_FIRST_FRAME_EXIT=1 \
       MOUI_SKIA_RENDERER="$mode" \
       MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
       moon run moui_tests/tester/linux_skia_first_frame_smoke --target native \
         > "$output" 2>&1 || rc=$?
   fi
@@ -345,9 +261,9 @@ fi
 run_first_frame_mode "auto" "$first_frame_log"
 
 #
-# Step 7: Generate summary
+# Step 6: Generate summary
 #
-echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
+echo "=== Step 6: Generate evidence summary ===" | tee -a "$preflight_log"
 {
   echo "Linux platform evidence summary:"
   echo "  skia_commit=$skia_commit"

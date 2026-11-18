@@ -6,11 +6,12 @@
 renderer-neutral `DrawCommand` 流，因此同一份 sketch 可以跑在原生 Skia、
 Web wasm-gc，或只做记录的无头 `Recorder` 上。
 
-本目录是一个独立的 MoonBit module（`examples/p5_sketch`），包含：
+本目录是一个独立的 MoonBit module（`examples/p5_sketch`）。p5 核心与 MoUI
+适配层已经抽成独立的 addon module `moui_p5`（仓库根目录），本目录保留示例侧包：
 
-- `p5/`：不依赖 MoUI 的 sketch 核心（生命周期、图形、颜色、变换、文本、数学、输入、路径、Recorder）。
-- `p5/http/`：native-only 的异步 `https:` 图片 worker（`load_image_async` 的宿主实现）。
-- `p5/moui/`：MoUI 适配层（`MoUISurface` + `SketchView`）。
+- `moui_p5/`（仓库根，addon）：不依赖 MoUI 的 sketch 核心（生命周期、图形、颜色、变换、文本、数学、输入、路径、Recorder）。
+- `moui_p5/http/`：native-only 的异步 `https:` 图片 worker（`load_image_async` 的宿主实现）。
+- `moui_p5/moui/`：MoUI 适配层（`MoUISurface` + `SketchView`）。
 - `app/`：三个可交互示例和 TEA 外壳。
 - `macos_skia/`、`web_wasm/`：原生与 Web 入口。
 
@@ -126,8 +127,8 @@ p5.mbt 的 JS 版依赖 DOM、HTML Canvas、`Path2D`、图片元素和浏览器�
       Skia        Web wasm     (其他 MoUI renderer)
 ```
 
-核心包 `p5` 不知道 MoUI 的存在，可以在 `moon test` 里直接跑；MoUI 只在
-`p5/moui` 出现。这与 p5.mbt 的 `p5` / `p5/math` / `p5/color` / `p5/dom`
+核心包 `moui_p5` 不知道 MoUI 的存在，可以在 `moon test` 里直接跑；MoUI 只在
+`moui_p5/moui` 出现。这与 p5.mbt 的 `p5` / `p5/math` / `p5/color` / `p5/dom`
 分层是同一个思路。
 
 ### 2.2 已实现（可运行）
@@ -142,7 +143,7 @@ p5.mbt 的 JS 版依赖 DOM、HTML Canvas、`Path2D`、图片元素和浏览器�
 | 模式 | `rect_mode`、`ellipse_mode`、`angle_mode` |
 | 变换 | `translate`、`rotate`、`scale`、`shear_x` / `shear_y`、`apply_matrix`、`reset_matrix`、`get_matrix` |
 | 文本 | `text_size`、`text_font`、`text_style`、`text_leading`、`text_align`、`text_wrap`、`text`（多行、按 `max_width` 换行、按 `max_height` 截断；`stroke()` 走 `TextRun` 描边，`no_fill()` 时为 stroke-only 描边文字）、`text_width`、`text_ascent`、`text_descent` |
-| 图像/像素 | `load_image` / `try_load_image`（同步 PNG data URI、本地文件、`file://`）、`load_image_async` + `ImageFetcher`（宿主非阻塞 fetch）、`create_image`、`create_graphics`（矢量 recording sketch + `image()` replay）、`Image::get` / `set` / `fill` / `pixels` / `load_pixels` / `update_pixels` / `resize` / `copy` / `filter` / `tinted` / `to_png_bytes` / `save`、`tint` / `no_tint`、`image`；CPU 滤镜（threshold/gray/opaque/invert/posterize/blur/erode/dilate）；MoUI `RgbaImage` 可写离屏 buffer，adapter 编码 PNG data URI → `DrawCommand::DrawImage` |
+| 图像/像素 | `load_image` / `try_load_image`（同步 PNG data URI、本地文件、`file://`）、`load_image_async` + `ImageFetcher`（宿主非阻塞 fetch）、`create_image`、`create_graphics`（矢量 recording sketch + `image()` replay）、`Image::get` / `set` / `fill` / `pixels` / `load_pixels` / `update_pixels` / `resize` / `copy` / `filter` / `tinted` / `to_png_bytes` / `save`、`tint` / `no_tint`、`image`；CPU 滤镜（threshold/gray/opaque/invert/posterize/blur/erode/dilate）；MoUI `RgbaBuffer` 可写离屏 buffer，框架 `to_png_bytes()` 是唯一公开 PNG 编码入口；adapter 再包成 data URI → `DrawCommand::DrawImage` |
 | 数学 | `random` / `random_max` / `random_range` / `random_choice` / `random_gaussian` / `random_seed`、`random2d` / `random3d`、`noise` / `noise_seed` / `noise_detail`、`sin` / `cos` / `tan` / `asin` / `acos` / `atan` / `atan2`、`map` / `constrain` / `lerp` / `dist` / `mag` / `norm` / `sq` / `fract` / `round` / `degrees` / `radians` |
 | Vector | `new`、`copy`、`set`、`add` / `sub` / `mult` / `div`、`mag` / `mag_sq`、`dot` / `cross`、`normalize` / `set_mag` / `limit`、`heading` / `rotate`、`dist`、`lerp`、`angle_between`、`array` |
 | 输入 | `pointer_down` / `pointer_move` / `pointer_up` / `pointer_clicked` / `pointer_double_clicked` / `pointer_wheel`、`touch_started_at` / `touch_moved_to` / `touch_ended_at`、`on_touch_started` / `on_touch_moved` / `on_touch_ended`、`touches`（含 `id`/`pressure`）、`text_input` / `composition_start/update/end`、`composing` / `composition_text` / `last_input_text`、`key_down` / `key_up` / `key_typed_input` / `key_is_down`（`key` + 物理 `code` + `key_code`）、`mouse_x` / `mouse_y` / `pmouse_*` / `moved_*` / `mouse_is_pressed` / `mouse_button` / `key` / `code` / `key_code` / `focused` |
@@ -164,9 +165,11 @@ p5.mbt 的 JS 版依赖 DOM、HTML Canvas、`Path2D`、图片元素和浏览器�
 - `View::on_keyboard_input(key_handler, text_input_handler)`：一个 focusable
   wrapper 同时接收 `KeyboardEvent` 与 `TextInputEvent`，避免两个独立
   focusable modifier 抢焦点；p5 适配层用它接 IME。
-- `@graphics.RgbaImage`：可写、renderer-neutral 的 RGBA8 离屏 buffer
-  （get/set/fill/pixels）；p5 adapter 把它编码为 PNG data URI 后走
-  `DrawCommand::DrawImage`，Skia/Sun/browser 共用同一条图片路径。
+- `@graphics.RgbaBuffer`：可写、renderer-neutral 的 RGBA8 离屏 buffer
+  （get/set/fill/pixels）；框架只保留一个公开 PNG 编码入口
+  `RgbaBuffer::to_png_bytes()`，p5 的 `Image::to_png_bytes` 委托给它，
+  adapter 再把字节包成 PNG data URI 走 `DrawCommand::DrawImage`，
+  Skia/Sun/browser 共用同一条图片路径。
 
 这些能力是通用的 canvas/custom-paint 能力，不是 p5 专用；p5 适配层
 用它们替换了原来的 `on_drag_with_frame` + `on_tap_with_frame` 组合，从而补上
@@ -176,7 +179,7 @@ hover、滚轮、画布外 release 和键盘输入。核心测试从 199 增至 
 
 | 未实现 | 原因 |
 |---|---|
-| WGPU/Metal 的 Source blend 与可分离模式 | 同步加载覆盖 data URI、本地文件和 `file://`；`load_image_async` + native `p5/http` 已把 `https:` 放到 async worker；主画布 readback 在 macOS 走 `skia_raster`、Web 走 `web_raster`（示例自带 `p5_raster` import 命名空间 + 离屏 2D 解释器）。像素 overlay 的 `BlendMode::Source` 在 WGPU/Metal 仍退化为 source-over（不可擦除）。 |
+| WGPU/Metal 的 Source blend 与可分离模式 | 同步加载覆盖 data URI、本地文件和 `file://`；`load_image_async` + native `moui_p5/http` 已把 `https:` 放到 async worker；主画布 readback 在 macOS 走 `skia_raster`、Web 走 `web_raster`（示例自带 `p5_raster` import 命名空间 + 离屏 2D 解释器）。像素 overlay 的 `BlendMode::Source` 在 WGPU/Metal 仍退化为 source-over（不可擦除）。 |
 | DOM 元素（`create_div` 等） | p5.mbt 的 DOM 是浏览器 FFI；MoUI 用 `views` 构建 UI，不需要在 sketch 里创建 DOM。 |
 | WebGL / WebGPU / 3D / shader / framebuffer | 与 p5.mbt 一样不在 2D 核心范围。 |
 | 视频 / 音频 / 摄像头 | 依赖浏览器媒体元素。 |
@@ -195,33 +198,12 @@ hover、滚轮、画布外 release 和键盘输入。核心测试从 199 增至 
 examples/p5_sketch/
 ├── moon.mod                 # examples/p5_sketch，依赖 moui / skia / web
 ├── README.md                # 本文件
-├── p5/                      # 核心：不依赖 MoUI
-│   ├── moon.pkg
-│   ├── math.mbt             # 常量、标量、Matrix、Random、Noise、Vector
-│   ├── color.mbt            # Color、RGB/HSB/HSL、ColorArg、CSS 解析
-│   ├── path.mbt             # PathCmd、矩形/圆角/椭圆/弧/Bézier
-│   ├── types.mbt            # FontSpec、TextMetrics、对齐、BlendMode、StrokeCap
-│   ├── surface.mbt          # Surface trait、NullSurface、Recorder
-│   ├── image.mbt            # Image / create_image / create_graphics / image
-│   ├── image_filters.mbt    # CPU filters + tinted()
-│   ├── graphics.mbt         # create_graphics recording surface + replay
-│   ├── png_decode.mbt       # PNG data URI / local file decoder for load_image
-│   ├── png_encode.mbt       # Image → PNG bytes / Image::save
-│   ├── sketch.mbt           # Sketch 状态、生命周期、图形、变换、push/pop
-│   ├── api.mbt             # 文本、数学、输入、颜色访问器
-│   └── core_test.mbt        # 37 个无头测试
+（p5 核心已迁移到仓库根的 `moui_p5/` addon：`math.mbt` / `color.mbt` /
+`path.mbt` / `image*.mbt` / `sketch*.mbt` / `surface.mbt` / `api.mbt` 与
+`moui/` 适配、`http/` worker；本示例只保留 app 与宿主入口。）
 ├── web_raster/              # wasm-only CanvasRasterizer（JSON + p5_raster import）
 │   ├── serialize.mbt        # 命令流 → 紧凑 JSON（自写转义）
 │   └── raster.mbt           # 字符串句柄 ABI、capture、install/self_test
-├── p5/http/                 # native-only 异步 https 图片 worker
-│   ├── loader.mbt           # RemoteImageLoader / with_loader
-│   └── loader_wbtest.mbt    # 队列投递与拒绝 cleartext 测试
-├── p5/moui/                 # MoUI 适配
-│   ├── moon.pkg
-│   ├── view.mbt             # MoUISurface、SketchView、P5Canvas ViewNode
-│   ├── image_encode.mbt     # RGBA → PNG data URI（ImageRun source）
-│   ├── pixels.mbt           # CanvasRasterizer、capture/save、主画布像素 API
-│   └── adapter_test.mbt     # 13 个 DrawCommand/输入/retained/readback 适配测试
 ├── skia_raster/             # native-only 离屏 Skia CanvasRasterizer
 │   ├── raster.mbt           # DrawCommand → RGBA p5.Image（含反预乘）
 │   └── raster_wbtest.mbt    # 像素回读、半透明混合、save_canvas 测试
@@ -236,11 +218,12 @@ examples/p5_sketch/
     └── index.html           # 本地 Web 预览页
 ```
 
-`p5` 的 `supported_targets` 是 `+native+js+wasm-gc+wasm`；它只依赖
-`moonbitlang/core/{math,buffer,compress/zlib,encoding/base64}` 与
-`moonbitlang/x/fs`。`p5/http` 是 native-only 的 async worker，依赖
-`moonbitlang/async` + `moonbitlang/async/http`。`p5/moui` 依赖 `p5` +
-`wzzc-dev/moui/core`，`app` 依赖 `p5`、`p5/moui`、`moui` 和 `moui/views`。
+`moui_p5` addon 的 `supported_targets` 是 `+native+js+wasm-gc+wasm`；它只依赖
+`moonbitlang/core/{math,buffer,compress/zlib,encoding/base64}`，不再依赖任何
+文件系统包——本地文件读写通过宿主注入的 `FilePorts`（loader/saver 闭包对）
+完成。`moui_p5/http` 是 native-only 的 async worker，依赖
+`moonbitlang/async` + `moonbitlang/async/http`。`moui_p5/moui` 依赖 `moui_p5` +
+`wzzc-dev/moui/core`，`app` 依赖 `moui_p5`、`moui_p5/moui`、`moui` 和 `moui/views`。
 
 ---
 
@@ -326,7 +309,7 @@ let remote = p.load_image_async("https://example.com/logo.png", on_load=img => {
 
 `load_image_async` 只负责投递；宿主用 `Sketch::set_image_fetcher` 或
 `set_default_image_fetcher` 安装 `ImageFetcher`。macOS 入口已安装
-`p5/http` 的 native worker，仅接受 `https:`。循环中的 sketch 会自动重绘；
+`moui_p5/http` 的 native worker，仅接受 `https:`。循环中的 sketch 会自动重绘；
 `no_loop` 的 sketch 应在 `on_load` 里触发一次 app 状态更新或重绘请求。
 
 主画布 readback 通过宿主的 `CanvasRasterizer` 完成：
@@ -394,7 +377,7 @@ Intro 所有半透明颜色都经 `intro_fill` / `intro_stroke` 助手换算。
 - `SketchView::new_stateless()` 保留旧行为：每帧替换，不累积
 
 这不是像素级持久 canvas：MoUI 仍不保留上一帧 RGBA，也没有主画布
-`get()/set()/pixels` readback。逐像素效果仍应使用 `Image`/`RgbaImage`
+`get()/set()/pixels` readback。逐像素效果仍应使用 `Image`/`RgbaBuffer`
 或 app 侧状态。
 
 ### 5.2 输入能力
@@ -441,7 +424,7 @@ IME / 文本输入现在走 `View::on_keyboard_input`：`InsertText`/`ReplaceTex
   在 recording 阶段使用 fallback，replay 时由父 surface 重新排版。
   `load_image` 已支持 data URI、本地文件和 `file://`；`Image::to_png_bytes` /
   `Image::save` 复用同一个 PNG 编码器；`load_image_async` 通过 `ImageFetcher`
-  接 native async worker（`p5/http`，仅 `https:`），占位图在完成时原地填充。
+  接 native async worker（`moui_p5/http`，仅 `https:`），占位图在完成时原地填充。
   主画布 readback 由宿主 `CanvasRasterizer` 提供：macOS 用 `skia_raster`
   离屏重放命令，Web 用 `web_raster`（命令 JSON → 示例自带 JS 解释器 →
   离屏 2D canvas → `getImageData`），`save_canvas`、`load_pixels`、
@@ -462,9 +445,9 @@ export PATH="$HOME/.moon/bin:$PATH"
 ### 6.1 核心测试（无窗口）
 
 ```sh
-moon test examples/p5_sketch/p5 --target native
-moon test examples/p5_sketch/p5/http --target native
-moon test examples/p5_sketch/p5/moui --target native
+moon test moui_p5 --target native
+moon test moui_p5/http --target native
+moon test moui_p5/moui --target native
 moon test examples/p5_sketch/skia_raster --target native
 moon test examples/p5_sketch/web_raster --target wasm-gc
 ```
@@ -472,9 +455,9 @@ moon test examples/p5_sketch/web_raster --target wasm-gc
 预期：
 
 ```text
-Total tests: 38, passed: 38, failed: 0.   # p5 core
+Total tests: 41, passed: 41, failed: 0.   # p5 core
 Total tests: 2, passed: 2, failed: 0.       # native http loader
-Total tests: 14, passed: 14, failed: 0.     # MoUI adapter
+Total tests: 15, passed: 15, failed: 0.     # MoUI adapter
 Total tests: 3, passed: 3, failed: 0.       # Skia canvas rasterizer
 ```
 
@@ -496,9 +479,10 @@ Total tests: 3, passed: 3, failed: 0.       # Skia canvas rasterizer
 - image buffer 的 create/get/set/pixels、filter/tint、Recorder 绘制与 PNG data URI 编码
 - graphics recording → replay 的 transform/path 断言
 - PNG data URI / 本地文件 / `file://` → Image 像素解码、`try_load_image` 失败语义与 `load_image` 回调
-- `Image::to_png_bytes` 编码 → 解码 round-trip、`Image::save` 写盘与失败返回
+- `FilePorts` 注入：内存 loader/saver 覆盖本地文件、`file://`、缺失文件、保存失败与 `save_canvas` 回写语义
+- `Image::to_png_bytes` 编码 → 解码 round-trip、`Image::save` 经注入 saver 写入与失败返回
 - `load_image_async` 的同步/延迟完成、占位图原地填充、失败保持占位与重复完成忽略
-- native `p5/http` 的队列投递、字节回传与 cleartext `http` 拒绝
+- native `moui_p5/http` 的队列投递、字节回传与 cleartext `http` 拒绝
 - `SketchView` 通过宿主 rasterizer 捕获命令流、主画布 load/set/update pixels 的 overlay 命令
 - `skia_raster` 的 RGBA/半透明回读（含反预乘）与 `save_canvas` → PNG → `load_image` 闭环
 - retained display list 的累积、opaque background reset 与 stateless 对照
@@ -590,9 +574,9 @@ python3 -m http.server 8765
 ### 6.5 一次性检查
 
 ```sh
-moon check examples/p5_sketch/p5 --target native
-moon check examples/p5_sketch/p5/http --target native
-moon check examples/p5_sketch/p5/moui --target native
+moon check moui_p5 --target native
+moon check moui_p5/http --target native
+moon check moui_p5/moui --target native
 moon check examples/p5_sketch/skia_raster --target native
 moon check examples/p5_sketch/app --target native
 ```
@@ -604,19 +588,19 @@ moon check examples/p5_sketch/app --target native
 
 | 验证 | 结果 |
 |---|---|
-| `moon test moui/core` | 205 passed, 0 failed（含 `RgbaImage`/`on_keyboard_input`/`PathSpec::shape_bounds`） |
+| `moon test moui/core` | 205 passed, 0 failed（含 `RgbaBuffer`/`to_png_bytes`/`on_keyboard_input`/`PathSpec::shape_bounds`） |
 | `moon test moui/runtime` | 250 passed, 0 failed（含 pointer→focus→key/text 路由） |
 | `moon test moui/backend/common/input` | 35 passed, 0 failed（含 PhysicalKey→code 解码） |
 | `moon test moui_skia_renderer` | 153 passed, 0 failed（含三角形路径裁剪、描边文字、Difference 合成像素断言） |
 | `moon test moui_sun_renderer` | 113 passed, 0 failed（含高级 blend 映射） |
-| `moon test examples/p5_sketch/p5` | 41 passed, 0 failed（含 stroke-only、RGB/HSB alpha 范围、圆角图元路由与 replay） |
-| `moon test examples/p5_sketch/p5/http` | 2 passed, 0 failed |
-| `moon test examples/p5_sketch/p5/moui` | 15 passed, 0 failed（含 Difference/Dodge → PushLayer 断言） |
+| `moon test moui_p5` | 41 passed, 0 failed（含 stroke-only、RGB/HSB alpha 范围、圆角图元路由与 replay） |
+| `moon test moui_p5/http` | 2 passed, 0 failed |
+| `moon test moui_p5/moui` | 15 passed, 0 failed（含 Difference/Dodge → PushLayer 断言） |
 | `moon test examples/p5_sketch/skia_raster` | 3 passed, 0 failed |
 | `moon test examples/p5_sketch/web_raster` | 2 passed, 0 failed（JSON 序列化） |
 | Web `?debug=1` 启动日志 | `p5 web readback self-test: left=(255,0,0) right=(0,255,0)`（JSON → 离屏 2D → getImageData → 像素回传闭环） |
 | `moon test moui_sun_renderer` / `moui_tui_renderer` / `moui_web_renderer` / `moui_wgpu_renderer` / `moui_metal_renderer` | 112 / 43 / 33 / 61 / 91 passed，路径 clip fallback 通过 |
-| `moon check`（p5 / p5/http / p5/moui / skia_raster / app） | 0 warning, 0 error |
+| `moon check`（moui_p5 / moui_p5/http / moui_p5/moui / skia_raster / app） | 0 warning, 0 error |
 | `moon build examples/p5_sketch/macos_skia --target native` | 成功，async entry + `RemoteImageLoader` 链接通过，产物 `_build/native/debug/build/examples/p5_sketch/macos_skia/macos_skia.exe` |
 | `moon build examples/p5_sketch/web_wasm --target wasm-gc` | 成功，产物约 1.6 MB |
 | Web 预览（启动本地 HTTP server，打开 `web_wasm/`） | 页面加载；DOM 无障碍树包含三个 tab 与 canvas；点击 `Flow` 后标题和 `● Flow` 选中态更新 |

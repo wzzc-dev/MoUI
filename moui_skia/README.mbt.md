@@ -385,8 +385,12 @@ library files.
 
 The package prebuild hook now enables native real-Skia configuration by
 default for native builds. Set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
-`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` when you need the fallback-unavailable
-compile path. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
+`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` only for the pure-build escape hatch: it
+skips the Skia include/lib/define fetch but still resolves a stub archive
+(`MOUI_SKIA_STUB_LIB` when set, otherwise a local no-Skia compile inside the
+prebuild), so native link checks stay green while the app reports Skia
+unavailable. The C++ stub never returns to the `mbt` `native-stub` compile, and
+`MOUI_SKIA_STUB_MODE=prebuilt` is a hard error under the hatch. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
 `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, `MOUI_SKIA_EXTRA_LINK_FLAGS`, and
 `MOUI_SKIA_LINK_MODE` take precedence over the release provider defaults.

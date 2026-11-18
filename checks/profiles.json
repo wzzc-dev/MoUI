@@ -3,7 +3,15 @@
   "description": "MoUI repository check profiles. This catalog is source metadata for scripts/check.mjs, not generated evidence.",
   "profiles": {
     "pr": {
-      "description": "Fast pull-request gate: static guards, core package checks, and Web wasm-gc builds.",
+      "description": "Fast pull-request gate: the pr-static and pr-native halves in order. Locally one command; CI splits the halves across ubuntu-24.04 and macOS so a PR pays for one compile graph instead of three.",
+      "includes": [
+        "pr-static",
+        "pr-native"
+      ],
+      "steps": []
+    },
+    "pr-static": {
+      "description": "Static pull-request guards: script lint, policy validators, and MoonBit tool tests. Host-independent, so CI runs this half on ubuntu-24.04.",
       "steps": [
         {
           "name": "script lint (pr)",
@@ -29,16 +37,6 @@
           ]
         },
         {
-          "name": "performance budget validator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_performance_budgets",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "accessibility foundation",
           "argv": [
             "node",
@@ -53,30 +51,10 @@
           ]
         },
         {
-          "name": "platform matrix validator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_platform_matrix",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "portfolio governance",
           "argv": [
             "node",
             "scripts/validate-portfolio-governance.mjs"
-          ]
-        },
-        {
-          "name": "portfolio governance validator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_portfolio_governance",
-            "--target",
-            "native"
           ]
         },
         {
@@ -116,16 +94,6 @@
           ]
         },
         {
-          "name": "view declarations generator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/generate_view_declarations",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "core derives generation",
           "argv": [
             "node",
@@ -134,30 +102,10 @@
           ]
         },
         {
-          "name": "core derives generator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/generate_core_derives",
-            "--target",
-            "native"
-          ]
-        },
-        {
           "name": "ViewNode declaration coverage",
           "argv": [
             "node",
             "scripts/validate-viewnode-declaration-coverage.mjs"
-          ]
-        },
-        {
-          "name": "ViewNode declaration coverage tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_viewnode_declaration_coverage",
-            "--target",
-            "native"
           ]
         },
         {
@@ -211,6 +159,31 @@
           ]
         },
         {
+          "name": "doc budget",
+          "argv": [
+            "node",
+            "scripts/validate-doc-budget.mjs"
+          ]
+        },
+        {
+          "name": "tool test coverage",
+          "argv": [
+            "node",
+            "scripts/validate-tool-test-coverage.mjs"
+          ]
+        },
+        {
+          "name": "MoonBit tool tests",
+          "argv": [
+            "moon",
+            "-C",
+            "tools",
+            "test",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "backend renderer boundary",
           "argv": [
             "node",
@@ -229,16 +202,6 @@
           "argv": [
             "node",
             "scripts/validate-runtime-state-render-ownership.mjs"
-          ]
-        },
-        {
-          "name": "runtime ownership validator tests",
-          "argv": [
-            "moon",
-            "test",
-            "tools/moui/validate_runtime_state_render_ownership",
-            "--target",
-            "native"
           ]
         },
         {
@@ -369,7 +332,12 @@
             "fmt",
             "--check"
           ]
-        },
+        }
+      ]
+    },
+    "pr-native": {
+      "description": "Native pull-request gate: format check, workspace check, generated-interface drift, and the package test/build matrix. CI runs this half on macOS, where the mainline Skia bindings resolve.",
+      "steps": [
         {
           "name": "MoonBit workspace check",
           "argv": [
@@ -435,6 +403,18 @@
           ]
         },
         {
+          "name": "p5 addon tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_p5",
+            "moui_p5/moui",
+            "moui_p5/http",
+            "--target",
+            "native"
+          ]
+        },
+        {
           "name": "WebView addon tests",
           "argv": [
             "moon",
@@ -490,6 +470,16 @@
             "moon",
             "test",
             "examples/custom_control/app",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "p5 Sketch demo tests",
+          "argv": [
+            "moon",
+            "test",
+            "examples/p5_sketch/skia_raster",
             "--target",
             "native"
           ]
@@ -882,18 +872,6 @@
             "moon",
             "test",
             "tools_product/moui/validate_renderer_capability_consistency",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "doc references validator tests",
-          "argv": [
-            "moon",
-            "-C",
-            "tools",
-            "test",
-            "moui/validate_doc_references",
             "--target",
             "native"
           ]

@@ -290,7 +290,7 @@ wiring、text diagnostics 和 advanced rendering，
 Typora 风格的所见即所得 Markdown 编辑器（MoMark）在自有仓库
 [wzzc-dev/MoMark](https://github.com/wzzc-dev/MoMark) 独立发布，基于已发布的
 `wzzc-dev/moui` 与 `wzzc-dev/moui_richtext` 包构建。它不是本仓库的 submodule
-或 workspace 成员；MoUI 改动走 [vendor 工作流](vendor-workflow.md)。指针说明参见
+或 workspace 成员；MoUI 改动走 [vendor 工作流](../vendor-workflow.md)。指针说明参见
 [Markdown Editor](markdown-editor.md)。
 
 ## Settings

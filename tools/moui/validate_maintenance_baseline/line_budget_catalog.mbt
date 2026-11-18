@@ -185,7 +185,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 422,
+      max_lines: 425,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -193,7 +193,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 157,
+      // The wrapper catalog itself carries a ratchet; doc-budget and tool-test
+      // coverage wrappers are registered here like every other MoonBit tool.
+      max_lines: 159,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",

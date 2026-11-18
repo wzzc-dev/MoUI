@@ -19,6 +19,7 @@ members = [
   "./moui_i18n",
   "./moui_richtext",
   "./moui_markdown",
+  "./moui_p5",
   "./moui_webview",
   "./moui_devtools",
   "./moui_agent",

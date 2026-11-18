@@ -401,7 +401,7 @@
       },
       "docs": [
         "docs/testing.md",
-        "docs/plans/done/tui-output-path.md"
+        "docs/plans/done/INDEX.md"
       ],
       "artifacts": [
         "artifacts/smoke/tui-pty-smoke/raw-stream.log"

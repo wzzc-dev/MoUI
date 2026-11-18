@@ -43,7 +43,7 @@ fn usage() -> String {
     #|
     #|Options:
     #|  --repo-root PATH      Repository root used to resolve relative paths. Defaults to cwd.
-    #|  --build-script PATH   Build script path. Defaults to build.js.
+    #|  --build-script PATH   Build script path. Defaults to build.mbtx.
     #|  --examples-dir PATH   Examples directory. Defaults to examples.
     #|  -h, --help            Show this help.
     #|
@@ -53,7 +53,7 @@ fn usage() -> String {
 ///|
 fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let repo_root = Ref(@env.current_dir().unwrap_or(""))
-  let build_script = Ref("build.js")
+  let build_script = Ref("build.mbtx")
   let examples_dir = Ref("examples")
   let help = Ref(false)
   let mut index = 0

@@ -22,8 +22,8 @@ workflow run.
 ## Renderer Feature Proof Status
 
 All 17 renderer features from `RendererFeature` enum share the same CI job
-mapping. L1 proof is always provided by `pr-profile` (package tests). L2 proof
-is provided by the three platform jobs on every PR.
+mapping. L1 proof is provided by `pr-profile` (package tests) or `pr-static`
+(API surface guards). L2 proof is provided by the three platform jobs on every PR.
 
 | Feature | L1 (ci.yml) | L2 macOS | L2 Linux | L2 Windows | L3 |
 |---------|-------------|----------|----------|------------|-----|

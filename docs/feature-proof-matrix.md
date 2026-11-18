@@ -29,11 +29,17 @@ rendering behavior, so L2 real Skia smoke runs on every PR.
 | Web wasm-gc build | `pr-profile` | macOS-14 | check.sh --profile pr: Web wasm-gc build succeeds |
 | Renderer capability report consistency | `pr-profile` | macOS-14 | check.sh --profile pr: capabilities_test.mbt passes |
 | Text conformance (grapheme/cluster/caret) | `pr-profile` | macOS-14 | `sh scripts/check.sh --profile full` includes text diagnostics |
-| API surface stability | `api-surface` | macOS-14 | moon info drift check passes |
+| API surface stability | `pr-static` | ubuntu-24.04 | `validate-api-surface.mjs` / `moon info` drift check passes in the static guards job |
 | Linux backend contracts | `linux-platform` | ubuntu-24.04 | `sh scripts/check.sh --profile platform` passes |
 | Windows backend contracts | `windows-native` | windows-2022 | Windows backend MSVC tests pass |
 | macOS packaging | `macos-packaging` | macOS-14 | Showcase app bundle packages successfully |
 | Benchmark scaffold | `benchmark-scaffold` | macOS-14 | Benchmark targets build successfully |
+
+`macos-packaging` and `benchmark-scaffold` are push/dispatch-only landing checks,
+so on a pull request their L1 rows are by-design skips rather than gaps. The same
+applies to the compile jobs when a change touches documentation only; the
+`feature-proof-summary.yml` workflow passes `--event` and `--docs-only` to the
+report generator so a genuine failure still fails the summary.
 
 ## L2 Features (moui-renderer-real-skia-ci.yml, every PR and push-to-main)
 
@@ -116,7 +122,7 @@ after worker-owned presentation and its matching-hardware manifest pass
 `moui-renderer-real-skia-ci.yml`, generates a proof report, and verifies
 coverage:
 
-- L1 jobs must pass (ci.yml).
+- L1 jobs must pass (ci.yml), except the by-design skips above.
 - L2 jobs must pass on all three platforms (moui-renderer-real-skia-ci.yml).
 
 ## Artifact Paths
@@ -131,8 +137,8 @@ coverage:
 ## Adding CI Proof For A New Feature
 
 1. If the feature is L1 (no real renderer needed): add a package test under
-   the appropriate `moui/` package. The `pr-profile` job in `ci.yml` will
-   pick it up via `check.sh --profile daily`.
+   the appropriate `moui/` package. The `pr` profile (the `pr-static` and
+   `pr-profile` halves) picks it up.
 2. If the feature is L2 (needs real Skia): add a smoke assertion to
    `moui_skia/scripts/native_smoke/` and update
    `moui_skia/native/capabilities.json` if needed. The

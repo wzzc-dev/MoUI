@@ -2,8 +2,8 @@
 package "examples/p5_sketch/app"
 
 import {
-  "examples/p5_sketch/p5/moui",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_p5/moui",
 }
 
 // Values

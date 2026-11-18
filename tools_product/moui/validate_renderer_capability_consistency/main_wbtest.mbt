@@ -68,16 +68,18 @@ test "parse_table finds the header and all data rows" {
   let text =
     #|# Title
     #|
-    #|| Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Sun CPU raster | Follow-up |
-    #|| --- | --- | --- | --- | --- | --- |
-    #|| Rect | supported | supported | supported | supported | note |
-    #|| Gradient | supported | partial | partial | supported | note |
-    #|| Text shaping | supported | supported | supported | partial | note |
+    #|| Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Sun CPU raster | Terminal cell ANSI | Native direct GPU | Follow-up |
+    #|| --- | --- | --- | --- | --- | --- | --- |
+    #|| Rect | supported | supported | supported | supported | supported | supported | note |
+    #|| Gradient | supported | partial | partial | supported | partial | supported | note |
+    #|| Text shaping | supported | supported | supported | partial | partial | supported | note |
   let (header_line, rows) = parse_table(text)
   assert_eq(header_line, 3)
   assert_eq(rows.length(), 3)
   assert_eq(rows[0].feature_name, "Rect")
   assert_eq(rows[0].skia, "supported")
+  assert_eq(rows[0].tui, "supported")
+  assert_eq(rows[0].metal, "supported")
   assert_eq(rows[1].wgpu, "partial")
   assert_eq(rows[2].sun, "partial")
 }

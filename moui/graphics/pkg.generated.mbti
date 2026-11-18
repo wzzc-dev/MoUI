@@ -34,7 +34,7 @@ pub using @core {type PathSpec}
 
 pub using @core {type PathVerb}
 
-pub using @core {type RgbaImage}
+pub using @core {type RgbaBuffer}
 
 pub using @core {type RoundedRect}
 

@@ -173,6 +173,29 @@ $assetUrl = $asset.url
 $sourceName = if ($provider.source_archive.name) { $provider.source_archive.name } else { "$($provider.owner)-$($provider.repo)-$Tag-source.zip" }
 $sourceUrl = if ($provider.source_archive.url) { $provider.source_archive.url } else { "https://github.com/$($provider.owner)/$($provider.repo)/archive/refs/tags/$Tag.zip" }
 $libraryNames = @($asset.library_names)
+$stubEntry = $null
+$stubLibraries = Get-JsonPropertyValue -Object $provider -Name "stub_libraries"
+if ($stubLibraries) {
+  $stubPlatform = Get-JsonPropertyValue -Object $stubLibraries -Name $resolvedPlatform
+  if ($stubPlatform) {
+    $stubConfig = Get-JsonPropertyValue -Object $stubPlatform -Name $Config
+    if ($stubConfig) { $stubEntry = Get-JsonPropertyValue -Object $stubConfig -Name $resolvedArch }
+  }
+}
+$stubName = ""
+$stubSha256 = ""
+$stubSize = ""
+$stubUrl = ""
+$stubSourcesSha256 = ""
+$stubLibraryNames = @()
+if ($stubEntry) {
+  $stubName = $stubEntry.name
+  $stubSha256 = $stubEntry.sha256.ToLowerInvariant()
+  $stubSize = $stubEntry.size
+  $stubUrl = $stubEntry.url
+  $stubSourcesSha256 = $stubEntry.sources_sha256
+  $stubLibraryNames = @($stubEntry.library_names)
+}
 $extraCcFlags = Get-JsonPropertyValue -Object $provider.default_extra_cc_flags -Name $resolvedPlatform
 if ($null -eq $extraCcFlags) { $extraCcFlags = "" }
 $extraLinkFlags = Get-JsonPropertyValue -Object $provider.default_extra_link_flags -Name $resolvedPlatform
@@ -185,6 +208,9 @@ $packageZip = Join-Path $entryDir $assetName
 $packageDir = Join-Path $entryDir "package"
 $sourceDir = Join-Path $tagDir "source"
 $sourceZip = Join-Path $tagDir $sourceName
+$stubEntryDir = Join-Path $tagDir "$resolvedPlatform-$Config-$resolvedArch-stub"
+$stubZip = Join-Path $stubEntryDir $stubName
+$stubDir = Join-Path $stubEntryDir "package"
 
 if (!$DryRunConfig) {
   if ($Force -or !(Test-Path -LiteralPath $packageDir -PathType Container)) {
@@ -200,6 +226,34 @@ if (!$DryRunConfig) {
     Expand-ZipArchive -Archive $packageZip -Destination $packageDir
   }
 }
+
+$stubLibPath = ""
+if ($stubName) {
+  if (!$DryRunConfig) {
+    if ($Force -or !(Test-Path -LiteralPath $stubDir -PathType Container)) {
+      New-Item -ItemType Directory -Force -Path $stubEntryDir | Out-Null
+      if ($Force -or !(Test-Path -LiteralPath $stubZip -PathType Leaf)) {
+        [Console]::Error.WriteLine("Downloading Skia stub library asset: $stubName")
+        Download-File -Url $stubUrl -Output $stubZip
+      }
+      $actualStubSha256 = Get-Sha256Hex -Path $stubZip
+      if ($actualStubSha256 -ne $stubSha256) {
+        throw "Skia stub library SHA256 mismatch: $stubZip expected=$stubSha256 actual=$actualStubSha256"
+      }
+      Expand-ZipArchive -Archive $stubZip -Destination $stubDir
+    }
+  }
+  if (Test-Path -LiteralPath $stubDir -PathType Container) {
+    $stubLibPath = Find-LibDir -Root $stubDir -LibraryNames $stubLibraryNames
+    if (!$stubLibPath) {
+      $stubLibPath = Find-LibDir -Root $stubDir -LibraryNames @("libmoui_skia_stub.a", "moui_skia_stub.lib")
+    }
+  }
+} elseif (!$DryRunConfig) {
+  [Console]::Error.WriteLine("note: skia-provider-lock.json has no released stub library for platform=$resolvedPlatform config=$Config arch=$resolvedArch; the build compiles native/*.cpp locally instead")
+}
+$stubLibPath = "$stubLibPath" -replace "\\", "/"
+$stubSource = if ($stubLibPath) { "release" } else { "" }
 
 $skiaInclude = Find-HeaderRoot -Root $packageDir
 $includeSource = "package"
@@ -264,6 +318,10 @@ if ($PrintEnv) {
     "MOUI_SKIA_SKIA_LIB=skia"
     "MOUI_SKIA_EXTRA_CC_FLAGS=$extraCcFlags"
     "MOUI_SKIA_EXTRA_LINK_FLAGS=$extraLinkFlags"
+    "MOUI_SKIA_STUB_LIB=$stubLibPath"
+    "MOUI_SKIA_STUB_ASSET_SHA256=$stubSha256"
+    "MOUI_SKIA_STUB_SOURCES_SHA256=$stubSourcesSha256"
+    "MOUI_SKIA_STUB_SOURCE=$stubSource"
   ) | Write-Output
   exit 0
 }
@@ -292,6 +350,11 @@ if ($PrintEnv) {
   "  skia_lib=skia"
   "  extra_cc_flags=$extraCcFlags"
   "  extra_link_flags=$extraLinkFlags"
+  "  stub_asset=$stubName"
+  "  stub_asset_sha256=$stubSha256"
+  "  stub_asset_size=$stubSize"
+  "  stub_sources_sha256=$stubSourcesSha256"
+  "  stub_lib=$stubLibPath"
 ) | Write-Output
 
 if ($DryRunConfig) {

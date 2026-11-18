@@ -27,6 +27,8 @@ pub fn dispatch_text_file(@backend.HostTextFileRequest) -> @backend.HostServiceR
 
 pub fn remote_image_service() -> @services.RemoteImageService
 
+pub fn remote_image_service_with_owner(RemoteImageOwner) -> @services.RemoteImageService
+
 pub fn remote_image_starter(RemoteImageOwner) -> @image.WindowImageTaskStarter
 
 pub async fn remote_image_worker_loop(RemoteImageOwner) -> Unit

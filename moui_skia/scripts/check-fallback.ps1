@@ -379,24 +379,30 @@ try {
       -SkiaLibDir $fakeSkiaLibDir `
       -DryRunConfig
 
-    $fakeWindowsNativePkg = Join-Path $dryRunRoot "fake-windows-native.moon.pkg"
-    & (Join-Path $repoRoot "scripts/configure-windows-native-pkg.ps1") `
+    $windowsNativeConfig = & (Join-Path $repoRoot "scripts/configure-windows-native-pkg.ps1") `
       -SkiaInclude $fakeSkiaInclude `
       -SkiaLibDir $fakeSkiaLibDir `
       -ExtraCcFlags "-DMOUI_SKIA_FAKE_CONFIG_CC" `
-      -ExtraLinkFlags "-lskia_fake_config_dep" `
-      -Output $fakeWindowsNativePkg `
-      -Write
+      -ExtraLinkFlags "-lskia_fake_config_dep"
+    $windowsNativeConfigText = $windowsNativeConfig -join "`n"
+    if ($windowsNativeConfigText -notlike "*MOUI_SKIA_SKIA_INCLUDE=*" -or
+      $windowsNativeConfigText -notlike "*MOUI_SKIA_SKIA_LIB_DIR=*") {
+      throw "configure-windows-native-pkg.ps1 did not print the prebuild environment for the fake Skia layout"
+    }
     & (Join-Path $repoRoot "scripts/configure-windows-native-pkg.ps1") `
       -SkiaInclude $fakeSkiaInclude `
       -SkiaLibDir $fakeSkiaLibDir `
-      -ExtraCcFlags "-DMOUI_SKIA_FAKE_CONFIG_CC" `
-      -ExtraLinkFlags "-lskia_fake_config_dep" `
-      -Output $fakeWindowsNativePkg `
       -Check
+    $fakeWindowsNativePkg = Join-Path $dryRunRoot "fake-windows-native.moon.pkg"
+    Set-Content -LiteralPath $fakeWindowsNativePkg -Value @(
+      'options(',
+      '  "native-stub": [ "skia_stub.cpp" ],',
+      '  link: { "native": { "stub-cc-flags": "-DMOUI_SKIA_HAS_SKIA" } },',
+      ')'
+    )
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/configure-windows-native-pkg.ps1") -SkiaInclude $fakeSkiaInclude -SkiaLibDir $fakeSkiaLibDir -Output $fakeWindowsNativePkg -Check } `
-      -ExpectedMessage "does not match generated Windows Skia link config"
+      -ExpectedMessage "must not list C++ stub sources or stub-cc-flags"
 
     $env:MOUI_SKIA_SKIA_INCLUDE = $fakeSkiaInclude
     $env:MOUI_SKIA_SKIA_LIB_DIR = $fakeSkiaLibDir
@@ -467,23 +473,23 @@ try {
     Compress-Archive -Path (Join-Path $fakeMsvcSharedRoot "*") -DestinationPath $fakeMsvcSharedZip -Force
     $fakeMsvcSharedExtract = Join-Path $dryRunRoot "fake-msvc-shared-extract"
     $fakeMsvcSharedPkg = Join-Path $dryRunRoot "fake-msvc-shared.moon.pkg"
-    & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
+    $fakeMsvcSharedConfig = & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
       -SkiaRoot $fakeMsvcSharedExtract `
       -SkiaZip $fakeMsvcSharedZip `
-      -SkiaLinkMode dynamic `
-      -Output $fakeMsvcSharedPkg `
-      -Write
-    $fakeMsvcSharedConfig = Get-Content -LiteralPath $fakeMsvcSharedPkg -Raw
-    if ($fakeMsvcSharedConfig -notlike "*out/Release-windows-x64-shared/skia.dll.lib*" -or
-      $fakeMsvcSharedConfig -notlike "*/DMOUI_SKIA_HAS_SKIA*" -or
-      $fakeMsvcSharedConfig -notlike "*cc-link-flags*") {
+      -SkiaLinkMode dynamic
+    $fakeMsvcSharedConfigText = $fakeMsvcSharedConfig -join "`n"
+    if ($fakeMsvcSharedConfigText -notlike "*out/Release-windows-x64-shared*" -or
+      $fakeMsvcSharedConfigText -notlike '*MOUI_SKIA_LINK_MODE = "dynamic"*') {
       throw "configure-windows-msvc-native-pkg.ps1 did not resolve the Windows shared release zip layout"
     }
-    & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
-      -SkiaRoot $fakeMsvcSharedExtract `
-      -SkiaLinkMode dynamic `
-      -Output $fakeMsvcSharedPkg `
-      -Check
+    Set-Content -LiteralPath $fakeMsvcSharedPkg -Value @(
+      'options(',
+      '  link: { "native": { "cc-link-flags": "-lskia" } },',
+      ')'
+    )
+    Assert-CommandFailsWith `
+      -Command { & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") -SkiaRoot $fakeMsvcSharedExtract -SkiaLinkMode dynamic -Output $fakeMsvcSharedPkg -Check } `
+      -ExpectedMessage "must carry cc-link-flags"
 
     try {
       & (Join-Path $repoRoot "scripts/windows-accept-real-skia-smoke.ps1") `

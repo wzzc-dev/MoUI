@@ -1,9 +1,12 @@
 import {
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/compress/zlib",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/math",
   "wzzc-dev/moui/core/unicode",
 }
 
 options(
+  "allow-experimental-packages": true,
   targets: { },
 )

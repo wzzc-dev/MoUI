@@ -1500,19 +1500,20 @@ pub fn RetainedLayerSpec::not_equal(Self, Self) -> Bool
 pub fn RetainedLayerSpec::to_json(Self) -> @json.Json
 pub fn RetainedLayerSpec::to_repr(Self) -> @debug.Repr
 
-pub(all) struct RgbaImage {
+pub(all) struct RgbaBuffer {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
 }
-pub fn RgbaImage::copy(Self) -> Self
-pub fn RgbaImage::fill(Self, Color) -> Unit
-pub fn RgbaImage::from_rgba(width~ : Int32, height~ : Int32, pixels~ : FixedArray[Byte]) -> Self?
-pub fn RgbaImage::get(Self, Int32, Int32) -> Color
-pub fn RgbaImage::is_empty(Self) -> Bool
-pub fn RgbaImage::new(width~ : Int32, height~ : Int32, fill? : Color) -> Self
-pub fn RgbaImage::row_bytes(Self) -> Int32
-pub fn RgbaImage::set(Self, Int32, Int32, Color) -> Unit
+pub fn RgbaBuffer::copy(Self) -> Self
+pub fn RgbaBuffer::fill(Self, Color) -> Unit
+pub fn RgbaBuffer::from_rgba(width~ : Int32, height~ : Int32, pixels~ : FixedArray[Byte]) -> Self?
+pub fn RgbaBuffer::get(Self, Int32, Int32) -> Color
+pub fn RgbaBuffer::is_empty(Self) -> Bool
+pub fn RgbaBuffer::new(width~ : Int32, height~ : Int32, fill? : Color) -> Self
+pub fn RgbaBuffer::row_bytes(Self) -> Int32
+pub fn RgbaBuffer::set(Self, Int32, Int32, Color) -> Unit
+pub fn RgbaBuffer::to_png_bytes(Self) -> Bytes
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RoundedRect {

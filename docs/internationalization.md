@@ -111,11 +111,25 @@ shapes, and stale generated output.
 
 ## Website documentation
 
-Public website documentation has English canonical sources in `docs/` and a
-complete Simplified Chinese mirror in `docs/zh-Hans/`. The website catalog uses
-stable IDs and locale-specific titles, summaries, keywords, and source paths.
-The documentation sync tool publishes the English tree under `docs/` and the
-Chinese tree under `docs/zh-Hans/`; it validates parity before writing output.
+Public website documentation has English canonical sources in `docs/`. The
+publication set is exactly what `website/docs-catalog.json` lists in `entries`:
+the get-started, guides, and examples pages. Every other root docs page is
+listed in `excluded` with a one-line reason, stays in-repo for contributors, and
+is not rendered on the website.
+
+The Simplified Chinese mirror (`docs/zh-Hans/`) covers the published set and
+nothing else: each published slug has one translated page at
+`docs/zh-Hans/<basename>.md` plus one locale entry in the catalog. The
+documentation sync tool publishes the English tree under `docs/` and the Chinese
+tree under `docs/zh-Hans/`, and validates parity over the published set — a
+published slug without a locale entry, a locale entry without a translation, or
+a locale entry for an unpublished slug all fail. Pages that are English-only
+are not half-mirrored.
+
+Promoting a page into the published set therefore takes one change: add its
+`entries` row, remove it from `excluded`, add the `docs/zh-Hans/` translation
+and its locale entry, then run
+`node scripts/sync-website-docs.mjs` and `node scripts/check-website-docs.mjs`.
 
 The Website keeps English canonical URLs unchanged. A Chinese route adds
 `lang=zh-Hans`, for example:

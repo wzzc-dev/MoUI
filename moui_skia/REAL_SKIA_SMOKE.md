@@ -429,10 +429,17 @@ For self-hosted or manually prepared runners, the Windows helpers also accept
 `MOUI_SKIA_SKIA_ROOT`, `MOUI_SKIA_SKIA_ZIP`, `MOUI_SKIA_EXTRA_CC_FLAGS`, and
 `MOUI_SKIA_EXTRA_LINK_FLAGS` as environment defaults. Workflow inputs and
 explicit PowerShell parameters override those environment values.
-When you want a persistent Windows link configuration instead of a temporary
-smoke rewrite, use `scripts/configure-windows-native-pkg.ps1` for an existing
-MinGW-compatible Skia build, or `scripts/configure-windows-msvc-native-pkg.ps1`
-for an existing MSVC `skia.lib` build.
+The Windows link configuration is resolved by the module prebuild instead of a
+persistent `native/moon.pkg` rewrite: apply
+`scripts/configure-windows-msvc-native-pkg.ps1 ... | Invoke-Expression` for an
+existing MSVC `skia.lib` build, or `scripts/configure-windows-native-pkg.ps1`
+for an existing GCC/MinGW-compatible `libskia.a` build, then build/run without
+`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1`. Both helpers refuse `-Write`:
+`moui_skia/build.mbtx` compiles the C++ stub and owns the link flags, and
+`native/moon.pkg` stays free of C++ stub sources so the CLI's `/std:c11` can
+never meet Skia's `/std:c++20` (D8016). The Windows smoke wrappers still rewrite
+the package through the retired generator and are being ported to this
+environment flow.
 
 ## What Still Does Not Count
 

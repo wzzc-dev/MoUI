@@ -391,4 +391,4 @@ diagnostics log: a wasm trap in a completion is otherwise invisible.
 `/Volumes/Data/Code/moon/new_world/app/msg.mbt` + `effect.mbt` + `turn.mbt` + `creation.mbt`
 (protocol / host effects / turn pipelines / wizard+generation),
 `/Volumes/Data/Code/moon/new_world/app/lore.mbt` (lorebook selection),
-`/Volumes/Data/Code/moon/MoUI/docs/plans/done/ai-world-engine.md` (product state).
+`ai-world-engine` plan (body retired; see `docs/plans/done/INDEX.md`) (product state).

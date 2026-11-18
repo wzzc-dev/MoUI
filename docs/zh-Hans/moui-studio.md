@@ -5,7 +5,7 @@ MoUI Studio 是 **MoUI 的 IDE 工具**：一个中英双语（zh-Hans / English
 讲清楚的老师。UI 走技术风：暗色工程面板、发丝分隔线、等宽字体优先、网格画布、
 终端式控制台。
 
-- 源码：[wzzc-dev/moui_studio](https://github.com/wzzc-dev/moui_studio)——**外部仓库**，不是本仓库的 submodule 或 `moon.work` 成员。需要在开发 Studio 时修改 MoUI，使用 [vendor 工作流](vendor-workflow.md)
+- 源码：[wzzc-dev/moui_studio](https://github.com/wzzc-dev/moui_studio)——**外部仓库**，不是本仓库的 submodule 或 `moon.work` 成员。需要在开发 Studio 时修改 MoUI，使用 [vendor 工作流](../vendor-workflow.md)
 - 入口：Web（`web_wasm`）与 macOS（`macos_skia`）
 - 项目格式：`moui.studio.project` v1（`.studio.json`），且是唯一格式——
   早期产品世代的项目文件不会被读取或迁移，而是返回结构化拒绝
@@ -141,4 +141,4 @@ moon test app --target wasm-gc
 ```
 
 完整验证循环见 `wzzc-dev/moui_studio`，验收矩阵见
-`docs/plans/done/moui-studio.md`。
+`docs/plans/done/INDEX.md`。
