@@ -50,7 +50,11 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // fields the three desktop backends drive. +2 for the Linux CSD titlebar
       // hit-test types (issue #24) — the painted chrome and its clickable
       // regions must share one public geometry contract.
-      max_count: 112,
+      // +3 (titlebar polish follow-up): LinuxTitlebarPolicy (paint and
+      // hit-testing derive from one policy), LinuxTitlebarButtonState
+      // (hover/pressed feedback), and LinuxTitlebarPalette (scheme-driven
+      // colors) — all pure data for the same shared-contract goal.
+      max_count: 115,
     },
     {
       kind: "pub(all)",

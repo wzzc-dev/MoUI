@@ -170,7 +170,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_catalog.mbt",
-      max_lines: 110,
+      // 110 -> 113 (titlebar polish follow-up): the backend pub(all) bump
+      // note for LinuxTitlebarPolicy/ButtonState/Palette.
+      max_lines: 113,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_checks.mbt",
@@ -189,8 +191,10 @@ fn file_budgets() -> Array[FileBudget] {
       // this entry's own growth.
       // 422 -> 425 -> 427 (issue #24 follow-up): the effective_window_requests
       // note above and this entry's own growth.
+      // 427 -> 431 (titlebar polish follow-up): the count-budget pub(all) note
+      // above and this entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 427,
+      max_lines: 431,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

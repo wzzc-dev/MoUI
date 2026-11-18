@@ -544,6 +544,8 @@ pub fn WindowControlSource::set_capabilities(Self, WindowControlCapabilities) ->
 pub fn WindowControlSource::set_decorations(Self, Bool) -> Unit
 pub fn WindowControlSource::set_fullscreen(Self, Bool) -> Unit
 pub fn WindowControlSource::set_observed(Self, maximized~ : Bool, fullscreen~ : Bool) -> Unit
+pub fn WindowControlSource::set_titlebar_insets(Self, insets~ : @core.Insets?) -> Unit
+pub fn WindowControlSource::titlebar_insets(Self) -> @core.Insets?
 pub fn WindowControlSource::toggle_fullscreen(Self) -> Unit
 pub fn WindowControlSource::unavailable() -> Self
 
