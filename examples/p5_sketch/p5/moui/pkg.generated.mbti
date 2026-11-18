@@ -1,0 +1,86 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/p5_sketch/p5/moui"
+
+import {
+  "examples/p5_sketch/p5",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn set_default_canvas_rasterizer(((Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?)?) -> Unit
+
+// Errors
+
+// Types and methods
+#derive(Eq)
+pub(all) enum CanvasInput {
+  Pointer(PointerPhase, Double, Double, Int32, Int32, Double)
+  Wheel(Double, Double, Double)
+  Key(String, String, Bool, String?)
+  TextInput(@core.TextInputEvent)
+}
+pub fn CanvasInput::equal(Self, Self) -> Bool
+pub fn CanvasInput::not_equal(Self, Self) -> Bool
+
+pub struct MoUISurface {
+  // private fields
+}
+pub fn MoUISurface::begin_frame(Self) -> Unit
+pub fn MoUISurface::clear_rect(Self, Double, Double, Double, Double) -> Unit
+pub fn MoUISurface::clip_end(Self) -> Unit
+pub fn MoUISurface::clip_path(Self, @p5.Path) -> Unit
+pub fn MoUISurface::draw_image(Self, @p5.Image, Double, Double, Double, Double, Double, @p5.Color?) -> Unit
+pub fn MoUISurface::fill_path(Self, @p5.Path, @p5.Color) -> Unit
+pub fn MoUISurface::fill_rect(Self, Double, Double, Double, Double, @p5.Color) -> Unit
+pub fn MoUISurface::fill_rounded_rect(Self, Double, Double, Double, Double, Double, @p5.Color) -> Unit
+pub fn MoUISurface::fill_text(Self, String, Double, Double, @p5.Color, @p5.Color?, Double, @p5.FontSpec, @p5.HAlign, @p5.VAlign) -> Unit
+pub fn MoUISurface::finish(Self) -> Array[@core.DrawCommand]
+pub fn MoUISurface::measure_width(Self, String, @p5.FontSpec) -> Double
+pub fn MoUISurface::new() -> Self
+pub fn MoUISurface::restore(Self) -> Unit
+pub fn MoUISurface::save(Self) -> Unit
+pub fn MoUISurface::set_blend_mode(Self, @p5.BlendMode) -> Unit
+pub fn MoUISurface::set_smoothing(Self, Bool) -> Unit
+pub fn MoUISurface::set_text_system(Self, @core.TextSystem) -> Unit
+pub fn MoUISurface::set_transform(Self, @p5.Matrix) -> Unit
+pub fn MoUISurface::stroke_path(Self, @p5.Path, @p5.Color, Double, @p5.StrokeCap, @p5.StrokeJoin) -> Unit
+pub fn MoUISurface::stroke_rounded_rect(Self, Double, Double, Double, Double, Double, @p5.Color, Double) -> Unit
+pub fn MoUISurface::text_metrics(Self, @p5.FontSpec) -> @p5.TextMetrics
+pub impl @p5.Surface for MoUISurface
+
+#derive(Eq)
+pub(all) enum PointerPhase {
+  Move
+  Down
+  Up
+  Cancel
+  Exit
+}
+pub fn PointerPhase::equal(Self, Self) -> Bool
+pub fn PointerPhase::not_equal(Self, Self) -> Bool
+
+pub struct SketchView {
+  // private fields
+}
+pub fn SketchView::capture_image(Self) -> @p5.Image?
+pub fn SketchView::clear_pixel_overlay(Self) -> Unit
+pub fn SketchView::clear_rasterizer(Self) -> Unit
+pub fn SketchView::get_pixel(Self, Int32, Int32) -> @p5.Color
+pub fn SketchView::handle_input(Self, CanvasInput) -> Unit
+pub fn SketchView::load_pixels(Self) -> @p5.Image?
+pub fn SketchView::new(Double, Double) -> Self
+pub fn SketchView::new_stateless(Double, Double) -> Self
+pub fn SketchView::pixels(Self) -> @p5.Image?
+pub fn SketchView::render_commands(Self, Double) -> Array[@core.DrawCommand]
+pub fn SketchView::save_canvas(Self, String) -> Bool
+pub fn SketchView::set_pixel(Self, Int32, Int32, @p5.Color) -> Bool
+pub fn SketchView::set_rasterizer(Self, (Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?) -> Unit
+pub fn SketchView::set_text_system(Self, @core.TextSystem) -> Unit
+pub fn SketchView::sketch(Self) -> @p5.Sketch
+pub fn SketchView::update_pixels(Self) -> Bool
+pub fn SketchView::view(Self) -> @core.View[CanvasInput]
+
+// Type aliases
+pub type CanvasRasterizer = (Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?
+
+// Traits

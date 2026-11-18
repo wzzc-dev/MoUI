@@ -33,7 +33,7 @@ fn WebGpuPathMeshCache::find_entry(
   path : @core.PathSpec,
 ) -> WebGpuPathMeshEntry? {
   for entry in self.entries {
-    if entry.path == path {
+    if entry.path.verbs == path.verbs {
       return Some(entry)
     }
   }

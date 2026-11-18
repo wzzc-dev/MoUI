@@ -309,3 +309,59 @@ test "a press during a fling grabs the surface and stops the glide" {
   assert_true(received.length() == grab_messages)
   assert_false(runtime.needs_redraw())
 }
+
+///|
+test "on_pointer focuses the surface so on_key receives keyboard events" {
+  let received : Array[String] = []
+  let root : @core.View[String] = @views.canvas(
+      measure=fn(_) { @core.Size::new(width=100.0, height=100.0) },
+      draw=fn(_, _) { () },
+    )
+    .on_pointer(fn(event, _) {
+      match event.phase {
+        @core.Move => "move"
+        @core.Down => "down"
+        @core.Up => "up"
+        @core.Cancel => "cancel"
+        @core.Exit => "exit"
+      }
+    })
+    .on_keyboard_input(key_handler=fn(event) { "key:" + event.key }, text_input_handler=fn(
+      event,
+    ) {
+      match event {
+        @core.InsertText(text) => "text:" + text
+        _ => "text:other"
+      }
+    })
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.layout())
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="a")))
+  // A hover does not focus the canvas.
+  assert_true(!received.contains("key:a"))
+  runtime.dispatch_event(
+    Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(Keyboard(@core.KeyboardEvent::new(key="a")))
+  assert_true(received.contains("down"))
+  assert_true(received.contains("key:a"))
+  runtime.dispatch_event(TextInput(@core.TextInputEvent::InsertText("日")))
+  assert_true(received.contains("text:日"))
+}

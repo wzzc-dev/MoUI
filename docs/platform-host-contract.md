@@ -27,6 +27,10 @@ normalized to `0.0..=1.0` where `1.0` means the host gave no pressure signal.
 Decoders must forward both fields when they rebase, replay, or synthesize an
 event, because the runtime keys pointer capture and the frame-tick re-sample by
 `PointerEvent.id` and treats hover and focus as owned by the primary stream.
+Keyboard decoding keeps the logical `KeyboardEvent.key` and the DOM-style
+physical `KeyboardEvent.code` separate; window-hosted backends derive `code`
+from the platform `PhysicalKey` (`KeyA`, `Digit1`, `ArrowLeft`, …) and leave it
+empty when the host reports no physical identity.
 
 Root `backend` exposes the closure-based `WindowRequests` port;
 `backend/common` implements it with `WindowRequestQueue` so runtime or platform code can enqueue

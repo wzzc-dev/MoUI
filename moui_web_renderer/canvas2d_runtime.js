@@ -517,6 +517,14 @@ export function createCanvas2dImports(options = {}) {
       case 3: return "overlay";
       case 4: return "darken";
       case 5: return "lighten";
+      case 6: return "lighter";
+      case 7: return "difference";
+      case 8: return "exclusion";
+      case 9: return "hard-light";
+      case 10: return "soft-light";
+      case 11: return "color-dodge";
+      case 12: return "color-burn";
+      case 13: return "copy";
       default: return "source-over";
     }
   };

@@ -176,3 +176,7 @@ Showcase 的 Platform 工作区（`examples/showcase/app/platform`）。
 而原生宿主可以通过同一选择数组返回平台路径。
 
 关于设置、后端特定约束和验证命令，见 [平台说明](platform-notes.md)。
+
+键盘解码把逻辑键 `KeyboardEvent.key` 与 DOM 风格物理键 `KeyboardEvent.code`
+分开保存；window-hosted 后端从平台 `PhysicalKey`（`KeyA`、`Digit1`、
+`ArrowLeft` 等）派生 `code`，宿主没有物理键身份时留空。

@@ -120,6 +120,8 @@ pub fn golden_scenes() -> Array[(String, Array[@core.DrawCommand])] {
           ),
           stroke: None,
           stroke_width: 0.0,
+          stroke_cap: None,
+          stroke_join: None,
         }),
       ],
     ),

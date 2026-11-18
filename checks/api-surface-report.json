@@ -18,8 +18,8 @@
     {
       "label": "graphics sugar",
       "path": "moui/graphics/pkg.generated.mbti",
-      "lines": 47,
-      "public_declarations": 16,
+      "lines": 53,
+      "public_declarations": 19,
       "pub_all_declarations": 0
     },
     {
@@ -60,9 +60,9 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2946,
-      "public_declarations": 1263,
-      "pub_all_declarations": 153
+      "lines": 3001,
+      "public_declarations": 1283,
+      "pub_all_declarations": 156
     },
     {
       "label": "views facade",

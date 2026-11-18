@@ -104,3 +104,16 @@ test "scope kind names match push and pop commands" {
     )
   }
 }
+
+///|
+test "path clip scopes balance like rect clips" {
+  let path = @core.PathSpec::new(verbs=[])
+  let balanced = @common.plan_renderer_command_fallbacks([
+    @core.PushPathClip(path),
+    @core.PopPathClip,
+  ])
+  assert_eq(balanced.fallbacks().length(), 0)
+  let unbalanced = @common.plan_renderer_command_fallbacks([@core.PopPathClip])
+  assert_eq(unbalanced.fallbacks().length(), 1)
+  inspect(unbalanced.fallbacks()[0].command(), content="PopClip")
+}

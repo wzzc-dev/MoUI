@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MoUI p5 Sketch</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #f6f7f9;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+      }
+      #canvas-host {
+        width: 100vw;
+        height: 100vh;
+      }
+      #diagnostics {
+        display: none;
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        width: min(520px, calc(100vw - 24px));
+        max-height: 40vh;
+        overflow: auto;
+        padding: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        font: 12px/1.45 "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      }
+      body.debug #diagnostics,
+      body.failed #diagnostics { display: block; }
+      #status { font-weight: 600; margin-bottom: 8px; }
+      #log { margin: 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-host" aria-label="MoUI canvas host"></div>
+    <aside id="diagnostics" aria-live="polite">
+      <div id="status">Loading wasm-gc...</div>
+      <pre id="log"></pre>
+    </aside>
+    <script type="module">
+      import { bootMouiWasmGcApp } from "../../../moui_web_renderer/runtime.js";
+
+      if (new URLSearchParams(window.location.search).get("debug") === "1") {
+        document.body.classList.add("debug");
+      }
+
+      const status = document.querySelector("#status");
+      const log = document.querySelector("#log");
+      let line = "";
+      const append = message => {
+        log.textContent += `${message}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+      const setStatus = message => {
+        status.textContent = message;
+        append(message);
+      };
+
+      // p5 canvas readback: render the serialized command JSON onto an
+      // offscreen 2D canvas and hand straight RGBA bytes back to wasm.
+      const createP5RasterImports = () => {
+        let nextHandle = 1;
+        const strings = new Map();
+        const byteArrays = new Map();
+        const colorOf = c =>
+          c
+            ? `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${c[3]})`
+            : "rgba(0,0,0,0)";
+        const pathOf = (ctx, verbs) => {
+          ctx.beginPath();
+          for (const v of verbs) {
+            switch (v[0]) {
+              case "M": ctx.moveTo(v[1], v[2]); break;
+              case "L": ctx.lineTo(v[1], v[2]); break;
+              case "Q": ctx.quadraticCurveTo(v[1], v[2], v[3], v[4]); break;
+              case "C": ctx.bezierCurveTo(v[1], v[2], v[3], v[4], v[5], v[6]); break;
+              case "Z": ctx.closePath(); break;
+            }
+          }
+        };
+        const capture = (width, height, textHandle) => {
+          const payload = strings.get(textHandle);
+          strings.delete(textHandle);
+          if (payload === undefined) return -1;
+          let scene;
+          try {
+            scene = JSON.parse(payload);
+          } catch {
+            return -1;
+          }
+          const w = Math.max(0, Math.round(Number(width) || 0));
+          const h = Math.max(0, Math.round(Number(height) || 0));
+          if (w <= 0 || h <= 0) return -1;
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          const contexts = [ctx];
+          for (const op of scene.ops) {
+            const ctx = contexts[contexts.length - 1];
+            switch (op.op) {
+              case "clear": {
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.globalCompositeOperation = "copy";
+                ctx.fillStyle = colorOf(op.c);
+                ctx.fillRect(0, 0, w, h);
+                ctx.restore();
+                break;
+              }
+              case "rect":
+                ctx.fillStyle = colorOf(op.c);
+                ctx.fillRect(op.x, op.y, op.w, op.h);
+                break;
+              case "srect":
+                ctx.lineWidth = op.lw;
+                ctx.strokeStyle = colorOf(op.c);
+                ctx.strokeRect(op.x, op.y, op.w, op.h);
+                break;
+              case "rrect":
+                ctx.fillStyle = colorOf(op.c);
+                ctx.beginPath();
+                ctx.roundRect(op.x, op.y, op.w, op.h, op.r);
+                ctx.fill();
+                break;
+              case "srrect":
+                ctx.lineWidth = op.lw;
+                ctx.strokeStyle = colorOf(op.c);
+                ctx.beginPath();
+                ctx.roundRect(op.x, op.y, op.w, op.h, op.r);
+                ctx.stroke();
+                break;
+              case "path":
+                pathOf(ctx, op.v);
+                if (op.f) {
+                  ctx.fillStyle = colorOf(op.f);
+                  ctx.fill();
+                }
+                if (op.s) {
+                  ctx.lineWidth = op.sw || 1;
+                  ctx.strokeStyle = colorOf(op.s);
+                  ctx.stroke();
+                }
+                break;
+              case "text":
+                ctx.font = `${op.weight} ${op.size}px system-ui, sans-serif`;
+                ctx.textAlign = "left";
+                ctx.textBaseline = "alphabetic";
+                ctx.fillStyle = colorOf(op.c);
+                ctx.fillText(op.t, op.x, op.y + op.size * 0.8);
+                if (op.sc) {
+                  ctx.lineWidth = op.sw;
+                  ctx.strokeStyle = colorOf(op.sc);
+                  ctx.strokeText(op.t, op.x, op.y + op.size * 0.8);
+                }
+                break;
+              case "image": {
+                // Data URIs decode async; draws land once the image is in the
+                // cache (the second capture onward).
+                const image = new Image();
+                image.src = op.src;
+                if (image.complete) {
+                  ctx.drawImage(image, op.x, op.y, op.w, op.h);
+                }
+                break;
+              }
+              case "clip":
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(op.x, op.y, op.w, op.h);
+                ctx.clip();
+                break;
+              case "endclip":
+                ctx.restore();
+                break;
+              case "transform":
+                ctx.save();
+                ctx.transform(op.a, op.b, op.c, op.d, op.tx, op.ty);
+                break;
+              case "endtransform":
+                ctx.restore();
+                break;
+              case "opacity":
+                ctx.save();
+                ctx.globalAlpha *= op.v;
+                break;
+              case "endopacity":
+                ctx.restore();
+                break;
+              case "layer": {
+                ctx.save();
+                contexts.push(ctx);
+                const off = document.createElement("canvas");
+                off.width = w;
+                off.height = h;
+                off.dataset.mode = op.mode || "source-over";
+                const layerCtx = off.getContext("2d");
+                layerCtx.setTransform(ctx.getTransform());
+                contexts.push(layerCtx);
+                break;
+              }
+              case "endlayer": {
+                const layerCanvas = contexts.pop().canvas;
+                const parent = contexts.pop();
+                parent.save();
+                parent.setTransform(1, 0, 0, 1, 0, 0);
+                parent.globalCompositeOperation =
+                  layerCanvas.dataset.mode || "source-over";
+                parent.drawImage(layerCanvas, 0, 0);
+                parent.restore();
+                contexts.push(parent);
+                break;
+              }
+            }
+          }
+          const data = ctx.getImageData(0, 0, w, h).data;
+          const handle = nextHandle;
+          nextHandle += 1;
+          byteArrays.set(handle, data);
+          return handle;
+        };
+        return {
+          begin_string() {
+            const handle = nextHandle;
+            nextHandle += 1;
+            strings.set(handle, "");
+            return handle;
+          },
+          string_append(handle, codePoint) {
+            const value = strings.get(handle);
+            if (value !== undefined) {
+              strings.set(handle, value + String.fromCodePoint(codePoint));
+            }
+          },
+          finish_string() {},
+          capture,
+          bytes_len(handle) {
+            return byteArrays.get(handle)?.length ?? 0;
+          },
+          bytes_get(handle, index) {
+            return byteArrays.get(handle)?.[index] ?? 0;
+          },
+          bytes_close(handle) {
+            byteArrays.delete(handle);
+          },
+        };
+      };
+
+      bootMouiWasmGcApp({
+        // Dev-preview page: the query keeps the browser from pinning a stale
+        // wasm build in the HTTP cache between `moon build` runs.
+        wasmUrl: (() => {
+          const url = new URL(
+            "../../../_build/wasm-gc/debug/build/examples/p5_sketch/web_wasm/web_wasm.wasm",
+            import.meta.url,
+          );
+          url.searchParams.set("dev", "1");
+          return url;
+        })(),
+        canvasHost: "#canvas-host",
+        imports: { p5_raster: createP5RasterImports() },
+        onStatus: setStatus,
+        onPrint(ch) {
+          if (ch === "\n") {
+            append(line);
+            line = "";
+          } else {
+            line += ch;
+          }
+        },
+      }).then(() => {
+        status.textContent = "Running";
+        append("MoonBit wasm-gc started.");
+      }).catch(error => {
+        document.body.classList.add("failed");
+        status.textContent = "Failed";
+        append(error.stack || String(error));
+        console.error(error);
+      });
+    </script>
+  </body>
+</html>

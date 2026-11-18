@@ -173,6 +173,15 @@ fn build_native_draw_plan_range(
             state = push_clip_state(state, rect)
           }
           PopClip => state = pop_native_paint_state(state_stack, state)
+          PushPathClip(spec) => {
+            state_stack.push(state)
+            let bounds = match spec.shape_bounds() {
+              Some(rect) => rect
+              None => @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
+            }
+            state = push_clip_state(state, bounds)
+          }
+          PopPathClip => state = pop_native_paint_state(state_stack, state)
           PushRoundedClip(rounded) => {
             state_stack.push(state)
             state = push_rounded_clip_state(state, rounded)

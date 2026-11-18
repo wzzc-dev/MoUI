@@ -70,6 +70,7 @@ pub fn InputState::focus_event(
 pub fn InputState::keyboard_event(
   self : InputState,
   key~ : String,
+  code~ : String = "",
   text~ : String? = None,
   pressed~ : Bool = true,
   repeat~ : Bool = false,
@@ -79,6 +80,7 @@ pub fn InputState::keyboard_event(
       Keyboard(
         @core.KeyboardEvent::new(
           key~,
+          code~,
           text~,
           pressed~,
           repeat~,

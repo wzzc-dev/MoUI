@@ -678,6 +678,8 @@ pub fn collect_rect_batches(
       | PopClip
       | PushRoundedClip(_)
       | PopRoundedClip
+      | PushPathClip(_)
+      | PopPathClip
       | PushTransform(_)
       | PopTransform
       | PushOpacity(_)

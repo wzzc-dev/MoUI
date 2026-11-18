@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/p5_sketch/app"
+
+import {
+  "examples/p5_sketch/p5/moui",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn intro_bank() -> DemoBank
+
+pub fn program() -> @core.Program[Model, Msg]
+
+// Errors
+
+// Types and methods
+pub struct DemoBank {
+  // private fields
+}
+pub fn DemoBank::handle_input(Self, Int32, @moui.CanvasInput) -> Unit
+pub fn DemoBank::new(Double, Double) -> Self
+pub fn DemoBank::reset(Self, Int32) -> Unit
+pub fn DemoBank::set_paused(Self, Int32, Bool) -> Unit
+pub fn DemoBank::sketch_view(Self, Int32) -> @moui.SketchView
+pub fn DemoBank::view(Self, Int32) -> @core.View[@moui.CanvasInput]
+
+pub struct Model {
+  demo : Int32
+  paused : Bool
+}
+
+pub(all) enum Msg {
+  Select(Int32)
+  TogglePause
+  Reset
+  Canvas(@moui.CanvasInput)
+}
+
+// Type aliases
+
+// Traits

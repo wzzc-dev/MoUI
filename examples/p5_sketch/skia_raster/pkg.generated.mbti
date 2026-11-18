@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/p5_sketch/skia_raster"
+
+import {
+  "examples/p5_sketch/p5",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn install() -> Unit
+
+pub fn rasterize(Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?
+
+// Errors
+
+// Types and methods
+pub struct SkiaCanvasRaster {
+  // private fields
+}
+pub fn SkiaCanvasRaster::capture(Self, Array[@core.DrawCommand]) -> @p5.Image?
+pub fn SkiaCanvasRaster::new(@core.SurfaceMetrics) -> Self?
+pub fn SkiaCanvasRaster::text_system(Self) -> @core.TextSystem
+
+// Type aliases
+
+// Traits

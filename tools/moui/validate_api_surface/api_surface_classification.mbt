@@ -78,7 +78,13 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // FontVariation/FontSpec.
       // GradientStop / GradientAxis / StopsGradientSpec + helpers (+16):
       // V3 gradient primitives; renderer-neutral paint protocol data.
-      max_count: 1278,
+      // RgbaImage + helpers (+8): writable offscreen RGBA8 data for
+      // image/pixel work; renderer-neutral paint protocol data.
+      // StrokeCap/StrokeJoin + PathSpec accessors (+8): explicit path stroke
+      // styling for vector/creative canvases.
+      // PathSpec::shape_bounds (+1): geometric clip bounds without stroke
+      // inflation, paired with the PushPathClip command.
+      max_count: 1295,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -255,7 +261,7 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "RadialGradient", "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll",
     "Semantic", "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
-    "View", "VisualStyle", "TaskScope", "CancelToken", "Spring",
+    "View", "VisualStyle", "TaskScope", "CancelToken", "Spring", "StrokeCap", "StrokeJoin",
   ]
 }
 

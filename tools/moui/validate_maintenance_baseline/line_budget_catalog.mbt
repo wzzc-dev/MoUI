@@ -76,8 +76,10 @@ fn file_budgets() -> Array[FileBudget] {
       // 497 -> 513 (2026-11-13, visual-quality V3 accent): window
       // AccentColorChanged maps to the host accent event and stays out of
       // core app messages.
+      // 513 -> 544 (2026-11-17): KeyboardEvent.code physical key decode
+      // (window PhysicalKey -> DOM-style code).
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 513,
+      max_lines: 544,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
@@ -116,7 +118,9 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/common/lifecycle/window_platform_map.mbt",
       max_lines: 109,
     },
-    { path: "moui/backend/web/host_runtime.mbt", max_lines: 484, },
+    // Real animation frame clock (web): begin_redraw advances wall time so
+    // paint-time animation is not tied to the paint rate.
+    { path: "moui/backend/web/host_runtime.mbt", max_lines: 492, },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620, },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240, },
     { path: "moui/backend/web/web_host.mbt", max_lines: 500, },
@@ -176,8 +180,11 @@ fn file_budgets() -> Array[FileBudget] {
       // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
       // 409 -> 412 (2026-11-13, visual-quality V3 accent): the window
       // accent decode-test note and this entry's self-referential growth.
+      // 414 -> 416 (2026-11-17): keyboard decode test budget entry.
+      // 417 -> 418 (2026-11-17): path-clip Sun budget note.
+      // 418 -> 421 (2026-11-18): web frame-clock budget note.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 414,
+      max_lines: 421,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -220,7 +227,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/image_resource_records.mbt", max_lines: 70, },
     { path: "moui/render/image_resource_types.mbt", max_lines: 75, },
     { path: "moui_sun_renderer/renderer.mbt", max_lines: 373, },
-    { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 853, },
+    { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 899, }, // path clip fallback + advanced blend arms
     { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 87, },
     { path: "moui_sun_renderer/renderer_text_draw.mbt", max_lines: 664, },
     {
@@ -388,7 +395,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",
       max_lines: 25,
     },
-    { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 50, },
+    { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 57, }, // stroke pass under fill
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887, },
     // 470 -> 479 (2026-10-14, TUI output path decision B): the opt-in
     // `set_semantics_frames_enabled` sits beside the `draw_frame` it steers.

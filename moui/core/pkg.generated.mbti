@@ -217,6 +217,14 @@ pub(all) enum BlendMode {
   Overlay
   Darken
   Lighten
+  Add
+  Difference
+  Exclusion
+  HardLight
+  SoftLight
+  ColorDodge
+  ColorBurn
+  Source
 }
 pub fn BlendMode::equal(Self, Self) -> Bool
 pub fn BlendMode::not_equal(Self, Self) -> Bool
@@ -620,6 +628,8 @@ pub(all) enum DrawCommand {
   PopClip
   PushRoundedClip(RoundedRect)
   PopRoundedClip
+  PushPathClip(PathSpec)
+  PopPathClip
   PushTransform(Transform2D)
   PopTransform
   PushOpacity(Double)
@@ -1047,13 +1057,14 @@ pub fn KeyModifiers::to_repr(Self) -> @debug.Repr
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct KeyboardEvent {
   key : String
+  code : String
   text : String?
   pressed : Bool
   repeat : Bool
   modifiers : KeyModifiers
 }
 pub fn KeyboardEvent::equal(Self, Self) -> Bool
-pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers) -> Self
+pub fn KeyboardEvent::new(key~ : String, pressed? : Bool, text? : String?, repeat? : Bool, modifiers? : KeyModifiers, code? : String) -> Self
 pub fn KeyboardEvent::not_equal(Self, Self) -> Bool
 pub fn KeyboardEvent::to_json(Self) -> @json.Json
 pub fn KeyboardEvent::to_repr(Self) -> @debug.Repr
@@ -1192,11 +1203,14 @@ pub(all) struct PathSpec {
   fill : Brush?
   stroke : Brush?
   stroke_width : Double
+  stroke_cap : StrokeCap?
+  stroke_join : StrokeJoin?
 }
 pub fn PathSpec::bounds(Self) -> Rect?
 pub fn PathSpec::equal(Self, Self) -> Bool
-pub fn PathSpec::new(verbs~ : Array[PathVerb], fill? : Brush?, stroke? : Brush?, stroke_width? : Double) -> Self
+pub fn PathSpec::new(verbs~ : Array[PathVerb], fill? : Brush?, stroke? : Brush?, stroke_width? : Double, stroke_cap? : StrokeCap?, stroke_join? : StrokeJoin?) -> Self
 pub fn PathSpec::not_equal(Self, Self) -> Bool
+pub fn PathSpec::shape_bounds(Self) -> Rect?
 pub fn PathSpec::to_json(Self) -> @json.Json
 pub fn PathSpec::to_repr(Self) -> @debug.Repr
 
@@ -1431,6 +1445,20 @@ pub fn RetainedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : 
 pub fn RetainedLayerSpec::not_equal(Self, Self) -> Bool
 pub fn RetainedLayerSpec::to_json(Self) -> @json.Json
 pub fn RetainedLayerSpec::to_repr(Self) -> @debug.Repr
+
+pub(all) struct RgbaImage {
+  width : Int32
+  height : Int32
+  pixels : FixedArray[Byte]
+}
+pub fn RgbaImage::copy(Self) -> Self
+pub fn RgbaImage::fill(Self, Color) -> Unit
+pub fn RgbaImage::from_rgba(width~ : Int32, height~ : Int32, pixels~ : FixedArray[Byte]) -> Self?
+pub fn RgbaImage::get(Self, Int32, Int32) -> Color
+pub fn RgbaImage::is_empty(Self) -> Bool
+pub fn RgbaImage::new(width~ : Int32, height~ : Int32, fill? : Color) -> Self
+pub fn RgbaImage::row_bytes(Self) -> Int32
+pub fn RgbaImage::set(Self, Int32, Int32, Color) -> Unit
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RoundedRect {
@@ -1969,6 +1997,28 @@ pub fn StopsGradientSpec::srgb_stops(Self, resolution? : Int32) -> Array[Gradien
 pub fn StopsGradientSpec::to_json(Self) -> @json.Json
 pub fn StopsGradientSpec::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum StrokeCap {
+  Butt
+  Round
+  Square
+}
+pub fn StrokeCap::equal(Self, Self) -> Bool
+pub fn StrokeCap::not_equal(Self, Self) -> Bool
+pub fn StrokeCap::to_json(Self) -> @json.Json
+pub fn StrokeCap::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum StrokeJoin {
+  Miter
+  Round
+  Bevel
+}
+pub fn StrokeJoin::equal(Self, Self) -> Bool
+pub fn StrokeJoin::not_equal(Self, Self) -> Bool
+pub fn StrokeJoin::to_json(Self) -> @json.Json
+pub fn StrokeJoin::to_repr(Self) -> @debug.Repr
+
 pub struct Subscription[Msg] {
   // private fields
 }
@@ -2275,9 +2325,11 @@ pub(all) struct TextRun {
   font : FontSpec
   color : Color
   align : TextAlign
+  stroke_color : Color?
+  stroke_width : Double
 }
 pub fn TextRun::equal(Self, Self) -> Bool
-pub fn TextRun::new(text~ : String, frame~ : Rect, font~ : FontSpec, color~ : Color, align? : TextAlign) -> Self
+pub fn TextRun::new(text~ : String, frame~ : Rect, font~ : FontSpec, color~ : Color, align? : TextAlign, stroke_color? : Color?, stroke_width? : Double) -> Self
 pub fn TextRun::not_equal(Self, Self) -> Bool
 pub fn TextRun::to_json(Self) -> @json.Json
 pub fn TextRun::to_repr(Self) -> @debug.Repr
@@ -2510,8 +2562,11 @@ pub fn[Msg] View::on_drag_with_frame(Self[Msg], (DragGestureEvent, Rect) -> Msg)
 pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_gesture(Self[Msg], (GestureEvent) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_hover(Self[Msg], (Bool) -> Msg) -> Self[Msg]
+pub fn[Msg] View::on_key(Self[Msg], (KeyboardEvent) -> Msg) -> Self[Msg]
+pub fn[Msg] View::on_keyboard_input(Self[Msg], key_handler~ : (KeyboardEvent) -> Msg, text_input_handler~ : (TextInputEvent) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_pinch(Self[Msg], (PinchGestureEvent) -> Msg) -> Self[Msg]
+pub fn[Msg] View::on_pointer(Self[Msg], (PointerEvent, Rect) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_secondary_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_secondary_tap_with_frame(Self[Msg], (Point, Rect) -> Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
