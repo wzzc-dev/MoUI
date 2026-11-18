@@ -417,6 +417,8 @@ test "native renderer builds text vertices and atlas entries" {
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
       align: TextCenter,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -489,6 +491,8 @@ test "native renderer marks color glyph text vertices" {
       font: @core.FontSpec::new(size=24.0),
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.text_vertices.length(), content="6")
@@ -578,6 +582,8 @@ test "native renderer accepts layouts that omit whitespace glyphs" {
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -645,6 +651,8 @@ test "native renderer blits platform glyph rows away from atlas top edge" {
       font: @core.FontSpec::new(size=32.0, weight=700),
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.draw_items.length(), content="1")
@@ -680,6 +688,8 @@ test "native renderer builds cjk text vertices with fallback font" {
       font: @core.FontSpec::new(size=18.0, weight=500),
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.text_vertices.length() > 0, content="true")
@@ -701,6 +711,8 @@ test "native renderer keeps text in draw item order" {
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
       align: TextCenter,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
     FillRect(
       @core.Rect::new(x=0.0, y=20.0, width=10.0, height=10.0),
@@ -712,6 +724,8 @@ test "native renderer keeps text in draw item order" {
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
       align: TextCenter,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   inspect(renderer.draw_items.length(), content="3")
@@ -737,6 +751,8 @@ test "native renderer applies text alignment" {
       font,
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   let centered = new_test_renderer_handle()
@@ -752,6 +768,8 @@ test "native renderer applies text alignment" {
       font,
       color: @core.Color::black(),
       align: TextCenter,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   assert_true(left.text_vertices.length() > 0)
@@ -767,6 +785,8 @@ test "native renderer vertically centers text in taller frames" {
     font: @core.FontSpec::new(size=16.0, weight=500),
     color: @core.Color::black(),
     align: TextStart,
+    stroke_color: None,
+    stroke_width: 0.0,
   })
   let renderer = new_test_renderer_handle()
   renderer.resize(
@@ -788,6 +808,8 @@ test "native renderer keeps text logical vertices stable across dpr" {
     font: @core.FontSpec::new(size=18.0, weight=500),
     color: @core.Color::black(),
     align: TextStart,
+    stroke_color: None,
+    stroke_width: 0.0,
   })
   let scale_one = new_test_renderer_handle()
   scale_one.resize(
@@ -848,6 +870,8 @@ test "native renderer clears glyph atlas when dpr changes" {
       font: @core.FontSpec::new(size=16.0, weight=500),
       color: @core.Color::black(),
       align: TextStart,
+      stroke_color: None,
+      stroke_width: 0.0,
     }),
   ])
   assert_true(glyph_atlas_entry_count(renderer.glyph_atlas) > 0)

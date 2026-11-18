@@ -1312,6 +1312,16 @@ fn RendererHandle::advanced_pipeline_for_blend(
     Overlay => self.advanced_pipeline_source_over
     Darken => self.advanced_pipeline_darken
     Lighten => self.advanced_pipeline_lighten
+    // Fixed-function factors cannot express the separable modes; degrade to
+    // source-over until the advanced pipeline grows the shader math.
+    Add => self.advanced_pipeline_source_over
+    Difference => self.advanced_pipeline_source_over
+    Exclusion => self.advanced_pipeline_source_over
+    HardLight => self.advanced_pipeline_source_over
+    SoftLight => self.advanced_pipeline_source_over
+    ColorDodge => self.advanced_pipeline_source_over
+    ColorBurn => self.advanced_pipeline_source_over
+    Source => self.advanced_pipeline_source_over
   }
 }
 
@@ -1908,5 +1918,14 @@ fn set_advanced_blend(
         @wgpu_mbt.BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         @wgpu_mbt.BLEND_OPERATION_ADD,
       )
+    // Separable modes degrade to source-over (fixed-function limits).
+    Add
+    | Difference
+    | Exclusion
+    | HardLight
+    | SoftLight
+    | ColorDodge
+    | ColorBurn
+    | Source => try! builder.enable_alpha_blend()
   }
 }

@@ -49,6 +49,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/harmonyos_demo |
 | ./examples/button_freeze_probe |
 | ./examples/showcase |
+| ./examples/p5_sketch |
 | ./examples/disabled_input_demo |
 | ./examples/design_systems |
 | ./examples/excel |
@@ -74,7 +75,7 @@ This file is generated from repository manifests and validator reports.
 |---|---:|---:|---:|
 | root facade (app-loop sugar) (moui/pkg.generated.mbti) | 43 | 14 | 0 |
 | geometry sugar (moui/geometry/pkg.generated.mbti) | 33 | 9 | 0 |
-| graphics sugar (moui/graphics/pkg.generated.mbti) | 47 | 16 | 0 |
+| graphics sugar (moui/graphics/pkg.generated.mbti) | 53 | 19 | 0 |
 | animation sugar (moui/animation/pkg.generated.mbti) | 25 | 5 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
@@ -115,6 +116,7 @@ This file is generated from repository manifests and validator reports.
 | HarmonyOS Demo | examples/harmonyos_demo | no |
 | Button Freeze Probe | examples/button_freeze_probe | no |
 | Showcase | examples/showcase | yes |
+| p5 Sketch | examples/p5_sketch | no |
 | Disabled Input Demo | examples/disabled_input_demo | no |
 | Design Systems | examples/design_systems | no |
 | Excel Viewer | examples/excel | yes |

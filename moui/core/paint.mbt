@@ -100,6 +100,10 @@ pub(all) struct TextRun {
   font : FontSpec
   color : Color
   align : TextAlign
+  /// Optional glyph-outline stroke drawn under the fill. `None` (and a zero
+  /// width) is fill-only text; renderers without a text-stroke path ignore it.
+  stroke_color : Color?
+  stroke_width : Double
 }
 
 ///|
@@ -195,6 +199,16 @@ pub(all) enum BlendMode {
   Overlay
   Darken
   Lighten
+  Add
+  Difference
+  Exclusion
+  HardLight
+  SoftLight
+  ColorDodge
+  ColorBurn
+  /// Exact-replace compositing: the scope's output replaces the destination
+  /// color and alpha outright (Skia `Src`, Canvas2D `copy`).
+  Source
 }
 
 ///|
@@ -244,12 +258,34 @@ pub(all) enum PathVerb {
 }
 
 ///|
+
+///|
+#derive(Eq, Debug, ToJson)
+pub(all) enum StrokeCap {
+  Butt
+  Round
+  Square
+}
+
+///|
+#derive(Eq, Debug, ToJson)
+pub(all) enum StrokeJoin {
+  Miter
+  Round
+  Bevel
+}
+
+///|
 #derive(Eq, Debug, ToJson)
 pub(all) struct PathSpec {
   verbs : Array[PathVerb]
   fill : Brush?
   stroke : Brush?
   stroke_width : Double
+  /// `None` keeps the renderer default (Skia Butt/Miter).
+  stroke_cap : StrokeCap?
+  /// `None` keeps the renderer default (Skia Miter).
+  stroke_join : StrokeJoin?
 }
 
 ///|
@@ -278,6 +314,8 @@ pub(all) enum DrawCommand {
   PopClip
   PushRoundedClip(RoundedRect)
   PopRoundedClip
+  PushPathClip(PathSpec)
+  PopPathClip
   PushTransform(Transform2D)
   PopTransform
   PushOpacity(Double)
@@ -591,8 +629,10 @@ pub fn TextRun::new(
   font~ : FontSpec,
   color~ : Color,
   align~ : TextAlign = TextCenter,
+  stroke_color~ : Color? = None,
+  stroke_width~ : Double = 0.0,
 ) -> TextRun {
-  { text, frame, font, color, align, }
+  { text, frame, font, color, align, stroke_color, stroke_width, }
 }
 
 ///|
@@ -747,8 +787,10 @@ pub fn PathSpec::new(
   fill~ : Brush? = None,
   stroke~ : Brush? = None,
   stroke_width~ : Double = 1.0,
+  stroke_cap~ : StrokeCap? = None,
+  stroke_join~ : StrokeJoin? = None,
 ) -> PathSpec {
-  { verbs, fill, stroke, stroke_width, }
+  { verbs, fill, stroke, stroke_width, stroke_cap, stroke_join, }
 }
 
 ///|

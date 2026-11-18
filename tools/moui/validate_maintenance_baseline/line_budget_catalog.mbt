@@ -76,8 +76,10 @@ fn file_budgets() -> Array[FileBudget] {
       // 497 -> 513 (2026-11-13, visual-quality V3 accent): window
       // AccentColorChanged maps to the host accent event and stays out of
       // core app messages.
+      // 513 -> 544 (2026-11-17): KeyboardEvent.code physical key decode
+      // (window PhysicalKey -> DOM-style code).
       path: "moui/backend/common/input/window_event_decode_test.mbt",
-      max_lines: 513,
+      max_lines: 544,
     },
     {
       path: "moui/backend/common/lifecycle/window_registry_test.mbt",
@@ -182,24 +184,8 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 95,
     },
     {
-      // 383 -> 400 (2026-11-07, §7 + route transitions + RTL step 2): the
-      // decode-test, showcase-app, views-facade, and text-helper budget
-      // notes, plus this self-referential entry's own growth.
-      // 400 -> 406 (2026-11-10, ADR 0068): the runtime.mbt transient-handoff
-      // note and its self-referential growth.
-      // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
-      // 409 -> 412 (2026-11-13, visual-quality V3 accent): the window
-      // accent decode-test note and this entry's self-referential growth.
-      // 414 -> 420 (issue #24): the window-chrome line-budget notes above and
-      // this entry's own growth.
-      // 422 -> 425 -> 427 (issue #24 follow-up): the effective_window_requests
-      // note above and this entry's own growth.
-      // 427 -> 431 (titlebar polish follow-up): the count-budget pub(all) note
-      // above and this entry's own growth.
-      // 431 -> 436 (window PR #3 follow-up): the window_registry
-      // MaximizedChanged note above and this entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 436,
+      max_lines: 421,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -242,7 +228,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/image_resource_records.mbt", max_lines: 70, },
     { path: "moui/render/image_resource_types.mbt", max_lines: 75, },
     { path: "moui_sun_renderer/renderer.mbt", max_lines: 373, },
-    { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 853, },
+    { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 899, }, // path clip fallback + advanced blend arms
     { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 87, },
     { path: "moui_sun_renderer/renderer_text_draw.mbt", max_lines: 664, },
     {
@@ -410,7 +396,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",
       max_lines: 25,
     },
-    { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 50, },
+    { path: "moui_skia_renderer/renderer_text.mbt", max_lines: 57, }, // stroke pass under fill
     { path: "moui_tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887, },
     // 470 -> 479 (2026-10-14, TUI output path decision B): the opt-in
     // `set_semantics_frames_enabled` sits beside the `draw_frame` it steers.

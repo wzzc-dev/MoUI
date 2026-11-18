@@ -242,6 +242,8 @@ pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
     PopClip => None
     PushRoundedClip(rounded) => Some(rounded.rect)
     PopRoundedClip => None
+    PushPathClip(path) => path.shape_bounds()
+    PopPathClip => None
     PushTransform(_) => None
     PopTransform => None
     PushOpacity(_) => None
@@ -268,7 +270,9 @@ pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
 }
 
 ///|
-pub fn PathSpec::bounds(self : PathSpec) -> Rect? {
+/// The path's geometric bounds, excluding stroke inflation. Clip scopes use
+/// this; drawing damage uses `bounds`, which inflates by the stroke width.
+pub fn PathSpec::shape_bounds(self : PathSpec) -> Rect? {
   let mut has_point = false
   let mut min_x = 0.0
   let mut min_y = 0.0
@@ -304,12 +308,17 @@ pub fn PathSpec::bounds(self : PathSpec) -> Rect? {
     }
   }
   if has_point {
-    Some(
-      Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y).inflate(
-        self.stroke_width.max(1.0),
-      ),
-    )
+    Some(Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y))
   } else {
     None
+  }
+}
+
+///|
+/// Drawing damage bounds: the path geometry plus its stroke width.
+pub fn PathSpec::bounds(self : PathSpec) -> Rect? {
+  match self.shape_bounds() {
+    Some(bounds) => Some(bounds.inflate(self.stroke_width.max(1.0)))
+    None => None
   }
 }

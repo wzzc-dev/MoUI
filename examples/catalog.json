@@ -20,6 +20,12 @@
       "featured": false
     },
     {
+      "id": "p5_sketch",
+      "path": "examples/p5_sketch",
+      "title": "p5 Sketch",
+      "featured": false
+    },
+    {
       "id": "custom_control",
       "path": "examples/custom_control",
       "title": "Custom Control",

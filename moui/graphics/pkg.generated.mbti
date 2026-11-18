@@ -34,6 +34,8 @@ pub using @core {type PathSpec}
 
 pub using @core {type PathVerb}
 
+pub using @core {type RgbaImage}
+
 pub using @core {type RoundedRect}
 
 pub using @core {type ShaderEffectSpec}
@@ -41,6 +43,10 @@ pub using @core {type ShaderEffectSpec}
 pub using @core {type ShadowSpec}
 
 pub using @core {type ShadowStyle}
+
+pub using @core {type StrokeCap}
+
+pub using @core {type StrokeJoin}
 
 pub using @core {type Transform2D}
 

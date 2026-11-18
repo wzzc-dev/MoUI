@@ -1,0 +1,16 @@
+import {
+  "examples/p5_sketch/app" @p5_app,
+  "examples/p5_sketch/skia_raster",
+  "wzzc-dev/moui/core",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string" @strconv,
+  "moonbitlang/x/fs",
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

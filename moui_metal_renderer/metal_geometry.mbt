@@ -329,6 +329,15 @@ fn build_metal_range(
         state = metal_state_with_clip(state, rect)
       }
       @core.PopClip => state = metal_state_pop_clip(state, clip_stack)
+      @core.PushPathClip(spec) => {
+        clip_stack.push(state.clip)
+        let bounds = match spec.shape_bounds() {
+          Some(rect) => rect
+          None => @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
+        }
+        state = metal_state_with_clip(state, bounds)
+      }
+      @core.PopPathClip => state = metal_state_pop_clip(state, clip_stack)
       @core.PushRoundedClip(rounded) =>
         // A rounded clip whose arc the composite can still describe becomes an
         // offscreen pass rounded by the same SDF a `LayerMask::RoundedMask`

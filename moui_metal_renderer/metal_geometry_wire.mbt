@@ -315,7 +315,16 @@ fn metal_blend_code(mode : @core.BlendMode) -> Int32 {
     Screen => metal_blend_screen
     Darken => metal_blend_darken
     Lighten => metal_blend_lighten
+    // -1 is the unsupported sentinel the shader already handles for Overlay.
     Overlay => -1
+    Add => -1
+    Difference => -1
+    Exclusion => -1
+    HardLight => -1
+    SoftLight => -1
+    ColorDodge => -1
+    ColorBurn => -1
+    Source => -1
   }
 }
 

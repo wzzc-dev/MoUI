@@ -76,12 +76,30 @@ pub fn modifiers_to_core(
 }
 
 ///|
+
+///|
+/// Maps a window physical key to the DOM-style `KeyboardEvent.code` name.
+/// `KeyCode` variants are already named after DOM codes (`KeyA`, `Digit1`,
+/// `ArrowLeft`), and its derived Debug output is the bare variant name.
+fn physical_key_code(event : @window_core.KeyEvent) -> String {
+  match event.physical_key() {
+    @window_core.Code(code) =>
+      match code {
+        @window_core.Unidentified => ""
+        _ => Repr(code).to_string()
+      }
+    @window_core.Unidentified(_) => ""
+  }
+}
+
+///|
 pub fn keyboard_event_to_core(
   event : @window_core.KeyEvent,
   modifiers : @core.KeyModifiers,
 ) -> @core.KeyboardEvent {
   @core.KeyboardEvent::new(
     key=key_event_name(event),
+    code=physical_key_code(event),
     text=key_event_text(event),
     pressed=element_state_pressed(event.state()),
     repeat=event.repeat(),

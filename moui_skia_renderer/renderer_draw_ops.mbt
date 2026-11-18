@@ -59,6 +59,21 @@ fn SkiaRasterRenderer::render_command(
       canvas.clip_rrect(skia_rrect(rounded), anti_alias=true)
     }
     PopRoundedClip => self.pop_canvas_scope(canvas, canvas_scopes, RoundedClip)
+    PushPathClip(spec) => {
+      ignore(canvas.save())
+      canvas_scopes.push(Clip)
+      match skia_path(spec) {
+        Some(path) => canvas.clip_path(path, anti_alias=true)
+        None =>
+          // An empty path clips everything; a zero rect matches that result
+          // without depending on how Skia treats an empty path.
+          canvas.clip_rect(
+            skia_rect(@core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)),
+            anti_alias=true,
+          )
+      }
+    }
+    PopPathClip => self.pop_canvas_scope(canvas, canvas_scopes, Clip)
     PushTransform(transform) => {
       ignore(canvas.save())
       canvas_scopes.push(Transform)
@@ -347,7 +362,12 @@ fn SkiaRasterRenderer::draw_path(
         Some(Solid(color)) =>
           canvas.draw_path(
             path,
-            self.skia_stroke_paint(color, spec.stroke_width),
+            self.skia_stroke_paint_styled(
+              color,
+              spec.stroke_width,
+              spec.stroke_cap,
+              spec.stroke_join,
+            ),
           )
         Some(brush) =>
           self.draw_path_brush(
@@ -355,6 +375,8 @@ fn SkiaRasterRenderer::draw_path(
             path,
             brush,
             stroke_width=Some(spec.stroke_width),
+            stroke_cap=spec.stroke_cap,
+            stroke_join=spec.stroke_join,
           )
         None => ()
       }
@@ -373,6 +395,8 @@ fn SkiaRasterRenderer::draw_path_brush(
   path : @skia_native.Path,
   brush : @core.Brush,
   stroke_width~ : Double?,
+  stroke_cap~ : @core.StrokeCap? = None,
+  stroke_join~ : @core.StrokeJoin? = None,
 ) -> Unit {
   match skia_brush_shader(brush) {
     Some(shader) =>
@@ -381,7 +405,12 @@ fn SkiaRasterRenderer::draw_path_brush(
           canvas.draw_path_shader(
             path,
             shader,
-            self.skia_stroke_paint(brush.fallback_color(), width),
+            self.skia_stroke_paint_styled(
+              brush.fallback_color(),
+              width,
+              stroke_cap,
+              stroke_join,
+            ),
           )
         None =>
           match path.bounds() {
@@ -396,7 +425,13 @@ fn SkiaRasterRenderer::draw_path_brush(
       }
     None => {
       let paint = match stroke_width {
-        Some(width) => self.skia_stroke_paint(brush.fallback_color(), width)
+        Some(width) =>
+          self.skia_stroke_paint_styled(
+            brush.fallback_color(),
+            width,
+            stroke_cap,
+            stroke_join,
+          )
         None => self.skia_paint(brush.fallback_color())
       }
       canvas.draw_path(path, paint)
@@ -823,6 +858,52 @@ fn SkiaRasterRenderer::skia_stroke_paint(
 }
 
 ///|
+fn skia_stroke_cap(cap : @core.StrokeCap) -> @moui_skia.StrokeCap {
+  match cap {
+    @core.Butt => @moui_skia.Butt
+    @core.Round => @moui_skia.Round
+    @core.Square => @moui_skia.Square
+  }
+}
+
+///|
+fn skia_stroke_join(join : @core.StrokeJoin) -> @moui_skia.StrokeJoin {
+  match join {
+    @core.Miter => @moui_skia.Miter
+    @core.Round => @moui_skia.Round
+    @core.Bevel => @moui_skia.Bevel
+  }
+}
+
+///|
+fn SkiaRasterRenderer::skia_stroke_paint_styled(
+  self : SkiaRasterRenderer,
+  color : @core.Color,
+  width : Double,
+  cap : @core.StrokeCap?,
+  join : @core.StrokeJoin?,
+) -> @moui_skia.Paint {
+  if cap is None && join is None {
+    return self.skia_stroke_paint(color, width)
+  }
+  let mut paint = @moui_skia.Paint::new(
+      color=skia_color(color),
+      anti_alias=true,
+    )
+    .set_stroke(true)
+    .set_stroke_width(Float::from_double(width.max(0.0)))
+  match cap {
+    Some(cap) => paint = paint.set_stroke_cap(skia_stroke_cap(cap))
+    None => ()
+  }
+  match join {
+    Some(join) => paint = paint.set_stroke_join(skia_stroke_join(join))
+    None => ()
+  }
+  paint
+}
+
+///|
 fn skia_blend_mode(mode : @core.BlendMode) -> @moui_skia.BlendMode {
   match mode {
     SourceOver => SrcOver
@@ -831,6 +912,14 @@ fn skia_blend_mode(mode : @core.BlendMode) -> @moui_skia.BlendMode {
     Overlay => Overlay
     Darken => Darken
     Lighten => Lighten
+    Add => Plus
+    Difference => Difference
+    Exclusion => Exclusion
+    HardLight => HardLight
+    SoftLight => SoftLight
+    ColorDodge => ColorDodge
+    ColorBurn => ColorBurn
+    Source => Src
   }
 }
 

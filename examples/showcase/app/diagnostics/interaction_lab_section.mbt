@@ -173,6 +173,8 @@ fn ShowcaseModel::trackpad_gesture_card(
         fill: Some(@core.Brush::Solid(theme.palette.primary)),
         stroke: None,
         stroke_width: 0.0,
+        stroke_cap: None,
+        stroke_join: None,
       })
     },
     semantics_label="trackpad gesture marker",

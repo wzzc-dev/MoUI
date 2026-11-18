@@ -108,10 +108,11 @@ test "input host owns capabilities focus modifiers and text input gating" {
     _ => fail("expected focus event")
   }
   input.set_modifiers(@core.KeyModifiers::new(shift=true))
-  let key_event = input.keyboard_event(key="A", text=Some("A"))
+  let key_event = input.keyboard_event(key="A", code="KeyA", text=Some("A"))
   match key_event {
     Some(Keyboard(event)) => {
       inspect(event.key, content="A")
+      inspect(event.code, content="KeyA")
       inspect(event.modifiers.shift, content="true")
     }
     _ => fail("expected keyboard event")
@@ -509,5 +510,35 @@ test "window accent color change maps to host accent event" {
   match event.unwrap().to_core() {
     None => ()
     Some(_) => fail("accent changes are handled by the host runtime driver")
+  }
+}
+
+///|
+test "keyboard event carries the physical key code" {
+  let key_event = @window_core.KeyEvent::KeyEvent(
+    @window_core.PhysicalKey::from_key_code(@window_core.KeyCode::KeyA),
+    @window_core.Key::Character("a"),
+    @window_core.Key::Character("a"),
+    @window_core.KeyLocation::Standard,
+    @window_core.ElementState::Pressed,
+    false,
+    Some("a"),
+    Some("a"),
+  )
+  let event = @input.window_event_to_host(
+    @window_core.WindowEvent::KeyboardInput(None, key_event, false),
+    @core.Point::new(x=0.0, y=0.0),
+  )
+  match event {
+    Some(host_event) =>
+      match host_event.to_core() {
+        Some(Keyboard(keyboard)) => {
+          inspect(keyboard.key, content="a")
+          inspect(keyboard.code, content="KeyA")
+          debug_inspect(keyboard.text, content="Some(\"a\")")
+        }
+        _ => fail("expected keyboard app event")
+      }
+    _ => fail("expected keyboard host event")
   }
 }

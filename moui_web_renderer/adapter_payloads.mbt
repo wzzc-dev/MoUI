@@ -59,6 +59,14 @@ fn blend_mode_host_code(mode : @core.BlendMode) -> Int32 {
     Overlay => 3
     Darken => 4
     Lighten => 5
+    Add => 6
+    Difference => 7
+    Exclusion => 8
+    HardLight => 9
+    SoftLight => 10
+    ColorDodge => 11
+    ColorBurn => 12
+    Source => 13
   }
 }
 

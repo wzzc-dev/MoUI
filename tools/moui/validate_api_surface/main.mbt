@@ -476,15 +476,31 @@ fn package_budgets() -> Array[PackageBudget] {
       // `with_system_accent`, `resolve_theme_with_accent`, and
       // `Color::from_argb` carry the host-reported OS accent as an additive
       // environment input; `resolve_desktop_theme` gains an optional argument.
-      // Cursor style API (issue #25): CursorIcon (+37 lines: 34 neutral
-      // variants that mirror the platform icon set plus Debug/Eq), CursorStyle
-      // (+7), CursorStyle::icon / is_inherit (+2), View::cursor /
-      // View::pointer_cursor (+2), AnyModifier::pointer_cursor and the
-      // ViewNode trait hook (+4). Cross-runtime pointer presentation is core
-      // protocol data, the same family as PointerEvent/PointerPhase.
-      max_lines: 3003,
-      max_pub_lines: 1273,
-      max_pub_all_lines: 155,
+      // Raw pointer/key observers (+2 lines, +2 pub): `View::on_pointer` and
+      // `View::on_key` expose continuous canvas input without owning press
+      // state; the p5 sketch adapter consumes them for hover/wheel/keyboard.
+      // KeyboardEvent.code (+1 line): hosts report the DOM-style physical key
+      // alongside the logical key; p5 passes it through unchanged.
+      // View::on_keyboard_input (+1 line): one focusable wrapper carries both
+      // keyboard and IME TextInput streams for canvas surfaces.
+      // RgbaImage (+14 lines, +8 pub): writable offscreen RGBA8 buffer for
+      // image/pixel work; no renderer dependency, drawn via encoded ImageRun.
+      // StrokeCap/StrokeJoin + PathSpec fields (+24 lines, +8 pub, +2 pub_all):
+      // explicit path stroke styling for vector/creative canvases.
+      // Path clip (path-clip-command plan) adds PushPathClip/PopPathClip and
+      // PathSpec::shape_bounds: +3 lines, +1 pub. shape_bounds excludes stroke
+      // inflation, which is what a clip scope needs.
+      // TextRun stroke fields (+2 lines, +0 pub: fields ride existing struct
+      // lines; the ctor widens the same lines): stroke-text protocol for
+      // canvas-style outlined text; Skia draws the outline under the fill.
+      // Advanced blend modes (+7 lines, +0 pub): Add/Difference/Exclusion/
+      // HardLight/SoftLight/ColorDodge/ColorBurn join the layer blend enum;
+      // Skia/Sun/Canvas2D implement them, WGPU/Metal degrade to source-over.
+      // BlendMode::Source (+1 line): exact-replace compositing for pixel
+      // overlays; Skia Src / Sun Source / Canvas2D copy.
+      max_lines: 3001,
+      max_pub_lines: 1283,
+      max_pub_all_lines: 156,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

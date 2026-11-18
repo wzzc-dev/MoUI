@@ -416,11 +416,11 @@ fn render_inspector_from_commands(
     match command {
       DrawText(_) => text_count = text_count + 1
       DrawImage(_) => image_count = image_count + 1
-      PushClip(_) | PushRoundedClip(_) => {
+      PushClip(_) | PushRoundedClip(_) | PushPathClip(_) => {
         clip_depth = clip_depth + 1
         max_clip_depth = runtime_devtools_max_int(max_clip_depth, clip_depth)
       }
-      PopClip | PopRoundedClip =>
+      PopClip | PopRoundedClip | PopPathClip =>
         if clip_depth == 0 {
           unbalanced_pop_count = unbalanced_pop_count + 1
         } else {

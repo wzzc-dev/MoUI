@@ -175,6 +175,8 @@ fn refresh_arc_path(
     fill: None,
     stroke: Some(@core.Brush::Solid(color)),
     stroke_width: 2.5,
+    stroke_cap: None,
+    stroke_join: None,
   }
 }
 

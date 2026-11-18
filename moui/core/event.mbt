@@ -75,6 +75,9 @@ pub extend KeyModifiers with ToJson::{to_json}
 #derive(Eq, Debug, ToJson)
 pub(all) struct KeyboardEvent {
   key : String
+  /// DOM-style physical key name (e.g. "KeyA", "ArrowLeft"); empty when the
+  /// host only reports a logical key.
+  code : String
   text : String?
   pressed : Bool
   repeat : Bool
@@ -352,8 +355,9 @@ pub fn KeyboardEvent::new(
   text~ : String? = None,
   repeat~ : Bool = false,
   modifiers~ : KeyModifiers = KeyModifiers::none(),
+  code~ : String = "",
 ) -> KeyboardEvent {
-  { key, text, pressed, repeat, modifiers, }
+  { key, code, text, pressed, repeat, modifiers, }
 }
 
 ///|
