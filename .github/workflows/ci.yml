@@ -23,10 +23,89 @@ permissions:
   contents: read
 
 jobs:
-  moonbit-workspace-baseline:
-    name: MoonBit workspace baseline
+  changes:
+    name: Change scope
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # A docs-only change cannot break a native build, so the compile jobs are
+      # skipped rather than paying a workspace compile for a typo fix. The
+      # documented validator steps still run in pr-static. Keep this path list in
+      # sync with docs/testing.md.
+      - name: Detect docs-only change
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # The checkout already has full history; fetch the base ref by name
+            # instead of with --depth, which would leave a shallow boundary that
+            # can truncate the merge-base and make the file list lie.
+            base="${{ github.base_ref }}"
+            git fetch --no-tags origin "refs/heads/$base:refs/remotes/origin/$base"
+            range="origin/$base...HEAD"
+          else
+            range="HEAD~1...HEAD"
+          fi
+          files="$(git diff --name-only "$range" || true)"
+          echo "changed files in $range:"
+          printf '%s\n' "$files" | sed 's/^/  /'
+          docs_only=true
+          # An empty diff (a dispatch run on an already-landed commit) is not a
+          # docs-only change; keep the compile jobs so the run still proves the
+          # tree it was asked to prove.
+          if [ -z "$files" ]; then
+            docs_only=false
+          fi
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              docs/*|memories/*|website/web_wasm/docs/*|*.md) ;;
+              *) docs_only=false ;;
+            esac
+          done <<EOF
+          $files
+          EOF
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+
+  pr-static:
+    name: PR static guards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      # Host-independent guards: policy validators, generators, script lint and
+      # the MoonBit tool tests. Nothing in this half needs darwin, and together
+      # they were ~40% of the old single-macOS-job PR minute, so they run on the
+      # cheap runner and leave macOS to the compile graph.
+      - name: Run PR static profile
+        run: sh scripts/check.sh --profile pr-static --skip-submodule-init
+
+  pr-profile:
+    name: PR profile gate
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -43,40 +122,34 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      # The workspace sweep compiles every member package natively, which is the
-      # long pole of the PR critical path. It stays on macOS because it covers
-      # the mainline Skia bindings; the public-interface drift check runs in the
-      # same job so it reuses the warm build graph instead of a second full
-      # compile on a second runner.
-      - name: Run MoonBit workspace baseline
-        run: |
-          moon check
-          node scripts/run-workspace-tests.mjs
-          node scripts/check-generated-interfaces.mjs
-
-  pr-profile:
-    name: PR profile gate
-    runs-on: macos-latest
-    timeout-minutes: 25
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up MoonBit
-        uses: ./.github/actions/setup-moonbit
+      # The prebuild downloads the locked Skia release into moui_skia/.skia-cache
+      # and reuses compiled stub archives there. Keying it on the provider lock,
+      # the prebuild script and the stub sources keeps a hit warm for exactly the
+      # inputs that regenerate it.
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v4
         with:
-          submodules: "false"
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
 
-      - name: Install dependencies
-        run: |
-          moon version --all
-          sh scripts/ci-moon-update.sh
+      # One compile graph for the whole PR. The old split ran `moon check` in
+      # the baseline job, then a second full compile in the PR profile job, then
+      # a third partial one for the sweep, and the generated-interface job added
+      # a fourth `moon info` pass. Now the native profile runs format, check,
+      # interface drift and the package matrix in order, and the 316-package
+      # sweep reuses that same _build on the same runner.
+      - name: Run PR native profile
+        run: sh scripts/check.sh --profile pr-native --skip-submodule-init
 
-      - name: Run PR check profile
-        run: sh scripts/check.sh --profile pr --skip-submodule-init
+      - name: Run full workspace test sweep
+        run: node scripts/run-workspace-tests.mjs
 
   linux-platform:
     name: Linux platform contracts
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -101,6 +174,18 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
+      # The prebuild downloads the locked Skia release into moui_skia/.skia-cache
+      # and reuses compiled stub archives there. Keying it on the provider lock,
+      # the prebuild script and the stub sources keeps a hit warm for exactly the
+      # inputs that regenerate it.
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
+
       - name: Run Linux platform profile
         run: sh scripts/check.sh --profile platform --skip-submodule-init
 
@@ -111,13 +196,14 @@ jobs:
 
   macos-packaging:
     name: macOS packaging smoke
+    needs: changes
     runs-on: macos-latest
     timeout-minutes: 15
     # Packaging is a landing check, not a review-time check: it is the most
     # macOS-minute-heavy step per unit of signal and its failure mode (bundle
-    # layout) is not something a code review changes. Pull requests get the
-    # package build only through the explicit dispatch input.
-    if: ${{ github.event_name != 'pull_request' }}
+    # layout) is not something a code review changes. It runs on main/dev
+    # landings and on an explicit dispatch, never on a pull request.
+    if: ${{ github.event_name != 'pull_request' && needs.changes.outputs.docs_only != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -131,6 +217,18 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
+
+      # The prebuild downloads the locked Skia release into moui_skia/.skia-cache
+      # and reuses compiled stub archives there. Keying it on the provider lock,
+      # the prebuild script and the stub sources keeps a hit warm for exactly the
+      # inputs that regenerate it.
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
 
       - name: Package Showcase app bundle
         run: |
@@ -155,8 +253,14 @@ jobs:
 
   benchmark-scaffold:
     name: Benchmark scaffold
+    needs: changes
     runs-on: macos-latest
     timeout-minutes: 20
+    # 421s measured for a structural gate that cannot regress from a code review
+    # alone. It stays on main/dev landings and dispatch runs; pull requests get
+    # the structural budgets through scripts/run-performance-budgets.mjs only
+    # when a reviewer asks for it.
+    if: ${{ github.event_name != 'pull_request' && needs.changes.outputs.docs_only != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -170,6 +274,18 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
+
+      # The prebuild downloads the locked Skia release into moui_skia/.skia-cache
+      # and reuses compiled stub archives there. Keying it on the provider lock,
+      # the prebuild script and the stub sources keeps a hit warm for exactly the
+      # inputs that regenerate it.
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
 
       - name: Build benchmark targets
         run: node scripts/conformance-capture-scaffold.mjs --mode benchmark
@@ -194,6 +310,8 @@ jobs:
 
   agent-protocol-smoke:
     name: Agent MCP protocol smoke
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -230,6 +348,8 @@ jobs:
 
   windows-native:
     name: Windows MSVC native smoke
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
@@ -253,6 +373,45 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
+
+      # The prebuild downloads the locked Skia release into moui_skia/.skia-cache
+      # and reuses compiled stub archives there. Keying it on the provider lock,
+      # the prebuild script and the stub sources keeps a hit warm for exactly the
+      # inputs that regenerate it.
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
+
+      - name: Assert the Skia stub boundary stays out of mbt
+        shell: pwsh
+        run: |
+          $errors = @()
+          if ($env:MOON_CC) {
+            $errors += "MOON_CC must stay unset so cl.exe owns the stub compile; got $env:MOON_CC"
+          }
+          $nativePkg = Get-Content -LiteralPath "moui_skia/native/moon.pkg" -Raw
+          if ($nativePkg -match '"native-stub"') {
+            $errors += "moui_skia/native/moon.pkg must not list native-stub sources (CLI /std:c11 vs /std:c++20 => D8016)"
+          }
+          if ($nativePkg -match 'stub-cc-flags') {
+            $errors += "moui_skia/native/moon.pkg must not carry stub-cc-flags: the C++ stub compiles in build.mbtx"
+          }
+          $mod = Get-Content -LiteralPath "moui_skia/moon.mod" -Raw
+          if ($mod -notmatch '"--moonbit-unstable-prebuild"\s*:\s*"build.mbtx"') {
+            $errors += "moui_skia/moon.mod must declare build.mbtx as its prebuild script"
+          }
+          if (-not (Test-Path -LiteralPath "moui_skia/build.mbtx")) {
+            $errors += "moui_skia/build.mbtx is missing"
+          }
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+          Write-Host "Skia stub boundary: ok (build.mbtx owns the C++ stub; MOON_CC is unset)"
 
       - name: Verify Windows check wrapper plan
         shell: pwsh

@@ -211,6 +211,13 @@ if not isinstance(asset, dict):
         f"manifest has no {mode} release asset for platform={platform} config={config} arch={arch}"
     )
 
+stub_entry = (
+    provider.get("stub_libraries", {})
+    .get(platform, {})
+    .get(config, {})
+    .get(arch)
+)
+stub = stub_entry if isinstance(stub_entry, dict) else {}
 source = provider.get("source_archive", {})
 items = {
     "provider_key": provider_key,
@@ -231,6 +238,12 @@ items = {
     ),
     "extra_cc_flags": provider.get("default_extra_cc_flags", {}).get(platform, ""),
     "extra_link_flags": provider.get("default_extra_link_flags", {}).get(platform, ""),
+    "stub_name": stub.get("name", ""),
+    "stub_sha256": stub.get("sha256", ""),
+    "stub_size": str(stub.get("size", "")),
+    "stub_url": stub.get("url", ""),
+    "stub_sources_sha256": stub.get("sources_sha256", ""),
+    "stub_library_names": " ".join(stub.get("library_names", [])),
 }
 for key, value in items.items():
     print(f"{key}={value}")
@@ -258,6 +271,12 @@ source_name="$(get_manifest_value source_name)"
 source_url="$(get_manifest_value source_url)"
 extra_cc_flags="$(get_manifest_value extra_cc_flags)"
 extra_link_flags="$(get_manifest_value extra_link_flags)"
+stub_name="$(get_manifest_value stub_name)"
+stub_sha256="$(get_manifest_value stub_sha256)"
+stub_size="$(get_manifest_value stub_size)"
+stub_url="$(get_manifest_value stub_url)"
+stub_sources_sha256="$(get_manifest_value stub_sources_sha256)"
+stub_library_names="$(get_manifest_value stub_library_names)"
 
 tag_dir="$resolved_cache_dir/$tag"
 entry_dir="$tag_dir/$resolved_platform-$config-$resolved_arch-$resolved_link_mode"
@@ -265,6 +284,9 @@ package_zip="$entry_dir/$asset_name"
 package_dir="$entry_dir/package"
 source_dir="$tag_dir/source"
 source_zip="$tag_dir/$source_name"
+stub_entry_dir="$tag_dir/$resolved_platform-$config-$resolved_arch-stub"
+stub_zip="$stub_entry_dir/$stub_name"
+stub_dir="$stub_entry_dir/package"
 
 find_header_root() {
   local root="$1"
@@ -418,7 +440,64 @@ ensure_source_extracted() {
   fi
 }
 
+find_stub_lib() {
+  local root="$1"
+  if [[ ! -d "$root" ]]; then
+    return 0
+  fi
+  local wanted found=""
+  for wanted in $stub_library_names libmoui_skia_stub.a moui_skia_stub.lib; do
+    found="$(find "$root" -type f -name "$wanted" -print 2>/dev/null | head -n 1 || true)"
+    if [[ -n "$found" ]]; then
+      echo "$found"
+      return 0
+    fi
+  done
+  echo ""
+}
+
+ensure_stub_extracted() {
+  if [[ -z "$stub_name" ]]; then
+    echo "note: skia-provider-lock.json has no released stub library for platform=$resolved_platform config=$config arch=$resolved_arch; the build compiles native/*.cpp locally instead" >&2
+    return 0
+  fi
+  if [[ $dry_run_config -eq 1 ]]; then
+    return 0
+  fi
+  if [[ $force -eq 1 || ! -d "$stub_dir" ]]; then
+    mkdir -p "$stub_entry_dir"
+    if [[ $force -eq 1 && -f "$stub_zip" ]]; then
+      rm -f "$stub_zip"
+    fi
+    if [[ $force -eq 1 || ! -f "$stub_zip" ]]; then
+      download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"
+    fi
+    actual_stub_sha256="$(compute_sha256 "$stub_zip" | tr '[:upper:]' '[:lower:]')"
+    if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
+      echo "Skia stub library SHA256 mismatch; downloading a fresh copy: $stub_zip" >&2
+      echo "  expected=$stub_sha256" >&2
+      echo "  actual=$actual_stub_sha256" >&2
+      rm -f "$stub_zip"
+      download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"
+      actual_stub_sha256="$(compute_sha256 "$stub_zip" | tr '[:upper:]' '[:lower:]')"
+    fi
+    if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
+      echo "Skia stub library SHA256 mismatch: $stub_zip" >&2
+      echo "  expected=$stub_sha256" >&2
+      echo "  actual=$actual_stub_sha256" >&2
+      exit 1
+    fi
+    extract_zip "$stub_zip" "$stub_dir"
+  fi
+}
+
 ensure_package_extracted
+ensure_stub_extracted
+
+stub_lib_path=""
+if [[ -n "$stub_name" && -d "$stub_dir" ]]; then
+  stub_lib_path="$(find_stub_lib "$stub_dir")"
+fi
 
 skia_include=""
 include_source="package"
@@ -461,6 +540,17 @@ for suffix in \
   fi
 done
 
+stub_env_lines=""
+if [[ -n "$stub_lib_path" ]]; then
+  stub_env_lines="MOUI_SKIA_STUB_LIB=$stub_lib_path
+MOUI_SKIA_STUB_ASSET_SHA256=$stub_sha256
+MOUI_SKIA_STUB_SOURCES_SHA256=$stub_sources_sha256
+MOUI_SKIA_STUB_SOURCE=release"
+else
+  stub_env_lines="MOUI_SKIA_STUB_LIB=
+MOUI_SKIA_STUB_SOURCE="
+fi
+
 if [[ $print_env -eq 1 ]]; then
   cat <<EOF
 MOUI_SKIA_PROVIDER=$provider_key
@@ -479,6 +569,7 @@ MOUI_SKIA_SKIA_LIB_DIR=$skia_lib_dir
 MOUI_SKIA_SKIA_LIB=skia
 MOUI_SKIA_EXTRA_CC_FLAGS=$extra_cc_flags
 MOUI_SKIA_EXTRA_LINK_FLAGS=$extra_link_flags
+$stub_env_lines
 EOF
   exit 0
 fi
@@ -507,6 +598,11 @@ Skia release provider:
   skia_lib=skia
   extra_cc_flags=$extra_cc_flags
   extra_link_flags=$extra_link_flags
+  stub_asset=$stub_name
+  stub_asset_sha256=$stub_sha256
+  stub_asset_size=$stub_size
+  stub_sources_sha256=$stub_sources_sha256
+  stub_lib=$stub_lib_path
 EOF
 if [[ $dry_run_config -eq 1 ]]; then
   echo "Dry run complete; Skia release asset was not downloaded or extracted."

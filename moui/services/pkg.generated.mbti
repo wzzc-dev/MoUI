@@ -331,11 +331,19 @@ pub fn ProtocolRegistration::not_equal(Self, Self) -> Bool
 pub fn ProtocolRegistration::to_json(Self) -> @json.Json
 pub fn ProtocolRegistration::to_repr(Self) -> @debug.Repr
 
+pub struct RemoteImageRequest {
+  // private fields
+}
+pub fn RemoteImageRequest::cancel(Self) -> Unit
+pub fn RemoteImageRequest::is_cancelled(Self) -> Bool
+pub fn RemoteImageRequest::new(cancel~ : () -> Unit) -> Self
+
 pub struct RemoteImageService {
   // private fields
 }
+pub fn RemoteImageService::fetch(Self, source~ : String, on_complete~ : (Bytes?) -> Unit) -> RemoteImageRequest?
 pub fn RemoteImageService::is_available(Self) -> Bool
-pub fn RemoteImageService::new(set_completed_listener~ : ((String, Bytes) -> Unit) -> Unit) -> Self
+pub fn RemoteImageService::new(set_completed_listener~ : ((String, Bytes) -> Unit) -> Unit, fetch? : (String, (Bytes?) -> Unit) -> RemoteImageRequest?) -> Self
 pub fn RemoteImageService::set_completed_listener(Self, (String, Bytes) -> Unit) -> Unit
 pub fn RemoteImageService::unavailable() -> Self
 

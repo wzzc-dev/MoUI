@@ -49,3 +49,44 @@ You can browse and install extra skills here:
   behavior. For solid, well-defined results (e.g. scientific computations),
   prefer assertion tests. You can use `moon coverage analyze > uncovered.log` to
   see which parts of your code are not covered by tests.
+
+## Skia prebuild and prebuilt stub assets
+
+- `moon.mod` points `--moonbit-unstable-prebuild` at `build.mbtx` (a MoonBit
+  `.mbtx` script, no Node). It prints one JSON object with `vars` (expanded as
+  `${build.*}` in `moon.pkg`) and one `link_configs` entry, the only carrier that
+  reaches is-main links.
+- The C++ stub (`native/*.cpp`) is **not** part of the `mbt` `native-stub`
+  compile anymore. It is published per platform/config/arch in the
+  `wzzc-dev/skia` release next to the Skia archives, and recorded in
+  `skia-provider-lock.json` under `providers.release.stub_libraries`.
+- `moui_skia/native/moon.pkg` must list no C++ sources. Adding one back
+  reintroduces the Windows D8016 clash (CLI `/std:c11` against Skia's
+  `/std:c++20`), because `mbt` classifies MSVC stub compiles as C.
+- Resolution order: `MOUI_SKIA_STUB_LIB` (explicit archive wins), then
+  `MOUI_SKIA_STUB_MODE=auto|prebuilt|build`, then `MOUI_SKIA_STUB_CC` /
+  `MOUI_SKIA_STUB_CC_FLAGS`. `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` is the
+  pure-build escape hatch, not a rendering path: it skips every Skia
+  include/lib/define fetch and still resolves the stub archive
+  (`MOUI_SKIA_STUB_LIB` when set, otherwise a local no-Skia compile in the
+  prebuild) so native links keep working, but the executable reports Skia
+  unavailable. `MOUI_SKIA_STUB_MODE=prebuilt` under the hatch is a hard error
+  (nothing was fetched); pass `MOUI_SKIA_STUB_LIB` instead. Non-native
+  (wasm/js) targets never compile or link the stub, so web tooling keeps the
+  hatch cheap. The hatch is not needed to dodge D8016 either: no `/std:c++20`
+  ever reaches `mbt`; native evidence scripts that set it do so only to stay
+  offline and avoid the real Skia dependency.
+- `moui_skia/scripts/fetch-release-skia.{sh,ps1}` download the stub zip after
+  the Skia package, verify its sha256/size, and emit `MOUI_SKIA_STUB_LIB`
+  (plus `MOUI_SKIA_STUB_ASSET_SHA256` / `MOUI_SKIA_STUB_SOURCES_SHA256`) in
+  `--print-env` / `-PrintEnv`. With no lock entry for the target they emit an
+  empty value and the prebuild compiles `native/*.cpp` locally, so a clean
+  checkout still builds; `MOUI_SKIA_STUB_MODE=prebuilt` turns that fallback
+  into a hard error.
+- Stale-asset risk (temporary, until MoonBit ships a `stub-cxx-flags` c/cpp
+  split so the C++ stub can return to the `mbt` build): the released stub is a
+  build artifact, so editing `native/*.cpp` without republishing leaves the lock
+  pointing at an archive that no longer matches the sources. `build.mbtx`
+  stamps the sources (`stub_source_stamp`) into its cache key; the cross-check
+  is `moui_skia/scripts/publish-stub-library.sh --check`, which fails when
+  `native/*.cpp` no longer hash to the lock's `sources_sha256`.

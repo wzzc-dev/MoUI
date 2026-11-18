@@ -66,10 +66,12 @@ Generated evidence stays out of git: do not commit `artifacts/`. Root `docs/` is
 
 Prefer the smallest loop from the router. Do not start small package edits with full daily/platform.
 
-Pre-push static trio (every commit that touches guidance, API, or package layout):
+Pre-push static guards (every commit that touches guidance, API, or package layout):
 
 ```sh
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-doc-budget.mjs
+node scripts/validate-tool-test-coverage.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-release-module-closures.mjs
 node scripts/validate-portfolio-governance.mjs

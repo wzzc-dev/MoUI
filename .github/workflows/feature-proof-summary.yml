@@ -21,14 +21,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install native Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip
-
+      # This job only renders a report from job conclusions plus the MoonBit
+      # verify tool, so it needs neither the 356 MB window submodule nor the
+      # wayland/Skia system libraries a compile job would need.
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install MoonBit dependencies
         run: sh scripts/ci-moon-update.sh
@@ -106,9 +105,9 @@ jobs:
             const status = {};
             // Map display names to short keys used by generate-feature-proof-report.mjs
             const jobNameToKey = {
-              "MoonBit workspace baseline": "moonbit-workspace-baseline",
+              "Change scope": "change-scope",
+              "PR static guards": "pr-static",
               "PR profile gate": "pr-profile",
-              "Public API surface": "api-surface",
               "Linux platform contracts": "linux-platform",
               "macOS packaging smoke": "macos-packaging",
               "Benchmark scaffold": "benchmark-scaffold",
@@ -156,17 +155,33 @@ jobs:
             core.setOutput('status', JSON.stringify(status));
             core.setOutput('run_id', String(runId));
             core.setOutput('html_url', ciRun.html_url);
+            // Push-only jobs (packaging, benchmark) and the docs-only fast path
+            // legitimately report "skipped"; tell the report generator so those
+            // by-design skips are not counted as proof gaps.
+            const event = context.payload.workflow_run?.event ?? 'push';
+            const docsOnly = status['pr-profile'] === 'skipped' &&
+              status['pr-static'] === 'success';
+            core.setOutput('event', event);
+            core.setOutput('docs_only', docsOnly ? 'true' : 'false');
 
       - name: Generate feature proof report
         if: ${{ steps.collect.outputs.skipped != 'true' }}
         env:
           JOB_STATUS: ${{ steps.collect.outputs.status }}
           RUN_URL: ${{ steps.collect.outputs.html_url }}
+          CI_EVENT: ${{ steps.collect.outputs.event }}
+          DOCS_ONLY: ${{ steps.collect.outputs.docs_only }}
         run: |
           mkdir -p artifacts/feature-proof
+          extra=()
+          if [ "$DOCS_ONLY" = "true" ]; then
+            extra+=(--docs-only)
+          fi
           node scripts/generate-feature-proof-report.mjs \
             --status "$JOB_STATUS" \
             --run-url "$RUN_URL" \
+            --event "$CI_EVENT" \
+            "${extra[@]}" \
             --output artifacts/feature-proof/proof-report.json
 
       - name: Verify feature proof coverage

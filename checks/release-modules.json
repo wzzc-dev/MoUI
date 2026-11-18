@@ -128,6 +128,13 @@
       "releaseStage": "addons"
     },
     {
+      "name": "wzzc-dev/moui_p5",
+      "directory": "moui_p5",
+      "publication": "public",
+      "role": "addon",
+      "releaseStage": "addons"
+    },
+    {
       "name": "wzzc-dev/moui_theme",
       "directory": "moui_theme",
       "publication": "public",

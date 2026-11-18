@@ -83,20 +83,22 @@ drive `mouseX`/`mouseMoved`/`mouseWheel` and p5 key callbacks.
 
 ## Offscreen RGBA buffers
 
-`@graphics.RgbaImage` is a writable, renderer-neutral RGBA8 buffer for
+`@graphics.RgbaBuffer` is a writable, renderer-neutral RGBA8 buffer for
 procedural textures, thumbnails, and pixel editing:
 
 ```moonbit nocheck
-let image = @graphics.RgbaImage::new(width=64, height=64)
+let image = @graphics.RgbaBuffer::new(width=64, height=64)
 image.set(0, 0, @graphics.Color::rgba(r=1.0, g=0.0, b=0.5))
 let pixel = image.get(0, 0)
 image.pixels[4] = (255 : Byte)
 ```
 
 It is straight (non-premultiplied) row-major RGBA and has no renderer
-dependency. To paint it, wrap the bytes in a renderer-decodable source (the p5
-adapter encodes a PNG data URI) and emit `ImageRun`/`DrawImage`; Skia and Sun
-decode PNG data URIs, and the browser image loader accepts the same source.
+dependency. `to_png_bytes()` is the framework's single public PNG encode entry:
+an addon keeps its own naming on top (the p5 `Image::to_png_bytes` delegates to
+it) and turns those bytes into a renderer-decodable source. To paint it, emit
+`ImageRun`/`DrawImage`; Skia and Sun decode PNG data URIs, and the browser image
+loader accepts the same source.
 
 ## Path stroke caps and joins
 

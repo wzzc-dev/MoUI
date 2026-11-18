@@ -17,9 +17,21 @@ async test "remote image fetch completes with no bytes for cleartext http" {
       received.val = bytes
       called.val = true
     },
+    cancelled: Ref(false),
   })
   // The completion still runs exactly once, so the renderer leaves the loading
   // state instead of stalling.
   assert_true(called.val)
   assert_true(received.val is None)
+}
+
+///|
+async test "cancelled remote image work skips the completion" {
+  let called = Ref(false)
+  remote_image_fetch({
+    source: "http://example.com/a.png",
+    finish: _bytes => called.val = true,
+    cancelled: Ref(true),
+  })
+  assert_false(called.val)
 }

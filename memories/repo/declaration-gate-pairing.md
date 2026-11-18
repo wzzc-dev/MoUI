@@ -1,6 +1,6 @@
 # Declaration coverage gate pairing (P17)
 
-- **Plan**: `docs/plans/done/hot-path-invalidation-boilerplate-convergence.md`
+- **Plan**: `hot-path-invalidation-boilerplate-convergence` (body retired; see `docs/plans/done/INDEX.md`)
   (H1), ADR 0034.
 
 ## Standing facts

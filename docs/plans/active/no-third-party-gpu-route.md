@@ -787,7 +787,7 @@ is **not**, on one pre-existing failure that this route does not own:
 stubs and fails at HEAD too (A/B proven; `-Wl,-dead_strip` exonerated). Two other
 `daily` reds of the same "generated file vs generator" class were fixed on the way
 through. Details and the owner decision still open:
-`docs/ai-sessions/2026-10-27-direct-host-gpu-renderer-l1.md`.
+`docs/ai-sessions/renderer-and-gpu.md`.
 
 **L2c — scopes, and the first mis-draw this route ever found (2026-10-28).**
 `PushLayer`/`PopLayer`, `PushFilter`/`PopFilter`, `BeginRetainedLayer`/

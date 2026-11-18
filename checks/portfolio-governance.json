@@ -319,6 +319,16 @@
       "retirement": "Remove or merge if no supported editor imports it for two reviews."
     },
     {
+      "name": "wzzc-dev/moui_p5",
+      "owner": "addons/p5",
+      "intent": "product",
+      "reviewDate": "2026-11-19",
+      "reviewTrigger": "p5 sketch API, file-port injection, adapter contract, or release-stage change; quarterly otherwise.",
+      "evidence": "package tests, sketch adapter contract tests, and release closure validator",
+      "graduation": "Already public; retain only while a supported creative-coding example or addon consumer uses it.",
+      "retirement": "Remove or merge if no supported example or consumer imports it for two reviews."
+    },
+    {
       "name": "wzzc-dev/moui_theme",
       "owner": "addons/theme",
       "intent": "product",

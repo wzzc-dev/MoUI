@@ -6,7 +6,7 @@
 入口均在 MoMark 仓库的 README 与文档中说明。
 
 MoMark **不再**是本仓库的 submodule 或 `moon.work` 成员。需要修改 MoUI 时使用
-[vendor 工作流](vendor-workflow.md)：在 MoMark checkout 里 vendor MoUI，双方验证
+[vendor 工作流](../vendor-workflow.md)：在 MoMark checkout 里 vendor MoUI，双方验证
 后把框架改动作为 MoUI PR 提回。
 
 本仓库保留 MoMark 所消费的框架侧能力：

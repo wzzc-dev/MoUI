@@ -119,7 +119,7 @@ const changed = trackedInterfaces.filter(path => {
 // `moon info` also generates interfaces for packages that never committed one.
 // Those are invisible to `git diff`, so surface them explicitly instead of
 // letting a new package ship without a reviewable public surface.
-const statusLines = run(
+const statusEntries = run(
   "git",
   [
     "status",
@@ -134,9 +134,21 @@ const statusLines = run(
   .split("\0")
   .filter(Boolean);
 
-const untracked = statusLines
-  .map(entry => entry.slice(3))
-  .filter(path => !trackedInterfaces.includes(path));
+// `-z` emits rename/copy entries as "XY newpath\0oldpath", so the old path
+// arrives as a bare token that looks like a path with no status prefix. Walk the
+// entries by status instead of mapping every token.
+const untracked = [];
+for (let index = 0; index < statusEntries.length; index += 1) {
+  const entry = statusEntries[index];
+  const status = entry.slice(0, 2);
+  if (status[0] === "R" || status[0] === "C") {
+    index += 1;
+    continue;
+  }
+  if (status === "??" && !trackedInterfaces.includes(entry.slice(3))) {
+    untracked.push(entry.slice(3));
+  }
+}
 
 if (changed.length > 0 || untracked.length > 0) {
   if (changed.length > 0) {

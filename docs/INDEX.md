@@ -94,6 +94,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 |---|---|---|
 | [ai-collaboration.md](ai-collaboration.md) | `canonical` | Agent workflow and anti-patterns |
 | [plans/README.md](plans/README.md) | `canonical` | Exec plan layout |
+| [plans/done/INDEX.md](plans/done/INDEX.md) | `canonical` | Retired-plan archive: one row per finished plan (stem, outcome, landing sha) |
 | [decisions/README.md](decisions/README.md) | `canonical` | ADR index |
 | [ai-sessions/](ai-sessions/) | `historical` | Past multi-file sessions |
 | [harness-mechanize-invariants-batch1.md](plans/done/harness-mechanize-invariants-batch1.md) | `map` | First mechanizable invariants batch (done) |

@@ -277,23 +277,22 @@ the native smoke executable. They only prove a pinnable revision when
 full `skia_commit`; otherwise keep them separate from the first source-built
 Linux acceptance used to update `skia-revision.txt`.
 
-To generate a persistent `native/moon.pkg` for an existing Linux Skia build,
-preview the config first and then write it explicitly:
+`native/moon.pkg` is declarative and no longer generated: the module prebuild
+(`moui_skia/build.mbtx`) resolves the Skia include/link flags and compiles the
+C++ stub archive, so the helper only resolves the environment that prebuild
+consumes. Source it instead of rewriting the package:
 
 ```bash
-bash scripts/configure-linux-native-pkg.sh \
+eval "$(bash scripts/configure-linux-native-pkg.sh \
   --skia-include /path/to/skia \
-  --skia-lib-dir /path/to/skia/out/Static
-
-bash scripts/configure-linux-native-pkg.sh \
-  --skia-include /path/to/skia \
-  --skia-lib-dir /path/to/skia/out/Static \
-  --write
+  --skia-lib-dir /path/to/skia/out/Static)"
 ```
 
-Use `--check` in CI or local scripts to verify that `native/moon.pkg` still
-matches the expected Linux Skia link config. The smoke helpers use this same
-generator for their temporary package rewrite.
+`--write` is refused on purpose: writing the retired `native-stub` +
+`stub-cc-flags` layout back into `native/moon.pkg` would reintroduce the Windows
+D8016 clash (`/std:c11` injected next to Skia's `/std:c++20`). Use `--check` to
+verify the committed package is still the prebuild-based layout (no C++ stub
+sources, `${build.MOUI_SKIA_CC_LINK_FLAGS}`).
 
 Use `--skia-lib`, `--extra-cc-flags`, and `--extra-link-flags` when a build uses
 a non-default library name or needs additional dependent libraries/rpaths. Use
@@ -452,25 +451,23 @@ For cross-builds, set `MOUI_SKIA_PLATFORM`, `MOUI_SKIA_ARCH`, and optionally
 `MOUI_SKIA_CONFIG`; Android builds should use `MOUI_SKIA_PLATFORM=android`
 instead of relying on host auto-detection.
 
-To generate a persistent `native/moon.pkg` for an existing macOS Skia build,
-preview the config first and then write it explicitly:
+`native/moon.pkg` is declarative and no longer generated: the module prebuild
+(`moui_skia/build.mbtx`) resolves the Skia include/link flags, the macOS
+framework link flags, and the C++ stub archive. Source the helper output instead
+of rewriting the package:
 
 ```bash
-bash scripts/configure-macos-native-pkg.sh \
-  --skia-include /path/to/skia \
-  --skia-lib-dir /path/to/skia/out/Static
-
-bash scripts/configure-macos-native-pkg.sh \
+eval "$(bash scripts/configure-macos-native-pkg.sh \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static \
-  --link-mode static \
-  --write
+  --link-mode static)"
 ```
 
-Use `--check` in CI or local scripts to verify that `native/moon.pkg` still
-matches the expected macOS Skia link config. The macOS smoke helper uses this
-same generator for its temporary package rewrite, including the required macOS
-framework link flags.
+`--write` is refused on purpose: writing the retired `native-stub` +
+`stub-cc-flags` layout back into `native/moon.pkg` would reintroduce the Windows
+D8016 clash (`/std:c11` injected next to Skia's `/std:c++20`). Use `--check` to
+verify the committed package is still the prebuild-based layout (no C++ stub
+sources, `${build.MOUI_SKIA_CC_LINK_FLAGS}`).
 
 The `macOS Real Skia Smoke` workflow exposes source-build inputs (`skia_rev`,
 `extra_gn_args`) and existing-build inputs (`skia_include`, `skia_lib_dir`,
@@ -514,11 +511,11 @@ non-default library name or needs additional dependent libraries. The acceptance
 wrapper captures the dry-run preflight log, wrapper log, native executable log, and
 `windows-real-skia-acceptance.log`; checks the final
 `moui_skia native smoke test passed` marker; and verifies that `native/moon.pkg`
-was restored. The lower-level smoke helper checks for `include/core/SkSurface.h`,
-either `lib<name>.a` or `<name>.lib`, temporarily rewrites `native/moon.pkg`,
-runs `scripts/native_smoke`, restores the package file, and prepends the Skia
-library directory to `PATH` before running the smoke binary so adjacent DLLs can
-be found.
+was restored. The lower-level smoke helper checks for `include/core/SkSurface.h`
+and either `lib<name>.a` or `<name>.lib`, then runs `scripts/native_smoke` and
+prepends the Skia library directory to `PATH` so adjacent DLLs can be found. Its
+temporary `native/moon.pkg` rewrite is being retired in favour of the prebuild
+environment; `REAL_SKIA_SMOKE.md` tracks that port.
 
 The Windows helpers also accept the same existing-build environment defaults as
 Linux: `MOUI_SKIA_SKIA_INCLUDE`, `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
@@ -526,24 +523,26 @@ Linux: `MOUI_SKIA_SKIA_INCLUDE`, `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 parameters override environment variables, which lets a self-hosted runner keep
 Skia paths in its environment while workflow inputs can still override them.
 
-To generate a persistent Windows `native/moon.pkg` for an existing
-MinGW-compatible Skia build, preview the config first and then write it
-explicitly:
+`native/moon.pkg` is declarative and no longer generated: the moui_skia prebuild
+(`build.mbtx`) resolves the Skia include/link flags and compiles the C++ stub
+archive. Both Windows helpers print the environment the prebuild consumes, so
+apply it with `Invoke-Expression` instead of rewriting the package:
 
 ```powershell
 .\scripts\configure-windows-native-pkg.ps1 `
   -SkiaInclude C:\path\to\skia `
-  -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
+  -SkiaLibDir C:\path\to\skia\out\moonbit-smoke | Invoke-Expression
 
-.\scripts\configure-windows-native-pkg.ps1 `
-  -SkiaInclude C:\path\to\skia `
-  -SkiaLibDir C:\path\to\skia\out\moonbit-smoke `
-  -Write
+.\scripts\configure-windows-msvc-native-pkg.ps1 `
+  -SkiaRoot C:\path\to\skia `
+  -SkiaLinkMode static | Invoke-Expression
 ```
 
-Use `-Check` to verify that the file still matches the expected Windows Skia
-link config. The Windows smoke helper uses this same generator for its temporary
-package rewrite.
+`-Write` is refused on purpose: writing the retired `native-stub` +
+`stub-cc-flags` layout back into `native/moon.pkg` would reintroduce Windows
+D8016 (`/std:c11` injected next to Skia's `/std:c++20`). Use `-Check` to verify
+the committed package is still the prebuild-based layout (no C++ stub sources,
+`${build.MOUI_SKIA_CC_LINK_FLAGS}`).
 
 For preflight without rewriting `native/moon.pkg` or building the smoke binary:
 

@@ -1,0 +1,1850 @@
+///|
+/// Skia prebuild hook (`--moonbit-unstable-prebuild`) for `wzzc-dev/moui_skia`.
+///
+/// Port of the former `build.js`. It reads the build config JSON from stdin and
+/// prints one JSON object with `vars` (expanded as `${build.*}` in `moon.pkg`)
+/// and `link_configs` (the only carrier that reaches is-main links).
+///
+/// Since the C++ stub moved out of the `mbt`-driven `native-stub` compile, this
+/// script also resolves the stub archive:
+///   - `MOUI_SKIA_STUB_LIB` (explicit path) wins; nothing is downloaded or built.
+///   - `MOUI_SKIA_STUB_MODE=prebuilt` requires the release asset listed in
+///     `skia-provider-lock.json` (`providers.release.stub_libraries`).
+///   - `MOUI_SKIA_STUB_MODE=build` compiles `native/*.cpp` here (the old path).
+///   - `auto` prefers the prebuilt asset and falls back to a local compile.
+///
+/// `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` is the pure-build escape hatch: it skips
+/// the Skia release fetch, so no Skia headers, libraries, or defines are used.
+/// The stub archive is still resolved: `MOUI_SKIA_STUB_LIB` when set, otherwise
+/// a local compile of `native/*.cpp` without Skia defines (`cl /std:c++20` on
+/// Windows, `cc -std=c++17` elsewhere) cached under `.skia-cache/stub-build/`.
+/// That compile runs here, never in the `mbt`-driven `native-stub` step, so the
+/// MSVC D8016 `/std:c11` vs `/std:c++20` clash cannot recur and
+/// `native/moon.pkg` keeps only pure-C sources. Native links keep working, but
+/// the resulting executable reports Skia unavailable: the hatch is for
+/// build/link gates, not rendering evidence. Non-native targets (wasm/js) never
+/// compile or link the stub. Under the hatch `MOUI_SKIA_STUB_MODE=prebuilt` is a
+/// hard error because no release asset is fetched; pass `MOUI_SKIA_STUB_LIB`
+/// (or use it from `fetch-release-skia --print-env`) instead.
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+}
+
+///|
+struct Opts {
+  config : @json.Json
+  env : Map[String, String]
+  host : String
+  module_root : String
+}
+
+///|
+struct Flags {
+  stub_cc : String
+  link : String
+  android : String
+}
+
+///|
+struct SkiaValues {
+  include_dir : String
+  lib_dir : String
+  lib_name : String
+  extra_cc : String
+  extra_link : String
+  link_mode : String
+  release_tag : String
+  provider : String
+  stub_lib : String
+  stub_source : String
+}
+
+///|
+struct StubInfo {
+  path : String
+  mode : String
+}
+
+///|
+fn[T] bail(message : String) -> T {
+  abort(message)
+}
+
+///|
+fn pick_config(env : Map[String, String], primary : String, secondary : String, fallback : String) -> String {
+  let first = config_or(env, primary, "")
+  if !is_blank(first) {
+    return first
+  }
+  config_or(env, secondary, fallback)
+}
+
+///|
+fn is_blank(value : String) -> Bool {
+  value.trim_space().length() == 0
+}
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim_space().to_owned().to_lower()
+}
+
+///|
+fn truthy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "1" || text == "true" || text == "yes" || text == "on"
+}
+
+///|
+fn falsy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "0" || text == "false" || text == "no" || text == "off"
+}
+
+///|
+fn split_str(value : String, delimiter : String) -> Array[String] {
+  let parts : Array[String] = []
+  for part in value.split(delimiter) {
+    parts.push(part.to_owned())
+  }
+  parts
+}
+
+///|
+fn split_ws(value : String) -> Array[String] {
+  let parts : Array[String] = []
+  for part in value.split(" ") {
+    let token = part.trim_space()
+    if token.length() > 0 {
+      parts.push(token.to_owned())
+    }
+  }
+  parts
+}
+
+///|
+fn join(parts : Array[String], separator : String) -> String {
+  let mut out = ""
+  let mut index = 0
+  while index < parts.length() {
+    if index > 0 {
+      out = out + separator
+    }
+    out = out + parts[index]
+    index = index + 1
+  }
+  out
+}
+
+///|
+fn append_flags(base : String, extra : String) -> String {
+  if extra == "" {
+    return base
+  }
+  if base == "" {
+    return extra
+  }
+  base + " " + extra
+}
+
+///|
+fn has_token(parts : Array[String], token : String) -> Bool {
+  for part in parts {
+    if part == token {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn append_missing_flags(base : String, flags : Array[String]) -> String {
+  let parts = split_ws(base)
+  for flag in flags {
+    if !has_token(parts, flag) {
+      parts.push(flag)
+    }
+  }
+  join(parts, " ")
+}
+
+///|
+fn append_missing_frameworks(base : String, frameworks : Array[String]) -> String {
+  let parts = split_ws(base)
+  let out : Array[String] = []
+  let seen : Map[String, Bool] = Map([])
+  let mut index = 0
+  while index < parts.length() {
+    if parts[index] == "-framework" && index + 1 < parts.length() {
+      let name = parts[index + 1]
+      index = index + 2
+      if seen.get(name) is None {
+        out.push("-framework")
+        out.push(name)
+        seen.set(name, true)
+      }
+    } else {
+      out.push(parts[index])
+      index = index + 1
+    }
+  }
+  for framework in frameworks {
+    if seen.get(framework) is None {
+      out.push("-framework")
+      out.push(framework)
+      seen.set(framework, true)
+    }
+  }
+  join(out, " ")
+}
+
+///|
+fn sort_strings(items : Array[String]) -> Array[String] {
+  let out : Array[String] = []
+  for item in items {
+    out.push(item)
+  }
+  let count = out.length()
+  for index in 0..<count {
+    let mut cursor = index
+    while cursor > 0 && out[cursor].compare(out[cursor - 1]) < 0 {
+      let temporary = out[cursor]
+      out[cursor] = out[cursor - 1]
+      out[cursor - 1] = temporary
+      cursor = cursor - 1
+    }
+  }
+  out
+}
+
+///|
+fn path_join(left : String, right : String) -> String {
+  if left == "" {
+    return right
+  }
+  if right == "" {
+    return left
+  }
+  if left.has_suffix("/") || left.has_suffix("\\") {
+    return left + right
+  }
+  left + "/" + right
+}
+
+///|
+fn basename(path : String) -> String {
+  let mut last = path
+  for segment in path.split("/") {
+    last = segment.to_owned()
+  }
+  last
+}
+
+///|
+fn path_exists(path : String) -> Bool {
+  @fs.path_exists(path)
+}
+
+///|
+fn is_dir(path : String) -> Bool {
+  @fs.is_dir(path) catch {
+    _ => false
+  }
+}
+
+///|
+fn read_dir_safe(path : String) -> Array[String] {
+  let out : Array[String] = []
+  let names = @fs.read_dir(path) catch {
+    _ => return out
+  }
+  for name in names {
+    out.push(name)
+  }
+  out
+}
+
+///|
+fn mkdir_ignore(path : String) -> Unit {
+  @fs.create_dir(path) catch {
+    _ => ()
+  }
+}
+
+///|
+fn append_path_part(prefix : String, part : String) -> String {
+  if prefix == "" {
+    return part
+  }
+  if prefix == "/" {
+    return "/" + part
+  }
+  prefix + "/" + part
+}
+
+///|
+fn ensure_dir(path : String) -> Unit {
+  if path == "" || path_exists(path) {
+    return
+  }
+  let mut prefix = ""
+  if path.has_prefix("/") {
+    prefix = "/"
+  }
+  for part in path.split("/") {
+    let segment = part.to_owned()
+    if segment != "" {
+      prefix = append_path_part(prefix, segment)
+      if !path_exists(prefix) {
+        mkdir_ignore(prefix)
+      }
+    }
+  }
+}
+
+///|
+fn write_text(path : String, content : String) -> Unit {
+  @fs.write_string_to_file(path, content) catch {
+    _ => bail("failed to write \{path}")
+  }
+}
+
+///|
+fn read_file_text(path : String) -> String {
+  let bytes = @fs.read_file_to_bytes(path) catch {
+    _ => b""
+  }
+  @utf8.decode(bytes) catch {
+    _ => ""
+  }
+}
+
+///|
+fn file_reference(path : String) -> String {
+  let bytes = @fs.read_file_to_bytes(path) catch {
+    _ => bail("failed to read \{path}")
+  }
+  "\{path}=\{bytes.length()}"
+}
+
+// ===== config plumbing =====
+
+///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  match value {
+    @json.Object(fields) => fields.get(key)
+    _ => None
+  }
+}
+
+///|
+fn json_string_field(value : @json.Json, key : String) -> String? {
+  match json_field(value, key) {
+    Some(@json.String(text)) => Some(text)
+    _ => None
+  }
+}
+
+///|
+fn nested_string(value : @json.Json, keys : Array[String]) -> String? {
+  let mut node = value
+  let mut index = 0
+  while index < keys.length() {
+    match json_field(node, keys[index]) {
+      Some(next) => node = next
+      None => return None
+    }
+    index = index + 1
+  }
+  match node {
+    @json.String(text) => Some(text)
+    _ => None
+  }
+}
+
+///|
+fn add_env_object(out : Map[String, String], node : @json.Json) -> Unit {
+  match json_field(node, "env") {
+    Some(@json.Object(fields)) => {
+      for key, value in fields {
+        match value {
+          @json.String(text) => out.set(key, text)
+          _ => ()
+        }
+      }
+      }
+    _ => ()
+  }
+}
+
+///|
+fn config_env(config : @json.Json) -> Map[String, String] {
+  let out : Map[String, String] = Map([])
+  match json_field(config, "build_info") {
+    Some(node) => add_env_object(out, node)
+    None => ()
+  }
+  match json_field(config, "build") {
+    Some(node) => add_env_object(out, node)
+    None => ()
+  }
+  add_env_object(out, config)
+  out
+}
+
+///|
+fn config_value(env : Map[String, String], key : String) -> String? {
+  match @env.get_env_var(key) {
+    Some(value) => {
+      if is_blank(value) {
+        stored_value(env, key)
+      } else {
+        Some(value)
+      }
+      }
+    None => stored_value(env, key)
+  }
+}
+
+///|
+fn stored_value(env : Map[String, String], key : String) -> String? {
+  match env.get(key) {
+    Some(value) => {
+      if is_blank(value) {
+        None
+      } else {
+        Some(value)
+      }
+      }
+    None => None
+  }
+}
+
+///|
+fn config_key_present(env : Map[String, String], key : String) -> Bool {
+  match @env.get_env_var(key) {
+    Some(_) => true
+    None => {
+      match env.get(key) {
+        Some(_) => true
+        None => false
+      }
+      }
+  }
+}
+
+///|
+fn config_or(env : Map[String, String], key : String, fallback : String) -> String {
+  match config_value(env, key) {
+    Some(value) => value
+    None => fallback
+  }
+}
+
+///|
+fn target_kind(opts : Opts) -> String? {
+  let candidates : Array[Array[String]] = [
+    ["build", "target", "kind"],
+    ["build_info", "target", "kind"],
+    ["target", "kind"],
+    ["target", "backend"],
+  ]
+  for path in candidates {
+    match nested_string(opts.config, path) {
+      Some(kind) => return Some(kind)
+      None => ()
+    }
+  }
+  config_value(opts.env, "MOON_TARGET")
+}
+
+///|
+fn reject_legacy_link_mode(opts : Opts) -> Unit {
+  for key in ["MOUI_SKIA_SKIA_LINK_MODE", "MOUI_SKIA_MACOS_LINK_MODE"] {
+    if config_key_present(opts.env, key) {
+      bail(
+        "\{key} is no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto.",
+      )
+    }
+  }
+}
+
+// ===== env / platform resolution =====
+
+///|
+async fn capture(program : String, args : Array[String], cwd : String) -> (
+  Int32,
+  String,
+  String,
+) {
+  let result = @process.run(
+    program,
+    args,
+    stdout=@process.Collect,
+    stderr=@process.Collect,
+    cwd=cwd,
+  )
+  let out = result.stdout_text() catch {
+    _ => ""
+  }
+  let err = result.stderr_text() catch {
+    _ => ""
+  }
+  (result.exit_code, out, err)
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out, _) = capture("uname", ["-s"], ".")
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  if code == 0 && out.find("Linux") is Some(_) {
+    return "linux"
+  }
+  "linux"
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) => {
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+fn release_platform(opts : Opts) -> String {
+  let platform = lower_trim(
+    pick_config(
+      opts.env,
+      "MOUI_SKIA_PLATFORM",
+      "MOUI_SKIA_RELEASE_PLATFORM",
+      "auto",
+    ),
+  )
+  let allowed = [
+    "auto",
+    "macos",
+    "linux",
+    "windows",
+    "android",
+    "harmonyos",
+    "ios",
+    "iossim",
+    "tvos",
+    "tvossim",
+    "wasm",
+  ]
+  if !has_token(allowed, platform) {
+    bail("unsupported MOUI_SKIA_PLATFORM: \{platform}")
+  }
+  platform
+}
+
+///|
+fn release_arch(opts : Opts) -> String {
+  let arch = lower_trim(
+    pick_config(
+      opts.env,
+      "MOUI_SKIA_ARCH",
+      "MOUI_SKIA_RELEASE_ARCH",
+      "auto",
+    ),
+  )
+  if !has_token(["auto", "arm64", "x64", "riscv64"], arch) {
+    bail("unsupported MOUI_SKIA_ARCH: \{arch}")
+  }
+  arch
+}
+
+///|
+fn release_config(opts : Opts) -> String {
+  let config = pick_config(
+    opts.env,
+    "MOUI_SKIA_CONFIG",
+    "MOUI_SKIA_RELEASE_CONFIG",
+    "Release",
+  )
+  let lowered = lower_trim(config)
+  if lowered == "release" {
+    return "Release"
+  }
+  if lowered == "debug" {
+    return "Debug"
+  }
+  bail("unsupported MOUI_SKIA_CONFIG: \{config}")
+}
+
+///|
+fn skia_link_mode(opts : Opts) -> String {
+  let mode = lower_trim(config_or(opts.env, "MOUI_SKIA_LINK_MODE", "static"))
+  if !has_token(["auto", "dynamic", "static"], mode) {
+    bail("unsupported MOUI_SKIA_LINK_MODE: \{mode}")
+  }
+  mode
+}
+
+///|
+fn skia_prebuild_enabled(opts : Opts) -> Bool {
+  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
+    return false
+  }
+  match config_value(opts.env, "MOUI_SKIA_ENABLE_PREBUILD_SKIA") {
+    Some(value) => !falsy(value)
+    None => true
+  }
+}
+
+///|
+fn should_configure_skia(opts : Opts) -> Bool {
+  match target_kind(opts) {
+    Some(kind) => {
+      if has_token(["wasm", "wasm32", "wasmgc", "wasm-gc", "js"], kind) {
+        return false
+      }
+      }
+    None => ()
+  }
+  skia_prebuild_enabled(opts)
+}
+
+///|
+fn parse_env_lines(output : String) -> Map[String, String] {
+  let values : Map[String, String] = Map([])
+  for line in output.split("\n") {
+    let text = line.trim_space().to_owned()
+    let index = text.find("=")
+    match index {
+      Some(position) => {
+        if position > 0 {
+          values.set(
+            text.substring(start=0, end=position),
+            text.substring(start=position + 1),
+          )
+        }
+        }
+      None => ()
+    }
+  }
+  values
+}
+
+///|
+fn native_target(opts : Opts) -> Bool {
+  match target_kind(opts) {
+    Some(kind) => {
+      let text = lower_trim(kind)
+      for skipped in ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"] {
+        if text == skipped {
+          return false
+        }
+      }
+      true
+    }
+    None => true
+  }
+}
+
+///|
+fn empty_skia_values() -> SkiaValues {
+  {
+    include_dir: "",
+    lib_dir: "",
+    lib_name: "",
+    extra_cc: "",
+    extra_link: "",
+    link_mode: "",
+    release_tag: "",
+    provider: "",
+    stub_lib: "",
+    stub_source: "",
+  }
+}
+
+///|
+async fn fetch_skia_env(opts : Opts) -> Map[String, String] {
+  let platform = release_platform(opts)
+  let arch = release_arch(opts)
+  let config = release_config(opts)
+  let link_mode = skia_link_mode(opts)
+  if opts.host == "windows" {
+    let args : Array[String] = [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "scripts/fetch-release-skia.ps1",
+      "-Platform",
+      platform,
+      "-Arch",
+      arch,
+      "-Config",
+      config,
+      "-LinkMode",
+      link_mode,
+      "-CacheDir",
+      ".skia-cache/release",
+      "-PrintEnv",
+    ]
+    let (code, out, err) = capture("powershell.exe", args, opts.module_root)
+    if code != 0 {
+      let (retry_code, retry_out, retry_err) = capture(
+        "pwsh",
+        args,
+        opts.module_root,
+      )
+      if retry_code != 0 {
+        bail(
+          "failed to fetch Skia release; PowerShell exited with \{code} (\{err}) and pwsh exited with \{retry_code} (\{retry_err})",
+        )
+      }
+      return parse_env_lines(retry_out)
+    }
+    return parse_env_lines(out)
+  }
+  let args : Array[String] = [
+    "scripts/fetch-release-skia.sh",
+    "--platform",
+    platform,
+    "--arch",
+    arch,
+    "--config",
+    config,
+    "--link-mode",
+    link_mode,
+    "--cache-dir",
+    ".skia-cache/release",
+    "--print-env",
+  ]
+  let (code, out, err) = capture("bash", args, opts.module_root)
+  if code != 0 {
+    bail("failed to fetch Skia release; bash exited with \{code} (\{err})")
+  }
+  parse_env_lines(out)
+}
+
+// ===== skia values =====
+
+///|
+fn picked(env : Map[String, String], fetched : Map[String, String], key : String) -> String {
+  match config_value(env, key) {
+    Some(value) => value
+    None => {
+      match fetched.get(key) {
+        Some(value) => value
+        None => ""
+      }
+      }
+  }
+}
+
+///|
+async fn skia_values(opts : Opts) -> SkiaValues {
+  let include_env = config_value(opts.env, "MOUI_SKIA_SKIA_INCLUDE")
+  let lib_env = config_value(opts.env, "MOUI_SKIA_SKIA_LIB_DIR")
+  let fetched = match (include_env, lib_env) {
+    (Some(_), Some(_)) => Map([])
+    _ => fetch_skia_env(opts)
+  }
+  let include_path = picked(opts.env, fetched, "MOUI_SKIA_SKIA_INCLUDE")
+  let lib_dir = picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB_DIR")
+  let stub_lib = picked(opts.env, fetched, "MOUI_SKIA_STUB_LIB")
+  let stub_source = picked(opts.env, fetched, "MOUI_SKIA_STUB_SOURCE")
+  {
+    include_dir: include_path,
+    lib_dir: lib_dir,
+    lib_name: picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB"),
+    extra_cc: picked(opts.env, fetched, "MOUI_SKIA_EXTRA_CC_FLAGS"),
+    extra_link: picked(opts.env, fetched, "MOUI_SKIA_EXTRA_LINK_FLAGS"),
+    link_mode: skia_link_mode(opts),
+    release_tag: picked(opts.env, fetched, "MOUI_SKIA_RELEASE_TAG"),
+    provider: picked(opts.env, fetched, "MOUI_SKIA_SKIA_PROVIDER"),
+    stub_lib: stub_lib,
+    stub_source: stub_source,
+  }
+}
+
+// ===== capability switches =====
+
+///|
+fn metal_gpu_enabled(opts : Opts, platform : String) -> Bool {
+  match config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_METAL") {
+    Some(value) => return !falsy(value)
+    None => ()
+  }
+  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_GPU_METAL", "")) {
+    return false
+  }
+  let target = platform
+  if has_token(["macos", "ios", "iossim"], target) {
+    return true
+  }
+  opts.host == "macos"
+}
+
+///|
+fn gpu_flag_names(platform : String) -> Array[String] {
+  if platform == "windows" {
+    ["MOUI_SKIA_ENABLE_GPU_D3D12", "MOUI_SKIA_ENABLE_GPU_D3D"]
+  } else if platform == "linux" {
+    ["MOUI_SKIA_ENABLE_GPU_VULKAN"]
+  } else if platform == "android" {
+    ["MOUI_SKIA_ENABLE_GPU_VULKAN", "MOUI_SKIA_ENABLE_GPU_EGL"]
+  } else if platform == "harmonyos" {
+    ["MOUI_SKIA_ENABLE_GPU_EGL"]
+  } else {
+    []
+  }
+}
+
+///|
+fn gpu_enabled(opts : Opts, platform : String) -> Bool {
+  let names = gpu_flag_names(platform)
+  let mut explicit_on = false
+  let mut explicit_off = false
+  for name in names {
+    match config_value(opts.env, name) {
+      Some(value) => {
+        if truthy(value) {
+          explicit_on = true
+        }
+        if falsy(value) {
+          explicit_off = true
+        }
+      }
+      None => ()
+    }
+  }
+  if explicit_on {
+    return true
+  }
+  if explicit_off {
+    return false
+  }
+  names.length() > 0
+}
+
+///|
+fn paragraph_enabled(opts : Opts) -> Bool {
+  match config_value(opts.env, "MOUI_SKIA_ENABLE_SKPARAGRAPH") {
+    Some(value) => !falsy(value)
+    None => true
+  }
+}
+
+///|
+fn paragraph_required(opts : Opts) -> Bool {
+  truthy(config_or(opts.env, "MOUI_SKIA_REQUIRE_SKPARAGRAPH", ""))
+}
+
+// ===== library probes =====
+
+///|
+fn paragraph_header_paths(include_path : String) -> Array[String] {
+  let names = [
+    "modules/skparagraph/include/Paragraph.h",
+    "modules/skparagraph/include/ParagraphBuilder.h",
+    "modules/skparagraph/include/ParagraphStyle.h",
+    "modules/skparagraph/include/TextStyle.h",
+    "modules/skparagraph/include/FontCollection.h",
+  ]
+  let out : Array[String] = []
+  for name in names {
+    out.push(path_join(include_path, name))
+  }
+  out
+}
+
+///|
+fn paragraph_library_candidates(lib_path : String, name : String, host : String) -> Array[String] {
+  if host == "windows" {
+    [
+      path_join(lib_path, name + ".lib"),
+      path_join(lib_path, name + ".dll.lib"),
+    ]
+  } else if host == "macos" {
+    [
+      path_join(lib_path, "lib" + name + ".a"),
+      path_join(lib_path, "lib" + name + ".dylib"),
+    ]
+  } else {
+    [
+      path_join(lib_path, "lib" + name + ".a"),
+      path_join(lib_path, "lib" + name + ".so"),
+    ]
+  }
+}
+
+///|
+fn paragraph_required_library_names(host : String) -> Array[String] {
+  let names = ["skparagraph", "skshaper", "skunicode_icu", "skunicode_core"]
+  if host == "macos" {
+    let out : Array[String] = []
+    for name in names {
+      out.push(name)
+    }
+    out.push("harfbuzz")
+    out.push("icu")
+    return out
+  }
+  names
+}
+
+///|
+fn paragraph_link_library_names(host : String) -> Array[String] {
+  let required = paragraph_required_library_names(host)
+  let out : Array[String] = []
+  for name in required {
+    if !has_token(out, name) {
+      out.push(name)
+    }
+  }
+  if host != "windows" {
+    for name in ["harfbuzz", "icu"] {
+      if !has_token(out, name) {
+        out.push(name)
+      }
+    }
+  }
+  out
+}
+
+///|
+fn paragraph_libraries_present(lib_path : String, host : String) -> Bool {
+  for name in ["skparagraph", "skshaper", "skunicode_icu", "skunicode_core"] {
+    let candidates = match host {
+      "windows" => [
+        path_join(lib_path, name + ".lib"),
+        path_join(lib_path, name + ".dll.lib"),
+      ]
+      _ => [
+        path_join(lib_path, "lib" + name + ".a"),
+        path_join(lib_path, "lib" + name + ".so"),
+        path_join(lib_path, "lib" + name + ".dylib"),
+      ]
+    }
+    let mut found = false
+    for candidate in candidates {
+      if path_exists(candidate) {
+        found = true
+      }
+    }
+    if !found {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn require_paragraph_artifacts(opts : Opts, include_path : String, lib_path : String) -> Unit {
+  if !paragraph_required(opts) {
+    return
+  }
+  let missing_headers : Array[String] = []
+  for candidate in paragraph_header_paths(include_path) {
+    if !path_exists(candidate) {
+      missing_headers.push(candidate)
+    }
+  }
+  if missing_headers.length() > 0 {
+    let missing = join(missing_headers, ", ")
+    bail("MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but headers were missing: \{missing}")
+  }
+  let missing_libs : Array[String] = []
+  for name in paragraph_required_library_names(opts.host) {
+    let mut found = false
+    for candidate in paragraph_library_candidates(lib_path, name, opts.host) {
+      if path_exists(candidate) {
+        found = true
+      }
+    }
+    if !found {
+      missing_libs.push(name)
+    }
+  }
+  if missing_libs.length() > 0 {
+    let missing = join(missing_libs, ", ")
+    bail("MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but libraries were missing in \{lib_path}: \{missing}")
+  }
+}
+
+///|
+fn dynamic_suffix(host : String) -> String {
+  if host == "macos" {
+    ".dylib"
+  } else {
+    ".so"
+  }
+}
+
+///|
+fn resolve_unix_link_mode(requested : String, lib_path : String, skia_lib : String, suffix : String) -> String {
+  if requested != "auto" {
+    return requested
+  }
+  let static_lib = path_join(lib_path, "lib" + skia_lib + ".a")
+  let dynamic_lib = path_join(lib_path, "lib" + skia_lib + suffix)
+  if path_exists(dynamic_lib) {
+    return "dynamic"
+  }
+  if path_exists(static_lib) {
+    return "static"
+  }
+  bail(
+    "Skia library lib\{skia_lib}\{suffix} or lib\{skia_lib}.a was not found in \{lib_path}",
+  )
+}
+
+///|
+fn unix_library_flag(lib_path : String, name : String, mode : String, suffix : String) -> String {
+  let static_lib = path_join(lib_path, "lib" + name + ".a")
+  let dynamic_lib = path_join(lib_path, "lib" + name + suffix)
+  let candidates = if mode == "dynamic" {
+    [dynamic_lib, static_lib]
+  } else {
+    [static_lib, dynamic_lib]
+  }
+  for candidate in candidates {
+    if path_exists(candidate) {
+      return candidate
+    }
+  }
+  "-l" + name
+}
+
+///|
+fn paragraph_link_flags(lib_path : String, mode : String, host : String) -> String {
+  let suffix = dynamic_suffix(host)
+  let library_flags : Array[String] = []
+  for name in paragraph_link_library_names(host) {
+    library_flags.push(unix_library_flag(lib_path, name, mode, suffix))
+  }
+  if host == "linux" && mode == "static" {
+    let parts : Array[String] = ["-L" + lib_path, "-Wl,--start-group"]
+    for flag in library_flags {
+      parts.push(flag)
+    }
+    parts.push("-Wl,--end-group")
+    return join(parts, " ")
+  }
+  let parts : Array[String] = ["-L" + lib_path]
+  for flag in library_flags {
+    parts.push(flag)
+  }
+  join(parts, " ")
+}
+
+///|
+fn linux_static_paragraph_link_flags(lib_path : String, skia_lib : String) -> String {
+  let parts : Array[String] = [
+    "-L" + lib_path,
+    "-Wl,--start-group",
+    path_join(lib_path, "lib" + skia_lib + ".a"),
+  ]
+  for name in ["skparagraph", "skshaper", "skunicode_icu", "skunicode_core", "harfbuzz", "icu"] {
+    parts.push(unix_library_flag(lib_path, name, "static", ".so"))
+  }
+  parts.push("-Wl,--end-group")
+  join(parts, " ")
+}
+
+///|
+fn unix_static_paragraph_link_flags(
+  lib_path : String,
+  skia_lib : String,
+  host : String,
+) -> String {
+  let parts : Array[String] = [
+    "-L" + lib_path,
+    "-Wl,--start-group",
+    path_join(lib_path, "lib" + skia_lib + ".a"),
+  ]
+  for name in paragraph_link_library_names(host) {
+    parts.push(unix_library_flag(lib_path, name, "static", dynamic_suffix(host)))
+  }
+  parts.push("-Wl,--end-group")
+  join(parts, " ")
+}
+
+///|
+fn linux_release_abi_flags(values : SkiaValues) -> Array[String] {
+  let provider = lower_trim(
+    if values.provider != "" {
+      values.provider
+    } else {
+      values.provider
+    },
+  )
+  if provider != "release" && values.release_tag == "" {
+    []
+  } else {
+    ["-D_GLIBCXX_USE_CXX11_ABI=0"]
+  }
+}
+
+///|
+fn macos_library_flags(
+  lib_path : String,
+  skia_lib : String,
+  include_ganesh_ext : Bool,
+  requested_mode : String,
+) -> String {
+  let static_lib = path_join(lib_path, "lib" + skia_lib + ".a")
+  let dynamic_lib = path_join(lib_path, "lib" + skia_lib + ".dylib")
+  let ganesh_static = path_join(lib_path, "libskia_ganesh_ext.a")
+  let ganesh_dynamic = path_join(lib_path, "libskia_ganesh_ext.dylib")
+  let mode = if include_ganesh_ext &&
+    requested_mode == "auto" &&
+    path_exists(static_lib) &&
+    path_exists(ganesh_static) {
+    "static"
+  } else {
+    resolve_unix_link_mode(requested_mode, lib_path, skia_lib, ".dylib")
+  }
+  if mode == "dynamic" {
+    if !path_exists(dynamic_lib) {
+      bail(
+        "MOUI_SKIA_LINK_MODE=dynamic requested, but \{dynamic_lib} was not found",
+      )
+    }
+    if include_ganesh_ext && !path_exists(ganesh_dynamic) {
+      bail(
+        "MOUI_SKIA_ENABLE_GPU_METAL with dynamic linking requested, but \{ganesh_dynamic} was not found",
+      )
+    }
+    if include_ganesh_ext {
+      return "\{ganesh_dynamic} \{dynamic_lib} -Wl,-rpath,\{lib_path}"
+    }
+    return "\{dynamic_lib} -Wl,-rpath,\{lib_path}"
+  }
+  if !path_exists(static_lib) {
+    bail("MOUI_SKIA_LINK_MODE=static requested, but \{static_lib} was not found")
+  }
+  if include_ganesh_ext {
+    if !path_exists(ganesh_static) {
+      bail("MOUI_SKIA_ENABLE_GPU_METAL requested, but \{ganesh_static} was not found")
+    }
+    return "\{ganesh_static} \{static_lib}"
+  }
+  static_lib
+}
+
+// ===== platform flags =====
+
+///|
+fn platform_flags(opts : Opts, platform : String, values : SkiaValues) -> Flags {
+  let include_path = values.include_dir
+  let lib_path = values.lib_dir
+  if include_path == "" {
+    bail("fetch output is missing MOUI_SKIA_SKIA_INCLUDE")
+  }
+  if lib_path == "" {
+    bail("fetch output is missing MOUI_SKIA_SKIA_LIB_DIR")
+  }
+  let skia_lib = if values.lib_name == "" {
+    "skia"
+  } else {
+    values.lib_name
+  }
+  let mut extra_cc = values.extra_cc
+  let extra_link = values.extra_link
+  let link_mode = values.link_mode
+  let mut paragraph = paragraph_enabled(opts) || paragraph_required(opts)
+  if paragraph && !paragraph_libraries_present(lib_path, opts.host) {
+    if paragraph_required(opts) {
+      bail(
+        "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries were not found in \{lib_path}",
+      )
+    }
+    paragraph = false
+  }
+  require_paragraph_artifacts(opts, include_path, lib_path)
+  let mut stub_cc = "-DMOUI_SKIA_HAS_SKIA -I" + include_path
+  let mut link = "-L" + lib_path + " -l" + skia_lib
+  if platform == "windows" {
+    stub_cc = "/DMOUI_SKIA_HAS_SKIA /EHsc /I" + include_path
+    let static_lib = path_join(lib_path, skia_lib + ".lib")
+    let import_lib = path_join(lib_path, skia_lib + ".dll.lib")
+    let dynamic_dll = path_join(lib_path, skia_lib + ".dll")
+    let mut resolved = link_mode
+    if resolved == "auto" {
+      resolved = if path_exists(dynamic_dll) && path_exists(import_lib) {
+        "dynamic"
+      } else {
+        "static"
+      }
+    }
+    let mut skia_lib_flag = static_lib
+    if resolved == "dynamic" {
+      if !path_exists(dynamic_dll) {
+        bail("MOUI_SKIA_LINK_MODE=dynamic requested, but \{dynamic_dll} was not found")
+      }
+      if !path_exists(import_lib) && !path_exists(static_lib) {
+        bail(
+          "MOUI_SKIA_LINK_MODE=dynamic requested, but \{import_lib} or \{static_lib} was not found",
+        )
+      }
+      skia_lib_flag = if path_exists(import_lib) {
+        import_lib
+      } else {
+        static_lib
+      }
+    } else if !path_exists(static_lib) {
+      bail("MOUI_SKIA_LINK_MODE=static requested, but \{static_lib} was not found")
+    }
+    let package_libs : Array[String] = []
+    for name in read_dir_safe(lib_path) {
+      if name.has_suffix(".lib") {
+        package_libs.push(path_join(lib_path, name))
+      }
+    }
+    let sorted_libs = sort_strings(package_libs)
+    let ordered : Array[String] = [skia_lib_flag]
+    for candidate in sorted_libs {
+      if candidate != skia_lib_flag {
+        ordered.push(candidate)
+      }
+    }
+    let slashified : Array[String] = []
+    for candidate in ordered {
+      slashified.push(join(split_str(candidate, "\\"), "/"))
+    }
+    link = join(slashified, " ") +
+      " user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib"
+    if gpu_enabled(opts, platform) {
+      stub_cc = append_flags(
+        stub_cc,
+        "/DMOUI_SKIA_ENABLE_GPU_D3D /DMOUI_SKIA_ENABLE_GPU_D3D12",
+      )
+      link = append_flags(link, "d3d12.lib d3dcompiler.lib dxguid.lib")
+    }
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER",
+      )
+    }
+  } else if platform == "macos" {
+    let resolved = resolve_unix_link_mode(link_mode, lib_path, skia_lib, ".dylib")
+    let metal = metal_gpu_enabled(opts, platform)
+    stub_cc = "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I" + include_path
+    link = macos_library_flags(lib_path, skia_lib, metal, link_mode) +
+      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      )
+      link = append_flags(link, paragraph_link_flags(lib_path, resolved, "macos"))
+    }
+    if metal {
+      stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_METAL")
+      link = append_missing_frameworks(
+        link,
+        ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
+      )
+    }
+  } else if platform == "ios" || platform == "iossim" {
+    let resolved = resolve_unix_link_mode(link_mode, lib_path, skia_lib, ".dylib")
+    let metal = metal_gpu_enabled(opts, platform)
+    stub_cc = "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I" + include_path
+    link = macos_library_flags(lib_path, skia_lib, metal, link_mode) +
+      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework QuartzCore -framework UIKit"
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      )
+      link = append_flags(link, paragraph_link_flags(lib_path, resolved, "macos"))
+    }
+    if metal {
+      stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_METAL")
+      link = append_missing_frameworks(
+        link,
+        ["Metal", "CoreVideo", "IOSurface"],
+      )
+    }
+  } else if platform == "linux" {
+    stub_cc = "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I" + include_path
+    let static_lib = path_join(lib_path, "lib" + skia_lib + ".a")
+    let dynamic_lib = path_join(lib_path, "lib" + skia_lib + ".so")
+    let resolved = resolve_unix_link_mode(link_mode, lib_path, skia_lib, ".so")
+    if resolved == "static" {
+      if !path_exists(static_lib) {
+        bail("MOUI_SKIA_LINK_MODE=static requested, but \{static_lib} was not found")
+      }
+      link = if paragraph {
+        linux_static_paragraph_link_flags(lib_path, skia_lib)
+      } else {
+        static_lib
+      }
+    } else {
+      if !path_exists(dynamic_lib) {
+        bail("MOUI_SKIA_LINK_MODE=dynamic requested, but \{dynamic_lib} was not found")
+      }
+      link = "-L" + lib_path + " -l" + skia_lib + " -Wl,-rpath," + lib_path
+    }
+    link = append_missing_flags(
+      link,
+      ["-lfontconfig", "-lfreetype", "-lharfbuzz"],
+    )
+    if gpu_enabled(opts, platform) {
+      let ganesh = path_join(lib_path, "libskia_ganesh_ext.a")
+      if !path_exists(ganesh) {
+        bail("MOUI_SKIA_ENABLE_GPU_VULKAN requested, but \{ganesh} was not found")
+      }
+      stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_VULKAN")
+      link = append_missing_flags(ganesh + " " + link, ["-lvulkan", "-ldl"])
+    }
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      )
+      extra_cc = append_missing_flags(extra_cc, linux_release_abi_flags(values))
+      if resolved != "static" {
+        link = append_flags(link, paragraph_link_flags(lib_path, resolved, "linux"))
+      }
+    }
+    link = append_missing_flags(link, ["-lstdc++", "-pthread"])
+  } else if platform == "android" {
+    stub_cc = "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I" + include_path
+    let static_lib = path_join(lib_path, "lib" + skia_lib + ".a")
+    let dynamic_lib = path_join(lib_path, "lib" + skia_lib + ".so")
+    let resolved = resolve_unix_link_mode(link_mode, lib_path, skia_lib, ".so")
+    if resolved == "static" {
+      if !path_exists(static_lib) {
+        bail("MOUI_SKIA_LINK_MODE=static requested, but \{static_lib} was not found")
+      }
+      link = if paragraph {
+        unix_static_paragraph_link_flags(lib_path, skia_lib, "android")
+      } else {
+        static_lib
+      }
+    } else {
+      if !path_exists(dynamic_lib) {
+        bail("MOUI_SKIA_LINK_MODE=dynamic requested, but \{dynamic_lib} was not found")
+      }
+      link = "-L" + lib_path + " -l" + skia_lib
+    }
+    link = append_missing_flags(link, ["-landroid", "-llog", "-lc++", "-lm", "-ldl"])
+    if gpu_enabled(opts, platform) {
+      let ganesh = path_join(lib_path, "libskia_ganesh_ext.a")
+      if !path_exists(ganesh) {
+        bail("Android GPU default/enable requested, but \{ganesh} was not found")
+      }
+      let vulkan_value = config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_VULKAN")
+      let egl_value = config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_EGL")
+      let enable_vulkan = match vulkan_value {
+        Some(value) => !falsy(value)
+        None => true
+      }
+      let enable_egl = match egl_value {
+        Some(value) => !falsy(value)
+        None => true
+      }
+      if enable_vulkan {
+        stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_VULKAN")
+        link = ganesh + " " + link
+      }
+      if enable_egl {
+        stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_EGL")
+        link = append_missing_flags(link, ["-lEGL", "-lGLESv2"])
+      }
+    }
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      )
+      if resolved != "static" {
+        link = append_flags(link, paragraph_link_flags(lib_path, resolved, "android"))
+      }
+    }
+  } else if platform == "harmonyos" {
+    stub_cc = "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I" + include_path
+    let static_lib = path_join(lib_path, "lib" + skia_lib + ".a")
+    let dynamic_lib = path_join(lib_path, "lib" + skia_lib + ".so")
+    let resolved = resolve_unix_link_mode(link_mode, lib_path, skia_lib, ".so")
+    if resolved == "static" {
+      if !path_exists(static_lib) {
+        bail("MOUI_SKIA_LINK_MODE=static requested, but \{static_lib} was not found")
+      }
+      link = if paragraph {
+        unix_static_paragraph_link_flags(lib_path, skia_lib, "harmonyos")
+      } else {
+        static_lib
+      }
+    } else {
+      if !path_exists(dynamic_lib) {
+        bail("MOUI_SKIA_LINK_MODE=dynamic requested, but \{dynamic_lib} was not found")
+      }
+      link = "-L" + lib_path + " -l" + skia_lib
+    }
+    link = append_missing_flags(link, ["-lc++", "-lm", "-ldl"])
+    if gpu_enabled(opts, platform) {
+      let ganesh = path_join(lib_path, "libskia_ganesh_ext.a")
+      if !path_exists(ganesh) {
+        bail("MOUI_SKIA_ENABLE_GPU_EGL requested, but \{ganesh} was not found")
+      }
+      stub_cc = append_flags(stub_cc, "-DMOUI_SKIA_ENABLE_GPU_EGL")
+      link = append_missing_flags(ganesh + " " + link, ["-lEGL", "-lGLESv3"])
+    }
+    if paragraph {
+      stub_cc = append_flags(
+        stub_cc,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      )
+      if resolved != "static" {
+        link = append_flags(link, paragraph_link_flags(lib_path, resolved, "harmonyos"))
+      }
+    }
+  }
+  if has_token(["macos", "ios", "iossim"], platform) {
+    // ld64: drop unreferenced atoms and local symbols. MoonBit backtraces keep
+    // working; `atos` loses local frames.
+    link = append_flags(link, "-Wl,-dead_strip -Wl,-x")
+  }
+  let combined = append_flags(link, extra_link)
+  let final_link = if has_token(["macos", "ios", "iossim"], platform) {
+    append_missing_frameworks(combined, [])
+  } else {
+    combined
+  }
+  {
+    stub_cc: append_flags(stub_cc, extra_cc),
+    link: final_link,
+    android: if platform == "android" {
+      "-landroid -llog"
+    } else {
+      ""
+    },
+  }
+}
+
+///|
+fn fallback_native_runtime_link_flags(platform : String) -> String {
+  if platform == "windows" {
+    return ""
+  }
+  if platform == "linux" {
+    return "-lstdc++ -pthread"
+  }
+  "-lc++"
+}
+
+///|
+fn fallback_stub_cc_flags(platform : String) -> String {
+  if platform == "windows" {
+    // No `/std:c++*` here on purpose: `moon` injects `/std:c11` for MSVC C
+    // stubs, and cl.exe rejects a second standard flag (D8016). The C++ stub is
+    // no longer compiled by `mbt`, so this variable carries no C++ standard.
+    ""
+  } else {
+    "-std=c++17"
+  }
+}
+
+///|
+fn macos_example_link_flags(
+  base : String,
+  frameworks : Array[String],
+  platform : String,
+) -> String {
+  if platform != "macos" {
+    return base
+  }
+  append_missing_frameworks(base, frameworks)
+}
+
+// ===== stub archive =====
+
+///|
+fn moon_include_dir() -> String {
+  let home = config_value(Map([]), "MOON_HOME") |> or_else(
+    fn () {
+      config_value(Map([]), "HOME") |> or_else(
+        fn () { config_value(Map([]), "USERPROFILE") |> or_else(fn () { "" }) },
+      )
+    },
+  )
+  if home == "" {
+    ""
+  } else {
+    path_join(home, ".moon/include")
+  }
+}
+
+///|
+fn or_else(value : String?, fallback : (() -> String)) -> String {
+  match value {
+    Some(text) => text
+    None => fallback()
+  }
+}
+
+///|
+fn stub_sources(module_root : String) -> Array[String] {
+  let native_dir = path_join(module_root, "native")
+  let sources : Array[String] = []
+  for name in read_dir_safe(native_dir) {
+    if name.has_suffix(".cpp") {
+      sources.push(path_join(native_dir, name))
+    }
+  }
+  if sources.length() == 0 {
+    bail("no native/*.cpp stub sources found in \{native_dir}")
+  }
+  sort_strings(sources)
+}
+
+///|
+fn stub_source_stamp(sources : Array[String]) -> String {
+  let mut total : UInt64 = 0
+  for source in sources {
+    let bytes = @fs.read_file_to_bytes(source) catch {
+      _ => b""
+    }
+    total = total + bytes.length().to_uint64()
+  }
+  "\{total}"
+}
+
+///|
+async fn compile_stub(
+  opts : Opts,
+  platform : String,
+  stub_cc_flags : String,
+  with_skia : Bool,
+) -> StubInfo {
+  let sources = stub_sources(opts.module_root)
+  let native_dir = path_join(opts.module_root, "native")
+  let windows = platform == "windows"
+  let flags : Array[String] = []
+  if with_skia {
+    for flag in split_ws(stub_cc_flags) {
+      flags.push(flag)
+    }
+  } else {
+    if windows {
+      flags.push("/EHsc")
+    } else {
+      flags.push("-std=c++17")
+    }
+  }
+  if windows {
+    flags.push("/I" + native_dir)
+    flags.push("/I" + moon_include_dir())
+  } else {
+    flags.push("-I" + native_dir)
+    flags.push("-I" + moon_include_dir())
+    flags.push("-O1")
+  }
+  let stamp = stub_source_stamp(sources)
+  let variant = if with_skia {
+    "skia"
+  } else {
+    "plain"
+  }
+  let flag_count = flags.length()
+  let stub_flag_count = stub_cc_flags.length()
+  let key = "\{platform}-\{variant}-\{stamp}-\{flag_count}-\{stub_flag_count}"
+  let cache_dir = path_join(opts.module_root, ".skia-cache/stub-build/" + key)
+  let archive = path_join(
+    cache_dir,
+    if windows {
+      "moui_skia_stub.lib"
+    } else {
+      "libmoui_skia_stub.a"
+    },
+  )
+  if path_exists(archive) {
+    return { path: archive, mode: "build" }
+  }
+  ensure_dir(cache_dir)
+  let objects : Array[String] = []
+  let compiler = match config_value(opts.env, "MOUI_SKIA_STUB_CC") {
+    Some(value) => value
+    None => {
+      if windows {
+        "cl"
+      } else {
+        "cc"
+      }
+      }
+  }
+  let mut index = 0
+  for source in sources {
+    let object_ext = if windows {
+      "obj"
+    } else {
+      "o"
+    }
+    let object = path_join(cache_dir, "stub-\{index}.\{object_ext}")
+    let args : Array[String] = if windows {
+      let values : Array[String] = ["/nologo", "/c", "/std:c++20"]
+      for flag in flags {
+        values.push(flag)
+      }
+      values.push("/Fo" + object)
+      values.push(source)
+      values
+    } else {
+      let values : Array[String] = []
+      for flag in flags {
+        values.push(flag)
+      }
+      values.push("-c")
+      values.push("-o")
+      values.push(object)
+      values.push(source)
+      values
+    }
+    let (code, _, err) = capture(compiler, args, opts.module_root)
+    if code != 0 {
+      bail("failed to compile Skia stub \{source} (\{compiler} exited with \{code}): \{err}")
+    }
+    objects.push(object)
+    index = index + 1
+  }
+  let archive_args : Array[String] = []
+  let archiver = if windows {
+    archive_args.push("/nologo")
+    archive_args.push("/out:" + archive)
+    "lib"
+  } else {
+    archive_args.push("rcs")
+    archive_args.push(archive)
+    "ar"
+  }
+  for object in objects {
+    archive_args.push(object)
+  }
+  let (archive_code, _, archive_err) = capture(archiver, archive_args, opts.module_root)
+  if archive_code != 0 {
+    bail("failed to archive Skia stub (\{archiver} exited with \{archive_code}): \{archive_err}")
+  }
+  { path: archive, mode: "build" }
+}
+
+///|
+async fn resolve_stub(
+  opts : Opts,
+  platform : String,
+  stub_cc_flags : String,
+  values : SkiaValues,
+  with_skia : Bool,
+) -> StubInfo {
+  match config_value(opts.env, "MOUI_SKIA_STUB_LIB") {
+    Some(path) => {
+      if path_exists(path) {
+        return { path: path, mode: "provided" }
+      }
+      bail("MOUI_SKIA_STUB_LIB points at \{path}, which does not exist")
+      }
+    None => ()
+  }
+  let mode = lower_trim(config_or(opts.env, "MOUI_SKIA_STUB_MODE", "auto"))
+  if mode != "auto" && mode != "prebuilt" && mode != "build" {
+    bail("unsupported MOUI_SKIA_STUB_MODE: \{mode}")
+  }
+  if with_skia && mode != "build" && values.stub_lib != "" {
+    if path_exists(values.stub_lib) {
+      return { path: values.stub_lib, mode: "prebuilt" }
+    }
+    bail(
+      "prebuilt stub archive \{values.stub_lib} was not found; rerun the provider fetch or set MOUI_SKIA_STUB_MODE=build",
+    )
+  }
+  if mode == "prebuilt" {
+    bail(
+      "MOUI_SKIA_STUB_MODE=prebuilt requested, but skia-provider-lock.json has no published stub asset for \{platform} (publish it with moui_skia/scripts/publish-stub-library.sh)",
+    )
+  }
+  compile_stub(opts, platform, stub_cc_flags, with_skia)
+}
+
+// ===== output =====
+
+///|
+fn json_strings(pairs : Array[(String, String)]) -> @json.Json {
+  let fields : Map[String, @json.Json] = Map([])
+  for pair in pairs {
+    fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  @json.Json::object(fields)
+}
+
+///|
+fn json_link_configs(pairs : Array[(String, String)]) -> @json.Json {
+  let entries : Array[@json.Json] = []
+  for pair in pairs {
+    let fields : Map[String, @json.Json] = Map([])
+    fields.set("package", @json.Json::string(pair.0))
+    fields.set("link_flags", @json.Json::string(pair.1))
+    entries.push(@json.Json::object(fields))
+  }
+  @json.Json::array(entries)
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", json_strings(vars))
+  payload.set("link_configs", json_link_configs(link_configs))
+  println(@json.Json::object(payload).stringify())
+}
+
+// ===== main =====
+
+///|
+async fn run_prebuild() -> Unit {
+  let raw = @stdio.stdin.read_all() catch {
+    _ => b""
+  }
+  let mut text = @utf8.decode(raw) catch {
+    _ => ""
+  }
+  let module_root = match @env.current_dir() {
+    Some(dir) => dir
+    None => "."
+  }
+  if is_blank(text) {
+    let fallback_path = path_join(module_root, ".skia-cache/prebuild-stdin.json")
+    if path_exists(fallback_path) {
+      text = read_file_text(fallback_path)
+    }
+  }
+  let config = if is_blank(text) {
+    @json.Json::empty_object()
+  } else {
+    @json.parse(text) catch {
+      _ => @json.Json::empty_object()
+    }
+  }
+  let host = host_platform()
+  let opts : Opts = {
+    config: config,
+    env: config_env(config),
+    host: host,
+    module_root: module_root,
+  }
+  reject_legacy_link_mode(opts)
+  let platform = match release_platform(opts) {
+    "auto" => host
+    other => other
+  }
+  if !should_configure_skia(opts) {
+    if native_target(opts) && !skia_prebuild_enabled(opts) {
+      // Skia prebuild disabled (`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` or
+      // `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0`): no Skia include/lib is fetched; the stub is
+      // resolved here (explicit `MOUI_SKIA_STUB_LIB` when set, otherwise a local
+      // compile without Skia defines) so the binding still links and every
+      // `skia_available`/shaper/paragraph probe reports unavailable.
+      let stub_cc = match config_value(opts.env, "MOUI_SKIA_STUB_CC_FLAGS") {
+        Some(value) => value
+        None => fallback_stub_cc_flags(platform)
+      }
+      let stub = resolve_stub(opts, platform, "", empty_skia_values(), false)
+      let native_link = match config_value(opts.env, "MOUI_SKIA_CC_LINK_FLAGS") {
+        Some(value) => value
+        None => append_flags(stub.path, fallback_native_runtime_link_flags(platform))
+      }
+      let triangle = macos_example_link_flags(
+        "",
+        ["QuartzCore", "AppKit"],
+        platform,
+      )
+      let metal_window = macos_example_link_flags(
+        "",
+        ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
+        platform,
+      )
+      emit(
+        [
+          ("MOUI_SKIA_STUB_CC_FLAGS", stub_cc),
+          ("MOUI_SKIA_CC_LINK_FLAGS", native_link),
+          (
+            "MOUI_SKIA_ANDROID_LINK_FLAGS",
+            match config_value(opts.env, "MOUI_SKIA_ANDROID_LINK_FLAGS") {
+              Some(value) => value
+              None => ""
+            },
+          ),
+          ("MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS", triangle),
+          ("MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS", metal_window),
+          ("MOUI_SKIA_STUB_LIB_PATH", stub.path),
+        ],
+        [("wzzc-dev/moui_skia/native", native_link)],
+      )
+      return
+    }
+    // Non-native target (wasm/js): nothing links, so keep the old fallback.
+    let native_link = match config_value(opts.env, "MOUI_SKIA_CC_LINK_FLAGS") {
+      Some(value) => value
+      None => fallback_native_runtime_link_flags(platform)
+    }
+    let triangle = macos_example_link_flags("", ["QuartzCore", "AppKit"], platform)
+    let metal_window = macos_example_link_flags(
+      "",
+      ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
+      platform,
+    )
+    emit(
+      [
+        ("MOUI_SKIA_STUB_CC_FLAGS", fallback_stub_cc_flags(platform)),
+        ("MOUI_SKIA_CC_LINK_FLAGS", native_link),
+        ("MOUI_SKIA_ANDROID_LINK_FLAGS", ""),
+        ("MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS", triangle),
+        ("MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS", metal_window),
+        ("MOUI_SKIA_STUB_LIB_PATH", ""),
+      ],
+      [("wzzc-dev/moui_skia/native", native_link)],
+    )
+    return
+  }
+  let values = skia_values(opts)
+  let flags = platform_flags(opts, platform, values)
+  let stub = resolve_stub(opts, platform, flags.stub_cc, values, true)
+  let native_link = append_flags(stub.path, flags.link)
+  let triangle = macos_example_link_flags(
+    native_link,
+    ["QuartzCore", "AppKit"],
+    platform,
+  )
+  let metal_window = macos_example_link_flags(
+    native_link,
+    ["Metal", "QuartzCore", "CoreVideo", "IOSurface", "AppKit"],
+    platform,
+  )
+  emit(
+    [
+      ("MOUI_SKIA_STUB_CC_FLAGS", flags.stub_cc),
+      ("MOUI_SKIA_CC_LINK_FLAGS", native_link),
+      ("MOUI_SKIA_ANDROID_LINK_FLAGS", flags.android),
+      ("MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS", triangle),
+      ("MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS", metal_window),
+      ("MOUI_SKIA_STUB_LIB_PATH", stub.path),
+    ],
+    [("wzzc-dev/moui_skia/native", native_link)],
+  )
+}
+
+///|
+async fn main {
+  run_prebuild()
+}

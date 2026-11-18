@@ -146,7 +146,7 @@ renderers consume `DrawCommand` only.
 | Area | Owner path |
 |---|---|
 | Public controls / themes helpers | `moui/views` |
-| App-facing files/clipboard/URL/settings/menu tasks, timer/route sources, and `RemoteImageService` completion | `moui/services` |
+| App-facing files/clipboard/URL/settings/menu tasks, timer/route sources, and `RemoteImageService` completion/cancellation | `moui/services` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects / semantics | `moui/runtime` |
 | AppBuilder / run_app / HostRuntimeDriver / RedrawScheduler / host event adapters | `moui/apphost` |

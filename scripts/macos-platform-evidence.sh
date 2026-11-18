@@ -6,10 +6,13 @@ usage() {
 Usage: scripts/macos-platform-evidence.sh [options]
 
 Collects macOS platform runtime evidence by:
-1. Configuring the repository for real Skia linking (release provider)
-2. Building and running the Showcase macos_skia entrypoint with the
-   first-frame auto-exit marker (MOUI_FIRST_FRAME_EXIT=1)
-3. Collecting evidence logs under artifacts/platform-evidence/macos/
+1. Resolving the release Skia provider
+2. Building the Showcase macos_skia entrypoint; the moui_skia/build.mbtx
+   prebuild compiles the Skia C++ stub and emits the final link config, so no
+   package files are patched
+3. Running the Showcase first-frame auto-exit smoke (MOUI_FIRST_FRAME_EXIT=1)
+4. Running the native IME runtime smoke
+5. Collecting evidence logs under artifacts/platform-evidence/macos/
 
 Options:
   --log-dir PATH          Output directory for evidence logs.
@@ -81,7 +84,7 @@ fi
 mkdir -p "$resolved_log_dir"
 
 #
-# Step 1: Fetch release Skia and configure moui_skia/native/moon.pkg
+# Step 1: Fetch the release Skia provider
 #
 echo "=== Step 1: Fetch release Skia provider ===" | tee -a "$preflight_log"
 fetch_args=(
@@ -113,94 +116,46 @@ if [[ -z "$skia_include" || -z "$skia_lib_dir" || -z "$skia_lib" ]]; then
 fi
 
 #
-# Step 2: Configure moui_skia/native/moon.pkg
+# Step 2: Export the Skia provider environment
 #
-echo "=== Step 2: Configure moui_skia/native/moon.pkg ===" | tee -a "$preflight_log"
-bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
-  --skia-include "$skia_include" \
-  --skia-lib-dir "$skia_lib_dir" \
-  --skia-lib "$skia_lib" \
-  --link-mode "$skia_link_mode" \
-  --write >/dev/null
-
-echo "  Configured moui_skia/native/moon.pkg" | tee -a "$preflight_log"
-
-generated_output="$(bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
-  --skia-include "$skia_include" \
-  --skia-lib-dir "$skia_lib_dir" \
-  --skia-lib "$skia_lib" \
-  --link-mode "$skia_link_mode")"
-
-macos_link_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"cc-link-flags": "\(.*\)",/\1/p')"
-macos_stub_cc_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"stub-cc-flags": "\(.*\)",/\1/p')"
-
-echo "  Skia link flags: $macos_link_flags
-  Stub CC flags: $macos_stub_cc_flags" | tee -a "$preflight_log"
+echo "=== Step 2: Export Skia provider environment ===" | tee -a "$preflight_log"
+# moui_skia/build.mbtx reads the provider paths from the environment, compiles
+# native/*.cpp itself (no mbt stub-cc-flags), and emits the final link config,
+# so example packages need no hand-written Skia flags.
+export MOUI_SKIA_PLATFORM=macos
+export MOUI_SKIA_SKIA_INCLUDE="$skia_include"
+export MOUI_SKIA_SKIA_LIB_DIR="$skia_lib_dir"
+export MOUI_SKIA_LINK_MODE="$skia_link_mode"
+export MOUI_SKIA_STUB_MODE=build
+export MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA
+unset MOUI_SKIA_STUB_LIB
+{
+  echo "  MOUI_SKIA_PLATFORM=$MOUI_SKIA_PLATFORM"
+  echo "  MOUI_SKIA_SKIA_INCLUDE=$MOUI_SKIA_SKIA_INCLUDE"
+  echo "  MOUI_SKIA_SKIA_LIB_DIR=$MOUI_SKIA_SKIA_LIB_DIR"
+  echo "  MOUI_SKIA_LINK_MODE=$MOUI_SKIA_LINK_MODE"
+  echo "  MOUI_SKIA_STUB_MODE=$MOUI_SKIA_STUB_MODE"
+} | tee -a "$preflight_log"
 
 #
-# Step 3: Configure example macos_skia moon.pkg
+# Step 3: Build showcase
 #
-echo "=== Step 3: Configure example macos_skia moon.pkg ===" | tee -a "$preflight_log"
-
-showcase_pkg="$REPO_ROOT/examples/showcase/macos_skia/moon.pkg"
-showcase_backup="$showcase_pkg.moui-evidence.bak"
-cp "$showcase_pkg" "$showcase_backup"
-
-cat > "$showcase_pkg" <<PKGEOF
-import {
-  "wzzc-dev/moui/apphost",
-  "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui_skia_renderer" @render_skia,
-  "examples/showcase",
-}
-
-supported_targets = "native"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "native": {
-      "stub-cc-flags": "$macos_stub_cc_flags",
-      "cc-link-flags": "$macos_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-PKGEOF
-echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
-
-restore_example_pkgs() {
-  if [[ -f "$showcase_backup" ]]; then
-    cp "$showcase_backup" "$showcase_pkg"
-    rm -f "$showcase_backup"
-    echo "Restored $showcase_pkg"
-  fi
-  cd "$REPO_ROOT"
-  git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true
-}
-trap restore_example_pkgs EXIT
-
-#
-# Step 4: Build showcase
-#
-echo "=== Step 4: Build showcase macos_skia ===" | tee -a "$preflight_log"
+echo "=== Step 3: Build showcase macos_skia ===" | tee -a "$preflight_log"
 
 cd "$REPO_ROOT"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/macos_skia --target native 2>&1 | tee -a "$preflight_log"
 echo "  Built examples/showcase/macos_skia" | tee -a "$preflight_log"
 
 #
-# Step 5: Run Showcase with first-frame auto-exit
+# Step 4: Run Showcase with first-frame auto-exit
 #
 showcase_status="skipped"
 if [[ $run_showcase -eq 1 ]]; then
-  echo "=== Step 5: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
+  echo "=== Step 4: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
   cd "$REPO_ROOT"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     MOUI_FIRST_FRAME_EXIT=1 \
     moon run examples/showcase/macos_skia --target native \
     > "$showcase_log" 2>&1 &
@@ -228,14 +183,13 @@ if [[ $run_showcase -eq 1 ]]; then
 fi
 
 #
-# Step 6: Optional Showcase native IME runtime smoke
+# Step 5: Optional Showcase native IME runtime smoke
 #
 ime_status="skipped"
 if [[ $run_ime -eq 1 ]]; then
-  echo "=== Step 6: Run Showcase native IME runtime smoke ===" | tee -a "$preflight_log"
+  echo "=== Step 5: Run Showcase native IME runtime smoke ===" | tee -a "$preflight_log"
   cd "$REPO_ROOT"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     MOUI_MACOS_NATIVE_IME_EVIDENCE=1 \
     moon run examples/showcase/macos_skia --target native \
     > "$ime_log" 2>&1 &
@@ -264,9 +218,9 @@ if [[ $run_ime -eq 1 ]]; then
 fi
 
 #
-# Step 7: Generate summary
+# Step 6: Generate evidence summary
 #
-echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
+echo "=== Step 6: Generate evidence summary ===" | tee -a "$preflight_log"
 {
   echo "macOS platform evidence summary:"
   echo "  skia_commit=$skia_commit"
