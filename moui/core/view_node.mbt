@@ -36,7 +36,7 @@ pub(all) struct OverlayPlacementContext {
 /// Message-independent behavior for a low-level custom view node.
 ///
 /// One trait on purpose: only `identity` and `layout` are compiler-required,
-/// the other 13 methods carry inert defaults, so a node opts into the work it
+/// the other 14 methods carry inert defaults, so a node opts into the work it
 /// actually performs instead of stubbing the rest. `declaration()` is the third
 /// contract in practice — enforced by invariant P17, not by the compiler.
 ///
@@ -71,10 +71,15 @@ pub(open) trait ViewNode {
   fn focus_trap(Self) -> Bool = _
   fn keyboard_policy(Self) -> KeyboardPolicy = _
   fn flex_weight(Self) -> Double = _
+  /// Pointer shape this node declares for its own frame. `Inherit` (the
+  /// default) defers to the nearest ancestor that declares one; the runtime
+  /// resolves the chain under the pointer, so a node may return a different
+  /// value on any rebuild without invalidating anything.
+  fn pointer_cursor(Self) -> CursorStyle = _
 }
 
 // Design note: one fat trait is deliberate. Only `identity` and `layout` are
-// compiler-required; the other 13 methods default to inert values, so a node
+// compiler-required; the other 14 methods default to inert values, so a node
 // overrides the channels it participates in. `declaration` is a third contract
 // in practice (57 of the 63 node types hand-build its cache keys anyway), policed
 // by invariant P17 rather than the compiler — so the defaults are not what makes
@@ -155,6 +160,11 @@ impl ViewNode with fn keyboard_policy(_self) {
 ///|
 impl ViewNode with fn flex_weight(_self) {
   0.0
+}
+
+///|
+impl ViewNode with fn pointer_cursor(_self) {
+  Inherit
 }
 
 ///|

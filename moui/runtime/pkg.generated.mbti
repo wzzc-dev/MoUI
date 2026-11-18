@@ -82,6 +82,7 @@ pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment, state_transport? : @core.ProgramStateTransport?, transient_transport? : @core.ProgramStateTransport?) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
+pub fn AppRuntime::pointer_cursor(Self) -> @core.CursorStyle
 pub fn AppRuntime::profile_draw_frame(Self, () -> Double) -> ProfiledDrawFrame
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::push_diagnostics(Self, Array[@diagnostics.DiagnosticEvent]) -> Unit

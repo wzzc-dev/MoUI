@@ -88,6 +88,8 @@ pub struct LinuxHostAppOptions {
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
+  /// App-facing window controls; `None` keeps control intents a no-op.
+  priv window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -107,6 +109,9 @@ type LinuxSurfaceBinding = @window_host.DesktopSurfaceBinding[
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
+  /// System color scheme the CSD palette follows; frozen at window creation
+  /// (runtime theme switches refreshing the band are a recorded follow-up).
+  scheme : @core.ColorScheme
 }
 
 ///|
@@ -131,6 +136,11 @@ struct LinuxNativeHostBackend {
   atspi_state : LinuxAtspiHostState
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
+  window_controls : @services.WindowControlSource?
+  /// Titlebar button pressed on the CSD band, waiting for its release.
+  mut titlebar_press : LinuxTitlebarButton?
+  /// Titlebar button under the pointer, for hover feedback.
+  mut titlebar_hover : LinuxTitlebarButton?
 }
 
 ///|
@@ -155,6 +165,7 @@ pub fn LinuxHostAppOptions::new(
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar~ : Bool = false,
   platform_attributes~ : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  window_controls~ : @services.WindowControlSource? = None,
 ) -> LinuxHostAppOptions {
   {
     scene_resolver,
@@ -162,6 +173,7 @@ pub fn LinuxHostAppOptions::new(
     platform_view_plugins,
     transparent_titlebar,
     platform_attributes,
+    window_controls,
   }
 }
 
@@ -176,8 +188,17 @@ pub fn LinuxHostSmokeOptions::new(
 pub fn LinuxClientDecorationState::new(
   active~ : Bool,
   titlebar_height~ : Double = linux_client_titlebar_height,
+  scheme~ : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> LinuxClientDecorationState {
-  { active, titlebar_height: if active { titlebar_height } else { 0.0 }, }
+  {
+    active,
+    titlebar_height: if active {
+      titlebar_height
+    } else {
+      0.0
+    },
+    scheme,
+  }
 }
 
 ///|

@@ -180,6 +180,45 @@ pub fn WindowRegistry::set_primary(
 }
 
 ///|
+/// Record the observed/requested maximize state for an open window.
+pub fn WindowRegistry::set_maximized(
+  self : WindowRegistry,
+  id : @backend_host.WindowId,
+  maximized : Bool,
+) -> Bool {
+  self.update_open_window(id, record => { ..record, maximized, })
+}
+
+///|
+/// Record the observed/requested fullscreen state for an open window.
+pub fn WindowRegistry::set_fullscreen(
+  self : WindowRegistry,
+  id : @backend_host.WindowId,
+  fullscreen : Bool,
+) -> Bool {
+  self.update_open_window(id, record => {
+    // A fullscreen window is not "maximized" for chrome purposes: chrome shows
+    // either a restore affordance or a fullscreen-exit one, never both.
+    ..record,
+    fullscreen,
+    maximized: false,
+  })
+}
+
+///|
+/// Restore means "neither maximized nor fullscreen".
+fn WindowRegistry::set_maximized_off_and_fullscreen_off(
+  self : WindowRegistry,
+  id : @backend_host.WindowId,
+) -> Bool {
+  self.update_open_window(id, record => {
+    ..record,
+    maximized: false,
+    fullscreen: false,
+  })
+}
+
+///|
 pub fn WindowRegistry::apply_host_event(
   self : WindowRegistry,
   id : @backend_host.WindowId,
@@ -187,6 +226,7 @@ pub fn WindowRegistry::apply_host_event(
 ) -> Bool {
   match event {
     Resized(metrics) => self.resize(id, metrics)
+    MaximizedChanged(maximized) => self.set_maximized(id, maximized)
     Focus({ focused: true, .. }) => self.focus(id)
     Focus({ focused: false, .. }) =>
       self.update_open_window(id, record => {
@@ -235,6 +275,33 @@ pub fn WindowRegistry::apply_request(
         id,
         self.set_primary(id),
         action="set primary",
+      )
+    MaximizeWindow(id) =>
+      window_request_update_result(
+        id,
+        self.set_maximized(id, true),
+        action="maximize",
+      )
+    RestoreWindow(id) =>
+      window_request_update_result(
+        id,
+        self.set_maximized_off_and_fullscreen_off(id),
+        action="restore",
+      )
+    SetFullscreenWindow(id, fullscreen) =>
+      window_request_update_result(
+        id,
+        self.set_fullscreen(id, fullscreen),
+        action="set fullscreen",
+      )
+    // Decorations are a platform projection with no cross-runtime record
+    // state: the request is accepted for an open window and the surface
+    // action performs the native call.
+    SetDecorationsWindow(id, _) =>
+      window_request_update_result(
+        id,
+        self.has_open_window(id),
+        action="set decorations",
       )
   }
 }

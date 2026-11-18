@@ -65,6 +65,14 @@ pub fn window_theme_to_color_scheme(@wzzc-dev/window/core.Theme) -> @wzzc-dev/mo
 // Errors
 
 // Types and methods
+pub struct CursorSession {
+  // private fields
+}
+pub fn CursorSession::applied(Self, @backend.WindowId) -> @wzzc-dev/moui/core.CursorStyle
+pub fn CursorSession::forget(Self, @backend.WindowId) -> Unit
+pub fn CursorSession::new() -> Self
+pub fn CursorSession::sync(Self, @backend.WindowId, @wzzc-dev/moui/core.CursorStyle) -> @wzzc-dev/moui/core.CursorStyle?
+
 pub(all) struct InputState {
   mut focused : Bool
   mut modifiers : @wzzc-dev/moui/core.KeyModifiers
@@ -165,10 +173,13 @@ pub(all) enum TransformedWindowEvent {
 pub struct WindowInputState {
   // private fields
 }
+pub fn WindowInputState::applied_cursor(Self, @backend.WindowId) -> @wzzc-dev/moui/core.CursorStyle
+pub fn WindowInputState::forget_cursor(Self, @backend.WindowId) -> Unit
 pub fn WindowInputState::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
 pub fn WindowInputState::new(event_sources? : @apphost.HostPlatformEventSources?) -> Self
 pub fn WindowInputState::publish(Self, @backend.WindowId, @backend.Event) -> @apphost.HostPlatformEventPublishResult?
 pub fn WindowInputState::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
+pub fn WindowInputState::sync_cursor(Self, @backend.WindowId, @wzzc-dev/moui/core.CursorStyle) -> @wzzc-dev/moui/core.CursorStyle?
 
 // Type aliases
 

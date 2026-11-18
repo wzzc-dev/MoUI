@@ -131,6 +131,14 @@ fn create_linux_app(
   smoke_options~ : LinuxHostSmokeOptions,
   window_requests~ : @host.WindowRequests,
 ) -> (@window_linux.EventLoop, LinuxNativeHostBackend) {
+  // A composition root that did not wire `AppBuilder::window_requests` hands
+  // us the unavailable port, whose pushes vanish. Install a backend-owned
+  // queue so window-control intents and CSD button requests still flow.
+  let fallback_requests = @window_lifecycle.WindowRequestQueue::new()
+  let window_requests = @window_lifecycle.effective_window_requests(
+    window_requests,
+    fallback_requests.requests(),
+  )
   let event_loop = @window_linux.EventLoop::new()
   let services = linux_service_bridge(
     system_theme=linux_color_scheme_from_theme(event_loop.system_theme()),
@@ -155,6 +163,9 @@ fn create_linux_app(
     atspi_state: LinuxAtspiHostState::new(),
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
+    window_controls: options.window_controls,
+    titlebar_press: None,
+    titlebar_hover: None,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @apphost.install_platform_view_plugins(options.platform_view_plugins, (

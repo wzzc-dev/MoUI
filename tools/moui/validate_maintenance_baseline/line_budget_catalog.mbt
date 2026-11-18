@@ -95,10 +95,17 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/backend/common/lifecycle/window_requests_test.mbt",
       max_lines: 385,
     },
-    { path: "moui/backend/window_lifecycle.mbt", max_lines: 182, },
+    // Issue #24: observed maximized/fullscreen record state and four window
+    // chrome request variants.
+    { path: "moui/backend/window_lifecycle.mbt", max_lines: 205, },
     {
       path: "moui/backend/common/lifecycle/window_registry.mbt",
-      max_lines: 325,
+      // Issue #24: maximize/restore/fullscreen request application plus the
+      // observed-state setters and their restore helper.
+      // +1 line: apply_host_event lands MaximizedChanged on the record, so
+      // compositor-side maximize/restore flips keep the registry authoritative
+      // (window PR #3).
+      max_lines: 396,
     },
     {
       path: "moui/backend/common/lifecycle/window_scene_resolution.mbt",
@@ -110,13 +117,18 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/common/lifecycle/window_request_queue.mbt",
-      max_lines: 210,
+      // Issue #24: maximize/restore/fullscreen/decorations queue helpers.
+      // +19: effective_window_requests resolves an unwired composition-root
+      // port (WindowRequests::is_unavailable) against a backend-owned queue,
+      // so app-driven window requests cannot vanish silently.
+      max_lines: 262,
     },
     {
       path: "moui/backend/common/lifecycle/window_platform_map.mbt",
       max_lines: 109,
     },
-    { path: "moui/backend/web/host_runtime.mbt", max_lines: 484, },
+    // Issue #24: window-control options plus the three chrome projections.
+    { path: "moui/backend/web/host_runtime.mbt", max_lines: 514, },
     { path: "moui/backend/web/web_async_services.mbt", max_lines: 620, },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240, },
     { path: "moui/backend/web/web_host.mbt", max_lines: 500, },
@@ -161,7 +173,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_catalog.mbt",
-      max_lines: 110,
+      // 110 -> 113 (titlebar polish follow-up): the backend pub(all) bump
+      // note for LinuxTitlebarPolicy/ButtonState/Palette.
+      max_lines: 113,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_checks.mbt",
@@ -176,8 +190,16 @@ fn file_budgets() -> Array[FileBudget] {
       // 406 -> 408 (2026-11-10, DevTools v1): the runtime.mbt sampler note.
       // 409 -> 412 (2026-11-13, visual-quality V3 accent): the window
       // accent decode-test note and this entry's self-referential growth.
+      // 414 -> 420 (issue #24): the window-chrome line-budget notes above and
+      // this entry's own growth.
+      // 422 -> 425 -> 427 (issue #24 follow-up): the effective_window_requests
+      // note above and this entry's own growth.
+      // 427 -> 431 (titlebar polish follow-up): the count-budget pub(all) note
+      // above and this entry's own growth.
+      // 431 -> 436 (window PR #3 follow-up): the window_registry
+      // MaximizedChanged note above and this entry's own growth.
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 414,
+      max_lines: 436,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

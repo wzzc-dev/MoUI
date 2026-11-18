@@ -107,6 +107,7 @@ pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
 pub fn HostRuntimeDriver::keyboard_command_intent(Self, @core.KeyboardEvent) -> @core.CommandIntent?
 pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit, frame_clock? : (() -> Double)?) -> Self
 pub fn HostRuntimeDriver::perform_semantics_action(Self, @runtime.PerformSemanticsActionRequest) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]
+pub fn HostRuntimeDriver::pointer_cursor(Self) -> @core.CursorStyle
 pub fn HostRuntimeDriver::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError]
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit

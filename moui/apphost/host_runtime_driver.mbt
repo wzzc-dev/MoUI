@@ -78,6 +78,10 @@ pub fn HostRuntimeDriver::dispatch(
       )
       self.request_redraw_if_needed()
     }
+    // Window-record state: applied by the window registry when the host
+    // event is dispatched. The driver holds no runtime environment for it;
+    // the geometry change that accompanies a maximize drives the repaint.
+    MaximizedChanged(_) => ()
     Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()
@@ -481,6 +485,16 @@ pub fn HostRuntimeDriver::focused_text_input(
   self : HostRuntimeDriver,
 ) -> @core.TextInputState {
   self.runtime.focused_text_input()
+}
+
+///|
+/// The pointer cursor the view tree resolves for the current pointer, ready for
+/// the host to project. `Default` when nothing is declared under the pointer, or
+/// before the first pointer sample.
+pub fn HostRuntimeDriver::pointer_cursor(
+  self : HostRuntimeDriver,
+) -> @core.CursorStyle {
+  self.runtime.pointer_cursor()
 }
 
 ///|

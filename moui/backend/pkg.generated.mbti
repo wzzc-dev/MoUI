@@ -22,6 +22,7 @@ pub(all) enum Event {
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
+  MaximizedChanged(Bool)
   AccentColorChanged(UInt32)
   Command(@core.CommandIntent)
   Gesture(@core.GestureEvent)
@@ -625,6 +626,8 @@ pub(all) struct WindowRecord {
   metrics : @core.SurfaceMetrics
   phase : WindowLifecyclePhase
   primary : Bool
+  maximized : Bool
+  fullscreen : Bool
 }
 pub fn WindowRecord::equal(Self, Self) -> Bool
 pub fn WindowRecord::new(id~ : WindowId, title~ : String, scene? : WindowScene, metrics~ : @core.SurfaceMetrics, phase? : WindowLifecyclePhase, primary? : Bool) -> Self
@@ -641,6 +644,10 @@ pub(all) enum WindowRequest {
   MinimizeWindow(WindowId)
   ShowWindow(WindowId)
   SetPrimaryWindow(WindowId)
+  MaximizeWindow(WindowId)
+  RestoreWindow(WindowId)
+  SetFullscreenWindow(WindowId, Bool)
+  SetDecorationsWindow(WindowId, Bool)
 }
 pub fn WindowRequest::equal(Self, Self) -> Bool
 pub fn WindowRequest::not_equal(Self, Self) -> Bool
@@ -675,11 +682,13 @@ pub struct WindowRequests {
   drain_fn : () -> Array[WindowRequest]
   record_result_fn : (WindowRequest, WindowRequestResult) -> Unit
   subscribe_completed_fn : ((WindowRequestCompletion) -> Unit) -> () -> Unit
+  // private fields
 }
 pub fn WindowRequests::completed_count(Self) -> Int32
 pub fn WindowRequests::drain(Self) -> Array[WindowRequest]
 pub fn WindowRequests::drain_with_handler(Self, (WindowRequest) -> WindowRequestResult) -> Array[WindowRequestCompletion]
-pub fn WindowRequests::new(push? : (WindowRequest) -> Unit, pending_count? : () -> Int32, completed_count? : () -> Int32, drain? : () -> Array[WindowRequest], record_result? : (WindowRequest, WindowRequestResult) -> Unit, subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit) -> Self
+pub fn WindowRequests::is_unavailable(Self) -> Bool
+pub fn WindowRequests::new(push? : (WindowRequest) -> Unit, pending_count? : () -> Int32, completed_count? : () -> Int32, drain? : () -> Array[WindowRequest], record_result? : (WindowRequest, WindowRequestResult) -> Unit, subscribe_completed? : ((WindowRequestCompletion) -> Unit) -> () -> Unit, unavailable? : Bool) -> Self
 pub fn WindowRequests::pending_count(Self) -> Int32
 pub fn WindowRequests::push(Self, WindowRequest) -> Unit
 pub fn WindowRequests::record_result(Self, WindowRequest, WindowRequestResult) -> Unit

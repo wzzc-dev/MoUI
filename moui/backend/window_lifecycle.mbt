@@ -58,6 +58,12 @@ pub(all) struct WindowRecord {
   metrics : @core.SurfaceMetrics
   phase : WindowLifecyclePhase
   primary : Bool
+  /// Last observed/requested maximize state. Focus and maximized are
+  /// independent facts, so they are separate fields rather than more
+  /// `WindowLifecyclePhase` variants ("focused + maximized" stays expressible).
+  maximized : Bool
+  /// Last observed/requested fullscreen state.
+  fullscreen : Bool
 }
 
 ///|
@@ -97,6 +103,14 @@ pub(all) enum WindowRequest {
   MinimizeWindow(WindowId)
   ShowWindow(WindowId)
   SetPrimaryWindow(WindowId)
+  /// Maximize (zoom) the window.
+  MaximizeWindow(WindowId)
+  /// Restore from maximized/fullscreen back to the normal frame.
+  RestoreWindow(WindowId)
+  /// Enter or leave fullscreen.
+  SetFullscreenWindow(WindowId, Bool)
+  /// Show or hide native decorations (client-side chrome stays untouched).
+  SetDecorationsWindow(WindowId, Bool)
 }
 
 ///|
@@ -168,7 +182,16 @@ pub fn WindowRecord::new(
   phase~ : WindowLifecyclePhase = WindowCreated,
   primary~ : Bool = false,
 ) -> WindowRecord {
-  { id, title, scene, metrics, phase, primary, }
+  {
+    id,
+    title,
+    scene,
+    metrics,
+    phase,
+    primary,
+    maximized: false,
+    fullscreen: false,
+  }
 }
 
 ///|

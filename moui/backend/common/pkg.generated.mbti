@@ -8,8 +8,6 @@ import {
   "wzzc-dev/moui/backend/common/image",
   "wzzc-dev/moui/backend/common/input",
   "wzzc-dev/moui/backend/common/lifecycle",
-  "wzzc-dev/moui/backend/common/services",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
@@ -17,13 +15,17 @@ import {
 // Values
 pub fn apply_platform_window_request(@lifecycle.WindowLifecycle, @backend.WindowId, @backend.WindowRequest, (@lifecycle.WindowSurfaceActions) -> Unit) -> @backend.WindowRequestResult
 
-pub fn apply_window_request(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowRequest, open_window~ : (@backend.WindowOpenRequest) -> @backend.WindowRequestResult, dispose_window? : (@backend.WindowId) -> Unit, exit~ : () -> Unit) -> @backend.WindowRequestResult
+pub fn apply_window_control_requests(@wzzc-dev/moui/services.WindowControlSource, @lifecycle.WindowLifecycle, @backend.WindowId) -> Unit
+
+pub fn apply_window_request(@lifecycle.WindowLifecycle, @input.WindowInputState, @wzzc-dev/moui/backend/common/services.WindowServiceState, @backend.WindowRequest, open_window~ : (@backend.WindowOpenRequest) -> @backend.WindowRequestResult, dispose_window? : (@backend.WindowId) -> Unit, exit~ : () -> Unit) -> @backend.WindowRequestResult
 
 pub fn attach_window_surface(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @backend.WindowId, @render.RendererSession, @lifecycle.WindowSurfaceActions, image_task_starter? : @image.WindowImageTaskStarter) -> Bool
 
-pub fn dispatch_host_event(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowId, @backend.Event, adjust~ : (@backend.Event) -> @backend.Event?) -> Unit
+pub fn cursor_icon_to_window(@wzzc-dev/moui/core.CursorIcon) -> @wzzc-dev/window/core.CursorIcon
 
-pub fn dispose_window(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @services.WindowServiceState, @backend.WindowId) -> Unit
+pub fn dispatch_host_event(@lifecycle.WindowLifecycle, @input.WindowInputState, @wzzc-dev/moui/backend/common/services.WindowServiceState, @backend.WindowId, @backend.Event, adjust~ : (@backend.Event) -> @backend.Event?) -> Unit
+
+pub fn dispose_window(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @image.WindowImageTaskStates, @wzzc-dev/moui/backend/common/services.WindowServiceState, @backend.WindowId, input~ : @input.WindowInputState) -> Unit
 
 pub fn platform_view_plugins_next_deadline(Array[@backend.PlatformViewPlugin]) -> Int64?
 
@@ -37,15 +39,21 @@ pub fn run_window_redraw(@lifecycle.WindowLifecycle, @frame.WindowFrameStates, @
 
 pub fn runtime_slot_needs_redraw(@lifecycle.WindowRuntimeSlot) -> Bool
 
-pub fn sync_observed_resize(@lifecycle.WindowLifecycle, @input.WindowInputState, @services.WindowServiceState, @backend.WindowId, @core.SurfaceMetrics) -> @core.SurfaceMetrics?
+pub fn sync_cursor_for_host_event(@lifecycle.WindowLifecycle, @input.WindowInputState, @backend.WindowId, @backend.Event) -> Unit
+
+pub fn sync_observed_resize(@lifecycle.WindowLifecycle, @input.WindowInputState, @wzzc-dev/moui/backend/common/services.WindowServiceState, @backend.WindowId, @wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics?
+
+pub fn sync_pointer_cursor(@lifecycle.WindowLifecycle, @input.WindowInputState, @backend.WindowId) -> Unit
 
 pub fn sync_text_input_session(@lifecycle.WindowLifecycle, @input.WindowInputState) -> Unit
+
+pub fn sync_window_controls(@wzzc-dev/moui/services.WindowControlSource?, @lifecycle.WindowLifecycle, @wzzc-dev/moui/services.WindowControlCapabilities) -> Unit
 
 pub fn to_host_id(@render.RenderWindowId) -> @backend.WindowId
 
 pub fn to_render_id(@backend.WindowId) -> @render.RenderWindowId
 
-pub fn to_render_metrics(@core.SurfaceMetrics) -> @core.SurfaceMetrics
+pub fn to_render_metrics(@wzzc-dev/moui/core.SurfaceMetrics) -> @wzzc-dev/moui/core.SurfaceMetrics
 
 // Errors
 
@@ -59,20 +67,20 @@ pub(all) struct DesktopNativeHostBackendCore[W, Extra] {
   images : @image.WindowImageTaskStates
   input : @input.WindowInputState
   surface_binding : DesktopSurfaceBinding[W]
-  services : @services.WindowServiceState
+  services : @wzzc-dev/moui/backend/common/services.WindowServiceState
   platform_slots : @lifecycle.WindowSlotMap[W, Extra]
   platform_view_plugins : Array[@backend.PlatformViewPlugin]
-  mut last_pointer : @core.Point
-  mut modifiers : @core.KeyModifiers
+  mut last_pointer : @wzzc-dev/moui/core.Point
+  mut modifiers : @wzzc-dev/moui/core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
 }
-pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, frame_clock? : (() -> Double)?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
+pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @wzzc-dev/moui/backend/common/services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, frame_clock? : (() -> Double)?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
 
 pub(all) struct DesktopSurfaceBinding[W] {
-  create_renderer : (W, @core.SurfaceMetrics) -> @render.RendererSession?
-  sync_surface : (W, @core.SurfaceMetrics) -> Unit
+  create_renderer : (W, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?
+  sync_surface : (W, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit
 }
-pub fn[W] DesktopSurfaceBinding::new(create_renderer~ : (W, @core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (W, @core.SurfaceMetrics) -> Unit) -> Self[W]
+pub fn[W] DesktopSurfaceBinding::new(create_renderer~ : (W, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?, sync_surface? : (W, @wzzc-dev/moui/core.SurfaceMetrics) -> Unit) -> Self[W]
 
 // Type aliases
 

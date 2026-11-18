@@ -37,6 +37,11 @@ fn allowed_shared_app_core_imports() -> Array[String] {
   [
     "examples/browser/app/moon.pkg", "examples/mo_workbench/app/moon.pkg", "examples/pdf_workbench/app/moon.pkg",
     "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
+    // Chrome demo (issue #25/#24 runtime evidence): the app exists to declare
+    // `CursorStyle`/`CursorIcon` — core cursor vocabulary — and to read
+    // `WindowControlSource` observed state, so it consumes `wzzc-dev/moui/core`
+    // directly by design, like the rich-text kernel consumers above.
+     "examples/chrome_demo/app/moon.pkg",
   ]
 }
 
