@@ -77,11 +77,19 @@ fn LinuxNativeHostBackend::dispatch_host_event(
           }
           Press(button) => {
             self.titlebar_press = Some(button)
+            // Repaint now: the pressed dot shrinks, and without an explicit
+            // request nothing else damages the band until the release.
+            slot.window.request_redraw()
             return
           }
           Activate(button) => {
             self.titlebar_press = None
             self.activate_titlebar_button(window_id, button)
+            // Restore the idle dot immediately; the window request that
+            // follows usually repaints anyway, but a rejected or no-op
+            // request (e.g. already in the target state) must not leave a
+            // stale pressed dot on screen.
+            slot.window.request_redraw()
             return
           }
         }

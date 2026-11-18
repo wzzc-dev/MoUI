@@ -585,8 +585,8 @@ pub fn linux_titlebar_button_at(
   }
   let candidates : Array[(Int32, LinuxTitlebarButton)] = [
     (0, LinuxTitlebarButton::Close),
-    (1, LinuxTitlebarButton::Minimize),
-    (2, LinuxTitlebarButton::Maximize),
+    (1, LinuxTitlebarButton::Maximize),
+    (2, LinuxTitlebarButton::Minimize),
   ]
   for candidate in candidates {
     let (index, button) = candidate

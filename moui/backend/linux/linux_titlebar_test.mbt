@@ -44,6 +44,27 @@ test "titlebar buttons are clickable across their whole slot" {
     @linux.linux_titlebar_button_at(width, height, slot_edge),
     Some(@linux.LinuxTitlebarButton::Close),
   )
+  // Hit testing and painting must agree on which slot is which button: the
+  // maximize slot is second from the right and minimize is leftmost, matching
+  // the painted [minimize][maximize][close] order. A mismatch here made the
+  // painted maximize button minimize the window (caught in weston runtime
+  // evidence for the CSD work).
+  let maximize_center = @core.Point::new(
+    x=maximize.origin.x + maximize.size.width / 2.0,
+    y=16.0,
+  )
+  assert_eq(
+    @linux.linux_titlebar_button_at(width, height, maximize_center),
+    Some(@linux.LinuxTitlebarButton::Maximize),
+  )
+  let minimize_center = @core.Point::new(
+    x=minimize.origin.x + minimize.size.width / 2.0,
+    y=16.0,
+  )
+  assert_eq(
+    @linux.linux_titlebar_button_at(width, height, minimize_center),
+    Some(@linux.LinuxTitlebarButton::Minimize),
+  )
 }
 
 ///|
