@@ -2,9 +2,9 @@ name: MoUI CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
     inputs:
       run_slow_native_examples:
@@ -12,38 +12,60 @@ on:
         required: false
         default: false
         type: boolean
+
+# One in-flight run per branch. A superseded pull-request run is cancelled;
+# push runs on main/dev are never cancelled, so landing evidence is not dropped.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
 jobs:
   moonbit-workspace-baseline:
     name: MoonBit workspace baseline
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          # Workspace builds take wzzc-dev/window from the registry; the 356 MB
+          # window checkout is only needed by the window-hosted evidence jobs.
+          submodules: "false"
 
       - name: Install dependencies
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
 
+      # The workspace sweep compiles every member package natively, which is the
+      # long pole of the PR critical path. It stays on macOS because it covers
+      # the mainline Skia bindings; the public-interface drift check runs in the
+      # same job so it reuses the warm build graph instead of a second full
+      # compile on a second runner.
       - name: Run MoonBit workspace baseline
         run: |
           moon check
           node scripts/run-workspace-tests.mjs
-          moon info
-          git diff --exit-code
+          node scripts/check-generated-interfaces.mjs
 
   pr-profile:
     name: PR profile gate
     runs-on: macos-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         run: |
@@ -51,47 +73,12 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Run PR check profile
-        run: sh scripts/check.sh --profile pr
-
-  api-surface:
-    name: Public API surface
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up MoonBit
-        uses: ./.github/actions/setup-moonbit
-
-      - name: Install dependencies
-        run: |
-          moon version --all
-          sh scripts/ci-moon-update.sh
-
-      - name: Ⓒ moon info — public interface generation (all packages)
-        run: |
-          # Regenerate only MoUI-tracked packages; mooncakes deps (e.g. bobzhang/openseek) are not in git.
-          # Skip vendored third_party modules whose package ids differ from filesystem paths.
-          # Module roots (own moon.mod) are outside `-p` package resolution when they
-          # are not workspace members (e.g. moui_skia/scripts/native_smoke), so run
-          # them with `-C` from the module root instead.
-          while IFS= read -r path; do
-            case "$path" in
-              third_party/*) continue ;;
-            esac
-            if [ -f "$path/moon.mod" ] || [ -f "$path/moon.mod.json" ]; then
-              moon -C "$path" info
-            else
-              moon info -p "$path"
-            fi
-          done < <(git ls-files '**/pkg.generated.mbti' | sed 's|/pkg.generated.mbti$||')
-
-      - name: Check generated interface drift
-        run: git diff --exit-code -- '**/pkg.generated.mbti'
+        run: sh scripts/check.sh --profile pr --skip-submodule-init
 
   linux-platform:
     name: Linux platform contracts
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -106,6 +93,8 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         run: |
@@ -113,7 +102,7 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Run Linux platform profile
-        run: sh scripts/check.sh --profile platform
+        run: sh scripts/check.sh --profile platform --skip-submodule-init
 
       - name: Build Linux native examples
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
@@ -123,12 +112,20 @@ jobs:
   macos-packaging:
     name: macOS packaging smoke
     runs-on: macos-latest
+    timeout-minutes: 15
+    # Packaging is a landing check, not a review-time check: it is the most
+    # macOS-minute-heavy step per unit of signal and its failure mode (bundle
+    # layout) is not something a code review changes. Pull requests get the
+    # package build only through the explicit dispatch input.
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         run: |
@@ -159,12 +156,15 @@ jobs:
   benchmark-scaffold:
     name: Benchmark scaffold
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         run: |
@@ -195,12 +195,15 @@ jobs:
   agent-protocol-smoke:
     name: Agent MCP protocol smoke
     runs-on: macos-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         run: |
@@ -228,6 +231,7 @@ jobs:
   windows-native:
     name: Windows MSVC native smoke
     runs-on: windows-2022
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -241,6 +245,8 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
 
       - name: Install dependencies
         shell: bash
