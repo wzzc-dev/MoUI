@@ -91,6 +91,9 @@ pub struct WindowsHostAppOptions {
   /// example benchmark harnesses) use it instead of spawning a concurrent
   /// task, keeping every runtime mutation on the pump thread.
   priv pump_tick : (async () -> Bool)?
+  /// App-facing window controls. `None` keeps every window-control intent a
+  /// no-op, which is what composition roots that do not opt in get.
+  priv window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -113,6 +116,7 @@ struct WindowsNativeHostBackend {
   core : @window_host.DesktopNativeHostBackendCore[@win.Window, Unit]
   accessibility_state : WindowsAccessibilityState
   on_frame_presented : (() -> Unit)?
+  window_controls : @services.WindowControlSource?
 }
 
 ///|
@@ -138,6 +142,7 @@ pub fn WindowsHostAppOptions::new(
   frame_clock~ : (() -> Double)? = None,
   on_frame_presented~ : (() -> Unit)? = None,
   pump_tick~ : (async () -> Bool)? = None,
+  window_controls~ : @services.WindowControlSource? = None,
 ) -> WindowsHostAppOptions {
   {
     scene_resolver,
@@ -146,6 +151,7 @@ pub fn WindowsHostAppOptions::new(
     frame_clock,
     on_frame_presented,
     pump_tick,
+    window_controls,
   }
 }
 
@@ -323,6 +329,7 @@ fn create_windows_app(
     ),
     accessibility_state: WindowsAccessibilityState::new(),
     on_frame_presented: options.on_frame_presented,
+    window_controls: options.window_controls,
   }
   app.core.driver.set_redraw_scheduler(() => app.request_redraw())
   @apphost.install_platform_view_plugins(options.platform_view_plugins, (
@@ -794,6 +801,11 @@ fn WindowsNativeHostBackend::drain_window_requests(
   self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
 ) -> Unit {
+  @window_host.sync_window_controls(
+    self.window_controls,
+    self.core.lifecycle,
+    @services.WindowControlCapabilities::all(),
+  )
   self.core.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
@@ -984,6 +996,7 @@ fn WindowsNativeHostBackend::dispose_window(
     self.core.images,
     self.core.services,
     window_id,
+    input=self.core.input,
   )
   ignore(self.core.platform_slots.remove_host(window_id))
 }
@@ -1028,6 +1041,20 @@ fn WindowsNativeHostBackend::windows_surface_actions(
     },
     set_minimized=fn(minimized) { window.set_minimized(minimized) },
     set_visible=fn(visible) { window.set_visible(visible) },
+    set_maximized=fn(maximized) { window.set_maximized(maximized) },
+    set_fullscreen=fn(fullscreen) {
+      window.set_fullscreen(
+        if fullscreen {
+          Some(Borderless(None))
+        } else {
+          None
+        },
+      )
+    },
+    set_decorations=fn(decorated) { window.set_decorations(decorated) },
+    set_cursor=fn(icon) {
+      window.set_cursor_icon(@window_host.cursor_icon_to_window(icon))
+    },
     request_redraw=fn() { window.request_redraw() },
     request_ime_update=fn(action) {
       match action {

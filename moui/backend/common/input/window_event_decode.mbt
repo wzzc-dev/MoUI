@@ -393,6 +393,7 @@ pub fn window_event_to_host_with_modifiers(
       )
     ThemeChanged(theme) =>
       Some(ThemeChanged(window_theme_to_color_scheme(theme)))
+    MaximizedChanged(maximized) => Some(MaximizedChanged(maximized))
     AccentColorChanged(argb) => Some(AccentColorChanged(argb))
     // `PointerEntered`/`PointerLeft` are dropped on purpose: the runtime
     // synthesises `Exit` from the `Move` stream, which keeps hover correct on

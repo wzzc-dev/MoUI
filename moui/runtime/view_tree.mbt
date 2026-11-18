@@ -57,6 +57,9 @@ priv trait RuntimeViewNode {
   fn focusable(Self) -> Bool
   fn focus_trap(Self) -> Bool
   fn flex_weight(Self) -> Double
+  /// Pointer shape this node declares; `Inherit` defers to an ancestor. Read
+  /// live by the cursor resolver, never sampled into a snapshot.
+  fn pointer_cursor(Self) -> @core.CursorStyle
 }
 
 ///|
@@ -265,6 +268,13 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focusable(self) {
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focus_trap(self) {
   self.view.traps_focus()
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn pointer_cursor(
+  self,
+) {
+  self.view.pointer_cursor()
 }
 
 ///|

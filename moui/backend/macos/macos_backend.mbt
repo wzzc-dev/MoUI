@@ -57,6 +57,7 @@ pub struct MacosHostAppOptions {
   /// same source handed to `app_environment`; leave unset when the app draws a
   /// conventional title bar.
   priv window_drag : @services.WindowDragRegionSource?
+  priv window_controls : @services.WindowControlSource?
   /// Native window background applied before the window is shown, so the
   /// first frame never flashes AppKit's default white.
   priv window_background : @core.Color?
@@ -110,6 +111,8 @@ struct MacosNativeHostBackend {
   /// App-declared window drag band plus the revision already pushed to AppKit.
   /// `None` keeps hosts without a drag region free of native calls.
   window_drag : @services.WindowDragRegionSource?
+  /// App-facing window controls; `None` keeps control intents a no-op.
+  window_controls : @services.WindowControlSource?
   window_background : @core.Color?
   mut window_drag_applied : Int32?
   /// Surface the revision was pushed to. A drag band is per-surface state, so
@@ -183,6 +186,7 @@ pub fn MacosHostAppOptions::new(
   min_window_size~ : @dpi.LogicalSize? = None,
   frame_clock~ : (() -> Double)? = None,
   window_drag~ : @services.WindowDragRegionSource? = None,
+  window_controls~ : @services.WindowControlSource? = None,
   window_background~ : @core.Color? = None,
   dock_icon_path~ : String? = None,
 ) -> MacosHostAppOptions {
@@ -197,6 +201,7 @@ pub fn MacosHostAppOptions::new(
     min_window_size,
     frame_clock,
     window_drag,
+    window_controls,
     window_background,
     dock_icon_path,
   }

@@ -92,6 +92,11 @@ pub(all) enum Event {
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
   ThemeChanged(@core.ColorScheme)
+  /// Observed window maximize state from the host. The host emits it when it
+  /// observes a change — a compositor shortcut, a tiling gesture, a CSD
+  /// request, or a titlebar double-click — so the window record mirrors
+  /// reality instead of tracking only what this app requested.
+  MaximizedChanged(Bool)
   /// Host system accent color, packed 0xAARRGGBB sRGB. Desktop drives an
   /// `Environment::with_system_accent` rebuild; other hosts leave it unset.
   AccentColorChanged(UInt32)
@@ -196,6 +201,9 @@ pub fn Event::to_core(self : Event) -> @core.AppEvent? {
     TextInput(event) => Some(TextInput(event))
     DragDrop(event) => Some(DragDrop(event))
     ThemeChanged(_) => None
+    // Maximize state is window-record state, not app input: apps observe it
+    // through the window-controls source, not the app event stream.
+    MaximizedChanged(_) => None
     AccentColorChanged(_) => None
     Command(_) => None
     Gesture(event) => Some(Gesture(event))

@@ -8,6 +8,8 @@ import {
   "wzzc-dev/moui/backend/common/input" @window_input,
   "wzzc-dev/moui/backend/common/services" @window_services,
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/window/core" @window_core,
 }
 
 import {

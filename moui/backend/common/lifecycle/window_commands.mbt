@@ -93,6 +93,40 @@ pub fn WindowCommands::close(
 }
 
 ///|
+pub fn WindowCommands::maximize(
+  self : WindowCommands,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.queue.maximize_window(id)
+}
+
+///|
+pub fn WindowCommands::restore(
+  self : WindowCommands,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.queue.restore_window(id)
+}
+
+///|
+pub fn WindowCommands::set_fullscreen(
+  self : WindowCommands,
+  id : @backend_host.WindowId,
+  fullscreen : Bool,
+) -> Unit {
+  self.queue.set_fullscreen_window(id, fullscreen)
+}
+
+///|
+pub fn WindowCommands::set_decorations(
+  self : WindowCommands,
+  id : @backend_host.WindowId,
+  decorations : Bool,
+) -> Unit {
+  self.queue.set_decorations_window(id, decorations)
+}
+
+///|
 pub fn WindowCommands::set_primary(
   self : WindowCommands,
   id : @backend_host.WindowId,

@@ -287,16 +287,18 @@ pub struct PlatformServices {
   window_state_value : WindowStateServices
   lifecycle_value : AppLifecycleSource?
   window_drag_value : WindowDragRegionSource
+  window_controls_value : WindowControlSource
 }
 pub fn PlatformServices::associations(Self) -> AssociationServices
 pub fn PlatformServices::lifecycle(Self) -> AppLifecycleSource?
-pub fn PlatformServices::new(notifications? : NotificationServices, tray? : TrayServices, permissions? : PermissionServices, sharing? : ShareServices, printing? : PrintServices, associations? : AssociationServices, window_state? : WindowStateServices, lifecycle? : AppLifecycleSource?, window_drag? : WindowDragRegionSource) -> Self
+pub fn PlatformServices::new(notifications? : NotificationServices, tray? : TrayServices, permissions? : PermissionServices, sharing? : ShareServices, printing? : PrintServices, associations? : AssociationServices, window_state? : WindowStateServices, lifecycle? : AppLifecycleSource?, window_drag? : WindowDragRegionSource, window_controls? : WindowControlSource) -> Self
 pub fn PlatformServices::notifications(Self) -> NotificationServices
 pub fn PlatformServices::permissions(Self) -> PermissionServices
 pub fn PlatformServices::printing(Self) -> PrintServices
 pub fn PlatformServices::sharing(Self) -> ShareServices
 pub fn PlatformServices::tray(Self) -> TrayServices
 pub fn PlatformServices::unavailable() -> Self
+pub fn PlatformServices::window_controls(Self) -> WindowControlSource
 pub fn PlatformServices::window_drag(Self) -> WindowDragRegionSource
 pub fn PlatformServices::window_state(Self) -> WindowStateServices
 
@@ -495,6 +497,57 @@ pub struct UrlServices {
 }
 pub fn UrlServices::new(open? : (String) -> ServiceTask[Unit]) -> Self
 pub fn UrlServices::open(Self, String) -> ServiceTask[Unit]
+
+#derive(Eq, @debug.Debug)
+pub(all) struct WindowControlCapabilities {
+  minimize : Bool
+  maximize : Bool
+  fullscreen : Bool
+  decorations : Bool
+}
+pub fn WindowControlCapabilities::all() -> Self
+pub fn WindowControlCapabilities::equal(Self, Self) -> Bool
+pub fn WindowControlCapabilities::none() -> Self
+pub fn WindowControlCapabilities::not_equal(Self, Self) -> Bool
+pub fn WindowControlCapabilities::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum WindowControlRequest {
+  Minimize
+  Maximize
+  Restore
+  ToggleFullscreen
+  SetFullscreen(Bool)
+  SetDecorations(Bool)
+}
+pub fn WindowControlRequest::equal(Self, Self) -> Bool
+pub fn WindowControlRequest::not_equal(Self, Self) -> Bool
+pub fn WindowControlRequest::to_repr(Self) -> @debug.Repr
+
+pub struct WindowControlSource {
+  // private fields
+}
+pub fn WindowControlSource::can_maximize(Self) -> Bool
+pub fn WindowControlSource::can_minimize(Self) -> Bool
+pub fn WindowControlSource::can_set_decorations(Self) -> Bool
+pub fn WindowControlSource::can_toggle_fullscreen(Self) -> Bool
+pub fn WindowControlSource::capabilities(Self) -> WindowControlCapabilities
+pub fn WindowControlSource::drain(Self) -> Array[WindowControlRequest]
+pub fn WindowControlSource::fullscreen(Self) -> Bool
+pub fn WindowControlSource::maximize(Self) -> Unit
+pub fn WindowControlSource::maximized(Self) -> Bool
+pub fn WindowControlSource::minimize(Self) -> Unit
+pub fn WindowControlSource::new() -> Self
+pub fn WindowControlSource::restore(Self) -> Unit
+pub fn WindowControlSource::revision(Self) -> Int32
+pub fn WindowControlSource::set_capabilities(Self, WindowControlCapabilities) -> Unit
+pub fn WindowControlSource::set_decorations(Self, Bool) -> Unit
+pub fn WindowControlSource::set_fullscreen(Self, Bool) -> Unit
+pub fn WindowControlSource::set_observed(Self, maximized~ : Bool, fullscreen~ : Bool) -> Unit
+pub fn WindowControlSource::set_titlebar_insets(Self, insets~ : @core.Insets?) -> Unit
+pub fn WindowControlSource::titlebar_insets(Self) -> @core.Insets?
+pub fn WindowControlSource::toggle_fullscreen(Self) -> Unit
+pub fn WindowControlSource::unavailable() -> Self
 
 pub struct WindowDragRegionSource {
   // private fields

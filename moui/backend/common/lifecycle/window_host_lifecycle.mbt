@@ -8,6 +8,16 @@ pub(all) struct WindowSurfaceActions {
   sync_observed_resize : (@core.SurfaceMetrics) -> @core.SurfaceMetrics
   set_minimized : (Bool) -> Unit
   set_visible : (Bool) -> Unit
+  /// Maximize/restore projection. Hosts without maximize leave it a no-op.
+  set_maximized : (Bool) -> Unit
+  /// Fullscreen projection. Hosts without fullscreen leave it a no-op.
+  set_fullscreen : (Bool) -> Unit
+  /// Native decoration projection. Hosts that cannot toggle decorations leave
+  /// it a no-op.
+  set_decorations : (Bool) -> Unit
+  /// Project the resolved pointer icon. Carries a view-resolved value (never
+  /// `Inherit`); hosts that cannot set a cursor leave it a no-op.
+  set_cursor : (@core.CursorIcon) -> Unit
   request_redraw : () -> Unit
   request_ime_update : (@window_input.TextInputSessionAction) -> Unit
   set_drag_region : (@core.Rect?) -> Unit
@@ -23,6 +33,10 @@ pub fn WindowSurfaceActions::new(
   sync_observed_resize~ : (@core.SurfaceMetrics) -> @core.SurfaceMetrics,
   set_minimized~ : (Bool) -> Unit,
   set_visible~ : (Bool) -> Unit,
+  set_maximized~ : (Bool) -> Unit,
+  set_fullscreen~ : (Bool) -> Unit,
+  set_decorations~ : (Bool) -> Unit,
+  set_cursor~ : (@core.CursorIcon) -> Unit,
   request_redraw~ : () -> Unit,
   request_ime_update~ : (@window_input.TextInputSessionAction) -> Unit,
   set_drag_region~ : (@core.Rect?) -> Unit = _ => (),
@@ -36,6 +50,10 @@ pub fn WindowSurfaceActions::new(
     sync_observed_resize,
     set_minimized,
     set_visible,
+    set_maximized,
+    set_fullscreen,
+    set_decorations,
+    set_cursor,
     request_redraw,
     request_ime_update,
     set_drag_region,
@@ -218,6 +236,15 @@ pub fn WindowLifecycle::open_resolution(
   request : @backend_host.WindowOpenRequest,
 ) -> WindowOpenResolution {
   resolve_open_request(self.windows, request, self.scene_resolver)
+}
+
+///|
+/// The host's request port, so shared workflows and platform backends can
+/// enqueue logical window requests (maximize, restore, fullscreen, …).
+pub fn WindowLifecycle::requests(
+  self : WindowLifecycle,
+) -> @backend_host.WindowRequests {
+  self.requests
 }
 
 ///|

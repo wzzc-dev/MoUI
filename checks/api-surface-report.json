@@ -46,36 +46,36 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 794,
-      "public_declarations": 521,
+      "lines": 795,
+      "public_declarations": 522,
       "pub_all_declarations": 19
     },
     {
       "label": "apphost facade",
       "path": "moui/apphost/pkg.generated.mbti",
-      "lines": 191,
-      "public_declarations": 95,
+      "lines": 192,
+      "public_declarations": 96,
       "pub_all_declarations": 5
     },
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 2946,
-      "public_declarations": 1263,
-      "pub_all_declarations": 153
+      "lines": 3003,
+      "public_declarations": 1273,
+      "pub_all_declarations": 155
     },
     {
       "label": "views facade",
       "path": "moui/views/pkg.generated.mbti",
-      "lines": 751,
-      "public_declarations": 359,
+      "lines": 755,
+      "public_declarations": 361,
       "pub_all_declarations": 1
     },
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 704,
-      "public_declarations": 268,
+      "lines": 713,
+      "public_declarations": 269,
       "pub_all_declarations": 44
     },
     {
@@ -151,15 +151,15 @@
     {
       "label": "backend common",
       "path": "moui/backend/common/pkg.generated.mbti",
-      "lines": 79,
-      "public_declarations": 18,
+      "lines": 87,
+      "public_declarations": 23,
       "pub_all_declarations": 2
     },
     {
       "label": "backend common lifecycle owner",
       "path": "moui/backend/common/lifecycle/pkg.generated.mbti",
-      "lines": 302,
-      "public_declarations": 170,
+      "lines": 319,
+      "public_declarations": 182,
       "pub_all_declarations": 7
     },
     {
@@ -179,8 +179,8 @@
     {
       "label": "backend common input owner",
       "path": "moui/backend/common/input/pkg.generated.mbti",
-      "lines": 175,
-      "public_declarations": 61,
+      "lines": 186,
+      "public_declarations": 69,
       "pub_all_declarations": 7
     },
     {

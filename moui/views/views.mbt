@@ -374,6 +374,12 @@ pub using @popover {
 }
 
 ///|
+/// Pointer-cursor vocabulary for `.cursor(...)` modifiers: the three-state
+/// style plus the neutral icon set. Platforms map the icon at their own edge,
+/// so apps never import a platform package.
+pub using @core {type CursorStyle, type CursorIcon}
+
+///|
 /// Command types re-exported from core for the menu/command entrypoints.
 pub using @core {
   type ActionCommand,

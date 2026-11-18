@@ -84,6 +84,7 @@ pub fn dispatch_host_event(
       }
       ignore(input.publish(id, adjusted))
       sync_text_input_session(lifecycle, input)
+      sync_cursor_for_host_event(lifecycle, input, id, adjusted)
     }
     None => ()
   }
@@ -102,6 +103,66 @@ pub fn sync_text_input_session(
             NoImeChange => ()
             action => (actions.request_ime_update)(action)
           }
+        None => ()
+      }
+    None => ()
+  }
+}
+
+///|
+/// Push the resolved pointer cursor for one window when the host event can have
+/// changed it.
+///
+/// Only pointer, scroll, and focus events move either the hit chain or the
+/// cursor's right to be shown; keyboard, IME, resize, and redraw events leave it
+/// alone, so they do not even walk the tree. A focus loss is the one case where
+/// the runtime still resolves a declaration (the pointer is usually still over
+/// the window), so it pushes `Default` explicitly instead: the OS cursor of an
+/// unfocused window must not keep signalling "draggable".
+pub fn sync_cursor_for_host_event(
+  lifecycle : @window_lifecycle.WindowLifecycle,
+  input : @window_input.WindowInputState,
+  id : @backend_host.WindowId,
+  event : @backend_host.Event,
+) -> Unit {
+  match event {
+    Pointer(_) | Scroll(_) => sync_pointer_cursor(lifecycle, input, id)
+    Focus(focus) =>
+      if focus.focused {
+        sync_pointer_cursor(lifecycle, input, id)
+      } else {
+        push_pointer_cursor(lifecycle, input, id, @core.CursorStyle::Default)
+      }
+    _ => ()
+  }
+}
+
+///|
+/// Push the runtime-resolved cursor for one window, at most once per change.
+pub fn sync_pointer_cursor(
+  lifecycle : @window_lifecycle.WindowLifecycle,
+  input : @window_input.WindowInputState,
+  id : @backend_host.WindowId,
+) -> Unit {
+  match lifecycle.runtime_slot_lookup(id) {
+    Some(slot) =>
+      push_pointer_cursor(lifecycle, input, id, slot.driver.pointer_cursor())
+    None => ()
+  }
+}
+
+///|
+/// Project one cursor style to the platform surface, skipping unchanged pushes.
+fn push_pointer_cursor(
+  lifecycle : @window_lifecycle.WindowLifecycle,
+  input : @window_input.WindowInputState,
+  id : @backend_host.WindowId,
+  style : @core.CursorStyle,
+) -> Unit {
+  match lifecycle.surface_actions(id) {
+    Some(actions) =>
+      match input.sync_cursor(id, style) {
+        Some(next) => (actions.set_cursor)(next.icon())
         None => ()
       }
     None => ()
@@ -142,6 +203,26 @@ pub fn apply_window_request(
     MinimizeWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
         (actions.set_minimized)(true)
+      })
+    MaximizeWindow(id) =>
+      apply_platform_window_request(lifecycle, id, request, actions => {
+        (actions.set_maximized)(true)
+      })
+    RestoreWindow(id) =>
+      apply_platform_window_request(lifecycle, id, request, actions => {
+        (actions.set_maximized)(false)
+        (actions.set_fullscreen)(false)
+      })
+    SetFullscreenWindow(id, fullscreen) =>
+      apply_platform_window_request(lifecycle, id, request, actions => {
+        (actions.set_fullscreen)(fullscreen)
+        if !fullscreen {
+          (actions.set_maximized)(false)
+        }
+      })
+    SetDecorationsWindow(id, decorations) =>
+      apply_platform_window_request(lifecycle, id, request, actions => {
+        (actions.set_decorations)(decorations)
       })
     ShowWindow(id) =>
       apply_platform_window_request(lifecycle, id, request, actions => {
@@ -216,6 +297,7 @@ pub fn run_window_redraw(
         let prior_presented = frame_state.accept_present_completions(prior)
         if prior_presented {
           sync_text_input_session(lifecycle, input)
+          sync_pointer_cursor(lifecycle, input, id)
           if finish_presented(slot) {
             return true
           }
@@ -233,6 +315,11 @@ pub fn run_window_redraw(
       slot.driver.finish_redraw()
       let presented = frame_state.finish_submission(result, completions)
       sync_text_input_session(lifecycle, input)
+      // A frame is the other way the hit chain changes without a pointer
+      // sample: the declaring view can unmount, or a rebuild can move the
+      // region out from under a resting pointer. Re-syncing here is a compare
+      // unless the resolved style really changed.
+      sync_pointer_cursor(lifecycle, input, id)
       presented && finish_presented(slot)
     }
     _ => false
@@ -302,8 +389,10 @@ pub fn dispose_window(
   images : @window_image.WindowImageTaskStates,
   services : @window_services.WindowServiceState,
   id : @backend_host.WindowId,
+  input~ : @window_input.WindowInputState,
 ) -> Unit {
   guard lifecycle.begin_close(id) else { return }
+  input.forget_cursor(id)
   let actions = lifecycle.surface_actions(id)
   let closes_host = lifecycle.runtime_slots().count() == 1
   // Stop image callbacks and tasks before disposing the renderer session.

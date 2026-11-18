@@ -300,6 +300,9 @@ fn LinuxNativeHostBackend::redraw_window(
             metrics=surface_metrics,
             decorations=platform_slot.extra,
             clear_color=frame.clear_color,
+            hover=self.titlebar_hover,
+            pressed=self.titlebar_press,
+            maximized=runtime_slot.record.maximized,
           )
           let has_platform_views = frame.platform_views.length() > 0
           if has_platform_views {

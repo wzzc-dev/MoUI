@@ -125,6 +125,40 @@ pub fn WindowRequestQueue::set_primary_window(
 }
 
 ///|
+pub fn WindowRequestQueue::maximize_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.push(MaximizeWindow(id))
+}
+
+///|
+pub fn WindowRequestQueue::restore_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+) -> Unit {
+  self.push(RestoreWindow(id))
+}
+
+///|
+pub fn WindowRequestQueue::set_fullscreen_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+  fullscreen : Bool,
+) -> Unit {
+  self.push(SetFullscreenWindow(id, fullscreen))
+}
+
+///|
+pub fn WindowRequestQueue::set_decorations_window(
+  self : WindowRequestQueue,
+  id : @backend_host.WindowId,
+  decorations : Bool,
+) -> Unit {
+  self.push(SetDecorationsWindow(id, decorations))
+}
+
+///|
 pub fn WindowRequestQueue::drain(
   self : WindowRequestQueue,
 ) -> Array[@backend_host.WindowRequest] {
@@ -206,4 +240,23 @@ fn WindowRequestQueue::remove_completion_handler(
   }
   self.completion_handlers = remaining
   removed
+}
+
+///|
+/// Resolve the request port a backend hands its lifecycle.
+///
+/// A composition root that never called `AppBuilder::window_requests` provides
+/// the unavailable port, whose pushes vanish. Backends substitute their own
+/// queue in that case so app-driven window requests — window-control intents,
+/// client-decoration buttons, runtime close requests — still reach the
+/// platform instead of being silently dropped.
+pub fn effective_window_requests(
+  requested : @backend_host.WindowRequests,
+  fallback : @backend_host.WindowRequests,
+) -> @backend_host.WindowRequests {
+  if requested.is_unavailable() {
+    fallback
+  } else {
+    requested
+  }
 }

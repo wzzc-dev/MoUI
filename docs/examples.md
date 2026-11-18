@@ -61,6 +61,7 @@ entrypoint supplies the program and renderer provider. Run
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
+| Chrome Demo | Issue #25/#24 runtime evidence demo | `examples/chrome_demo/app/`, `examples/chrome_demo/linux_sun/` | View-declared cursor styles (pointer/text/grabbing hover zones and a press-frozen `CursorColResize` splitter) plus Maximize/Restore/Fullscreen through `services.WindowControlSource`, with the Linux Sun renderer entrypoint wiring the control source and the `WindowRequestQueue` port |
 | Counter | Minimal model/update/view app | `examples/counter/app/`, `examples/counter/{macos_skia,web_wasm,terminal}/` | Simple `Program::simple` flow with retained macOS Skia, Web, and terminal (`moon run examples/counter/terminal`) entrypoints |
 | Custom Control | Reference SDK for reusable package-local controls | `examples/custom_control/widgets/`, `examples/custom_control/app/` | Message-independent editable counter with model-owned committed state, typed callbacks and semantic actions, declaration channels, pointer-seeded caret, bounded IME composition, LTR/RTL geometry, and golden layout/paint tests |
 | 3D Viewer | Experimental interactive cube and static glTF/GLB viewer | `examples/three_d_viewer/app/`, `examples/three_d_viewer/{macos_wgpu,web_wasm}/` | Independent `moui_3d` scene/snapshot model with orbit camera input, macOS child CAMetalLayer + native WGPU and Web secondary-canvas WebGPU host paths; no CPU fallback |
@@ -778,7 +779,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the `wzzc-dev/window@0.5.4-0.2.11` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.4-0.2.12` Wayland host core. The
 recommended native entrypoints compose `backend/linux` with `moui_skia_renderer` and
 present Skia CPU pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:

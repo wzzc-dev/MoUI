@@ -115,3 +115,8 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn focus_trap(self) {
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn flex_weight(self) {
   self.modifier.flex_weight
 }
+
+///|
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn pointer_cursor(self) {
+  self.modifier.pointer_cursor
+}

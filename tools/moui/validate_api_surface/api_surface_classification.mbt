@@ -78,7 +78,13 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // FontVariation/FontSpec.
       // GradientStop / GradientAxis / StopsGradientSpec + helpers (+16):
       // V3 gradient primitives; renderer-neutral paint protocol data.
-      max_count: 1278,
+      // CursorStyle / CursorIcon (+8, including the Debug/Eq extend lines):
+      // issue #25 — pointer presentation is cross-runtime protocol data in the
+      // same family as PointerEvent/PointerPhase. The icon set mirrors the
+      // platform CursorIcon one-to-one but stays in core so the contract layer
+      // does not depend on the window crate and the facades keep `@core`
+      // aliases.
+      max_count: 1286,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -169,7 +175,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/backend/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 268,
+      // +1: WindowRequests::is_unavailable, the unwired-port marker backends
+      // use to install their own request queue (see backend budget note).
+      max_count: 269,
     },
     {
       path: "moui/backend/pkg.generated.mbti",
@@ -246,9 +254,9 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Accessibility", "ActionCommand", "Alignment", "Animation", "AppEvent", "Axis",
     "Controlled", "Badge", "Binding", "BlendMode", "Border", "Brush", "Button", "CachedLayer",
     "CheckMark", "ChoiceControl", "Color", "Command", "Component", "Composition",
-    "Constraints", "ContentSize", "ControlState", "CrossAxis", "Custom", "Damage",
-    "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",
-    "Environment", "Feedback", "Feature", "Filter", "Focus", "Font", "FormValidationTheme",
+    "Constraints", "ContentSize", "ControlState", "CrossAxis", "Cursor", "Custom",
+    "Damage", "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing",
+    "Effect", "Environment", "Feedback", "Feature", "Filter", "Focus", "Font", "FormValidationTheme",
     "Frame", "Gesture", "Image", "Insets", "InteractionState", "Key", "Keyboard",
     "Gradient", "Layer", "Layout", "LinearGradient", "MainAxis", "Motion", "Navigation",
     "Path", "PickerTheme", "PlatformView", "Point", "Pointer", "Program", "Progress",
