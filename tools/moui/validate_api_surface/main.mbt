@@ -498,9 +498,17 @@ fn package_budgets() -> Array[PackageBudget] {
       // Skia/Sun/Canvas2D implement them, WGPU/Metal degrade to source-over.
       // BlendMode::Source (+1 line): exact-replace compositing for pixel
       // overlays; Skia Src / Sun Source / Canvas2D copy.
-      max_lines: 3001,
-      max_pub_lines: 1283,
-      max_pub_all_lines: 156,
+      // Budget re-accounting 2026-11-19 (p5 canvas slice that landed
+      // before dev had CI): measured 3058 / 1293 / 158. The additive
+      // entries above (RgbaImage, on_pointer/on_key, KeyboardEvent.code,
+      // on_keyboard_input, StrokeCap/StrokeJoin, PathSpec, blend modes)
+      // shipped without their ceiling raise; this registration clears
+      // the standing drift. W2 (moui_p5 extraction) retracts RgbaImage
+      // and the raw-input hooks, and that retraction ratchets these
+      // numbers back down rather than adding a new bump.
+      max_lines: 3058,
+      max_pub_lines: 1293,
+      max_pub_all_lines: 158,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",
