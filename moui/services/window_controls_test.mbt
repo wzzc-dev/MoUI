@@ -80,3 +80,26 @@ test "unavailable source keeps app chrome callable and inert" {
   assert_true(source.drain().is_empty())
   assert_eq(source.capabilities(), window_controls_all())
 }
+
+///|
+test "titlebar insets mirror from the host with revision bump on change" {
+  let source = @services.WindowControlSource::new()
+  assert_true(source.titlebar_insets() is None)
+  source.set_titlebar_insets(
+    insets=Some({ top: 32.0, right: 0.0, bottom: 0.0, left: 0.0, }),
+  )
+  let revision = source.revision()
+  assert_eq(
+    source.titlebar_insets(),
+    Some({ top: 32.0, right: 0.0, bottom: 0.0, left: 0.0, }),
+  )
+  // Re-publishing the same occupancy does not churn the revision.
+  source.set_titlebar_insets(
+    insets=Some({ top: 32.0, right: 0.0, bottom: 0.0, left: 0.0, }),
+  )
+  assert_eq(source.revision(), revision)
+  // A band change (or server-side decorations taking over) clears it.
+  source.set_titlebar_insets(insets=None)
+  assert_true(source.titlebar_insets() is None)
+  assert_eq(source.revision(), revision + 1)
+}

@@ -30,7 +30,7 @@ pub fn linux_adjust_host_event_for_client_decorations(@backend.Event, LinuxClien
 
 pub fn linux_capability_summary(services? : @backend.HostServiceCapabilities, web_view_available? : Bool, web_view_description? : String) -> @backend.HostCapabilitySummary
 
-pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, decorations~ : LinuxClientDecorationState) -> Array[@wzzc-dev/moui/core.DrawCommand]
+pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @wzzc-dev/moui/core.SurfaceMetrics, decorations~ : LinuxClientDecorationState, policy? : LinuxTitlebarPolicy, hover? : LinuxTitlebarButton?, pressed? : LinuxTitlebarButton?, maximized? : Bool) -> Array[@wzzc-dev/moui/core.DrawCommand]
 
 pub fn linux_content_metrics_for_surface(@wzzc-dev/moui/core.SurfaceMetrics, LinuxClientDecorationState) -> @wzzc-dev/moui/core.SurfaceMetrics
 
@@ -44,9 +44,9 @@ pub fn linux_surface_metrics_for_content(@wzzc-dev/moui/core.SurfaceMetrics, Lin
 
 pub fn linux_timer_source() -> @services.TimerSource
 
-pub fn linux_titlebar_button_at(Double, @wzzc-dev/moui/core.Point) -> LinuxTitlebarButton?
+pub fn linux_titlebar_button_at(Double, Double, @wzzc-dev/moui/core.Point, policy? : LinuxTitlebarPolicy) -> LinuxTitlebarButton?
 
-pub fn linux_titlebar_button_slot_rect(Double, Int32) -> @wzzc-dev/moui/core.Rect
+pub fn linux_titlebar_button_slot_rect(Double, Double, Int32, policy? : LinuxTitlebarPolicy) -> @wzzc-dev/moui/core.Rect
 
 pub fn linux_titlebar_pointer_action(LinuxClientDecorationState, Double, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.PointerPhase, Int32, LinuxTitlebarButton?) -> LinuxTitlebarAction
 
@@ -147,9 +147,10 @@ pub fn LinuxBackendReadiness::to_repr(Self) -> @debug.Repr
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
+  scheme : @wzzc-dev/moui/core.ColorScheme
 }
 pub fn LinuxClientDecorationState::equal(Self, Self) -> Bool
-pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double) -> Self
+pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double, scheme? : @wzzc-dev/moui/core.ColorScheme) -> Self
 pub fn LinuxClientDecorationState::not_equal(Self, Self) -> Bool
 pub fn LinuxClientDecorationState::to_json(Self) -> @json.Json
 pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
@@ -199,6 +200,35 @@ pub(all) enum LinuxTitlebarButton {
 pub fn LinuxTitlebarButton::equal(Self, Self) -> Bool
 pub fn LinuxTitlebarButton::not_equal(Self, Self) -> Bool
 pub fn LinuxTitlebarButton::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum LinuxTitlebarButtonState {
+  Idle
+  Hover
+  Pressed
+}
+pub fn LinuxTitlebarButtonState::equal(Self, Self) -> Bool
+pub fn LinuxTitlebarButtonState::not_equal(Self, Self) -> Bool
+pub fn LinuxTitlebarButtonState::to_repr(Self) -> @debug.Repr
+
+pub(all) struct LinuxTitlebarPalette {
+  background : @wzzc-dev/moui/core.Color
+  border : @wzzc-dev/moui/core.Color
+  title : @wzzc-dev/moui/core.Color
+  glyph : @wzzc-dev/moui/core.Color
+  close : @wzzc-dev/moui/core.Color
+  minimize : @wzzc-dev/moui/core.Color
+  maximize : @wzzc-dev/moui/core.Color
+  hover_ring : @wzzc-dev/moui/core.Color
+}
+
+pub(all) struct LinuxTitlebarPolicy {
+  slot_size : Double
+  gap : Double
+  edge_margin : Double
+  dot_size : Double
+}
+pub fn LinuxTitlebarPolicy::default() -> Self
 
 // Type aliases
 

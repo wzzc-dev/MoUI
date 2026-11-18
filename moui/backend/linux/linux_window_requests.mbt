@@ -43,6 +43,20 @@ fn LinuxNativeHostBackend::dispatch_host_event(
     (Some(slot), Pointer(pointer)) =>
       if decorations.active && pointer.position.y < decorations.titlebar_height {
         let content_width = linux_window_surface_metrics(slot.window).logical_size.width
+        // Track hover for the button feedback; a change repaints the band.
+        let hovered = match pointer.phase {
+          Exit => None
+          _ =>
+            linux_titlebar_button_at(
+              content_width,
+              decorations.titlebar_height,
+              pointer.position,
+            )
+        }
+        if hovered != self.titlebar_hover {
+          self.titlebar_hover = hovered
+          slot.window.request_redraw()
+        }
         match
           linux_titlebar_pointer_action(
             decorations,
@@ -124,9 +138,43 @@ fn LinuxNativeHostBackend::drain_window_requests(
     self.core.lifecycle,
     @services.WindowControlCapabilities::all(),
   )
+  self.sync_window_titlebar_insets()
   self.core.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })
+}
+
+///|
+/// Mirror the CSD titlebar occupancy to the app-facing control source, so
+/// chrome can lay out against the band (mygo-style titlebar insets). Windows
+/// with server-side decorations report no client insets.
+fn LinuxNativeHostBackend::sync_window_titlebar_insets(
+  self : LinuxNativeHostBackend,
+) -> Unit {
+  match self.window_controls {
+    Some(controls) => {
+      let insets = match self.core.lifecycle.active_runtime_slot() {
+        Some(active) =>
+          match self.core.platform_slots.lookup_host(active.id) {
+            Some(platform_slot) =>
+              if platform_slot.extra.active {
+                Some(@core.Insets::{
+                  top: platform_slot.extra.titlebar_height,
+                  right: 0.0,
+                  bottom: 0.0,
+                  left: 0.0,
+                })
+              } else {
+                None
+              }
+            None => None
+          }
+        None => None
+      }
+      controls.set_titlebar_insets(insets~)
+    }
+    None => ()
+  }
 }
 
 ///|

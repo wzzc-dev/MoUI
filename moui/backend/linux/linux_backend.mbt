@@ -109,6 +109,9 @@ type LinuxSurfaceBinding = @window_host.DesktopSurfaceBinding[
 pub(all) struct LinuxClientDecorationState {
   active : Bool
   titlebar_height : Double
+  /// System color scheme the CSD palette follows; frozen at window creation
+  /// (runtime theme switches refreshing the band are a recorded follow-up).
+  scheme : @core.ColorScheme
 }
 
 ///|
@@ -136,6 +139,8 @@ struct LinuxNativeHostBackend {
   window_controls : @services.WindowControlSource?
   /// Titlebar button pressed on the CSD band, waiting for its release.
   mut titlebar_press : LinuxTitlebarButton?
+  /// Titlebar button under the pointer, for hover feedback.
+  mut titlebar_hover : LinuxTitlebarButton?
 }
 
 ///|
@@ -183,8 +188,17 @@ pub fn LinuxHostSmokeOptions::new(
 pub fn LinuxClientDecorationState::new(
   active~ : Bool,
   titlebar_height~ : Double = linux_client_titlebar_height,
+  scheme~ : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> LinuxClientDecorationState {
-  { active, titlebar_height: if active { titlebar_height } else { 0.0 }, }
+  {
+    active,
+    titlebar_height: if active {
+      titlebar_height
+    } else {
+      0.0
+    },
+    scheme,
+  }
 }
 
 ///|

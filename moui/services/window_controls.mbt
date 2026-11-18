@@ -77,6 +77,9 @@ pub struct WindowControlSource {
   priv mut fullscreen_value : Bool
   priv mut requests : Array[WindowControlRequest]
   priv mut revision_value : Int32
+  /// Occupied space of host-drawn window chrome (e.g. the Linux CSD
+  /// titlebar band), mirrored from the host like the observed state.
+  priv mut titlebar_value : @core.Insets?
   priv hosted : Bool
 }
 
@@ -90,6 +93,7 @@ pub fn WindowControlSource::unavailable() -> WindowControlSource {
     fullscreen_value: false,
     requests: [],
     revision_value: 0,
+    titlebar_value: None,
     hosted: false,
   }
 }
@@ -104,6 +108,7 @@ pub fn WindowControlSource::new() -> WindowControlSource {
     fullscreen_value: false,
     requests: [],
     revision_value: 0,
+    titlebar_value: None,
     hosted: true,
   }
 }
@@ -238,6 +243,34 @@ pub fn WindowControlSource::set_observed(
   if self.maximized_value != maximized || self.fullscreen_value != fullscreen {
     self.maximized_value = maximized
     self.fullscreen_value = fullscreen
+    self.revision_value = self.revision_value + 1
+  }
+}
+
+///|
+/// Occupied space of host-drawn window chrome (e.g. the Linux CSD titlebar
+/// band), or `None` when the window carries no client-side chrome. Mirrored
+/// from the host like the observed maximize/fullscreen state, so chrome can
+/// lay out against the band without touching the platform.
+pub fn WindowControlSource::titlebar_insets(
+  self : WindowControlSource,
+) -> @core.Insets? {
+  self.titlebar_value
+}
+
+///|
+/// Host side: mirror the chrome occupancy and bump the revision on change.
+pub fn WindowControlSource::set_titlebar_insets(
+  self : WindowControlSource,
+  insets~ : @core.Insets?,
+) -> Unit {
+  let changed = match (self.titlebar_value, insets) {
+    (Some(previous), Some(next)) => @core.Insets::equal(previous, next) == false
+    (None, None) => false
+    _ => true
+  }
+  if changed {
+    self.titlebar_value = insets
     self.revision_value = self.revision_value + 1
   }
 }
