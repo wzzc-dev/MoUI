@@ -30,7 +30,7 @@ fn swatch() -> @moui.View[Msg] {
     draw=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @graphics.StrokeCap::RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.RoundedRect::new(rect=frame, radius=12.0),
         @graphics.Brush::solid(@graphics.Color::rgba(r=0.2, g=0.45, b=0.9)),
       )
     },
