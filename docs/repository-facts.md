@@ -82,7 +82,7 @@ This file is generated from repository manifests and validator reports.
 | apphost facade (moui/apphost/pkg.generated.mbti) | 192 | 96 | 5 |
 | core (moui/core/pkg.generated.mbti) | 3003 | 1273 | 155 |
 | views facade (moui/views/pkg.generated.mbti) | 755 | 361 | 1 |
-| backend protocols (moui/backend/pkg.generated.mbti) | 712 | 269 | 44 |
+| backend protocols (moui/backend/pkg.generated.mbti) | 713 | 269 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
 | render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
