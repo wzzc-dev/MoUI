@@ -617,7 +617,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // +1 line / +1 pub: WindowRequests::is_unavailable lets backends detect
       // an unwired composition-root port and install their own request queue,
       // so app-driven window requests cannot vanish silently.
-      max_lines: 712,
+      // +1 line: Event::MaximizedChanged(Bool) carries the observed maximize
+      // flip from the host (compositor shortcut, tiling gesture, CSD request,
+      // double-click zoom) into the window record, so every maximize/restore
+      // source converges on one observed-state event (window PR #3).
+      max_lines: 737,
       max_pub_lines: 269,
       max_pub_all_lines: 55,
       required_tokens: [

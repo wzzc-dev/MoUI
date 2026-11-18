@@ -74,7 +74,7 @@
     {
       "label": "backend protocols",
       "path": "moui/backend/pkg.generated.mbti",
-      "lines": 712,
+      "lines": 713,
       "public_declarations": 269,
       "pub_all_declarations": 44
     },

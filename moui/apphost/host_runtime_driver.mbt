@@ -78,6 +78,10 @@ pub fn HostRuntimeDriver::dispatch(
       )
       self.request_redraw_if_needed()
     }
+    // Window-record state: applied by the window registry when the host
+    // event is dispatched. The driver holds no runtime environment for it;
+    // the geometry change that accompanies a maximize drives the repaint.
+    MaximizedChanged(_) => ()
     Command(intent) =>
       if self.runtime.dispatch_command(intent) {
         self.request_redraw_if_needed()

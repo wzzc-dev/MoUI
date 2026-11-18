@@ -226,6 +226,7 @@ pub fn WindowRegistry::apply_host_event(
 ) -> Bool {
   match event {
     Resized(metrics) => self.resize(id, metrics)
+    MaximizedChanged(maximized) => self.set_maximized(id, maximized)
     Focus({ focused: true, .. }) => self.focus(id)
     Focus({ focused: false, .. }) =>
       self.update_open_window(id, record => {
