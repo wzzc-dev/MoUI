@@ -1,8 +1,9 @@
 # Titlebar controls polish (close/minimize/maximize + titlebar)
 
-Status: active
+Status: active (Phase 1 + 2 landed; Phase 4 evidence captured)
 Parent issue: #24 (completion beyond PR #26)
 Branch: `feature/cursor-and-window-chrome` (lands in PR #26)
+Companion: wzzc-dev/window PR #3 (merged, 0.5.4-0.2.12 published)
 
 ## Goal
 
@@ -53,23 +54,49 @@ Confirmed decisions (user, 2026-11-18):
   machine transitions, semantics exposure; X11/Xvfb run evidence in
   `artifacts/`.
 
-### Phase 2 — event timestamps + double-click zoom
+### Phase 2 — double-click zoom (delivered at the platform layer)
 
-- backend/common input pipeline stamps host pointer events with the host
-  clock (same timeline as `AppEnvironment.clock`); the normalized `Event`
-  gains an optional timestamp, defaulting to absent for existing hosts.
-- CSD titlebar double-click toggles maximize (with debounce), matching
-  Windows/GNOME behavior; platform-layer ownership mirrors mygo's
-  `TitleBarDoubleClicked`.
-- Tests: synthetic timestamp sequences for double-click detection; X11
-  round-trip evidence.
+Delivered in wzzc-dev/window (PR #3, 0.5.4-0.2.12) instead of the originally
+planned host-timestamp design: the native Wayland layer already owns the
+bare-band move gesture, so the double-click detector lives beside it (second
+press within 400 ms and 8 px of the first toggles maximize via the same
+native path). This matches Winc/mygo platform-layer ownership and avoids
+duplicating the gesture clock on the host side. The host-timestamp plumbing
+design above is retired.
 
-### Phase 4 — matching-host Wayland evidence
+- Native: bare-band double-click toggles maximize; button-slot double presses
+  stay ordinary clicks (two single activations).
+- Host: `Event::MaximizedChanged(Bool)` from `xdg_toplevel` configure lands on
+  the window record, so the observed state (restore glyph, `controls.
+  maximized()`) is correct for every maximize/restore source — compositor
+  shortcut, tiling gesture, CSD request, double-click.
+- Evidence (nested weston, Xvfb): double-click maximizes/restores
+  (`artifacts/91_dblclick_max.png`, `92_dblclick_restore.png`); CSD-button
+  maximize → restore glyph + `MAXIMIZED=TRUE` (`60_clean_after.png`,
+  `maximized_glyph_zoom.png`); pressed shrink pixel-verified (strict-green
+  48 → 36 while held, `78_p11_pressed.png`); protocol traces
+  (`app_wl2.log`, `app_wl3.log`).
 
-- weston (x11-backend) nested in Xvfb; the app connects via the Wayland
-  socket so `uses_client_decorations()` activates and the CSD path runs for
-  real. Screenshot/recording evidence for buttons, drag, double-click.
-- Requires a one-time `weston` install on the host (user action).
+### Follow-ups
+
+- Restore geometry under weston: `unset_maximized` on a fully maximized CSD
+  window gets a configure that echoes the maximized size (1600×968) instead
+  of 0×0, so the client stays large while the compositor animates it to a new
+  position. State stays correct (`MAXIMIZED=FALSE`, restore glyph); the size
+  choice belongs to the window crate's restore sizing (prefer saved
+  restore_width on `pending_unmaximize` when the compositor echoes the
+  maximized size). Recorded for the next window slice.
+- CSD semantics: host-painted chrome needs an AT-SPI-level design (see
+  Phase 1 finding).
+- Runtime palette refresh on system theme switch (currently frozen at
+  creation).
+
+### Phase 4 — matching-host Wayland evidence (done)
+
+- weston 13.0.0 (x11-backend, pixman renderer) nested in Xvfb; the app
+  connects via the `wayland-moui` socket so the CSD path runs for real.
+  Phase 1 + Phase 2 evidence listed above; single-instance discipline and
+  `WAYLAND_DEBUG=1` protocol traces used to pin event-flow facts.
 
 ## Engineering discipline
 
