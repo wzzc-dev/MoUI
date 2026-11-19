@@ -315,6 +315,23 @@ bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode
 .\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
+When GitHub is unreachable, the same helpers fall back to the GitCode mirror
+recorded in the lock (`providers.release.mirrors`). The mirror serves the same
+bytes and is verified against the locked SHA256 and size, so it cannot silently
+swap an artifact:
+
+```bash
+MOUI_SKIA_MIRROR=gitcode-skia bash scripts/fetch-release-skia.sh --print-env
+bash scripts/fetch-release-skia.sh --no-mirror --print-env  # primary host only
+```
+
+`MOUI_SKIA_MIRROR` accepts `auto` (default: primary, then every mirror), `off`,
+or a mirror name to try first; a name also covers mirrors named `<name>-...`, so
+`gitcode` prefers `gitcode-skia` and `gitcode-skia-stub` in one go.
+`MOUI_SKIA_SKIA_PACKAGE_MIRROR` and
+`MOUI_SKIA_STUB_ASSET_MIRROR` in `--print-env` report which source served the
+download. `scripts/mirror-release-assets.sh` refreshes the mirror from the lock.
+
 Use [REAL_SKIA_SMOKE.md](REAL_SKIA_SMOKE.md) as the acceptance checklist for
 real-backend artifacts. A passing fallback build, dry-run, or syntax check is
 not enough to claim real Skia acceptance.

@@ -37,3 +37,32 @@
   fallback: when the lock has no entry (or the asset is absent) the prebuild
   compiles `native/*.cpp` locally; `MOUI_SKIA_STUB_MODE=prebuilt` makes that
   fallback a hard error.
+- GitCode mirror (China reachability): `providers.release.mirrors` in the lock
+  records the MoUI AtomGit/GitCode repository (`gitcode.com/wzzc/MoUI`) as a
+  mirror, not a second producer. `gitcode-skia` carries the Release static
+  desktop packages (macos/linux/windows x arm64/x64 = 6 assets, 328,799,010
+  bytes) under `skia-<skia-tag>`; `gitcode-skia-stub` carries the stub archives
+  under `skia-stub-<skia-tag>`. Debug assets stay GitHub-only (they reach ~999 MB
+  and are not used by CI).
+- Mirror plumbing: `fetch-release-skia.{sh,ps1}` build the candidate list from
+  the lock mirror filters, try the primary host then the mirrors, and verify the
+  locked sha256 + size on every candidate, so a stale mirror is rejected.
+  `MOUI_SKIA_MIRROR=auto|off|<name>` (`--mirror`/`--no-mirror`, `-Mirror`/
+  `-NoMirror`) controls the order; `MOUI_SKIA_SKIA_PACKAGE_MIRROR` and
+  `MOUI_SKIA_STUB_ASSET_MIRROR` in `--print-env` report the serving source.
+- `moui_skia/scripts/mirror-release-assets.sh` fills the mirror: selection comes
+  from the same lock filters, uploads go through
+  `GET /repos/{owner}/{repo}/releases/{tag}/upload_url` (AtomGit API v5,
+  `GITCODE_TOKEN`) followed by a PUT to the signed object-storage URL.
+  `--list` (offline), `--dry-run`, `--force`, `--verify`, `--verify-only`.
+  AtomGit release attachments can only be served once a tag exists, so the script
+  creates the tag from `--ref main` before the release.
+- Offline proof of the fallback lives in `pr-static`:
+  `moui_skia/scripts/tests/fetch-release-skia-mirror.sh` builds a temporary lock
+  whose primary URL is missing and whose mirror is a local `file://` directory,
+  then asserts the mirror serves both artifacts, `--no-mirror` fails, `--mirror`
+  reorders the candidates, and corrupt mirror bytes are rejected.
+- Mirror caveat: GitCode has no `wzzc/skia` code repository, which is why every
+  mirrored Skia asset lives in the MoUI GitCode repository. Do not add mirror
+  filters that claim assets the script has not uploaded; the fetch helpers will
+  spend a failed candidate on them before falling back.
