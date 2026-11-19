@@ -93,6 +93,13 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
+      # `wzzc-dev/window` generates its Wayland protocol bindings in its
+      # prebuild on Linux, and every MoonBit-backed validator shim resolves
+      # that module, so the tool tests need the Wayland set even though this
+      # half never opens a window. X11/Skia/smoke/runtime extras stay out.
+      - name: Install Wayland prebuild dependencies
+        run: bash scripts/set_linux_deps.sh --wayland
+
       # Host-independent guards: policy validators, generators, script lint and
       # the MoonBit tool tests. Nothing in this half needs darwin, and together
       # they were ~40% of the old single-macOS-job PR minute, so they run on the
