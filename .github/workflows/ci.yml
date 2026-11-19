@@ -252,7 +252,7 @@ jobs:
           moon build examples/showcase/macos_skia --target native
 
       - name: Upload macOS package artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: moui-showcase-macos-app
           path: dist/macos/MoUI Showcase.app
@@ -309,7 +309,7 @@ jobs:
 
       - name: Upload performance report
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: moui-performance-budgets
           path: artifacts/performance/result.json
@@ -347,7 +347,7 @@ jobs:
 
       - name: Upload agent protocol smoke artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: moui-agent-mcp-protocol-smoke
           path: artifacts/smoke/agent-mcp-counter-protocol/
@@ -446,7 +446,7 @@ jobs:
             -BuildNumber $env:GITHUB_RUN_NUMBER
 
       - name: Upload Windows package artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: moui-showcase-windows-msvc-portable
           path: dist/windows-msvc/MoUIShowcase

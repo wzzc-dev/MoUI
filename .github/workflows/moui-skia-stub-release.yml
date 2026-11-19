@@ -260,7 +260,7 @@ jobs:
 
       - name: Upload stub asset artifact
         if: steps.stale.outputs.publish == 'true'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: skia-stub-${{ github.run_id }}
           path: moui_skia/dist/*.zip

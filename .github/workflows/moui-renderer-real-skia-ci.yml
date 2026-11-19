@@ -60,7 +60,7 @@ jobs:
 
       - name: Upload macOS renderer real Skia logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-renderer-real-skia-ci
           path: |
@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload Linux renderer real Skia logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: linux-renderer-real-skia-ci
           path: |
@@ -229,7 +229,7 @@ jobs:
 
       - name: Upload Windows renderer real Skia logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: windows-renderer-real-skia-ci
           path: |

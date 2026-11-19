@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload Web runtime presentation artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: web-runtime-presentation-smoke
           path: artifacts/smoke/web-runtime-presentation/
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload macOS real Skia release artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-real-skia-release
           path: |
@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload TUI PTY smoke artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: tui-pty-interaction-smoke
           path: artifacts/smoke/tui-pty-smoke/

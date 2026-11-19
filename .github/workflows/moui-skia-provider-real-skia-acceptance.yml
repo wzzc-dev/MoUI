@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload Linux acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: linux-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload macOS acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: macos-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
@@ -329,7 +329,7 @@ jobs:
 
       - name: Upload Windows acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: windows-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
