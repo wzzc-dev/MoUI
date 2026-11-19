@@ -204,8 +204,13 @@ fn SunRasterRenderer::render_command(
       match canvas_scopes.pop() {
         Some(Filter) => {
           let layer_pixmap = self.canvas.get_pixmap()
+          // Blur radii are logical; the layer pixmap is device-resolution, so
+          // scale the kernel by DPR to keep the perceived softness.
           let effective_pixmap = if blur_radius > 0.0 {
-            sun_box_blur_pixmap(layer_pixmap, blur_radius)
+            sun_box_blur_pixmap(
+              layer_pixmap,
+              blur_radius * self.metrics.scale_factor,
+            )
           } else {
             layer_pixmap
           }
@@ -602,72 +607,6 @@ fn sun_path(path : @core.PathSpec) -> @sun_graphics.Path {
     }
   }
   out
-}
-
-///|
-fn SunRasterRenderer::draw_shadow(
-  self : SunRasterRenderer,
-  shadow : @core.ShadowSpec,
-  opacity : Double,
-) -> Unit {
-  let rect = shadow.rect.rect
-  let corner_radius = shadow.rect.radius.max(0.0)
-  let base_color = shadow.color
-  let spread = shadow.spread.max(0.0)
-  let blur_r = shadow.blur_radius.max(0.0)
-  guard opacity > 0.0 else { return }
-  guard base_color.a > 0.0 else { return }
-  let pad = (blur_r * 2.0).ceil().to_int().max(1)
-  let inner_w = rect.size.width + spread * 2.0
-  let inner_h = rect.size.height + spread * 2.0
-  let shadow_w = inner_w.ceil().to_int().max(1) + pad * 2
-  let shadow_h = inner_h.ceil().to_int().max(1) + pad * 2
-  let shadow_pixmap = @sun_graphics.Pixmap::new(shadow_w, shadow_h)
-  let shadow_color = @sun_graphics.Color::new(
-    r=sun_channel(base_color.r),
-    g=sun_channel(base_color.g),
-    b=sun_channel(base_color.b),
-    a=sun_channel(sun_clamp_unit(base_color.a * opacity)),
-  )
-  let cx = pad.to_double() + inner_w * 0.5
-  let cy = pad.to_double() + inner_h * 0.5
-  let hx = inner_w * 0.5
-  let hy = inner_h * 0.5
-  let scaled_radius = corner_radius.min(hx).min(hy)
-  for sy in 0..<shadow_h {
-    for sx in 0..<shadow_w {
-      let px = sx.to_double() + 0.5
-      let py = sy.to_double() + 0.5
-      let qx = (px - cx).abs() - (hx - scaled_radius)
-      let qy = (py - cy).abs() - (hy - scaled_radius)
-      let outside_dist = if qx > 0.0 && qy > 0.0 {
-        (qx * qx + qy * qy).sqrt()
-      } else if qx > 0.0 {
-        qx
-      } else if qy > 0.0 {
-        qy
-      } else {
-        0.0
-      }
-      let d = outside_dist - scaled_radius
-      if d < 0.5 {
-        shadow_pixmap.set_pixel(sx, sy, shadow_color)
-      }
-    }
-  }
-  let blurred = if blur_r > 0.5 {
-    sun_box_blur_pixmap(shadow_pixmap, blur_r)
-  } else {
-    shadow_pixmap
-  }
-  let draw_x = rect.origin.x + shadow.offset.x - spread - pad.to_double()
-  let draw_y = rect.origin.y + shadow.offset.y - spread - pad.to_double()
-  self.canvas.draw_pixmap(
-    blurred,
-    draw_x.to_int(),
-    draw_y.to_int(),
-    @sun_graphics.Paint::new().set_opacity(1.0),
-  )
 }
 
 ///|

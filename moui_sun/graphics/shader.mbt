@@ -158,7 +158,7 @@ pub fn PaintGradientStop::get_color(self : PaintGradientStop) -> Color {
 }
 
 ///|
-/// Create a device-space linear gradient shader.
+/// Create a linear gradient shader in canvas space.
 pub fn PaintShader::linear_gradient(
   x0~ : Double,
   y0~ : Double,
@@ -174,7 +174,7 @@ pub fn PaintShader::linear_gradient(
 }
 
 ///|
-/// Create a device-space linear gradient shader with multiple color stops.
+/// Create a multi-stop linear gradient shader in canvas space.
 pub fn PaintShader::linear_gradient_stops(
   x0~ : Double,
   y0~ : Double,
@@ -196,7 +196,7 @@ pub fn PaintShader::linear_gradient_stops(
 }
 
 ///|
-/// Create a device-space radial gradient shader.
+/// Create a radial gradient shader in canvas space.
 pub fn PaintShader::radial_gradient(
   cx~ : Double,
   cy~ : Double,
@@ -218,7 +218,7 @@ pub fn PaintShader::radial_gradient(
 }
 
 ///|
-/// Create a device-space radial gradient shader with multiple color stops.
+/// Create a multi-stop radial gradient shader in canvas space.
 pub fn PaintShader::radial_gradient_stops(
   cx~ : Double,
   cy~ : Double,
