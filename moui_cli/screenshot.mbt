@@ -396,6 +396,7 @@ fn screenshot_package_main(renderer : String) -> String {
       #|  } noraise {
       #|    renderer => renderer
       #|  }
+      #|  runtime.set_text_system(renderer.text_system())
       #|  ignore(renderer.render_frame(runtime.draw_frame()))
     )
   } else {
@@ -417,6 +418,7 @@ fn screenshot_package_main(renderer : String) -> String {
       #|  } noraise {
       #|    renderer => renderer
       #|  }
+      #|  runtime.set_text_system(renderer.text_system())
       #|  ignore(renderer.render_frame(runtime.draw_frame()))
     )
   }
