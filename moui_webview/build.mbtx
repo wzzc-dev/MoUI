@@ -27,16 +27,20 @@ fn lower_trim(value : String) -> String {
 
 ///|
 async fn capture(program : String, args : Array[String]) -> (Int32, String) {
-  let result = @process.run(
-    program,
-    args,
-    stdout=@process.Collect,
-    stderr=@process.Collect,
-  )
-  let out = result.stdout_text() catch {
-    _ => ""
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Collect,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
   }
-  (result.exit_code, out)
 }
 
 ///|
@@ -300,7 +304,13 @@ async fn main {
   }
   let repo_root = path_join(module_root, "..")
   let (windows_stub, windows_link) = windows_webview2_flags(config, repo_root)
-  let (linux_stub, linux_link) = linux_webkitgtk_flags(config)
+  // Only the Linux backend consumes WebKitGTK flags, and pkg-config is not
+  // guaranteed to exist on macOS/Windows runners.
+  let (linux_stub, linux_link) = if host == "linux" {
+    linux_webkitgtk_flags(config)
+  } else {
+    ("", "")
+  }
   let link_configs : Array[(String, String)] = []
   if host == "macos" {
     link_configs.push(
