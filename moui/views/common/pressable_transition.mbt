@@ -29,7 +29,7 @@ impl @core.ViewStateValue for PressableTransition with fn encode_view_state(
   match self {
     Idle => b"\x00"
     Active(from_state, start_ms) => {
-      let output = Buffer(size_hint=10)
+      let output = Buffer(capacity=10)
       output.write_byte(1)
       output.write_byte(
         match from_state {

@@ -110,7 +110,7 @@ pub fn RendererRecoveryBudget::recovery_deadline_ms(
   self : RendererRecoveryBudget,
   loss_time_ms : Double,
 ) -> Double {
-  loss_time_ms + self.vsync_ms * Double::from_int(self.recovery_vsync_budget)
+  loss_time_ms + self.vsync_ms * self.recovery_vsync_budget.to_double()
 }
 
 ///|

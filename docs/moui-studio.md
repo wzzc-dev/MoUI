@@ -125,7 +125,8 @@ confirmation card. No real network request is made, on either platform.
 
 ## Capability upgrade (2026-10)
 
-The capability-upgrade plan (`docs/plans/done/moui-studio-capability-upgrade.md`)
+The capability-upgrade plan (`docs/plans/done/INDEX.md`, row
+`moui-studio-capability-upgrade`)
 closed the largest gaps to a mature IDE:
 
 - **Real code editor.** The Code view is a `moui_richtext` controlled rich-text
@@ -173,7 +174,7 @@ closed the largest gaps to a mature IDE:
 ## AI mode: dialog transcript workbench (2026-10)
 
 The AI mode is a **dialog transcript workbench** (see
-`docs/plans/done/moui-studio-ai-chat.md`):
+`docs/plans/done/INDEX.md`, row `moui-studio-ai-chat`):
 
 - Submitted prompts are echoed as right-aligned user bubbles with copy/edit
   actions; AI explanations render as markdown messages with copy/retry; the
@@ -389,4 +390,4 @@ Studio 的壳与能力面按**静态插件架构**组织（ADR 0038；参照 Cor
   编辑器同源）；goal-column 光标语义（`TextControlStateContext.goal_column`，
   垂直播种/保持、水平/点击/插入重置）。
 
-验收与里程碑记录：`docs/plans/done/moui-studio-plugin-kernel.md`。
+验收与里程碑记录：`docs/plans/done/INDEX.md`（`moui-studio-plugin-kernel` 行）。

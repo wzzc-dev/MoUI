@@ -84,7 +84,7 @@ verified by matching-host evidence.
 `moui build ios showcase --sdk iphonesimulator` now builds and links a
 runnable simulator .app end to end. Two repairs landed the same day:
 
-1. `moui_cli/build_ios.mbt` prefers the 0.10.20 toolchain's split runtime
+1. `moui_cli/build_ios.mbt` prefers the 0.10.20+ toolchain's split runtime
    (`lib/runtime/*.c`, one object per subsystem) over the removed
    `lib/runtime.c` and compiles every split source for the iOS target.
 2. `moui/backend/ios/runtime_compat/` provides simulator SDK shims for the

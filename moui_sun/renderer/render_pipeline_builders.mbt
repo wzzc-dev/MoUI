@@ -45,7 +45,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       x,
       y,
       config,
-      paint
+      paint,
     ) =>
       DrawFontBytesFallbackKeyed(
         copy_font_bytes_fallback_sources(sources),
@@ -63,7 +63,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       x,
       y,
       config,
-      paint
+      paint,
     ) =>
       DrawFontBytesFallbackAtlasKeyed(
         copy_font_bytes_fallback_sources(sources),
@@ -81,7 +81,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       x,
       y,
       config,
-      paint
+      paint,
     ) =>
       DrawLoadedFontFallbackKeyed(
         copy_string_array(font_keys),
@@ -99,7 +99,7 @@ fn copy_render_command(command : RenderCommand) -> RenderCommand {
       x,
       y,
       config,
-      paint
+      paint,
     ) =>
       DrawLoadedFontFallbackAtlasKeyed(
         copy_string_array(font_keys),

@@ -881,7 +881,7 @@ test "scroll drag and motion codecs reject a corrupt sample" {
   assert_true(
     @core.ViewStateValue::decode_view_state(motion, drag_bytes) is None,
   )
-  let corrupt = Buffer(size_hint=50)
+  let corrupt = Buffer(capacity=50)
   corrupt.write_byte(1)
   corrupt.write_byte(2)
   corrupt.write_double_be(1.5)

@@ -5,6 +5,20 @@
 async fn main {
   let loader = @p5_http.RemoteImageLoader::new()
   @p5.set_default_image_fetcher(Some(loader.fetcher()))
+  // The p5 addon carries no filesystem dependency; the host injects it here.
+  @p5.set_default_file_ports(
+    @p5.FilePorts::new(
+      load=fn(path) { Some(@fs.read_file_to_bytes(path)) catch { _ => None } },
+      save=fn(path, bytes) {
+        try {
+          @fs.write_bytes_to_file(path, bytes)
+          true
+        } catch {
+          _ => false
+        }
+      },
+    ),
+  )
   @p5_skia_raster.install()
   let runtime = @runtime.new_program_with_dimensions(
     program=@p5_app.program(),

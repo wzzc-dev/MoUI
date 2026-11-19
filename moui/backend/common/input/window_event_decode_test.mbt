@@ -142,8 +142,8 @@ test "host converts window drag drop events to logical core events" {
   match event {
     Some(
       DragDrop(
-        { phase: Dropped, paths, position: Some({ x: 12.0, y: 24.0, }), }
-      )
+        { phase: Dropped, paths, position: Some({ x: 12.0, y: 24.0, }), },
+      ),
     ) => inspect(paths[0], content="/tmp/note.md")
     _ => fail("expected logical file drop")
   }
@@ -223,7 +223,7 @@ test "host maps touch button events to core pointer phases" {
   )
   match touch_down {
     Some(
-      Pointer({ phase: Down, button: 0, position: { x: 12.0, y: 24.0, }, .. })
+      Pointer({ phase: Down, button: 0, position: { x: 12.0, y: 24.0, }, .. }),
     ) => ()
     _ => fail("expected touch down pointer event")
   }

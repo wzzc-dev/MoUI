@@ -23,7 +23,7 @@ impl @core.ViewStateValue for DatePickerViewDateState with fn encode_view_state(
   match self {
     FollowSelection => b"\x00"
     Month(year, month) => {
-      let output = Buffer(size_hint=9)
+      let output = Buffer(capacity=9)
       output.write_byte(1)
       output.write_int_be(year)
       output.write_int_be(month)

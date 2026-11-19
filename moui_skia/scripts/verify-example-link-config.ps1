@@ -1,5 +1,5 @@
 param(
-  [string] $BuildScript = "build.js",
+  [string] $BuildScript = "build.mbtx",
   [string] $ExamplesDir = "examples",
   [switch] $Help
 )

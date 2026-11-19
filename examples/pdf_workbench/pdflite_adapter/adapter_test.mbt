@@ -63,7 +63,7 @@ test "pdflite adapter service handler exposes real document services" {
   match services.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > bytes.length())
       assert_true(diagnostics.any(entry => entry.contains("StampText")))
@@ -107,7 +107,7 @@ test "pdflite adapter writeback applies rotate and crop edits" {
   match @pdflite_adapter.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > 0)
       inspect(diagnostics.length(), content="2")
@@ -140,7 +140,7 @@ test "pdflite adapter writeback applies stamp edits" {
   match @pdflite_adapter.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")
@@ -176,7 +176,7 @@ test "pdflite adapter writeback applies metadata title edits" {
   match @pdflite_adapter.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")
@@ -213,7 +213,7 @@ test "pdflite adapter writeback applies bookmark edits" {
   match @pdflite_adapter.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")
@@ -255,7 +255,7 @@ test "pdflite adapter writeback applies text annotation edits" {
   match @pdflite_adapter.writeback_document(edited) {
     @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
       output,
-      diagnostics
+      diagnostics,
     ) => {
       assert_true(output.length() > bytes.length())
       inspect(diagnostics.length(), content="1")

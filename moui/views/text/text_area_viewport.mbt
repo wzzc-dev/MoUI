@@ -17,7 +17,7 @@ impl @core.ViewStateValue for TextAreaScrollState with fn view_state_type_key() 
 impl @core.ViewStateValue for TextAreaScrollState with fn encode_view_state(
   self,
 ) {
-  let output = Buffer(size_hint=8)
+  let output = Buffer(capacity=8)
   output.write_double_be(self.offset_y)
   output.to_bytes()
 }

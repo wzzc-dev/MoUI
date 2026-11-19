@@ -87,7 +87,7 @@ pub fn service_handler() -> @protocol.PdfWorkbenchPdfliteServiceHandler {
       @protocol.PdfWorkbenchPdfliteServiceRequest::WritebackDocument(
         path,
         bytes,
-        edits
+        edits,
       ) =>
         match
           @app.PdfWorkbenchDocument::from_engine_summary(
@@ -104,7 +104,7 @@ pub fn service_handler() -> @protocol.PdfWorkbenchPdfliteServiceHandler {
             match writeback_document(document) {
               @app.PdfWorkbenchDocumentWritebackResult::WritebackReady(
                 output,
-                diagnostics
+                diagnostics,
               ) =>
                 @protocol.PdfWorkbenchPdfliteServiceResponse::WritebackReady(
                   output, diagnostics,

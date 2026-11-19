@@ -2,14 +2,14 @@
 package "examples/p5_sketch/skia_raster"
 
 import {
-  "examples/p5_sketch/p5",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_p5",
 }
 
 // Values
 pub fn install() -> Unit
 
-pub fn rasterize(Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?
+pub fn rasterize(Array[@core.DrawCommand], @core.SurfaceMetrics) -> @moui_p5.Image?
 
 // Errors
 
@@ -17,7 +17,7 @@ pub fn rasterize(Array[@core.DrawCommand], @core.SurfaceMetrics) -> @p5.Image?
 pub struct SkiaCanvasRaster {
   // private fields
 }
-pub fn SkiaCanvasRaster::capture(Self, Array[@core.DrawCommand]) -> @p5.Image?
+pub fn SkiaCanvasRaster::capture(Self, Array[@core.DrawCommand]) -> @moui_p5.Image?
 pub fn SkiaCanvasRaster::new(@core.SurfaceMetrics) -> Self?
 pub fn SkiaCanvasRaster::text_system(Self) -> @core.TextSystem
 

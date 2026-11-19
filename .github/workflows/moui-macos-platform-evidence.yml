@@ -54,7 +54,7 @@ jobs:
         run: ../scripts/ci-moon-update.sh
 
       - name: Cache release Skia
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-macos-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -121,7 +121,7 @@ jobs:
 
       - name: Upload macOS platform evidence artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: moui-macos-platform-evidence
           path: |

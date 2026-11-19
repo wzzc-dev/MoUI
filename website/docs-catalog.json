@@ -87,33 +87,6 @@
       ]
     },
     {
-      "group": "architecture-api",
-      "slug": "diagnostics",
-      "title": "Diagnostics",
-      "path": "docs/diagnostics.md",
-      "summary": "Shared DiagnosticEvent envelope, caller-owned bounded sink, and the producer/consumer map.",
-      "keywords": [
-        "diagnostics",
-        "DiagnosticEvent",
-        "observability",
-        "degrade"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "task-lifecycle",
-      "title": "Task Lifecycle",
-      "path": "docs/task-lifecycle.md",
-      "summary": "Ownership, cancellation, and teardown order for effects, subscriptions, service tasks, image requests, and renderer sessions.",
-      "keywords": [
-        "task",
-        "cancellation",
-        "lifecycle",
-        "effects",
-        "subscriptions"
-      ]
-    },
-    {
       "group": "get-started",
       "slug": "tutorials",
       "title": "Tutorials",
@@ -356,294 +329,6 @@
       ]
     },
     {
-      "group": "platforms",
-      "slug": "platform-notes",
-      "title": "Platform Notes",
-      "path": "docs/platform-notes.md",
-      "summary": "Current Web and native backend setup notes and platform-specific constraints.",
-      "keywords": [
-        "platform",
-        "web",
-        "native",
-        "backend"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-notes-web",
-      "title": "Web Platform Notes",
-      "path": "docs/platform-notes-web.md",
-      "summary": "Web wasm-gc setup, browser runtime behavior, rendering paths, and validation commands.",
-      "keywords": [
-        "Web",
-        "wasm-gc",
-        "browser",
-        "WebGPU"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-notes-macos",
-      "title": "macOS Platform Notes",
-      "path": "docs/platform-notes-macos.md",
-      "summary": "macOS AppKit host setup, native Skia rendering, services, and runtime evidence.",
-      "keywords": [
-        "macOS",
-        "AppKit",
-        "Skia",
-        "native"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-notes-windows",
-      "title": "Windows Platform Notes",
-      "path": "docs/platform-notes-windows.md",
-      "summary": "Windows host setup, native Skia rendering, platform services, and validation workflow.",
-      "keywords": [
-        "Windows",
-        "Win32",
-        "Skia",
-        "native"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-notes-linux",
-      "title": "Linux Platform Notes",
-      "path": "docs/platform-notes-linux.md",
-      "summary": "Linux Wayland host setup, native Skia rendering, system dependencies, and validation workflow.",
-      "keywords": [
-        "Linux",
-        "Wayland",
-        "Skia",
-        "native"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-notes-wechat",
-      "title": "WeChat Mini Program Platform Notes",
-      "path": "docs/platform-notes-wechat.md",
-      "summary": "WeChat Mini Program Skyline, Canvas 2D, wasm-gc, and platform-specific integration notes.",
-      "keywords": [
-        "WeChat",
-        "Mini Program",
-        "Skyline",
-        "Canvas 2D"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-host-contract",
-      "title": "Platform Host Contract",
-      "path": "docs/platform-host-contract.md",
-      "summary": "Shared host runtime, window, input, service, rendering, and accessibility contracts.",
-      "keywords": [
-        "host",
-        "contract",
-        "window",
-        "services"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "window-hosted-moui",
-      "title": "Window-hosted MoUI",
-      "path": "docs/window-hosted-moui.md",
-      "summary": "The window-hosted Android, iOS, and HarmonyOS lifecycle, surface, input, and validation route.",
-      "keywords": [
-        "mobile",
-        "window",
-        "Android",
-        "iOS",
-        "HarmonyOS"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "platform-readiness-declaration",
-      "title": "Platform Readiness Declaration",
-      "path": "docs/platform-readiness-declaration.md",
-      "summary": "Auditable declaration of MoUI's cross-platform support and evidence levels.",
-      "keywords": [
-        "platform",
-        "readiness",
-        "support",
-        "evidence"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "android-support",
-      "title": "Android Support",
-      "path": "docs/android-support.md",
-      "summary": "Android window-hosted architecture, packaging workflow, and runtime evidence requirements.",
-      "keywords": [
-        "Android",
-        "mobile",
-        "Skia",
-        "JNI"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "ios-support",
-      "title": "iOS Support",
-      "path": "docs/ios-support.md",
-      "summary": "iOS window-hosted UIKit architecture, Xcode packaging, and smoke evidence requirements.",
-      "keywords": [
-        "iOS",
-        "UIKit",
-        "mobile",
-        "Skia"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "mobile-device-evidence",
-      "title": "Mobile Device Evidence",
-      "path": "docs/mobile-device-evidence.md",
-      "summary": "Signing, install, and evidence runbook for physical Android and iOS devices.",
-      "keywords": [
-        "Android",
-        "iOS",
-        "signing",
-        "device",
-        "evidence"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "harmonyos-support",
-      "title": "HarmonyOS Support",
-      "path": "docs/harmonyos-support.md",
-      "summary": "HarmonyOS window-hosted Stage Ability and XComponent integration, packaging, and runtime evidence requirements.",
-      "keywords": [
-        "HarmonyOS",
-        "XComponent",
-        "NAPI",
-        "mobile"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "wechat-support",
-      "title": "WeChat Mini Program Support",
-      "path": "docs/wechat-support.md",
-      "summary": "WeChat Mini Program Canvas 2D wasm-gc support, current scope, and remaining runtime evidence.",
-      "keywords": [
-        "WeChat",
-        "Mini Program",
-        "Canvas 2D",
-        "wasm-gc"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "gpu-promotion-runbook",
-      "title": "GPU Promotion Runbook",
-      "path": "docs/gpu-promotion-runbook.md",
-      "summary": "Matching-host GPU promotion evidence, performance gates, and claim validation workflow.",
-      "keywords": [
-        "GPU",
-        "promotion",
-        "evidence",
-        "performance"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "renderer-capability-report",
-      "title": "Renderer Capability Report",
-      "path": "docs/renderer-capability-report.md",
-      "summary": "Renderer feature matrix, support tiers, tracked gaps, and verification commands.",
-      "keywords": [
-        "renderer",
-        "Skia",
-        "WebGPU",
-        "capabilities"
-      ]
-    },
-    {
-      "group": "platforms",
-      "slug": "3d-capability-report",
-      "title": "3D Capability Report",
-      "path": "docs/3d-capability-report.md",
-      "summary": "Experimental 3D viewer capabilities, renderer routes, and current presentation evidence.",
-      "keywords": [
-        "3D",
-        "WebGPU",
-        "WGPU",
-        "capabilities"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "architecture",
-      "title": "Architecture",
-      "path": "docs/architecture.md",
-      "summary": "Package map and the View-to-renderer runtime pipeline across supported hosts.",
-      "keywords": [
-        "architecture",
-        "runtime",
-        "renderer",
-        "packages"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "architecture-map",
-      "title": "Architecture Map",
-      "path": "docs/architecture-map.md",
-      "summary": "One-page package layers, dependency direction, and ownership cheat sheet for contributors and agents.",
-      "keywords": [
-        "architecture",
-        "packages",
-        "dependencies",
-        "map"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "agent-semantics",
-      "title": "Committed Semantics and Agent Actions",
-      "path": "docs/agent-semantics.md",
-      "summary": "Committed semantics snapshots, stable identity, generation-checked typed actions, and the default MCP boundary.",
-      "keywords": [
-        "semantics",
-        "Agent",
-        "MCP",
-        "generation"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "api-surface",
-      "title": "API Surface",
-      "path": "docs/api-surface.md",
-      "summary": "Public package contracts, facade policy, compatibility expectations, and API checks.",
-      "keywords": [
-        "API",
-        "public surface",
-        "facade",
-        "compatibility"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "compatibility-policy",
-      "title": "Compatibility Policy",
-      "path": "docs/compatibility-policy.md",
-      "summary": "SemVer, deprecation, quality levels, and external consumer validation for published MoUI packages.",
-      "keywords": [
-        "compatibility",
-        "SemVer",
-        "deprecation",
-        "quality levels"
-      ]
-    },
-    {
       "group": "architecture-api",
       "slug": "moui-skia-readme",
       "title": "MoUI Skia README",
@@ -654,150 +339,6 @@
         "binding",
         "native",
         "renderer"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "development",
-      "title": "Development",
-      "path": "docs/development.md",
-      "summary": "Workspace setup, dependency workflow, docs sync, and focused development loops.",
-      "keywords": [
-        "development",
-        "setup",
-        "workspace",
-        "workflow"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "vendor-workflow",
-      "title": "Vendor Workflow",
-      "path": "docs/vendor-workflow.md",
-      "summary": "Use a local MoUI vendor checkout while developing MoMark or MoUI Studio, then send the framework change back as a MoUI PR.",
-      "keywords": [
-        "vendor",
-        "MoMark",
-        "MoUI Studio",
-        "pull request"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "testing",
-      "title": "Testing",
-      "path": "docs/testing.md",
-      "summary": "Focused tests, repository profiles, conformance checks, and manual smoke evidence.",
-      "keywords": [
-        "testing",
-        "CI",
-        "smoke",
-        "validation"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "maintenance",
-      "title": "Maintenance Mainline",
-      "path": "docs/maintenance.md",
-      "summary": "Maintenance ratchets, package health checks, and repository cleanup policy.",
-      "keywords": [
-        "maintenance",
-        "ratchet",
-        "quality",
-        "cleanup"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "release-readiness",
-      "title": "Release Readiness",
-      "path": "docs/release-readiness.md",
-      "summary": "Release gates, runtime smoke catalog, evidence policy, and artifact requirements.",
-      "keywords": [
-        "release",
-        "readiness",
-        "gates",
-        "artifacts"
-      ]
-    },
-    {
-      "group": "status-roadmap",
-      "slug": "compatibility-matrix",
-      "title": "Compatibility Matrix",
-      "path": "docs/compatibility-matrix.md",
-      "summary": "0.4.x module intents, release stages, and exact base pins.",
-      "keywords": [
-        "compatibility",
-        "release line",
-        "modules",
-        "pins"
-      ]
-    },
-    {
-      "group": "contributing",
-      "slug": "ai-collaboration",
-      "title": "AI Collaboration",
-      "path": "docs/ai-collaboration.md",
-      "summary": "Repository guidance for agent sessions, decisions, review, and durable records.",
-      "keywords": [
-        "AI",
-        "agents",
-        "collaboration",
-        "ADR"
-      ]
-    },
-    {
-      "group": "status-roadmap",
-      "slug": "repository-facts",
-      "title": "Repository Facts",
-      "path": "docs/repository-facts.md",
-      "summary": "Generated API counts, workspace members and examples, platform protocol status, and documentation catalog totals.",
-      "keywords": [
-        "generated",
-        "API",
-        "workspace",
-        "platform status",
-        "catalog"
-      ]
-    },
-    {
-      "group": "status-roadmap",
-      "slug": "feature-proof-matrix",
-      "title": "Feature Proof Matrix",
-      "path": "docs/feature-proof-matrix.md",
-      "summary": "Feature-level implementation and test evidence across MoUI packages and platforms.",
-      "keywords": [
-        "features",
-        "proof",
-        "coverage",
-        "evidence"
-      ]
-    },
-    {
-      "group": "status-roadmap",
-      "slug": "feature-status-dashboard",
-      "title": "Feature Status Dashboard",
-      "path": "docs/feature-status-dashboard.md",
-      "summary": "Current feature status, proof level, owner, gaps, and next verification actions.",
-      "keywords": [
-        "status",
-        "dashboard",
-        "features",
-        "gaps"
-      ]
-    },
-    {
-      "group": "status-roadmap",
-      "slug": "roadmap-2026",
-      "title": "2026 Roadmap",
-      "path": "docs/roadmap-2026.md",
-      "summary": "Planned framework, renderer, backend, examples, and release-readiness milestones.",
-      "keywords": [
-        "roadmap",
-        "2026",
-        "milestones",
-        "planning"
       ]
     }
   ],
@@ -829,6 +370,146 @@
     {
       "path": "docs/moonbitlang.md",
       "reason": "Contributor-facing index of upstream MoonBit language references; it is not MoUI product documentation."
+    },
+    {
+      "path": "docs/diagnostics.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/task-lifecycle.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes-web.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes-macos.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes-windows.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes-linux.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-notes-wechat.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-host-contract.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/window-hosted-moui.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/platform-readiness-declaration.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/android-support.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/ios-support.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/mobile-device-evidence.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/harmonyos-support.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/wechat-support.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/gpu-promotion-runbook.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/renderer-capability-report.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/3d-capability-report.md",
+      "reason": "Platform reference page kept in the repo for maintainers; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/architecture.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/architecture-map.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/agent-semantics.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/api-surface.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/compatibility-policy.md",
+      "reason": "Architecture/API reference page kept in the repo for contributors; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/development.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/vendor-workflow.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/testing.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/maintenance.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/release-readiness.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/compatibility-matrix.md",
+      "reason": "Status/roadmap projection kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/ai-collaboration.md",
+      "reason": "Contributor workflow page kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/repository-facts.md",
+      "reason": "Status/roadmap projection kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/feature-proof-matrix.md",
+      "reason": "Status/roadmap projection kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/feature-status-dashboard.md",
+      "reason": "Status/roadmap projection kept in the repo; not part of the public get-started/guides/examples set."
+    },
+    {
+      "path": "docs/roadmap-2026.md",
+      "reason": "Status/roadmap projection kept in the repo; not part of the public get-started/guides/examples set."
     }
   ],
   "locales": {
@@ -1141,305 +822,6 @@
           "localizedPath": "docs/zh-Hans/mo-workbench.md"
         },
         {
-          "group": "platforms",
-          "slug": "platform-notes",
-          "title": "\u5e73\u53f0\u8bf4\u660e",
-          "summary": "MoUI \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u5e73\u53f0\u8bf4\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-notes-web",
-          "title": "Web \u5e73\u53f0\u8bf4\u660e",
-          "summary": "MoUI Web \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "Web \u5e73\u53f0\u8bf4\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes-web.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-notes-macos",
-          "title": "macOS \u5e73\u53f0\u8bf4\u660e",
-          "summary": "MoUI macOS \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "macOS \u5e73\u53f0\u8bf4\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes-macos.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-notes-windows",
-          "title": "Windows \u5e73\u53f0\u8bf4\u660e",
-          "summary": "MoUI Windows \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "Windows \u5e73\u53f0\u8bf4\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes-windows.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-notes-linux",
-          "title": "Linux \u5e73\u53f0\u8bf4\u660e",
-          "summary": "MoUI Linux \u5e73\u53f0\u8bf4\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "Linux \u5e73\u53f0\u8bf4\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes-linux.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-notes-wechat",
-          "title": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u5e73\u53f0\u8bf4\u660e",
-          "summary": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f Skyline\u3001Canvas 2D\u3001WebAssembly \u4e0e\u5e73\u53f0\u96c6\u6210\u8bf4\u660e\u3002",
-          "keywords": [
-            "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-            "Skyline",
-            "Canvas 2D",
-            "WebAssembly"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-notes-wechat.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-host-contract",
-          "title": "\u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6",
-          "summary": "MoUI \u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u5e73\u53f0\u5bbf\u4e3b\u5951\u7ea6",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-host-contract.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "window-hosted-moui",
-          "title": "Window \u6258\u7ba1\u7684 MoUI",
-          "summary": "Android\u3001iOS \u548c HarmonyOS \u7684 window-hosted \u751f\u547d\u5468\u671f\u3001Surface\u3001\u8f93\u5165\u4e0e\u9a8c\u8bc1\u8def\u5f84\u3002",
-          "keywords": [
-            "\u79fb\u52a8\u7aef",
-            "window",
-            "Android",
-            "iOS",
-            "HarmonyOS"
-          ],
-          "localizedPath": "docs/zh-Hans/window-hosted-moui.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "platform-readiness-declaration",
-          "title": "\u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e",
-          "summary": "MoUI \u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u5e73\u53f0\u5c31\u7eea\u5ea6\u58f0\u660e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/platform-readiness-declaration.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "android-support",
-          "title": "Android \u652f\u6301",
-          "summary": "MoUI Android \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "Android \u652f\u6301",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/android-support.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "ios-support",
-          "title": "iOS \u652f\u6301",
-          "summary": "MoUI iOS \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "iOS \u652f\u6301",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/ios-support.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "mobile-device-evidence",
-          "title": "\u79fb\u52a8\u771f\u673a\u8bc1\u636e",
-          "summary": "Android/iOS \u771f\u673a\u7b7e\u540d\u3001\u5b89\u88c5\u4e0e\u8bc1\u636e\u8bb0\u5f55\u8fd0\u884c\u624b\u518c\u3002",
-          "keywords": [
-            "Android",
-            "iOS",
-            "\u7b7e\u540d",
-            "\u771f\u673a",
-            "\u8bc1\u636e"
-          ],
-          "localizedPath": "docs/zh-Hans/mobile-device-evidence.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "harmonyos-support",
-          "title": "HarmonyOS \u652f\u6301",
-          "summary": "MoUI HarmonyOS \u652f\u6301\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "HarmonyOS \u652f\u6301",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/harmonyos-support.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "wechat-support",
-          "title": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f\u652f\u6301",
-          "summary": "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f Canvas 2D WebAssembly \u652f\u6301\u8303\u56f4\u3001\u5f53\u524d\u72b6\u6001\u548c\u5f85\u8865\u9f50\u7684\u8fd0\u884c\u65f6\u8bc1\u636e\u3002",
-          "keywords": [
-            "\u5fae\u4fe1\u5c0f\u7a0b\u5e8f",
-            "Canvas 2D",
-            "WebAssembly",
-            "\u8fd0\u884c\u65f6"
-          ],
-          "localizedPath": "docs/zh-Hans/wechat-support.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "gpu-promotion-runbook",
-          "title": "GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c",
-          "summary": "MoUI GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "GPU \u63a8\u8fdb\u8fd0\u884c\u624b\u518c",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/gpu-promotion-runbook.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "renderer-capability-report",
-          "title": "\u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a",
-          "summary": "MoUI \u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u6e32\u67d3\u5668\u80fd\u529b\u62a5\u544a",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/renderer-capability-report.md"
-        },
-        {
-          "group": "platforms",
-          "slug": "3d-capability-report",
-          "title": "3D \u80fd\u529b\u62a5\u544a",
-          "summary": "\u5b9e\u9a8c\u6027 3D viewer \u80fd\u529b\u3001\u6e32\u67d3\u8def\u7ebf\u548c\u5f53\u524d\u5448\u73b0\u8bc1\u636e\u3002",
-          "keywords": [
-            "3D \u80fd\u529b\u62a5\u544a",
-            "WebGPU",
-            "WGPU",
-            "\u80fd\u529b"
-          ],
-          "localizedPath": "docs/zh-Hans/3d-capability-report.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "architecture",
-          "title": "\u67b6\u6784",
-          "summary": "MoUI \u67b6\u6784\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u67b6\u6784",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/architecture.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "diagnostics",
-          "title": "\u8bca\u65ad",
-          "summary": "\u5171\u4eab DiagnosticEvent \u4fe1\u5c01\u3001\u8c03\u7528\u65b9\u62e5\u6709\u7684\u6709\u754c sink\uff0c\u4ee5\u53ca\u751f\u4ea7\u8005/\u6d88\u8d39\u8005\u6620\u5c04\u3002",
-          "keywords": [
-            "\u8bca\u65ad",
-            "DiagnosticEvent",
-            "\u53ef\u89c2\u6d4b\u6027",
-            "\u964d\u7ea7"
-          ],
-          "localizedPath": "docs/zh-Hans/diagnostics.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "task-lifecycle",
-          "title": "\u4efb\u52a1\u751f\u547d\u5468\u671f",
-          "summary": "Effect\u3001Subscription\u3001ServiceTask\u3001image request \u4e0e renderer session \u7684\u6240\u6709\u6743\u3001\u53d6\u6d88\u4e0e teardown \u987a\u5e8f\u3002",
-          "keywords": [
-            "\u4efb\u52a1",
-            "\u53d6\u6d88",
-            "\u751f\u547d\u5468\u671f",
-            "Effect",
-            "Subscription"
-          ],
-          "localizedPath": "docs/zh-Hans/task-lifecycle.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "architecture-map",
-          "title": "\u67b6\u6784\u5730\u56fe",
-          "summary": "MoUI \u67b6\u6784\u5730\u56fe\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u67b6\u6784\u5730\u56fe",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/architecture-map.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "agent-semantics",
-          "title": "\u5df2\u63d0\u4ea4\u8bed\u4e49\u4e0e Agent \u64cd\u4f5c",
-          "summary": "\u5df2\u63d0\u4ea4\u8bed\u4e49\u5feb\u7167\u3001\u7a33\u5b9a\u8eab\u4efd\u3001generation \u6821\u9a8c\u7684 typed action \u4e0e\u9ed8\u8ba4 MCP \u8fb9\u754c\u3002",
-          "keywords": [
-            "\u8bed\u4e49",
-            "Agent",
-            "MCP",
-            "generation"
-          ],
-          "localizedPath": "docs/zh-Hans/agent-semantics.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "api-surface",
-          "title": "API \u8868\u9762",
-          "summary": "MoUI API \u8868\u9762\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "API \u8868\u9762",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/api-surface.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "compatibility-policy",
-          "title": "\u517c\u5bb9\u6027\u7b56\u7565",
-          "summary": "MoUI \u5df2\u53d1\u5e03\u5305\u7684 SemVer\u3001\u5e9f\u5f03\u3001\u8d28\u91cf\u7b49\u7ea7\u4e0e\u5916\u90e8\u6d88\u8d39\u8005\u6821\u9a8c\u3002",
-          "keywords": [
-            "\u517c\u5bb9\u6027\u7b56\u7565",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/compatibility-policy.md"
-        },
-        {
           "group": "architecture-api",
           "slug": "moui-skia-readme",
           "title": "moui_skia README",
@@ -1450,140 +832,6 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/moui-skia-readme.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "development",
-          "title": "\u5f00\u53d1",
-          "summary": "MoUI \u5f00\u53d1\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u5f00\u53d1",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/development.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "vendor-workflow",
-          "title": "Vendor \u5de5\u4f5c\u6d41",
-          "summary": "\u5728\u5f00\u53d1 MoMark \u6216 MoUI Studio \u65f6\u672c\u5730 vendor MoUI\uff0c\u5e76\u628a\u6846\u67b6\u6539\u52a8\u4f5c\u4e3a MoUI PR \u63d0\u56de\u3002",
-          "keywords": [
-            "vendor",
-            "MoMark",
-            "MoUI Studio",
-            "PR"
-          ],
-          "localizedPath": "docs/zh-Hans/vendor-workflow.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "testing",
-          "title": "\u6d4b\u8bd5",
-          "summary": "MoUI \u6d4b\u8bd5\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u6d4b\u8bd5",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/testing.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "maintenance",
-          "title": "\u7ef4\u62a4",
-          "summary": "MoUI \u7ef4\u62a4\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u7ef4\u62a4",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/maintenance.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "release-readiness",
-          "title": "\u53d1\u5e03\u5c31\u7eea\u5ea6",
-          "summary": "MoUI \u53d1\u5e03\u5c31\u7eea\u5ea6\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u53d1\u5e03\u5c31\u7eea\u5ea6",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/release-readiness.md"
-        },
-        {
-          "group": "status-roadmap",
-          "slug": "compatibility-matrix",
-          "title": "\u517c\u5bb9\u77e9\u9635",
-          "summary": "0.4.x \u6a21\u5757 intent\u3001\u53d1\u5e03\u9636\u6bb5\u4e0e\u7cbe\u786e\u57fa\u7840 pin\u3002",
-          "keywords": [
-            "\u517c\u5bb9",
-            "\u53d1\u5e03\u7ebf",
-            "\u6a21\u5757",
-            "pin"
-          ],
-          "localizedPath": "docs/zh-Hans/compatibility-matrix.md"
-        },
-        {
-          "group": "contributing",
-          "slug": "ai-collaboration",
-          "title": "AI \u534f\u4f5c",
-          "summary": "MoUI AI \u534f\u4f5c\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "AI \u534f\u4f5c",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/ai-collaboration.md"
-        },
-        {
-          "group": "status-roadmap",
-          "slug": "repository-facts",
-          "title": "\u4ed3\u5e93\u4e8b\u5b9e",
-          "summary": "MoUI \u4ed3\u5e93\u4e8b\u5b9e\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u4ed3\u5e93\u4e8b\u5b9e",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/repository-facts.md"
-        },
-        {
-          "group": "status-roadmap",
-          "slug": "feature-proof-matrix",
-          "title": "\u529f\u80fd\u8bc1\u660e\u77e9\u9635",
-          "summary": "MoUI \u529f\u80fd\u8bc1\u660e\u77e9\u9635\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u529f\u80fd\u8bc1\u660e\u77e9\u9635",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/feature-proof-matrix.md"
-        },
-        {
-          "group": "status-roadmap",
-          "slug": "feature-status-dashboard",
-          "title": "\u529f\u80fd\u72b6\u6001\u9762\u677f",
-          "summary": "MoUI \u529f\u80fd\u72b6\u6001\u9762\u677f\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "\u529f\u80fd\u72b6\u6001\u9762\u677f",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/feature-status-dashboard.md"
-        },
-        {
-          "group": "status-roadmap",
-          "slug": "roadmap-2026",
-          "title": "2026 \u8def\u7ebf\u56fe",
-          "summary": "MoUI 2026 \u8def\u7ebf\u56fe\u7684\u516c\u5f00\u6587\u6863\u3002",
-          "keywords": [
-            "2026 \u8def\u7ebf\u56fe",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/roadmap-2026.md"
         }
       ]
     }

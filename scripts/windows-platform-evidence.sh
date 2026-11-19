@@ -7,9 +7,13 @@ Usage: scripts/windows-platform-evidence.sh [options]
 
 Collects Windows Skia platform evidence from the canonical Showcase route:
 1. Resolves the requested real Skia provider.
-2. Temporarily configures moui_skia/native/moon.pkg for MSVC.
-3. Builds and runs examples/showcase/windows_skia with first-frame auto-exit.
-4. Writes logs under artifacts/platform-evidence/windows/.
+2. Builds and runs examples/showcase/windows_skia with first-frame auto-exit. The
+   moui_skia/build.mbtx prebuild compiles the Skia C++ stub and emits the final
+   link config, so no package file is patched and MOON_CC stays untouched.
+3. Writes logs under artifacts/platform-evidence/windows/.
+
+Run this from an MSVC developer environment (cl.exe and lib.exe on PATH, e.g.
+inside `vcvarsall.bat x64`); the prebuild shells out to cl for the C++ stub.
 
 Options:
   --log-dir PATH          Evidence output directory.
@@ -65,10 +69,6 @@ case "$log_dir" in
 esac
 
 skia_repo="$REPO_ROOT/moui_skia"
-skia_pkg="$skia_repo/native/moon.pkg"
-skia_pkg_backup="$skia_pkg.moui-evidence.bak"
-showcase_pkg="$REPO_ROOT/examples/showcase/windows_skia/moon.pkg"
-showcase_backup="$showcase_pkg.moui-evidence.bak"
 showcase_log="$resolved_log_dir/showcase-windows-skia-first-frame.log"
 preflight_log="$resolved_log_dir/windows-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/windows-platform-evidence-summary.log"
@@ -88,30 +88,8 @@ if [[ $dry_run_config -eq 1 ]]; then
   exit 0
 fi
 
-restore_skia_pkg() {
-  if [[ -f "$skia_pkg_backup" ]]; then
-    cp "$skia_pkg_backup" "$skia_pkg"
-    rm -f "$skia_pkg_backup"
-    echo "Restored $skia_pkg"
-  fi
-  if [[ -f "$showcase_backup" ]]; then
-    cp "$showcase_backup" "$showcase_pkg"
-    rm -f "$showcase_backup"
-    echo "Restored $showcase_pkg"
-  fi
-}
-
-if [[ -f "$skia_pkg_backup" ]]; then
-  echo "stale Skia package backup exists: $skia_pkg_backup" >&2
-  exit 1
-fi
-if [[ -f "$showcase_backup" ]]; then
-  echo "stale Showcase package backup exists: $showcase_backup" >&2
-  exit 1
-fi
-cp "$skia_pkg" "$skia_pkg_backup"
-cp "$showcase_pkg" "$showcase_backup"
-trap restore_skia_pkg EXIT
+# The prebuild owns the Skia link config; nothing in the tree is rewritten, so
+# there is no package backup or restore step to manage here.
 
 if [[ "$skia_provider" == "release" ]]; then
   echo "=== Step 1: Resolve release Skia provider ===" | tee -a "$preflight_log"
@@ -148,85 +126,34 @@ if [[ -z "$skia_root" || -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   exit 1
 fi
 
-echo "=== Step 2: Configure moui_skia/native/moon.pkg ===" | tee -a "$preflight_log"
-powershell -NoProfile -ExecutionPolicy Bypass -File \
-  "$skia_repo/scripts/configure-windows-msvc-native-pkg.ps1" \
-  -SkiaRoot "$skia_root" \
-  -SkiaInclude "$skia_include" \
-  -SkiaLibDir "$skia_lib_dir" \
-  -SkiaLinkMode "$skia_link_mode" \
-  -Write 2>&1 | tee -a "$preflight_log"
+echo "=== Step 2: Export Skia provider environment ===" | tee -a "$preflight_log"
+# moui_skia/build.mbtx reads the provider paths from the environment and compiles
+# native/*.cpp with cl's own /std:c++20, so mbt never injects its /std:c11 stub
+# flags and the D8016 clash cannot occur. The final link gets the Skia flags from
+# the prebuild's link_configs, so no package file is patched.
+export MOUI_SKIA_PLATFORM=windows
+export MOUI_SKIA_SKIA_ROOT="$skia_root"
+export MOUI_SKIA_SKIA_INCLUDE="$skia_include"
+export MOUI_SKIA_SKIA_LIB_DIR="$skia_lib_dir"
+export MOUI_SKIA_LINK_MODE="$skia_link_mode"
+export MOUI_SKIA_STUB_MODE=build
+export MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA
+unset MOUI_SKIA_STUB_LIB
+{
+  echo "  MOUI_SKIA_PLATFORM=$MOUI_SKIA_PLATFORM"
+  echo "  MOUI_SKIA_SKIA_INCLUDE=$MOUI_SKIA_SKIA_INCLUDE"
+  echo "  MOUI_SKIA_SKIA_LIB_DIR=$MOUI_SKIA_SKIA_LIB_DIR"
+  echo "  MOUI_SKIA_LINK_MODE=$MOUI_SKIA_LINK_MODE"
+  echo "  MOUI_SKIA_STUB_MODE=$MOUI_SKIA_STUB_MODE"
+} | tee -a "$preflight_log"
 
-echo "=== Step 3: Configure Showcase package link flags ===" | tee -a "$preflight_log"
-# The MSVC final link only sees link flags carried by build.js link_configs;
-# with MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 that carrier is empty, so inject the
-# generated Skia flags into the executable package directly (same pattern as
-# scripts/linux-platform-evidence.sh).
-win_stub_cc_flags="$(sed -n 's/.*"stub-cc-flags": "\(.*\)",/\1/p' "$skia_pkg" | tail -n 1)"
-win_link_flags="$(sed -n 's/.*"cc-link-flags": "\(.*\)",/\1/p' "$skia_pkg" | tail -n 1)"
-if [[ -z "$win_stub_cc_flags" || -z "$win_link_flags" ]]; then
-  echo "Failed to extract Skia link flags from $skia_pkg" >&2
-  exit 1
-fi
-echo "  Skia link flags: $win_link_flags" | tee -a "$preflight_log"
-
-cat > "$showcase_pkg" <<PKGEOF
-import {
-  "wzzc-dev/moui/apphost",
-  "wzzc-dev/moui/backend/windows" @windows_backend,
-  "wzzc-dev/moui_skia_renderer" @render_skia,
-  "examples/showcase",
-}
-
-supported_targets = "native"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "native": {
-      "stub-cc-flags": "$win_stub_cc_flags",
-      "cc-link-flags": "$win_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-PKGEOF
-echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
-
-echo "=== Step 4: Build Showcase Windows Skia ===" | tee -a "$preflight_log"
+echo "=== Step 3: Build Showcase Windows Skia ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
-# The MoonBit CLI injects /std:c11 for MSVC stub compiles while the Skia stubs
-# need /std:c++20; cl.exe rejects that pair (D8016). Build through clang-cl.exe
-# from the same Visual Studio install, which accepts both and is classified as
-# MSVC by the CLI (moon pairs the sibling llvm-lib.exe automatically).
-if [[ -z "${MOON_CC:-}" ]]; then
-  MOON_CC="$(powershell -NoProfile -ExecutionPolicy Bypass -Command "
-    \$vswhere = Join-Path \${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    if (-not (Test-Path -LiteralPath \$vswhere)) { exit 1 }
-    \$install = & \$vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-    if (-not \$install) { exit 1 }
-    \$candidate = Join-Path \$install 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
-    if (Test-Path -LiteralPath \$candidate) { Write-Output \$candidate }
-  " 2>/dev/null | tr -d '\r')"
-fi
-if [[ -z "${MOON_CC:-}" ]]; then
-  echo "clang-cl.exe was not found; set MOON_CC to its absolute path before running this script" >&2
-  exit 1
-fi
-if [[ ! -f "$(cygpath -u "$MOON_CC" 2>/dev/null || printf '%s' "$MOON_CC")" ]]; then
-  echo "MOON_CC does not point at an existing compiler: $MOON_CC" >&2
-  exit 1
-fi
-export MOON_CC
-echo "  MOON_CC=$MOON_CC" | tee -a "$preflight_log"
-
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  moon build examples/showcase/windows_skia --target native 2>&1 \
+moon build examples/showcase/windows_skia --target native 2>&1 \
   | tee -a "$preflight_log"
 
-echo "=== Step 4.5: Stage Skia ICU data next to the executable ===" | tee -a "$preflight_log"
+echo "=== Step 3.5: Stage Skia ICU data next to the executable ===" | tee -a "$preflight_log"
 # Skia's SkLoadICU only searches the exe/module directories (the ICU_DATA
 # environment variable is ignored), so the release Skia package's icudtl.dat
 # must be staged next to the executable before the run.
@@ -240,10 +167,8 @@ else
   echo "  WARNING: could not stage $icu_src; SkParagraph text layout will degrade" | tee -a "$preflight_log"
 fi
 
-echo "=== Step 5: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  MOUI_FIRST_FRAME_EXIT=1 \
+echo "=== Step 4: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
+MOUI_FIRST_FRAME_EXIT=1 \
   moon run examples/showcase/windows_skia --target native \
   > "$showcase_log" 2>&1 &
 showcase_pid=$!

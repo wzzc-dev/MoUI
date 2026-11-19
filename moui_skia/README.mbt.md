@@ -315,6 +315,29 @@ bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode
 .\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
+When GitHub is unreachable, the same helpers fall back to the GitCode mirror
+recorded in the lock (`providers.release.mirrors`). The mirror serves the same
+bytes and is verified against the locked SHA256 and size, so it cannot silently
+swap an artifact:
+
+```bash
+MOUI_SKIA_MIRROR=gitcode-skia bash scripts/fetch-release-skia.sh --print-env
+bash scripts/fetch-release-skia.sh --no-mirror --print-env  # primary host only
+```
+
+The lock also records `url-prefix` proxies (for example `gh-proxy.com`), which
+front GitHub at download time and need no upload, so Debug packages and the
+source archive get a fallback too. They rank after the hosted GitCode copy and
+must still match the locked SHA256, because these services sometimes answer with
+an error page or a truncated body.
+
+`MOUI_SKIA_MIRROR` accepts `auto` (default: primary, then every mirror), `off`,
+or a mirror name to try first; a name also covers mirrors named `<name>-...`, so
+`gitcode` prefers `gitcode-skia` and `gitcode-skia-stub` in one go.
+`MOUI_SKIA_SKIA_PACKAGE_MIRROR` and
+`MOUI_SKIA_STUB_ASSET_MIRROR` in `--print-env` report which source served the
+download. `scripts/mirror-release-assets.sh` refreshes the mirror from the lock.
+
 Use [REAL_SKIA_SMOKE.md](REAL_SKIA_SMOKE.md) as the acceptance checklist for
 real-backend artifacts. A passing fallback build, dry-run, or syntax check is
 not enough to claim real Skia acceptance.
@@ -385,8 +408,16 @@ library files.
 
 The package prebuild hook now enables native real-Skia configuration by
 default for native builds. Set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
-`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` when you need the fallback-unavailable
-compile path. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
+`MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` only for the pure-build escape hatch: it
+skips the Skia include/lib/define fetch but still resolves a stub archive
+(`MOUI_SKIA_STUB_LIB` when set, otherwise a local no-Skia compile inside the
+prebuild), so native link checks stay green while the app reports Skia
+unavailable. The C++ stub never returns to the `mbt` `native-stub` compile, and
+`MOUI_SKIA_STUB_MODE=prebuilt` is a hard error under the hatch. Under the
+default `MOUI_SKIA_STUB_MODE=auto`, an unavailable released stub archive is
+not fatal: the provider fetch prints a note and the prebuild compiles
+`native/*.cpp` locally instead, so a release without the optional stub asset
+still builds. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
 `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, `MOUI_SKIA_EXTRA_LINK_FLAGS`, and
 `MOUI_SKIA_LINK_MODE` take precedence over the release provider defaults.

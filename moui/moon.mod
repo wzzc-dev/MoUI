@@ -24,5 +24,5 @@ keywords = [ "moui", "gui", "framework" ]
 description = "MoUI is a multi-platform MoonBit GUI framework"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

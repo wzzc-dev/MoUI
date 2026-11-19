@@ -114,8 +114,8 @@ must not be reversed by moving them back into `core`.
   `control_theme_set.mbt`, `control_style.mbt`). App-side control appearance
   should read `@views.ControlThemeSet` via
   `@style.views_ambient_control_theme(theme)` and use `@views.*Style` /
-  `light_theme`/`theme`. See `docs/plans/done/core-component-theme-to-views.md`
-  (superseded by ADR 0017).
+  `light_theme`/`theme`. See `docs/plans/done/INDEX.md` (row
+  `core-component-theme-to-views`, superseded by ADR 0017).
 - **WebView ownership has moved out**: WebView-specific controller, bridge,
   policy, request, and event types are owned by the independent
   `wzzc-dev/moui_webview` addon. `core` retains only renderer-neutral
@@ -247,9 +247,11 @@ should depend by default on:
   capabilities. One-shot operations return typed `ServiceTask[T]`; sources emit
   core `Subscription` values. Neither API exposes a host bridge, request id, or
   completion queue. Remote image loading is observed through
-  `AppServices::remote_image()`; the concrete native HTTP/retry/worker
-  implementation stays in `backend/common/services/native` and is installed by
-  the composition root.
+  `AppServices::remote_image()`; `fetch` returns a `RemoteImageRequest` whose
+  idempotent `cancel()` suppresses the eventual completion, so the framework
+  never requires the app to wrap a fire-and-forget fetch. The concrete native
+  HTTP/retry/worker implementation stays in `backend/common/services/native`
+  and is installed by the composition root.
 
 - `wzzc-dev/moui_i18n` — an **optional localization addon**. It provides locale
   normalization, static catalog lookup, fallback, named interpolation, and

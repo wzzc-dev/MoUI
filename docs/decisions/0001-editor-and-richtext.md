@@ -268,7 +268,7 @@ remain public.
 - **Agent model**: Trae AI
 - **Key prompt or instruction**: "把 .trae 下面的文档统一维护起来"
 - **Validation**: Workflow 4 (blackbox tests) was completed and verified — see
-  `docs/ai-sessions/2026-06-29-moui-richtext-blackbox-tests.md`.
+  `docs/ai-sessions/text-and-editors.md`.
 
 ### References
 

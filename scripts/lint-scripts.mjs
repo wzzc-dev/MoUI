@@ -33,7 +33,7 @@ if (!["pr", "full"].includes(profile)) {
 const walk = dir => {
   const files = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "node_modules" || entry.name === ".git") continue;
+    if (["node_modules", ".git", ".mooncakes", ".skia-cache", "dist"].includes(entry.name)) continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...walk(path));
@@ -67,7 +67,13 @@ const commandExists = command => {
   return result.status === 0;
 };
 
-const scriptFiles = walk(resolve(repoRoot, "scripts"));
+// Root `scripts/` holds the shared gates; `moui_skia/scripts/` holds the Skia
+// provider tooling (fetch, publish, mirror). Linting both keeps the provider
+// scripts' bash/PowerShell syntax checked by the same pr gate.
+const scriptRoots = ["scripts", "moui_skia/scripts"]
+  .map(dir => resolve(repoRoot, dir))
+  .filter(dir => existsSync(dir));
+const scriptFiles = scriptRoots.flatMap(dir => walk(dir));
 const nodeFiles = scriptFiles.filter(path => extname(path) === ".mjs").sort();
 for (const file of nodeFiles) {
   run(["node", "--check", relative(repoRoot, file)]);

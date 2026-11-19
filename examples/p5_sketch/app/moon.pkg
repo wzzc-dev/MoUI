@@ -1,6 +1,6 @@
 import {
-  "examples/p5_sketch/p5",
-  "examples/p5_sketch/p5/moui" @p5m,
+  "wzzc-dev/moui_p5" @p5,
+  "wzzc-dev/moui_p5/moui" @p5m,
   "wzzc-dev/moui",
   "wzzc-dev/moui/views",
 }

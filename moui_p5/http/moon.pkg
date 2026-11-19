@@ -1,0 +1,7 @@
+import {
+  "wzzc-dev/moui_p5" @p5,
+  "moonbitlang/async",
+  "moonbitlang/async/http" @async_http,
+}
+
+supported_targets = "native"

@@ -28,6 +28,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_i18n |
 | ./moui_richtext |
 | ./moui_markdown |
+| ./moui_p5 |
 | ./moui_webview |
 | ./moui_devtools |
 | ./moui_agent |
@@ -81,7 +82,7 @@ This file is generated from repository manifests and validator reports.
 | state sugar (moui/state/pkg.generated.mbti) | 23 | 4 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 795 | 522 | 19 |
 | apphost facade (moui/apphost/pkg.generated.mbti) | 192 | 96 | 5 |
-| core (moui/core/pkg.generated.mbti) | 3058 | 1293 | 158 |
+| core (moui/core/pkg.generated.mbti) | 3059 | 1294 | 158 |
 | views facade (moui/views/pkg.generated.mbti) | 755 | 361 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 713 | 269 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
@@ -147,14 +148,14 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 58.
+Published documents: 23.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
 | Guides (guides) | 12 |
 | Examples (examples) | 5 |
-| Platforms (platforms) | 17 |
-| Architecture & API (architecture-api) | 8 |
-| Contributing (contributing) | 6 |
-| Status & Roadmap (status-roadmap) | 5 |
+| Platforms (platforms) | 0 |
+| Architecture & API (architecture-api) | 1 |
+| Contributing (contributing) | 0 |
+| Status & Roadmap (status-roadmap) | 0 |

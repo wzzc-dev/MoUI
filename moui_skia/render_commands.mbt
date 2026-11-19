@@ -10,7 +10,7 @@ pub(all) enum RenderCommand {
     Paint,
     ColorFilterDescriptor?,
     ImageFilterDescriptor?,
-    MaskFilterDescriptor?
+    MaskFilterDescriptor?,
   )
   TranslateCanvas(Point)
   ScaleCanvas(Size)
@@ -47,7 +47,7 @@ pub(all) enum RenderCommand {
     TextRunDescriptor,
     RendererResourceKey,
     Point,
-    Paint
+    Paint,
   )
   DrawCanvasShapedGlyphRunUtf8(Bytes, ShapedGlyphRunDescriptor, Point, Paint)
   DeclareRenderResource(RendererResourceDescriptor)

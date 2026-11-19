@@ -3,7 +3,8 @@
 Status: Accepted (2026-11-09) — proposal 1 landed for `text()`; proposals 2
 (buttons/inputs) and the example pixel-size cleanup remain deferred.
 
-Author: plan `docs/plans/done/hot-path-invalidation-boilerplate-convergence.md` (J1)
+Author: plan `hot-path-invalidation-boilerplate-convergence` (J1; see
+`docs/plans/done/INDEX.md`)
 
 ## Context
 

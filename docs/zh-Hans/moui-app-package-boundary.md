@@ -91,7 +91,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `control_style.mbt`）。app 侧控件外观应通过
   `@style.views_ambient_control_theme(theme)` 读取 `@views.ControlThemeSet`，
   并使用 `@views.*Style` 与 `light_theme`/`theme`。详见
-  `docs/plans/done/core-component-theme-to-views.md`（已被 ADR 0017 取代）。
+  `docs/plans/done/INDEX.md`（`core-component-theme-to-views` 行，已被 ADR 0017 取代）。
 - **WebView ownership 已迁出**：WebView 专用的 controller、bridge、policy、
   request 和 event 类型由独立的 `wzzc-dev/moui_webview` addon 拥有。
   `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、

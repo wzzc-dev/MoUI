@@ -192,13 +192,13 @@ fn clipboard_services(clipboard : Ref[String]) -> @services.AppServices {
     handle=request => {
       match request {
         @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::WriteText(text)
+          @host.HostClipboardRequest::WriteText(text),
         ) => {
           clipboard.val = text
           @host.HostServiceResponse::ClipboardWritten
         }
         @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::ReadText
+          @host.HostClipboardRequest::ReadText,
         ) => @host.HostServiceResponse::ClipboardText(clipboard.val)
         _ => @host.HostServiceResponse::Unavailable("unexpected request")
       }

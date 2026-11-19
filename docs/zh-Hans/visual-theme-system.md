@@ -1,7 +1,7 @@
 # 视觉主题系统
 
 > 本文档描述 ThemeSpec → Theme 管道、ColorPalette、组件主题和环境主题解析。
-> 概述见 [架构](architecture.md)。控件样式细节见 [按钮样式指南](button-styling-guide.md)。
+> 概述见 [架构](../architecture.md)。控件样式细节见 [按钮样式指南](button-styling-guide.md)。
 
 视觉系统是一条 `ThemeSpec -> resolve_theme -> Theme` 管道。`core`
 拥有中立的模式和解析器；带品牌的设计系统是插件式适配器，生成同一个
@@ -94,7 +94,7 @@
 Skia provider 呈现 CPU 像素帧，并使用本地 `moui_skia` 绑定进行栅格、路径、图像
 和文本诊断。WebGPU host-import 渲染器会把完整命令集转发给浏览器运行时。
 实验性原生 WGPU 在明确请求时继续覆盖 GPU surface 路径和 provider 文本集成。
-见 [渲染器能力报告](renderer-capability-report.md)。
+见 [渲染器能力报告](../renderer-capability-report.md)。
 
 文本测量流经运行时 `TextSystem` 契约。`core/` 拥有中立契约和确定性兜底；
 原生 Skia 主线暴露 `skia_text_system()` 用于渲染器/文本诊断，WGPU 诊断 provider

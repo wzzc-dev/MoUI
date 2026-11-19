@@ -5,10 +5,10 @@ usage() {
   cat <<'EOF'
 Usage: scripts/configure-macos-native-pkg.sh --skia-include PATH --skia-lib-dir PATH [options]
 
-Generates the native/moon.pkg contents needed to link the native package against
-an existing macOS Skia build. By default the generated package is printed to
-stdout only. Use --write to replace native/moon.pkg, or --check to verify that
-native/moon.pkg already matches the generated contents.
+Resolves the environment that the moui_skia prebuild (build.mbtx) needs to
+compile the Skia C++ stub and link an existing Skia build. By default the export
+statements are printed for `eval "$(bash scripts/...)"`; --check verifies that
+native/moon.pkg keeps the prebuild link-config form; --write is retired.
 
 Options:
   --skia-include PATH    Skia checkout or include root containing Skia headers.
@@ -22,11 +22,11 @@ Options:
                           to be linkable from --skia-lib-dir.
   --require-skparagraph  Enable SkParagraph and fail immediately when required
                          headers or libraries are missing.
-  --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
-  --extra-link-flags STR Extra linker flags appended to cc-link-flags.
+  --extra-cc-flags STR   Extra C/C++ flags for the prebuild stub compile.
+  --extra-link-flags STR Extra linker flags for the prebuild link config.
   --output PATH          Package file to write/check. Default: native/moon.pkg.
-  --write                Write the generated package to --output.
-  --check                Fail unless --output already equals the generated package.
+  --write                Retired: exits 2 with migration guidance.
+  --check                Verify --output stays on the prebuild link-config form.
   -h, --help             Show this help.
 
 Environment defaults:
@@ -132,6 +132,16 @@ done
 
 if [[ $write_config -eq 1 && $check_config -eq 1 ]]; then
   echo "--write and --check cannot be used together" >&2
+  exit 2
+fi
+if [[ $write_config -eq 1 ]]; then
+  cat >&2 <<'MOUI_EOF'
+configure-native-pkg.sh no longer writes native/moon.pkg: the moui_skia prebuild
+(build.mbtx) now owns the Skia compile/link flags and the C++ stub archive, and
+native/moon.pkg must stay free of C++ stub sources (Windows D8016). Export
+MOUI_SKIA_SKIA_INCLUDE / MOUI_SKIA_SKIA_LIB_DIR / MOUI_SKIA_LINK_MODE (or set
+MOUI_SKIA_STUB_LIB) and run moon without MOUI_SKIA_DISABLE_PREBUILD_SKIA=1.
+MOUI_EOF
   exit 2
 fi
 case "$link_mode" in
@@ -260,80 +270,31 @@ if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi
 
-generated_config="$(cat <<EOF
-import {
-  "wzzc-dev/moui_skia" @skia,
-}
-
-options(
-  "native-stub": [
-    "skia_stub.cpp",
-    "skia_stub_common.cpp",
-    "skia_stub_surface_image_data.cpp",
-    "skia_stub_canvas.cpp",
-    "skia_stub_backdrop_blur.cpp",
-    "skia_stub_path.cpp",
-    "skia_stub_text_font.cpp",
-    "skia_stub_paragraph.cpp",
-    "skia_stub_shader_filter.cpp",
-    "skia_stub_picture.cpp",
-    "skia_stub_gpu_worker.cpp",
-  ],
-  link: {
-    "native": {
-      "stub-cc-flags": "$cc_flags",
-      "cc-link-flags": "$link_flags",
-    },
-  },
-  targets: {
-    "handles_native.mbt": [ "native", "llvm" ],
-    "skia_native.mbt": [ "native", "llvm" ],
-    "availability_native.mbt": [ "native", "llvm" ],
-    "surface_image_data_native.mbt": [ "native", "llvm" ],
-    "canvas_native.mbt": [ "native", "llvm" ],
-    "backdrop_blur_native.mbt": [ "native", "llvm" ],
-    "path_native.mbt": [ "native", "llvm" ],
-    "text_font_native.mbt": [ "native", "llvm" ],
-    "paragraph_native.mbt": [ "native", "llvm" ],
-    "shader_filter_native.mbt": [ "native", "llvm" ],
-    "picture_native.mbt": [ "native", "llvm" ],
-    "native_gpu_worker_native.mbt": [ "native", "llvm" ],
-    "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
-    "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "backdrop_blur_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "paragraph_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "picture_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "native_gpu_worker_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-  },
-)
-EOF
-)"
-
 if [[ $check_config -eq 1 ]]; then
   if [[ ! -f "$resolved_output_path" ]]; then
     echo "native package file is missing: $resolved_output_path" >&2
     exit 1
   fi
-  if ! diff -u "$resolved_output_path" <(printf '%s\n' "$generated_config"); then
-    echo "native package file does not match generated macOS Skia link config: $resolved_output_path" >&2
+  if grep -Eq '"native-stub"|"stub-cc-flags"' "$resolved_output_path"; then
+    echo "native/moon.pkg must not list C++ stub sources or stub-cc-flags (Windows D8016): $resolved_output_path" >&2
     exit 1
   fi
-  echo "Verified $resolved_output_path matches generated macOS Skia link config."
+  if ! grep -Fq '${build.MOUI_SKIA_CC_LINK_FLAGS}' "$resolved_output_path"; then
+    echo 'native/moon.pkg must carry cc-link-flags = "${build.MOUI_SKIA_CC_LINK_FLAGS}": '"$resolved_output_path" >&2
+    exit 1
+  fi
+  echo "Verified $resolved_output_path is the prebuild-based native package (no C++ stub sources)."
   exit 0
 fi
 
-if [[ $write_config -eq 1 ]]; then
-  mkdir -p "$(dirname "$resolved_output_path")"
-  printf '%s\n' "$generated_config" > "$resolved_output_path"
-  echo "Wrote macOS Skia link config to $resolved_output_path"
-  exit 0
-fi
-
-printf '%s\n' "$generated_config"
+# The Skia C++ stub is no longer `native-stub` material: the CLI injects
+# `/std:c11` for MSVC stub compiles, which clashes with Skia's `/std:c++20`
+# (D8016). `moui_skia/build.mbtx` compiles and links the stub, so this helper
+# only resolves the environment that prebuild consumes:
+#   eval "$(bash scripts/configure-macos-native-pkg.sh ...)"
+printf 'export MOUI_SKIA_SKIA_INCLUDE=%q\n' "$include_path"
+printf 'export MOUI_SKIA_SKIA_LIB_DIR=%q\n' "$lib_path"
+printf 'export MOUI_SKIA_LINK_MODE=%q\n' "$link_mode"
+printf 'export MOUI_SKIA_ENABLE_SKPARAGRAPH=%q\n' "$enable_skparagraph"
+printf 'export MOUI_SKIA_EXTRA_CC_FLAGS=%q\n' "$extra_cc_flags"
+printf 'export MOUI_SKIA_EXTRA_LINK_FLAGS=%q\n' "$extra_link_flags"

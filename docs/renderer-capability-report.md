@@ -201,7 +201,12 @@ an opaque image request token; backend image tasks read raw bytes and return a
 completion with the same token. `apply_image_load_completion` returns `true`
 only when the session accepted the current request, so stale, duplicate, and
 disposed completions cannot roll back status or cause a duplicate redraw.
-`HostImageSource` never decodes or caches images. The selected
+The framework's image surface stays neutral: `@core.RgbaBuffer`
+(`@graphics.RgbaBuffer`) owns app-side RGBA bytes and the one public PNG encode
+entry (`to_png_bytes`), while decoding has no concrete implementation in
+`moui/core` — it enters only through injected renderer-owned decoder ports, so
+the wasm route needs no framework decoder stub and native routes inject their
+provider. `HostImageSource` never decodes or caches images. The selected
 `RendererProvider` contributes a renderer-owned `RendererImageDecoder`;
 Skia, Sun, and WGPU perform their own format detection, decode, cache update,
 and ready/failed completion creation. Native host cores drain session events,

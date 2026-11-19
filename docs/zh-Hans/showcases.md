@@ -18,7 +18,7 @@ MoMark 是一个 Typora 风格的所见即所得 Markdown 编辑器，在源码�
 submodule 或 `moon.work` 成员。
 
 GitHub 源码：https://github.com/wzzc-dev/MoMark
-框架改动：[vendor 工作流](vendor-workflow.md)
+框架改动：[vendor 工作流](../vendor-workflow.md)
 
 ## Showcase
 

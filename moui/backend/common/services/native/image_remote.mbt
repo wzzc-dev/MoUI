@@ -14,16 +14,19 @@
 /// load to cleartext.
 
 ///|
-/// One pending remote image fetch.
-priv struct RemoteImageRequest {
+/// One pending remote image fetch. `cancelled` is shared with the starter's
+/// returned cancel handle and checked by the worker before it fetches or
+/// reports, so cancelling suppresses both the network work and the completion.
+priv struct RemoteImageWork {
   source : String
   finish : (Bytes?) -> Unit
+  cancelled : Ref[Bool]
 }
 
 ///|
 /// App-owned queue and worker handle for remote image sources.
 pub struct RemoteImageOwner {
-  priv queue : @async.Queue[RemoteImageRequest]
+  priv queue : @async.Queue[RemoteImageWork]
 }
 
 ///|
@@ -63,26 +66,29 @@ pub fn remote_image_starter(
       complete(request.load())
       return None
     }
-    ignore(
-      owner.queue.try_put({
-        source,
-        finish: bytes => {
-          match bytes {
-            Some(data) => {
-              (remote_image_completed.val)(source, data)
-              complete(request.load_bytes(data))
-            }
-            None => complete(request.load())
+    let work = {
+      source,
+      finish: bytes => {
+        match bytes {
+          Some(data) => {
+            (remote_image_completed.val)(source, data)
+            complete(request.load_bytes(data))
           }
-        },
-      }) catch {
-        _ => false
+          None => complete(request.load())
+        }
       },
-    )
-    // Cancellation is cooperative: a source the renderer already disposed is
-    // dropped by the worker, and a late completion is rejected by its token.
-    // The queue is unbounded, so a full queue is not a failure mode here.
-    None
+      cancelled: Ref(false),
+    }
+    let queued = owner.queue.try_put(work) catch { _ => false }
+    if !queued {
+      // The queue is unbounded, so a rejected put is a host-side shutdown;
+      // report it as no cancellable work and let the renderer lifecycle fail.
+      return None
+    }
+    // A disposed renderer disposes its image source through this handle: the
+    // worker skips the queued work and a late completion is rejected by the
+    // request token as well.
+    Some(fn() { work.cancelled.val = true })
   })
 }
 
@@ -135,7 +141,10 @@ pub async fn with_remote_images(
 /// connect failure — hosts like img.shields.io are routinely unreachable from
 /// some networks while the same URL succeeds seconds later — would otherwise
 /// blank the image for the whole session.
-async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
+async fn remote_image_fetch(work : RemoteImageWork) -> Unit {
+  if work.cancelled.val {
+    return
+  }
   if !remote_image_source_is_fetchable(work.source) {
     (work.finish)(None)
     return
@@ -144,8 +153,14 @@ async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
   let mut completed = false
   try {
     for attempt in 0..<attempts {
+      if work.cancelled.val {
+        return
+      }
       match remote_image_fetch_once(work.source) {
         Some(data) => {
+          if work.cancelled.val {
+            return
+          }
           (work.finish)(Some(data))
           completed = true
           break
@@ -159,7 +174,7 @@ async fn remote_image_fetch(work : RemoteImageRequest) -> Unit {
   } catch {
     _ => completed = false
   }
-  if !completed {
+  if !completed && !work.cancelled.val {
     (work.finish)(None)
   }
 }
@@ -213,4 +228,33 @@ pub fn remote_image_service() -> @services.RemoteImageService {
   @services.RemoteImageService::new(set_completed_listener=listener => {
     set_remote_image_completed_listener(listener)
   })
+}
+
+///|
+/// Owner-backed facade: the completion listener keeps feeding the
+/// renderer-driven image pipeline, and `RemoteImageService::fetch` returns a
+/// cancellable request handle backed by the same worker queue. Hosts that
+/// offer explicit remote fetches (document/image addons) install this one
+/// instead of the listener-only factory.
+pub fn remote_image_service_with_owner(
+  owner : RemoteImageOwner,
+) -> @services.RemoteImageService {
+  @services.RemoteImageService::new(
+    set_completed_listener=listener => {
+      set_remote_image_completed_listener(listener)
+    },
+    fetch=(source, on_complete) => {
+      let work = { source, finish: on_complete, cancelled: Ref(false), }
+      let queued = owner.queue.try_put(work) catch { _ => false }
+      if !queued {
+        None
+      } else {
+        Some(
+          @services.RemoteImageRequest::new(cancel=fn() {
+            work.cancelled.val = true
+          }),
+        )
+      }
+    },
+  )
 }

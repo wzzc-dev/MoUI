@@ -335,8 +335,8 @@ test "macos backend converts file drag drop to logical host event" {
   match drop {
     Some(
       DragDrop(
-        { phase: Dropped, paths, position: Some({ x: 60.0, y: 40.0, }), }
-      )
+        { phase: Dropped, paths, position: Some({ x: 60.0, y: 40.0, }), },
+      ),
     ) => inspect(paths[0], content="/tmp/moui.md")
     _ => fail("expected scaled file drop")
   }
@@ -357,8 +357,8 @@ test "macos backend converts wheel and focus into host input contract" {
           position: { x: 4.0, y: 5.0, },
           delta: Pixels({ x: 8.0, y: -12.0, }),
           ..
-        }
-      )
+        },
+      ),
     ) => ()
     _ => fail("expected scaled wheel event")
   }

@@ -1,6 +1,6 @@
 # Benchmark variance on shared hosts
 
-- **Plan**: `docs/plans/done/hot-path-invalidation-boilerplate-convergence.md`.
+- **Plan**: `hot-path-invalidation-boilerplate-convergence` (body retired; see `docs/plans/done/INDEX.md`).
 
 ## Standing facts
 

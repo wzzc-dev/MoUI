@@ -27,7 +27,7 @@ impl @core.ViewStateValue for TextClickCount with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for TextClickCount with fn encode_view_state(self) {
-  let output = Buffer(size_hint=32)
+  let output = Buffer(capacity=32)
   output.write_double_be(self.count.to_double())
   output.write_double_be(self.time_ms)
   output.write_double_be(self.position.x)

@@ -26,3 +26,36 @@ test "AppServices exposes the registered remote image service" {
   let services = @services.AppServices::new(remote_image=service)
   assert_true(services.remote_image().is_available())
 }
+
+///|
+test "remote image service fetch returns a cancellable request handle" {
+  let cancels = Ref(0)
+  let service = @services.RemoteImageService::new(
+    set_completed_listener=_listener => (),
+    fetch=(_source, _on_complete) => {
+      Some(
+        @services.RemoteImageRequest::new(cancel=fn() {
+          cancels.val = cancels.val + 1
+        }),
+      )
+    },
+  )
+  let request = service
+    .fetch(source="https://example.com/a.png", on_complete=_bytes => ())
+    .unwrap()
+  assert_false(request.is_cancelled())
+  request.cancel()
+  assert_true(request.is_cancelled())
+  // Cancelling twice is inert: the host cancel callback runs once.
+  request.cancel()
+  inspect(cancels.val, content="1")
+}
+
+///|
+test "unavailable remote image service rejects explicit fetches" {
+  let service = @services.RemoteImageService::unavailable()
+  let request = service.fetch(source="https://example.com/a.png", on_complete=_bytes => {
+    ()
+  })
+  assert_true(request is None)
+}

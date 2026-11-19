@@ -50,6 +50,14 @@ fn main {
   @fs.create_dir(out_dir) catch {
     _ => ()
   }
+  let save_png : (String, Bytes) -> Bool = fn(path, bytes) {
+    try {
+      @fs.write_bytes_to_file(path, bytes)
+      true
+    } catch {
+      _ => false
+    }
+  }
   let view = @p5_app.intro_bank().sketch_view(3)
   let metrics = @core.SurfaceMetrics::from_logical(
     size=@core.Size::new(width=900.0, height=540.0),
@@ -76,7 +84,7 @@ fn main {
     match raster.capture(commands) {
       Some(image) => {
         let name = "\{out_dir}/frame_\{pad4(index)}.png"
-        if image.save(name) {
+        if image.save(name, saver=save_png) {
           written = written + 1
         } else {
           println("failed to write \{name}")

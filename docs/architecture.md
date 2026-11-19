@@ -28,7 +28,7 @@ ViewDeclaration -> ElementTree
 | --- | --- |
 | `moui/` | Root public facade for app-loop types: `View`, `Program`, `Effect`, `Subscription`, `Theme`, `Environment`, and `ViewEnvironment`. |
 | `moui/{geometry,graphics,animation,text,state}/` | Domain facades over `moui/core` for app-facing geometry, paint/drawing, motion, text, and state/focus value types. They depend on `core`; `core` does not depend on them. |
-| `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and the public message-independent `ViewNode` extension protocol. |
+| `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, the neutral `RgbaBuffer` with the single public PNG encode entry (`to_png_bytes`), and the public message-independent `ViewNode` extension protocol. |
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
 | `moui/services/` | App-facing `AppServices`, typed `ServiceTask[T]`, `TimerSource`, `RouteSource`, and `AppEnvironment`; depends only on `moui/core`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
@@ -39,7 +39,7 @@ ViewDeclaration -> ElementTree
 | `moui/backend/common/image/` | Renderer image-request scheduling, cancellation, and host I/O task lifetime; `image/native` owns the filesystem image-byte source. Resource status, decoding, cache, and repaint decisions stay in the renderer session. |
 | `moui/backend/common/input/` | Neutral event conversion plus pointer/text/IME session state. Raw native decoding stays in concrete backends. |
 | `moui/backend/common/services/` | Service facade, async completion, and bridge lifetime; `services/{desktop,embedded,native}` own the concrete routers, callback transport, filesystem services, and the native remote-image loader. |
-| `moui/services/` | App-facing typed services: files, clipboard, URL, settings, appearance, menus, timers, routes, service extensions, and the `RemoteImageService` completion contract. It does not expose a host bridge or a concrete HTTP stack. |
+| `moui/services/` | App-facing typed services: files, clipboard, URL, settings, appearance, menus, timers, routes, service extensions, and the `RemoteImageService` completion contract with cancellable request handles. It does not expose a host bridge or a concrete HTTP stack. |
 | `moui/backend/common/embedded/` | Embedded session assembly after `ApplicationHandler` callbacks: transport/session generation, renderer attach, service-update mapping, IME, semantics, and platform views. It composes the other owners without duplicating lifecycle/frame/image state. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. They decode native input locally and route neutral lifecycle facts through `backend/common`. |
 | `moui/backend/wechat/` | Direct Canvas2D callback host. The bridge boundary validator keeps it on that route without fabricating a `WindowEvent` import. |
@@ -95,6 +95,7 @@ Release line **`0.6.x`** uses **`synchronized-line`** coordination. A base-only 
 | `moui_i18n` | `addons/i18n` | product | `addons` |
 | `moui_richtext` | `addons/richtext` | product | `addons` |
 | `moui_markdown` | `addons/markdown` | product | `addons` |
+| `moui_p5` | `addons/p5` | product | `addons` |
 | `moui_theme` | `addons/theme` | product | `addons` |
 | `moui_webview` | `addons/webview` | product | `addons` |
 | `moui_3d` | `addons/3d` | lab | `addons` |

@@ -75,7 +75,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -101,7 +101,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Bmp(image_data),
@@ -128,7 +128,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Png(image_data),
@@ -148,7 +148,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -168,7 +168,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -186,7 +186,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Bmp(image_data),
@@ -204,7 +204,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Bmp(image_data),
@@ -222,7 +222,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Bmp(image_data),
@@ -240,7 +240,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Bmp(image_data),
@@ -258,7 +258,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Png(image_data),
@@ -276,7 +276,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Png(image_data),
@@ -294,7 +294,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Png(image_data),
@@ -312,7 +312,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Png(image_data),
@@ -332,7 +332,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -352,7 +352,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -372,7 +372,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -392,7 +392,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_transformed_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -411,7 +411,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Bmp(image_data),
@@ -430,7 +430,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Png(image_data),
@@ -451,7 +451,7 @@ fn render_command_estimated_dirty_rect(
       width,
       height,
       _,
-      _
+      _,
     ) =>
       render_scaled_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -483,7 +483,7 @@ fn render_command_estimated_dirty_rect(
       src_rect,
       x,
       y,
-      _
+      _,
     ) =>
       render_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -519,7 +519,7 @@ fn render_command_estimated_dirty_rect(
       y,
       width,
       height,
-      _
+      _,
     ) =>
       render_tiled_image_bytes_rect_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),
@@ -556,7 +556,7 @@ fn render_command_estimated_dirty_rect(
       height,
       _,
       _,
-      _
+      _,
     ) =>
       render_nine_patch_image_bytes_estimated_dirty_rect(
         Rgba(image_data, image_width, image_height),

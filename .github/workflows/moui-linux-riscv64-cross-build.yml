@@ -63,7 +63,7 @@ jobs:
         run: sh scripts/ci-moon-update.sh
 
       - name: Cache RISC-V64 sysroot
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ runner.temp }}/moui-riscv64-sysroot-cache
           key: moui-riscv64-sysroot-${{ hashFiles('checks/toolchains/linux-riscv64.json', 'scripts/prepare-linux-riscv64-sysroot.sh') }}
@@ -82,7 +82,7 @@ jobs:
           echo "MOUI_RISCV64_SYSROOT=$sysroot" >> "$GITHUB_ENV"
 
       - name: Cache release Skia
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-linux-riscv64-static-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload RISC-V64 cross-build evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: moui-linux-riscv64-l0-l2
           path: artifacts/linux-riscv64/

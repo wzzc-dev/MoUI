@@ -1,24 +1,27 @@
 # AI Session Logs
 
-This directory stores summaries of significant AI-agent-assisted
-development sessions for MoUI.
+Durable, thematic summaries of significant AI-agent-assisted sessions for MoUI.
+Individual session files were folded into these theme pages (2026-11 docs diet);
+one-off session logs are no longer kept in-tree.
 
 ## Purpose
 
-- Record **what was done**, **why**, and **what was learned**.
-- Help future agents (and maintainers) understand context that is
-  not captured in commit messages alone.
-- Track patterns that work well or pitfalls to avoid.
+- Record **what landed**, **why**, and **what was learned**.
+- Keep context that is not visible in the code or commit messages alone.
+- Track patterns and pitfalls worth reusing.
 
-## Naming Convention
+## Files
 
-```
-YYYY-MM-DD-short-description.md
-```
+| Theme | Covers |
+|---|---|
+| [renderer-and-gpu.md](renderer-and-gpu.md) | Skia cache/damage, GPU promotion, HarmonyOS direct present, ADR 0044 route, text-provider relocation, Metal renderer L1–L4 |
+| [text-and-editors.md](text-and-editors.md) | richtext, Markdown session/caret/layout, Code Editor example, Studio blocks canvas |
+| [platform-readiness.md](platform-readiness.md) | mobile host services, Windows/Android/iOS promotions, cross-platform ownership |
+| [tui-and-input.md](tui-and-input.md) | terminal output path S0–S7, TUI hardening, pointer/RTL parity |
+| [toolchain-ci-and-release.md](toolchain-ci-and-release.md) | feature-proof CI, MoonBit 0.10.4/0.10.20, playground assets, release + governance-tax arcs |
+| [examples-harness-and-cadence.md](examples-harness-and-cadence.md) | Showcase consolidation, harness map, hot-path convergence, maturity-gap commits |
 
-Example: `2026-06-25-button-variant-refactor.md`
-
-## When to Log a Session
+## When to Log
 
 - Multi-file changes that touch architecture boundaries.
 - Sessions that produced an ADR.
@@ -28,30 +31,6 @@ Example: `2026-06-25-button-variant-refactor.md`
 
 ## Template
 
-Copy `TEMPLATE.md` and fill in the relevant sections.
-Keep it brief — aim for 1–2 pages max per session.
-
-## Index
-
-<!-- Add new entries newest-first: -->
-- [2026-10-27: L1 — a Metal renderer with no Skia and no wgpu](2026-10-27-direct-host-gpu-renderer-l1.md)
-- [2026-10-27: L0.5 — move the text providers out of the wgpu module](2026-10-27-text-provider-module-relocation.md)
-- [2026-10-27: ADR 0044 L0 — instrument the renderer route, then stop it](2026-10-27-adr0044-l0-renderer-route-instrument.md)
-- [2026-10-25: Governance tax — studio budgets exit, ratchet quanta](2026-10-25-governance-tax-studio-budget-exit.md)
-- [2026-10-23: Pointer/input parity §0–§6, §8, §9](2026-10-23-pointer-input-parity-s0-s6-s8-s9.md)
-- [2026-10-16: TUI hardening H1–H5](2026-10-16-tui-hardening.md)
-- [2026-10-15: TUI output path (S0–S7)](2026-10-15-tui-output-path.md)
-- [2026-08-29: Windows promoted to committed product class](2026-08-29-windows-committed-promotion.md)
-- [2026-08-05: Cross-platform behavior convergence](2026-08-05-cross-platform-behavior-convergence.md)
-- [2026-07-13: All-platform native GPU workers](2026-07-13-all-platform-native-gpu-workers.md)
-- [2026-07-12: Skia layer cache indexing and damage region partial clear](2026-07-12-skia-layer-cache-damage-region.md)
-- [2026-07-11: Mobile mainline and host services](2026-07-11-mobile-mainline-host-services.md)
-- [2026-07-07: Native Code Editor Example](2026-07-07-code-editor-example.md)
-- [2026-06-29: CI feature proof system](2026-06-29-ci-feature-proof-system.md)
-- [2026-06-29: Richtext blackbox tests (Workflow 4)](2026-06-29-moui-richtext-blackbox-tests.md)
-- [2026-06-29: Fix Markdown Editor file tree scroll](2026-06-29-markdown-editor-file-tree-scroll.md)
-- [2026-06-29: Fix Markdown Editor table click caret](2026-06-29-markdown-editor-table-click-caret.md)
-- [2026-06-29: Markdown Editor Typora flush layout](2026-06-29-markdown-editor-typora-flush-layout.md)
-- [2026-06-28: Markdown scroll cache and caret latency](2026-06-28-markdown-scroll-cache-caret.md)
-- [2026-06-28: Markdown session virtual scrolling](2026-06-28-markdown-session-virtual-scrolling.md)
-<!-- - [2026-06-25: Button variant refactor](2026-06-25-button-variant-refactor.md) -->
+Copy the shape in [TEMPLATE.md](TEMPLATE.md). Prefer promoting a durable fact to
+`memories/repo/` and a durable decision to `docs/decisions/`; the session page is
+the narrative that remains.

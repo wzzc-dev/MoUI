@@ -71,7 +71,7 @@ fn render_point_image_commands_are_same(
         a_src,
         ax,
         ay,
-        a_paint
+        a_paint,
       ),
       DrawRgbaBytesRectKeyed(
         b_key,
@@ -81,7 +81,7 @@ fn render_point_image_commands_are_same(
         b_src,
         bx,
         by,
-        b_paint
+        b_paint,
       ),
     ) =>
       Some(
@@ -131,7 +131,7 @@ fn render_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawSampledRgbaBytesKeyed(
         b_key,
@@ -143,7 +143,7 @@ fn render_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -163,7 +163,7 @@ fn render_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawSampledBmpBytesRectKeyed(
         b_key,
@@ -174,7 +174,7 @@ fn render_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -193,7 +193,7 @@ fn render_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawSampledPngBytesRectKeyed(
         b_key,
@@ -204,7 +204,7 @@ fn render_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -225,7 +225,7 @@ fn render_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawSampledRgbaBytesRectKeyed(
         b_key,
@@ -238,7 +238,7 @@ fn render_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -278,7 +278,7 @@ fn render_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawQualityBmpBytesRectKeyed(
         b_key,
@@ -289,7 +289,7 @@ fn render_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -318,7 +318,7 @@ fn render_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawQualityPngBytesRectKeyed(
         b_key,
@@ -329,7 +329,7 @@ fn render_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -349,7 +349,7 @@ fn render_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawQualityRgbaBytesKeyed(
         b_key,
@@ -361,7 +361,7 @@ fn render_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -383,7 +383,7 @@ fn render_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawQualityRgbaBytesRectKeyed(
         b_key,
@@ -396,7 +396,7 @@ fn render_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -425,7 +425,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledBmpBytesKeyed(
         b_key,
@@ -435,7 +435,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -454,7 +454,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledBmpBytesRectKeyed(
         b_key,
@@ -465,7 +465,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -483,7 +483,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledPngBytesKeyed(
         b_key,
@@ -493,7 +493,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -512,7 +512,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledPngBytesRectKeyed(
         b_key,
@@ -523,7 +523,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -543,7 +543,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledRgbaBytesKeyed(
         b_key,
@@ -555,7 +555,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -577,7 +577,7 @@ fn render_transformed_sampled_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawTransformedSampledRgbaBytesRectKeyed(
         b_key,
@@ -590,7 +590,7 @@ fn render_transformed_sampled_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       Some(
@@ -619,7 +619,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityBmpBytesKeyed(
         b_key,
@@ -629,7 +629,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -648,7 +648,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityBmpBytesRectKeyed(
         b_key,
@@ -659,7 +659,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -677,7 +677,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityPngBytesKeyed(
         b_key,
@@ -687,7 +687,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -706,7 +706,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityPngBytesRectKeyed(
         b_key,
@@ -717,7 +717,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -737,7 +737,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityRgbaBytesKeyed(
         b_key,
@@ -749,7 +749,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -771,7 +771,7 @@ fn render_transformed_quality_image_commands_are_same(
         aw,
         ah,
         a_paint,
-        a_quality
+        a_quality,
       ),
       DrawTransformedQualityRgbaBytesRectKeyed(
         b_key,
@@ -784,7 +784,7 @@ fn render_transformed_quality_image_commands_are_same(
         bw,
         bh,
         b_paint,
-        b_quality
+        b_quality,
       ),
     ) =>
       Some(
@@ -833,7 +833,7 @@ fn render_tiled_image_commands_are_same(
         ay,
         aw,
         ah,
-        a_paint
+        a_paint,
       ),
       DrawTiledRgbaBytesRectKeyed(
         b_key,
@@ -845,7 +845,7 @@ fn render_tiled_image_commands_are_same(
         by,
         bw,
         bh,
-        b_paint
+        b_paint,
       ),
     ) =>
       Some(

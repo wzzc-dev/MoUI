@@ -6,6 +6,21 @@ inputs:
     description: Path to the MoonBit toolchain version file, relative to the workspace root.
     required: false
     default: .moonbit-toolchain
+  submodules:
+    description: >-
+      Initialize git submodules. The `window` submodule is a 356 MB checkout that
+      only the window-hosted evidence workflows need; workspace builds resolve
+      `wzzc-dev/window` from the registry, so most jobs pass "false".
+    required: false
+    default: "true"
+  cache:
+    description: >-
+      Restore and save the MoonBit toolchain (~/.moon) and the workspace
+      dependency checkout (.mooncakes). Both are content-addressed by the pinned
+      toolchain and the module manifests, so a stale entry is re-resolved by
+      `moon update` rather than silently reused.
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -15,8 +30,27 @@ runs:
       run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
     - name: Initialize and update git submodules
+      if: inputs.submodules == 'true'
       shell: bash
       run: git submodule update --init --recursive
+
+    - name: Cache MoonBit toolchain
+      if: inputs.cache == 'true'
+      uses: actions/cache@v5
+      with:
+        path: ~/.moon
+        key: ${{ runner.os }}-moon-toolchain-${{ hashFiles(inputs.toolchain-file) }}
+        restore-keys: |
+          ${{ runner.os }}-moon-toolchain-
+
+    - name: Cache workspace dependencies
+      if: inputs.cache == 'true'
+      uses: actions/cache@v5
+      with:
+        path: .mooncakes
+        key: ${{ runner.os }}-mooncakes-${{ hashFiles('moon.work', '**/moon.mod', '**/moon.mod.json') }}
+        restore-keys: |
+          ${{ runner.os }}-mooncakes-
 
     - name: Set up MoonBit on Unix
       if: runner.os != 'Windows'
@@ -29,10 +63,14 @@ runs:
           echo "::error::MoonBit toolchain file is missing a valid moonc version: $toolchain_file" >&2
           exit 1
         fi
-        echo "Installing MoonBit toolchain $version"
-        curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$version"
         version_log="${RUNNER_TEMP:-/tmp}/moui-moonbit-version.txt"
-        "$HOME/.moon/bin/moon" version --all | tee "$version_log"
+        if [[ -x "$HOME/.moon/bin/moon" ]] && "$HOME/.moon/bin/moon" version --all > "$version_log" 2>&1 && grep -Fq "$version" "$version_log"; then
+          echo "Reusing cached MoonBit toolchain $version"
+        else
+          echo "Installing MoonBit toolchain $version"
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s "$version"
+          "$HOME/.moon/bin/moon" version --all | tee "$version_log"
+        fi
         if ! grep -Fq "$version" "$version_log"; then
           echo "::error::Installed MoonBit toolchain does not match $version" >&2
           exit 1
@@ -50,11 +88,19 @@ runs:
         if ([string]::IsNullOrWhiteSpace($expectedVersion)) {
           throw "MoonBit toolchain file is missing a valid moonc version: $toolchainFile"
         }
-        Write-Host "Installing MoonBit toolchain $expectedVersion"
-        $env:MOONBIT_INSTALL_VERSION = $expectedVersion
-        Invoke-RestMethod https://cli.moonbitlang.com/install/powershell.ps1 | Invoke-Expression
         $moon = Join-Path $env:USERPROFILE ".moon\bin\moon.exe"
-        $versionOutput = & $moon version --all | Out-String
+        $versionOutput = ""
+        if (Test-Path $moon) {
+          $versionOutput = (& $moon version --all | Out-String)
+        }
+        if ($versionOutput.Contains($expectedVersion)) {
+          Write-Host "Reusing cached MoonBit toolchain $expectedVersion"
+        } else {
+          Write-Host "Installing MoonBit toolchain $expectedVersion"
+          $env:MOONBIT_INSTALL_VERSION = $expectedVersion
+          Invoke-RestMethod https://cli.moonbitlang.com/install/powershell.ps1 | Invoke-Expression
+          $versionOutput = (& $moon version --all | Out-String)
+        }
         Write-Host $versionOutput
         if (!$versionOutput.Contains($expectedVersion)) {
           throw "Installed MoonBit toolchain does not match $expectedVersion"

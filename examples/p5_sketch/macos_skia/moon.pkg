@@ -4,10 +4,11 @@ import {
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui/runtime",
   "examples/p5_sketch/app" @p5_app,
-  "examples/p5_sketch/p5",
-  "examples/p5_sketch/p5/http" @p5_http,
+  "wzzc-dev/moui_p5" @p5,
+  "wzzc-dev/moui_p5/http" @p5_http,
   "examples/p5_sketch/skia_raster" @p5_skia_raster,
   "moonbitlang/async",
+  "moonbitlang/x/fs",
 }
 
 supported_targets = "native"

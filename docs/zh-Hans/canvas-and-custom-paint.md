@@ -80,18 +80,19 @@ p5 示例（`examples/p5_sketch`）用这对 modifier 驱动 `mouseX`/
 
 ## 离屏 RGBA buffer
 
-`@graphics.RgbaImage` 是可写的、renderer-neutral 的 RGBA8 buffer，适合程序化
+`@graphics.RgbaBuffer` 是可写的、renderer-neutral 的 RGBA8 buffer，适合程序化
 纹理、缩略图和逐像素编辑：
 
 ```moonbit nocheck
-let image = @graphics.RgbaImage::new(width=64, height=64)
+let image = @graphics.RgbaBuffer::new(width=64, height=64)
 image.set(0, 0, @graphics.Color::rgba(r=1.0, g=0.0, b=0.5))
 let pixel = image.get(0, 0)
 image.pixels[4] = (255 : Byte)
 ```
 
-像素是 straight（非预乘）、逐行 RGBA，不依赖 renderer。要绘制时，把字节包装
-成 renderer 可解码的 source（p5 adapter 编码为 PNG data URI）并发出
+像素是 straight（非预乘）、逐行 RGBA，不依赖 renderer。`to_png_bytes()` 是
+框架唯一的公开 PNG 编码入口：addon 在其上保留自己的命名（p5 的
+`Image::to_png_bytes` 委托给它）再把字节包装成 renderer 可解码的 source，发出
 `ImageRun`/`DrawImage`；Skia 与 Sun 都支持 PNG data URI，浏览器图片加载器也
 接受同一 source。
 

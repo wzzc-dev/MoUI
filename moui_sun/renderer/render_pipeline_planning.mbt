@@ -151,7 +151,7 @@ pub fn RenderPipeline::resource_plan(
         image_height,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -180,7 +180,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -202,7 +202,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
@@ -224,7 +224,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
@@ -241,7 +241,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -259,7 +259,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -274,7 +274,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
@@ -290,7 +290,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
@@ -305,7 +305,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_image_dependency(
@@ -321,7 +321,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
@@ -336,7 +336,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
@@ -352,7 +352,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
@@ -367,7 +367,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_image_dependency(
@@ -383,7 +383,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
@@ -400,7 +400,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -418,7 +418,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -435,7 +435,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -453,7 +453,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -469,7 +469,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
@@ -485,7 +485,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
@@ -503,7 +503,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -530,7 +530,7 @@ pub fn RenderPipeline::resource_plan(
         src_rect,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -545,7 +545,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_bmp_bytes_rect_image_dependency(
@@ -560,7 +560,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_png_bytes_rect_image_dependency(
@@ -577,7 +577,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_rect_image_dependency(
@@ -607,7 +607,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) =>
         image_dependencies.push(
           render_pipeline_make_rgba_bytes_image_dependency(
@@ -664,7 +664,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         config,
-        _
+        _,
       ) => {
         font_dependencies.push(
           render_pipeline_make_font_dependency(index, font_key, font_data),
@@ -700,7 +700,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) => {
         for source in sources {
           font_dependencies.push(
@@ -752,7 +752,7 @@ pub fn RenderPipeline::resource_plan(
         _,
         _,
         _,
-        _
+        _,
       ) => {
         for font_key in font_keys {
           font_dependencies.push(

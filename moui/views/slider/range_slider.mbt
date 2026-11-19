@@ -28,7 +28,7 @@ impl @core.ViewStateValue for RangeSliderDrag with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for RangeSliderDrag with fn encode_view_state(self) {
-  let output = Buffer(size_hint=2)
+  let output = Buffer(capacity=2)
   output.write_byte(if self.active { 1 } else { 0 })
   output.write_byte(if self.upper { 1 } else { 0 })
   output.to_bytes()
