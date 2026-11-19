@@ -25,6 +25,33 @@ let lock_name : String = "pdfium-provider-lock.json"
 let cache_dir_name : String = ".pdfium-cache"
 
 ///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  if value is @json.Object(fields) {
+    fields.get(key)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_text(value : @json.Json) -> String? {
+  if value is @json.String(text) {
+    Some(text)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_number(value : @json.Json) -> Double? {
+  if value is @json.Number(number, ..) {
+    Some(number)
+  } else {
+    None
+  }
+}
+
+///|
 fn lower_trim(value : String) -> String {
   value.trim().to_owned().to_lower()
 }
@@ -130,7 +157,7 @@ async fn host_platform() -> String {
 }
 
 ///|
-async fn env_arch() -> String {
+fn env_arch() -> String {
   for key in ["PROCESSOR_ARCHITECTURE", "PROCESSOR_ARCHITEW6432"] {
     match @env.get_env_var(key) {
       Some(value) =>
@@ -177,7 +204,7 @@ fn config_env(config : @json.Json, key : String) -> String {
     let mut node = config
     let mut found = true
     for segment in path {
-      match node.value(segment) {
+      match json_field(node, segment) {
         Some(next) => node = next
         None => {
           found = false
@@ -186,9 +213,9 @@ fn config_env(config : @json.Json, key : String) -> String {
       }
     }
     if found {
-      match node.value(key) {
+      match json_field(node, key) {
         Some(value) =>
-          match value.as_string() {
+          match json_text(value) {
             Some(text) =>
               if text != "" {
                 return text
@@ -206,12 +233,12 @@ fn config_env(config : @json.Json, key : String) -> String {
 fn config_string(config : @json.Json, path : Array[String]) -> String? {
   let mut node = config
   for segment in path {
-    match node.value(segment) {
+    match json_field(node, segment) {
       Some(next) => node = next
       None => return None
     }
   }
-  node.as_string()
+  json_text(node)
 }
 
 ///|
@@ -374,9 +401,9 @@ async fn sha256_of(path : String) -> String {
 
 ///|
 fn asset_string(asset : @json.Json, key : String) -> String {
-  match asset.value(key) {
+  match json_field(asset, key) {
     Some(value) =>
-      match value.as_string() {
+      match json_text(value) {
         Some(text) => text
         None => ""
       }
@@ -389,9 +416,9 @@ async fn fetch_file(asset : @json.Json, output : String, host : String) -> Unit 
   mkdir_all(path_dirname(output))
   let name = asset_string(asset, "name")
   let url = asset_string(asset, "url")
-  let size = match asset.value("size") {
+  let size = match json_field(asset, "size") {
     Some(value) =>
-      match value.as_number() {
+      match json_number(value) {
         Some(number) => number.to_int().to_string()
         None => ""
       }
@@ -491,25 +518,25 @@ async fn bundled_values(
   let lock = @json.parse(read_text(lock_path)) catch {
     _ => abort("failed to parse \{lock_path}")
   }
-  let asset = match lock.value("assets") {
+  let asset = match json_field(lock, "assets") {
     Some(assets) =>
-      match assets.value(key) {
+      match json_field(assets, key) {
         Some(value) => value
         None => abort("PDFium lock has no asset for \{key}")
       }
     None => abort("PDFium lock has no assets block")
   }
-  let tag = match lock.value("release") {
+  let tag = match json_field(lock, "release") {
     Some(release) =>
-      match release.value("tag") {
+      match json_field(release, "tag") {
         Some(value) =>
-          match value.as_string() {
+          match json_text(value) {
             Some(text) => text
             None => abort("PDFium lock release.tag is not a string")
           }
         None => abort("PDFium lock release has no tag")
       }
-    None => abort("PDFium lock has no release block")
+    None => abort("PDFium lock release has no block")
   }
   let cache_root = path_join(
     path_join(module_root, cache_dir_name),
