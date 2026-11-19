@@ -124,7 +124,7 @@ disables `tcc -run` when required:
 link: { "native": { "cc-link-flags": "" } },
 ```
 
-WebView2 flags remain owned by `moui_webview/build.js` `link_configs` for
+WebView2 flags remain owned by `moui_webview/build.mbtx` `link_configs` for
 `backend/windows` when the SDK is detected.
 
 ## Host Architecture

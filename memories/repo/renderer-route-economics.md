@@ -85,7 +85,7 @@ Durable facts for deciding between rendering routes. Full record: ADR 0043
   now live in their own published module `wzzc-dev/moui_text_providers` (directory
   `moui_text_providers`, registered `publication: public` / `role: binding` /
   `releaseStage: base-bindings` / `0.2.2` — the `moui_skia`/`moui_sun` topology),
-  together with `build.js` and the `--moonbit-unstable-prebuild` hook that used to
+  together with `build.mbtx` and the `--moonbit-unstable-prebuild` hook that used to
   sit in `moui_wgpu_renderer`. That was not cosmetic: P14 (`docs/invariants.md:30`)
   forbids a `role: "renderer"` module importing another renderer module, so while
   the providers sat inside `moui_wgpu_renderer` no `moui_metal_renderer` could
@@ -112,13 +112,13 @@ Durable facts for deciding between rendering routes. Full record: ADR 0043
   alternative, harfbuzz "Old MIT", libpng, libwebp BSD-with-advertising-clause,
   swiftshader Apache-2.0, zlib; plus `include/third_party/vulkan`), all
   BSD/MIT/Zlib/libpng/FTL family. What
-  the macOS route *actually* links is decided by `moui_skia/build.js`, not by what
+  the macOS route *actually* links is decided by `moui_skia/build.mbtx`, not by what
   the package contains: with paragraph + Metal static, the darwin link line names
   **eight archives** (`libskia_ganesh_ext`, `libskia`, `libskparagraph`,
   `libskshaper`, `libskunicode_icu`, `libskunicode_core`, `libharfbuzz`, `libicu`)
   plus `-lc++` and Apple frameworks; the package ships 29. Only HarfBuzz of those
   eight has its text in the artifact — no Skia root `LICENSE`, no ICU terms.
-  `-lfreetype` is appended only on Linux (`moui_skia/build.js:777`), so FTL-vs-GPLv2
+  `-lfreetype` is appended only on Linux (`moui_skia/build.mbtx`), so FTL-vs-GPLv2
   is a Linux-route question. Residual exposure is **notice completeness, not IP
   blocking**, and is self-fixable because the locked provider is this project's own
   `wzzc-dev/skia` artifact (`moui_skia/skia-provider-lock.json`,
@@ -250,11 +250,11 @@ Durable facts for deciding between rendering routes. Full record: ADR 0043
 
 - **库包的 `cc-link-flags` 到不了 is-main 链接。** 实证方式：往
   `moui_text_providers/coretext/moon.pkg` 塞一个非法 flag，`macos_wgpu` 照样
-  build 成功。载体是 prebuild 的 `link_configs`（`moui_skia/build.js:1059` 的注释
+  build 成功。载体是 prebuild 的 `link_configs`（`moui_skia/build.mbtx` 的注释
   早就这么写）。它不是死配置：`moon test <pkg>` 时该包就是 is-main，自己的 flag
   会生效。CoreText 此前只是碰巧能链接——平台后端额外链了 `ApplicationServices`
   umbrella 并转发导出 CoreText；不带后端链接 CoreText 的消费者会失败，现已由
-  `moui_text_providers/build.js` 在 darwin 上发出 `link_configs` 修掉，并由
+  `moui_text_providers/build.mbtx` 在 darwin 上发出 `link_configs` 修掉，并由
   `scripts/test-moui-prebuild.mjs` 钉住。
 - **`moui/render` 的公开面禁止命名平台 surface。** `Metal`/`HWND`/`Vulkan`/`EGL`/
   `D3D`/`Wayland` 在 `checks/backend-common-ownership.json`

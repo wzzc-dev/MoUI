@@ -468,7 +468,7 @@ GPU-capable compliant option (`sun` has no GPU, `wgpu` links an excluded library
   each platform. If the conclusion is "permissive and non-blocking", the license
   motive is dropped from the record rather than left implicit.
   **Done (2026-10-27)**, in `THIRD_PARTY.md`. The macOS link line is eight
-  archives (`moui_skia/build.js` darwin static + paragraph), the delivered
+  archives (`moui_skia/build.mbtx` darwin static + paragraph), the delivered
   artifact carries license text for one of them (HarfBuzz), and the seven texts
   it does carry are BSD-family / MIT-family / Zlib / libpng / FTL — so the
   exposure is notice completeness, not IP blocking. Per this bullet's own rule
@@ -546,7 +546,7 @@ alternative that gives the new module `role: "renderer"` is not merely worse: it
   `tools/moui/validate_maintenance_baseline/scan_scope.mbt` `monitored_roots`; the
   `text_protocol` PackageBudget re-key at
   `tools/moui/validate_api_surface/main.mbt:606-607`; a new
-  `moui_text_providers/build.js` that owns the DirectWrite/Fontconfig `link_configs`
+  `moui_text_providers/build.mbtx` that owns the DirectWrite/Fontconfig `link_configs`
   and `MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS`, with the `--moonbit-unstable-prebuild`
   option travelling with it; `scripts/test-moui-prebuild.mjs:196-207`, whose
   assertions are about *ownership* ("WGPU prebuild must own the DirectWrite link
@@ -571,8 +571,8 @@ alternative that gives the new module `role: "renderer"` is not merely worse: it
   `--profile pr` green. P14's escape hatch is an RFC, and the correct answer here is
   to move the packages, not to file the RFC.
 - **Delivered 2026-10-27.** `git mv` of the five packages into
-  `moui_text_providers/`, plus `moui_wgpu_renderer/build.js` →
-  `moui_text_providers/build.js` (byte-identical apart from the two `link_configs`
+  `moui_text_providers/`, plus `moui_wgpu_renderer/build.mbtx` →
+  `moui_text_providers/build.mbtx` (byte-identical apart from the two `link_configs`
   package tokens), with the `--moonbit-unstable-prebuild` option and the
   `Milky2018/moon_cosmic` / `moon_swash` pins travelling with it. Measured:
   `moon test` per package 23 `cosmic_text` / 20 `coretext` / 14 `text_protocol` /
@@ -600,7 +600,7 @@ alternative that gives the new module `role: "renderer"` is not merely worse: it
   (the transitive cover the move removed); and a
   `docs/architecture-map.md` ownership row naming the module, because it is now
   what any renderer reaches for text. The prebuild test also gained an assertion
-  the plan did not call for: `existsSync("moui_wgpu_renderer/build.js")` must be
+  the plan did not call for: `existsSync("moui_wgpu_renderer/build.mbtx")` must be
   false, so a renderer module re-acquiring text `link_configs` fails the gate
   whose whole purpose is to keep them out of renderers.
 - **Three registrations deliberately not added, with the check that ruled them
@@ -626,7 +626,7 @@ alternative that gives the new module `role: "renderer"` is not merely worse: it
   which restored a `wzzc-dev/moui_skia/native` `link_configs` entry that the
   earlier `3df372319` had forbidden. It is a `daily`/`full` step, not a `pr` step
   (77 steps, 0 prebuild hits), which is why `pr` never caught it. Evidence it is
-  independent of L0.5: with HEAD's own `moui_skia/build.js` the hook emits
+  independent of L0.5: with HEAD's own `moui_skia/build.mbtx` the hook emits
   `link_configs.length == 1` under exactly the env the test passes, and excising
   only that block makes the re-labelled script print
   `split module prebuild tests: ok`. Which side should win is an owner call — the
@@ -696,10 +696,10 @@ draws that frame. Measured against the acceptance text above:
   "the direct Metal GPU provider". (2) A package's `cc-link-flags` never reach an
   is-main link (measured by injecting an invalid flag into
   `moui_text_providers/coretext` and watching `macos_wgpu` build anyway), so the
-  frameworks travel in `moui_metal_renderer/build.js` `link_configs` — and the
+  frameworks travel in `moui_metal_renderer/build.mbtx` `link_configs` — and the
   same gap was latent in CoreText itself, where the symbols resolved only because
   a platform backend also links the `ApplicationServices` umbrella. That is now
-  fixed in `moui_text_providers/build.js` and pinned by
+  fixed in `moui_text_providers/build.mbtx` and pinned by
   `scripts/test-moui-prebuild.mjs`.
 - **One test-quality lesson worth keeping.** The first glyph test used a fully
   covered mask, and it passed while real CoreText text painted solid white bars:
@@ -1385,7 +1385,7 @@ side effect of an evidence leg.
 | 2026-10-28 | **Decision:** a clip rect is transformed on push and a layer mask is not, on both native GPU routes. Reason stated while fixing the Metal divergence: a clip is a shape drawn in the caller's coordinate space, a mask names a rectangle on the surface, and the two must survive a transform differently or the same command stream paints two ways depending on the route. |
 | 2026-10-28 | L4's vacuous-recovery item closed at the contract, not with an engine: `RendererSession::new`'s `recover~` default no longer returns `RecoverySucceeded` (A/B-pinned by a new `moui/render` test), and the macOS GPU promotion harness stopped writing `context_loss_done = context_loss_injected` when nothing recovered — `gpu_recovery_count()` is a constant 0 on every route, so `diagnostics.recoveryCount` in promotion artifacts had been counting injected losses as completed rebuilds. The lifecycle line gained `context_loss_injected=` and `recovery_count_after=`, and `gpu-performance-metrics.mjs` exposes `contextLossInjected`. A Metal device-loss rebuild was **not** built: `recover` has no production caller (all four call sites are tests) and `MTLDevice isRemoved` is unpolled — the reopen condition is in ADR 0045. `moon test moui/render --target native` 21/21, `moon test moui/backend/macos --target native` 49/49. |
 | 2026-10-28 | L4 size motive **measured and recorded**, and it refuted the plan's own derivation: `macos_metal` release artifact 4,101,856 B (`__text` 3,527,568 / `__const` 339,584) against `macos_sun` re-measured the same day at 4,260,688 B under the same app and the same `-Wl,-dead_strip -Wl,-x`, i.e. the GPU route is 158,832 B *below* the figure this plan called the floor, with 171,436 B less `__text` than Sun's whole CPU rasterizer. Corrected in **Measured baseline** and in "The language floor, measured"; ADR 0044 amended in place with a pointer to the measurement, and ADR 0043's kill-reason wording left as the decision record it is (its numbers stand, its extrapolation does not); the substance is in ADR 0045 §"Amended 2026-10-28 (L4 size)". Boundary proof taken from the shipped binary rather than the package config: `otool -L` lists Apple frameworks only, `nm -a` returns 0 matches for skia/wgpu/`hal::`/vulkan and `strings -a` finds none. Honest limits: the two link flags are not committed (added for the measurement, reverted after), and `moui package macos` builds debug artifacts, so this is a release-binary number, not a packaging-gate one. |
-| 2026-10-27 | L0.5 landed: `coretext`, `cosmic_text`, `directwrite`, `fontconfig` and `text_protocol` moved by `git mv` into the new published module `wzzc-dev/moui_text_providers` (`role: "binding"`, `releaseStage: "base-bindings"`, `0.2.2`), with `moui_wgpu_renderer/build.js` and the `--moonbit-unstable-prebuild` hook and the Cosmic/Swash pins travelling with them; `examples/showcase/*_wgpu` and `moui_tests/{wgpu_renderer_smoke,text_conformance}` were repointed (paths plus `@wgpu_*` → `@text_*` aliases) and the six static validators, `moon fmt --check`, the per-package tests and `check.sh --profile pr` are green. Verification detail, the two registrations the pre-move survey missed, and the pre-existing `daily` prebuild red this run surfaced are in the L0.5 block above. |
+| 2026-10-27 | L0.5 landed: `coretext`, `cosmic_text`, `directwrite`, `fontconfig` and `text_protocol` moved by `git mv` into the new published module `wzzc-dev/moui_text_providers` (`role: "binding"`, `releaseStage: "base-bindings"`, `0.2.2`), with `moui_wgpu_renderer/build.mbtx` and the `--moonbit-unstable-prebuild` hook and the Cosmic/Swash pins travelling with them; `examples/showcase/*_wgpu` and `moui_tests/{wgpu_renderer_smoke,text_conformance}` were repointed (paths plus `@wgpu_*` → `@text_*` aliases) and the six static validators, `moon fmt --check`, the per-package tests and `check.sh --profile pr` are green. Verification detail, the two registrations the pre-move survey missed, and the pre-existing `daily` prebuild red this run surfaced are in the L0.5 block above. |
 | 2026-10-27 | L0 opened (state since superseded by the rows below): no renderer code, no package registration, no ADR 0005 amendment yet. Plumbing facts re-verified from source (host `CAMetalLayer` export, `coretext` link flags, `native_text_model.mbt` ownership) — the extraction, not the writing, is the first real cost. |
 | 2026-10-27 | Read the repo's own frame artifact and the MoonBit size floor: `presentMs` is measured against a no-op presenter on the forced raster route, the shipped `MetalGpuSurfaceRoute` has never been benchmarked, and a hello-world MoonBit native binary is 266,600 B. Added L0.4 (control measurement + fix the all-zero `buildMs`/`layoutMs`) and made it a kill gate. |
 | 2026-10-27 | L0.4 measured: four present paths (`raster`, `metal-gpu`, `metal-gpu-host`, the new `metal-gpu-host-rotating`) × 3 interleaved rounds × 40 frames, 5 scenarios, through the committed budget runner. `drawMs`/`totalMs` emitted and gated (7 timing metrics now), `presentMs` given a real presenter, and the blit path's engagement asserted in-package because a failed `Surface::copy_from` silently degrades to a full redraw. Results in "L0.4 measured" above; the committed budgets cannot discriminate between any of these routes (0 of 140 ratios exceed 1.0). |

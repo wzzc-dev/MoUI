@@ -1,0 +1,110 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+---
+
+///|
+/// `moui_tests` prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. The module owns no Skia flags; it re-emits the
+/// renderer prebuild vars so its own harnesses link the same Skia archives. The
+/// delegated `moui_skia_renderer/build.mbtx` inherits this process' stdin, so it
+/// sees exactly the config moon handed to this hook. The renderer module keeps
+/// its own `link_configs`: moon rejects a prebuild from `wzzc-dev/moui_tests`
+/// that targets an external module name, so only `vars` are forwarded.
+let delegated_script : String = "../moui_skia_renderer/build.mbtx"
+
+///|
+let delegated_cache : String = "../moui_skia_renderer/.skia-cache/prebuild-target"
+
+///|
+fn path_join(left : String, right : String) -> String {
+  if left == "" {
+    return right
+  }
+  if right == "" {
+    return left
+  }
+  if left.has_suffix("/") || left.has_suffix("\\") {
+    return left + right
+  }
+  left + "/" + right
+}
+
+///|
+fn last_json_line(text : String) -> String? {
+  let mut found : String? = None
+  for line in text.split("\n") {
+    let trimmed = line.trim().to_owned()
+    if trimmed.has_prefix("{") {
+      found = Some(trimmed)
+    }
+  }
+  found
+}
+
+///|
+fn emit_vars(vars : Map[String, @json.Json]) -> Unit {
+  let string_fields : Map[String, @json.Json] = Map([])
+  for key, value in vars {
+    match value.as_string() {
+      Some(text) => string_fields.set(key, @json.Json::string(text))
+      None => ()
+    }
+  }
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(string_fields))
+  payload.set("link_configs", @json.Json::array([]))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let module_root = match @env.current_dir() {
+    Some(dir) => dir
+    None => "."
+  }
+  let renderer_root = path_join(module_root, "../moui_skia_renderer")
+  let result = @process.run(
+    "moon",
+    [
+      "run",
+      delegated_script,
+      "--target",
+      "native",
+      "--target-dir",
+      path_join(renderer_root, delegated_cache),
+    ],
+    stdout=@process.Collect,
+    stderr=@process.Inherit,
+    cwd=renderer_root,
+  )
+  if result.exit_code != 0 {
+    abort("moui_tests prebuild: the delegated renderer prebuild exited with \{result.exit_code}")
+  }
+  let output = result.stdout_text() catch {
+    _ => ""
+  }
+  let mut vars : Map[String, @json.Json] = Map([])
+  match last_json_line(output) {
+    Some(line) => {
+      let parsed = @json.parse(line) catch {
+        _ => @json.Json::empty_object()
+      }
+      match parsed.value("vars") {
+        Some(field) =>
+          match field.as_object() {
+            Some(fields) => vars = fields
+            None => ()
+          }
+        None => ()
+      }
+    }
+    None => ()
+  }
+  emit_vars(vars)
+}

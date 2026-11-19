@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 import {
-  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -17,47 +17,48 @@ import { spawnSync } from "node:child_process";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "moui-prebuild-"));
 
-// Split module prebuild contract, in two families:
-//   - `build.js` modules still run as Node scripts copied into a temp module.
-//   - `moui_skia` / `moui_skia_renderer` own `build.mbtx` scripts that need
-//     their real module root (moon resolves `moonbitlang/x`), so they run in
-//     place with `--target-dir` under the temp root.
-const moduleRoots = {
-  base: join(temporaryRoot, "moui"),
-  textProviders: join(temporaryRoot, "moui_text_providers"),
-  metalRenderer: join(temporaryRoot, "moui_metal_renderer"),
-};
-
-for (const root of Object.values(moduleRoots)) {
-  mkdirSync(root, { recursive: true });
-}
-cpSync(join(repoRoot, "moui/build.js"), join(moduleRoots.base, "build.js"));
-cpSync(
-  join(repoRoot, "moui_text_providers/build.js"),
-  join(moduleRoots.textProviders, "build.js"),
-);
-cpSync(
-  join(repoRoot, "moui_metal_renderer/build.js"),
-  join(moduleRoots.metalRenderer, "build.js"),
-);
+// Every module with a `--moonbit-unstable-prebuild` hook owns a `build.mbtx`
+// script. They need their real module root (moon resolves `moonbitlang/x`, and
+// hooks such as `moui_tests` delegate to a sibling module), so each one runs in
+// place with `--target-dir` under the temp root.
+const prebuildModules = new Map([
+  ["moui", join(repoRoot, "moui")],
+  ["moui_webview", join(repoRoot, "moui_webview")],
+  ["moui_text_providers", join(repoRoot, "moui_text_providers")],
+  ["moui_metal_renderer", join(repoRoot, "moui_metal_renderer")],
+  ["moui_tests", join(repoRoot, "moui_tests")],
+  ["moui_skia", join(repoRoot, "moui_skia")],
+  ["moui_skia_renderer", join(repoRoot, "moui_skia_renderer")],
+  ["pdf_workbench", join(repoRoot, "examples/pdf_workbench")],
+]);
 
 const readRepoFile = relative => readFileSync(join(repoRoot, relative), "utf8");
 
-// Static contracts for the prebuilt-stub architecture (option 1). These are the
-// invariants that make the Windows D8016 clash unreachable: the `.mbtx` prebuild
-// owns the C++ compile, and the `mbt` native-stub list stays C-only (empty here).
-for (const module of ["moui_skia", "moui_skia_renderer"]) {
-  const manifest = readRepoFile(`${module}/moon.mod`);
+// Static contracts. Every prebuild hook must be a `.mbtx` script: Node
+// `build.js` hooks are gone, and `moui_skia` additionally owns the C++ stub, so
+// its `.mbtx` prebuild has to stay the only compile owner (the `mbt`
+// native-stub list stays C-only, which is what makes Windows D8016 unreachable).
+for (const [module, moduleRoot] of prebuildModules) {
+  const relative = module === "pdf_workbench"
+    ? "examples/pdf_workbench"
+    : module;
+  const manifest = readRepoFile(`${relative}/moon.mod`);
   if (!manifest.includes('"--moonbit-unstable-prebuild": "build.mbtx"')) {
-    throw new Error(`${module}/moon.mod must point at build.mbtx`);
+    throw new Error(`${relative}/moon.mod must point at build.mbtx`);
   }
-  if (!existsSync(join(repoRoot, module, "build.mbtx"))) {
-    throw new Error(`${module}/build.mbtx is missing`);
+  if (!existsSync(join(moduleRoot, "build.mbtx"))) {
+    throw new Error(`${relative}/build.mbtx is missing`);
   }
-  if (existsSync(join(repoRoot, module, "build.js"))) {
+  if (existsSync(join(moduleRoot, "build.js"))) {
     throw new Error(
-      `${module}/build.js must stay deleted: the prebuild only supports build.mbtx`,
+      `${relative}/build.js must stay deleted: the prebuild only supports build.mbtx`,
     );
+  }
+}
+for (const entry of readdirSync(repoRoot, { withFileTypes: true })) {
+  if (!entry.isDirectory()) continue;
+  if (existsSync(join(repoRoot, entry.name, "build.js"))) {
+    throw new Error(`${entry.name}/build.js must stay deleted: use build.mbtx`);
   }
 }
 const nativePkg = readRepoFile("moui_skia/native/moon.pkg");
@@ -76,21 +77,6 @@ if (!nativePkg.includes("MOUI_SKIA_CC_LINK_FLAGS")) {
   throw new Error("moui_skia/native/moon.pkg must link binding-local tests with Skia flags");
 }
 
-const runNodePrebuild = (root, env = {}) => {
-  const result = spawnSync(process.execPath, ["build.js"], {
-    cwd: root,
-    encoding: "utf8",
-    input: JSON.stringify({ build: { target: { kind: "native" } }, env }),
-    env: { ...process.env, MOUI_SKIA_DISABLE_PREBUILD_SKIA: "", ...env },
-  });
-  if (result.status !== 0) {
-    throw new Error(
-      `prebuild failed in ${root}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
-    );
-  }
-  return JSON.parse(result.stdout);
-};
-
 const lastJsonLine = stdout => {
   const lines = String(stdout || "")
     .split("\n")
@@ -103,16 +89,27 @@ const lastJsonLine = stdout => {
 };
 
 let mbtxRuns = 0;
-const runMbtxPrebuild = (module, env = {}, { expectFailure = false } = {}) => {
+const runMbtxPrebuild = (
+  module,
+  env = {},
+  { expectFailure = false, config = { build: { target: { kind: "native" } } } } = {},
+) => {
   mbtxRuns += 1;
-  const targetDir = join(temporaryRoot, `target-${module}-${mbtxRuns}`);
+  const moduleRoot = prebuildModules.get(module);
+  if (!moduleRoot) {
+    throw new Error(`unknown prebuild module: ${module}`);
+  }
+  const targetDir = join(
+    temporaryRoot,
+    `target-${module.replaceAll("/", "-")}-${mbtxRuns}`,
+  );
   const result = spawnSync(
     "moon",
     ["run", "build.mbtx", "--target", "native", "--target-dir", targetDir],
     {
-      cwd: join(repoRoot, module),
+      cwd: moduleRoot,
       encoding: "utf8",
-      input: JSON.stringify({ build: { target: { kind: "native" } } }),
+      input: JSON.stringify(config),
       env: { ...process.env, MOUI_SKIA_DISABLE_PREBUILD_SKIA: "", ...env },
     },
   );
@@ -179,7 +176,7 @@ const releaseEnv = {
 };
 
 try {
-  const base = runNodePrebuild(moduleRoots.base);
+  const base = runMbtxPrebuild("moui");
   const basePackages = linkPackages(base);
   if (
     basePackages.has("wzzc-dev/moui_skia_renderer") ||
@@ -196,9 +193,7 @@ try {
   ) {
     throw new Error("base prebuild is missing macOS host frameworks");
   }
-  const android = runNodePrebuild(moduleRoots.base, {
-    MOUI_SKIA_PLATFORM: "android",
-  });
+  const android = runMbtxPrebuild("moui", { MOUI_SKIA_PLATFORM: "android" });
   if (!String(android.vars.MOUI_ANDROID_HOST_LINK_FLAGS).includes("-landroid")) {
     throw new Error("base prebuild must expose Android host link flags");
   }
@@ -362,7 +357,7 @@ try {
     }
   }
 
-  const textProviders = runNodePrebuild(moduleRoots.textProviders);
+  const textProviders = runMbtxPrebuild("moui_text_providers");
   const textProviderPackages = linkPackages(textProviders);
   if (!textProviderPackages.has("wzzc-dev/moui_text_providers/directwrite")) {
     throw new Error("text provider prebuild must own the DirectWrite link config");
@@ -381,7 +376,7 @@ try {
   } else if (textProviderPackages.has("wzzc-dev/moui_text_providers/fontconfig")) {
     throw new Error("text provider prebuild must omit Fontconfig off Linux");
   }
-  const metalRenderer = runNodePrebuild(moduleRoots.metalRenderer);
+  const metalRenderer = runMbtxPrebuild("moui_metal_renderer");
   const metalPackages = linkPackages(metalRenderer);
   if (process.platform === "darwin") {
     if (!metalPackages.has("wzzc-dev/moui_metal_renderer")) {
@@ -413,8 +408,59 @@ try {
     throw new Error("text provider prebuild must omit CoreText off darwin");
   }
 
-  if (existsSync(join(repoRoot, "moui_wgpu_renderer/build.js"))) {
-    throw new Error("renderer modules must not own platform text link configs");
+  // `moui_webview`: the WebView host libraries travel as vars plus link configs,
+  // and the WebView2 env var pair is rejected when it is incomplete.
+  const webview = runMbtxPrebuild("moui_webview", {
+    MOUI_WINDOWS_ENABLE_WEBVIEW2: "",
+    MOUI_WINDOWS_WEBVIEW2_INCLUDE: "",
+    MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS: "",
+    MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS: "",
+    MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS: "",
+  });
+  if (process.platform === "darwin") {
+    if (
+      !flagsFor(webview, "wzzc-dev/moui_webview/backend/macos").includes(
+        "-framework WebKit",
+      )
+    ) {
+      throw new Error("webview prebuild must own the macOS WebKit link config");
+    }
+  } else if (linkPackages(webview).has("wzzc-dev/moui_webview/backend/macos")) {
+    throw new Error("webview prebuild must omit the WebKit config off darwin");
+  }
+  runMbtxPrebuild(
+    "moui_webview",
+    { MOUI_WINDOWS_ENABLE_WEBVIEW2: "1", MOUI_WINDOWS_WEBVIEW2_INCLUDE: "" },
+    { expectFailure: true },
+  );
+
+  // `moui_tests` re-emits the renderer vars for its own harnesses and owns no
+  // link config, so its Skia link flags must equal the renderer's.
+  const tests = runMbtxPrebuild("moui_tests", releaseEnv);
+  if ((tests.link_configs || []).length !== 0) {
+    throw new Error("moui_tests prebuild must not own link_configs");
+  }
+  if (
+    String(tests.vars.MOUI_SKIA_CC_LINK_FLAGS || "") !==
+    String(skiaRenderer.vars.MOUI_SKIA_CC_LINK_FLAGS || "")
+  ) {
+    throw new Error(
+      "moui_tests prebuild must re-emit the renderer Skia link flags",
+    );
+  }
+
+  // `pdf_workbench` disables PDFium for non-native targets and for a bare
+  // config, so the disabled shape is the empty var pair.
+  const pdfDisabled = runMbtxPrebuild(
+    "pdf_workbench",
+    {},
+    { config: { build: { target: { kind: "wasm-gc" } } } },
+  );
+  if (
+    String(pdfDisabled.vars.MOUI_PDFIUM_STUB_CC_FLAGS || "") !== "" ||
+    String(pdfDisabled.vars.MOUI_PDFIUM_CC_LINK_FLAGS || "") !== ""
+  ) {
+    throw new Error("pdf_workbench prebuild must stay disabled on wasm targets");
   }
 
   console.log("split module prebuild tests: ok");

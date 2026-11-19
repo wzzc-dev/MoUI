@@ -12,7 +12,7 @@
   capture / record / ci_host) were restored into the canonical `window`
   submodule after the workspace module split dropped them; the transcript
   sentinel contract (`MOUIWindowsSmoke: ...`) is unchanged from the old repo.
-- moon on MSVC reaches Skia link flags only through the prebuild `build.js`
+- moon on MSVC reaches Skia link flags only through the prebuild `build.mbtx`
   `link_configs` carrier; `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` empties it, so
   `windows-platform-evidence.sh` injects the generated flags into the
   showcase executable package (same pattern as

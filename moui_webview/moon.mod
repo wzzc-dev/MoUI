@@ -18,5 +18,5 @@ import {
 readme = "README.mbt.md"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

@@ -376,14 +376,14 @@ way every other seam on this route had to.
 - A package's `link.native.cc-link-flags` do **not** reach an is-main link:
   measured by injecting an invalid flag into `moui_text_providers/coretext` and
   watching `macos_wgpu` build anyway. The carrier is a prebuild `link_configs`
-  entry (as `moui_skia/build.js:1059` already documents), which is why
-  `moui_metal_renderer/build.js` exists and why the module's own `moon.pkg`
+  entry (as `moui_skia/build.mbtx` already documents), which is why
+  `moui_metal_renderer/build.mbtx` exists and why the module's own `moon.pkg`
   carries no framework flags.
 - The same gap was latent in the CoreText provider: its Apple frameworks were
   declared only in package `cc-link-flags`, and the symbols resolved solely
   because a platform backend also links the `ApplicationServices` umbrella, which
   re-exports CoreText. Any consumer that links CoreText without a backend would
-  fail to link. `moui_text_providers/build.js` now emits those flags as
+  fail to link. `moui_text_providers/build.mbtx` now emits those flags as
   `link_configs` on darwin, so the provider is self-sufficient.
 
 ## Consequences
