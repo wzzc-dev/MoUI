@@ -158,7 +158,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The dependency install alone is a cold apt run over a shared mirror; two
+    # runs hit the old 20 minute cap inside it before any MoonBit work started.
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -305,7 +307,12 @@ jobs:
 
       - name: Review timing budgets (non-blocking report)
         continue-on-error: true
-        run: node scripts/validate-performance-budgets.mjs --results artifacts/performance/result.json
+        run: |
+          # Wall-clock budgets are report-only here. A miss must not annotate the
+          # run as failed, so the exit status is printed instead of propagated.
+          status=0
+          node scripts/validate-performance-budgets.mjs --results artifacts/performance/result.json || status=$?
+          echo "timing budget review exit: ${status}"
 
       - name: Upload performance report
         if: ${{ always() }}
