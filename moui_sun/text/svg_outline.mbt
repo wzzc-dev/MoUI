@@ -51,7 +51,7 @@ pub fn FontFace::text_run_outline(
   for run in layout.get_runs() {
     let run_baseline = baseline_y + (run.get_baseline_y() - layout_baseline)
     for glyph in run.get_glyphs() {
-      let pen_x = origin_x + glyph.x * length_factor
+      let pen_x = origin_x + glyph.origin_x * length_factor
       match font.get_glyph(glyph.glyph_id) {
         Simple(simple) =>
           for contour in simple.contours {

@@ -27,7 +27,8 @@ pub fn Canvas::draw_mask(
       let mask_y = py - y
       let coverage = mask[mask_y * width + mask_x].to_int()
       if coverage > 0 {
-        let color = paint.sample_color(
+        let color = self.sample_paint_color(
+          paint,
           px.to_double() + 0.5,
           py.to_double() + 0.5,
         )

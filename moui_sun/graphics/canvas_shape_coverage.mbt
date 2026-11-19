@@ -114,7 +114,8 @@ fn Canvas::blend_coverage_row(
       let px = left + index
       let covered = (coverage * 255.0 + 0.5).to_int()
       if covered > 0 {
-        let color = paint.sample_color(
+        let color = self.sample_paint_color(
+          paint,
           px.to_double() + 0.5,
           y.to_double() + 0.5,
         )

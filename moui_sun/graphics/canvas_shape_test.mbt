@@ -759,20 +759,22 @@ test "Canvas::fill_rect transformed decal shader tracks tight dirty bounds" {
     @graphics.Paint::new().set_shader(shader),
   )
 
+  // Decal shader starts at user x 2, so after the +1 translate only device
+  // pixels 3..4 sample inside it; the rest stays transparent (dirty-free).
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  assert_eq(canvas.get_pixmap().get_pixel(2, 0), @graphics.Color::white())
   assert_eq(
-    canvas.get_pixmap().get_pixel(2, 0),
+    canvas.get_pixmap().get_pixel(3, 0),
     @graphics.Color::new(r=191, g=0, b=64),
   )
   assert_eq(
-    canvas.get_pixmap().get_pixel(3, 0),
+    canvas.get_pixmap().get_pixel(4, 0),
     @graphics.Color::new(r=64, g=0, b=191),
   )
-  assert_eq(canvas.get_pixmap().get_pixel(4, 0), @graphics.Color::white())
   assert_true(
     canvas.get_dirty_region().bounds() ==
-    Some(@graphics.PixelRect::new(x=2, y=0, width=2, height=1)),
+    Some(@graphics.PixelRect::new(x=3, y=0, width=2, height=1)),
   )
 }
 
@@ -1295,7 +1297,7 @@ test "Canvas::fill_path applies coverage to sweep paint shader" {
 }
 
 ///|
-test "Canvas::fill_path samples shader in device space after transform" {
+test "Canvas::fill_path resolves shader geometry in canvas space after transform" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.clear_dirty_region()
@@ -1314,13 +1316,15 @@ test "Canvas::fill_path samples shader in device space after transform" {
   )
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  // The shader spans user x 0..4; a +2 translate puts it over device pixels
+  // 2..3, and sampling maps each device centre back to user space (2.5, 3.5).
   assert_eq(
     canvas.get_pixmap().get_pixel(2, 0),
-    @graphics.Color::new(r=96, g=0, b=159),
+    @graphics.Color::new(r=223, g=0, b=32),
   )
   assert_eq(
     canvas.get_pixmap().get_pixel(3, 0),
-    @graphics.Color::new(r=32, g=0, b=223),
+    @graphics.Color::new(r=159, g=0, b=96),
   )
   assert_true(
     canvas.get_dirty_region().bounds() ==
@@ -2267,7 +2271,7 @@ test "Canvas::stroke_path samples radial paint shader" {
 }
 
 ///|
-test "Canvas::stroke_path samples shader in device space after transform" {
+test "Canvas::stroke_path resolves shader geometry in canvas space after transform" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.clear_dirty_region()
@@ -2290,13 +2294,15 @@ test "Canvas::stroke_path samples shader in device space after transform" {
   )
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  // The shader spans user x 0..4; a +2 translate puts it over device pixels
+  // 2..3, and sampling maps each device centre back to user space (2.5, 3.5).
   assert_eq(
     canvas.get_pixmap().get_pixel(2, 0),
-    @graphics.Color::new(r=96, g=0, b=159),
+    @graphics.Color::new(r=223, g=0, b=32),
   )
   assert_eq(
     canvas.get_pixmap().get_pixel(3, 0),
-    @graphics.Color::new(r=32, g=0, b=223),
+    @graphics.Color::new(r=159, g=0, b=96),
   )
   assert_true(
     canvas.get_dirty_region().bounds() ==

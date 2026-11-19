@@ -1039,7 +1039,7 @@ pub fn Rasterizer::rasterize_text_face(
         Simple(simple_glyph) =>
           self.rasterize_glyph(
             simple_glyph,
-            x + glyph.x,
+            x + glyph.origin_x,
             y + run.get_baseline_y(),
             scale,
           )

@@ -426,6 +426,7 @@ pub impl FontLoader for MemoryFontLoader
 type PositionedGlyph
 pub fn PositionedGlyph::get_advance_width(Self) -> Double
 pub fn PositionedGlyph::get_glyph_id(Self) -> Int32
+pub fn PositionedGlyph::get_origin_x(Self) -> Double
 pub fn PositionedGlyph::get_x(Self) -> Double
 pub fn PositionedGlyph::get_y(Self) -> Double
 pub fn PositionedGlyph::to_repr(Self) -> @debug.Repr

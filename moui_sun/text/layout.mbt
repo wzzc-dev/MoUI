@@ -96,8 +96,22 @@ pub fn PositionedGlyph::get_glyph_id(self : PositionedGlyph) -> Int32 {
 
 ///|
 /// Get this positioned glyph's x position in pixels.
+///
+/// This is the drawing origin *including* the glyph's left side bearing, i.e.
+/// the pen position plus `left_side_bearing * scale`. Glyph contours already
+/// carry their own `xMin`, so painters must position outlines with
+/// `get_origin_x()` instead and let the contour supply the bearing; adding
+/// both double-counts it and shifts the ink right. Carets and hit testing use
+/// `get_origin_x()` for the same reason.
 pub fn PositionedGlyph::get_x(self : PositionedGlyph) -> Double {
   self.x
+}
+
+///|
+/// Get this positioned glyph's pen (advance) origin in pixels, without the
+/// left side bearing. This is the position glyph outlines must be drawn at.
+pub fn PositionedGlyph::get_origin_x(self : PositionedGlyph) -> Double {
+  self.origin_x
 }
 
 ///|
