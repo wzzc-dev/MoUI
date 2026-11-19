@@ -157,5 +157,8 @@ if [[ $use_sudo -eq 1 && ${EUID:-$(id -u)} -ne 0 ]]; then
 fi
 
 echo "Installing Linux dependencies: ${missing[*]}"
-"${apt[@]}" update
-"${apt[@]}" install -y "${missing[@]}"
+# A shared Ubuntu mirror occasionally stalls; retry the metadata fetch and the
+# install instead of failing the whole job on one bad connection.
+export DEBIAN_FRONTEND=noninteractive
+"${apt[@]}" -o Acquire::Retries=5 update
+"${apt[@]}" -o Acquire::Retries=5 install -y "${missing[@]}"
