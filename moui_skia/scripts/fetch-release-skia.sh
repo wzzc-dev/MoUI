@@ -389,6 +389,8 @@ extract_zip() {
   unzip -q -o "$archive" -d "$dest"
 }
 
+stub_mode="$(printf '%s' "${MOUI_SKIA_STUB_MODE:-auto}" | tr '[:upper:]' '[:lower:]')"
+
 ensure_package_extracted() {
   if [[ $dry_run_config -eq 1 ]]; then
     return 0
@@ -464,35 +466,56 @@ ensure_stub_extracted() {
   if [[ $dry_run_config -eq 1 ]]; then
     return 0
   fi
-  if [[ $force -eq 1 || ! -d "$stub_dir" ]]; then
-    mkdir -p "$stub_entry_dir"
-    if [[ $force -eq 1 && -f "$stub_zip" ]]; then
-      rm -f "$stub_zip"
+  if [[ "${stub_mode:-auto}" == "build" ]]; then
+    return 0
+  fi
+  if [[ $force -eq 0 && -d "$stub_dir" ]]; then
+    return 0
+  fi
+  mkdir -p "$stub_entry_dir"
+  if [[ $force -eq 1 && -f "$stub_zip" ]]; then
+    rm -f "$stub_zip"
+  fi
+  if [[ $force -eq 1 || ! -f "$stub_zip" ]]; then
+    if ! download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"; then
+      return 1
     fi
-    if [[ $force -eq 1 || ! -f "$stub_zip" ]]; then
-      download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"
+  fi
+  local actual_stub_sha256
+  actual_stub_sha256="$(compute_sha256 "$stub_zip" | tr '[:upper:]' '[:lower:]')"
+  if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
+    echo "Skia stub library SHA256 mismatch; downloading a fresh copy: $stub_zip" >&2
+    echo "  expected=$stub_sha256" >&2
+    echo "  actual=$actual_stub_sha256" >&2
+    rm -f "$stub_zip"
+    if ! download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"; then
+      return 1
     fi
     actual_stub_sha256="$(compute_sha256 "$stub_zip" | tr '[:upper:]' '[:lower:]')"
-    if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
-      echo "Skia stub library SHA256 mismatch; downloading a fresh copy: $stub_zip" >&2
-      echo "  expected=$stub_sha256" >&2
-      echo "  actual=$actual_stub_sha256" >&2
-      rm -f "$stub_zip"
-      download_file "$stub_url" "$stub_zip" "Skia stub library asset $stub_name" "$stub_sha256" "$stub_size"
-      actual_stub_sha256="$(compute_sha256 "$stub_zip" | tr '[:upper:]' '[:lower:]')"
-    fi
-    if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
-      echo "Skia stub library SHA256 mismatch: $stub_zip" >&2
-      echo "  expected=$stub_sha256" >&2
-      echo "  actual=$actual_stub_sha256" >&2
-      exit 1
-    fi
-    extract_zip "$stub_zip" "$stub_dir"
   fi
+  if [[ -n "$stub_sha256" && "$actual_stub_sha256" != "$stub_sha256" ]]; then
+    echo "Skia stub library SHA256 mismatch: $stub_zip" >&2
+    echo "  expected=$stub_sha256" >&2
+    echo "  actual=$actual_stub_sha256" >&2
+    return 1
+  fi
+  if ! extract_zip "$stub_zip" "$stub_dir"; then
+    echo "failed to extract Skia stub library archive: $stub_zip" >&2
+    return 1
+  fi
+  return 0
 }
 
 ensure_package_extracted
-ensure_stub_extracted
+if ! ensure_stub_extracted; then
+  if [[ "$stub_mode" == "prebuilt" ]]; then
+    echo "MOUI_SKIA_STUB_MODE=prebuilt requires the released stub asset $stub_name ($stub_url), which is unavailable" >&2
+    exit 1
+  fi
+  echo "note: released stub asset $stub_name is unavailable ($stub_url); the build compiles native/*.cpp locally instead" >&2
+  rm -rf "$stub_entry_dir"
+  stub_name=""
+fi
 
 stub_lib_path=""
 if [[ -n "$stub_name" && -d "$stub_dir" ]]; then

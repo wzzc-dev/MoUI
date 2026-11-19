@@ -68,7 +68,9 @@ compile: the stub is the prebuilt release archive and the prebuild passes
 `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
-ignored repository-local manifest workspace under `.tools\\vcpkg-msvc`. Packaged
+ignored repository-local manifest workspace under `.tools\\vcpkg-msvc`; the
+manifest pins its own `builtin-baseline` so `zlib:x64-windows` resolves the same
+port on every machine instead of tracking the latest vcpkg registry revision. Packaged
 apps should be launched through the generated `run.cmd`; WGPU diagnostic
 packages use that wrapper so the bundled WGPU release metadata is visible to
 the dynamic loader.

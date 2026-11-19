@@ -385,7 +385,7 @@ node scripts/validate-core-theme-no-control-surface.mjs  # core keeps no control
 node scripts/validate-host-import-baseline.mjs           # backend default imports stay contracts-only (ADR 0018, P5)
 node scripts/validate-renderer-provider-open-extension.mjs  # render providers stay open-extension; no central matrix (ADR 0019, P6)
 node scripts/validate-backend-common-boundary.mjs       # platform adapters use the single backend/common owner (ADR 0025, P10)
-node scripts/validate-window-lifecycle-boundary.mjs     # seven backends share lifecycle/frame ownership; window dispatch is physical-only
+node scripts/validate-window-lifecycle-boundary.mjs     # seven backends share lifecycle/frame ownership; window dispatch is physical-only (skips the window-package half with a printed note when the optional `window` submodule is not checked out)
 ```
 
 Run them when touching their change surface: core/theme layering, host
