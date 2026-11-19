@@ -66,3 +66,16 @@
   mirrored Skia asset lives in the MoUI GitCode repository. Do not add mirror
   filters that claim assets the script has not uploaded; the fetch helpers will
   spend a failed candidate on them before falling back.
+- ghproxy-style fallback: `providers.release.mirrors` also carries `url-prefix`
+  entries (`kind: url-prefix`, `prefix`), used as `<prefix><primary url>`. They
+  need no upload and cover Debug/wasm/source, but rank after the GitCode copy.
+  Measured 2026-11-19 from mainland China on the 80 KB stub asset: `gh-proxy.com`,
+  `ghproxy.net`, and `ghproxy.monkeyray.net` returned byte-identical files;
+  `ghproxy.cfd`, `ghproxy.cn`, `gh-proxy.net`, `ghproxy.homeboyc.cn`,
+  `gitproxy.click` answered 200 with an error page or 401, and `ghfast.top`,
+  `ghproxy.cc`, `mirror.ghproxy.com`, `ghp.ci`, `gh.llkk.cc`,
+  `github.moeyy.xyz`, `hub.gitmirror.com`, `gh.xxooo.cf`,
+  `gh.api.99988866.xyz`, `ghps.cc` were unreachable/404. The 54.7 MB
+  `Skia-…-linux-Release-x64.zip` was much slower through these proxies than a
+  hosted copy, so do not promote proxies above `gitcode-skia`, and keep the
+  SHA256 check as the only reason they are safe to try at all.

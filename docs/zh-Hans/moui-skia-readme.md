@@ -279,6 +279,11 @@ MOUI_SKIA_MIRROR=gitcode-skia bash moui_skia/scripts/fetch-release-skia.sh --pri
 bash moui_skia/scripts/fetch-release-skia.sh --no-mirror --print-env  # 只用主站
 ```
 
+lock 里还记录了 `url-prefix` 型代理（例如 `gh-proxy.com`）：它们在下载时给
+GitHub 地址加前缀，不需要上传，因此 Debug 包和源码归档也有回退路径。它们的优先级
+排在 GitCode 副本之后，且同样必须匹配 lock 中的 SHA256——这类服务有时会返回错误
+页或截断内容，只有校验能挡住。它们属于第三方服务，可能限速或消失。
+
 `MOUI_SKIA_MIRROR` 取 `auto`（默认：先主站，再逐个镜像）、`off`，或某个镜像名
 （优先尝试它）；名字也会匹配以 `<名字>-` 开头的镜像，所以 `gitcode` 会同时
 优先 `gitcode-skia` 与 `gitcode-skia-stub`。`--print-env` 中的

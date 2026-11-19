@@ -87,16 +87,22 @@ You can browse and install extra skills here:
   hatch cheap. The hatch is not needed to dodge D8016 either: no `/std:c++20`
   ever reaches `mbt`; native evidence scripts that set it do so only to stay
   offline and avoid the real Skia dependency.
-- `providers.release.mirrors` records the GitCode copy of the locked subset
-  (MoUI's GitCode repository, tags `skia-<skia-tag>` and `skia-stub-<skia-tag>`).
-  It is a mirror, not a second producer: `wzzc-dev/skia` still builds Skia and
-  MoUI still publishes the stub. `fetch-release-skia.{sh,ps1}` try the primary
-  host first, then the mirrors, and verify the locked SHA256 and size on every
-  candidate; `MOUI_SKIA_MIRROR` accepts `auto|off|<mirror-name>` (flags
-  `--mirror NAME` / `--no-mirror`, `-Mirror` / `-NoMirror`). Do not add a mirror
-  entry whose filters claim assets the mirror does not serve: the filters are the
-  upload list for `scripts/mirror-release-assets.sh` and the download candidates
-  for the fetch helpers. That script needs `GITCODE_TOKEN` and is gated by
+- `providers.release.mirrors` records two fallback kinds. `release-download`
+  entries are hosted copies in the GitCode MoUI repository (`skia-<skia-tag>`,
+  `skia-stub-<skia-tag>`); `url-prefix` entries are ghproxy-style services used
+  as `<prefix><primary url>`, which need no upload and also cover Debug, wasm,
+  and the source archive. Both are mirrors, not second producers: `wzzc-dev/skia`
+  still builds Skia and MoUI still publishes the stub. `fetch-release-skia.{sh,ps1}`
+  try the primary host, then the hosted copies, then the proxies, and verify the
+  locked SHA256 and size on every candidate; `MOUI_SKIA_MIRROR` accepts
+  `auto|off|<mirror-name>` (flags `--mirror NAME` / `--no-mirror`, `-Mirror` /
+  `-NoMirror`). Proxies are third-party and only usable because of that check:
+  several of them answer 200 with an error page or a truncated body. Never use a
+  proxy as an upload target (`mirror-release-assets.sh` rejects it), and do not
+  add a `release-download` entry whose filters claim assets the mirror does not
+  serve: those filters are both the upload list for
+  `scripts/mirror-release-assets.sh` and the download candidates for the fetch
+  helpers. That script needs `GITCODE_TOKEN` and is gated by
   `.github/workflows/moui-skia-gitcode-mirror.yml`;
   `moui_skia/scripts/tests/fetch-release-skia-mirror.sh` proves the fallback
   offline in `pr-static`.

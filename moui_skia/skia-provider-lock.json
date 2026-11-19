@@ -38,6 +38,39 @@
           "scope": "stub",
           "base_url": "https://gitcode.com/wzzc/MoUI/releases/download/skia-stub-{tag}/",
           "notes": "AtomGit/GitCode mirror of the MoUI-hosted Skia stub assets"
+        },
+        {
+          "name": "gh-proxy-com",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://gh-proxy.com/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
+        },
+        {
+          "name": "ghproxy-net",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://ghproxy.net/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
+        },
+        {
+          "name": "ghproxy-monkeyray",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://ghproxy.monkeyray.net/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
         }
       ],
       "source_archive": {

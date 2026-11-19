@@ -142,14 +142,36 @@ DOWNLOAD_PATTERN = re.compile(
 )
 
 
+def scope_matches(mirror, scope):
+    scopes = mirror.get("scope")
+    if isinstance(scopes, str):
+        scopes = [scopes]
+    return scope in (scopes or [])
+
+
 def pick(scope):
     for mirror in mirrors:
-        if mirror.get("scope") != scope:
+        if not scope_matches(mirror, scope):
+            continue
+        if mirror.get("kind", "release-download") != "release-download":
+            # url-prefix entries (ghproxy-style) front GitHub at download time and
+            # have nothing to upload, so they are never mirror targets.
             continue
         if requested_mirror and mirror.get("name") != requested_mirror:
             continue
         return mirror
     return None
+
+
+if requested_mirror:
+    for mirror in mirrors:
+        if mirror.get("name") != requested_mirror:
+            continue
+        if mirror.get("kind", "release-download") != "release-download":
+            raise SystemExit(
+                f"mirror {requested_mirror} is a {mirror.get('kind')} download proxy; "
+                "it needs no upload, so --mirror only accepts hosted release copies"
+            )
 
 
 def matches(mirror, platform, config, arch, link_mode):

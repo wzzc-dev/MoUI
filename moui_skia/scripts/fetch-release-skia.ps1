@@ -109,17 +109,19 @@ function Get-MirrorCandidates {
   param(
     [Parameter(Mandatory = $true)][object] $Provider,
     [Parameter(Mandatory = $true)][string] $Scope,
-    [Parameter(Mandatory = $true)][string] $ArtifactName
+    [Parameter(Mandatory = $true)][string] $ArtifactName,
+    [string] $PrimaryUrl = ""
   )
   $candidates = @()
   if ([string]::IsNullOrWhiteSpace($ArtifactName)) { return $candidates }
   $mirrors = Get-JsonPropertyValue -Object $Provider -Name "mirrors"
   if (!$mirrors) { return $candidates }
   foreach ($mirror in @($mirrors)) {
-    if ((Get-JsonPropertyValue -Object $mirror -Name "scope") -ne $Scope) { continue }
-    $baseUrl = Get-JsonPropertyValue -Object $mirror -Name "base_url"
+    $mirrorScope = Get-JsonPropertyValue -Object $mirror -Name "scope"
+    if ($mirrorScope -is [string]) { $mirrorScope = @($mirrorScope) }
+    if (@($mirrorScope) -notcontains $Scope) { continue }
     $name = Get-JsonPropertyValue -Object $mirror -Name "name"
-    if ([string]::IsNullOrWhiteSpace($baseUrl) -or [string]::IsNullOrWhiteSpace($name)) { continue }
+    if ([string]::IsNullOrWhiteSpace($name)) { continue }
     $platforms = Get-JsonPropertyValue -Object $mirror -Name "platforms"
     if ($platforms -and (@($platforms) -notcontains $resolvedPlatform)) { continue }
     $configs = Get-JsonPropertyValue -Object $mirror -Name "configs"
@@ -128,9 +130,22 @@ function Get-MirrorCandidates {
     if ($arches -and (@($arches) -notcontains $resolvedArch)) { continue }
     $linkModes = Get-JsonPropertyValue -Object $mirror -Name "link_modes"
     if ($linkModes -and (@($linkModes) -notcontains $resolvedLinkMode)) { continue }
+    $kind = Get-JsonPropertyValue -Object $mirror -Name "kind"
+    if ([string]::IsNullOrWhiteSpace($kind)) { $kind = "release-download" }
+    if ($kind -eq "release-download") {
+      $baseUrl = Get-JsonPropertyValue -Object $mirror -Name "base_url"
+      if ([string]::IsNullOrWhiteSpace($baseUrl)) { continue }
+      $url = $baseUrl.Replace("{tag}", $Tag) + $ArtifactName
+    } elseif ($kind -eq "url-prefix") {
+      $prefix = Get-JsonPropertyValue -Object $mirror -Name "prefix"
+      if ([string]::IsNullOrWhiteSpace($prefix) -or [string]::IsNullOrWhiteSpace($PrimaryUrl)) { continue }
+      $url = $prefix + $PrimaryUrl
+    } else {
+      continue
+    }
     $candidates += [pscustomobject]@{
       Name = $name
-      Url  = ($baseUrl.Replace("{tag}", $Tag) + $ArtifactName)
+      Url  = $url
     }
   }
   return $candidates
@@ -328,11 +343,11 @@ $extraCcFlags = Get-JsonPropertyValue -Object $provider.default_extra_cc_flags -
 if ($null -eq $extraCcFlags) { $extraCcFlags = "" }
 $extraLinkFlags = Get-JsonPropertyValue -Object $provider.default_extra_link_flags -Name $resolvedPlatform
 if ($null -eq $extraLinkFlags) { $extraLinkFlags = "" }
-$packageMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "skia" -ArtifactName $assetName)
-$sourceMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "source" -ArtifactName $sourceName)
+$packageMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "skia" -ArtifactName $assetName -PrimaryUrl $assetUrl)
+$sourceMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "source" -ArtifactName $sourceName -PrimaryUrl $sourceUrl)
 $stubMirrorCandidates = @()
 if ($stubName) {
-  $stubMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "stub" -ArtifactName $stubName)
+  $stubMirrorCandidates = @(Get-MirrorCandidates -Provider $provider -Scope "stub" -ArtifactName $stubName -PrimaryUrl $stubUrl)
 }
 
 $resolvedCacheDir = Resolve-RepoPath $CacheDir

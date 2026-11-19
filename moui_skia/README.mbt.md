@@ -325,6 +325,12 @@ MOUI_SKIA_MIRROR=gitcode-skia bash scripts/fetch-release-skia.sh --print-env
 bash scripts/fetch-release-skia.sh --no-mirror --print-env  # primary host only
 ```
 
+The lock also records `url-prefix` proxies (for example `gh-proxy.com`), which
+front GitHub at download time and need no upload, so Debug packages and the
+source archive get a fallback too. They rank after the hosted GitCode copy and
+must still match the locked SHA256, because these services sometimes answer with
+an error page or a truncated body.
+
 `MOUI_SKIA_MIRROR` accepts `auto` (default: primary, then every mirror), `off`,
 or a mirror name to try first; a name also covers mirrors named `<name>-...`, so
 `gitcode` prefers `gitcode-skia` and `gitcode-skia-stub` in one go.
