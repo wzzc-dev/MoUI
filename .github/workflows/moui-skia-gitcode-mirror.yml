@@ -7,8 +7,18 @@ name: MoUI Skia GitCode Mirror
 # The selection, digests, and target tags all come from the lock mirrors, so this
 # workflow never hardcodes an asset name. `fetch-release-skia.{sh,ps1}` read the
 # same lock, verify every candidate against the locked SHA256, and only fall back
-# to a mirror when the primary host fails.
+# to a mirror when the primary host fails. A push that changes the lock or this
+# tooling re-mirrors automatically; without the GITCODE_TOKEN secret the job
+# reports a skip instead of failing.
 on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - moui_skia/skia-provider-lock.json
+      - moui_skia/scripts/mirror-release-assets.sh
+      - .github/workflows/moui-skia-gitcode-mirror.yml
   workflow_dispatch:
     inputs:
       force:
