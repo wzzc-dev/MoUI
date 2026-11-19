@@ -10,13 +10,17 @@
 /// avoids re-reading the same face for every renderer.
 ///
 /// Payload layout (little-endian i32 lengths):
-///   i32 version (1)
+///   i32 version (2)
 ///   i32 match_count
-///     per match: i32 role, i32 path_len, path bytes, i32 family_len, family
+///     per match: i32 role, i32 weight, i32 path_len, path bytes,
+///                i32 family_len, family bytes
 ///   i32 list_count
 ///     per list entry: i32 path_len, path bytes, i32 family_len, family
 ///
-/// role: 0 = sans, 1 = monospace, 2 = serif.
+/// role: 0 = sans, 1 = monospace, 2 = serif. `weight` is the CSS weight bucket
+/// the face was matched for (100/300/400/600/700/800), which is the same
+/// quantisation the Skia fontconfig provider applies, so both renderers pick a
+/// bold face at the same weight.
 priv enum SunPlatformFontRole {
   Sans
   Monospace
@@ -26,6 +30,8 @@ priv enum SunPlatformFontRole {
 ///|
 priv struct SunPlatformFontMatch {
   role : SunPlatformFontRole
+  /// CSS weight bucket this face was matched for; 400 is the regular bucket.
+  weight : Int32
   path : String
   family : String
 }
@@ -125,11 +131,11 @@ fn sun_decode_platform_font_payload(
     return None
   }
   let version = @render_common.async_image_read_i32_le(payload, 0)
-  if version != 1 {
+  if version != 2 {
     return None
   }
   let match_count = @render_common.async_image_read_i32_le(payload, 4)
-  if match_count < 0 || match_count > 3 {
+  if match_count < 0 || match_count > 18 {
     return None
   }
   let matches : Array[SunPlatformFontMatch] = []
@@ -143,6 +149,14 @@ fn sun_decode_platform_font_payload(
     match sun_platform_font_role(role_code) {
       None => return None
       Some(role) => {
+        if offset + 4 > payload.length() {
+          return None
+        }
+        let weight = @render_common.async_image_read_i32_le(payload, offset)
+        offset += 4
+        if !sun_platform_font_weight_is_known(weight) {
+          return None
+        }
         let path_result = sun_platform_font_read_string(payload, offset)
         guard path_result is Some(result) else { return None }
         let (path, after_path) = result
@@ -151,7 +165,7 @@ fn sun_decode_platform_font_payload(
         guard family_result is Some(result) else { return None }
         let (family, after_family) = result
         offset = after_family
-        matches.push({ role, path, family, })
+        matches.push({ role, weight, path, family, })
       }
     }
   }
@@ -179,6 +193,19 @@ fn sun_decode_platform_font_payload(
     return None
   }
   Some({ matches, entries, })
+}
+
+///|
+/// CSS weight buckets the native stub queries, in ascending order. Keeping the
+/// list here (not just in the stub) lets the decoder reject a payload from a
+/// stub that drifted, instead of silently mis-registering faces.
+fn sun_platform_font_weight_is_known(weight : Int32) -> Bool {
+  weight == 100 ||
+  weight == 300 ||
+  weight == 400 ||
+  weight == 600 ||
+  weight == 700 ||
+  weight == 800
 }
 
 ///|
