@@ -116,6 +116,10 @@ test "screenshot package templates select the requested renderer" {
   assert_true(
     screenshot_package_moon_pkg("skia").contains("wzzc-dev/moui_skia_renderer"),
   )
+  // Offscreen screenshots must lay out with the renderer's text metrics: the
+  // fallback system measures wide system faces differently and clips labels.
+  assert_true(skia.contains("runtime.set_text_system(renderer.text_system())"))
+  assert_true(sun.contains("runtime.set_text_system(renderer.text_system())"))
 }
 
 ///|
