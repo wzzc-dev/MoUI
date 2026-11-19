@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/x/fs",
   "mizchi/image",
   "moonbitlang/core/math",
@@ -20,4 +21,5 @@ supported_targets = "native"
 
 options(
   targets: { },
+  "native-stub": [ "renderer_platform_font_query.c" ],
 )
