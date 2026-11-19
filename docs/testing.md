@@ -517,18 +517,22 @@ sh scripts/check.sh --profile full
 ```
 
 CI profile jobs use the shell wrapper to express gate intent. The `pr` profile is
-composite: `pr-static` (host-independent guards, MoonBit tool tests, script lint)
+composite: `pr-static` (script lint, policy validators, and the MoonBit tool tests)
 followed by `pr-native` (format check, `moon check`, generated-interface drift,
 the package test matrix, and the Web wasm-gc builds). Locally
 `sh scripts/check.sh --profile pr` runs both halves in order; `ci.yml` splits them
 across runners — `pr-static` on `ubuntu-24.04`, `pr-native` plus the workspace
 sweep on macOS — so a pull request pays for one compile graph, on the only runner
-that resolves the mainline Skia bindings, instead of three (baseline `moon check`,
+that resolves the mainline Skia bindings and ships ObjC++, instead of three (baseline `moon check`,
 profile compile, sweep compile). A composite profile may declare `steps: []` when
 `includes` delegates every step; `validate-check-profiles` enforces that.
 
 Two cost rules in `ci.yml` are easy to undo by accident:
 
+- `pr-static` is Linux-host only: install the Wayland prebuild set
+  (`bash scripts/set_linux_deps.sh --wayland`) before it runs, and keep anything
+  that needs ObjC++ (the renderer capability consistency tool imports
+  `moui_metal_renderer`) or a real Skia link in `pr-native`.
 - a pull request whose changed paths are all documentation (`docs/`, `memories/`,
   `website/web_wasm/docs/`, or any `*.md`) skips the compile jobs; the static
   guards still run because they are what validates documentation.

@@ -11,7 +11,7 @@
       "steps": []
     },
     "pr-static": {
-      "description": "Static pull-request guards: script lint, policy validators, and MoonBit tool tests. Host-independent, so CI runs this half on ubuntu-24.04.",
+      "description": "Static pull-request guards: script lint, policy validators, and MoonBit tool tests from tools/moui. Linux-host only, so CI runs this half on ubuntu-24.04 with scripts/set_linux_deps.sh --wayland for the window prebuild; steps needing ObjC++ or a real Skia link live in pr-native.",
       "steps": [
         {
           "name": "script lint (pr)",
@@ -252,13 +252,6 @@
           "argv": [
             "node",
             "scripts/validate-renderer-provider-manifests.mjs"
-          ]
-        },
-        {
-          "name": "renderer capability consistency",
-          "argv": [
-            "node",
-            "scripts/validate-renderer-capability-consistency.mjs"
           ]
         },
         {
@@ -592,6 +585,13 @@
             "moui_tests/renderer_contract",
             "--target",
             "native"
+          ]
+        },
+        {
+          "name": "renderer capability consistency",
+          "argv": [
+            "node",
+            "scripts/validate-renderer-capability-consistency.mjs"
           ]
         },
         {
