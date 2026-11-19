@@ -24,5 +24,5 @@ keywords = [ "moui", "text", "coretext", "directwrite", "fontconfig" ]
 description = "Platform text providers for MoUI renderers"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

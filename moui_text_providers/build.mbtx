@@ -1,0 +1,117 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+---
+
+///|
+/// Text provider prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. A package's own `cc-link-flags` do not reach
+/// an is-main link, so the Apple frameworks the CoreText stub calls (and the
+/// Fontconfig/HarfBuzz set on Linux) travel through `link_configs` instead. The
+/// Fontconfig/Breetype/HarfBuzz include path is probed with `pkg-config` and
+/// exported as `MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS`.
+let coretext_darwin_link_flags : String = "-framework AppKit -framework QuartzCore -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lz"
+
+///|
+let fontconfig_link_flags : String = "-lfontconfig -lharfbuzz -lfreetype -lz"
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+async fn capture(program : String, args : Array[String]) -> (Int32, String) {
+  let result = @process.run(
+    program,
+    args,
+    stdout=@process.Collect,
+    stderr=@process.Collect,
+  )
+  let out = result.stdout_text() catch {
+    _ => ""
+  }
+  (result.exit_code, out)
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out) = capture("uname", ["-s"])
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  "linux"
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) =>
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+async fn pkg_config_cflags(packages : Array[String]) -> String {
+  let args : Array[String] = ["--cflags"]
+  for name in packages {
+    args.push(name)
+  }
+  let (code, out) = capture("pkg-config", args)
+  if code != 0 {
+    return ""
+  }
+  out.trim().to_owned()
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let var_fields : Map[String, @json.Json] = Map([])
+  for pair in vars {
+    var_fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  let entries : Array[@json.Json] = []
+  for pair in link_configs {
+    let fields : Map[String, @json.Json] = Map([])
+    fields.set("package", @json.Json::string(pair.0))
+    fields.set("link_flags", @json.Json::string(pair.1))
+    entries.push(@json.Json::object(fields))
+  }
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(var_fields))
+  payload.set("link_configs", @json.Json::array(entries))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let platform = host_platform()
+  let link_configs : Array[(String, String)] = [
+    ("wzzc-dev/moui_text_providers/directwrite", "-lz"),
+  ]
+  if platform == "macos" {
+    link_configs.push(
+      ("wzzc-dev/moui_text_providers/coretext", coretext_darwin_link_flags),
+    )
+  }
+  let mut fontconfig_cflags = ""
+  if platform == "linux" {
+    link_configs.push(
+      ("wzzc-dev/moui_text_providers/fontconfig", fontconfig_link_flags),
+    )
+    fontconfig_cflags = pkg_config_cflags([
+      "fontconfig", "freetype2", "harfbuzz",
+    ])
+  }
+  emit([("MOUI_LINUX_FONTCONFIG_STUB_CC_FLAGS", fontconfig_cflags)], link_configs)
+}

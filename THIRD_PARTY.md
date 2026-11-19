@@ -62,7 +62,7 @@ be found in the LICENSE file" — but **the delivered package has no top-level
 alone. Treat "Skia is BSD-3-Clause" as upstream knowledge requiring
 confirmation against `skia/LICENSE`, not as evidence this repo holds.
 
-What a macOS link actually pulls is determined by `moui_skia/build.js`, not by
+What a macOS link actually pulls is determined by `moui_skia/build.mbtx`, not by
 what the package happens to contain. With paragraph text and Metal GPU enabled
 (static mode), the darwin link line names eight archives
 (`macosLibraryFlags` + `skiaParagraphLinkLibraryNames`):
@@ -108,7 +108,7 @@ text: HarfBuzz.** Skia itself, `skparagraph`, `skshaper`, `skunicode_icu`,
 `skunicode_core` and — the significant one — **ICU have no license text in the
 artifact**: `third_party/icu/` contains only `SkLoadICU.h`. FreeType ships both
 its grants but is not linked on Apple platforms at all (`-lfreetype` is appended
-only in the Linux branch, `moui_skia/build.js:777`), so its FTL-versus-GPLv2
+only in the Linux branch, `moui_skia/build.mbtx`), so its FTL-versus-GPLv2
 choice is a Linux-route obligation, not a macOS one.
 
 ## WGPU and WebGPU

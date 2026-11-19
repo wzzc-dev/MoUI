@@ -21,5 +21,5 @@ keywords = [ "moui", "renderer", "metal", "experimental" ]
 description = "Experimental direct Metal renderer for MoUI: no Skia, no wgpu"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

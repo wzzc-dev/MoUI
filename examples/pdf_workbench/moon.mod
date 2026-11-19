@@ -13,5 +13,5 @@ import {
 }
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

@@ -111,9 +111,9 @@ Linux runtime requirements are intentionally native:
   When neither portal nor zenity is available, file and folder selection
   silently returns cancelled, and the app prints a diagnostic message to stdout.
 - zlib / pthread / fontconfig system libraries for the final native link.
-  `moui/build.js` owns the `backend/linux` zlib entry,
+  `moui/build.mbtx` owns the `backend/linux` zlib entry,
   `moui_skia/build.mbtx` owns the Skia binding's pthread/fontconfig stack, and
-  `moui_text_providers/build.js` owns `moui_text_providers/fontconfig`. Linux example entrypoints
+  `moui_text_providers/build.mbtx` owns `moui_text_providers/fontconfig`. Linux example entrypoints
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`

@@ -235,7 +235,7 @@ Authorize the route as a staged plan, not as an implementation sprint:
   renderer code, no package registration, no ADR 0005 amendment. Two self-
   corrections during the run: an initial note claimed the macOS product "links 28
   archives" — the verified figure is 29 shipped / 8 on the darwin link line,
-  `-lfreetype` is Linux-only (`moui_skia/build.js:777`), and the release binary is
+  `-lfreetype` is Linux-only (`moui_skia/build.mbtx`), and the release binary is
   stripped so `nm` counts are inconclusive; and the L0.4 draft treated
   all-zero `buildMs`/`layoutMs` as a broken probe, when they are only timed on the
   dirty path — the missing instruments were `drawMs`/`totalMs`.
