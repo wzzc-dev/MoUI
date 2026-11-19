@@ -330,11 +330,14 @@ matrix report is inconsistent. A second column reports the share of pixels with
 any non-zero channel difference as a diagnostic only. `--generate` renders both
 matrices first (Skia first, so a host without Skia fails fast), `--report-only`
 prints every number without blocking, and `--self-test` exercises the metric
-and invalidity paths without renderers. On a host without a Skia build the gate
-prints `visual parity: skipped (Skia renderer unavailable on this host)` and
-exits 0, the same convention as the control previews and gallery screenshots.
-The step runs in the `visual` profile report-only while Sun parity work is in
-flight (see
+and invalidity paths without renderers. A blocking run needs a Skia reference:
+without `--report-only`, a host without a Skia build exits 1 instead of
+skipping. The blocking step opts into the locked release prebuild for its two
+matrix children (the rest of the `visual` profile keeps its default
+prebuild-disabled environment, so host-pinned preview/gallery checks still
+skip). `--report-only` keeps the old skip-and-exit-0 behavior for in-flight
+work. The step is a blocking Linux step in the `visual` profile, thresholds
+3%/10%, and the `visual-profile` CI job runs the whole profile on Ubuntu (see
 [plans/active/sun-visual-parity.md](plans/active/sun-visual-parity.md)).
 
 ### Gallery screenshots (`moui_tests/gallery_screenshots`)

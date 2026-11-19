@@ -1248,12 +1248,16 @@
           ]
         },
         {
-          "name": "sun/skia visual parity (report-only)",
+          "name": "sun/skia visual parity (blocking)",
+          "host": "linux",
           "argv": [
             "node",
             "scripts/visual-parity-gate.mjs",
             "--generate",
-            "--report-only"
+            "--max-avg",
+            "3",
+            "--max-worst",
+            "10"
           ]
         },
         {

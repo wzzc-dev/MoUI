@@ -19,11 +19,11 @@
 ///|
 /// Scene `solid_and_rounded_rects`: clear + fill rect + fill/stroke rounded
 /// rects.
-pub let golden_baseline_solid_and_rounded_rects : UInt64 = 3990293542802571389UL
+pub let golden_baseline_solid_and_rounded_rects : UInt64 = 961543285849148029UL
 
 ///|
 /// Scene `linear_gradient`: diagonal linear gradient inside a rounded rect.
-pub let golden_baseline_linear_gradient : UInt64 = 8759695772735398335UL
+pub let golden_baseline_linear_gradient : UInt64 = 3090617638251390686UL
 
 ///|
 /// Scene `clip_transform_opacity`: clipped, sheared, 60%-opacity rect.

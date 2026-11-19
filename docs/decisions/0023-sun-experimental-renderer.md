@@ -1,7 +1,7 @@
 # ADR 0023: Sun CPU Raster is an Experimental Renderer
 
 - **Date**: 2026-08-02
-- **Status**: Accepted
+- **Status**: Accepted (amended 2026-11-20: bounded visual-parity goal; positioning unchanged)
 - **Deciders**: Agent-assisted (deepseek-v4-flash); positioning decided by repo owner
 - **Related**: ADR 0007 (renderer and Skia, sections on provider open-extension); ADR 0019 (renderer provider plugin); invariants R1/R2; `moui_sun_renderer/provider.mbt`; `moui_sun/` package
 
@@ -69,6 +69,36 @@ the same product class as native WGPU but with an even lower commitment:
    (no-Skia distribution, WASM CPU raster, standalone text package), record it
    in an RFC/ADR. If no role materializes, the freeze becomes the steady
    state and any future removal reuses the ADR 0023 rationale.
+
+## Addendum (2026-11-20): bounded visual-parity goal
+
+The repo owner added a continuing visual goal for Sun: on Linux, the controls
+Sun already supports should converge on Skia's perceived output — the 60-cell
+control-state matrix within avg 3% / worst cell 10% under the fixed perceptual
+metric, and the Showcase first screen free of bitmap-looking text, clipped
+glyphs and jaggies. This addendum does not change the decision above:
+
+1. **Positioning is unchanged.** Sun stays an experimental renderer: it is not
+   selected by the product `auto` path, is not registered in a default
+   composition root, and makes no usability or performance claim (decision 1
+   still holds).
+2. **The capability freeze still holds** (decision 2). Parity is a quality
+   goal for the existing feature set, not an obligation to mirror every new
+   Skia capability. A new `DrawCommand` capability still needs its own reason
+   and ADR note; the parity gate never fails a build because Sun lacks a
+   capability it never claimed.
+3. **"Resist pressure to keep parity" keeps its original meaning.** Option B
+   rejects *unbounded* parity pressure: every new Skia feature becoming a
+   standing Sun obligation. It does not forbid a bounded, measured visual
+   target on the current controls. This addendum is that bounded target; the
+   two statements are compatible.
+4. **The gate is opt-in and one-way.** Enforcement lives in the `visual` check
+   profile on Linux (`scripts/visual-parity-gate.mjs --generate`), not in the
+   product path. The comparison always treats Skia as the reference; Skia
+   output is never changed to match Sun.
+5. **Not product evidence.** A green parity gate is visual-quality evidence
+   for the experimental stack, not evidence for promotion. Promotion still
+   needs an RFC/ADR and product-class evidence.
 
 ## Options Considered
 

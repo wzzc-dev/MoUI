@@ -394,16 +394,27 @@ const generateMatrices = options => {
         "--out",
         dir,
       ],
-      { cwd: repoRoot, encoding: "utf8", shell: false },
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+        shell: false,
+        // The blocking gate needs a Skia reference. The rest of the `visual`
+        // profile keeps the default prebuild-disabled environment (the
+        // committed docs previews and gallery shots are host-pinned), so only
+        // this comparison opts into the locked release prebuild.
+        env: options.reportOnly
+          ? process.env
+          : { ...process.env, MOUI_SKIA_DISABLE_PREBUILD_SKIA: "0" },
+      },
     );
     const output = `${run.stdout ?? ""}\n${run.stderr ?? ""}`;
     if (run.error) {
       return { problem: `${renderer} matrix: ${run.error.message}` };
     }
     if (run.status !== 0) {
-      // The `visual` profile disables the Skia prebuild, so a Skia-capable
-      // developer machine can compare while CI hosts skip. Match the existing
-      // control-preview/gallery-screenshot convention instead of failing.
+      // A blocking gate must not pass by skipping. Only `--report-only`
+      // tolerates a missing Skia reference; the blocking `visual` profile
+      // entry runs on a Skia-capable Linux job and fails loudly otherwise.
       if (output.includes("skia renderer unavailable")) {
         return { skiaUnavailable: true };
       }
@@ -624,10 +635,13 @@ const main = () => {
   if (options.generate) {
     const generation = generateMatrices(options);
     if (generation.skiaUnavailable) {
-      console.log(
-        "visual parity: skipped (Skia renderer unavailable on this host)",
-      );
-      process.exit(0);
+      const message = "visual parity: Skia renderer unavailable on this host";
+      if (options.reportOnly) {
+        console.log(`${message}; report-only, not blocking`);
+        process.exit(0);
+      }
+      console.error(`${message}; a blocking gate needs a Skia-capable host`);
+      process.exit(1);
     }
     if (generation.problem) {
       console.error(`visual parity: cannot generate matrices: ${generation.problem}`);
