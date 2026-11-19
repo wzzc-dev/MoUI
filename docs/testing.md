@@ -314,6 +314,29 @@ differences. Hosts without a Skia build (the `visual` profile disables the
 immutable prebuild) print `control previews: skipped` and keep the matrix gate
 as the hard check; a Skia-capable developer machine verifies the sheets.
 
+### Sun/Skia visual parity (`scripts/visual-parity-gate.mjs`)
+
+```sh
+node scripts/visual-parity-gate.mjs --sun artifacts/vm-sun --skia artifacts/vm-skia
+node scripts/visual-parity-gate.mjs --self-test
+```
+
+Compares the Sun and Skia control-state matrices cell by cell: for every pixel
+take the maximum absolute difference over the R/G/B channels, average it over
+the cell, and normalize by 255 into a percentage. The gate requires all 60
+cells with matching names and sizes and fails on `blank`/`missing` cells, on
+threshold breaches (`--max-avg` defaults to 3, `--max-worst` to 10), or when a
+matrix report is inconsistent. A second column reports the share of pixels with
+any non-zero channel difference as a diagnostic only. `--generate` renders both
+matrices first (Skia first, so a host without Skia fails fast), `--report-only`
+prints every number without blocking, and `--self-test` exercises the metric
+and invalidity paths without renderers. On a host without a Skia build the gate
+prints `visual parity: skipped (Skia renderer unavailable on this host)` and
+exits 0, the same convention as the control previews and gallery screenshots.
+The step runs in the `visual` profile report-only while Sun parity work is in
+flight (see
+[plans/active/sun-visual-parity.md](plans/active/sun-visual-parity.md)).
+
 ### Gallery screenshots (`moui_tests/gallery_screenshots`)
 
 The README and homepage screenshots are renders, not manual captures. The tool

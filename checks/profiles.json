@@ -1248,6 +1248,15 @@
           ]
         },
         {
+          "name": "sun/skia visual parity (report-only)",
+          "argv": [
+            "node",
+            "scripts/visual-parity-gate.mjs",
+            "--generate",
+            "--report-only"
+          ]
+        },
+        {
           "name": "control preview freshness",
           "argv": [
             "node",
