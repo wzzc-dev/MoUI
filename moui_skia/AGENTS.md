@@ -57,9 +57,20 @@ You can browse and install extra skills here:
   `${build.*}` in `moon.pkg`) and one `link_configs` entry, the only carrier that
   reaches is-main links.
 - The C++ stub (`native/*.cpp`) is **not** part of the `mbt` `native-stub`
-  compile anymore. It is published per platform/config/arch in the
-  `wzzc-dev/skia` release next to the Skia archives, and recorded in
-  `skia-provider-lock.json` under `providers.release.stub_libraries`.
+  compile anymore. It is published per platform/config/arch in MoUI's own
+  `skia-stub-<skia-tag>` release (the `wzzc-dev/skia` release keeps only the
+  Skia archives), and recorded in `skia-provider-lock.json` under
+  `providers.release.stub_libraries`.
+- `.github/workflows/moui-skia-stub-release.yml` owns publishing. Pushes that
+  touch `native/*.cpp|*.h`, `build.mbtx`, or `publish-stub-library.sh` run
+  `publish-stub-library.sh --check` first: a lock whose `sources_sha256` still
+  matches is a no-op; otherwise the job rebuilds the stub on `macos-latest`,
+  uploads it with `--clobber` to the `skia-stub-<skia-tag>` release, verifies the
+  asset digest and download URL, and commits the refreshed lock with
+  `GITHUB_TOKEN` (a token push does not start a second CI run, and only the lock
+  changes, so the stub sources are not re-triggered). `workflow_dispatch` with
+  `force=true` republishes unconditionally; a forced rerun can rewrite the asset
+  `sha256` because `ar`/`zip` output is not byte-reproducible.
 - `moui_skia/native/moon.pkg` must list no C++ sources. Adding one back
   reintroduces the Windows D8016 clash (CLI `/std:c11` against Skia's
   `/std:c++20`), because `mbt` classifies MSVC stub compiles as C.
