@@ -291,10 +291,10 @@ fn SunRasterRenderer::draw_text_clipped(
   let renderer = @sun_renderer.Renderer::new(self.canvas)
   let mut line_index = 0
   for line in plan.lines {
-    let baseline_y = origin_y +
-      line_index.to_double() * line_height +
-      plan.baseline
-    if baseline_y > run.frame.origin.y + run.frame.size.height + line_height {
+    // The fallback line API takes the line-box top and adds the face baseline
+    // itself; passing a baseline here shifted every line down by its ascent.
+    let line_top_y = origin_y + line_index.to_double() * line_height
+    if line_top_y > run.frame.origin.y + run.frame.size.height {
       return
     }
     let x = sun_text_placeholder_start_x(run, line.width)
@@ -303,7 +303,7 @@ fn SunRasterRenderer::draw_text_clipped(
       faces,
       line.text,
       x,
-      baseline_y,
+      line_top_y,
       config,
       self.resources,
       key,
@@ -350,10 +350,7 @@ fn SunRasterRenderer::register_default_platform_fonts(
   self : SunRasterRenderer,
 ) -> Unit {
   for source in sun_default_platform_font_sources() {
-    let data : Bytes? = Some(@fs.read_file_to_bytes(source.path)) catch {
-      _ => None
-    }
-    match data {
+    match sun_platform_font_file_data(source.path) {
       Some(data) =>
         for family in source.families {
           self.register_font_family_data(family, data)
@@ -370,27 +367,160 @@ priv struct SunDefaultPlatformFontSource {
 }
 
 ///|
+/// Platform faces Sun draws with, in registration priority order.
+///
+/// Linux discovers the faces fontconfig hands the Skia text provider, so both
+/// renderers draw the same system families (see
+/// `renderer_platform_font_query.mbt`). Bundled macOS paths stay for the
+/// macOS route; on Linux they simply do not exist and are skipped. Callers
+/// tolerate missing files, so a host without system fonts keeps falling back
+/// to placeholder glyphs instead of panicking.
 fn sun_default_platform_font_sources() -> Array[SunDefaultPlatformFontSource] {
-  [
-    {
-      path: "/System/Library/Fonts/Supplemental/Arial.ttf",
-      families: [
-        SystemUi,
-        UiSansSerif,
-        SansSerif,
-        Name("Arial"),
-        Name("Helvetica"),
-      ],
-    },
-    {
-      path: "/System/Library/Fonts/Supplemental/Courier New.ttf",
-      families: [UiMonospace, Monospace, Name("Courier New"), Name("Menlo")],
-    },
-    {
-      path: "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
-      families: [UiSerif, Serif, Name("Times New Roman")],
-    },
-  ]
+  let sources : Array[SunDefaultPlatformFontSource] = []
+  let seen_paths : Map[String, Unit] = Map([])
+  let mut resolved_sans = false
+  let mut resolved_monospace = false
+  let mut resolved_serif = false
+  match sun_platform_font_discovery() {
+    Some(discovery) => {
+      for match_entry in discovery.matches {
+        if seen_paths.contains(match_entry.path) {
+          continue
+        }
+        let already_resolved = match match_entry.role {
+          Sans => resolved_sans
+          Monospace => resolved_monospace
+          Serif => resolved_serif
+        }
+        if already_resolved {
+          continue
+        }
+        seen_paths.set(match_entry.path, ())
+        match match_entry.role {
+          Sans => resolved_sans = true
+          Monospace => resolved_monospace = true
+          Serif => resolved_serif = true
+        }
+        sources.push({
+          path: match_entry.path,
+          families: sun_platform_role_families(
+            match_entry.role,
+            match_entry.family,
+          ),
+        })
+      }
+      // fc-list 兜底: a role fontconfig could not match directly still gets a
+      // same-class face rather than the placeholder path.
+      if !resolved_sans {
+        match sun_platform_font_list_fallback(discovery, Sans, seen_paths) {
+          Some(entry) => {
+            seen_paths.set(entry.path, ())
+            sources.push({
+              path: entry.path,
+              families: sun_platform_role_families(Sans, entry.family),
+            })
+          }
+          None => ()
+        }
+      }
+      if !resolved_monospace {
+        match
+          sun_platform_font_list_fallback(discovery, Monospace, seen_paths) {
+          Some(entry) => {
+            seen_paths.set(entry.path, ())
+            sources.push({
+              path: entry.path,
+              families: sun_platform_role_families(Monospace, entry.family),
+            })
+          }
+          None => ()
+        }
+      }
+      if !resolved_serif {
+        match sun_platform_font_list_fallback(discovery, Serif, seen_paths) {
+          Some(entry) => {
+            seen_paths.set(entry.path, ())
+            sources.push({
+              path: entry.path,
+              families: sun_platform_role_families(Serif, entry.family),
+            })
+          }
+          None => ()
+        }
+      }
+    }
+    None => ()
+  }
+  for
+    source in [
+      {
+        path: "/System/Library/Fonts/Supplemental/Arial.ttf",
+        families: [
+          SystemUi,
+          UiSansSerif,
+          SansSerif,
+          Name("Arial"),
+          Name("Helvetica"),
+        ],
+      },
+      {
+        path: "/System/Library/Fonts/Supplemental/Courier New.ttf",
+        families: [UiMonospace, Monospace, Name("Courier New"), Name("Menlo")],
+      },
+      {
+        path: "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+        families: [UiSerif, Serif, Name("Times New Roman")],
+      },
+    ] {
+    if seen_paths.contains(source.path) {
+      continue
+    }
+    seen_paths.set(source.path, ())
+    sources.push(source)
+  }
+  sources
+}
+
+///|
+/// Family keys registered for one fontconfig-discovered face. Generic names
+/// mirror what the Skia fontconfig provider maps to `sans-serif`/`serif`/
+/// `monospace`, so a `system-ui` request resolves to the same file on both
+/// renderers.
+fn sun_platform_role_families(
+  role : SunPlatformFontRole,
+  family : String,
+) -> Array[@core.FontFamily] {
+  let families : Array[@core.FontFamily] = match role {
+    Sans => [SystemUi, UiSansSerif, SansSerif]
+    Monospace => [UiMonospace, Monospace]
+    Serif => [UiSerif, Serif]
+  }
+  if !family.is_empty() {
+    families.push(Name(family))
+  }
+  families
+}
+
+///|
+fn sun_platform_font_list_fallback(
+  discovery : SunPlatformFontDiscovery,
+  role : SunPlatformFontRole,
+  seen_paths : Map[String, Unit],
+) -> SunPlatformFontListEntry? {
+  let keyword = match role {
+    Sans => "sans"
+    Monospace => "mono"
+    Serif => "serif"
+  }
+  for entry in discovery.entries {
+    if seen_paths.contains(entry.path) {
+      continue
+    }
+    if entry.family.to_lower().contains(keyword) {
+      return Some(entry)
+    }
+  }
+  None
 }
 
 ///|
@@ -515,7 +645,7 @@ fn SunRasterRenderer::measure_text_layout(
     input.text,
     carets,
   )
-  {
+  let result : @core.TextLayoutResult = {
     size: @core.Size::new(
       width=max_width.min(input.max_width.unwrap_or(max_width)),
       height=plan.line_height * plan.lines.length().to_double(),
@@ -523,6 +653,7 @@ fn SunRasterRenderer::measure_text_layout(
     baseline,
     caret_positions: stabilized,
   }
+  result
 }
 
 ///|
