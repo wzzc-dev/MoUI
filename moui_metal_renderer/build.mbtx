@@ -26,16 +26,20 @@ fn lower_trim(value : String) -> String {
 
 ///|
 async fn capture(program : String, args : Array[String]) -> (Int32, String) {
-  let result = @process.run(
-    program,
-    args,
-    stdout=@process.Collect,
-    stderr=@process.Collect,
-  )
-  let out = result.stdout_text() catch {
-    _ => ""
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Collect,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
   }
-  (result.exit_code, out)
 }
 
 ///|
