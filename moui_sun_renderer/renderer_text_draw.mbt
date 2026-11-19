@@ -285,14 +285,18 @@ fn SunRasterRenderer::draw_text_clipped(
   guard !plan.lines.is_empty() else { return }
   let paint = sun_paint(run.color, opacity)
   let line_height = plan.line_height
-  let total_height = line_height * plan.lines.length().to_double()
+  // A single line is centred in its frame with the face ascent/descent box,
+  // which is exactly what Skia's renderer uses; the nominal `size * 1.2` line
+  // height floated every label ~1 logical px above Skia's baseline in the same
+  // frame. Multi-line runs keep the configured pitch, the same geometry the
+  // paragraph layout reports and paints.
+  let total_height = if plan.lines.length() <= 1 {
+    sun_text_metric_span(faces, config)
+  } else {
+    line_height * plan.lines.length().to_double()
+  }
   let origin_y = run.frame.origin.y +
     (run.frame.size.height - total_height).max(0.0) * 0.5
-  if run.text == "Notifications" || run.text == "✓" {
-    println(
-      "TRACE text={run.text} frame=\{run.frame.origin.x},\{run.frame.origin.y} \{run.frame.size.width}x\{run.frame.size.height} lh=\{line_height} base=\{plan.baseline} origin=\{origin_y} line0w=\{plan.lines[0].width} faces=\{faces.length()} ascent=\{faces[0].get_metrics().ascent} descent=\{faces[0].get_metrics().descent} upem=\{faces[0].get_units_per_em()}",
-    )
-  }
   let renderer = @sun_renderer.Renderer::new(self.canvas)
   let mut line_index = 0
   for line in plan.lines {
@@ -396,7 +400,11 @@ fn SunRasterRenderer::measure_text_layout(
   let result : @core.TextLayoutResult = {
     size: @core.Size::new(
       width=max_width.min(input.max_width.unwrap_or(max_width)),
-      height=plan.line_height * plan.lines.length().to_double(),
+      height=if plan.lines.length() <= 1 {
+        sun_text_metric_span(faces, config)
+      } else {
+        plan.line_height * plan.lines.length().to_double()
+      },
     ),
     baseline,
     caret_positions: stabilized,
@@ -414,7 +422,10 @@ fn SunRasterRenderer::measure_single_line_text(
   ignore(self)
   if text == "" {
     return {
-      size: @core.Size::new(width=0.0, height=config.line_height),
+      size: @core.Size::new(
+        width=0.0,
+        height=sun_text_metric_span(faces, config),
+      ),
       baseline: sun_text_baseline_for_faces(faces, config),
       caret_positions: [0.0],
     }
@@ -524,6 +535,31 @@ fn sun_text_baseline_for_faces(
   } else {
     faces[0].get_metrics().ascent.to_double() * config.font_size / units
   }
+}
+
+///|
+/// Face metric span (`ascent - descent + line_gap`) at `config.font_size`.
+///
+/// Skia both measures a run and places it in its frame with the face's
+/// ascent/descent box, and only falls back to `size * 1.25` when the face
+/// metrics are unusable. Sun's configured `line_height` stays the pitch between
+/// wrapped lines; it is not the box a single line is centred in.
+fn sun_text_metric_span(
+  faces : Array[@sun_text.FontFace],
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  let fallback = (config.font_size * 1.25).max(1.0)
+  guard !faces.is_empty() else { return fallback }
+  let units = faces[0].get_units_per_em().to_double()
+  guard units > 0.0 else { return fallback }
+  let metrics = faces[0].get_metrics()
+  let ascent = metrics.ascent.to_double()
+  let descent = metrics.descent.to_double()
+  let line_gap = metrics.line_gap.to_double()
+  let scale = config.font_size / units
+  let span = (ascent - descent + line_gap).max(ascent - descent).max(0.0) *
+    scale
+  span.max(ascent * scale).max(1.0)
 }
 
 ///|
