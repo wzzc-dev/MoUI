@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# Package the locally built Skia C++ stub archive as a wzzc-dev/skia release asset.
+# Package the locally built Skia C++ stub archive as a MoUI release asset.
 #
 # Why this exists
 # ---------------
 # `mbt` classifies MSVC stub compiles as C and injects `/std:c11`, which clashes
 # with the `/std:c++20` that the Skia stub needs (MSVC D8016). Until MoonBit
 # ships a `stub-cxx-flags` c/cpp split, `moui_skia/native/` keeps only pure-C
-# sources in the `mbt` build and the C++ stub travels as a prebuilt archive in
-# the `wzzc-dev/skia` release next to the Skia archives. This script turns a
-# local stub build into that archive and prints the exact upload command plus
-# the `skia-provider-lock.json` entry for it.
+# sources in the `mbt` build and the C++ stub travels as a prebuilt archive in a
+# MoUI release (`skia-stub-<skia-tag>`); the `wzzc-dev/skia` release keeps only
+# the Skia archives. This script turns a local stub build into that archive and
+# prints the exact upload command plus the `skia-provider-lock.json` entry for
+# it.
 #
 # Nothing here uploads or edits the lock: it prints what to paste and run.
+# `.github/workflows/moui-skia-stub-release.yml` automates the same steps with
+# `--print-env` and the `--tag/--asset-tag/--release-owner/--release-repo`
+# overrides used there.
 set -euo pipefail
 
 usage() {
@@ -25,9 +29,19 @@ Options:
   --platform NAME    Lock platform key: macos (auto), linux, windows, android.
   --config NAME      Lock config key (auto, default Release).
   --arch NAME        Lock arch key (auto).
-  --tag TAG          Release tag (auto, default from skia-provider-lock.json).
+  --tag TAG          Release tag that receives the asset (auto, default from
+                     skia-provider-lock.json). Use `skia-stub-<skia-tag>` when the
+                     stub is hosted on the MoUI release instead of wzzc-dev/skia.
+  --asset-tag TAG    Skia tag embedded in the asset filename (default: --tag).
+                     Set this when --tag names a MoUI stub release.
+  --release-owner NAME
+                     Release owner that receives the asset (default: lock provider).
+  --release-repo NAME
+                     Release repo that receives the asset (default: lock provider).
   --out-dir DIR      Where the zip is written (default dist/).
   --lock PATH        Lock path (default <module>/skia-provider-lock.json).
+  --print-sources    Print only MOUI_SKIA_STUB_SOURCES_SHA256=... and exit; useful
+                     for deciding whether a publish is needed before building.
   --check            Do not package. Fail when the lock entry is missing, or when
                      its sources_sha256 does not match native/*.cpp|*.h in the tree
                      (detector for "stub assets went stale").
@@ -46,10 +60,14 @@ platform="auto"
 config="auto"
 arch="auto"
 tag=""
+asset_tag=""
+release_owner=""
+release_repo=""
 out_dir=""
 lock_path="$module_root/skia-provider-lock.json"
 check_mode=0
 print_env=0
+print_sources=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -58,10 +76,14 @@ while [[ $# -gt 0 ]]; do
     --config) config="$2"; shift 2 ;;
     --arch) arch="$2"; shift 2 ;;
     --tag) tag="$2"; shift 2 ;;
+    --asset-tag) asset_tag="$2"; shift 2 ;;
+    --release-owner) release_owner="$2"; shift 2 ;;
+    --release-repo) release_repo="$2"; shift 2 ;;
     --out-dir) out_dir="$2"; shift 2 ;;
     --lock) lock_path="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
     --print-env) print_env=1; shift ;;
+    --print-sources) print_sources=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -176,6 +198,12 @@ fi
 
 sources_sha="$(sources_sha256)"
 
+# ----- --print-sources: cheap "do I need to publish?" probe -----
+if [[ $print_sources -eq 1 ]]; then
+  echo "MOUI_SKIA_STUB_SOURCES_SHA256=$sources_sha"
+  exit 0
+fi
+
 # ----- --check: stale detector (no packaging, no network) -----
 if [[ $check_mode -eq 1 ]]; then
   status="$(lock_value status "$platform" "$config" "$arch" "$tag")"
@@ -223,7 +251,8 @@ case "$stub_name" in
   *) echo "stub archive must end in .a or .lib: $stub_path" >&2; exit 1 ;;
 esac
 
-asset_name="MoUISkiaStub-$resolved_tag-$platform-$config-$arch.zip"
+asset_tag_name="${asset_tag:-$resolved_tag}"
+asset_name="MoUISkiaStub-$asset_tag_name-$platform-$config-$arch.zip"
 mkdir -p "$out_dir"
 asset_path="$out_dir/$asset_name"
 staging="$(mktemp -d)"
@@ -234,8 +263,8 @@ cp "$stub_path" "$staging/$stub_name"
 asset_size="$(wc -c < "$asset_path" | tr -d ' ')"
 stub_sha="$(sha256_of "$stub_path")"
 asset_sha="$(sha256_of "$asset_path")"
-owner="$(lock_value owner "$platform" "$config" "$arch" "$tag")"
-repo="$(lock_value repo "$platform" "$config" "$arch" "$tag")"
+owner="${release_owner:-$(lock_value owner "$platform" "$config" "$arch" "$tag")}"
+repo="${release_repo:-$(lock_value repo "$platform" "$config" "$arch" "$tag")}"
 asset_url="https://github.com/$owner/$repo/releases/download/$resolved_tag/$asset_name"
 
 if [[ $print_env -eq 1 ]]; then
