@@ -11,6 +11,35 @@
       "tag": "dev-6d73578a36",
       "commit": "6d73578a36506d10bc044e920cc71037982e481d",
       "release_url": "https://github.com/wzzc-dev/skia/releases/tag/dev-6d73578a36",
+      "mirrors": [
+        {
+          "name": "gitcode-skia",
+          "scope": "skia",
+          "base_url": "https://gitcode.com/wzzc/MoUI/releases/download/skia-{tag}/",
+          "platforms": [
+            "macos",
+            "linux",
+            "windows"
+          ],
+          "configs": [
+            "Release"
+          ],
+          "link_modes": [
+            "static"
+          ],
+          "arches": [
+            "arm64",
+            "x64"
+          ],
+          "notes": "AtomGit/GitCode mirror inside the MoUI repository; Release static desktop assets only; refreshed by moui_skia/scripts/mirror-release-assets.sh"
+        },
+        {
+          "name": "gitcode-skia-stub",
+          "scope": "stub",
+          "base_url": "https://gitcode.com/wzzc/MoUI/releases/download/skia-stub-{tag}/",
+          "notes": "AtomGit/GitCode mirror of the MoUI-hosted Skia stub assets"
+        }
+      ],
       "source_archive": {
         "name": "wzzc-dev-skia-dev-6d73578a36-source.zip",
         "url": "https://github.com/wzzc-dev/skia/archive/refs/tags/dev-6d73578a36.zip"

@@ -87,6 +87,19 @@ You can browse and install extra skills here:
   hatch cheap. The hatch is not needed to dodge D8016 either: no `/std:c++20`
   ever reaches `mbt`; native evidence scripts that set it do so only to stay
   offline and avoid the real Skia dependency.
+- `providers.release.mirrors` records the GitCode copy of the locked subset
+  (MoUI's GitCode repository, tags `skia-<skia-tag>` and `skia-stub-<skia-tag>`).
+  It is a mirror, not a second producer: `wzzc-dev/skia` still builds Skia and
+  MoUI still publishes the stub. `fetch-release-skia.{sh,ps1}` try the primary
+  host first, then the mirrors, and verify the locked SHA256 and size on every
+  candidate; `MOUI_SKIA_MIRROR` accepts `auto|off|<mirror-name>` (flags
+  `--mirror NAME` / `--no-mirror`, `-Mirror` / `-NoMirror`). Do not add a mirror
+  entry whose filters claim assets the mirror does not serve: the filters are the
+  upload list for `scripts/mirror-release-assets.sh` and the download candidates
+  for the fetch helpers. That script needs `GITCODE_TOKEN` and is gated by
+  `.github/workflows/moui-skia-gitcode-mirror.yml`;
+  `moui_skia/scripts/tests/fetch-release-skia-mirror.sh` proves the fallback
+  offline in `pr-static`.
 - `moui_skia/scripts/fetch-release-skia.{sh,ps1}` download the stub zip after
   the Skia package, verify its sha256/size, and emit `MOUI_SKIA_STUB_LIB`
   (plus `MOUI_SKIA_STUB_ASSET_SHA256` / `MOUI_SKIA_STUB_SOURCES_SHA256`) in

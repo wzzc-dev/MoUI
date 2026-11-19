@@ -1,0 +1,90 @@
+name: MoUI Skia GitCode Mirror
+
+# Mirrors the locked Skia release subset and the MoUI stub archives into the
+# AtomGit/GitCode MoUI repository so networks that cannot reach GitHub still
+# resolve `moui_skia/skia-provider-lock.json`.
+#
+# The selection, digests, and target tags all come from the lock mirrors, so this
+# workflow never hardcodes an asset name. `fetch-release-skia.{sh,ps1}` read the
+# same lock, verify every candidate against the locked SHA256, and only fall back
+# to a mirror when the primary host fails.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Re-upload assets even when the attachment already exists
+        type: boolean
+        default: false
+      verify_only:
+        description: Verify the existing mirror assets without uploading
+        type: boolean
+        default: false
+
+concurrency:
+  group: skia-gitcode-mirror
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GITCODE_TOKEN: ${{ secrets.GITCODE_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check the mirror secret
+        id: secret
+        run: |
+          if [ -z "${GITCODE_TOKEN}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Skia GitCode mirror skipped"
+              echo
+              echo "The \`GITCODE_TOKEN\` repository secret is not set, so there is nothing to upload with."
+              echo "Add an AtomGit/GitCode access token with release write access to this repository and rerun."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Show the mirror selection
+        if: steps.secret.outputs.configured == 'true'
+        run: |
+          {
+            echo "### Skia GitCode mirror selection"
+            echo '```'
+            bash moui_skia/scripts/mirror-release-assets.sh --list
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Mirror the locked assets
+        if: steps.secret.outputs.configured == 'true'
+        env:
+          FORCE: ${{ inputs.force }}
+          VERIFY_ONLY: ${{ inputs.verify_only }}
+        run: |
+          args=(--verify)
+          if [ "${VERIFY_ONLY}" = "true" ]; then
+            args=(--verify-only)
+          elif [ "${FORCE}" = "true" ]; then
+            args+=(--force)
+          fi
+          bash moui_skia/scripts/mirror-release-assets.sh "${args[@]}"
+
+      - name: Summarize
+        if: always() && steps.secret.outputs.configured == 'true'
+        run: |
+          {
+            echo "### Mirror result"
+            echo
+            echo "- outcome: \`${{ job.status }}\`"
+            echo "- mirror tags: \`skia-<skia-tag>\` for the Skia packages, \`skia-stub-<skia-tag>\` for the stub"
+            echo "- fallback order: primary GitHub release first, then the recorded GitCode mirror"
+            echo "- consumer check: \`bash moui_skia/scripts/fetch-release-skia.sh --mirror gitcode-skia --print-env\`"
+          } >> "$GITHUB_STEP_SUMMARY"

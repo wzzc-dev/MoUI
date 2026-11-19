@@ -99,6 +99,48 @@ and use the same-tag release source archive as a header fallback. They only
 print include/lib/flag environment values; `configure-*-native-pkg.*` remains
 the only layer that generates `native/moon.pkg` contents.
 
+### GitCode mirror fallback
+
+GitHub is sometimes unreachable from mainland China, so the lock also records
+`providers.release.mirrors`: the same assets copied into the MoUI repository on
+AtomGit/GitCode, under `skia-<skia-tag>` (Release static desktop packages) and
+`skia-stub-<skia-tag>` (MoUI's stub archives). The mirror is a copy, not a second
+producer: `wzzc-dev/skia` still builds Skia, and MoUI still publishes its stub.
+
+Both fetch helpers try the primary host, then every mirror, and verify the
+locked SHA256 and size on each candidate, so a stale or tampered mirror is
+rejected instead of linked:
+
+```bash
+MOUI_SKIA_MIRROR=gitcode-skia bash scripts/fetch-release-skia.sh --print-env
+bash scripts/fetch-release-skia.sh --no-mirror --print-env
+```
+
+```powershell
+.\scripts\fetch-release-skia.ps1 -Mirror gitcode-skia -PrintEnv
+.\scripts\fetch-release-skia.ps1 -NoMirror -PrintEnv
+```
+
+`MOUI_SKIA_MIRROR=auto` (default) is primary-then-mirrors, `off` disables the
+fallback, and any other value names a mirror to try first. A name also matches
+mirrors called `<name>-something`, so `gitcode` prefers `gitcode-skia` and
+`gitcode-skia-stub` together.
+`MOUI_SKIA_SKIA_PACKAGE_MIRROR` / `MOUI_SKIA_STUB_ASSET_MIRROR` report which
+source served the download and stay empty for the primary host.
+
+Refresh the mirror with:
+
+```bash
+GITCODE_TOKEN=... bash scripts/mirror-release-assets.sh --list   # selection only
+GITCODE_TOKEN=... bash scripts/mirror-release-assets.sh --verify # upload + verify
+bash scripts/mirror-release-assets.sh --verify-only              # audit only
+```
+
+The selection comes from the lock mirror filters, so the upload list and the
+fetch candidates cannot drift. `.github/workflows/moui-skia-gitcode-mirror.yml`
+runs the same script with the `GITCODE_TOKEN` repository secret and skips itself
+when the secret is absent.
+
 ## Fallback gate
 
 Run this on Windows when you want to verify the no-Skia build stays healthy:

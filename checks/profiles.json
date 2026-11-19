@@ -23,6 +23,13 @@
           ]
         },
         {
+          "name": "skia mirror fallback test",
+          "argv": [
+            "bash",
+            "moui_skia/scripts/tests/fetch-release-skia-mirror.sh"
+          ]
+        },
+        {
           "name": "check profile catalog",
           "argv": [
             "node",

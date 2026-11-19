@@ -269,6 +269,22 @@ bash moui_skia/scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 -
 .\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
+GitHub 不可达时，同一套 helper 会回退到 lock 中 `providers.release.mirrors`
+记录的 GitCode 镜像（MoUI 的 GitCode 仓库，tag 为 `skia-<skia-tag>` 与
+`skia-stub-<skia-tag>`）。镜像是副本而非第二个生产者，每个候选都用 lock 里的
+SHA256 与 size 校验，因此镜像无法悄悄替换 artifact：
+
+```bash
+MOUI_SKIA_MIRROR=gitcode-skia bash moui_skia/scripts/fetch-release-skia.sh --print-env
+bash moui_skia/scripts/fetch-release-skia.sh --no-mirror --print-env  # 只用主站
+```
+
+`MOUI_SKIA_MIRROR` 取 `auto`（默认：先主站，再逐个镜像）、`off`，或某个镜像名
+（优先尝试它）；名字也会匹配以 `<名字>-` 开头的镜像，所以 `gitcode` 会同时
+优先 `gitcode-skia` 与 `gitcode-skia-stub`。`--print-env` 中的
+`MOUI_SKIA_SKIA_PACKAGE_MIRROR` / `MOUI_SKIA_STUB_ASSET_MIRROR` 报告实际来源；
+镜像由 `moui_skia/scripts/mirror-release-assets.sh` 按 lock 选择集刷新。
+
 将[真实 Skia 冒烟验收清单](../../moui_skia/REAL_SKIA_SMOKE.md)用作真实后端 artifact
 的验收 checklist。通过的回退构建、dry-run 或 syntax check 不足以声称真实 Skia
 验收通过。
