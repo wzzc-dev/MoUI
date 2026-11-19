@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload Linux platform evidence artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: moui-linux-platform-evidence
           path: |
