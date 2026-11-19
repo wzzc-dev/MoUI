@@ -101,7 +101,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [richtext-markdown-domain-relocation](active/richtext-markdown-domain-relocation.md) | Move the Markdown editing domain model out of `moui_richtext` into `moui_markdown` to converge its public surface toward ~30 pub lines |
 | [line-level-viewport-window](active/line-level-viewport-window.md) | Window the visible range at line granularity inside one oversized markdown block so open and scroll cost track the viewport instead of the document |
 | [no-third-party-gpu-route](active/no-third-party-gpu-route.md) | Apple-first Metal renderer that links no external graphics library (ADR 0044, supersedes 0043's conclusion). **Route parked at L0 (2026-10-27): the kill gate fired** — the shipped Skia-Metal route already holds `presentMs` at 0.10–0.76 ms p50 so there is no performance prize, and the license motive is struck; only size-versus-Skia + autonomy survive. L0.1 (provider-parametric harness) and L0.2 (neutral text-model extraction out of the wgpu-importing package) stay live as framework work |
-| [governance-ci-docs-and-p5-layering](active/governance-ci-docs-and-p5-layering.md) | Self-test the governance tools (zero zero-test packages, ratcheted), split the PR gate into static/native halves and move packaging/benchmark off the PR path with dev triggers, ratchet `docs/` to a 40,000-line budget after the ai-sessions/plans/zh-Hans diet, and lift the p5 slice into the `moui_p5` addon with port-injected file IO |
 
 ## Debt
 
@@ -117,7 +116,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| [done/INDEX](done/INDEX.md) | One row per retired plan (69 bodies, 2026-07 → 2026-11-19) with its outcome and landing commit; start here before reopening an archived subject |
+| [done/INDEX](done/INDEX.md) | One row per retired plan (70 bodies, 2026-07 → 2026-11-19) with its outcome and landing commit; start here before reopening an archived subject |
 | [visual-quality](done/visual-quality.md) | Default-theme visual baseline: Desktop preset metrics/typography, control craft, typography + icon expression, materials/motion defaults, and a `visual` gate with a per-control state matrix, rendered previews, and gallery-derived README/website screenshots. **Complete 2026-11-13**; the human blind-review gate is explicitly waived by the agent and remains available for a later real review |
 | [harness-mechanize-invariants-batch1](done/harness-mechanize-invariants-batch1.md) | Map-style AGENTS/docs + P1/P2/A6/R3/M5/G1/G2 machine checks with agent-facing fix hints |
 
