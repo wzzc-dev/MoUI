@@ -18,4 +18,5 @@
   on macOS/Linux cannot catch this class of bug because the prebuild output is
   only tokenized on the Windows link line.
 - Docs: `docs/platform-notes-windows.md` "Link Flags" states the forward-slash
-  rule; plan `governance-ci-docs-and-p5-layering` records the CI run.
+  rule; plan `governance-ci-docs-and-p5-layering` is archived in
+  `docs/plans/done/INDEX.md` with the CI run that proved it (`44433924728`).
