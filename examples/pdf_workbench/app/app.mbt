@@ -158,7 +158,7 @@ pub enum PdfWorkbenchMsg {
     String,
     Bytes,
     Array[String],
-    @services.ServiceTaskResult[Unit]
+    @services.ServiceTaskResult[Unit],
   )
   SaveFailed(String)
   RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)

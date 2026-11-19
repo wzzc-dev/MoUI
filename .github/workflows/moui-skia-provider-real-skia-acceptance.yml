@@ -54,7 +54,7 @@ jobs:
         run: bash scripts/install-linux-smoke-deps.sh --check
 
       - name: Cache release Skia
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload Linux acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
@@ -146,7 +146,7 @@ jobs:
         run: brew install ninja
 
       - name: Cache release Skia
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload macOS acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
@@ -250,7 +250,7 @@ jobs:
           "VCVARSALL=$vcvarsall" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Cache release Skia
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -329,7 +329,7 @@ jobs:
 
       - name: Upload Windows acceptance logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |

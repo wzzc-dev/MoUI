@@ -95,21 +95,53 @@ fn validate_worker_api(
 }
 
 ///|
-fn android_flags_block(build : String) -> String? {
-  match build.find("platform === \"android\"") {
-    None => None
-    Some(android_start) =>
-      match build[android_start:].find("platform === \"harmonyos\"") {
-        None => None
-        Some(relative_harmony) => {
-          let harmony_start = android_start + relative_harmony
-          if harmony_start > android_start {
-            Some(build[android_start:harmony_start].to_owned())
-          } else {
-            None
-          }
-        }
+fn last_index_before(text : String, needle : String, limit : Int32) -> Int32? {
+  let mut search = 0
+  let mut found : Int32? = None
+  while search + needle.length() <= limit {
+    match text[search:limit].find(needle) {
+      None => break
+      Some(offset) => {
+        let at = search + offset
+        found = Some(at)
+        search = at + needle.length()
       }
+    }
+  }
+  found
+}
+
+///|
+fn android_flags_block(build : String) -> String? {
+  let harmony = match build.find("platform == \"harmonyos\"") {
+    Some(index) => Some(index)
+    None => build.find("platform === \"harmonyos\"")
+  }
+  let harmony_start = match harmony {
+    Some(index) => index
+    None => return None
+  }
+  // The prebuild is a MoonBit script (`build.mbtx`) now, so the slice is bounded
+  // by `platform == "android"` / `platform == "harmonyos"` branches. The `===`
+  // spelling is still read so the guard keeps working on an older checkout.
+  // Taking the last android branch before the harmonyos branch skips the earlier
+  // target-triple branch and reads the platform flags branch.
+  let moonbit_marker = last_index_before(
+    build, "platform == \"android\"", harmony_start,
+  )
+  let script_marker = last_index_before(
+    build, "platform === \"android\"", harmony_start,
+  )
+  let android_start = match (moonbit_marker, script_marker) {
+    (Some(left), Some(right)) => if left > right { left } else { right }
+    (Some(left), None) => left
+    (None, Some(right)) => right
+    (None, None) => return None
+  }
+  if harmony_start > android_start {
+    Some(build[android_start:harmony_start].to_owned())
+  } else {
+    None
   }
 }
 
@@ -183,7 +215,7 @@ fn run(args : Array[String]) -> Int32 {
     Ok(repo_root) => {
       let worker_rel = "moui_skia/native/skia_stub_gpu_worker.cpp"
       let worker_api_rel = "moui_skia/native/native_gpu_worker_native.mbt"
-      let build_rel = "moui_skia/build.js"
+      let build_rel = "moui_skia/build.mbtx"
       let worker_path = @tools.resolve_path(repo_root, worker_rel)
       let worker_api_path = @tools.resolve_path(repo_root, worker_api_rel)
       let build_path = @tools.resolve_path(repo_root, build_rel)

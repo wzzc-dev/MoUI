@@ -84,9 +84,9 @@ if "$VERIFY"; then
   test -f "$OUT_DIR/bundle-size.json"
   if ! "$SKIP_DOCS"; then
     test -f "$OUT_DIR/docs/catalog.json"
-    test -f "$OUT_DIR/docs/architecture.md"
+    test -f "$OUT_DIR/docs/getting-started.md"
     test -f "$OUT_DIR/docs/zh-Hans/catalog.json"
-    test -f "$OUT_DIR/docs/zh-Hans/architecture.md"
+    test -f "$OUT_DIR/docs/zh-Hans/getting-started.md"
   fi
   if ! "$SKIP_PLAYGROUND"; then
     test -f "$OUT_DIR/playground/index.html"

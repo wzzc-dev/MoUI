@@ -347,7 +347,7 @@ for arg in "\$@"; do
       continue
       ;;
     "-lstdc++"|"-lc++")
-      # moui_skia/build.js appends -lstdc++ for Linux; zig would recognize
+      # moui_skia/build.mbtx appends -lstdc++ for Linux; zig would recognize
       # it as a request for its bundled libc++ and mix two incompatible
       # C++ runtimes into the link. The sysroot libstdc++.so is provided
       # explicitly on link invocations instead.

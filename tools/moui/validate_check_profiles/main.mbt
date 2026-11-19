@@ -212,7 +212,8 @@ fn validate_profile(
     Some(_) => ()
     None => push(failures, profile_name + ".description is required")
   }
-  for included in json_array_field(profile.get("includes")) {
+  let includes = json_array_field(profile.get("includes"))
+  for included in includes {
     match included {
       Json::String(name) if name != profile_name && profiles.contains(name) =>
         ()
@@ -227,8 +228,14 @@ fn validate_profile(
     }
   }
   let steps = json_array_field(profile.get("steps"))
-  if steps.is_empty() {
-    push(failures, profile_name + ".steps must be non-empty")
+  // A composite profile may delegate every step through `includes`; the
+  // non-empty rule exists so a profile cannot validate nothing at all.
+  if steps.is_empty() && includes.is_empty() {
+    push(
+      failures,
+      profile_name +
+      ".steps must be non-empty unless includes delegates every step",
+    )
   }
   for index, step in steps {
     validate_step(repo_root, profile_name, step, index, failures)

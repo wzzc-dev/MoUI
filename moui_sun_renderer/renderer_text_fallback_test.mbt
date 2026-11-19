@@ -1029,7 +1029,7 @@ fn sun_test_align2(value : Int32) -> Int32 {
 
 ///|
 fn sun_test_string_from_codepoints(codepoints : Array[Int32]) -> String {
-  let out = StringBuilder(size_hint=codepoints.length())
+  let out = StringBuilder(capacity=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())
   }

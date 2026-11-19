@@ -171,18 +171,9 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "docs/platform-readiness-declaration.md",
       token: "checks/architecture-evidence/linux-skia-riscv64.json",
     },
-    {
-      path: "docs/zh-Hans/platform-notes-linux.md",
-      token: "riscv64-linux-gnu",
-    },
-    {
-      path: "docs/zh-Hans/testing.md",
-      token: "test-linux-riscv64-cross-build.sh",
-    },
-    {
-      path: "docs/zh-Hans/platform-readiness-declaration.md",
-      token: "linux-skia-riscv64",
-    },
+    // The zh-Hans mirror is the published get-started/guides/examples set only
+    // (`website/docs-catalog.json`); platform/testing/readiness pages are
+    // English-only, so their route tokens are checked on the English sources above.
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "linux-riscv64-cross-build.sh",

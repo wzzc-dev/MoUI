@@ -51,75 +51,39 @@ if (![string]::IsNullOrWhiteSpace($ExtraLinkFlags)) {
   $linkFlags = "$linkFlags $ExtraLinkFlags"
 }
 
-$generatedConfig = @"
-import {
-  "wzzc-dev/moui_skia" @skia,
-}
-
-options(
-  "native-stub": [
-    "skia_stub.cpp",
-    "skia_stub_common.cpp",
-    "skia_stub_surface_image_data.cpp",
-    "skia_stub_canvas.cpp",
-    "skia_stub_backdrop_blur.cpp",
-    "skia_stub_path.cpp",
-    "skia_stub_text_font.cpp",
-    "skia_stub_shader_filter.cpp",
-    "skia_stub_picture.cpp",
-    "skia_stub_gpu_worker.cpp",
-  ],
-  link: {
-    "native": {
-      "stub-cc-flags": "$ccFlags",
-      "cc-link-flags": "$linkFlags",
-    },
-  },
-  targets: {
-    "handles_native.mbt": [ "native", "llvm" ],
-    "availability_native.mbt": [ "native", "llvm" ],
-    "surface_image_data_native.mbt": [ "native", "llvm" ],
-    "canvas_native.mbt": [ "native", "llvm" ],
-    "backdrop_blur_native.mbt": [ "native", "llvm" ],
-    "path_native.mbt": [ "native", "llvm" ],
-    "text_font_native.mbt": [ "native", "llvm" ],
-    "shader_filter_native.mbt": [ "native", "llvm" ],
-    "picture_native.mbt": [ "native", "llvm" ],
-    "native_gpu_worker_native.mbt": [ "native", "llvm" ],
-    "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "backdrop_blur_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "picture_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-    "native_gpu_worker_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
-  },
-)
+$envBlock = @"
+`$env:MOUI_SKIA_SKIA_INCLUDE = "$includePath"
+`$env:MOUI_SKIA_SKIA_LIB_DIR = "$libPath"
+`$env:MOUI_SKIA_EXTRA_CC_FLAGS = "$ExtraCcFlags"
+`$env:MOUI_SKIA_EXTRA_LINK_FLAGS = "$ExtraLinkFlags"
 "@
 
+# The Skia C++ stub is no longer `native-stub` material: the CLI injects
+# `/std:c11` for MSVC stub compiles, which clashes with Skia's `/std:c++20`
+# (D8016). The moui_skia prebuild (`build.mbtx`) compiles and links the stub, so
+# this helper only resolves the environment that prebuild consumes.
 if ($Check) {
   if (!(Test-Path -LiteralPath $resolvedOutput -PathType Leaf)) {
     throw "native package file is missing: $resolvedOutput"
   }
   $actual = Get-Content -LiteralPath $resolvedOutput -Raw
-  if ($actual.TrimEnd() -ne $generatedConfig.TrimEnd()) {
-    throw "native package file does not match generated Windows Skia link config: $resolvedOutput"
+  if ($actual -match '"native-stub"|"stub-cc-flags"') {
+    throw "native/moon.pkg must not list C++ stub sources or stub-cc-flags (Windows D8016): $resolvedOutput"
   }
-  Write-Host "Verified $resolvedOutput matches generated Windows Skia link config."
+  if ($actual -notmatch '\$\{build\.MOUI_SKIA_CC_LINK_FLAGS\}') {
+    throw ('native/moon.pkg must carry cc-link-flags = "${build.MOUI_SKIA_CC_LINK_FLAGS}": ' + $resolvedOutput)
+  }
+  Write-Host "Verified $resolvedOutput is the prebuild-based native package (no C++ stub sources)."
   exit 0
 }
 
 if ($Write) {
-  $outputDir = Split-Path -Parent $resolvedOutput
-  if ($outputDir.Length -gt 0) {
-    New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
-  }
-  Set-Content -LiteralPath $resolvedOutput -Value $generatedConfig -NoNewline
-  Write-Host "Wrote Windows Skia link config to $resolvedOutput"
-  exit 0
+  throw ("configure-windows-native-pkg.ps1 no longer writes native/moon.pkg: the moui_skia " +
+    "prebuild (build.mbtx) now owns the Skia flags and the C++ stub archive. Export the " +
+    "variables below and run moon without MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 instead:" +
+    [Environment]::NewLine + $envBlock)
 }
 
-Write-Output $generatedConfig
+Write-Output "Resolved Windows Skia configuration for the moui_skia prebuild:"
+Write-Output $envBlock
+Write-Output "native/moon.pkg is intentionally left unchanged (prebuild-based; no C++ stub sources)."

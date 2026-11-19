@@ -174,8 +174,8 @@ test "web maps wheel and focus to host input events" {
   match wheel {
     Some(
       Scroll(
-        { position: { x: 12.0, y: 34.0, }, delta: Lines({ y: -3.0, .. }), .. }
-      )
+        { position: { x: 12.0, y: 34.0, }, delta: Lines({ y: -3.0, .. }), .. },
+      ),
     ) => ()
     _ => fail("expected scroll event")
   }

@@ -15,7 +15,7 @@ unrecorded on a matching host.
 Two independent defects kept L3 unrecordable, both now fixed:
 
 1. **MoUI link failure.** `moui/backend/linux/linux_atspi_host.c` drives the
-   AT-SPI accessibility host over GDBus, but `moui/build.js` only resolved
+   AT-SPI accessibility host over GDBus, but `moui/build.mbtx` only resolved
    `glib-2.0` from pkg-config. GDBus symbols (`g_bus_get_sync`,
    `g_dbus_connection_register_object`, `g_dbus_method_invocation_return_value`,
    …) live in `gio-2.0`, so `moon run examples/showcase/linux_skia --target

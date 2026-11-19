@@ -28,5 +28,5 @@ import {
 description = "Unpublished MoUI test harnesses, integration tests, benchmarks, and renderer smokes"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

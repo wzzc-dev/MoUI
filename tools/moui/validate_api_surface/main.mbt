@@ -483,8 +483,9 @@ fn package_budgets() -> Array[PackageBudget] {
       // alongside the logical key; p5 passes it through unchanged.
       // View::on_keyboard_input (+1 line): one focusable wrapper carries both
       // keyboard and IME TextInput streams for canvas surfaces.
-      // RgbaImage (+14 lines, +8 pub): writable offscreen RGBA8 buffer for
-      // image/pixel work; no renderer dependency, drawn via encoded ImageRun.
+      // RgbaBuffer (+14 lines, +9 pub): the one neutral writable RGBA8
+      // pixel buffer and its public PNG encode entry; no renderer dependency,
+      // drawn via encoded ImageRun.
       // StrokeCap/StrokeJoin + PathSpec fields (+24 lines, +8 pub, +2 pub_all):
       // explicit path stroke styling for vector/creative canvases.
       // Path clip (path-clip-command plan) adds PushPathClip/PopPathClip and
@@ -503,11 +504,11 @@ fn package_budgets() -> Array[PackageBudget] {
       // entries above (RgbaImage, on_pointer/on_key, KeyboardEvent.code,
       // on_keyboard_input, StrokeCap/StrokeJoin, PathSpec, blend modes)
       // shipped without their ceiling raise; this registration clears
-      // the standing drift. W2 (moui_p5 extraction) retracts RgbaImage
-      // and the raw-input hooks, and that retraction ratchets these
-      // numbers back down rather than adding a new bump.
-      max_lines: 3058,
-      max_pub_lines: 1293,
+      // the standing drift. W2 (moui_p5 extraction) renamed that buffer to
+      // the neutral RgbaBuffer and added its PNG encode entry: measured
+      // 3059 / 1294 / 158.
+      max_lines: 3059,
+      max_pub_lines: 1294,
       max_pub_all_lines: 158,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -524,7 +525,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub struct SemanticId", "pub struct SemanticsNodeId", "pub struct SemanticsGeneration",
         "pub(all) enum SemanticsActionKind", "pub(all) enum SemanticsAction", "pub(open) trait ViewStateValue",
         "pub struct ViewStateSlot", "pub struct ViewStateSlots", "ViewStateContext::read_slot",
-        "ViewStateContext::with_slot", "ViewStateContext::without_slot",
+        "RgbaBuffer::to_png_bytes", "ViewStateContext::with_slot", "ViewStateContext::without_slot",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui_skia_renderer\"", "SkiaRasterRenderer",

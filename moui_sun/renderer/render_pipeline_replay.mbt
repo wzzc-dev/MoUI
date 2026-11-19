@@ -73,7 +73,7 @@ pub fn RenderPipeline::replay_result(
         image_height,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           render_pipeline_draw_image_bytes_result(
@@ -95,7 +95,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_result(
@@ -120,7 +120,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_result(
@@ -147,7 +147,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_result(
@@ -172,7 +172,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_result(
@@ -198,7 +198,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_rect_result(
@@ -224,7 +224,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_result(
@@ -250,7 +250,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_rect_result(
@@ -278,7 +278,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_result(
@@ -306,7 +306,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_quality_image_bytes_rect_result(
@@ -332,7 +332,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_result(
@@ -358,7 +358,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_rect_result(
@@ -384,7 +384,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_result(
@@ -410,7 +410,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_rect_result(
@@ -436,7 +436,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_result(
@@ -462,7 +462,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_rect_result(
@@ -488,7 +488,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_result(
@@ -514,7 +514,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_rect_result(
@@ -542,7 +542,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_result(
@@ -570,7 +570,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_transformed_sampled_image_bytes_rect_result(
@@ -598,7 +598,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_result(
@@ -626,7 +626,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           render_pipeline_draw_transformed_quality_image_bytes_rect_result(
@@ -653,7 +653,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_rect_result(
@@ -680,7 +680,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_rect_result(
@@ -709,7 +709,7 @@ pub fn RenderPipeline::replay_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_sampled_image_bytes_rect_result(
@@ -763,7 +763,7 @@ pub fn RenderPipeline::replay_result(
         src_rect,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           render_pipeline_draw_image_bytes_rect_result(
@@ -786,7 +786,7 @@ pub fn RenderPipeline::replay_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           render_pipeline_draw_tiled_image_bytes_rect_result(
@@ -811,7 +811,7 @@ pub fn RenderPipeline::replay_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           render_pipeline_draw_tiled_image_bytes_rect_result(
@@ -838,7 +838,7 @@ pub fn RenderPipeline::replay_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           render_pipeline_draw_tiled_image_bytes_rect_result(
@@ -864,7 +864,7 @@ pub fn RenderPipeline::replay_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_nine_patch_image_bytes_result(
@@ -891,7 +891,7 @@ pub fn RenderPipeline::replay_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_nine_patch_image_bytes_result(
@@ -920,7 +920,7 @@ pub fn RenderPipeline::replay_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           render_pipeline_draw_nine_patch_image_bytes_result(

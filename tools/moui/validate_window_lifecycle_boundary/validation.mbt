@@ -110,7 +110,18 @@ fn validate_window_common(root : String, failures : Array[String]) -> Unit {
 }
 
 ///|
+fn window_submodule_present(root : String) -> Bool {
+  @tools.directory_exists(@tools.resolve_path(root, "window/modules/window"))
+}
+
+///|
 fn validate_window_dispatch(root : String, failures : Array[String]) -> Unit {
+  if !window_submodule_present(root) {
+    // `window` is an optional submodule (see window-dev-mode.sh). CI checkouts
+    // leave it out, so the physical dispatch checks can only run where it is
+    // present; the repo-owned checks above still gate every checkout.
+    return
+  }
   let dispatch_path = @tools.resolve_path(
     root, "window/modules/window/internal/embedded_dispatch",
   )

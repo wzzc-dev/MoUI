@@ -89,7 +89,7 @@ fn metal_text_capacity_smoke(text_engine~ : NativeTextEngine) -> Unit {
   ]
   for cell in cells {
     let (size, scale, glyphs, least_items) = cell
-    let builder = StringBuilder(size_hint=glyphs)
+    let builder = StringBuilder(capacity=glyphs)
     for index in 0..<glyphs {
       builder.write_char((0x4E00 + index).unsafe_to_char())
     }

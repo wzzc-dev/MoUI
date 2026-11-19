@@ -14,7 +14,7 @@ impl @core.ViewStateValue for DownstreamSlotValue with fn view_state_type_key() 
 impl @core.ViewStateValue for DownstreamSlotValue with fn encode_view_state(
   self,
 ) {
-  let output = Buffer(size_hint=12)
+  let output = Buffer(capacity=12)
   output.write_int_be(self.count)
   output.write_double_be(self.progress)
   output.to_bytes()

@@ -78,17 +78,18 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // FontVariation/FontSpec.
       // GradientStop / GradientAxis / StopsGradientSpec + helpers (+16):
       // V3 gradient primitives; renderer-neutral paint protocol data.
-      // RgbaImage + helpers (+8): writable offscreen RGBA8 data for
-      // image/pixel work; renderer-neutral paint protocol data.
+      // RgbaBuffer + helpers (+9): the one neutral writable RGBA8 pixel
+      // buffer plus its public PNG encode entry; renderer-neutral paint
+      // protocol data shared by framework app code and domain addons.
       // StrokeCap/StrokeJoin + PathSpec accessors (+8): explicit path stroke
       // styling for vector/creative canvases.
       // PathSpec::shape_bounds (+1): geometric clip bounds without stroke
       // inflation, paired with the PushPathClip command.
       // Re-accounted 2026-11-19 to the measured 1305: the p5 canvas
       // additions already itemized above landed without the ceiling
-      // raise. W2 retracts RgbaImage and the raw-input hooks, which
-      // ratchets this back down.
-      max_count: 1305,
+      // raise. W2 replaces the p5-shaped RgbaImage name with the neutral
+      // RgbaBuffer and adds its PNG encode entry (+1 pub): measured 1306.
+      max_count: 1306,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -268,6 +269,7 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Semantic", "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
     "View", "VisualStyle", "TaskScope", "CancelToken", "Spring", "StrokeCap", "StrokeJoin",
+    "RgbaBuffer",
   ]
 }
 

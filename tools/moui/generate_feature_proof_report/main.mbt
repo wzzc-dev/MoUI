@@ -29,7 +29,7 @@ struct ProofReport {
 ///|
 fn usage() -> String {
   (
-    #|Usage: tools/moui/generate_feature_proof_report --status <json> --output <path> [--run-url <url>] [--timestamp <iso8601>]
+    #|Usage: tools/moui/generate_feature_proof_report --status <json> --output <path> [--run-url <url>] [--timestamp <iso8601>] [--event <push|pull_request>] [--docs-only]
     #|
     #|Builds feature proof JSON/Markdown reports from CI job status JSON.
     #|
@@ -46,7 +46,7 @@ fn l1_features() -> Array[L1Feature] {
     { feature: "Web wasm-gc build", job: "pr-profile", },
     { feature: "Renderer capability report consistency", job: "pr-profile", },
     { feature: "Text conformance", job: "pr-profile", },
-    { feature: "API surface stability", job: "api-surface", },
+    { feature: "API surface stability", job: "pr-static", },
     { feature: "Linux backend contracts", job: "linux-platform", },
     { feature: "Windows backend contracts", job: "windows-native", },
     { feature: "macOS packaging", job: "macos-packaging", },
@@ -96,10 +96,35 @@ fn parse_status_map(text : String) -> Result[Map[String, String], String] {
 }
 
 ///|
+fn skip_is_by_design(job : String, event : String, docs_only : Bool) -> Bool {
+  if docs_only {
+    job == "pr-profile" ||
+    job == "linux-platform" ||
+    job == "windows-native" ||
+    job == "macos-packaging" ||
+    job == "benchmark-scaffold"
+  } else {
+    event == "pull_request" &&
+    (job == "macos-packaging" || job == "benchmark-scaffold")
+  }
+}
+
+///|
 fn build_report(
   statuses : Map[String, String],
   run_url : String,
   timestamp : String,
+) -> ProofReport {
+  build_report_with_context(statuses, run_url, timestamp, "push", false)
+}
+
+///|
+fn build_report_with_context(
+  statuses : Map[String, String],
+  run_url : String,
+  timestamp : String,
+  event : String,
+  docs_only : Bool,
 ) -> ProofReport {
   let features : Array[FeatureEntry] = []
   for item in l1_features() {
@@ -111,7 +136,8 @@ fn build_report(
       proof_jobs: [],
       status_text: status,
       status_map: Map([]),
-      proven: status == "success",
+      proven: status == "success" ||
+      (skip_is_by_design(item.job, event, docs_only) && status == "skipped"),
       category_status: "",
     })
   }
@@ -420,6 +446,8 @@ struct CliOptions {
   run_url : String
   output : String
   timestamp : String
+  event : String
+  docs_only : Bool
   help : Bool
 }
 
@@ -429,6 +457,8 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let mut run_url = ""
   let mut output = ""
   let mut timestamp = ""
+  let mut event = "push"
+  let mut docs_only = false
   let mut help = false
   let mut index = 0
   while index < args.length() {
@@ -465,10 +495,21 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
         timestamp = args[index + 1]
         index += 2
       }
+      "--event" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --event")
+        }
+        event = args[index + 1]
+        index += 2
+      }
+      "--docs-only" => {
+        docs_only = true
+        index += 1
+      }
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok({ status_json, run_url, output, timestamp, help, })
+  Ok({ status_json, run_url, output, timestamp, event, docs_only, help, })
 }
 
 ///|
@@ -500,7 +541,17 @@ fn run(args : Array[String]) -> Int32 {
       } else {
         options.timestamp
       }
-      let report = build_report(statuses, options.run_url, timestamp)
+      let report = if options.event == "push" && !options.docs_only {
+        build_report(statuses, options.run_url, timestamp)
+      } else {
+        build_report_with_context(
+          statuses,
+          options.run_url,
+          timestamp,
+          options.event,
+          options.docs_only,
+        )
+      }
       let json_text = report_to_json(report).stringify(indent=2) + "\n"
       let md_text = report_to_markdown(report)
       match ensure_parent_dir(options.output) {

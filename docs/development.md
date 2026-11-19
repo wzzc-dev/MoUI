@@ -452,6 +452,14 @@ Skia/Metal link flags are injected by the `moui_skia` prebuild
 (`${build.MOUI_SKIA_CC_LINK_FLAGS}`); do not write machine-local absolute
 paths into example `moon.pkg` files.
 
+Every `--moonbit-unstable-prebuild` hook in this repository is a `build.mbtx`
+MoonBit script (`moui`, `moui_webview`, `moui_text_providers`,
+`moui_metal_renderer`, `moui_tests`, `moui_skia`, `moui_skia_renderer`, and
+`examples/pdf_workbench`); there is no Node `build.js` hook left. The hooks read
+the build config JSON from stdin and print one JSON object with `vars` and
+`link_configs`, so they run without Node on every host. `scripts/test-moui-prebuild.mjs`
+runs all of them and asserts their flag contracts.
+
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `moui_skia/native` with
 the SkShaper define, links `libskshaper`, `libskunicode_core`,
@@ -613,7 +621,19 @@ log in release notes.
 GitHub Actions installs MoonBit through `.github/actions/setup-moonbit`. The
 pinned compiler version lives in `.moonbit-toolchain`; update that file when
 moving CI to a new MoonBit toolchain version. The current pin is MoonBit
-`0.10.20` (`moonc v0.10.20+65efd5b93`, `moonrun 0.1.20261104`).
+`0.10.21` (`moonc v0.10.21+06da1ed44`, `moonrun 0.1.20261117`,
+`@moonbit/moonc-worker@0.1.202611179` for the Playground).
+
+The 0.10.21 migration touched three things:
+
+- `Show` implementations no longer expose `to_string` as a method, so
+  `StringBuilder`/`Buffer` build-up code and the `mizchi/image@0.5.0` bump
+  (renderer image decoding) keep compiling.
+- `StringBuilder(size_hint=...)` and `Buffer(size_hint=...)` are deprecated in
+  favour of `capacity=`, and `Int64::from_int`/`Double::from_int` are deprecated
+  in favour of `.to_int64()`/`.to_double()`.
+- `build.mbtx` scripts declare imports in a `---` frontmatter block; imports
+  after the first declaration warn as `unfenced_import`.
 
 The 0.10.19+ syntax migration is now the repository baseline:
 

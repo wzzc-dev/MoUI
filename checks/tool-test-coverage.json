@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "description": "Ratchet for tool packages under tools/moui that have no *_wbtest.mbt. Only moves down; a new untested tool package fails the check immediately.",
+  "root": "tools/moui",
+  "maxUntestedPackages": 0
+}

@@ -1265,7 +1265,7 @@ fn append_zeroes(out : Array[Byte], count : Int32) -> Unit {
 
 ///|
 fn parser_test_string_from_codepoints(codepoints : Array[Int32]) -> String {
-  let out = StringBuilder(size_hint=codepoints.length())
+  let out = StringBuilder(capacity=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())
   }

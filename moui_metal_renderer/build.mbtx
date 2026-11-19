@@ -1,0 +1,97 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+---
+
+///|
+/// Metal renderer prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. MoonBit applies a package's `cc-link-flags`
+/// only when that package is the is-main link unit (its own tests), never when a
+/// dependency links it into an executable. `link_configs` is the carrier that
+/// reaches is-main links, so the Apple framework list travels with this module
+/// instead of being repeated by every composition root. Same mechanism as
+/// `moui_skia/build.mbtx` and `moui_text_providers/build.mbtx`.
+///|
+let apple_link_flags : String = "-framework Metal -framework QuartzCore -framework CoreGraphics -framework ImageIO -framework Foundation -framework CoreFoundation"
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+async fn capture(program : String, args : Array[String]) -> (Int32, String) {
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Collect,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
+  }
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) =>
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out) = capture("uname", ["-s"])
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  "linux"
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let var_fields : Map[String, @json.Json] = Map([])
+  for pair in vars {
+    var_fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  let entries : Array[@json.Json] = []
+  for pair in link_configs {
+    if pair.0 != "" && pair.1 != "" {
+      let fields : Map[String, @json.Json] = Map([])
+      fields.set("package", @json.Json::string(pair.0))
+      fields.set("link_flags", @json.Json::string(pair.1))
+      entries.push(@json.Json::object(fields))
+    }
+  }
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(var_fields))
+  payload.set("link_configs", @json.Json::array(entries))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let platform = host_platform()
+  let link_configs = if platform == "macos" {
+    [("wzzc-dev/moui_metal_renderer", apple_link_flags)]
+  } else {
+    []
+  }
+  emit([], link_configs)
+}

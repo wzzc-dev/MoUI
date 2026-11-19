@@ -1,0 +1,354 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/x/fs",
+}
+---
+
+///|
+/// `moui_webview` prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. WebView host libraries are platform-specific
+/// and a package `cc-link-flags` does not reach an is-main link, so the WebKit /
+/// WebView2 / WebKitGTK flag sets travel as `vars` and `link_configs`. WebView2
+/// can be pinned explicitly through `MOUI_WINDOWS_WEBVIEW2_*` env vars or picked
+/// up from the `.tools/webview2/` SDK layout that `scripts/windows` installs.
+let macos_backend_webkit_flags : String = "-framework WebKit"
+
+///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  if value is @json.Object(fields) {
+    fields.get(key)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_text(value : @json.Json) -> String? {
+  if value is @json.String(text) {
+    Some(text)
+  } else {
+    None
+  }
+}
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+async fn capture(program : String, args : Array[String]) -> (Int32, String) {
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Collect,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
+  }
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out) = capture("uname", ["-s"])
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  "linux"
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) =>
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+fn config_env(config : @json.Json, key : String) -> String {
+  match @env.get_env_var(key) {
+    Some(value) =>
+      if value != "" {
+        return value
+      }
+    None => ()
+  }
+  for path in [["env"], ["build", "env"], ["build_info", "env"]] {
+    let mut node = config
+    let mut found = true
+    for segment in path {
+      match json_field(node, segment) {
+        Some(next) => node = next
+        None => {
+          found = false
+          break
+        }
+      }
+    }
+    if found {
+      match json_field(node, key) {
+        Some(value) =>
+          match json_text(value) {
+            Some(text) =>
+              if text != "" {
+                return text
+              }
+            None => ()
+          }
+        None => ()
+      }
+    }
+  }
+  ""
+}
+
+///|
+fn truthy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "1" || text == "true" || text == "yes" || text == "on"
+}
+
+///|
+fn is_shell_safe(text : String) -> Bool {
+  for char in text {
+    let code = char.to_int()
+    let digit = code >= 48 && code <= 57
+    let upper = code >= 65 && code <= 90
+    let lower = code >= 97 && code <= 122
+    let allowed = char == '_' || char == '.' || char == '/' || char == ':' || char == '\\' || char == '-'
+    if !(digit || upper || lower || allowed) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn shell_path(value : String) -> String {
+  if is_shell_safe(value) {
+    return value
+  }
+  "\"" + value.replace_all(old="\\", new="\\\\").replace_all(old="\"", new="\\\"") + "\""
+}
+
+///|
+async fn pkg_config(packages : Array[String], flag : String) -> String {
+  let args : Array[String] = [flag]
+  for name in packages {
+    args.push(name)
+  }
+  let (code, out) = capture("pkg-config", args)
+  if code != 0 {
+    return ""
+  }
+  out.trim().to_owned()
+}
+
+///|
+fn prepend_missing_define(flags : String, define_flag : String) -> String {
+  let text = flags.trim().to_owned()
+  for token in text.split(" ") {
+    if token == define_flag {
+      return text
+    }
+  }
+  if text == "" {
+    return define_flag
+  }
+  define_flag + " " + text
+}
+
+///|
+fn path_join(left : String, right : String) -> String {
+  if left == "" {
+    return right
+  }
+  if right == "" {
+    return left
+  }
+  if left.has_suffix("/") || left.has_suffix("\\") {
+    return left + right
+  }
+  left + "/" + right
+}
+
+///|
+fn windows_webview2_auto(repo_root : String) -> (String, String)? {
+  let tools_dir = path_join(path_join(repo_root, ".tools"), "webview2")
+  if !@fs.path_exists(tools_dir) {
+    return None
+  }
+  let entries = @fs.read_dir(tools_dir) catch {
+    _ => return None
+  }
+  let mut found : String? = None
+  for entry in entries {
+    if entry.has_prefix("Microsoft.Web.WebView2.") {
+      found = Some(path_join(tools_dir, entry))
+      break
+    }
+  }
+  let dir = match found {
+    Some(value) => value
+    None => return None
+  }
+  let header = path_join(path_join(path_join(path_join(dir, "build"), "native"), "include"), "WebView2.h")
+  let static_lib = path_join(path_join(path_join(path_join(dir, "build"), "native"), "x64"), "WebView2LoaderStatic.lib")
+  if !@fs.path_exists(header) || !@fs.path_exists(static_lib) {
+    return None
+  }
+  let include_dir = path_join(path_join(path_join(dir, "build"), "native"), "include")
+  Some(
+    (
+      "-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I" + shell_path(include_dir),
+      shell_path(static_lib) + " version.lib",
+    ),
+  )
+}
+
+///|
+fn windows_webview2_flags(
+  config : @json.Json,
+  repo_root : String,
+) -> (String, String) {
+  let explicit_stub = config_env(config, "MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS")
+  let explicit_link = config_env(config, "MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS")
+  if explicit_stub != "" || explicit_link != "" {
+    return (
+      prepend_missing_define(explicit_stub, "-DMOUI_WINDOWS_ENABLE_WEBVIEW2"),
+      explicit_link,
+    )
+  }
+  if truthy(config_env(config, "MOUI_WINDOWS_ENABLE_WEBVIEW2")) {
+    let include_dir = config_env(config, "MOUI_WINDOWS_WEBVIEW2_INCLUDE")
+    let link_flags = config_env(config, "MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS")
+    if include_dir == "" || link_flags == "" {
+      abort(
+        "MOUI_WINDOWS_ENABLE_WEBVIEW2 requires MOUI_WINDOWS_WEBVIEW2_INCLUDE and MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS, or explicit MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS/MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS.",
+      )
+    }
+    return (
+      "-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I" + shell_path(include_dir),
+      link_flags,
+    )
+  }
+  match windows_webview2_auto(repo_root) {
+    Some(flags) => flags
+    None => ("", "")
+  }
+}
+
+///|
+async fn linux_webkitgtk_flags(config : @json.Json) -> (String, String) {
+  let explicit_stub = config_env(config, "MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS")
+  let explicit_link = config_env(config, "MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS")
+  if explicit_stub != "" || explicit_link != "" {
+    return (
+      prepend_missing_define(explicit_stub, "-DMOUI_LINUX_ENABLE_WEBKITGTK"),
+      explicit_link,
+    )
+  }
+  for webkit_package in ["webkit2gtk-4.1", "webkit2gtk-4.0"] {
+    let packages : Array[String] = ["gtk+-3.0", webkit_package]
+    let cflags = pkg_config(packages, "--cflags")
+    let libs = pkg_config(packages, "--libs")
+    if cflags != "" && libs != "" {
+      return ("-DMOUI_LINUX_ENABLE_WEBKITGTK " + cflags, libs)
+    }
+  }
+  // WebKitGTK not available through pkg-config: compile without it.
+  ("", "")
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let var_fields : Map[String, @json.Json] = Map([])
+  for pair in vars {
+    var_fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  let entries : Array[@json.Json] = []
+  for pair in link_configs {
+    if pair.0 != "" && pair.1 != "" {
+      let fields : Map[String, @json.Json] = Map([])
+      fields.set("package", @json.Json::string(pair.0))
+      fields.set("link_flags", @json.Json::string(pair.1))
+      entries.push(@json.Json::object(fields))
+    }
+  }
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(var_fields))
+  payload.set("link_configs", @json.Json::array(entries))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let raw = @stdio.stdin.read_all() catch {
+    _ => b""
+  }
+  let text = @utf8.decode(raw) catch {
+    _ => ""
+  }
+  let config = if text.trim().to_owned() == "" {
+    @json.Json::empty_object()
+  } else {
+    @json.parse(text) catch {
+      _ => @json.Json::empty_object()
+    }
+  }
+  let host = host_platform()
+  let module_root = match @env.current_dir() {
+    Some(dir) => dir
+    None => "."
+  }
+  let repo_root = path_join(module_root, "..")
+  let (windows_stub, windows_link) = windows_webview2_flags(config, repo_root)
+  // Only the Linux backend consumes WebKitGTK flags, and pkg-config is not
+  // guaranteed to exist on macOS/Windows runners.
+  let (linux_stub, linux_link) = if host == "linux" {
+    linux_webkitgtk_flags(config)
+  } else {
+    ("", "")
+  }
+  let link_configs : Array[(String, String)] = []
+  if host == "macos" {
+    link_configs.push(
+      ("wzzc-dev/moui_webview/backend/macos", macos_backend_webkit_flags),
+    )
+  }
+  if windows_link != "" {
+    link_configs.push(("wzzc-dev/moui_webview/backend/windows", windows_link))
+  }
+  if linux_link != "" {
+    link_configs.push(("wzzc-dev/moui_webview/backend/linux", linux_link))
+  }
+  emit(
+    [
+      ("MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS", windows_stub),
+      ("MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS", windows_link),
+      ("MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS", linux_stub),
+      ("MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS", linux_link),
+      ("MOUI_MACOS_WEBVIEW_LINK_FLAGS", macos_backend_webkit_flags),
+    ],
+    link_configs,
+  )
+}

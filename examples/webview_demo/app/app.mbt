@@ -61,7 +61,7 @@ pub(all) enum Msg {
   GoBack
   GoForward
   CommandCompleted(
-    @webview_host.WebViewTaskResult[@webview_host.WebViewCommandReceipt]
+    @webview_host.WebViewTaskResult[@webview_host.WebViewCommandReceipt],
   )
   WebViewEvent(WebViewAppEvent)
 }

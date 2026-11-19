@@ -133,7 +133,7 @@ jobs:
 
       - name: Cache Skia checkout and build
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/macos
           key: skia-macos-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-${{ hashFiles('moui_skia/scripts/macos-build-skia.sh', 'moui_skia/scripts/macos-real-skia-smoke.sh', 'moui_skia/scripts/macos-skia-smoke.sh') }}
@@ -143,7 +143,7 @@ jobs:
 
       - name: Cache release Skia
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'release' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache/release
           key: release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Upload smoke log
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: macos-real-skia-smoke-log
           path: |

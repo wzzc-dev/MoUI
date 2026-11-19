@@ -100,7 +100,7 @@ test "windows UIA actions preserve node generation and typed payload" {
         target: ByNodeId(node_id),
         action: SetNumericValue(value),
         precondition: Exact(generation),
-      }
+      },
     ) else {
     fail("expected decoded UIA numeric action")
   }

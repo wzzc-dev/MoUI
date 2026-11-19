@@ -111,7 +111,7 @@ pub struct WebsiteDocEntry {
   keywords : Array[String]
 }
 pub fn WebsiteDocEntry::equal(Self, Self) -> Bool
-pub fn WebsiteDocEntry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocEntry::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocEntry::not_equal(Self, Self) -> Bool
 pub fn WebsiteDocEntry::to_json(Self) -> @json.Json
 pub fn WebsiteDocEntry::to_repr(Self) -> @debug.Repr
@@ -122,7 +122,7 @@ pub struct WebsiteDocGroup {
   title : String
 }
 pub fn WebsiteDocGroup::equal(Self, Self) -> Bool
-pub fn WebsiteDocGroup::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocGroup::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocGroup::not_equal(Self, Self) -> Bool
 pub fn WebsiteDocGroup::to_json(Self) -> @json.Json
 pub fn WebsiteDocGroup::to_repr(Self) -> @debug.Repr
@@ -143,7 +143,7 @@ pub struct WebsiteDocsCatalog {
   entries : Array[WebsiteDocEntry]
 }
 pub fn WebsiteDocsCatalog::equal(Self, Self) -> Bool
-pub fn WebsiteDocsCatalog::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WebsiteDocsCatalog::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WebsiteDocsCatalog::not_equal(Self, Self) -> Bool
 pub fn WebsiteDocsCatalog::to_json(Self) -> @json.Json
 pub fn WebsiteDocsCatalog::to_repr(Self) -> @debug.Repr

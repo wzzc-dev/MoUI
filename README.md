@@ -170,7 +170,7 @@ To try Showcase on a mobile platform, follow the platform-specific setup, build,
 > .\scripts\windows\msvc_env.ps1
 > ```
 >
-> This sets up the MSVC environment required by the native Skia link step with shared C11 atomics support (`/experimental:c11atomics`) and pins `MOON_CC` to an absolute `clang-cl.exe`. Run it once per shell before `moon run ... --target native` on Windows. The MoonBit CLI injects `/std:c11` into every MSVC-classified stub compile, and `cl.exe` rejects that together with the `/std:c++20` the Skia stubs need (D8016); `clang-cl.exe` accepts both and is automatically paired with its sibling `llvm-lib.exe` as the archiver. The `windows_wgpu` diagnostic route additionally needs C11 mode (`/std:c11`) for `wgpu_mbt`'s `<stdatomic.h>` stubs — the Windows build/package helpers enable it for WGPU packages automatically; for a direct `moon run`, dot-source the script and call `Enable-MsvcGlobalC11ModeForCOnlyStubs` first.
+> This sets up the MSVC environment required by the native Skia link step with shared C11 atomics support (`/experimental:c11atomics`). Run it once per shell before `moon run ... --target native` on Windows. `MOON_CC` stays unset: the Skia C++ stub compiles inside the `moui_skia` prebuild (`build.mbtx`) with its own `/std:c++20`, so the MoonBit CLI's injected `/std:c11` only reaches C stubs and the old D8016 clash is gone. The `windows_wgpu` diagnostic route additionally needs C11 mode (`/std:c11`) for `wgpu_mbt`'s `<stdatomic.h>` stubs — the Windows build/package helpers enable it for WGPU packages automatically; for a direct `moon run`, dot-source the script and call `Enable-MsvcGlobalC11ModeForCOnlyStubs` first.
 
 ### Showcase
 

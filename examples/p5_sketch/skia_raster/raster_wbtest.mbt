@@ -1,5 +1,8 @@
 ///|
 test "SketchView captures through the installed Skia rasterizer" {
+  // `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` links the plain stub with no Skia
+  // backend, so the rasterizer cannot capture; skip instead of panicking.
+  guard @render_skia.skia_available() else { return () }
   install()
   let view = @p5m.SketchView::new(4.0, 2.0)
   let sketch = view.sketch()
@@ -23,6 +26,9 @@ test "SketchView captures through the installed Skia rasterizer" {
 
 ///|
 test "SketchView save_canvas writes a PNG that load_image can read" {
+  // `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` links the plain stub with no Skia
+  // backend, so the rasterizer cannot capture; skip instead of panicking.
+  guard @render_skia.skia_available() else { return () }
   install()
   let view = @p5m.SketchView::new(4.0, 2.0)
   let sketch = view.sketch()
@@ -33,17 +39,17 @@ test "SketchView save_canvas writes a PNG that load_image can read" {
     p.rect(0.0, 0.0, 2.0, 2.0)
   })
   ignore(view.render_commands(0.0))
-  let candidates = [
-    "/tmp/moui_p5_save_canvas.png", "C:/Temp/moui_p5_save_canvas.png", "moui_p5_save_canvas.png",
-  ]
-  let mut saved = ""
-  for path in candidates {
-    if view.save_canvas(path) {
-      saved = path
-      break
-    }
-  }
-  assert_true(saved != "")
+  // `save_canvas` writes through the sketch's injected file ports; this test
+  // keeps the bytes in memory instead of touching the host filesystem.
+  let store : Map[String, Bytes] = Map([])
+  sketch.set_file_ports(
+    @p5.FilePorts::new(load=fn(path) { store.get(path) }, save=fn(path, bytes) {
+      store[path] = bytes
+      true
+    }),
+  )
+  let saved = "moui_p5_save_canvas.png"
+  assert_true(view.save_canvas(saved))
   let loaded = sketch.try_load_image(saved).unwrap()
   inspect(loaded.width(), content="4")
   inspect(loaded.height(), content="2")
@@ -56,6 +62,9 @@ test "SketchView save_canvas writes a PNG that load_image can read" {
 
 ///|
 test "skia canvas rasterizer reads back opaque and translucent pixels" {
+  // `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` links the plain stub with no Skia
+  // backend, so the rasterizer cannot capture; skip instead of panicking.
+  guard @render_skia.skia_available() else { return () }
   let commands : Array[@core.DrawCommand] = [
     @core.Clear(@core.Color::rgba(r=1.0, g=1.0, b=1.0)),
     @core.FillRect(

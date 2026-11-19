@@ -76,7 +76,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         image_height,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -98,7 +98,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -119,7 +119,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -142,7 +142,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -164,7 +164,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -186,7 +186,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -208,7 +208,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -230,7 +230,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -254,7 +254,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -279,7 +279,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -301,7 +301,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -323,7 +323,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -345,7 +345,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -367,7 +367,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -389,7 +389,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -411,7 +411,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -433,7 +433,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -455,7 +455,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -479,7 +479,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -504,7 +504,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -528,7 +528,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -553,7 +553,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -576,7 +576,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -599,7 +599,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -624,7 +624,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -670,7 +670,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         src_rect,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -692,7 +692,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -714,7 +714,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -738,7 +738,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -761,7 +761,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -784,7 +784,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -809,7 +809,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -857,7 +857,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_cached_with_renderer_resources(
@@ -883,7 +883,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_atlas_with_renderer_resources(
@@ -914,7 +914,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_fallback_line_cached_with_renderer_resources(
@@ -949,7 +949,7 @@ pub fn RenderPipeline::replay_with_renderer_resources_result(
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_fallback_line_atlas_with_renderer_resources(
@@ -1097,7 +1097,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         image_height,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1119,7 +1119,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1140,7 +1140,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1163,7 +1163,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1185,7 +1185,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1207,7 +1207,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1229,7 +1229,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1251,7 +1251,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1275,7 +1275,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1300,7 +1300,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1323,7 +1323,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1346,7 +1346,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1371,7 +1371,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1417,7 +1417,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         src_rect,
         x,
         y,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1439,7 +1439,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1461,7 +1461,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1485,7 +1485,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         y,
         width,
         height,
-        paint
+        paint,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1508,7 +1508,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1531,7 +1531,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1556,7 +1556,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         height,
         insets,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1604,7 +1604,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_cached_with_renderer_resources(
@@ -1630,7 +1630,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_font_bytes_atlas_with_renderer_resources(
@@ -1661,7 +1661,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         let faces : Array[@text.FontFace] = []
         let mut command_font_parse_count = 0
@@ -1705,7 +1705,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         let faces : Array[@text.FontFace] = []
         let mut command_font_parse_count = 0
@@ -1753,7 +1753,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1775,7 +1775,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1797,7 +1797,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1819,7 +1819,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_bmp_resource_image_replay_result(
@@ -1841,7 +1841,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1863,7 +1863,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -1887,7 +1887,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1912,7 +1912,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        sampling
+        sampling,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1936,7 +1936,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1961,7 +1961,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_rgba_resource_image_replay_result(
@@ -1983,7 +1983,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -2005,7 +2005,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         width,
         height,
         paint,
-        quality
+        quality,
       ) =>
         match
           record_png_resource_image_replay_result(
@@ -2046,7 +2046,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         let faces : Array[@text.FontFace] = []
         let mut command_font_parse_count = 0
@@ -2090,7 +2090,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         let faces : Array[@text.FontFace] = []
         let mut command_font_parse_count = 0
@@ -2137,7 +2137,7 @@ pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_r
         x,
         y,
         config,
-        paint
+        paint,
       ) => {
         match
           renderer.draw_loaded_font_atlas_with_renderer_resources(

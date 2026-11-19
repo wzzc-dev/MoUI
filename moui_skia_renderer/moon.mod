@@ -23,5 +23,5 @@ keywords = [ "moui", "renderer", "skia", "gui" ]
 description = "Native Skia renderer provider for MoUI"
 
 options(
-  "--moonbit-unstable-prebuild": "build.js",
+  "--moonbit-unstable-prebuild": "build.mbtx",
 )

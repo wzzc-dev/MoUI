@@ -1,0 +1,387 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+}
+---
+
+///|
+/// Skia renderer prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. The renderer owns no Skia flags of its own, so
+/// it delegates to the `moui_skia` module prebuild (a `.mbtx` script) and
+/// re-emits the two vars it needs plus one `link_configs` entry. Package
+/// `cc-link-flags` cover binding-local tests but do not propagate through the
+/// renderer to final is-main links, so the link configs entry is the carrier.
+
+///|
+struct RendererOpts {
+  config : @json.Json
+  env : Map[String, String]
+  parent_root : String
+}
+
+///|
+fn[T] bail(message : String) -> T {
+  abort(message)
+}
+
+///|
+fn is_blank(value : String) -> Bool {
+  value.trim().length() == 0
+}
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+fn truthy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "1" || text == "true" || text == "yes" || text == "on"
+}
+
+///|
+fn falsy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "0" || text == "false" || text == "no" || text == "off"
+}
+
+///|
+fn split_str(value : String, delimiter : String) -> Array[String] {
+  let parts : Array[String] = []
+  for part in value.split(delimiter) {
+    parts.push(part.to_owned())
+  }
+  parts
+}
+
+///|
+fn path_join(left : String, right : String) -> String {
+  if left == "" {
+    return right
+  }
+  if right == "" {
+    return left
+  }
+  if left.has_suffix("/") || left.has_suffix("\\") {
+    return left + right
+  }
+  left + "/" + right
+}
+
+///|
+fn path_exists(path : String) -> Bool {
+  @fs.path_exists(path)
+}
+
+///|
+fn ensure_dir(path : String) -> Unit {
+  if path_exists(path) {
+    return
+  }
+  @fs.create_dir(path) catch {
+    _ => bail("failed to create directory \{path}")
+  }
+}
+
+///|
+fn write_text(path : String, content : String) -> Unit {
+  @fs.write_string_to_file(path, content) catch {
+    _ => bail("failed to write \{path}")
+  }
+}
+
+///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  match value {
+    @json.Object(fields) => fields.get(key)
+    _ => None
+  }
+}
+
+///|
+fn nested_string(value : @json.Json, keys : Array[String]) -> String? {
+  let mut node = value
+  let mut index = 0
+  while index < keys.length() {
+    match json_field(node, keys[index]) {
+      Some(next) => node = next
+      None => return None
+    }
+    index = index + 1
+  }
+  match node {
+    @json.String(text) => Some(text)
+    _ => None
+  }
+}
+
+///|
+fn add_env_object(out : Map[String, String], node : @json.Json) -> Unit {
+  match json_field(node, "env") {
+    Some(@json.Object(fields)) => {
+      for key, value in fields {
+        match value {
+          @json.String(text) => out.set(key, text)
+          _ => ()
+        }
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
+fn config_env(config : @json.Json) -> Map[String, String] {
+  let out : Map[String, String] = Map([])
+  match json_field(config, "build_info") {
+    Some(node) => add_env_object(out, node)
+    None => ()
+  }
+  match json_field(config, "build") {
+    Some(node) => add_env_object(out, node)
+    None => ()
+  }
+  add_env_object(out, config)
+  out
+}
+
+///|
+fn stored_value(env : Map[String, String], key : String) -> String? {
+  match env.get(key) {
+    Some(value) => {
+      if is_blank(value) {
+        None
+      } else {
+        Some(value)
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn config_value(env : Map[String, String], key : String) -> String? {
+  match @env.get_env_var(key) {
+    Some(value) => {
+      if is_blank(value) {
+        stored_value(env, key)
+      } else {
+        Some(value)
+      }
+    }
+    None => stored_value(env, key)
+  }
+}
+
+///|
+fn config_or(env : Map[String, String], key : String, fallback : String) -> String {
+  match config_value(env, key) {
+    Some(value) => value
+    None => fallback
+  }
+}
+
+///|
+fn target_kind(opts : RendererOpts) -> String? {
+  let candidates : Array[Array[String]] = [
+    ["build", "target", "kind"],
+    ["build_info", "target", "kind"],
+    ["target", "kind"],
+    ["target", "backend"],
+  ]
+  for path in candidates {
+    match nested_string(opts.config, path) {
+      Some(kind) => return Some(kind)
+      None => ()
+    }
+  }
+  config_value(opts.env, "MOON_TARGET")
+}
+
+///|
+fn should_configure_skia(opts : RendererOpts) -> Bool {
+  match target_kind(opts) {
+    Some(kind) => {
+      let text = lower_trim(kind)
+      for skipped in ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"] {
+        if text == skipped {
+          return false
+        }
+      }
+    }
+    None => ()
+  }
+  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
+    return false
+  }
+  !falsy(config_or(opts.env, "MOUI_SKIA_ENABLE_PREBUILD_SKIA", ""))
+}
+
+///|
+async fn capture(
+  program : String,
+  args : Array[String],
+  cwd : String,
+) -> (Int, String, String) {
+  let result = @process.run(
+    program,
+    args,
+    stdout=@process.Collect,
+    stderr=@process.Collect,
+    cwd=cwd,
+  )
+  let out = result.stdout_text() catch {
+    _ => ""
+  }
+  let err = result.stderr_text() catch {
+    _ => ""
+  }
+  (result.exit_code, out, err)
+}
+
+///|
+fn var_from_output(output : String, name : String) -> String {
+  let lines = split_str(output, "\n")
+  let mut index = lines.length() - 1
+  while index >= 0 {
+    let line = lines[index].trim()
+    if line.has_prefix("{") {
+      let parsed = @json.parse(line) catch {
+        _ => @json.Json::empty_object()
+      }
+      match json_field(parsed, "vars") {
+        Some(vars) => {
+          match json_field(vars, name) {
+            Some(@json.String(value)) => return value
+            _ => ()
+          }
+        }
+        None => ()
+      }
+    }
+    index = index - 1
+  }
+  ""
+}
+
+///|
+async fn run_parent_prebuild(opts : RendererOpts, config_text : String) -> String {
+  let cache_dir = path_join(opts.parent_root, ".skia-cache")
+  ensure_dir(cache_dir)
+  let stdin_path = path_join(cache_dir, "prebuild-stdin.json")
+  let text = if is_blank(config_text) {
+    "{}"
+  } else {
+    config_text
+  }
+  write_text(stdin_path, text)
+  // The nested `moon run` may surface the parent module prebuild hook (which
+  // also reads stdin) before the script runs, so the script falls back to this
+  // file whenever its stdin is already drained.
+  let target_dir = path_join(cache_dir, "prebuild-target")
+  let (code, out, err) = capture(
+    "moon",
+    ["run", "build.mbtx", "--target", "native", "--target-dir", target_dir],
+    opts.parent_root,
+  )
+  if code != 0 {
+    bail("moui_skia prebuild exited with \{code}: \{err}")
+  }
+  out
+}
+
+///|
+fn json_strings(pairs : Array[(String, String)]) -> @json.Json {
+  let fields : Map[String, @json.Json] = Map([])
+  for pair in pairs {
+    fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  @json.Json::object(fields)
+}
+
+///|
+fn json_link_configs(pairs : Array[(String, String)]) -> @json.Json {
+  let entries : Array[@json.Json] = []
+  for pair in pairs {
+    let fields : Map[String, @json.Json] = Map([])
+    fields.set("package", @json.Json::string(pair.0))
+    fields.set("link_flags", @json.Json::string(pair.1))
+    entries.push(@json.Json::object(fields))
+  }
+  @json.Json::array(entries)
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", json_strings(vars))
+  payload.set("link_configs", json_link_configs(link_configs))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let raw = @stdio.stdin.read_all() catch {
+    _ => b""
+  }
+  let text = @utf8.decode(raw) catch {
+    _ => ""
+  }
+  let config = if is_blank(text) {
+    @json.Json::empty_object()
+  } else {
+    @json.parse(text) catch {
+      _ => @json.Json::empty_object()
+    }
+  }
+  let module_root = match nested_string(config, ["paths", "module_root"]) {
+    Some(dir) => dir
+    None => {
+      match @env.current_dir() {
+        Some(dir) => dir
+        None => "."
+      }
+    }
+  }
+  let opts : RendererOpts = {
+    config: config,
+    env: config_env(config),
+    parent_root: path_join(module_root, "../moui_skia"),
+  }
+  let configure = should_configure_skia(opts)
+  let mut stub_flags = ""
+  let mut link_flags = ""
+  if configure {
+    let parent_out = run_parent_prebuild(opts, text)
+    stub_flags = config_or(
+      opts.env,
+      "MOUI_SKIA_STUB_CC_FLAGS",
+      var_from_output(parent_out, "MOUI_SKIA_STUB_CC_FLAGS"),
+    )
+    link_flags = config_or(
+      opts.env,
+      "MOUI_SKIA_CC_LINK_FLAGS",
+      var_from_output(parent_out, "MOUI_SKIA_CC_LINK_FLAGS"),
+    )
+  }
+  let link_configs = if link_flags == "" {
+    []
+  } else {
+    [("wzzc-dev/moui_skia_renderer", link_flags)]
+  }
+  emit(
+    [
+      ("MOUI_SKIA_STUB_CC_FLAGS", stub_flags),
+      ("MOUI_SKIA_CC_LINK_FLAGS", link_flags),
+    ],
+    link_configs,
+  )
+}

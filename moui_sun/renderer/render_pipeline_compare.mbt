@@ -54,7 +54,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ah,
         a_insets,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawNinePatchBmpBytesKeyed(
         b_key,
@@ -65,7 +65,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bh,
         b_insets,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       render_keyed_nine_patch_image_is_same(
@@ -82,7 +82,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ah,
         a_insets,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawNinePatchPngBytesKeyed(
         b_key,
@@ -93,7 +93,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bh,
         b_insets,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       render_keyed_nine_patch_image_is_same(
@@ -112,7 +112,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ah,
         a_insets,
         a_paint,
-        a_sampling
+        a_sampling,
       ),
       DrawNinePatchRgbaBytesKeyed(
         b_key,
@@ -125,7 +125,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bh,
         b_insets,
         b_paint,
-        b_sampling
+        b_sampling,
       ),
     ) =>
       render_keyed_nine_patch_image_dimensions_is_same(
@@ -161,7 +161,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawFontBytesKeyed(
         b_font_key,
@@ -171,7 +171,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       a_font_key == b_font_key &&
@@ -190,7 +190,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawFontBytesAtlasKeyed(
         b_font_key,
@@ -200,7 +200,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       a_font_key == b_font_key &&
@@ -218,7 +218,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawFontBytesFallbackKeyed(
         b_sources,
@@ -227,7 +227,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       render_font_bytes_fallback_sources_are_same(a_sources, b_sources) &&
@@ -245,7 +245,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawFontBytesFallbackAtlasKeyed(
         b_sources,
@@ -254,7 +254,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       render_font_bytes_fallback_sources_are_same(a_sources, b_sources) &&
@@ -272,7 +272,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawLoadedFontKeyed(
         b_font_key,
@@ -281,7 +281,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       a_font_key == b_font_key &&
@@ -299,7 +299,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawLoadedFontFallbackKeyed(
         b_font_keys,
@@ -308,7 +308,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       string_arrays_are_same(a_font_keys, b_font_keys) &&
@@ -326,7 +326,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawLoadedFontFallbackAtlasKeyed(
         b_font_keys,
@@ -335,7 +335,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       string_arrays_are_same(a_font_keys, b_font_keys) &&
@@ -353,7 +353,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         ax,
         ay,
         a_config,
-        a_paint
+        a_paint,
       ),
       DrawLoadedFontAtlasKeyed(
         b_font_key,
@@ -362,7 +362,7 @@ fn render_commands_are_same(a : RenderCommand, b : RenderCommand) -> Bool {
         bx,
         by,
         b_config,
-        b_paint
+        b_paint,
       ),
     ) =>
       a_font_key == b_font_key &&

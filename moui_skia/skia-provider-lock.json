@@ -11,6 +11,68 @@
       "tag": "dev-6d73578a36",
       "commit": "6d73578a36506d10bc044e920cc71037982e481d",
       "release_url": "https://github.com/wzzc-dev/skia/releases/tag/dev-6d73578a36",
+      "mirrors": [
+        {
+          "name": "gitcode-skia",
+          "scope": "skia",
+          "base_url": "https://gitcode.com/wzzc/MoUI/releases/download/skia-{tag}/",
+          "platforms": [
+            "macos",
+            "linux",
+            "windows"
+          ],
+          "configs": [
+            "Release"
+          ],
+          "link_modes": [
+            "static"
+          ],
+          "arches": [
+            "arm64",
+            "x64"
+          ],
+          "notes": "AtomGit/GitCode mirror inside the MoUI repository; Release static desktop assets only; refreshed by moui_skia/scripts/mirror-release-assets.sh"
+        },
+        {
+          "name": "gitcode-skia-stub",
+          "scope": "stub",
+          "base_url": "https://gitcode.com/wzzc/MoUI/releases/download/skia-stub-{tag}/",
+          "notes": "AtomGit/GitCode mirror of the MoUI-hosted Skia stub assets"
+        },
+        {
+          "name": "gh-proxy-com",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://gh-proxy.com/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
+        },
+        {
+          "name": "ghproxy-net",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://ghproxy.net/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
+        },
+        {
+          "name": "ghproxy-monkeyray",
+          "kind": "url-prefix",
+          "scope": [
+            "skia",
+            "stub",
+            "source"
+          ],
+          "prefix": "https://ghproxy.monkeyray.net/",
+          "notes": "Third-party GitHub download proxy; verified like every other candidate, so a bad or truncated response is rejected"
+        }
+      ],
       "source_archive": {
         "name": "wzzc-dev-skia-dev-6d73578a36-source.zip",
         "url": "https://github.com/wzzc-dev/skia/archive/refs/tags/dev-6d73578a36.zip"
@@ -773,6 +835,22 @@
                   "skia.lib"
                 ]
               }
+            }
+          }
+        }
+      },
+      "stub_libraries": {
+        "macos": {
+          "Release": {
+            "arm64": {
+              "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
+              "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
+              "sha256": "b296046652c2083d34d5486c1ec3ccdb4ce7bc9a66b21156c40de254d4ea80ad",
+              "size": 80907,
+              "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
+              "library_names": [
+                "libmoui_skia_stub.a"
+              ]
             }
           }
         }

@@ -2,7 +2,11 @@
 // Full pipeline: register embedded font data on the text system, then measure
 // with a FontSpec that references the registered family and varies the "wght"
 // axis. macOS ships SFNS.ttf (a variable font); other platforms skip.
+// `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` links the plain stub (no Skia text
+// backend) so registration cannot drive measurement; skip with the rest of the
+// capability-gated tests instead of asserting on fallback metrics.
 test "embedded font registration drives measurement with variations" {
+  guard skia_available() else { return () }
   let font_path = "/System/Library/Fonts/SFNS.ttf"
   if !@fs.path_exists(font_path) {
     return

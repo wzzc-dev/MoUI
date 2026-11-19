@@ -69,15 +69,23 @@ Linux runtime requirements are intentionally native:
   sets below in one step. The default set covers the Wayland window core,
   GLib/zlib link libraries, Weston for headless compositor checks, zenity,
   and the Skia renderer stack. `--minimal` restricts the install to the core
-  Wayland build/runtime set, `--with-webview` adds WebKitGTK development
-  packages for native WebView support, and `--print-packages` shows the exact
-  apt list for the selected set before installing:
+  Wayland build/runtime set, `--wayland` installs only the MoonBit toolchain
+  plus the Wayland prebuild set (no X11, smoke, Skia, or runtime extras; use it
+  on hosts that only run validators and tool tests), `--with-webview` adds
+  WebKitGTK development packages for native WebView support, and
+  `--print-packages` shows the exact apt list for the selected set before
+  installing:
   ```sh
   sh scripts/set_linux_deps.sh                 # full default set (Skia included)
   sh scripts/set_linux_deps.sh --minimal       # core Wayland build/runtime only
+  sh scripts/set_linux_deps.sh --wayland       # toolchain + Wayland prebuild only
   sh scripts/set_linux_deps.sh --with-webview  # + WebKitGTK native WebView
   sh scripts/set_linux_deps.sh --check         # verify the installed set
   ```
+  The `wzzc-dev/window` prebuild generates the Wayland protocol bindings on
+  Linux, and every MoonBit-backed repository tool resolves that module, so even
+  a validator-only host needs `--wayland` (this is why the ubuntu PR static
+  guards job installs it).
   The individual requirements below describe what each package set provides
   and how the MoUI prebuilds consume them.
 
@@ -103,9 +111,9 @@ Linux runtime requirements are intentionally native:
   When neither portal nor zenity is available, file and folder selection
   silently returns cancelled, and the app prints a diagnostic message to stdout.
 - zlib / pthread / fontconfig system libraries for the final native link.
-  `moui/build.js` owns the `backend/linux` zlib entry,
-  `moui_skia/build.js` owns the Skia binding's pthread/fontconfig stack, and
-  `moui_text_providers/build.js` owns `moui_text_providers/fontconfig`. Linux example entrypoints
+  `moui/build.mbtx` owns the `backend/linux` zlib entry,
+  `moui_skia/build.mbtx` owns the Skia binding's pthread/fontconfig stack, and
+  `moui_text_providers/build.mbtx` owns `moui_text_providers/fontconfig`. Linux example entrypoints
   should not repeat `-lz` or fontconfig stacks; they only need an empty
   `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`

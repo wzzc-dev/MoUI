@@ -54,7 +54,7 @@ pub using @core {type Transform2D}
 pub using @core {type ShaderEffectSpec}
 
 ///|
-pub using @core {type RgbaImage}
+pub using @core {type RgbaBuffer}
 
 ///|
 pub using @core {type StrokeCap}

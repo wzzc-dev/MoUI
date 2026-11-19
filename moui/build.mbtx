@@ -1,0 +1,265 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/core/async/stdio",
+}
+---
+
+///|
+/// `moui` prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. Platform backends need host libraries that a
+/// package `cc-link-flags` cannot deliver to an is-main link, so this hook emits
+/// both the `link_configs` entries and the same values as `MOUI_*` vars for
+/// composition roots that assemble their own link line. The Linux backend drives
+/// the GLib main loop and the AT-SPI GDBus host from one C stub set, so
+/// `gio-2.0` joins `glib-2.0` in both the include and the link flag sets.
+let macos_backend_host_flags : String = "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework UserNotifications -framework CoreGraphics -framework CoreFoundation -lz -Wl,-dead_strip -Wl,-x"
+
+///|
+let linux_backend_host_flags : String = "-lz"
+
+///|
+let android_backend_host_flags : String = "-landroid -llog"
+
+///|
+let windows_backend_host_libs : Array[String] = [
+  "comdlg32", "shell32", "ole32", "oleaut32", "uiautomationcore", "user32", "gdi32",
+  "kernel32", "advapi32", "dwmapi", "imm32", "shcore",
+]
+
+///|
+let linux_glib_packages : Array[String] = ["glib-2.0", "gio-2.0"]
+
+///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  if value is @json.Object(fields) {
+    fields.get(key)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_text(value : @json.Json) -> String? {
+  if value is @json.String(text) {
+    Some(text)
+  } else {
+    None
+  }
+}
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+async fn capture(program : String, args : Array[String]) -> (Int32, String) {
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Collect,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
+  }
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out) = capture("uname", ["-s"])
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  "linux"
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) =>
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+fn env_or(config : @json.Json, key : String) -> String {
+  match @env.get_env_var(key) {
+    Some(value) =>
+      if value != "" {
+        return value
+      }
+    None => ()
+  }
+  for path in [["env"], ["build", "env"], ["build_info", "env"]] {
+    let mut node = config
+    let mut found = true
+    for segment in path {
+      match json_field(node, segment) {
+        Some(next) => node = next
+        None => {
+          found = false
+          break
+        }
+      }
+    }
+    if found {
+      match json_field(node, key) {
+        Some(value) =>
+          match json_text(value) {
+            Some(text) =>
+              if text != "" {
+                return text
+              }
+            None => ()
+          }
+        None => ()
+      }
+    }
+  }
+  ""
+}
+
+///|
+async fn pkg_config(packages : Array[String], flag : String) -> String {
+  let args : Array[String] = [flag]
+  for name in packages {
+    args.push(name)
+  }
+  let (code, out) = capture("pkg-config", args)
+  if code != 0 {
+    return ""
+  }
+  out.trim().to_owned()
+}
+
+///|
+fn append_link_flags(base : String, extra : String) -> String {
+  if extra == "" {
+    return base
+  }
+  if base == "" {
+    return extra
+  }
+  base + " " + extra
+}
+
+///|
+fn windows_backend_host_flags(host : String) -> String {
+  let uses_msvc = match @env.get_env_var("VSCMD_VER") {
+    Some(value) => value != ""
+    None =>
+      match @env.get_env_var("VCINSTALLDIR") {
+        Some(value) => value != ""
+        None => false
+      }
+  }
+  let cc = match @env.get_env_var("CC") {
+    Some(value) => lower_trim(value)
+    None => ""
+  }
+  let msvc = uses_msvc ||
+    cc.has_suffix("cl.exe") ||
+    cc == "cl" ||
+    host == "windows"
+  let parts : Array[String] = []
+  for lib in windows_backend_host_libs {
+    if msvc {
+      parts.push(lib + ".lib")
+    } else {
+      parts.push("-l" + lib)
+    }
+  }
+  parts.join(" ")
+}
+
+///|
+fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) -> Unit {
+  let var_fields : Map[String, @json.Json] = Map([])
+  for pair in vars {
+    var_fields.set(pair.0, @json.Json::string(pair.1))
+  }
+  let entries : Array[@json.Json] = []
+  for pair in link_configs {
+    if pair.0 != "" && pair.1 != "" {
+      let fields : Map[String, @json.Json] = Map([])
+      fields.set("package", @json.Json::string(pair.0))
+      fields.set("link_flags", @json.Json::string(pair.1))
+      entries.push(@json.Json::object(fields))
+    }
+  }
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(var_fields))
+  payload.set("link_configs", @json.Json::array(entries))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let raw = @stdio.stdin.read_all() catch {
+    _ => b""
+  }
+  let text = @utf8.decode(raw) catch {
+    _ => ""
+  }
+  let config = if text.trim().to_owned() == "" {
+    @json.Json::empty_object()
+  } else {
+    @json.parse(text) catch {
+      _ => @json.Json::empty_object()
+    }
+  }
+  let host = host_platform()
+  let explicit_stub = env_or(config, "MOUI_LINUX_GLIB_STUB_CC_FLAGS")
+  let explicit_link = env_or(config, "MOUI_LINUX_GLIB_CC_LINK_FLAGS")
+  let mut glib_stub_flags = explicit_stub
+  let mut glib_link_flags = explicit_link
+  if explicit_stub == "" && explicit_link == "" && host == "linux" {
+    // Only the Linux backend consumes these; probing on other hosts would just
+    // fail (or pick up a Homebrew glib that never reaches a macOS/Windows link).
+    glib_stub_flags = pkg_config(linux_glib_packages, "--cflags")
+    glib_link_flags = pkg_config(linux_glib_packages, "--libs")
+  }
+  let linux_host_flags = append_link_flags(linux_backend_host_flags, glib_link_flags)
+  let windows_flags = windows_backend_host_flags(host)
+  let android_flags = if lower_trim(env_or(config, "MOUI_SKIA_PLATFORM")) == "android" {
+    android_backend_host_flags
+  } else {
+    ""
+  }
+  let link_configs : Array[(String, String)] = []
+  if host == "macos" {
+    link_configs.push(("wzzc-dev/moui/backend/macos", macos_backend_host_flags))
+  }
+  if host == "windows" {
+    link_configs.push(("wzzc-dev/moui/backend/windows", windows_flags))
+  }
+  link_configs.push(("wzzc-dev/moui/backend/linux", linux_host_flags))
+  emit(
+    [
+      ("MOUI_LINUX_GLIB_STUB_CC_FLAGS", glib_stub_flags),
+      ("MOUI_LINUX_GLIB_CC_LINK_FLAGS", glib_link_flags),
+      ("MOUI_ANDROID_HOST_LINK_FLAGS", android_flags),
+      ("MOUI_MACOS_BACKEND_HOST_LINK_FLAGS", macos_backend_host_flags),
+      ("MOUI_LINUX_BACKEND_HOST_LINK_FLAGS", linux_host_flags),
+      ("MOUI_WINDOWS_BACKEND_HOST_LINK_FLAGS", windows_flags),
+    ],
+    link_configs,
+  )
+}

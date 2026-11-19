@@ -1,0 +1,749 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+}
+---
+
+///|
+/// `pdf_workbench` prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. PDFium is a binary provider like Skia: the
+/// locked archive is downloaded, SHA256-verified, extracted under
+/// `.pdfium-cache/`, and turned into stub defines plus link flags for the host
+/// platform. `MOUI_PDFIUM_INCLUDE`/`MOUI_PDFIUM_LIB_DIR` bypass the download for
+/// local builds, and `MOUI_PDFIUM_LINK_MODE=auto|dynamic|static` picks the
+/// library flavour.
+let lock_name : String = "pdfium-provider-lock.json"
+
+///|
+let cache_dir_name : String = ".pdfium-cache"
+
+///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  if value is @json.Object(fields) {
+    fields.get(key)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_text(value : @json.Json) -> String? {
+  if value is @json.String(text) {
+    Some(text)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_number(value : @json.Json) -> Double? {
+  if value is @json.Number(number, ..) {
+    Some(number)
+  } else {
+    None
+  }
+}
+
+///|
+fn lower_trim(value : String) -> String {
+  value.trim().to_owned().to_lower()
+}
+
+///|
+fn truthy(value : String) -> Bool {
+  let text = lower_trim(value)
+  text == "1" || text == "true" || text == "yes" || text == "on"
+}
+
+///|
+fn path_join(left : String, right : String) -> String {
+  if left == "" {
+    return right
+  }
+  if right == "" {
+    return left
+  }
+  if left.has_suffix("/") || left.has_suffix("\\") {
+    return left + right
+  }
+  left + "/" + right
+}
+
+///|
+fn path_dirname(path : String) -> String {
+  let mut index : Int = -1
+  for i, char in path {
+    if char == '/' || char == '\\' {
+      index = i
+    }
+  }
+  if index < 0 {
+    return "."
+  }
+  if index == 0 {
+    return path[0:1].to_owned()
+  }
+  path[0:index].to_owned()
+}
+
+///|
+fn shell_path(value : String) -> String {
+  value.replace_all(old="\\", new="/")
+}
+
+///|
+async fn try_run(program : String, args : Array[String], cwd : String) -> (Int32, String) {
+  try {
+    let result = @process.run(
+      program,
+      args,
+      stdout=@process.Collect,
+      stderr=@process.Inherit,
+      cwd=cwd,
+    )
+    let out = result.stdout_text() catch {
+      _ => ""
+    }
+    (result.exit_code, out)
+  } catch {
+    _ => (-1, "")
+  }
+}
+
+///|
+async fn run_checked(
+  program : String,
+  args : Array[String],
+  cwd : String,
+  description : String,
+) -> String {
+  let (code, out) = try_run(program, args, cwd)
+  if code < 0 {
+    abort("failed to \{description}")
+  }
+  if code != 0 {
+    abort("\{program} exited with \{code} while trying to \{description}")
+  }
+  out.trim().to_owned()
+}
+
+///|
+async fn unix_host_platform() -> String {
+  let (code, out) = try_run("uname", ["-s"], ".")
+  if code == 0 && out.find("Darwin") is Some(_) {
+    return "macos"
+  }
+  "linux"
+}
+
+///|
+async fn host_platform() -> String {
+  match @env.get_env_var("OS") {
+    Some(value) =>
+      if lower_trim(value) == "windows_nt" {
+        "windows"
+      } else {
+        unix_host_platform()
+      }
+    None => unix_host_platform()
+  }
+}
+
+///|
+fn env_arch() -> String {
+  for key in ["PROCESSOR_ARCHITECTURE", "PROCESSOR_ARCHITEW6432"] {
+    match @env.get_env_var(key) {
+      Some(value) =>
+        if value != "" {
+          return lower_trim(value)
+        }
+      None => ()
+    }
+  }
+  ""
+}
+
+///|
+async fn host_arch() -> String {
+  let mut arch = env_arch()
+  if arch == "" {
+    let (code, out) = try_run("uname", ["-m"], ".")
+    if code == 0 {
+      arch = lower_trim(out)
+    }
+  }
+  if arch == "" {
+    return ""
+  }
+  if arch == "arm64" || arch == "aarch64" {
+    return "arm64"
+  }
+  if arch == "x86_64" || arch == "amd64" {
+    return "x64"
+  }
+  arch
+}
+
+///|
+fn config_env(config : @json.Json, key : String) -> String {
+  match @env.get_env_var(key) {
+    Some(value) =>
+      if value != "" {
+        return value
+      }
+    None => ()
+  }
+  for path in [["env"], ["build", "env"], ["build_info", "env"]] {
+    let mut node = config
+    let mut found = true
+    for segment in path {
+      match json_field(node, segment) {
+        Some(next) => node = next
+        None => {
+          found = false
+          break
+        }
+      }
+    }
+    if found {
+      match json_field(node, key) {
+        Some(value) =>
+          match json_text(value) {
+            Some(text) =>
+              if text != "" {
+                return text
+              }
+            None => ()
+          }
+        None => ()
+      }
+    }
+  }
+  ""
+}
+
+///|
+fn config_string(config : @json.Json, path : Array[String]) -> String? {
+  let mut node = config
+  for segment in path {
+    match json_field(node, segment) {
+      Some(next) => node = next
+      None => return None
+    }
+  }
+  json_text(node)
+}
+
+///|
+fn target_kind(config : @json.Json) -> String {
+  for path in [
+    ["build", "target", "kind"],
+    ["build_info", "target", "kind"],
+    ["target", "kind"],
+    ["target", "backend"],
+  ] {
+    match config_string(config, path) {
+      Some(value) => return lower_trim(value)
+      None => ()
+    }
+  }
+  lower_trim(config_env(config, "MOON_TARGET"))
+}
+
+///|
+fn is_wasm_kind(kind : String) -> Bool {
+  kind == "wasm" ||
+  kind == "wasm32" ||
+  kind == "wasmgc" ||
+  kind == "wasm-gc" ||
+  kind == "js"
+}
+
+///|
+fn has_overrides(config : @json.Json) -> Bool {
+  config_env(config, "MOUI_PDFIUM_INCLUDE") != "" &&
+    config_env(config, "MOUI_PDFIUM_LIB_DIR") != ""
+}
+
+///|
+fn should_configure_pdfium(config : @json.Json) -> Bool {
+  if is_wasm_kind(target_kind(config)) {
+    return false
+  }
+  if truthy(config_env(config, "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM")) {
+    return false
+  }
+  if has_overrides(config) {
+    return true
+  }
+  truthy(config_env(config, "MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM"))
+}
+
+///|
+fn pdfium_link_mode(config : @json.Json) -> String {
+  let raw = config_env(config, "MOUI_PDFIUM_LINK_MODE")
+  let mode = if raw == "" {
+    "auto"
+  } else {
+    lower_trim(raw)
+  }
+  if mode != "auto" && mode != "dynamic" && mode != "static" {
+    abort("unsupported MOUI_PDFIUM_LINK_MODE: \{mode}")
+  }
+  mode
+}
+
+///|
+async fn platform_asset_key(host : String) -> String {
+  let arch = host_arch()
+  let prefix = if host == "macos" {
+    "mac"
+  } else if host == "windows" {
+    "win"
+  } else {
+    "linux"
+  }
+  if arch == "arm64" || arch == "x64" {
+    return prefix + "-" + arch
+  }
+  abort("unsupported PDFium platform \{host}/\{arch}")
+}
+
+///|
+fn read_text(path : String) -> String {
+  @fs.read_file_to_string(path) catch {
+    _ => abort("failed to read \{path}")
+  }
+}
+
+///|
+fn path_exists(path : String) -> Bool {
+  @fs.path_exists(path)
+}
+
+///|
+fn mkdir_all(path : String) -> Unit {
+  if path == "" || path == "." || path == "/" {
+    return
+  }
+  if path_exists(path) {
+    return
+  }
+  mkdir_all(path_dirname(path))
+  @fs.create_dir(path) catch {
+    _ => ()
+  }
+}
+
+///|
+fn remove_tree(path : String) -> Unit {
+  if !path_exists(path) {
+    return
+  }
+  let is_directory = @fs.is_dir(path) catch {
+    _ => false
+  }
+  if !is_directory {
+    @fs.remove_file(path) catch {
+      _ => ()
+    }
+    return
+  }
+  let entries : ArrayView[String] = @fs.read_dir(path) catch {
+    _ => []
+  }
+  for entry in entries {
+    remove_tree(path_join(path, entry))
+  }
+  @fs.remove_dir(path) catch {
+    _ => ()
+  }
+}
+
+///|
+fn first_existing(candidates : Array[String]) -> String? {
+  for candidate in candidates {
+    if path_exists(candidate) {
+      return Some(candidate)
+    }
+  }
+  None
+}
+
+///|
+async fn sha256_of(path : String) -> String {
+  let (shasum_code, shasum_out) = try_run("shasum", ["-a", "256", path], ".")
+  if shasum_code == 0 {
+    match shasum_out.trim().to_owned().split(" ").head() {
+      Some(value) =>
+        if value != "" {
+          return lower_trim(value.to_owned())
+        }
+      None => ()
+    }
+  }
+  let (sum_code, sum_out) = try_run("sha256sum", [path], ".")
+  if sum_code == 0 {
+    match sum_out.trim().to_owned().split(" ").head() {
+      Some(value) => return lower_trim(value.to_owned())
+      None => ()
+    }
+  }
+  abort("failed to hash \{path}: neither shasum nor sha256sum is usable")
+}
+
+///|
+fn asset_string(asset : @json.Json, key : String) -> String {
+  match json_field(asset, key) {
+    Some(value) =>
+      match json_text(value) {
+        Some(text) => text
+        None => ""
+      }
+    None => ""
+  }
+}
+
+///|
+async fn fetch_file(asset : @json.Json, output : String, host : String) -> Unit {
+  mkdir_all(path_dirname(output))
+  let name = asset_string(asset, "name")
+  let url = asset_string(asset, "url")
+  let size = match json_field(asset, "size") {
+    Some(value) =>
+      match json_number(value) {
+        Some(number) => number.to_int().to_string()
+        None => ""
+      }
+    None => ""
+  }
+  let sha = asset_string(asset, "sha256")
+  eprintln("Downloading PDFium archive \{name}:")
+  eprintln("  url=\{url}")
+  eprintln("  output=\{output}")
+  if size != "" {
+    eprintln("  expected_size=\{size}")
+  }
+  if sha != "" {
+    eprintln("  expected_sha256=\{sha}")
+  }
+  if host == "windows" {
+    let script = "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri '\{url}' -OutFile '\{output}'"
+    let (code, _) = try_run(
+      "powershell.exe",
+      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      ".",
+    )
+    if code == 0 {
+      return
+    }
+  }
+  let (code, _) = try_run(
+    "curl",
+    [
+      "-LfsS",
+      "--connect-timeout",
+      "20",
+      "--retry",
+      "2",
+      "--retry-delay",
+      "2",
+      "-o",
+      output,
+      url,
+    ],
+    ".",
+  )
+  if code != 0 {
+    abort("curl exited with \{code} while trying to download PDFium archive")
+  }
+}
+
+///|
+async fn ensure_archive(asset : @json.Json, archive_path : String, host : String) -> Unit {
+  let expected = asset_string(asset, "sha256")
+  if path_exists(archive_path) {
+    let actual = sha256_of(archive_path)
+    if actual == expected {
+      return
+    }
+    remove_tree(archive_path)
+  }
+  fetch_file(asset, archive_path, host)
+  let actual = sha256_of(archive_path)
+  if actual != expected {
+    remove_tree(archive_path)
+    abort(
+      "PDFium archive checksum mismatch for \{asset_string(asset, "name")}: expected \{expected}, got \{actual}",
+    )
+  }
+}
+
+///|
+async fn extract_archive(archive_path : String, extract_dir : String) -> Unit {
+  let include_path = path_join(extract_dir, "include")
+  if path_exists(path_join(include_path, "fpdfview.h")) {
+    return
+  }
+  remove_tree(extract_dir)
+  mkdir_all(extract_dir)
+  let _ = run_checked(
+    "tar",
+    ["-xzf", archive_path, "-C", extract_dir],
+    ".",
+    "extract PDFium archive",
+  )
+}
+
+///|
+async fn bundled_values(
+  config : @json.Json,
+  module_root : String,
+  host : String,
+) -> (String, String, String) {
+  let include_override = config_env(config, "MOUI_PDFIUM_INCLUDE")
+  let lib_override = config_env(config, "MOUI_PDFIUM_LIB_DIR")
+  if include_override != "" && lib_override != "" {
+    return (include_override, lib_override, lib_override)
+  }
+  let key = platform_asset_key(host)
+  let lock_path = path_join(module_root, lock_name)
+  let lock = @json.parse(read_text(lock_path)) catch {
+    _ => abort("failed to parse \{lock_path}")
+  }
+  let asset = match json_field(lock, "assets") {
+    Some(assets) =>
+      match json_field(assets, key) {
+        Some(value) => value
+        None => abort("PDFium lock has no asset for \{key}")
+      }
+    None => abort("PDFium lock has no assets block")
+  }
+  let tag = match json_field(lock, "release") {
+    Some(release) =>
+      match json_field(release, "tag") {
+        Some(value) =>
+          match json_text(value) {
+            Some(text) => text
+            None => abort("PDFium lock release.tag is not a string")
+          }
+        None => abort("PDFium lock release has no tag")
+      }
+    None => abort("PDFium lock release has no block")
+  }
+  let cache_root = path_join(
+    path_join(module_root, cache_dir_name),
+    path_join(tag.replace_all(old="/", new="-"), key),
+  )
+  let archive_path = path_join(cache_root, asset_string(asset, "name"))
+  let extract_dir = path_join(cache_root, "pdfium")
+  ensure_archive(asset, archive_path, host)
+  extract_archive(archive_path, extract_dir)
+  (
+    path_join(extract_dir, "include"),
+    path_join(extract_dir, "lib"),
+    path_join(extract_dir, "bin"),
+  )
+}
+
+///|
+async fn normalize_macos_install_name(dynamic_lib : String) -> Unit {
+  let target = "@rpath/libpdfium.dylib"
+  let mut current = ""
+  let (code, out) = try_run("otool", ["-D", dynamic_lib], ".")
+  if code == 0 {
+    for line in out.split("\n") {
+      let trimmed = line.trim().to_owned()
+      if trimmed != "" && !trimmed.has_suffix(":") {
+        current = trimmed
+        break
+      }
+    }
+  }
+  if current == target {
+    return
+  }
+  let _ = run_checked(
+    "install_name_tool",
+    ["-id", target, dynamic_lib],
+    ".",
+    "rewrite PDFium dylib install name",
+  )
+}
+
+///|
+async fn platform_flags(
+  config : @json.Json,
+  include_path : String,
+  lib_dir : String,
+  bin_dir : String,
+  host : String,
+) -> (String, String) {
+  if !path_exists(path_join(include_path, "fpdfview.h")) {
+    abort("PDFium header not found under \{include_path}")
+  }
+  let mode = pdfium_link_mode(config)
+  let mut resolved = mode
+  if host == "windows" {
+    let dynamic_import = first_existing([
+      path_join(lib_dir, "pdfium.dll.lib"), path_join(lib_dir, "pdfium.lib"),
+    ])
+    let dynamic_dll = first_existing([
+      path_join(bin_dir, "pdfium.dll"), path_join(lib_dir, "pdfium.dll"),
+    ])
+    let static_lib = path_join(lib_dir, "pdfium.lib")
+    if resolved == "auto" {
+      resolved = match (dynamic_dll, dynamic_import) {
+        (Some(_), Some(_)) => "dynamic"
+        _ => "static"
+      }
+    }
+    if resolved == "dynamic" {
+      match (dynamic_dll, dynamic_import) {
+        (Some(_), Some(import_lib)) =>
+          return (
+            "/DMOUI_PDFIUM_HAS_PDFIUM /I" + shell_path(include_path),
+            shell_path(import_lib) + " user32.lib advapi32.lib",
+          )
+        _ =>
+          abort(
+            "MOUI_PDFIUM_LINK_MODE=dynamic requested, but pdfium.dll/pdfium.dll.lib were not found",
+          )
+      }
+    }
+    if !path_exists(static_lib) {
+      abort(
+        "MOUI_PDFIUM_LINK_MODE=static requested, but \{static_lib} was not found",
+      )
+    }
+    return (
+      "/DMOUI_PDFIUM_HAS_PDFIUM /I" + shell_path(include_path),
+      shell_path(static_lib) + " user32.lib advapi32.lib",
+    )
+  }
+  let stub_cc_flags = "-DMOUI_PDFIUM_HAS_PDFIUM -I" + shell_path(include_path)
+  if host == "macos" {
+    let dynamic_lib = first_existing([
+      path_join(lib_dir, "libpdfium.dylib"), path_join(bin_dir, "libpdfium.dylib"),
+    ])
+    let static_lib = path_join(lib_dir, "libpdfium.a")
+    if resolved == "auto" {
+      resolved = match dynamic_lib {
+        Some(_) => "dynamic"
+        None => "static"
+      }
+    }
+    if resolved == "dynamic" {
+      match dynamic_lib {
+        Some(lib) => {
+          normalize_macos_install_name(lib)
+          let dynamic_dir = path_dirname(lib)
+          return (
+            stub_cc_flags,
+            "-L" +
+            shell_path(dynamic_dir) +
+            " -lpdfium -Wl,-rpath," +
+            shell_path(dynamic_dir),
+          )
+        }
+        None =>
+          abort(
+            "MOUI_PDFIUM_LINK_MODE=dynamic requested, but libpdfium.dylib was not found",
+          )
+      }
+    }
+    if !path_exists(static_lib) {
+      abort(
+        "MOUI_PDFIUM_LINK_MODE=static requested, but \{static_lib} was not found",
+      )
+    }
+    return (
+      stub_cc_flags,
+      shell_path(static_lib) +
+      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices",
+    )
+  }
+  let dynamic_lib = first_existing([
+    path_join(lib_dir, "libpdfium.so"), path_join(bin_dir, "libpdfium.so"),
+  ])
+  let static_lib = path_join(lib_dir, "libpdfium.a")
+  if resolved == "auto" {
+    resolved = match dynamic_lib {
+      Some(_) => "dynamic"
+      None => "static"
+    }
+  }
+  if resolved == "dynamic" {
+    match dynamic_lib {
+      Some(lib) => {
+        let dynamic_dir = path_dirname(lib)
+        return (
+          stub_cc_flags,
+          "-L" +
+          shell_path(dynamic_dir) +
+          " -lpdfium -Wl,-rpath," +
+          shell_path(dynamic_dir) +
+          " -pthread",
+        )
+      }
+      None =>
+        abort(
+          "MOUI_PDFIUM_LINK_MODE=dynamic requested, but libpdfium.so was not found",
+        )
+    }
+  }
+  if !path_exists(static_lib) {
+    abort("MOUI_PDFIUM_LINK_MODE=static requested, but \{static_lib} was not found")
+  }
+  (stub_cc_flags, shell_path(static_lib) + " -ldl -pthread -lstdc++ -lm")
+}
+
+///|
+fn emit(stub_cc_flags : String, link_flags : String) -> Unit {
+  let vars : Map[String, @json.Json] = Map([])
+  vars.set("MOUI_PDFIUM_STUB_CC_FLAGS", @json.Json::string(stub_cc_flags))
+  vars.set("MOUI_PDFIUM_CC_LINK_FLAGS", @json.Json::string(link_flags))
+  // The former script emitted `{ "vars": ... }` only: PDFium needs no
+  // link_configs entry, and an omitted block is the same as an empty one.
+  let payload : Map[String, @json.Json] = Map([])
+  payload.set("vars", @json.Json::object(vars))
+  println(@json.Json::object(payload).stringify())
+}
+
+///|
+async fn main {
+  let raw = @stdio.stdin.read_all() catch {
+    _ => b""
+  }
+  let text = @utf8.decode(raw) catch {
+    _ => ""
+  }
+  let config = if text.trim().to_owned() == "" {
+    @json.Json::empty_object()
+  } else {
+    @json.parse(text) catch {
+      _ => @json.Json::empty_object()
+    }
+  }
+  if !should_configure_pdfium(config) {
+    emit("", "")
+    return
+  }
+  let host = host_platform()
+  let module_root = match @env.current_dir() {
+    Some(dir) => dir
+    None => "."
+  }
+  let (include_path, lib_dir, bin_dir) = bundled_values(config, module_root, host)
+  let (stub_cc_flags, link_flags) = platform_flags(
+    config, include_path, lib_dir, bin_dir, host,
+  )
+  emit(stub_cc_flags, link_flags)
+}

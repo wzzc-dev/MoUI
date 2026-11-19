@@ -1,0 +1,284 @@
+name: MoUI Skia Stub Release
+
+# Publishes the macOS arm64 Release Skia stub archive to MoUI's own release and
+# records it in `moui_skia/skia-provider-lock.json`.
+#
+# Why MoUI hosts it: the stub is a MoUI artifact, compiled from
+# `moui_skia/native/*.cpp`, so it ships from MoUI's release instead of the
+# `wzzc-dev/skia` release that carries upstream Skia. Everything here runs on
+# `GITHUB_TOKEN`; no cross-repository token is needed to publish in the repo
+# that owns the sources.
+#
+# Cost control: the job is a no-op unless `native/*.cpp|*.h` changed the stub
+# fingerprint (or a dispatch run forces it). A republish rebuilds the stub,
+# uploads it with `--clobber`, and rewrites the lock so `moui_skia` consumers
+# pick the new archive up on the next provider fetch. Because the lock commit is
+# pushed with `GITHUB_TOKEN`, it does not start a second CI run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild and republish even when the sources already match the lock.
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [main, dev]
+    paths:
+      - moui_skia/native/*.cpp
+      - moui_skia/native/*.h
+      - moui_skia/build.mbtx
+      - moui_skia/scripts/publish-stub-library.sh
+      - .github/workflows/moui-skia-stub-release.yml
+
+# A release is read-modify-write on one lock file, so overlapping runs must not
+# race. Unlike CI, never cancel: an interrupted run could leave the asset
+# uploaded and the lock stale.
+concurrency:
+  group: skia-stub-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PLATFORM: macos
+  CONFIG: Release
+  ARCH: arm64
+  # `gh` reads GH_TOKEN; the release steps use the job token, never a PAT.
+  GH_TOKEN: ${{ github.token }}
+  # The stub must be compiled from `native/*.cpp` here; `build` keeps the
+  # provider fetch from resolving the released archive that this run replaces.
+  MOUI_SKIA_STUB_MODE: build
+
+jobs:
+  publish-stub:
+    name: Publish macOS arm64 stub
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # The lock entry is the trigger signal: matching `sources_sha256` means the
+      # published archive already corresponds to the sources in this commit, so
+      # there is nothing to rebuild, upload, or commit.
+      - name: Decide whether the stub is stale
+        id: stale
+        shell: bash
+        working-directory: moui_skia
+        env:
+          FORCE: ${{ inputs.force || 'false' }}
+        run: |
+          set -euo pipefail
+          if [ "$FORCE" = "true" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "forced republish requested"
+            exit 0
+          fi
+          if bash scripts/publish-stub-library.sh --check \
+            --platform "$PLATFORM" --config "$CONFIG" --arch "$ARCH"; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up MoonBit
+        if: steps.stale.outputs.publish == 'true'
+        uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
+
+      - name: Install dependencies
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      # Same key as the CI compile jobs, so a republish reuses the Skia release
+      # and compiled stub archives rather than downloading Skia again.
+      - name: Cache Skia release and stub archives
+        if: steps.stale.outputs.publish == 'true'
+        uses: actions/cache@v5
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
+
+      # Only the Skia headers/lib roots are exported. `MOUI_SKIA_STUB_LIB` stays
+      # unset so the prebuild compiles the stub instead of reusing the archive.
+      - name: Fetch Skia release headers
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        working-directory: moui_skia
+        run: |
+          set -euo pipefail
+          bash scripts/fetch-release-skia.sh \
+            --platform "$PLATFORM" --config "$CONFIG" --arch "$ARCH" \
+            --print-env > skia-release-env.txt
+          grep -E '^(MOUI_SKIA_SKIA_INCLUDE|MOUI_SKIA_SKIA_LIB_DIR|MOUI_SKIA_SKIA_LIB|MOUI_SKIA_LINK_MODE|MOUI_SKIA_EXTRA_CC_FLAGS|MOUI_SKIA_EXTRA_LINK_FLAGS)=' skia-release-env.txt >> "$GITHUB_ENV"
+          grep -v '^MOUI_SKIA_STUB_LIB=' skia-release-env.txt | sed 's/^/  /'
+
+      # `moon run build.mbtx` is the same prebuild moon itself runs, so the stub
+      # is compiled with exactly the flags the binding uses, and the prebuild
+      # prints the archive path it resolved.
+      - name: Build stub archive from sources
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        working-directory: moui_skia
+        run: |
+          set -euo pipefail
+          json="$(printf '{"target":"native","host":"macos"}' | moon run build.mbtx --target native)"
+          stub="$(printf '%s' "$json" | python3 -c 'import json, sys; print(json.load(sys.stdin)["vars"]["MOUI_SKIA_STUB_LIB_PATH"])')"
+          case "$stub" in
+            */stub-build/*) ;;
+            *)
+              echo "fatal: the prebuild resolved a non-local stub archive: $stub" >&2
+              exit 1
+              ;;
+          esac
+          if [ ! -f "$stub" ]; then
+            echo "fatal: stub archive missing: $stub" >&2
+            exit 1
+          fi
+          echo "MOUI_SKIA_STUB_LIB_PATH=$stub" >> "$GITHUB_ENV"
+          echo "compiled stub: $stub"
+
+      # The asset name stays `MoUISkiaStub-<skia-tag>-<platform>-<config>-<arch>.zip`
+      # across releases; the lock sha256 is what changes when the stub is rebuilt.
+      - name: Package stub asset
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        working-directory: moui_skia
+        run: |
+          set -euo pipefail
+          skia_tag="$(python3 -c 'import json; print(json.load(open("skia-provider-lock.json"))["providers"]["release"]["tag"])')"
+          {
+            echo "STUB_ASSET_TAG=$skia_tag"
+            echo "STUB_RELEASE_TAG=skia-stub-$skia_tag"
+          } >> "$GITHUB_ENV"
+          bash scripts/publish-stub-library.sh \
+            --stub "$MOUI_SKIA_STUB_LIB_PATH" \
+            --platform "$PLATFORM" --config "$CONFIG" --arch "$ARCH" \
+            --tag "skia-stub-$skia_tag" --asset-tag "$skia_tag" \
+            --release-owner "${GITHUB_REPOSITORY%%/*}" \
+            --release-repo "${GITHUB_REPOSITORY#*/}" \
+            --print-env >> "$GITHUB_ENV"
+
+      - name: Upload stub asset to the MoUI release
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$STUB_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$STUB_RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "MoUI Skia stub assets ($STUB_ASSET_TAG)" \
+              --notes "Prebuilt macOS arm64 Release Skia stub for $STUB_ASSET_TAG. Published by the MoUI Skia Stub Release workflow." \
+              --latest=false
+          fi
+          gh release upload "$STUB_RELEASE_TAG" "$MOUI_SKIA_STUB_ASSET_PATH" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+
+      # The lock must point at a byte-identical asset, so verify the exact URL
+      # that `fetch-release-skia` will download before committing it.
+      - name: Verify the published asset
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(gh release view "$STUB_RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq ".assets[] | select(.name == \"$MOUI_SKIA_STUB_ASSET_NAME\") | .digest")"
+          if [ "$digest" != "sha256:$MOUI_SKIA_STUB_ASSET_SHA256" ]; then
+            echo "fatal: release digest $digest does not match $MOUI_SKIA_STUB_ASSET_SHA256" >&2
+            exit 1
+          fi
+          curl -fsSL --retry 3 --max-time 60 "$MOUI_SKIA_STUB_RELEASE_URL" -o downloaded-stub.zip
+          actual="$(shasum -a 256 downloaded-stub.zip | awk '{print $1}')"
+          if [ "$actual" != "$MOUI_SKIA_STUB_ASSET_SHA256" ]; then
+            echo "fatal: downloaded asset $actual does not match $MOUI_SKIA_STUB_ASSET_SHA256" >&2
+            exit 1
+          fi
+          rm -f downloaded-stub.zip
+
+      - name: Update the provider lock
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path("moui_skia/skia-provider-lock.json")
+          lock = json.loads(path.read_text(encoding="utf-8"))
+          entry = (
+              lock["providers"]["release"]["stub_libraries"]["macos"]["Release"]["arm64"]
+          )
+          entry["name"] = os.environ["MOUI_SKIA_STUB_ASSET_NAME"]
+          entry["url"] = os.environ["MOUI_SKIA_STUB_RELEASE_URL"]
+          entry["sha256"] = os.environ["MOUI_SKIA_STUB_ASSET_SHA256"]
+          entry["size"] = int(os.environ["MOUI_SKIA_STUB_ASSET_SIZE"])
+          entry["sources_sha256"] = os.environ["MOUI_SKIA_STUB_SOURCES_SHA256"]
+          entry["library_names"] = [os.path.basename(os.environ["MOUI_SKIA_STUB_LIB_PATH"])]
+          path.write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
+          PY
+          git diff --stat -- moui_skia/skia-provider-lock.json
+          bash moui_skia/scripts/publish-stub-library.sh --check \
+            --platform "$PLATFORM" --config "$CONFIG" --arch "$ARCH"
+
+      # `ar` output is not byte-reproducible, so a forced rerun can rewrite the
+      # sha256 without touching the sources; only commit when the lock moved.
+      - name: Commit and push the refreshed lock
+        if: steps.stale.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- moui_skia/skia-provider-lock.json; then
+            echo "lock already matches the uploaded asset; nothing to commit"
+            exit 0
+          fi
+          git config user.name "moui-skia-stub-release"
+          git config user.email "actions@users.noreply.github.com"
+          git add moui_skia/skia-provider-lock.json
+          git commit -m "chore(moui_skia): publish the $STUB_ASSET_TAG Skia stub asset"
+          branch="${GITHUB_REF_NAME}"
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "$branch"
+            if git push origin "HEAD:$branch"; then
+              exit 0
+            fi
+            echo "push attempt $attempt failed; retrying" >&2
+            sleep "$((attempt * 10))"
+          done
+          echo "fatal: could not push the refreshed lock to $branch" >&2
+          exit 1
+
+      - name: Upload stub asset artifact
+        if: steps.stale.outputs.publish == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: skia-stub-${{ github.run_id }}
+          path: moui_skia/dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Summarize
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "### MoUI Skia stub release"
+            if [ "${{ steps.stale.outputs.publish }}" = "true" ]; then
+              echo "- asset: \`${MOUI_SKIA_STUB_ASSET_NAME:-not packaged}\`"
+              echo "- release: \`${STUB_RELEASE_TAG:-not resolved}\`"
+              echo "- lock sources_sha256: \`${MOUI_SKIA_STUB_SOURCES_SHA256:-not packaged}\`"
+            else
+              echo "- no-op: the locked stub asset already matches \`moui_skia/native/*.cpp\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

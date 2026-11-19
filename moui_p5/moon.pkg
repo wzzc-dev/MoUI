@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/core",
+  "moonbitlang/core/compress/zlib",
+  "moonbitlang/core/math" @cmath,
+  "moonbitlang/core/encoding/base64",
+}
+
+supported_targets = "+native+js+wasm-gc+wasm"
+
+options(
+  "allow-experimental-packages": true,
+  targets: { "png_file_test.mbt": [ "native" ] },
+)

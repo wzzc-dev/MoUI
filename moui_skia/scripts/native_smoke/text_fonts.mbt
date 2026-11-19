@@ -153,7 +153,7 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
     let shaped_smoke_plan = shaped_smoke_descriptor.resource_plan(
       smoke_text_bytes(),
     )
-    let shaped_smoke_glyph_ids : Array[Int] = Array::new(
+    let shaped_smoke_glyph_ids : Array[Int] = Array(
       capacity=shaped_glyphs.length(),
     )
     for glyph in shaped_glyphs {
