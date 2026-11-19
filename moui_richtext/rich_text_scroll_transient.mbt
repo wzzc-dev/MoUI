@@ -64,7 +64,7 @@ impl @core.ViewStateValue for MarkdownSessionScrollState with fn view_state_type
 impl @core.ViewStateValue for MarkdownSessionScrollState with fn encode_view_state(
   self,
 ) {
-  let output = Buffer(size_hint=46)
+  let output = Buffer(capacity=46)
   output.write_double_be(self.glide.from_y)
   output.write_double_be(self.glide.to_y)
   output.write_double_be(self.glide.start_ms)

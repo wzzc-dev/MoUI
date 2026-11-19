@@ -29,7 +29,7 @@ pub(all) struct CompileDiagnostic {
   end_line : Int32
   end_column : Int32
 }
-pub fn CompileDiagnostic::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileDiagnostic::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CompileDiagnostic::to_json(Self) -> @json.Json
 
 #derive(@json.FromJson, @json.ToJson)
@@ -37,7 +37,7 @@ pub(all) struct CompileFile {
   path : String
   source : String
 }
-pub fn CompileFile::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileFile::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CompileFile::to_json(Self) -> @json.Json
 
 #derive(@json.FromJson, @json.ToJson)
@@ -46,7 +46,7 @@ pub(all) struct CompileRequest {
   files : Array[CompileFile]
   lesson_id : String
 }
-pub fn CompileRequest::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileRequest::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CompileRequest::new(Model) -> Self
 pub fn CompileRequest::to_json(Self) -> @json.Json
 pub fn CompileRequest::to_json_line(Self) -> String
@@ -57,7 +57,7 @@ pub(all) struct CompileResult {
   status : CompileStatus
   diagnostics : Array[CompileDiagnostic]
 }
-pub fn CompileResult::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileResult::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CompileResult::to_json(Self) -> @json.Json
 
 #derive(Eq, @json.FromJson, @json.ToJson)
@@ -67,7 +67,7 @@ pub(all) enum CompileStatus {
   Unavailable
 }
 pub fn CompileStatus::equal(Self, Self) -> Bool
-pub fn CompileStatus::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CompileStatus::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CompileStatus::not_equal(Self, Self) -> Bool
 pub fn CompileStatus::to_json(Self) -> @json.Json
 
@@ -122,7 +122,7 @@ pub(all) struct PlaygroundProject {
   files : Array[CompileFile]
   lesson_id : String
 }
-pub fn PlaygroundProject::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PlaygroundProject::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn PlaygroundProject::new(Model) -> Self
 pub fn PlaygroundProject::to_json(Self) -> @json.Json
 pub fn PlaygroundProject::to_json_line(Self) -> String

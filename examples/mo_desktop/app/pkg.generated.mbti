@@ -53,7 +53,7 @@ pub(all) enum AppKind {
 }
 pub fn AppKind::descriptor(Self) -> AppDescriptor
 pub fn AppKind::equal(Self, Self) -> Bool
-pub fn AppKind::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AppKind::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn AppKind::label(Self) -> String
 pub fn AppKind::not_equal(Self, Self) -> Bool
 pub fn AppKind::to_json(Self) -> @json.Json
@@ -111,7 +111,7 @@ pub(all) struct DesktopIconPlacement {
   offset_y : Double
 }
 pub fn DesktopIconPlacement::equal(Self, Self) -> Bool
-pub fn DesktopIconPlacement::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopIconPlacement::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn DesktopIconPlacement::not_equal(Self, Self) -> Bool
 pub fn DesktopIconPlacement::to_json(Self) -> @json.Json
 pub fn DesktopIconPlacement::to_repr(Self) -> @debug.Repr
@@ -240,22 +240,22 @@ pub(all) struct DesktopSnapshot {
   icon_placements : Array[DesktopIconPlacement]
 }
 pub fn DesktopSnapshot::equal(Self, Self) -> Bool
-pub fn DesktopSnapshot::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopSnapshot::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn DesktopSnapshot::not_equal(Self, Self) -> Bool
 pub fn DesktopSnapshot::to_json(Self) -> @json.Json
 pub fn DesktopSnapshot::to_repr(Self) -> @debug.Repr
 
 #derive(@json.FromJson)
 type DesktopSnapshotV1
-pub fn DesktopSnapshotV1::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopSnapshotV1::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 
 #derive(@json.FromJson)
 type DesktopSnapshotV2
-pub fn DesktopSnapshotV2::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopSnapshotV2::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 
 #derive(@json.FromJson)
 type DesktopSnapshotV3
-pub fn DesktopSnapshotV3::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DesktopSnapshotV3::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 
 #derive(Eq, @debug.Debug)
 pub(all) enum DesktopTask {
@@ -413,7 +413,7 @@ pub(all) struct WindowBounds {
   height : Double
 }
 pub fn WindowBounds::equal(Self, Self) -> Bool
-pub fn WindowBounds::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowBounds::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WindowBounds::not_equal(Self, Self) -> Bool
 pub fn WindowBounds::to_json(Self) -> @json.Json
 pub fn WindowBounds::to_repr(Self) -> @debug.Repr
@@ -424,7 +424,7 @@ pub(all) struct WindowId {
   serial : Int32
 }
 pub fn WindowId::equal(Self, Self) -> Bool
-pub fn WindowId::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowId::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WindowId::not_equal(Self, Self) -> Bool
 pub fn WindowId::to_json(Self) -> @json.Json
 pub fn WindowId::to_repr(Self) -> @debug.Repr
@@ -437,7 +437,7 @@ pub(all) struct WindowRecord {
   z_order : Int32
 }
 pub fn WindowRecord::equal(Self, Self) -> Bool
-pub fn WindowRecord::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowRecord::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WindowRecord::not_equal(Self, Self) -> Bool
 pub fn WindowRecord::to_json(Self) -> @json.Json
 pub fn WindowRecord::to_repr(Self) -> @debug.Repr
@@ -449,7 +449,7 @@ pub(all) enum WindowState {
   MaximizedWindow
 }
 pub fn WindowState::equal(Self, Self) -> Bool
-pub fn WindowState::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowState::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WindowState::not_equal(Self, Self) -> Bool
 pub fn WindowState::to_json(Self) -> @json.Json
 pub fn WindowState::to_repr(Self) -> @debug.Repr

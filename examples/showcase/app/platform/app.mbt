@@ -58,7 +58,7 @@ pub(all) enum Msg {
   NotificationCancelCompleted(Int32, @services.ServiceTaskResult[Unit])
   PermissionCompleted(
     Int32,
-    @services.ServiceTaskResult[@services.PermissionStatus]
+    @services.ServiceTaskResult[@services.PermissionStatus],
   )
   ProbeTextChanged(String)
   ProbeAction

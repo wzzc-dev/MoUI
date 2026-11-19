@@ -125,7 +125,7 @@ fn base_forbidden_tokens() -> Array[String] {
 
 ///|
 fn validate_base_closure(repo_root : String, failures : Array[String]) -> Unit {
-  let paths = ["moui/moon.mod", "moui/build.js"]
+  let paths = ["moui/moon.mod", "moui/build.mbtx"]
   for path in paths {
     match read_text(repo_root, path) {
       Ok(text) =>

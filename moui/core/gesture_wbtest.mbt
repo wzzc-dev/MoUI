@@ -82,7 +82,7 @@ fn gesture_step(
 
 ///|
 fn gesture_bytes(pieces : Array[Bytes]) -> Bytes {
-  let output = Buffer(size_hint=64)
+  let output = Buffer(capacity=64)
   for piece in pieces {
     output.write_bytes(piece)
   }

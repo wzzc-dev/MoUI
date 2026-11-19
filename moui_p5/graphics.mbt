@@ -17,7 +17,7 @@ priv enum RecordedKind {
     Double,
     FontSpec,
     HAlign,
-    VAlign
+    VAlign,
   )
   ClipPath(Path)
   ClipEnd

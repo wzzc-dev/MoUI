@@ -148,7 +148,7 @@ extern "C" fn harmonyos_accessibility_publish_native(
 fn read_i64_le(bytes : Bytes, offset : Int32) -> Int64 {
   let mut value = 0L
   for i in 0..<8 {
-    value = value | (Int64::from_int(bytes[offset + i].to_int()) << (i * 8))
+    value = value | (bytes[offset + i].to_int().to_int64() << (i * 8))
   }
   value
 }

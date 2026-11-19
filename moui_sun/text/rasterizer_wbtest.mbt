@@ -167,7 +167,7 @@ fn dump_pixels(
   width : Int32,
   height : Int32,
 ) -> String {
-  let out = StringBuilder(size_hint=(width + 1) * height)
+  let out = StringBuilder(capacity=(width + 1) * height)
   for y in 0..<height {
     if y > 0 {
       out.write_char('\n')
@@ -194,7 +194,7 @@ fn coverage_char(value : Int32) -> Char {
 
 ///|
 fn string_from_codepoints(codepoints : Array[Int32]) -> String {
-  let out = StringBuilder(size_hint=codepoints.length())
+  let out = StringBuilder(capacity=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())
   }

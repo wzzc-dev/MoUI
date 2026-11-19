@@ -65,7 +65,7 @@ pub extend DeclarationChanges with Eq::{not_equal, equal}
 
 ///|
 fn declaration_key_frame(tag : Byte, payload : Bytes) -> DeclarationKey {
-  let output = Buffer(size_hint=1 + 8 + payload.length())
+  let output = Buffer(capacity=1 + 8 + payload.length())
   output.write_byte(tag)
   output.write_uint64_be(payload.length().to_uint64())
   output.write_bytes(payload)
@@ -87,7 +87,7 @@ pub fn DeclarationKey::bool(value : Bool) -> DeclarationKey {
 ///|
 /// Builds a key for an exact signed 32-bit `Int` value.
 pub fn DeclarationKey::int(value : Int32) -> DeclarationKey {
-  let payload = Buffer(size_hint=4)
+  let payload = Buffer(capacity=4)
   payload.write_int_be(value)
   declaration_key_frame(2, payload.to_bytes())
 }
@@ -95,7 +95,7 @@ pub fn DeclarationKey::int(value : Int32) -> DeclarationKey {
 ///|
 /// Builds a key for an exact unsigned 32-bit `UInt` value.
 pub fn DeclarationKey::uint(value : UInt32) -> DeclarationKey {
-  let payload = Buffer(size_hint=4)
+  let payload = Buffer(capacity=4)
   payload.write_uint_be(value)
   declaration_key_frame(3, payload.to_bytes())
 }
@@ -103,7 +103,7 @@ pub fn DeclarationKey::uint(value : UInt32) -> DeclarationKey {
 ///|
 /// Builds a key for an exact signed 64-bit integer value.
 pub fn DeclarationKey::int64(value : Int64) -> DeclarationKey {
-  let payload = Buffer(size_hint=8)
+  let payload = Buffer(capacity=8)
   payload.write_int64_be(value)
   declaration_key_frame(4, payload.to_bytes())
 }

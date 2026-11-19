@@ -198,8 +198,8 @@ test "linux backend preserves normalized vertical wheel direction" {
           position: { x: 8.0, y: 24.0, },
           delta: Pixels({ x: 0.0, y: -120.0, }),
           ..
-        }
-      )
+        },
+      ),
     ) => ()
     _ => fail("expected normalized Linux wheel delta to stay negative")
   }
@@ -229,7 +229,7 @@ test "linux backend converts high dpi drag drop coordinates to logical space" {
   )
   match event {
     Some(
-      DragDrop({ phase: Dropped, position: Some({ x: 48.0, y: 72.0, }), .. })
+      DragDrop({ phase: Dropped, position: Some({ x: 48.0, y: 72.0, }), .. }),
     ) => ()
     _ => fail("expected logical high dpi drag drop position")
   }

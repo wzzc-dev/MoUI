@@ -277,8 +277,8 @@ test "windows backend converts wheel and focus into host input events" {
           position: { x: 11.0, y: 12.0, },
           delta: Lines({ x: 2.0, y: -1.0, }),
           ..
-        }
-      )
+        },
+      ),
     ) => ()
     _ => fail("expected wheel event")
   }
@@ -301,8 +301,8 @@ test "windows backend converts file drag drop to host event contract" {
   match drop {
     Some(
       DragDrop(
-        { phase: Dropped, paths, position: Some({ x: 24.0, y: 48.0, }), }
-      )
+        { phase: Dropped, paths, position: Some({ x: 24.0, y: 48.0, }), },
+      ),
     ) => inspect(paths[0], content="C:\\Users\\moui\\note.md")
     _ => fail("expected file drop contract")
   }

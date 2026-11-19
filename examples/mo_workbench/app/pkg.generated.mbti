@@ -242,7 +242,7 @@ pub struct MoProviderFile {
   models : Array[String]
 }
 pub fn MoProviderFile::equal(Self, Self) -> Bool
-pub fn MoProviderFile::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoProviderFile::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn MoProviderFile::not_equal(Self, Self) -> Bool
 pub fn MoProviderFile::to_json(Self) -> @json.Json
 pub fn MoProviderFile::to_repr(Self) -> @debug.Repr
@@ -269,7 +269,7 @@ pub struct MoWorkbenchSettingsFile {
   appearance : String
 }
 pub fn MoWorkbenchSettingsFile::equal(Self, Self) -> Bool
-pub fn MoWorkbenchSettingsFile::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoWorkbenchSettingsFile::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn MoWorkbenchSettingsFile::not_equal(Self, Self) -> Bool
 pub fn MoWorkbenchSettingsFile::to_json(Self) -> @json.Json
 pub fn MoWorkbenchSettingsFile::to_repr(Self) -> @debug.Repr
@@ -277,7 +277,7 @@ pub fn MoWorkbenchSettingsFile::to_repr(Self) -> @debug.Repr
 #derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 type MoWorkbenchSettingsFileLegacy
 pub fn MoWorkbenchSettingsFileLegacy::equal(Self, Self) -> Bool
-pub fn MoWorkbenchSettingsFileLegacy::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoWorkbenchSettingsFileLegacy::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn MoWorkbenchSettingsFileLegacy::not_equal(Self, Self) -> Bool
 pub fn MoWorkbenchSettingsFileLegacy::to_json(Self) -> @json.Json
 pub fn MoWorkbenchSettingsFileLegacy::to_repr(Self) -> @debug.Repr

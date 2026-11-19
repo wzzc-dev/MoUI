@@ -166,7 +166,7 @@ pub impl ViewStateValue for Int32 with fn view_state_type_key() {
 
 ///|
 pub impl ViewStateValue for Int32 with fn encode_view_state(self) {
-  let output = Buffer(size_hint=4)
+  let output = Buffer(capacity=4)
   output.write_int_be(self)
   output.to_bytes()
 }
