@@ -783,8 +783,8 @@
             "arm64": {
               "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
-              "sha256": "9c4692020357932c1c13ec755c592540388edc26bed483c19b76757b4fc694ab",
-              "size": 80748,
+              "sha256": "b296046652c2083d34d5486c1ec3ccdb4ce7bc9a66b21156c40de254d4ea80ad",
+              "size": 80907,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
