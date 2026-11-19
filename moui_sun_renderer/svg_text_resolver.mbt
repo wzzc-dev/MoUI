@@ -22,11 +22,8 @@ fn sun_svg_default_face() -> @sun_text.FontFace? {
   match sun_svg_text_resolver_state.face {
     Some(face) => Some(face)
     None => {
-      for source in sun_default_platform_font_sources() {
-        let data : Bytes? = Some(@fs.read_file_to_bytes(source.path)) catch {
-          _ => None
-        }
-        match data {
+      for source in sun_default_platform_font_faces() {
+        match sun_platform_font_file_data(source.path) {
           Some(data) =>
             match @sun_text.FontFace::from_bytes(data) {
               Ok(face) => {
