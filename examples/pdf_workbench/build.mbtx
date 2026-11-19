@@ -130,12 +130,31 @@ async fn host_platform() -> String {
 }
 
 ///|
+async fn env_arch() -> String {
+  for key in ["PROCESSOR_ARCHITECTURE", "PROCESSOR_ARCHITEW6432"] {
+    match @env.get_env_var(key) {
+      Some(value) =>
+        if value != "" {
+          return lower_trim(value)
+        }
+      None => ()
+    }
+  }
+  ""
+}
+
+///|
 async fn host_arch() -> String {
-  let (code, out) = try_run("uname", ["-m"], ".")
-  if code != 0 {
+  let mut arch = env_arch()
+  if arch == "" {
+    let (code, out) = try_run("uname", ["-m"], ".")
+    if code == 0 {
+      arch = lower_trim(out)
+    }
+  }
+  if arch == "" {
     return ""
   }
-  let arch = lower_trim(out)
   if arch == "arm64" || arch == "aarch64" {
     return "arm64"
   }
