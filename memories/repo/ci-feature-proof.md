@@ -50,3 +50,12 @@ Every MoonBit-backed validator shim runs `moon` in the workspace, and resolving
 `xdg-shell protocol XML not found`, before any guard output. Install the lean
 set (`bash scripts/set_linux_deps.sh --wayland`) in that job; the full set is
 only for the Linux platform-contracts job that actually links and runs.
+
+## ubuntu `pr-static` cannot build ObjC++ tools
+
+`tools_product/moui/validate_renderer_capability_consistency` imports every
+concrete renderer, including `moui_metal_renderer`, whose `.mm` sources need the
+Objective-C++ frontend. Ubuntu's `clang`/`gcc` ship no `cc1objplus`, so the C stub
+build dies with `cannot execute 'cc1objplus'` and the step can never pass on the
+Linux runner even with the Wayland set installed. Keep it in `pr-native`
+(macOS); `pr-static` is Linux-host only.
