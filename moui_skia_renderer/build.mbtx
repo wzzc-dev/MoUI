@@ -1,11 +1,4 @@
-///|
-/// Skia renderer prebuild hook (`--moonbit-unstable-prebuild`).
-///
-/// Port of the former `build.js`. The renderer owns no Skia flags of its own, so
-/// it delegates to the `moui_skia` module prebuild (a `.mbtx` script) and
-/// re-emits the two vars it needs plus one `link_configs` entry. Package
-/// `cc-link-flags` cover binding-local tests but do not propagate through the
-/// renderer to final is-main links, so the link configs entry is the carrier.
+---
 import {
   "moonbitlang/core/async",
   "moonbitlang/core/async/process",
@@ -15,12 +8,21 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
 }
+---
+
+///|
+/// Skia renderer prebuild hook (`--moonbit-unstable-prebuild`).
+///
+/// Port of the former `build.js`. The renderer owns no Skia flags of its own, so
+/// it delegates to the `moui_skia` module prebuild (a `.mbtx` script) and
+/// re-emits the two vars it needs plus one `link_configs` entry. Package
+/// `cc-link-flags` cover binding-local tests but do not propagate through the
+/// renderer to final is-main links, so the link configs entry is the carrier.
 
 ///|
 struct RendererOpts {
   config : @json.Json
   env : Map[String, String]
-  module_root : String
   parent_root : String
 }
 
@@ -31,12 +33,12 @@ fn[T] bail(message : String) -> T {
 
 ///|
 fn is_blank(value : String) -> Bool {
-  value.trim_space().length() == 0
+  value.trim().length() == 0
 }
 
 ///|
 fn lower_trim(value : String) -> String {
-  value.trim_space().to_owned().to_lower()
+  value.trim().to_owned().to_lower()
 }
 
 ///|
@@ -76,9 +78,7 @@ fn path_join(left : String, right : String) -> String {
 
 ///|
 fn path_exists(path : String) -> Bool {
-  @fs.path_exists(path) catch {
-    _ => false
-  }
+  @fs.path_exists(path)
 }
 
 ///|
@@ -252,7 +252,7 @@ fn var_from_output(output : String, name : String) -> String {
   let lines = split_str(output, "\n")
   let mut index = lines.length() - 1
   while index >= 0 {
-    let line = lines[index].trim_space()
+    let line = lines[index].trim()
     if line.has_prefix("{") {
       let parsed = @json.parse(line) catch {
         _ => @json.Json::empty_object()
@@ -354,7 +354,6 @@ async fn main {
   let opts : RendererOpts = {
     config: config,
     env: config_env(config),
-    module_root: module_root,
     parent_root: path_join(module_root, "../moui_skia"),
   }
   let configure = should_configure_skia(opts)

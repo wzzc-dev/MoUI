@@ -21,6 +21,24 @@ import {
 let macos_backend_webkit_flags : String = "-framework WebKit"
 
 ///|
+fn json_field(value : @json.Json, key : String) -> @json.Json? {
+  if value is @json.Object(fields) {
+    fields.get(key)
+  } else {
+    None
+  }
+}
+
+///|
+fn json_text(value : @json.Json) -> String? {
+  if value is @json.String(text) {
+    Some(text)
+  } else {
+    None
+  }
+}
+
+///|
 fn lower_trim(value : String) -> String {
   value.trim().to_owned().to_lower()
 }
@@ -78,7 +96,7 @@ fn config_env(config : @json.Json, key : String) -> String {
     let mut node = config
     let mut found = true
     for segment in path {
-      match node.value(segment) {
+      match json_field(node, segment) {
         Some(next) => node = next
         None => {
           found = false
@@ -87,9 +105,9 @@ fn config_env(config : @json.Json, key : String) -> String {
       }
     }
     if found {
-      match node.value(key) {
+      match json_field(node, key) {
         Some(value) =>
-          match value.as_string() {
+          match json_text(value) {
             Some(text) =>
               if text != "" {
                 return text
@@ -146,17 +164,17 @@ async fn pkg_config(packages : Array[String], flag : String) -> String {
 }
 
 ///|
-fn prepend_missing_define(flags : String, define : String) -> String {
+fn prepend_missing_define(flags : String, define_flag : String) -> String {
   let text = flags.trim().to_owned()
   for token in text.split(" ") {
-    if token == define {
+    if token == define_flag {
       return text
     }
   }
   if text == "" {
-    return define
+    return define_flag
   }
-  define + " " + text
+  define_flag + " " + text
 }
 
 ///|

@@ -3,6 +3,16 @@ fn WebApp::drain_window_requests(
   self : WebApp,
   event_loop : @window_web.ActiveEventLoop,
 ) -> Unit {
+  // Browser tabs expose fullscreen only: minimize/maximize/decorations are
+  // no-ops in the upstream web backend, so the app chrome must not offer them.
+  // Capabilities are republished every tick because a window can appear after
+  // the first tick and `set_capabilities` dedupes.
+  @window_host.sync_window_controls(self.window_controls, self.lifecycle, {
+    minimize: false,
+    maximize: false,
+    fullscreen: true,
+    decorations: false,
+  })
   self.lifecycle.drain_window_requests(request => {
     self.apply_window_request(event_loop, request)
   })

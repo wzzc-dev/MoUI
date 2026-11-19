@@ -1,3 +1,15 @@
+---
+import {
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+}
+---
+
 ///|
 /// Skia prebuild hook (`--moonbit-unstable-prebuild`) for `wzzc-dev/moui_skia`.
 ///
@@ -26,15 +38,6 @@
 /// compile or link the stub. Under the hatch `MOUI_SKIA_STUB_MODE=prebuilt` is a
 /// hard error because no release asset is fetched; pass `MOUI_SKIA_STUB_LIB`
 /// (or use it from `fetch-release-skia --print-env`) instead.
-import {
-  "moonbitlang/core/async",
-  "moonbitlang/core/async/process",
-  "moonbitlang/core/async/stdio",
-  "moonbitlang/core/encoding/utf8",
-  "moonbitlang/core/env",
-  "moonbitlang/core/json",
-  "moonbitlang/x/fs",
-}
 
 ///|
 struct Opts {
@@ -62,13 +65,11 @@ struct SkiaValues {
   release_tag : String
   provider : String
   stub_lib : String
-  stub_source : String
 }
 
 ///|
 struct StubInfo {
   path : String
-  mode : String
 }
 
 ///|
@@ -256,24 +257,8 @@ fn host_path(host : String, path : String) -> String {
 }
 
 ///|
-fn basename(path : String) -> String {
-  let mut last = path
-  for segment in path.split("/") {
-    last = segment.to_owned()
-  }
-  last
-}
-
-///|
 fn path_exists(path : String) -> Bool {
   @fs.path_exists(path)
-}
-
-///|
-fn is_dir(path : String) -> Bool {
-  @fs.is_dir(path) catch {
-    _ => false
-  }
 }
 
 ///|
@@ -327,13 +312,6 @@ fn ensure_dir(path : String) -> Unit {
 }
 
 ///|
-fn write_text(path : String, content : String) -> Unit {
-  @fs.write_string_to_file(path, content) catch {
-    _ => bail("failed to write \{path}")
-  }
-}
-
-///|
 fn read_file_text(path : String) -> String {
   let bytes = @fs.read_file_to_bytes(path) catch {
     _ => b""
@@ -343,28 +321,12 @@ fn read_file_text(path : String) -> String {
   }
 }
 
-///|
-fn file_reference(path : String) -> String {
-  let bytes = @fs.read_file_to_bytes(path) catch {
-    _ => bail("failed to read \{path}")
-  }
-  "\{path}=\{bytes.length()}"
-}
-
 // ===== config plumbing =====
 
 ///|
 fn json_field(value : @json.Json, key : String) -> @json.Json? {
   match value {
     @json.Object(fields) => fields.get(key)
-    _ => None
-  }
-}
-
-///|
-fn json_string_field(value : @json.Json, key : String) -> String? {
-  match json_field(value, key) {
-    Some(@json.String(text)) => Some(text)
     _ => None
   }
 }
@@ -688,7 +650,6 @@ fn empty_skia_values() -> SkiaValues {
     release_tag: "",
     provider: "",
     stub_lib: "",
-    stub_source: "",
   }
 }
 
@@ -783,7 +744,7 @@ async fn skia_values(opts : Opts) -> SkiaValues {
   )
   let lib_dir = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB_DIR"))
   let stub_lib = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_STUB_LIB"))
-  let stub_source = host_path(
+  let _stub_source = host_path(
     opts.host,
     picked(opts.env, fetched, "MOUI_SKIA_STUB_SOURCE"),
   )
@@ -797,7 +758,6 @@ async fn skia_values(opts : Opts) -> SkiaValues {
     release_tag: picked(opts.env, fetched, "MOUI_SKIA_RELEASE_TAG"),
     provider: picked(opts.env, fetched, "MOUI_SKIA_SKIA_PROVIDER"),
     stub_lib: stub_lib,
-    stub_source: stub_source,
   }
 }
 
@@ -1597,7 +1557,7 @@ async fn compile_stub(
     },
   )
   if path_exists(archive) {
-    return { path: archive, mode: "build" }
+    return { path: archive }
   }
   ensure_dir(cache_dir)
   let objects : Array[String] = []
@@ -1662,7 +1622,7 @@ async fn compile_stub(
   if archive_code != 0 {
     bail("failed to archive Skia stub (\{archiver} exited with \{archive_code}): \{archive_err}")
   }
-  { path: archive, mode: "build" }
+  { path: archive }
 }
 
 ///|
@@ -1677,7 +1637,7 @@ async fn resolve_stub(
     Some(given) => {
       let path = host_path(opts.host, given)
       if path_exists(path) {
-        return { path: path, mode: "provided" }
+        return { path: path }
       }
       bail("MOUI_SKIA_STUB_LIB points at \{given}, which does not exist")
       }
@@ -1689,7 +1649,7 @@ async fn resolve_stub(
   }
   if with_skia && mode != "build" && values.stub_lib != "" {
     if path_exists(values.stub_lib) {
-      return { path: values.stub_lib, mode: "prebuilt" }
+      return { path: values.stub_lib }
     }
     bail(
       "prebuilt stub archive \{values.stub_lib} was not found; rerun the provider fetch or set MOUI_SKIA_STUB_MODE=build",
