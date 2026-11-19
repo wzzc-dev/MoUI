@@ -44,7 +44,7 @@ impl ViewStateValue for LongPressGestureState with fn view_state_type_key() {
 
 ///|
 impl ViewStateValue for LongPressGestureState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=42)
+  let output = Buffer(capacity=42)
   output.write_byte(
     match self.phase {
       Idle => 0
@@ -175,7 +175,7 @@ impl ViewStateValue for DoubleTapGestureState with fn view_state_type_key() {
 
 ///|
 impl ViewStateValue for DoubleTapGestureState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=41)
+  let output = Buffer(capacity=41)
   match self.first_position {
     Some(point) => {
       output.write_byte(1)
@@ -302,7 +302,7 @@ impl ViewStateValue for DragGestureState with fn view_state_type_key() {
 
 ///|
 impl ViewStateValue for DragGestureState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=43)
+  let output = Buffer(capacity=43)
   output.write_byte(
     match self.phase {
       Idle => 0

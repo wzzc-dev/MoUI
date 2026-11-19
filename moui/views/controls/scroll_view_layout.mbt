@@ -61,7 +61,7 @@ impl @core.ViewStateValue for ScrollRuntimeState with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for ScrollRuntimeState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=20)
+  let output = Buffer(capacity=20)
   output.write_double_be(self.offset.x)
   output.write_double_be(self.offset.y)
   output.write_int_be(self.applied_request_id)

@@ -17,7 +17,7 @@ impl @core.ViewStateValue for CarouselDrag with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for CarouselDrag with fn encode_view_state(self) {
-  let output = Buffer(size_hint=17)
+  let output = Buffer(capacity=17)
   output.write_byte(if self.active { 1 } else { 0 })
   output.write_double_be(self.origin_x)
   output.write_double_be(self.raw_dx)

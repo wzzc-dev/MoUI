@@ -99,7 +99,7 @@ fn pixmap_has_ink(pixmap : @graphics.Pixmap) -> Bool {
 
 ///|
 fn printable_ascii_string() -> String {
-  let out = StringBuilder(size_hint=printable_ascii_count())
+  let out = StringBuilder(capacity=printable_ascii_count())
   for codepoint in 0x20..<=0x7E {
     out.write_char(codepoint.unsafe_to_char())
   }
@@ -113,7 +113,7 @@ fn printable_ascii_count() -> Int32 {
 
 ///|
 fn string_from_codepoints(codepoints : Array[Int32]) -> String {
-  let out = StringBuilder(size_hint=codepoints.length())
+  let out = StringBuilder(capacity=codepoints.length())
   for codepoint in codepoints {
     out.write_char(codepoint.unsafe_to_char())
   }

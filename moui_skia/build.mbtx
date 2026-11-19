@@ -87,12 +87,12 @@ fn pick_config(env : Map[String, String], primary : String, secondary : String, 
 
 ///|
 fn is_blank(value : String) -> Bool {
-  value.trim_space().length() == 0
+  value.trim().length() == 0
 }
 
 ///|
 fn lower_trim(value : String) -> String {
-  value.trim_space().to_owned().to_lower()
+  value.trim().to_owned().to_lower()
 }
 
 ///|
@@ -120,7 +120,7 @@ fn split_str(value : String, delimiter : String) -> Array[String] {
 fn split_ws(value : String) -> Array[String] {
   let parts : Array[String] = []
   for part in value.split(" ") {
-    let token = part.trim_space()
+    let token = part.trim()
     if token.length() > 0 {
       parts.push(token.to_owned())
     }
@@ -643,14 +643,14 @@ fn should_configure_skia(opts : Opts) -> Bool {
 fn parse_env_lines(output : String) -> Map[String, String] {
   let values : Map[String, String] = Map([])
   for line in output.split("\n") {
-    let text = line.trim_space().to_owned()
+    let text = line.trim().to_owned()
     let index = text.find("=")
     match index {
       Some(position) => {
         if position > 0 {
           values.set(
-            text.substring(start=0, end=position),
-            text.substring(start=position + 1),
+            text[0: position].to_owned(),
+            text[position + 1:].to_owned(),
           )
         }
         }

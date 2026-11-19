@@ -48,7 +48,7 @@ impl ViewStateValue for PinchRecognitionState with fn view_state_type_key() {
 
 ///|
 impl ViewStateValue for PinchRecognitionState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=60)
+  let output = Buffer(capacity=60)
   output.write_int_be(self.tracked)
   output.write_int_be(self.pointer0_id)
   output.write_double_be(self.pointer0.x)

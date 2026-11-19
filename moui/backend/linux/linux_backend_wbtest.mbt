@@ -123,7 +123,7 @@ test "linux native at-spi actions preserve identity generation and payload" {
         target: ByNodeId(node_id),
         action: SetNumericValue(value),
         precondition: Exact(generation),
-      }
+      },
     ) else {
     fail("expected decoded AT-SPI numeric action")
   }

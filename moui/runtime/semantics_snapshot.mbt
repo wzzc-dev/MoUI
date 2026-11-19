@@ -5,13 +5,13 @@ pub(all) enum SemanticsIssue {
   MissingRelationTarget(
     @core.SemanticsNodeId,
     @core.SemanticsRelationKind,
-    @core.SemanticId
+    @core.SemanticId,
   )
   AmbiguousRelationTarget(
     @core.SemanticsNodeId,
     @core.SemanticsRelationKind,
     @core.SemanticId,
-    Array[@core.SemanticsNodeId]
+    Array[@core.SemanticsNodeId],
   )
 }
 

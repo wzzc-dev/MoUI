@@ -318,7 +318,7 @@ fn Sketch::replay_graphics(
         stroke_width,
         font,
         align_h,
-        align_v
+        align_v,
       ) =>
         self.surface.fill_text(
           text, tx, ty, color, stroke, stroke_width, font, align_h, align_v,

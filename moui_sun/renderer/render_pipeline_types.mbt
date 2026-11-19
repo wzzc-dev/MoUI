@@ -20,7 +20,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawSampledPngBytesKeyed(
     String,
@@ -30,7 +30,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawSampledRgbaBytesKeyed(
     String,
@@ -42,7 +42,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawQualityBmpBytesKeyed(
     String,
@@ -52,7 +52,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawQualityBmpBytesRectKeyed(
     String,
@@ -63,7 +63,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawQualityPngBytesKeyed(
     String,
@@ -73,7 +73,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawQualityPngBytesRectKeyed(
     String,
@@ -84,7 +84,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawQualityRgbaBytesKeyed(
     String,
@@ -96,7 +96,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawQualityRgbaBytesRectKeyed(
     String,
@@ -109,7 +109,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedSampledBmpBytesKeyed(
     String,
@@ -119,7 +119,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedSampledBmpBytesRectKeyed(
     String,
@@ -130,7 +130,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedQualityBmpBytesKeyed(
     String,
@@ -140,7 +140,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedQualityBmpBytesRectKeyed(
     String,
@@ -151,7 +151,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedSampledPngBytesKeyed(
     String,
@@ -161,7 +161,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedSampledPngBytesRectKeyed(
     String,
@@ -172,7 +172,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedQualityPngBytesKeyed(
     String,
@@ -182,7 +182,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedQualityPngBytesRectKeyed(
     String,
@@ -193,7 +193,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedSampledRgbaBytesKeyed(
     String,
@@ -205,7 +205,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedSampledRgbaBytesRectKeyed(
     String,
@@ -218,7 +218,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawTransformedQualityRgbaBytesKeyed(
     String,
@@ -230,7 +230,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawTransformedQualityRgbaBytesRectKeyed(
     String,
@@ -243,7 +243,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @graphics.Paint,
-    @graphics.ImageQuality
+    @graphics.ImageQuality,
   )
   DrawSampledBmpBytesRectKeyed(
     String,
@@ -254,7 +254,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawSampledPngBytesRectKeyed(
     String,
@@ -265,7 +265,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawSampledRgbaBytesRectKeyed(
     String,
@@ -278,7 +278,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawBmpBytesRectKeyed(
     String,
@@ -286,7 +286,7 @@ pub enum RenderCommand {
     @graphics.PixelRect,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawPngBytesRectKeyed(
     String,
@@ -294,7 +294,7 @@ pub enum RenderCommand {
     @graphics.PixelRect,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawRgbaBytesRectKeyed(
     String,
@@ -304,7 +304,7 @@ pub enum RenderCommand {
     @graphics.PixelRect,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawTiledBmpBytesRectKeyed(
     String,
@@ -314,7 +314,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawTiledPngBytesRectKeyed(
     String,
@@ -324,7 +324,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawTiledRgbaBytesRectKeyed(
     String,
@@ -336,7 +336,7 @@ pub enum RenderCommand {
     Int32,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawNinePatchBmpBytesKeyed(
     String,
@@ -347,7 +347,7 @@ pub enum RenderCommand {
     Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawNinePatchPngBytesKeyed(
     String,
@@ -358,7 +358,7 @@ pub enum RenderCommand {
     Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawNinePatchRgbaBytesKeyed(
     String,
@@ -371,14 +371,14 @@ pub enum RenderCommand {
     Int32,
     @graphics.NinePatchInsets,
     @graphics.Paint,
-    @graphics.ImageSampling
+    @graphics.ImageSampling,
   )
   DrawPixmapRect(
     @graphics.Pixmap,
     @graphics.PixelRect,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawPixmapRectKeyed(
     String,
@@ -386,7 +386,7 @@ pub enum RenderCommand {
     @graphics.PixelRect,
     Int32,
     Int32,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawTextFace(
     @text.FontFace,
@@ -394,7 +394,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawTextFaceKeyed(
     String,
@@ -403,7 +403,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawFontBytesKeyed(
     String,
@@ -413,7 +413,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawFontBytesAtlasKeyed(
     String,
@@ -423,7 +423,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawFontBytesFallbackKeyed(
     Array[FontBytesFallbackSource],
@@ -432,7 +432,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawFontBytesFallbackAtlasKeyed(
     Array[FontBytesFallbackSource],
@@ -441,7 +441,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawLoadedFontKeyed(
     String,
@@ -450,7 +450,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawLoadedFontFallbackKeyed(
     Array[String],
@@ -459,7 +459,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawLoadedFontFallbackAtlasKeyed(
     Array[String],
@@ -468,7 +468,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
   DrawLoadedFontAtlasKeyed(
     String,
@@ -477,7 +477,7 @@ pub enum RenderCommand {
     Double,
     Double,
     @text.LayoutConfig,
-    @graphics.Paint
+    @graphics.Paint,
   )
 }
 

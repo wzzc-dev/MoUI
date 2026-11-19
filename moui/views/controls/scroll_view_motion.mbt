@@ -21,7 +21,7 @@ impl @core.ViewStateValue for ScrollMotionState with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for ScrollMotionState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=56)
+  let output = Buffer(capacity=56)
   output.write_double_be(self.anchor.x)
   output.write_double_be(self.anchor.y)
   output.write_double_be(self.start_time_ms)
@@ -301,7 +301,7 @@ impl @core.ViewStateValue for ScrollFlingState with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for ScrollFlingState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=48)
+  let output = Buffer(capacity=48)
   output.write_double_be(self.anchor.x)
   output.write_double_be(self.anchor.y)
   output.write_double_be(self.start_time_ms)
@@ -504,7 +504,7 @@ impl @core.ViewStateValue for ScrollDragState with fn view_state_type_key() {
 
 ///|
 impl @core.ViewStateValue for ScrollDragState with fn encode_view_state(self) {
-  let output = Buffer(size_hint=90)
+  let output = Buffer(capacity=90)
   output.write_byte(if self.active { 1 } else { 0 })
   output.write_byte(if self.dragging { 1 } else { 0 })
   output.write_double_be(self.origin.x)

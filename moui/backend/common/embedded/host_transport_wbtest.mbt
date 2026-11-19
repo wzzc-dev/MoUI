@@ -26,9 +26,9 @@ test "shell Host Wire v1 parses revisioned PlatformView events" {
           3,
           "camera.preview",
           "preview",
-          Named(name="ready", value="yes", detail="", flag=true)
+          Named(name="ready", value="yes", detail="", flag=true),
         ),
-      }
+      },
     ) => ()
     _ => fail("expected a revisioned PlatformView response")
   }
@@ -44,7 +44,7 @@ test "shell Host Wire v1 parses PlatformChannel completion request ids" {
         schema_version: 1,
         session_generation: 9,
         response: PlatformChannel({ value: 12, }, Error("denied")),
-      }
+      },
     ) => ()
     _ => fail("expected a PlatformChannel error completion")
   }
@@ -64,9 +64,9 @@ test "shell Host Wire parses generation-checked typed accessibility actions" {
             target: ByNodeId(node_id),
             precondition: Exact(generation),
             action: SetText("Luna"),
-          }
+          },
         ),
-      }
+      },
     ) => {
       assert_true(node_id.value() == 18446744073709551615UL)
       assert_true(generation.value() == 9007199254740993UL)

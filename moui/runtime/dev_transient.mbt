@@ -74,7 +74,7 @@ fn dev_hex_decode(text : String) -> Bytes? {
   if text.length() % 2 != 0 {
     return None
   }
-  let output = Buffer(size_hint=text.length() / 2)
+  let output = Buffer(capacity=text.length() / 2)
   let mut index = 0
   while index < text.length() {
     let high = match dev_hex_value(text[index]) {
