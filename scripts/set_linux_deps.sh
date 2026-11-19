@@ -15,6 +15,8 @@ Vulkan headers). Native WebView (WebKitGTK) is optional and off by default.
 Options:
   --minimal          Install only the core Wayland build/runtime set
                      (no Skia stack, no fonts, no Vulkan headers).
+  --wayland          Install only the MoonBit toolchain plus the Wayland
+                     prebuild set; no X11, smoke, Skia, or runtime extras.
   --with-webview     Also install WebKitGTK development packages
                      (libwebkit2gtk-4.1-dev) for native WebView support.
   --check            Only verify that required packages are installed.
@@ -80,6 +82,7 @@ webview_packages=(
 )
 
 minimal_only=0
+wayland_only=0
 with_webview=0
 check_only=0
 print_packages=0
@@ -88,6 +91,7 @@ use_sudo=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --minimal) minimal_only=1; shift ;;
+    --wayland) wayland_only=1; shift ;;
     --with-webview) with_webview=1; shift ;;
     --check) check_only=1; shift ;;
     --print-packages) print_packages=1; shift ;;
@@ -97,9 +101,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-packages=("${base_packages[@]}" "${wayland_packages[@]}" "${x11_packages[@]}" "${smoke_packages[@]}" "${runtime_packages[@]}")
-if [[ $minimal_only -eq 0 ]]; then
-  packages+=("${skia_packages[@]}")
+if [[ $wayland_only -eq 1 ]]; then
+  packages=("${base_packages[@]}" "${wayland_packages[@]}")
+else
+  packages=("${base_packages[@]}" "${wayland_packages[@]}" "${x11_packages[@]}" "${smoke_packages[@]}" "${runtime_packages[@]}")
+  if [[ $minimal_only -eq 0 ]]; then
+    packages+=("${skia_packages[@]}")
+  fi
 fi
 if [[ $with_webview -eq 1 ]]; then
   packages+=("${webview_packages[@]}")

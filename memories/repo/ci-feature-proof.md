@@ -40,3 +40,13 @@ to carry were pure overhead. `docs_only` is derived from
 `pr-profile == skipped && pr-static == success`, and an empty commit range (a
 dispatch run on an already-landed commit) is forced to `docs_only=false` so the
 run still compiles the tree it was asked to prove.
+
+## ubuntu `pr-static` needs the Wayland prebuild set
+
+Every MoonBit-backed validator shim runs `moon` in the workspace, and resolving
+`wzzc-dev/window` executes its Linux prebuild, which shells out to
+`wayland-scanner` for `xdg-shell`, `xdg-decoration`, and `cursor-shape`. Without
+`wayland-protocols` + `libwayland-dev`/`libwayland-bin` the job dies with
+`xdg-shell protocol XML not found`, before any guard output. Install the lean
+set (`bash scripts/set_linux_deps.sh --wayland`) in that job; the full set is
+only for the Linux platform-contracts job that actually links and runs.
