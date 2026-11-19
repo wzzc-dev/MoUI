@@ -203,6 +203,52 @@ jobs:
         run: |
           moon build examples/showcase/linux_skia --target native
 
+  visual-profile:
+    name: Sun/Skia visual profile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Linux dependencies
+        run: bash scripts/set_linux_deps.sh
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      - name: Cache release Skia
+        uses: actions/cache@v5
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-linux-static-${{ runner.arch }}-
+            release-skia-linux-static-
+
+      # check.mjs keeps MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 by default: the
+      # committed docs previews and gallery shots are host-pinned and skip on
+      # this Linux job. The parity step opts into the locked release prebuild
+      # itself, so this profile genuinely compares Sun against Skia.
+      - name: Run visual profile (blocking Sun/Skia parity)
+        run: sh scripts/check.sh --profile visual
+
+      - name: Upload visual parity reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: sun-visual-parity
+          path: |
+            artifacts/vm-sun/report.json
+            artifacts/vm-skia/report.json
+            artifacts/visual-matrix/report.json
+          if-no-files-found: warn
+
   macos-packaging:
     name: macOS packaging smoke
     needs: changes

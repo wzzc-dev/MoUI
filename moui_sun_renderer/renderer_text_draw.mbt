@@ -285,16 +285,25 @@ fn SunRasterRenderer::draw_text_clipped(
   guard !plan.lines.is_empty() else { return }
   let paint = sun_paint(run.color, opacity)
   let line_height = plan.line_height
-  let total_height = line_height * plan.lines.length().to_double()
+  // A single line is centred in its frame with the face ascent/descent box,
+  // which is exactly what Skia's renderer uses; the nominal `size * 1.2` line
+  // height floated every label ~1 logical px above Skia's baseline in the same
+  // frame. Multi-line runs keep the configured pitch, the same geometry the
+  // paragraph layout reports and paints.
+  let total_height = if plan.lines.length() <= 1 {
+    sun_text_metric_span(faces, config)
+  } else {
+    line_height * plan.lines.length().to_double()
+  }
   let origin_y = run.frame.origin.y +
     (run.frame.size.height - total_height).max(0.0) * 0.5
   let renderer = @sun_renderer.Renderer::new(self.canvas)
   let mut line_index = 0
   for line in plan.lines {
-    let baseline_y = origin_y +
-      line_index.to_double() * line_height +
-      plan.baseline
-    if baseline_y > run.frame.origin.y + run.frame.size.height + line_height {
+    // The fallback line API takes the line-box top and adds the face baseline
+    // itself; passing a baseline here shifted every line down by its ascent.
+    let line_top_y = origin_y + line_index.to_double() * line_height
+    if line_top_y > run.frame.origin.y + run.frame.size.height {
       return
     }
     let x = sun_text_placeholder_start_x(run, line.width)
@@ -303,7 +312,7 @@ fn SunRasterRenderer::draw_text_clipped(
       faces,
       line.text,
       x,
-      baseline_y,
+      line_top_y,
       config,
       self.resources,
       key,
@@ -332,133 +341,6 @@ fn SunRasterRenderer::draw_text_clipped(
     }
     line_index += 1
   }
-}
-
-///|
-fn SunRasterRenderer::register_font_family_data(
-  self : SunRasterRenderer,
-  family : @core.FontFamily,
-  data : Bytes,
-) -> Unit {
-  for key in sun_font_family_registration_keys(family) {
-    ignore(self.text_system.register_font_bytes(key, data))
-  }
-}
-
-///|
-fn SunRasterRenderer::register_default_platform_fonts(
-  self : SunRasterRenderer,
-) -> Unit {
-  for source in sun_default_platform_font_sources() {
-    let data : Bytes? = Some(@fs.read_file_to_bytes(source.path)) catch {
-      _ => None
-    }
-    match data {
-      Some(data) =>
-        for family in source.families {
-          self.register_font_family_data(family, data)
-        }
-      None => ()
-    }
-  }
-}
-
-///|
-priv struct SunDefaultPlatformFontSource {
-  path : String
-  families : Array[@core.FontFamily]
-}
-
-///|
-fn sun_default_platform_font_sources() -> Array[SunDefaultPlatformFontSource] {
-  [
-    {
-      path: "/System/Library/Fonts/Supplemental/Arial.ttf",
-      families: [
-        SystemUi,
-        UiSansSerif,
-        SansSerif,
-        Name("Arial"),
-        Name("Helvetica"),
-      ],
-    },
-    {
-      path: "/System/Library/Fonts/Supplemental/Courier New.ttf",
-      families: [UiMonospace, Monospace, Name("Courier New"), Name("Menlo")],
-    },
-    {
-      path: "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
-      families: [UiSerif, Serif, Name("Times New Roman")],
-    },
-  ]
-}
-
-///|
-fn sun_font_family_registration_keys(
-  family : @core.FontFamily,
-) -> Array[String] {
-  let keys : Array[String] = []
-  match family {
-    Name(name) => {
-      keys.push(name)
-      keys.push(name.to_lower())
-    }
-    _ => {
-      let css = family.css_name()
-      keys.push(css)
-      keys.push(css.to_lower())
-    }
-  }
-  keys
-}
-
-///|
-fn SunRasterRenderer::resolved_faces(
-  self : SunRasterRenderer,
-  font : @core.FontSpec,
-) -> Array[@sun_text.FontFace] {
-  let faces : Array[@sun_text.FontFace] = []
-  let seen : Map[String, Unit] = Map([])
-  for key in sun_font_spec_candidate_keys(font) {
-    if seen.contains(key) {
-      continue
-    }
-    seen[key] = ()
-    match self.text_system.get_font_face(key) {
-      Ok(face) => faces.push(face)
-      Err(_) => ()
-    }
-  }
-  for key in self.text_system.get_font_keys() {
-    if seen.contains(key) {
-      continue
-    }
-    seen[key] = ()
-    match self.text_system.get_font_face(key) {
-      Ok(face) => faces.push(face)
-      Err(_) => ()
-    }
-  }
-  faces
-}
-
-///|
-fn sun_font_spec_candidate_keys(font : @core.FontSpec) -> Array[String] {
-  let keys : Array[String] = []
-  for family in font.families.families {
-    match family {
-      Name(name) => {
-        keys.push(name)
-        keys.push(name.to_lower())
-      }
-      _ => {
-        let css = family.css_name()
-        keys.push(css)
-        keys.push(css.to_lower())
-      }
-    }
-  }
-  keys
 }
 
 ///|
@@ -515,14 +397,19 @@ fn SunRasterRenderer::measure_text_layout(
     input.text,
     carets,
   )
-  {
+  let result : @core.TextLayoutResult = {
     size: @core.Size::new(
       width=max_width.min(input.max_width.unwrap_or(max_width)),
-      height=plan.line_height * plan.lines.length().to_double(),
+      height=if plan.lines.length() <= 1 {
+        sun_text_metric_span(faces, config)
+      } else {
+        plan.line_height * plan.lines.length().to_double()
+      },
     ),
     baseline,
     caret_positions: stabilized,
   }
+  result
 }
 
 ///|
@@ -535,7 +422,10 @@ fn SunRasterRenderer::measure_single_line_text(
   ignore(self)
   if text == "" {
     return {
-      size: @core.Size::new(width=0.0, height=config.line_height),
+      size: @core.Size::new(
+        width=0.0,
+        height=sun_text_metric_span(faces, config),
+      ),
       baseline: sun_text_baseline_for_faces(faces, config),
       caret_positions: [0.0],
     }
@@ -645,6 +535,31 @@ fn sun_text_baseline_for_faces(
   } else {
     faces[0].get_metrics().ascent.to_double() * config.font_size / units
   }
+}
+
+///|
+/// Face metric span (`ascent - descent + line_gap`) at `config.font_size`.
+///
+/// Skia both measures a run and places it in its frame with the face's
+/// ascent/descent box, and only falls back to `size * 1.25` when the face
+/// metrics are unusable. Sun's configured `line_height` stays the pitch between
+/// wrapped lines; it is not the box a single line is centred in.
+fn sun_text_metric_span(
+  faces : Array[@sun_text.FontFace],
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  let fallback = (config.font_size * 1.25).max(1.0)
+  guard !faces.is_empty() else { return fallback }
+  let units = faces[0].get_units_per_em().to_double()
+  guard units > 0.0 else { return fallback }
+  let metrics = faces[0].get_metrics()
+  let ascent = metrics.ascent.to_double()
+  let descent = metrics.descent.to_double()
+  let line_gap = metrics.line_gap.to_double()
+  let scale = config.font_size / units
+  let span = (ascent - descent + line_gap).max(ascent - descent).max(0.0) *
+    scale
+  span.max(ascent * scale).max(1.0)
 }
 
 ///|

@@ -930,7 +930,8 @@ fn draw_text_face_atlas(
                 canvas,
                 atlas.to_mask(),
                 entry,
-                floor_to_int(x + glyph.get_x()) + placement.get_draw_offset_x(),
+                floor_to_int(x + glyph.get_origin_x()) +
+                placement.get_draw_offset_x(),
                 floor_to_int(y + run.get_baseline_y()) +
                 placement.get_draw_offset_y(),
                 paint,

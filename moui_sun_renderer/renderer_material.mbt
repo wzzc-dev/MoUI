@@ -16,7 +16,8 @@ fn SunRasterRenderer::draw_backdrop_blur_effect(
   let height = device.height.to_int()
   if blur > 0.0 && width > 0 && height > 0 {
     let pixmap = self.canvas.get_pixmap()
-    let blurred = sun_box_blur_pixmap(pixmap, blur)
+    // Blur uniforms are logical; the backdrop pixmap is device-resolution.
+    let blurred = sun_box_blur_pixmap(pixmap, blur * self.metrics.scale_factor)
     self.canvas.save()
     self.canvas.intersect_clip_rect(
       @sun_graphics.Rect::new(

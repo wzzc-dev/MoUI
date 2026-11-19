@@ -266,16 +266,19 @@ test "sun renderer draws text without unsupported diagnostic" {
   inspect(renderer.unsupported_command_count(), content="0")
   match presented.val {
     Some(frame) => {
-      let mut dark_pixels = 0
+      // Count ink, not near-black pixels: an outline face paints coverage AA
+      // that at 10px on a bare surface may never reach the dark threshold,
+      // while the placeholder bitmap used to paint solid cells.
+      let mut ink_pixels = 0
       for index in 0..<(frame.width() * frame.height()) {
         let offset = index * 4
-        if frame.pixels()[offset].to_int() < 64 &&
-          frame.pixels()[offset + 1].to_int() < 64 &&
-          frame.pixels()[offset + 2].to_int() < 64 {
-          dark_pixels = dark_pixels + 1
+        if frame.pixels()[offset].to_int() < 250 ||
+          frame.pixels()[offset + 1].to_int() < 250 ||
+          frame.pixels()[offset + 2].to_int() < 250 {
+          ink_pixels = ink_pixels + 1
         }
       }
-      assert_true(dark_pixels > 0)
+      assert_true(ink_pixels > 0)
     }
     None => fail("expected Sun frame")
   }

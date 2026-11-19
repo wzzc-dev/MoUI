@@ -806,31 +806,40 @@ fn is_point_in_miter_join(
   half_width : Double,
   miter_limit : Double,
 ) -> Bool {
-  guard is_miter_join_within_limit(join, miter_limit) else {
+  let ratio = match miter_ratio(join) {
+    Some(ratio) => ratio
+    None => return is_point_in_join_wedge(px, py, join, half_width)
+  }
+  guard ratio <= miter_limit.max(1.0) else {
     return is_point_in_join_wedge(px, py, join, half_width)
   }
   let dx = px - join.x
   let dy = py - join.y
+  // The two offset edges of the wedge only bound it laterally: their slabs are
+  // unbounded along the join's lines, so a point far along a nearly straight
+  // join still satisfies both. Cap the wedge at the miter length, which is
+  // `half_width * ratio` from the join along the outward bisector — without it,
+  // every flattened curve joint claims a strip roughly a half pixel wide along
+  // its whole edge, and stroked curves come out visibly fatter than filled ones.
   is_point_in_join_sector(dx, dy, join) &&
+  dx * dx + dy * dy <= half_width * ratio * (half_width * ratio) &&
   cross2(join.in_x, join.in_y, dx, dy).abs() <= half_width &&
   cross2(join.out_x, join.out_y, dx, dy).abs() <= half_width
 }
 
 ///|
-fn is_miter_join_within_limit(
-  join : StrokeJoinPoint,
-  miter_limit : Double,
-) -> Bool {
+/// Miter length in units of `half_width` for `join`, i.e. `1 / sin(half the
+/// interior angle)`. `None` when the join is degenerate (straight or reversing).
+fn miter_ratio(join : StrokeJoinPoint) -> Double? {
   let bx = -join.out_x
   let by = -join.out_y
   guard cross2(join.in_x, join.in_y, bx, by).abs() > 0.000001 else {
-    return false
+    return None
   }
   let dot = (join.in_x * bx + join.in_y * by).max(-1.0).min(1.0)
   let sin_half_sq = (1.0 - dot) / 2.0
-  guard sin_half_sq > 0.0 else { return false }
-  let ratio = 1.0 / sin_half_sq.sqrt()
-  ratio <= miter_limit.max(1.0)
+  guard sin_half_sq > 0.0 else { return None }
+  Some(1.0 / sin_half_sq.sqrt())
 }
 
 ///|

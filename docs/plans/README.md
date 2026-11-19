@@ -62,6 +62,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | Plan | Summary |
 |------|---------|
 | [titlebar-controls-polish](active/titlebar-controls-polish.md) | Titlebar controls polish on top of the chrome work: policy-driven, theme-sized CSD buttons with hover/pressed feedback and state icons, titlebar insets exposed to apps, host event timestamps enabling double-click zoom, and matching-host Wayland evidence via nested weston |
+| [sun-visual-parity](active/sun-visual-parity.md) | Drive the Sun CPU renderer's perceived Linux output to Skia parity (60-cell matrix avg ≤3%, worst ≤10%, Showcase first screen clean) with a reproducible `scripts/visual-parity-gate.mjs` gate, registered report-only first and blocking in stage 5; Sun stays experimental |
 | [cursor-and-window-chrome](active/cursor-and-window-chrome.md) | Issue #25 cursor style API and issue #24 window chrome controls: view-declared pointer shapes resolved through the runtime hit chain and pushed to the host once per change; maximize/restore/fullscreen/decorations requests plus honest per-host capability reporting and interactive Linux CSD |
 | [maturity-program](active/maturity-program.md) | Umbrella program for closing the external-adopter loop: developer loop (transient handoff + DevTools), productization correctness, ecosystem seed, and governance truth, followed by public-quality and 1.0-readiness phases |
 | [maturity-dev-loop](active/maturity-dev-loop.md) | `moui dev` transient handoff (scroll/focus/caret), DevTools read-only protocol/server/client, and diagnostics forwarding |

@@ -1,4 +1,33 @@
 ///|
+/// Sample a paint's color source for one device-space pixel centre.
+///
+/// Shader geometry (gradient start/end points, radial centres) is stated in the
+/// user space the app draws in, while rasterisation works in device pixels.
+/// Sampling the shader with raw device coordinates makes a gradient under a 2x
+/// canvas transform reach its end colour at half its intended length; mapping
+/// the point back through the inverse transform keeps shader geometry aligned
+/// with the shapes it fills. Solid paints ignore the position entirely, so the
+/// transform work only happens when a shader is actually active.
+fn Canvas::sample_paint_color(
+  self : Canvas,
+  paint : Paint,
+  x : Double,
+  y : Double,
+) -> Color {
+  match paint.get_shader() {
+    Some(_) =>
+      match self.transform.inverse() {
+        Some(inverse) => {
+          let (user_x, user_y) = inverse.apply(x, y)
+          paint.sample_color(user_x, user_y)
+        }
+        None => paint.sample_color(x, y)
+      }
+    None => paint.sample_color(x, y)
+  }
+}
+
+///|
 /// Draw a filled rectangle
 pub fn Canvas::fill_rect(
   self : Canvas,
@@ -37,7 +66,8 @@ pub fn Canvas::fill_rect(
     let mut dirty_y_end = y_start
     for py in y_start..<y_end {
       for px in x_start..<x_end {
-        let color = paint.sample_color(
+        let color = self.sample_paint_color(
+          paint,
           px.to_double() + 0.5,
           py.to_double() + 0.5,
         )
@@ -101,6 +131,9 @@ pub fn Canvas::fill_rounded_rect(
   paint : Paint,
 ) -> Unit {
   guard w > 0.0 && h > 0.0 else { return }
+  if self.fill_rounded_rect_coverage(x, y, w, h, radius, paint) {
+    return
+  }
   self.fill_path(Path::new().add_rounded_rect(x, y, w, h, radius), paint)
 }
 
@@ -316,7 +349,11 @@ pub fn Canvas::fill_path(self : Canvas, path : Path, paint : Paint) -> Unit {
           self.pixmap,
           x,
           y,
-          paint.sample_color(x.to_double() + 0.5, y.to_double() + 0.5),
+          self.sample_paint_color(
+            paint,
+            x.to_double() + 0.5,
+            y.to_double() + 0.5,
+          ),
           covered,
           sample_count_sq,
           paint.blend_mode,
@@ -341,6 +378,9 @@ pub fn Canvas::stroke_rounded_rect(
   paint : Paint,
 ) -> Unit {
   guard w > 0.0 && h > 0.0 else { return }
+  if self.stroke_rounded_rect_coverage(x, y, w, h, radius, paint) {
+    return
+  }
   self.stroke_path(Path::new().add_rounded_rect(x, y, w, h, radius), paint)
 }
 
@@ -448,7 +488,11 @@ fn Canvas::stroke_path_with_local_metrics(
           self.pixmap,
           x,
           y,
-          paint.sample_color(x.to_double() + 0.5, y.to_double() + 0.5),
+          self.sample_paint_color(
+            paint,
+            x.to_double() + 0.5,
+            y.to_double() + 0.5,
+          ),
           covered,
           sample_count_sq,
           paint.blend_mode,
@@ -526,7 +570,11 @@ fn Canvas::stroke_path_with_device_metrics(
           self.pixmap,
           x,
           y,
-          paint.sample_color(x.to_double() + 0.5, y.to_double() + 0.5),
+          self.sample_paint_color(
+            paint,
+            x.to_double() + 0.5,
+            y.to_double() + 0.5,
+          ),
           covered,
           sample_count_sq,
           paint.blend_mode,

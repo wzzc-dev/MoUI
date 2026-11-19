@@ -362,8 +362,8 @@ pub fn Paint::get_opacity(self : Paint) -> Double {
 }
 
 ///|
-/// Sample this paint's active color source at a device-space point and apply
-/// paint opacity.
+/// Sample this paint's active color source at a point in canvas space and
+/// apply paint opacity.
 pub fn Paint::sample_color(self : Paint, x : Double, y : Double) -> Color {
   let color = match self.shader {
     Some(shader) => shader.sample(x, y)

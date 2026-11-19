@@ -759,20 +759,22 @@ test "Canvas::fill_rect transformed decal shader tracks tight dirty bounds" {
     @graphics.Paint::new().set_shader(shader),
   )
 
+  // Decal shader starts at user x 2, so after the +1 translate only device
+  // pixels 3..4 sample inside it; the rest stays transparent (dirty-free).
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  assert_eq(canvas.get_pixmap().get_pixel(2, 0), @graphics.Color::white())
   assert_eq(
-    canvas.get_pixmap().get_pixel(2, 0),
+    canvas.get_pixmap().get_pixel(3, 0),
     @graphics.Color::new(r=191, g=0, b=64),
   )
   assert_eq(
-    canvas.get_pixmap().get_pixel(3, 0),
+    canvas.get_pixmap().get_pixel(4, 0),
     @graphics.Color::new(r=64, g=0, b=191),
   )
-  assert_eq(canvas.get_pixmap().get_pixel(4, 0), @graphics.Color::white())
   assert_true(
     canvas.get_dirty_region().bounds() ==
-    Some(@graphics.PixelRect::new(x=2, y=0, width=2, height=1)),
+    Some(@graphics.PixelRect::new(x=3, y=0, width=2, height=1)),
   )
 }
 
@@ -1295,7 +1297,7 @@ test "Canvas::fill_path applies coverage to sweep paint shader" {
 }
 
 ///|
-test "Canvas::fill_path samples shader in device space after transform" {
+test "Canvas::fill_path resolves shader geometry in canvas space after transform" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.clear_dirty_region()
@@ -1314,13 +1316,15 @@ test "Canvas::fill_path samples shader in device space after transform" {
   )
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  // The shader spans user x 0..4; a +2 translate puts it over device pixels
+  // 2..3, and sampling maps each device centre back to user space (2.5, 3.5).
   assert_eq(
     canvas.get_pixmap().get_pixel(2, 0),
-    @graphics.Color::new(r=96, g=0, b=159),
+    @graphics.Color::new(r=223, g=0, b=32),
   )
   assert_eq(
     canvas.get_pixmap().get_pixel(3, 0),
-    @graphics.Color::new(r=32, g=0, b=223),
+    @graphics.Color::new(r=159, g=0, b=96),
   )
   assert_true(
     canvas.get_dirty_region().bounds() ==
@@ -1651,7 +1655,13 @@ test "Canvas::fill_rounded_rect matches rounded path fill" {
     @graphics.Paint::new().set_color(@graphics.Color::black()),
   )
 
-  assert_same_pixmap(helper_canvas.get_pixmap(), path_canvas.get_pixmap())
+  // Same rounded rectangle, two samplers: the analytic row-coverage fast path
+  // here and the adaptive generic path fill. Solid pixels must agree exactly;
+  // partially covered edge pixels only within the sampler tolerance.
+  assert_pixmaps_match_within_sampling(
+    helper_canvas.get_pixmap(),
+    path_canvas.get_pixmap(),
+  )
   assert_true(
     helper_canvas.get_dirty_region().bounds() ==
     path_canvas.get_dirty_region().bounds(),
@@ -2261,7 +2271,7 @@ test "Canvas::stroke_path samples radial paint shader" {
 }
 
 ///|
-test "Canvas::stroke_path samples shader in device space after transform" {
+test "Canvas::stroke_path resolves shader geometry in canvas space after transform" {
   let canvas = @graphics.Canvas::new(4, 1)
   canvas.clear(@graphics.Color::white())
   canvas.clear_dirty_region()
@@ -2284,13 +2294,15 @@ test "Canvas::stroke_path samples shader in device space after transform" {
   )
   assert_eq(canvas.get_pixmap().get_pixel(0, 0), @graphics.Color::white())
   assert_eq(canvas.get_pixmap().get_pixel(1, 0), @graphics.Color::white())
+  // The shader spans user x 0..4; a +2 translate puts it over device pixels
+  // 2..3, and sampling maps each device centre back to user space (2.5, 3.5).
   assert_eq(
     canvas.get_pixmap().get_pixel(2, 0),
-    @graphics.Color::new(r=96, g=0, b=159),
+    @graphics.Color::new(r=223, g=0, b=32),
   )
   assert_eq(
     canvas.get_pixmap().get_pixel(3, 0),
-    @graphics.Color::new(r=32, g=0, b=223),
+    @graphics.Color::new(r=159, g=0, b=96),
   )
   assert_true(
     canvas.get_dirty_region().bounds() ==
@@ -3005,7 +3017,13 @@ test "Canvas::stroke_rounded_rect matches rounded path stroke" {
     paint,
   )
 
-  assert_same_pixmap(helper_canvas.get_pixmap(), path_canvas.get_pixmap())
+  // The ring is the outer rounded rect minus the inner one, so both edges are
+  // analytic; the path strokes the same outline through the adaptive sampler.
+  // Solid pixels must agree exactly; edge pixels only within sampler tolerance.
+  assert_pixmaps_match_within_sampling(
+    helper_canvas.get_pixmap(),
+    path_canvas.get_pixmap(),
+  )
   assert_not_white(helper_canvas.get_pixmap().get_pixel(3, 1))
   assert_eq(
     helper_canvas.get_pixmap().get_pixel(3, 3),
@@ -3297,68 +3315,4 @@ test "Canvas::stroke_path resets dash phase at MoveTo" {
   assert_eq(pixmap.get_pixel(3, 1), @graphics.Color::black())
   assert_eq(pixmap.get_pixel(4, 1), @graphics.Color::black())
   assert_eq(pixmap.get_pixel(5, 1), @graphics.Color::white())
-}
-
-///|
-test "Canvas::stroke_path supports dotted strokes" {
-  let canvas = @graphics.Canvas::new(8, 5)
-  canvas.clear(@graphics.Color::white())
-  let path = @graphics.Path::new().move_to(1.0, 2.0).line_to(7.0, 2.0)
-  let paint = @graphics.Paint::new()
-    .set_color(@graphics.Color::black())
-    .set_style(Stroke)
-    .set_stroke_width(2.0)
-    .set_dotted_stroke()
-  canvas.stroke_path(path, paint)
-  let pixmap = canvas.get_pixmap()
-  assert_not_white(pixmap.get_pixel(1, 2))
-  assert_eq(pixmap.get_pixel(3, 2), @graphics.Color::white())
-  assert_not_white(pixmap.get_pixel(5, 2))
-}
-
-///|
-fn assert_not_white(color : @graphics.Color) -> Unit raise {
-  assert_true(color != @graphics.Color::white())
-}
-
-///|
-fn assert_empty_stroke_width_skips_pixels(width : Double) -> Unit raise {
-  let canvas = @graphics.Canvas::new(5, 4)
-  canvas.clear(@graphics.Color::white())
-  canvas.clear_dirty_region()
-  let path = @graphics.Path::new().move_to(0.0, 1.0).line_to(4.0, 1.0)
-  let paint = @graphics.Paint::new()
-    .set_color(@graphics.Color::black())
-    .set_style(Stroke)
-    .set_stroke_width(width)
-  canvas.stroke_path(path, paint)
-  assert_eq(paint.get_stroke_width(), 0.0)
-  assert_eq(canvas.get_pixmap().get_pixel(2, 1), @graphics.Color::white())
-  assert_true(canvas.get_dirty_region().is_empty())
-}
-
-///|
-fn assert_same_pixmap(
-  left : @graphics.Pixmap,
-  right : @graphics.Pixmap,
-) -> Unit raise {
-  assert_eq(left.get_width(), right.get_width())
-  assert_eq(left.get_height(), right.get_height())
-  for y in 0..<left.get_height() {
-    for x in 0..<left.get_width() {
-      assert_eq(left.get_pixel(x, y), right.get_pixel(x, y))
-    }
-  }
-}
-
-///|
-test "Canvas::stroke_path ignores fill paint" {
-  let canvas = @graphics.Canvas::new(3, 3)
-  canvas.clear(@graphics.Color::white())
-  let path = @graphics.Path::new().move_to(0.0, 1.0).line_to(3.0, 1.0)
-  canvas.stroke_path(
-    path,
-    @graphics.Paint::new().set_color(@graphics.Color::black()),
-  )
-  assert_eq(canvas.get_pixmap().get_pixel(1, 1), @graphics.Color::white())
 }
