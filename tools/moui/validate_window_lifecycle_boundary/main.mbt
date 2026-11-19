@@ -44,6 +44,11 @@ fn main {
     Ok(options) if options.help => println(usage())
     Ok(options) => {
       let failures = validate_window_lifecycle_boundary(options.repo_root)
+      if !window_submodule_present(options.repo_root) {
+        println(
+          "note: window submodule is not checked out; window dispatch checks skipped",
+        )
+      }
       if failures.is_empty() {
         println("window host boundary: ok")
       } else {

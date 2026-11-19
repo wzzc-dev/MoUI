@@ -8,6 +8,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# zlib is pinned through an explicit vcpkg baseline: resolving "latest" on every
+# CI run made the job non-deterministic (the unpinned baseline moved zlib to
+# 1.4, whose installed tree this script could not find). Keep the baseline at a
+# registry revision that installs zlib 1.3.2 headers and import libraries under
+# installed\x64-windows.
+$ZlibManifestBaseline = "177e8175121536d414f405ed8b3099b325a42638"
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
 . (Join-Path $scriptDir "webview2_sdk.ps1")
@@ -111,6 +118,7 @@ function Write-ZlibManifest {
   $manifest = [ordered]@{
     name = "moui-msvc-native-deps"
     "version-string" = "0.1.0"
+    "builtin-baseline" = $ZlibManifestBaseline
     dependencies = @("zlib")
   } | ConvertTo-Json -Depth 4
   Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding ASCII
