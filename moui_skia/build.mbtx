@@ -238,6 +238,24 @@ fn path_join(left : String, right : String) -> String {
 }
 
 ///|
+fn link_safe_path(path : String) -> String {
+  // `moon` tokenizes `cc-link-flags` with shell-style escaping, so a Windows
+  // path such as `D:\a\MoUI\MoUI\...` reaches the link command as
+  // `D:aMoUIMoUI...` unless it is normalized first. MSVC accepts `/` separators
+  // for `/Fo`, `/I`, and linker inputs alike, so emit forward slashes only.
+  path.replace_all(old="\\", new="/")
+}
+
+///|
+fn host_path(host : String, path : String) -> String {
+  if host == "windows" {
+    link_safe_path(path)
+  } else {
+    path
+  }
+}
+
+///|
 fn basename(path : String) -> String {
   let mut last = path
   for segment in path.split("/") {
@@ -759,10 +777,16 @@ async fn skia_values(opts : Opts) -> SkiaValues {
     (Some(_), Some(_)) => Map([])
     _ => fetch_skia_env(opts)
   }
-  let include_path = picked(opts.env, fetched, "MOUI_SKIA_SKIA_INCLUDE")
-  let lib_dir = picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB_DIR")
-  let stub_lib = picked(opts.env, fetched, "MOUI_SKIA_STUB_LIB")
-  let stub_source = picked(opts.env, fetched, "MOUI_SKIA_STUB_SOURCE")
+  let include_path = host_path(
+    opts.host,
+    picked(opts.env, fetched, "MOUI_SKIA_SKIA_INCLUDE"),
+  )
+  let lib_dir = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB_DIR"))
+  let stub_lib = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_STUB_LIB"))
+  let stub_source = host_path(
+    opts.host,
+    picked(opts.env, fetched, "MOUI_SKIA_STUB_SOURCE"),
+  )
   {
     include_dir: include_path,
     lib_dir: lib_dir,
@@ -1650,11 +1674,12 @@ async fn resolve_stub(
   with_skia : Bool,
 ) -> StubInfo {
   match config_value(opts.env, "MOUI_SKIA_STUB_LIB") {
-    Some(path) => {
+    Some(given) => {
+      let path = host_path(opts.host, given)
       if path_exists(path) {
         return { path: path, mode: "provided" }
       }
-      bail("MOUI_SKIA_STUB_LIB points at \{path}, which does not exist")
+      bail("MOUI_SKIA_STUB_LIB points at \{given}, which does not exist")
       }
     None => ()
   }
@@ -1719,8 +1744,9 @@ async fn run_prebuild() -> Unit {
   let mut text = @utf8.decode(raw) catch {
     _ => ""
   }
+  let host = host_platform()
   let module_root = match @env.current_dir() {
-    Some(dir) => dir
+    Some(dir) => host_path(host, dir)
     None => "."
   }
   if is_blank(text) {
@@ -1736,7 +1762,6 @@ async fn run_prebuild() -> Unit {
       _ => @json.Json::empty_object()
     }
   }
-  let host = host_platform()
   let opts : Opts = {
     config: config,
     env: config_env(config),
@@ -1762,7 +1787,11 @@ async fn run_prebuild() -> Unit {
       let stub = resolve_stub(opts, platform, "", empty_skia_values(), false)
       let native_link = match config_value(opts.env, "MOUI_SKIA_CC_LINK_FLAGS") {
         Some(value) => value
-        None => append_flags(stub.path, fallback_native_runtime_link_flags(platform))
+        None =>
+          append_flags(
+            link_safe_path(stub.path),
+            fallback_native_runtime_link_flags(platform),
+          )
       }
       let triangle = macos_example_link_flags(
         "",
@@ -1787,7 +1816,7 @@ async fn run_prebuild() -> Unit {
           ),
           ("MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS", triangle),
           ("MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS", metal_window),
-          ("MOUI_SKIA_STUB_LIB_PATH", stub.path),
+          ("MOUI_SKIA_STUB_LIB_PATH", link_safe_path(stub.path)),
         ],
         [("wzzc-dev/moui_skia/native", native_link)],
       )
@@ -1820,7 +1849,7 @@ async fn run_prebuild() -> Unit {
   let values = skia_values(opts)
   let flags = platform_flags(opts, platform, values)
   let stub = resolve_stub(opts, platform, flags.stub_cc, values, true)
-  let native_link = append_flags(stub.path, flags.link)
+  let native_link = append_flags(link_safe_path(stub.path), flags.link)
   let triangle = macos_example_link_flags(
     native_link,
     ["QuartzCore", "AppKit"],
@@ -1838,7 +1867,7 @@ async fn run_prebuild() -> Unit {
       ("MOUI_SKIA_ANDROID_LINK_FLAGS", flags.android),
       ("MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS", triangle),
       ("MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS", metal_window),
-      ("MOUI_SKIA_STUB_LIB_PATH", stub.path),
+      ("MOUI_SKIA_STUB_LIB_PATH", link_safe_path(stub.path)),
     ],
     [("wzzc-dev/moui_skia/native", native_link)],
   )

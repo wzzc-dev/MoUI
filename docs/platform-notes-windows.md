@@ -94,6 +94,10 @@ binding-local tests, while `moui_skia_renderer/build.mbtx` re-emits them as one
 final application `link_configs` entry. The first entry in that flag string is
 the prebuilt stub archive (`MoUISkiaStub-<tag>-<platform>-<config>-<arch>.zip`
 in `wzzc-dev/skia`), so it always precedes the Skia archives on the link line.
+Every path in that string uses forward slashes: Moon tokenizes `cc-link-flags`
+with shell-style escaping, so a `D:\a\MoUI\...` value reaches `link.exe` as
+`D:aMoUIMoUI...` and fails with `LNK1181: cannot open input file`.
+`build.mbtx` normalizes the module root and every stub/Skia path it emits.
 Publishing a new stub (only when `moui_skia/native/*.cpp` changed):
 `moui_skia/scripts/publish-stub-library.sh` prints the exact
 `gh release upload dev-6d73578a36 <zip> --repo wzzc-dev/skia` command and the

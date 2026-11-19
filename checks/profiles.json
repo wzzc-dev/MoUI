@@ -241,26 +241,6 @@
           ]
         },
         {
-          "name": "cli scaffold generator tests",
-          "argv": [
-            "moon",
-            "test",
-            "moui_cli",
-            "--target",
-            "native"
-          ]
-        },
-        {
-          "name": "cli scaffold generator purity",
-          "argv": [
-            "moon",
-            "test",
-            "moui_cli/scaffold_plan",
-            "--target",
-            "wasm-gc"
-          ]
-        },
-        {
           "name": "website docs catalog",
           "argv": [
             "node",
@@ -670,6 +650,26 @@
             "moon",
             "build",
             "examples/showcase/web_wasm",
+            "--target",
+            "wasm-gc"
+          ]
+        },
+        {
+          "name": "cli scaffold generator tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_cli",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "cli scaffold generator purity",
+          "argv": [
+            "moon",
+            "test",
+            "moui_cli/scaffold_plan",
             "--target",
             "wasm-gc"
           ]
