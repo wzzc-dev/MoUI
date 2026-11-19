@@ -101,6 +101,9 @@ pub fn Canvas::fill_rounded_rect(
   paint : Paint,
 ) -> Unit {
   guard w > 0.0 && h > 0.0 else { return }
+  if self.fill_rounded_rect_coverage(x, y, w, h, radius, paint) {
+    return
+  }
   self.fill_path(Path::new().add_rounded_rect(x, y, w, h, radius), paint)
 }
 
@@ -341,6 +344,9 @@ pub fn Canvas::stroke_rounded_rect(
   paint : Paint,
 ) -> Unit {
   guard w > 0.0 && h > 0.0 else { return }
+  if self.stroke_rounded_rect_coverage(x, y, w, h, radius, paint) {
+    return
+  }
   self.stroke_path(Path::new().add_rounded_rect(x, y, w, h, radius), paint)
 }
 
