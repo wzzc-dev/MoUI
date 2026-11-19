@@ -40,8 +40,10 @@ by real-smoke logs.
 Mirror behaviour: MOUI_SKIA_MIRROR=auto (default) downloads from the primary
 release host and falls back to every mirror recorded in
 skia-provider-lock.json, off disables mirrors, and any other value names one
-mirror to try first. Mirrors must serve byte-identical assets; every candidate
-is verified against the locked SHA256 and size.
+mirror to try first. Mirrors are either `release-download` copies (the GitCode
+repository) or `url-prefix` proxies such as gh-proxy.com that front GitHub
+without hosting a copy. Every candidate is verified against the locked SHA256
+and size, so a proxy that truncates or rewrites a file is rejected.
 EOF
 }
 
@@ -247,15 +249,24 @@ stub = stub_entry if isinstance(stub_entry, dict) else {}
 source = provider.get("source_archive", {})
 
 
-def mirror_candidates(scope, artifact_name):
-    """Mirror URLs serving artifact_name, filtered by the mirror's selection."""
+def mirror_candidates(scope, artifact_name, primary_url):
+    """Mirror URLs for one artifact, filtered by each mirror's selection.
+
+    A `release-download` mirror serves `<base_url>/<asset name>`; a `url-prefix`
+    mirror serves `<prefix><primary url>`, which is how ghproxy-style services
+    that front GitHub without hosting a copy are recorded.
+    """
     candidates = []
     for mirror in provider.get("mirrors") or []:
-        if not isinstance(mirror, dict) or mirror.get("scope") != scope:
+        if not isinstance(mirror, dict):
             continue
-        base_url = mirror.get("base_url", "")
+        scopes = mirror.get("scope")
+        if isinstance(scopes, str):
+            scopes = [scopes]
+        if scope not in (scopes or []):
+            continue
         name = mirror.get("name", "")
-        if not base_url or not name or not artifact_name:
+        if not name or not artifact_name:
             continue
         platforms = mirror.get("platforms")
         if platforms and platform not in platforms:
@@ -269,7 +280,20 @@ def mirror_candidates(scope, artifact_name):
         link_modes = mirror.get("link_modes")
         if link_modes and mode not in link_modes:
             continue
-        candidates.append(f"{name}::{base_url.replace('{tag}', tag)}{artifact_name}")
+        kind = mirror.get("kind", "release-download")
+        if kind == "release-download":
+            base_url = mirror.get("base_url", "")
+            if not base_url:
+                continue
+            url = base_url.replace("{tag}", tag) + artifact_name
+        elif kind == "url-prefix":
+            prefix = mirror.get("prefix", "")
+            if not prefix or not primary_url:
+                continue
+            url = prefix + primary_url
+        else:
+            continue
+        candidates.append(f"{name}::{url}")
     return " ".join(candidates)
 
 
@@ -285,21 +309,28 @@ items = {
     "asset_sha256": asset["sha256"],
     "asset_size": str(asset.get("size", "")),
     "asset_url": asset["url"],
-    "asset_mirrors": mirror_candidates("skia", asset["name"]),
+    "asset_mirrors": mirror_candidates("skia", asset["name"], asset["url"]),
     "link_mode": mode,
     "library_names": " ".join(asset.get("library_names", [])),
     "source_name": source_name,
     "source_url": source.get(
         "url", f"https://github.com/{provider['owner']}/{provider['repo']}/archive/refs/tags/{tag}.zip"
     ),
-    "source_mirrors": mirror_candidates("source", source_name),
+    "source_mirrors": mirror_candidates(
+        "source",
+        source_name,
+        source.get(
+            "url",
+            f"https://github.com/{provider['owner']}/{provider['repo']}/archive/refs/tags/{tag}.zip",
+        ),
+    ),
     "extra_cc_flags": provider.get("default_extra_cc_flags", {}).get(platform, ""),
     "extra_link_flags": provider.get("default_extra_link_flags", {}).get(platform, ""),
     "stub_name": stub.get("name", ""),
     "stub_sha256": stub.get("sha256", ""),
     "stub_size": str(stub.get("size", "")),
     "stub_url": stub.get("url", ""),
-    "stub_mirrors": mirror_candidates("stub", stub.get("name", "")),
+    "stub_mirrors": mirror_candidates("stub", stub.get("name", ""), stub.get("url", "")),
     "stub_sources_sha256": stub.get("sources_sha256", ""),
     "stub_library_names": " ".join(stub.get("library_names", [])),
 }

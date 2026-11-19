@@ -141,6 +141,27 @@ fetch candidates cannot drift. `.github/workflows/moui-skia-gitcode-mirror.yml`
 runs the same script with the `GITCODE_TOKEN` repository secret and skips itself
 when the secret is absent.
 
+### ghproxy-style fallback
+
+Uploading a copy is not the only fallback: the lock also records `url-prefix`
+mirrors, which front GitHub at download time instead of hosting bytes. They are
+used as `<prefix><primary url>`, so they cover every asset (Debug, wasm, the
+source archive) without any upload:
+
+```json
+{ "name": "gh-proxy-com", "kind": "url-prefix", "prefix": "https://gh-proxy.com/" }
+```
+
+They rank after the hosted GitCode copy because a copy on a Chinese CDN is
+usually faster, and every response still has to match the locked SHA256 and size:
+several of these services answer `200` with an error page or a truncated body, so
+verification is what makes them usable at all. Treat them as third-party helpers
+they can rate-limit, throttle, or disappear; they see only public release
+requests. `--no-mirror` disables them, and `MOUI_SKIA_MIRROR=gitcode` skips both
+the primary host timeout and the proxies when the GitCode copy is already there.
+`mirror-release-assets.sh --mirror <proxy>` is rejected: a proxy has nothing to
+upload.
+
 ## Fallback gate
 
 Run this on Windows when you want to verify the no-Skia build stays healthy:

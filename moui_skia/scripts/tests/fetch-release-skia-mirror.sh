@@ -25,7 +25,12 @@ for command in python3 zip unzip curl; do
 done
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/moui-skia-mirror-test.XXXXXX")"
+proxy_pid=""
 cleanup() {
+  if [[ -n "$proxy_pid" ]]; then
+    kill "$proxy_pid" 2>/dev/null || true
+    wait "$proxy_pid" 2>/dev/null || true
+  fi
   rm -rf "$work_dir"
 }
 trap cleanup EXIT
@@ -39,13 +44,60 @@ echo "fake-stub" > "$work_dir/stub-package/libmoui_skia_stub.a"
 (cd "$work_dir/package" && zip -qr "$work_dir/assets/Skia-test-macos-Release-arm64.zip" .)
 (cd "$work_dir/stub-package" && zip -qr "$work_dir/stub/MoUISkiaStub-test-macos-Release-arm64.zip" .)
 
-python3 - "$work_dir" <<'PY'
+# ghproxy-style `url-prefix` mirrors are served by a local HTTP server that
+# answers any path with the file named by the last path segment, so the test
+# never needs the network but still exercises the prefix concatenation.
+mkdir -p "$work_dir/http-root"
+cp "$work_dir/assets/Skia-test-macos-Release-arm64.zip" "$work_dir/http-root/"
+cp "$work_dir/stub/MoUISkiaStub-test-macos-Release-arm64.zip" "$work_dir/http-root/"
+cat > "$work_dir/http-proxy.py" <<'PROXY_EOF'
+import http.server
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+log = pathlib.Path(sys.argv[2])
+port = int(sys.argv[3])
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        with log.open("a", encoding="utf-8") as handle:
+            handle.write(self.path + "\n")
+        target = root / self.path.rsplit("/", 1)[-1]
+        if not target.is_file():
+            self.send_error(404)
+            return
+        data = target.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, *args):
+        pass
+
+
+http.server.HTTPServer(("127.0.0.1", port), Handler).serve_forever()
+PROXY_EOF
+proxy_port="$(python3 -c 'import socket; sock = socket.socket(); sock.bind(("127.0.0.1", 0)); print(sock.getsockname()[1]); sock.close()')"
+python3 "$work_dir/http-proxy.py" "$work_dir/http-root" "$work_dir/http-proxy.log" "$proxy_port" &
+proxy_pid=$!
+for _ in $(seq 1 50); do
+  if python3 -c "import socket, sys; sock = socket.socket(); sys.exit(0 if sock.connect_ex(('127.0.0.1', int('$proxy_port'))) == 0 else 1)" 2>/dev/null; then
+    break
+  fi
+  sleep 0.1
+done
+
+python3 - "$work_dir" "$proxy_port" <<'PY'
 import hashlib
 import json
 import pathlib
 import sys
 
 root = pathlib.Path(sys.argv[1])
+proxy_port = sys.argv[2]
 asset = root / "assets/Skia-test-macos-Release-arm64.zip"
 stub = root / "stub/MoUISkiaStub-test-macos-Release-arm64.zip"
 
@@ -86,6 +138,12 @@ lock = {
                     "name": "test-stub-mirror",
                     "scope": "stub",
                     "base_url": (root / "stub").as_uri() + "/",
+                },
+                {
+                    "name": "test-proxy",
+                    "kind": "url-prefix",
+                    "scope": ["skia", "stub", "source"],
+                    "prefix": f"http://127.0.0.1:{proxy_port}/",
                 },
             ],
             "source_archive": {
@@ -216,9 +274,30 @@ else
   check "--mirror group covers both mirrors" 0 1 "$(grep MIRROR "$work_dir/group.out" | tr '\n' ' ')"
 fi
 
-# 5. A mirror that serves the wrong bytes must be rejected, not trusted.
-cp "$work_dir/assets/Skia-test-macos-Release-arm64.zip" "$work_dir/assets/corrupt.zip"
+# 5. A `url-prefix` proxy mirror is used as `<prefix><primary url>` and its
+#    response is verified like any hosted copy.
+if run_fetch cache-proxy --mirror test-proxy --print-env >"$work_dir/proxy.out" 2>"$work_dir/proxy.err"; then
+  check "url-prefix proxy run exit status" 0 0
+else
+  check "url-prefix proxy run exit status" 0 1 "$(tail -3 "$work_dir/proxy.err" | tr '\n' ' ')"
+fi
+if grep -qx "MOUI_SKIA_SKIA_PACKAGE_MIRROR=test-proxy" "$work_dir/proxy.out" \
+  && grep -qx "MOUI_SKIA_STUB_ASSET_MIRROR=test-proxy" "$work_dir/proxy.out"; then
+  check "url-prefix proxy serves both artifacts" 0 0
+else
+  check "url-prefix proxy serves both artifacts" 0 1 "$(grep MIRROR "$work_dir/proxy.out" | tr '\n' ' ')"
+fi
+if [[ -f "$work_dir/http-proxy.log" ]] && grep -q '^/file:' "$work_dir/http-proxy.log"; then
+  check "url-prefix proxy receives the prefixed URL" 0 0
+else
+  check "url-prefix proxy receives the prefixed URL" 0 1 "$(head -2 "$work_dir/http-proxy.log" 2>/dev/null | tr '\n' ' ')"
+fi
+
+# 6. A mirror that serves the wrong bytes must be rejected, not trusted.
 printf 'corrupt' >> "$work_dir/assets/Skia-test-macos-Release-arm64.zip"
+# The proxy serves its own copy, so corrupt that one too; otherwise the proxy
+# candidate would legitimately rescue the run and hide the rejection path.
+printf 'corrupt' >> "$work_dir/http-root/Skia-test-macos-Release-arm64.zip"
 if run_fetch cache-mismatch --print-env >"$work_dir/mismatch.out" 2>"$work_dir/mismatch.err"; then
   check "corrupt mirror asset rejected" 0 1
 else
