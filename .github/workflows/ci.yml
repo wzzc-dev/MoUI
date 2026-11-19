@@ -134,7 +134,7 @@ jobs:
       # the prebuild script and the stub sources keeps a hit warm for exactly the
       # inputs that regenerate it.
       - name: Cache Skia release and stub archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache
           key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
@@ -186,7 +186,7 @@ jobs:
       # the prebuild script and the stub sources keeps a hit warm for exactly the
       # inputs that regenerate it.
       - name: Cache Skia release and stub archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache
           key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
@@ -230,7 +230,7 @@ jobs:
       # the prebuild script and the stub sources keeps a hit warm for exactly the
       # inputs that regenerate it.
       - name: Cache Skia release and stub archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache
           key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
@@ -252,7 +252,7 @@ jobs:
           moon build examples/showcase/macos_skia --target native
 
       - name: Upload macOS package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: moui-showcase-macos-app
           path: dist/macos/MoUI Showcase.app
@@ -287,7 +287,7 @@ jobs:
       # the prebuild script and the stub sources keeps a hit warm for exactly the
       # inputs that regenerate it.
       - name: Cache Skia release and stub archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache
           key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
@@ -309,7 +309,7 @@ jobs:
 
       - name: Upload performance report
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: moui-performance-budgets
           path: artifacts/performance/result.json
@@ -347,7 +347,7 @@ jobs:
 
       - name: Upload agent protocol smoke artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: moui-agent-mcp-protocol-smoke
           path: artifacts/smoke/agent-mcp-counter-protocol/
@@ -386,7 +386,7 @@ jobs:
       # the prebuild script and the stub sources keeps a hit warm for exactly the
       # inputs that regenerate it.
       - name: Cache Skia release and stub archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: moui_skia/.skia-cache
           key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
@@ -446,7 +446,7 @@ jobs:
             -BuildNumber $env:GITHUB_RUN_NUMBER
 
       - name: Upload Windows package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: moui-showcase-windows-msvc-portable
           path: dist/windows-msvc/MoUIShowcase
