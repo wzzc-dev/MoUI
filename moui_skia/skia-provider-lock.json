@@ -893,7 +893,7 @@
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
-              "sha256": "0cca2e0178f8af715e58f35a86d00d5512a753cfe5ec8be881da8fba59190ac4",
+              "sha256": "dff1342868b25632931d25e184c7a5a69404f2d22eb9118a997e280899680c84",
               "size": 501886,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
