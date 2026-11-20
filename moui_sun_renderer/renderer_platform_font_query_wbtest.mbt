@@ -48,8 +48,8 @@ test "sun platform font payload decodes to a well-formed discovery" {
 test "sun platform font payload rejects a short or mistyped header" {
   let no_payload : Bytes = Bytes::from_array([])
   assert_true(sun_decode_platform_font_payload(no_payload) is None)
-  // version 2, no matches, no list entries: the empty discovery.
-  let empty = sun_test_payload_bytes([2, 0, 0])
+  // version 3, no matches, no list entries: the empty discovery.
+  let empty = sun_test_payload_bytes([3, 0, 0])
   match sun_decode_platform_font_payload(empty) {
     Some(discovery) => {
       assert_true(discovery.matches.is_empty())
@@ -61,9 +61,14 @@ test "sun platform font payload rejects a short or mistyped header" {
   assert_true(
     sun_decode_platform_font_payload(sun_test_payload_bytes([1, 0, 0])) is None,
   )
+  // Version 2 is the pre-symbol layout; the decoder must not accept a payload
+  // whose role codes it would misread.
+  assert_true(
+    sun_decode_platform_font_payload(sun_test_payload_bytes([2, 0, 0])) is None,
+  )
   // A list count with a truncated path length prefix.
   assert_true(
-    sun_decode_platform_font_payload(sun_test_payload_bytes([2, 0, 1])) is None,
+    sun_decode_platform_font_payload(sun_test_payload_bytes([3, 0, 1])) is None,
   )
 }
 
@@ -446,4 +451,59 @@ test "weight buckets quantise on the fontconfig scale Skia matches on" {
   // fontconfig's book/light end of the scale.
   inspect(sun_font_weight_bucket(300), content="100")
   inspect(sun_font_weight_bucket(200), content="100")
+}
+
+///|
+/// The symbol role is the DirectWrite fallback Sun was missing: a check mark is
+/// a text glyph (`DrawText("?")` in the checkbox view) and U+2713 is not in the
+/// text families, so without a symbol face it painted the .notdef box.
+test "sun fallback stack covers the check mark when a symbol face exists" {
+  let discovery = match sun_platform_font_discovery() {
+    None => return
+    Some(discovery) => discovery
+  }
+  let has_symbol = discovery.matches.any(match_entry => {
+    match match_entry.role {
+      Symbol => true
+      _ => false
+    }
+  })
+  if !has_symbol {
+    return
+  }
+  let target = SunPresentTarget::new(description="symbol-coverage", present=_ => {
+    true
+  })
+  let renderer = create_with_present_target(
+    @core.SurfaceMetrics::from_logical(
+      size=@core.Size::new(width=64.0, height=32.0),
+    ),
+    target,
+  )
+  // The checkbox asks for weight 700; the symbol file only ships regular, so
+  // coverage here also pins that the fallback stack reaches past the
+  // weight-preferred faces.
+  let faces = renderer.resolved_faces(
+    @core.FontSpec::new(size=18.0, weight=700),
+  )
+  let mut covered = false
+  for face in faces {
+    if face.has_glyph_for_char(0x2713) {
+      covered = true
+    }
+  }
+  assert_true(covered)
+}
+
+///|
+/// A symbol face must never become a generic text family: it is reachable
+/// through its own name only, so registering it cannot change how body text
+/// resolves on a host that has one.
+test "sun symbol role registers no generic text family" {
+  let families = sun_platform_role_families(Symbol, "Segoe UI Symbol")
+  assert_eq(families.length(), 1)
+  match families[0] {
+    Name(name) => assert_eq(name, "Segoe UI Symbol")
+    _ => fail("symbol role must keep only its own family name")
+  }
 }

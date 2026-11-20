@@ -7,6 +7,20 @@ pub struct Canvas {
   mut clip_rect : Rect?
   state_stack : Array[CanvasState]
   dirty_region : DirtyRegion
+  /// Reused shape-fill scratch: an idle frame issues dozens of rounded fills
+  /// and strokes, and allocating a coverage row, a colour row, and four
+  /// sub-scanline span rows per shape dominated the per-fill cost. The buffers
+  /// grow to the widest shape and are then reused; every fill zeroes exactly
+  /// the slices it reads, so stale samples can never leak between shapes.
+  mut cover_scratch : Array[Double]
+  mut solid_pattern_scratch : FixedArray[Byte]
+  mut solid_pattern_red : Int32
+  mut solid_pattern_green : Int32
+  mut solid_pattern_blue : Int32
+  sample_outer_lo : FixedArray[Double]
+  sample_outer_hi : FixedArray[Double]
+  sample_hole_lo : FixedArray[Double]
+  sample_hole_hi : FixedArray[Double]
 }
 
 ///|
@@ -25,12 +39,22 @@ pub extend CanvasState with Debug::{to_repr}
 ///|
 /// Create a new canvas with the given dimensions
 pub fn Canvas::new(width : Int32, height : Int32) -> Canvas {
+  let steps = sun_shape_coverage_steps
   {
     pixmap: Pixmap::new(width, height),
     transform: Transform::identity(),
     clip_rect: None,
     state_stack: [],
     dirty_region: DirtyRegion::new(),
+    cover_scratch: [],
+    solid_pattern_scratch: FixedArray::make(0, b"\xff"[0]),
+    solid_pattern_red: -1,
+    solid_pattern_green: -1,
+    solid_pattern_blue: -1,
+    sample_outer_lo: FixedArray::make(steps, 0.0),
+    sample_outer_hi: FixedArray::make(steps, 0.0),
+    sample_hole_lo: FixedArray::make(steps, 0.0),
+    sample_hole_hi: FixedArray::make(steps, 0.0),
   }
 }
 
@@ -45,6 +69,21 @@ pub fn Canvas::get_pixmap(self : Canvas) -> Pixmap {
 pub fn Canvas::clear(self : Canvas, color : Color) -> Unit {
   self.pixmap.clear(color)
   self.dirty_region.add_all(self.pixmap.get_width(), self.pixmap.get_height())
+}
+
+///|
+/// Reset the canvas for a new frame while keeping its pixel buffer.
+///
+/// A hosted surface keeps its physical size across most frames, and allocating
+/// a fresh canvas every frame costs a full-surface allocation plus a zero fill.
+/// The buffer is reusable once the per-frame drawing state — transform, clip,
+/// and saved-state stack — is cleared. Pixels are still cleared separately with
+/// the frame's clear colour.
+pub fn Canvas::reset_for_frame(self : Canvas) -> Unit {
+  self.transform = Transform::identity()
+  self.clip_rect = None
+  self.state_stack.clear()
+  self.dirty_region.clear()
 }
 
 ///|

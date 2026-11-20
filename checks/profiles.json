@@ -596,6 +596,7 @@
         },
         {
           "name": "renderer capability consistency",
+          "host": "darwin",
           "argv": [
             "node",
             "scripts/validate-renderer-capability-consistency.mjs"

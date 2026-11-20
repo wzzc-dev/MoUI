@@ -1,30 +1,35 @@
 ///|
-/// Linux platform font discovery for the Sun CPU raster renderer.
+/// Platform font discovery for the Sun CPU raster renderer.
 ///
-/// The Skia path resolves generic families through fontconfig
-/// (`moui_text_providers/fontconfig`), so Sun asks the same source for the
-/// same faces: `fc-match` supplies one sans/mono/serif face, `fc-list` is the
-/// fallback when a match is unavailable. Discovery happens in the native stub
-/// (`renderer_platform_font_query.c`) and arrives here as one versioned
-/// payload; this file only decodes it and keeps the file-byte cache that
-/// avoids re-reading the same face for every renderer.
+/// Linux resolves generic families through fontconfig (`moui_text_providers/fontconfig`),
+/// so Sun asks the same source for the same faces: `fc-match` supplies one
+/// sans/mono/serif face, `fc-list` is the fallback when a match is unavailable.
+/// Windows resolves the faces DirectWrite hands Skia (Segoe UI, Consolas, Times
+/// New Roman, then Arial/Georgia/Courier New) from the Windows Fonts directory,
+/// plus Segoe UI Symbol so a glyph the text families do not cover draws its
+/// outline instead of the .notdef box. Discovery happens in the native stub
+/// (`renderer_platform_font_query.c`) and arrives here as one versioned payload;
+/// this file only decodes it and keeps the file-byte cache that avoids
+/// re-reading the same face for every renderer.
 ///
 /// Payload layout (little-endian i32 lengths):
-///   i32 version (2)
+///   i32 version (3)
 ///   i32 match_count
 ///     per match: i32 role, i32 weight, i32 path_len, path bytes,
 ///                i32 family_len, family bytes
 ///   i32 list_count
 ///     per list entry: i32 path_len, path bytes, i32 family_len, family
 ///
-/// role: 0 = sans, 1 = monospace, 2 = serif. `weight` is the CSS weight bucket
-/// the face was matched for (100/300/400/600/700/800), which is the same
-/// quantisation the Skia fontconfig provider applies, so both renderers pick a
-/// bold face at the same weight.
+/// role: 0 = sans, 1 = monospace, 2 = serif, 3 = symbol. `weight` is the CSS
+/// weight bucket the face was matched for (100/300/400/600/700/800), which is
+/// the same quantisation the Skia fontconfig provider applies, so both
+/// renderers pick a bold face at the same weight. Version 3 added the symbol
+/// role; a host that resolves no symbol face simply omits it.
 priv enum SunPlatformFontRole {
   Sans
   Monospace
   Serif
+  Symbol
 }
 
 ///|
@@ -49,7 +54,7 @@ priv struct SunPlatformFontDiscovery {
 }
 
 ///|
-extern "C" fn sun_linux_platform_font_payload() -> Bytes = "moui_sun_linux_platform_font_payload"
+extern "C" fn sun_platform_font_payload() -> Bytes = "moui_sun_platform_font_payload"
 
 ///|
 /// Decoded font files keyed by path. Renderer construction must stay cheap:
@@ -116,6 +121,7 @@ fn sun_platform_font_role(code : Int32) -> SunPlatformFontRole? {
     0 => Some(Sans)
     1 => Some(Monospace)
     2 => Some(Serif)
+    3 => Some(Symbol)
     _ => None
   }
 }
@@ -131,11 +137,13 @@ fn sun_decode_platform_font_payload(
     return None
   }
   let version = @render_common.async_image_read_i32_le(payload, 0)
-  if version != 2 {
+  if version != 3 {
     return None
   }
   let match_count = @render_common.async_image_read_i32_le(payload, 4)
-  if match_count < 0 || match_count > 18 {
+  // One role × weight slot per discovery; 4 roles × 6 weights caps a payload
+  // that claims more matches than the layout can hold.
+  if match_count < 0 || match_count > 24 {
     return None
   }
   let matches : Array[SunPlatformFontMatch] = []
@@ -210,5 +218,5 @@ fn sun_platform_font_weight_is_known(weight : Int32) -> Bool {
 
 ///|
 fn sun_platform_font_discovery() -> SunPlatformFontDiscovery? {
-  sun_decode_platform_font_payload(sun_linux_platform_font_payload())
+  sun_decode_platform_font_payload(sun_platform_font_payload())
 }

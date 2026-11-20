@@ -295,6 +295,11 @@ fn SunRasterRenderer::fill_rounded_rect(
   opacity : Double,
 ) -> Unit {
   let rect = rounded.rect
+  let start = if sun_profile_enabled() {
+    Some(@bench.monotonic_clock_start())
+  } else {
+    None
+  }
   self.canvas.fill_rounded_rect(
     rect.origin.x,
     rect.origin.y,
@@ -303,6 +308,13 @@ fn SunRasterRenderer::fill_rounded_rect(
     rounded.radius,
     sun_brush_paint(brush, opacity),
   )
+  match start {
+    Some(s) => {
+      let bucket = if brush is @core.Brush::Solid(_) { 32 } else { 33 }
+      sun_profile_add(bucket, @bench.monotonic_clock_end(s))
+    }
+    None => ()
+  }
 }
 
 ///|
@@ -666,131 +678,137 @@ fn sun_box_blur_pixmap(
 ) -> @sun_graphics.Pixmap {
   let r = radius.max(0.0).to_int()
   guard r > 0 else { return src }
-  // Three-pass box blur approximates a Gaussian kernel, producing
-  // much smoother falloff than a single pass while keeping the same
-  // effective blur spread (each pass uses the full integer radius).
-  let pass1 = sun_single_box_blur(src, r)
-  let pass2 = sun_single_box_blur(pass1, r)
-  sun_single_box_blur(pass2, r)
-}
-
-///|
-fn sun_single_box_blur(
-  src : @sun_graphics.Pixmap,
-  r : Int32,
-) -> @sun_graphics.Pixmap {
   let w = src.get_width()
   let h = src.get_height()
   guard w > 0 && h > 0 else { return src }
+  // Three-pass box blur approximates a Gaussian kernel, producing much smoother
+  // falloff than a single pass while keeping the same effective blur spread.
+  // All six directional passes run over the raw interleaved byte buffer with
+  // integer sliding windows and a sum → channel lookup table, and the two
+  // scratch pixmaps are allocated once for the whole chain. The earlier form
+  // allocated two pixmaps per pass and moved every pixel through `Color`
+  // get/set with double sums, which made a single popup shadow cost ~200 ms
+  // in a debug build.
   let k = 2 * r + 1
-  let temp = @sun_graphics.Pixmap::new(w, h)
-  // Horizontal pass with sliding window
-  for y in 0..<h {
-    let mut sum_r = 0.0
-    let mut sum_g = 0.0
-    let mut sum_b = 0.0
-    let mut sum_a = 0.0
-    for dx in (0 - r)..<(r + 1) {
-      let c = src.get_pixel(dx.max(0).min(w - 1), y)
-      sum_r = sum_r + c.r.to_int().to_double()
-      sum_g = sum_g + c.g.to_int().to_double()
-      sum_b = sum_b + c.b.to_int().to_double()
-      sum_a = sum_a + c.a.to_int().to_double()
-    }
-    temp.set_pixel(
-      0,
-      y,
-      @sun_graphics.Color::new(
-        r=sun_blur_channel(sum_r, k),
-        g=sun_blur_channel(sum_g, k),
-        b=sun_blur_channel(sum_b, k),
-        a=sun_blur_channel(sum_a, k),
-      ),
-    )
-    for x in 1..<w {
-      let leave = src.get_pixel((x - 1 - r).max(0), y)
-      let enter = src.get_pixel((x + r).min(w - 1), y)
-      sum_r = sum_r +
-        enter.r.to_int().to_double() -
-        leave.r.to_int().to_double()
-      sum_g = sum_g +
-        enter.g.to_int().to_double() -
-        leave.g.to_int().to_double()
-      sum_b = sum_b +
-        enter.b.to_int().to_double() -
-        leave.b.to_int().to_double()
-      sum_a = sum_a +
-        enter.a.to_int().to_double() -
-        leave.a.to_int().to_double()
-      temp.set_pixel(
-        x,
-        y,
-        @sun_graphics.Color::new(
-          r=sun_blur_channel(sum_r, k),
-          g=sun_blur_channel(sum_g, k),
-          b=sun_blur_channel(sum_b, k),
-          a=sun_blur_channel(sum_a, k),
-        ),
-      )
-    }
+  let lut = sun_blur_lut(k, r)
+  let scratch_a = @sun_graphics.Pixmap::new(w, h)
+  let scratch_b = @sun_graphics.Pixmap::new(w, h)
+  let a = scratch_a.get_pixels()
+  let b = scratch_b.get_pixels()
+  let mut source = src.get_pixels()
+  for _pass in 0..<3 {
+    sun_box_blur_horizontal(source, a, w, h, r, lut)
+    sun_box_blur_vertical(a, b, w, h, r, lut)
+    source = b
   }
-  let dst = @sun_graphics.Pixmap::new(w, h)
-  // Vertical pass with sliding window
-  for x in 0..<w {
-    let mut sum_r = 0.0
-    let mut sum_g = 0.0
-    let mut sum_b = 0.0
-    let mut sum_a = 0.0
-    for dy in (0 - r)..<(r + 1) {
-      let c = temp.get_pixel(x, dy.max(0).min(h - 1))
-      sum_r = sum_r + c.r.to_int().to_double()
-      sum_g = sum_g + c.g.to_int().to_double()
-      sum_b = sum_b + c.b.to_int().to_double()
-      sum_a = sum_a + c.a.to_int().to_double()
-    }
-    dst.set_pixel(
-      x,
-      0,
-      @sun_graphics.Color::new(
-        r=sun_blur_channel(sum_r, k),
-        g=sun_blur_channel(sum_g, k),
-        b=sun_blur_channel(sum_b, k),
-        a=sun_blur_channel(sum_a, k),
-      ),
-    )
-    for y in 1..<h {
-      let leave = temp.get_pixel(x, (y - 1 - r).max(0))
-      let enter = temp.get_pixel(x, (y + r).min(h - 1))
-      sum_r = sum_r +
-        enter.r.to_int().to_double() -
-        leave.r.to_int().to_double()
-      sum_g = sum_g +
-        enter.g.to_int().to_double() -
-        leave.g.to_int().to_double()
-      sum_b = sum_b +
-        enter.b.to_int().to_double() -
-        leave.b.to_int().to_double()
-      sum_a = sum_a +
-        enter.a.to_int().to_double() -
-        leave.a.to_int().to_double()
-      dst.set_pixel(
-        x,
-        y,
-        @sun_graphics.Color::new(
-          r=sun_blur_channel(sum_r, k),
-          g=sun_blur_channel(sum_g, k),
-          b=sun_blur_channel(sum_b, k),
-          a=sun_blur_channel(sum_a, k),
-        ),
-      )
-    }
-  }
-  dst
+  scratch_b
 }
 
 ///|
-fn sun_blur_channel(sum : Double, count : Int32) -> Byte {
-  (sum / count.to_double() + 0.5).to_int().max(0).min(255).to_byte()
+/// Window sum → rounded channel byte, clamped to `0 .. 255`.
+///
+/// The old per-pixel path computed `floor(sum / k + 0.5)` in doubles. For a
+/// non-negative integer sum and odd `k = 2r + 1`, `floor(sum / k + 0.5)` equals
+/// the integer division `(sum + r) / k`, so the table is bit-exact for every
+/// reachable sum (`0 .. 255 * k`).
+fn sun_blur_lut(k : Int32, half : Int32) -> FixedArray[Byte] {
+  let size = 255 * k + 1
+  let lut : FixedArray[Byte] = FixedArray::make(size, 0)
+  for sum in 0..<size {
+    lut[sum] = ((sum + half) / k).to_byte()
+  }
+  lut
+}
+
+///|
+/// Horizontal box-blur pass: per row, a sliding window over raw RGBA bytes.
+fn sun_box_blur_horizontal(
+  src : FixedArray[Byte],
+  dst : FixedArray[Byte],
+  w : Int32,
+  h : Int32,
+  r : Int32,
+  lut : FixedArray[Byte],
+) -> Unit {
+  let last_x = w - 1
+  for y in 0..<h {
+    let row = y * w * 4
+    let mut sum_r = 0
+    let mut sum_g = 0
+    let mut sum_b = 0
+    let mut sum_a = 0
+    for dx in (0 - r)..<(r + 1) {
+      let offset = row + dx.max(0).min(last_x) * 4
+      sum_r = sum_r + src[offset].to_int()
+      sum_g = sum_g + src[offset + 1].to_int()
+      sum_b = sum_b + src[offset + 2].to_int()
+      sum_a = sum_a + src[offset + 3].to_int()
+    }
+    let mut out = row
+    dst[out] = lut[sum_r]
+    dst[out + 1] = lut[sum_g]
+    dst[out + 2] = lut[sum_b]
+    dst[out + 3] = lut[sum_a]
+    for x in 1..<w {
+      let leave = row + (x - 1 - r).max(0) * 4
+      let enter = row + (x + r).min(last_x) * 4
+      sum_r = sum_r + src[enter].to_int() - src[leave].to_int()
+      sum_g = sum_g + src[enter + 1].to_int() - src[leave + 1].to_int()
+      sum_b = sum_b + src[enter + 2].to_int() - src[leave + 2].to_int()
+      sum_a = sum_a + src[enter + 3].to_int() - src[leave + 3].to_int()
+      out = row + x * 4
+      dst[out] = lut[sum_r]
+      dst[out + 1] = lut[sum_g]
+      dst[out + 2] = lut[sum_b]
+      dst[out + 3] = lut[sum_a]
+    }
+  }
+}
+
+///|
+/// Vertical box-blur pass: per column, a sliding window over raw RGBA bytes.
+fn sun_box_blur_vertical(
+  src : FixedArray[Byte],
+  dst : FixedArray[Byte],
+  w : Int32,
+  h : Int32,
+  r : Int32,
+  lut : FixedArray[Byte],
+) -> Unit {
+  let last_y = h - 1
+  let stride = w * 4
+  for x in 0..<w {
+    let column = x * 4
+    let mut sum_r = 0
+    let mut sum_g = 0
+    let mut sum_b = 0
+    let mut sum_a = 0
+    for dy in (0 - r)..<(r + 1) {
+      let offset = dy.max(0).min(last_y) * stride + column
+      sum_r = sum_r + src[offset].to_int()
+      sum_g = sum_g + src[offset + 1].to_int()
+      sum_b = sum_b + src[offset + 2].to_int()
+      sum_a = sum_a + src[offset + 3].to_int()
+    }
+    let mut out = column
+    dst[out] = lut[sum_r]
+    dst[out + 1] = lut[sum_g]
+    dst[out + 2] = lut[sum_b]
+    dst[out + 3] = lut[sum_a]
+    for y in 1..<h {
+      let leave = (y - 1 - r).max(0) * stride + column
+      let enter = (y + r).min(last_y) * stride + column
+      sum_r = sum_r + src[enter].to_int() - src[leave].to_int()
+      sum_g = sum_g + src[enter + 1].to_int() - src[leave + 1].to_int()
+      sum_b = sum_b + src[enter + 2].to_int() - src[leave + 2].to_int()
+      sum_a = sum_a + src[enter + 3].to_int() - src[leave + 3].to_int()
+      out = y * stride + column
+      dst[out] = lut[sum_r]
+      dst[out + 1] = lut[sum_g]
+      dst[out + 2] = lut[sum_b]
+      dst[out + 3] = lut[sum_a]
+    }
+  }
 }
 
 ///|

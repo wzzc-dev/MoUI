@@ -1,6 +1,8 @@
 import {
+  "moonbitlang/core/bench",
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "mizchi/image",
   "moonbitlang/core/math",
@@ -12,10 +14,6 @@ import {
   "wzzc-dev/moui_sun/renderer" @sun_renderer,
   "wzzc-dev/moui_sun/text" @sun_text,
 }
-
-import {
-  "moonbitlang/core/env",
-} for "test"
 
 supported_targets = "native"
 

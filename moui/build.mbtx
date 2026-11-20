@@ -18,7 +18,7 @@ import {
 /// composition roots that assemble their own link line. The Linux backend drives
 /// the GLib main loop and the AT-SPI GDBus host from one C stub set, so
 /// `gio-2.0` joins `glib-2.0` in both the include and the link flag sets.
-let macos_backend_host_flags : String = "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework UserNotifications -framework CoreGraphics -framework CoreFoundation -lz -Wl,-dead_strip -Wl,-x"
+let macos_backend_host_flags : String = "-framework AppKit -framework QuartzCore -framework IOSurface -framework UniformTypeIdentifiers -framework UserNotifications -framework CoreGraphics -framework CoreFoundation -lz -Wl,-dead_strip -Wl,-x"
 
 ///|
 let linux_backend_host_flags : String = "-lz"

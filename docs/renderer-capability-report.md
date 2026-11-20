@@ -493,9 +493,10 @@ support, update:
 
 The Skia, native WGPU, Sun and terminal columns are all machine-checked against
 their code self-reports by
-`node scripts/validate-renderer-capability-consistency.mjs`; the Web column is
-checked by wasm-side package tests because a native validator cannot import
-`moui_web_renderer`. Changing terminal projection coverage means
+`node scripts/validate-renderer-capability-consistency.mjs` (the check links the
+Metal `.mm` stubs, so it runs on macOS and prints a skip line on other hosts);
+the Web column is checked by wasm-side package tests because a native validator
+cannot import `moui_web_renderer`. Changing terminal projection coverage means
 `moui_tui_renderer/capabilities.mbt` plus its cell in this table — a
 `supported` cell there would claim pixels a cell grid cannot draw.
 

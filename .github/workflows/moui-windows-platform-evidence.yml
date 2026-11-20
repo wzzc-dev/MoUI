@@ -111,16 +111,28 @@ jobs:
               $showcasePassed = "passed"
             }
           }
+          # The Sun-vs-Skia parity step records its status in the evidence
+          # summary; it stays report-only until CI reproduces the local numbers.
+          $parityStatus = "not-recorded"
+          $evidenceSummary = "$env:GITHUB_WORKSPACE/artifacts/platform-evidence/windows/windows-platform-evidence-summary.log"
+          if (Test-Path -LiteralPath $evidenceSummary) {
+            $parityLine = Select-String -LiteralPath $evidenceSummary -Pattern "^  visual_parity_status=" | Select-Object -First 1
+            if ($parityLine) {
+              $parityStatus = ($parityLine.Line -split "=", 2)[1].Trim()
+            }
+          }
           {
             "## Windows Platform Evidence"
             ""
             "Artifact: moui-windows-platform-evidence"
             "Showcase first-frame: $showcasePassed"
+            "Sun-vs-Skia parity: $parityStatus"
             "Skia provider: ${{ inputs.skia_provider || 'release' }}"
             "Skia link mode: ${{ inputs.link_mode || 'static' }}"
             ""
             "### Logs"
             "Preflight: artifacts/platform-evidence/windows/windows-platform-evidence-preflight.log"
+            "Parity gate: artifacts/platform-evidence/windows/visual-parity/gate.log"
             "Showcase: artifacts/platform-evidence/windows/showcase-windows-skia-first-frame.log"
             "Summary: artifacts/platform-evidence/windows/windows-platform-evidence-summary.log"
           } >> $env:GITHUB_STEP_SUMMARY

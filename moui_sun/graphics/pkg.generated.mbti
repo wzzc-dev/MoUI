@@ -63,6 +63,15 @@ pub struct Canvas {
   mut clip_rect : Rect?
   state_stack : Array[CanvasState]
   dirty_region : DirtyRegion
+  mut cover_scratch : Array[Double]
+  mut solid_pattern_scratch : FixedArray[Byte]
+  mut solid_pattern_red : Int32
+  mut solid_pattern_green : Int32
+  mut solid_pattern_blue : Int32
+  sample_outer_lo : FixedArray[Double]
+  sample_outer_hi : FixedArray[Double]
+  sample_hole_lo : FixedArray[Double]
+  sample_hole_hi : FixedArray[Double]
 }
 pub fn Canvas::clear(Self, Color) -> Unit
 pub fn Canvas::clear_clip(Self) -> Unit
@@ -111,6 +120,7 @@ pub fn Canvas::new(Int32, Int32) -> Self
 pub fn[S : Surface] Canvas::present_dirty_to(Self, S) -> Result[Int32, PresentError]
 pub fn[S : Surface] Canvas::present_dirty_to_with_limit(Self, S, Int32) -> Result[Int32, PresentError]
 pub fn[S : Surface] Canvas::present_to(Self, S) -> Result[Unit, PresentError]
+pub fn Canvas::reset_for_frame(Self) -> Unit
 pub fn Canvas::reset_transform(Self) -> Unit
 pub fn Canvas::restore(Self) -> Bool
 pub fn Canvas::rotate(Self, Double) -> Unit

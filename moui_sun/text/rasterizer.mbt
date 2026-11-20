@@ -30,24 +30,71 @@ struct Rasterizer {
 
 ///|
 /// Grayscale coverage mask produced by text rasterization
+///
+/// `offset_x`/`offset_y` place the mask's top-left pixel in the device-space
+/// box it was rasterized against, so a mask can be a tight line box instead of
+/// a full-canvas buffer while still compositing at its absolute position.
+/// `phase_x`/`phase_y` record the sub-pixel text origin the coverage was
+/// rasterized for; the cache compares them on a hit, because the mask is
+/// line-local and only differs by phase when the origin keeps the same integer
+/// pixel.
 #derive(Debug)
 struct CoverageMask {
   width : Int32
   height : Int32
   pixels : FixedArray[Byte]
+  offset_x : Int32
+  offset_y : Int32
+  phase_x : Double
+  phase_y : Double
 }
 
 ///|
 pub extend CoverageMask with Debug::{to_repr}
 
 ///|
-/// Create a coverage mask from grayscale pixels
+/// Create a coverage mask from grayscale pixels with its origin at (0, 0)
 pub fn CoverageMask::new(
   width : Int32,
   height : Int32,
   pixels : FixedArray[Byte],
 ) -> CoverageMask {
-  { width, height, pixels, }
+  {
+    width,
+    height,
+    pixels,
+    offset_x: 0,
+    offset_y: 0,
+    phase_x: 0.0,
+    phase_y: 0.0,
+  }
+}
+
+///|
+/// Create a coverage mask whose top-left pixel sits at a device-space offset
+pub fn CoverageMask::new_at(
+  width : Int32,
+  height : Int32,
+  pixels : FixedArray[Byte],
+  offset_x : Int32,
+  offset_y : Int32,
+) -> CoverageMask {
+  { width, height, pixels, offset_x, offset_y, phase_x: 0.0, phase_y: 0.0, }
+}
+
+///|
+/// Create an offset-carrying coverage mask that records the sub-pixel origin
+/// its coverage was rasterized for.
+fn CoverageMask::new_at_phase(
+  width : Int32,
+  height : Int32,
+  pixels : FixedArray[Byte],
+  offset_x : Int32,
+  offset_y : Int32,
+  phase_x : Double,
+  phase_y : Double,
+) -> CoverageMask {
+  { width, height, pixels, offset_x, offset_y, phase_x, phase_y, }
 }
 
 ///|
@@ -69,9 +116,41 @@ pub fn CoverageMask::get_pixels(self : CoverageMask) -> FixedArray[Byte] {
 }
 
 ///|
+/// Get the device-space x offset of the mask's top-left pixel
+pub fn CoverageMask::get_offset_x(self : CoverageMask) -> Int32 {
+  self.offset_x
+}
+
+///|
+/// Get the device-space y offset of the mask's top-left pixel
+pub fn CoverageMask::get_offset_y(self : CoverageMask) -> Int32 {
+  self.offset_y
+}
+
+///|
+/// Get the sub-pixel x origin the mask was rasterized for
+fn CoverageMask::get_phase_x(self : CoverageMask) -> Double {
+  self.phase_x
+}
+
+///|
+/// Get the sub-pixel y origin the mask was rasterized for
+fn CoverageMask::get_phase_y(self : CoverageMask) -> Double {
+  self.phase_y
+}
+
+///|
 /// Copy this coverage mask and its pixel storage.
 pub fn CoverageMask::copy(self : CoverageMask) -> CoverageMask {
-  CoverageMask::new(self.width, self.height, copy_bytes(self.pixels))
+  CoverageMask::new_at_phase(
+    self.width,
+    self.height,
+    copy_bytes(self.pixels),
+    self.offset_x,
+    self.offset_y,
+    self.phase_x,
+    self.phase_y,
+  )
 }
 
 ///|
@@ -758,6 +837,11 @@ fn GlyphMaskCache::evict_over_capacity(self : GlyphMaskCache) -> Unit {
 struct TextMaskCache {
   mut masks : Map[String, CoverageMask]
   mut access_order : Array[String]
+  /// Laid-out advance width per cached span, keyed the same way as the masks
+  /// but without the sub-pixel phase. Static text is re-drawn every frame;
+  /// re-running shaping only to recover a width that cannot have changed is a
+  /// large part of that per-frame cost, so the width is memoised with the mask.
+  mut advances : Map[String, Double]
   capacity : Int32
   is_bounded : Bool
 }
@@ -779,7 +863,13 @@ pub extend TextMaskCacheRenderResult with Debug::{to_repr}
 ///|
 /// Create an empty text mask cache.
 pub fn TextMaskCache::new() -> TextMaskCache {
-  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false, }
+  {
+    masks: Map([]),
+    access_order: [],
+    advances: Map([]),
+    capacity: 0,
+    is_bounded: false,
+  }
 }
 
 ///|
@@ -788,6 +878,7 @@ pub fn TextMaskCache::with_capacity(capacity : Int32) -> TextMaskCache {
   {
     masks: Map([]),
     access_order: [],
+    advances: Map([]),
     capacity: capacity.max(1),
     is_bounded: true,
   }
@@ -841,6 +932,10 @@ pub fn TextMaskCache::contains(self : TextMaskCache, key : String) -> Bool {
 
 ///|
 /// Look up a rendered mask by caller-provided key.
+///
+/// The cache owns its pixel buffers: lookups return a copy so a caller cannot
+/// mutate cached coverage. Tight line-sized masks keep that copy cheap; a
+/// canvas-sized mask must never reach this cache.
 pub fn TextMaskCache::get(self : TextMaskCache, key : String) -> CoverageMask? {
   match self.masks.get(key) {
     Some(mask) => {
@@ -852,17 +947,38 @@ pub fn TextMaskCache::get(self : TextMaskCache, key : String) -> CoverageMask? {
 }
 
 ///|
+/// Return the memoised laid-out advance width for a span, if it was measured.
+pub fn TextMaskCache::get_advance(
+  self : TextMaskCache,
+  key : String,
+) -> Double? {
+  self.advances.get(key)
+}
+
+///|
+/// Memoise the laid-out advance width for a span.
+pub fn TextMaskCache::insert_advance(
+  self : TextMaskCache,
+  key : String,
+  width : Double,
+) -> Unit {
+  self.advances[key] = width
+}
+
+///|
 /// Insert or replace a rendered mask under a caller-provided key.
+///
+/// The cache stores its own copy and returns the caller's mask, so later
+/// mutation of either side cannot alias the other.
 pub fn TextMaskCache::insert(
   self : TextMaskCache,
   key : String,
   mask : CoverageMask,
 ) -> CoverageMask {
-  let stored = mask.copy()
-  self.masks[key] = stored
+  self.masks[key] = mask.copy()
   self.touch_key(key)
   self.evict_over_capacity()
-  stored.copy()
+  mask
 }
 
 ///|
@@ -909,9 +1025,56 @@ pub fn TextMaskCache::get_or_render_face_result(
 }
 
 ///|
+/// Render text into a tight, offset-carrying mask on first use and return the
+/// cached mask afterwards.
+pub fn TextMaskCache::get_or_render_face_tight(
+  self : TextMaskCache,
+  key : String,
+  face : FontFace,
+  text : String,
+  phase_x : Double,
+  phase_y : Double,
+  config : LayoutConfig,
+) -> CoverageMask {
+  self
+  .get_or_render_face_tight_result(key, face, text, phase_x, phase_y, config)
+  .get_mask()
+}
+
+///|
+/// Render text into a tight, offset-carrying mask on first use and report
+/// whether the cache missed.
+pub fn TextMaskCache::get_or_render_face_tight_result(
+  self : TextMaskCache,
+  key : String,
+  face : FontFace,
+  text : String,
+  phase_x : Double,
+  phase_y : Double,
+  config : LayoutConfig,
+) -> TextMaskCacheRenderResult {
+  match self.get(key) {
+    // A tight mask bakes the sub-pixel phase into its coverage, while the key
+    // stays position-independent so keyed-resource bookkeeping (`contains`,
+    // eviction, `len`) keeps working. Reuse only when the phase matches;
+    // otherwise re-rasterise and replace the entry under the same key.
+    Some(mask) if mask.get_phase_x() == phase_x && mask.get_phase_y() == phase_y =>
+      { mask, did_render: false, }
+    Some(_) | None => {
+      let mask = self.insert(
+        key,
+        render_text_mask_face_tight(face, text, phase_x, phase_y, config),
+      )
+      { mask, did_render: true, }
+    }
+  }
+}
+
+///|
 /// Remove a cached mask by key.
 pub fn TextMaskCache::remove(self : TextMaskCache, key : String) -> Unit {
   self.masks.remove(key)
+  self.advances.remove(key)
   self.remove_access_key(key)
 }
 
@@ -919,6 +1082,7 @@ pub fn TextMaskCache::remove(self : TextMaskCache, key : String) -> Unit {
 /// Drop all cached masks.
 pub fn TextMaskCache::clear(self : TextMaskCache) -> Unit {
   self.masks = Map([])
+  self.advances = Map([])
   self.access_order = []
 }
 
@@ -946,6 +1110,7 @@ fn TextMaskCache::evict_over_capacity(self : TextMaskCache) -> Unit {
   while self.masks.length() > self.capacity && self.access_order.length() > 0 {
     let key = self.access_order.remove(0)
     self.masks.remove(key)
+    self.advances.remove(key)
   }
 }
 
@@ -986,6 +1151,44 @@ pub fn Rasterizer::to_mask(self : Rasterizer) -> CoverageMask {
 }
 
 ///|
+/// Snapshot the current grayscale pixels as a coverage mask placed at a
+/// device-space offset.
+pub fn Rasterizer::to_mask_at(
+  self : Rasterizer,
+  offset_x : Int32,
+  offset_y : Int32,
+) -> CoverageMask {
+  CoverageMask::new_at(
+    self.width,
+    self.height,
+    copy_bytes(self.pixels),
+    offset_x,
+    offset_y,
+  )
+}
+
+///|
+/// Snapshot the current grayscale pixels as an offset- and phase-carrying
+/// coverage mask.
+fn Rasterizer::to_mask_at_phase(
+  self : Rasterizer,
+  offset_x : Int32,
+  offset_y : Int32,
+  phase_x : Double,
+  phase_y : Double,
+) -> CoverageMask {
+  CoverageMask::new_at_phase(
+    self.width,
+    self.height,
+    copy_bytes(self.pixels),
+    offset_x,
+    offset_y,
+    phase_x,
+    phase_y,
+  )
+}
+
+///|
 /// Clear the buffer
 pub fn Rasterizer::clear(self : Rasterizer) -> Unit {
   for i in 0..<self.pixels.length() {
@@ -1003,11 +1206,6 @@ fn Rasterizer::rasterize_glyph(
   y : Double,
   scale : Double,
 ) -> Unit {
-  // Clear coverage buffer
-  for i in 0..<self.coverage.length() {
-    self.coverage[i] = 0
-  }
-
   let segments = []
   for contour in glyph.contours {
     let contour_segments = flatten_contour(contour, x, y, scale)
@@ -1016,7 +1214,9 @@ fn Rasterizer::rasterize_glyph(
     }
   }
 
-  // Fill using scanline algorithm with anti-aliasing
+  // Fill using scanline algorithm with anti-aliasing. The scanline pass owns
+  // both the coverage write and the pixel apply, scoped to the glyph's own
+  // bounding rows/columns, so no full-buffer clear is needed per glyph.
   scanline_fill_with_aa(self, segments)
 }
 
@@ -1078,6 +1278,114 @@ pub fn render_text_mask_face(
   let rasterizer = Rasterizer::new(width, height)
   rasterizer.rasterize_text_face(face, text, x, y, config)
   rasterizer.to_mask()
+}
+
+///|
+/// Render text into a coverage mask that covers only the laid-out glyphs plus
+/// one pixel of padding, and record the mask's device-space offset.
+///
+/// `phase_x`/`phase_y` are the sub-pixel position of the text origin inside
+/// the pixel the caller will composite at; they are quantised by the caller
+/// and recorded on the mask, so the cache can reuse it independent of the
+/// absolute origin while still rejecting a mask rasterized for another phase.
+pub fn render_text_mask_face_tight(
+  face : FontFace,
+  text : String,
+  phase_x : Double,
+  phase_y : Double,
+  config : LayoutConfig,
+) -> CoverageMask {
+  let font = face.get_font()
+  let layout = layout_text_face(face, text, config)
+  let scale = config.font_size / face.get_units_per_em().to_double()
+  let mut min_x = 0.0
+  let mut min_y = 0.0
+  let mut max_x = 0.0
+  let mut max_y = 0.0
+  let mut has_bounds = false
+  for run in layout.get_runs() {
+    let baseline_y = phase_y + run.get_baseline_y()
+    for glyph in run.get_glyphs() {
+      match font.get_glyph(glyph.glyph_id) {
+        Simple(simple_glyph) =>
+          if simple_glyph.contours.length() > 0 {
+            let glyph_x = phase_x + glyph.origin_x
+            let glyph_min_x = glyph_x + simple_glyph.xmin.to_double() * scale
+            let glyph_max_x = glyph_x + simple_glyph.xmax.to_double() * scale
+            let glyph_min_y = baseline_y - simple_glyph.ymax.to_double() * scale
+            let glyph_max_y = baseline_y - simple_glyph.ymin.to_double() * scale
+            if !has_bounds {
+              min_x = glyph_min_x
+              max_x = glyph_max_x
+              min_y = glyph_min_y
+              max_y = glyph_max_y
+              has_bounds = true
+            } else {
+              if glyph_min_x < min_x {
+                min_x = glyph_min_x
+              }
+              if glyph_max_x > max_x {
+                max_x = glyph_max_x
+              }
+              if glyph_min_y < min_y {
+                min_y = glyph_min_y
+              }
+              if glyph_max_y > max_y {
+                max_y = glyph_max_y
+              }
+            }
+          }
+        _ => ()
+      }
+    }
+  }
+  if !has_bounds {
+    return CoverageMask::new_at_phase(
+      0,
+      0,
+      FixedArray::make(0, b"\x00"[0]),
+      0,
+      0,
+      phase_x,
+      phase_y,
+    )
+  }
+  let left = floor_to_int(min_x) - 1
+  let top = floor_to_int(min_y) - 1
+  let width = ceil_to_int(max_x) + 1 - left
+  let height = ceil_to_int(max_y) + 1 - top
+  // One malformed font must not ask for an unbounded buffer; an empty mask
+  // degrades to "nothing drawn" instead of exhausting memory.
+  if width <= 0 || height <= 0 || width > 16384 || height > 4096 {
+    return CoverageMask::new_at_phase(
+      0,
+      0,
+      FixedArray::make(0, b"\x00"[0]),
+      0,
+      0,
+      phase_x,
+      phase_y,
+    )
+  }
+  let rasterizer = Rasterizer::new(width, height)
+  for run in layout.get_runs() {
+    let baseline_y = phase_y + run.get_baseline_y()
+    for glyph in run.get_glyphs() {
+      match font.get_glyph(glyph.glyph_id) {
+        Simple(simple_glyph) =>
+          if simple_glyph.contours.length() > 0 {
+            rasterizer.rasterize_glyph(
+              simple_glyph,
+              phase_x + glyph.origin_x - left.to_double(),
+              baseline_y - top.to_double(),
+              scale,
+            )
+          }
+        _ => ()
+      }
+    }
+  }
+  rasterizer.to_mask_at_phase(left, top, phase_x, phase_y)
 }
 
 ///|
@@ -1243,7 +1551,22 @@ fn calculate_bezier_steps(
 }
 
 ///|
+/// One segment crossing of a horizontal sub-scanline.
+priv struct ScanlineCrossing {
+  x : Double
+  dir : Int32
+}
+
+///|
 /// Scanline fill with non-zero winding rule and 4x4 supersampling anti-aliasing
+///
+/// The winding test only depends on the crossings of one horizontal line, so
+/// each sub-scanline is resolved once: collect where the segments cross it,
+/// sort, and turn the accumulated winding into x-intervals. Per-pixel coverage
+/// then falls out of the sub-columns of the four sub-scanlines, instead of
+/// testing every pixel sample against every segment of the whole glyph run.
+/// The crossing formula and its strict `x < sample` comparison are unchanged,
+/// so the coverage bytes are identical to the former per-sample test.
 fn scanline_fill_with_aa(
   rasterizer : Rasterizer,
   segments : Array[LineSegment],
@@ -1271,49 +1594,102 @@ fn scanline_fill_with_aa(
   let y_start = min_y.to_int().max(0)
   let y_end = (max_y.to_int() + 1).min(rasterizer.height)
   let x_start = min_x(segments).to_int().max(0)
-  let x_end = max_x(segments).to_int().min(rasterizer.width)
+  let x_end = (max_x(segments).to_int() + 1).min(rasterizer.width)
+  guard y_start < y_end && x_start < x_end else { return }
 
   // 4x4 supersampling for anti-aliasing
   let sample_count = 4
   let sample_count_sq = sample_count * sample_count // 16
+  let crossings : Array[ScanlineCrossing] = []
 
-  // For each pixel in the bounding box
   for y in y_start..<y_end {
-    for x in x_start..<x_end {
-      let mut covered = 0
-
-      // Check each sub-pixel
-      for sy in 0..<sample_count {
-        for sx in 0..<sample_count {
-          // Sub-pixel position (center of sub-pixel)
-          let sample_x = x.to_double() +
-            (sx.to_double() + 0.5) / sample_count.to_double()
-          let sample_y = y.to_double() +
-            (sy.to_double() + 0.5) / sample_count.to_double()
-
-          // Check if this sub-pixel is inside the glyph using non-zero winding rule
-          if is_point_inside_glyph(sample_x, sample_y, segments) {
-            covered = covered + 1
+    let row = y * rasterizer.width
+    // `coverage` is a per-row accumulator of covered sub-samples; clear the
+    // slice this glyph can touch before adding to it.
+    for offset in 0..<(x_end - x_start) {
+      rasterizer.coverage[row + x_start + offset] = 0
+    }
+    for sy in 0..<sample_count {
+      let sample_y = y.to_double() +
+        (sy.to_double() + 0.5) / sample_count.to_double()
+      crossings.clear()
+      for seg in segments {
+        let y0 = seg.y0
+        let y1 = seg.y1
+        // Half-open crossing test: a shared vertex crosses exactly one of its
+        // two segments, the same rule the per-sample winding test used.
+        if (y0 < sample_y && y1 >= sample_y) ||
+          (y1 < sample_y && y0 >= sample_y) {
+          let t = (sample_y - y0) / (y1 - y0)
+          crossings.push({
+            x: seg.x0 + t * (seg.x1 - seg.x0),
+            dir: if y0 < y1 {
+              1
+            } else {
+              -1
+            },
+          })
+        }
+      }
+      if crossings.is_empty() {
+        continue
+      }
+      sort_crossings(crossings)
+      let mut winding = 0
+      let mut span_start = 0.0
+      for crossing in crossings {
+        let inside_before = winding != 0
+        winding = winding + crossing.dir
+        let inside_after = winding != 0
+        if !inside_before && inside_after {
+          span_start = crossing.x
+        } else if inside_before && !inside_after {
+          // A sample at sub-column x + q is inside iff span_start < x + q <
+          // crossing.x, so each sub-column covers one integer px interval.
+          for sx in 0..<sample_count {
+            let q = (sx.to_double() + 0.5) / sample_count.to_double()
+            let first = (floor_to_int(span_start - q) + 1).max(x_start)
+            let last = (ceil_to_int(crossing.x - q) - 1).min(x_end - 1)
+            let mut px = first
+            while px <= last {
+              let index = row + px
+              rasterizer.coverage[index] = rasterizer.coverage[index] + 1
+              px = px + 1
+            }
           }
         }
       }
-
-      // Map coverage count to 0-255
-      if covered > 0 {
-        let idx = y * rasterizer.width + x
-        rasterizer.coverage[idx] = covered * 255 / sample_count_sq
+    }
+    for x in x_start..<x_end {
+      let index = row + x
+      let covered = rasterizer.coverage[index]
+      // Map coverage count to 0-255 and apply it (max-composite; overlapping
+      // glyphs keep the stronger coverage).
+      let value = if covered > 0 { covered * 255 / sample_count_sq } else { 0 }
+      if value > 0 {
+        let coverage = value.min(255).to_byte()
+        if coverage.to_int() > rasterizer.pixels[index].to_int() {
+          rasterizer.pixels[index] = coverage
+        }
       }
     }
   }
+}
 
-  // Apply coverage to pixels
-  for i in 0..<rasterizer.pixels.length() {
-    if rasterizer.coverage[i] > 0 {
-      let coverage = rasterizer.coverage[i].min(255).to_byte()
-      if coverage.to_int() > rasterizer.pixels[i].to_int() {
-        rasterizer.pixels[i] = coverage
-      }
+///|
+/// Insertion sort of one sub-scanline's crossings; a scanline crosses only a
+/// handful of segments, so the quadratic order is below the noise.
+fn sort_crossings(crossings : Array[ScanlineCrossing]) -> Unit {
+  let mut index = 1
+  while index < crossings.length() {
+    let value = crossings[index]
+    let mut slot = index
+    while slot > 0 && crossings[slot - 1].x > value.x {
+      crossings[slot] = crossings[slot - 1]
+      slot = slot - 1
     }
+    crossings[slot] = value
+    index = index + 1
   }
 }
 
@@ -1374,42 +1750,6 @@ fn max_x(segments : Array[LineSegment]) -> Double {
     }
   }
   max_val
-}
-
-///|
-/// Check if a point is inside the glyph using non-zero winding rule
-fn is_point_inside_glyph(
-  px : Double,
-  py : Double,
-  segments : Array[LineSegment],
-) -> Bool {
-  // Count crossings with direction
-  let mut winding = 0
-
-  for seg in segments {
-    let y0 = seg.y0
-    let y1 = seg.y1
-
-    // Check if segment crosses the horizontal line at py
-    if (y0 < py && y1 >= py) || (y1 < py && y0 >= py) {
-      // Calculate x intersection
-      let t = (py - y0) / (y1 - y0)
-      let x = seg.x0 + t * (seg.x1 - seg.x0)
-
-      // Only count if intersection is to the left of the point
-      if x < px {
-        // Direction: +1 if crossing upward, -1 if downward
-        if y0 < y1 {
-          winding = winding + 1
-        } else {
-          winding = winding - 1
-        }
-      }
-    }
-  }
-
-  // Non-zero rule: point is inside if winding number is non-zero
-  winding != 0
 }
 
 ///|

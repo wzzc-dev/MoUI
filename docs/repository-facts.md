@@ -90,7 +90,7 @@ This file is generated from repository manifests and validator reports.
 | render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
 | native text model (moui/render/native_text/pkg.generated.mbti) | 96 | 46 | 1 |
 | skia renderer (moui_skia_renderer/pkg.generated.mbti) | 294 | 167 | 7 |
-| sun renderer (moui_sun_renderer/pkg.generated.mbti) | 283 | 175 | 1 |
+| sun renderer (moui_sun_renderer/pkg.generated.mbti) | 284 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 190 | 92 | 2 |
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 119 | 55 | 2 |
 | native metal renderer (moui_metal_renderer/pkg.generated.mbti) | 57 | 13 | 0 |

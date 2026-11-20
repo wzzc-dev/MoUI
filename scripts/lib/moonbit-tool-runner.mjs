@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { hostMatches, hostName } from "./check-runner.mjs";
 
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const staticToolsRoot = resolve(repoRoot, "tools");
@@ -80,6 +81,13 @@ export const runCommand = (command, args, options = {}) => {
 };
 
 export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) => {
+  const { host, ...runOptions } = options;
+  if (!hostMatches(host, process.platform)) {
+    console.log(
+      `${toolPackage.split("/").at(-1)}: skipped on ${hostName()} (this MoonBit tool only builds on a ${host} host)`,
+    );
+    return { status: 0 };
+  }
   const isStaticTool = toolPackage.startsWith("tools/");
   const packagePath = isStaticTool ? toolPackage.slice("tools/".length) : toolPackage;
   const workspaceArgs = isStaticTool ? [ "-C", staticToolsRoot ] : [];
@@ -87,12 +95,12 @@ export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) => {
     "moon",
     [ ...workspaceArgs, "run", packagePath, "--target", "native", "--", ...toolArgs ],
     {
-      ...options,
+      ...runOptions,
       env: {
         ...process.env,
         MOUI_SKIA_DISABLE_PREBUILD_SKIA:
           process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
-        ...(options.env ?? {}),
+        ...(runOptions.env ?? {}),
       },
     },
   );

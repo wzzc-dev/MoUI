@@ -440,3 +440,60 @@ fn sun_stabilize_grapheme_cluster_caret_rects(
   }
   stabilized
 }
+
+///|
+/// Cached per-run text layout: the resolved face stack, the wrapped line plan,
+/// and the single-line metric span. Static UI text is laid out identically on
+/// every frame, so re-running fallback planning and width measurement per frame
+/// is pure waste; the cache entry is keyed by the font identity, the wrapping
+/// width, and the text.
+priv struct SunTextRunEntry {
+  faces : Array[@sun_text.FontFace]
+  plan : SunTextLinePlan
+  metric_span : Double
+}
+
+///|
+fn sun_text_run_cache_key(
+  run : @core.TextRun,
+  config : @sun_text.LayoutConfig,
+) -> String {
+  "sun:text-run:" +
+  run.font.to_json().stringify() +
+  ":max:" +
+  config.max_width.to_string() +
+  ":" +
+  run.text
+}
+
+///|
+fn SunRasterRenderer::sun_text_run_entry(
+  self : SunRasterRenderer,
+  run : @core.TextRun,
+  config : @sun_text.LayoutConfig,
+) -> SunTextRunEntry {
+  let key = sun_text_run_cache_key(run, config)
+  match self.text_run_cache.get(key) {
+    Some(entry) => entry
+    None => {
+      let faces = self.resolved_faces(run.font)
+      let entry = {
+        faces,
+        plan: sun_text_line_plan(faces, run.text, config),
+        metric_span: sun_text_metric_span(faces, config),
+      }
+      if self.text_run_cache.length() >= sun_text_run_cache_capacity {
+        if self.text_run_cache_order.length() > 0 {
+          let oldest = self.text_run_cache_order.remove(0)
+          self.text_run_cache.remove(oldest)
+        }
+      }
+      self.text_run_cache[key] = entry
+      self.text_run_cache_order.push(key)
+      entry
+    }
+  }
+}
+
+///|
+let sun_text_run_cache_capacity : Int32 = 512

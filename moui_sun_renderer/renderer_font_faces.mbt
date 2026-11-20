@@ -13,6 +13,9 @@ fn SunRasterRenderer::register_font_family_data(
   for key in sun_font_family_registration_keys(family, weight) {
     ignore(self.text_system.register_font_bytes(key, data))
   }
+  // The face stack a run resolves to depends on the registered fonts.
+  self.text_run_cache.clear()
+  self.text_run_cache_order = []
 }
 
 ///|
@@ -54,10 +57,13 @@ fn SunRasterRenderer::register_default_platform_fonts(
 ///
 /// Linux discovers the faces fontconfig hands the Skia text provider, so both
 /// renderers draw the same system families at the same weight (see
-/// `renderer_platform_font_query.mbt`). Bundled macOS paths stay for the macOS
-/// route; on Linux they simply do not exist and are skipped. Callers tolerate
-/// missing files, so a host without system fonts keeps falling back to
-/// placeholder glyphs instead of panicking.
+/// `renderer_platform_font_query.mbt`). Windows adds a symbol role (Segoe UI
+/// Symbol) that joins the fallback stack under its own family only, so a check
+/// mark or arrow the text families do not cover draws an outline instead of the
+/// .notdef box. Bundled macOS paths stay for the macOS route; on Linux they
+/// simply do not exist and are skipped. Callers tolerate missing files, so a
+/// host without system fonts keeps falling back to placeholder glyphs instead of
+/// panicking.
 ///
 /// A weight bucket whose file is the same as the regular one adds nothing: the
 /// plain family keys already resolve that file, which is exactly what
@@ -175,6 +181,7 @@ fn sun_platform_font_role_code(role : SunPlatformFontRole) -> Int32 {
     Sans => 0
     Monospace => 1
     Serif => 2
+    Symbol => 3
   }
 }
 
@@ -182,7 +189,9 @@ fn sun_platform_font_role_code(role : SunPlatformFontRole) -> Int32 {
 /// Family keys registered for one fontconfig-discovered face. Generic names
 /// mirror what the Skia fontconfig provider maps to `sans-serif`/`serif`/
 /// `monospace`, so a `system-ui` request resolves to the same file on both
-/// renderers.
+/// renderers. The symbol role deliberately registers no generic name: its face
+/// joins the fallback stack through its own family only, so a symbol font can
+/// never take over ordinary text.
 fn sun_platform_role_families(
   role : SunPlatformFontRole,
   family : String,
@@ -191,6 +200,7 @@ fn sun_platform_role_families(
     Sans => [SystemUi, UiSansSerif, SansSerif]
     Monospace => [UiMonospace, Monospace]
     Serif => [UiSerif, Serif]
+    Symbol => []
   }
   if !family.is_empty() {
     families.push(Name(family))
@@ -208,6 +218,9 @@ fn sun_platform_font_list_fallback(
     Sans => "sans"
     Monospace => "mono"
     Serif => "serif"
+    // Symbol faces are resolved through the candidate table, never through the
+    // role fallback list, so no family keyword can match here.
+    Symbol => "symbol"
   }
   for entry in discovery.entries {
     if grouped.contains(entry.path + "#400") {

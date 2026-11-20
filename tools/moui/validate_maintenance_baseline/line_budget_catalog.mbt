@@ -185,7 +185,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 425,
+      max_lines: 428,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -229,9 +229,13 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/image_resource_completions.mbt", max_lines: 101, },
     { path: "moui/render/image_resource_records.mbt", max_lines: 70, },
     { path: "moui/render/image_resource_types.mbt", max_lines: 75, },
-    { path: "moui_sun_renderer/renderer.mbt", max_lines: 373, },
+    // 373 -> 394: the per-run text cache (faces + line plan + metric span) and
+    // its FIFO order live beside the other renderer-owned caches.
+    { path: "moui_sun_renderer/renderer.mbt", max_lines: 394, },
     { path: "moui_sun_renderer/renderer_commands.mbt", max_lines: 899, }, // path clip fallback + advanced blend arms
-    { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 87, },
+    // 87 -> 100: `pixels()` keeps one materialised view of the frame snapshot
+    // so readback and tests stop copying 6.4 MB per frame.
+    { path: "moui_sun_renderer/renderer_surface_model.mbt", max_lines: 100, },
     { path: "moui_sun_renderer/renderer_text_draw.mbt", max_lines: 664, },
     {
       path: "moui_sun_renderer/renderer_text_diagnostic_producers.mbt",

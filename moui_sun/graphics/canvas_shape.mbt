@@ -1,29 +1,53 @@
 ///|
-/// Sample a paint's color source for one device-space pixel centre.
+/// Precomputed paint-sampling state for one draw operation.
 ///
-/// Shader geometry (gradient start/end points, radial centres) is stated in the
-/// user space the app draws in, while rasterisation works in device pixels.
-/// Sampling the shader with raw device coordinates makes a gradient under a 2x
-/// canvas transform reach its end colour at half its intended length; mapping
-/// the point back through the inverse transform keeps shader geometry aligned
-/// with the shapes it fills. Solid paints ignore the position entirely, so the
-/// transform work only happens when a shader is actually active.
-fn Canvas::sample_paint_color(
-  self : Canvas,
-  paint : Paint,
-  x : Double,
-  y : Double,
-) -> Color {
-  match paint.get_shader() {
-    Some(_) =>
-      match self.transform.inverse() {
-        Some(inverse) => {
-          let (user_x, user_y) = inverse.apply(x, y)
-          paint.sample_color(user_x, user_y)
-        }
-        None => paint.sample_color(x, y)
-      }
-    None => paint.sample_color(x, y)
+/// Shader geometry lives in user space while rasterisation walks device pixels,
+/// so a shader paint must map every sample back through the inverse canvas
+/// transform. Hoisting that inverse out of the pixel loops is what makes a
+/// large gradient fill cost sampling instead of a matrix inversion per pixel.
+/// Solid paints have no positional dependence at all: their filter and opacity
+/// are folded into one constant colour up front.
+priv struct PaintSampler {
+  paint : Paint
+  inverse : Transform?
+  is_solid : Bool
+  constant : Color
+}
+
+///|
+/// Build the sampling state for one draw operation.
+fn Canvas::paint_sampler(self : Canvas, paint : Paint) -> PaintSampler {
+  if paint.has_shader() {
+    // An identity transform needs no mapping; skipping it keeps the common
+    // untransformed draw identical to the fallback path.
+    let inverse = if self.transform == Transform::identity() {
+      None
+    } else {
+      self.transform.inverse()
+    }
+    { paint, inverse, is_solid: false, constant: Color::transparent(), }
+  } else {
+    {
+      paint,
+      inverse: None,
+      is_solid: true,
+      constant: paint.sample_color(0.0, 0.0),
+    }
+  }
+}
+
+///|
+/// Sample the precomputed paint state at one device-space pixel centre.
+fn PaintSampler::sample(self : PaintSampler, x : Double, y : Double) -> Color {
+  if self.is_solid {
+    return self.constant
+  }
+  match self.inverse {
+    Some(inverse) => {
+      let (user_x, user_y) = inverse.apply(x, y)
+      self.paint.sample_color(user_x, user_y)
+    }
+    None => self.paint.sample_color(x, y)
   }
 }
 
@@ -60,17 +84,14 @@ pub fn Canvas::fill_rect(
   guard x_start < x_end && y_start < y_end else { return }
 
   if paint.has_shader() {
+    let sampler = self.paint_sampler(paint)
     let mut dirty_x_start = x_end
     let mut dirty_y_start = y_end
     let mut dirty_x_end = x_start
     let mut dirty_y_end = y_start
     for py in y_start..<y_end {
       for px in x_start..<x_end {
-        let color = self.sample_paint_color(
-          paint,
-          px.to_double() + 0.5,
-          py.to_double() + 0.5,
-        )
+        let color = sampler.sample(px.to_double() + 0.5, py.to_double() + 0.5)
         guard should_blend_source_color(color, paint.blend_mode) else {
           continue
         }
@@ -329,8 +350,11 @@ pub fn Canvas::fill_path(self : Canvas, path : Path, paint : Paint) -> Unit {
   let sample_count = 4
   let sample_count_sq = sample_count * sample_count
   let sample_count_double = sample_count.to_double()
+  let sampler = self.paint_sampler(paint)
 
   for y in y_start..<y_end {
+    let mut row_dirty_start = x_end
+    let mut row_dirty_end = x_start
     for x in x_start..<x_end {
       let mut covered = 0
       for sy in 0..<sample_count {
@@ -349,19 +373,19 @@ pub fn Canvas::fill_path(self : Canvas, path : Path, paint : Paint) -> Unit {
           self.pixmap,
           x,
           y,
-          self.sample_paint_color(
-            paint,
-            x.to_double() + 0.5,
-            y.to_double() + 0.5,
-          ),
+          sampler.sample(x.to_double() + 0.5, y.to_double() + 0.5),
           covered,
           sample_count_sq,
           paint.blend_mode,
         )
         if did_blend {
-          self.mark_dirty_bounds(x, y, x + 1, y + 1)
+          row_dirty_start = row_dirty_start.min(x)
+          row_dirty_end = row_dirty_end.max(x + 1)
         }
       }
+    }
+    if row_dirty_start < row_dirty_end {
+      self.mark_dirty_bounds(row_dirty_start, y, row_dirty_end, y + 1)
     }
   }
 }
@@ -459,8 +483,11 @@ fn Canvas::stroke_path_with_local_metrics(
   let sample_count = 4
   let sample_count_sq = sample_count * sample_count
   let sample_count_double = sample_count.to_double()
+  let sampler = self.paint_sampler(paint)
 
   for y in y_start..<y_end {
+    let mut row_dirty_start = x_end
+    let mut row_dirty_end = x_start
     for x in x_start..<x_end {
       let mut covered = 0
       for sy in 0..<sample_count {
@@ -488,19 +515,19 @@ fn Canvas::stroke_path_with_local_metrics(
           self.pixmap,
           x,
           y,
-          self.sample_paint_color(
-            paint,
-            x.to_double() + 0.5,
-            y.to_double() + 0.5,
-          ),
+          sampler.sample(x.to_double() + 0.5, y.to_double() + 0.5),
           covered,
           sample_count_sq,
           paint.blend_mode,
         )
         if did_blend {
-          self.mark_dirty_bounds(x, y, x + 1, y + 1)
+          row_dirty_start = row_dirty_start.min(x)
+          row_dirty_end = row_dirty_end.max(x + 1)
         }
       }
+    }
+    if row_dirty_start < row_dirty_end {
+      self.mark_dirty_bounds(row_dirty_start, y, row_dirty_end, y + 1)
     }
   }
 }
@@ -542,8 +569,11 @@ fn Canvas::stroke_path_with_device_metrics(
   let sample_count = 4
   let sample_count_sq = sample_count * sample_count
   let sample_count_double = sample_count.to_double()
+  let sampler = self.paint_sampler(paint)
 
   for y in y_start..<y_end {
+    let mut row_dirty_start = x_end
+    let mut row_dirty_end = x_start
     for x in x_start..<x_end {
       let mut covered = 0
       for sy in 0..<sample_count {
@@ -570,19 +600,19 @@ fn Canvas::stroke_path_with_device_metrics(
           self.pixmap,
           x,
           y,
-          self.sample_paint_color(
-            paint,
-            x.to_double() + 0.5,
-            y.to_double() + 0.5,
-          ),
+          sampler.sample(x.to_double() + 0.5, y.to_double() + 0.5),
           covered,
           sample_count_sq,
           paint.blend_mode,
         )
         if did_blend {
-          self.mark_dirty_bounds(x, y, x + 1, y + 1)
+          row_dirty_start = row_dirty_start.min(x)
+          row_dirty_end = row_dirty_end.max(x + 1)
         }
       }
+    }
+    if row_dirty_start < row_dirty_end {
+      self.mark_dirty_bounds(row_dirty_start, y, row_dirty_end, y + 1)
     }
   }
 }

@@ -116,7 +116,7 @@
     {
       "label": "sun renderer",
       "path": "moui_sun_renderer/pkg.generated.mbti",
-      "lines": 283,
+      "lines": 284,
       "public_declarations": 175,
       "pub_all_declarations": 1
     },
