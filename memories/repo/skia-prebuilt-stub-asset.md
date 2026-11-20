@@ -93,3 +93,13 @@
   `build.mbtx`'s stub cache key has no arch component, so the per-leg
   `actions/cache` key must keep `platform-arch` in it or two arches on one OS
   can restore each other's archive.
+- Windows stub pitfall: the bash provider fetch reports Git Bash POSIX paths
+  (`/d/a/...`), which the native Windows `moon`/`cl` cannot resolve, so
+  `build.mbtx` panics while resolving the link mode. The Windows matrix leg must
+  use `fetch-release-skia.ps1` (`D:\...` paths), exactly like the windows-msvc CI
+  jobs. Symptom: `MOUI_SKIA_LINK_MODE=static requested, but /d/a/... PanicError`
+  followed by an empty `MOUI_SKIA_STUB_LIB_PATH`.
+- Publish plumbing detail: `publish-stub-library.sh --print-env` output is
+  sourced with `set -a` in the publish job, because the `gh`, `curl`, and
+  `python3` children read `MOUI_SKIA_STUB_*` from the environment. Without
+  allexport the lock patch dies with `KeyError`.
