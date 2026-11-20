@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/async/process",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
+  "moonbitlang/x/fs",
 }
 ---
 
@@ -19,7 +20,19 @@ import {
 let delegated_script : String = "../moui_skia_renderer/build.mbtx"
 
 ///|
-let delegated_cache : String = "../moui_skia_renderer/.skia-cache/prebuild-target"
+let delegated_cache : String = "../moui_skia_renderer/.skia-cache/prebuild-target-tests"
+
+///|
+/// The parent moon keeps the shared dependency source cache locked for the whole
+/// build, so this delegated (nested) moon must resolve against its own cache.
+let delegated_dep_cache : String = "../moui_skia_renderer/.skia-cache/prebuild-dep-cache-tests"
+
+///|
+/// MSVC keeps its debug record and linker response files in TMP, and the parent
+/// build runs other native prebuilds at the same time; a shared TMP makes those
+/// `cl` runs fail with `D8018`/`D8050`.
+let delegated_tmp : String = "../moui_skia_renderer/.skia-cache/prebuild-tmp-tests"
+
 
 ///|
 fn json_field(value : @json.Json, key : String) -> @json.Json? {
@@ -88,6 +101,12 @@ async fn main {
     None => "."
   }
   let renderer_root = path_join(module_root, "../moui_skia_renderer")
+  let tmp_dir = path_join(renderer_root, delegated_tmp)
+  if !@fs.path_exists(tmp_dir) {
+    @fs.create_dir(tmp_dir) catch {
+      _ => ()
+    }
+  }
   let result = @process.run(
     "moon",
     [
@@ -98,6 +117,13 @@ async fn main {
       "--target-dir",
       path_join(renderer_root, delegated_cache),
     ],
+    extra_env=Map([
+      ("MOON_DEP_CACHE", path_join(renderer_root, delegated_dep_cache)),
+      ("MOUI_SKIA_PREBUILD_CACHE_NAMESPACE", "tests"),
+      ("TMP", tmp_dir),
+      ("TEMP", tmp_dir),
+      ("TMPDIR", tmp_dir),
+    ]),
     stdout=@process.Collect,
     stderr=@process.Inherit,
     cwd=renderer_root,

@@ -230,10 +230,12 @@ async fn capture(
   program : String,
   args : Array[String],
   cwd : String,
+  extra_env : Map[String, String],
 ) -> (Int, String, String) {
   let result = @process.run(
     program,
     args,
+    extra_env=extra_env,
     stdout=@process.Collect,
     stderr=@process.Collect,
     cwd=cwd,
@@ -273,6 +275,19 @@ fn var_from_output(output : String, name : String) -> String {
 }
 
 ///|
+/// moon may run the module prebuild hooks of one build concurrently, and both the
+/// renderer hook and the `moui_tests` delegation end up nesting a moon in
+/// `moui_skia`. Each caller therefore gets its own target/dep cache subtree;
+/// sharing one made two concurrent nested links write the same `single.exe` and
+/// one of them failed with MSVC `D8018` (cannot create linker response file).
+fn cache_key_for_caller() -> String {
+  match @env.get_env_var("MOUI_SKIA_PREBUILD_CACHE_NAMESPACE") {
+    Some(value) => if is_blank(value) { "renderer" } else { value }
+    None => "renderer"
+  }
+}
+
+///|
 async fn run_parent_prebuild(opts : RendererOpts, config_text : String) -> String {
   let cache_dir = path_join(opts.parent_root, ".skia-cache")
   ensure_dir(cache_dir)
@@ -286,14 +301,31 @@ async fn run_parent_prebuild(opts : RendererOpts, config_text : String) -> Strin
   // The nested `moon run` may surface the parent module prebuild hook (which
   // also reads stdin) before the script runs, so the script falls back to this
   // file whenever its stdin is already drained.
-  let target_dir = path_join(cache_dir, "prebuild-target")
+  let cache_key = cache_key_for_caller()
+  let target_dir = path_join(cache_dir, "prebuild-target-\{cache_key}")
+  // The parent moon keeps the shared dependency source cache locked for the
+  // whole build, so a nested moon that reuses it fails hard with `Unable to
+  // lock dependency source cache`. Give the nested resolve its own cache under
+  // the module's `.skia-cache/` so it never contends with the parent lock.
+  let dep_cache = path_join(cache_dir, "prebuild-dep-cache-\{cache_key}")
+  // The parent build runs several native prebuilds at once and MSVC keeps its
+  // debug record and linker response files in TMP; concurrent `cl` runs sharing
+  // one TMP fail with `D8018`/`D8050`. Give the nested build its own TMP.
+  let tmp_dir = path_join(cache_dir, "prebuild-tmp-\{cache_key}")
+  ensure_dir(tmp_dir)
   let (code, out, err) = capture(
     "moon",
     ["run", "build.mbtx", "--target", "native", "--target-dir", target_dir],
     opts.parent_root,
+    Map([
+      ("MOON_DEP_CACHE", dep_cache),
+      ("TMP", tmp_dir),
+      ("TEMP", tmp_dir),
+      ("TMPDIR", tmp_dir),
+    ]),
   )
   if code != 0 {
-    bail("moui_skia prebuild exited with \{code}: \{err}")
+    bail("moui_skia prebuild exited with \{code}: \{err}\n\{out}")
   }
   out
 }

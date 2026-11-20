@@ -56,6 +56,15 @@ You can browse and install extra skills here:
   `.mbtx` script, no Node). It prints one JSON object with `vars` (expanded as
   `${build.*}` in `moon.pkg`) and one `link_configs` entry, the only carrier that
   reaches is-main links.
+- Nested `moon` runs from a prebuild (the `moui_skia_renderer` hook and the
+  `moui_tests` delegation both re-run `moui_skia/build.mbtx`) need their own
+  `MOON_DEP_CACHE`, their own `--target-dir` subtree and their own `TMP`/`TEMP`:
+  the parent build holds the shared dep-source cache lock for its whole run and
+  runs prebuilds concurrently, so a nested moon that shares any of them fails
+  with `Unable to lock dependency source cache`, MSVC `D8018` (cannot create
+  linker response file) or `D8050` (cannot put the command line in the debug
+  record). Both scripts namespace those paths through
+  `MOUI_SKIA_PREBUILD_CACHE_NAMESPACE`.
 - The C++ stub (`native/*.cpp`) is **not** part of the `mbt` `native-stub`
   compile anymore. It is published per platform/config/arch in MoUI's own
   `skia-stub-<skia-tag>` release (the `wzzc-dev/skia` release keeps only the
