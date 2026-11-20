@@ -177,6 +177,7 @@ pub struct SunRasterRenderer {
   mut blur_radius_stack : Array[Double]
   mut rounded_clip_stack : Array[@core.RoundedRect]
   mut platform_view_draw_fn : (() -> Unit)?
+  // private fields
 }
 pub fn SunRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> Bool
 pub fn SunRasterRenderer::cached_layer_diagnostic(Self) -> SunCachedLayerDiagnostic

@@ -143,11 +143,12 @@ pub fn Pixmap::from_bmp_bytes(
 
 ///|
 fn rgba_bytes_from_pixels(pixels : FixedArray[Byte]) -> Bytes {
-  let out : Array[Byte] = []
-  for i in 0..<pixels.length() {
-    out.push(pixels[i])
-  }
-  Bytes::from_array(out)
+  // `unsafe_blit` is the `%fixedarray.copy` intrinsic (a bulk memcpy), and
+  // `Bytes::from_array` adopts a freshly blitted array. A per-byte `Array::push`
+  // loop used to dominate per-frame readback (tens of milliseconds per surface).
+  let copied : FixedArray[Byte] = FixedArray::make(pixels.length(), 0)
+  FixedArray::unsafe_blit(copied, 0, pixels, 0, pixels.length())
+  Bytes::from_array(copied[:])
 }
 
 ///|

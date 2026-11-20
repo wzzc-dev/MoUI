@@ -21,17 +21,20 @@ pub fn Canvas::draw_mask(
     y + height,
   )
   guard x_start < x_end && y_start < y_end else { return }
+  // Mask compositing is the text path: build the sampler once for the whole
+  // mask so a gradient fill pays one matrix inversion instead of one per glyph
+  // pixel, and a solid fill samples a precomputed constant. Dirty bounds are
+  // accumulated per row, matching the coverage path.
+  let sampler = self.paint_sampler(paint)
   for py in y_start..<y_end {
+    let mut dirty_start = x_end
+    let mut dirty_end = x_start
     for px in x_start..<x_end {
       let mask_x = px - x
       let mask_y = py - y
       let coverage = mask[mask_y * width + mask_x].to_int()
       if coverage > 0 {
-        let color = self.sample_paint_color(
-          paint,
-          px.to_double() + 0.5,
-          py.to_double() + 0.5,
-        )
+        let color = sampler.sample(px.to_double() + 0.5, py.to_double() + 0.5)
         let alpha = (color.a.to_int() * coverage + 127) / 255
         if blend_sampled_source_pixel(
             self.pixmap,
@@ -40,9 +43,13 @@ pub fn Canvas::draw_mask(
             color.with_alpha(clamp_byte(alpha)),
             paint.blend_mode,
           ) {
-          self.mark_dirty_bounds(px, py, px + 1, py + 1)
+          dirty_start = dirty_start.min(px)
+          dirty_end = dirty_end.max(px + 1)
         }
       }
+    }
+    if dirty_start < dirty_end {
+      self.mark_dirty_bounds(dirty_start, py, dirty_end, py + 1)
     }
   }
 }
@@ -83,13 +90,16 @@ pub fn Canvas::draw_mask_rect(
         dst_y + clipped_src.height,
       )
       guard x_start < x_end && y_start < y_end else { return }
+      let sampler = self.paint_sampler(paint)
       for py in y_start..<y_end {
+        let mut dirty_start = x_end
+        let mut dirty_end = x_start
         for px in x_start..<x_end {
           let mask_x = clipped_src.x + px - dst_x
           let mask_y = clipped_src.y + py - dst_y
           let coverage = mask[mask_y * mask_width + mask_x].to_int()
           if coverage > 0 {
-            let color = paint.sample_color(
+            let color = sampler.sample(
               px.to_double() + 0.5,
               py.to_double() + 0.5,
             )
@@ -101,9 +111,13 @@ pub fn Canvas::draw_mask_rect(
                 color.with_alpha(clamp_byte(alpha)),
                 paint.blend_mode,
               ) {
-              self.mark_dirty_bounds(px, py, px + 1, py + 1)
+              dirty_start = dirty_start.min(px)
+              dirty_end = dirty_end.max(px + 1)
             }
           }
+        }
+        if dirty_start < dirty_end {
+          self.mark_dirty_bounds(dirty_start, py, dirty_end, py + 1)
         }
       }
     }
@@ -130,6 +144,35 @@ pub fn Canvas::draw_pixmap(
     y + src.get_height(),
   )
   guard x_start < x_end && y_start < y_end else { return }
+  // The common case — source-over with no filter — is byte identical to the
+  // per-pixel path but runs straight over the pixel buffers, and reports the
+  // touched bounding box so the dirty region gets one rect instead of one per
+  // pixel. Shadow masks and layer composites (hundreds of thousands of pixels
+  // per frame) go through here.
+  if paint.blend_mode is SourceOver &&
+    paint_filter_option_is_none_or_identity(paint.get_filter()) {
+    match
+      self.pixmap.blend_pixmap_source_over(
+        src,
+        x,
+        y,
+        x_start,
+        y_start,
+        x_end,
+        y_end,
+        paint.opacity,
+      ) {
+      Some(rect) =>
+        self.mark_dirty_bounds(
+          rect.x,
+          rect.y,
+          rect.x + rect.width,
+          rect.y + rect.height,
+        )
+      None => ()
+    }
+    return
+  }
   for py in y_start..<y_end {
     for px in x_start..<x_end {
       let color = paint.sample_source_color(src.get_pixel(px - x, py - y))
@@ -171,6 +214,30 @@ pub fn Canvas::draw_pixmap_rect(
         dst_y + clipped_src.height,
       )
       guard x_start < x_end && y_start < y_end else { return }
+      if paint.blend_mode is SourceOver &&
+        paint_filter_option_is_none_or_identity(paint.get_filter()) {
+        match
+          self.pixmap.blend_pixmap_source_over(
+            src,
+            dst_x - clipped_src.x,
+            dst_y - clipped_src.y,
+            x_start,
+            y_start,
+            x_end,
+            y_end,
+            paint.opacity,
+          ) {
+          Some(rect) =>
+            self.mark_dirty_bounds(
+              rect.x,
+              rect.y,
+              rect.x + rect.width,
+              rect.y + rect.height,
+            )
+          None => ()
+        }
+        return
+      }
       for py in y_start..<y_end {
         for px in x_start..<x_end {
           let src_x = clipped_src.x + px - dst_x
@@ -629,6 +696,88 @@ pub fn Canvas::draw_transformed_quality_pixmap(
 }
 
 ///|
+/// Exact axis-aligned one-to-one blit of a source pixmap rectangle.
+///
+/// Retained-layer composites land here: the layer pixmap is rendered at
+/// `logical size x device scale`, and the composite maps it back onto exactly
+/// that many device pixels. Every device pixel centre then falls on a source
+/// pixel centre, so nearest and bilinear sampling are both an exact copy and
+/// the per-pixel matrix inverse plus resample can be skipped.
+///
+/// Returns `false` and leaves the caller on the general path whenever the
+/// mapping is not exact: a fractional device origin, a non-integral scale, a
+/// source rect that needs clipping, or bicubic sampling.
+fn Canvas::blit_pixmap_rect_exact(
+  self : Canvas,
+  src : Pixmap,
+  src_rect : PixelRect,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  paint : Paint,
+  sampling : ImageSampling,
+) -> Bool {
+  match sampling {
+    Nearest | Bilinear => ()
+    _ => return false
+  }
+  let transform = self.transform
+  guard transform.b == 0.0 &&
+    transform.c == 0.0 &&
+    transform.a > 0.0 &&
+    transform.d > 0.0 else {
+    return false
+  }
+  guard src_rect.x >= 0 &&
+    src_rect.y >= 0 &&
+    src_rect.x + src_rect.width <= src.get_width() &&
+    src_rect.y + src_rect.height <= src.get_height() else {
+    return false
+  }
+  // The destination must cover exactly one device pixel per source pixel.
+  guard width * transform.a == src_rect.width.to_double() &&
+    height * transform.d == src_rect.height.to_double() else {
+    return false
+  }
+  let left = x * transform.a + transform.tx
+  let top = y * transform.d + transform.ty
+  let left_floor = left.floor()
+  let top_floor = top.floor()
+  guard left - left_floor < 1.0e-9 && top - top_floor < 1.0e-9 else {
+    return false
+  }
+  let left_int = left_floor.to_int()
+  let top_int = top_floor.to_int()
+  let (x_start, y_start, x_end, y_end) = clipped_int_bounds(
+    self,
+    left_int,
+    top_int,
+    left_int + src_rect.width,
+    top_int + src_rect.height,
+  )
+  guard x_start < x_end && y_start < y_end else { return true }
+  for py in y_start..<y_end {
+    let sy = src_rect.y + (py - top_int)
+    let mut dirty_start = x_end
+    let mut dirty_end = x_start
+    for px in x_start..<x_end {
+      let sx = src_rect.x + (px - left_int)
+      let color = paint.sample_source_color(src.get_pixel(sx, sy))
+      if should_blend_source_color(color, paint.blend_mode) {
+        self.pixmap.blend_pixel_with_mode(px, py, color, paint.blend_mode)
+        dirty_start = dirty_start.min(px)
+        dirty_end = dirty_end.max(px + 1)
+      }
+    }
+    if dirty_start < dirty_end {
+      self.mark_dirty_bounds(dirty_start, py, dirty_end, py + 1)
+    }
+  }
+  true
+}
+
+///|
 /// Draw a source pixmap rectangle transformed by the current canvas transform.
 pub fn Canvas::draw_transformed_sampled_pixmap_rect(
   self : Canvas,
@@ -644,6 +793,11 @@ pub fn Canvas::draw_transformed_sampled_pixmap_rect(
   guard paint.style is Fill else { return }
   guard width > 0.0 && height > 0.0 else { return }
   guard src.get_width() > 0 && src.get_height() > 0 else { return }
+  if self.blit_pixmap_rect_exact(
+      src, src_rect, x, y, width, height, paint, sampling,
+    ) {
+    return
+  }
   let src_bounds = PixelRect::new(
     x=0,
     y=0,

@@ -391,6 +391,7 @@ fn SunRasterRenderer::render_cached_command_range(
 ) -> Bool {
   let mut index = start
   while index < end {
+    let command_start = @bench.monotonic_clock_start()
     match commands[index] {
       BeginRetainedLayer(spec) =>
         match sun_find_cached_layer_end(commands, index + 1, spec.key) {
@@ -426,6 +427,10 @@ fn SunRasterRenderer::render_cached_command_range(
           command, canvas_scopes, opacity_stack, blend_mode_stack, layer_spec_stack,
           rounded_clip_transform_stack,
         )
+        sun_profile_add(
+          sun_profile_tag(command),
+          @bench.monotonic_clock_end(command_start),
+        )
         index = index + 1
       }
     }
@@ -455,7 +460,9 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
       cached_scale is Some(scale) &&
       scale == self.metrics.scale_factor {
       let pixmap = self.cached_layer_pixmaps[cache_key]
+      let composite_start = @bench.monotonic_clock_start()
       self.draw_cached_layer_pixmap(pixmap, spec.frame, opacity)
+      sun_profile_add(28, @bench.monotonic_clock_end(composite_start))
       self.cached_layer_admission_record(cache_key).record_hit()
       self.cached_layer_hit_count = self.cached_layer_hit_count + 1
       stats.cache_hit_count = stats.cache_hit_count + 1
@@ -463,9 +470,12 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
     }
   }
   stats.cache_miss_count = stats.cache_miss_count + 1
-  self.update_cached_layer(
+  let miss_start = @bench.monotonic_clock_start()
+  let result = self.update_cached_layer(
     spec, commands, child_start, child_end, opacity, stats,
   )
+  sun_profile_add(29, @bench.monotonic_clock_end(miss_start))
+  result
 }
 
 ///|

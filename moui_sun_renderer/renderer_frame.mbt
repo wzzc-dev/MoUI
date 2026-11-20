@@ -19,9 +19,18 @@ fn SunRasterRenderer::render_frame_inner(
   self : SunRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult raise SunRendererError {
-  self.canvas = new_canvas_for_metrics(self.metrics)
+  let profile = sun_profile_enabled()
+  let profile_start = @bench.monotonic_clock_start()
+  sun_profile_begin_frame()
+  self.prepare_canvas_for_frame()
   self.canvas.clear(sun_color(frame.clear_color))
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
+  let setup_us = if profile {
+    @bench.monotonic_clock_end(profile_start)
+  } else {
+    0.0
+  }
+  let replay_start = @bench.monotonic_clock_start()
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let canvas_scopes : Array[@render_common.PlanScopeKind] = []
@@ -73,14 +82,28 @@ fn SunRasterRenderer::render_frame_inner(
       diagnostics=sun_unsupported_command_events(self),
     )
   }
+  let replay_us = @bench.monotonic_clock_end(replay_start)
+  let platform_view_start = @bench.monotonic_clock_start()
   match self.platform_view_draw_fn {
     Some(draw_fn) => draw_fn()
     None => ()
   }
+  sun_profile_add(30, @bench.monotonic_clock_end(platform_view_start))
+  let read_start = @bench.monotonic_clock_start()
   let sun_frame = self.read_frame()
+  let read_us = @bench.monotonic_clock_end(read_start)
   self.last_frame = Some(sun_frame)
+  let present_start = @bench.monotonic_clock_start()
   if (self.target.present)(sun_frame) {
+    let present_us = @bench.monotonic_clock_end(present_start)
     self.present_count = self.present_count + 1
+    sun_profile_report_frame(
+      frame.commands.length(),
+      setup_us,
+      replay_us,
+      read_us,
+      present_us,
+    )
     stats.to_render_frame_result(
       presented=true,
       diagnostics=sun_unsupported_command_events(self),

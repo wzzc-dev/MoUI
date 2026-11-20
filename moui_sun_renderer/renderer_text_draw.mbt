@@ -206,7 +206,7 @@ fn SunRasterRenderer::draw_text(
   // No registered face: the placeholder draws in the run's coordinate space
   // and the canvas transform applies once. Transforming the run first would
   // scale it a second time and push the glyphs off the frame.
-  if self.resolved_faces(run.font).is_empty() {
+  if self.text_system.font_count() == 0 {
     self.draw_text_placeholder(run, opacity)
     return
   }
@@ -276,12 +276,13 @@ fn SunRasterRenderer::draw_text_clipped(
   opacity : Double,
 ) -> Unit {
   let config = sun_text_layout_config(run.font, run.frame.size.width)
-  let faces = self.resolved_faces(run.font)
+  let entry = self.sun_text_run_entry(run, config)
+  let faces = entry.faces
   guard !faces.is_empty() else {
     self.draw_text_placeholder(run, opacity)
     return
   }
-  let plan = sun_text_line_plan(faces, run.text, config)
+  let plan = entry.plan
   guard !plan.lines.is_empty() else { return }
   let paint = sun_paint(run.color, opacity)
   let line_height = plan.line_height
@@ -291,7 +292,7 @@ fn SunRasterRenderer::draw_text_clipped(
   // frame. Multi-line runs keep the configured pitch, the same geometry the
   // paragraph layout reports and paints.
   let total_height = if plan.lines.length() <= 1 {
-    sun_text_metric_span(faces, config)
+    entry.metric_span
   } else {
     line_height * plan.lines.length().to_double()
   }
@@ -563,6 +564,14 @@ fn sun_text_metric_span(
 }
 
 ///|
+/// Cache key for one laid-out line's coverage masks.
+///
+/// The key covers what the mask geometry depends on: the resolved font (family
+/// selection, size, weight, style, line height, letter spacing — all through
+/// `FontSpec`'s serialised identity) and the line text. Paint colour is not part
+/// of the identity because the mask stores coverage only and is composited with
+/// whatever paint the run carries. The actual draw position is also absent: the
+/// fallback path re-keys by sub-pixel phase, and tight masks are line-local.
 fn sun_text_cache_key(
   run : @core.TextRun,
   line_index : Int32,
@@ -571,9 +580,7 @@ fn sun_text_cache_key(
   "sun:text:" +
   line_index.to_string() +
   ":" +
-  run.font.size.to_string() +
-  ":" +
-  run.color.to_json().stringify() +
+  run.font.to_json().stringify() +
   ":" +
   text
 }

@@ -27,6 +27,8 @@ pub fn read_file(String) -> Bytes raise @fs.IOError
 
 pub fn render_text_mask_face(FontFace, String, Int32, Int32, Double, Double, LayoutConfig) -> CoverageMask
 
+pub fn render_text_mask_face_tight(FontFace, String, Double, Double, LayoutConfig) -> CoverageMask
+
 pub fn select_font_face_index_for_char(Array[FontFace], Int32) -> Int32
 
 pub fn write_file(String, Bytes) -> Unit raise @fs.IOError
@@ -38,9 +40,12 @@ pub fn write_file(String, Bytes) -> Unit raise @fs.IOError
 type CoverageMask
 pub fn CoverageMask::copy(Self) -> Self
 pub fn CoverageMask::get_height(Self) -> Int32
+pub fn CoverageMask::get_offset_x(Self) -> Int32
+pub fn CoverageMask::get_offset_y(Self) -> Int32
 pub fn CoverageMask::get_pixels(Self) -> FixedArray[Byte]
 pub fn CoverageMask::get_width(Self) -> Int32
 pub fn CoverageMask::new(Int32, Int32, FixedArray[Byte]) -> Self
+pub fn CoverageMask::new_at(Int32, Int32, FixedArray[Byte], Int32, Int32) -> Self
 pub fn CoverageMask::to_repr(Self) -> @debug.Repr
 
 #derive(@debug.Debug)
@@ -440,6 +445,7 @@ pub fn Rasterizer::get_width(Self) -> Int32
 pub fn Rasterizer::new(Int32, Int32) -> Self
 pub fn Rasterizer::rasterize_text_face(Self, FontFace, String, Double, Double, LayoutConfig) -> Unit
 pub fn Rasterizer::to_mask(Self) -> CoverageMask
+pub fn Rasterizer::to_mask_at(Self, Int32, Int32) -> CoverageMask
 
 #derive(Eq, @debug.Debug)
 type Script
@@ -530,9 +536,13 @@ pub fn TextMaskCache::capacity(Self) -> Int32
 pub fn TextMaskCache::clear(Self) -> Unit
 pub fn TextMaskCache::contains(Self, String) -> Bool
 pub fn TextMaskCache::get(Self, String) -> CoverageMask?
+pub fn TextMaskCache::get_advance(Self, String) -> Double?
 pub fn TextMaskCache::get_or_render_face(Self, String, FontFace, String, Int32, Int32, Double, Double, LayoutConfig) -> CoverageMask
 pub fn TextMaskCache::get_or_render_face_result(Self, String, FontFace, String, Int32, Int32, Double, Double, LayoutConfig) -> TextMaskCacheRenderResult
+pub fn TextMaskCache::get_or_render_face_tight(Self, String, FontFace, String, Double, Double, LayoutConfig) -> CoverageMask
+pub fn TextMaskCache::get_or_render_face_tight_result(Self, String, FontFace, String, Double, Double, LayoutConfig) -> TextMaskCacheRenderResult
 pub fn TextMaskCache::insert(Self, String, CoverageMask) -> CoverageMask
+pub fn TextMaskCache::insert_advance(Self, String, Double) -> Unit
 pub fn TextMaskCache::is_capacity_bounded(Self) -> Bool
 pub fn TextMaskCache::is_empty(Self) -> Bool
 pub fn TextMaskCache::len(Self) -> Int32

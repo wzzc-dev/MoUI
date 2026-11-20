@@ -615,10 +615,14 @@ fn draw_text_face(
   config : @text.LayoutConfig,
   paint : @graphics.Paint,
 ) -> Unit {
-  let mask = @text.render_text_mask_face(
-    face, text, width, height, x, y, config,
+  ignore(width)
+  ignore(height)
+  let (origin_x, phase_x) = text_mask_origin(x)
+  let (origin_y, phase_y) = text_mask_origin(y)
+  let mask = @text.render_text_mask_face_tight(
+    face, text, phase_x, phase_y, config,
   )
-  draw_coverage_mask(canvas, mask, paint)
+  draw_coverage_mask_at(canvas, mask, origin_x, origin_y, paint)
 }
 
 ///|
@@ -636,10 +640,18 @@ fn draw_text_face_cached(
   text_key : String,
   paint : @graphics.Paint,
 ) -> TextMaskDrawResult {
-  let result = text_cache.get_or_render_face_result(
-    text_key, face, text, width, height, x, y, config,
+  ignore(width)
+  ignore(height)
+  let (origin_x, phase_x) = text_mask_origin(x)
+  let (origin_y, phase_y) = text_mask_origin(y)
+  // The caller key stays verbatim: callers use it as the keyed-resource name
+  // (`contains_text_mask` and eviction rely on an exact match). The mask itself
+  // records the sub-pixel phase, and the cache re-rasterises when it differs,
+  // so a mask rendered for another fractional position is never replayed.
+  let result = text_cache.get_or_render_face_tight_result(
+    text_key, face, text, phase_x, phase_y, config,
   )
-  draw_coverage_mask(canvas, result.get_mask(), paint)
+  draw_coverage_mask_at(canvas, result.get_mask(), origin_x, origin_y, paint)
   { did_render_mask: result.did_render(), }
 }
 
@@ -824,23 +836,41 @@ fn draw_text_fallback_line_with_cache(
     } else {
       let face = faces[span.get_face_index()]
       let span_text = span.get_text()
+      let advance_key = fallback_text_advance_key(
+        text_key_prefix,
+        span_index,
+        span.get_face_index(),
+        span_text,
+        line_config,
+      )
+      let mut span_width = -1.0
       match text_cache {
         Some(cache) => {
+          match cache.get_advance(advance_key) {
+            Some(width) => span_width = width
+            None => ()
+          }
+          let (origin_x, phase_x) = text_mask_origin(cursor_x)
+          let (origin_y, phase_y) = text_mask_origin(y)
           let key = fallback_text_cache_key(
             text_key_prefix,
             span_index,
             span.get_face_index(),
             span_text,
-            width,
-            height,
-            cursor_x,
-            y,
+            phase_x,
+            phase_y,
             line_config,
           )
-          let result = cache.get_or_render_face_result(
-            key, face, span_text, width, height, cursor_x, y, line_config,
+          let result = cache.get_or_render_face_tight_result(
+            key, face, span_text, phase_x, phase_y, line_config,
           )
-          draw_coverage_mask(canvas, result.get_mask(), paint)
+          draw_coverage_mask_at(
+            canvas,
+            result.get_mask(),
+            origin_x,
+            origin_y,
+            paint,
+          )
           if result.did_render() {
             rendered_mask_count += 1
           } else {
@@ -852,7 +882,17 @@ fn draw_text_fallback_line_with_cache(
             canvas, face, span_text, cursor_x, y, width, height, line_config, paint,
           )
       }
-      cursor_x += @text.TextLayout::layout(face, span_text, line_config).get_width()
+      // The advance cannot change while the span identity does not, so once a
+      // line has been laid out its width is reused; shaping on every frame only
+      // to re-learn the same width is pure waste in a static UI.
+      if span_width < 0.0 {
+        span_width = @text.TextLayout::layout(face, span_text, line_config).get_width()
+        match text_cache {
+          Some(cache) => cache.insert_advance(advance_key, span_width)
+          None => ()
+        }
+      }
+      cursor_x += span_width
       drawn_span_count += 1
     }
     emitted_char_count += span.get_char_count()
@@ -991,15 +1031,42 @@ fn estimate_missing_span_advance(
 }
 
 ///|
+/// Cache key for one fallback span's tight coverage mask.
+///
+/// The mask is rasterised into a line-local box, so the absolute draw position
+/// is not part of the identity: only the sub-pixel phase (which shifts the
+/// glyph coverage inside the box) is. That lets a scrolled or re-laid-out line
+/// reuse its mask as long as the phase matches.
+fn fallback_text_advance_key(
+  prefix : String,
+  span_index : Int32,
+  face_index : Int32,
+  text : String,
+  config : @text.LayoutConfig,
+) -> String {
+  prefix +
+  ":fallback-advance:" +
+  span_index.to_string() +
+  ":face:" +
+  face_index.to_string() +
+  ":size:" +
+  config.font_size.to_string() +
+  ":letter:" +
+  config.letter_spacing.to_string() +
+  ":word:" +
+  config.word_spacing.to_string() +
+  ":text:" +
+  text
+}
+
+///|
 fn fallback_text_cache_key(
   prefix : String,
   span_index : Int32,
   face_index : Int32,
   text : String,
-  width : Int32,
-  height : Int32,
-  x : Double,
-  y : Double,
+  phase_x : Double,
+  phase_y : Double,
   config : @text.LayoutConfig,
 ) -> String {
   prefix +
@@ -1007,14 +1074,10 @@ fn fallback_text_cache_key(
   span_index.to_string() +
   ":face:" +
   face_index.to_string() +
-  ":width:" +
-  width.to_string() +
-  ":height:" +
-  height.to_string() +
-  ":x:" +
-  x.to_string() +
-  ":y:" +
-  y.to_string() +
+  ":phase-x:" +
+  phase_x.to_string() +
+  ":phase-y:" +
+  phase_y.to_string() +
   ":size:" +
   config.font_size.to_string() +
   ":letter:" +
@@ -1034,15 +1097,33 @@ fn fallback_glyph_atlas_cache_prefix(
 }
 
 ///|
-/// Composite a text coverage mask on a canvas.
+/// Composite a text coverage mask on a canvas at the mask's own origin.
 fn draw_coverage_mask(
   canvas : @graphics.Canvas,
   mask : @text.CoverageMask,
   paint : @graphics.Paint,
 ) -> Unit {
+  draw_coverage_mask_at(
+    canvas,
+    mask,
+    mask.get_offset_x(),
+    mask.get_offset_y(),
+    paint,
+  )
+}
+
+///|
+/// Composite a text coverage mask on a canvas with an extra origin offset.
+fn draw_coverage_mask_at(
+  canvas : @graphics.Canvas,
+  mask : @text.CoverageMask,
+  origin_x : Int32,
+  origin_y : Int32,
+  paint : @graphics.Paint,
+) -> Unit {
   canvas.draw_mask(
-    0,
-    0,
+    origin_x + mask.get_offset_x(),
+    origin_y + mask.get_offset_y(),
     mask.get_width(),
     mask.get_height(),
     mask.get_pixels(),
@@ -1083,6 +1164,28 @@ fn glyph_atlas_cache_key(
   font_size : Double,
 ) -> String {
   prefix + ":glyph:" + glyph_id.to_string() + ":size:" + font_size.to_string()
+}
+
+///|
+/// Split a device-space coordinate into an integer mask origin and a
+/// quantised sub-pixel phase.
+///
+/// Tight text masks are rasterised in a line-local box; the phase decides where
+/// the glyph coverage sits inside that box. Quantising to 1/16 px keeps the
+/// mask cache addressable at the cost of at most ~0.03 px of glyph shift, which
+/// is below what the 4x4 sample grid can resolve.
+fn text_mask_origin(value : Double) -> (Int32, Double) {
+  let base = floor_to_int(value)
+  let mut phase = value - base.to_double()
+  if phase < 0.0 {
+    phase = 0.0
+  }
+  let quantised = (phase * 16.0).round() / 16.0
+  if quantised >= 1.0 {
+    (base + 1, 0.0)
+  } else {
+    (base, quantised)
+  }
 }
 
 ///|

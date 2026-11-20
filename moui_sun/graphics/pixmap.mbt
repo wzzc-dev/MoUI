@@ -209,10 +209,23 @@ pub fn Pixmap::get_pixel(self : Pixmap, x : Int32, y : Int32) -> Color {
 ///|
 /// Clear the pixmap with a color
 pub fn Pixmap::clear(self : Pixmap, color : Color) -> Unit {
-  for y in 0..<self.height {
-    for x in 0..<self.width {
-      self.set_pixel(x, y, color)
-    }
+  let width = self.width
+  let height = self.height
+  guard width > 0 && height > 0 else { return }
+  let pixels = self.pixels
+  let row_len = width.to_int() * 4
+  // Write one row, then duplicate it with a bulk copy per row. Clearing a
+  // 1600x1000 hosted surface used to run 1.6M guarded `set_pixel` calls every
+  // frame; now it is one row of stores plus `height - 1` memcpys.
+  for x in 0..<width {
+    let idx = x * 4
+    pixels[idx] = color.r
+    pixels[idx + 1] = color.g
+    pixels[idx + 2] = color.b
+    pixels[idx + 3] = color.a
+  }
+  for y in 1..<height.to_int() {
+    FixedArray::unsafe_blit(pixels, y * row_len, pixels, 0, row_len)
   }
 }
 
@@ -226,10 +239,37 @@ pub fn Pixmap::fill_rect(
   h : Int32,
   color : Color,
 ) -> Unit {
-  for dy in 0..<h {
-    for dx in 0..<w {
-      self.set_pixel(x + dx, y + dy, color)
-    }
+  guard w > 0 && h > 0 else { return }
+  let x_start = x.max(0)
+  let y_start = y.max(0)
+  let x_end = (x + w).min(self.width)
+  let y_end = (y + h).min(self.height)
+  guard x_start < x_end && y_start < y_end else { return }
+  let span = (x_end - x_start).to_int()
+  let row_len = span * 4
+  // Build one row of the colour, then blit it down the rectangle. Rectangle
+  // fills are the single most frequent primitive (every panel, chip and
+  // indicator), so this trades a guarded `set_pixel` per pixel for one row
+  // build plus `h` memcpys.
+  let row : FixedArray[Byte] = FixedArray::make(row_len, 0)
+  for i in 0..<span {
+    let idx = i * 4
+    row[idx] = color.r
+    row[idx + 1] = color.g
+    row[idx + 2] = color.b
+    row[idx + 3] = color.a
+  }
+  let pixels = self.pixels
+  let stride = self.width.to_int() * 4
+  let left = x_start.to_int() * 4
+  for py in y_start..<y_end {
+    FixedArray::unsafe_blit(
+      pixels,
+      py.to_int() * stride + left,
+      row,
+      0,
+      row_len,
+    )
   }
 }
 
@@ -243,11 +283,13 @@ pub fn Pixmap::blend_rect(
   h : Int32,
   color : Color,
 ) -> Unit {
-  for dy in 0..<h {
-    for dx in 0..<w {
-      self.blend_pixel(x + dx, y + dy, color)
-    }
-  }
+  guard w > 0 && h > 0 else { return }
+  let x_start = x.max(0)
+  let y_start = y.max(0)
+  let x_end = (x + w).min(self.width)
+  let y_end = (y + h).min(self.height)
+  guard x_start < x_end && y_start < y_end else { return }
+  self.blend_rect_solid(x_start, y_start, x_end, y_end, color)
 }
 
 ///|
@@ -260,11 +302,207 @@ fn Pixmap::blend_rect_with_mode(
   color : Color,
   blend_mode : BlendMode,
 ) -> Unit {
+  guard w > 0 && h > 0 else { return }
+  if blend_mode is SourceOver {
+    let x_start = x.max(0)
+    let y_start = y.max(0)
+    let x_end = (x + w).min(self.width)
+    let y_end = (y + h).min(self.height)
+    guard x_start < x_end && y_start < y_end else { return }
+    self.blend_rect_solid(x_start, y_start, x_end, y_end, color)
+    return
+  }
   for dy in 0..<h {
     for dx in 0..<w {
       self.blend_pixel_with_mode(x + dx, y + dy, color, blend_mode)
     }
   }
+}
+
+///|
+/// Composite a solid straight-alpha colour over a clamped rectangle.
+///
+/// Byte identical to `Color::blend_over` per pixel, but the destination guard
+/// and `Color` round-trip are hoisted out of the loop: a rectangle fill runs
+/// once per panel, chip and hover overlay, so the per-pixel allocation and
+/// bounds checks showed up directly in the frame time.
+fn Pixmap::blend_rect_solid(
+  self : Pixmap,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
+  color : Color,
+) -> Unit {
+  let sa = color.a.to_int()
+  let pixels = self.pixels
+  let stride = self.width.to_int() * 4
+  if sa == 255 {
+    // Opaque source: the composite is a straight copy of the colour.
+    for py in y_start..<y_end {
+      let row = py.to_int() * stride
+      for px in x_start..<x_end {
+        let idx = row + px.to_int() * 4
+        pixels[idx] = color.r
+        pixels[idx + 1] = color.g
+        pixels[idx + 2] = color.b
+        pixels[idx + 3] = 255
+      }
+    }
+    return
+  }
+  if sa == 0 {
+    // `blend_over` leaves non-empty destinations untouched but rewrites fully
+    // transparent pixels as `Color::transparent()`; mirror that exactly.
+    for py in y_start..<y_end {
+      let row = py.to_int() * stride
+      for px in x_start..<x_end {
+        let idx = row + px.to_int() * 4
+        if pixels[idx + 3].to_int() == 0 {
+          pixels[idx] = 0
+          pixels[idx + 1] = 0
+          pixels[idx + 2] = 0
+          pixels[idx + 3] = 0
+        }
+      }
+    }
+    return
+  }
+  let sr = color.r.to_int()
+  let sg = color.g.to_int()
+  let sb = color.b.to_int()
+  let inv_sa = 255 - sa
+  for py in y_start..<y_end {
+    let row = py.to_int() * stride
+    for px in x_start..<x_end {
+      let idx = row + px.to_int() * 4
+      let da = pixels[idx + 3].to_int()
+      let out_a = sa + (da * inv_sa + 127) / 255
+      // `div_round(premul, out_a)` with `out_a > 0` because `sa > 0`.
+      let dr = sr * sa +
+        (pixels[idx].to_int() * da * inv_sa + 127) / 255 +
+        out_a / 2
+      let dg = sg * sa +
+        (pixels[idx + 1].to_int() * da * inv_sa + 127) / 255 +
+        out_a / 2
+      let db = sb * sa +
+        (pixels[idx + 2].to_int() * da * inv_sa + 127) / 255 +
+        out_a / 2
+      pixels[idx] = clamp_byte(dr / out_a)
+      pixels[idx + 1] = clamp_byte(dg / out_a)
+      pixels[idx + 2] = clamp_byte(db / out_a)
+      pixels[idx + 3] = clamp_byte(out_a)
+    }
+  }
+}
+
+///|
+/// Map every source alpha byte through `Color::scale_alpha(opacity)`.
+///
+/// `scale_alpha` only depends on the alpha byte, so one 256-entry table
+/// replaces a double multiply-and-round per pixel for every scaled blit.
+fn source_alpha_lut(opacity : Double) -> FixedArray[Byte] {
+  let clamped = normalize_opacity(opacity)
+  let table : FixedArray[Byte] = FixedArray::make(256, 0)
+  for a in 0..<256 {
+    table[a] = clamp_byte((a.to_double() * clamped + 0.5).to_int())
+  }
+  table
+}
+
+///|
+/// Composite a source pixmap region with source-over, row-wise.
+///
+/// `src_x`/`src_y` is where source pixel `(0, 0)` lands in this pixmap. The
+/// arithmetic is byte identical to `get_pixel` + `scale_alpha` + `blend_over`,
+/// but the clipping (already applied by the caller), the `Color` construction
+/// and the per-pixel destination guard are gone. Returns the bounding rectangle
+/// of pixels that changed so the caller can mark one dirty rect instead of one
+/// per pixel.
+fn Pixmap::blend_pixmap_source_over(
+  self : Pixmap,
+  src : Pixmap,
+  src_x : Int32,
+  src_y : Int32,
+  x_start : Int32,
+  y_start : Int32,
+  x_end : Int32,
+  y_end : Int32,
+  opacity : Double,
+) -> PixelRect? {
+  let lut = source_alpha_lut(opacity)
+  let src_pixels = src.pixels
+  let src_stride = src.width.to_int() * 4
+  let pixels = self.pixels
+  let stride = self.width.to_int() * 4
+  let mut dirty_left : Int32 = x_end
+  let mut dirty_right : Int32 = x_start
+  let mut dirty_top : Int32 = y_end
+  let mut dirty_bottom : Int32 = y_start
+  for py in y_start..<y_end {
+    let row = py.to_int() * stride
+    let src_row = (py - src_y).to_int() * src_stride
+    let mut row_left : Int32 = x_end
+    let mut row_right : Int32 = x_start
+    for px in x_start..<x_end {
+      let s = src_row + (px - src_x).to_int() * 4
+      let sa = lut[src_pixels[s + 3].to_int()].to_int()
+      if sa > 0 {
+        let idx = row + px.to_int() * 4
+        let da = pixels[idx + 3].to_int()
+        if sa == 255 {
+          // Opaque source pixel: the composite is a straight copy.
+          pixels[idx] = src_pixels[s]
+          pixels[idx + 1] = src_pixels[s + 1]
+          pixels[idx + 2] = src_pixels[s + 2]
+          pixels[idx + 3] = 255
+        } else {
+          let inv_sa = 255 - sa
+          let out_a = sa + (da * inv_sa + 127) / 255
+          let dr = src_pixels[s].to_int() * sa +
+            (pixels[idx].to_int() * da * inv_sa + 127) / 255 +
+            out_a / 2
+          let dg = src_pixels[s + 1].to_int() * sa +
+            (pixels[idx + 1].to_int() * da * inv_sa + 127) / 255 +
+            out_a / 2
+          let db = src_pixels[s + 2].to_int() * sa +
+            (pixels[idx + 2].to_int() * da * inv_sa + 127) / 255 +
+            out_a / 2
+          pixels[idx] = clamp_byte(dr / out_a)
+          pixels[idx + 1] = clamp_byte(dg / out_a)
+          pixels[idx + 2] = clamp_byte(db / out_a)
+          pixels[idx + 3] = clamp_byte(out_a)
+        }
+        if px < row_left {
+          row_left = px
+        }
+        if px + 1 > row_right {
+          row_right = px + 1
+        }
+      }
+    }
+    if row_left < row_right {
+      if row_left < dirty_left {
+        dirty_left = row_left
+      }
+      if row_right > dirty_right {
+        dirty_right = row_right
+      }
+      if py < dirty_top {
+        dirty_top = py
+      }
+      dirty_bottom = py + 1
+    }
+  }
+  guard dirty_left < dirty_right else { return None }
+  Some(
+    PixelRect::new(
+      x=dirty_left,
+      y=dirty_top,
+      width=dirty_right - dirty_left,
+      height=dirty_bottom - dirty_top,
+    ),
+  )
 }
 
 ///|
@@ -355,14 +593,11 @@ pub fn Pixmap::blend_pixmap(
   let x_end = (x + src.get_width()).min(self.width)
   let y_end = (y + src.get_height()).min(self.height)
   guard x_start < x_end && y_start < y_end else { return }
-  for py in y_start..<y_end {
-    for px in x_start..<x_end {
-      let src_color = src.get_pixel(px - x, py - y).scale_alpha(opacity)
-      if src_color.a.to_int() > 0 {
-        self.blend_pixel(px, py, src_color)
-      }
-    }
-  }
+  ignore(
+    self.blend_pixmap_source_over(
+      src, x, y, x_start, y_start, x_end, y_end, opacity,
+    ),
+  )
 }
 
 ///|
@@ -392,16 +627,18 @@ pub fn Pixmap::blend_pixmap_rect(
       let x_end = (dst_x + clipped_src.width).min(self.width)
       let y_end = (dst_y + clipped_src.height).min(self.height)
       guard x_start < x_end && y_start < y_end else { return }
-      for py in y_start..<y_end {
-        for px in x_start..<x_end {
-          let src_x = clipped_src.x + px - dst_x
-          let src_y = clipped_src.y + py - dst_y
-          let src_color = src.get_pixel(src_x, src_y).scale_alpha(opacity)
-          if src_color.a.to_int() > 0 {
-            self.blend_pixel(px, py, src_color)
-          }
-        }
-      }
+      ignore(
+        self.blend_pixmap_source_over(
+          src,
+          dst_x - clipped_src.x,
+          dst_y - clipped_src.y,
+          x_start,
+          y_start,
+          x_end,
+          y_end,
+          opacity,
+        ),
+      )
     }
     None => ()
   }

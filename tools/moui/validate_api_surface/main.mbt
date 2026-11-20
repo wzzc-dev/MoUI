@@ -759,7 +759,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "sun renderer",
       path: "moui_sun_renderer/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui_sun_renderer\"",
-      max_lines: 283,
+      // +1 line: the shadow-mask FIFO cursor is private state, so the struct
+      // now emits the private-fields marker; no new public declaration.
+      max_lines: 284,
       max_pub_lines: 175,
       max_pub_all_lines: 1,
       required_tokens: [

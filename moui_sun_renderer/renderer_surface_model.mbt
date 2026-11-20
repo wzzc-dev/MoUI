@@ -5,7 +5,9 @@ pub struct SunPixelFrame {
   priv height : Int32
   priv row_bytes : Int32
   priv scale_factor : Double
-  priv pixels : FixedArray[Byte]
+  // The snapshot is stored once, as `bytes`; `pixels()` materialises a fixed
+  // array view on demand for tests and golden comparisons.
+  priv mut pixels_cache : FixedArray[Byte]?
   priv bytes : Bytes
 }
 
@@ -78,7 +80,18 @@ pub fn SunPixelFrame::scale_factor(self : SunPixelFrame) -> Double {
 
 ///|
 pub fn SunPixelFrame::pixels(self : SunPixelFrame) -> FixedArray[Byte] {
-  self.pixels
+  match self.pixels_cache {
+    Some(cached) => cached
+    None => {
+      let bytes = self.bytes
+      let out : FixedArray[Byte] = FixedArray::make(bytes.length(), 0)
+      // `blit_from_bytes` is the `%fixedarray.copy` intrinsic, so deriving the
+      // view is one bulk copy instead of a per-byte loop.
+      out.blit_from_bytes(0, bytes, 0, bytes.length())
+      self.pixels_cache = Some(out)
+      out
+    }
+  }
 }
 
 ///|

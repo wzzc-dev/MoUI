@@ -13,6 +13,9 @@ fn SunRasterRenderer::register_font_family_data(
   for key in sun_font_family_registration_keys(family, weight) {
     ignore(self.text_system.register_font_bytes(key, data))
   }
+  // The face stack a run resolves to depends on the registered fonts.
+  self.text_run_cache.clear()
+  self.text_run_cache_order = []
 }
 
 ///|

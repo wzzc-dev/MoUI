@@ -34,6 +34,8 @@ pub struct SunRasterRenderer {
   mut last_frame : SunPixelFrame?
   text_system : @sun_text.TextSystem
   text_paragraph_cache : @render_common.TextParagraphCache
+  priv text_run_cache : Map[String, SunTextRunEntry]
+  priv mut text_run_cache_order : Array[String]
   resources : @sun_renderer.RendererResources
   image_lifecycle : @render_common.ImageResourceLifecycle
   async_image_loading : Bool
@@ -50,6 +52,8 @@ pub struct SunRasterRenderer {
   cached_layer_admissions : Array[SunCachedLayerAdmissionRecord]
   mut blur_radius_stack : Array[Double]
   mut rounded_clip_stack : Array[@core.RoundedRect]
+  priv shadow_cache : Array[SunShadowMaskEntry]
+  priv mut shadow_cache_next : Int32
   mut platform_view_draw_fn : (() -> Unit)?
 }
 
@@ -106,6 +110,8 @@ pub fn create_with_present_target(
     last_frame: None,
     text_system: @sun_text.TextSystem::with_font_cache_capacity(64),
     text_paragraph_cache: @render_common.TextParagraphCache::new(),
+    text_run_cache: Map([]),
+    text_run_cache_order: [],
     resources: @sun_renderer.RendererResources::with_font_capacity(
       1024, 1024, 64, 256, 256, 128,
     ),
@@ -124,6 +130,8 @@ pub fn create_with_present_target(
     cached_layer_admissions: [],
     blur_radius_stack: [],
     rounded_clip_stack: [],
+    shadow_cache: [],
+    shadow_cache_next: 0,
     platform_view_draw_fn: None,
   }
   renderer.register_default_platform_fonts()
@@ -138,6 +146,10 @@ pub fn SunRasterRenderer::resize(
   self.metrics = metrics
   self.canvas = new_canvas_for_metrics(metrics)
   self.clear_cached_layers()
+  // Shadow masks are position-independent but sized in device pixels, so a
+  // scale-factor or size change makes every entry stale.
+  self.shadow_cache.clear()
+  self.shadow_cache_next = 0
 }
 
 ///|
@@ -145,7 +157,7 @@ pub fn SunRasterRenderer::render(
   self : SunRasterRenderer,
   commands : Array[@core.DrawCommand],
 ) -> Unit raise SunRendererError {
-  self.canvas = new_canvas_for_metrics(self.metrics)
+  self.prepare_canvas_for_frame()
   self.canvas.clear(sun_color(@render.first_clear_color(commands)))
   self.canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
   self.unsupported_command_count = 0
@@ -342,26 +354,41 @@ fn new_canvas_for_metrics(
 }
 
 ///|
+/// Reuse the canvas pixel buffer when the surface size has not changed.
+///
+/// A fresh canvas per frame costs a full-surface allocation plus a zero fill
+/// that the frame's clear pass overwrites immediately. Reusing the buffer makes
+/// steady-state frames allocation free; only the per-frame drawing state is
+/// reset. `resize` still reallocates, so cached layers stay in step with size
+/// changes.
+fn SunRasterRenderer::prepare_canvas_for_frame(
+  self : SunRasterRenderer,
+) -> Unit raise SunRendererError {
+  let width = sun_dim_to_int(self.metrics.physical_size.width)
+  let height = sun_dim_to_int(self.metrics.physical_size.height)
+  guard width > 0 && height > 0 else { raise InvalidSurfaceSize(width, height) }
+  let pixmap = self.canvas.get_pixmap()
+  if pixmap.get_width() == width && pixmap.get_height() == height {
+    self.canvas.reset_for_frame()
+  } else {
+    self.canvas = @sun_graphics.Canvas::new(width, height)
+  }
+}
+
+///|
 fn SunRasterRenderer::read_frame(self : SunRasterRenderer) -> SunPixelFrame {
   let pixmap = self.canvas.get_pixmap()
   let width = pixmap.get_width()
   let height = pixmap.get_height()
-  let pixels = copy_fixed_pixels(pixmap.get_pixels())
+  // One snapshot per frame: the hosted present path reads `bytes`, and the
+  // `pixels()` accessor derives its view on demand, so the frame no longer
+  // carries a second full-surface copy.
   {
     width,
     height,
     row_bytes: width * 4,
     scale_factor: self.metrics.scale_factor,
-    pixels,
+    pixels_cache: None,
     bytes: pixmap.to_rgba_bytes(),
   }
-}
-
-///|
-fn copy_fixed_pixels(src : FixedArray[Byte]) -> FixedArray[Byte] {
-  let dst : FixedArray[Byte] = FixedArray::make(src.length(), 0)
-  for index in 0..<src.length() {
-    dst[index] = src[index]
-  }
-  dst
 }

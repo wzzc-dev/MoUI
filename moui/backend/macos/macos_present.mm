@@ -1,5 +1,6 @@
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <IOSurface/IOSurface.h>
 #import <QuartzCore/QuartzCore.h>
 #import <moonbit.h>
 #import <objc/runtime.h>
@@ -78,34 +79,95 @@ static NSView *moui_host_presenter_hit_test(NSView *view, NSPoint point) {
 // has displayed the new one; a sidebar/editor scroll can therefore expose the
 // clear window background for one or more compositing transactions.  Keep this
 // as a plain layer-backed view and replace the layer contents atomically.
+//
+// Frames are handed to Core Animation as `IOSurface`s, double buffered on the
+// view: assigning a fresh `CGImage` per frame makes CA convert and upload a
+// multi-megabyte texture on the AppKit thread (measured at ~10 ms for a
+// 1600x1000 raster frame at 2x), while an IOSurface is sampled from shared
+// memory with no copy.  The pair lives on the view rather than in a static so
+// two windows can never scribble over each other's presented frame.
 @interface MOUIHostPixelImageView : NSView {
-  CGImageRef _presentedImage;
+  id _presentedContents;
+  IOSurfaceRef _presentSurfaces[2];
+  int32_t _presentSurfaceWidth;
+  int32_t _presentSurfaceHeight;
+  int _presentSurfaceSlot;
 }
-- (CGImageRef)presentedImage;
-- (void)setPresentedImage:(CGImageRef)image;
+- (id)presentedContents;
+- (void)setPresentedContents:(id)contents;
+- (IOSurfaceRef)presentSurfaceForWidth:(int32_t)width
+                                height:(int32_t)height;
 @end
 
 @implementation MOUIHostPixelImageView
 
-- (CGImageRef)presentedImage {
-  return _presentedImage;
+- (id)presentedContents {
+  return _presentedContents;
 }
 
-- (void)setPresentedImage:(CGImageRef)image {
+- (void)setPresentedContents:(id)contents {
   // Keep an explicit CF retain; this view can outlive the present call while
   // Core Animation performs its next display transaction.
-  if (_presentedImage == image) {
+  if (_presentedContents == contents) {
     return;
   }
-  if (_presentedImage != NULL) {
-    CGImageRelease(_presentedImage);
+  if (_presentedContents != NULL) {
+    CFRelease((CFTypeRef)_presentedContents);
   }
-  _presentedImage = image == NULL ? NULL : CGImageRetain(image);
+  _presentedContents =
+      contents == NULL ? NULL : (id)CFRetain((CFTypeRef)contents);
+}
+
+// Returns the next surface to draw into, allocating or replacing the pair when
+// the pixel size changes.  Alternating surfaces gives Core Animation a new
+// contents object every frame and keeps the frame it is still displaying from
+// being overwritten.
+- (IOSurfaceRef)presentSurfaceForWidth:(int32_t)width
+                                height:(int32_t)height {
+  if (_presentSurfaceWidth != width || _presentSurfaceHeight != height) {
+    for (int index = 0; index < 2; index++) {
+      if (_presentSurfaces[index] != NULL) {
+        CFRelease((CFTypeRef)_presentSurfaces[index]);
+        _presentSurfaces[index] = NULL;
+      }
+    }
+    _presentSurfaceSlot = 0;
+    _presentSurfaceWidth = width;
+    _presentSurfaceHeight = height;
+  }
+  for (int index = 0; index < 2; index++) {
+    if (_presentSurfaces[index] == NULL) {
+      NSDictionary *properties = @{
+        (id)kIOSurfaceWidth: [NSNumber numberWithInt:width],
+        (id)kIOSurfaceHeight: [NSNumber numberWithInt:height],
+        (id)kIOSurfaceBytesPerElement: [NSNumber numberWithInt:4],
+        (id)kIOSurfaceBytesPerRow: [NSNumber numberWithInt:width * 4],
+        (id)kIOSurfaceAllocSize: [NSNumber
+            numberWithLongLong:(long long)width * (long long)height * 4],
+        // 'BGRA' in memory order; the raster surface stores R,G,B,A, so the
+        // copy swizzles the red and blue bytes.
+        (id)kIOSurfacePixelFormat: [NSNumber numberWithUnsignedInt:0x42475241u],
+      };
+      _presentSurfaces[index] =
+          IOSurfaceCreate((__bridge CFDictionaryRef)properties);
+    }
+  }
+  if (_presentSurfaces[0] == NULL || _presentSurfaces[1] == NULL) {
+    return NULL;
+  }
+  int slot = _presentSurfaceSlot;
+  _presentSurfaceSlot = slot ^ 1;
+  return _presentSurfaces[slot];
 }
 
 - (void)dealloc {
-  if (_presentedImage != NULL) {
-    CGImageRelease(_presentedImage);
+  if (_presentedContents != NULL) {
+    CFRelease((CFTypeRef)_presentedContents);
+  }
+  for (int index = 0; index < 2; index++) {
+    if (_presentSurfaces[index] != NULL) {
+      CFRelease((CFTypeRef)_presentSurfaces[index]);
+    }
   }
   [super dealloc];
 }
@@ -118,10 +180,10 @@ static NSView *moui_host_presenter_hit_test(NSView *view, NSPoint point) {
   // AppKit may call this after a neighboring view invalidates the window.
   // Re-assert the last frame instead of letting the backing-store display
   // path clear the layer before the next renderer present.
-  if (self.presentedImage != NULL) {
+  if (self.presentedContents != nil) {
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    self.layer.contents = (__bridge id)self.presentedImage;
+    self.layer.contents = self.presentedContents;
     [CATransaction commit];
   }
 }
@@ -170,6 +232,12 @@ static NSString *const kMouiHostPixelImageViewIdentifier =
 static NSString *const kMouiHostGpuSurfaceViewIdentifier =
     @"moui_host_gpu_surface_view";
 
+// CGImage fallback buffers, double buffered and reused across frames. Only the
+// IOSurface-allocation-failure path uses them; a fresh 6.4 MB NSMutableData per
+// frame would otherwise cost a page-faulted zero-fill on every present.
+static NSMutableData *g_moui_present_buffers[2] = {nil, nil};
+static int g_moui_present_buffer_slot = 0;
+
 @interface MOUITestFlippedView : NSView
 @end
 
@@ -194,32 +262,6 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
   if (view == nil) {
     return 1;
   }
-  NSMutableData *data = [NSMutableData dataWithLength:(NSUInteger)width * height * 4];
-  if (data == nil) {
-    return 1;
-  }
-  uint8_t *dst = (uint8_t *)data.mutableBytes;
-  for (int32_t y = 0; y < height; y++) {
-    memcpy(dst + (size_t)y * width * 4,
-           pixels + (size_t)y * row_bytes,
-           (size_t)width * 4);
-  }
-  CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
-  CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
-  // The raster surface stores RGBA8888 premul bytes (see
-  // `ImageInfo::n32_premul` = RGBA8888 in the raster renderer binding).
-  // Interpret the buffer as R,G,B,A memory order; reading it as BGRA would
-  // swap red and blue in every presented frame (images rendered with the
-  // wrong hue on the raster route).
-  CGImageRef image = CGImageCreate(width, height, 8, 32, width * 4,
-                                   color_space,
-                                   kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast,
-                                   provider, NULL, false,
-                                   kCGRenderingIntentDefault);
-  if (provider != NULL) CGDataProviderRelease(provider);
-  if (color_space != NULL) CGColorSpaceRelease(color_space);
-  if (image == NULL) return 1;
-
   MOUIHostPixelImageView *image_view = nil;
   for (NSView *subview in view.subviews) {
     if ([subview.identifier isEqualToString:kMouiHostPixelImageViewIdentifier] &&
@@ -240,6 +282,86 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
     [view addSubview:image_view positioned:NSWindowAbove relativeTo:nil];
     [image_view release];
   }
+  // Prefer an IOSurface: Core Animation samples it straight out of shared
+  // memory, while a CGImage contents object costs a CPU-side conversion plus
+  // texture upload on the AppKit thread at every commit.  The fallback path
+  // below stays for hosts where IOSurface allocation fails.
+  IOSurfaceRef surface = [image_view presentSurfaceForWidth:width
+                                                     height:height];
+  id contents = nil;
+  CGImageRef image = NULL;
+  if (surface != NULL) {
+    IOSurfaceLock(surface, 0, NULL);
+    uint8_t *base = (uint8_t *)IOSurfaceGetBaseAddress(surface);
+    size_t stride = IOSurfaceGetBytesPerRow(surface);
+    if (base != NULL && stride >= (size_t)width * 4) {
+      if (row_bytes == width * 4 && stride == (size_t)width * 4) {
+        const uint32_t *src = (const uint32_t *)pixels;
+        uint32_t *dst = (uint32_t *)base;
+        size_t count = (size_t)width * (size_t)height;
+        for (size_t index = 0; index < count; index++) {
+          uint32_t value = src[index];
+          // RGBA -> BGRA: swap the red and blue bytes of each pixel.
+          dst[index] = (value & 0xFF00FF00u) | ((value & 0x000000FFu) << 16) |
+                       ((value >> 16) & 0x000000FFu);
+        }
+      } else {
+        for (int32_t y = 0; y < height; y++) {
+          const uint8_t *src_row = pixels + (size_t)y * row_bytes;
+          uint32_t *dst_row = (uint32_t *)(base + (size_t)y * stride);
+          for (int32_t x = 0; x < width; x++) {
+            uint32_t value = *(const uint32_t *)(src_row + (size_t)x * 4);
+            dst_row[x] = (value & 0xFF00FF00u) |
+                         ((value & 0x000000FFu) << 16) |
+                         ((value >> 16) & 0x000000FFu);
+          }
+        }
+      }
+      contents = (__bridge id)surface;
+    }
+    IOSurfaceUnlock(surface, 0, NULL);
+  }
+  if (contents == nil) {
+    NSUInteger needed = (NSUInteger)width * (NSUInteger)height * 4;
+    int slot = g_moui_present_buffer_slot;
+    g_moui_present_buffer_slot = slot ^ 1;
+    NSMutableData *data = g_moui_present_buffers[slot];
+    if (data == nil || data.length != needed) {
+      [data release];
+      data = [[NSMutableData alloc] initWithLength:needed];
+      if (data == nil) {
+        g_moui_present_buffers[slot] = nil;
+        return 1;
+      }
+      g_moui_present_buffers[slot] = data;
+    }
+    uint8_t *dst = (uint8_t *)data.mutableBytes;
+    if (row_bytes == width * 4) {
+      memcpy(dst, pixels, (size_t)needed);
+    } else {
+      for (int32_t y = 0; y < height; y++) {
+        memcpy(dst + (size_t)y * width * 4,
+               pixels + (size_t)y * row_bytes,
+               (size_t)width * 4);
+      }
+    }
+    CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+    CGDataProviderRef provider =
+        CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+    // The raster surface stores RGBA8888 premul bytes (see
+    // `ImageInfo::n32_premul` = RGBA8888 in the raster renderer binding).
+    // Interpret the buffer as R,G,B,A memory order; reading it as BGRA would
+    // swap red and blue in every presented frame (images rendered with the
+    // wrong hue on the raster route).
+    image = CGImageCreate(width, height, 8, 32, width * 4, color_space,
+                          kCGBitmapByteOrder32Big |
+                              kCGImageAlphaPremultipliedLast,
+                          provider, NULL, false, kCGRenderingIntentDefault);
+    if (provider != NULL) CGDataProviderRelease(provider);
+    if (color_space != NULL) CGColorSpaceRelease(color_space);
+    if (image == NULL) return 1;
+    contents = (__bridge id)image;
+  }
   // The renderer calls this on the AppKit thread. Disable implicit frame and
   // contents animations so Core Animation never presents an intermediate
   // transparent frame while the sidebar/editor is scrolling.
@@ -252,10 +374,10 @@ int32_t moui_macos_present_pixels_to_view(uint64_t raw_view,
       ? view.window.backingScaleFactor
       : 1.0;
   image_view.layer.contentsScale = scale;
-  image_view.presentedImage = image;
-  image_view.layer.contents = (__bridge id)image_view.presentedImage;
+  image_view.presentedContents = contents;
+  image_view.layer.contents = image_view.presentedContents;
   [CATransaction commit];
-  CGImageRelease(image);
+  if (image != NULL) CGImageRelease(image);
   return 0;
 }
 
@@ -292,11 +414,11 @@ int32_t moui_macos_cpu_presenter_stable_layer_test(void) {
     // layer contents must survive an NSView display/updateLayer callback.
     [presenter setNeedsDisplay:YES];
     [presenter displayIfNeeded];
-    // The view must retain the latest CGImage directly; an NSImageView image
+    // The view must retain the latest contents directly; an NSImageView image
     // swap would reintroduce the transient clear that this test guards.
     return presenter != nil && presenter.layer != nil &&
                    presenter.layer.contents != nil &&
-                   presenter.presentedImage != NULL &&
+                   presenter.presentedContents != nil &&
                    presenter.layer.contents == latest_contents &&
                    ![presenter isKindOfClass:[NSImageView class]]
                ? 1
