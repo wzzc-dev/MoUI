@@ -1,9 +1,11 @@
 // Platform font discovery for the Sun CPU raster renderer.
 //
-// macOS gets its system fonts from the fixed locations listed in
-// renderer_text_draw.mbt. Linux resolves the same generic families through
-// fontconfig the way fc-match does, so Sun draws with the face fontconfig
-// hands the Skia text provider instead of falling back to placeholder glyphs.
+// Linux resolves the generic families through fontconfig the way fc-match
+// does, so Sun draws with the face fontconfig hands the Skia text provider.
+// Windows resolves the system faces Skia's DirectWrite manager would pick
+// (Segoe UI, Consolas, Times New Roman, with Arial/Georgia/Courier New as
+// fallbacks) from the Windows Fonts directory. macOS gets its system fonts from
+// the fixed locations listed in renderer_text_draw.mbt.
 //
 // Discovery runs once per process and is cached: renderer construction must
 // stay cheap even though several renderers may be created per test run.
@@ -18,8 +20,8 @@
 //
 // role: 0 = sans, 1 = monospace, 2 = serif. weight is the CSS weight bucket the
 // face was matched for (see the fc weight table below); a face only gets a
-// bucket entry when fontconfig resolves that weight to it. Empty/missing
-// entries are omitted, so an environment without fontconfig yields an empty
+// bucket entry when the host resolves that weight to it. Empty/missing
+// entries are omitted, so a host without the platform query yields an empty
 // discovery.
 
 #include "moonbit.h"
@@ -28,6 +30,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 
 #define MOUI_SUN_FONT_ROLE_COUNT 3
 #define MOUI_SUN_FONT_WEIGHT_COUNT 6
@@ -66,12 +72,26 @@ static const char *const g_weight_query[MOUI_SUN_FONT_WEIGHT_COUNT] = {
   "light", "book", "regular", "demibold", "bold", "black",
 };
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(_WIN32)
 static SunPlatformFontMatchSlot
   g_matches[MOUI_SUN_FONT_ROLE_COUNT][MOUI_SUN_FONT_WEIGHT_COUNT];
 static SunPlatformFontListEntry g_list[MOUI_SUN_FONT_LIST_MAX];
 static int32_t g_list_count = 0;
 static int32_t g_resolved = 0;
+#endif
+
+static void sun_copy_truncated(char *dst, size_t cap, const char *src, size_t len) {
+  if (cap == 0) {
+    return;
+  }
+  if (len > cap - 1) {
+    len = cap - 1;
+  }
+  memcpy(dst, src, len);
+  dst[len] = '\0';
+}
+
+#if defined(__linux__)
 
 static int32_t sun_run_capture(const char *command, char *out, int32_t cap) {
   if (cap <= 1) {
@@ -107,17 +127,6 @@ static void sun_trim_line(char *text) {
       break;
     }
   }
-}
-
-static void sun_copy_truncated(char *dst, size_t cap, const char *src, size_t len) {
-  if (cap == 0) {
-    return;
-  }
-  if (len > cap - 1) {
-    len = cap - 1;
-  }
-  memcpy(dst, src, len);
-  dst[len] = '\0';
 }
 
 static void sun_resolve_match_slot(int32_t role, int32_t weight_index) {
@@ -232,6 +241,156 @@ static void sun_resolve_once(void) {
   }
   sun_resolve_list();
 }
+#elif defined(_WIN32)
+
+// Windows system faces, in the order Skia's DirectWrite font manager resolves
+// the generic families. Paths are built from the Windows directory at run time
+// so a relocated Windows install still works.
+typedef struct {
+  int32_t role;
+  int32_t weight;
+  const char *family;
+  const char *file;
+} SunWindowsFontCandidate;
+
+static const SunWindowsFontCandidate g_windows_candidates[] = {
+  // Segoe UI is the DirectWrite sans default. Light serves both the 100 and 300
+  // buckets, Semibold/Bold/Black cover 600/700/800.
+  { 0, 100, "Segoe UI", "segoeuil.ttf" },
+  { 0, 300, "Segoe UI", "segoeuil.ttf" },
+  { 0, 400, "Segoe UI", "segoeui.ttf" },
+  { 0, 600, "Segoe UI", "seguisb.ttf" },
+  { 0, 700, "Segoe UI", "segoeuib.ttf" },
+  { 0, 800, "Segoe UI", "seguibl.ttf" },
+  { 1, 400, "Consolas", "consola.ttf" },
+  { 1, 700, "Consolas", "consolab.ttf" },
+  { 2, 400, "Times New Roman", "times.ttf" },
+  { 2, 700, "Times New Roman", "timesbd.ttf" },
+};
+
+static const SunWindowsFontCandidate g_windows_fallbacks[] = {
+  { 0, 400, "Arial", "arial.ttf" },
+  { 0, 700, "Arial", "arialbd.ttf" },
+  { 1, 400, "Courier New", "cour.ttf" },
+  { 1, 700, "Courier New", "courbd.ttf" },
+  { 2, 400, "Georgia", "georgia.ttf" },
+  { 2, 700, "Georgia", "georgiab.ttf" },
+};
+
+static int32_t sun_windows_weight_index(int32_t weight) {
+  for (int32_t index = 0; index < MOUI_SUN_FONT_WEIGHT_COUNT; index += 1) {
+    if (g_weight_css[index] == weight) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+static void sun_windows_fonts_dir(char *dst, size_t cap) {
+  wchar_t wide[MOUI_SUN_FONT_PATH_MAX];
+  UINT length = GetWindowsDirectoryW(wide, (UINT)MOUI_SUN_FONT_PATH_MAX);
+  if (length == 0 || length >= MOUI_SUN_FONT_PATH_MAX) {
+    return;
+  }
+  char utf8[MOUI_SUN_FONT_PATH_MAX];
+  int written = WideCharToMultiByte(
+    CP_UTF8,
+    0,
+    wide,
+    (int)length,
+    utf8,
+    (int)sizeof(utf8) - 1,
+    NULL,
+    NULL
+  );
+  if (written <= 0) {
+    return;
+  }
+  utf8[written] = '\0';
+  snprintf(dst, cap, "%s\\Fonts", utf8);
+}
+
+static int32_t sun_windows_file_exists(const char *path) {
+  wchar_t wide[MOUI_SUN_FONT_PATH_MAX];
+  int length = MultiByteToWideChar(
+    CP_UTF8,
+    0,
+    path,
+    -1,
+    wide,
+    (int)MOUI_SUN_FONT_PATH_MAX
+  );
+  if (length <= 0) {
+    return 0;
+  }
+  DWORD attributes = GetFileAttributesW(wide);
+  return attributes != INVALID_FILE_ATTRIBUTES &&
+    (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+static void sun_windows_try_candidate(
+  const char *fonts_dir,
+  const SunWindowsFontCandidate *candidate
+) {
+  int32_t weight_index = sun_windows_weight_index(candidate->weight);
+  if (weight_index < 0) {
+    return;
+  }
+  SunPlatformFontMatchSlot *slot = &g_matches[candidate->role][weight_index];
+  if (slot->present) {
+    return;
+  }
+  char path[MOUI_SUN_FONT_PATH_MAX];
+  snprintf(path, sizeof(path), "%s\\%s", fonts_dir, candidate->file);
+  if (!sun_windows_file_exists(path)) {
+    return;
+  }
+  sun_copy_truncated(slot->path, sizeof(slot->path), path, strlen(path));
+  sun_copy_truncated(
+    slot->family,
+    sizeof(slot->family),
+    candidate->family,
+    strlen(candidate->family)
+  );
+  slot->present = 1;
+}
+
+static int32_t sun_windows_role_has_face(int32_t role) {
+  for (int32_t index = 0; index < MOUI_SUN_FONT_WEIGHT_COUNT; index += 1) {
+    if (g_matches[role][index].present) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static void sun_resolve_once(void) {
+  if (g_resolved) {
+    return;
+  }
+  g_resolved = 1;
+  char fonts_dir[MOUI_SUN_FONT_PATH_MAX];
+  fonts_dir[0] = '\0';
+  sun_windows_fonts_dir(fonts_dir, sizeof(fonts_dir));
+  if (fonts_dir[0] == '\0') {
+    return;
+  }
+  size_t candidate_count =
+    sizeof(g_windows_candidates) / sizeof(g_windows_candidates[0]);
+  for (size_t index = 0; index < candidate_count; index += 1) {
+    sun_windows_try_candidate(fonts_dir, &g_windows_candidates[index]);
+  }
+  size_t fallback_count =
+    sizeof(g_windows_fallbacks) / sizeof(g_windows_fallbacks[0]);
+  for (size_t index = 0; index < fallback_count; index += 1) {
+    const SunWindowsFontCandidate *candidate = &g_windows_fallbacks[index];
+    if (sun_windows_role_has_face(candidate->role)) {
+      continue;
+    }
+    sun_windows_try_candidate(fonts_dir, candidate);
+  }
+}
+
 #endif
 
 static void sun_write_i32(uint8_t *dst, int32_t value) {
@@ -244,11 +403,12 @@ static void sun_write_i32(uint8_t *dst, int32_t value) {
 
 static int32_t sun_payload_size(void) {
   // version(4) + match_count(4) + list_count(4). The trailing list count is
-  // part of every payload, including the empty discovery non-Linux hosts send,
-  // so it must be counted outside the platform block; otherwise the fixed-size
-  // write overruns the buffer and the decoder rejects the short payload.
+  // part of every payload, including the empty discovery hosts without a
+  // platform query send, so it must be counted outside the platform block;
+  // otherwise the fixed-size write overruns the buffer and the decoder rejects
+  // the short payload.
   int32_t size = 12;
-#if defined(__linux__)
+#if defined(__linux__) || defined(_WIN32)
   for (int32_t role = 0; role < MOUI_SUN_FONT_ROLE_COUNT; role += 1) {
     for (
       int32_t weight_index = 0;
@@ -277,10 +437,10 @@ static int32_t sun_append_text(uint8_t *dst, const char *text) {
   return length;
 }
 
-moonbit_bytes_t moui_sun_linux_platform_font_payload(void) {
+moonbit_bytes_t moui_sun_platform_font_payload(void) {
   int32_t match_count = 0;
   int32_t list_count = 0;
-#if defined(__linux__)
+#if defined(__linux__) || defined(_WIN32)
   sun_resolve_once();
   for (int32_t role = 0; role < MOUI_SUN_FONT_ROLE_COUNT; role += 1) {
     for (
@@ -305,7 +465,7 @@ moonbit_bytes_t moui_sun_linux_platform_font_payload(void) {
   cursor += 4;
   sun_write_i32(cursor, match_count);
   cursor += 4;
-#if defined(__linux__)
+#if defined(__linux__) || defined(_WIN32)
   for (int32_t role = 0; role < MOUI_SUN_FONT_ROLE_COUNT; role += 1) {
     for (
       int32_t weight_index = 0;
@@ -331,7 +491,7 @@ moonbit_bytes_t moui_sun_linux_platform_font_payload(void) {
 #endif
   sun_write_i32(cursor, list_count);
   cursor += 4;
-#if defined(__linux__)
+#if defined(__linux__) || defined(_WIN32)
   for (int32_t index = 0; index < g_list_count; index += 1) {
     int32_t path_len = sun_append_text(cursor + 4, g_list[index].path);
     sun_write_i32(cursor, path_len);

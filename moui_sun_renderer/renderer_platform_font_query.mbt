@@ -1,13 +1,14 @@
 ///|
-/// Linux platform font discovery for the Sun CPU raster renderer.
+/// Platform font discovery for the Sun CPU raster renderer.
 ///
-/// The Skia path resolves generic families through fontconfig
-/// (`moui_text_providers/fontconfig`), so Sun asks the same source for the
-/// same faces: `fc-match` supplies one sans/mono/serif face, `fc-list` is the
-/// fallback when a match is unavailable. Discovery happens in the native stub
-/// (`renderer_platform_font_query.c`) and arrives here as one versioned
-/// payload; this file only decodes it and keeps the file-byte cache that
-/// avoids re-reading the same face for every renderer.
+/// Linux resolves generic families through fontconfig (`moui_text_providers/fontconfig`),
+/// so Sun asks the same source for the same faces: `fc-match` supplies one
+/// sans/mono/serif face, `fc-list` is the fallback when a match is unavailable.
+/// Windows resolves the faces DirectWrite hands Skia (Segoe UI, Consolas, Times
+/// New Roman, then Arial/Georgia/Courier New) from the Windows Fonts directory.
+/// Discovery happens in the native stub (`renderer_platform_font_query.c`) and
+/// arrives here as one versioned payload; this file only decodes it and keeps
+/// the file-byte cache that avoids re-reading the same face for every renderer.
 ///
 /// Payload layout (little-endian i32 lengths):
 ///   i32 version (2)
@@ -49,7 +50,7 @@ priv struct SunPlatformFontDiscovery {
 }
 
 ///|
-extern "C" fn sun_linux_platform_font_payload() -> Bytes = "moui_sun_linux_platform_font_payload"
+extern "C" fn sun_platform_font_payload() -> Bytes = "moui_sun_platform_font_payload"
 
 ///|
 /// Decoded font files keyed by path. Renderer construction must stay cheap:
@@ -210,5 +211,5 @@ fn sun_platform_font_weight_is_known(weight : Int32) -> Bool {
 
 ///|
 fn sun_platform_font_discovery() -> SunPlatformFontDiscovery? {
-  sun_decode_platform_font_payload(sun_linux_platform_font_payload())
+  sun_decode_platform_font_payload(sun_platform_font_payload())
 }
