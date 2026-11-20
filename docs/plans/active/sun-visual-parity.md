@@ -108,12 +108,18 @@ matrix executable before claiming non-Latin coverage.
 | before Windows font discovery | 7.41% | 17.67% (`checkbox/dark/focused`) | 20.00% |
 | after Windows font discovery | 1.57% | 5.04% (`toggle/light/focused`) | 11.73% |
 | after font discovery, through `windows-platform-evidence.sh` with `icudtl.dat` staged | 1.52% | 4.00% (`checkbox/dark/pressed`) | 11.60% |
+| after the Windows symbol face (payload v3) | 1.04% | 2.30% (`checkbox/dark/pressed`) | 11.01% |
 
 Before the fix every label painted placeholder glyphs (a blocky `PRIMARY`);
 `moui_sun_renderer` had no Windows face query, so
 `sun_default_platform_font_faces` only offered the bundled macOS paths, which
-do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
-`checkbox` the next (≈3.2%); text cells sit below 2%.
+do not exist on Windows. After the face query `toggle` was the worst group
+(≈5.0%) and `checkbox` the next (≈3.2%). The symbol face is what closes most of
+the remaining checkbox gap: the checked box paints `DrawText("✓")`, U+2713 is
+not in the text families, and Sun without a symbol face drew the .notdef box
+while DirectWrite fell back to Segoe UI Symbol. With the face registered,
+`checkbox` drops to 1.95–2.30% and `toggle` to 0.9–1.3%; text cells stay below
+1.7% and slider ≤0.06%.
 
 ### Acceptance
 
@@ -122,7 +128,13 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
 - [x] Windows system font discovery resolves Segoe UI, Consolas and Times New
       Roman from `%WINDIR%\Fonts` through the existing weight buckets;
       the button cell now draws real Segoe UI outlines instead of placeholders.
-- [x] Windows matrix average ≤3% and worst ≤10%: 1.57% / 5.04% (gate PASS).
+- [x] Windows matrix average ≤3% and worst ≤10%: 1.57% / 5.04% after face
+      discovery, 1.04% / 2.30% after the symbol face (both gate PASS).
+- [x] Windows symbol coverage: the payload carries a `symbol` role and the
+      native stub registers `Segoe UI Symbol`, so a check mark or arrow the text
+      families do not cover draws its outline instead of the .notdef box; the
+      face is reachable through its own family only, so body text still resolves
+      to Segoe UI.
 - [x] Windows parity step recorded by `scripts/windows-platform-evidence.sh`
       (60 cells, avg 1.52% / worst 4.00%, gate PASS, `icudtl.dat` staged next to
       the matrix executable) and the weekly `moui-windows-platform-evidence`
@@ -136,12 +148,19 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
    confirming the matrix tool and the Skia prebuild work on Windows.
 7. **Windows font discovery** — done 2026-11-20: the native payload producer
    enumerates Segoe UI (100/300/400/600/700/800), Consolas (400/700) and Times
-   New Roman (400/700), with Arial/Georgia/Courier New as per-role fallbacks;
-   the payload contract stays at version 2, so the MoonBit decoder is unchanged.
-8. **Windows visual refinement (stretch)** — the thresholds are already met;
-   remaining work is bringing the worst cell down to Linux's 2.63% level
-   (toggle geometry, checkbox ring/text phase) and checking weight mapping for
-   `550`-style requests against DirectWrite's nearest-bucket rule.
+   New Roman (400/700), with Arial/Georgia/Courier New as per-role fallbacks.
+   That stage kept the payload at version 2, so no decoder change was needed;
+   stage 8 adds the symbol role and bumps it to version 3.
+8. **Windows fallback coverage (started)** — done 2026-11-20: a `symbol` role
+   carrying `Segoe UI Symbol` (`%WINDIR%\Fonts\seguisym.ttf`) puts the
+   DirectWrite fallback face into Sun's fallback stack, so U+2713 and other
+   symbols the text families lack draw outlines instead of the .notdef box.
+   The payload moves to version 3 (`role 3 = symbol`), the decoder rejects
+   version 2, and the symbol face registers under its own family only. Matrix
+   after the change: avg 1.04% / worst 2.30%, now better than Linux
+   (1.23% / 2.63%). Remaining stretch: checkbox ring/text phase and toggle
+   geometry residuals, and `550`-style weight requests against DirectWrite's
+   nearest-bucket rule.
 9. **Windows gate + evidence** — recorded 2026-11-20: the script builds
    `moui_tests/visual_matrix` once, stages the release `icudtl.dat` beside it,
    runs both 60-cell matrices and the gate, and writes
@@ -177,6 +196,7 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
 | 2026-11-20 | Phase 2: with the thresholds met after font discovery, stage 8 stays a stretch target rather than a gate blocker. DirectWrite resolves a `550` request to the nearest heavier bucket (600 Semibold); Sun's fontconfig-derived bucket table currently resolves it to 400, so a Windows-specific CSS nearest-bucket rule is the first stage-8 candidate once the worst cells need further tightening. |
 | 2026-11-20 | Same branch: the softbuffer Win32 presenter is restored to GDI `StretchDIBits` with RGBA→BGRA conversion and surface→client rect scaling for partial presents. `scripts/windows-platform-evidence.sh` runs `moon test moui_sun/softbuffer --target native` as step 0, because `moon build` on that library package tries to link an executable with no `main`. |
 | 2026-11-20 | Stage 9: the parity step runs inside the evidence script in report-only form. It builds `moui_tests/visual_matrix` once, copies the release provider's `icudtl.dat` next to the executable (SkLoadICU only searches the module directory), runs the Sun and Skia matrices into `<log-dir>/visual-parity/`, and records `visual_parity_status` plus `visual_parity_enforcement` in the summary. `--parity-blocking` (or `MOUI_WINDOWS_VISUAL_PARITY_BLOCKING=1`) is the only way to make a threshold miss red, so the weekly job reports numbers instead of blocking until it reproduces 1.52% / 4.00%. Matrix paths go through `cygpath -w` because Git Bash paths such as `/c/...` would be read by node's `path.resolve` as `C:\c\...`. |
+| 2026-11-20 | Stage 8: the Windows text stack had no symbol fallback face, so `DrawText("✓")` (U+2713 — the checkbox and toggle check glyph) painted the .notdef box while Skia's DirectWrite fallback reached Segoe UI Symbol. The native payload moves to version 3 and carries `role 3 = symbol`; the Windows candidate table registers `%WINDIR%\Fonts\seguisym.ttf` under its own family only, so the face joins `resolved_faces` as a fallback without ever resolving `system-ui`/`sans-serif`. The decoder rejects version 2 and caps `match_count` at 4 roles × 6 weights. Symbol faces come from the candidate table only, so the Linux fc-match loop still queries the three text roles. |
 
 ## Progress
 
@@ -189,3 +209,4 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
 | 2026-11-20 | Stage 5: the `visual` parity entry is blocking and Linux-only. The gate no longer skips on a missing Skia reference (exit 1 without `--report-only`), and the blocking step forces the locked release prebuild for its two matrix children while the rest of the profile keeps the prebuild-disabled default (so the host-pinned control-preview and gallery-screenshot checks print `skipped` on Linux instead of going stale). `ci.yml` now triggers pull requests to `dev` and runs the whole `visual` profile in a `ubuntu-24.04` job after `set_linux_deps.sh`; the parity check is a red check on dev PRs. Tightening the gate to `--max-avg 1` exited 1; restoring 3/10 exited 0. Final standard-directory gate: 60 cells, `avg 1.23%` (limit 3.00%), worst `2.63% text_field/light/default` (limit 10.00%), 22 transitions, no missing/blank, exit 0; diagnostic changed-pixel share 11.66%. `node scripts/check.mjs --profile visual` exits 0 (parity PASS, golden 4/4, gallery app 3/3; previews/gallery skipped by the documented host rule). Real X11 Showcase screenshots at 1100×680 via `scripts/capture-showcase-sun.sh`: Welcome `artifacts/showcase-real/sun-0.png`, Advanced Rendering `sun-1.png`, Accessibility Probe `sun-2.png`; visual inspection shows no bitmap glyphs or jaggies and no clipped text on the first screen. Local checks: `moon check` clean, `moon fmt --check` clean, `moui_sun_renderer` 124/124, `examples/showcase/app` 17/17; static validators green except `validate-renderer-capability-consistency`, which cannot compile the Metal `.mm` stubs on this Linux host (`cc1objplus` missing). Known gaps documented in the PR: Sun `draw_text` overflow wraps where Skia clips (Renderer Smoke card), and the Renderer Smoke PNG data URI still paints a Sun placeholder. |
 | 2026-11-20 | Phase 2 stages 6–7: Windows baseline before the fix was `avg 7.41%` / worst `17.67% checkbox/dark/focused` (changed-pixel share 20.00%) with every label in placeholder glyphs. After the Windows face query: `avg 1.57%` (limit 3.00%) / worst `5.04% toggle/light/focused` (limit 10.00%), gate PASS, changed-pixel share 11.73%; the button cell inspected at 2x now shows real Segoe UI outlines. `moon test moui_sun_renderer --target native` 124/124. The reference matrix came from the same host with the locked release provider; `icudtl.dat` staging is deferred to stage 9. |
 | 2026-11-20 | Phase 2 stage 9: one full `scripts/windows-platform-evidence.sh` run on Windows (MSVC x64, release provider `dev-6d73578a36`) exits 0 and records `softbuffer_smoke_status=passed`, `visual_parity_status=passed` (report-only), `showcase_first_frame_status=passed`. Parity with `icudtl.dat` staged: 60 cells, `avg 1.52%` (limit 3.00%), worst `4.00% checkbox/dark/pressed` (limit 10.00%), 22 transitions, no missing/blank cells, changed-pixel share 11.60%. The worst group is now checkbox (3.6–4.0%), then toggle (2.6–3.0%); slider stays ≤0.06%. |
+| 2026-11-20 | Phase 2 stage 8: Windows symbol fallback landed. 60-cell matrix avg 1.04% (limit 3.00%), worst 2.30% `checkbox/dark/pressed` (limit 10.00%), changed-pixel share 11.01% — better than Linux (1.23% / 2.63%). Checkbox group 3.6–4.0% → 1.95–2.30%, toggle 2.6–3.0% → 0.91–1.25%. `moon test moui_sun_renderer --target native` 126/126 (two new tests: the fallback stack covers U+2713, and the symbol role registers no generic family); `windows_sun` first-frame smoke still prints its marker. Local note: the five image/font fixture tests only pass with TEMP/TMP pointed inside the repo, because this machine denies %TEMP% writes to locally built executables. |

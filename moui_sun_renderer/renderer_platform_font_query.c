@@ -4,25 +4,28 @@
 // does, so Sun draws with the face fontconfig hands the Skia text provider.
 // Windows resolves the system faces Skia's DirectWrite manager would pick
 // (Segoe UI, Consolas, Times New Roman, with Arial/Georgia/Courier New as
-// fallbacks) from the Windows Fonts directory. macOS gets its system fonts from
-// the fixed locations listed in renderer_text_draw.mbt.
+// fallbacks) from the Windows Fonts directory, plus Segoe UI Symbol so a glyph
+// the text families do not cover (a check mark, an arrow) draws its outline
+// instead of the .notdef box DirectWrite's fallback would never show. macOS gets
+// its system fonts from the fixed locations listed in renderer_text_draw.mbt.
 //
 // Discovery runs once per process and is cached: renderer construction must
 // stay cheap even though several renderers may be created per test run.
 //
 // Payload layout (little-endian int32 lengths):
-//   i32 version (2)
+//   i32 version (3)
 //   i32 match_count
 //     per match: i32 role, i32 weight, i32 path_len, path bytes,
 //                i32 family_len, family bytes
 //   i32 list_count
 //     per list entry: i32 path_len, path bytes, i32 family_len, family bytes
 //
-// role: 0 = sans, 1 = monospace, 2 = serif. weight is the CSS weight bucket the
-// face was matched for (see the fc weight table below); a face only gets a
-// bucket entry when the host resolves that weight to it. Empty/missing
+// role: 0 = sans, 1 = monospace, 2 = serif, 3 = symbol. weight is the CSS weight
+// bucket the face was matched for (see the fc weight table below); a face only
+// gets a bucket entry when the host resolves that weight to it. Empty/missing
 // entries are omitted, so a host without the platform query yields an empty
-// discovery.
+// discovery. Version 3 added the symbol role; hosts that never resolve one
+// simply omit it, so the layout is otherwise identical to version 2.
 
 #include "moonbit.h"
 
@@ -35,7 +38,10 @@
 #include <windows.h>
 #endif
 
-#define MOUI_SUN_FONT_ROLE_COUNT 3
+#define MOUI_SUN_FONT_ROLE_COUNT 4
+// Roles the fontconfig match loop resolves. Symbol faces are resolved by the
+// Windows candidate table only, so Linux keeps querying the three text roles.
+#define MOUI_SUN_FONT_MATCH_ROLE_COUNT 3
 #define MOUI_SUN_FONT_WEIGHT_COUNT 6
 #define MOUI_SUN_FONT_PATH_MAX 1024
 #define MOUI_SUN_FONT_FAMILY_MAX 256
@@ -55,7 +61,7 @@ typedef struct {
 } SunPlatformFontListEntry;
 
 // Role query order matches the payload role codes.
-static const char *const g_role_query[MOUI_SUN_FONT_ROLE_COUNT] = {
+static const char *const g_role_query[MOUI_SUN_FONT_MATCH_ROLE_COUNT] = {
   "sans-serif",
   "monospace",
   "serif",
@@ -230,7 +236,7 @@ static void sun_resolve_once(void) {
     return;
   }
   g_resolved = 1;
-  for (int32_t role = 0; role < MOUI_SUN_FONT_ROLE_COUNT; role += 1) {
+  for (int32_t role = 0; role < MOUI_SUN_FONT_MATCH_ROLE_COUNT; role += 1) {
     for (
       int32_t weight_index = 0;
       weight_index < MOUI_SUN_FONT_WEIGHT_COUNT;
@@ -266,6 +272,11 @@ static const SunWindowsFontCandidate g_windows_candidates[] = {
   { 1, 700, "Consolas", "consolab.ttf" },
   { 2, 400, "Times New Roman", "times.ttf" },
   { 2, 700, "Times New Roman", "timesbd.ttf" },
+  // Segoe UI Symbol is the face DirectWrite's system fallback shows for symbols
+  // the text families do not cover (the U+2713 check mark, arrows, dingbats).
+  // Registering it draws those outlines instead of the .notdef box; it is only
+  // reachable through its own family key, so it never becomes a text fallback.
+  { 3, 400, "Segoe UI Symbol", "seguisym.ttf" },
 };
 
 static const SunWindowsFontCandidate g_windows_fallbacks[] = {
@@ -461,7 +472,7 @@ moonbit_bytes_t moui_sun_platform_font_payload(void) {
     return moonbit_make_bytes(8, 0);
   }
   uint8_t *cursor = (uint8_t *)payload;
-  sun_write_i32(cursor, 2);
+  sun_write_i32(cursor, 3);
   cursor += 4;
   sun_write_i32(cursor, match_count);
   cursor += 4;
