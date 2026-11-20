@@ -99,6 +99,15 @@
   use `fetch-release-skia.ps1` (`D:\...` paths), exactly like the windows-msvc CI
   jobs. Symptom: `MOUI_SKIA_LINK_MODE=static requested, but /d/a/... PanicError`
   followed by an empty `MOUI_SKIA_STUB_LIB_PATH`.
+- `MOUI_SKIA_STUB_LIB` must be the stub archive **file**, not the extracted
+  `...-<config>-<arch>-stub/package` directory. On 2026-11-20 the `.ps1` provider
+  fetch still called `Find-LibDir` there (the `.sh` side had `find_stub_lib`), so
+  Windows dev builds handed the directory to `cl` and the is-main link died with
+  `LNK1181: 无法打开输入文件 ...\windows-Release-x64-stub\package.obj` after a
+  fully successful Skia/stub build. Fixed by `Find-LibFile` in
+  `fetch-release-skia.ps1`; `build.mbtx`'s `normalize_stub_lib` now also resolves
+  a directory-valued path to the archive inside it and bails when the directory
+  holds none, and `scripts/test-moui-prebuild.mjs` covers both shapes.
 - Publish plumbing detail: `publish-stub-library.sh --print-env` output is
   sourced with `set -a` in the publish job, because the `gh`, `curl`, and
   `python3` children read `MOUI_SKIA_STUB_*` from the environment. Without

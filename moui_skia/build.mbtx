@@ -1626,6 +1626,32 @@ async fn compile_stub(
 }
 
 ///|
+fn stub_lib_in_dir(path : String) -> String {
+  for name in ["moui_skia_stub.lib", "libmoui_skia_stub.a"] {
+    let candidate = path_join(path, name)
+    if path_exists(candidate) {
+      return candidate
+    }
+  }
+  ""
+}
+
+///|
+fn normalize_stub_lib(path : String) -> String {
+  // An extracted stub asset directory (`...-stub/package`) is not a link input:
+  // MSVC appends `.obj` and fails with LNK1181 on `package.obj`, and `cc` treats
+  // the directory as an unreadable file. Resolve the archive inside it; "" means
+  // the path is a directory holding no stub archive.
+  let dir = @fs.is_dir(path) catch {
+    _ => false
+  }
+  if !dir {
+    return path
+  }
+  stub_lib_in_dir(path)
+}
+
+///|
 async fn resolve_stub(
   opts : Opts,
   platform : String,
@@ -1635,11 +1661,13 @@ async fn resolve_stub(
 ) -> StubInfo {
   match config_value(opts.env, "MOUI_SKIA_STUB_LIB") {
     Some(given) => {
-      let path = host_path(opts.host, given)
-      if path_exists(path) {
+      let path = normalize_stub_lib(host_path(opts.host, given))
+      if path != "" && path_exists(path) {
         return { path: path }
       }
-      bail("MOUI_SKIA_STUB_LIB points at \{given}, which does not exist")
+      bail(
+        "MOUI_SKIA_STUB_LIB points at \{given}, which is not a stub archive file; point it at the archive itself (e.g. .../windows-Release-x64-stub/package/moui_skia_stub.lib), not its directory",
+      )
       }
     None => ()
   }
@@ -1648,8 +1676,9 @@ async fn resolve_stub(
     bail("unsupported MOUI_SKIA_STUB_MODE: \{mode}")
   }
   if with_skia && mode != "build" && values.stub_lib != "" {
-    if path_exists(values.stub_lib) {
-      return { path: values.stub_lib }
+    let path = normalize_stub_lib(values.stub_lib)
+    if path != "" && path_exists(path) {
+      return { path: path }
     }
     bail(
       "prebuilt stub archive \{values.stub_lib} was not found; rerun the provider fetch or set MOUI_SKIA_STUB_MODE=build",

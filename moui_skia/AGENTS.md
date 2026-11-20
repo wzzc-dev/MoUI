@@ -127,11 +127,16 @@ You can browse and install extra skills here:
   locally there.
 - `moui_skia/scripts/fetch-release-skia.{sh,ps1}` download the stub zip after
   the Skia package, verify its sha256/size, and emit `MOUI_SKIA_STUB_LIB`
-  (plus `MOUI_SKIA_STUB_ASSET_SHA256` / `MOUI_SKIA_STUB_SOURCES_SHA256`) in
+  as the extracted archive's **file path** — never its `package/` directory,
+  which would reach the link command as an input (MSVC appends `.obj` and fails
+  with `LNK1181 ... package.obj`) — plus
+  `MOUI_SKIA_STUB_ASSET_SHA256` / `MOUI_SKIA_STUB_SOURCES_SHA256` in
   `--print-env` / `-PrintEnv`. With no lock entry for the target they emit an
   empty value and the prebuild compiles `native/*.cpp` locally, so a clean
   checkout still builds; `MOUI_SKIA_STUB_MODE=prebuilt` turns that fallback
-  into a hard error.
+  into a hard error. `build.mbtx` also resolves a directory-valued
+  `MOUI_SKIA_STUB_LIB` to the archive inside it and fails loudly when that
+  directory holds none.
 - Stale-asset risk (temporary, until MoonBit ships a `stub-cxx-flags` c/cpp
   split so the C++ stub can return to the `mbt` build): the released stub is a
   build artifact, so editing `native/*.cpp` without republishing leaves the lock

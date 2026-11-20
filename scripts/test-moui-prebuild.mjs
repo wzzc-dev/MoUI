@@ -165,6 +165,14 @@ writeFileSync(join(fakeLib, "skia.lib"), "");
 
 const stubKind = "libmoui_skia_stub.a";
 
+// `build.mbtx` normalizes Windows paths to forward slashes before emitting them
+// (moon's shell-style `cc-link-flags` tokenizing eats backslashes), so compare
+// against the slash form to keep this suite meaningful on a Windows host.
+const asSlash = value => String(value).replaceAll("\\", "/");
+const fakeIncludeFlag = asSlash(fakeInclude);
+const fakeLibFlag = asSlash(fakeLib);
+const fakeStubFlag = asSlash(fakeStub);
+
 const releaseEnv = {
   MOUI_SKIA_PLATFORM: "macos",
   MOUI_SKIA_LINK_MODE: "static",
@@ -216,7 +224,7 @@ try {
   );
   if (
     !skiaBindingStubFlags.includes("MOUI_SKIA_HAS_SKIA") ||
-    !skiaBindingStubFlags.includes(fakeInclude)
+    !skiaBindingStubFlags.includes(fakeIncludeFlag)
   ) {
     throw new Error(
       "Skia binding prebuild must expose the Skia include dir through stub flags",
@@ -230,19 +238,19 @@ try {
       "Skia binding link_configs must carry the same flags as MOUI_SKIA_CC_LINK_FLAGS",
     );
   }
-  if (tokenCount(skiaBindingLinkFlags, fakeStub) !== 1) {
+  if (tokenCount(skiaBindingLinkFlags, fakeStubFlag) !== 1) {
     throw new Error("Skia binding link flags must name the stub archive once");
   }
-  if (skiaBinding.vars.MOUI_SKIA_STUB_LIB_PATH !== fakeStub) {
+  if (skiaBinding.vars.MOUI_SKIA_STUB_LIB_PATH !== fakeStubFlag) {
     throw new Error(
       "MOUI_SKIA_STUB_LIB must win over the lock entry and be reported verbatim",
     );
   }
-  if (tokenCount(skiaBindingLinkFlags, join(fakeLib, "libskia.a")) !== 1) {
+  if (tokenCount(skiaBindingLinkFlags, `${fakeLibFlag}/libskia.a`) !== 1) {
     throw new Error("Skia binding link flags must name libskia.a once");
   }
   if (
-    tokenCount(skiaBindingLinkFlags, join(fakeLib, "libskia_ganesh_ext.a")) !== 1
+    tokenCount(skiaBindingLinkFlags, `${fakeLibFlag}/libskia_ganesh_ext.a`) !== 1
   ) {
     throw new Error(
       "Metal GPU link flags must name libskia_ganesh_ext.a once",
@@ -268,6 +276,42 @@ try {
     }
   }
 
+  // A directory-valued stub path must resolve to the archive inside it. The provider
+  // fetch extracts the stub asset into `<platform>-<config>-<arch>-stub/package/`, and
+  // handed through unchanged that directory reaches the link command as a file: MSVC
+  // appends `.obj` and the link dies with `LNK1181: cannot open input file
+  // ...\package.obj` (seen on Windows with the release stub asset).
+  const stubPackageDir = join(fakeSkia, "windows-Release-x64-stub", "package");
+  mkdirSync(stubPackageDir, { recursive: true });
+  const stubPackageArchive = join(stubPackageDir, "moui_skia_stub.lib");
+  writeFileSync(stubPackageArchive, "");
+  const dirStub = runMbtxPrebuild("moui_skia", {
+    ...releaseEnv,
+    MOUI_SKIA_STUB_LIB: stubPackageDir,
+  });
+  if (dirStub.vars.MOUI_SKIA_STUB_LIB_PATH !== asSlash(stubPackageArchive)) {
+    throw new Error(
+      "a directory-valued MOUI_SKIA_STUB_LIB must resolve to the stub archive inside it",
+    );
+  }
+  if (
+    tokenCount(
+      String(dirStub.vars.MOUI_SKIA_CC_LINK_FLAGS || ""),
+      asSlash(stubPackageArchive),
+    ) !== 1
+  ) {
+    throw new Error(
+      "a directory-valued MOUI_SKIA_STUB_LIB must link the stub archive inside it",
+    );
+  }
+  const emptyStubDir = join(fakeSkia, "empty-stub-package");
+  mkdirSync(emptyStubDir, { recursive: true });
+  runMbtxPrebuild(
+    "moui_skia",
+    { ...releaseEnv, MOUI_SKIA_STUB_LIB: emptyStubDir },
+    { expectFailure: true },
+  );
+
   // `moui_skia_renderer` delegates to the binding prebuild and re-emits one
   // final-application link config instead of duplicating Skia knowledge.
   const skiaRenderer = runMbtxPrebuild("moui_skia_renderer", releaseEnv);
@@ -289,7 +333,7 @@ try {
   }
   if (
     !String(skiaRenderer.vars.MOUI_SKIA_STUB_CC_FLAGS || "").includes(
-      fakeInclude,
+      fakeIncludeFlag,
     )
   ) {
     throw new Error(

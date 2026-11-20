@@ -98,6 +98,20 @@ function Find-LibDir {
   return $null
 }
 
+function Find-LibFile {
+  param(
+    [Parameter(Mandatory = $true)][string] $Root,
+    [Parameter(Mandatory = $true)][object] $LibraryNames
+  )
+  if (!(Test-Path -LiteralPath $Root -PathType Container)) { return $null }
+  foreach ($name in @($LibraryNames)) {
+    if (!$name) { continue }
+    $lib = Get-ChildItem -LiteralPath $Root -Recurse -File -Filter $name -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($lib) { return ($lib.FullName -replace "\\", "/") }
+  }
+  return $null
+}
+
 function Download-File {
   param([Parameter(Mandatory = $true)][string] $Url, [Parameter(Mandatory = $true)][string] $Output)
   $parent = Split-Path -Parent $Output
@@ -404,9 +418,12 @@ if ($stubName) {
     }
   }
   if (Test-Path -LiteralPath $stubDir -PathType Container) {
-    $stubLibPath = Find-LibDir -Root $stubDir -LibraryNames $stubLibraryNames
+    # The stub is a single archive handed straight to the link command, so it must be
+    # the file path: the directory would reach the linker as an input (MSVC appends
+    # `.obj` and fails with LNK1181 on `package.obj`).
+    $stubLibPath = Find-LibFile -Root $stubDir -LibraryNames $stubLibraryNames
     if (!$stubLibPath) {
-      $stubLibPath = Find-LibDir -Root $stubDir -LibraryNames @("libmoui_skia_stub.a", "moui_skia_stub.lib")
+      $stubLibPath = Find-LibFile -Root $stubDir -LibraryNames @("libmoui_skia_stub.a", "moui_skia_stub.lib")
     }
   }
 } elseif (!$DryRunConfig) {
