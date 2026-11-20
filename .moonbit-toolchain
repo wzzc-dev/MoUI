@@ -1,5 +1,5 @@
 {
-  "moonc": "0.10.21+06da1ed44",
-  "moonc-worker": "0.1.202611179",
-  "moonc-worker-integrity": "sha512-/M+/I7ktMdOXdh9ftZQNrNEsnUkrOxNwTRui1C3hBX6ZloPWJBA78d9kHYRrx59cO/vLKpa6kX1wulFUIi6UvA=="
+  "moonc": "0.10.22+124d61d05",
+  "moonc-worker": "0.1.202611201",
+  "moonc-worker-integrity": "sha512-JF7NhLAJfG0m30fL2bMv6R9nHtB4Wg3TtxeLmvx0RAsSC4fn6bVGosd6U+hsP3Cxw+8WJfM6UU0zO3UAgmAvAQ=="
 }

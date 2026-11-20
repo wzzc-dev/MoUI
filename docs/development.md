@@ -621,8 +621,8 @@ log in release notes.
 GitHub Actions installs MoonBit through `.github/actions/setup-moonbit`. The
 pinned compiler version lives in `.moonbit-toolchain`; update that file when
 moving CI to a new MoonBit toolchain version. The current pin is MoonBit
-`0.10.21` (`moonc v0.10.21+06da1ed44`, `moonrun 0.1.20261117`,
-`@moonbit/moonc-worker@0.1.202611179` for the Playground).
+`0.10.22` (`moonc v0.10.22+124d61d05`, `moonrun 0.1.20261119`,
+`@moonbit/moonc-worker@0.1.202611201` for the Playground).
 
 The 0.10.21 migration touched three things:
 
