@@ -1,6 +1,12 @@
 ///|
 test "macOS presenter uses passthrough image view for pointer delivery" {
-  assert_true(macos_presenter_passthrough_ready())
+  // The passthrough NSImageView is an AppKit path: macOS reports it ready once
+  // AppKit is loaded, every other host must not claim it.
+  if host_is_macos() {
+    assert_true(macos_presenter_passthrough_ready())
+  } else {
+    assert_true(!macos_presenter_passthrough_ready())
+  }
 }
 
 ///|

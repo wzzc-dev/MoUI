@@ -6,6 +6,8 @@ usage() {
 Usage: scripts/windows-platform-evidence.sh [options]
 
 Collects Windows Skia platform evidence from the canonical Showcase route:
+0. Compiles and tests the moui_sun/softbuffer native stub, so a broken Win32
+   presenter fails fast before the Skia build.
 1. Resolves the requested real Skia provider.
 2. Builds and runs examples/showcase/windows_skia with first-frame auto-exit. The
    moui_skia/build.mbtx prebuild compiles the Skia C++ stub and emits the final
@@ -86,6 +88,17 @@ mkdir -p "$resolved_log_dir"
 if [[ $dry_run_config -eq 1 ]]; then
   echo "Dry run; no operations performed." | tee -a "$preflight_log"
   exit 0
+fi
+
+echo "=== Step 0: Run moui_sun/softbuffer native smoke ===" | tee -a "$preflight_log"
+softbuffer_log="$resolved_log_dir/softbuffer-native-smoke.log"
+cd "$REPO_ROOT"
+if moon test moui_sun/softbuffer --target native > "$softbuffer_log" 2>&1; then
+  echo "  softbuffer native smoke passed" | tee -a "$preflight_log"
+else
+  tail -n 20 "$softbuffer_log" >&2
+  echo "moui_sun/softbuffer native smoke failed; see $softbuffer_log" >&2
+  exit 1
 fi
 
 # The prebuild owns the Skia link config; nothing in the tree is rewritten, so
@@ -200,6 +213,7 @@ fi
 {
   echo "Windows platform evidence summary:"
   echo "  route=examples/showcase/windows_skia"
+  echo "  softbuffer_smoke_status=passed"
   echo "  skia_commit=$skia_commit"
   echo "  showcase_exit_status=$showcase_exit"
   echo "  showcase_first_frame_status=$showcase_status"

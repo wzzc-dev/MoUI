@@ -7,6 +7,18 @@ pub fn macos_presenter_passthrough_ready() -> Bool {
 }
 
 ///|
+/// Host platform of the native stub, so capability queries can be asserted
+/// against the platform they belong to instead of the host that runs the test.
+extern "c" fn renderer_host_is_macos() -> Int32 = "renderer_host_is_macos"
+
+///|
+/// True when the native stub was compiled for macOS. Capability queries such
+/// as `macos_presenter_passthrough_ready` only promise AppKit support here.
+pub fn host_is_macos() -> Bool {
+  renderer_host_is_macos() != 0
+}
+
+///|
 /// Present a tightly packed RGBA rectangle with the full surface dimensions.
 ///
 /// Native backends that keep a backing store, such as macOS layer contents,

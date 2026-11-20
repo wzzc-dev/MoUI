@@ -10,8 +10,105 @@
 #ifdef _WIN32
 // ============================================================================
 // Windows Implementation
+//
+// MoonBit hands tightly packed RGBA (premultiplied) rectangles; GDI's 32 bpp
+// BI_RGB DIB reads BGRA, so the channels are swapped on the way out. A present
+// blits only the submitted rectangle, scaled from surface pixels to window
+// client pixels when DPI or the window size makes the two differ, so the rest
+// of the window keeps the frame it already shows.
 // ============================================================================
 #include <windows.h>
+
+// Swap one tightly packed RGBA rectangle into a BGRA buffer.
+static bool renderer_win32_rect_to_bgra(
+    const uint8_t* pixels,
+    int32_t width,
+    int32_t height,
+    uint8_t** out_bgra
+) {
+    if (pixels == NULL || out_bgra == NULL || width <= 0 || height <= 0) {
+        return false;
+    }
+    if ((size_t)width > SIZE_MAX / 4u) {
+        return false;
+    }
+    size_t row_bytes = (size_t)width * 4u;
+    if ((size_t)height > SIZE_MAX / row_bytes) {
+        return false;
+    }
+    size_t byte_count = row_bytes * (size_t)height;
+    uint8_t* bgra = (uint8_t*)malloc(byte_count);
+    if (bgra == NULL) {
+        return false;
+    }
+    for (int32_t row = 0; row < height; row++) {
+        const uint8_t* src = pixels + (size_t)row * row_bytes;
+        uint8_t* dst = bgra + (size_t)row * row_bytes;
+        for (int32_t column = 0; column < width; column++) {
+            size_t at = (size_t)column * 4u;
+            dst[at + 0] = src[at + 2];
+            dst[at + 1] = src[at + 1];
+            dst[at + 2] = src[at + 0];
+            dst[at + 3] = src[at + 3];
+        }
+    }
+    *out_bgra = bgra;
+    return true;
+}
+
+// Blit a tightly packed BGRA image into a window. Source pixels map onto the
+// destination rectangle, so callers scale surface pixels to client pixels here.
+static void renderer_win32_blit_bgra(
+    HWND hwnd,
+    const uint8_t* bgra,
+    int32_t source_width,
+    int32_t source_height,
+    int32_t dest_x,
+    int32_t dest_y,
+    int32_t dest_width,
+    int32_t dest_height
+) {
+    if (hwnd == NULL || bgra == NULL) {
+        return;
+    }
+    if (source_width <= 0 || source_height <= 0 || dest_width <= 0 || dest_height <= 0) {
+        return;
+    }
+    HDC hdc = GetDC(hwnd);
+    if (hdc == NULL) {
+        return;
+    }
+    BITMAPINFO bmi;
+    memset(&bmi, 0, sizeof(bmi));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = source_width;
+    bmi.bmiHeader.biHeight = -source_height; // negative: top-down, like the pixel buffer
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    StretchDIBits(
+        hdc,
+        dest_x, dest_y, dest_width, dest_height,
+        0, 0, source_width, source_height,
+        bgra, &bmi, DIB_RGB_COLORS, SRCCOPY
+    );
+    ReleaseDC(hwnd, hdc);
+}
+
+// Scale one surface-space axis range to client pixels. Integer math keeps the
+// result stable across frames; a non-empty source range never maps to an empty
+// destination, so a one-pixel line cannot vanish on a tiny scale-down.
+static int32_t renderer_win32_scale_axis(
+    int32_t value,
+    int32_t surface_extent,
+    int32_t client_extent
+) {
+    if (surface_extent <= 0) {
+        return 0;
+    }
+    int64_t scaled = ((int64_t)value * (int64_t)client_extent) / (int64_t)surface_extent;
+    return (int32_t)scaled;
+}
 
 void renderer_present(native_window_t window, const uint8_t* pixels, int32_t width, int32_t height) {
     renderer_present_surface_rect(window, pixels, width, height, 0, 0, width, height);
@@ -25,7 +122,17 @@ void renderer_present_rect(
     int32_t width,
     int32_t height
 ) {
-    renderer_present_surface_rect(window, pixels, width, height, x, y, width, height);
+    HWND hwnd = (HWND)(uintptr_t)window;
+    if (hwnd == NULL || !IsWindow(hwnd)) {
+        return;
+    }
+    uint8_t* bgra = NULL;
+    if (!renderer_win32_rect_to_bgra(pixels, width, height, &bgra)) {
+        return;
+    }
+    // Without a surface size the rectangle is already in client pixels.
+    renderer_win32_blit_bgra(hwnd, bgra, width, height, x, y, width, height);
+    free(bgra);
 }
 
 void renderer_present_surface_rect(
@@ -38,76 +145,60 @@ void renderer_present_surface_rect(
     int32_t width,
     int32_t height
 ) {
+    HWND hwnd = (HWND)(uintptr_t)window;
+    if (hwnd == NULL || !IsWindow(hwnd)) {
+        return;
+    }
     if (pixels == NULL || surface_width <= 0 || surface_height <= 0 || width <= 0 || height <= 0) {
         return;
     }
-
-    renderer_objc_id view = renderer_content_view(window);
-    if (view == NULL) { return; }
-
-    // Find or create passthrough NSImageView subview (created once, reused)
-    renderer_objc_id image_view = renderer_find_or_create_image_view(view);
-    if (image_view == NULL) { return; }
-
-    // Get content view bounds and window scale factor
-    renderer_cgrect_t view_bounds = renderer_view_bounds(view);
-    double scale = renderer_backing_scale_factor(view);
-
-    // Update image view frame to match content view bounds (like Skia)
-    if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
-        ((void (*)(renderer_objc_id, renderer_objc_sel, renderer_cgrect_t))
-            renderer_darwin_api.objc_msg_send)(
-                image_view, renderer_sel("setFrame:"), view_bounds);
+    if (x < 0 || y < 0 || x >= surface_width || y >= surface_height) {
+        return;
     }
 
-    // Create CGImage from pixel data
-    renderer_backing_t* backing = renderer_backing_for_view(view, surface_width, surface_height);
-    if (backing == NULL) { return; }
-    renderer_copy_rect_to_backing(backing, pixels, x, y, width, height);
-
-    void* cg_image = renderer_create_cg_image(backing);
-    if (cg_image == NULL) { return; }
-
-    // Create NSImage using logical-point size (matching Skia presenter)
-    renderer_objc_id ns_image_class = renderer_darwin_api.objc_get_class("NSImage");
-    if (ns_image_class != NULL) {
-        renderer_objc_id ns_image_alloc = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
-            renderer_darwin_api.objc_msg_send)(ns_image_class, renderer_sel("alloc"));
-        if (ns_image_alloc != NULL) {
-            // NSImage size must be in points (logical size), not physical pixels.
-            // Skia uses view.bounds; we do the same, falling back to physical
-            // pixels divided by the backing scale factor when bounds are empty.
-            double point_w, point_h;
-            if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
-                point_w = view_bounds.width;
-                point_h = view_bounds.height;
-            } else {
-                point_w = (double)surface_width / scale;
-                point_h = (double)surface_height / scale;
-            }
-
-
-            // initWithCGImage:size: takes (CGImageRef, NSSize). NSSize = two doubles on arm64.
-            renderer_objc_id ns_image = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel, void*, double, double))
-                renderer_darwin_api.objc_msg_send)(
-                    ns_image_alloc, renderer_sel("initWithCGImage:size:"),
-                    cg_image, point_w, point_h);
-            if (ns_image != NULL) {
-                ((void (*)(renderer_objc_id, renderer_objc_sel, renderer_objc_id))
-                    renderer_darwin_api.objc_msg_send)(
-                        image_view, renderer_sel("setImage:"), ns_image);
-                ((void (*)(renderer_objc_id, renderer_objc_sel, intptr_t))
-                    renderer_darwin_api.objc_msg_send)(
-                        image_view, renderer_sel("setNeedsDisplay:"), (intptr_t)1);
-                renderer_msg_void(ns_image, "release");
-            }
-        }
+    RECT client;
+    if (!GetClientRect(hwnd, &client)) {
+        return;
+    }
+    int32_t client_width = client.right - client.left;
+    int32_t client_height = client.bottom - client.top;
+    if (client_width <= 0 || client_height <= 0) {
+        return;
     }
 
-    renderer_darwin_api.cg_image_release(cg_image);
+    int32_t dest_left = renderer_win32_scale_axis(x, surface_width, client_width);
+    int32_t dest_top = renderer_win32_scale_axis(y, surface_height, client_height);
+    int32_t dest_right = renderer_win32_scale_axis(x + width, surface_width, client_width);
+    int32_t dest_bottom = renderer_win32_scale_axis(y + height, surface_height, client_height);
+    if (dest_right <= dest_left) {
+        dest_right = dest_left + 1;
+    }
+    if (dest_bottom <= dest_top) {
+        dest_bottom = dest_top + 1;
+    }
+
+    uint8_t* bgra = NULL;
+    if (!renderer_win32_rect_to_bgra(pixels, width, height, &bgra)) {
+        return;
+    }
+    renderer_win32_blit_bgra(
+        hwnd,
+        bgra,
+        width,
+        height,
+        dest_left,
+        dest_top,
+        dest_right - dest_left,
+        dest_bottom - dest_top
+    );
+    free(bgra);
 }
 
 int32_t renderer_macos_presenter_passthrough_ready(void) {
+    return 0;
+}
+
+int32_t renderer_host_is_macos(void) {
     return 0;
 }
 
@@ -407,6 +498,10 @@ int32_t renderer_macos_presenter_passthrough_ready(void) {
         return 0;
     }
     return renderer_passthrough_hit_test_returns_nil() ? 1 : 0;
+}
+
+int32_t renderer_host_is_macos(void) {
+    return 1;
 }
 
 // Get view bounds (NSRect/CGRect) via ObjC runtime.
@@ -809,6 +904,10 @@ void renderer_present_surface_rect(
 }
 
 int32_t renderer_macos_presenter_passthrough_ready(void) {
+    return 0;
+}
+
+int32_t renderer_host_is_macos(void) {
     return 0;
 }
 
