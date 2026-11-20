@@ -82,6 +82,14 @@ provider entry because its first arm64 assets are published on
 `dev-fcb9c18e54`. Use `--platform harmonyos --arch arm64` to select that
 provider while leaving the default desktop release lock unchanged.
 
+Published stub coverage follows a runner matrix: macOS arm64/x64, Linux
+x64/arm64, and Windows x64. Each platform/arch is compiled by its own toolchain
+(MSVC on Windows, the provider's `_GLIBCXX_USE_CXX11_ABI` flag on Linux, Apple
+clang on macOS), so the archive always matches what the consumer links with.
+Android, iOS, tvOS, HarmonyOS, and every Debug config stay unpublished on
+purpose: they need SDK toolchains that the repository does not provision, and
+`MOUI_SKIA_STUB_MODE=auto` compiles the stub locally there.
+
 Fetch or inspect the selected package with:
 
 ```bash

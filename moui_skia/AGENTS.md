@@ -63,14 +63,15 @@ You can browse and install extra skills here:
   `providers.release.stub_libraries`.
 - `.github/workflows/moui-skia-stub-release.yml` owns publishing. Pushes that
   touch `native/*.cpp|*.h`, `build.mbtx`, or `publish-stub-library.sh` run
-  `publish-stub-library.sh --check` first: a lock whose `sources_sha256` still
-  matches is a no-op; otherwise the job rebuilds the stub on `macos-latest`,
-  uploads it with `--clobber` to the `skia-stub-<skia-tag>` release, verifies the
-  asset digest and download URL, and commits the refreshed lock with
-  `GITHUB_TOKEN` (a token push does not start a second CI run, and only the lock
-  changes, so the stub sources are not re-triggered). `workflow_dispatch` with
-  `force=true` republishes unconditionally; a forced rerun can rewrite the asset
-  `sha256` because `ar`/`zip` output is not byte-reproducible.
+  `publish-stub-library.sh --check` per matrix leg first: a leg whose lock entry
+  still matches `sources_sha256` is a no-op; the others rebuild, upload their raw
+  archive as a workflow artifact, and one publish job packages, uploads with
+  `--clobber`, verifies the digest and download URL, and commits every refreshed
+  lock entry in one commit with `GITHUB_TOKEN` (a token push does not start a
+  second CI run, and only the lock changes, so the stub sources are not
+  re-triggered). `workflow_dispatch` with `force=true` republishes
+  unconditionally; a forced rerun can rewrite the asset `sha256` because
+  `ar`/`zip` output is not byte-reproducible.
 - `moui_skia/native/moon.pkg` must list no C++ sources. Adding one back
   reintroduces the Windows D8016 clash (CLI `/std:c11` against Skia's
   `/std:c++20`), because `mbt` classifies MSVC stub compiles as C.
@@ -106,6 +107,15 @@ You can browse and install extra skills here:
   `.github/workflows/moui-skia-gitcode-mirror.yml`;
   `moui_skia/scripts/tests/fetch-release-skia-mirror.sh` proves the fallback
   offline in `pr-static`.
+- Published stub coverage is a runner matrix, not one host: macOS arm64 and
+  macOS x64 (Apple clang cross-compiled on the arm64 runner because MoonBit has
+  no Darwin x86_64 toolchain), Linux x64, Linux arm64, and Windows x64 (MSVC with
+  the vcvars environment imported in the build step). Each leg uploads its raw
+  archive as a workflow artifact; one publish job packages, uploads, verifies,
+  and commits every lock entry in a single commit, so a stale build tool never
+  packages on the wrong OS. Android/iOS/tvOS/HarmonyOS and Debug stay unpublished
+  on purpose: they need their own SDK toolchains, and `auto` compiles the stub
+  locally there.
 - `moui_skia/scripts/fetch-release-skia.{sh,ps1}` download the stub zip after
   the Skia package, verify its sha256/size, and emit `MOUI_SKIA_STUB_LIB`
   (plus `MOUI_SKIA_STUB_ASSET_SHA256` / `MOUI_SKIA_STUB_SOURCES_SHA256`) in

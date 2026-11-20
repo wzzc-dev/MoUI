@@ -279,6 +279,12 @@ MOUI_SKIA_MIRROR=gitcode-skia bash moui_skia/scripts/fetch-release-skia.sh --pri
 bash moui_skia/scripts/fetch-release-skia.sh --no-mirror --print-env  # 只用主站
 ```
 
+预编译 stub 现在按 runner 矩阵发布：macOS arm64/x64、Linux x64/arm64、Windows
+x64，每个平台用各自工具链编译（Windows 用 MSVC、Linux 带 provider 的
+`_GLIBCXX_USE_CXX11_ABI` 标志、macOS 用 Apple clang），因此归档必然与消费者链接的
+工具链一致。Android、iOS、tvOS、HarmonyOS 与所有 Debug 配置有意不发布：它们需要各自
+SDK 工具链，这些平台上 `MOUI_SKIA_STUB_MODE=auto` 会本地编译 stub。
+
 lock 里还记录了 `url-prefix` 型代理（例如 `gh-proxy.com`）：它们在下载时给
 GitHub 地址加前缀，不需要上传，因此 Debug 包和源码归档也有回退路径。它们的优先级
 排在 GitCode 副本之后，且同样必须匹配 lock 中的 SHA256——这类服务有时会返回错误

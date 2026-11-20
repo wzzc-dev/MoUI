@@ -79,3 +79,17 @@
   `Skia-…-linux-Release-x64.zip` was much slower through these proxies than a
   hosted copy, so do not promote proxies above `gitcode-skia`, and keep the
   SHA256 check as the only reason they are safe to try at all.
+- Stub coverage is a runner matrix (`moui-skia-stub-release.yml`): macos arm64 on
+  `macos-latest`, macos x64 cross-compiled by Apple clang on the same runner
+  (`MOUI_SKIA_STUB_CC` wrapper `cc -arch x86_64`, because MoonBit ships no
+  Darwin x86_64 toolchain), linux x64 on `ubuntu-24.04`, linux arm64 on
+  `ubuntu-24.04-arm`, windows x64 on `windows-2022` with the vcvars environment
+  imported inside the build step. Build legs upload the raw archive as a
+  workflow artifact; a single ubuntu publish job packages, uploads, verifies
+  digest + download, patches every lock entry, and commits once, so packaging
+  never depends on a non-Unix shell's `zip`/`shasum`.
+- Android/iOS/tvOS/HarmonyOS and all Debug configs stay unpublished on purpose
+  (SDK toolchains are not provisioned; `auto` compiles the stub locally there).
+  `build.mbtx`'s stub cache key has no arch component, so the per-leg
+  `actions/cache` key must keep `platform-arch` in it or two arches on one OS
+  can restore each other's archive.
