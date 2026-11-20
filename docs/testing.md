@@ -558,7 +558,11 @@ Two cost rules in `ci.yml` are easy to undo by accident:
 - `pr-static` is Linux-host only: install the Wayland prebuild set
   (`bash scripts/set_linux_deps.sh --wayland`) before it runs, and keep anything
   that needs ObjC++ (the renderer capability consistency tool imports
-  `moui_metal_renderer`) or a real Skia link in `pr-native`.
+  `moui_metal_renderer`) or a real Skia link in `pr-native`. That step carries
+  `"host": "darwin"`, so a local `pr` run on Linux or Windows prints it as
+  skipped instead of failing on the Metal `.mm` stubs; the standalone
+  `node scripts/validate-renderer-capability-consistency.mjs` prints the same
+  skip line.
 - a pull request whose changed paths are all documentation (`docs/`, `memories/`,
   `website/web_wasm/docs/`, or any `*.md`) skips the compile jobs; the static
   guards still run because they are what validates documentation.

@@ -22,11 +22,14 @@
   externs with stubs only, which broke real-Win32 linking of anything that
   references `rwh_06_display_handle` or `current_monitor` (masked for years by
   MoonBit dead-code elimination).
-- `validate-renderer-capability-consistency.mjs` cannot compile native C on a
-  bare Windows host (wgpu_mbt shim's `<stdatomic.h>` needs MSVC C11 mode;
-  `/experimental:c11atomics` alone does not define `__STDC_VERSION__`);
-  it runs on Linux/macOS CI. On Windows, source
-  `moui/scripts/windows/msvc_env.ps1` (shared CL carries
+- `validate-renderer-capability-consistency.mjs` imports `moui_metal_renderer`,
+  so its native executable links the Metal `.mm` stubs and only builds on
+  macOS. The `pr-native` step carries `"host": "darwin"` and the wrapper prints
+  a skip line elsewhere; before that gate it failed on Windows on ObjC++ and on
+  Linux on `cc1objplus`. The old "cannot compile native C on bare Windows" also
+  hit the wgpu_mbt shim's `<stdatomic.h>`, which needs MSVC C11 mode
+  (`/experimental:c11atomics` alone does not define `__STDC_VERSION__`). On
+  Windows, source `moui/scripts/windows/msvc_env.ps1` (shared CL carries
   `/experimental:c11atomics /utf-8`; `MOON_CC` stays unset) and call
   `Enable-MsvcGlobalC11ModeForCOnlyStubs` before
   WGPU-native builds (`moon run examples/showcase/windows_wgpu --target native`
