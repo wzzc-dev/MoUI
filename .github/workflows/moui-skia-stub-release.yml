@@ -210,7 +210,7 @@ jobs:
       # Only the Skia headers/lib roots are exported. `MOUI_SKIA_STUB_LIB` stays
       # unset so the prebuild compiles the stub instead of reusing the archive.
       - name: Fetch Skia release headers
-        if: steps.stale.outputs.publish == 'true'
+        if: steps.stale.outputs.publish == 'true' && matrix.platform != 'windows'
         shell: bash
         working-directory: moui_skia
         run: |
@@ -220,6 +220,33 @@ jobs:
             --print-env > skia-release-env.txt
           grep -E '^(MOUI_SKIA_SKIA_INCLUDE|MOUI_SKIA_SKIA_LIB_DIR|MOUI_SKIA_SKIA_LIB|MOUI_SKIA_LINK_MODE|MOUI_SKIA_EXTRA_CC_FLAGS|MOUI_SKIA_EXTRA_LINK_FLAGS)=' skia-release-env.txt >> "$GITHUB_ENV"
           grep -v '^MOUI_SKIA_STUB_LIB=' skia-release-env.txt | sed 's/^/  /'
+
+      # The bash fetch reports Git Bash POSIX paths (`/d/a/...`), which the native
+      # Windows moon/cl cannot resolve, so Windows uses the PowerShell fetch that
+      # reports `D:\\...` paths.
+      - name: Fetch Skia release headers (Windows)
+        if: steps.stale.outputs.publish == 'true' && matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $keep = @(
+            "MOUI_SKIA_SKIA_INCLUDE",
+            "MOUI_SKIA_SKIA_LIB_DIR",
+            "MOUI_SKIA_SKIA_LIB",
+            "MOUI_SKIA_LINK_MODE",
+            "MOUI_SKIA_EXTRA_CC_FLAGS",
+            "MOUI_SKIA_EXTRA_LINK_FLAGS"
+          )
+          $lines = & ./moui_skia/scripts/fetch-release-skia.ps1 -Platform windows -Arch x64 -Config Release -PrintEnv
+          if ($LASTEXITCODE -ne 0) {
+            throw "fetch-release-skia.ps1 failed with exit code $LASTEXITCODE"
+          }
+          foreach ($line in $lines) {
+            if ($line -match '^([^=]+)=(.*)$' -and $keep -contains $Matches[1]) {
+              "$($Matches[1])=$($Matches[2])" | Out-File -FilePath $env:GITHUB_ENV -Append
+              Write-Output "  $line"
+            }
+          }
 
       # `moon run build.mbtx` is the same prebuild moon itself runs, so the stub
       # is compiled with exactly the flags the binding uses, and the prebuild
