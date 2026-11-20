@@ -5,7 +5,9 @@
   Skia parity — 60-cell control-state matrix average pixel error ≤3%, worst
   cell ≤10% under the perceptual metric below, Showcase first screen without
   bitmap-looking text, clipped glyphs, or jaggies — and keep it there with a
-  reproducible comparison gate that blocks regressions.
+  reproducible comparison gate that blocks regressions. Linux is complete;
+  **Phase 2 extends the same bar to Windows**, starting from a measured
+  baseline and closing the host gaps (system font discovery first).
 - **Non-goals**:
   - Pixel-exact parity. Anti-aliasing/hinting/rounding differences are
     expected and accepted; only perceived similarity is targeted.
@@ -13,8 +15,8 @@
     not selected by `auto`, not registered in default composition roots, and
     no performance promises (ADR 0023, which this plan only annotates with a
     visual goal).
-  - macOS/Windows visual-parity gates. Linux is verified first; other hosts
-    follow only after the Linux loop is stable.
+  - A macOS visual-parity gate. Linux and now Windows are the measured hosts;
+    macOS stays deferred until it has its own evidence route.
 
 ## Acceptance
 
@@ -80,6 +82,66 @@ slider rest states at ~0.01–0.03%. Diagnostic changed-pixel share: 20.89%.
 5. **Showcase + blocking gate** — tune the Showcase first screen, switch the
    profile entry from report-only to blocking.
 
+## Phase 2: Windows parity
+
+Windows is the second measured host. Sun runs through the lab route
+`examples/showcase/windows_sun`, while the 60-cell matrix and the gate are
+host-agnostic, so the same comparison runs on Windows against a Skia reference
+built on the same machine.
+
+### Baseline (2026-11-20, Windows, `sun` branch)
+
+```sh
+node scripts/visual-control-matrix.mjs --renderer sun --out artifacts/vm-sun-win
+node scripts/visual-control-matrix.mjs --renderer skia --out artifacts/vm-skia-win
+node scripts/visual-parity-gate.mjs --sun artifacts/vm-sun-win --skia artifacts/vm-skia-win
+```
+
+The Skia reference was built from the locked release provider
+(`dev-6d73578a36`, `windows-Release-x64-static`). It printed
+`SkLoadICU: datafile ... icudtl.dat is missing`, so its Latin labels were shaped
+through DirectWrite without ICU data; stage 9 stages `icudtl.dat` next to the
+matrix executable before claiming non-Latin coverage.
+
+| Step | Avg | Worst | Diagnostic changed-pixel share |
+|---|---|---|---|
+| before Windows font discovery | 7.41% | 17.67% (`checkbox/dark/focused`) | 20.00% |
+| after Windows font discovery | 1.57% | 5.04% (`toggle/light/focused`) | 11.73% |
+
+Before the fix every label painted placeholder glyphs (a blocky `PRIMARY`);
+`moui_sun_renderer` had no Windows face query, so
+`sun_default_platform_font_faces` only offered the bundled macOS paths, which
+do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
+`checkbox` the next (≈3.2%); text cells sit below 2%.
+
+### Acceptance
+
+- [x] Windows baseline recorded before any change: avg/worst, top offenders,
+      and the placeholder-glyph cause.
+- [x] Windows system font discovery resolves Segoe UI, Consolas and Times New
+      Roman from `%WINDIR%\Fonts` through the existing weight buckets;
+      the button cell now draws real Segoe UI outlines instead of placeholders.
+- [x] Windows matrix average ≤3% and worst ≤10%: 1.57% / 5.04% (gate PASS).
+- [ ] Windows parity step recorded by `scripts/windows-platform-evidence.sh`
+      and a Windows CI route (stage 9).
+
+### Stages
+
+6. **Windows baseline** — done 2026-11-20: 7.41% / 17.67% before the font fix,
+   confirming the matrix tool and the Skia prebuild work on Windows.
+7. **Windows font discovery** — done 2026-11-20: the native payload producer
+   enumerates Segoe UI (100/300/400/600/700/800), Consolas (400/700) and Times
+   New Roman (400/700), with Arial/Georgia/Courier New as per-role fallbacks;
+   the payload contract stays at version 2, so the MoonBit decoder is unchanged.
+8. **Windows visual refinement (stretch)** — the thresholds are already met;
+   remaining work is bringing the worst cell down to Linux's 2.63% level
+   (toggle geometry, checkbox ring/text phase) and checking weight mapping for
+   `550`-style requests against DirectWrite's nearest-bucket rule.
+9. **Windows gate + evidence** — run both matrices and the gate from
+   `scripts/windows-platform-evidence.sh`, stage `icudtl.dat` for the matrix
+   executable, and keep the step report-only until the same numbers reproduce
+   on CI. Blocking follows only after that reproduction.
+
 ## Decision log
 
 | Date | Decision |
@@ -100,6 +162,11 @@ slider rest states at ~0.01–0.03%. Diagnostic changed-pixel share: 20.89%.
 | 2026-11-20 | Stage 5: the golden pixel baselines `solid_and_rounded_rects` and `linear_gradient` are updated to the current Sun hashes (`961543285849148029` and `3090617638251390686`). Both moves are intentional stage-3/4 changes — analytic rounded-rect row coverage and canvas-space gradient sampling — and were visually covered by the stage-3 corner crops and the stage-4 gradient zoom; `clip_transform_opacity` and `path_fill` stayed unchanged. Without the update the `visual` profile's golden step is red, which would make the new blocking CI job red for a stale baseline rather than a parity regression. |
 | 2026-11-20 | Stage 5: the two known gaps are documented in the PR as limitations rather than fixed here. `draw_text` overflow wrapping in Sun versus clipping in Skia is a layout-policy difference with many public `moui_sun/text` tests, and it does not enter the matrix or the first-screen acceptance; the Renderer Smoke image placeholder only affects the offscreen screenshot path, while the stage-5 screenshots come from the real run where image loading is active. |
 | 2026-11-20 | Stage 4: the Skia build used here paints `DrawShadow` with no blurred falloff (a synthetic DPR=2 probe steps `255 -> 153` across a single pixel at the shadow edge; either the prebuild lacks `MOUI_SKIA_HAS_MASK_FILTER` or `saveLayer` does not apply the mask filter). Sun keeps the three-pass box blur (support `3 * radius`, no banding), so shadow parity is judged by position, size and softness, not by pixel equality with that reference artefact. |
+| 2026-11-20 | Phase 2: Windows is measured on the same host as its Skia reference, with the locked release provider (`dev-6d73578a36`). The missing `icudtl.dat` warning is recorded as a limitation of the reference for non-Latin shaping; the ASCII matrix labels still shape through DirectWrite, so the 60 cells remain comparable. |
+| 2026-11-20 | Phase 2: the Windows face query lives in the existing native stub instead of a new `moon.pkg` link dependency. It builds paths from `GetWindowsDirectoryW` and returns the same version-2 payload, so no MoonBit decoder or package-config change was needed; the producer symbol is now `moui_sun_platform_font_payload` (was `moui_sun_linux_platform_font_payload`). |
+| 2026-11-20 | Phase 2: Windows weight buckets map Segoe UI Light to both 100 and 300 (the family has no ExtraLight), Semibold to 600, Bold to 700 and Black to 800. The per-path face cache keeps the duplicated Light entry cheap, and the existing non-distinct-weight filter only compares against the regular (400) path, so Light is still registered once per weight key. |
+| 2026-11-20 | Phase 2: with the thresholds met after font discovery, stage 8 stays a stretch target rather than a gate blocker. DirectWrite resolves a `550` request to the nearest heavier bucket (600 Semibold); Sun's fontconfig-derived bucket table currently resolves it to 400, so a Windows-specific CSS nearest-bucket rule is the first stage-8 candidate once the worst cells need further tightening. |
+| 2026-11-20 | Same branch: the softbuffer Win32 presenter is restored to GDI `StretchDIBits` with RGBA→BGRA conversion and surface→client rect scaling for partial presents. `scripts/windows-platform-evidence.sh` runs `moon test moui_sun/softbuffer --target native` as step 0, because `moon build` on that library package tries to link an executable with no `main`. |
 
 ## Progress
 
@@ -110,3 +177,4 @@ slider rest states at ~0.01–0.03%. Diagnostic changed-pixel share: 20.89%.
 | 2026-11-19 | Stage 3: analytic row coverage for rounded-rect fill/stroke, miter-join bound in the generic stroker, and single-line text centred on the face ascent/descent box. 60-cell matrix on a frozen tree avg 2.09% (limit 4.0%), worst 6.33% `checkbox/light/focused` (limit 13%); the 30 checkbox/radio/toggle cells are 0.79-6.33%, all under the 8% per-cell line; 60 cells + 22 transitions, no missing styles; corner, ring, focus-ring and rail crops show only 1-2 level edge differences, no jaggies. Glyph masks still use the 4x4 grid; the adaptive glyph-mask sampler measured neutral in an A/B (50 cells changed pixels, gate unchanged) and is not part of this stage. The residual on checkbox labels is dominated by a one-logical-pixel horizontal phase offset of the text origin (ink starts at 60 device px against Skia's 58), not by edge coverage; left-shifting Sun text by that pixel takes checkbox from 6.65% to 3.42%. That is carried into stage 4. |
 | 2026-11-20 | Stage 4: text placement now uses the pen origin (no double side bearing), shaders sample in canvas space, and blur/shadow geometry scales with DPR. 60-cell matrix on the frozen tree avg 1.23% (limit 3.5%), worst 2.63% `text_field/light/default` (limit 10.5%); 60 cells + 22 transitions, no missing styles, changed-pixel share 11.66%. Showcase at 2160×1440: Welcome first screen 1.036%, Advanced Rendering 0.973% (1.332% before the gradient fix), Accessibility Probe 0.84%; radial-gradient card region 0.093%, filter card region 0.481% → 0.259% after DPR blur; a DPR=2 shadow probe shows a smooth 3-pass falloff with no banding. First-screen render 33.9 s vs the 41.5 s stage-3 baseline (debug native, 1080×720, DPR 2) = 0.82×, inside the 1.2× line. `moon check` clean; `moui_sun_renderer` 124/124. Known gaps outside this stage: the Showcase image source still paints Sun's placeholder in the offscreen screenshot path, and overflowing `draw_text` wraps in Sun's layout where Skia clips at the frame edge. |
 | 2026-11-20 | Stage 5: the `visual` parity entry is blocking and Linux-only. The gate no longer skips on a missing Skia reference (exit 1 without `--report-only`), and the blocking step forces the locked release prebuild for its two matrix children while the rest of the profile keeps the prebuild-disabled default (so the host-pinned control-preview and gallery-screenshot checks print `skipped` on Linux instead of going stale). `ci.yml` now triggers pull requests to `dev` and runs the whole `visual` profile in a `ubuntu-24.04` job after `set_linux_deps.sh`; the parity check is a red check on dev PRs. Tightening the gate to `--max-avg 1` exited 1; restoring 3/10 exited 0. Final standard-directory gate: 60 cells, `avg 1.23%` (limit 3.00%), worst `2.63% text_field/light/default` (limit 10.00%), 22 transitions, no missing/blank, exit 0; diagnostic changed-pixel share 11.66%. `node scripts/check.mjs --profile visual` exits 0 (parity PASS, golden 4/4, gallery app 3/3; previews/gallery skipped by the documented host rule). Real X11 Showcase screenshots at 1100×680 via `scripts/capture-showcase-sun.sh`: Welcome `artifacts/showcase-real/sun-0.png`, Advanced Rendering `sun-1.png`, Accessibility Probe `sun-2.png`; visual inspection shows no bitmap glyphs or jaggies and no clipped text on the first screen. Local checks: `moon check` clean, `moon fmt --check` clean, `moui_sun_renderer` 124/124, `examples/showcase/app` 17/17; static validators green except `validate-renderer-capability-consistency`, which cannot compile the Metal `.mm` stubs on this Linux host (`cc1objplus` missing). Known gaps documented in the PR: Sun `draw_text` overflow wraps where Skia clips (Renderer Smoke card), and the Renderer Smoke PNG data URI still paints a Sun placeholder. |
+| 2026-11-20 | Phase 2 stages 6–7: Windows baseline before the fix was `avg 7.41%` / worst `17.67% checkbox/dark/focused` (changed-pixel share 20.00%) with every label in placeholder glyphs. After the Windows face query: `avg 1.57%` (limit 3.00%) / worst `5.04% toggle/light/focused` (limit 10.00%), gate PASS, changed-pixel share 11.73%; the button cell inspected at 2x now shows real Segoe UI outlines. `moon test moui_sun_renderer --target native` 124/124. The reference matrix came from the same host with the locked release provider; `icudtl.dat` staging is deferred to stage 9. |
