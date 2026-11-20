@@ -107,6 +107,7 @@ matrix executable before claiming non-Latin coverage.
 |---|---|---|---|
 | before Windows font discovery | 7.41% | 17.67% (`checkbox/dark/focused`) | 20.00% |
 | after Windows font discovery | 1.57% | 5.04% (`toggle/light/focused`) | 11.73% |
+| after font discovery, through `windows-platform-evidence.sh` with `icudtl.dat` staged | 1.52% | 4.00% (`checkbox/dark/pressed`) | 11.60% |
 
 Before the fix every label painted placeholder glyphs (a blocky `PRIMARY`);
 `moui_sun_renderer` had no Windows face query, so
@@ -122,8 +123,12 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
       Roman from `%WINDIR%\Fonts` through the existing weight buckets;
       the button cell now draws real Segoe UI outlines instead of placeholders.
 - [x] Windows matrix average ≤3% and worst ≤10%: 1.57% / 5.04% (gate PASS).
-- [ ] Windows parity step recorded by `scripts/windows-platform-evidence.sh`
-      and a Windows CI route (stage 9).
+- [x] Windows parity step recorded by `scripts/windows-platform-evidence.sh`
+      (60 cells, avg 1.52% / worst 4.00%, gate PASS, `icudtl.dat` staged next to
+      the matrix executable) and the weekly `moui-windows-platform-evidence`
+      workflow surfaces `visual_parity_status` in its job summary.
+- [ ] Windows parity step flips from report-only to blocking after CI
+      reproduces the local 3%/10% numbers (stage 9 remainder).
 
 ### Stages
 
@@ -137,10 +142,14 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
    remaining work is bringing the worst cell down to Linux's 2.63% level
    (toggle geometry, checkbox ring/text phase) and checking weight mapping for
    `550`-style requests against DirectWrite's nearest-bucket rule.
-9. **Windows gate + evidence** — run both matrices and the gate from
-   `scripts/windows-platform-evidence.sh`, stage `icudtl.dat` for the matrix
-   executable, and keep the step report-only until the same numbers reproduce
-   on CI. Blocking follows only after that reproduction.
+9. **Windows gate + evidence** — recorded 2026-11-20: the script builds
+   `moui_tests/visual_matrix` once, stages the release `icudtl.dat` beside it,
+   runs both 60-cell matrices and the gate, and writes
+   `visual_parity_status`/`visual_parity_enforcement` into the evidence summary.
+   The step stays report-only (`--parity-blocking`, or
+   `MOUI_WINDOWS_VISUAL_PARITY_BLOCKING=1`, opts into a red run) until the
+   weekly Windows job reproduces 1.52% / 4.00%; blocking follows only after
+   that reproduction.
 
 ## Decision log
 
@@ -167,6 +176,7 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
 | 2026-11-20 | Phase 2: Windows weight buckets map Segoe UI Light to both 100 and 300 (the family has no ExtraLight), Semibold to 600, Bold to 700 and Black to 800. The per-path face cache keeps the duplicated Light entry cheap, and the existing non-distinct-weight filter only compares against the regular (400) path, so Light is still registered once per weight key. |
 | 2026-11-20 | Phase 2: with the thresholds met after font discovery, stage 8 stays a stretch target rather than a gate blocker. DirectWrite resolves a `550` request to the nearest heavier bucket (600 Semibold); Sun's fontconfig-derived bucket table currently resolves it to 400, so a Windows-specific CSS nearest-bucket rule is the first stage-8 candidate once the worst cells need further tightening. |
 | 2026-11-20 | Same branch: the softbuffer Win32 presenter is restored to GDI `StretchDIBits` with RGBA→BGRA conversion and surface→client rect scaling for partial presents. `scripts/windows-platform-evidence.sh` runs `moon test moui_sun/softbuffer --target native` as step 0, because `moon build` on that library package tries to link an executable with no `main`. |
+| 2026-11-20 | Stage 9: the parity step runs inside the evidence script in report-only form. It builds `moui_tests/visual_matrix` once, copies the release provider's `icudtl.dat` next to the executable (SkLoadICU only searches the module directory), runs the Sun and Skia matrices into `<log-dir>/visual-parity/`, and records `visual_parity_status` plus `visual_parity_enforcement` in the summary. `--parity-blocking` (or `MOUI_WINDOWS_VISUAL_PARITY_BLOCKING=1`) is the only way to make a threshold miss red, so the weekly job reports numbers instead of blocking until it reproduces 1.52% / 4.00%. Matrix paths go through `cygpath -w` because Git Bash paths such as `/c/...` would be read by node's `path.resolve` as `C:\c\...`. |
 
 ## Progress
 
@@ -178,3 +188,4 @@ do not exist on Windows. After the fix `toggle` is the worst group (≈5.0%) and
 | 2026-11-20 | Stage 4: text placement now uses the pen origin (no double side bearing), shaders sample in canvas space, and blur/shadow geometry scales with DPR. 60-cell matrix on the frozen tree avg 1.23% (limit 3.5%), worst 2.63% `text_field/light/default` (limit 10.5%); 60 cells + 22 transitions, no missing styles, changed-pixel share 11.66%. Showcase at 2160×1440: Welcome first screen 1.036%, Advanced Rendering 0.973% (1.332% before the gradient fix), Accessibility Probe 0.84%; radial-gradient card region 0.093%, filter card region 0.481% → 0.259% after DPR blur; a DPR=2 shadow probe shows a smooth 3-pass falloff with no banding. First-screen render 33.9 s vs the 41.5 s stage-3 baseline (debug native, 1080×720, DPR 2) = 0.82×, inside the 1.2× line. `moon check` clean; `moui_sun_renderer` 124/124. Known gaps outside this stage: the Showcase image source still paints Sun's placeholder in the offscreen screenshot path, and overflowing `draw_text` wraps in Sun's layout where Skia clips at the frame edge. |
 | 2026-11-20 | Stage 5: the `visual` parity entry is blocking and Linux-only. The gate no longer skips on a missing Skia reference (exit 1 without `--report-only`), and the blocking step forces the locked release prebuild for its two matrix children while the rest of the profile keeps the prebuild-disabled default (so the host-pinned control-preview and gallery-screenshot checks print `skipped` on Linux instead of going stale). `ci.yml` now triggers pull requests to `dev` and runs the whole `visual` profile in a `ubuntu-24.04` job after `set_linux_deps.sh`; the parity check is a red check on dev PRs. Tightening the gate to `--max-avg 1` exited 1; restoring 3/10 exited 0. Final standard-directory gate: 60 cells, `avg 1.23%` (limit 3.00%), worst `2.63% text_field/light/default` (limit 10.00%), 22 transitions, no missing/blank, exit 0; diagnostic changed-pixel share 11.66%. `node scripts/check.mjs --profile visual` exits 0 (parity PASS, golden 4/4, gallery app 3/3; previews/gallery skipped by the documented host rule). Real X11 Showcase screenshots at 1100×680 via `scripts/capture-showcase-sun.sh`: Welcome `artifacts/showcase-real/sun-0.png`, Advanced Rendering `sun-1.png`, Accessibility Probe `sun-2.png`; visual inspection shows no bitmap glyphs or jaggies and no clipped text on the first screen. Local checks: `moon check` clean, `moon fmt --check` clean, `moui_sun_renderer` 124/124, `examples/showcase/app` 17/17; static validators green except `validate-renderer-capability-consistency`, which cannot compile the Metal `.mm` stubs on this Linux host (`cc1objplus` missing). Known gaps documented in the PR: Sun `draw_text` overflow wraps where Skia clips (Renderer Smoke card), and the Renderer Smoke PNG data URI still paints a Sun placeholder. |
 | 2026-11-20 | Phase 2 stages 6–7: Windows baseline before the fix was `avg 7.41%` / worst `17.67% checkbox/dark/focused` (changed-pixel share 20.00%) with every label in placeholder glyphs. After the Windows face query: `avg 1.57%` (limit 3.00%) / worst `5.04% toggle/light/focused` (limit 10.00%), gate PASS, changed-pixel share 11.73%; the button cell inspected at 2x now shows real Segoe UI outlines. `moon test moui_sun_renderer --target native` 124/124. The reference matrix came from the same host with the locked release provider; `icudtl.dat` staging is deferred to stage 9. |
+| 2026-11-20 | Phase 2 stage 9: one full `scripts/windows-platform-evidence.sh` run on Windows (MSVC x64, release provider `dev-6d73578a36`) exits 0 and records `softbuffer_smoke_status=passed`, `visual_parity_status=passed` (report-only), `showcase_first_frame_status=passed`. Parity with `icudtl.dat` staged: 60 cells, `avg 1.52%` (limit 3.00%), worst `4.00% checkbox/dark/pressed` (limit 10.00%), 22 transitions, no missing/blank cells, changed-pixel share 11.60%. The worst group is now checkbox (3.6–4.0%), then toggle (2.6–3.0%); slider stays ≤0.06%. |
