@@ -454,8 +454,8 @@ jobs:
             echo "lock already matches the uploaded assets; nothing to commit"
             exit 0
           fi
-          git config user.name "moui-skia-stub-release"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name "wzzc-dev"
+          git config user.email "wzzc@wzzc.dev"
           git add moui_skia/skia-provider-lock.json
           git commit -m "chore(moui_skia): publish the $STUB_ASSET_TAG Skia stub assets"
           branch="${GITHUB_REF_NAME}"
