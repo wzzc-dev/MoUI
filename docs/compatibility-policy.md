@@ -26,6 +26,8 @@ the Skia list (bug fix, no public API, package boundary, or wire-contract
 change). `0.7.2` is the next patch: it makes the Skia asset download observable
 and steerable (progress, mirror listing and choice, default speed probe), again
 tooling only with no public API, package boundary, or wire-contract change.
+`0.7.3` adds the opt-in macOS dev hot-reload loop: a dev-only module plus the
+`moui dev --hot` flag, with no published package or wire-contract change.
 The pre-1 policy is unchanged: a 0.x minor may break with an upgrade
 note and migration example, and the external consumer gate still runs.
 `checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable

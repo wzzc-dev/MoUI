@@ -2,12 +2,12 @@ name = "wzzc-dev/moui_agent"
 
 preferred_target = "native"
 
-version = "0.7.2"
+version = "0.7.3"
 
 license = "Apache-2.0"
 
 import {
-  "wzzc-dev/moui@0.7.2",
+  "wzzc-dev/moui@0.7.3",
 }
 
 description = "MoUI agent protocol layer: observable/controllable runtime surface for external agents"
