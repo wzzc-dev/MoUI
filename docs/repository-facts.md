@@ -43,6 +43,7 @@ This file is generated from repository manifests and validator reports.
 | ./moui_tui |
 | ./moui_text_providers |
 | ./examples/chrome_demo |
+| ./moui_devhost |
 | ./examples/counter |
 | ./examples/gallery |
 | ./examples/custom_control |
