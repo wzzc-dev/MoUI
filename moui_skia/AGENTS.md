@@ -106,7 +106,23 @@ You can browse and install extra skills here:
   try the primary host, then the hosted copies, then the proxies, and verify the
   locked SHA256 and size on every candidate; `MOUI_SKIA_MIRROR` accepts
   `auto|off|<mirror-name>` (flags `--mirror NAME` / `--no-mirror`, `-Mirror` /
-  `-NoMirror`). Proxies are third-party and only usable because of that check:
+  `-NoMirror`). `--list-mirrors` (`-ListMirrors`) prints the recorded sources and
+  downloads nothing; `--probe` (`-Probe`) measures the first 256 KiB of each
+  release-asset candidate and suggests a faster one. The same probe runs by
+  default (`MOUI_SKIA_PROBE=auto`) before an asset of at least 4 MiB is
+  downloaded in `auto` mirror mode: once per invocation, reported through the
+  progress channel, and only to reorder candidates, since every download still
+  verifies the locked SHA256 and size. `--no-probe` (`-NoProbe`) or
+  `MOUI_SKIA_PROBE=off` disables it (a fresh cache pays seconds per run, and CI
+  without a TTY only sees it as stderr noise); an explicit `--mirror NAME` /
+  `-Mirror NAME` or `--no-mirror` / `-NoMirror` already fixes the order and
+  skips the probe. Live throughput goes
+  through `MOUI_SKIA_PROGRESS=auto|off|stderr|tty` (`--progress MODE` /
+  `--no-progress`, `-Progress MODE` / `-NoProgress`), which uses `/dev/tty` (or
+  `CONOUT$` on Windows) when `moon` captures a prebuild's stderr. The inspection
+  modes are rejected together with `--print-env`, whose stdout stays
+  machine-readable. Proxies are third-party and only usable because of the
+  digest check:
   several of them answer 200 with an error page or a truncated body. Never use a
   proxy as an upload target (`mirror-release-assets.sh` rejects it), and do not
   add a `release-download` entry whose filters claim assets the mirror does not

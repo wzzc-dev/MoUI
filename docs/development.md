@@ -452,6 +452,27 @@ Skia/Metal link flags are injected by the `moui_skia` prebuild
 (`${build.MOUI_SKIA_CC_LINK_FLAGS}`); do not write machine-local absolute
 paths into example `moon.pkg` files.
 
+Skia downloads are observable and steerable. `moui_skia/scripts/fetch-release-skia.sh`
+and its PowerShell twin report live throughput through
+`MOUI_SKIA_PROGRESS=auto|off|stderr|tty` (flags `--progress MODE` / `--no-progress`,
+`-Progress MODE` / `-NoProgress`), because a prebuild hook's stderr can be captured
+by `moon`. `--list-mirrors` prints every recorded source without downloading,
+`--probe` measures the first 256 KiB of each release-asset candidate and suggests
+a faster one, and `--mirror NAME` / `MOUI_SKIA_MIRROR=NAME` prefers that mirror
+(`auto` tries the primary host then every mirror, `off` keeps the primary host
+only). Every candidate is still verified against the locked SHA256 and size.
+
+The same 256 KiB probe runs by default (`MOUI_SKIA_PROBE=auto`) before an asset
+of at least 4 MiB is downloaded in `auto` mirror mode: once per invocation, its
+report goes to the progress channel (never stdout, so `--print-env` stays
+machine-readable), and it only reorders candidates — the fastest measured source
+is tried first, while the locked SHA256 and size still gate every download.
+`--no-probe` / `MOUI_SKIA_PROBE=off` keeps the plain order (primary host, then
+the mirrors); an explicit `--mirror NAME` / `--no-mirror` already fixes the order
+and skips the probe. On a fresh cache the default probe costs roughly 5–25 s, and
+CI without a TTY only sees it as stderr lines, so build jobs may set
+`MOUI_SKIA_PROBE=off`.
+
 Every `--moonbit-unstable-prebuild` hook in this repository is a `build.mbtx`
 MoonBit script (`moui`, `moui_webview`, `moui_text_providers`,
 `moui_metal_renderer`, `moui_tests`, `moui_skia`, `moui_skia_renderer`, and
