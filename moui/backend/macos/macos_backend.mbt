@@ -73,8 +73,8 @@ pub struct MacosHostSmokeOptions {
   priv first_frame_smoke_auto_exit : Bool
   priv native_ime_runtime_smoke : Bool
   /// Drive a synthetic slider drag (pointer down + move stream) and report
-  /// present-to-present latency, so Sun/Skia interaction cadence is measured,
-  /// not felt.
+  /// present-to-present latency, so Sun and mainline-renderer interaction
+  /// cadence is measured, not felt.
   priv slider_drag_smoke : Bool
   /// When > 0, keep presenting for this many milliseconds after warm-up and
   /// emit a performance summary line. Mutually exclusive with first-frame

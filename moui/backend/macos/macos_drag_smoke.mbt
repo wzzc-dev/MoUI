@@ -5,8 +5,8 @@
 /// pointer move per presented frame, recording the present-to-present
 /// interval. That interval is the whole interaction loop the user feels —
 /// event dispatch, rebuild, renderer replay, present, pump wait — so Sun and
-/// Skia routes (and debug/release builds) compare on measured numbers instead
-/// of feel. One move per present keeps the loop identical across routes: the
+/// mainline-renderer routes (and debug/release builds) compare on measured
+/// numbers instead of feel. One move per present keeps the loop identical across routes: the
 /// pump never has queued moves waiting, it always redraws for the single new
 /// event.
 
