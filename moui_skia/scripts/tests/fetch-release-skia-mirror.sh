@@ -40,6 +40,10 @@ mkdir -p "$fixture/scripts" "$work_dir/assets" "$work_dir/stub" "$work_dir/packa
 cp "$fetch_script" "$fixture/scripts/fetch-release-skia.sh"
 : > "$work_dir/package/include/core/SkSurface.h"
 echo "fake-static-lib" > "$work_dir/package/lib/libskia.a"
+# The automatic probe only measures assets of at least 4 MiB, so pad the package
+# with incompressible bytes; otherwise every large-download section would skip
+# the probe and the default-probe coverage would silently pass without one.
+head -c 4194304 /dev/urandom > "$work_dir/package/lib/libskia-padding.bin"
 echo "fake-stub" > "$work_dir/stub-package/libmoui_skia_stub.a"
 (cd "$work_dir/package" && zip -qr "$work_dir/assets/Skia-test-macos-Release-arm64.zip" .)
 (cd "$work_dir/stub-package" && zip -qr "$work_dir/stub/MoUISkiaStub-test-macos-Release-arm64.zip" .)
@@ -211,12 +215,14 @@ run_fetch() {
   (
     cd "$fixture"
     bash scripts/fetch-release-skia.sh --platform macos --arch arm64 \
-      --cache-dir "$work_dir/$cache_name" "$@"
+      --cache-dir "$work_dir/$cache_name" --progress stderr "$@"
   )
 }
 
-# 1. The primary URL is missing, so the mirror must serve both artifacts.
-if run_fetch cache-fallback --print-env >"$work_dir/fallback.out" 2>"$work_dir/fallback.err"; then
+# 1. The primary URL is missing, so the mirror must serve both artifacts. The
+#    speed probe is switched off here so the source order stays deterministic;
+#    the default probe has its own section below.
+if run_fetch cache-fallback --no-probe --print-env >"$work_dir/fallback.out" 2>"$work_dir/fallback.err"; then
   check "mirror fallback exit status" 0 0
 else
   check "mirror fallback exit status" 0 1 "see $work_dir/fallback.err"
@@ -235,6 +241,12 @@ if grep -q "MOUI_SKIA_STUB_LIB=.*libmoui_skia_stub.a" "$work_dir/fallback.out"; 
   check "stub archive resolved from the mirror" 0 0
 else
   check "stub archive resolved from the mirror" 0 1
+fi
+if grep -q '\[skia\] fetching' "$work_dir/fallback.err" \
+  && grep -q '\[skia\] fresh: received .* from test-mirror' "$work_dir/fallback.err"; then
+  check "download progress is reported without a terminal" 0 0
+else
+  check "download progress is reported without a terminal" 0 1 "$(grep '\[skia\]' "$work_dir/fallback.err" | head -4 | tr '\n' ' ')"
 fi
 
 # 2. --no-mirror must fail instead of silently using the mirror.
@@ -293,12 +305,113 @@ else
   check "url-prefix proxy receives the prefixed URL" 0 1 "$(head -2 "$work_dir/http-proxy.log" 2>/dev/null | tr '\n' ' ')"
 fi
 
-# 6. A mirror that serves the wrong bytes must be rejected, not trusted.
+# 6. --list-mirrors prints every recorded source and downloads nothing.
+if run_fetch cache-list --list-mirrors >"$work_dir/list.out" 2>"$work_dir/list.err"; then
+  check "--list-mirrors exit status" 0 0
+else
+  check "--list-mirrors exit status" 0 1 "$(cat "$work_dir/list.err")"
+fi
+if grep -q 'release asset:' "$work_dir/list.out" \
+  && grep -q 'primary' "$work_dir/list.out" \
+  && grep -q 'test-mirror' "$work_dir/list.out" \
+  && grep -q 'test-proxy' "$work_dir/list.out" \
+  && grep -q 'stub library:' "$work_dir/list.out"; then
+  check "--list-mirrors lists primary and mirrors" 0 0
+else
+  check "--list-mirrors lists primary and mirrors" 0 1 "$(head -8 "$work_dir/list.out" | tr '\n' ' ')"
+fi
+if [[ -z "$(find "$work_dir/cache-list" -type f 2>/dev/null)" ]]; then
+  check "--list-mirrors does not download" 0 0
+else
+  check "--list-mirrors does not download" 0 1 "$(find "$work_dir/cache-list" -type f | head -3 | tr '\n' ' ')"
+fi
+
+# 7. --probe measures each package candidate and suggests a mirror.
+if run_fetch cache-probe --probe >"$work_dir/probe.out" 2>"$work_dir/probe.err"; then
+  check "--probe exit status" 0 0
+else
+  check "--probe exit status" 0 1 "$(cat "$work_dir/probe.err")"
+fi
+if grep -q 'Probing Skia release asset' "$work_dir/probe.out" \
+  && grep -q 'test-mirror' "$work_dir/probe.out" \
+  && grep -q 'test-proxy' "$work_dir/probe.out" \
+  && grep -q 'Fastest probe:' "$work_dir/probe.out"; then
+  check "--probe reports candidates and a suggestion" 0 0
+else
+  check "--probe reports candidates and a suggestion" 0 1 "$(head -8 "$work_dir/probe.out" | tr '\n' ' ')"
+fi
+if [[ -z "$(find "$work_dir/cache-probe" -type f 2>/dev/null)" ]]; then
+  check "--probe does not download the asset" 0 0
+else
+  check "--probe does not download the asset" 0 1 "$(find "$work_dir/cache-probe" -type f | head -3 | tr '\n' ' ')"
+fi
+
+# 8. The inspection modes must not pollute --print-env output.
+if run_fetch cache-list-env --print-env --list-mirrors >"$work_dir/list-env.out" 2>/dev/null; then
+  check "--list-mirrors rejects --print-env" 0 1
+else
+  check "--list-mirrors rejects --print-env" 0 0
+fi
+
+# 9. The speed probe is on by default: before a large download it measures every
+#    recorded source and starts from the fastest one, reports through the
+#    progress channel so --print-env stdout stays machine readable, and runs
+#    once per invocation even though the stub is downloaded right after the
+#    package.
+if run_fetch cache-auto-probe --print-env >"$work_dir/auto-probe.out" 2>"$work_dir/auto-probe.err"; then
+  check "default auto probe exit status" 0 0
+else
+  check "default auto probe exit status" 0 1 "$(tail -3 "$work_dir/auto-probe.err" | tr '\n' ' ')"
+fi
+if grep -q '\[skia\] probing' "$work_dir/auto-probe.err" \
+  && grep -q '\[skia\] fastest source:' "$work_dir/auto-probe.err"; then
+  check "default auto probe reports the fastest source" 0 0
+else
+  check "default auto probe reports the fastest source" 0 1 "$(grep '\[skia\]' "$work_dir/auto-probe.err" | head -4 | tr '\n' ' ')"
+fi
+probe_runs="$(grep -c '\[skia\] probing' "$work_dir/auto-probe.err" || true)"
+if [[ "$probe_runs" == "1" ]]; then
+  check "default auto probe runs once per invocation" 0 0
+else
+  check "default auto probe runs once per invocation" 0 1 "probing lines=$probe_runs"
+fi
+if grep -Eq 'Probing|fastest source' "$work_dir/auto-probe.out"; then
+  check "auto probe keeps --print-env stdout machine readable" 0 1 "$(grep -E 'Probing|fastest source' "$work_dir/auto-probe.out" | head -2 | tr '\n' ' ')"
+else
+  check "auto probe keeps --print-env stdout machine readable" 0 0
+fi
+probe_mirror="$(grep '^MOUI_SKIA_SKIA_PACKAGE_MIRROR=' "$work_dir/auto-probe.out" || true)"
+case "$probe_mirror" in
+  "MOUI_SKIA_SKIA_PACKAGE_MIRROR=test-mirror"|"MOUI_SKIA_SKIA_PACKAGE_MIRROR=test-proxy")
+    check "auto probe starts from a measured source" 0 0 ;;
+  *) check "auto probe starts from a measured source" 0 1 "$probe_mirror" ;;
+esac
+
+# 10. MOUI_SKIA_PROBE=off keeps the recorded order and skips the probe.
+if ( cd "$fixture"; MOUI_SKIA_PROBE=off bash scripts/fetch-release-skia.sh \
+    --platform macos --arch arm64 --cache-dir "$work_dir/cache-probe-off" \
+    --progress stderr --print-env ) >"$work_dir/probe-off.out" 2>"$work_dir/probe-off.err"; then
+  check "MOUI_SKIA_PROBE=off exit status" 0 0
+else
+  check "MOUI_SKIA_PROBE=off exit status" 0 1 "$(tail -3 "$work_dir/probe-off.err" | tr '\n' ' ')"
+fi
+if grep -q '\[skia\] probing' "$work_dir/probe-off.err"; then
+  check "MOUI_SKIA_PROBE=off skips the probe" 0 1 "$(grep '\[skia\]' "$work_dir/probe-off.err" | head -2 | tr '\n' ' ')"
+else
+  check "MOUI_SKIA_PROBE=off skips the probe" 0 0
+fi
+if grep -qx "MOUI_SKIA_SKIA_PACKAGE_MIRROR=test-mirror" "$work_dir/probe-off.out"; then
+  check "MOUI_SKIA_PROBE=off keeps the recorded order" 0 0
+else
+  check "MOUI_SKIA_PROBE=off keeps the recorded order" 0 1 "$(grep MIRROR "$work_dir/probe-off.out" || true)"
+fi
+
+# 11. A mirror that serves the wrong bytes must be rejected, not trusted.
 printf 'corrupt' >> "$work_dir/assets/Skia-test-macos-Release-arm64.zip"
 # The proxy serves its own copy, so corrupt that one too; otherwise the proxy
 # candidate would legitimately rescue the run and hide the rejection path.
 printf 'corrupt' >> "$work_dir/http-root/Skia-test-macos-Release-arm64.zip"
-if run_fetch cache-mismatch --print-env >"$work_dir/mismatch.out" 2>"$work_dir/mismatch.err"; then
+if run_fetch cache-mismatch --no-probe --print-env >"$work_dir/mismatch.out" 2>"$work_dir/mismatch.err"; then
   check "corrupt mirror asset rejected" 0 1
 else
   check "corrupt mirror asset rejected" 0 0

@@ -19,6 +19,20 @@ param(
 
   [switch] $NoMirror,
 
+  [string] $Progress = $(if ($env:MOUI_SKIA_PROGRESS) { $env:MOUI_SKIA_PROGRESS } else { "auto" }),
+
+  [switch] $NoProgress,
+
+  [switch] $ListMirrors,
+
+  [switch] $Probe,
+
+  [string] $ProbeMode = $(if ($env:MOUI_SKIA_PROBE) { $env:MOUI_SKIA_PROBE } else { "auto" }),
+
+  [switch] $NoProbe,
+
+  [switch] $AutoProbe,
+
   [switch] $DryRunConfig,
 
   [switch] $PrintEnv,
@@ -40,6 +54,123 @@ if ([string]::IsNullOrWhiteSpace($mirrorMode)) {
 $script:downloadSource = ""
 $packageMirror = ""
 $stubMirror = ""
+
+$progressMode = if ($NoProgress) { "off" } else { $Progress }
+if ([string]::IsNullOrWhiteSpace($progressMode)) {
+  $progressMode = "auto"
+}
+if (@("auto", "off", "stderr", "tty") -notcontains $progressMode) {
+  throw "unsupported -Progress mode: $progressMode (use auto|off|stderr|tty)"
+}
+$probeMode = if ($NoProbe) { "off" } elseif ($AutoProbe) { "auto" } else { $ProbeMode }
+if ([string]::IsNullOrWhiteSpace($probeMode)) {
+  $probeMode = "auto"
+}
+if (@("auto", "off") -notcontains $probeMode) {
+  throw "unsupported -ProbeMode mode: $probeMode (use auto|off)"
+}
+if (($ListMirrors -or $Probe) -and $PrintEnv) {
+  throw "-ListMirrors and -Probe cannot be combined with -PrintEnv"
+}
+
+# TLS 1.2 is not enabled by default in Windows PowerShell 5.1 on older images.
+try {
+  [System.Net.ServicePointManager]::SecurityProtocol =
+    [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
+} catch {
+}
+
+$script:UiWriter = $null
+$script:UiIsTty = $false
+$script:UiClearable = $false
+$script:UiLastWidth = 0
+$script:probeBestName = ""
+$script:probeBestSpeed = 0.0
+$script:probePrimarySpeed = 0.0
+$script:probeCandidateCount = 0
+$script:probeReportMode = "stdout"
+$script:probeDone = $false
+$script:preferredSource = ""
+
+function Format-Bytes {
+  param([double] $Bytes)
+  if ($Bytes -lt 1024) { return ("{0:0} B" -f $Bytes) }
+  $units = @("B", "KiB", "MiB", "GiB", "TiB")
+  $index = 0
+  while ($Bytes -ge 1024 -and $index -lt ($units.Count - 1)) {
+    $Bytes = $Bytes / 1024
+    $index++
+  }
+  return ("{0:0.0} {1}" -f $Bytes, $units[$index])
+}
+
+function Format-Seconds {
+  param([double] $Seconds)
+  $whole = [int][Math]::Round($Seconds)
+  if ($whole -lt 60) { return ("{0:0.0}s" -f $Seconds) }
+  if ($whole -lt 3600) { return ("{0}m{1:00}s" -f [int]($whole / 60), ($whole % 60)) }
+  return ("{0}h{1:00}m" -f [int]($whole / 3600), [int](($whole % 3600) / 60))
+}
+
+function Write-Ui {
+  param([string] $Message)
+  if ($null -eq $script:UiWriter) { return }
+  $script:UiWriter.Write($Message + "`n")
+}
+
+function Write-UiProgress {
+  param([string] $Text)
+  if ($null -eq $script:UiWriter -or -not $script:UiClearable) { return }
+  $script:UiWriter.Write("`r" + $Text)
+  $script:UiLastWidth = $Text.Length
+}
+
+function Clear-UiLine {
+  if ($null -ne $script:UiWriter -and $script:UiClearable) {
+    $width = [Math]::Max(1, $script:UiLastWidth)
+    $script:UiWriter.Write("`r" + (" " * $width) + "`r")
+    $script:UiLastWidth = 0
+  }
+}
+
+function Initialize-UiChannel {
+  $script:UiWriter = $null
+  $script:UiIsTty = $false
+  $script:UiClearable = $false
+  if ($progressMode -eq "off") { return }
+  $stderrIsTty = -not [Console]::IsErrorRedirected
+  if ($progressMode -eq "stderr" -or $stderrIsTty) {
+    $script:UiWriter = [Console]::Error
+    $script:UiIsTty = $stderrIsTty
+    $script:UiClearable = $stderrIsTty
+    return
+  }
+  # A prebuild hook may capture stderr, so live progress goes straight to the
+  # console device when one is attached.
+  $consolePath = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { "CONOUT$" } else { "/dev/tty" }
+  try {
+    $stream = [System.IO.File]::Open(
+      $consolePath,
+      [System.IO.FileMode]::Open,
+      [System.IO.FileAccess]::Write,
+      [System.IO.FileShare]::ReadWrite)
+    $writer = New-Object System.IO.StreamWriter($stream)
+    $writer.AutoFlush = $true
+    $script:UiWriter = $writer
+    $script:UiIsTty = $true
+    $script:UiClearable = $true
+    return
+  } catch {
+    if ($progressMode -eq "tty") {
+      [Console]::Error.WriteLine("note: -Progress tty requested but no console is available; writing progress to stderr")
+    }
+    $script:UiWriter = [Console]::Error
+    $script:UiIsTty = $false
+    $script:UiClearable = $false
+  }
+}
+
+Initialize-UiChannel
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $manifestPath = Join-Path $repoRoot "skia-provider-lock.json"
@@ -113,10 +244,138 @@ function Find-LibFile {
 }
 
 function Download-File {
-  param([Parameter(Mandatory = $true)][string] $Url, [Parameter(Mandatory = $true)][string] $Output)
+  param(
+    [Parameter(Mandatory = $true)][string] $Url,
+    [Parameter(Mandatory = $true)][string] $Output,
+    [string] $Label = "Skia release file",
+    [string] $SourceName = "primary",
+    [string] $ExpectedSha256 = "",
+    [string] $ExpectedSize = ""
+  )
   $parent = Split-Path -Parent $Output
   if ($parent.Length -gt 0) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
-  Invoke-WebRequest -Uri $Url -OutFile $Output
+  [Console]::Error.WriteLine("Downloading $($Label):")
+  [Console]::Error.WriteLine("  url=$Url")
+  [Console]::Error.WriteLine("  output=$Output")
+  if ($ExpectedSize) { [Console]::Error.WriteLine("  expected_size=$ExpectedSize") }
+  if ($ExpectedSha256) { [Console]::Error.WriteLine("  expected_sha256=$ExpectedSha256") }
+
+  # Invoke-WebRequest buffers the whole body, so a slow mirror shows nothing for
+  # minutes and a 44 MiB archive is held in memory twice. Stream it instead and
+  # report bytes, percent, and throughput while the transfer runs.
+  $attempts = 3
+  $attempt = 0
+  $failure = ""
+  while ($attempt -lt $attempts) {
+    $attempt++
+    $existing = 0L
+    if (Test-Path -LiteralPath $Output -PathType Leaf) {
+      $existing = (Get-Item -LiteralPath $Output).Length
+    }
+    $mode = if ($existing -gt 0) { "resume" } else { "fresh" }
+    [Console]::Error.WriteLine("  mode=$mode")
+    Write-Ui "  [skia] fetching $($Label) from $($SourceName)"
+    Write-Ui "         url=$Url"
+
+    $request = $null
+    $response = $null
+    $inputStream = $null
+    $outputStream = $null
+    $started = [DateTime]::UtcNow
+    $received = $existing
+    $httpCode = 0
+    $total = -1L
+    $success = $false
+    $retryable = $true
+    try {
+      $request = [System.Net.WebRequest]::Create($Url)
+      $request.Method = "GET"
+      $request.Timeout = 30000
+      if ($request -is [System.Net.HttpWebRequest]) {
+        $request.AllowAutoRedirect = $true
+        $request.UserAgent = "moui-skia-fetch/1.0"
+        $request.Headers.Add("Accept-Encoding", "identity")
+        if ($null -ne $request.PSObject.Properties["ReadWriteTimeout"]) {
+          $request.ReadWriteTimeout = 60000
+        }
+        if ($existing -gt 0) { $request.AddRange([long]$existing) }
+      }
+      $response = $request.GetResponse()
+      if ($null -ne $response.PSObject.Properties["StatusCode"]) {
+        $httpCode = [int]$response.StatusCode
+      }
+      $contentLength = $response.ContentLength
+      $total = $contentLength
+      if ($existing -gt 0 -and $httpCode -ne 206) {
+        # The server ignored `Range`; rewrite the file from the start.
+        $existing = 0L
+        $received = 0L
+        $mode = "fresh"
+        $outputStream = [System.IO.File]::Create($Output)
+      } elseif ($existing -gt 0) {
+        if ($contentLength -ge 0) { $total = $existing + $contentLength }
+        $outputStream = New-Object System.IO.FileStream(
+          $Output,
+          [System.IO.FileMode]::Append,
+          [System.IO.FileAccess]::Write,
+          [System.IO.FileShare]::None)
+      } else {
+        $outputStream = [System.IO.File]::Create($Output)
+      }
+      $inputStream = $response.GetResponseStream()
+      $buffer = New-Object byte[] (128 * 1024)
+      $lastReport = [DateTime]::UtcNow
+      while (($read = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+        $outputStream.Write($buffer, 0, $read)
+        $received += $read
+        if ($script:UiClearable) {
+          $now = [DateTime]::UtcNow
+          if (($now - $lastReport).TotalMilliseconds -ge 250) {
+            $soFar = ($now - $started).TotalSeconds
+            $rate = if ($soFar -gt 0) { $received / $soFar } else { 0 }
+            if ($total -gt 0) {
+              $percent = [Math]::Min(100.0, 100.0 * $received / $total)
+              Write-UiProgress ("  [skia] {0,5:0.0}%  {1} / {2}  {3}/s" -f $percent, (Format-Bytes $received), (Format-Bytes $total), (Format-Bytes $rate))
+            } else {
+              Write-UiProgress ("  [skia] {0}  {1}/s" -f (Format-Bytes $received), (Format-Bytes $rate))
+            }
+            $lastReport = $now
+          }
+        }
+      }
+      $success = $true
+    } catch {
+      $failure = $_.Exception.Message
+      $webResponse = $null
+      if ($_.Exception -is [System.Net.WebException]) { $webResponse = $_.Exception.Response }
+      if ($null -ne $webResponse) {
+        if ($null -ne $webResponse.PSObject.Properties["StatusCode"]) {
+          $statusCode = [int]$webResponse.StatusCode
+          if ($statusCode -ge 400 -and $statusCode -lt 500 -and $statusCode -ne 408 -and $statusCode -ne 429) {
+            $retryable = $false
+          }
+        }
+      }
+    } finally {
+      if ($null -ne $outputStream) { $outputStream.Dispose() }
+      if ($null -ne $inputStream) { $inputStream.Dispose() }
+      if ($null -ne $response) { $response.Dispose() }
+    }
+    Clear-UiLine
+    if ($success) {
+      $elapsed = [Math]::Max(0.001, ([DateTime]::UtcNow - $started).TotalSeconds)
+      $speed = $received / $elapsed
+      Write-Ui ("  [skia] {0}: received {1} in {2} ({3}/s, http {4}) from {5}" -f $mode, (Format-Bytes $received), (Format-Seconds $elapsed), (Format-Bytes $speed), $httpCode, $SourceName)
+      return
+    }
+    if (!$retryable) { break }
+    if ($attempt -lt $attempts) {
+      [Console]::Error.WriteLine("  attempt $attempt of $attempts failed: $failure; retrying in 2s")
+      Start-Sleep -Seconds 2
+    }
+  }
+  Write-Ui ("  [skia] download failed from {0} ({1})" -f $SourceName, $failure)
+  throw "download failed from $Url : $failure"
 }
 
 function Get-MirrorCandidates {
@@ -177,7 +436,15 @@ function Get-CandidateOrder {
   if ($Mode -ne "off") {
     foreach ($candidate in $MirrorCandidates) {
       if ($Mode -eq "auto") {
-        $others += $candidate
+        # The automatic probe reorders the candidates: the fastest measured source
+        # is tried first, and a prefix match keeps a sibling entry (e.g. the stub
+        # hosted next to the package) on the same source.
+        if (![string]::IsNullOrEmpty($script:preferredSource) -and
+          ($candidate.Name -eq $script:preferredSource -or $candidate.Name.StartsWith("$($script:preferredSource)-"))) {
+          $preferred += $candidate
+        } else {
+          $others += $candidate
+        }
       } elseif ($candidate.Name -eq $Mode -or $candidate.Name.StartsWith("$Mode-")) {
         $preferred += $candidate
         $matched = $true
@@ -201,6 +468,209 @@ function Get-CandidateNames {
   return (($Candidates | ForEach-Object { $_.Name }) -join ",")
 }
 
+# Every recorded candidate in discovery order (primary first), regardless of the
+# active mirror mode. -ListMirrors and -Probe use it so a user can see and
+# measure sources that the current mode would not try.
+function Get-AllCandidates {
+  param(
+    [string] $PrimaryUrl = "",
+    [object[]] $MirrorCandidates = @()
+  )
+  $all = @()
+  if (![string]::IsNullOrWhiteSpace($PrimaryUrl)) {
+    $all += [pscustomobject]@{ Name = "primary"; Url = $PrimaryUrl }
+  }
+  if ($MirrorCandidates.Count -gt 0) { $all += $MirrorCandidates }
+  return $all
+}
+
+function Write-ProbeLine {
+  param([string] $Message = "")
+  # -Probe and -ListMirrors report on stdout; the automatic probe goes through
+  # the progress channel so -PrintEnv's stdout stays machine-readable.
+  if ($script:probeReportMode -eq "ui") {
+    Write-Ui $Message
+  } else {
+    Write-Output $Message
+  }
+}
+
+function Show-MirrorSources {
+  param(
+    [Parameter(Mandatory = $true)][string] $Label,
+    [string] $PrimaryUrl = "",
+    [object[]] $MirrorCandidates = @()
+  )
+  $candidates = @(Get-AllCandidates -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates)
+  Write-ProbeLine $Label
+  if ($candidates.Count -eq 0) {
+    Write-ProbeLine "  (none recorded)"
+    return
+  }
+  foreach ($candidate in $candidates) {
+    $marker = ""
+    if ($mirrorMode -ne "auto" -and $mirrorMode -ne "off" -and
+      ($candidate.Name -eq $mirrorMode -or $candidate.Name.StartsWith("$mirrorMode-"))) {
+      $marker = "  (preferred by -Mirror $mirrorMode)"
+    }
+    Write-ProbeLine ("  {0,-26} {1}{2}" -f $candidate.Name, $candidate.Url, $marker)
+  }
+}
+
+# Measure connection setup, time to first byte, and throughput over a bounded
+# 256 KiB range. It is deliberately approximate: no archive is written, and a
+# slow mirror is only ever a suggestion, since the real download still has to
+# pass SHA256 and size verification.
+function Invoke-ProbeCandidate {
+  param(
+    [Parameter(Mandatory = $true)][string] $Name,
+    [Parameter(Mandatory = $true)][string] $Url
+  )
+  $request = $null
+  $response = $null
+  $stream = $null
+  $started = [DateTime]::UtcNow
+  $httpCode = 0
+  $bytes = 0L
+  $ttfb = 0.0
+  $failure = ""
+  $cutOff = $false
+  try {
+    $request = [System.Net.WebRequest]::Create($Url)
+    $request.Method = "GET"
+    $request.Timeout = 8000
+    if ($request -is [System.Net.HttpWebRequest]) {
+      $request.AllowAutoRedirect = $true
+      $request.UserAgent = "moui-skia-fetch/1.0"
+      $request.Headers.Add("Accept-Encoding", "identity")
+      if ($null -ne $request.PSObject.Properties["ReadWriteTimeout"]) {
+        $request.ReadWriteTimeout = 8000
+      }
+      $request.AddRange([long]0, [long]262143)
+    }
+    $response = $request.GetResponse()
+    if ($null -ne $response.PSObject.Properties["StatusCode"]) {
+      $httpCode = [int]$response.StatusCode
+    }
+    $contentLength = $response.ContentLength
+    if ($httpCode -ge 400) {
+      Write-ProbeLine ("  {0,-26} failed (http={1})" -f $Name, $httpCode)
+      return
+    }
+    if ($httpCode -eq 200 -and $contentLength -gt 16777216) {
+      Write-ProbeLine ("  {0,-26} skipped (too large and does not honor Range; try it directly with -Mirror {1})" -f $Name, $Name)
+      return
+    }
+    $stream = $response.GetResponseStream()
+    $buffer = New-Object byte[] (64 * 1024)
+    $firstRead = $true
+    while ($bytes -lt 262144) {
+      $want = [int][Math]::Min([long]$buffer.Length, [long](262144 - $bytes))
+      $read = $stream.Read($buffer, 0, $want)
+      if ($read -le 0) { break }
+      if ($firstRead) {
+        $ttfb = ([DateTime]::UtcNow - $started).TotalSeconds
+        $firstRead = $false
+      }
+      $bytes += $read
+    }
+    if ($bytes -ge 262144) { $cutOff = $true }
+  } catch {
+    $failure = $_.Exception.Message
+  } finally {
+    if ($null -ne $stream) { $stream.Dispose() }
+    if ($null -ne $response) { $response.Dispose() }
+  }
+  $elapsed = [Math]::Max(0.001, ([DateTime]::UtcNow - $started).TotalSeconds)
+  if ($failure -and $bytes -eq 0) {
+    Write-ProbeLine ("  {0,-26} failed ({1})" -f $Name, $failure)
+    return
+  }
+  $speed = $bytes / $elapsed
+  $suffix = if ($failure -or $cutOff) { "  (probe cut off)" } else { "" }
+  Write-ProbeLine ("  {0,-26} http={1}  ttfb={2:0.00}s  {3} in {4}  {5}/s{6}" -f `
+      $Name, $httpCode, $ttfb, (Format-Bytes $bytes), (Format-Seconds $elapsed), (Format-Bytes $speed), $suffix)
+  if ($speed -gt $script:probeBestSpeed) {
+    $script:probeBestName = $Name
+    $script:probeBestSpeed = $speed
+  }
+  if ($Name -eq "primary") { $script:probePrimarySpeed = $speed }
+}
+
+# Probe every recorded candidate once and record the fastest one in the probe_*
+# globals. $script:probeCandidateCount tells the callers whether the lock records
+# any source at all.
+function Invoke-ProbeAllCandidates {
+  param(
+    [string] $PrimaryUrl = "",
+    [object[]] $MirrorCandidates = @()
+  )
+  $script:probeBestName = ""
+  $script:probeBestSpeed = 0.0
+  $script:probePrimarySpeed = 0.0
+  $candidates = @(Get-AllCandidates -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates)
+  $script:probeCandidateCount = $candidates.Count
+  foreach ($candidate in $candidates) {
+    Invoke-ProbeCandidate -Name $candidate.Name -Url $candidate.Url
+  }
+}
+
+# -Probe writes its report on stdout and downloads nothing.
+function Invoke-Probe {
+  param(
+    [Parameter(Mandatory = $true)][string] $Label,
+    [string] $PrimaryUrl = "",
+    [object[]] $MirrorCandidates = @()
+  )
+  $script:probeReportMode = "stdout"
+  Write-ProbeLine ("Probing {0}: first 256 KiB from each candidate (max 25s each)." -f $Label)
+  Invoke-ProbeAllCandidates -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates
+  if ($script:probeCandidateCount -eq 0) {
+    Write-ProbeLine "  (no download source is recorded)"
+    return
+  }
+  Write-ProbeLine ""
+  if ([string]::IsNullOrEmpty($script:probeBestName)) {
+    Write-ProbeLine "No candidate answered the probe; the default order still verifies every source."
+    return
+  }
+  if ($script:probeBestName -eq "primary") {
+    Write-ProbeLine ("Fastest probe: primary host ({0}/s). The default auto order already tries it first." -f (Format-Bytes $script:probeBestSpeed))
+  } elseif ($script:probeBestSpeed -gt ($script:probePrimarySpeed * 1.15)) {
+    Write-ProbeLine ("Fastest probe: {0} ({1}/s). Prefer it with:" -f $script:probeBestName, (Format-Bytes $script:probeBestSpeed))
+    Write-ProbeLine ('  $env:MOUI_SKIA_MIRROR={0}; ./fetch-release-skia.ps1' -f $script:probeBestName)
+    Write-ProbeLine ('  # or: ./fetch-release-skia.ps1 -Mirror {0}' -f $script:probeBestName)
+  } else {
+    Write-ProbeLine ("Fastest probe: {0} ({1}/s), close to the primary host." -f $script:probeBestName, (Format-Bytes $script:probeBestSpeed))
+  }
+  Write-ProbeLine "Note: the probe only measures the first 256 KiB; the real download still verifies the full SHA256 and size."
+}
+
+# The automatic probe runs once per invocation before a large download. It
+# reports through the progress channel (stdout is reserved for -PrintEnv) and
+# only reorders the candidates: every download still verifies SHA256 and size.
+function Invoke-AutoProbe {
+  param(
+    [Parameter(Mandatory = $true)][string] $Label,
+    [string] $PrimaryUrl = "",
+    [object[]] $MirrorCandidates = @()
+  )
+  $script:probeReportMode = "ui"
+  Write-Ui "  [skia] probing $Label (first 256 KiB from each recorded source)"
+  Invoke-ProbeAllCandidates -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates
+  if ($script:probeCandidateCount -eq 0) {
+    Write-Ui "  [skia] no download source is recorded; keeping the default order"
+  } elseif ([string]::IsNullOrEmpty($script:probeBestName)) {
+    Write-Ui "  [skia] probe answered nothing; keeping the default order"
+  } elseif ($script:probeBestName -eq "primary") {
+    Write-Ui ("  [skia] fastest source: primary host ({0}/s)" -f (Format-Bytes $script:probeBestSpeed))
+  } else {
+    $script:preferredSource = $script:probeBestName
+    Write-Ui ("  [skia] fastest source: {0} ({1}/s); trying it first" -f $script:probeBestName, (Format-Bytes $script:probeBestSpeed))
+  }
+  $script:probeReportMode = "stdout"
+}
+
 function Download-Artifact {
   param(
     [Parameter(Mandatory = $true)][string] $Label,
@@ -211,7 +681,19 @@ function Download-Artifact {
     [object[]] $MirrorCandidates = @()
   )
   $script:downloadSource = ""
-  $candidates = Get-CandidateOrder -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates -Mode $mirrorMode
+  # Automatic speed probe: default in auto mirror mode, at most once per run,
+  # and only for an asset worth measuring (a tiny stub keeps the plain order).
+  $expectedSizeBytes = 0L
+  if (![string]::IsNullOrWhiteSpace($ExpectedSize)) {
+    [long]::TryParse($ExpectedSize, [ref]$expectedSizeBytes) | Out-Null
+  }
+  if ($probeMode -eq "auto" -and $mirrorMode -eq "auto" -and !$script:probeDone -and
+    $MirrorCandidates.Count -gt 0 -and
+    ([string]::IsNullOrWhiteSpace($ExpectedSize) -or $expectedSizeBytes -ge 4194304)) {
+    $script:probeDone = $true
+    Invoke-AutoProbe -Label $Label -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates
+  }
+  $candidates = @(Get-CandidateOrder -PrimaryUrl $PrimaryUrl -MirrorCandidates $MirrorCandidates -Mode $mirrorMode)
   if ($candidates.Count -eq 0) {
     [Console]::Error.WriteLine("no download candidate is recorded for $Label")
     return $false
@@ -222,31 +704,42 @@ function Download-Artifact {
     $first = $false
     [Console]::Error.WriteLine("  candidate=$($candidate.Name)")
     try {
-      Download-File -Url $candidate.Url -Output $Output
+      Download-File -Url $candidate.Url -Output $Output -Label $Label -SourceName $candidate.Name `
+        -ExpectedSha256 $ExpectedSha256 -ExpectedSize $ExpectedSize
     } catch {
-      [Console]::Error.WriteLine("download failed from $($candidate.Url): $($_.Exception.Message); trying the next candidate")
+      [Console]::Error.WriteLine("download failed from $($candidate.Url); trying the next candidate")
+      Write-Ui "  [skia] $($candidate.Name) failed; trying the next source"
       if (Test-Path -LiteralPath $Output -PathType Leaf) { Remove-Item -LiteralPath $Output -Force }
       continue
     }
     $actualSha256 = Get-Sha256Hex -Path $Output
     if ($ExpectedSha256 -and $actualSha256 -ne $ExpectedSha256.ToLowerInvariant()) {
-      [Console]::Error.WriteLine("SHA256 mismatch from $($candidate.Url) expected=$ExpectedSha256 actual=$actualSha256")
+      [Console]::Error.WriteLine("SHA256 mismatch from $($candidate.Url)")
+      [Console]::Error.WriteLine("  expected=$ExpectedSha256")
+      [Console]::Error.WriteLine("  actual=$actualSha256")
+      Write-Ui "  [skia] $($candidate.Name) returned a file with the wrong SHA256; trying the next source"
       Remove-Item -LiteralPath $Output -Force
       continue
     }
-    if ($ExpectedSize) {
+    $actualSize = 0L
+    if (Test-Path -LiteralPath $Output -PathType Leaf) {
       $actualSize = (Get-Item -LiteralPath $Output).Length
-      if ("$actualSize" -ne "$ExpectedSize") {
-        [Console]::Error.WriteLine("size mismatch from $($candidate.Url) expected=$ExpectedSize actual=$actualSize")
-        Remove-Item -LiteralPath $Output -Force
-        continue
-      }
+    }
+    if ($ExpectedSize -and "$actualSize" -ne "$ExpectedSize") {
+      [Console]::Error.WriteLine("size mismatch from $($candidate.Url)")
+      [Console]::Error.WriteLine("  expected=$ExpectedSize")
+      [Console]::Error.WriteLine("  actual=$actualSize")
+      Write-Ui "  [skia] $($candidate.Name) returned the wrong size; trying the next source"
+      Remove-Item -LiteralPath $Output -Force
+      continue
     }
     $script:downloadSource = $candidate.Name
     [Console]::Error.WriteLine("  verified_from=$($candidate.Name)")
+    Write-Ui ("  [skia] verified {0} from {1}" -f (Format-Bytes $actualSize), $candidate.Name)
     return $true
   }
   [Console]::Error.WriteLine("could not download $Label from any recorded source")
+  Write-Ui "  [skia] all recorded sources failed for $Label"
   return $false
 }
 
@@ -374,6 +867,28 @@ $sourceZip = Join-Path $tagDir $sourceName
 $stubEntryDir = Join-Path $tagDir "$resolvedPlatform-$Config-$resolvedArch-stub"
 $stubZip = Join-Path $stubEntryDir $stubName
 $stubDir = Join-Path $stubEntryDir "package"
+
+if ($ListMirrors) {
+  Write-Output ("Skia download sources (mirror mode: {0})" -f $mirrorMode)
+  Write-Output ""
+  Show-MirrorSources -Label "release asset: $assetName" -PrimaryUrl $assetUrl -MirrorCandidates $packageMirrorCandidates
+  Write-Output ""
+  Show-MirrorSources -Label "source archive: $sourceName" -PrimaryUrl $sourceUrl -MirrorCandidates $sourceMirrorCandidates
+  Write-Output ""
+  if ($stubName) {
+    Show-MirrorSources -Label "stub library: $stubName" -PrimaryUrl $stubUrl -MirrorCandidates $stubMirrorCandidates
+  } else {
+    Write-Output ("stub library: not published for {0}-{1}-{2} (native/*.cpp compiles locally)" -f $resolvedPlatform, $Config, $resolvedArch)
+  }
+  Write-Output ""
+  Write-Output 'Pick a source with -Mirror <name> or $env:MOUI_SKIA_MIRROR=<name>; -NoMirror keeps the primary host only.'
+  exit 0
+}
+
+if ($Probe) {
+  Invoke-Probe -Label "Skia release asset $assetName" -PrimaryUrl $assetUrl -MirrorCandidates $packageMirrorCandidates
+  exit 0
+}
 
 if (!$DryRunConfig) {
   if ($Force -or !(Test-Path -LiteralPath $packageDir -PathType Container)) {

@@ -23,6 +23,17 @@ Options:
                          gitcode-skia-stub at once.
   --no-mirror            Ignore every mirror and download from the primary host
                          only.
+  --list-mirrors         List every recorded download source for the selected
+                         release asset, source archive, and stub, then exit.
+  --probe                Print a probe report (first 256 KiB from each candidate
+                         plus a ready-to-use MOUI_SKIA_MIRROR suggestion) and
+                         exit. A large download runs the same probe anyway.
+  --no-probe             Skip the automatic speed probe and keep the default
+                         order (primary host, then the mirrors).
+  --auto-probe           Force the automatic speed probe (the default).
+  --progress MODE        auto|off|stderr|tty (default: auto). auto writes live
+                         progress to the terminal even when stderr is captured.
+  --no-progress          Same as --progress off.
   --dry-run-config       Print selected asset and resolved paths without
                          downloading or extracting archives.
   --print-env            Print only KEY=value lines suitable for wrappers.
@@ -44,6 +55,25 @@ mirror to try first. Mirrors are either `release-download` copies (the GitCode
 repository) or `url-prefix` proxies such as gh-proxy.com that front GitHub
 without hosting a copy. Every candidate is verified against the locked SHA256
 and size, so a proxy that truncates or rewrites a file is rejected.
+
+MOUI_SKIA_PROBE selects the automatic speed probe. auto (default) times the first
+256 KiB of every recorded candidate before a release asset of at least 4 MiB is
+downloaded and starts from the fastest one; the probe runs once per invocation,
+and the real download still verifies the locked SHA256 and size. off (or
+--no-probe) keeps the default order: primary host first, then the mirrors.
+--mirror NAME, --no-mirror, and MOUI_SKIA_MIRROR=<name> already name the order
+the user wants, so they skip the probe. --probe always prints its report on
+stdout and exits; the automatic probe writes to the progress channel, so
+--print-env stdout stays machine readable.
+
+MOUI_SKIA_PROGRESS selects the progress channel. auto (default) uses stderr when
+it is a terminal; otherwise it writes to /dev/tty, which makes download progress
+visible inside `moon build` (MoonBit hides hook stderr unless --verbose). off
+silences progress, stderr forces it onto stderr for CI logs, and tty requires a
+terminal. Progress lines never go to stdout, so --print-env stays machine
+readable. Use --list-mirrors to inspect the recorded sources and --probe for a
+standalone measurement; the automatic probe reports the fastest source through
+the progress channel.
 EOF
 }
 
@@ -65,7 +95,11 @@ cache_dir=".skia-cache/release"
 dry_run_config=0
 print_env=0
 force=0
+list_mirrors=0
+probe=0
+progress_mode="${MOUI_SKIA_PROGRESS:-auto}"
 mirror_mode="${MOUI_SKIA_MIRROR:-auto}"
+probe_mode="${MOUI_SKIA_PROBE:-auto}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -103,6 +137,30 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-mirror)
       mirror_mode="off"
+      shift
+      ;;
+    --list-mirrors)
+      list_mirrors=1
+      shift
+      ;;
+    --probe)
+      probe=1
+      shift
+      ;;
+    --no-probe)
+      probe_mode="off"
+      shift
+      ;;
+    --auto-probe)
+      probe_mode="auto"
+      shift
+      ;;
+    --progress)
+      progress_mode="${2:-}"
+      shift 2
+      ;;
+    --no-progress)
+      progress_mode="off"
       shift
       ;;
     --print-env)
@@ -145,6 +203,20 @@ if [[ -z "$mirror_mode" ]]; then
   echo "--mirror requires a mirror name (or use --no-mirror)" >&2
   exit 2
 fi
+case "$progress_mode" in
+  auto|off|stderr|tty) ;;
+  *) echo "unsupported --progress mode: $progress_mode (use auto|off|stderr|tty)" >&2; exit 2 ;;
+esac
+case "$probe_mode" in
+  auto|off) ;;
+  *) echo "unsupported MOUI_SKIA_PROBE mode: $probe_mode (use auto|off)" >&2; exit 2 ;;
+esac
+if [[ $list_mirrors -eq 1 || $probe -eq 1 ]]; then
+  if [[ $print_env -eq 1 ]]; then
+    echo "--list-mirrors and --probe cannot be combined with --print-env" >&2
+    exit 2
+  fi
+fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest_path="$repo_root/skia-provider-lock.json"
@@ -152,6 +224,86 @@ case "$cache_dir" in
   /*) resolved_cache_dir="$cache_dir" ;;
   *) resolved_cache_dir="$repo_root/$cache_dir" ;;
 esac
+
+ui_fd=2
+ui_tty=0
+ui_target=""
+
+# Progress goes to the terminal even when stderr is captured: MoonBit's prebuild
+# hook collects stderr and drops it on success, so a fetch that only writes to
+# stderr is invisible during `moon build`. stdout is reserved for --print-env.
+setup_ui_channel() {
+  ui_fd=2
+  ui_tty=0
+  ui_target=""
+  case "$progress_mode" in
+    off)
+      ui_fd=""
+      return 0
+      ;;
+    stderr)
+      ui_fd=2
+      if [[ -t 2 ]]; then ui_tty=1; fi
+      return 0
+      ;;
+    auto|tty)
+      if [[ -t 2 ]]; then
+        ui_fd=2
+        ui_tty=1
+        return 0
+      fi
+      if { : 9>/dev/tty; } 2>/dev/null && { exec 9>/dev/tty; } 2>/dev/null; then
+        ui_fd=9
+        ui_tty=1
+        ui_target="/dev/tty"
+        return 0
+      fi
+      if [[ "$progress_mode" == "tty" ]]; then
+        echo "note: MOUI_SKIA_PROGRESS=tty requested but no terminal is available; writing progress to stderr" >&2
+      fi
+      ui_fd=2
+      if [[ -t 2 ]]; then ui_tty=1; fi
+      return 0
+      ;;
+  esac
+}
+
+ui() {
+  if [[ -z "$ui_fd" ]]; then
+    return 0
+  fi
+  printf '%s\n' "$*" >&"$ui_fd"
+}
+
+ui_clear_line() {
+  if [[ -n "$ui_fd" && "$ui_tty" -eq 1 ]]; then
+    printf '\r\033[K' >&"$ui_fd"
+  fi
+}
+
+format_bytes() {
+  awk -v b="${1:-0}" 'BEGIN {
+    split("B KiB MiB GiB TiB", unit, " ");
+    i = 1;
+    while (b >= 1024 && i < 5) { b /= 1024; i++ }
+    if (i == 1) printf "%.0f %s", b, unit[i];
+    else printf "%.1f %s", b, unit[i];
+  }'
+}
+
+format_seconds() {
+  awk -v s="${1:-0}" 'BEGIN {
+    if (s < 60) printf "%.1fs", s;
+    else if (s < 3600) printf "%dm%02.0fs", int(s / 60), s - int(s / 60) * 60;
+    else printf "%dh%02.0fm", int(s / 3600), int((s - int(s / 3600) * 3600) / 60);
+  }'
+}
+
+format_latency() {
+  awk -v s="${1:-0}" 'BEGIN { printf "%.2fs", s }'
+}
+
+setup_ui_channel
 
 detect_platform() {
   case "$(uname -s)" in
@@ -424,6 +576,18 @@ download_file() {
   local label="${3:-Skia release file}"
   local expected_sha256="${4:-}"
   local expected_size="${5:-}"
+  local source_name="${6:-primary}"
+  local metrics_file metrics http_code bytes elapsed speed status=0 transfer_mode
+  local -a curl_args=(
+    --fail
+    --location
+    --http1.1
+    --connect-timeout 30
+    --retry 5
+    --retry-delay 2
+    --speed-limit 1024
+    --speed-time 60
+  )
   if ! command -v curl >/dev/null 2>&1; then
     echo "missing required command: curl" >&2
     exit 1
@@ -440,45 +604,73 @@ download_file() {
       echo "  expected_sha256=$expected_sha256"
     fi
   } >&2
+  if [[ -n "$ui_fd" && "$ui_tty" -eq 1 ]]; then
+    curl_args+=(--progress-bar)
+    if [[ "$ui_fd" != "2" ]]; then
+      curl_args+=(--stderr "$ui_target")
+    fi
+  else
+    curl_args+=(--no-progress-meter)
+  fi
+  metrics_file="$(mktemp "${TMPDIR:-/tmp}/moui-skia-curl.XXXXXX")" || {
+    echo "failed to create a curl metrics temporary file" >&2
+    return 1
+  }
+  ui "  [skia] fetching $label from $source_name"
+  ui "         url=$url"
   if [[ -s "$output" ]]; then
+    transfer_mode="resume"
     echo "  mode=resume" >&2
-    curl \
-      --fail \
-      --location \
-      --http1.1 \
-      --connect-timeout 30 \
-      --retry 5 \
-      --retry-delay 2 \
-      --speed-limit 1024 \
-      --speed-time 60 \
+    curl "${curl_args[@]}" \
       --continue-at - \
       -o "$output" \
-      "$url"
-    return
+      -w '%{http_code} %{size_download} %{time_total} %{speed_download}\n' \
+      "$url" > "$metrics_file" || status=$?
+  else
+    transfer_mode="fresh"
+    echo "  mode=fresh" >&2
+    curl "${curl_args[@]}" \
+      -o "$output" \
+      -w '%{http_code} %{size_download} %{time_total} %{speed_download}\n' \
+      "$url" > "$metrics_file" || status=$?
   fi
-  echo "  mode=fresh" >&2
-  curl \
-    --fail \
-    --location \
-    --http1.1 \
-    --connect-timeout 30 \
-    --retry 5 \
-    --retry-delay 2 \
-    --speed-limit 1024 \
-    --speed-time 60 \
-    -o "$output" \
-    "$url"
+  metrics=""
+  if [[ -f "$metrics_file" ]]; then
+    metrics="$(< "$metrics_file")"
+  fi
+  rm -f "$metrics_file"
+  ui_clear_line
+  http_code=""
+  bytes=""
+  elapsed=""
+  speed=""
+  if [[ -n "$metrics" ]]; then
+    read -r http_code bytes elapsed speed <<< "$metrics" || true
+  fi
+  if [[ $status -ne 0 ]]; then
+    ui "  [skia] download failed from $source_name (curl exit $status)"
+    return $status
+  fi
+  if [[ -n "$bytes" && -n "$elapsed" && -n "$speed" ]]; then
+    ui "  [skia] ${transfer_mode}: received $(format_bytes "$bytes") in $(format_seconds "$elapsed") ($(format_bytes "$speed")/s, http $http_code) from $source_name"
+  else
+    ui "  [skia] downloaded from $source_name"
+  fi
+  return 0
 }
 
 download_source=""
 
 # Print the ordered download candidates for one artifact as "name::url" lines.
-# MOUI_SKIA_MIRROR=auto tries the primary host first and then every mirror,
-# off keeps the primary host only, and any other value names one mirror to try
-# first (that mirror, then the primary host, then the remaining mirrors).
+# MOUI_SKIA_MIRROR=auto tries the primary host first and then every mirror, or
+# the source picked by the automatic probe (preferred_source, matched exactly or
+# by the "<name>-something" convention) before the primary host; off keeps the
+# primary host only, and any other value names one mirror to try first (that
+# mirror, then the primary host, then the remaining mirrors).
 build_candidates() {
   local primary_url="$1"
   local mirror_list="$2"
+  local prefer="$preferred_source"
   local entry name url
   local -a preferred=()
   local -a others=()
@@ -488,7 +680,11 @@ build_candidates() {
       name="${entry%%::*}"
       url="${entry#*::}"
       if [[ "$mirror_mode" == "auto" ]]; then
-        others+=("$name::$url")
+        if [[ -n "$prefer" && ( "$name" == "$prefer" || "$name" == "$prefer"-* ) ]]; then
+          preferred+=("$name::$url")
+        else
+          others+=("$name::$url")
+        fi
       elif [[ "$name" == "$mirror_mode" || "$name" == "$mirror_mode"-* ]]; then
         preferred+=("$name::$url")
         matched=1
@@ -519,6 +715,10 @@ candidate_names() {
   while IFS= read -r entry; do
     [[ -n "$entry" ]] && candidates+=("$entry")
   done < <(build_candidates "$primary_url" "$mirror_list")
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    printf '%s' ""
+    return 0
+  fi
   for entry in "${candidates[@]}"; do
     name="${entry%%::*}"
     if [[ -z "$names" ]]; then
@@ -528,6 +728,212 @@ candidate_names() {
     fi
   done
   printf '%s' "$names"
+}
+
+# Every recorded candidate in discovery order (primary first), regardless of the
+# active mirror mode. Used by --list-mirrors and --probe so users can see and
+# measure sources that the current mode would not try.
+all_candidates() {
+  local primary_url="$1"
+  local mirror_list="$2"
+  local entry
+  if [[ -n "$primary_url" ]]; then
+    printf 'primary::%s\n' "$primary_url"
+  fi
+  for entry in $mirror_list; do
+    if [[ -n "$entry" ]]; then
+      printf '%s\n' "$entry"
+    fi
+  done
+}
+
+print_mirror_sources() {
+  local label="$1"
+  local primary_url="$2"
+  local mirror_list="$3"
+  local entry name url marker
+  local -a candidates=()
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && candidates+=("$entry")
+  done < <(all_candidates "$primary_url" "$mirror_list")
+  printf '%s\n' "$label"
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    printf '  (none recorded)\n'
+    return 0
+  fi
+  for entry in "${candidates[@]}"; do
+    name="${entry%%::*}"
+    url="${entry#*::}"
+    marker=""
+    if [[ "$mirror_mode" != "auto" && "$mirror_mode" != "off" && ( "$name" == "$mirror_mode" || "$name" == "$mirror_mode"-* ) ]]; then
+      marker="  (preferred by --mirror $mirror_mode)"
+    fi
+    printf '  %-26s %s%s\n' "$name" "$url" "$marker"
+  done
+}
+
+probe_best_name=""
+probe_best_speed=0
+probe_primary_speed=0
+probe_report_mode="stdout"
+probe_done=0
+preferred_source=""
+
+# --probe reads its report on stdout; the automatic probe routes it through the
+# progress channel, whose stdout is reserved for --print-env.
+probe_line() {
+  if [[ "$probe_report_mode" == "ui" ]]; then
+    ui "$*"
+  else
+    printf '%s\n' "$*"
+  fi
+}
+
+# Measure connection setup, time to first byte, and throughput for a bounded
+# 256 KiB range. It is deliberately approximate: no archive is written, and a
+# slow mirror is only ever a suggestion, since the real download still has to
+# pass SHA256 and size verification.
+probe_candidate() {
+  local name="$1"
+  local url="$2"
+  local err_file metrics status=0 http_code connect ttfb total bytes speed detail suffix
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "missing required command: curl" >&2
+    return 1
+  fi
+  err_file="$(mktemp "${TMPDIR:-/tmp}/moui-skia-probe.XXXXXX")" || return 1
+  metrics="$(curl \
+    --location \
+    --http1.1 \
+    --connect-timeout 8 \
+    --max-time 25 \
+    --max-filesize 16777216 \
+    --range 0-262143 \
+    --no-progress-meter \
+    -sS \
+    -o /dev/null \
+    -w '%{http_code} %{time_connect} %{time_starttransfer} %{time_total} %{size_download} %{speed_download}' \
+    "$url" 2>"$err_file")" || status=$?
+  http_code=""
+  connect=""
+  ttfb=""
+  total=""
+  bytes=""
+  speed=""
+  if [[ -n "$metrics" ]]; then
+    read -r http_code connect ttfb total bytes speed <<< "$metrics" || true
+  fi
+  detail="$(head -n 1 "$err_file" 2>/dev/null || true)"
+  rm -f "$err_file"
+  if [[ "$http_code" =~ ^[0-9]+$ ]] && (( http_code >= 400 )); then
+    probe_line "$(printf '  %-26s failed (http=%s)' "$name" "$http_code")"
+    return 1
+  fi
+  if [[ $status -eq 63 ]]; then
+    probe_line "$(printf '  %-26s skipped (too large and does not honor Range; try it directly with --mirror %s)' \
+      "$name" "$name")"
+    return 1
+  fi
+  if [[ $status -ne 0 && "${bytes:-0}" == "0" ]]; then
+    if [[ -n "$detail" ]]; then
+      probe_line "$(printf '  %-26s failed (curl %s: %s)' "$name" "$status" "$detail")"
+    else
+      probe_line "$(printf '  %-26s failed (curl %s)' "$name" "$status")"
+    fi
+    return 1
+  fi
+  suffix=""
+  if [[ $status -ne 0 ]]; then
+    suffix="  (probe cut off)"
+  fi
+  probe_line "$(printf '  %-26s http=%s  ttfb=%s  %s in %s  %s/s%s' \
+    "$name" "${http_code:-?}" "$(format_latency "${ttfb:-0}")" \
+    "$(format_bytes "${bytes:-0}")" "$(format_seconds "${total:-0}")" \
+    "$(format_bytes "${speed:-0}")" "$suffix")"
+  if awk -v s="${speed:-0}" -v b="$probe_best_speed" 'BEGIN { exit !(s > b) }'; then
+    probe_best_name="$name"
+    probe_best_speed="${speed:-0}"
+  fi
+  if [[ "$name" == "primary" ]]; then
+    probe_primary_speed="${speed:-0}"
+  fi
+  return 0
+}
+
+# Probe every recorded candidate once and record the fastest one in the
+# probe_* globals. Returns 1 when the lock records no candidate.
+probe_all_candidates() {
+  local primary_url="$1"
+  local mirror_list="$2"
+  local entry name url
+  local -a candidates=()
+  probe_best_name=""
+  probe_best_speed=0
+  probe_primary_speed=0
+  while IFS= read -r entry; do
+    [[ -n "$entry" ]] && candidates+=("$entry")
+  done < <(all_candidates "$primary_url" "$mirror_list")
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    return 1
+  fi
+  for entry in "${candidates[@]}"; do
+    name="${entry%%::*}"
+    url="${entry#*::}"
+    probe_candidate "$name" "$url" || true
+  done
+  return 0
+}
+
+# --probe writes its report on stdout and downloads nothing.
+run_probe() {
+  local label="$1"
+  local primary_url="$2"
+  local mirror_list="$3"
+  probe_report_mode="stdout"
+  printf 'Probing %s: first 256 KiB from each candidate (max 25s each).\n' "$label"
+  if ! probe_all_candidates "$primary_url" "$mirror_list"; then
+    printf '  (no download source is recorded)\n'
+    return 0
+  fi
+  printf '\n'
+  if [[ -z "$probe_best_name" ]]; then
+    printf 'No candidate answered the probe; the default order still verifies every source.\n'
+    return 0
+  fi
+  if [[ "$probe_best_name" == "primary" ]]; then
+    printf 'Fastest probe: primary host (%s/s). The default auto order already tries it first.\n' \
+      "$(format_bytes "$probe_best_speed")"
+  elif awk -v m="$probe_best_speed" -v p="$probe_primary_speed" 'BEGIN { exit !(m > p * 1.15) }'; then
+    printf 'Fastest probe: %s (%s/s). Prefer it with:\n' "$probe_best_name" "$(format_bytes "$probe_best_speed")"
+    printf '  MOUI_SKIA_MIRROR=%s sh scripts/fetch-release-skia.sh\n' "$probe_best_name"
+    printf '  # or: sh scripts/fetch-release-skia.sh --mirror %s\n' "$probe_best_name"
+  else
+    printf 'Fastest probe: %s (%s/s), close to the primary host.\n' \
+      "$probe_best_name" "$(format_bytes "$probe_best_speed")"
+  fi
+  printf 'Note: the probe only measures the first 256 KiB; the real download still verifies the full SHA256 and size.\n'
+}
+
+# The automatic probe runs once per invocation before a large download. It
+# reports through the progress channel (stdout is reserved for --print-env) and
+# only reorders the candidates: every download still verifies SHA256 and size.
+auto_probe_sources() {
+  local label="$1"
+  local primary_url="$2"
+  local mirror_list="$3"
+  probe_report_mode="ui"
+  ui "  [skia] probing $label (first 256 KiB from each recorded source)"
+  if ! probe_all_candidates "$primary_url" "$mirror_list"; then
+    ui "  [skia] no download source is recorded; keeping the default order"
+  elif [[ -z "$probe_best_name" ]]; then
+    ui "  [skia] probe answered nothing; keeping the default order"
+  elif [[ "$probe_best_name" == "primary" ]]; then
+    ui "  [skia] fastest source: primary host ($(format_bytes "$probe_best_speed")/s)"
+  else
+    preferred_source="$probe_best_name"
+    ui "  [skia] fastest source: $probe_best_name ($(format_bytes "$probe_best_speed")/s); trying it first"
+  fi
+  probe_report_mode="stdout"
 }
 
 # Download one artifact from its ordered candidates, then verify sha256 and size.
@@ -541,10 +947,22 @@ download_artifact() {
   local mirror_list="$6"
   local entry name url actual_size actual_sha256 first=1
   local -a candidates=()
+  local probe_size_ok=0
   download_source=""
   if [[ -z "$primary_url" && -z "$mirror_list" ]]; then
     echo "no download URL is recorded for $label" >&2
     return 1
+  fi
+  # Automatic speed probe: default in auto mirror mode, at most once per run,
+  # and only for an asset worth measuring (a tiny stub keeps the plain order).
+  if [[ -z "$expected_size" ]]; then
+    probe_size_ok=1
+  elif [[ "$expected_size" =~ ^[0-9]+$ ]] && (( expected_size >= 4194304 )); then
+    probe_size_ok=1
+  fi
+  if [[ "$probe_mode" == "auto" && "$mirror_mode" == "auto" && -n "$mirror_list" && $probe_done -eq 0 && $probe_size_ok -eq 1 ]]; then
+    probe_done=1
+    auto_probe_sources "$label" "$primary_url" "$mirror_list"
   fi
   while IFS= read -r entry; do
     [[ -n "$entry" ]] && candidates+=("$entry")
@@ -561,8 +979,9 @@ download_artifact() {
     fi
     first=0
     echo "  candidate=$name" >&2
-    if ! download_file "$url" "$output" "$label" "$expected_sha256" "$expected_size"; then
+    if ! download_file "$url" "$output" "$label" "$expected_sha256" "$expected_size" "$name"; then
       echo "download failed from $url; trying the next candidate" >&2
+      ui "  [skia] $name failed; trying the next source"
       rm -f "$output"
       continue
     fi
@@ -571,24 +990,26 @@ download_artifact() {
       echo "SHA256 mismatch from $url" >&2
       echo "  expected=$expected_sha256" >&2
       echo "  actual=$actual_sha256" >&2
+      ui "  [skia] $name returned a file with the wrong SHA256; trying the next source"
       rm -f "$output"
       continue
     fi
-    if [[ -n "$expected_size" ]]; then
-      actual_size="$(wc -c < "$output" | tr -d '[:space:]')"
-      if [[ "$actual_size" != "$expected_size" ]]; then
-        echo "size mismatch from $url" >&2
-        echo "  expected=$expected_size" >&2
-        echo "  actual=$actual_size" >&2
-        rm -f "$output"
-        continue
-      fi
+    actual_size="$(wc -c < "$output" | tr -d '[:space:]')"
+    if [[ -n "$expected_size" && "$actual_size" != "$expected_size" ]]; then
+      echo "size mismatch from $url" >&2
+      echo "  expected=$expected_size" >&2
+      echo "  actual=$actual_size" >&2
+      ui "  [skia] $name returned the wrong size; trying the next source"
+      rm -f "$output"
+      continue
     fi
     download_source="$name"
     echo "  verified_from=$name" >&2
+    ui "  [skia] verified $(format_bytes "${actual_size:-0}") from $name"
     return 0
   done
   echo "could not download $label from any recorded source" >&2
+  ui "  [skia] all recorded sources failed for $label"
   return 1
 }
 
@@ -719,6 +1140,27 @@ ensure_stub_extracted() {
   fi
   return 0
 }
+
+if [[ $list_mirrors -eq 1 ]]; then
+  printf 'Skia download sources (mirror mode: %s)\n\n' "$mirror_mode"
+  print_mirror_sources "release asset: $asset_name" "$asset_url" "$asset_mirrors"
+  printf '\n'
+  print_mirror_sources "source archive: $source_name" "$source_url" "$source_mirrors"
+  printf '\n'
+  if [[ -n "$stub_name" ]]; then
+    print_mirror_sources "stub library: $stub_name" "$stub_url" "$stub_mirrors"
+  else
+    printf 'stub library: not published for %s-%s-%s (native/*.cpp compiles locally)\n' \
+      "$resolved_platform" "$config" "$resolved_arch"
+  fi
+  printf '\nPick a source with --mirror <name> or MOUI_SKIA_MIRROR=<name>; --no-mirror keeps the primary host only.\n'
+  exit 0
+fi
+
+if [[ $probe -eq 1 ]]; then
+  run_probe "Skia release asset $asset_name" "$asset_url" "$asset_mirrors"
+  exit 0
+fi
 
 ensure_package_extracted
 if ! ensure_stub_extracted; then
