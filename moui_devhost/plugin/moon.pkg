@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_devhost/protocol",
+}
+
+supported_targets = "native"

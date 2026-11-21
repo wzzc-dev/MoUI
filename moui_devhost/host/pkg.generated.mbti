@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_devhost/host"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn dispatch_event(@core.AppEvent) -> Bool
+
+pub fn dump_frame_if_requested() -> Unit
+
+pub fn frame_commands() -> Array[@core.DrawCommand]
+
+pub fn generation_path_from_env() -> String?
+
+pub fn initialize(String, Double, Double) -> Bool
+
+pub fn plugin_path_from_env() -> String?
+
+pub fn poll_reload() -> Bool
+
+pub fn resize(Double, Double) -> Unit
+
+pub fn shutdown() -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct DevBridgeView {
+  revision : Int32
+}
+pub fn DevBridgeView::new(Int32) -> Self
+pub impl @core.ViewNode for DevBridgeView
+
+// Type aliases
+
+// Traits

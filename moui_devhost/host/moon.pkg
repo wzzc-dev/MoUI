@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_devhost/protocol",
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "moui_devhost_bridge.c" ],
+  targets: { },
+)

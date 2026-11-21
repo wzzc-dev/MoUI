@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_devhost/plugin"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn state_transport(String?) -> @core.ProgramStateTransport?
+
+// Errors
+
+// Types and methods
+pub struct Session {
+  runtime : @runtime.AppRuntime
+  transient_path : String?
+}
+pub fn Session::destroy(Self) -> Unit
+pub fn Session::dispatch_json(Self, String) -> Bool
+pub fn Session::flush(Self) -> Unit
+pub fn Session::frame_json(Self) -> String
+pub fn Session::new(@runtime.AppRuntime, String?) -> Self
+pub fn Session::resize(Self, Double, Double) -> Unit
+
+// Type aliases
+
+// Traits

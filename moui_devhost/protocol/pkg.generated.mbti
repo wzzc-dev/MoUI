@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_devhost/protocol"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn abi_version() -> Int32
+
+pub fn bytes_to_string(Bytes, Int32) -> String?
+
+pub fn decode_config(String) -> DevConfig?
+
+pub fn decode_event(String) -> @core.AppEvent?
+
+pub fn decode_frame(String) -> Array[@core.DrawCommand]?
+
+pub fn encode_config(DevConfig) -> String
+
+pub fn encode_event(@core.AppEvent) -> String?
+
+pub fn encode_frame(@core.DrawFrame) -> String
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct DevConfig {
+  width : Double
+  height : Double
+  state_file : String?
+  transient_file : String?
+}
+pub fn DevConfig::new(width~ : Double, height~ : Double, state_file? : String?, transient_file? : String?) -> Self
+
+// Type aliases
+
+// Traits

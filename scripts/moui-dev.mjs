@@ -32,8 +32,10 @@ const transientFile = stateFile.endsWith(".json")
   ? `${stateFile.slice(0, -5)}-transient.json`
   : `${stateFile}-transient`;
 const statusFile = path.join(projectRoot, ".moui", "dev-status.json");
+const hot = has("--hot");
+const workspaceRoot = findWorkspaceRoot(projectRoot);
 
-const status = { ok: true, phase: "starting", generation: 0, package: packageName, target, error: "", updatedAt: Date.now() };
+const status = { ok: true, phase: "starting", generation: 0, package: packageName, target, hot, error: "", updatedAt: Date.now() };
 const writeStatus = (patch = {}) => {
   Object.assign(status, patch, { updatedAt: Date.now() });
   const dir = path.dirname(statusFile);
@@ -47,8 +49,8 @@ const log = (message) => {
 const run = (command, commandArgs, options = {}) => new Promise((resolve) => {
   const child = spawn(command, commandArgs, { cwd: projectRoot, env: { ...process.env, ...options.env }, stdio: ["ignore", "pipe", "pipe"], shell: false });
   let output = "";
-  child.stdout.on("data", (chunk) => { process.stdout.write(chunk); output += chunk; });
-  child.stderr.on("data", (chunk) => { process.stderr.write(chunk); output += chunk; });
+  child.stdout.on("data", (chunk) => { if (!options.quiet) process.stdout.write(chunk); output += chunk; });
+  child.stderr.on("data", (chunk) => { if (!options.quiet) process.stderr.write(chunk); output += chunk; });
   child.once("error", (error) => resolve({ code: 1, error }));
   child.once("exit", (code, signal) => resolve({ code: code ?? 1, signal, output }));
 });
@@ -134,7 +136,173 @@ async function startNative(pkg, buildTarget) {
   });
 }
 
-const clientScript = `(() => { let generation = null; let error = null; const box = document.createElement('pre'); box.id = '__moui_dev_error'; Object.assign(box.style, { position: 'fixed', inset: '12px', zIndex: 2147483647, margin: 0, padding: '16px', background: '#2b1111', color: '#ffd6d6', font: '13px/1.5 monospace', whiteSpace: 'pre-wrap', display: 'none' }); document.body.appendChild(box); async function poll() { try { const response = await fetch('/__moui/status', { cache: 'no-store' }); const status = await response.json(); if (generation !== null && status.generation !== generation && status.ok) location.reload(); generation = status.generation; error = status.error || null; box.textContent = error ? '[moui dev] ' + error + '\\n\\nFix the source and save to retry.' : ''; box.style.display = error ? 'block' : 'none'; } catch (_) {} setTimeout(poll, 700); } poll(); })();`;
+// Native hot mode keeps the window and swaps only the app plugin. The host is
+// generated once; each successful plugin build publishes a new, uniquely named
+// dylib and advances the marker the host polls.
+const hotRoot = workspaceRoot ? path.join(workspaceRoot, "moui_devhost", "dev_hot") : "";
+const hotOut = hotRoot ? path.join(hotRoot, "out") : "";
+const hotMarker = hotOut ? path.join(hotOut, "current") : "";
+const hotHost = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "host", "host.exe");
+const hotPluginArchive = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "plugin", "plugin.a");
+const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
+const hotAppModule = (() => {
+  if (packageName) return packageName;
+  if (!workspaceRoot) return "";
+  const relative = path.relative(workspaceRoot, projectRoot);
+  if (relative && !relative.startsWith("..") && fs.existsSync(path.join(projectRoot, "app", "moon.pkg"))) {
+    return relative.split(path.sep).join("/");
+  }
+  return workspaceRoot === projectRoot ? "examples/counter" : "";
+})();
+const hotProject = hotAppModule ? path.join(workspaceRoot, hotAppModule) : projectRoot;
+let hotChild = null;
+let hotFastPlan = null;
+
+function hotSourceShape() {
+  return listFiles(hotProject)
+    .split("\n")
+    .map((line) => line.replace(/:\d+(?:\.\d+)?:\d+$/, ""))
+    .sort()
+    .join("\n");
+}
+
+async function captureHotPlan() {
+  const dry = await run(moon, [
+    "build", "moui_devhost/dev_hot/plugin",
+    "--target", "native", "--frozen", "-v", "--dry-run",
+  ], { quiet: true });
+  if (dry.code !== 0) return null;
+  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
+  const steps = dry.output
+    .split("\n")
+    .map((line) => line.replace(/\$MOON_HOME/g, moonHome))
+    .filter((line) => {
+      if (line.startsWith("moonc build-package ")) {
+        return line.includes(hotAppModule) || line.includes("moui_devhost/dev_hot/plugin");
+      }
+      return line.startsWith("moonc link-core ") ||
+        (line.includes("libtool -static") && line.includes("dev_hot/plugin/plugin.a"));
+    });
+  if (steps.length < 2) return null;
+  return { shape: hotSourceShape(), steps };
+}
+
+async function runHotSteps(steps) {
+  for (const step of steps) {
+    const result = await run("sh", ["-c", step]);
+    if (result.code !== 0) return false;
+  }
+  return true;
+}
+
+function hotAvailable() {
+  return Boolean(
+    workspaceRoot &&
+      hotAppModule &&
+      fs.existsSync(path.join(workspaceRoot, "moui_devhost", "moon.mod")) &&
+      fs.existsSync(path.join(workspaceRoot, "moui_devhost", "protocol", "moon.pkg")) &&
+      fs.existsSync(hotGenerator),
+  );
+}
+
+async function prepareHot() {
+  const generated = await run("node", [
+    hotGenerator,
+    "--root", workspaceRoot,
+    "--out", path.relative(workspaceRoot, hotRoot),
+    "--app", hotAppModule,
+    "--app-package", "app",
+  ]);
+  if (generated.code !== 0) return false;
+  const hostBuild = await run(moon, ["build", "moui_devhost/dev_hot/host", "--target", "native"]);
+  return hostBuild.code === 0;
+}
+
+async function publishHotPlugin() {
+  const startedAt = Date.now();
+  writeStatus({ ok: true, phase: "building", hot: true, error: "" });
+  log(`building hot plugin (${hotAppModule})`);
+  const shape = hotSourceShape();
+  let compiled = false;
+  if (hotFastPlan && hotFastPlan.shape === shape) {
+    compiled = await runHotSteps(hotFastPlan.steps);
+    if (!compiled) log("hot fast build failed; falling back to moon build");
+  }
+  if (!compiled) {
+    const built = await run(moon, ["build", "moui_devhost/dev_hot/plugin", "--target", "native", "--frozen"]);
+    if (built.code !== 0) {
+      const error = built.output.trim() || `plugin build failed with exit code ${built.code}`;
+      writeStatus({ ok: false, phase: "error", hot: true, error });
+      log(error);
+      return false;
+    }
+    // Cache the warm compile/link steps so a same-shape edit avoids moon's
+    // workspace planning cost; the next shape change refreshes the plan.
+    hotFastPlan = await captureHotPlan();
+  }
+  if (!fs.existsSync(hotPluginArchive)) {
+    const error = `plugin archive missing: ${hotPluginArchive}`;
+    writeStatus({ ok: false, phase: "error", hot: true, error });
+    log(error);
+    return false;
+  }
+  const generation = status.generation + 1;
+  const generationDir = path.join(hotOut, `gen-${generation}`);
+  fs.mkdirSync(generationDir, { recursive: true });
+  const dylib = path.join(generationDir, "plugin.dylib");
+  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
+  const linked = await run("cc", [
+    "-shared",
+    `-Wl,-force_load,${hotPluginArchive}`,
+    path.join(moonHome, "lib", "libbacktrace.a"),
+    "-lm",
+    "-o", dylib,
+  ]);
+  if (linked.code !== 0) {
+    const error = linked.output.trim() || `plugin link failed with exit code ${linked.code}`;
+    writeStatus({ ok: false, phase: "error", hot: true, error });
+    log(error);
+    return false;
+  }
+  // Publish atomically: the host never observes a half-written dylib or marker.
+  const markerTemp = `${hotMarker}.tmp`;
+  fs.writeFileSync(markerTemp, dylib);
+  fs.renameSync(markerTemp, hotMarker);
+  status.generation = generation;
+  writeStatus({ ok: true, phase: "running", hot: true, error: "" });
+  log(`hot plugin ready (generation ${generation}, ${(fs.statSync(dylib).size / 1024 / 1024).toFixed(1)} MiB, ${Date.now() - startedAt}ms)`);
+  return true;
+}
+
+async function startHotHost(pluginPath) {
+  if (!fs.existsSync(hotHost)) {
+    const error = `hot host missing: ${hotHost}`;
+    writeStatus({ ok: false, phase: "error", hot: true, error });
+    log(error);
+    return false;
+  }
+  writeStatus({ ok: true, phase: "running", hot: true, error: "" });
+  const env = {
+    MOUI_HOT_PLUGIN: pluginPath,
+    MOUI_HOT_GENERATION: hotMarker,
+    MOUI_HOT_RELOAD_LIMIT: "32",
+    MOUI_DEV_STATE_FILE: stateFile,
+    MOUI_DEV_TRANSIENT_FILE: transientFile,
+  };
+  if (inspect) {
+    env.MOUI_DEVTOOLS_FILE = devtoolsFile;
+    env.MOUI_DEVTOOLS_PORT = "0";
+    env.MOUI_DEVTOOLS_PORT_FILE = devtoolsPortFile;
+  }
+  hotChild = spawn(hotHost, [], { cwd: workspaceRoot, env: { ...process.env, ...env }, stdio: "inherit" });
+  hotChild.once("exit", (code, signal) => {
+    if (!stopping) log(`hot host exited (code=${code ?? "null"}, signal=${signal ?? "none"})`);
+    hotChild = null;
+  });
+  return true;
+}
+
+const clientScript = `(() => { let generation = null; let error = null; const box = document.createElement('pre'); box.id = '__moui_dev_error'; Object.assign(box.style, { position: 'fixed', inset: '12px', zIndex: 2147483647, margin: 0, padding: '16px', background: '#2b1111', color: '#ffd6d6', font: '13px/1.5 monospace', whiteSpace: 'pre-wrap', display: 'none' }); document.body.appendChild(box); async function poll() { try { const response = await fetch('/__moui/status', { cache: 'no-store' }); const status = await response.json(); if (generation !== null && status.generation !== generation && status.ok) location.reload(); generation = status.generation; error = status.error || null; box.textContent = error ? '[moui dev] ' + error + '\n\nFix the source and save to retry.' : ''; box.style.display = error ? 'block' : 'none'; } catch (_) {} setTimeout(poll, 700); } poll(); })();`;
 
 function findWorkspaceRoot(start) {
   let dir = start;
@@ -247,34 +415,107 @@ const pkg = discoverPackage();
 const buildTarget = discoverTarget(pkg);
 writeStatus({ package: pkg, target: buildTarget });
 if (has("--help")) {
-  process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
+  process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--hot] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
   process.stdout.write("Watches MoonBit inputs, rebuilds incrementally, restarts native apps, and serves Web errors with refresh.\\n");
+  process.stdout.write("--hot (macOS native) keeps the window and swaps the app plugin dylib instead of restarting.\\n");
   process.exit(0);
 }
 
-const server = web ? serve() : null;
-let lastSnapshot = listFiles(projectRoot);
-const initial = await build(pkg, buildTarget);
-if (once) {
-  if (server) server.close();
-  process.exit(initial ? 0 : 1);
+let server = null;
+let timer = null;
+let hotTimer = null;
+
+if (hot && web) {
+  writeStatus({ ok: false, phase: "error", hot: true, error: "--hot is native-only; Web keeps the reload page path" });
+  process.exit(1);
 }
-if (initial && !web) await startNative(pkg, buildTarget);
-log(`watching ${projectRoot} every ${intervalMs}ms (state: ${stateFile})`);
-const timer = setInterval(async () => {
-  if (stopping) return;
-  const nextSnapshot = listFiles(projectRoot);
-  if (nextSnapshot === lastSnapshot) return;
-  lastSnapshot = nextSnapshot;
-  await stopChild();
-  const ok = await build(pkg, buildTarget);
-  if (ok && !web) await startNative(pkg, buildTarget);
-}, intervalMs);
+if (hot && process.platform !== "darwin") {
+  writeStatus({ ok: false, phase: "error", hot: true, error: "--hot currently requires macOS" });
+  process.exit(1);
+}
+if (hot && !hotAvailable()) {
+  writeStatus({
+    ok: false,
+    phase: "error",
+    hot: true,
+    error: "--hot requires the repository dev module moui_devhost and scripts/moui-dev-hot-generate.mjs",
+  });
+  process.exit(1);
+}
+if (hot && !fs.readFileSync(path.join(workspaceRoot, "moui_devhost", "moon.mod"), "utf8").includes(`"${hotAppModule}@`)) {
+  writeStatus({
+    ok: false,
+    phase: "error",
+    hot: true,
+    error: `--hot cannot import ${hotAppModule}; add "${hotAppModule}@<version>" to moui_devhost/moon.mod`,
+  });
+  process.exit(1);
+}
+
+if (hot) {
+  const prepared = await prepareHot();
+  if (!prepared) {
+    writeStatus({ ok: false, phase: "error", hot: true, error: "hot host generation failed" });
+    process.exit(1);
+  }
+  const published = await publishHotPlugin();
+  if (!published || once) process.exit(published ? 0 : 1);
+  const initialDylib = fs.readFileSync(hotMarker, "utf8").trim();
+  if (!(await startHotHost(initialDylib))) process.exit(1);
+  let lastHotSnapshot = listFiles(hotProject);
+  let hotBuilding = false;
+  log(`watching ${hotProject} every ${intervalMs}ms (hot, state: ${stateFile})`);
+  hotTimer = setInterval(async () => {
+    if (stopping || hotBuilding) return;
+    const nextSnapshot = listFiles(hotProject);
+    if (nextSnapshot === lastHotSnapshot) return;
+    lastHotSnapshot = nextSnapshot;
+    hotBuilding = true;
+    try {
+      // A failed build keeps the previous generation published and interactive.
+      await publishHotPlugin();
+    } finally {
+      hotBuilding = false;
+    }
+  }, intervalMs);
+} else {
+  server = web ? serve() : null;
+  let lastSnapshot = listFiles(projectRoot);
+  const initial = await build(pkg, buildTarget);
+  if (once) {
+    if (server) server.close();
+    process.exit(initial ? 0 : 1);
+  }
+  if (initial && !web) await startNative(pkg, buildTarget);
+  log(`watching ${projectRoot} every ${intervalMs}ms (state: ${stateFile})`);
+  timer = setInterval(async () => {
+    if (stopping) return;
+    const nextSnapshot = listFiles(projectRoot);
+    if (nextSnapshot === lastSnapshot) return;
+    lastSnapshot = nextSnapshot;
+    await stopChild();
+    const ok = await build(pkg, buildTarget);
+    if (ok && !web) await startNative(pkg, buildTarget);
+  }, intervalMs);
+}
+
+const stopHotChild = async () => {
+  if (!hotChild || hotChild.exitCode !== null) return;
+  const current = hotChild;
+  current.kill("SIGTERM");
+  await new Promise((resolve) => {
+    const killTimer = setTimeout(() => { current.kill("SIGKILL"); resolve(); }, 1500);
+    current.once("exit", () => { clearTimeout(killTimer); resolve(); });
+  });
+  hotChild = null;
+};
 const shutdown = async () => {
   if (stopping) return;
   stopping = true;
-  clearInterval(timer);
+  if (timer) clearInterval(timer);
+  if (hotTimer) clearInterval(hotTimer);
   await stopChild();
+  await stopHotChild();
   if (server) server.close();
   process.exit(0);
 };
