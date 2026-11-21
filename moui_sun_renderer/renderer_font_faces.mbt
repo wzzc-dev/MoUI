@@ -55,9 +55,9 @@ fn SunRasterRenderer::register_default_platform_fonts(
 ///|
 /// Platform faces Sun draws with, in registration priority order.
 ///
-/// Linux discovers the faces fontconfig hands the Skia text provider, so both
-/// renderers draw the same system families at the same weight (see
-/// `renderer_platform_font_query.mbt`). Windows adds a symbol role (Segoe UI
+/// Linux discovers the explicit candidate families Skia's fontconfig provider
+/// resolves, so both renderers draw the same system families at the same weight
+/// (see `renderer_platform_font_query.mbt`). Windows adds a symbol role (Segoe UI
 /// Symbol) that joins the fallback stack under its own family only, so a check
 /// mark or arrow the text families do not cover draws an outline instead of the
 /// .notdef box. Bundled macOS paths stay for the macOS route; on Linux they
