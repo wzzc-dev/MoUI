@@ -9,7 +9,9 @@ pub fn encode_frame(frame : @core.DrawFrame) -> String {
   for command in frame.commands {
     match command {
       @core.DrawCommand::FillRoundedRect(rounded, color) =>
-        commands.push(rounded_color_command("fill_rounded_rect", rounded, color))
+        commands.push(
+          rounded_color_command("fill_rounded_rect", rounded, color),
+        )
       @core.DrawCommand::FillRoundedRectBrush(rounded, brush) =>
         match brush {
           @core.Brush::Solid(color) =>
@@ -26,7 +28,9 @@ pub fn encode_frame(frame : @core.DrawFrame) -> String {
         match brush {
           @core.Brush::Solid(color) =>
             commands.push(
-              rounded_stroke_command("stroke_rounded_rect", rounded, color, width),
+              rounded_stroke_command(
+                "stroke_rounded_rect", rounded, color, width,
+              ),
             )
           _ => unsupported = unsupported + 1
         }
@@ -123,10 +127,12 @@ fn text_command(run : @core.TextRun) -> Json {
     run.font.weight.to_double(),
     repr=run.font.weight.to_string(),
   )
-  font["italic"] = bool_json(match run.font.style {
-    @core.FontStyle::Normal => false
-    @core.FontStyle::Italic => true
-  })
+  font["italic"] = bool_json(
+    match run.font.style {
+      @core.FontStyle::Normal => false
+      @core.FontStyle::Italic => true
+    },
+  )
   font["line_height"] = match run.font.line_height {
     Some(value) => number_json(value)
     None => Json::null()
@@ -242,7 +248,12 @@ fn decode_command(value : Json) -> @core.DrawCommand? {
       }
       Some(
         @core.DrawCommand::PushTransform(@core.Transform2D::{
-          a, b, c, d, tx, ty,
+          a,
+          b,
+          c,
+          d,
+          tx,
+          ty,
         }),
       )
     }
@@ -308,20 +319,18 @@ fn decode_command(value : Json) -> @core.DrawCommand? {
         None => 0.0
       }
       Some(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::{
-            text: match wire_string(fields.get("text")) {
-              Some(text) => text
-              None => return None
-            },
-            frame: rect,
-            font,
-            color,
-            align,
-            stroke_color,
-            stroke_width,
+        @core.DrawCommand::DrawText(@core.TextRun::{
+          text: match wire_string(fields.get("text")) {
+            Some(text) => text
+            None => return None
           },
-        ),
+          frame: rect,
+          font,
+          color,
+          align,
+          stroke_color,
+          stroke_width,
+        }),
       )
     }
     _ => None

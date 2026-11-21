@@ -170,7 +170,7 @@ fn rounded_rect_from_json(value : Json?) -> @core.RoundedRect? {
     Some(value) => value
     None => return None
   }
-  Some(@core.RoundedRect::{ rect, radius })
+  Some(@core.RoundedRect::{ rect, radius, })
 }
 
 ///|

@@ -1,9 +1,9 @@
 ///|
 #derive(Eq, Debug)
-/// Plugin creation payload. Paths are dev-loop files; `None` keeps the app on
-/// its own init model for that transport, so an app without
-/// `program_with_dev_state` still runs.
 pub(all) struct DevConfig {
+  /// Plugin creation payload. Paths are dev-loop files; `None` keeps the app on
+  /// its own init model for that transport, so an app without
+  /// `program_with_dev_state` still runs.
   width : Double
   height : Double
   state_file : String?

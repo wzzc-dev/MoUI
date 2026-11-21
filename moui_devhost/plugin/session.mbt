@@ -9,7 +9,9 @@ pub fn state_transport(path : String?) -> @core.ProgramStateTransport? {
         @core.ProgramStateTransport::new(
           read=() => {
             if @fs.path_exists(path) {
-              let bytes = @fs.read_file_to_bytes(path) catch { _ => return None }
+              let bytes = @fs.read_file_to_bytes(path) catch {
+                _ => return None
+              }
               Some(@utf8.decode_lossy(bytes[:], ignore_bom=true))
             } else {
               None
@@ -17,7 +19,9 @@ pub fn state_transport(path : String?) -> @core.ProgramStateTransport? {
           },
           write=payload => {
             let bytes = @utf8.encode(payload[:], bom=false)
-            @fs.write_bytes_to_file(path, bytes) catch { _ => return () }
+            @fs.write_bytes_to_file(path, bytes) catch {
+              _ => return ()
+            }
           },
         ),
       )
@@ -64,7 +68,9 @@ pub fn Session::flush(self : Session) -> Unit {
     Some(path) => {
       let payload = self.runtime.capture_dev_transient()
       let bytes = @utf8.encode(payload[:], bom=false)
-      @fs.write_bytes_to_file(path, bytes) catch { _ => () }
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => ()
+      }
     }
     None => ()
   }

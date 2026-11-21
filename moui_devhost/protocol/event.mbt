@@ -130,9 +130,8 @@ pub fn decode_event(text : String) -> @core.AppEvent? {
   }
   match kind {
     "pointer" => {
-      let phase = match pointer_phase_from_name(
-        wire_string(fields.get("phase")).unwrap_or(""),
-      ) {
+      let phase = match
+        pointer_phase_from_name(wire_string(fields.get("phase")).unwrap_or("")) {
         Some(phase) => phase
         None => return None
       }
@@ -176,7 +175,7 @@ pub fn decode_event(text : String) -> @core.AppEvent? {
           @core.KeyboardEvent::new(
             key~,
             code~,
-            text=text,
+            text~,
             pressed=wire_bool(fields.get("pressed")).unwrap_or(true),
             repeat=wire_bool(fields.get("repeat")).unwrap_or(false),
             modifiers=modifiers_from_json(fields.get("modifiers")).unwrap_or(

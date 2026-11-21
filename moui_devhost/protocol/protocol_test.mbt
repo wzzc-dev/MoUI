@@ -72,7 +72,10 @@ test "frame decoder rejects corruption and old ABI" {
   assert_eq(@protocol.decode_frame("not json"), None)
   assert_eq(@protocol.decode_frame("{\"version\":0,\"commands\":[]}"), None)
   assert_eq(@protocol.decode_frame("{\"version\":1}"), None)
-  assert_eq(@protocol.decode_frame("{\"version\":1,\"commands\":[{\"kind\":\"text\"}]}"), None)
+  assert_eq(
+    @protocol.decode_frame("{\"version\":1,\"commands\":[{\"kind\":\"text\"}]}"),
+    None,
+  )
 }
 
 ///|
@@ -115,7 +118,9 @@ test "event round trip" {
     None => abort("text input failed to encode")
   }
   assert_eq(@protocol.decode_event(encoded_text), Some(text_input))
-  let resize = @core.AppEvent::Resize(@core.Size::new(width=640.0, height=480.0))
+  let resize = @core.AppEvent::Resize(
+    @core.Size::new(width=640.0, height=480.0),
+  )
   let encoded_resize = match @protocol.encode_event(resize) {
     Some(text) => text
     None => abort("resize failed to encode")

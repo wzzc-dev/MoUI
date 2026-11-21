@@ -53,12 +53,7 @@ let host_reloads : Ref[Int32] = Ref(0)
 /// image per edit. `0` disables the budget for a single spike run.
 fn reload_limit() -> Int32 {
   match env_nonempty("MOUI_HOT_RELOAD_LIMIT") {
-    Some(value) =>
-      try {
-        @string.parse_int(value[:])
-      } catch {
-        _ => 32
-      }
+    Some(value) => @string.parse_int(value[:]) catch { _ => 32 }
     None => 32
   }
 }
@@ -103,7 +98,11 @@ fn read_generation(path : String) -> String? {
 /// Load the first plugin generation and publish it through DevTools. The host
 /// runtime is created after this call, so plugin state restoration happens
 /// before the first frame.
-pub fn initialize(plugin_path : String, width : Double, height : Double) -> Bool {
+pub fn initialize(
+  plugin_path : String,
+  width : Double,
+  height : Double,
+) -> Bool {
   let config = @protocol.DevConfig::new(
     width~,
     height~,
@@ -127,10 +126,7 @@ pub fn initialize(plugin_path : String, width : Double, height : Double) -> Bool
   // onto a newer published generation.
   host_generation.val = plugin_path
   host_reloads.val = 0
-  host_settings.val = Some({
-    config_json,
-    generation_path,
-  })
+  host_settings.val = Some({ config_json, generation_path, })
   true
 }
 
