@@ -250,6 +250,18 @@ async fn capture(
 }
 
 ///|
+fn var_from_json(parsed : @json.Json, name : String) -> String {
+  match json_field(parsed, "vars") {
+    Some(vars) =>
+      match json_field(vars, name) {
+        Some(@json.String(value)) => value
+        _ => ""
+      }
+    None => ""
+  }
+}
+
+///|
 fn var_from_output(output : String, name : String) -> String {
   let lines = split_str(output, "\n")
   let mut index = lines.length() - 1
@@ -392,17 +404,42 @@ async fn main {
   let mut stub_flags = ""
   let mut link_flags = ""
   if configure {
-    let parent_out = run_parent_prebuild(opts, text)
-    stub_flags = config_or(
-      opts.env,
-      "MOUI_SKIA_STUB_CC_FLAGS",
-      var_from_output(parent_out, "MOUI_SKIA_STUB_CC_FLAGS"),
-    )
-    link_flags = config_or(
-      opts.env,
-      "MOUI_SKIA_CC_LINK_FLAGS",
-      var_from_output(parent_out, "MOUI_SKIA_CC_LINK_FLAGS"),
-    )
+    match config_value(opts.env, "MOUI_SKIA_PREBUILD_CONTRACT_FILE") {
+      Some(contract_path) => {
+        // The RISC-V64 cross build precomputes the parent contract with the
+        // host toolchain before it exports MOON_CC. Reading that file avoids a
+        // nested `moon run` under the cross compiler.
+        let contract_text = @fs.read_file_to_string(contract_path) catch {
+          _ => bail("failed to read MOUI_SKIA_PREBUILD_CONTRACT_FILE: \{contract_path}")
+        }
+        let contract = @json.parse(contract_text) catch {
+          _ => bail("failed to parse MOUI_SKIA_PREBUILD_CONTRACT_FILE: \{contract_path}")
+        }
+        stub_flags = config_or(
+          opts.env,
+          "MOUI_SKIA_STUB_CC_FLAGS",
+          var_from_json(contract, "MOUI_SKIA_STUB_CC_FLAGS"),
+        )
+        link_flags = config_or(
+          opts.env,
+          "MOUI_SKIA_CC_LINK_FLAGS",
+          var_from_json(contract, "MOUI_SKIA_CC_LINK_FLAGS"),
+        )
+      }
+      None => {
+        let parent_out = run_parent_prebuild(opts, text)
+        stub_flags = config_or(
+          opts.env,
+          "MOUI_SKIA_STUB_CC_FLAGS",
+          var_from_output(parent_out, "MOUI_SKIA_STUB_CC_FLAGS"),
+        )
+        link_flags = config_or(
+          opts.env,
+          "MOUI_SKIA_CC_LINK_FLAGS",
+          var_from_output(parent_out, "MOUI_SKIA_CC_LINK_FLAGS"),
+        )
+      }
+    }
   }
   let link_configs = if link_flags == "" {
     []

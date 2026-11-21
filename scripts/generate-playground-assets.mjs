@@ -312,26 +312,71 @@ const packages = Object.fromEntries([...packageIds].sort().map(id => [id, {
   core: allPackages[id].core,
 }]));
 
+// Current toolchains bundle the standard library as one artifact per package
+// plus `all_pkgs.json`; older ones emitted a single monolithic `core.core`.
+// Support both so local checkouts on an older pinned toolchain still package.
 const coreModuleRoot = process.env.MOONBIT_PLAYGROUND_CORE_ROOT || join(homedir(), ".moon/lib/core");
 const coreBundleRoot = join(coreModuleRoot, "_build/wasm-gc/release/bundle");
-if (!existsSync(join(coreBundleRoot, "core.core"))) {
+const coreBundleIndex = join(coreBundleRoot, "all_pkgs.json");
+const monolithicCore = join(coreBundleRoot, "core.core");
+if (!existsSync(monolithicCore) && !existsSync(coreBundleIndex)) {
   execFileSync("moon", ["bundle", "--target", "wasm-gc", "--release", "--strip"], {
     cwd: coreModuleRoot,
     stdio: "inherit",
   });
 }
-copy(join(coreBundleRoot, "core.core"), join(outDir, "assets/moonbit-core/core.core"));
-const abortCore = join(coreBundleRoot, "abort/abort.core");
-if (existsSync(abortCore)) copy(abortCore, join(outDir, "assets/moonbit-core/abort/abort.core"));
 const coreInterfaces = [];
-for (const file of collectFiles(coreBundleRoot).filter(file => file.rel.endsWith(".mi"))) {
-  copy(file.full, join(outDir, "assets/moonbit-core", file.rel));
-  const packagePath = dirname(file.rel).replaceAll("\\", "/");
-  coreInterfaces.push({
-    path: `moonbitlang/core/${packagePath}`,
-    spec: `/lib/core/${packagePath}:${packagePath.split("/").at(-1)}`,
-    url: `assets/moonbit-core/${file.rel.replaceAll("\\", "/")}`,
-  });
+const coreFiles = [];
+if (existsSync(coreBundleIndex)) {
+  const bundle = JSON.parse(readFileSync(coreBundleIndex, "utf8"));
+  if (!Array.isArray(bundle.packages) || bundle.packages.length === 0) {
+    throw new Error(`core bundle index is empty: ${coreBundleIndex}`);
+  }
+  const entries = bundle.packages
+    .map(entry => {
+      const packagePath = String(entry.rel || "").replaceAll("\\", "/");
+      const miPath = String(entry.artifact || "").replaceAll("\\", "/");
+      return { packagePath, miPath };
+    })
+    .filter(entry => entry.packagePath && entry.miPath.endsWith(".mi"))
+    .sort((a, b) => a.packagePath.localeCompare(b.packagePath));
+  for (const { packagePath, miPath } of entries) {
+    if (!existsSync(miPath)) continue;
+    const miRel = relative(coreBundleRoot, miPath).replaceAll("\\", "/");
+    copy(miPath, join(outDir, "assets/moonbit-core", miRel));
+    coreInterfaces.push({
+      path: `moonbitlang/core/${packagePath}`,
+      spec: `/lib/core/${packagePath}:${packagePath.split("/").at(-1)}`,
+      url: `assets/moonbit-core/${miRel}`,
+    });
+    const corePath = miPath.slice(0, -".mi".length) + ".core";
+    if (existsSync(corePath)) {
+      const coreRel = relative(coreBundleRoot, corePath).replaceAll("\\", "/");
+      copy(corePath, join(outDir, "assets/moonbit-core", coreRel));
+      coreFiles.push(`assets/moonbit-core/${coreRel}`);
+    }
+  }
+} else if (existsSync(monolithicCore)) {
+  const abortCore = join(coreBundleRoot, "abort/abort.core");
+  if (existsSync(abortCore)) {
+    copy(abortCore, join(outDir, "assets/moonbit-core/abort/abort.core"));
+    coreFiles.push("assets/moonbit-core/abort/abort.core");
+  }
+  copy(monolithicCore, join(outDir, "assets/moonbit-core/core.core"));
+  coreFiles.push("assets/moonbit-core/core.core");
+  for (const file of collectFiles(coreBundleRoot).filter(file => file.rel.endsWith(".mi"))) {
+    copy(file.full, join(outDir, "assets/moonbit-core", file.rel));
+    const packagePath = dirname(file.rel).replaceAll("\\", "/");
+    coreInterfaces.push({
+      path: `moonbitlang/core/${packagePath}`,
+      spec: `/lib/core/${packagePath}:${packagePath.split("/").at(-1)}`,
+      url: `assets/moonbit-core/${file.rel.replaceAll("\\", "/")}`,
+    });
+  }
+} else {
+  throw new Error(
+    `core bundle has neither all_pkgs.json nor core.core: ${coreBundleRoot}`,
+  );
 }
 
 const pkgSources = [
@@ -345,15 +390,14 @@ const trackedAssets = collectFiles(outDir)
   .filter(file => !file.rel.startsWith(".npm-tmp/"))
   .map(file => ({ path: file.rel, hash: hashFile(file.full), bytes: statSync(file.full).size }));
 const manifest = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   target: "wasm-gc",
   compiler: { package: "@moonbit/moonc-worker", version: COMPILER_VERSION, integrity: COMPILER_INTEGRITY },
   userPackage: "wzzc-dev/moui_playground/user",
   runnerPackage: "wzzc-dev/moui_playground/runner",
   pkgSources,
   core: {
-    core: "assets/moonbit-core/core.core",
-    abort: existsSync(abortCore) ? "assets/moonbit-core/abort/abort.core" : null,
+    cores: coreFiles,
     interfaces: coreInterfaces,
   },
   packages,

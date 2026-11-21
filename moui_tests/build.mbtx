@@ -16,7 +16,10 @@ import {
 /// delegated `moui_skia_renderer/build.mbtx` inherits this process' stdin, so it
 /// sees exactly the config moon handed to this hook. The renderer module keeps
 /// its own `link_configs`: moon rejects a prebuild from `wzzc-dev/moui_tests`
-/// that targets an external module name, so only `vars` are forwarded.
+/// that targets an external module name, so only `vars` are forwarded. The two
+/// smoke harnesses in this module do get `link_configs` derived from the
+/// forwarded `MOUI_SKIA_CC_LINK_FLAGS`, so the real-Skia smoke scripts build
+/// them from the module root without rewriting their `moon.pkg` files.
 let delegated_script : String = "../moui_skia_renderer/build.mbtx"
 
 ///|
@@ -90,7 +93,27 @@ fn emit_vars(vars : Map[String, @json.Json]) -> Unit {
   }
   let payload : Map[String, @json.Json] = Map([])
   payload.set("vars", @json.Json::object(string_fields))
-  payload.set("link_configs", @json.Json::array([]))
+  // The smoke harnesses live in this module, so moon accepts their link
+  // configs here; the renderer's own config cannot be re-emitted because it
+  // targets an external module. Both harnesses are native executables that the
+  // real-Skia smoke scripts build without patching their `moon.pkg` files.
+  let entries : Array[@json.Json] = []
+  match string_fields.get("MOUI_SKIA_CC_LINK_FLAGS") {
+    Some(@json.String(link_flags)) =>
+      if link_flags != "" {
+        for package in [
+          "wzzc-dev/moui_tests/skia_renderer_smoke/native",
+          "wzzc-dev/moui_tests/skia_text_emoji_smoke/native",
+        ] {
+          let fields : Map[String, @json.Json] = Map([])
+          fields.set("package", @json.Json::string(package))
+          fields.set("link_flags", @json.Json::string(link_flags))
+          entries.push(@json.Json::object(fields))
+        }
+      }
+    _ => ()
+  }
+  payload.set("link_configs", @json.Json::array(entries))
   println(@json.Json::object(payload).stringify())
 }
 
@@ -100,45 +123,20 @@ async fn main {
     Some(dir) => dir
     None => "."
   }
-  let renderer_root = path_join(module_root, "../moui_skia_renderer")
-  let tmp_dir = path_join(renderer_root, delegated_tmp)
-  if !@fs.path_exists(tmp_dir) {
-    @fs.create_dir(tmp_dir) catch {
-      _ => ()
-    }
-  }
-  let result = @process.run(
-    "moon",
-    [
-      "run",
-      delegated_script,
-      "--target",
-      "native",
-      "--target-dir",
-      path_join(renderer_root, delegated_cache),
-    ],
-    extra_env=Map([
-      ("MOON_DEP_CACHE", path_join(renderer_root, delegated_dep_cache)),
-      ("MOUI_SKIA_PREBUILD_CACHE_NAMESPACE", "tests"),
-      ("TMP", tmp_dir),
-      ("TEMP", tmp_dir),
-      ("TMPDIR", tmp_dir),
-    ]),
-    stdout=@process.Collect,
-    stderr=@process.Inherit,
-    cwd=renderer_root,
-  )
-  if result.exit_code != 0 {
-    abort("moui_tests prebuild: the delegated renderer prebuild exited with \{result.exit_code}")
-  }
-  let output = result.stdout_text() catch {
-    _ => ""
-  }
   let mut vars : Map[String, @json.Json] = Map([])
-  match last_json_line(output) {
-    Some(line) => {
-      let parsed = @json.parse(line) catch {
-        _ => @json.Json::empty_object()
+  let contract_path = match @env.get_env_var("MOUI_SKIA_PREBUILD_CONTRACT_FILE") {
+    Some(value) => if value.trim().length() == 0 { None } else { Some(value) }
+    None => None
+  }
+  match contract_path {
+    Some(path) => {
+      // The RISC-V64 cross build precomputes the contract with the host
+      // toolchain; reuse it instead of nesting a moon run under MOON_CC.
+      let contract_text = @fs.read_file_to_string(path) catch {
+        _ => abort("moui_tests prebuild: failed to read MOUI_SKIA_PREBUILD_CONTRACT_FILE: \{path}")
+      }
+      let parsed = @json.parse(contract_text) catch {
+        _ => abort("moui_tests prebuild: failed to parse MOUI_SKIA_PREBUILD_CONTRACT_FILE: \{path}")
       }
       match json_field(parsed, "vars") {
         Some(field) =>
@@ -148,7 +146,57 @@ async fn main {
         None => ()
       }
     }
-    None => ()
+    None => {
+      let renderer_root = path_join(module_root, "../moui_skia_renderer")
+      let tmp_dir = path_join(renderer_root, delegated_tmp)
+      if !@fs.path_exists(tmp_dir) {
+        @fs.create_dir(tmp_dir) catch {
+          _ => ()
+        }
+      }
+      let result = @process.run(
+        "moon",
+        [
+          "run",
+          delegated_script,
+          "--target",
+          "native",
+          "--target-dir",
+          path_join(renderer_root, delegated_cache),
+        ],
+        extra_env=Map([
+          ("MOON_DEP_CACHE", path_join(renderer_root, delegated_dep_cache)),
+          ("MOUI_SKIA_PREBUILD_CACHE_NAMESPACE", "tests"),
+          ("TMP", tmp_dir),
+          ("TEMP", tmp_dir),
+          ("TMPDIR", tmp_dir),
+        ]),
+        stdout=@process.Collect,
+        stderr=@process.Inherit,
+        cwd=renderer_root,
+      )
+      if result.exit_code != 0 {
+        abort("moui_tests prebuild: the delegated renderer prebuild exited with \{result.exit_code}")
+      }
+      let output = result.stdout_text() catch {
+        _ => ""
+      }
+      match last_json_line(output) {
+        Some(line) => {
+          let parsed = @json.parse(line) catch {
+            _ => @json.Json::empty_object()
+          }
+          match json_field(parsed, "vars") {
+            Some(field) =>
+              if field is @json.Object(fields) {
+                vars = fields
+              }
+            None => ()
+          }
+        }
+        None => ()
+      }
+    }
   }
   emit_vars(vars)
 }

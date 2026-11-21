@@ -61,7 +61,7 @@ async function loadManifest() {
     manifestPromise = fetch(new URL("../assets/manifest.json", self.location.href)).then(async response => {
       if (!response.ok) throw new Error("Playground compiler manifest is unavailable.");
       const manifest = await response.json();
-      if (manifest.schemaVersion !== 2) {
+      if (manifest.schemaVersion !== 3) {
         throw new Error(
           `Playground assets are stale (compiler manifest schema v${manifest.schemaVersion}); ` +
           "rebuild and redeploy the Playground assets.",
@@ -294,9 +294,11 @@ async function compile(request) {
     "wzzc-dev/moui_web_renderer",
   ];
   const packageCores = await Promise.all(reachablePackageIds(manifest, roots).map(id => fetchBytes(manifest.packages[id].core)));
+  // Standard-library packages are bundled one .core per package by current
+  // toolchains; the manifest lists them dependency-first. Older manifests
+  // listed a single monolithic core (schema v2), which is rejected above.
   const coreFiles = [
-    ...(manifest.core.abort ? [await fetchBytes(manifest.core.abort)] : []),
-    await fetchBytes(manifest.core.core),
+    ...(await Promise.all(manifest.core.cores.map(file => fetchBytes(file)))),
     ...packageCores,
     user.core,
     runner.core,

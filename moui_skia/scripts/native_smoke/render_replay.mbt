@@ -185,11 +185,7 @@ fn run_render_replay_smoke(
     )
   }
   let replay_text_resource_smoke = run_replay_text_resource_smoke(
-    replay_descriptor,
-    replay_font,
-    replay_shaping,
-    replay_shaped_run,
-    replay_shaped_glyph_run,
+    replay_descriptor, replay_font, replay_shaping, replay_shaped_run, replay_shaped_glyph_run,
     replay_text_run_plan,
   )
   if replay_plan.length() != 15 ||
@@ -237,7 +233,9 @@ fn run_render_replay_smoke(
   }
   println("native smoke render frame unbalanced validation")
   println(1)
-  let replay_resource_cache_smoke = run_replay_resource_cache_smoke(replay_frame)
+  let replay_resource_cache_smoke = run_replay_resource_cache_smoke(
+    replay_frame,
+  )
   let replay_native_resources = @native.NativeReplayResources::new(
     shader_max_bytes=1024L,
     path_max_bytes=1024L,
@@ -286,8 +284,10 @@ fn run_render_replay_smoke(
       replay_command_stats.shader_resource_count ||
       replay_stats.filter_resource_count !=
       replay_command_stats.filter_resource_count ||
-      replay_stats.path_resource_count != replay_command_stats.path_resource_count ||
-      replay_stats.text_resource_count != replay_command_stats.text_resource_count ||
+      replay_stats.path_resource_count !=
+      replay_command_stats.path_resource_count ||
+      replay_stats.text_resource_count !=
+      replay_command_stats.text_resource_count ||
       replay_command_stats.transform_count != 6 ||
       replay_command_stats.resource_declaration_count != 4 ||
       replay_command_stats.image_resource_count != 0 ||
@@ -388,7 +388,8 @@ fn run_render_replay_smoke(
       replay_frame_rejected_stats.replayed_count != 0 ||
       replay_frame_rejected_stats.skipped_count == 0 ||
       replay_frame_rejected_stats.is_complete() ||
-      replay_frame_rejected_stats.status() != @native.CanvasReplaySkippedCommands ||
+      replay_frame_rejected_stats.status() !=
+      @native.CanvasReplaySkippedCommands ||
       replay_frame_rejected_stats.status().is_complete() {
       fail_smoke("native render frame replay contract did not hold")
     }
@@ -408,11 +409,7 @@ fn run_render_replay_smoke(
     0xff,
   )
   let replay_surface_frame_smoke = run_replay_surface_frame_smoke(
-    replay_size,
-    replay_frame,
-    replay_commands,
-    replay_command_stats,
-    replay_font,
+    replay_size, replay_frame, replay_commands, replay_command_stats, replay_font,
   )
   let render_frame_stats = replay_surface_frame_smoke.stats
   let render_frame_resource_stats = replay_surface_frame_smoke.resource_stats
@@ -428,7 +425,13 @@ fn run_render_replay_smoke(
   println("native smoke render frame replay commands")
   println(replay_frame_stats.command_count)
   println("native smoke render frame replay complete")
-  println(if !filters_available || replay_frame_stats.is_complete() { 1 } else { 0 })
+  println(
+    if !filters_available || replay_frame_stats.is_complete() {
+      1
+    } else {
+      0
+    },
+  )
   println("native smoke canvas replay status contract")
   println(3)
   println("native smoke canvas replay transforms")
@@ -482,7 +485,13 @@ fn run_render_replay_smoke(
   println("native smoke surface render frame commands")
   println(render_frame_stats.replay.command_count)
   println("native smoke surface render frame finalized")
-  println(if !filters_available || render_frame_stats.finalized { 1 } else { 0 })
+  println(
+    if !filters_available || render_frame_stats.finalized {
+      1
+    } else {
+      0
+    },
+  )
   println("native smoke surface render frame status contract")
   println(2)
   println("native smoke surface render frame finalization frame index")
@@ -494,11 +503,29 @@ fn run_render_replay_smoke(
   println("native smoke surface render frame finalization uncacheable count")
   println(render_frame_finalization_plan.uncacheable_count)
   println("native smoke surface render frame cache resources")
-  println(if !filters_available { 9 } else { render_frame_resource_stats.resource_count })
+  println(
+    if !filters_available {
+      9
+    } else {
+      render_frame_resource_stats.resource_count
+    },
+  )
   println("native smoke native replay resource stats caches")
-  println(if !filters_available { 9 } else { replay_native_resource_stats.cache_count })
+  println(
+    if !filters_available {
+      9
+    } else {
+      replay_native_resource_stats.cache_count
+    },
+  )
   println("native smoke native replay resource stats resources")
-  println(if !filters_available { 9 } else { replay_native_resource_stats.resource_count })
+  println(
+    if !filters_available {
+      9
+    } else {
+      replay_native_resource_stats.resource_count
+    },
+  )
   println("native smoke surface render frame mismatch rejected")
   println(if !render_frame_mismatch_stats.is_complete() { 1 } else { 0 })
   println("native smoke render shaped glyph run command replay")
@@ -534,7 +561,13 @@ fn run_render_replay_smoke(
   println("native smoke render typeface cache hits")
   println(replay_typeface_cache_stats.hits)
   println("native smoke render color filter cache resources")
-  println(if !filters_available { 1 } else { replay_native_resources.color_filter_cache.length() })
+  println(
+    if !filters_available {
+      1
+    } else {
+      replay_native_resources.color_filter_cache.length()
+    },
+  )
   println("native smoke render color filter cache misses")
   println(replay_color_filter_cache_stats.misses)
   println("native smoke render color filter cache hits")
@@ -566,7 +599,9 @@ fn run_render_replay_smoke(
   println("native smoke invalid measured text resource plan count")
   println(replay_text_resource_smoke.invalid_measured_run_plan.length())
   println("native smoke invalid measured text uncacheable count")
-  println(replay_text_resource_smoke.invalid_measured_run_plan.uncacheable_count)
+  println(
+    replay_text_resource_smoke.invalid_measured_run_plan.uncacheable_count,
+  )
   println("native smoke text measurement key variation")
   println(1)
   println("native smoke render frame resource plan count")

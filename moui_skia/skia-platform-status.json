@@ -33,8 +33,8 @@
     {
       "id": "native.smoke-build",
       "area": "NativeSmoke",
-      "unix_command": "moon -C scripts/native_smoke check && moon -C scripts/native_smoke build --target native",
-      "powershell_command": "moon -C scripts/native_smoke check; moon -C scripts/native_smoke build --target native"
+      "unix_command": "MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check scripts/native_smoke && MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build scripts/native_smoke --target native",
+      "powershell_command": "$env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = \"1\"; moon check scripts/native_smoke; moon build scripts/native_smoke --target native"
     },
     {
       "id": "native.asan-smoke-dry-run",

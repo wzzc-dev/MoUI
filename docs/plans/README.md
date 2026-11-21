@@ -61,6 +61,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [main-ci-green-0-7-3](active/main-ci-green-0-7-3.md) | Restore the five failing `main` workflows (Playground core bundle, `--write` smoke/acceptance migration, fallback verifiers, RISC-V nested prebuild) and then publish 0.7.3 |
 | [titlebar-controls-polish](active/titlebar-controls-polish.md) | Titlebar controls polish on top of the chrome work: policy-driven, theme-sized CSD buttons with hover/pressed feedback and state icons, titlebar insets exposed to apps, host event timestamps enabling double-click zoom, and matching-host Wayland evidence via nested weston |
 | [sun-interactive-parity](active/sun-interactive-parity.md) | Sun route interaction parity with Skia on macOS: IME smoke machinery fixed (re-entrancy, key-window wait) and macOS IME surrounding-text drop fixed in window; CJK glyph coverage via TTC parsing + lazy glyph decode + lazy system-CJK face; caret positions from real glyph advances instead of an even split; text/glyph mask caches sized above page line count (360-line thrash 518→30 ms/frame); synthetic drag smoke measures Sun vs Skia cadence |
 | [sun-cpu-raster-hot-paths](active/sun-cpu-raster-hot-paths.md) | Sun CPU renderer interactive latency on macOS: measured per-phase and per-command profile, tight line-box text masks with offset-aware cache, per-scanline AA rasterisation, run-level text cache, hoisted gradient transforms, row-level dirty marking, canvas reuse, 1:1 layer blits, and an IOSurface-backed CPU presenter; release cold 307.6→31 ms / warm 56.8→11.5 ms |
@@ -113,7 +114,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [view-state-slot-storage](debt/view-state-slot-storage.md) | Replace copy-on-write `Map[DeclarationKey, Bytes]` slot storage if event-path profiles demand it |
 | [renderer-session-closure-style](debt/renderer-session-closure-style.md) | Revisit `RendererSession` closure record vs trait when renderer duplication or capability mistakes justify an RFC |
 | [message-transform-chain](debt/message-transform-chain.md) | Remove recursive `View::map` adapter copies only if MoonBit gains safe existential/associated-source typing or profiles justify a larger runtime redesign |
-| [skia-manual-smoke-prebuild-migration](debt/skia-manual-smoke-prebuild-migration.md) | Port the manual macOS/Linux/Windows Skia smoke runners off the retired `configure-*-native-pkg --write` + `MOON_CC` flow onto the `build.mbtx` environment exports; real-Skia hosts and pwsh needed before validating, so parked |
 
 ## Done
 

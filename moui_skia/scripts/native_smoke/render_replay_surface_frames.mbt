@@ -79,7 +79,8 @@ fn run_replay_surface_frame_smoke(
     replay_frame,
     font=Some(replay_font),
   )
-  let surface_filters_available = @native.ColorFilter::saturation(1.0) is Some(_)
+  let surface_filters_available = @native.ColorFilter::saturation(1.0)
+    is Some(_)
   if surface_filters_available {
     if !render_frame_stats.is_complete() ||
       render_frame_stats.status() != @native.SurfaceFrameReplayComplete ||
@@ -124,7 +125,9 @@ fn run_replay_surface_frame_smoke(
       render_frame_mismatch_stats.surface_matches ||
       render_frame_mismatch_stats.finalized ||
       render_frame_mismatch_stats.replay.replayed_count != 0 {
-      fail_smoke("native surface render frame finalization contract did not hold")
+      fail_smoke(
+        "native surface render frame finalization contract did not hold",
+      )
     }
   }
   guard render_frame_surface.read_pixels(

@@ -4,6 +4,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# The fallback gate proves the no-Skia path: keep the prebuild from fetching a
+# release artifact and compile the fallback stub instead.
+$env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
+Remove-Item Env:\MOUI_SKIA_ENABLE_PREBUILD_SKIA -ErrorAction SilentlyContinue
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
@@ -92,11 +97,17 @@ function Assert-WorkflowUsesHashtableSplatting {
   }
 }
 
-function Assert-WindowsMsvcSmokePassesResolvedLinkMode {
+function Assert-WindowsMsvcSmokeUsesPrebuildContract {
   $path = Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1"
   $content = Get-Content -LiteralPath $path -Raw
-  if ($content -notmatch '(?s)configure-windows-msvc-native-pkg\.ps1.*-SkiaLinkMode\s+\$resolvedSkiaLinkMode') {
-    throw "windows-msvc-skia-smoke.ps1 must pass the resolved Skia link mode to configure-windows-msvc-native-pkg.ps1"
+  if ($content -match 'Set-Content[^\r\n]*moon\.pkg') {
+    throw "windows-msvc-skia-smoke.ps1 must not rewrite package files with its own link flags"
+  }
+  if ($content -notmatch 'MOUI_SKIA_LINK_MODE\s*=\s*\$resolvedSkiaLinkMode') {
+    throw "windows-msvc-skia-smoke.ps1 must export the resolved Skia link mode to the prebuild"
+  }
+  if ($content -notmatch 'MOUI_SKIA_ENABLE_PREBUILD_SKIA\s*=\s*"1"') {
+    throw "windows-msvc-skia-smoke.ps1 must enable the moui_skia prebuild contract"
   }
 }
 
@@ -353,15 +364,10 @@ try {
   & (Join-Path $repoRoot "scripts/verify-native-capability-contract.ps1")
   Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml")
   Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-provider-real-skia-acceptance.yml")
-  Assert-WindowsMsvcSmokePassesResolvedLinkMode
+  Assert-WindowsMsvcSmokeUsesPrebuildContract
 
-  Push-Location (Join-Path $repoRoot "scripts/native_smoke")
-  try {
-    moon check
-    moon build --target native
-  } finally {
-    Pop-Location
-  }
+  moon check scripts/native_smoke
+  moon build scripts/native_smoke --target native
 
   $beforeNativePkgHash = Get-Sha256Hex -Path $nativePkg
   $beforeSmokePkgHash = Get-Sha256Hex -Path $smokePkg

@@ -314,7 +314,7 @@ fn verify_example_link_config(options : CliOptions) -> Result[String, String] {
       Err(message) => return Err(message)
     }
   }
-  if !build_text.contains("macosExampleLinkFlags") {
+  if !build_text.contains("macos_example_link_flags") {
     return Err("build script is missing macOS example link flag helper")
   }
   for framework in ["QuartzCore", "AppKit", "Metal", "CoreVideo", "IOSurface"] {

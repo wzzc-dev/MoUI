@@ -49,11 +49,12 @@ Options:
                          rewriting package files or building the smoke binary.
   -h, --help             Show this help.
 
-The script temporarily rewrites native/moon.pkg and scripts/native_smoke/moon.pkg,
-builds scripts/native_smoke with --target native, runs the produced executable
-directly, then restores both package files.
-The executable output must include the final smoke-test success marker so CI
-proves the real backend path reached the end of the test.
+The script exports the resolved Skia paths and flags as the `moui_skia`
+prebuild contract (build.mbtx owns the C++ stub and the native link flags),
+builds scripts/native_smoke from the module root with --target native, and runs
+the produced executable directly. No package file is rewritten. The executable
+output must include the final smoke-test success marker so CI proves the real
+backend path reached the end of the test.
 
 Environment defaults:
   MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB,
@@ -247,14 +248,6 @@ fi
 
 moui_skia_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 repo_root="$(cd "$moui_skia_root/.." && pwd)"
-native_pkg="$moui_skia_root/native/moon.pkg"
-backup_pkg="$native_pkg.smoke.bak"
-smoke_pkg="$moui_skia_root/scripts/native_smoke/moon.pkg"
-smoke_backup_pkg="$smoke_pkg.smoke.bak"
-renderer_pkg="$repo_root/moui_tests/skia_renderer_smoke/native/moon.pkg"
-renderer_pkg_backup="$renderer_pkg.smoke.bak"
-text_emoji_pkg="$repo_root/moui_tests/skia_text_emoji_smoke/native/moon.pkg"
-text_emoji_pkg_backup="$text_emoji_pkg.smoke.bak"
 smoke_log=""
 smoke_log_is_temporary=0
 renderer_log=""
@@ -373,17 +366,6 @@ if [[ $enable_skshaper -eq 1 ]]; then
   done
 fi
 
-if [[ -f "$backup_pkg" ]]; then
-  echo "native/moon.pkg smoke backup already exists: $backup_pkg" >&2
-  echo "Resolve the stale backup before running smoke." >&2
-  exit 1
-fi
-if [[ -f "$smoke_backup_pkg" ]]; then
-  echo "scripts/native_smoke/moon.pkg smoke backup already exists: $smoke_backup_pkg" >&2
-  echo "Resolve the stale backup before running smoke." >&2
-  exit 1
-fi
-
 echo "macOS Skia smoke environment:"
 echo "  moon=$(moon version 2>/dev/null | head -n 1 || true)"
 echo "  cxx=$(${CXX:-c++} --version 2>/dev/null | head -n 1 || true)"
@@ -454,13 +436,6 @@ if [[ $enable_asan -eq 1 ]]; then
   echo "  asan_options=$ASAN_OPTIONS"
 fi
 
-native_extra_cc_flags="$extra_cc_flags"
-native_extra_link_flags="$extra_link_flags"
-if [[ $enable_skshaper -eq 1 ]]; then
-  native_extra_cc_flags="-DMOUI_SKIA_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
-  native_extra_link_flags="-lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu${native_extra_link_flags:+ $native_extra_link_flags}"
-fi
-
 cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skshaper -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKSHAPER"
@@ -497,7 +472,7 @@ if [[ $dry_run_config -eq 1 ]]; then
   exit 0
 fi
 
-restore_native_pkg() {
+cleanup_temporary_logs() {
   if [[ $smoke_log_is_temporary -eq 1 && -n "${smoke_log:-}" && -f "$smoke_log" ]]; then
     rm -f "$smoke_log"
   fi
@@ -507,83 +482,58 @@ restore_native_pkg() {
   if [[ $text_emoji_log_is_temporary -eq 1 && -n "${text_emoji_log:-}" && -f "$text_emoji_log" ]]; then
     rm -f "$text_emoji_log"
   fi
-  if [[ -f "$backup_pkg" ]]; then
-    cp "$backup_pkg" "$native_pkg"
-    rm -f "$backup_pkg"
-    echo "Restored native/moon.pkg after macOS Skia smoke."
-  else
-    echo "No native/moon.pkg smoke backup found; nothing to restore."
-  fi
-  if [[ -f "$smoke_backup_pkg" ]]; then
-    cp "$smoke_backup_pkg" "$smoke_pkg"
-    rm -f "$smoke_backup_pkg"
-    echo "Restored scripts/native_smoke/moon.pkg after macOS Skia smoke."
-  else
-    echo "No scripts/native_smoke/moon.pkg smoke backup found; nothing to restore."
-  fi
-  if [[ -f "$renderer_pkg_backup" ]]; then
-    cp "$renderer_pkg_backup" "$renderer_pkg"
-    rm -f "$renderer_pkg_backup"
-    echo "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after macOS Skia smoke."
-  fi
-  if [[ -f "$text_emoji_pkg_backup" ]]; then
-    cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
-    rm -f "$text_emoji_pkg_backup"
-    echo "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after macOS Skia smoke."
-  fi
 }
-trap restore_native_pkg EXIT
+trap cleanup_temporary_logs EXIT
 
-cp "$native_pkg" "$backup_pkg"
-echo "Backed up native/moon.pkg to $backup_pkg."
-cp "$smoke_pkg" "$smoke_backup_pkg"
-echo "Backed up scripts/native_smoke/moon.pkg to $smoke_backup_pkg."
-
-configure_args=(
-  --skia-include "$include_path" \
-  --skia-lib-dir "$lib_path" \
-  --skia-lib "$skia_lib" \
-  --link-mode "$resolved_link_mode" \
-  --extra-cc-flags "$native_extra_cc_flags" \
-  --extra-link-flags "$native_extra_link_flags" \
-  --output "$native_pkg" \
-  --write
-)
-if [[ $enable_skparagraph -eq 1 ]]; then
-  configure_args+=(--enable-skparagraph)
+# The moui_skia prebuild (build.mbtx) owns the C++ stub compile flags and the
+# native link flags; native/moon.pkg stays on its `${build.MOUI_SKIA_CC_LINK_FLAGS}`
+# form and receives them through the prebuild link configs. Export the resolved
+# contract instead of rewriting package files.
+prebuild_extra_cc_flags="$extra_cc_flags"
+prebuild_extra_link_flags="$extra_link_flags"
+if [[ $enable_skshaper -eq 1 ]]; then
+  prebuild_extra_cc_flags="-DMOUI_SKIA_HAS_SKSHAPER${prebuild_extra_cc_flags:+ $prebuild_extra_cc_flags}"
+  prebuild_extra_link_flags="-L$lib_path -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu${prebuild_extra_link_flags:+ $prebuild_extra_link_flags}"
 fi
-if [[ $require_skparagraph -eq 1 ]]; then
-  configure_args+=(--require-skparagraph)
+export MOUI_SKIA_PLATFORM=macos
+export MOUI_SKIA_SKIA_INCLUDE="$include_path"
+export MOUI_SKIA_SKIA_LIB_DIR="$lib_path"
+export MOUI_SKIA_SKIA_LIB="$skia_lib"
+export MOUI_SKIA_LINK_MODE="$resolved_link_mode"
+export MOUI_SKIA_EXTRA_CC_FLAGS="$prebuild_extra_cc_flags"
+export MOUI_SKIA_EXTRA_LINK_FLAGS="$prebuild_extra_link_flags"
+export MOUI_SKIA_ENABLE_SKPARAGRAPH="$enable_skparagraph"
+export MOUI_SKIA_REQUIRE_SKPARAGRAPH="$require_skparagraph"
+# A real-Skia smoke must run the prebuild; inherited escape hatches would leave
+# the package on the fallback stub and silently skip the Skia path.
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA
+export MOUI_SKIA_ENABLE_PREBUILD_SKIA=1
+# The smoke exercises the CPU raster path; keep the prebuild from demanding
+# libskia_ganesh_ext and Metal frameworks that the old direct link did not use.
+export MOUI_SKIA_ENABLE_GPU_METAL=0
+if [[ -n "$skia_provider" ]]; then
+  export MOUI_SKIA_SKIA_PROVIDER="$skia_provider"
 fi
-bash "$moui_skia_root/scripts/configure-macos-native-pkg.sh" "${configure_args[@]}" >/dev/null
-echo "Wrote temporary native/moon.pkg with macOS Skia link flags."
-
-cat > "$smoke_pkg" <<EOF
-import {
-  "wzzc-dev/moui_skia" @skia,
-  "wzzc-dev/moui_skia/native" @native,
-}
-
-options(
-  "is-main": true,
-  "native-stub": [ "smoke_debug.c" ],
-  link: {
-    "native": {
-      "cc-link-flags": "$link_flags",
-    },
-  },
-)
-EOF
-echo "Wrote temporary scripts/native_smoke/moon.pkg with macOS Skia executable link flags."
-
-cd "$moui_skia_root/scripts/native_smoke"
-moon build --target native
-smoke_exe="$PWD/_build/native/debug/build/moui_skia_native_smoke"
-if [[ ! -x "$smoke_exe" && -x "$smoke_exe.exe" ]]; then
-  smoke_exe="$smoke_exe.exe"
+if [[ -n "$release_tag" ]]; then
+  export MOUI_SKIA_RELEASE_TAG="$release_tag"
 fi
-if [[ ! -x "$smoke_exe" ]]; then
-  echo "native smoke executable was not produced at $smoke_exe" >&2
+echo "Exported the moui_skia prebuild Skia contract (no package file was rewritten)."
+
+cd "$moui_skia_root"
+moon build scripts/native_smoke --target native
+smoke_exe=""
+for candidate in \
+  "$repo_root/_build/native/debug/build/wzzc-dev/moui_skia/scripts/native_smoke/native_smoke.exe" \
+  "$repo_root/_build/native/debug/build/wzzc-dev/moui_skia/scripts/native_smoke/native_smoke" \
+  "$moui_skia_root/_build/native/debug/build/wzzc-dev/moui_skia/scripts/native_smoke/native_smoke.exe" \
+  "$moui_skia_root/_build/native/debug/build/wzzc-dev/moui_skia/scripts/native_smoke/native_smoke"; do
+  if [[ -x "$candidate" ]]; then
+    smoke_exe="$candidate"
+    break
+  fi
+done
+if [[ -z "$smoke_exe" ]]; then
+  echo "native smoke executable was not produced under _build/native/debug/build/wzzc-dev/moui_skia/scripts/native_smoke" >&2
   exit 1
 fi
 export DYLD_LIBRARY_PATH="$lib_path${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
@@ -617,38 +567,8 @@ if [[ $require_skparagraph -eq 1 ]]; then
 fi
 
 if [[ $run_renderer_smoke -eq 1 ]]; then
-  cp "$renderer_pkg" "$renderer_pkg_backup"
-  echo "Backed up moui_tests/skia_renderer_smoke/native/moon.pkg to $renderer_pkg_backup."
-  cat > "$renderer_pkg" <<EOF
-import {
-  "moonbitlang/core/encoding/base64",
-  "moonbitlang/core/env",
-  "moonbitlang/x/fs",
-  "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/backend/common/image" @window_image,
-  "wzzc-dev/moui/render/common" @render_common,
-  "wzzc-dev/moui_skia_renderer" @skia_renderer,
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-  echo "Wrote temporary moui_tests/skia_renderer_smoke/native/moon.pkg with macOS Skia link flags."
-
   cd "$repo_root"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     moon build moui_tests/skia_renderer_smoke/native --target native
   renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_renderer_smoke/native/native.exe"
   if [[ ! -x "$renderer_exe" ]]; then
@@ -689,10 +609,6 @@ EOF
     exit 1
   fi
   echo "Verified MoUI Skia async image deferred-completion marker."
-
-  cp "$renderer_pkg_backup" "$renderer_pkg"
-  rm -f "$renderer_pkg_backup"
-  echo "Restored moui_tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
 fi
 
 if [[ $run_text_emoji_smoke -eq 1 ]]; then
@@ -700,35 +616,8 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     echo "--run-text-emoji-smoke requires --enable-skparagraph or --require-skparagraph for SkParagraph bidi/emoji markers" >&2
     exit 2
   fi
-  cp "$text_emoji_pkg" "$text_emoji_pkg_backup"
-  echo "Backed up moui_tests/skia_text_emoji_smoke/native/moon.pkg to $text_emoji_pkg_backup."
-  cat > "$text_emoji_pkg" <<EOF
-import {
-  "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/common/input" @window_input,
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui_skia_renderer" @skia_renderer,
-  "wzzc-dev/moui/views",
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-  echo "Wrote temporary moui_tests/skia_text_emoji_smoke/native/moon.pkg with macOS Skia link flags."
-
   cd "$repo_root"
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     moon build moui_tests/skia_text_emoji_smoke/native --target native
   text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tests/skia_text_emoji_smoke/native/native.exe"
   if [[ ! -x "$text_emoji_exe" ]]; then
@@ -780,8 +669,4 @@ EOF
     fi
   done
   echo "Verified MoUI Skia text/emoji renderer capability markers."
-
-  cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
-  rm -f "$text_emoji_pkg_backup"
-  echo "Restored moui_tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
 fi

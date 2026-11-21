@@ -64,14 +64,17 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          moon fmt
-          moon check --fmt
-          moon check
-          moon check --target all
-          moon info
+          # The fallback gate proves the no-Skia path: keep the prebuild from
+          # fetching a release artifact and compile the fallback stub instead.
+          export MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
+          moon fmt .
+          moon check --fmt .
+          moon check .
+          moon check . --target all
+          moon info .
           moon test . --target native
-          moon -C scripts/native_smoke check
-          moon -C scripts/native_smoke build --target native
+          moon check scripts/native_smoke
+          moon build scripts/native_smoke --target native
           bash -n scripts/linux-build-skia.sh
           bash -n scripts/linux-skia-smoke.sh
           bash -n scripts/linux-real-skia-smoke.sh
@@ -642,30 +645,44 @@ jobs:
             --skia-lib-dir .skia-dry-run/static \
             --extra-cc-flags -DMOUI_SKIA_FAKE_CONFIG_CC \
             --extra-link-flags -lskia_fake_config_dep \
-            > logs/fake-linux-native.moon.pkg
-          grep -Fq -- '-DMOUI_SKIA_HAS_SKIA' logs/fake-linux-native.moon.pkg
-          grep -Fq -- '-DMOUI_SKIA_FAKE_CONFIG_CC' logs/fake-linux-native.moon.pkg
-          grep -Fq -- '-lskia_fake_config_dep' logs/fake-linux-native.moon.pkg
-          bash scripts/configure-linux-native-pkg.sh \
-            --skia-include .skia-dry-run/skia \
-            --skia-lib-dir .skia-dry-run/static \
-            --extra-cc-flags -DMOUI_SKIA_FAKE_CONFIG_CC \
-            --extra-link-flags -lskia_fake_config_dep \
-            --output logs/fake-linux-native-written.moon.pkg \
-            --write
-          bash scripts/configure-linux-native-pkg.sh \
-            --skia-include .skia-dry-run/skia \
-            --skia-lib-dir .skia-dry-run/static \
-            --extra-cc-flags -DMOUI_SKIA_FAKE_CONFIG_CC \
-            --extra-link-flags -lskia_fake_config_dep \
-            --output logs/fake-linux-native-written.moon.pkg \
-            --check
+            > logs/fake-linux-native.env
+          grep -Fq 'MOUI_SKIA_SKIA_INCLUDE=' logs/fake-linux-native.env
+          grep -Fq 'MOUI_SKIA_SKIA_LIB_DIR=' logs/fake-linux-native.env
+          grep -Fq 'MOUI_SKIA_LINK_MODE=static' logs/fake-linux-native.env
+          grep -Fq -- '-DMOUI_SKIA_FAKE_CONFIG_CC' logs/fake-linux-native.env
+          grep -Fq -- '-lskia_fake_config_dep' logs/fake-linux-native.env
+          ( eval "$(cat logs/fake-linux-native.env)"; test "$MOUI_SKIA_LINK_MODE" = "static" )
           if bash scripts/configure-linux-native-pkg.sh \
             --skia-include .skia-dry-run/skia \
             --skia-lib-dir .skia-dry-run/static \
             --output logs/fake-linux-native-written.moon.pkg \
+            --write >logs/fake-linux-native-write.out 2>logs/fake-linux-native-write.err; then
+            echo "configure-linux-native-pkg unexpectedly accepted the retired --write mode" >&2
+            exit 1
+          fi
+          grep -Fq 'no longer writes native/moon.pkg' logs/fake-linux-native-write.err
+          bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --check
+          sed 's/[$][{]build[.]MOUI_SKIA_CC_LINK_FLAGS[}]//' native/moon.pkg \
+            > logs/fake-linux-native-nonprebuild.moon.pkg
+          if bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --output logs/fake-linux-native-nonprebuild.moon.pkg \
             --check; then
-            echo "configure-linux-native-pkg unexpectedly accepted mismatched generated config" >&2
+            echo "configure-linux-native-pkg unexpectedly accepted a package without the prebuild link config" >&2
+            exit 1
+          fi
+          cp native/moon.pkg logs/fake-linux-native-stub.moon.pkg
+          printf '\n// "native-stub": []\n' >> logs/fake-linux-native-stub.moon.pkg
+          if bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --output logs/fake-linux-native-stub.moon.pkg \
+            --check; then
+            echo "configure-linux-native-pkg unexpectedly accepted C++ stub sources in the native package" >&2
             exit 1
           fi
           bash scripts/configure-macos-native-pkg.sh \
@@ -673,31 +690,34 @@ jobs:
             --skia-lib-dir .skia-dry-run/static \
             --extra-cc-flags -DMOUI_SKIA_FAKE_MACOS_CONFIG_CC \
             --extra-link-flags -lskia_fake_macos_config_dep \
-            > logs/fake-macos-native.moon.pkg
-          grep -Fq -- '-DMOUI_SKIA_HAS_SKIA' logs/fake-macos-native.moon.pkg
-          grep -Fq -- '-DMOUI_SKIA_FAKE_MACOS_CONFIG_CC' logs/fake-macos-native.moon.pkg
-          grep -Fq -- '-framework CoreGraphics' logs/fake-macos-native.moon.pkg
-          grep -Fq -- '-lskia_fake_macos_config_dep' logs/fake-macos-native.moon.pkg
-          bash scripts/configure-macos-native-pkg.sh \
-            --skia-include .skia-dry-run/skia \
-            --skia-lib-dir .skia-dry-run/static \
-            --extra-cc-flags -DMOUI_SKIA_FAKE_MACOS_CONFIG_CC \
-            --extra-link-flags -lskia_fake_macos_config_dep \
-            --output logs/fake-macos-native-written.moon.pkg \
-            --write
-          bash scripts/configure-macos-native-pkg.sh \
-            --skia-include .skia-dry-run/skia \
-            --skia-lib-dir .skia-dry-run/static \
-            --extra-cc-flags -DMOUI_SKIA_FAKE_MACOS_CONFIG_CC \
-            --extra-link-flags -lskia_fake_macos_config_dep \
-            --output logs/fake-macos-native-written.moon.pkg \
-            --check
+            > logs/fake-macos-native.env
+          grep -Fq 'MOUI_SKIA_SKIA_INCLUDE=' logs/fake-macos-native.env
+          grep -Fq 'MOUI_SKIA_SKIA_LIB_DIR=' logs/fake-macos-native.env
+          grep -Fq 'MOUI_SKIA_LINK_MODE=static' logs/fake-macos-native.env
+          grep -Fq -- '-DMOUI_SKIA_FAKE_MACOS_CONFIG_CC' logs/fake-macos-native.env
+          grep -Fq -- '-lskia_fake_macos_config_dep' logs/fake-macos-native.env
+          ( eval "$(cat logs/fake-macos-native.env)"; test "$MOUI_SKIA_LINK_MODE" = "static" )
           if bash scripts/configure-macos-native-pkg.sh \
             --skia-include .skia-dry-run/skia \
             --skia-lib-dir .skia-dry-run/static \
             --output logs/fake-macos-native-written.moon.pkg \
+            --write >logs/fake-macos-native-write.out 2>logs/fake-macos-native-write.err; then
+            echo "configure-macos-native-pkg unexpectedly accepted the retired --write mode" >&2
+            exit 1
+          fi
+          grep -Fq 'no longer writes native/moon.pkg' logs/fake-macos-native-write.err
+          bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --check
+          sed 's/[$][{]build[.]MOUI_SKIA_CC_LINK_FLAGS[}]//' native/moon.pkg \
+            > logs/fake-macos-native-nonprebuild.moon.pkg
+          if bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --output logs/fake-macos-native-nonprebuild.moon.pkg \
             --check; then
-            echo "configure-macos-native-pkg unexpectedly accepted mismatched generated config" >&2
+            echo "configure-macos-native-pkg unexpectedly accepted a package without the prebuild link config" >&2
             exit 1
           fi
           bash scripts/linux-real-skia-smoke.sh --dry-run-config \

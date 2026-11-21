@@ -862,13 +862,12 @@ fn parent_directory(path : String) -> String {
 }
 
 ///|
-/// Platform configure scripts regenerate `native/moon.pkg` for real-Skia
-/// builds. They are hand-maintained copies of the target map, so keep them in
-/// lockstep with the manifest: every native/fallback file must appear quoted.
-fn verify_configure_script_coverage(
+/// Platform configure scripts now export the prebuild Skia contract instead of
+/// rewriting `native/moon.pkg`: each must print the include/lib-dir variables,
+/// mention the `${build.MOUI_SKIA_CC_LINK_FLAGS}` package form, support a
+/// check mode, and reject the retired write mode with migration guidance.
+fn verify_configure_script_prebuild_contract(
   native_dir : String,
-  native_files : Map[String, String],
-  fallback_files : Map[String, String],
 ) -> Result[Unit, String] {
   let scripts = [
     "configure-macos-native-pkg.sh", "configure-linux-native-pkg.sh", "configure-windows-native-pkg.ps1",
@@ -882,41 +881,30 @@ fn verify_configure_script_coverage(
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    // The legacy Windows template intentionally omits Skia/Paragraph pairs;
-    // every other platform template must cover every manifest pair.
-    let require_all = script != "configure-windows-native-pkg.ps1"
-    let missing : Array[String] = []
-    for native_file in native_files.keys() {
-      let fallback_file = native_file.replace_all(
-        old="_native.mbt",
-        new="_unavailable.mbt",
-      )
-      if !fallback_files.contains(fallback_file) {
-        continue
-      }
-      let has_native = text.contains("\"" + native_file + "\"")
-      let has_fallback = text.contains("\"" + fallback_file + "\"")
-      if has_native != has_fallback {
+    for
+      token in [
+        "MOUI_SKIA_SKIA_INCLUDE", "MOUI_SKIA_SKIA_LIB_DIR", "MOUI_SKIA_CC_LINK_FLAGS",
+      ] {
+      if !text.contains(token) {
         return Err(
-          "native package configure script pairs are incomplete: " +
+          "native package configure script is missing the prebuild contract token: " +
           script +
           ": " +
-          native_file +
-          "/" +
-          fallback_file,
+          token,
         )
       }
-      if require_all && !has_native {
-        missing.push(native_file)
-        missing.push(fallback_file)
-      }
     }
-    if !missing.is_empty() {
+    let has_check = text.contains("--check") || text.contains("-Check")
+    if !has_check {
       return Err(
-        "native package configure script is missing target entries: " +
-        script +
-        ": " +
-        @tools.comma_join(missing),
+        "native package configure script must support the prebuild package check mode: " +
+        script,
+      )
+    }
+    if !text.contains("no longer writes") && !text.contains("retired") {
+      return Err(
+        "native package configure script must retire the write mode with migration guidance: " +
+        script,
       )
     }
   }
@@ -978,10 +966,7 @@ fn verify_native_capability_contract(
       smoke_source,
     ) {
     Ok(_) =>
-      match
-        verify_configure_script_coverage(
-          native_dir, native_files, fallback_files,
-        ) {
+      match verify_configure_script_prebuild_contract(native_dir) {
         Ok(_) => Ok("Verified native capability contract in " + manifest_path)
         Err(message) => Err(message)
       }

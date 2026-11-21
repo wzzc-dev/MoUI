@@ -2,7 +2,7 @@
 priv struct ReplayResourceCacheSmokeStats {
   frame_cacheable_plan : @skia.RendererResourcePlan
   frame_uncacheable_plan : @skia.RendererResourcePlan
-  cache_inserts : Int
+  cache_inserts : Int32
   missing_before : @skia.RendererResourcePlan
   cached_after : @skia.RendererResourcePlan
   lru_stats : @skia.ResourceCacheStats

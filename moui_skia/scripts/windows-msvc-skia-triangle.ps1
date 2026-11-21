@@ -22,10 +22,6 @@ if ($null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_SKIA_LINK_MODE") 
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$nativePkg = Join-Path $repoRoot "native/moon.pkg"
-$trianglePkg = Join-Path $repoRoot "examples/triangle_window/moon.pkg"
-$nativeBackup = "$nativePkg.triangle.bak"
-$triangleBackup = "$trianglePkg.triangle.bak"
 . (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
 
 function Resolve-SkiaMsvcLibrary {
@@ -80,8 +76,9 @@ $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
   -SkiaLibDir $SkiaLibDir `
   -ForceExtract:$ForceExtract
 $resolvedRoot = $resolvedPaths.Root
+$resolvedIncludeRoot = $resolvedPaths.IncludeRoot
 $resolvedLibDir = $resolvedPaths.LibDir
-$skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
+$null = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
 $resolvedSkiaLinkMode = $SkiaLinkMode.Trim().ToLowerInvariant()
 if ($resolvedSkiaLinkMode -eq "auto") {
   if ((Test-Path -LiteralPath (Join-Path $resolvedLibDir "skia.dll") -PathType Leaf) -and
@@ -92,84 +89,26 @@ if ($resolvedSkiaLinkMode -eq "auto") {
   }
 }
 
-if (Test-Path -LiteralPath $nativeBackup) {
-  throw "native/moon.pkg triangle backup already exists: $nativeBackup. Resolve the stale backup before running."
-}
-if (Test-Path -LiteralPath $triangleBackup) {
-  throw "examples/triangle_window/moon.pkg triangle backup already exists: $triangleBackup. Resolve the stale backup before running."
-}
+# The moui_skia prebuild (build.mbtx) owns the C++ stub compile flags and the
+# native link flags; native/moon.pkg and the example package stay on their
+# plain form. Export the resolved contract instead of rewriting package files.
+$env:MOUI_SKIA_PLATFORM = "windows"
+$env:MOUI_SKIA_SKIA_INCLUDE = $resolvedIncludeRoot
+$env:MOUI_SKIA_SKIA_LIB_DIR = $resolvedLibDir
+$env:MOUI_SKIA_LINK_MODE = $resolvedSkiaLinkMode
+$env:MOUI_SKIA_EXTRA_CC_FLAGS = $ExtraCcFlags
+$env:MOUI_SKIA_EXTRA_LINK_FLAGS = $ExtraLinkFlags
+# The triangle exercises the CPU raster path; keep the prebuild from adding D3D
+# flags and libraries that the old direct link did not use.
+$env:MOUI_SKIA_ENABLE_GPU_D3D12 = "0"
+$env:MOUI_SKIA_ENABLE_GPU_D3D = "0"
+Remove-Item Env:\MOUI_SKIA_DISABLE_PREBUILD_SKIA -ErrorAction SilentlyContinue
+$env:MOUI_SKIA_ENABLE_PREBUILD_SKIA = "1"
 
-$packageLibs = Get-MsvcLinkLibraries -LibDir $resolvedLibDir -LinkMode $resolvedSkiaLinkMode
-$skiaLibFlag = $skiaLib -replace "\\", "/"
-$orderedPackageLibs = @($skiaLibFlag) + ($packageLibs | Where-Object { $_ -ne $skiaLibFlag })
-$systemLibs = @(
-  "user32.lib",
-  "gdi32.lib",
-  "ole32.lib",
-  "opengl32.lib",
-  "usp10.lib",
-  "fontsub.lib",
-  "imm32.lib",
-  "winmm.lib",
-  "version.lib",
-  "dwrite.lib",
-  "d2d1.lib",
-  "dxgi.lib",
-  "advapi32.lib",
-  "comdlg32.lib",
-  "shell32.lib"
-)
-$linkFlags = ($orderedPackageLibs + $systemLibs) -join " "
-if (![string]::IsNullOrWhiteSpace($ExtraLinkFlags)) {
-  $linkFlags = "$linkFlags $ExtraLinkFlags"
-}
-
-$originalNative = Get-Content -LiteralPath $nativePkg -Raw
-$originalTriangle = Get-Content -LiteralPath $trianglePkg -Raw
-
-try {
-  Set-Content -LiteralPath $nativeBackup -Value $originalNative -NoNewline
-  Set-Content -LiteralPath $triangleBackup -Value $originalTriangle -NoNewline
-
-  & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
-    -SkiaRoot $resolvedRoot `
-    -SkiaLibDir $resolvedLibDir `
-    -SkiaLinkMode $SkiaLinkMode `
-    -ExtraCcFlags $ExtraCcFlags `
-    -ExtraLinkFlags $ExtraLinkFlags `
-    -Output $nativePkg `
-    -Write | Out-Null
-
-  @"
-import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui_skia" @skia,
-  "wzzc-dev/moui_skia/native",
-  "wzzc-dev/window/core",
-  "wzzc-dev/window/dpi",
-  "wzzc-dev/window/windows",
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$linkFlags",
-    },
-  },
-  targets: {
-    "main.mbt": [ "native" ],
-    "win32_present.mbt": [ "native" ],
-  },
-)
-"@ | Set-Content -LiteralPath $trianglePkg -NoNewline
-
-  $cmdFile = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-triangle-$PID.cmd"
-  $traceLine = if ($Trace) { "set MOUI_SKIA_TRIANGLE_TRACE=1" } else { "rem MOUI_SKIA_TRIANGLE_TRACE not enabled" }
-  $runLine = if ($BuildOnly) { "exit /b 0" } else { "moon run .\cmd\triangle_window --target native" }
-  $cmdContent = @"
+$cmdFile = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-triangle-$PID.cmd"
+$traceLine = if ($Trace) { "set MOUI_SKIA_TRIANGLE_TRACE=1" } else { "rem MOUI_SKIA_TRIANGLE_TRACE not enabled" }
+$runLine = if ($BuildOnly) { "exit /b 0" } else { "moon run .\examples\triangle_window --target native" }
+$cmdContent = @"
 @echo off
 setlocal
 call "$VcVarsAll" $VcArch
@@ -178,24 +117,17 @@ set "MOON_CC=$ClangClPath"
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
-set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 cd /d "$repoRoot"
-moon build .\cmd\triangle_window --target native
+moon build .\examples\triangle_window --target native
 if errorlevel 1 exit /b %errorlevel%
 $traceLine
 $runLine
 exit /b %errorlevel%
 "@
-  Set-Content -LiteralPath $cmdFile -Value $cmdContent -NoNewline -Encoding ASCII
-  & cmd.exe /d /c $cmdFile
-  $status = $LASTEXITCODE
-  Remove-Item -LiteralPath $cmdFile -ErrorAction SilentlyContinue
-  if ($status -ne 0) {
-    throw "MoonBit Skia triangle command failed with exit code $status"
-  }
-} finally {
-  Set-Content -LiteralPath $nativePkg -Value $originalNative -NoNewline
-  Set-Content -LiteralPath $trianglePkg -Value $originalTriangle -NoNewline
-  Remove-Item -LiteralPath $nativeBackup -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $triangleBackup -ErrorAction SilentlyContinue
+Set-Content -LiteralPath $cmdFile -Value $cmdContent -NoNewline -Encoding ASCII
+& cmd.exe /d /c $cmdFile
+$status = $LASTEXITCODE
+Remove-Item -LiteralPath $cmdFile -ErrorAction SilentlyContinue
+if ($status -ne 0) {
+  throw "MoonBit Skia triangle command failed with exit code $status"
 }

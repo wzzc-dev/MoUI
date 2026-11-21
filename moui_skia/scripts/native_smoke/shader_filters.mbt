@@ -193,7 +193,9 @@ fn run_shader_filter_smoke(
           mask_filter=Some(mask_filter),
         )
         if filtered_layer_count <= 0 {
-          fail_smoke("native filtered save_layer did not return a valid save count")
+          fail_smoke(
+            "native filtered save_layer did not return a valid save count",
+          )
         }
         canvas.restore_to_count(save_count_before_filter_layer)
         println("native smoke filter layer count")
@@ -202,7 +204,9 @@ fn run_shader_filter_smoke(
       _ => fail_smoke("failed to create native image/mask filter")
     }
   } else {
-    println("native color filters not available (Skia release header structure)")
+    println(
+      "native color filters not available (Skia release header structure)",
+    )
     // Skia release binary may not ship ColorFilter/ImageFilter/MaskFilter
     // headers. In that case we still exercise save_layer without any filter
     // so the "filter layer count" stage marker is emitted for the verifier.
@@ -211,7 +215,9 @@ fn run_shader_filter_smoke(
       bounds=Some(@skia.Rect::from_xywh(0, 0, 16, 16)),
     )
     if filtered_layer_count <= 0 {
-      fail_smoke("native unfiltered save_layer did not return a valid save count")
+      fail_smoke(
+        "native unfiltered save_layer did not return a valid save count",
+      )
     }
     canvas.restore_to_count(save_count_before_filter_layer)
     println("native smoke filter layer count")

@@ -20,7 +20,6 @@ const required = [
   "host/preview-host.js",
   "assets/moonc-web.cjs",
   "assets/moonc-worker.js",
-  "assets/moonbit-core/core.core",
   "assets/manifest.json",
   "lessons/catalog.json",
 ];
@@ -54,11 +53,29 @@ assert.equal(/codemirror/i.test(hostSources), false, "Playground contains CodeMi
 assert.equal(/https?:\/\/(?:cdn\.|unpkg\.|esm\.sh|jsdelivr\.)/i.test(hostSources), false, "Playground contains an unpinned CDN dependency");
 const manifest = JSON.parse(readFileSync(join(root, "assets/manifest.json"), "utf8"));
 assert.equal(manifest.target, "wasm-gc");
-assert.equal(manifest.schemaVersion, 2, "compiler manifest must record per-package dependency edges");
+assert.equal(manifest.schemaVersion, 3, "compiler manifest must list the bundled standard-library core files");
 assert.equal(manifest.compiler.package, "@moonbit/moonc-worker");
 assert.equal(manifest.compiler.version, pinnedToolchain.mooncWorker, "Playground compiler version must match .moonbit-toolchain");
 assert.equal(manifest.compiler.integrity, pinnedToolchain.mooncWorkerIntegrity, "Playground compiler integrity must match .moonbit-toolchain");
 assert.ok(manifest.allowedImports.includes("wzzc-dev/moui/views"));
+// Current toolchains bundle the standard library one `.core` per package.
+// The worker links every listed file before the program closure, so a missing
+// or empty entry degrades into an opaque moonc panic instead of a load error.
+assert.ok(Array.isArray(manifest.core?.cores) && manifest.core.cores.length > 0, "core bundle lists no core files");
+for (const corePath of manifest.core.cores) {
+  const full = join(root, corePath);
+  assert.ok(existsSync(full), `core bundle file missing ${corePath}`);
+  assert.ok(statSync(full).size > 0, `core bundle file is empty ${corePath}`);
+}
+assert.ok(Array.isArray(manifest.core.interfaces) && manifest.core.interfaces.length > 0, "core bundle lists no interfaces");
+for (const item of manifest.core.interfaces) {
+  assert.ok(item.path.startsWith("moonbitlang/core/"), `unexpected core interface ${item.path}`);
+  assert.ok(existsSync(join(root, item.url)), `core interface missing ${item.url}`);
+}
+assert.ok(
+  manifest.core.interfaces.some(item => item.path === "moonbitlang/core/prelude"),
+  "core bundle lost the prelude interface",
+);
 // The in-browser linker walks manifest.packages dependency edges to build the
 // link closure; empty or dangling edges degrade the closure to the roots and
 // surface as an opaque moonc panic, so validate the graph at packaging time.

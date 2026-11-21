@@ -8,15 +8,13 @@ fn run_paragraph_smoke() -> Unit {
   println("native smoke paragraph availability")
   println(1)
   smoke_mark(b"skparagraph available")
-  guard
-    @native.Paragraph::layout_utf8(
+  guard @native.Paragraph::layout_utf8(
       b"alpha beta gamma delta",
       family_name=b"",
       size=16.0,
       max_width=76.0,
     )
-    is Some(paragraph)
-  else {
+    is Some(paragraph) else {
     fail_smoke("SkParagraph was available but paragraph layout failed")
   }
   let metrics = paragraph.line_metrics()

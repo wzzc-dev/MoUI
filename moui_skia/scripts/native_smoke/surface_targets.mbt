@@ -67,8 +67,8 @@ fn make_smoke_surface(size : @skia.ISize) -> @native.Surface? {
     metal_gpu_context,
   )
   if @native.Surface::gpu_context_support_status(
-    @skia.GpuContextDescriptor::mock(id=b"native-smoke-mock-gpu-context"),
-  ).is_available() {
+      @skia.GpuContextDescriptor::mock(id=b"native-smoke-mock-gpu-context"),
+    ).is_available() {
     fail_smoke("mock GPU context must not report native Skia GPU availability")
   }
   if @native.Surface::metal_gpu_context_runtime_available() {
@@ -76,7 +76,9 @@ fn make_smoke_surface(size : @skia.ISize) -> @native.Surface? {
       fail_smoke("Metal GPU runtime probe did not produce an available status")
     }
   } else if metal_gpu_status.is_available() {
-    fail_smoke("Metal GPU context must not be available without a runtime probe")
+    fail_smoke(
+      "Metal GPU context must not be available without a runtime probe",
+    )
   }
   println("native smoke gpu metal context support status")
   if metal_gpu_status.is_available() {
@@ -98,13 +100,13 @@ fn make_smoke_surface(size : @skia.ISize) -> @native.Surface? {
         gpu_context_key=Some(native_metal_context.resource_key()),
       )
       if @native.Surface::target_support_status_with_gpu_context(
-        metal_gpu_target, native_metal_context,
-      ) != @native.SurfaceTargetSupported {
+          metal_gpu_target, native_metal_context,
+        ) !=
+        @native.SurfaceTargetSupported {
         fail_smoke("Metal GPU target did not report supported with its context")
       }
       guard @native.Surface::for_target_with_gpu_context(
-          metal_gpu_target,
-          native_metal_context,
+          metal_gpu_target, native_metal_context,
         )
         is Some(gpu_surface) else {
         fail_smoke("failed to allocate Metal GPU-backed surface")

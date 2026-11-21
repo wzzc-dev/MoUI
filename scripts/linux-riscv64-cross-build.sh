@@ -407,6 +407,56 @@ cat > "$wrapper_dir/moui-riscv64-ar" <<EOF
 exec "$zig_bin" ar "\$@"
 EOF
 chmod +x "$wrapper_dir/moui-riscv64-cc" "$wrapper_dir/moui-riscv64-ar"
+
+# Resolve the target Skia contract before the cross compiler takes over. The
+# moui_skia prebuild hook is a host MoonBit program; run it once with the host
+# toolchain and keep its JSON contract for the renderer/moui_tests hooks, whose
+# nested `moon run` would otherwise link host runtime objects under
+# MOON_CC=riscv64. The C++ stub itself is compiled with the cross wrapper.
+export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
+export MOUI_LINUX_GLIB_CC_LINK_FLAGS="$glib_link_flags"
+# The cross build always needs the real Skia contract; an inherited disable
+# switch would make the precompute emit empty flags.
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA
+export MOUI_SKIA_ENABLE_PREBUILD_SKIA=1
+export MOUI_SKIA_PLATFORM=linux
+export MOUI_SKIA_ARCH=riscv64
+export MOUI_SKIA_CONFIG=Release
+export MOUI_SKIA_LINK_MODE=static
+export MOUI_SKIA_PROVIDER=release
+export MOUI_SKIA_SKIA_PROVIDER=release
+export MOUI_SKIA_ENABLE_GPU_VULKAN=0
+export MOUI_SKIA_ENABLE_SKPARAGRAPH=1
+export MOUI_SKIA_REQUIRE_SKPARAGRAPH=1
+export MOUI_SKIA_RENDERER=skia-raster
+export MOUI_SKIA_EXTRA_CC_FLAGS="$native_stub_flags"
+export MOUI_SKIA_EXTRA_LINK_FLAGS="$native_link_flags -lz -ldl -lm -pthread"
+export MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1
+export MOUI_SKIA_STUB_CC="$wrapper_dir/moui-riscv64-cc"
+export MOUI_SKIA_STUB_MODE=build
+
+mkdir -p "$target_dir"
+prebuild_contract="$target_dir/moui_skia-prebuild-contract.json"
+prebuild_target_dir="$repo_root/_build/riscv64-host-prebuild"
+prebuild_stdout="$log_dir/riscv64-prebuild-contract.stdout.log"
+prebuild_stderr="$log_dir/riscv64-prebuild-contract.stderr.log"
+if ! (
+  cd "$repo_root/moui_skia"
+  printf '%s' '{"build":{"target":{"kind":"native"}}}' |
+    moon run build.mbtx --target native --target-dir "$prebuild_target_dir"
+) >"$prebuild_stdout" 2>"$prebuild_stderr"; then
+  echo "moui_skia host prebuild contract failed; see $prebuild_stderr" >&2
+  cat "$prebuild_stderr" >&2
+  exit 1
+fi
+contract_json="$(grep '^{' "$prebuild_stdout" | tail -1)"
+if [[ -z "$contract_json" ]]; then
+  echo "moui_skia host prebuild did not emit a JSON contract: $prebuild_stdout" >&2
+  exit 1
+fi
+printf '%s\n' "$contract_json" >"$prebuild_contract"
+export MOUI_SKIA_PREBUILD_CONTRACT_FILE="$prebuild_contract"
+
 export MOON_CC="$wrapper_dir/moui-riscv64-cc"
 export MOON_AR="$wrapper_dir/moui-riscv64-ar"
 
@@ -443,21 +493,8 @@ if [[ " ${hidden_toolchain[*]} " == *" libbacktrace.a "* ]]; then
   "$zig_bin" ar rcs "$toolchain_lib/libbacktrace.a" "$stub_obj"
 fi
 
-export MOUI_LINUX_GLIB_STUB_CC_FLAGS="$glib_stub_flags"
-export MOUI_LINUX_GLIB_CC_LINK_FLAGS="$glib_link_flags"
-export MOUI_SKIA_PLATFORM=linux
-export MOUI_SKIA_ARCH=riscv64
-export MOUI_SKIA_CONFIG=Release
-export MOUI_SKIA_LINK_MODE=static
-export MOUI_SKIA_PROVIDER=release
-export MOUI_SKIA_SKIA_PROVIDER=release
-export MOUI_SKIA_ENABLE_GPU_VULKAN=0
-export MOUI_SKIA_ENABLE_SKPARAGRAPH=1
-export MOUI_SKIA_REQUIRE_SKPARAGRAPH=1
-export MOUI_SKIA_RENDERER=skia-raster
-export MOUI_SKIA_EXTRA_CC_FLAGS="$native_stub_flags"
-export MOUI_SKIA_EXTRA_LINK_FLAGS="$native_link_flags -lz -ldl -lm -pthread"
-export MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1
+# The target Skia environment, cross stub compiler, and prebuild contract file
+# were exported before the cross toolchain took over.
 
 mkdir -p "$target_dir"
 build_log="$log_dir/cross-build.log"
