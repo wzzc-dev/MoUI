@@ -1,7 +1,21 @@
 // Platform font discovery for the Sun CPU raster renderer.
 //
-// Linux resolves the generic families through fontconfig the way fc-match
-// does, so Sun draws with the face fontconfig hands the Skia text provider.
+// Linux draws with the same explicit family candidates the Skia fontconfig font
+// manager tries, in the same order (see `skia_system_sans_families` and the
+// sibling tables in moui_skia_renderer/renderer_text_glyphs.mbt). Skia asks
+// fontconfig for each candidate name and keeps a face only when the match
+// carries that exact family, so a weak alias (Arial on a host without Arial
+// resolves to Nimbus Sans) is discarded and the next candidate is tried. Sun
+// probes the same names and accepts a face only when fc-match echoes the
+// requested family back, falling back to the generic role query
+// (sans-serif/monospace/serif) when no candidate resolves.
+//
+// Asking the generic family directly is not equivalent, and treating it as if
+// it were is what split the two renderers: on a Linux image with Noto installed
+// fontconfig resolves sans-serif to Noto Sans, while Skia never looks at the
+// generic alias and keeps picking the earlier DejaVu Sans candidate. Same host,
+// same app, different face for every text control.
+//
 // Windows resolves the system faces Skia's DirectWrite manager would pick
 // (Segoe UI, Consolas, Times New Roman, with Arial/Georgia/Courier New as
 // fallbacks) from the Windows Fonts directory, plus Segoe UI Symbol so a glyph
@@ -66,6 +80,80 @@ static const char *const g_role_query[MOUI_SUN_FONT_MATCH_ROLE_COUNT] = {
   "monospace",
   "serif",
 };
+
+#if defined(__linux__)
+
+// Explicit family candidates, name-for-name and in the order of
+// `skia_system_sans_families` / `skia_monospace_families` /
+// `skia_serif_families` in moui_skia_renderer/renderer_text_glyphs.mbt. The
+// order is load-bearing: Skia returns the first candidate whose match carries
+// that family, so Sun has to walk the same list from the same end. Edit both
+// lists together: a candidate added on one side alone puts the renderers back on
+// different faces, which the visual parity gate reports as a text diff.
+static const char *const g_sans_candidates[] = {
+  "Helvetica Neue",
+  "Segoe UI",
+  "Arial",
+  "HarmonyOS Sans",
+  "HarmonyOS Sans SC",
+  "DejaVu Sans",
+  "Noto Sans",
+  "Noto Sans CJK SC",
+  "Liberation Sans",
+};
+static const char *const g_monospace_candidates[] = {
+  "Menlo",
+  "Consolas",
+  "Courier New",
+  "DejaVu Sans Mono",
+  "Noto Sans Mono",
+  "Liberation Mono",
+};
+static const char *const g_serif_candidates[] = {
+  "Times New Roman",
+  "Georgia",
+  "DejaVu Serif",
+  "Noto Serif",
+  "Liberation Serif",
+};
+
+typedef struct {
+  const char *const *names;
+  int32_t count;
+} SunFontCandidateTable;
+
+// The tables line up with g_role_query and the payload role codes.
+static const SunFontCandidateTable
+  g_role_candidates[MOUI_SUN_FONT_MATCH_ROLE_COUNT] = {
+  {
+    g_sans_candidates,
+    (int32_t)(sizeof(g_sans_candidates) / sizeof(g_sans_candidates[0])),
+  },
+  {
+    g_monospace_candidates,
+    (int32_t)(sizeof(g_monospace_candidates) / sizeof(g_monospace_candidates[0])),
+  },
+  {
+    g_serif_candidates,
+    (int32_t)(sizeof(g_serif_candidates) / sizeof(g_serif_candidates[0])),
+  },
+};
+
+// Family the candidate probe settled on for each role, or NULL when every
+// candidate was rejected and the generic query is used instead. Resolved once
+// per process, alongside the weight buckets.
+static const char *g_role_family[MOUI_SUN_FONT_MATCH_ROLE_COUNT] = {
+  NULL,
+  NULL,
+  NULL,
+};
+
+// CSS 400 bucket, the probe weight: any installed family answers a regular
+// request with one of its own faces, so the probe only has to test whether the
+// family exists at all.
+#define MOUI_SUN_FONT_PROBE_WEIGHT_INDEX 2
+
+#endif
 
 // CSS weight buckets, paired with the fontconfig weight constant they ask for.
 // The buckets mirror `moui_linux_fontconfig_weight` in the Skia text provider:
@@ -135,27 +223,62 @@ static void sun_trim_line(char *text) {
   }
 }
 
-static void sun_resolve_match_slot(int32_t role, int32_t weight_index) {
+// Case-insensitive family-name comparison: fontconfig echoes the family as it
+// stores it, which can differ in case from the name the caller asked for.
+static int32_t sun_family_name_equal(const char *left, const char *right) {
+  size_t index = 0;
+  for (;;) {
+    unsigned char expected = (unsigned char)left[index];
+    unsigned char actual = (unsigned char)right[index];
+    if (expected >= 'A' && expected <= 'Z') {
+      expected = (unsigned char)(expected - 'A' + 'a');
+    }
+    if (actual >= 'A' && actual <= 'Z') {
+      actual = (unsigned char)(actual - 'A' + 'a');
+    }
+    if (expected != actual) {
+      return 0;
+    }
+    if (expected == '\0') {
+      return 1;
+    }
+    index += 1;
+  }
+}
+
+// One fc-match query for one family at one weight bucket. Returns 1 and fills
+// the slot when fontconfig produced a face. `require_family` additionally
+// rejects a face whose first family is not the requested name: that is the
+// weak-alias case (Arial answering with Nimbus Sans) Skia discards before it
+// tries the next candidate.
+static int32_t sun_query_family(
+  const char *family,
+  int32_t weight_index,
+  int32_t require_family,
+  SunPlatformFontMatchSlot *slot
+) {
   char command[MOUI_SUN_FONT_COMMAND_MAX];
   snprintf(
     command,
     sizeof(command),
     "fc-match -f '%%{file}\\n%%{family[0]}\\n' '%s:weight=%s' 2>/dev/null",
-    g_role_query[role],
+    family,
     g_weight_query[weight_index]
   );
   char buffer[MOUI_SUN_FONT_COMMAND_MAX];
   if (sun_run_capture(command, buffer, (int32_t)sizeof(buffer)) <= 0) {
-    return;
+    return 0;
   }
-  SunPlatformFontMatchSlot *slot = &g_matches[role][weight_index];
   const char *first_end = strchr(buffer, '\n');
   size_t path_len = first_end == NULL ? strlen(buffer) : (size_t)(first_end - buffer);
-  sun_copy_truncated(slot->path, sizeof(slot->path), buffer, path_len);
-  sun_trim_line(slot->path);
-  if (slot->path[0] == '\0') {
-    return;
+  char path[MOUI_SUN_FONT_PATH_MAX];
+  sun_copy_truncated(path, sizeof(path), buffer, path_len);
+  sun_trim_line(path);
+  if (path[0] == '\0') {
+    return 0;
   }
+  char resolved_family[MOUI_SUN_FONT_FAMILY_MAX];
+  resolved_family[0] = '\0';
   if (first_end != NULL) {
     const char *family_start = first_end + 1;
     const char *family_end = strchr(family_start, '\n');
@@ -163,14 +286,59 @@ static void sun_resolve_match_slot(int32_t role, int32_t weight_index) {
       ? strlen(family_start)
       : (size_t)(family_end - family_start);
     sun_copy_truncated(
-      slot->family,
-      sizeof(slot->family),
+      resolved_family,
+      sizeof(resolved_family),
       family_start,
       family_len
     );
-    sun_trim_line(slot->family);
+    sun_trim_line(resolved_family);
   }
+  if (require_family) {
+    if (resolved_family[0] == '\0' ||
+      !sun_family_name_equal(resolved_family, family)) {
+      return 0;
+    }
+  }
+  sun_copy_truncated(slot->path, sizeof(slot->path), path, strlen(path));
+  sun_copy_truncated(
+    slot->family,
+    sizeof(slot->family),
+    resolved_family,
+    strlen(resolved_family)
+  );
   slot->present = 1;
+  return 1;
+}
+
+// Walks one role's candidate list in order and stops at the first family
+// fontconfig answers with that family's own face.
+static const char *sun_pick_role_family(int32_t role) {
+  const SunFontCandidateTable *table = &g_role_candidates[role];
+  for (int32_t index = 0; index < table->count; index += 1) {
+    SunPlatformFontMatchSlot probe;
+    memset(&probe, 0, sizeof(probe));
+    if (sun_query_family(
+      table->names[index],
+      MOUI_SUN_FONT_PROBE_WEIGHT_INDEX,
+      1,
+      &probe
+    )) {
+      return table->names[index];
+    }
+  }
+  return NULL;
+}
+
+static void sun_resolve_match_slot(int32_t role, int32_t weight_index) {
+  SunPlatformFontMatchSlot *slot = &g_matches[role][weight_index];
+  const char *family = g_role_family[role];
+  if (family != NULL && sun_query_family(family, weight_index, 1, slot)) {
+    return;
+  }
+  // No candidate resolved, or this bucket answered with another family: keep
+  // the generic query so a host without any listed family still draws with
+  // whatever fontconfig treats as the generic face.
+  sun_query_family(g_role_query[role], weight_index, 0, slot);
 }
 
 static void sun_resolve_list(void) {
@@ -236,6 +404,9 @@ static void sun_resolve_once(void) {
     return;
   }
   g_resolved = 1;
+  for (int32_t role = 0; role < MOUI_SUN_FONT_MATCH_ROLE_COUNT; role += 1) {
+    g_role_family[role] = sun_pick_role_family(role);
+  }
   for (int32_t role = 0; role < MOUI_SUN_FONT_MATCH_ROLE_COUNT; role += 1) {
     for (
       int32_t weight_index = 0;

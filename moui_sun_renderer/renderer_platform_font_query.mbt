@@ -1,9 +1,12 @@
 ///|
 /// Platform font discovery for the Sun CPU raster renderer.
 ///
-/// Linux resolves generic families through fontconfig (`moui_text_providers/fontconfig`),
-/// so Sun asks the same source for the same faces: `fc-match` supplies one
-/// sans/mono/serif face, `fc-list` is the fallback when a match is unavailable.
+/// Linux draws with the same explicit family candidates the Skia fontconfig
+/// provider tries, in the same order, and accepts a candidate only when
+/// `fc-match` echoes a face carrying that family back (a weak alias such as
+/// Arial -> Nimbus Sans is skipped, exactly as Skia skips it). The generic
+/// sans-serif/monospace/serif query is the fallback for a host where no
+/// candidate resolves; `fc-list` backs the glyph fallback stack.
 /// Windows resolves the faces DirectWrite hands Skia (Segoe UI, Consolas, Times
 /// New Roman, then Arial/Georgia/Courier New) from the Windows Fonts directory,
 /// plus Segoe UI Symbol so a glyph the text families do not cover draws its
