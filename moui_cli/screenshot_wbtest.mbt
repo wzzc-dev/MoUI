@@ -126,7 +126,12 @@ test "screenshot package templates select the requested renderer" {
 test "screenshot output keeps png paths and appends a suffix otherwise" {
   inspect(screenshot_output_png_path("/tmp/shot.png"), content="/tmp/shot.png")
   inspect(screenshot_output_png_path("/tmp/"), content="/tmp/screenshot.png")
-  inspect(screenshot_output_png_path("/tmp/shot"), content="/tmp/shot.png")
+  // A bare path must not depend on whether `/tmp/shot` happens to exist.
+  let stem = join_path(
+    process_tmp_dir(),
+    "moui-shot-stem-" + @env.now().to_string(),
+  )
+  inspect(screenshot_output_png_path(stem), content=stem + ".png")
 }
 
 ///|
