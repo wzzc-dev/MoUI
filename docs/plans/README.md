@@ -61,7 +61,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| [main-ci-green-0-7-3](active/main-ci-green-0-7-3.md) | Restore the five failing `main` workflows (Playground core bundle, `--write` smoke/acceptance migration, fallback verifiers, RISC-V nested prebuild) and then publish 0.7.3 |
 | [titlebar-controls-polish](active/titlebar-controls-polish.md) | Titlebar controls polish on top of the chrome work: policy-driven, theme-sized CSD buttons with hover/pressed feedback and state icons, titlebar insets exposed to apps, host event timestamps enabling double-click zoom, and matching-host Wayland evidence via nested weston |
 | [sun-interactive-parity](active/sun-interactive-parity.md) | Sun route interaction parity with Skia on macOS: IME smoke machinery fixed (re-entrancy, key-window wait) and macOS IME surrounding-text drop fixed in window; CJK glyph coverage via TTC parsing + lazy glyph decode + lazy system-CJK face; caret positions from real glyph advances instead of an even split; text/glyph mask caches sized above page line count (360-line thrash 518→30 ms/frame); synthetic drag smoke measures Sun vs Skia cadence |
 | [sun-cpu-raster-hot-paths](active/sun-cpu-raster-hot-paths.md) | Sun CPU renderer interactive latency on macOS: measured per-phase and per-command profile, tight line-box text masks with offset-aware cache, per-scanline AA rasterisation, run-level text cache, hoisted gradient transforms, row-level dirty marking, canvas reuse, 1:1 layer blits, and an IOSurface-backed CPU presenter; release cold 307.6→31 ms / warm 56.8→11.5 ms |
@@ -84,7 +83,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [pointer-input-parity](active/pointer-input-parity.md) | Make declared-but-inert input land for real: long press / double tap, touch selection, multi-pointer identity, scroll rebound, honest text semantics, RTL mirroring |
 | [text-provider-native-completion](active/text-provider-native-completion.md) | Finish the scaffolded native text providers: DirectWrite shaping/IME, fontconfig/HarfBuzz measurement, and matching-host Windows IME evidence |
 | [gpu-partial-repaint](active/gpu-partial-repaint.md) | Turn damage bookkeeping into GPU-side partial repaint: per-route capability queries, damage-rect presentation on Metal/SkiaGpuNative, and present-rect budgets |
-| [native-dev-hot-reload](active/native-dev-hot-reload.md) | Same-window native dev reload: generated bridge host + app plugin dylib, state/transient handoff, restart fallback; macOS Phase 0 gate, Web wasm swap separate |
 | [rtl-step3-native-base-direction](active/rtl-step3-native-base-direction.md) | Plumb `TextLayoutInput.direction` into the native providers (SkParagraph/cosmic/DirectWrite/CoreText) with a shared direction-matrix fixture |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |

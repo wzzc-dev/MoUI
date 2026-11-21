@@ -3,7 +3,7 @@
 - **Date**: 2026-11-22
 - **Status**: Accepted
 - **Deciders**: wzzc-dev (agent-assisted)
-- **Related**: plan `docs/plans/active/native-dev-hot-reload.md`, ADR 0068
+- **Related**: plan `native-dev-hot-reload` (`docs/plans/done/INDEX.md`), ADR 0068
 
 ## Context
 

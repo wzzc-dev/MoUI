@@ -59,6 +59,7 @@ are still readable — find the stem here.
 
 | Plan | Outcome | Landed |
 |---|---|---|
+| `native-dev-hot-reload` | macOS same-window dev reload: generated bridge host + app plugin dylib with generation paths, state/transient handoff, failure retention, and 32-swap re-exec; warm rebuilds p50 ≈0.63 s. | `0ce990ce` 2026-11-22 |
 | `window-host-lifecycle-unification` | `wzzc-dev/window` keeps the physical event loop; MoUI `window_host` owns logical lifecycle, surface generation, window registration, frame coordination. | `71d9a74a` 2026-08-30 |
 | `window-hosted-legacy-cleanup` | Retired mobile packaging/embedding entrypoints; window-hosted entrypoints are canonical. | `c5edfbf8` 2026-08-04 |
 | `window-upstream-sync` | Rebased the fork onto the `moonbit-community/window` workspace layout and split branches. | `68dfba21` 2026-08-06 |
@@ -115,6 +116,7 @@ are still readable — find the stem here.
 
 | Plan | Outcome | Landed |
 |---|---|---|
+| `main-ci-green-0-7-3` | Restored the five failing `main` workflows (Playground schema v3, prebuild env for smoke/acceptance, fallback verifier fixes, RISC-V host contract) and published `0.7.3`. | `6980b773` 2026-11-22 |
 | `skia-manual-smoke-prebuild-migration` | macOS/Linux/Windows smoke runners moved off `configure-*-native-pkg --write` + `MOON_CC` onto the `build.mbtx` prebuild env; package rewrites and real-Skia disable switches removed. | `6980b773` 2026-11-22 |
 | `all-target-diagnostics-cleanup` | `moon check --target all` clean; no compiler warnings outside `window/` packages. | `a982053b` 2026-08-04 |
 | `governance-ci-docs-and-p5-layering` | Governance tools got whitebox suites (zero-test ceiling 0); the PR gate split into `pr-static` (ubuntu, Linux-host only) / `pr-native` (macOS, the one runner with ObjC++ and real Skia link), with landing-only packaging/benchmark jobs, dev triggers, and per-job timeouts; `docs/` ratcheted to a 40,000-line budget after the ai-sessions/plans/zh-Hans diet; the p5 slice became the `moui_p5` addon with port-injected file IO; and the Skia C++ stub moved into the `build.mbtx` prebuild (`/std:c++20`), so Windows runs without `MOON_CC=clang-cl`. CI run `44433924728` green. | `528ad3dd` 2026-11-19 |
