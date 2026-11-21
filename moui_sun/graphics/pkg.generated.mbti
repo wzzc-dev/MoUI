@@ -68,6 +68,7 @@ pub struct Canvas {
   mut solid_pattern_red : Int32
   mut solid_pattern_green : Int32
   mut solid_pattern_blue : Int32
+  mut solid_pattern_width : Int32
   sample_outer_lo : FixedArray[Double]
   sample_outer_hi : FixedArray[Double]
   sample_hole_lo : FixedArray[Double]

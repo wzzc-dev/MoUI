@@ -33,8 +33,6 @@ This file is generated from repository manifests and validator reports.
 | ./moui_devtools |
 | ./moui_agent |
 | ./moui_agent_mcp |
-| ./window/modules/window |
-| ./window/modules/windowing |
 | ./examples/agent_counter |
 | ./tools |
 | ./tools_product |

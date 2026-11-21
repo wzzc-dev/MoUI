@@ -96,7 +96,7 @@ pub fn MacosHostAppOptions::window_background(Self) -> @wzzc-dev/moui/core.Color
 pub struct MacosHostSmokeOptions {
   // private fields
 }
-pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int32, performance_smoke_warm_up_presents? : Int32, performance_smoke_refresh_hz? : Int32, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int32, promotion_fg_bg_cycles? : Int32, promotion_context_loss_count? : Int32) -> Self
+pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, slider_drag_smoke? : Bool, performance_smoke_duration_ms? : Int32, performance_smoke_warm_up_presents? : Int32, performance_smoke_refresh_hz? : Int32, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int32, promotion_fg_bg_cycles? : Int32, promotion_context_loss_count? : Int32) -> Self
 pub fn MacosHostSmokeOptions::performance_enabled(Self) -> Bool
 
 pub struct MacosModalNativeHooks {

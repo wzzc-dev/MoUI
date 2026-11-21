@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tests/tester/fixtures/slider_drag_app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+
+pub fn update(SliderDragModel, SliderDragMsg) -> SliderDragModel
+
+pub fn view(SliderDragModel) -> @core.View[SliderDragMsg]
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct SliderDragModel {
+  value : Double
+}
+pub fn SliderDragModel::equal(Self, Self) -> Bool
+pub fn SliderDragModel::new() -> Self
+pub fn SliderDragModel::not_equal(Self, Self) -> Bool
+pub fn SliderDragModel::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum SliderDragMsg {
+  ValueChanged(Double)
+}
+pub fn SliderDragMsg::equal(Self, Self) -> Bool
+pub fn SliderDragMsg::not_equal(Self, Self) -> Bool
+pub fn SliderDragMsg::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
