@@ -80,7 +80,7 @@ jobs:
           test -f dist/pages/playground/host/compiler-worker.js
           test -f dist/pages/playground/assets/moonc-web.cjs
           test -f dist/pages/playground/assets/moonc-worker.js
-          test -f dist/pages/playground/assets/moonbit-core/core.core || test -f dist/pages/playground/assets/moonbit-core/prelude/prelude.core
+          test -f dist/pages/playground/assets/moonbit-core/abort/abort.core
           test -f dist/pages/playground/assets/manifest.json
           test -f dist/pages/playground/lessons/catalog.json
           grep -q 'from "./runtime.js"' dist/pages/index.html

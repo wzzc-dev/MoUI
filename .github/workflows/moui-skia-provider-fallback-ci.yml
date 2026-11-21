@@ -73,8 +73,8 @@ jobs:
           moon check . --target all
           moon info .
           moon test . --target native
-          moon check scripts/native_smoke
-          moon build scripts/native_smoke --target native
+          MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check scripts/native_smoke
+          MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build scripts/native_smoke --target native
           bash -n scripts/linux-build-skia.sh
           bash -n scripts/linux-skia-smoke.sh
           bash -n scripts/linux-real-skia-smoke.sh

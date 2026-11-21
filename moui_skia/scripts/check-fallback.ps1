@@ -13,6 +13,37 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 
+# The fallback stub is still compiled locally, and GitHub's Windows image does
+# not put MSVC on PATH unless a developer shell is entered. Import the
+# vcvarsall environment when cl.exe is missing so build.mbtx can compile it.
+function Initialize-MsvcEnvironment {
+  if (Get-Command cl.exe -ErrorAction SilentlyContinue) {
+    return
+  }
+  $vcvars = $env:VCVARSALL
+  if ([string]::IsNullOrWhiteSpace($vcvars)) {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+    if (Test-Path -LiteralPath $vswhere -PathType Leaf) {
+      $installPath = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath) -join ""
+      if (![string]::IsNullOrWhiteSpace($installPath)) {
+        $vcvars = Join-Path $installPath "VC\Auxiliary\Build\vcvarsall.bat"
+      }
+    }
+  }
+  if ([string]::IsNullOrWhiteSpace($vcvars) -or !(Test-Path -LiteralPath $vcvars -PathType Leaf)) {
+    throw "MSVC cl.exe was not found and vcvarsall.bat is unavailable; install the Visual Studio C++ tools"
+  }
+  $envLines = & cmd.exe /c "call `"$vcvars`" x64 >nul && set"
+  foreach ($line in $envLines) {
+    if ($line -match '^([A-Za-z_][A-Za-z0-9_]*)=(.*)$') {
+      [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
+    }
+  }
+  if (!(Get-Command cl.exe -ErrorAction SilentlyContinue)) {
+    throw "MSVC cl.exe is still unavailable after importing $vcvars"
+  }
+}
+
 function Get-Sha256Hex {
   param([Parameter(Mandatory = $true)][string] $Path)
   if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
@@ -366,6 +397,7 @@ try {
   Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-provider-real-skia-acceptance.yml")
   Assert-WindowsMsvcSmokeUsesPrebuildContract
 
+  Initialize-MsvcEnvironment
   moon check scripts/native_smoke
   moon build scripts/native_smoke --target native
 
@@ -391,8 +423,8 @@ try {
       -ExtraCcFlags "-DMOUI_SKIA_FAKE_CONFIG_CC" `
       -ExtraLinkFlags "-lskia_fake_config_dep"
     $windowsNativeConfigText = $windowsNativeConfig -join "`n"
-    if ($windowsNativeConfigText -notlike "*MOUI_SKIA_SKIA_INCLUDE=*" -or
-      $windowsNativeConfigText -notlike "*MOUI_SKIA_SKIA_LIB_DIR=*") {
+    if ($windowsNativeConfigText -notmatch 'MOUI_SKIA_SKIA_INCLUDE\s*=' -or
+      $windowsNativeConfigText -notmatch 'MOUI_SKIA_SKIA_LIB_DIR\s*=') {
       throw "configure-windows-native-pkg.ps1 did not print the prebuild environment for the fake Skia layout"
     }
     & (Join-Path $repoRoot "scripts/configure-windows-native-pkg.ps1") `
