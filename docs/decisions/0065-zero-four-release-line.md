@@ -6,8 +6,10 @@
   with the platform-bridge features recorded in `docs/releases/0.5.0.md`.
   It continues again on `0.6.x`: 0.6.0 advances every public module together
   with the mature-framework parity program recorded in
-  `docs/releases/0.6.0.md`. The cadence is unchanged, so no superseding ADR
-  is required.
+  `docs/releases/0.6.0.md`. It continues once more on `0.7.x`: 0.7.0 advances
+  every public module together with the Linux frame clock, Sun parity, and
+  window-chrome work recorded in `docs/releases/0.7.0.md`. The cadence is
+  unchanged, so no superseding ADR is required.
 - **Deciders**: wzzc-dev (agent-assisted architecture review)
 - **Related**: ADR 0055, ADR 0059, `checks/release-modules.json`,
   `docs/releases/0.4.0.md`

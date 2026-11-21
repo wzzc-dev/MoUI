@@ -17,12 +17,12 @@ A patch release that needs a public symbol, package boundary, host wire
 contract, or app-import change is out of scope. Move the change to the next
 minor; no patch exception ledger is maintained.
 
-## 0.6.x Line
+## 0.7.x Line
 
-The current synchronized line is `0.6.x`. `0.6.0` ("Less Work Per Frame")
-advances every public module together, and the pre-1 policy is unchanged: a
-0.x minor may break with an upgrade note and migration example, and the
-external consumer gate still runs. `checks/compatibility-policy.json`
+The current synchronized line is `0.7.x`. `0.7.0` ("Linux frame clock, Sun
+parity, window chrome") advances every public module together, and the pre-1
+policy is unchanged: a 0.x minor may break with an upgrade note and migration
+example, and the external consumer gate still runs. `checks/compatibility-policy.json`
 `currentReleaseLine` is the machine-readable source of truth; the docs,
 module manifests, and `docs/compatibility-matrix.md` must agree with it.
 
@@ -33,10 +33,10 @@ path: the pre-1 policy permits breaking changes when the release ships an
 upgrade note and migration examples. No SemVer exception is recorded for this
 program. The release still moves the synchronized line and every public module
 to `0.4.x` together, and it still passes the external consumer gate. The
-synchronized-line policy (ADR 0065) continued on the `0.5.x` line and then the
-`0.6.x` line: each minor advances every public module together with the
-platform-bridge features recorded in `docs/releases/0.5.0.md` and
-`docs/releases/0.6.0.md`.
+synchronized-line policy (ADR 0065) continued on the `0.5.x` line, then the
+`0.6.x` line, and then the `0.7.x` line: each minor advances every public
+module together with the features recorded in `docs/releases/0.5.0.md`,
+`docs/releases/0.6.0.md`, and `docs/releases/0.7.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
 removed from their old package in the same release; in-tree call sites and the
