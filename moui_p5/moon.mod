@@ -1,11 +1,11 @@
 name = "wzzc-dev/moui_p5"
 
-version = "0.7.0"
+version = "0.7.1"
 
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.7.0",
+  "wzzc-dev/moui@0.7.1",
   "moonbitlang/async@0.22.5",
 }
 
