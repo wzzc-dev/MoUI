@@ -36,6 +36,8 @@ pub fn linux_content_metrics_for_surface(@wzzc-dev/moui/core.SurfaceMetrics, Lin
 
 pub fn linux_environment_with_accessibility_settings(@wzzc-dev/moui/core.Environment) -> @wzzc-dev/moui/core.Environment
 
+pub fn linux_frame_clock() -> () -> Double
+
 pub fn linux_input_capabilities() -> @backend.HostInputCapabilities
 
 pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@backend.HostClipboardRequest) -> @backend.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@backend.HostFileDialogOptions) -> Array[String], text_file? : (@backend.HostTextFileRequest) -> @backend.HostServiceResponse, binary_file? : (@backend.HostBinaryFileRequest) -> @backend.HostServiceResponse, settings? : (@backend.HostSettingsRequest) -> @backend.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int32, list_directory? : (String) -> @backend.HostServiceResponse) -> @backend.HostServiceBridge
@@ -158,7 +160,7 @@ pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, window_controls? : @services.WindowControlSource?) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, frame_clock? : (() -> Double)?, window_controls? : @services.WindowControlSource?) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

@@ -157,6 +157,7 @@ fn create_linux_app(
       services=@window_services.WindowServiceState::new(bridge=services),
       scene_resolver=options.scene_resolver,
       event_sources=options.event_sources,
+      frame_clock=options.frame_clock,
       platform_view_plugins=options.platform_view_plugins,
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
