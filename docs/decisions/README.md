@@ -83,6 +83,7 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0069 | [macOS frames follow the display refresh, and paint-time editors own their live scroll](0069-macos-frame-pacing-and-transient-scroll.md) | 2026-11-12 | Accepted |
 | 0070 | [Control popups are presentation surfaces, not layout children](0070-control-popups-are-presentation-surfaces.md) | 2026-11-12 | Accepted |
 | 0071 | [Desktop visual preset and layout metrics](0071-desktop-visual-preset.md) | 2026-11-12 | Accepted |
+| 0072 | [Native dev hot reload: bridge host + app plugin dylib](0072-native-dev-hot-reload.md) | 2026-11-22 | Accepted |
 
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

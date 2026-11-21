@@ -279,9 +279,19 @@ A second opt-in transport (`MOUI_DEV_TRANSIENT_FILE`, default
 offsets, keyboard focus, and the focused text input's caret/selection/
 composition. The runtime flushes a debounced snapshot at frame boundaries and
 restores it without dispatching `on_scroll`/`on_change`. Navigation stays
-app-owned in the model. This is still restart-based — deliberately not an
-in-process hot reload. See [TEA program model](tea-program-model.md) and ADR
+app-owned in the model. See [TEA program model](tea-program-model.md) and ADR
 0068.
+
+On macOS native, `--hot` replaces restart with a same-window plugin swap: a
+generated host keeps the window, renderer and platform services, while the app
+package is rebuilt as a `foreign_library` and linked into a uniquely named
+`plugin.dylib` the host loads. Both transports above apply unchanged, so an
+opted-in model survives the swap; a warm app edit takes about 0.6 s, and a
+compiler error keeps the old UI interactive. Core, renderer, backend and ABI
+edits still restart, IME/semantics/platform views are Phase 2, and the host
+re-execs after 32 swaps because macOS retains dylib images. Generated sources
+live in `moui_devhost/dev_hot/` (gitignored); the app module must be listed in
+`moui_devhost/moon.mod` (counter is). See ADR 0072.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev

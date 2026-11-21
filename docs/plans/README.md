@@ -84,7 +84,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [pointer-input-parity](active/pointer-input-parity.md) | Make declared-but-inert input land for real: long press / double tap, touch selection, multi-pointer identity, scroll rebound, honest text semantics, RTL mirroring |
 | [text-provider-native-completion](active/text-provider-native-completion.md) | Finish the scaffolded native text providers: DirectWrite shaping/IME, fontconfig/HarfBuzz measurement, and matching-host Windows IME evidence |
 | [gpu-partial-repaint](active/gpu-partial-repaint.md) | Turn damage bookkeeping into GPU-side partial repaint: per-route capability queries, damage-rect presentation on Metal/SkiaGpuNative, and present-rect budgets |
-| [in-process-hot-reload-rfc](active/in-process-hot-reload-rfc.md) | RFC for replacing the restart-based dev loop with in-process reload: transient-state transport, interpreter-driven swap, or web-first module reload |
+| [native-dev-hot-reload](active/native-dev-hot-reload.md) | Same-window native dev reload: generated bridge host + app plugin dylib, state/transient handoff, restart fallback; macOS Phase 0 gate, Web wasm swap separate |
 | [rtl-step3-native-base-direction](active/rtl-step3-native-base-direction.md) | Plumb `TextLayoutInput.direction` into the native providers (SkParagraph/cosmic/DirectWrite/CoreText) with a shared direction-matrix fixture |
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |

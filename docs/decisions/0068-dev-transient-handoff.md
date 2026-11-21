@@ -3,8 +3,8 @@
 - **Date**: 2026-11-10
 - **Status**: Accepted
 - **Deciders**: wzzc-dev (agent-assisted maturity review)
-- **Related**: plan `maturity-program`, plan `maturity-dev-loop`, RFC
-  `in-process-hot-reload-rfc`, ADR 0056
+- **Related**: plan `maturity-program`, plan `maturity-dev-loop`, plan
+  `native-dev-hot-reload`, ADR 0056
 
 ## Context
 
@@ -15,11 +15,11 @@ application `Model`. Runtime-owned transient state — scroll offsets, keyboard
 focus, caret/selection/composition, pointer captures, overlay stack — resets on
 every restart, even when the app is otherwise unchanged.
 
-The hot-reload RFC records three options: (1) keep restart-based and extend the
-handoff with transient state, (2) interpreter-driven in-process reload, and
-(3) wasm-gc dynamic module reload. MoonBit compiles AOT native/wasm-gc and has
-no sanctioned dynamic-reload story; the interpreter path exists only inside
-Studio.
+The original hot-reload RFC recorded three options: (1) keep restart-based and
+extend the handoff with transient state, (2) interpreter-driven in-process
+reload, and (3) wasm-gc dynamic module reload. MoonBit compiles AOT
+native/wasm-gc and has no sanctioned dynamic-reload story; the interpreter path
+exists only inside Studio.
 
 ## Decision
 
