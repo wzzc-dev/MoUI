@@ -88,6 +88,11 @@ pub struct LinuxHostAppOptions {
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
+  /// Monotonic milliseconds driving the runtime animation clock. Defaults to
+  /// the host monotonic clock (`linux_frame_clock`), which keeps every motion
+  /// duration in wall-clock time instead of one 16ms step per painted frame;
+  /// pass `None` to restore the synthetic step for deterministic runs.
+  priv frame_clock : (() -> Double)?
   /// App-facing window controls; `None` keeps control intents a no-op.
   priv window_controls : @services.WindowControlSource?
 }
@@ -165,6 +170,7 @@ pub fn LinuxHostAppOptions::new(
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar~ : Bool = false,
   platform_attributes~ : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  frame_clock~ : (() -> Double)? = Some(linux_frame_clock()),
   window_controls~ : @services.WindowControlSource? = None,
 ) -> LinuxHostAppOptions {
   {
@@ -173,6 +179,7 @@ pub fn LinuxHostAppOptions::new(
     platform_view_plugins,
     transparent_titlebar,
     platform_attributes,
+    frame_clock,
     window_controls,
   }
 }
