@@ -1,13 +1,13 @@
 name = "wzzc-dev/moui_text_providers"
 
-version = "0.6.2"
+version = "0.7.0"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.6.2",
+  "wzzc-dev/moui@0.7.0",
   "Milky2018/moon_cosmic@0.3.8",
   "Milky2018/moon_swash@0.1.14",
   "moonbitlang/x@0.5.6",

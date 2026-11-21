@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_skia_renderer"
 
-version = "0.6.2"
+version = "0.7.0"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.6.2",
-  "wzzc-dev/moui_skia@0.6.2",
+  "wzzc-dev/moui@0.7.0",
+  "wzzc-dev/moui_skia@0.7.0",
   "moonbitlang/x@0.5.6",
 }
 
