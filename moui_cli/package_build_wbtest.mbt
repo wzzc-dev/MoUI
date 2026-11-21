@@ -162,6 +162,18 @@ test "package Linux writes the launcher and desktop entry" {
   let bundle = join_path(root, "dist/Demo")
   assert_true(path_is_file(join_path(bundle, "run.sh")))
   assert_true(path_is_file(join_path(bundle, "Demo.desktop")))
+  // The executable is named after the app, and the desktop entry launches and
+  // probes that name (not the moon package leaf, which was `demo`).
+  assert_true(path_is_file(join_path(bundle, "Demo")))
+  let desktop = @fs.read_file_to_string(join_path(bundle, "Demo.desktop")) catch {
+    _ => ""
+  }
+  assert_true(desktop.contains("Exec=Demo\n"))
+  assert_true(desktop.contains("TryExec=Demo\n"))
+  let manifest = @fs.read_file_to_string(join_path(bundle, "moui-package.json")) catch {
+    _ => ""
+  }
+  assert_true(manifest.contains("\"executable\": \"Demo\""))
 }
 
 ///|

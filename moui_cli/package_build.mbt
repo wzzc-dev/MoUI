@@ -562,12 +562,9 @@ fn package_linux_bundle(
   json : Bool,
 ) -> CliOutcome {
   let app_dir = join_path(dist_root, name)
-  let executable = base_name(artifact)
-  let executable = if executable.has_suffix(".exe") {
-    executable[:executable.length() - 4].to_owned()
-  } else {
-    executable
-  }
+  // The launcher, the desktop entry, and the executable all use the app name:
+  // `Exec=<moon package leaf>` produced a relative, uninstallable entry.
+  let executable = name
   let manifest_path = join_path(app_dir, "moui-package.json")
   if options.dry_run {
     let mut text = "[package] linux app=" + name + " (dry-run)\n"
@@ -625,6 +622,9 @@ fn package_linux_bundle(
     name +
     "\n" +
     "Exec=" +
+    executable +
+    "\n" +
+    "TryExec=" +
     executable +
     "\n" +
     "Terminal=false\n" +

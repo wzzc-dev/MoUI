@@ -41,14 +41,39 @@ fn desktop_build_once(
       "moon build failed with exit code " + result.exit_code.to_string(),
     )
   }
-  Ok(
-    desktop_artifact_path(
-      flow.build_base,
-      flow.package_path,
-      flow.target.target,
-      release~,
-    ),
+  let artifact = desktop_artifact_path(
+    flow.build_base,
+    flow.package_path,
+    flow.target.target,
+    release~,
   )
+  if release && flow.target.platform != "windows" {
+    match strip_native_artifact(artifact) {
+      Ok(_) => ()
+      Err(message) =>
+        println("[build] warning: native strip skipped: " + message)
+    }
+  }
+  Ok(artifact)
+}
+
+///|
+/// Strip the native artifact after a release build. `moon build --strip` is a
+/// no-op for native targets, so the packaged binary otherwise keeps its full
+/// symbol table (roughly 40 MB for a Skia-linked showcase).
+fn strip_native_artifact(artifact : String) -> Result[Unit, String] {
+  if !path_is_file(artifact) {
+    return Err("strip target is missing: " + artifact)
+  }
+  match process_exec_argv(["strip", artifact], capture=true) {
+    Ok(result) =>
+      if result.exit_code == 0 {
+        Ok(())
+      } else {
+        Err("strip failed with exit code " + result.exit_code.to_string())
+      }
+    Err(message) => Err(message)
+  }
 }
 
 ///|

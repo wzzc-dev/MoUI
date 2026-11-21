@@ -43,13 +43,21 @@ fn desktop_entrypoint_candidates(
       )
   }
   let primary = platform + suffix
-  let candidates = [primary]
+  let names = [primary]
   if renderer == "auto" {
     for fallback in ["_wgpu", "_sun", ""] {
       let name = platform + fallback
       if name != primary {
-        candidates.push(name)
+        names.push(name)
       }
+    }
+  }
+  let candidates : Array[String] = []
+  // `cmd/<platform>` is the conventional MoonBit command-package layout. It
+  // comes after the root-level names so existing projects keep their order.
+  for prefix in ["", "cmd/"] {
+    for name in names {
+      candidates.push(prefix + name)
     }
   }
   Ok(candidates)
@@ -113,9 +121,12 @@ fn resolve_desktop_root(
       return Ok(root)
     }
   }
-  // The argument may point at the entrypoint package itself.
+  // The argument may point at the entrypoint package itself, either named
+  // `<platform>_skia` / `<platform>_wgpu` / `<platform>_sun` / `web_wasm`
+  // or the bare platform name (`cmd/linux`).
   let leaf = base_name(root)
   let is_entrypoint_package = leaf == "web_wasm" ||
+    leaf == platform ||
     leaf.has_suffix("_skia") ||
     leaf.has_suffix("_wgpu") ||
     leaf.has_suffix("_sun")
@@ -177,9 +188,17 @@ fn desktop_artifact_path(
 
 ///|
 /// The directory `moon build` writes `_build` under: the enclosing workspace
-/// root when one exists, otherwise the app root (standalone projects).
+/// root when one exists, otherwise the module root of a standalone project
+/// (nearest `moon.mod`), and only then the app root itself.
 fn desktop_build_base(app_root : String) -> String {
-  moon_workspace_root(app_root).unwrap_or(app_root)
+  match moon_workspace_root(app_root) {
+    Some(root) => root
+    None =>
+      match moon_module_root(app_root) {
+        Some(root) => root
+        None => app_root
+      }
+  }
 }
 
 ///|

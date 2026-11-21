@@ -65,11 +65,12 @@ fn resolve_path(root : String, path : String) -> String {
 }
 
 ///|
-fn moon_workspace_root(project_root : String) -> String? {
+/// Walk up from `project_root` until a directory holding `marker` is found.
+fn ancestor_holding_file(project_root : String, marker : String) -> String? {
   let current = Ref(normalized_path(project_root))
   for _ in 0..<64 {
-    let marker = join_path(current.val, "moon.work")
-    let has_marker = @fs.is_file(marker) catch { _ => false }
+    let candidate = join_path(current.val, marker)
+    let has_marker = @fs.is_file(candidate) catch { _ => false }
     if has_marker {
       return Some(current.val)
     }
@@ -84,6 +85,18 @@ fn moon_workspace_root(project_root : String) -> String? {
     current.val = parent
   }
   None
+}
+
+///|
+fn moon_workspace_root(project_root : String) -> String? {
+  ancestor_holding_file(project_root, "moon.work")
+}
+
+///|
+/// Module root: the nearest ancestor holding `moon.mod`. `moon build` writes
+/// `_build` there for standalone modules that have no `moon.work`.
+fn moon_module_root(project_root : String) -> String? {
+  ancestor_holding_file(project_root, "moon.mod")
 }
 
 ///|
