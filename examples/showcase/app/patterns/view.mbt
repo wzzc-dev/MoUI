@@ -54,6 +54,10 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
         "These pages are small, complete app features — not single-widget demos. Open one from the left rail under Patterns, or jump below.",
         role=Body,
         width=card_width,
+        // Without `wrap`, `width` is only a minimum: the one-line paragraph
+        // widens the stretched column past the detail pane and pushes the
+        // right-aligned Open buttons off the window.
+        wrap=true,
       ),
       @views.callout(
         "How to use this section",
@@ -273,6 +277,8 @@ fn navigation_pattern(
       ),
       @views.text(
         "The root router selects a workspace; this package owns navigation inside the workspace.",
+        width~,
+        wrap=true,
       ),
     ],
     spacing=theme.spacing_scale.sm,
@@ -316,6 +322,8 @@ fn text_media_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
       @views.text("Text & Media", role=Headline),
       @views.text(
         "# Local Markdown\n\nA **bold** word and an image belong behind app-safe view APIs.",
+        width~,
+        wrap=true,
       ),
       @views.callout(
         "Addon boundary",

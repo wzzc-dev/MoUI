@@ -45,6 +45,43 @@ test "Renderer::draw_text_fallback_line draws spans with covering faces" {
 }
 
 ///|
+test "Renderer::draw_text_fallback_line keeps one baseline across ascenders" {
+  let primary = unwrap_font_face(
+    @text.FontFace::from_bytes(make_ttf_for_codes_with_ascent([65], ascent=10)),
+  )
+  let fallback = unwrap_font_face(
+    @text.FontFace::from_bytes(make_ttf_for_codes_with_ascent([66], ascent=14)),
+  )
+  let canvas = @graphics.Canvas::new(32, 24)
+  canvas.clear(@graphics.Color::white())
+  let renderer = @renderer.Renderer::new(canvas)
+  let config = @text.LayoutConfig::new(
+    max_width=40.0,
+    font_size=10.0,
+    line_height=10.0,
+  )
+  ignore(
+    renderer.draw_text_fallback_line(
+      [primary, fallback],
+      "AB",
+      1.0,
+      1.0,
+      config,
+      @graphics.Paint::new().set_color(@graphics.Color::black()),
+    ),
+  )
+  let pixmap = renderer.get_canvas().get_pixmap()
+  // The primary A (ascent 10) inks rows 1..10. The fallback B (ascent 14,
+  // ink top 7 units above its baseline) must land on the same baseline: rows
+  // 4..10. With its own ascent it was drawn four rows lower (8..14).
+  assert_eq(pixmap.get_pixel(1, 1), @graphics.Color::black())
+  assert_eq(pixmap.get_pixel(14, 4), @graphics.Color::black())
+  assert_eq(pixmap.get_pixel(14, 10), @graphics.Color::black())
+  assert_eq(pixmap.get_pixel(14, 3), @graphics.Color::white())
+  assert_eq(pixmap.get_pixel(14, 11), @graphics.Color::white())
+}
+
+///|
 test "Renderer::draw_text_fallback_line handles empty fallback stack" {
   let canvas = @graphics.Canvas::new(24, 12)
   canvas.clear(@graphics.Color::white())

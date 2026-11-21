@@ -159,6 +159,34 @@ matching window's redraw, while stale or disposed tokens are ignored. The real
 Skia smoke records matching-host async second-frame evidence only when the
 token completion and repaint markers are present.
 
+## Text Input And IME (real-system verified)
+
+Real-system IME verification (WeType pinyin, synthetic keyboard events, real
+NSTextInputClient pipeline) passes on **both** the Sun CPU route and the Skia
+GPU route as of 2026-11-21: composition preedit renders inline with underline,
+the candidate window anchors at the caret rect, committed Chinese text lands in
+the model (`Value:` mirror updates), and `cmd+A`/forward-delete/arrow-caret
+motion behave identically. The IME runtime smoke fixtures
+(`moui_tests/tester/macos_{sun,skia}_ime_smoke`, 8 markers each) cover the same
+pipeline deterministically.
+
+Known limitations (shared across routes, not renderer-specific):
+
+- The CI platform-evidence IME step is vacuous: it sets
+  `MOUI_MACOS_NATIVE_IME_EVIDENCE=1` on the showcase, which no code reads. Real
+  evidence comes from the per-route smoke fixtures; wire them into
+  `scripts/macos-skia-renderer-smoke.sh --run-ime-smoke` if CI coverage is
+  wanted.
+- Synthetic scroll-wheel injection (CGEvent scroll) is not delivered to the app
+  by AppKit in automation contexts, so scripted scroll sweeps cannot drive the
+  showcase scroll containers; the scroll pipeline itself (AppKit scrollWheel →
+  runtime Scroll event → scroll container) is shared, renderer-independent code.
+- Caret blink does not exist on either route (the caret is drawn solid while
+  focused).
+- Click-to-caret near a glyph boundary can differ by one character between the
+  Sun and Skia shapers (their advance widths differ slightly); the click hit
+  test is shared code, the measured caret positions are shaper-specific.
+
 ## Notifications And Permission
 
 macOS notification delivery uses `UNUserNotificationCenter` (not the deprecated

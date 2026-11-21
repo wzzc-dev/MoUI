@@ -76,34 +76,34 @@ fn make_box_font() -> Font {
   cmap[0x4E00] = 1
   cmap[0x4E8C] = 1
   cmap[0x4E09] = 1
-  {
-    head: { units_per_em: 10, index_to_loc_format: 0, },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
-    hmtx: [
+  Font::from_predecoded(
+    head={ units_per_em: 10, index_to_loc_format: 0, },
+    hhea={ ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
+    hmtx=[
       { advance_width: 0, lsb: 0, },
       { advance_width: 10, lsb: 0, },
       { advance_width: 5, lsb: 0, },
     ],
-    cmap,
-    glyphs: [Empty, Simple(make_box_glyph()), Empty],
-    glyph_count: 3,
-    kern: [],
-  }
+    cmap~,
+    glyphs=[Empty, Simple(make_box_glyph()), Empty],
+    glyph_count=3,
+    kern=[],
+  )
 }
 
 ///|
 fn make_space_only_font() -> Font {
   let cmap : Map[Int32, Int32] = Map([])
   cmap[' '.to_int()] = 1
-  {
-    head: { units_per_em: 10, index_to_loc_format: 0, },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 2, },
-    hmtx: [{ advance_width: 0, lsb: 0, }, { advance_width: 5, lsb: 0, }],
-    cmap,
-    glyphs: [Empty, Empty],
-    glyph_count: 2,
-    kern: [],
-  }
+  Font::from_predecoded(
+    head={ units_per_em: 10, index_to_loc_format: 0, },
+    hhea={ ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 2, },
+    hmtx=[{ advance_width: 0, lsb: 0, }, { advance_width: 5, lsb: 0, }],
+    cmap~,
+    glyphs=[Empty, Empty],
+    glyph_count=2,
+    kern=[],
+  )
 }
 
 ///|

@@ -363,7 +363,18 @@ fn SunRasterRenderer::measure_text_layout(
   self : SunRasterRenderer,
   input : @core.TextLayoutInput,
 ) -> @core.TextLayoutResult {
-  let faces = self.resolved_faces(input.font)
+  let mut faces = self.resolved_faces(input.font)
+  // The lazy CJK face registers in the draw path (run-entry) — but the views'
+  // caret runs through THIS measure first, and a commit frame measures before
+  // anything draws. Without the trigger here the commit-frame carets use the
+  // missing-span estimate and the caret lands mid-word until the next rebuild.
+  if !self.cjk_fallback_attempted &&
+    @sun_text.plan_font_fallback(faces, input.text).get_missing_char_count() > 0 {
+    self.cjk_fallback_attempted = true
+    if self.register_platform_cjk_fallback() {
+      faces = self.resolved_faces(input.font)
+    }
+  }
   if faces.is_empty() {
     return @core.TextSystem::fallback().measure_text(input)
   }
@@ -434,28 +445,84 @@ fn SunRasterRenderer::measure_single_line_text(
   let fallback = @sun_text.plan_font_fallback(faces, text)
   let carets : Array[Double] = [0.0]
   let mut width = 0.0
-  let mut emitted_scalars = 0
   for span in fallback.get_spans() {
-    let span_width = if span.is_missing() {
-      sun_measure_missing_span_width(span.get_text(), config)
-    } else {
-      @sun_text.TextLayout::layout(
-        faces[span.get_face_index()],
-        span.get_text(),
-        config,
-      ).get_width()
-    }
-    let per_scalar = if span.get_char_count() > 0 {
-      span_width / span.get_char_count().to_double()
-    } else {
-      0.0
-    }
-    for _ in 0..<span.get_char_count() {
-      emitted_scalars += 1
-      width += per_scalar
-      if emitted_scalars > 0 {
+    if span.is_missing() {
+      // No face covers this span; keep the even-split estimate so a caret in
+      // placeholder text still moves between characters.
+      let span_width = sun_measure_missing_span_width(span.get_text(), config)
+      let per_scalar = if span.get_char_count() > 0 {
+        span_width / span.get_char_count().to_double()
+      } else {
+        0.0
+      }
+      for _ in 0..<span.get_char_count() {
+        width += per_scalar
         carets.push(width)
       }
+      continue
+    }
+    // Covered span: carets come from the real per-glyph pen positions, not an
+    // even split. Even division made the caret drift from the drawn glyphs on
+    // any proportional face (caret after `H` in `Hello` claimed the width of
+    // one fifth of the whole word). Glyph boundaries use the next glyph's pen
+    // origin so kerning is included; multi-scalar glyphs (emoji) interpolate
+    // between their boundaries so every caret still moves forward.
+    let layout = @sun_text.TextLayout::layout(
+      faces[span.get_face_index()],
+      span.get_text(),
+      config,
+    )
+    let glyphs = match layout.get_runs().get(0) {
+      Some(run) => run.get_glyphs()
+      None => []
+    }
+    let glyph_count = glyphs.length()
+    let span_scalars = span.get_char_count()
+    let span_base = width
+    if glyph_count == 0 {
+      let span_width = layout.get_width()
+      let per_scalar = if span_scalars > 0 {
+        span_width / span_scalars.to_double()
+      } else {
+        0.0
+      }
+      for _ in 0..<span_scalars {
+        width = width + per_scalar
+        carets.push(width)
+      }
+      continue
+    }
+    let boundaries : Array[Double] = [0.0]
+    let mut previous = 0.0
+    for boundary in 1..<=glyph_count {
+      let target = if boundary < glyph_count {
+        glyphs[boundary].get_origin_x()
+      } else {
+        let last = glyphs[glyph_count - 1]
+        last.get_origin_x() + last.get_advance_width()
+      }
+      if target > previous {
+        previous = target
+      }
+      boundaries.push(previous)
+    }
+    let laid_out_width = layout.get_width()
+    if laid_out_width > previous {
+      boundaries[glyph_count] = laid_out_width
+    }
+    for scalar in 0..<span_scalars {
+      let step = scalar.to_double().add(1.0).mul(glyph_count.to_double()) /
+        span_scalars.to_double()
+      let below = step.floor().to_int().min(glyph_count)
+      let fraction = step - below.to_double()
+      let value = if below >= glyph_count {
+        boundaries[glyph_count]
+      } else {
+        boundaries[below] +
+        (boundaries[below + 1] - boundaries[below]) * fraction
+      }
+      width = span_base + value
+      carets.push(width)
     }
   }
   while carets.length() < text.to_array().length() + 1 {

@@ -3,7 +3,7 @@
 Status: active (Phase 1 + 2 landed; Phase 4 evidence captured)
 Parent issue: #24 (completion beyond PR #26)
 Branch: `feature/cursor-and-window-chrome` (lands in PR #26)
-Companion: wzzc-dev/window PR #3 (merged, 0.5.4-0.2.12 published)
+Companion: wzzc-dev/window PR #3 (merged, 0.5.4-0.2.13 published)
 
 ## Goal
 
@@ -56,7 +56,7 @@ Confirmed decisions (user, 2026-11-18):
 
 ### Phase 2 — double-click zoom (delivered at the platform layer)
 
-Delivered in wzzc-dev/window (PR #3, 0.5.4-0.2.12) instead of the originally
+Delivered in wzzc-dev/window (PR #3, 0.5.4-0.2.13) instead of the originally
 planned host-timestamp design: the native Wayland layer already owns the
 bare-band move gesture, so the double-click detector lives beside it (second
 press within 400 ms and 8 px of the first toggles maximize via the same

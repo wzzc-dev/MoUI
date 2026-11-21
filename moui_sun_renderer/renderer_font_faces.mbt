@@ -439,3 +439,39 @@ fn sun_font_spec_candidate_keys(font : @core.FontSpec) -> Array[String] {
   }
   keys
 }
+
+///|
+/// Read one CJK fallback face into the font stack. The default macOS stack
+/// (Arial / Courier New / Times New Roman) has no Han coverage, so committed
+/// IME text drew placeholder boxes. Candidates are system collections in
+/// preference order; paths that do not exist are skipped, so Linux/Windows
+/// fall through to their own discovery untouched. Parsed lazily on the first
+/// uncovered run, registered under its own family so it only joins the
+/// fallback tail and never takes over ordinary Latin text.
+fn SunRasterRenderer::register_platform_cjk_fallback(
+  self : SunRasterRenderer,
+) -> Bool {
+  let candidates : Array[(String, String)] = [
+    // Arial Unicode first: its CJK glyphs share Arial's sans-serif design, so
+    // mixed "Components你好" runs keep one texture and weight. Songti stays as
+    // a coverage backstop; Hiragino is CFF (OTTO) and this parser cannot
+    // decode it.
+    ("/Library/Fonts/Arial Unicode.ttf", "Arial Unicode"),
+    ("/System/Library/Fonts/Supplemental/Songti.ttc", "Songti SC"),
+  ]
+  for candidate in candidates {
+    let (path, family) = candidate
+    match sun_platform_font_file_data(path) {
+      Some(data) => {
+        self.register_font_family_data(
+          @core.FontFamily::Name(family),
+          data,
+          weight=400,
+        )
+        return true
+      }
+      None => ()
+    }
+  }
+  false
+}

@@ -52,22 +52,34 @@ fn make_kerning_ttf() -> Bytes {
 
 ///|
 fn make_ttf_for_codes(codepoints : Array[Int32]) -> Bytes {
+  make_ttf_for_codes_with_ascent(codepoints, ascent=10)
+}
+
+///|
+fn make_ttf_for_codes_with_ascent(
+  codepoints : Array[Int32],
+  ascent~ : Int32,
+) -> Bytes {
   let glyphs = []
   for codepoint in codepoints {
     glyphs.push(make_ascii_test_glyph(codepoint))
   }
-  make_ttf_with_glyphs(glyphs)
+  make_ttf_with_glyphs(glyphs, ascent~)
 }
 
 ///|
-fn make_ttf_with_glyphs(glyphs : Array[TestGlyph]) -> Bytes {
-  make_ttf_with_glyphs_and_kern(glyphs, [])
+fn make_ttf_with_glyphs(
+  glyphs : Array[TestGlyph],
+  ascent~ : Int32 = 10,
+) -> Bytes {
+  make_ttf_with_glyphs_and_kern(glyphs, [], ascent~)
 }
 
 ///|
 fn make_ttf_with_glyphs_and_kern(
   glyphs : Array[TestGlyph],
   kern_pairs : Array[TestKernPair],
+  ascent~ : Int32 = 10,
 ) -> Bytes {
   let tags : Array[Bytes] = [
     b"cmap", b"glyf", b"head", b"hhea", b"hmtx", b"loca", b"maxp",
@@ -76,7 +88,7 @@ fn make_ttf_with_glyphs_and_kern(
     make_cmap_table(glyphs),
     make_glyf_table(glyphs),
     make_head_table(),
-    make_hhea_table(glyphs),
+    make_hhea_table(glyphs, ascent~),
     make_hmtx_table(glyphs),
     make_loca_table(glyphs),
     make_maxp_table(glyphs),
@@ -180,10 +192,13 @@ fn make_head_table() -> Array[Byte] {
 }
 
 ///|
-fn make_hhea_table(glyphs : Array[TestGlyph]) -> Array[Byte] {
+fn make_hhea_table(
+  glyphs : Array[TestGlyph],
+  ascent~ : Int32 = 10,
+) -> Array[Byte] {
   let out : Array[Byte] = []
   append_u32(out, 0x00010000) // version
-  append_i16(out, 10) // ascent
+  append_i16(out, ascent) // ascent
   append_i16(out, 0) // descent
   append_i16(out, 0) // lineGap
   append_u16(out, 10) // advanceWidthMax

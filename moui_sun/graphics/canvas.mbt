@@ -17,6 +17,10 @@ pub struct Canvas {
   mut solid_pattern_red : Int32
   mut solid_pattern_green : Int32
   mut solid_pattern_blue : Int32
+  /// Pixels of `solid_pattern_scratch` written with the current colour. A
+  /// request wider than this must refill: the row blit reads `[0, width)` and
+  /// a stale tail would paint the previous shape's colour into the new one.
+  mut solid_pattern_width : Int32
   sample_outer_lo : FixedArray[Double]
   sample_outer_hi : FixedArray[Double]
   sample_hole_lo : FixedArray[Double]
@@ -51,6 +55,7 @@ pub fn Canvas::new(width : Int32, height : Int32) -> Canvas {
     solid_pattern_red: -1,
     solid_pattern_green: -1,
     solid_pattern_blue: -1,
+    solid_pattern_width: 0,
     sample_outer_lo: FixedArray::make(steps, 0.0),
     sample_outer_hi: FixedArray::make(steps, 0.0),
     sample_hole_lo: FixedArray::make(steps, 0.0),

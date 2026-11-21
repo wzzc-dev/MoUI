@@ -103,6 +103,39 @@ pub fn Renderer::draw_text_face_cached_with_renderer_resources(
 }
 
 ///|
+/// Face ascender in pixels at the configured size.
+fn fallback_face_ascent_px(
+  face : @text.FontFace,
+  config : @text.LayoutConfig,
+) -> Double {
+  let units = face.get_units_per_em().to_double()
+  if units <= 0.0 {
+    config.font_size * 0.8
+  } else {
+    face.get_metrics().ascent.to_double() * config.font_size / units
+  }
+}
+
+///|
+/// Line-top offset that puts a fallback span on the primary face's baseline.
+///
+/// Each face lays a single line out at `line_top + ascent(face) * scale`, so a
+/// span whose face carries a taller ascender is pushed below the Latin
+/// baseline when drawn at the shared line top (Arial 1854/2048 vs Arial
+/// Unicode 2189/2048 showed Chinese ~2.4 px low at 15 px). Shifting the span
+/// by the ascender difference keeps every face on one baseline.
+fn fallback_span_y(
+  y : Double,
+  primary : @text.FontFace,
+  face : @text.FontFace,
+  config : @text.LayoutConfig,
+) -> Double {
+  y +
+  fallback_face_ascent_px(primary, config) -
+  fallback_face_ascent_px(face, config)
+}
+
+///|
 /// Draw a single left-to-right text line through an ordered font fallback stack.
 pub fn Renderer::draw_text_fallback_line(
   self : Renderer,
@@ -753,12 +786,13 @@ fn draw_text_fallback_line_atlas(
     } else {
       let face = faces[span.get_face_index()]
       let span_text = span.get_text()
+      let span_y = fallback_span_y(y, faces[0], face, line_config)
       let result = draw_text_face_atlas(
         canvas,
         face,
         span_text,
         cursor_x,
-        y,
+        span_y,
         line_config,
         glyph_cache,
         atlas,
@@ -836,6 +870,7 @@ fn draw_text_fallback_line_with_cache(
     } else {
       let face = faces[span.get_face_index()]
       let span_text = span.get_text()
+      let span_y = fallback_span_y(y, faces[0], face, line_config)
       let advance_key = fallback_text_advance_key(
         text_key_prefix,
         span_index,
@@ -851,7 +886,7 @@ fn draw_text_fallback_line_with_cache(
             None => ()
           }
           let (origin_x, phase_x) = text_mask_origin(cursor_x)
-          let (origin_y, phase_y) = text_mask_origin(y)
+          let (origin_y, phase_y) = text_mask_origin(span_y)
           let key = fallback_text_cache_key(
             text_key_prefix,
             span_index,
@@ -879,7 +914,8 @@ fn draw_text_fallback_line_with_cache(
         }
         None =>
           draw_text_face(
-            canvas, face, span_text, cursor_x, y, width, height, line_config, paint,
+            canvas, face, span_text, cursor_x, span_y, width, height, line_config,
+            paint,
           )
       }
       // The advance cannot change while the span identity does not, so once a

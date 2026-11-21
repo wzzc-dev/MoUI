@@ -36,6 +36,10 @@ pub struct SunRasterRenderer {
   text_paragraph_cache : @render_common.TextParagraphCache
   priv text_run_cache : Map[String, SunTextRunEntry]
   priv mut text_run_cache_order : Array[String]
+  /// One-shot CJK fallback registration: macOS ships no CJK face in the
+  /// default Sun font stack, so the first run with uncovered codepoints reads
+  /// a system CJK collection once. Parsing stays off the startup path.
+  priv mut cjk_fallback_attempted : Bool
   resources : @sun_renderer.RendererResources
   image_lifecycle : @render_common.ImageResourceLifecycle
   async_image_loading : Bool
@@ -112,8 +116,13 @@ pub fn create_with_present_target(
     text_paragraph_cache: @render_common.TextParagraphCache::new(),
     text_run_cache: Map([]),
     text_run_cache_order: [],
+    cjk_fallback_attempted: false,
+    // Text/glyph mask caches sized above the Showcase line count: a cache
+    // smaller than the page's distinct lines thrashes, re-rasterising every
+    // line every frame (measured 500 ms/frame at 360 lines with 256 slots).
+    // Line masks are tight boxes, so 2048 entries stay in the low tens of MB.
     resources: @sun_renderer.RendererResources::with_font_capacity(
-      1024, 1024, 64, 256, 256, 128,
+      1024, 1024, 64, 2048, 2048, 128,
     ),
     image_lifecycle: @render_common.ImageResourceLifecycle::new(),
     async_image_loading,

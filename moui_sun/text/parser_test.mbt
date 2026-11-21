@@ -129,15 +129,22 @@ test "FontFace::from_bytes validates structured loca and cmap errors" {
 }
 
 ///|
-test "FontFace::from_bytes validates structured glyph outline errors" {
+/// Glyph outlines now decode on demand, so malformed outlines no longer fail
+/// the parse: they must degrade to empty ink when the glyph is drawn instead
+/// of crashing or reading out of bounds.
+test "FontFace::from_bytes degrades malformed glyph outlines to empty ink" {
+  let config = @text.LayoutConfig::new(max_width=800.0)
   let unsorted_glyph = make_bad_unsorted_contour_glyph()
   let unsorted_contours = make_structural_font_with_glyf(
     [0, unsorted_glyph.length()],
     unsorted_glyph,
   )
   match parse_font_face_result(unsorted_contours) {
-    Err(UnsortedGlyphContourEndpoints) => ()
-    _ => abort("expected unsorted glyph contour endpoints error")
+    Ok(face) => {
+      let mask = @text.render_text_mask_face(face, "A", 0, 0, 0.0, 0.0, config)
+      assert_true(mask.get_width() == 0)
+    }
+    _ => abort("malformed glyph outlines must not fail the parse")
   }
 
   let repeated_flags = make_structural_font_with_glyf(
@@ -145,8 +152,11 @@ test "FontFace::from_bytes validates structured glyph outline errors" {
     make_bad_flag_repeat_glyph(),
   )
   match parse_font_face_result(repeated_flags) {
-    Err(GlyphFlagRepeatOverflow) => ()
-    _ => abort("expected glyph flag repeat overflow error")
+    Ok(face) => {
+      let mask = @text.render_text_mask_face(face, "A", 0, 0, 0.0, 0.0, config)
+      assert_true(mask.get_width() == 0)
+    }
+    _ => abort("malformed glyph outlines must not fail the parse")
   }
 }
 
@@ -497,7 +507,9 @@ test "FontFace::from_bytes reads long loca glyph offsets" {
 }
 
 ///|
-test "FontFace::from_bytes validates glyf glyph byte requirements" {
+/// A glyph shorter than the sfnt header now surfaces when the glyph decodes,
+/// degrading to empty ink instead of failing the parse.
+test "FontFace::from_bytes degrades short glyph bytes to empty ink" {
   let bytes = make_structural_font_with_glyf([0, 4], [
     0x00, 0x01, // one contour
      0x00, 0x00, // xmin
@@ -506,8 +518,19 @@ test "FontFace::from_bytes validates glyf glyph byte requirements" {
      0x00, 0x01, // ymax
   ])
   match parse_font_face_result(bytes) {
-    Err(TableTooShort("glyf", 4, 10)) => ()
-    _ => abort("expected short glyph error")
+    Ok(face) => {
+      let mask = @text.render_text_mask_face(
+        face,
+        "A",
+        0,
+        0,
+        0.0,
+        0.0,
+        @text.LayoutConfig::new(max_width=800.0),
+      )
+      assert_true(mask.get_width() == 0)
+    }
+    _ => abort("short glyph bytes must not fail the parse")
   }
 }
 
@@ -536,12 +559,25 @@ test "FontFace::from_bytes parses simple glyph outline through checked path" {
 }
 
 ///|
-test "FontFace::from_bytes validates composite glyph scale bytes" {
+/// Composite components whose scale bytes are truncated degrade to empty ink
+/// at decode time instead of failing the parse.
+test "FontFace::from_bytes degrades short composite scale bytes to empty ink" {
   let glyph = make_bad_scaled_composite_glyph()
   let bytes = make_structural_font_with_glyf([0, glyph.length()], glyph)
   match parse_font_face_result(bytes) {
-    Err(TableTooShort("glyf", 18, 20)) => ()
-    _ => abort("expected composite scale length error")
+    Ok(face) => {
+      let mask = @text.render_text_mask_face(
+        face,
+        "A",
+        0,
+        0,
+        0.0,
+        0.0,
+        @text.LayoutConfig::new(max_width=800.0),
+      )
+      assert_true(mask.get_width() == 0)
+    }
+    _ => abort("short composite scale bytes must not fail the parse")
   }
 }
 

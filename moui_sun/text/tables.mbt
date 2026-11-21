@@ -141,14 +141,26 @@ pub extend KernPair with Debug::{to_repr}
 pub extend KernPair with Eq::{not_equal, equal}
 
 ///|
-/// Parsed font data
+/// Parsed font data.
+///
+/// Glyph outlines decode on demand (`glyph_memo`, `Font::get_glyph`): a CJK
+/// face carries tens of thousands of glyphs and bulk-decoding them at parse
+/// time cost hundreds of milliseconds per face, while a UI frame touches a
+/// few dozen. Coverage (`cmap`) and metrics (`hmtx`/`loca`) still parse up
+/// front, so fallback planning and layout see the whole face immediately.
 #derive(Debug)
 struct Font {
   head : FontHead
   hhea : FontHhea
   hmtx : Array[LongHorMetric]
   cmap : Map[Int32, Int32] // char code -> glyph index
+  /// Pre-decoded outlines for hand-built fonts (tests). Parsed fonts leave
+  /// this empty and decode outlines on demand through `glyph_memo`.
   glyphs : Array[GlyphData]
+  data : Bytes
+  glyf_offset : Int32
+  loca : Array[Int32]
+  glyph_memo : FixedArray[GlyphData?]
   glyph_count : Int32
   kern : Array[KernPair] // kerning pairs
 }
@@ -184,10 +196,46 @@ fn Font::has_glyph_for_char(self : Font, char_code : Int32) -> Bool {
 }
 
 ///|
-/// Get glyph data, resolving composite glyphs
+/// Get glyph data, resolving composite glyphs. Outlines decode on first
+/// request and are memoized; a malformed outline degrades to `Empty` so one
+/// bad glyph cannot take down the whole face.
 fn Font::get_glyph(self : Font, glyph_id : Int32) -> GlyphData {
   guard glyph_id >= 0 && glyph_id < self.glyph_count else { return Empty }
-  let data = self.glyphs[glyph_id]
+  if self.glyphs.length() > 0 {
+    return self.resolve_glyph(self.glyphs[glyph_id])
+  }
+  match self.glyph_memo[glyph_id] {
+    Some(cached) => self.resolve_glyph(cached)
+    None => {
+      let decoded = match self.decode_glyph(glyph_id) {
+        Ok(glyph) => glyph
+        Err(_) => Empty
+      }
+      self.glyph_memo[glyph_id] = Some(decoded)
+      self.resolve_glyph(decoded)
+    }
+  }
+}
+
+///|
+/// Decode one glyph outline straight from the font bytes. Exposed for the
+/// checked-parser tests: decode errors surface here instead of at parse time.
+fn Font::decode_glyph(
+  self : Font,
+  glyph_id : Int32,
+) -> Result[GlyphData, FontParseError] {
+  let offset = self.loca[glyph_id]
+  let next_offset = self.loca[glyph_id + 1]
+  guard offset < next_offset else { return Ok(Empty) }
+  parse_glyph_checked(
+    self.data,
+    self.glyf_offset + offset,
+    next_offset - offset,
+  )
+}
+
+///|
+fn Font::resolve_glyph(self : Font, data : GlyphData) -> GlyphData {
   match data {
     Composite(components) => resolve_composite_glyph(self, components)
     _ => data

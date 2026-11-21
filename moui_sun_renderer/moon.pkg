@@ -1,9 +1,9 @@
 import {
   "moonbitlang/core/bench",
+  "moonbitlang/x/fs",
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
-  "moonbitlang/x/fs",
   "mizchi/image",
   "moonbitlang/core/math",
   "wzzc-dev/moui/core",

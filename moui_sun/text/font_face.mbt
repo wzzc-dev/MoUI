@@ -17,19 +17,20 @@ fn FontFace::from_font(font : Font) -> FontFace {
 ///|
 /// Parse TTF bytes into a checked font face.
 pub fn FontFace::from_bytes(data : Bytes) -> Result[FontFace, FontParseError] {
-  match parse_font_result(data) {
+  match parse_font_result(data, 0) {
     Ok(font) => Ok(FontFace::from_font(font))
     Err(error) => Err(error)
   }
 }
 
 ///|
-/// Parse a raw font-data container into a checked font face.
+/// Parse a raw font-data container into a checked font face. The face index
+/// selects one member of a `ttcf` collection.
 pub fn FontFace::from_data(data : FontData) -> Result[FontFace, FontParseError] {
-  guard data.get_font_index() is 0 else {
-    return Err(UnsupportedFontIndex(data.get_font_index()))
+  match parse_font_result(data.get_data(), data.get_font_index()) {
+    Ok(font) => Ok(FontFace::from_font(font))
+    Err(error) => Err(error)
   }
-  FontFace::from_bytes(data.get_data())
 }
 
 ///|

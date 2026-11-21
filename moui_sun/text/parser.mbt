@@ -26,14 +26,53 @@ pub extend FontParseError with Debug::{to_repr}
 pub extend FontParseError with Eq::{not_equal, equal}
 
 ///|
-/// Parse a TTF font file and report structural errors as Result values.
-fn parse_font_result(data : Bytes) -> Result[Font, FontParseError] {
-  parse_font_checked(data)
+/// Parse a TTF font file (or one face of a TTC collection) and report
+/// structural errors as Result values.
+fn parse_font_result(
+  data : Bytes,
+  font_index : Int32,
+) -> Result[Font, FontParseError] {
+  parse_font_checked(data, font_index)
 }
 
 ///|
-fn parse_font_checked(data : Bytes) -> Result[Font, FontParseError] {
-  let tables = match parse_table_directory(data) {
+/// Resolve the byte offset of one face's table directory. A bare sfnt parses
+/// at offset 0; a `ttcf` collection stores one directory offset per face and
+/// keeps every table offset absolute inside the container, so the collection
+/// base is the only adjustment the parser needs.
+fn parse_collection_base(
+  data : Bytes,
+  font_index : Int32,
+) -> Result[Int32, FontParseError] {
+  guard data.length() >= 12 else {
+    return Err(UnexpectedEndOfData(0, 12, data.length()))
+  }
+  if read_u32_be_at(data, 0) == 0x74746366 {
+    // 'ttcf': version, numFonts, then one u32 directory offset per face.
+    let num_fonts = read_u32_be_at(data, 8).reinterpret_as_int()
+    guard font_index >= 0 && font_index < num_fonts else {
+      return Err(UnsupportedFontIndex(font_index))
+    }
+    let base = read_u32_be_at(data, 12 + font_index * 4).reinterpret_as_int()
+    guard base >= 0 && base + 12 <= data.length() else {
+      return Err(UnexpectedEndOfData(base, 12, data.length()))
+    }
+    return Ok(base)
+  }
+  guard font_index == 0 else { return Err(UnsupportedFontIndex(font_index)) }
+  Ok(0)
+}
+
+///|
+fn parse_font_checked(
+  data : Bytes,
+  font_index : Int32,
+) -> Result[Font, FontParseError] {
+  let base = match parse_collection_base(data, font_index) {
+    Err(error) => return Err(error)
+    Ok(base) => base
+  }
+  let tables = match parse_table_directory(data, base) {
     Err(error) => return Err(error)
     Ok(tables) => tables
   }
@@ -62,39 +101,62 @@ fn parse_font_checked(data : Bytes) -> Result[Font, FontParseError] {
     Err(error) => return Err(error)
     Ok(loca) => loca
   }
-  let (glyphs, glyph_count) = match
-    parse_glyf_checked(data, tables, loca, head.index_to_loc_format, num_glyphs) {
+  let glyf = match require_table(data, tables, "glyf") {
     Err(error) => return Err(error)
-    Ok(result) => result
+    Ok(table) => table
+  }
+  // Outlines decode on demand: a CJK face carries tens of thousands of glyphs
+  // and bulk-decoding them cost hundreds of milliseconds, so the parser keeps
+  // only the loca offsets and glyph bounds checks. Glyph errors therefore
+  // surface when a glyph is first requested (`Font::get_glyph`), not here.
+  let glyph_count = loca.length() - 1
+  match validate_loca_offsets(loca, glyf) {
+    Err(error) => return Err(error)
+    Ok(_) => ()
   }
   let kern = match parse_kern_checked(data, tables) {
     Err(error) => return Err(error)
     Ok(kern) => kern
   }
-  Ok({ head, hhea, hmtx, cmap, glyphs, glyph_count, kern, })
+  Ok({
+    head,
+    hhea,
+    hmtx,
+    cmap,
+    glyphs: [],
+    data,
+    glyf_offset: glyf.offset.reinterpret_as_int(),
+    loca,
+    glyph_memo: FixedArray::make(glyph_count, None),
+    glyph_count,
+    kern,
+  })
 }
 
 ///|
 fn parse_table_directory(
   data : Bytes,
+  base : Int32,
 ) -> Result[Map[String, TableRecord], FontParseError] {
-  guard data.length() >= 12 else {
-    return Err(UnexpectedEndOfData(0, 12, data.length()))
+  guard data.length() >= base + 12 else {
+    return Err(UnexpectedEndOfData(base, 12, data.length()))
   }
-  let sf_version = read_u32_be_at(data, 0)
-  guard sf_version == 0x00010000 else {
+  let sf_version = read_u32_be_at(data, base)
+  // 0x00010000 is the OpenType/TrueType version; 0x74727565 ('true') is the
+  // legacy Apple tag macOS system collections (e.g. Hiragino) still use.
+  guard sf_version == 0x00010000 || sf_version == 0x74727565 else {
     return Err(InvalidFontHeader(sf_version))
   }
 
-  let num_tables = read_u16_be_at(data, 4).to_int()
-  let directory_len = 12 + num_tables * 16
+  let num_tables = read_u16_be_at(data, base + 4).to_int()
+  let directory_len = base + 12 + num_tables * 16
   guard data.length() >= directory_len else {
-    return Err(UnexpectedEndOfData(12, num_tables * 16, data.length()))
+    return Err(UnexpectedEndOfData(base + 12, num_tables * 16, data.length()))
   }
 
   let tables : Map[String, TableRecord] = Map([])
   for i in 0..<num_tables {
-    let pos = 12 + i * 16
+    let pos = base + 12 + i * 16
     let tag = read_tag_at(data, pos)
     let checksum = read_u32_be_at(data, pos + 4)
     let offset = read_u32_be_at(data, pos + 8)
@@ -234,36 +296,6 @@ fn parse_loca_checked(
 }
 
 ///|
-fn parse_glyf_checked(
-  data : Bytes,
-  tables : Map[String, TableRecord],
-  loca : Array[Int32],
-  index_to_loc_format : Int32,
-  num_glyphs : Int32,
-) -> Result[(Array[GlyphData], Int32), FontParseError] {
-  let loca_table = match require_table(data, tables, "loca") {
-    Err(error) => return Err(error)
-    Ok(table) => table
-  }
-  let glyf = match require_table(data, tables, "glyf") {
-    Err(error) => return Err(error)
-    Ok(table) => table
-  }
-  match
-    validate_loca_offsets(
-      data, loca_table, glyf, index_to_loc_format, num_glyphs,
-    ) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  match validate_glyf_table(data, glyf, loca) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  parse_glyf_data_checked(data, glyf, loca)
-}
-
-///|
 fn parse_kern_checked(
   data : Bytes,
   tables : Map[String, TableRecord],
@@ -317,23 +349,12 @@ fn require_min_length(
 
 ///|
 fn validate_loca_offsets(
-  data : Bytes,
-  loca : TableRecord,
+  loca : Array[Int32],
   glyf : TableRecord,
-  index_to_loc_format : Int32,
-  num_glyphs : Int32,
 ) -> Result[Unit, FontParseError] {
-  let loca_offset = loca.offset.reinterpret_as_int()
   let glyf_len = glyf.length.reinterpret_as_int()
-  let loca_entry_size = if index_to_loc_format is 0 { 2 } else { 4 }
   let mut previous = 0
-  for i in 0..<=num_glyphs {
-    let entry_offset = loca_offset + i * loca_entry_size
-    let glyph_offset = if index_to_loc_format is 0 {
-      read_u16_be_at(data, entry_offset).to_int() * 2
-    } else {
-      read_u32_be_at(data, entry_offset).reinterpret_as_int()
-    }
+  for glyph_offset in loca {
     guard glyph_offset >= previous else { return Err(UnsortedLocaOffsets) }
     guard glyph_offset <= glyf_len else {
       return Err(
@@ -341,68 +362,15 @@ fn validate_loca_offsets(
           "glyf",
           glyf.offset.reinterpret_as_int() + glyph_offset,
           0,
-          data.length(),
+          // The container length is not needed for the message anymore; keep
+          // the historical shape by reporting the glyf table length.
+          glyf_len,
         ),
       )
     }
     previous = glyph_offset
   }
   Ok(())
-}
-
-///|
-fn validate_glyf_table(
-  data : Bytes,
-  glyf : TableRecord,
-  loca : Array[Int32],
-) -> Result[Unit, FontParseError] {
-  let glyf_offset = glyf.offset.reinterpret_as_int()
-  for i in 0..<(loca.length() - 1) {
-    let offset = loca[i]
-    let next_offset = loca[i + 1]
-    if offset < next_offset {
-      let glyph_length = next_offset - offset
-      match validate_glyph_data(data, glyf_offset + offset, glyph_length) {
-        Err(error) => return Err(error)
-        Ok(_) => ()
-      }
-    }
-  }
-  Ok(())
-}
-
-///|
-fn parse_glyf_data_checked(
-  data : Bytes,
-  glyf : TableRecord,
-  loca : Array[Int32],
-) -> Result[(Array[GlyphData], Int32), FontParseError] {
-  let glyf_offset = glyf.offset.reinterpret_as_int()
-  let glyph_count = loca.length() - 1
-  let glyphs = []
-
-  // CJK fonts can have many glyphs; keep the historical parse limit.
-  let max_glyphs = if glyph_count > 65536 { 65536 } else { glyph_count }
-  for i in 0..<max_glyphs {
-    let offset = loca[i]
-    let next_offset = loca[i + 1]
-
-    if offset >= next_offset {
-      glyphs.push(GlyphData::Empty)
-    } else {
-      let glyph_data = match
-        parse_glyph_checked(data, glyf_offset + offset, next_offset - offset) {
-        Err(error) => return Err(error)
-        Ok(glyph) => glyph
-      }
-      glyphs.push(glyph_data)
-    }
-  }
-  for _ in max_glyphs..<glyph_count {
-    glyphs.push(Empty)
-  }
-
-  Ok((glyphs, glyph_count))
 }
 
 ///|
@@ -672,166 +640,6 @@ fn parse_composite_glyph_checked(
   }
 
   Ok(Composite(components))
-}
-
-///|
-fn validate_glyph_data(
-  data : Bytes,
-  offset : Int32,
-  length : Int32,
-) -> Result[Unit, FontParseError] {
-  match require_glyph_bytes(length, 0, 10) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  let num_contours = read_i16_be_at(data, offset)
-  guard num_contours != 0 else { return Ok(()) }
-  if num_contours > 0 {
-    validate_simple_glyph_data(data, offset, length, num_contours)
-  } else {
-    validate_composite_glyph_data(data, offset, length)
-  }
-}
-
-///|
-fn validate_simple_glyph_data(
-  data : Bytes,
-  offset : Int32,
-  length : Int32,
-  num_contours : Int32,
-) -> Result[Unit, FontParseError] {
-  let mut pos = 10
-  let end_points_len = num_contours * 2
-  match require_glyph_bytes(length, pos, end_points_len) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  let mut previous_end_point = -1
-  for i in 0..<num_contours {
-    let end_point = read_u16_be_at(data, offset + pos + i * 2).to_int()
-    guard end_point > previous_end_point else {
-      return Err(UnsortedGlyphContourEndpoints)
-    }
-    previous_end_point = end_point
-  }
-  pos = pos + end_points_len
-  match require_glyph_bytes(length, pos, 2) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  let instruction_length = read_u16_be_at(data, offset + pos).to_int()
-  pos = pos + 2
-  match require_glyph_bytes(length, pos, instruction_length) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  pos = pos + instruction_length
-
-  let num_points = previous_end_point + 1
-  let flags = []
-  while flags.length() < num_points {
-    match require_glyph_bytes(length, pos, 1) {
-      Err(error) => return Err(error)
-      Ok(_) => ()
-    }
-    let flag = data[offset + pos].to_int()
-    pos = pos + 1
-    flags.push(flag)
-    if flag.land(0x08) != 0 {
-      match require_glyph_bytes(length, pos, 1) {
-        Err(error) => return Err(error)
-        Ok(_) => ()
-      }
-      let repeat_count = data[offset + pos].to_int()
-      pos = pos + 1
-      for _ in 0..<repeat_count {
-        flags.push(flag)
-      }
-    }
-  }
-
-  let x_bytes = glyph_coordinate_bytes(flags, num_points, is_x=true)
-  match require_glyph_bytes(length, pos, x_bytes) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  pos = pos + x_bytes
-  let y_bytes = glyph_coordinate_bytes(flags, num_points, is_x=false)
-  match require_glyph_bytes(length, pos, y_bytes) {
-    Err(error) => return Err(error)
-    Ok(_) => ()
-  }
-  Ok(())
-}
-
-///|
-fn validate_composite_glyph_data(
-  data : Bytes,
-  offset : Int32,
-  length : Int32,
-) -> Result[Unit, FontParseError] {
-  let arg_1_and_2_are_words = 0x0001
-  let more_components = 0x0020
-  let we_have_a_scale = 0x0008
-  let we_have_an_x_and_y_scale = 0x0040
-  let we_have_a_two_by_two = 0x0080
-
-  let mut pos = 10
-  let mut has_more = true
-  while has_more {
-    match require_glyph_bytes(length, pos, 4) {
-      Err(error) => return Err(error)
-      Ok(_) => ()
-    }
-    let flags = read_u16_be_at(data, offset + pos).to_int()
-    pos = pos + 4
-    let argument_len = if flags.land(arg_1_and_2_are_words) != 0 {
-      4
-    } else {
-      2
-    }
-    match require_glyph_bytes(length, pos, argument_len) {
-      Err(error) => return Err(error)
-      Ok(_) => ()
-    }
-    pos = pos + argument_len
-    let scale_len = if flags.land(we_have_a_scale) != 0 {
-      2
-    } else if flags.land(we_have_an_x_and_y_scale) != 0 {
-      4
-    } else if flags.land(we_have_a_two_by_two) != 0 {
-      8
-    } else {
-      0
-    }
-    match require_glyph_bytes(length, pos, scale_len) {
-      Err(error) => return Err(error)
-      Ok(_) => ()
-    }
-    pos = pos + scale_len
-    has_more = flags.land(more_components) != 0
-  }
-  Ok(())
-}
-
-///|
-fn glyph_coordinate_bytes(
-  flags : Array[Int32],
-  num_points : Int32,
-  is_x~ : Bool,
-) -> Int32 {
-  let short_vector = if is_x { 0x02 } else { 0x04 }
-  let same_or_positive = if is_x { 0x10 } else { 0x20 }
-  let mut total = 0
-  for i in 0..<num_points {
-    let flag = flags[i]
-    if flag.land(short_vector) != 0 {
-      total = total + 1
-    } else if flag.land(same_or_positive) == 0 {
-      total = total + 2
-    }
-  }
-  total
 }
 
 ///|

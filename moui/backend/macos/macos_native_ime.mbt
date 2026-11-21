@@ -29,6 +29,9 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
   self : MacosNativeHostBackend,
   window_id : @host.WindowId,
 ) -> Bool {
+  if self.native_ime_runtime_smoke_in_present {
+    return false
+  }
   if !self.native_ime_runtime_smoke || self.native_ime_runtime_smoke_done {
     return false
   }
@@ -92,6 +95,19 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
   title~ : String,
   prefix~ : String,
 ) -> Bool {
+  // The smoke starts on the first present, while the primary window is still
+  // being shown and made key. `active_runtime_slot()` resolves to nothing
+  // until the window phase is focused, so every IME sync would silently no-op
+  // and the candidate anchor could never pass. Wait for the key window the
+  // same way the later phases wait for redraws.
+  let window_focused = match runtime_slot.record.phase {
+    WindowFocused => true
+    _ => false
+  }
+  if !window_focused {
+    self.request_platform_redraw(window_id)
+    return false
+  }
   ignore(
     runtime_slot.driver.dispatch(Focus(@host.HostFocusEvent::new(focused=true))),
   )
@@ -559,7 +575,13 @@ fn MacosNativeHostBackend::present_native_ime_smoke_frame(
       let before = renderer.present_count()
       ignore(platform_slot)
       ignore(runtime_slot)
-      ignore(self.redraw_window(window_id))
+      // The nested present re-enters `finish_presented_window`; suppress the
+      // smoke for that frame so this phase runs to completion instead of
+      // recursing into itself.
+      self.native_ime_runtime_smoke_in_present = true
+      let presented = self.redraw_window(window_id)
+      self.native_ime_runtime_smoke_in_present = false
+      ignore(presented)
       renderer.present_count() > before
     }
     _ => false

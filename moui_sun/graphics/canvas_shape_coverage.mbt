@@ -691,8 +691,10 @@ fn Canvas::cover_scratch_for(self : Canvas, width : Int32) -> Array[Double] {
 }
 
 ///|
-/// Grow-on-demand fully opaque colour row for bulk span blits. Rewritten only
-/// when the colour changes; a frame of same-coloured fills pays one pass.
+/// Grow-on-demand fully opaque colour row for bulk span blits. Rewritten when
+/// the colour changes, or when the requested width exceeds the prefix written
+/// for that colour; reusing a longer buffer without refilling would blit the
+/// previous shape's colour into the tail of the new shape's rows.
 fn Canvas::solid_pattern_for(
   self : Canvas,
   color : Color,
@@ -703,6 +705,7 @@ fn Canvas::solid_pattern_for(
   let green = color.g.to_int()
   let blue = color.b.to_int()
   let reusable = self.solid_pattern_scratch.length() >= bytes &&
+    self.solid_pattern_width >= width &&
     self.solid_pattern_red == red &&
     self.solid_pattern_green == green &&
     self.solid_pattern_blue == blue
@@ -719,6 +722,7 @@ fn Canvas::solid_pattern_for(
     self.solid_pattern_red = red
     self.solid_pattern_green = green
     self.solid_pattern_blue = blue
+    self.solid_pattern_width = width
   }
   self.solid_pattern_scratch
 }

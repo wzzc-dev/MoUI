@@ -476,7 +476,18 @@ fn SunRasterRenderer::sun_text_run_entry(
   match self.text_run_cache.get(key) {
     Some(entry) => entry
     None => {
-      let faces = self.resolved_faces(run.font)
+      let mut faces = self.resolved_faces(run.font)
+      // The first run with codepoints no registered face covers reads a
+      // system CJK fallback face once and re-resolves. Registration clears
+      // this cache, so the re-resolved faces build the cached entry.
+      if !self.cjk_fallback_attempted &&
+        @sun_text.plan_font_fallback(faces, run.text).get_missing_char_count() >
+        0 {
+        self.cjk_fallback_attempted = true
+        if self.register_platform_cjk_fallback() {
+          faces = self.resolved_faces(run.font)
+        }
+      }
       let entry = {
         faces,
         plan: sun_text_line_plan(faces, run.text, config),
@@ -496,4 +507,4 @@ fn SunRasterRenderer::sun_text_run_entry(
 }
 
 ///|
-let sun_text_run_cache_capacity : Int32 = 512
+let sun_text_run_cache_capacity : Int32 = 2048

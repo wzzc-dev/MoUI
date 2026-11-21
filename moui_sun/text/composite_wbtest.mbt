@@ -61,17 +61,44 @@ fn assert_point(point : GlyphPoint, x : Int32, y : Int32) -> Unit raise {
 }
 
 ///|
-fn make_composite_transform_font() -> Font {
+/// Build a font from pre-decoded outlines. Hand-built fonts (tests) pass real
+/// glyphs; parsed fonts use the lazy `glyph_memo` path instead.
+fn Font::from_predecoded(
+  head~ : FontHead,
+  hhea~ : FontHhea,
+  hmtx~ : Array[LongHorMetric],
+  cmap~ : Map[Int32, Int32],
+  glyphs~ : Array[GlyphData],
+  glyph_count~ : Int32,
+  kern~ : Array[KernPair],
+) -> Font {
   {
-    head: { units_per_em: 10, index_to_loc_format: 0, },
-    hhea: { ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
-    hmtx: [
+    head,
+    hhea,
+    hmtx,
+    cmap,
+    glyphs,
+    data: Bytes::from_array([]),
+    glyf_offset: 0,
+    loca: [],
+    glyph_memo: FixedArray::make(0, None),
+    glyph_count,
+    kern,
+  }
+}
+
+///|
+fn make_composite_transform_font() -> Font {
+  Font::from_predecoded(
+    head={ units_per_em: 10, index_to_loc_format: 0, },
+    hhea={ ascent: 10, descent: 0, line_gap: 0, num_h_metrics: 3, },
+    hmtx=[
       { advance_width: 0, lsb: 0, },
       { advance_width: 10, lsb: 0, },
       { advance_width: 10, lsb: 0, },
     ],
-    cmap: Map([]),
-    glyphs: [
+    cmap=Map([]),
+    glyphs=[
       Empty,
       Simple(make_transform_base_glyph()),
       Composite([
@@ -104,9 +131,9 @@ fn make_composite_transform_font() -> Font {
         },
       ]),
     ],
-    glyph_count: 3,
-    kern: [],
-  }
+    glyph_count=3,
+    kern=[],
+  )
 }
 
 ///|

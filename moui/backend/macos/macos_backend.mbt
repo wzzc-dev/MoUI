@@ -72,6 +72,10 @@ pub struct MacosHostAppOptions {
 pub struct MacosHostSmokeOptions {
   priv first_frame_smoke_auto_exit : Bool
   priv native_ime_runtime_smoke : Bool
+  /// Drive a synthetic slider drag (pointer down + move stream) and report
+  /// present-to-present latency, so Sun/Skia interaction cadence is measured,
+  /// not felt.
+  priv slider_drag_smoke : Bool
   /// When > 0, keep presenting for this many milliseconds after warm-up and
   /// emit a performance summary line. Mutually exclusive with first-frame
   /// auto-exit in normal use; first-frame takes precedence if both are set.
@@ -120,6 +124,16 @@ struct MacosNativeHostBackend {
   /// declared revision has not changed.
   mut window_drag_window : @host.WindowId?
   native_ime_runtime_smoke : Bool
+  /// Re-entrancy guard: the smoke presents frames of its own, and every
+  /// present re-enters `finish_presented_window`; without this guard a smoke
+  /// phase recurses into itself and never completes.
+  mut native_ime_runtime_smoke_in_present : Bool
+  slider_drag_smoke : Bool
+  mut slider_drag_smoke_done : Bool
+  mut slider_drag_smoke_down_dispatched : Bool
+  mut slider_drag_smoke_x : Double
+  mut slider_drag_smoke_last_present_ms : Double
+  slider_drag_smoke_intervals_ms : Array[Double]
   mut native_ime_runtime_smoke_done : Bool
   mut native_ime_runtime_smoke_phase : Int32
   mut native_ime_runtime_smoke_wait_redraws : Int32
@@ -235,6 +249,7 @@ pub fn MacosHostAppOptions::dock_icon_path(
 pub fn MacosHostSmokeOptions::new(
   first_frame_smoke_auto_exit~ : Bool = false,
   native_ime_runtime_smoke~ : Bool = false,
+  slider_drag_smoke~ : Bool = false,
   performance_smoke_duration_ms~ : Int32 = 0,
   performance_smoke_warm_up_presents~ : Int32 = 30,
   performance_smoke_refresh_hz~ : Int32 = 60,
@@ -246,6 +261,7 @@ pub fn MacosHostSmokeOptions::new(
   {
     first_frame_smoke_auto_exit,
     native_ime_runtime_smoke,
+    slider_drag_smoke,
     performance_smoke_duration_ms,
     performance_smoke_warm_up_presents,
     performance_smoke_refresh_hz,

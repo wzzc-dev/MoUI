@@ -38,6 +38,10 @@ pub fn[Msg] route_header(
         theme=resolved_theme,
         width=title_width,
         height=24.0,
+        // The subtitle is prose (route summary + badge), not a label. Without
+        // wrapping it grows past the header's box and paints over the pane's
+        // right edge at narrower widths.
+        wrap=true,
       ),
     )
   }
@@ -78,7 +82,9 @@ pub fn[Msg] route_header(
       align=Center,
     ),
     width~,
-    height=if subtitle == "" { 58.0 } else { 78.0 },
+    // No fixed height: the wrapped subtitle decides the header height. The
+    // title/subtitle rows already provide the minimum height a short header
+    // had at a fixed 58/78.
     variant=Base,
     theme=resolved_theme,
     padding~,

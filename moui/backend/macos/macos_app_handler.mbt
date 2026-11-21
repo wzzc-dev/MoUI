@@ -346,8 +346,29 @@ fn MacosNativeHostBackend::finish_presented_window(
   runtime_slot : @window_lifecycle.WindowRuntimeSlot,
 ) -> Bool {
   macos_frame_log_record(macos_perf_now_ms())
-  if self.record_native_ime_runtime_smoke(window_id) {
+  if self.record_slider_drag_smoke(window_id) {
     true
+  } else if self.slider_drag_smoke && !self.slider_drag_smoke_done {
+    // The drag smoke owns the run while it waits for the key window; the
+    // first frame has presented, so disarm the first-frame pump watchdog and
+    // make sure the primary window is on screen.
+    self.core.first_frame_smoke_auto_exit = false
+    if runtime_slot.record.primary {
+      self.show_primary_window_after_first_present(window_id)
+    }
+    false
+  } else if self.record_native_ime_runtime_smoke(window_id) {
+    true
+  } else if self.native_ime_runtime_smoke && !self.native_ime_runtime_smoke_done {
+    // The IME smoke owns the run while it waits for the key window or one of
+    // its own frames. The first frame has presented, so disarm the first-frame
+    // pump watchdog and put the primary window on screen: the smoke's IME
+    // syncs resolve `active_runtime_slot()` only once the window is focused.
+    self.core.first_frame_smoke_auto_exit = false
+    if runtime_slot.record.primary {
+      self.show_primary_window_after_first_present(window_id)
+    }
+    false
   } else if @apphost.finish_first_frame_smoke_auto_exit(
       platform_name="macOS",
       title=runtime_slot.record.title,

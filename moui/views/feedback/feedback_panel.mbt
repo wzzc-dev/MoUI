@@ -16,11 +16,29 @@ fn[Msg] feedback_panel(
   let rows : Array[@core.View[Msg]] = []
   if title != "" {
     rows.push(
-      @text.text(title, role=Control, theme~, width=text_width, height=24.0),
+      @text.text(
+        title,
+        role=Control,
+        theme~,
+        width=text_width,
+        height=24.0,
+        wrap=true,
+      ),
     )
   }
+  // A feedback message is prose, not a label: it must wrap at the panel's inner
+  // width. Single-line layout widened the stretched column that hosts a callout
+  // whenever the message did not fit (Showcase Patterns overview overflowed its
+  // detail pane and pushed right-aligned controls off the window).
   rows.push(
-    @text.text(message, role=Caption, theme~, width=text_width, height=28.0),
+    @text.text(
+      message,
+      role=Caption,
+      theme~,
+      width=text_width,
+      height=28.0,
+      wrap=true,
+    ),
   )
   let body = @layout.column(rows, spacing=theme.spacing_scale.xs, align=Start)
   let content : @core.View[Msg] = match action {

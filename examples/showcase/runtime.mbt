@@ -21,6 +21,10 @@ pub fn runtime(
   } else {
     model
   }
+  let model = match @env.get_env_var("MOUI_SHOWCASE_ROUTE") {
+    Some(route) => model.update(Navigate(route))
+    None => model
+  }
   let program = match route_host {
     Some(host) => model.program_with_route_host(host, environment~)
     None => model.program_with_environment(environment)

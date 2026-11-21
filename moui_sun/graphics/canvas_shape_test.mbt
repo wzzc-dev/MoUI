@@ -1676,6 +1676,47 @@ test "Canvas::fill_rounded_rect matches rounded path fill" {
 }
 
 ///|
+test "Canvas::fill_rounded_rect keeps solid colour row in step with width" {
+  // Regression: the reusable opaque colour row kept its bytes for "same colour"
+  // even after a narrower shape refilled only a prefix, so a later wider shape
+  // of that colour blitted the previous shape's pixels into its tail (the
+  // Showcase's vertical gray band). Red 200 wide, green 100 wide, green 150
+  // wide: every pixel under the last shape must be green.
+  let canvas = @graphics.Canvas::new(260, 40)
+  canvas.clear(@graphics.Color::white())
+  canvas.fill_rounded_rect(
+    0.0,
+    0.0,
+    200.0,
+    40.0,
+    8.0,
+    @graphics.Paint::new().set_color(@graphics.Color::red()),
+  )
+  canvas.fill_rounded_rect(
+    0.0,
+    0.0,
+    100.0,
+    40.0,
+    8.0,
+    @graphics.Paint::new().set_color(@graphics.Color::green()),
+  )
+  canvas.fill_rounded_rect(
+    0.0,
+    0.0,
+    150.0,
+    40.0,
+    8.0,
+    @graphics.Paint::new().set_color(@graphics.Color::green()),
+  )
+  let pixmap = canvas.get_pixmap()
+  assert_eq(pixmap.get_pixel(60, 20), @graphics.Color::green())
+  // 120 sits inside the prefix the second shape never painted; before the fix
+  // it kept the first shape's red instead of the third shape's green.
+  assert_eq(pixmap.get_pixel(120, 20), @graphics.Color::green())
+  assert_eq(pixmap.get_pixel(220, 20), @graphics.Color::white())
+}
+
+///|
 test "Canvas::fill_rounded_rect_corners matches corner path fill" {
   let helper_canvas = @graphics.Canvas::new(8, 6)
   helper_canvas.clear(@graphics.Color::white())
