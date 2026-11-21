@@ -20,11 +20,14 @@ minor; no patch exception ledger is maintained.
 ## 0.7.x Line
 
 The current synchronized line is `0.7.x`. `0.7.0` ("Linux frame clock, Sun
-parity, window chrome") advances every public module together, and the pre-1
-policy is unchanged: a 0.x minor may break with an upgrade note and migration
-example, and the external consumer gate still runs. `checks/compatibility-policy.json`
-`currentReleaseLine` is the machine-readable source of truth; the docs,
-module manifests, and `docs/compatibility-matrix.md` must agree with it.
+parity, window chrome") advances every public module together, and `0.7.1` is a
+patch on the same line: it aligns the Sun renderer's Linux font candidates with
+the Skia list (bug fix, no public API, package boundary, or wire-contract
+change). The pre-1 policy is unchanged: a 0.x minor may break with an upgrade
+note and migration example, and the external consumer gate still runs.
+`checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
+source of truth; the docs, module manifests, and
+`docs/compatibility-matrix.md` must agree with it.
 
 ## 0.4.0 Architecture Program
 
