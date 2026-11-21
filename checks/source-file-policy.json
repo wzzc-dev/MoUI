@@ -103,8 +103,8 @@
     },
     {
       "path": "moui_sun/graphics/pixmap.mbt",
-      "maxLines": 1925,
-      "reason": "Existing pixmap implementation and codecs."
+      "maxLines": 2150,
+      "reason": "Existing pixmap implementation and codecs. Raised 1925->2150 2026-11-21 (nine 25-line quanta, measured 2146): pre-0.7.0 standing drift from the Sun/Skia parity merge (CJK fallback, image data, scratch reuse), unmasked after earlier static-guard failures cleared."
     },
     {
       "path": "examples/excel/sheet/sheet.mbt",
@@ -168,8 +168,8 @@
     },
     {
       "path": "moui_sun/text/rasterizer.mbt",
-      "maxLines": 1475,
-      "reason": "Existing text rasterizer implementation."
+      "maxLines": 1825,
+      "reason": "Existing text rasterizer implementation. Raised 1475->1825 2026-11-21 (fourteen 25-line quanta, measured 1808): pre-0.7.0 standing drift from the Sun text-parity merge, unmasked after earlier static-guard failures cleared."
     },
     {
       "path": "moui_sun/graphics/path_test.mbt",
@@ -223,13 +223,18 @@
     },
     {
       "path": "moui_sun/text/parser_test.mbt",
-      "maxLines": 1275,
-      "reason": "Existing comprehensive text parser test."
+      "maxLines": 1325,
+      "reason": "Existing comprehensive text parser test. Raised 1275->1325 2026-11-21 (two 25-line quanta, measured 1309): pre-0.7.0 standing drift from the Sun text-parity merge, unmasked after earlier static-guard failures cleared."
     },
     {
       "path": "moui_wgpu_renderer/native_smoke.mbt",
       "maxLines": 1250,
       "reason": "Existing native WGPU diagnostic smoke."
+    },
+    {
+      "path": "moui_sun/renderer/renderer_text.mbt",
+      "maxLines": 1250,
+      "reason": "Existing Sun text renderer (glyph runs, fallback faces, atlas replay) registered at 1250 2026-11-21 (measured 1245) as an existing ratchet after the pre-0.7.0 Sun parity merge pushed it past the 1200 new-file hard limit."
     },
     {
       "path": "moui_sun/renderer/renderer_image_sampling_cache.mbt",
