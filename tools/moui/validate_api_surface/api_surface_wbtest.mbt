@@ -148,7 +148,7 @@ test "classification failures name unclassified core lines" {
 test "classification budgets declare the expected ceilings" {
   assert_eq(
     budget_max_count("moui/core/pkg.generated.mbti", "advanced_core_protocol"),
-    Some(1306),
+    Some(1307),
   )
   assert_eq(
     budget_max_count("moui/core/pkg.generated.mbti", "required_protocol"),

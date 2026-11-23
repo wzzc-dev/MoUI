@@ -181,3 +181,112 @@ test "markdown document info panel renders metric groups" {
   assert_true(markdown_panel_has_text(commands, "Footnotes"))
   assert_true(markdown_panel_has_text(commands, "1"))
 }
+
+///|
+fn markdown_panel_max_text_right(commands : Array[@core.DrawCommand]) -> Double {
+  let mut right = 0.0
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText(run) => {
+        let edge = run.frame.origin.x + run.frame.size.width
+        if edge > right {
+          right = edge
+        }
+      }
+      _ => ()
+    }
+  }
+  right
+}
+
+///|
+fn markdown_panel_find_bar_view(
+  theme : @moui.Theme,
+  width : Double,
+  compact : Bool,
+) -> @moui.View[Int32] {
+  markdown_find_bar(
+    theme~,
+    query="needle",
+    replace_text="thread",
+    options=MarkdownFindOptions::default(),
+    status_label="1/2",
+    on_query_input=_ => 0,
+    on_replace_input=_ => 0,
+    on_submit_query=1,
+    on_submit_replace=2,
+    on_toggle_case_sensitive=3,
+    on_toggle_whole_word=4,
+    on_toggle_regex=5,
+    on_previous=6,
+    on_next=7,
+    on_replace_current=8,
+    on_replace_all=9,
+    on_close=10,
+    width~,
+    compact~,
+  )
+}
+
+///|
+test "compact find bar drops the inline captions and keeps every control" {
+  let theme = markdown_panel_theme()
+  let commands = markdown_panel_draw_commands(
+    markdown_panel_find_bar_view(theme, 760.0, true),
+    760.0,
+    64.0,
+  )
+  // The captions are gone — their fields keep the placeholders — so the
+  // trailing replace/close buttons get the space instead of being clipped.
+  assert_false(markdown_panel_has_text(commands, "Find"))
+  // "Replace" survives exactly once, as the replace-current button label.
+  let replace_runs = markdown_panel_texts(commands)
+    .filter(text => text == "Replace")
+    .length()
+  assert_eq(replace_runs, 1, msg="only the button keeps the Replace label")
+  assert_true(markdown_panel_has_text(commands, "Aa"))
+  assert_true(markdown_panel_has_text(commands, "W"))
+  assert_true(markdown_panel_has_text(commands, ".*"))
+  assert_true(markdown_panel_has_text(commands, "1/2"))
+  assert_true(markdown_panel_has_text(commands, "All"))
+}
+
+///|
+test "compact find bar fits the width the full bar overflows" {
+  let theme = markdown_panel_theme()
+  let full = markdown_panel_draw_commands(
+    markdown_panel_find_bar_view(theme, 760.0, false),
+    760.0,
+    64.0,
+  )
+  let compact = markdown_panel_draw_commands(
+    markdown_panel_find_bar_view(theme, 760.0, true),
+    760.0,
+    64.0,
+  )
+  // The full bar keeps its MoMark widths and runs past a 760pt slot …
+  assert_true(
+    markdown_panel_max_text_right(full) > 760.0,
+    msg="full bar overflows a narrow window",
+  )
+  // … while compact stays inside it.
+  assert_true(
+    markdown_panel_max_text_right(compact) <= 760.0,
+    msg="compact bar fits",
+  )
+}
+
+///|
+test "compact find bar keeps the replace and close actions on screen" {
+  let theme = markdown_panel_theme()
+  let bar = markdown_panel_find_bar_view(theme, 760.0, true)
+  let commands = markdown_panel_draw_commands(bar, 760.0, 64.0)
+  // The rightmost controls are still laid out inside a 760pt slot: the close
+  // button's glyph run ends around 742 and never runs past the bar.
+  assert_true(
+    markdown_panel_max_text_right(commands) <= 760.0,
+    msg="compact content stays inside the slot",
+  )
+  assert_true(markdown_panel_has_text(commands, "All"))
+  assert_true(markdown_panel_has_text(commands, "Replace"))
+}

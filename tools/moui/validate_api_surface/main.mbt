@@ -507,8 +507,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // the standing drift. W2 (moui_p5 extraction) renamed that buffer to
       // the neutral RgbaBuffer and added its PNG encode entry: measured
       // 3059 / 1294 / 158.
-      max_lines: 3059,
-      max_pub_lines: 1294,
+      // 0.9.0 tree/label/menu increment: View::on_context_menu_key (+1 pub),
+      // the keyboard route for the menu key that had only a pointer path.
+      max_lines: 3060,
+      max_pub_lines: 1295,
       max_pub_all_lines: 158,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",

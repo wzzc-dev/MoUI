@@ -56,7 +56,11 @@ pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColu
 
 pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?, dimmed? : Bool) -> TreeItem
 
-pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn tree_navigation_target(@core.KeyboardEvent, Array[TreeItem], expanded~ : Array[String], active~ : String) -> TreeNavigationTarget?
+
+pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, active? : String, on_activate? : ((String) -> Msg)?, on_secondary_tap_with_frame? : ((String, @core.Point, @core.Rect) -> Msg)?, hovered? : String, on_hover? : ((String, Bool) -> Msg)?, indent_guides? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn tree_visible_ids(Array[TreeItem], expanded~ : Array[String]) -> Array[String]
 
 pub fn[T] variable_list_metrics(Array[T], (T) -> String, (T) -> Double, spacing? : Double) -> VariableListMetrics
 
@@ -281,6 +285,20 @@ pub struct TreeItem {
   icon : @style.IconName?
   icon_color : @core.Color?
   dimmed : Bool
+}
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub enum TreeNavigationEffect {
+  Focus
+  Expand
+  Collapse
+  Activate
+}
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct TreeNavigationTarget {
+  id : String
+  effect : TreeNavigationEffect
 }
 
 pub struct VariableListAnchor {

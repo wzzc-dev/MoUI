@@ -787,3 +787,72 @@ fn[Msg] OnKeyboardInputModifier::to_any_modifier(
     },
   }
 }
+
+///|
+/// Keyboard context-menu trigger, with position and frame.
+///
+/// Right-click is not the only way into a context menu: Shift+F10 and the
+/// dedicated Menu key are the platform keyboard equivalents, and a host wired
+/// only through `on_secondary_tap_with_frame` leaves those users without a
+/// menu. This modifier fires only while the element is focused and hands the
+/// same `(point, frame)` pair, so one anchor rule serves both paths. The point
+/// is the frame's bottom-left corner: a keyboard invocation has no pointer, and
+/// a menu opening at the element's lower edge reads as anchored to it instead
+/// of floating at the window origin.
+priv struct OnContextMenuKeyModifier[Msg] {
+  handler : (Point, Rect) -> Msg
+}
+
+///|
+fn[Msg] OnContextMenuKeyModifier::to_any_modifier(
+  self : OnContextMenuKeyModifier[Msg],
+) -> AnyModifier[Msg] {
+  let handler = self.handler
+  {
+    ..noop_modifier(),
+    identity_kind: "OnContextMenuKey",
+    focusable: true,
+    event: fn(ctx) {
+      match ctx.event {
+        Keyboard(event) if ctx.focused && is_context_menu_key(event) => {
+          let frame = match ctx.child_frames {
+            [cf, ..] => cf
+            [] => ctx.frame
+          }
+          {
+            changed: true,
+            activated: false,
+            focused: false,
+            captured: true,
+            state: None,
+            text_control: None,
+            dirty: ViewPaintDirty,
+            messages: [
+              handler(
+                Point::new(
+                  x=frame.origin.x,
+                  y=frame.origin.y + frame.size.height,
+                ),
+                frame,
+              ),
+            ],
+          }
+        }
+        _ => ViewEventResult::ignored()
+      }
+    },
+  }
+}
+
+///|
+/// Whether a key event is a platform context-menu request: the dedicated
+/// Menu/ContextMenu key, or Shift+F10 (Windows and GTK both bind it).
+fn is_context_menu_key(event : KeyboardEvent) -> Bool {
+  if !event.pressed {
+    return false
+  }
+  let key = if event.key != "" { event.key } else { event.code }
+  key == "ContextMenu" ||
+  key == "Menu" ||
+  (key == "F10" && event.modifiers.shift)
+}
