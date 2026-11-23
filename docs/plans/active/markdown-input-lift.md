@@ -54,12 +54,14 @@ pub fn MarkdownEditorTarget::has_openable_target(self : MarkdownEditorTarget) ->
 
 // moui_richtext/markdown_edit_history.mbt (new)
 pub(all) enum MarkdownEditKind { Insert; Backspace; ForwardDelete; Other }
-pub(all) struct MarkdownEditOutcome { source : String; caret : Int32 }
+pub(all) struct MarkdownEditOutcome { source : String; caret : Int32; selection : MarkdownEditorSelection? }
 pub struct MarkdownEditHistory { /* fields stay package-private */ }
 pub fn MarkdownEditHistory::new() -> MarkdownEditHistory
 pub fn MarkdownEditHistory::record(
   self : MarkdownEditHistory, before~ : String, after~ : String,
   kind~ : MarkdownEditKind, at_ms~ : Int64,
+  selection_before~ : MarkdownEditorSelection? = None,
+  selection_after~ : MarkdownEditorSelection? = None,
 ) -> Unit
 pub fn MarkdownEditHistory::undo(self : MarkdownEditHistory, source~ : String) -> MarkdownEditOutcome?
 pub fn MarkdownEditHistory::redo(self : MarkdownEditHistory, source~ : String) -> MarkdownEditOutcome?
@@ -90,7 +92,7 @@ pub fn[Msg] markdown_format_bubble(
 ) -> @moui.View[Msg]
 ```
 
-Rules: `palette~` feeds the session the reader builds; `compact_blank_gaps~` folds inactive gaps via `markdown_editor_collapse_inactive_blank_gaps` for hit testing and painting too. Wikilinks: `[[t]]` → `Link` with `text = t`, `wiki = true`; `[[t|label]]` → `text = label`; empty target is not a link; syntax only under `with_wiki_links(Some(..))`. `target` keeps the raw text (lossless round-trips) and `resolve` applies only at `target_at`/click time; `wiki = true`, not a URL prefix, drives `[[...]]` write-back, so `[x](wiki:foo)` is never rewritten. Target precedence is `HtmlBlockTarget` > `FootnoteTarget` > `LinkTarget` > `ImageTarget` > `TableTools` > `PlainSelection`: footnote runs before link because `[^1]` is a legal CommonMark reference link once defined, and the link probe would hand the footnote body over as a URL. Undo merges same-kind single-character edits within 500 ms, with the clock passed in as `at_ms~`; `undo`/`redo` return `None` on a diverged source. Menu `action` is the existing command word (`"bold"`, `"table-row"`, …) so one string maps to one `Msg`; the bubble flips below the caret when it would leave the viewport, clamps y, never clamps x.
+Rules: `palette~` feeds the session the reader builds; `compact_blank_gaps~` folds inactive gaps via `markdown_editor_collapse_inactive_blank_gaps` for hit testing and painting too. Wikilinks: `[[t]]` → `Link` with `text = t`, `wiki = true`; `[[t|label]]` → `text = label`; empty target is not a link; syntax only under `with_wiki_links(Some(..))`. `target` keeps the raw text (lossless round-trips) and `resolve` applies only at `target_at`/click time; `wiki = true`, not a URL prefix, drives `[[...]]` write-back, so `[x](wiki:foo)` is never rewritten. Target precedence is `HtmlBlockTarget` > `FootnoteTarget` > `LinkTarget` > `ImageTarget` > `TableTools` > `PlainSelection`: footnote runs before link because `[^1]` is a legal CommonMark reference link once defined, and the link probe would hand the footnote body over as a URL. Undo merges same-kind single-character edits within 500 ms, with the clock passed in as `at_ms~`; `undo`/`redo` return `None` on a diverged source and hand back the recorded `MarkdownEditorSelection?` (pre-edit on undo, post-edit on redo; `None` falls back to the caret). Menu `action` is the existing command word (`"bold"`, `"table-row"`, …) so one string maps to one `Msg`; the bubble flips below the caret when it would leave the viewport, clamps y, never clamps x.
 
 ## Workstreams
 

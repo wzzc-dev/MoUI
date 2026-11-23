@@ -19,11 +19,14 @@ pub extend MarkdownEditKind with Debug::{to_repr}
 pub extend MarkdownEditKind with Eq::{not_equal, equal}
 
 ///|
-/// The document text and caret to restore, as returned by `undo`/`redo`.
+/// The document text, caret and selection to restore, as returned by
+/// `undo`/`redo`. `selection` is `None` when the edit was recorded without
+/// one, and the caller then falls back to a collapsed caret.
 #derive(Eq, Debug)
 pub(all) struct MarkdownEditOutcome {
   source : String
   caret : Int32
+  selection : MarkdownEditorSelection?
 }
 
 ///|
@@ -42,6 +45,8 @@ priv struct MarkdownEditEntry {
   after : String
   caret_before : Int32
   caret_after : Int32
+  selection_before : MarkdownEditorSelection?
+  selection_after : MarkdownEditorSelection?
 }
 
 ///|
@@ -188,12 +193,19 @@ fn markdown_edit_group_delta(kind : MarkdownEditKind) -> Int32 {
 /// Record one completed edit. `before` must be the source the editor had
 /// before the edit and `after` the source it has now; a call where both are
 /// equal is a no-op that also closes the open group.
+///
+/// `selection_before` and `selection_after` are optional so existing callers
+/// keep compiling; when given, `undo`/`redo` hand the matching selection back
+/// in the outcome. A merged single-character group keeps the selection from
+/// the first edit and the caret/selection from the last one.
 pub fn MarkdownEditHistory::record(
   self : MarkdownEditHistory,
   before~ : String,
   after~ : String,
   kind~ : MarkdownEditKind,
   at_ms~ : Int64,
+  selection_before~ : MarkdownEditorSelection? = None,
+  selection_after~ : MarkdownEditorSelection? = None,
 ) -> Unit {
   if before == after {
     self.group = None
@@ -223,6 +235,8 @@ pub fn MarkdownEditHistory::record(
       after,
       caret_before: top.caret_before,
       caret_after: markdown_edit_caret_after(kind, delta),
+      selection_before: top.selection_before,
+      selection_after,
     }
     match self.group {
       Some(group) => {
@@ -239,6 +253,8 @@ pub fn MarkdownEditHistory::record(
     after,
     caret_before: markdown_edit_caret_before(kind, delta),
     caret_after: markdown_edit_caret_after(kind, delta),
+    selection_before,
+    selection_after,
   })
   if self.undo.length() > markdown_edit_history_max_entries {
     let _ = self.undo.remove(0)
@@ -275,7 +291,11 @@ pub fn MarkdownEditHistory::undo(
   let _ = self.undo.pop()
   self.redo.push(entry)
   self.group = None
-  Some({ source: entry.before, caret: entry.caret_before, })
+  Some({
+    source: entry.before,
+    caret: entry.caret_before,
+    selection: entry.selection_before,
+  })
 }
 
 ///|
@@ -295,7 +315,11 @@ pub fn MarkdownEditHistory::redo(
   let _ = self.redo.pop()
   self.undo.push(entry)
   self.group = None
-  Some({ source: entry.after, caret: entry.caret_after, })
+  Some({
+    source: entry.after,
+    caret: entry.caret_after,
+    selection: entry.selection_after,
+  })
 }
 
 ///|

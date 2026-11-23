@@ -7,7 +7,10 @@ test "markdown_edit_history merges consecutive inserts inside the window" {
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="ab", kind=Insert, at_ms=100L)
   history.record(before="ab", after="abc", kind=Insert, at_ms=200L)
-  assert_eq(history.undo(source="abc"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="abc"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
   assert_false(history.can_undo())
   assert_true(history.can_redo())
 }
@@ -19,8 +22,14 @@ test "markdown_edit_history does not merge across the window" {
   let history = MarkdownEditHistory::new()
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="ab", kind=Insert, at_ms=501L)
-  assert_eq(history.undo(source="ab"), Some({ source: "a", caret: 1, }))
-  assert_eq(history.undo(source="a"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="ab"),
+    Some({ source: "a", caret: 1, selection: None, }),
+  )
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
   assert_false(history.can_undo())
 }
 
@@ -31,7 +40,10 @@ test "markdown_edit_history does not merge non-contiguous edits" {
   let history = MarkdownEditHistory::new()
   history.record(before="ab", after="xab", kind=Insert, at_ms=0L)
   history.record(before="xab", after="xaby", kind=Insert, at_ms=10L)
-  assert_eq(history.undo(source="xaby"), Some({ source: "xab", caret: 3, }))
+  assert_eq(
+    history.undo(source="xaby"),
+    Some({ source: "xab", caret: 3, selection: None, }),
+  )
   assert_true(history.can_undo())
 }
 
@@ -43,8 +55,14 @@ test "markdown_edit_history does not merge different kinds" {
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="ab", kind=Insert, at_ms=10L)
   history.record(before="ab", after="b", kind=ForwardDelete, at_ms=20L)
-  assert_eq(history.undo(source="b"), Some({ source: "ab", caret: 0, }))
-  assert_eq(history.undo(source="ab"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="b"),
+    Some({ source: "ab", caret: 0, selection: None, }),
+  )
+  assert_eq(
+    history.undo(source="ab"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
   assert_false(history.can_undo())
 }
 
@@ -56,9 +74,18 @@ test "markdown_edit_history keeps a paste as its own entry" {
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="axy", kind=Other, at_ms=10L)
   history.record(before="axy", after="axyz", kind=Insert, at_ms=20L)
-  assert_eq(history.undo(source="axyz"), Some({ source: "axy", caret: 3, }))
-  assert_eq(history.undo(source="axy"), Some({ source: "a", caret: 1, }))
-  assert_eq(history.undo(source="a"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="axyz"),
+    Some({ source: "axy", caret: 3, selection: None, }),
+  )
+  assert_eq(
+    history.undo(source="axy"),
+    Some({ source: "a", caret: 1, selection: None, }),
+  )
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
 }
 
 ///|
@@ -68,7 +95,10 @@ test "markdown_edit_history does not merge newline insertion" {
   let history = MarkdownEditHistory::new()
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="a\n", kind=Insert, at_ms=10L)
-  assert_eq(history.undo(source="a\n"), Some({ source: "a", caret: 1, }))
+  assert_eq(
+    history.undo(source="a\n"),
+    Some({ source: "a", caret: 1, selection: None, }),
+  )
   assert_true(history.can_undo())
 }
 
@@ -78,7 +108,10 @@ test "markdown_edit_history does not merge newline insertion" {
 test "markdown_edit_history restores the pre-backspace caret" {
   let history = MarkdownEditHistory::new()
   history.record(before="ab", after="a", kind=Backspace, at_ms=0L)
-  assert_eq(history.undo(source="a"), Some({ source: "ab", caret: 2, }))
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "ab", caret: 2, selection: None, }),
+  )
   assert_eq(history.undo(source="a"), None)
 }
 
@@ -89,7 +122,10 @@ test "markdown_edit_history merges consecutive backspaces" {
   let history = MarkdownEditHistory::new()
   history.record(before="abc", after="ab", kind=Backspace, at_ms=0L)
   history.record(before="ab", after="a", kind=Backspace, at_ms=100L)
-  assert_eq(history.undo(source="a"), Some({ source: "abc", caret: 3, }))
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "abc", caret: 3, selection: None, }),
+  )
   assert_false(history.can_undo())
 }
 
@@ -99,7 +135,10 @@ test "markdown_edit_history merges consecutive forward deletes" {
   let history = MarkdownEditHistory::new()
   history.record(before="abc", after="bc", kind=ForwardDelete, at_ms=0L)
   history.record(before="bc", after="c", kind=ForwardDelete, at_ms=100L)
-  assert_eq(history.undo(source="c"), Some({ source: "abc", caret: 0, }))
+  assert_eq(
+    history.undo(source="c"),
+    Some({ source: "abc", caret: 0, selection: None, }),
+  )
   assert_false(history.can_undo())
 }
 
@@ -111,7 +150,10 @@ test "markdown_edit_history rejects a diverged source" {
   history.record(before="", after="a", kind=Other, at_ms=0L)
   assert_eq(history.undo(source="xyz"), None)
   assert_true(history.can_undo())
-  assert_eq(history.undo(source="a"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
   assert_eq(history.redo(source="xyz"), None)
   assert_true(history.can_redo())
 }
@@ -135,9 +177,15 @@ test "markdown_edit_history does not merge into an undone entry" {
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   let _ = history.undo(source="a")
   history.record(before="", after="b", kind=Insert, at_ms=10L)
-  assert_eq(history.undo(source="b"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="b"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
   assert_false(history.can_undo())
-  assert_eq(history.redo(source=""), Some({ source: "b", caret: 1, }))
+  assert_eq(
+    history.redo(source=""),
+    Some({ source: "b", caret: 1, selection: None, }),
+  )
 }
 
 ///|
@@ -185,6 +233,74 @@ test "markdown_edit_history ignores an equal-source record" {
   history.record(before="", after="a", kind=Insert, at_ms=0L)
   history.record(before="a", after="a", kind=Insert, at_ms=10L)
   history.record(before="a", after="ab", kind=Insert, at_ms=20L)
-  assert_eq(history.undo(source="ab"), Some({ source: "a", caret: 1, }))
-  assert_eq(history.undo(source="a"), Some({ source: "", caret: 0, }))
+  assert_eq(
+    history.undo(source="ab"),
+    Some({ source: "a", caret: 1, selection: None, }),
+  )
+  assert_eq(
+    history.undo(source="a"),
+    Some({ source: "", caret: 0, selection: None, }),
+  )
+}
+
+///|
+/// Undo and redo hand the recorded selections back: undo restores the
+/// pre-edit caret and range, redo the post-edit one.
+test "markdown_edit_history restores selections on undo and redo" {
+  let history = MarkdownEditHistory::new()
+  let before_sel : MarkdownEditorSelection = { caret: 0, selection: None, }
+  let after_sel : MarkdownEditorSelection = {
+    caret: 3,
+    selection: Some({ start: 0, end: 3, }),
+  }
+  history.record(
+    before="",
+    after="abc",
+    kind=Other,
+    at_ms=0L,
+    selection_before=Some(before_sel),
+    selection_after=Some(after_sel),
+  )
+  assert_eq(
+    history.undo(source="abc"),
+    Some({ source: "", caret: 0, selection: Some(before_sel), }),
+  )
+  assert_eq(
+    history.redo(source=""),
+    Some({ source: "abc", caret: 3, selection: Some(after_sel), }),
+  )
+}
+
+///|
+/// A merged run keeps the selection from before the first keystroke and the
+/// one after the last, so one undo/redo round-trips the outer range.
+test "markdown_edit_history merges keep the outer selections" {
+  let history = MarkdownEditHistory::new()
+  let start : MarkdownEditorSelection = { caret: 0, selection: None, }
+  let after_a : MarkdownEditorSelection = { caret: 1, selection: None, }
+  let after_ab : MarkdownEditorSelection = { caret: 2, selection: None, }
+  history.record(
+    before="",
+    after="a",
+    kind=Insert,
+    at_ms=0L,
+    selection_before=Some(start),
+    selection_after=Some(after_a),
+  )
+  history.record(
+    before="a",
+    after="ab",
+    kind=Insert,
+    at_ms=10L,
+    selection_before=Some(after_a),
+    selection_after=Some(after_ab),
+  )
+  assert_eq(
+    history.undo(source="ab"),
+    Some({ source: "", caret: 0, selection: Some(start), }),
+  )
+  assert_eq(
+    history.redo(source=""),
+    Some({ source: "ab", caret: 2, selection: Some(after_ab), }),
+  )
 }

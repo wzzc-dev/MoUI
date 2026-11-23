@@ -377,7 +377,7 @@ pub fn MarkdownEditHistory::can_redo(Self) -> Bool
 pub fn MarkdownEditHistory::can_undo(Self) -> Bool
 pub fn MarkdownEditHistory::clear(Self) -> Unit
 pub fn MarkdownEditHistory::new() -> Self
-pub fn MarkdownEditHistory::record(Self, before~ : String, after~ : String, kind~ : MarkdownEditKind, at_ms~ : Int64) -> Unit
+pub fn MarkdownEditHistory::record(Self, before~ : String, after~ : String, kind~ : MarkdownEditKind, at_ms~ : Int64, selection_before? : MarkdownEditorSelection?, selection_after? : MarkdownEditorSelection?) -> Unit
 pub fn MarkdownEditHistory::redo(Self, source~ : String) -> MarkdownEditOutcome?
 pub fn MarkdownEditHistory::undo(Self, source~ : String) -> MarkdownEditOutcome?
 
@@ -396,6 +396,7 @@ pub fn MarkdownEditKind::to_repr(Self) -> @debug.Repr
 pub(all) struct MarkdownEditOutcome {
   source : String
   caret : Int32
+  selection : MarkdownEditorSelection?
 }
 pub fn MarkdownEditOutcome::equal(Self, Self) -> Bool
 pub fn MarkdownEditOutcome::not_equal(Self, Self) -> Bool
