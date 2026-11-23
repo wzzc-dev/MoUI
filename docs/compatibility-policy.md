@@ -17,22 +17,26 @@ A patch release that needs a public symbol, package boundary, host wire
 contract, or app-import change is out of scope. Move the change to the next
 minor; no patch exception ledger is maintained.
 
-## 0.7.x Line
+## 0.8.x Line
 
-The current synchronized line is `0.7.x`. `0.7.0` ("Linux frame clock, Sun
-parity, window chrome") advances every public module together, and `0.7.1` is a
-patch on the same line: it aligns the Sun renderer's Linux font candidates with
-the Skia list (bug fix, no public API, package boundary, or wire-contract
-change). `0.7.2` is the next patch: it makes the Skia asset download observable
-and steerable (progress, mirror listing and choice, default speed probe), again
-tooling only with no public API, package boundary, or wire-contract change.
-`0.7.3` adds the opt-in macOS dev hot-reload loop: a dev-only module plus the
-`moui dev --hot` flag, with no published package or wire-contract change.
-The pre-1 policy is unchanged: a 0.x minor may break with an upgrade
+The current synchronized line is `0.8.x`. `0.8.0` ("Markdown input surface")
+advances every public module together and publishes the WYSIWYG markdown input
+path the first-party apps had duplicated: block and selection targets, edit
+history with selection snapshots, the opt-in wiki-link surface, and the editor
+chrome (context menu, format bubble) in `moui_richtext` and `moui_markdown`.
+Every new parameter carries a default and no existing symbol, package
+boundary, or host wire contract changes, so the release adds public symbols
+only. The pre-1 policy is unchanged: a 0.x minor may break with an upgrade
 note and migration example, and the external consumer gate still runs.
 `checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
 source of truth; the docs, module manifests, and
 `docs/compatibility-matrix.md` must agree with it.
+
+## 0.7.x Line
+
+`0.7.x` is closed: `0.7.0` advanced every public module together, and `0.7.1`
+(font candidates), `0.7.2` (asset download), `0.7.3` (macOS dev hot-reload)
+were patches with no public API, package boundary, or wire-contract change.
 
 ## 0.4.0 Architecture Program
 
@@ -42,9 +46,10 @@ upgrade note and migration examples. No SemVer exception is recorded for this
 program. The release still moves the synchronized line and every public module
 to `0.4.x` together, and it still passes the external consumer gate. The
 synchronized-line policy (ADR 0065) continued on the `0.5.x` line, then the
-`0.6.x` line, and then the `0.7.x` line: each minor advances every public
-module together with the features recorded in `docs/releases/0.5.0.md`,
-`docs/releases/0.6.0.md`, and `docs/releases/0.7.0.md`.
+`0.6.x` line, the `0.7.x` line, and now the `0.8.x` line: each minor advances
+every public module together with the features recorded in
+`docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`, `docs/releases/0.7.0.md`,
+and `docs/releases/0.8.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
 removed from their old package in the same release; in-tree call sites and the

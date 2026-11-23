@@ -2,7 +2,7 @@ name = "wzzc-dev/moui_i18n"
 
 preferred_target = "native"
 
-version = "0.7.3"
+version = "0.8.0"
 
 repository = "https://github.com/wzzc-dev/MoUI.git"
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentReleaseLine": "0.7.x",
+  "currentReleaseLine": "0.8.x",
   "versioning": {
     "scheme": "semver",
     "patch": "bug fixes and documentation only",

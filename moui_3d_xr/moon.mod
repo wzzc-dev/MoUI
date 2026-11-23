@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_3d_xr"
 
-version = "0.7.3"
+version = "0.8.0"
 
 preferred_target = "native"
 
 supported_targets = "+native+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.7.3",
-  "wzzc-dev/moui_3d@0.7.3",
+  "wzzc-dev/moui@0.8.0",
+  "wzzc-dev/moui_3d@0.8.0",
 }
 
 license = "Apache-2.0"
