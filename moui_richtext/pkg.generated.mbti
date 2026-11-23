@@ -113,7 +113,7 @@ pub fn markdown_split_lines(String) -> Array[String]
 
 pub fn markdown_split_table_cells(String) -> Array[String]
 
-pub fn[Msg] markdown_viewer(source~ : String, size~ : @core.Size, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Brush, corner_radius? : Double, on_link_click? : ((String) -> Msg)?, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, key? : String?) -> @core.View[Msg]
+pub fn[Msg] markdown_viewer(source~ : String, size~ : @core.Size, font? : @core.FontSpec, palette? : MarkdownRichTextPalette?, foreground? : @core.Color, background? : @core.Brush, corner_radius? : Double, on_link_click? : ((String) -> Msg)?, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, compact_blank_gaps? : Bool, wiki_links? : MarkdownWikiLinkOptions?, key? : String?) -> @core.View[Msg]
 
 pub fn parse_markdown(String) -> Array[MarkdownBlock]
 
@@ -326,6 +326,7 @@ pub(all) struct MarkdownDocumentSession {
   height_index : MarkdownDocumentHeightIndex
   layout_cache : MarkdownDocumentLayoutCache?
   rich_text_palette : MarkdownRichTextPalette?
+  wiki_links : MarkdownWikiLinkOptions?
 }
 pub fn MarkdownDocumentSession::apply(Self, MarkdownEditTransaction) -> Self
 pub fn MarkdownDocumentSession::equal(Self, Self) -> Bool
@@ -338,10 +339,12 @@ pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, 
 pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
 pub fn MarkdownDocumentSession::source(Self) -> String
 pub fn MarkdownDocumentSession::source_offset_y(Self, Int32, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
+pub fn MarkdownDocumentSession::target_at(Self, MarkdownEditorSelection) -> MarkdownEditorTarget
 pub fn MarkdownDocumentSession::to_json(Self) -> @json.Json
 pub fn MarkdownDocumentSession::to_repr(Self) -> @debug.Repr
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 pub fn MarkdownDocumentSession::with_rich_text_palette(Self, MarkdownRichTextPalette?) -> Self
+pub fn MarkdownDocumentSession::with_wiki_links(Self, MarkdownWikiLinkOptions?) -> Self
 
 pub(all) struct MarkdownDocumentTextStore {
   segments : @ref.Ref[Array[MarkdownTextSegment]]
@@ -366,6 +369,37 @@ pub fn MarkdownDocumentTextStore::to_repr(Self) -> @debug.Repr
 pub impl Eq for MarkdownDocumentTextStore
 pub impl @debug.Debug for MarkdownDocumentTextStore
 pub impl @json.ToJson for MarkdownDocumentTextStore
+
+pub(all) struct MarkdownEditHistory {
+  // private fields
+}
+pub fn MarkdownEditHistory::can_redo(Self) -> Bool
+pub fn MarkdownEditHistory::can_undo(Self) -> Bool
+pub fn MarkdownEditHistory::clear(Self) -> Unit
+pub fn MarkdownEditHistory::new() -> Self
+pub fn MarkdownEditHistory::record(Self, before~ : String, after~ : String, kind~ : MarkdownEditKind, at_ms~ : Int64) -> Unit
+pub fn MarkdownEditHistory::redo(Self, source~ : String) -> MarkdownEditOutcome?
+pub fn MarkdownEditHistory::undo(Self, source~ : String) -> MarkdownEditOutcome?
+
+#derive(Eq, @debug.Debug)
+pub(all) enum MarkdownEditKind {
+  Insert
+  Backspace
+  ForwardDelete
+  Other
+}
+pub fn MarkdownEditKind::equal(Self, Self) -> Bool
+pub fn MarkdownEditKind::not_equal(Self, Self) -> Bool
+pub fn MarkdownEditKind::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct MarkdownEditOutcome {
+  source : String
+  caret : Int32
+}
+pub fn MarkdownEditOutcome::equal(Self, Self) -> Bool
+pub fn MarkdownEditOutcome::not_equal(Self, Self) -> Bool
+pub fn MarkdownEditOutcome::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum MarkdownEditReason {
@@ -545,6 +579,36 @@ pub fn MarkdownEditorSnapshot::parse_with_font(String, @core.FontSpec, base_dir?
 pub fn MarkdownEditorSnapshot::to_json(Self) -> @json.Json
 pub fn MarkdownEditorSnapshot::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct MarkdownEditorTarget {
+  kind : MarkdownEditorTargetKind
+  block_kind : MarkdownBlockKind
+  block_label : String
+  link_target : String?
+  image_target : String?
+  footnote_text : String?
+  html_block_text : String?
+}
+pub fn MarkdownEditorTarget::equal(Self, Self) -> Bool
+pub fn MarkdownEditorTarget::has_openable_target(Self) -> Bool
+pub fn MarkdownEditorTarget::not_equal(Self, Self) -> Bool
+pub fn MarkdownEditorTarget::to_json(Self) -> @json.Json
+pub fn MarkdownEditorTarget::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum MarkdownEditorTargetKind {
+  PlainSelection
+  LinkTarget
+  ImageTarget
+  FootnoteTarget
+  HtmlBlockTarget
+  TableTools
+}
+pub fn MarkdownEditorTargetKind::equal(Self, Self) -> Bool
+pub fn MarkdownEditorTargetKind::not_equal(Self, Self) -> Bool
+pub fn MarkdownEditorTargetKind::to_json(Self) -> @json.Json
+pub fn MarkdownEditorTargetKind::to_repr(Self) -> @debug.Repr
+
 #derive(Eq, @debug.Debug)
 type MarkdownHtmlBlockParseResult
 pub fn MarkdownHtmlBlockParseResult::equal(Self, Self) -> Bool
@@ -568,6 +632,7 @@ pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
+  wiki : Bool
 }
 pub fn MarkdownInline::equal(Self, Self) -> Bool
 pub fn MarkdownInline::not_equal(Self, Self) -> Bool
@@ -710,6 +775,17 @@ pub fn MarkdownTextSegment::equal(Self, Self) -> Bool
 pub fn MarkdownTextSegment::not_equal(Self, Self) -> Bool
 pub fn MarkdownTextSegment::to_json(Self) -> @json.Json
 pub fn MarkdownTextSegment::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct MarkdownWikiLinkOptions {
+  scheme : String
+}
+pub fn MarkdownWikiLinkOptions::equal(Self, Self) -> Bool
+pub fn MarkdownWikiLinkOptions::new(String) -> Self
+pub fn MarkdownWikiLinkOptions::not_equal(Self, Self) -> Bool
+pub fn MarkdownWikiLinkOptions::resolve(Self, String) -> String
+pub fn MarkdownWikiLinkOptions::to_json(Self) -> @json.Json
+pub fn MarkdownWikiLinkOptions::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct RichTextBlock {

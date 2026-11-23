@@ -773,6 +773,13 @@ fn markdown_editor_inline_marker_source_range(
     markdown_editor_single_inline_marker_at_window(chars, range.end, '_') {
     return Some({ start: range.start - 1, end: range.end + 1, })
   }
+  // A wiki link's brackets are not part of the parsed link: mizchi turns
+  // `[[target|label]]` into a Link whose visible span is just `label`, so the
+  // caret can sit inside the label and never see the double brackets.
+  if markdown_editor_window_has_marker(chars, range.start - 2, "[[") &&
+    markdown_editor_window_has_marker(chars, range.end, "]]") {
+    return Some({ start: range.start - 2, end: range.end + 2, })
+  }
   match markdown_editor_reference_source_range(source, chars~, range) {
     Some(reference_range) => return Some(reference_range)
     None => ()
@@ -2699,9 +2706,25 @@ fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String {
       Strikethrough => parts.push("~~" + inline.text + "~~")
       Highlight => parts.push("==" + inline.text + "==")
       Link =>
-        parts.push(
-          "[" + inline.text + "](" + markdown_editor_inline_target(inline) + ")",
-        )
+        if inline.wiki {
+          // Rebuild `[[target]]` / `[[target|label]]` from the *raw* target.
+          // Keying on the marker, not a target prefix, keeps an ordinary
+          // `[label](wiki:foo)` link out of this branch.
+          let body = if inline.text == markdown_editor_inline_target(inline) {
+            markdown_editor_inline_target(inline)
+          } else {
+            markdown_editor_inline_target(inline) + "|" + inline.text
+          }
+          parts.push("[[" + body + "]]")
+        } else {
+          parts.push(
+            "[" +
+            inline.text +
+            "](" +
+            markdown_editor_inline_target(inline) +
+            ")",
+          )
+        }
       Autolink => parts.push("<" + markdown_editor_inline_target(inline) + ">")
       Image =>
         parts.push(

@@ -189,7 +189,7 @@ test "markdown_block_to_rich_text converts a heading block" {
   let block : @moui_richtext.MarkdownBlock = {
     kind: Heading(1),
     text: "Title",
-    inlines: [{ text: "Title", kind: Plain, target: None, }],
+    inlines: [{ text: "Title", kind: Plain, target: None, wiki: false, }],
     table_alignments: [],
     code_language: None,
   }

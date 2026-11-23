@@ -11,6 +11,7 @@ pub fn[Msg] markdown_viewer(
   source~ : String,
   size~ : @core.Size,
   font~ : @core.FontSpec = @core.FontSpec::new(),
+  palette~ : MarkdownRichTextPalette? = None,
   foreground~ : @core.Color = @core.Color::black(),
   background~ : @core.Brush = @core.Brush::solid(
     @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
@@ -20,12 +21,15 @@ pub fn[Msg] markdown_viewer(
   visible_scroll_y~ : Double = 0.0,
   visible_viewport_height~ : Double = 0.0,
   visible_overscan~ : Double = 320.0,
+  compact_blank_gaps~ : Bool = false,
+  wiki_links~ : MarkdownWikiLinkOptions? = None,
   key~ : String? = None,
 ) -> @core.View[Msg] {
   markdown_viewer_snapshot(
     source~,
     size~,
     font~,
+    palette~,
     foreground~,
     background~,
     corner_radius~,
@@ -33,6 +37,8 @@ pub fn[Msg] markdown_viewer(
     visible_scroll_y~,
     visible_viewport_height~,
     visible_overscan~,
+    compact_blank_gaps~,
+    wiki_links~,
     key~,
   )
 }
@@ -42,6 +48,7 @@ fn[Msg] markdown_viewer_snapshot(
   source~ : String,
   size~ : @core.Size,
   font~ : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette?,
   foreground~ : @core.Color,
   background~ : @core.Brush,
   corner_radius~ : Double,
@@ -49,6 +56,8 @@ fn[Msg] markdown_viewer_snapshot(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
+  compact_blank_gaps~ : Bool,
+  wiki_links~ : MarkdownWikiLinkOptions?,
   key~ : String?,
 ) -> @core.View[Msg] {
   @core.View::from_node(
@@ -56,12 +65,15 @@ fn[Msg] markdown_viewer_snapshot(
       source,
       size,
       font,
+      palette,
       foreground,
       background,
       corner_radius,
       visible_scroll_y,
       visible_viewport_height,
       visible_overscan,
+      compact_blank_gaps,
+      wiki_links,
       key,
     },
     event=(node, ctx) => {
@@ -69,10 +81,13 @@ fn[Msg] markdown_viewer_snapshot(
         ctx,
         source=node.source,
         font=node.font,
+        palette=node.palette,
         on_link_click~,
         visible_scroll_y~,
         visible_viewport_height=node.visible_viewport_height,
         visible_overscan=node.visible_overscan,
+        compact_blank_gaps=node.compact_blank_gaps,
+        wiki_links=node.wiki_links,
       )
     },
   )
@@ -83,12 +98,15 @@ priv struct MarkdownViewerNode {
   source : String
   size : @core.Size
   font : @core.FontSpec
+  palette : MarkdownRichTextPalette?
   foreground : @core.Color
   background : @core.Brush
   corner_radius : Double
   visible_scroll_y : Double
   visible_viewport_height : Double
   visible_overscan : Double
+  compact_blank_gaps : Bool
+  wiki_links : MarkdownWikiLinkOptions?
   key : String?
 }
 
@@ -105,10 +123,26 @@ impl @core.ViewNode for MarkdownViewerNode with fn declaration(self) {
         ("source", @core.DeclarationKey::string(self.source)),
         ("size", declaration_size_key(self.size)),
         ("font", declaration_font_key(self.font)),
+        (
+          "compact_blank_gaps",
+          @core.DeclarationKey::bool(self.compact_blank_gaps),
+        ),
+        (
+          "wiki",
+          @core.DeclarationKey::string(
+            markdown_viewer_wiki_key(self.wiki_links),
+          ),
+        ),
       ]),
     ),
     paint=rich_text_exact_channel(
       rich_text_record_key("MarkdownViewer.paint", [
+        (
+          "palette",
+          @core.DeclarationKey::string(
+            markdown_viewer_palette_key(self.palette),
+          ),
+        ),
         ("foreground", declaration_color_key(self.foreground)),
         ("background", declaration_brush_key(self.background)),
         ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
@@ -140,6 +174,11 @@ impl @core.ViewNode for MarkdownViewerNode with fn layout(self, ctx) {
       self.font,
       ctx.text_system,
       cache,
+      options=rich_text_document_view_options(
+        palette=self.palette,
+        compact_blank_gaps=self.compact_blank_gaps,
+        wiki_links=self.wiki_links,
+      ),
     )
   }
   let measured = @core.Size::new(width=self.size.width, height=measured_height)
@@ -160,6 +199,11 @@ impl @core.ViewNode for MarkdownViewerNode with fn paint(self, ctx) {
     self.visible_viewport_height,
     self.visible_overscan,
     cache,
+    options=rich_text_document_view_options(
+      palette=self.palette,
+      compact_blank_gaps=self.compact_blank_gaps,
+      wiki_links=self.wiki_links,
+    ),
   )
 }
 
@@ -177,10 +221,13 @@ fn[Msg] markdown_viewer_event(
   ctx : @core.ViewEventContext,
   source~ : String,
   font~ : @core.FontSpec,
+  palette~ : MarkdownRichTextPalette?,
   on_link_click~ : ((String) -> Msg)?,
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
+  compact_blank_gaps~ : Bool,
+  wiki_links~ : MarkdownWikiLinkOptions?,
 ) -> @core.ViewEventResult[Msg] {
   match on_link_click {
     Some(handler) =>
@@ -197,19 +244,34 @@ fn[Msg] markdown_viewer_event(
                 visible_scroll_y,
                 visible_viewport_height,
                 visible_overscan,
+                options=rich_text_document_view_options(
+                  palette~,
+                  compact_blank_gaps~,
+                  wiki_links~,
+                ),
               ) {
               Some(offset) =>
-                match markdown_editor_link_context_at_caret(source, offset) {
-                  Some(context) =>
+                match
+                  markdown_editor_wiki_target_at(source, offset, wiki_links) {
+                  Some(target) =>
+                    view_event_result(captured=true, messages=[handler(target)])
+                  None =>
                     match
-                      markdown_editor_reference_target(source, context.bounds) {
-                      Some(target) =>
-                        view_event_result(captured=true, messages=[
-                          handler(target),
-                        ])
+                      markdown_editor_link_context_at_caret(source, offset) {
+                      Some(context) =>
+                        match
+                          markdown_editor_reference_target(
+                            source,
+                            context.bounds,
+                          ) {
+                          Some(target) =>
+                            view_event_result(captured=true, messages=[
+                              handler(target),
+                            ])
+                          None => view_event_result()
+                        }
                       None => view_event_result()
                     }
-                  None => view_event_result()
                 }
               None => view_event_result()
             }
@@ -219,5 +281,21 @@ fn[Msg] markdown_viewer_event(
         _ => view_event_result()
       }
     None => view_event_result()
+  }
+}
+
+///|
+fn markdown_viewer_palette_key(palette : MarkdownRichTextPalette?) -> String {
+  match palette {
+    Some(palette) => palette.cache_key()
+    None => "palette:default-light"
+  }
+}
+
+///|
+fn markdown_viewer_wiki_key(options : MarkdownWikiLinkOptions?) -> String {
+  match options {
+    Some(options) => "wiki:" + options.scheme
+    None => "wiki:off"
   }
 }

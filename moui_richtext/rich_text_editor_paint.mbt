@@ -680,6 +680,10 @@ fn append_rich_text_block_table(
           if column_index < table_row.length() {
             let cell = table_row[column_index]
             let align = cell.align.unwrap_or(TextStart)
+            // A cell's text may still measure a hair wider than its frame
+            // (an unbreakable glyph, provider shaping drift). Clip to the
+            // cell so it can never bleed into the adjacent column.
+            commands.push(PushClip(cell_frame))
             if cell_layout.segments.length() > 0 {
               // Styled cell: draw each run segment at its laid-out x with
               // its own font; the segment layout already skipped markers.
@@ -709,6 +713,7 @@ fn append_rich_text_block_table(
                   ),
                 )
               }
+              commands.push(PopClip)
               continue
             }
             for line_index, line in cell_layout.lines {
@@ -735,6 +740,7 @@ fn append_rich_text_block_table(
                 ),
               )
             }
+            commands.push(PopClip)
           }
         }
       }

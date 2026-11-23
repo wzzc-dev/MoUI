@@ -193,11 +193,62 @@ priv struct RichTextTableCellSegmentsLayout {
 }
 
 ///|
+/// Offset of the run's visible text inside its raw construct text. Inline
+/// markers sit before/after the visible span (`**bold**`, `` `code` ``), so
+/// mapping a visible char back to the cell source needs this prefix instead
+/// of assuming the visible span starts at `source_range.start`.
+fn rich_text_table_run_source_shift(
+  run : RichTextRun,
+  visible_chars : Array[Char],
+) -> Int32 {
+  if visible_chars.length() == 0 {
+    return 0
+  }
+  let raw_chars = run.text.to_array()
+  if raw_chars.length() == visible_chars.length() {
+    return 0
+  }
+  let mut shift = 0
+  while shift + visible_chars.length() <= raw_chars.length() {
+    let mut same = true
+    let mut index = 0
+    while index < visible_chars.length() {
+      if raw_chars[shift + index] != visible_chars[index] {
+        same = false
+        break
+      }
+      index = index + 1
+    }
+    if same {
+      return shift
+    }
+    shift = shift + 1
+  }
+  0
+}
+
+///|
+/// Next grapheme boundary after `index`, with a code-point fallback so a
+/// broken boundary table can never stall the wrapping loop.
+fn rich_text_table_next_cluster(visible : String, index : Int32) -> Int32 {
+  let length = visible.to_array().length()
+  let boundary = @core.text_next_grapheme_caret_boundary(visible, index)
+  if boundary > index && boundary <= length {
+    boundary
+  } else if boundary > length {
+    length
+  } else {
+    index + 1
+  }
+}
+
+///|
 /// Layout a styled cell: walk the runs' visible text in order, wrapping at
 /// the cell's inner width, and record each placed segment with its x offset
 /// and the cell-relative char range of its VISIBLE characters (markers
-/// occupy source chars but no width). Lines are derived for caret/hit's
-/// y-band math: each line covers the source span of whatever it holds.
+/// occupy source chars but no width). Every visual line gets a line record,
+/// including the first and last, so row heights and caret/hit y-bands match
+/// exactly what was drawn.
 fn rich_text_table_cell_segments_layout(
   cell : RichTextTableCell,
   font : @core.FontSpec,
@@ -209,98 +260,169 @@ fn rich_text_table_cell_segments_layout(
   let chars = cell.text.to_array()
   let mut x = 0.0
   let mut cursor = 0
+  // State of the visual line currently being filled. A line is only pushed
+  // when it is complete, so `line` indexes and line heights stay in sync.
+  let line_chars : Array[Char] = []
+  let mut line_start = 0
+  let mut line_end = 0
+  let mut line_width = 0.0
+  let mut line_open = false
   for run in cell.runs {
     let run_font = run.font.unwrap_or(font)
     let visible = rich_text_run_visual_text(run)
     let visible_chars = visible.to_array()
     // The run's source range within the cell (markers included); when absent
-    // the visible text cannot be located and the run still paints at the
-    // cursor (offsets only advance by its visible length).
-    let range = match run.source_range {
-      Some(range) => range
-      None => { start: cursor, end: cursor, }
+    // the visible text cannot be located, so it maps onto the running cursor
+    // position only.
+    let source_start = match run.source_range {
+      Some(range) => range.start
+      None => cursor
+    }
+    let source_shift = match run.source_range {
+      Some(_) => rich_text_table_run_source_shift(run, visible_chars)
+      None => 0
     }
     let mut index = 0
     while index < visible_chars.length() {
+      // Soft-wrapped lines do not begin with the space that did not fit;
+      // skipping it keeps the new line flush with the cell's text edge.
+      if x <= 0.0 &&
+        !line_open &&
+        (visible_chars[index] == ' ' || visible_chars[index] == '\t') {
+        index = rich_text_table_next_cluster(visible, index)
+        continue
+      }
       let remaining_width = max_double(0.0, cell_inner_width - x)
-      let piece = String::from_array(visible_chars[index:])
-      let width = rich_text_width(piece, run_font, text_system)
-      if width <= remaining_width || x <= 0.0 {
-        // Fits (or the segment alone overflows the cell: place it anyway).
-        let end = @core.min_int(
-          index + visible_chars.length(),
-          visible_chars.length(),
+      // Extend the chunk one grapheme cluster at a time while it fits, then
+      // draw the whole chunk as one segment so shaping/kerning inside a run
+      // survives the wrap.
+      let mut end = index
+      let mut chunk_width = 0.0
+      let mut placed = false
+      while end < visible_chars.length() {
+        let cluster_end = rich_text_table_next_cluster(visible, end)
+        let candidate_width = rich_text_width(
+          String::from_array(visible_chars[index:cluster_end]),
+          run_font,
+          text_system,
         )
-        let segment_text = if index == 0 {
-          visible
-        } else {
-          String::from_array(visible_chars[index:])
+        if candidate_width > remaining_width {
+          break
         }
-        segments.push({
-          run,
-          line: lines.length(),
-          start: range.start + index,
-          end: range.start + end,
-          x,
-          width,
-          text: segment_text,
-        })
-        x = x + width
-        index = visible_chars.length()
-        cursor = range.end
-      } else {
-        // Wrap: start a new line at the next cluster boundary that fits.
-        // Cells are usually short; measuring cluster-wise keeps it simple.
-        let mut taken = index
-        let mut taken_width = 0.0
-        while taken < visible_chars.length() {
-          let probe_width = rich_text_width(
-            String::from_array(visible_chars[index:taken + 1]),
-            run_font,
-            text_system,
-          )
-          if taken_width + probe_width > remaining_width && taken > index {
-            break
+        end = cluster_end
+        chunk_width = candidate_width
+        placed = true
+      }
+      if !placed {
+        if x > 0.0 {
+          // Nothing from this run fits on the current line: close it and
+          // retry the run at the start of the next line.
+          if line_open {
+            lines.push({
+              start: line_start,
+              end: line_end,
+              width: line_width,
+              text: String::from_array(line_chars),
+            })
+            line_chars.clear()
+            line_width = 0.0
+            line_open = false
           }
-          taken_width = taken_width + probe_width
-          taken = taken + 1
+          x = 0.0
+          continue
         }
-        let line_text = String::from_array(visible_chars[index:taken])
-        let line_width = rich_text_width(line_text, run_font, text_system)
-        segments.push({
-          run,
-          line: lines.length(),
-          start: range.start + index,
-          end: range.start + taken,
-          x,
-          width: line_width,
-          text: line_text,
-        })
+        // An unbreakable single cluster at a line start: place it anyway and
+        // let the painter's cell clip hide the overflow.
+        end = rich_text_table_next_cluster(visible, index)
+        chunk_width = rich_text_width(
+          String::from_array(visible_chars[index:end]),
+          run_font,
+          text_system,
+        )
+      }
+      let chunk_text = String::from_array(visible_chars[index:end])
+      let segment_start = source_start + source_shift + index
+      let segment_end = source_start + source_shift + end
+      segments.push({
+        run,
+        line: lines.length(),
+        start: segment_start,
+        end: segment_end,
+        x,
+        width: chunk_width,
+        text: chunk_text,
+      })
+      if !line_open {
+        line_open = true
+        line_start = segment_start
+      }
+      line_end = segment_end
+      line_width = x + chunk_width
+      for ch in chunk_text {
+        line_chars.push(ch)
+      }
+      x = x + chunk_width
+      index = end
+      if index < visible_chars.length() {
+        // The run continues, so this line is full by construction.
         lines.push({
-          start: range.start + index,
-          end: range.end,
-          width: cell_inner_width,
-          text: line_text,
+          start: line_start,
+          end: line_end,
+          width: line_width,
+          text: String::from_array(line_chars),
         })
+        line_chars.clear()
+        line_width = 0.0
+        line_open = false
         x = 0.0
-        index = taken
-        cursor = range.end
       }
     }
+    cursor = match run.source_range {
+      Some(range) => range.end
+      None => cursor + visible_chars.length()
+    }
   }
-  // One trailing line record so empty cells and the last line have a band.
+  if line_open {
+    lines.push({
+      start: line_start,
+      end: line_end,
+      width: line_width,
+      text: String::from_array(line_chars),
+    })
+  }
+  // Every cell needs at least one line band, even when its runs contain no
+  // visible text. Line source ranges are then made contiguous over the cell
+  // source so stray offsets (markers, gaps between runs) always resolve to a
+  // line instead of falling through to the last line.
   if lines.is_empty() {
     lines.push({ start: 0, end: chars.length(), width: 0.0, text: "", })
   } else {
-    let last = lines[lines.length() - 1]
-    let next_start = last.end
-    if next_start < chars.length() {
-      lines.push({
-        start: next_start,
-        end: chars.length(),
-        width: 0.0,
-        text: "",
-      })
+    let first = lines[0]
+    lines[0] = {
+      start: 0,
+      end: first.end,
+      width: first.width,
+      text: first.text,
+    }
+    let mut line_index = 0
+    while line_index + 1 < lines.length() {
+      let current = lines[line_index]
+      let next = lines[line_index + 1]
+      lines[line_index] = {
+        start: current.start,
+        end: next.start,
+        width: current.width,
+        text: current.text,
+      }
+      line_index = line_index + 1
+    }
+    let last_index = lines.length() - 1
+    let last = lines[last_index]
+    lines[last_index] = {
+      start: last.start,
+      end: chars.length(),
+      width: last.width,
+      text: last.text,
     }
   }
   { layout: { lines, segments, font, }, line_count: lines.length(), }
