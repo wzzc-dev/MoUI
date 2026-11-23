@@ -17,20 +17,23 @@ A patch release that needs a public symbol, package boundary, host wire
 contract, or app-import change is out of scope. Move the change to the next
 minor; no patch exception ledger is maintained.
 
+## 0.9.x Line
+
+The current synchronized line is `0.9.x`. `0.9.0` ("Navigation surface")
+advances every public module together with the keyboard and pointer surface a
+workbench shell needs: tree navigation targets, the tab strip, command-menu
+navigation and type-ahead, a keyboard-only focus ring, and a compact find bar.
+Every new parameter carries a default, no enum gains a variant, and nothing
+existing changes. `checks/compatibility-policy.json` `currentReleaseLine` is
+the machine-readable source of truth; the docs, module manifests, and
+`docs/compatibility-matrix.md` must agree with it.
+
 ## 0.8.x Line
 
-The current synchronized line is `0.8.x`. `0.8.0` ("Markdown input surface")
-advances every public module together and publishes the WYSIWYG markdown input
-path the first-party apps had duplicated: block and selection targets, edit
-history with selection snapshots, the opt-in wiki-link surface, and the editor
-chrome (context menu, format bubble) in `moui_richtext` and `moui_markdown`.
-Every new parameter carries a default and no existing symbol, package
-boundary, or host wire contract changes, so the release adds public symbols
-only. The pre-1 policy is unchanged: a 0.x minor may break with an upgrade
-note and migration example, and the external consumer gate still runs.
-`checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
-source of truth; the docs, module manifests, and
-`docs/compatibility-matrix.md` must agree with it.
+`0.8.x` is closed: `0.8.0` ("Markdown input surface") advanced every public
+module together and published the WYSIWYG markdown input path the first-party
+apps had duplicated — block and selection targets, edit history with selection
+snapshots, opt-in wiki links, and editor chrome — with defaults throughout.
 
 ## 0.7.x Line
 
@@ -46,10 +49,10 @@ upgrade note and migration examples. No SemVer exception is recorded for this
 program. The release still moves the synchronized line and every public module
 to `0.4.x` together, and it still passes the external consumer gate. The
 synchronized-line policy (ADR 0065) continued on the `0.5.x` line, then the
-`0.6.x` line, the `0.7.x` line, and now the `0.8.x` line: each minor advances
-every public module together with the features recorded in
+`0.6.x` line, the `0.7.x` line, the `0.8.x` line, and now the `0.9.x` line:
+each minor advances every public module together with the features recorded in
 `docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`, `docs/releases/0.7.0.md`,
-and `docs/releases/0.8.0.md`.
+`docs/releases/0.8.0.md`, and `docs/releases/0.9.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
 removed from their old package in the same release; in-tree call sites and the
