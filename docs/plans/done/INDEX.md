@@ -44,6 +44,7 @@ are still readable — find the stem here.
 | `platform-adapter-duplication-remediation` | Shared platform behavior made single-owner code; superseded by backend-render-package-convergence. | `71d9a74a` 2026-08-30 |
 | `moonbit-tooling-formalization` | Formalizable rules moved into `moon test`-able `tools/moui` packages; other languages kept as orchestration shells. | `a982053b` 2026-08-04 |
 | `validation-hygiene-cleanup` | Removed validator self-tests; kept product/evidence validation. | `68dfba21` 2026-08-06 |
+| `markdown-input-lift` | Markdown input surface lifted into `moui_richtext`/`moui_markdown` for `0.8.0`: viewer palette, opt-in wikilinks with an app-injected scheme, block-scoped editor targets, selection-aware undo/redo, opt-in compact blank gaps, styled table fixes, editor context menu, and the format bubble. | `7d3e2862` 2026-11-23 |
 
 ## Renderer, GPU, and canvas surface
 
