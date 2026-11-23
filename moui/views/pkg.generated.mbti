@@ -90,7 +90,7 @@ pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[@controls.MenuIt
 
 pub fn[Msg] command_bar(Array[@controls.ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?) -> @core.View[Msg]
 
 pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> @controls.CommandMenuSection
 
@@ -182,7 +182,7 @@ pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double) -> @core.View[Msg]
+pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double, focus_visible? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -410,7 +410,7 @@ pub fn stroke_rect(@common.PaintContext, @core.Rect, @core.Color, Double) -> Uni
 
 pub fn stroke_rounded_rect(@common.PaintContext, @core.RoundedRect, @core.Brush, Double) -> Unit
 
-pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> @navigation.TabItem[Msg]
+pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg], closable? : Bool, dirty? : Bool, icon? : @style.IconName?, pinned? : Bool) -> @navigation.TabItem[Msg]
 
 pub fn[Msg] tab_view(String, Array[@navigation.TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
@@ -442,7 +442,7 @@ pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool, theme? : @core.The
 
 pub fn tree_item(id~ : String, label~ : String, children? : Array[@data.TreeItem], icon? : @style.IconName?, icon_color? : @core.Color?, dimmed? : Bool) -> @data.TreeItem
 
-pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] tree_view(Array[@data.TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, on_secondary_tap? : ((String) -> Msg)?, active? : String, on_activate? : ((String) -> Msg)?, on_secondary_tap_with_frame? : ((String, @core.Point, @core.Rect) -> Msg)?, hovered? : String, on_hover? : ((String, Bool) -> Msg)?, indent_guides? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn update_named_field(Array[@form.FormFieldState], String, @form.FieldAction) -> Array[@form.FormFieldState]
 

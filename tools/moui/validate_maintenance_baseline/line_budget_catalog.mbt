@@ -177,7 +177,8 @@ fn file_budgets() -> Array[FileBudget] {
       path: "tools/moui/validate_maintenance_baseline/count_budget_catalog.mbt",
       // 110 -> 113 (titlebar polish follow-up): the backend pub(all) bump
       // note for LinuxTitlebarPolicy/ButtonState/Palette.
-      max_lines: 113,
+      // 113 -> 115 (0.9.0 tree navigation): the TreeNavigationTarget note.
+      max_lines: 115,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_checks.mbt",
@@ -185,7 +186,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 429,
+      // 429 -> 436 (0.9.0): the three ratchet registrations above.
+      max_lines: 436,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -282,7 +284,9 @@ fn file_budgets() -> Array[FileBudget] {
     // three-character hint as a 212x56 block) and now sizes itself to its
     // content with a 6/3 inset and the theme's Overlay surface. The added lines
     // are the content-width estimate plus the rationale for it.
-    { path: "moui/views/controls/control_focus_overlay.mbt", max_lines: 138, },
+    // 138 -> 153 (0.9.0 focus visibility): `focus_ring` gains `focus_visible~`
+    // and splits the drawn ring into lit / focused-but-hidden / unfocused.
+    { path: "moui/views/controls/control_focus_overlay.mbt", max_lines: 153, },
     { path: "moui/views/controls/input_group_shell.mbt", max_lines: 45, },
     { path: "moui/views/controls/input_number.mbt", max_lines: 105, },
     { path: "moui/views/controls/disclosure.mbt", max_lines: 210, },
@@ -339,7 +343,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/layout/layout_flow.mbt", max_lines: 155, },
     { path: "moui/views/navigation/navigation_state.mbt", max_lines: 110, },
     { path: "moui/views/navigation/command_palette.mbt", max_lines: 141, },
-    { path: "moui/views/navigation/menu_commands.mbt", max_lines: 220, },
+    // 220 -> 249 (0.9.0 menu keyboard layer): `command_menu` gains
+    // `active`/`on_hover` and the hover-aware row; the two pure key-resolution
+    // functions live in the sibling `menu_commands_nav.mbt`.
+    { path: "moui/views/navigation/menu_commands.mbt", max_lines: 249, },
     { path: "moui/views/controls/input_text_wrappers.mbt", max_lines: 95, },
     { path: "moui/views/controls/layout_helpers.mbt", max_lines: 180, },
     { path: "moui/views/controls/layout_responsive_grid.mbt", max_lines: 160, },

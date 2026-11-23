@@ -21,6 +21,7 @@ are still readable — find the stem here.
 
 | Plan | Outcome | Landed |
 |---|---|---|
+| `cohesion-governance-convergence` | Second-round maintainability landed: core domain splits (`core/command.mbt`, caret/word/composition), views helper dedup + shared `PressableTransition`, grouped `ViewSemanticsInfo` constructors, plan archival and session-knowledge deposit, budget-catalog review cadence, structure triggers and the backend/common runtime-import allowlist. | `eae4c126` 2026-11-19 |
 | `moui-architecture-convergence` | Converged core/views/backend/render/platform ownership and dependency direction per ADR 0014–0020 (Phases A–G). | `68dfba21` 2026-08-06 |
 | `core-component-theme-to-views` | Neutral theme schema stayed in `core`; control tokens moved to `@views.ControlThemeSet`. Superseded by ADR 0017. | `27543760` 2026-08-02 |
 | `backend-hosting-terminology` | One vocabulary across code and guidance: `native host backend` vs `embedded runtime backend`. | `dd788257` 2026-07-29 |

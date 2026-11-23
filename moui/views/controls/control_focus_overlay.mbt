@@ -8,17 +8,26 @@ pub fn[Msg] focus_ring(
   height? : Double,
   padding~ : Double = 3.0,
   radius~ : Double = 8.0,
+  focus_visible~ : Bool = true,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
+  // `:focus-visible` semantics: the element keeps focus when the pointer
+  // selects it, but the ring is a keyboard affordance, so a pointer-focused
+  // ring is painted transparent instead of lit up. `focus_visible=false` also
+  // covers the opposite case — a focused element whose ring the host wants to
+  // re-announce later — so it stays 1pt and never changes the child's box.
+  let lit = focused && focus_visible
   let ring = @core.BorderStyle::new(
     brush=@core.Brush::solid(
-      if focused {
+      if lit {
         resolved_theme.palette.primary
+      } else if focused {
+        resolved_theme.palette.primary.multiply_alpha(0.0)
       } else {
         resolved_theme.palette.outline.multiply_alpha(0.42)
       },
     ),
-    width=if focused { 2.0 } else { 1.0 },
+    width=if lit { 2.0 } else { 1.0 },
   )
   let wrapped = @layout.container_box(
     child=Some(child.padding(padding)),
@@ -33,7 +42,15 @@ pub fn[Msg] focus_ring(
   framed
   .focusable()
   .semantics_selected(selected=focused)
-  .semantics_description(if focused { "Focused" } else { "Not focused" })
+  .semantics_description(
+    if lit {
+      "Focused"
+    } else if focused {
+      "Focused, ring hidden"
+    } else {
+      "Not focused"
+    },
+  )
   .accessibility_label(label)
 }
 

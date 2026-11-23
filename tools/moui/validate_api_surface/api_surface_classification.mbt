@@ -89,7 +89,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // additions already itemized above landed without the ceiling
       // raise. W2 replaces the p5-shaped RgbaImage name with the neutral
       // RgbaBuffer and adds its PNG encode entry (+1 pub): measured 1306.
-      max_count: 1306,
+      // 0.9.0 adds View::on_context_menu_key (+1 pub), the keyboard entry
+      // for the context menu: measured 1307.
+      max_count: 1307,
     },
     {
       path: "moui/core/pkg.generated.mbti",

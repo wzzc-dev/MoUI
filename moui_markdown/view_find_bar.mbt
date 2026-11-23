@@ -81,6 +81,13 @@ fn[Msg] markdown_find_text_button(
 /// caller-composed label (e.g. localized text) works too.
 ///
 /// The bar is `width` wide and 42pt tall, matching MoMark's chrome slot.
+///
+/// `compact=true` drops the inline "Find"/"Replace" captions (the fields keep
+/// their placeholders), narrows both fields and the status slot, and halves the
+/// row gap. The laid-out content drops from ~1130pt to ~750pt, so the bar fits
+/// a narrow window instead of clipping its trailing buttons. Layout only —
+/// every control stays present, and the widths stay fixed so the caller can
+/// still compute its own slot.
 pub fn[Msg] markdown_find_bar(
   theme~ : @moui.Theme,
   query~ : String,
@@ -100,6 +107,7 @@ pub fn[Msg] markdown_find_bar(
   on_replace_all~ : Msg,
   on_close~ : Msg,
   width~ : Double,
+  compact~ : Bool = false,
   find_label~ : String = "Find",
   replace_label~ : String = "Replace",
   search_placeholder~ : String = "Search Markdown",
@@ -114,85 +122,117 @@ pub fn[Msg] markdown_find_bar(
   close_tooltip~ : String = "Close find bar",
   key_prefix~ : String = "markdown",
 ) -> @moui.View[Msg] {
+  let field_width = if compact { 104.0 } else { 196.0 }
+  let status_width = if compact { 44.0 } else { 88.0 }
+  let children : Array[@moui.View[Msg]] = []
+  if !compact {
+    children.push(
+      @views.text(find_label, width=44.0, height=34.0, theme~)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    )
+  }
+  children.push(
+    @views.text_field(
+      query,
+      on_input=on_query_input,
+      on_submit=Some(on_submit_query),
+      placeholder=search_placeholder,
+      variant=@views.TextFieldVariant::Outline,
+      theme~,
+      width=field_width,
+      height=34.0,
+    ).key("\{key_prefix}-find-query"),
+  )
+  if !compact {
+    children.push(
+      @views.text(replace_label, width=64.0, height=34.0, theme~)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    )
+  }
+  children.push(
+    @views.text_field(
+      replace_text,
+      on_input=on_replace_input,
+      on_submit=Some(on_submit_replace),
+      placeholder=replacement_placeholder,
+      variant=@views.TextFieldVariant::Outline,
+      theme~,
+      width=field_width,
+      height=34.0,
+    ).key("\{key_prefix}-replace-text"),
+  )
+  children.push(
+    markdown_find_toggle(
+      "Aa",
+      match_case_tooltip,
+      on_toggle_case_sensitive,
+      options.case_sensitive,
+      theme,
+    ),
+  )
+  children.push(
+    markdown_find_toggle(
+      "W",
+      whole_word_tooltip,
+      on_toggle_whole_word,
+      options.whole_word,
+      theme,
+    ),
+  )
+  children.push(
+    markdown_find_toggle(
+      ".*",
+      regex_tooltip,
+      on_toggle_regex,
+      options.regex,
+      theme,
+    ),
+  )
+  children.push(
+    @views.text(status_label, width=status_width, height=34.0, theme~)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted),
+  )
+  children.push(
+    markdown_find_icon_button(
+      @views.IconName::ChevronLeft,
+      previous_tooltip,
+      on_previous,
+      theme,
+    ),
+  )
+  children.push(
+    markdown_find_icon_button(
+      @views.IconName::ChevronRight,
+      next_tooltip,
+      on_next,
+      theme,
+    ),
+  )
+  children.push(
+    markdown_find_text_button(replace_button_label, on_replace_current, theme),
+  )
+  children.push(
+    markdown_find_text_button(replace_all_button_label, on_replace_all, theme),
+  )
+  children.push(
+    markdown_find_icon_button(
+      @views.IconName::Close,
+      close_tooltip,
+      on_close,
+      theme,
+    ),
+  )
   @views.frame(
     @views.row(
-      [
-        @views.text(find_label, width=44.0, height=34.0, theme~)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-        @views.text_field(
-          query,
-          on_input=on_query_input,
-          on_submit=Some(on_submit_query),
-          placeholder=search_placeholder,
-          variant=@views.TextFieldVariant::Outline,
-          theme~,
-          width=196.0,
-          height=34.0,
-        ).key("\{key_prefix}-find-query"),
-        @views.text(replace_label, width=64.0, height=34.0, theme~)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-        @views.text_field(
-          replace_text,
-          on_input=on_replace_input,
-          on_submit=Some(on_submit_replace),
-          placeholder=replacement_placeholder,
-          variant=@views.TextFieldVariant::Outline,
-          theme~,
-          width=196.0,
-          height=34.0,
-        ).key("\{key_prefix}-replace-text"),
-        markdown_find_toggle(
-          "Aa",
-          match_case_tooltip,
-          on_toggle_case_sensitive,
-          options.case_sensitive,
-          theme,
-        ),
-        markdown_find_toggle(
-          "W",
-          whole_word_tooltip,
-          on_toggle_whole_word,
-          options.whole_word,
-          theme,
-        ),
-        markdown_find_toggle(
-          ".*",
-          regex_tooltip,
-          on_toggle_regex,
-          options.regex,
-          theme,
-        ),
-        @views.text(status_label, width=88.0, height=34.0, theme~)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-        markdown_find_icon_button(
-          @views.IconName::ChevronLeft,
-          previous_tooltip,
-          on_previous,
-          theme,
-        ),
-        markdown_find_icon_button(
-          @views.IconName::ChevronRight,
-          next_tooltip,
-          on_next,
-          theme,
-        ),
-        markdown_find_text_button(
-          replace_button_label, on_replace_current, theme,
-        ),
-        markdown_find_text_button(
-          replace_all_button_label, on_replace_all, theme,
-        ),
-        markdown_find_icon_button(
-          @views.IconName::Close,
-          close_tooltip,
-          on_close,
-          theme,
-        ),
-      ],
-      spacing=theme.spacing_scale.xs,
+      children,
+      spacing=if compact {
+        theme.spacing_scale.xs * 0.5
+      } else {
+        theme.spacing_scale.xs
+      },
       align=@views.CrossAlign::Center,
     ),
     width~,

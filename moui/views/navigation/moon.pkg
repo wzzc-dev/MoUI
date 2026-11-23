@@ -11,4 +11,5 @@ import {
   "wzzc-dev/moui/views/container",
   "wzzc-dev/moui/views/button",
   "wzzc-dev/moui/views/text",
+  "wzzc-dev/moui/views/icon",
 }

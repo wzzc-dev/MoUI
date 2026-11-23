@@ -27,7 +27,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // TEA 受控值同风格,经 facade 以 pub using 透出)。
       // 69 = 68 + 1 RouteTransitionKind (路由转场风格枚举,随
       // router_stack/navigation_stack 的 transition~ 参数透出)。
-      max_count: 69,
+      // 70 = 69 + 1 TreeNavigationTarget (0.9.0 树导航:键盘导航目标记录
+      // id + effect,由 tree_navigation_target 以 pub(all) 结构返回)。
+      max_count: 70,
     },
     {
       kind: "pub(all)",

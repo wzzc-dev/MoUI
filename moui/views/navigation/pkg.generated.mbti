@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/style",
 }
 
 // Values
@@ -15,9 +16,13 @@ pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing
 
 pub fn[Msg] breadcrumb_item(id~ : String, label~ : String, message? : Msg?) -> BreadcrumbItem[Msg]
 
-pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?) -> @core.View[Msg]
+
+pub fn command_menu_navigation_index(@core.KeyboardEvent, Int32, active? : Int32, wrap? : Bool) -> Int32?
 
 pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> @controls.CommandMenuSection
+
+pub fn command_menu_type_ahead_match(@core.KeyboardEvent, Array[String], active? : Int32) -> Int32?
 
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -63,7 +68,9 @@ pub fn[Msg] sidebar_item(id~ : String, label~ : String, message~ : Msg, enabled?
 
 pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
+pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg], closable? : Bool, dirty? : Bool, icon? : @style.IconName?, pinned? : Bool) -> TabItem[Msg]
+
+pub fn[Msg] tab_strip(String, Array[TabItem[Msg]], on_select~ : (String) -> Msg, on_close? : ((String) -> Msg)?, on_secondary_tap_with_frame? : ((String, @core.Point, @core.Rect) -> Msg)?, active? : String, trailing? : @core.View[Msg]?, spacing? : Double, height? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
 
@@ -252,6 +259,10 @@ pub struct TabItem[Msg] {
   route : String
   label : String
   view : @core.View[Msg]
+  closable : Bool
+  dirty : Bool
+  icon : @style.IconName?
+  pinned : Bool
 }
 
 // Type aliases

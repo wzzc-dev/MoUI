@@ -43,9 +43,12 @@ pub fn[Msg] command_menu(
   theme? : @core.Theme,
   width~ : Double = 320.0,
   max_height~ : Double = 280.0,
+  active~ : Int32 = -1,
+  on_hover~ : ((Int32, Bool) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
+  let mut index = 0
   for section in sections {
     if section.title != "" {
       rows.push(
@@ -62,11 +65,15 @@ pub fn[Msg] command_menu(
       rows.push(
         command_menu_row(
           command,
+          index~,
+          active=index == active,
           on_select~,
+          on_hover~,
           theme=resolved_theme,
           width=width - resolved_theme.spacing_scale.md * 2.0,
         ),
       )
+      index = index + 1
     }
   }
   if rows.length() == 0 {
@@ -176,7 +183,10 @@ pub fn[Msg] context_menu_region(
 ///|
 fn[Msg] command_menu_row(
   command : @core.ActionCommand,
+  index~ : Int32,
+  active~ : Bool,
   on_select~ : (@core.CommandIntent) -> Msg,
+  on_hover~ : ((Int32, Bool) -> Msg)?,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
@@ -196,19 +206,38 @@ fn[Msg] command_menu_row(
     spacing=theme.spacing_scale.xs,
     align=Center,
   )
-  @layout.stack([
-    @button.button(
-      "",
-      on_click=on_select(command.intent),
-      variant=Ghost,
-      theme~,
-      width~,
-      height=34.0,
-    ),
-    row_view,
-  ])
-  .disabled(disabled=!command.enabled)
-  .accessibility_label(command.display_label())
+  let row = @layout.stack([
+      @button.button(
+        "",
+        on_click=on_select(command.intent),
+        variant=Ghost,
+        theme~,
+        width~,
+        height=34.0,
+      ),
+      row_view,
+    ])
+    .disabled(disabled=!command.enabled)
+    .accessibility_label(command.display_label())
+  // The highlight paints behind the row's own label/shortcut text, so the
+  // control theme still decides their colors; the 1pt border is what keeps
+  // the keyboard walk visible even on themes whose container fill is flat.
+  let row = if active {
+    row
+    .background(theme.palette.primary_container)
+    .border(
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(theme.palette.primary),
+        width=1.0,
+      ),
+    )
+  } else {
+    row
+  }
+  match on_hover {
+    Some(handler) => row.on_hover(entered => handler(index, entered))
+    None => row
+  }
 }
 
 ///|

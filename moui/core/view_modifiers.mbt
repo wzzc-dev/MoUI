@@ -661,3 +661,21 @@ pub fn[Msg] View::frame(
     }.to_any_modifier(),
   )
 }
+
+///|
+/// Keyboard context-menu trigger with geometry: fires while the element is
+/// focused and the user presses the platform menu key (Shift+F10 or the
+/// Menu/ContextMenu key), handing over an anchor point plus the child frame
+/// exactly like `on_secondary_tap_with_frame`.
+///
+/// Pair the two when a context menu must be reachable without a pointer: the
+/// same handler and the same anchor arithmetic then serve right-click and
+/// keyboard invocation. Like the other observer modifiers it adds no semantics
+/// role and no press state; it does make the element focusable, because the
+/// key has to land somewhere.
+pub fn[Msg] View::on_context_menu_key(
+  self : View[Msg],
+  handler : (Point, Rect) -> Msg,
+) -> View[Msg] {
+  self.apply_modifier(OnContextMenuKeyModifier::{ handler, }.to_any_modifier())
+}
