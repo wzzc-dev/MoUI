@@ -29,6 +29,9 @@ pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
   target : String?
+  // Opt-in wiki link marker. `target` stays the raw `[[...]]` body, so the
+  // source rebuild never has to strip an injected routing scheme back off.
+  wiki : Bool
 }
 
 ///|
@@ -51,8 +54,9 @@ fn markdown_inline(
   text : String,
   kind : MarkdownInlineKind,
   target~ : String? = None,
+  wiki~ : Bool = false,
 ) -> MarkdownInline {
-  { text, kind, target, }
+  { text, kind, target, wiki, }
 }
 
 ///|

@@ -236,6 +236,9 @@ pub(all) struct MarkdownDocumentSession {
   // palette through the whole event/paint chain; the conversion cache key
   // includes its digest, so changing it re-projects blocks.
   rich_text_palette : MarkdownRichTextPalette?
+  // Opt-in wiki link syntax. Kept on the session for the same reason as the
+  // palette: the parse entry points are shared by every read and edit path.
+  wiki_links : MarkdownWikiLinkOptions?
 }
 
 ///|
@@ -590,12 +593,7 @@ fn markdown_document_session_materialized_blocks(
   session : MarkdownDocumentSession,
 ) -> Array[MarkdownEditorBlock] {
   session.editor_blocks.map(fn(editor_block) {
-    markdown_editor_block_materialized(
-      session.source(),
-      source_length=session.source_length,
-      source_digest=session.source_digest,
-      editor_block,
-    )
+    markdown_editor_block_materialize_with_wiki(session, editor_block)
   })
 }
 
@@ -856,12 +854,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
         // Shell blocks from the cheap open parse carry no inline runs; the
         // visible window is where they are needed, so re-parse on demand
         // (a content-cached parse, near-free in steady state).
-        markdown_editor_block_materialized(
-          self.source(),
-          source_length=self.source_length,
-          source_digest=self.source_digest,
-          shell,
-        )
+        markdown_editor_block_materialize_with_wiki(self, shell)
       }
       rich_blocks.push(
         if source_mode {
@@ -1336,6 +1329,7 @@ fn markdown_document_session_apply_in_line_edit(
     height_index,
     layout_cache: None,
     rich_text_palette: session.rich_text_palette,
+    wiki_links: session.wiki_links,
   })
 }
 
@@ -1983,6 +1977,18 @@ pub fn MarkdownDocumentSession::with_rich_text_palette(
   palette : MarkdownRichTextPalette?,
 ) -> MarkdownDocumentSession {
   { ..self, rich_text_palette: palette, }
+}
+
+///|
+/// Turn wiki link syntax on: `[[target]]` parses into a `Link` inline tagged
+/// `wiki` with `target` left raw, and the host `scheme` is applied only where a
+/// target leaves the library (link clicks, `target_at`). Edits keep the setting
+/// like the palette does.
+pub fn MarkdownDocumentSession::with_wiki_links(
+  self : MarkdownDocumentSession,
+  options : MarkdownWikiLinkOptions?,
+) -> MarkdownDocumentSession {
+  { ..self, wiki_links: options, }
 }
 
 ///|
@@ -3624,6 +3630,10 @@ fn markdown_document_session_from_blocks(
     layout_cache: None,
     rich_text_palette: match previous {
       Some(prev) => prev.rich_text_palette
+      None => None
+    },
+    wiki_links: match previous {
+      Some(prev) => prev.wiki_links
       None => None
     },
   }

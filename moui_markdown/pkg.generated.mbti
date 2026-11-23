@@ -22,6 +22,8 @@ pub fn markdown_document_info_from_snapshot(@moui_richtext.MarkdownEditorSnapsho
 
 pub fn[Msg] markdown_document_info_panel(theme~ : @core.Theme, info~ : MarkdownDocumentInfo, word_count~ : Int32, line_count~ : Int32, reading_time_label~ : String, height~ : Double, width? : Double, title? : String, words_label? : String, characters_label? : String, lines_label? : String, reading_label? : String, headings_label? : String, paragraphs_label? : String, list_items_label? : String, tasks_label? : String, quotes_label? : String, code_blocks_label? : String, tables_label? : String, links_label? : String, images_label? : String, footnotes_label? : String) -> @core.View[Msg]
 
+pub fn markdown_editor_surface_menu_items(target~ : @moui_richtext.MarkdownEditorTarget, has_selection~ : Bool, in_task_item~ : Bool, has_openable_target~ : Bool) -> Array[MarkdownMenuItem]
+
 pub fn markdown_find_active_index(Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection) -> Int32
 
 pub fn[Msg] markdown_find_bar(theme~ : @core.Theme, query~ : String, replace_text~ : String, options~ : MarkdownFindOptions, status_label~ : String, on_query_input~ : (String) -> Msg, on_replace_input~ : (String) -> Msg, on_submit_query~ : Msg, on_submit_replace~ : Msg, on_toggle_case_sensitive~ : Msg, on_toggle_whole_word~ : Msg, on_toggle_regex~ : Msg, on_previous~ : Msg, on_next~ : Msg, on_replace_current~ : Msg, on_replace_all~ : Msg, on_close~ : Msg, width~ : Double, find_label? : String, replace_label? : String, search_placeholder? : String, replacement_placeholder? : String, replace_button_label? : String, replace_all_button_label? : String, match_case_tooltip? : String, whole_word_tooltip? : String, regex_tooltip? : String, previous_tooltip? : String, next_tooltip? : String, close_tooltip? : String, key_prefix? : String) -> @core.View[Msg]
@@ -43,6 +45,16 @@ pub fn markdown_find_seed_from_caret_word(String, @moui_richtext.MarkdownEditorS
 pub fn markdown_find_status_label(String, Array[@core.TextRange], @moui_richtext.MarkdownEditorSelection, options? : MarkdownFindOptions) -> String
 
 pub fn markdown_folded_outline(Array[@moui_richtext.MarkdownEditorOutlineItem], Array[Int32]) -> Array[@moui_richtext.MarkdownEditorOutlineItem]
+
+pub fn[Msg] markdown_format_bubble(on_action~ : (MarkdownFormatBubbleAction) -> Msg, caret~ : @core.Rect, viewport_height~ : Double, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn markdown_format_bubble_actions() -> Array[MarkdownFormatBubbleAction]
+
+pub fn markdown_format_bubble_glyph(MarkdownFormatBubbleAction) -> String
+
+pub fn markdown_format_bubble_label(MarkdownFormatBubbleAction) -> String
+
+pub fn markdown_format_bubble_rect(@core.Rect, width? : Double, height? : Double, viewport_height~ : Double) -> @core.Rect
 
 pub fn[Msg] markdown_format_palette(theme~ : @core.Theme, query~ : String, items~ : Array[MarkdownPaletteItem], on_query_input~ : (String) -> Msg, on_submit~ : Msg, on_action~ : (String) -> Msg, on_done~ : Msg, width~ : Double, title? : String, filter_placeholder? : String, done_label? : String, empty_label? : String, key_prefix? : String) -> @core.View[Msg]
 
@@ -131,6 +143,35 @@ pub fn MarkdownFindSeed::equal(Self, Self) -> Bool
 pub fn MarkdownFindSeed::not_equal(Self, Self) -> Bool
 pub fn MarkdownFindSeed::to_json(Self) -> @json.Json
 pub fn MarkdownFindSeed::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum MarkdownFormatBubbleAction {
+  Bold
+  Italic
+  Strikethrough
+  Code
+  Highlight
+  Link
+  Heading1
+  Heading2
+  UnorderedList
+  Quote
+}
+pub fn MarkdownFormatBubbleAction::equal(Self, Self) -> Bool
+pub fn MarkdownFormatBubbleAction::not_equal(Self, Self) -> Bool
+pub fn MarkdownFormatBubbleAction::to_json(Self) -> @json.Json
+pub fn MarkdownFormatBubbleAction::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct MarkdownMenuItem {
+  action : String
+  label : String
+  group : String
+}
+pub fn MarkdownMenuItem::equal(Self, Self) -> Bool
+pub fn MarkdownMenuItem::not_equal(Self, Self) -> Bool
+pub fn MarkdownMenuItem::to_json(Self) -> @json.Json
+pub fn MarkdownMenuItem::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct MarkdownPaletteItem {

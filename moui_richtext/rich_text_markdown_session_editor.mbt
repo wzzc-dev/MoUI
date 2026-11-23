@@ -823,11 +823,8 @@ fn markdown_session_record_measured_block_heights(
           continue
         }
         // Measured heights must come from the block's real inline runs.
-        let editor_block = markdown_editor_block_materialized(
-          session.source(),
-          source_length=session.source_length,
-          source_digest=session.source_digest,
-          editor_block,
+        let editor_block = markdown_editor_block_materialize_with_wiki(
+          session, editor_block,
         )
         let height = if rich_text_block_is_blank_gap(window_block) {
           // Collapsed WYSIWYG height (separator margin or writing line),
@@ -1042,12 +1039,7 @@ fn markdown_session_estimated_caret_inset_x(
       // Caret geometry needs the block's real inline runs.
       let rich_block = markdown_editor_block_to_rich_text(
         session.source(),
-        markdown_editor_block_materialized(
-          session.source(),
-          source_length=session.source_length,
-          source_digest=session.source_digest,
-          rich_source_block,
-        ),
+        markdown_editor_block_materialize_with_wiki(session, rich_source_block),
         font,
         base_dir~,
       )

@@ -1971,10 +1971,19 @@ fn rich_text_table_segment_offset_at_point(
 fn rich_text_table_segment_caret_x(
   cell_layout : RichTextTableCellLayout,
   local_offset~ : Int32,
+  line_index~ : Int32,
   text_x : Double,
   text_system~ : @core.TextSystem,
 ) -> Double {
+  let line = @core.clamp_int(line_index, 0, cell_layout.lines.length() - 1)
+  // Only segments on the caret's visual line can place its x: after a soft
+  // wrap the same run continues at x=0 on the next line, so considering an
+  // earlier line's segment would draw the caret at the previous line's end.
+  let mut line_end_x = text_x
   for segment in cell_layout.segments {
+    if segment.line != line {
+      continue
+    }
     if local_offset <= segment.start {
       return text_x + segment.x
     }
@@ -1989,9 +1998,9 @@ fn rich_text_table_segment_caret_x(
       let prefix = String::from_array(chars[:visible])
       return text_x + segment.x + rich_text_width(prefix, font, text_system)
     }
+    line_end_x = text_x + segment.x + segment.width
   }
-  let last = cell_layout.segments[cell_layout.segments.length() - 1]
-  text_x + last.x + last.width
+  line_end_x
 }
 
 ///|
@@ -2148,6 +2157,7 @@ fn rich_text_block_table_caret_rect(
         let caret_x = rich_text_table_segment_caret_x(
           cell_layout,
           local_offset~,
+          line_index~,
           text_frame.origin.x,
           text_system~,
         )

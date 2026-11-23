@@ -22,7 +22,7 @@ fn key_inline(
   kind~ : MarkdownInlineKind = Plain,
   target~ : String? = None,
 ) -> MarkdownInline {
-  { text, kind, target, }
+  { text, kind, target, wiki: false, }
 }
 
 ///|

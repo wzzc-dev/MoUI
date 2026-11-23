@@ -37,6 +37,28 @@ fn RichTextDocumentViewPrepared::new(
 }
 
 ///|
+/// Presentation options that change the projection of a viewer document:
+/// the palette baked into rich-text runs, collapsed blank gaps, and wiki link
+/// syntax. Everything that depends on them goes through the same cache key, so
+/// a theme switch or a wiki toggle re-projects instead of painting a stale
+/// document.
+#derive(Eq)
+priv struct RichTextDocumentViewOptions {
+  palette : MarkdownRichTextPalette?
+  compact_blank_gaps : Bool
+  wiki_links : MarkdownWikiLinkOptions?
+}
+
+///|
+fn rich_text_document_view_options(
+  palette~ : MarkdownRichTextPalette? = None,
+  compact_blank_gaps~ : Bool = false,
+  wiki_links~ : MarkdownWikiLinkOptions? = None,
+) -> RichTextDocumentViewOptions {
+  { palette, compact_blank_gaps, wiki_links, }
+}
+
+///|
 /// A bounded process-local entry keeps prepared documents alive across view
 /// reconciliation. Scroll position is application state in the virtual-list
 /// API, so the viewer node itself is rebuilt for every scroll update; without
@@ -46,6 +68,7 @@ priv struct RichTextDocumentViewCacheEntry {
   width : Double
   base_font : @core.FontSpec
   text_system_id : String
+  options : RichTextDocumentViewOptions
   prepared : RichTextDocumentViewPrepared
 }
 
@@ -65,6 +88,7 @@ priv struct RichTextDocumentViewCache {
   mut width : Double
   mut base_font : @core.FontSpec?
   mut text_system_id : String
+  mut options : RichTextDocumentViewOptions?
   mut prepared : RichTextDocumentViewPrepared?
 }
 
@@ -75,6 +99,7 @@ fn RichTextDocumentViewCache::new() -> RichTextDocumentViewCache {
     width: 0.0,
     base_font: None,
     text_system_id: "",
+    options: None,
     prepared: None,
   }
 }
@@ -86,11 +111,13 @@ fn RichTextDocumentViewCache::prepare(
   width : Double,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  options~ : RichTextDocumentViewOptions = rich_text_document_view_options(),
 ) -> RichTextDocumentViewPrepared {
   if self.source == Some(source) &&
     self.width == width &&
     self.base_font == Some(base_font) &&
-    self.text_system_id == text_system.id() {
+    self.text_system_id == text_system.id() &&
+    self.options == Some(options) {
     match self.prepared {
       Some(prepared) => return prepared
       None => ()
@@ -103,16 +130,20 @@ fn RichTextDocumentViewCache::prepare(
     if entry.source == source &&
       entry.width == width &&
       entry.base_font == base_font &&
-      entry.text_system_id == text_system.id() {
+      entry.text_system_id == text_system.id() &&
+      entry.options == options {
       self.source = Some(source)
       self.width = width
       self.base_font = Some(base_font)
       self.text_system_id = text_system.id()
+      self.options = Some(options)
       self.prepared = Some(entry.prepared)
       return entry.prepared
     }
   }
   let session = MarkdownDocumentSession::new(source)
+    .with_rich_text_palette(options.palette)
+    .with_wiki_links(options.wiki_links)
   let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let document = session.rich_text(
     dummy_selection,
@@ -121,6 +152,11 @@ fn RichTextDocumentViewCache::prepare(
     focus_mode=false,
     base_dir=None,
   )
+  let document = if options.compact_blank_gaps {
+    rich_text_document_view_collapse_blank_gaps(document, base_font)
+  } else {
+    document
+  }
   let wrapped = rich_text_document_view_wrap(
     document, width, base_font, text_system,
   )
@@ -131,6 +167,7 @@ fn RichTextDocumentViewCache::prepare(
   self.width = width
   self.base_font = Some(base_font)
   self.text_system_id = text_system.id()
+  self.options = Some(options)
   self.prepared = Some(prepared)
   let store = rich_text_document_view_cache_store.val
   if store.length() >= rich_text_document_view_cache_capacity() {
@@ -141,9 +178,26 @@ fn RichTextDocumentViewCache::prepare(
     width,
     base_font,
     text_system_id: text_system.id(),
+    options,
     prepared,
   })
   prepared
+}
+
+///|
+/// Collapse the inactive blank gaps a reader does not need: the same projection
+/// the editor already applies to blocks without a caret inside them. The viewer
+/// has no caret at all, so it passes a parked selection and gets the WYSIWYG
+/// spacing every reading surface in MoSpace shows today.
+fn rich_text_document_view_collapse_blank_gaps(
+  document : RichTextDocument,
+  base_font : @core.FontSpec,
+) -> RichTextDocument {
+  markdown_editor_collapse_inactive_blank_gaps(
+    document,
+    { caret: -1, selection: None, },
+    base_font,
+  )
 }
 
 ///|
@@ -155,6 +209,7 @@ fn rich_text_document_session_view_measure_height(
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
   cache : RichTextDocumentViewCache,
+  options~ : RichTextDocumentViewOptions = rich_text_document_view_options(),
 ) -> Double {
   let content_rect = rich_text_editor_content_rect(
     @core.Rect::new(
@@ -169,6 +224,7 @@ fn rich_text_document_session_view_measure_height(
     content_rect.size.width,
     base_font,
     text_system,
+    options~,
   )
   prepared.content_height + content_rect.origin.y * 2.0
 }
@@ -187,6 +243,7 @@ fn rich_text_document_session_view_paint(
   visible_viewport_height : Double,
   visible_overscan : Double,
   cache : RichTextDocumentViewCache,
+  options~ : RichTextDocumentViewOptions = rich_text_document_view_options(),
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
@@ -199,6 +256,7 @@ fn rich_text_document_session_view_paint(
     content.size.width,
     base_font,
     ctx.text_system,
+    options~,
   )
   let (window_document, top_padding) = rich_text_document_view_window(
     prepared, visible_scroll_y, visible_viewport_height, visible_overscan,
@@ -255,10 +313,13 @@ fn rich_text_document_session_view_offset_at_point(
   visible_scroll_y : Double,
   visible_viewport_height : Double,
   visible_overscan : Double,
+  options~ : RichTextDocumentViewOptions = rich_text_document_view_options(),
 ) -> Int32? {
   ignore(visible_overscan)
   let content = rich_text_editor_content_rect(frame)
   let session = MarkdownDocumentSession::new(source)
+    .with_rich_text_palette(options.palette)
+    .with_wiki_links(options.wiki_links)
   let dummy_selection : MarkdownEditorSelection = { caret: 0, selection: None, }
   let document = session.rich_text(
     dummy_selection,
@@ -267,6 +328,11 @@ fn rich_text_document_session_view_offset_at_point(
     focus_mode=false,
     base_dir=None,
   )
+  let document = if options.compact_blank_gaps {
+    rich_text_document_view_collapse_blank_gaps(document, base_font)
+  } else {
+    document
+  }
   let wrapped = rich_text_document_view_wrap(
     document,
     content.size.width,

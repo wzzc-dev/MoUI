@@ -143,8 +143,8 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_caret_hit.mbt",
-      "maxLines": 2200,
-      "reason": "Existing caret and hit-testing algorithms. Raised 2182->2192: caret-hit coverage/formatting drift from the markdown slices."
+      "maxLines": 2225,
+      "reason": "Existing caret and hit-testing algorithms. Raised 2182->2192: caret-hit coverage/formatting drift from the markdown slices. Raised 2200->2225 2026-11-23 (one 25-line quantum, measured 2206) for the wrapped styled-cell caret mapping (`line_index~` band selection) landed with the table cell wrap/clip fix."
     },
     {
       "path": "moui_skia/native/skia_stub_text_font.cpp",

@@ -933,7 +933,7 @@ fn markdown_editor_footnote_reference_label_at(
   if close >= chars.length() || chars[close] != ']' {
     return None
   }
-  if anchor < open + 2 || anchor > close {
+  if anchor <= open || anchor > close {
     return None
   }
   Some(String::from_array(chars[open + 2:close]))
