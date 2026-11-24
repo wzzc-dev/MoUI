@@ -8,14 +8,14 @@
 
 ## Context
 
-ADR 0072/0073 built the native bridge host: the window, renderer, input and
-platform services stay in a host process while the app is rebuilt as a
-`foreign_library` and loaded from a new `gen-<n>/plugin.dylib|so`. The
-counter-only slice left four gaps: the plugin imported whichever app
-`moui_devhost/moon.mod` listed; the bridge carried only counter's paint/event
-subset; the plugin had no `FrameTick`, timers or clock; and the watcher ignored
-shared packages outside the app module. Phase 2A closes those for any repository
-app on macOS/Linux. IME, semantics, platform views, Windows and Web remain 2B.
+ADR 0072/0073 built the native bridge host: window, renderer, input and platform
+services stay in a host process while the app is rebuilt as a `foreign_library`
+and loaded from a new `gen-<n>/plugin.dylib|so`. The counter-only slice had four
+gaps: the plugin imported whichever app `moui_devhost/moon.mod` listed; the
+bridge carried only counter's paint/event subset; there was no `FrameTick`,
+timer or clock; and the watcher ignored shared packages outside the app module.
+Phase 2A closes those for any repository app on macOS/Linux; IME, semantics,
+platform views, Windows and Web remain 2B.
 
 ## Decision
 
@@ -76,14 +76,18 @@ divider, shadow, clip, brush and a paint clock; `StatusCard` lives in
 `Count: 1`, generation 3 from the imported widget package, failed-build
 retention, and generation 4 recovery with state intact and the same host pid;
 Linux also asserts `dlclose ... images=1`. `smoke/gates.json` carries both
-manual matching-host gates.
+manual matching-host gates. On a matching macOS host, run
+`bash scripts/macos-hot-reload-smoke.sh --run` and expect those six legs plus
+`macos-hot-reload smoke passed` in `artifacts/macos-hot-reload/smoke.log`; this
+Linux host cannot run it, so the gate stays unchecked until recorded.
 
-**Asset-cache follow-up.** The host renderer caches images, typefaces, shaping
-and layers by path/identity for the process lifetime, so a changed asset with an
-unchanged path can stay stale after a swap. There is no public invalidation hook
-and recreating the renderer needs an apphost/renderer lifecycle change. Phase 2A
-records this as explicit debt (cache reset, mtime invalidation, or recreate)
-rather than claiming it solved.
+**Asset-cache follow-up (Phase 2C).** Trigger: after a successful swap, an image
+or font changed in place with the same path, shaping of changed text, or cached
+layer content still renders from the host cache. The host renderer caches these
+by path/identity for the process lifetime, exposes no invalidation hook, and
+recreating it needs an apphost/renderer lifecycle change. Phase 2A records this
+as explicit debt (cache reset, mtime invalidation, or recreate); Phase 2B stays
+IME/semantics/platform views and Windows/Web.
 
 ## Consequences
 
@@ -102,7 +106,4 @@ rather than claiming it solved.
 
 ## References
 
-- ADR 0072, ADR 0073, ADR 0068; `docs/plans/active/dev-hot-reload-phase2a.md`,
-  `docs/development.md`, `docs/testing.md`
-- `moui_devhost/{protocol,host,plugin}/`, `scripts/moui-dev*.mjs`,
-  `examples/hot_reload_probe/`, `examples/hot_reload_widgets/`
+- ADR 0072, ADR 0073, ADR 0068; `docs/development.md`, `docs/testing.md`.

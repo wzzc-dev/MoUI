@@ -37,17 +37,17 @@
 - [x] Linux smoke passes (2026-11-25, ticks 296→340, generations 1–4); macOS
       smoke script and both `smoke/gates.json` entries are in place.
 - [ ] Run macOS smoke on a matching host and record it.
-- [ ] Asset/font/layer cache invalidation (TODO below).
+- [ ] Phase 2C asset/font/layer cache invalidation (TODO below).
 - [ ] Phase 2B: IME/semantics/platform views, then Windows/Web.
 
 ## Asset-cache TODO
 
-The host renderer caches images, typefaces, shaping and layers for the process
-lifetime, so an in-place asset change can serve stale pixels after a swap. No
-invalidation hook exists; recreating the renderer needs a lifecycle change.
-Preferred follow-ups: a cache-reset entry point called after a swap, mtime
-invalidation, or a wholesale recreate preserving window/input/state. Do not
-claim asset invalidation until implemented and smoked.
+Trigger: after a successful swap, an image/font changed in place with the same
+path, changed shaping or cached layer content still renders from the host cache.
+No invalidation hook exists; recreating the renderer needs a lifecycle change.
+Target Phase 2C (after Phase 2B): a cache-reset entry point called after a swap,
+mtime invalidation, or a wholesale recreate preserving window/input/state. Do
+not claim asset invalidation until implemented and smoked.
 
 ## Boundary notes
 
