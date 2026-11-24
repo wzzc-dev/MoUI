@@ -87,6 +87,10 @@ int32_t moui_linux_timer_pump(void) {
   return (int32_t)timeout_ms;
 }
 
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_supported(void) {
+  return 1;
+}
 
 #else
 
@@ -109,6 +113,16 @@ void *moui_linux_timer_start(double interval_ms,
 MOONBIT_FFI_EXPORT
 void moui_linux_timer_cancel(void *handle) {
   (void)handle;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_pump(void) {
+  return -1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_supported(void) {
+  return 0;
 }
 
 #endif

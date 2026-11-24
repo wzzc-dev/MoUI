@@ -21,6 +21,11 @@ test "linux host app options default to a real monotonic frame clock" {
 /// timeout sources itself; without this a `TimerSource` subscription never
 /// ticks (and a hot-reload host never observes a new generation marker).
 test "linux timer pump drives GLib timeout callbacks" {
+  // The same package is compiled on other native hosts, where the timer host
+  // is a stub; only Linux has GLib sources to pump.
+  if linux_timer_supported() == 0 {
+    return ()
+  }
   let ticks = Ref(0)
   let handle = linux_timer_start(fn(call) { call() }, 10.0, fn() {
     ticks.val = ticks.val + 1
