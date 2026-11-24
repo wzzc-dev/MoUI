@@ -84,7 +84,7 @@ This file is generated from repository manifests and validator reports.
 | runtime facade (moui/runtime/pkg.generated.mbti) | 805 | 529 | 19 |
 | apphost facade (moui/apphost/pkg.generated.mbti) | 193 | 96 | 5 |
 | core (moui/core/pkg.generated.mbti) | 3063 | 1295 | 158 |
-| views facade (moui/views/pkg.generated.mbti) | 755 | 361 | 1 |
+| views facade (moui/views/pkg.generated.mbti) | 757 | 362 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 713 | 269 | 44 |
 | render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |

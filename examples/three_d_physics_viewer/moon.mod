@@ -5,11 +5,11 @@ version = "0.1.10"
 preferred_target = "native"
 
 import {
-  "wzzc-dev/moui@0.9.0",
+  "wzzc-dev/moui@0.9.1",
   "wzzc-dev/window@0.5.4-0.2.13",
-  "wzzc-dev/moui_skia_renderer@0.9.0",
-  "wzzc-dev/moui_3d@0.9.0",
+  "wzzc-dev/moui_skia_renderer@0.9.1",
+  "wzzc-dev/moui_3d@0.9.1",
   "wzzc-dev/moui_3d_wgpu_renderer@0.2.2",
-  "wzzc-dev/moui_3d_physics@0.9.0",
-  "wzzc-dev/moui_3d_physics_rapier@0.9.0",
+  "wzzc-dev/moui_3d_physics@0.9.1",
+  "wzzc-dev/moui_3d_physics_rapier@0.9.1",
 }
