@@ -54,7 +54,7 @@ const log = (message) => {
   else process.stdout.write(`[moui dev] ${message}\n`);
 };
 const run = (command, commandArgs, options = {}) => new Promise((resolve) => {
-  const child = spawn(command, commandArgs, { cwd: projectRoot, env: { ...process.env, ...options.env }, stdio: ["ignore", "pipe", "pipe"], shell: false });
+  const child = spawn(command, commandArgs, { cwd: options.cwd || projectRoot, env: { ...process.env, ...options.env }, stdio: ["ignore", "pipe", "pipe"], shell: false });
   let output = "";
   child.stdout.on("data", (chunk) => { if (!options.quiet) process.stdout.write(chunk); output += chunk; });
   child.stderr.on("data", (chunk) => { if (!options.quiet) process.stderr.write(chunk); output += chunk; });
@@ -150,12 +150,12 @@ const hotRoot = workspaceRoot ? path.join(workspaceRoot, "moui_devhost", "dev_ho
 const hotOut = hotRoot ? path.join(hotRoot, "out") : "";
 const hotMarker = hotOut ? path.join(hotOut, "current") : "";
 const hotPicDir = hotRoot ? path.join(hotRoot, "pic") : "";
-const hotHost = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "host", "host.exe");
-const hotPluginArchive = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "plugin", "plugin.a");
+const hotHost = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "host", "host.exe");
+const hotPluginArchive = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "plugin", "plugin.a");
 const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
 const hotPlatform = hotPlatformForNodePlatform(process.platform);
 const hotPluginName = hotPluginFileName(hotPlatform ?? "macos");
-const hotArchiveFragment = "dev_hot/plugin/plugin.a";
+const hotArchiveFragment = "moui_dev_hot/plugin/plugin.a";
 const hotAppModule = (() => {
   if (packageName) return packageName;
   if (!workspaceRoot) return "";
@@ -168,10 +168,69 @@ const hotAppModule = (() => {
 const hotProject = hotAppModule ? path.join(workspaceRoot, hotAppModule) : projectRoot;
 let hotChild = null;
 let hotFastPlan = null;
+let hotWatchRoots = [hotProject];
+
+// Resolve the app's local dependency closure so an edit to an imported package
+// outside the app folder still triggers a rebuild. Registry dependencies are
+// not watched; repository workspace members are.
+function localWorkspaceModules() {
+  const modules = new Map();
+  if (!workspaceRoot || !fs.existsSync(path.join(workspaceRoot, "moon.work"))) return modules;
+  const text = fs.readFileSync(path.join(workspaceRoot, "moon.work"), "utf8");
+  const block = text.match(/members\s*=\s*\[([\s\S]*?)\]/)?.[1] ?? "";
+  for (const match of block.matchAll(/"([^"]+)"/g)) {
+    const dir = path.resolve(workspaceRoot, match[1]);
+    if (!fs.existsSync(path.join(dir, "moon.mod"))) continue;
+    const name = fs
+      .readFileSync(path.join(dir, "moon.mod"), "utf8")
+      .match(/^\s*name\s*=\s*"([^"]+)"/m)?.[1];
+    if (name) modules.set(name, dir);
+  }
+  return modules;
+}
+
+function packageImports(packageDir) {
+  const pkgFile = path.join(packageDir, "moon.pkg");
+  if (!fs.existsSync(pkgFile)) return [];
+  const text = fs.readFileSync(pkgFile, "utf8");
+  const block = text.match(/import\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+  return [...block.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+}
+
+function hotDependencyRoots() {
+  if (!hotAppModule || !workspaceRoot) return [hotProject];
+  const modules = localWorkspaceModules();
+  const roots = [hotProject];
+  const seen = new Set();
+  const queue = [path.join(hotProject, "app")];
+  while (queue.length > 0) {
+    const packageDir = queue.shift();
+    if (seen.has(packageDir)) continue;
+    seen.add(packageDir);
+    for (const importPath of packageImports(packageDir)) {
+      const parts = importPath.split("/");
+      if (parts.length < 3) continue;
+      const moduleName = `${parts[0]}/${parts[1]}`;
+      const moduleDir = modules.get(moduleName);
+      if (!moduleDir) continue;
+      const importedDir = path.join(moduleDir, ...parts.slice(2));
+      if (
+        importedDir !== hotProject &&
+        !importedDir.startsWith(`${hotProject}${path.sep}`) &&
+        !roots.includes(importedDir)
+      ) {
+        roots.push(importedDir);
+      }
+      queue.push(importedDir);
+    }
+  }
+  return roots;
+}
 
 function hotSourceShape() {
-  return listFiles(hotProject)
-    .split("\n")
+  return hotWatchRoots
+    .flatMap((dir) => listFiles(dir).split("\n"))
+    .filter(Boolean)
     .map((line) => line.replace(/:\d+(?:\.\d+)?:\d+$/, ""))
     .sort()
     .join("\n");
@@ -179,9 +238,9 @@ function hotSourceShape() {
 
 async function captureHotPlan() {
   const dry = await run(moon, [
-    "build", "moui_devhost/dev_hot/plugin",
-    "--target", "native", "--frozen", "-v", "--dry-run",
-  ], { quiet: true });
+    "build", "plugin",
+    "--target", "native", "-v", "--dry-run",
+  ], { quiet: true, cwd: hotRoot });
   if (dry.code !== 0) return null;
   const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
   const steps = dry.output
@@ -203,9 +262,9 @@ async function prepareRuntimePicObjects() {
   if (hotPicObjects) return hotPicObjects;
   fs.mkdirSync(hotPicDir, { recursive: true });
   const dry = await run(moon, [
-    "build", "moui_devhost/dev_hot/plugin",
-    "--target", "native", "--frozen", "-v", "--dry-run",
-  ], { quiet: true });
+    "build", "plugin",
+    "--target", "native", "-v", "--dry-run",
+  ], { quiet: true, cwd: hotRoot });
   if (dry.code !== 0) return null;
   const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
   const objects = [];
@@ -281,9 +340,11 @@ async function prepareHot() {
     "--app", hotAppModule,
     "--app-package", "app",
     "--platform", hotPlatform,
+    "--frame-interval-ms", String(Number(valueOf("--frame-interval-ms", "16")) || 16),
   ]);
   if (generated.code !== 0) return false;
-  const hostBuild = await run(moon, ["build", "moui_devhost/dev_hot/host", "--target", "native"]);
+  hotWatchRoots = hotDependencyRoots();
+  const hostBuild = await run(moon, ["build", "host", "--target", "native"], { cwd: hotRoot });
   return hostBuild.code === 0;
 }
 
@@ -298,7 +359,7 @@ async function publishHotPlugin() {
     if (!compiled) log("hot fast build failed; falling back to moon build");
   }
   if (!compiled) {
-    const built = await run(moon, ["build", "moui_devhost/dev_hot/plugin", "--target", "native", "--frozen"]);
+    const built = await run(moon, ["build", "plugin", "--target", "native"], { cwd: hotRoot });
     if (built.code !== 0) {
       const error = built.output.trim() || `plugin build failed with exit code ${built.code}`;
       writeStatus({ ok: false, phase: "error", hot: true, error });
@@ -331,6 +392,7 @@ async function publishHotPlugin() {
   fs.writeFileSync(markerTemp, dylib);
   fs.renameSync(markerTemp, hotMarker);
   status.generation = generation;
+  hotWatchRoots = hotDependencyRoots();
   writeStatus({ ok: true, phase: "running", hot: true, error: "" });
   log(`hot plugin ready (generation ${generation}, ${(fs.statSync(dylib).size / 1024 / 1024).toFixed(1)} MiB, ${Date.now() - startedAt}ms)`);
   return true;
@@ -513,16 +575,6 @@ if (hot && !hotAvailable()) {
   });
   process.exit(1);
 }
-if (hot && !fs.readFileSync(path.join(workspaceRoot, "moui_devhost", "moon.mod"), "utf8").includes(`"${hotAppModule}@`)) {
-  writeStatus({
-    ok: false,
-    phase: "error",
-    hot: true,
-    error: `--hot cannot import ${hotAppModule}; add "${hotAppModule}@<version>" to moui_devhost/moon.mod`,
-  });
-  process.exit(1);
-}
-
 if (hot) {
   const prepared = await prepareHot();
   if (!prepared) {
@@ -533,18 +585,19 @@ if (hot) {
   if (!published || once) process.exit(published ? 0 : 1);
   const initialDylib = fs.readFileSync(hotMarker, "utf8").trim();
   if (!(await startHotHost(initialDylib))) process.exit(1);
-  let lastHotSnapshot = listFiles(hotProject);
+  let lastHotSnapshot = hotSourceShape();
   let hotBuilding = false;
-  log(`watching ${hotProject} every ${intervalMs}ms (hot, state: ${stateFile})`);
+  log(`watching ${hotWatchRoots.join(", ")} every ${intervalMs}ms (hot, state: ${stateFile})`);
   hotTimer = setInterval(async () => {
     if (stopping || hotBuilding) return;
-    const nextSnapshot = listFiles(hotProject);
+    const nextSnapshot = hotSourceShape();
     if (nextSnapshot === lastHotSnapshot) return;
     lastHotSnapshot = nextSnapshot;
     hotBuilding = true;
     try {
       // A failed build keeps the previous generation published and interactive.
       await publishHotPlugin();
+      lastHotSnapshot = hotSourceShape();
     } finally {
       hotBuilding = false;
     }

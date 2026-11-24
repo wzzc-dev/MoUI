@@ -362,7 +362,7 @@ pub fn encode_event(event : @core.AppEvent) -> String? {
       fields["position"] = optional_point_json(drag_drop.position)
       Some(Json::object(fields).stringify())
     }
-    @core.AppEvent::PlatformView(view, platform_event) => {
+    @core.AppEvent::PlatformView(view, platform_event) =>
       match platform_event {
         @core.PlatformViewEvent::Named(name~, value~, detail~, flag~) => {
           let fields : Map[String, Json] = Map([])
@@ -375,7 +375,6 @@ pub fn encode_event(event : @core.AppEvent) -> String? {
           Some(Json::object(fields).stringify())
         }
       }
-    }
     @core.AppEvent::Resize(size) => {
       let fields : Map[String, Json] = Map([])
       fields["kind"] = string_json("resize")

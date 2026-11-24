@@ -73,17 +73,21 @@ export function picRuntimeCompile(line, outputPath) {
 }
 
 /** Select the dry-run steps worth replaying for a same-shape app edit. */
-export function hotFastStepMatches(line, { appModule, archiveFragment = "dev_hot/plugin/plugin.a" }) {
+export function hotFastStepMatches(line, { appModule, archiveFragment = "moui_dev_hot/plugin/plugin.a" }) {
   if (line.startsWith("moonc build-package ")) {
-    return line.includes(appModule) || line.includes("moui_devhost/dev_hot/plugin");
+    return (
+      line.includes(appModule) ||
+      line.includes("moui_dev_hot/plugin") ||
+      line.includes("plugin/main.mbt")
+    );
   }
   if (line.startsWith("moonc link-core ")) {
-    return line.includes("moui_devhost/dev_hot/plugin");
+    return line.includes("moui_dev_hot/plugin");
   }
   // `link-core` regenerates plugin.c; the generated C must be recompiled
   // before the archive step, or the archive silently keeps the previous
   // plugin.o (and therefore the previous app code).
-  if (line.includes("dev_hot/plugin/__moonbit_link_core__/plugin.o")) {
+  if (line.includes("moui_dev_hot/plugin/__moonbit_link_core__/plugin.o")) {
     return true;
   }
   if (line.includes(archiveFragment)) {

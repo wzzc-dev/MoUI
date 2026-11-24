@@ -10,31 +10,27 @@ fn test_rect() -> @core.Rect {
 
 ///|
 fn test_rounded() -> @core.RoundedRect {
-  @core.RoundedRect::{ rect: test_rect(), radius: 8.0 }
+  @core.RoundedRect::{ rect: test_rect(), radius: 8.0, }
 }
 
 ///|
 fn test_linear_brush() -> @core.Brush {
-  @core.Brush::LinearGradient(
-    @core.LinearGradientSpec::{
-      start: @core.Point::new(x=0.0, y=0.0),
-      end: @core.Point::new(x=120.0, y=40.0),
-      start_color: test_color(0.2),
-      end_color: test_color(0.8),
-    },
-  )
+  @core.Brush::LinearGradient(@core.LinearGradientSpec::{
+    start: @core.Point::new(x=0.0, y=0.0),
+    end: @core.Point::new(x=120.0, y=40.0),
+    start_color: test_color(0.2),
+    end_color: test_color(0.8),
+  })
 }
 
 ///|
 fn test_radial_brush() -> @core.Brush {
-  @core.Brush::RadialGradient(
-    @core.RadialGradientSpec::{
-      center: @core.Point::new(x=60.0, y=40.0),
-      radius: 80.0,
-      center_color: test_color(0.9),
-      edge_color: test_color(0.1),
-    },
-  )
+  @core.Brush::RadialGradient(@core.RadialGradientSpec::{
+    center: @core.Point::new(x=60.0, y=40.0),
+    radius: 80.0,
+    center_color: test_color(0.9),
+    edge_color: test_color(0.1),
+  })
 }
 
 ///|
@@ -110,10 +106,11 @@ fn test_path() -> @core.PathSpec {
       @core.PathVerb::Close,
     ],
     fill: Some(@core.Brush::Solid(test_color(0.4))),
-    stroke: Some(test_stops_brush(@core.GradientAxis::ConicAxis(
-      @core.Point::new(x=20.0, y=20.0),
-      45.0,
-    ))),
+    stroke: Some(
+      test_stops_brush(
+        @core.GradientAxis::ConicAxis(@core.Point::new(x=20.0, y=20.0), 45.0),
+      ),
+    ),
     stroke_width: 2.0,
     stroke_cap: Some(@core.StrokeCap::Round),
     stroke_join: Some(@core.StrokeJoin::Bevel),
@@ -143,14 +140,7 @@ fn test_layer(mask : @core.LayerMask) -> @core.LayerSpec {
 
 ///|
 fn test_transform() -> @core.Transform2D {
-  @core.Transform2D::{
-    a: 1.0,
-    b: 0.0,
-    c: 0.0,
-    d: 1.0,
-    tx: 12.0,
-    ty: -4.0,
-  }
+  @core.Transform2D::{ a: 1.0, b: 0.0, c: 0.0, d: 1.0, tx: 12.0, ty: -4.0, }
 }
 
 ///|
@@ -169,24 +159,24 @@ fn every_draw_command() -> Array[@core.DrawCommand] {
     @core.DrawCommand::FillRoundedRectBrush(test_rounded(), test_radial_brush()),
     @core.DrawCommand::FillRoundedRectBrush(
       test_rounded(),
-      test_stops_brush(@core.GradientAxis::LinearAxis(
-        @core.Point::new(x=0.0, y=0.0),
-        @core.Point::new(x=1.0, y=1.0),
-      )),
+      test_stops_brush(
+        @core.GradientAxis::LinearAxis(
+          @core.Point::new(x=0.0, y=0.0),
+          @core.Point::new(x=1.0, y=1.0),
+        ),
+      ),
     ),
     @core.DrawCommand::FillRoundedRectBrush(
       test_rounded(),
-      test_stops_brush(@core.GradientAxis::RadialAxis(
-        @core.Point::new(x=50.0, y=50.0),
-        90.0,
-      )),
+      test_stops_brush(
+        @core.GradientAxis::RadialAxis(@core.Point::new(x=50.0, y=50.0), 90.0),
+      ),
     ),
     @core.DrawCommand::StrokeRoundedRectBrush(
       test_rounded(),
-      test_stops_brush(@core.GradientAxis::ConicAxis(
-        @core.Point::new(x=10.0, y=10.0),
-        30.0,
-      )),
+      test_stops_brush(
+        @core.GradientAxis::ConicAxis(@core.Point::new(x=10.0, y=10.0), 30.0),
+      ),
       3.0,
     ),
     @core.DrawCommand::DrawShadow(test_shadow()),
@@ -211,14 +201,12 @@ fn every_draw_command() -> Array[@core.DrawCommand] {
       test_layer(@core.LayerMask::RoundedMask(test_rounded())),
     ),
     @core.DrawCommand::PopLayer,
-    @core.DrawCommand::BeginRetainedLayer(
-      @core.RetainedLayerSpec::{
-        key: "sidebar",
-        frame: test_rect(),
-        content_revision: 7,
-        scale_factor: 2.0,
-      },
-    ),
+    @core.DrawCommand::BeginRetainedLayer(@core.RetainedLayerSpec::{
+      key: "sidebar",
+      frame: test_rect(),
+      content_revision: 7,
+      scale_factor: 2.0,
+    }),
     @core.DrawCommand::EndRetainedLayer("sidebar"),
     @core.DrawCommand::PushFilter(@core.FilterEffect::Blur(4.0)),
     @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(1.5)),
@@ -226,20 +214,18 @@ fn every_draw_command() -> Array[@core.DrawCommand] {
     @core.DrawCommand::PushFilter(@core.FilterEffect::Contrast(1.1)),
     @core.DrawCommand::PushFilter(
       @core.FilterEffect::ColorMatrix([
-        1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0, 0.0,
       ]),
     ),
     @core.DrawCommand::PopFilter,
     @core.DrawCommand::DrawPath(test_path()),
-    @core.DrawCommand::DrawShaderEffect(
-      @core.ShaderEffectSpec::{
-        name: "grain",
-        frame: test_rect(),
-        uniforms: [0.5, 12.0, 3.0],
-        fallback: @core.Brush::Solid(test_color(0.7)),
-      },
-    ),
+    @core.DrawCommand::DrawShaderEffect(@core.ShaderEffectSpec::{
+      name: "grain",
+      frame: test_rect(),
+      uniforms: [0.5, 12.0, 3.0],
+      fallback: @core.Brush::Solid(test_color(0.7)),
+    }),
   ]
 }
 
@@ -297,10 +283,7 @@ test "frame decoder accepts the original v1 text shape" {
     @core.DrawCommand::DrawText(run) => {
       assert_eq(run.text, "hi")
       assert_eq(run.font.style, @core.FontStyle::Italic)
-      assert_eq(
-        run.font.families.families[0],
-        @core.FontFamily::Name("Arial"),
-      )
+      assert_eq(run.font.families.families[0], @core.FontFamily::Name("Arial"))
     }
     _ => abort("expected DrawText")
   }
@@ -344,9 +327,7 @@ test "event round trip covers every app event variant" {
   let range = @core.TextRange::new(start=2, end=5)
   let composition_cursor = @core.TextRange::new(start=1, end=1)
   assert_event_round_trip(
-    @core.AppEvent::FrameTick(
-      @core.Frame::new(time_ms=1234.0, delta_ms=16.0),
-    ),
+    @core.AppEvent::FrameTick(@core.Frame::new(time_ms=1234.0, delta_ms=16.0)),
   )
   assert_event_round_trip(
     @core.AppEvent::Pointer(
@@ -404,17 +385,13 @@ test "event round trip covers every app event variant" {
     ),
   )
   assert_event_round_trip(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::CompositionEnd("日本"),
-    ),
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd("日本")),
   )
   assert_event_round_trip(
     @core.AppEvent::TextInput(@core.TextInputEvent::DeleteRange(range)),
   )
   assert_event_round_trip(
-    @core.AppEvent::TextInput(
-      @core.TextInputEvent::DeleteSurrounding(1, 2),
-    ),
+    @core.AppEvent::TextInput(@core.TextInputEvent::DeleteSurrounding(1, 2)),
   )
   assert_event_round_trip(
     @core.AppEvent::DragDrop(
@@ -432,10 +409,9 @@ test "event round trip covers every app event variant" {
   )
   assert_event_round_trip(
     @core.AppEvent::DragDrop(
-      @core.DragDropEvent::new(
-        phase=@core.DragDropPhase::Dropped,
-        paths=["/tmp/a.png", "/tmp/b.png"],
-      ),
+      @core.DragDropEvent::new(phase=@core.DragDropPhase::Dropped, paths=[
+        "/tmp/a.png", "/tmp/b.png",
+      ]),
     ),
   )
   assert_event_round_trip(
@@ -457,12 +433,13 @@ test "event round trip covers every app event variant" {
   assert_event_round_trip(
     @core.AppEvent::Resize(@core.Size::new(width=640.0, height=480.0)),
   )
-  for reason in [
-    @core.RedrawReason::Initial,
-    @core.RedrawReason::Input,
-    @core.RedrawReason::Resize,
-    @core.RedrawReason::Explicit,
-  ] {
+  for
+    reason in [
+      @core.RedrawReason::Initial,
+      @core.RedrawReason::Input,
+      @core.RedrawReason::Resize,
+      @core.RedrawReason::Explicit,
+    ] {
     assert_event_round_trip(@core.AppEvent::Redraw(reason))
   }
   assert_event_round_trip(
@@ -478,12 +455,13 @@ test "event round trip covers every app event variant" {
       ),
     ),
   )
-  for kind in [
-    @core.GestureKind::Rotate,
-    @core.GestureKind::Pan,
-    @core.GestureKind::DoubleTap,
-    @core.GestureKind::Pressure,
-  ] {
+  for
+    kind in [
+      @core.GestureKind::Rotate,
+      @core.GestureKind::Pan,
+      @core.GestureKind::DoubleTap,
+      @core.GestureKind::Pressure,
+    ] {
     assert_event_round_trip(
       @core.AppEvent::Gesture(
         @core.GestureEvent::new(kind~, phase=@core.GesturePhase::Started),
@@ -491,10 +469,7 @@ test "event round trip covers every app event variant" {
     )
   }
   assert_event_round_trip(@core.AppEvent::CloseRequested)
-  assert_eq(
-    @protocol.decode_event("{\"kind\":\"frame_tick\"}"),
-    None,
-  )
+  assert_eq(@protocol.decode_event("{\"kind\":\"frame_tick\"}"), None)
   assert_eq(@protocol.decode_event("{\"kind\":\"pointer\"}"), None)
   assert_eq(@protocol.decode_event("not json"), None)
 }

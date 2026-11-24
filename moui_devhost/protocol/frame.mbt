@@ -438,17 +438,15 @@ fn text_run_from_json(value : Json?) -> @core.TextRun? {
   }
   let stroke_color = nullable_color_from_json(fields.get("stroke_color"))
   let stroke_width = wire_number(fields.get("stroke_width")).unwrap_or(0.0)
-  Some(
-    @core.TextRun::{
-      text,
-      frame,
-      font,
-      color,
-      align,
-      stroke_color,
-      stroke_width,
-    },
-  )
+  Some(@core.TextRun::{
+    text,
+    frame,
+    font,
+    color,
+    align,
+    stroke_color,
+    stroke_width,
+  })
 }
 
 ///|
@@ -518,14 +516,7 @@ fn radial_gradient_from_json(value : Json?) -> @core.RadialGradientSpec? {
     Some(color) => color
     None => return None
   }
-  Some(
-    @core.RadialGradientSpec::{
-      center,
-      radius,
-      center_color,
-      edge_color,
-    },
-  )
+  Some(@core.RadialGradientSpec::{ center, radius, center_color, edge_color, })
 }
 
 ///|
@@ -1285,7 +1276,14 @@ fn path_spec_from_json(value : Json?) -> @core.PathSpec? {
         None => return None
       }
   }
-  Some(@core.PathSpec::{ verbs, fill, stroke, stroke_width, stroke_cap, stroke_join, })
+  Some(@core.PathSpec::{
+    verbs,
+    fill,
+    stroke,
+    stroke_width,
+    stroke_cap,
+    stroke_join,
+  })
 }
 
 ///|
@@ -1545,9 +1543,7 @@ fn command_from_json(value : Json) -> @core.DrawCommand? {
         Some(width) => width
         None => return None
       }
-      Some(
-        @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width),
-      )
+      Some(@core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width))
     }
     "draw_shadow" => {
       let spec = match shadow_spec_from_json(fields.get("shadow")) {
@@ -1675,9 +1671,7 @@ pub fn decode_frame_payload(text : String) -> FramePayload? {
     None => return None
   }
   match wire_int(root.get("version")) {
-    Some(version) => if version != abi_version() {
-      return None
-    }
+    Some(version) => if version != abi_version() { return None }
     None => return None
   }
   let items = match wire_array(root.get("commands")) {

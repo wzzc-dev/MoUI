@@ -3,6 +3,7 @@ import {
   "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui_devhost/protocol",
 }
 

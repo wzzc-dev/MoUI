@@ -71,7 +71,7 @@ test("runtime C compile rewrites its object and appends -fPIC", () => {
   );
   assert.equal(
     picRuntimeCompile(
-      "/usr/bin/cc -o ./_build/native/debug/build/wzzc-dev/moui_devhost/dev_hot/plugin/__moonbit_link_core__/plugin.o ./plugin.c",
+      "/usr/bin/cc -o ./_build/native/debug/build/wzzc-dev/moui_dev_hot/plugin/__moonbit_link_core__/plugin.o ./plugin.c",
       "/tmp/pic/plugin.o",
     ),
     null,
@@ -81,7 +81,7 @@ test("runtime C compile rewrites its object and appends -fPIC", () => {
 
 test("fast plan recompiles the generated plugin C before archiving", () => {
   const compile =
-    "/usr/bin/cc -o ./_build/native/debug/build/wzzc-dev/moui_devhost/dev_hot/plugin/__moonbit_link_core__/plugin.o -I$MOON_HOME/include -g -c ... plugin.c -fPIC";
+    "/usr/bin/cc -o ./_build/native/debug/build/wzzc-dev/moui_dev_hot/plugin/__moonbit_link_core__/plugin.o -I$MOON_HOME/include -g -c ... plugin.c -fPIC";
   assert.equal(hotFastStepMatches(compile, { appModule: "examples/counter" }), true);
   assert.equal(
     hotFastStepMatches("/usr/bin/cc -o /tmp/unrelated.o unrelated.c", {
@@ -102,7 +102,7 @@ test("fast plan keeps app/plugin compile, link-core, and archive steps", () => {
   );
   assert.equal(
     hotFastStepMatches(
-      "moonc build-package ./moui_devhost/dev_hot/plugin/main.mbt -o ./_build/plugin.core",
+      "moonc build-package ./plugin/main.mbt -o ./_build/plugin.core",
       options,
     ),
     true,
@@ -116,21 +116,21 @@ test("fast plan keeps app/plugin compile, link-core, and archive steps", () => {
   );
   assert.equal(
     hotFastStepMatches(
-      "moonc link-core ./a.core -main wzzc-dev/moui_devhost/dev_hot/plugin -o ./plugin.o",
+      "moonc link-core ./a.core -main wzzc-dev/moui_dev_hot/plugin -o ./plugin.o",
       options,
     ),
     true,
   );
   assert.equal(
     hotFastStepMatches(
-      "moon tool archive --output ./_build/wzzc-dev/moui_devhost/dev_hot/plugin/plugin.a -- /usr/bin/ar -r -c -s x.o",
+      "moon tool archive --output ./_build/wzzc-dev/moui_dev_hot/plugin/plugin.a -- /usr/bin/ar -r -c -s x.o",
       options,
     ),
     true,
   );
   assert.equal(
     hotFastStepMatches(
-      "libtool -static -o ./_build/wzzc-dev/moui_devhost/dev_hot/plugin/plugin.a a.o",
+      "libtool -static -o ./_build/wzzc-dev/moui_dev_hot/plugin/plugin.a a.o",
       options,
     ),
     true,

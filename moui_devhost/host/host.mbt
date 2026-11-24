@@ -51,6 +51,15 @@ let host_reloads : Ref[Int32] = Ref(0)
 let host_polls : Ref[Int32] = Ref(0)
 
 ///|
+let host_frames : Ref[Int32] = Ref(0)
+
+///|
+/// Number of newline-terminated lines already dispatched from the dev event
+/// injection file. Hot smokes use this to drive synthetic input without
+/// reaching into the plugin image.
+let host_injected_lines : Ref[Int32] = Ref(0)
+
+///|
 /// macOS keeps MoonBit dylibs mapped after `dlclose`, so the host re-execs
 /// itself after a bounded number of successful swaps instead of leaking an
 /// image per edit. Linux `dlclose` unmaps the image, so the dev runner sets
@@ -205,15 +214,175 @@ pub fn dispatch_event(event : @core.AppEvent) -> Bool {
 }
 
 ///|
-/// Decode the plugin's current frame for the bridge paint pass. A corrupt
-/// frame paints nothing and leaves the last presented frame in place.
-pub fn frame_commands() -> Array[@core.DrawCommand] {
+/// How often the debug frame trace repeats. `0` traces only the first frame.
+fn frame_trace_interval() -> Int32 {
+  match env_nonempty("MOUI_HOT_FRAME_TRACE_INTERVAL") {
+    Some(value) => @string.parse_int(value[:]) catch { _ => 30 }
+    None => 30
+  }
+}
+
+///|
+fn draw_command_kind(command : @core.DrawCommand) -> String {
+  match command {
+    @core.DrawCommand::Clear(_) => "clear"
+    @core.DrawCommand::FillRect(_) => "fill_rect"
+    @core.DrawCommand::StrokeRect(_) => "stroke_rect"
+    @core.DrawCommand::FillRoundedRect(_) => "fill_rounded_rect"
+    @core.DrawCommand::StrokeRoundedRect(_) => "stroke_rounded_rect"
+    @core.DrawCommand::FillRoundedRectBrush(_) => "fill_rounded_rect_brush"
+    @core.DrawCommand::StrokeRoundedRectBrush(_) => "stroke_rounded_rect_brush"
+    @core.DrawCommand::DrawShadow(_) => "draw_shadow"
+    @core.DrawCommand::DrawText(_) => "draw_text"
+    @core.DrawCommand::DrawImage(_) => "draw_image"
+    @core.DrawCommand::PushClip(_) => "push_clip"
+    @core.DrawCommand::PopClip => "pop_clip"
+    @core.DrawCommand::PushRoundedClip(_) => "push_rounded_clip"
+    @core.DrawCommand::PopRoundedClip => "pop_rounded_clip"
+    @core.DrawCommand::PushPathClip(_) => "push_path_clip"
+    @core.DrawCommand::PopPathClip => "pop_path_clip"
+    @core.DrawCommand::PushTransform(_) => "push_transform"
+    @core.DrawCommand::PopTransform => "pop_transform"
+    @core.DrawCommand::PushOpacity(_) => "push_opacity"
+    @core.DrawCommand::PopOpacity => "pop_opacity"
+    @core.DrawCommand::PushLayer(_) => "push_layer"
+    @core.DrawCommand::PopLayer => "pop_layer"
+    @core.DrawCommand::BeginRetainedLayer(_) => "begin_retained_layer"
+    @core.DrawCommand::EndRetainedLayer(_) => "end_retained_layer"
+    @core.DrawCommand::PushFilter(_) => "push_filter"
+    @core.DrawCommand::PopFilter => "pop_filter"
+    @core.DrawCommand::DrawPath(_) => "draw_path"
+    @core.DrawCommand::DrawShaderEffect(_) => "draw_shader_effect"
+  }
+}
+
+///|
+/// Debug-only frame summary. It gives the hot smoke a cheap way to assert that
+/// a real app produced the expected command vocabulary, no unsupported
+/// commands, and the text it expected after a state-restoring swap.
+fn trace_frame(payload : @protocol.FramePayload) -> Unit {
+  host_frames.val = host_frames.val + 1
+  if env_nonempty("MOUI_HOT_DEBUG") is None {
+    return
+  }
+  let interval = frame_trace_interval()
+  let due = host_frames.val == 1 ||
+    (interval > 0 && host_frames.val % interval == 0)
+  if !due {
+    return
+  }
+  let commands = payload.commands()
+  let kinds : Array[String] = []
+  let texts : Array[String] = []
+  for command in commands {
+    kinds.push(draw_command_kind(command))
+    match command {
+      @core.DrawCommand::DrawText(run) => texts.push(run.text)
+      _ => ()
+    }
+  }
+  let mut summary = "frame " +
+    host_frames.val.to_string() +
+    " commands=" +
+    commands.length().to_string() +
+    " unsupported=" +
+    payload.unsupported().to_string() +
+    " kinds=" +
+    kinds.join(",")
+  if texts.length() > 0 {
+    summary = summary + " texts=[" + texts.join(" || ") + "]"
+  }
+  hot_debug(summary)
+}
+
+///|
+fn decode_frame_payload() -> @protocol.FramePayload? {
   let bytes = moui_devhost_frame()
   let text = @utf8.decode_lossy(bytes[:], ignore_bom=true)
-  match @protocol.decode_frame(text) {
-    Some(commands) => commands
+  @protocol.decode_frame_payload(text)
+}
+
+///|
+fn with_clear(
+  commands : Array[@core.DrawCommand],
+  clear_color : @core.Color,
+) -> Array[@core.DrawCommand] {
+  let starts_with_clear = if commands.length() > 0 {
+    match commands[0] {
+      @core.DrawCommand::Clear(_) => true
+      _ => false
+    }
+  } else {
+    false
+  }
+  if starts_with_clear {
+    return commands
+  }
+  let output : Array[@core.DrawCommand] = [
+    @core.DrawCommand::Clear(clear_color),
+  ]
+  for command in commands {
+    output.push(command)
+  }
+  output
+}
+
+///|
+/// Decode the plugin's current frame for the bridge paint pass. The frame's
+/// `clear_color` becomes a leading `Clear` command because a host `DrawFrame`
+/// paints commands rather than carrying a separate clear color. A corrupt
+/// frame paints nothing and leaves the last presented frame in place.
+pub fn frame_commands() -> Array[@core.DrawCommand] {
+  match decode_frame_payload() {
+    Some(payload) => {
+      trace_frame(payload)
+      with_clear(payload.commands(), payload.clear_color())
+    }
     None => []
   }
+}
+
+///|
+/// Decode and dispatch one JSON `AppEvent`. Shared by the injection hook and
+/// by tests that need to drive the plugin without a platform event source.
+pub fn dispatch_event_json(payload : String) -> Bool {
+  match @protocol.decode_event(payload) {
+    Some(event) => dispatch_event(event)
+    None => false
+  }
+}
+
+///|
+/// Dev-only event injection. `MOUI_HOT_INJECT_FILE` names a file of JSON
+/// `AppEvent` lines; each complete line is dispatched exactly once. The hot
+/// smoke uses this to synthesize input (a click that increments the model)
+/// without depending on `xdotool` or a platform-specific input driver.
+pub fn poll_injected_events() -> Unit {
+  let path = match env_nonempty("MOUI_HOT_INJECT_FILE") {
+    Some(path) => path
+    None => return
+  }
+  if !@fs.path_exists(path) {
+    return
+  }
+  let bytes = @fs.read_file_to_bytes(path) catch { _ => return }
+  let text = @utf8.decode_lossy(bytes[:], ignore_bom=true)
+  let pieces = text.split("\n").to_array()
+  // The last piece is incomplete whether or not the file ends in a newline;
+  // only complete lines are dispatched, so a partially written append is
+  // picked up on the next poll instead of being lost as invalid JSON.
+  let complete = if pieces.length() > 0 { pieces.length() - 1 } else { 0 }
+  let mut consumed = 0
+  for index in 0..<complete {
+    let line = pieces[index].trim()
+    if index >= host_injected_lines.val && line != "" {
+      let accepted = dispatch_event_json(line.to_owned())
+      let prefix = if accepted { "injected " } else { "rejected injection " }
+      hot_debug(prefix + line.to_owned())
+    }
+    consumed = consumed + 1
+  }
+  host_injected_lines.val = consumed
 }
 
 ///|

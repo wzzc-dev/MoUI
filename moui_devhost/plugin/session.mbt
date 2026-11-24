@@ -50,6 +50,10 @@ pub fn Session::new(
 pub fn Session::dispatch_json(self : Session, payload : String) -> Bool {
   match @protocol.decode_event(payload) {
     Some(event) => {
+      match event {
+        @core.AppEvent::FrameTick(frame) => advance_hot_time(frame)
+        _ => ()
+      }
       self.runtime.dispatch_event(event)
       true
     }
@@ -87,4 +91,6 @@ pub fn Session::resize(self : Session, width : Double, height : Double) -> Unit 
 pub fn Session::destroy(self : Session) -> Unit {
   self.flush()
   self.runtime.destroy()
+  // Timer callbacks close over the app program; drop them with the image.
+  clear_hot_timers()
 }
