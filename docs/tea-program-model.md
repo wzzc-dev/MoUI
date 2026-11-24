@@ -301,10 +301,10 @@ debounced snapshot at frame boundaries and restores it after mount; restoration
 writes runtime fields directly and never dispatches `on_scroll`/`on_change`.
 Navigation remains app-owned in the model (ADR 0068).
 
-On macOS, `moui dev --hot` extends the same contract across a plugin swap
-instead of a process restart: the host keeps the window and platform services,
-and the new app plugin restores the model through the state transport and the
-runtime snapshot through the transient transport. The control tree is rebuilt
-from the new `Program`, so app-layer structure changes are picked up; renderer,
-backend, ABI and Phase 2 surfaces (IME, semantics, platform views) still
-require a restart (ADR 0072).
+On native macOS and Linux, `moui dev --hot` extends the same contract across a
+plugin swap instead of a process restart: the host keeps the window and
+platform services, and the new app plugin restores the model through the state
+transport and the runtime snapshot through the transient transport. The control
+tree is rebuilt from the new `Program`, so app-layer structure changes are
+picked up; renderer, backend, ABI and Phase 2 surfaces (IME, semantics,
+platform views) still require a restart (ADR 0072, ADR 0073).

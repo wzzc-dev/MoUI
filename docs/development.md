@@ -282,16 +282,21 @@ restores it without dispatching `on_scroll`/`on_change`. Navigation stays
 app-owned in the model. See [TEA program model](tea-program-model.md) and ADR
 0068.
 
-On macOS native, `--hot` replaces restart with a same-window plugin swap: a
-generated host keeps the window, renderer and platform services, while the app
-package is rebuilt as a `foreign_library` and linked into a uniquely named
-`plugin.dylib` the host loads. Both transports above apply unchanged, so an
-opted-in model survives the swap; a warm app edit takes about 0.6 s, and a
-compiler error keeps the old UI interactive. Core, renderer, backend and ABI
-edits still restart, IME/semantics/platform views are Phase 2, and the host
-re-execs after 32 swaps because macOS retains dylib images. Generated sources
-live in `moui_devhost/dev_hot/` (gitignored); the app module must be listed in
-`moui_devhost/moon.mod` (counter is). See ADR 0072.
+On native macOS and Linux, `--hot` replaces restart with a same-window plugin
+swap: a generated host keeps the window, renderer and platform services, while
+the app package is rebuilt as a `foreign_library` and linked into a uniquely
+named `plugin.dylib` (macOS) or PIC-rewritten `plugin.so` (Linux) the host
+loads. Both transports above apply unchanged, so an opted-in model survives the
+swap; a compiler error keeps the old UI interactive. Core, renderer, backend
+and ABI edits still restart, and IME/semantics/platform views are Phase 2.
+macOS re-execs the host after 32 swaps because dyld retains dylib images; Linux
+`dlclose` unmaps the image, so the runner disables that budget
+(`MOUI_HOT_RELOAD_LIMIT=0`) and measured ~0.26 MB RSS growth per 20 swaps.
+Warm app edits measured about 0.6 s on macOS (ADR 0072) and p50 8.4 s on the
+matching Linux host (n=20, dominated by compiling the generated plugin C).
+Generated sources live in `moui_devhost/dev_hot/` (gitignored); the app module
+must be listed in `moui_devhost/moon.mod` (counter is). See ADR 0072 and ADR
+0073.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev
