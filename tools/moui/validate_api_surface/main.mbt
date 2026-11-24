@@ -521,7 +521,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // 3059 / 1294 / 158.
       // 0.9.0 tree/label/menu increment: View::on_context_menu_key (+1 pub),
       // the keyboard route for the menu key that had only a pointer path.
-      max_lines: 3060,
+      // 0.9.1 semantics completion: SemanticsRole::TabList/Toolbar/MenuItem
+      // (+3 lines, +0 pub): three additive role variants so tab strips,
+      // toolbars and menu rows stop collapsing into Group/Label.
+      max_lines: 3063,
       max_pub_lines: 1295,
       max_pub_all_lines: 158,
       required_tokens: [

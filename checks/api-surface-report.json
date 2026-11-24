@@ -60,7 +60,7 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 3060,
+      "lines": 3063,
       "public_declarations": 1295,
       "pub_all_declarations": 158
     },

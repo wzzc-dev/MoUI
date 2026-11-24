@@ -173,7 +173,10 @@ fn TuiPalette::base_attrs(
     | @core.Table
     | @core.Row
     | @core.Cell
-    | @core.Separator => fg(self.neutral)
+    | @core.Separator
+    | @core.TabList
+    | @core.Toolbar
+    | @core.MenuItem => fg(self.neutral)
   }
 }
 

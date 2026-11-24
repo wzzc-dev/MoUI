@@ -916,6 +916,9 @@ fn semantics_role_code(role : @core.SemanticsRole) -> String {
     Row => "row"
     Cell => "cell"
     Separator => "separator"
+    TabList => "tab_list"
+    Toolbar => "toolbar"
+    MenuItem => "menu_item"
   }
 }
 

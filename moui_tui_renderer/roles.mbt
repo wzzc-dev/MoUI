@@ -77,6 +77,9 @@ pub fn role_tag(role : @core.SemanticsRole) -> String {
     @core.Row => "Row"
     @core.Cell => "Cell"
     @core.Separator => "Separator"
+    @core.TabList => "TabList"
+    @core.Toolbar => "Toolbar"
+    @core.MenuItem => "MenuItem"
     @core.None => "None"
   }
 }
@@ -97,9 +100,16 @@ pub fn role_kind(role : @core.SemanticsRole) -> RoleKind {
     | @core.Tree
     | @core.ScrollView
     | @core.Dialog
-    | @core.ButtonGroup => Region
+    | @core.ButtonGroup
+    | @core.TabList
+    | @core.Toolbar => Region
     @core.Row | @core.ListItem | @core.TreeItem | @core.Separator => Item
-    @core.Tab | @core.Option | @core.Cell | @core.Link | @core.Tooltip => Label
+    @core.Tab
+    | @core.Option
+    | @core.Cell
+    | @core.Link
+    | @core.Tooltip
+    | @core.MenuItem => Label
     @core.Image | @core.WebView => Placeholder
     @core.Text
     | @core.Status

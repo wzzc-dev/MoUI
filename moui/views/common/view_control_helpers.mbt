@@ -154,6 +154,9 @@ pub fn view_semantics_role_key(
       Row => 34
       Cell => 35
       Separator => 36
+      TabList => 37
+      Toolbar => 38
+      MenuItem => 39
     },
   )
 }

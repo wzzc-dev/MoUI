@@ -1864,6 +1864,9 @@ pub(all) enum SemanticsRole {
   Row
   Cell
   Separator
+  TabList
+  Toolbar
+  MenuItem
 }
 pub fn SemanticsRole::equal(Self, Self) -> Bool
 pub fn SemanticsRole::not_equal(Self, Self) -> Bool

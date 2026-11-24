@@ -246,7 +246,7 @@ pub fn draw_box(
 let container_roles : Array[String] = [
   "Group", "Row", "List", "ListItem", "Grid", "Main", "Navigation", "Form", "FormField",
   "Table", "Tab", "Menu", "Tree", "TreeItem", "ScrollView", "Dialog", "ButtonGroup",
-  "Separator", "Option", "Cell", "Tooltip", "Link",
+  "Separator", "Option", "Cell", "Tooltip", "Link", "TabList", "Toolbar", "MenuItem",
 ]
 
 ///|
@@ -302,6 +302,9 @@ fn role_tag(node : @core.SemanticsNode) -> String {
     @core.Row => "Row"
     @core.Cell => "Cell"
     @core.Separator => "Separator"
+    @core.TabList => "TabList"
+    @core.Toolbar => "Toolbar"
+    @core.MenuItem => "MenuItem"
     @core.None => "None"
   }
 }

@@ -38,6 +38,9 @@ pub(all) enum SemanticsRole {
   Row
   Cell
   Separator
+  TabList
+  Toolbar
+  MenuItem
 }
 
 ///|

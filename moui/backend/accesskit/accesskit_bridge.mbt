@@ -118,6 +118,9 @@ pub fn accesskit_role_from_semantics(
     Row => Row
     Cell => Cell
     Separator => Splitter
+    TabList => TabList
+    Toolbar => Toolbar
+    MenuItem => MenuItem
   }
 }
 
