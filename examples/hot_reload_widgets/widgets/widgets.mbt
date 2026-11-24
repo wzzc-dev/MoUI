@@ -71,6 +71,6 @@ impl @core.ViewNode for StatusCard with fn paint(self, context) {
 }
 
 ///|
-pub fn[Msg] status_card(ticks : Int32) -> @core.View[Msg] {
+pub fn[Msg] status_card(ticks : Int32) -> @moui.View[Msg] {
   @core.View::from_node(StatusCard::{ ticks, })
 }
