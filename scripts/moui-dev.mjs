@@ -5,6 +5,13 @@ import http from "node:http";
 import net from "node:net";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import {
+  hotFastStepMatches,
+  hotLinkArgs,
+  hotPlatformForNodePlatform,
+  hotPluginFileName,
+  picRuntimeCompile,
+} from "./moui-dev-hot-plan.mjs";
 
 const root = process.cwd();
 const args = process.argv.slice(2);
@@ -142,9 +149,13 @@ async function startNative(pkg, buildTarget) {
 const hotRoot = workspaceRoot ? path.join(workspaceRoot, "moui_devhost", "dev_hot") : "";
 const hotOut = hotRoot ? path.join(hotRoot, "out") : "";
 const hotMarker = hotOut ? path.join(hotOut, "current") : "";
+const hotPicDir = hotRoot ? path.join(hotRoot, "pic") : "";
 const hotHost = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "host", "host.exe");
 const hotPluginArchive = path.join(workspaceRoot ?? "", "_build", "native", "debug", "build", "wzzc-dev", "moui_devhost", "dev_hot", "plugin", "plugin.a");
 const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
+const hotPlatform = hotPlatformForNodePlatform(process.platform);
+const hotPluginName = hotPluginFileName(hotPlatform ?? "macos");
+const hotArchiveFragment = "dev_hot/plugin/plugin.a";
 const hotAppModule = (() => {
   if (packageName) return packageName;
   if (!workspaceRoot) return "";
@@ -176,15 +187,72 @@ async function captureHotPlan() {
   const steps = dry.output
     .split("\n")
     .map((line) => line.replace(/\$MOON_HOME/g, moonHome))
-    .filter((line) => {
-      if (line.startsWith("moonc build-package ")) {
-        return line.includes(hotAppModule) || line.includes("moui_devhost/dev_hot/plugin");
-      }
-      return line.startsWith("moonc link-core ") ||
-        (line.includes("libtool -static") && line.includes("dev_hot/plugin/plugin.a"));
-    });
+    .filter((line) => hotFastStepMatches(line, { appModule: hotAppModule, archiveFragment: hotArchiveFragment }));
   if (steps.length < 2) return null;
   return { shape: hotSourceShape(), steps };
+}
+
+// MoonBit's native backend does not emit shared-library objects, and the
+// runtime C sources are compiled without `-fPIC`. On Linux the runner links a
+// copied archive whose runtime members are recompiled PIC; `cc-flags` in the
+// generated plugin package already makes the app-side object PIC.
+let hotPicObjects = null;
+
+async function prepareRuntimePicObjects() {
+  if (hotPlatform !== "linux") return null;
+  if (hotPicObjects) return hotPicObjects;
+  fs.mkdirSync(hotPicDir, { recursive: true });
+  const dry = await run(moon, [
+    "build", "moui_devhost/dev_hot/plugin",
+    "--target", "native", "--frozen", "-v", "--dry-run",
+  ], { quiet: true });
+  if (dry.code !== 0) return null;
+  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
+  const objects = [];
+  for (const raw of dry.output.split("\n")) {
+    const line = raw.replace(/\$MOON_HOME/g, moonHome);
+    const output = line.match(/(?:^|\s)-o\s+(\S+)/);
+    if (!output) continue;
+    const object = path.join(hotPicDir, path.basename(output[1]));
+    const picStep = picRuntimeCompile(line, object);
+    if (!picStep) continue;
+    const compiled = await run("sh", ["-c", picStep], { quiet: true });
+    if (compiled.code !== 0) {
+      log(`hot PIC runtime compile failed: ${object}`);
+      return null;
+    }
+    objects.push(object);
+  }
+  if (objects.length === 0) return null;
+  hotPicObjects = objects;
+  return objects;
+}
+
+async function linkHotPlugin(dylib) {
+  let args;
+  if (hotPlatform === "linux") {
+    const picObjects = await prepareRuntimePicObjects();
+    if (!picObjects) return { code: 1, output: "hot PIC runtime objects unavailable" };
+    const picArchive = path.join(hotPicDir, "plugin.pic.a");
+    fs.copyFileSync(hotPluginArchive, picArchive);
+    const archived = await run(process.env.AR ?? "ar", ["r", picArchive, ...picObjects], { quiet: true });
+    if (archived.code !== 0) return archived;
+    args = hotLinkArgs({
+      platform: "linux",
+      pluginArchive: hotPluginArchive,
+      picArchive,
+      moonHome: process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon"),
+      output: dylib,
+    });
+  } else {
+    args = hotLinkArgs({
+      platform: "macos",
+      pluginArchive: hotPluginArchive,
+      moonHome: process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon"),
+      output: dylib,
+    });
+  }
+  return run("cc", args);
 }
 
 async function runHotSteps(steps) {
@@ -212,6 +280,7 @@ async function prepareHot() {
     "--out", path.relative(workspaceRoot, hotRoot),
     "--app", hotAppModule,
     "--app-package", "app",
+    "--platform", hotPlatform,
   ]);
   if (generated.code !== 0) return false;
   const hostBuild = await run(moon, ["build", "moui_devhost/dev_hot/host", "--target", "native"]);
@@ -249,15 +318,8 @@ async function publishHotPlugin() {
   const generation = status.generation + 1;
   const generationDir = path.join(hotOut, `gen-${generation}`);
   fs.mkdirSync(generationDir, { recursive: true });
-  const dylib = path.join(generationDir, "plugin.dylib");
-  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
-  const linked = await run("cc", [
-    "-shared",
-    `-Wl,-force_load,${hotPluginArchive}`,
-    path.join(moonHome, "lib", "libbacktrace.a"),
-    "-lm",
-    "-o", dylib,
-  ]);
+  const dylib = path.join(generationDir, hotPluginName);
+  const linked = await linkHotPlugin(dylib);
   if (linked.code !== 0) {
     const error = linked.output.trim() || `plugin link failed with exit code ${linked.code}`;
     writeStatus({ ok: false, phase: "error", hot: true, error });
@@ -285,7 +347,11 @@ async function startHotHost(pluginPath) {
   const env = {
     MOUI_HOT_PLUGIN: pluginPath,
     MOUI_HOT_GENERATION: hotMarker,
-    MOUI_HOT_RELOAD_LIMIT: "32",
+    // macOS dyld retains MoonBit images after dlclose, so the host re-execs
+    // after 32 swaps. Linux dlclose unmaps the image (measured: images=1 on
+    // every swap), so no periodic re-exec is needed; RSS still creeps with
+    // allocator/state churn (~0.26 MB/swap over 20 reloads).
+    MOUI_HOT_RELOAD_LIMIT: hotPlatform === "linux" ? "0" : "32",
     MOUI_DEV_STATE_FILE: stateFile,
     MOUI_DEV_TRANSIENT_FILE: transientFile,
   };
@@ -417,7 +483,7 @@ writeStatus({ package: pkg, target: buildTarget });
 if (has("--help")) {
   process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--hot] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
   process.stdout.write("Watches MoonBit inputs, rebuilds incrementally, restarts native apps, and serves Web errors with refresh.\\n");
-  process.stdout.write("--hot (macOS native) keeps the window and swaps the app plugin dylib instead of restarting.\\n");
+  process.stdout.write("--hot (macOS/Linux native) keeps the window and swaps the app plugin instead of restarting.\\n");
   process.exit(0);
 }
 
@@ -429,8 +495,13 @@ if (hot && web) {
   writeStatus({ ok: false, phase: "error", hot: true, error: "--hot is native-only; Web keeps the reload page path" });
   process.exit(1);
 }
-if (hot && process.platform !== "darwin") {
-  writeStatus({ ok: false, phase: "error", hot: true, error: "--hot currently requires macOS" });
+if (hot && hotPlatform === null) {
+  writeStatus({
+    ok: false,
+    phase: "error",
+    hot: true,
+    error: `--hot supports native macOS and Linux hosts; this host is ${process.platform}`,
+  });
   process.exit(1);
 }
 if (hot && !hotAvailable()) {

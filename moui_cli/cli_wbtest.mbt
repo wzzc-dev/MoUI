@@ -121,6 +121,39 @@ test "dev parser forwards watch options to the runner" {
 }
 
 ///|
+test "dev parser accepts native hot mode and rejects Web combinations" {
+  let parsed = parse_dev_args(["--hot"], "/workspace/demo")
+  guard parsed is Ok(parsed) else { fail("expected --hot to parse") }
+  inspect(parsed.hot, content="true")
+  inspect(parsed.runner_args.join("|"), content="--hot")
+  match parse_dev_args(["--hot", "--web"], "/workspace/demo") {
+    Err(message) =>
+      inspect(
+        message,
+        content="--hot is native-only; Web keeps the reload page path",
+      )
+    Ok(_) => fail("expected --hot with --web to fail")
+  }
+  match parse_dev_args(["--hot", "--target=wasm-gc"], "/workspace/demo") {
+    Err(_) => ()
+    Ok(_) => fail("expected --hot with a wasm target to fail")
+  }
+  match parse_dev_args(["--hot", "--package=web_wasm"], "/workspace/demo") {
+    Err(_) => ()
+    Ok(_) => fail("expected --hot with a Web package to fail")
+  }
+}
+
+///|
+test "dev hot host gate accepts only macOS and Linux" {
+  inspect(dev_hot_host_supported(@plan.HostPlatform::Macos), content="true")
+  inspect(dev_hot_host_supported(@plan.HostPlatform::Linux), content="true")
+  inspect(dev_hot_host_supported(@plan.HostPlatform::Windows), content="false")
+  inspect(dev_hot_host_supported(@plan.HostPlatform::Unknown), content="false")
+  inspect(dev_usage().contains("Native (Linux or macOS)"), content="true")
+}
+
+///|
 test "dev parser rejects duplicate package paths and invalid intervals" {
   match parse_dev_args(["app", "--package", "other"], "/workspace") {
     Err(message) =>

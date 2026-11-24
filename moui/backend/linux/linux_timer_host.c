@@ -69,6 +69,28 @@ void moui_linux_timer_cancel(void *handle) {
   free(timer);
 }
 
+// The Linux window event loop polls X11/Wayland directly and never iterates
+// the GLib default context. The backend calls this from its wait hook: dispatch
+// any due timeout sources (timer subscriptions), then report the next deadline
+// in milliseconds so the loop can sleep in `poll` and wake on time. -1 means
+// no GLib deadline is pending.
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_pump(void) {
+  GMainContext *context = g_main_context_default();
+  while (g_main_context_pending(context)) {
+    g_main_context_iteration(context, FALSE);
+  }
+  gint priority = G_MAXINT;
+  (void)g_main_context_prepare(context, &priority);
+  gint timeout_ms = -1;
+  (void)g_main_context_query(context, priority, &timeout_ms, NULL, 0);
+  return (int32_t)timeout_ms;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_supported(void) {
+  return 1;
+}
 
 #else
 
@@ -91,6 +113,16 @@ void *moui_linux_timer_start(double interval_ms,
 MOONBIT_FFI_EXPORT
 void moui_linux_timer_cancel(void *handle) {
   (void)handle;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_pump(void) {
+  return -1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_timer_supported(void) {
+  return 0;
 }
 
 #endif

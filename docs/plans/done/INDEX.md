@@ -64,6 +64,7 @@ are still readable — find the stem here.
 | Plan | Outcome | Landed |
 |---|---|---|
 | `native-dev-hot-reload` | macOS same-window dev reload: generated bridge host + app plugin dylib with generation paths, state/transient handoff, failure retention, and 32-swap re-exec; warm rebuilds p50 ≈0.63 s. | `0ce990ce` 2026-11-22 |
+| `native-dev-hot-reload-linux` | Linux same-window dev reload reusing the bridge host/ABI: PIC-rewritten `gen-<n>/plugin.so`, GLib timer pumping, failure retention, manual Xvfb smoke; measured p50 8.43 s over 20 swaps, same pid, `dlclose` unmaps images. | `e55b3589` 2026-11-24 |
 | `window-host-lifecycle-unification` | `wzzc-dev/window` keeps the physical event loop; MoUI `window_host` owns logical lifecycle, surface generation, window registration, frame coordination. | `71d9a74a` 2026-08-30 |
 | `window-hosted-legacy-cleanup` | Retired mobile packaging/embedding entrypoints; window-hosted entrypoints are canonical. | `c5edfbf8` 2026-08-04 |
 | `window-upstream-sync` | Rebased the fork onto the `moonbit-community/window` workspace layout and split branches. | `68dfba21` 2026-08-06 |

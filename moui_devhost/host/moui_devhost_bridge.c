@@ -2,15 +2,26 @@
 // table, and copy primitive byte buffers across the two MoonBit runtimes.
 // MoonBit objects never cross this boundary.
 
+// `dl_iterate_phdr` is a GNU extension; define the feature macro before any
+// system header so the Linux image-count probe compiles under plain `cc`.
+#if !defined(__APPLE__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE 1
+#endif
+
 #include <moonbit.h>
 
 #include <dlfcn.h>
-#include <mach-o/dyld.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#else
+#include <link.h>
+#endif
 
 typedef void (*hot_init_fn)(void);
 typedef int32_t (*hot_abi_fn)(void);
@@ -41,8 +52,10 @@ static hot_api g_current = {0};
 static int g_argc = 0;
 static char **g_argv = NULL;
 
-// macOS dyld keeps MoonBit dylibs mapped after dlclose (the runtime has static
-// TLS); the dev loop periodically re-execs itself instead of growing forever.
+// A dev-loop re-exec keeps the same command line, so the constructor captures
+// argv once. On macOS dyld keeps MoonBit dylibs mapped after dlclose (the
+// runtime has static TLS); the host therefore re-execs itself after a bounded
+// number of swaps. Linux measures the same counter through `dl_iterate_phdr`.
 __attribute__((constructor)) static void hot_capture_args(int argc, char **argv,
                                                          char **envp) {
   (void)envp;
@@ -55,6 +68,7 @@ static int hot_debug_enabled(void) {
   return value != NULL && value[0] != '\0';
 }
 
+#if defined(__APPLE__)
 static int hot_plugin_image_count(void) {
   int count = 0;
   uint32_t total = _dyld_image_count();
@@ -65,6 +79,30 @@ static int hot_plugin_image_count(void) {
     }
   }
   return count;
+}
+#else
+static int hot_count_plugin_image(struct dl_phdr_info *info, size_t size,
+                                  void *data) {
+  (void)size;
+  int *count = (int *)data;
+  if (info != NULL && info->dlpi_name != NULL &&
+      strstr(info->dlpi_name, "plugin") != NULL) {
+    *count += 1;
+  }
+  return 0;
+}
+
+static int hot_plugin_image_count(void) {
+  int count = 0;
+  dl_iterate_phdr(hot_count_plugin_image, &count);
+  return count;
+}
+#endif
+
+static void hot_log(const char *message) {
+  if (hot_debug_enabled()) {
+    fprintf(stderr, "moui-devhost: %s\n", message);
+  }
 }
 
 static void hot_log_close(const char *label, void *handle, int result) {
@@ -131,19 +169,27 @@ int32_t moui_devhost_open(const uint8_t *path, int32_t path_len,
   void *handle = dlopen(plugin_path, RTLD_NOW | RTLD_LOCAL);
   free(plugin_path);
   if (handle == NULL) {
+    if (hot_debug_enabled()) {
+      const char *error = dlerror();
+      fprintf(stderr, "moui-devhost: open dlopen failed: %s\n",
+              error != NULL ? error : "(no error)");
+    }
     return 1;
   }
   hot_api next;
   if (hot_resolve(&next, handle) != 0) {
+    hot_log("open missing ABI symbols");
     dlclose(handle);
     return 1;
   }
   next.init();
   if (next.abi() != 1) {
+    hot_log("open ABI mismatch");
     dlclose(handle);
     return 1;
   }
   if (next.create(config, config_len) != 0) {
+    hot_log("open dev_create failed");
     dlclose(handle);
     return 1;
   }
@@ -164,15 +210,22 @@ int32_t moui_devhost_reload(const uint8_t *path, int32_t path_len,
   void *handle = dlopen(plugin_path, RTLD_NOW | RTLD_LOCAL);
   free(plugin_path);
   if (handle == NULL) {
+    if (hot_debug_enabled()) {
+      const char *error = dlerror();
+      fprintf(stderr, "moui-devhost: reload dlopen failed: %s\n",
+              error != NULL ? error : "(no error)");
+    }
     return 1;
   }
   hot_api next;
   if (hot_resolve(&next, handle) != 0) {
+    hot_log("reload missing ABI symbols");
     dlclose(handle);
     return 1;
   }
   next.init();
   if (next.abi() != 1) {
+    hot_log("reload ABI mismatch");
     dlclose(handle);
     return 1;
   }
@@ -180,6 +233,7 @@ int32_t moui_devhost_reload(const uint8_t *path, int32_t path_len,
     g_current.flush();
   }
   if (next.create(config, config_len) != 0) {
+    hot_log("reload dev_create failed; keeping previous generation");
     dlclose(handle);
     return 1;
   }

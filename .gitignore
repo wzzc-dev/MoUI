@@ -10,7 +10,10 @@ _build/
 __pycache__/
 *.pyc
 **/.moui/dev-state.json
+**/.moui/dev-state-transient.json
 **/.moui/dev-status.json
+**/.moui/devtools.json
+**/.moui/devtools.port
 artifacts/
 .skia-cache/
 dist/

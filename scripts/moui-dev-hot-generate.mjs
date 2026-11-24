@@ -16,7 +16,14 @@ const programFn = value("--program-fn", "program_with_dev_state");
 const title = value("--title", "MoUI Hot Counter");
 const width = Number(value("--width", "520"));
 const height = Number(value("--height", "360"));
+const hostPlatform =
+  value("--platform", "") ||
+  (process.platform === "darwin" ? "macos" : process.platform === "linux" ? "linux" : "");
 
+if (hostPlatform !== "macos" && hostPlatform !== "linux") {
+  console.error(`moui-dev-hot: unsupported host platform: ${hostPlatform || process.platform}`);
+  process.exit(1);
+}
 if (!existsSync(join(repoRoot, appModule, appPackage, "moon.pkg"))) {
   console.error(`moui-dev-hot: app package not found: ${appModule}/${appPackage}`);
   process.exit(1);
@@ -40,6 +47,13 @@ writeFileSync(
 supported_targets = "native"
 
 pkgtype(kind: "foreign_library")
+
+// The host loads this archive as a shared image. Generated C is compiled PIC on
+// every host; Linux additionally recompiles MoonBit's runtime C members PIC
+// before linking (see scripts/moui-dev.mjs).
+options(
+  link: { "native": { "cc-flags": "-fPIC" } },
+)
 `,
 );
 
@@ -150,12 +164,27 @@ pub fn dev_resize(width : Double, height : Double) -> Unit {
 `,
 );
 
+const hostBackend =
+  hostPlatform === "macos"
+    ? {
+        importLine: `"wzzc-dev/moui/backend/macos"`,
+        timerExpr: "@macos.macos_timer_source()",
+        entryExpr: "@macos.entry()",
+        rendererPlatform: "MacOS",
+      }
+    : {
+        importLine: `"wzzc-dev/moui/backend/linux" @linux_backend`,
+        timerExpr: "@linux_backend.linux_timer_source()",
+        entryExpr: "@linux_backend.entry()",
+        rendererPlatform: "Linux",
+      };
+
 writeFileSync(
   join(staging, "host", "moon.pkg"),
   `import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/apphost",
-  "wzzc-dev/moui/backend/macos",
+  ${hostBackend.importLine},
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
   "wzzc-dev/moui_devtools/publish" @devtools_publish,
@@ -191,7 +220,7 @@ enum HostMsg {
 ///|
 fn subscriptions(_model : HostModel) -> @core.Subscription[HostMsg] {
   @services.TimerSource::subscription(
-    @macos.macos_timer_source(),
+    ${hostBackend.timerExpr},
     interval_ms=250.0,
     map=_frame => Poll,
     key="dev-hot/poll",
@@ -270,8 +299,8 @@ fn main {
       }
   }
   @apphost.run_app("${title}", runtime)
-  .render_all(@render_skia.from_env(platform=MacOS))
-  .backend(@macos.entry())
+  .render_all(@render_skia.from_env(platform=${hostBackend.rendererPlatform}))
+  .backend(${hostBackend.entryExpr})
   .run()
   @devhost.shutdown()
 }
@@ -287,6 +316,7 @@ writeFileSync(
       program: programFn,
       width,
       height,
+      platform: hostPlatform,
       host: "host",
       plugin: "plugin",
     },

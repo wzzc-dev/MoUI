@@ -406,6 +406,38 @@
       "artifacts": [
         "artifacts/smoke/tui-pty-smoke/raw-stream.log"
       ]
+    },
+    {
+      "id": "linux.native-hot-reload",
+      "tier": "nightly",
+      "kind": "native-hot-reload-smoke",
+      "host": "matching-host",
+      "purpose": "Drive the Linux bridge host and counter plugin under Xvfb: edit the app and assert a new generation swaps into the same host pid, force a compile error and assert the previous generation stays live, then fix it and assert recovery, including the Linux dlclose image-unmap marker. Path-triggered manual evidence; not part of the default daily check.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "scripts/linux-hot-reload-smoke.sh",
+            "--run"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-linux-platform-evidence.yml",
+        "gate": "release-manual"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/development.md",
+        "docs/decisions/0073-linux-native-dev-hot-reload.md"
+      ],
+      "artifacts": [
+        "artifacts/linux-hot-reload/smoke.log"
+      ]
     }
   ]
 }

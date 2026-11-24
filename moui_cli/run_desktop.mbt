@@ -146,6 +146,7 @@ fn run_run_desktop_web(parsed : ParsedRun, flow : DesktopFlow) -> CliOutcome {
   let parsed_dev : ParsedDev = {
     help: false,
     json: parsed.json,
+    hot: false,
     project_root: flow.app_root,
     runner: None,
     runner_args: ["--package=" + flow.package_path, "--web", "--target=wasm-gc"],

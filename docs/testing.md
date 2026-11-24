@@ -766,6 +766,24 @@ on the nightly schedule and on manual dispatch, on macos-latest, and uploads the
 raw-stream artifact on failure. The catalog command is `mode: run`; developers
 can still run `sh scripts/tui-pty-smoke.sh` directly for local reproduction.
 
+### Linux native hot reload smoke
+
+`smoke/gates.json` carries `linux.native-hot-reload` (nightly tier,
+`mode: manual`, host `matching-host`). It runs the real bridge host under Xvfb,
+edits `examples/counter/app`, and asserts a new generation loads into the same
+host PID with `reload-old ... images=1` (Linux `dlclose` unmaps the image),
+then forces a compile error and asserts the previous generation stays live and
+interactive, and finally fixes it and asserts recovery. It is path-triggered and
+is not part of the default daily check.
+
+```sh
+scripts/linux-hot-reload-smoke.sh --run
+```
+
+The script restores the counter source through an `EXIT` trap and writes
+`artifacts/linux-hot-reload/smoke.log`. It requires a native Linux build stack
+(`node`, `moon`, `cc`), GLib and Skia, and either `DISPLAY` or `xvfb-run`.
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`

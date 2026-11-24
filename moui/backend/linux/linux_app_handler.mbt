@@ -113,10 +113,26 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn abo
   // A plugin with a nested native event loop (e.g. WebKitGTK) may still have
   // outstanding work; keep the host spinning until the earliest reported
   // deadline instead of stalling on `Wait`.
-  match
-    @window_host.platform_view_plugins_next_deadline(
-      self.core.platform_view_plugins,
-    ) {
+  let plugin_deadline = @window_host.platform_view_plugins_next_deadline(
+    self.core.platform_view_plugins,
+  )
+  // The window loop polls X11/Wayland directly, so GLib timeout sources used
+  // by `@services.TimerSource` only run when the backend pumps the default
+  // context. Dispatch due timers here and sleep until the next GLib deadline.
+  let timer_timeout_ms = linux_timer_pump()
+  let timer_deadline = if timer_timeout_ms >= 0 {
+    Some(linux_monotonic_now_ms().to_int64() + timer_timeout_ms.to_int64())
+  } else {
+    None
+  }
+  let deadline = match (plugin_deadline, timer_deadline) {
+    (Some(plugin), Some(timer)) =>
+      Some(if plugin < timer { plugin } else { timer })
+    (Some(plugin), None) => Some(plugin)
+    (None, Some(timer)) => Some(timer)
+    (None, None) => None
+  }
+  match deadline {
     Some(deadline) =>
       event_loop.set_control_flow(
         @window_core.ControlFlow::wait_until(deadline),
