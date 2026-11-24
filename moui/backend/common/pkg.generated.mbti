@@ -74,7 +74,7 @@ pub(all) struct DesktopNativeHostBackendCore[W, Extra] {
   mut modifiers : @wzzc-dev/moui/core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
 }
-pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @wzzc-dev/moui/backend/common/services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, frame_clock? : (() -> Double)?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
+pub fn[W, Extra] DesktopNativeHostBackendCore::new(title~ : String, runtime~ : @runtime.AppRuntime, window_requests~ : @backend.WindowRequests, surface_binding~ : DesktopSurfaceBinding[W], services~ : @wzzc-dev/moui/backend/common/services.WindowServiceState, scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, frame_clock? : (() -> Double)?, driver_hooks? : @apphost.HostDriverHooks?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], first_frame_smoke_auto_exit? : Bool) -> Self[W, Extra]
 
 pub(all) struct DesktopSurfaceBinding[W] {
   create_renderer : (W, @wzzc-dev/moui/core.SurfaceMetrics) -> @render.RendererSession?

@@ -683,6 +683,7 @@ pub struct SemanticsSnapshot {
 }
 pub fn SemanticsSnapshot::equal(Self, Self) -> Bool
 pub fn SemanticsSnapshot::focused(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsSnapshot::from_frame_payload(@core.SemanticsFramePayload) -> Self
 pub fn SemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
 pub fn SemanticsSnapshot::issues(Self) -> Array[SemanticsIssue]
 pub fn SemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]

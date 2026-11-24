@@ -7,6 +7,9 @@ pub(all) struct HostRuntimeDriver {
   frame_clock : (() -> Double)?
   mut close_requested : Bool
   mut frame_time_ms : Double
+  // Host-owned overrides for platform state a bridge host carries outside the
+  // runtime tree. See `host_driver_hooks.mbt`.
+  priv hooks : HostDriverHooks?
   // The view-level context menu, open only while the platform menu service
   // cannot show one. See `context_menu_fallback.mbt`.
   priv mut context_menu : HostContextMenu?
@@ -17,6 +20,7 @@ pub fn HostRuntimeDriver::new(
   runtime~ : AppRuntime,
   schedule_redraw~ : () -> Unit,
   frame_clock~ : (() -> Double)? = None,
+  hooks~ : HostDriverHooks? = None,
 ) -> HostRuntimeDriver {
   let driver = {
     runtime,
@@ -24,6 +28,7 @@ pub fn HostRuntimeDriver::new(
     frame_clock,
     close_requested: false,
     frame_time_ms: 0.0,
+    hooks,
     context_menu: None,
   }
   runtime.set_redraw_callback(() => driver.request_redraw())
@@ -128,8 +133,16 @@ pub fn HostRuntimeDriver::perform_semantics_action(
   self : HostRuntimeDriver,
   request : PerformSemanticsActionRequest,
 ) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError] {
+  let dispatched = match self.hooks {
+    Some(hooks) =>
+      match hooks.perform_semantics_action {
+        Some(perform) => perform(request)
+        None => self.runtime.perform_semantics_action(request)
+      }
+    None => self.runtime.perform_semantics_action(request)
+  }
   let result : Result[SemanticsActionReceipt, SemanticsActionDispatchError] = match
-    self.runtime.perform_semantics_action(request) {
+    dispatched {
     Ok(receipt) => {
       self.request_redraw_if_needed()
       Ok(receipt)
@@ -149,9 +162,21 @@ pub fn HostRuntimeDriver::read_semantics(
   self : HostRuntimeDriver,
   since? : @core.SemanticsGeneration,
 ) -> Result[SemanticsRead, SemanticsReadError] {
-  match since {
-    Some(generation) => self.runtime.read_semantics(since=generation)
-    None => self.runtime.read_semantics()
+  match self.hooks {
+    Some(hooks) =>
+      match hooks.read_semantics {
+        Some(read) => read(since)
+        None =>
+          match since {
+            Some(generation) => self.runtime.read_semantics(since=generation)
+            None => self.runtime.read_semantics()
+          }
+      }
+    None =>
+      match since {
+        Some(generation) => self.runtime.read_semantics(since=generation)
+        None => self.runtime.read_semantics()
+      }
   }
 }
 
@@ -327,7 +352,7 @@ pub fn HostRuntimeDriver::show_context_menu(
 fn HostRuntimeDriver::context_menu_commands(
   self : HostRuntimeDriver,
 ) -> Array[@core.ActionCommand] {
-  let input = self.runtime.focused_text_input()
+  let input = self.focused_text_input()
   let commands = self.document_context_menu_commands()
   if input.focused {
     focused_text_context_menu_commands(input) + commands
@@ -485,9 +510,17 @@ pub fn HostRuntimeDriver::draw_commands(
 pub fn HostRuntimeDriver::draw_frame(
   self : HostRuntimeDriver,
 ) -> @core.DrawFrame {
-  match self.frame_clock {
+  let frame = match self.frame_clock {
     Some(clock) => self.runtime.profile_draw_frame(clock).frame()
     None => self.runtime.draw_frame()
+  }
+  match self.hooks {
+    Some(hooks) =>
+      match hooks.augment_frame {
+        Some(augment) => augment(frame)
+        None => frame
+      }
+    None => frame
   }
 }
 
@@ -518,7 +551,14 @@ pub fn HostRuntimeDriver::set_text_system(
 pub fn HostRuntimeDriver::focused_text_input(
   self : HostRuntimeDriver,
 ) -> @core.TextInputState {
-  self.runtime.focused_text_input()
+  match self.hooks {
+    Some(hooks) =>
+      match hooks.focused_text_input {
+        Some(read) => read()
+        None => self.runtime.focused_text_input()
+      }
+    None => self.runtime.focused_text_input()
+  }
 }
 
 ///|
