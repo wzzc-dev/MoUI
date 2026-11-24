@@ -2,6 +2,7 @@
 priv struct ParsedDev {
   help : Bool
   json : Bool
+  hot : Bool
   project_root : String
   runner : String?
   runner_args : Array[String]
@@ -27,7 +28,7 @@ fn dev_usage() -> String {
     #|  --port PORT              Web server port. Defaults to 3000.
     #|  --state PATH             Optional state file passed as MOUI_DEV_STATE_FILE.
     #|  --inspect                Publish a DevTools document for `moui inspect`.
-    #|  --hot                    macOS native: keep the window and swap the app plugin.
+    #|  --hot                    Native (Linux or macOS): keep the window and swap the app plugin.
     #|  --runner PATH            Node runner path. Defaults to .moui/dev.mjs or scripts/moui-dev.mjs.
     #|  --web                    Serve Web output and inject the dev client.
     #|  --once, --build-only     Build once and exit.
@@ -45,12 +46,54 @@ fn dev_int_option(value : String, name : String) -> Result[String, String] {
 }
 
 ///|
+fn dev_runner_value(args : Array[String], name : String) -> String? {
+  let prefix = name + "="
+  for argument in args {
+    if argument.has_prefix(prefix) {
+      return Some(argument[prefix.length():].to_owned())
+    }
+  }
+  None
+}
+
+///|
+/// The Web runner path and native hot mode are mutually exclusive; the dev
+/// runner already rejects the combination, and the CLI catches it before
+/// spawning Node.
+fn dev_hot_conflicts_with_web(args : Array[String]) -> Bool {
+  if args.any(argument => argument == "--web") {
+    return true
+  }
+  let wasm_target = match dev_runner_value(args, "--target") {
+    Some(target) => target.has_prefix("wasm")
+    None => false
+  }
+  if wasm_target {
+    return true
+  }
+  match dev_runner_value(args, "--package") {
+    Some(package_path) => package_path.has_suffix("web_wasm")
+    None => false
+  }
+}
+
+///|
+/// `--hot` is supported on native Linux and macOS hosts only.
+fn dev_hot_host_supported(platform : @plan.HostPlatform) -> Bool {
+  match platform {
+    @plan.HostPlatform::Macos | @plan.HostPlatform::Linux => true
+    _ => false
+  }
+}
+
+///|
 fn parse_dev_args(
   args : Array[String],
   cwd : String,
 ) -> Result[ParsedDev, String] {
   let help = Ref(false)
   let json = Ref(false)
+  let hot = Ref(false)
   let project_root = Ref(cwd)
   let runner : Ref[String?] = Ref(None)
   let package_name : Ref[String?] = Ref(None)
@@ -73,7 +116,12 @@ fn parse_dev_args(
         }
       "--web" | "--once" | "--build-only" | "--inspect" | "--hot" =>
         match flag_without_value(inline, name) {
-          Ok(_) => runner_args.push(name)
+          Ok(_) => {
+            if name == "--hot" {
+              hot.val = true
+            }
+            runner_args.push(name)
+          }
           Err(message) => return Err(message)
         }
       "--package"
@@ -119,9 +167,13 @@ fn parse_dev_args(
   if json.val {
     runner_args.push("--json")
   }
+  if hot.val && dev_hot_conflicts_with_web(runner_args) {
+    return Err("--hot is native-only; Web keeps the reload page path")
+  }
   Ok({
     help: help.val,
     json: json.val,
+    hot: hot.val,
     project_root: project_root.val,
     runner: runner.val,
     runner_args,
@@ -160,6 +212,13 @@ fn dev_runner_candidates(
 fn run_dev(parsed : ParsedDev) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(dev_usage())
+  }
+  if parsed.hot && !dev_hot_host_supported(detect_host_platform()) {
+    return failed_outcome(
+      "moui dev --hot requires a native Linux or macOS host",
+      parsed.json,
+      dev_usage(),
+    )
   }
   let runner = match
     first_existing(dev_runner_candidates(parsed.project_root, parsed.runner)) {

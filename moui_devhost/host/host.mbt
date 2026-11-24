@@ -48,13 +48,24 @@ let host_generation : Ref[String] = Ref("")
 let host_reloads : Ref[Int32] = Ref(0)
 
 ///|
+let host_polls : Ref[Int32] = Ref(0)
+
+///|
 /// macOS keeps MoonBit dylibs mapped after `dlclose`, so the host re-execs
 /// itself after a bounded number of successful swaps instead of leaking an
-/// image per edit. `0` disables the budget for a single spike run.
+/// image per edit. Linux `dlclose` unmaps the image, so the dev runner sets
+/// the budget to `0` there; `0` disables the budget entirely.
 fn reload_limit() -> Int32 {
   match env_nonempty("MOUI_HOT_RELOAD_LIMIT") {
     Some(value) => @string.parse_int(value[:]) catch { _ => 32 }
     None => 32
+  }
+}
+
+///|
+fn hot_debug(message : String) -> Unit {
+  if env_nonempty("MOUI_HOT_DEBUG") is Some(_) {
+    println("moui-devhost: " + message)
   }
 }
 
@@ -138,6 +149,10 @@ pub fn poll_reload() -> Bool {
     Some(settings) => settings
     None => return false
   }
+  if host_polls.val == 0 {
+    hot_debug("polling started")
+  }
+  host_polls.val = host_polls.val + 1
   let generation_path = match settings.generation_path {
     Some(path) => path
     None => return false
@@ -158,8 +173,10 @@ pub fn poll_reload() -> Bool {
     config_bytes.length(),
   )
   if result != 0 {
+    hot_debug("reload failed; keeping " + host_generation.val)
     return false
   }
+  hot_debug("reloaded " + next_path)
   host_generation.val = next_path
   host_reloads.val = host_reloads.val + 1
   let limit = reload_limit()
