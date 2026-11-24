@@ -787,8 +787,7 @@ Linux runs under Xvfb when `DISPLAY` is unset and writes
 `artifacts/linux-hot-reload/smoke.log`; macOS writes
 `artifacts/macos-hot-reload/smoke.log`. Both use an `EXIT` trap, require
 `node`/`moon`/`cc` plus platform Skia/GLib, and are path-triggered; the macOS
-smoke's four swaps stay inside the 32-swap re-exec budget. Frame/event fidelity
-is covered by `moon test moui_devhost/protocol --target native`.
+smoke's four swaps stay inside the 32-swap re-exec budget.
 
 ### Embedded runtime backends
 

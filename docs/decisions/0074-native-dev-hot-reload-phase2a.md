@@ -66,25 +66,24 @@ destroy/`dlclose` the old image. A failed build keeps the previous generation
 interactive; ADR 0068 state/transient transports are unchanged.
 `MOUI_HOT_INJECT_FILE` dispatches complete JSON `AppEvent` lines once for smoke
 input; `MOUI_HOT_FRAME_TRACE_INTERVAL` samples debug traces. `dlopen` keys images
-by path, so each reload publishes a new generation directory, and the plugin
-timer registry resets per generation because callbacks close over the old
-program.
+by path, so publish a new directory per reload; reset the plugin timer registry
+per generation.
 
-**Evidence.** `examples/hot_reload_probe` exercises count, timer ticks, image,
-divider, shadow, rounded clip, brush paint and a paint clock; its `StatusCard`
-lives in the separate `examples/hot_reload_widgets` module. Linux and macOS
-smokes assert rich frame `unsupported=0`, advancing ticks, injected click,
-generation 2 with pre-swap `Count: 1`, generation 3 from the imported widget
-package, failed-build retention, and generation 4 recovery with state intact and
-the same host pid; Linux also asserts `dlclose ... images=1`. `smoke/gates.json`
-carries both manual matching-host gates.
+**Evidence.** `examples/hot_reload_probe` exercises count, ticks, image,
+divider, shadow, clip, brush and a paint clock; `StatusCard` lives in
+`examples/hot_reload_widgets`. Linux and macOS smokes assert rich frame
+`unsupported=0`, advancing ticks, injected click, generation 2 with pre-swap
+`Count: 1`, generation 3 from the imported widget package, failed-build
+retention, and generation 4 recovery with state intact and the same host pid;
+Linux also asserts `dlclose ... images=1`. `smoke/gates.json` carries both
+manual matching-host gates.
 
 **Asset-cache follow-up.** The host renderer caches images, typefaces, shaping
 and layers by path/identity for the process lifetime, so a changed asset with an
 unchanged path can stay stale after a swap. There is no public invalidation hook
 and recreating the renderer needs an apphost/renderer lifecycle change. Phase 2A
-records this as explicit debt (cache reset on swap, mtime invalidation, or
-wholesale recreate) rather than claiming it solved.
+records this as explicit debt (cache reset, mtime invalidation, or recreate)
+rather than claiming it solved.
 
 ## Consequences
 
@@ -100,8 +99,6 @@ wholesale recreate) rather than claiming it solved.
   layer caches may serve stale content until follow-up. IME, semantics,
   platform views, Windows and Web remain Phase 2B; core, renderer, backend and
   ABI edits still restart.
-- An out-of-workspace module cannot resolve local deps by version alone; the
-  nested `moon.work` is required (it may list `../../moui_devhost`).
 
 ## References
 

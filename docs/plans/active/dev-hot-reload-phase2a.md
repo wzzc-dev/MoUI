@@ -36,7 +36,6 @@
       Linux `images=1` unmap marker.
 - [x] Linux smoke passes (2026-11-25, ticks 296→340, generations 1–4); macOS
       smoke script and both `smoke/gates.json` entries are in place.
-- [x] `docs/development.md`, `docs/testing.md`, ADR 0074 and this plan written.
 - [ ] Run macOS smoke on a matching host and record it.
 - [ ] Asset/font/layer cache invalidation (TODO below).
 - [ ] Phase 2B: IME/semantics/platform views, then Windows/Web.
@@ -63,5 +62,4 @@ claim asset invalidation until implemented and smoked.
 - Linux: `artifacts/linux-hot-reload/smoke.log` (not committed); 16534 ms
   initial, 11290/11447/11286 ms warm; plugin 5.1 MiB; 37 commands,
   `unsupported=0`. macOS: `artifacts/macos-hot-reload/smoke.log` on a matching
-  host. Commands: `scripts/linux-hot-reload-smoke.sh --run`,
-  `scripts/macos-hot-reload-smoke.sh --run`.
+  host, via `scripts/macos-hot-reload-smoke.sh --run`.
