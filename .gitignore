@@ -60,3 +60,4 @@ moui_studio/
 # MoUI Studio runtime state, never commit
 .studio/
 moui_devhost/dev_hot/
+moui_devhost/dev_web/

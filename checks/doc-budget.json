@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "description": "Documentation line budget for the main repository. Counts Markdown lines under docs/ only; the generated website mirror (website/web_wasm/docs) and memories/repo are outside the roots, so they never inflate the number a contributor has to cut.",
-  "maxLines": 40300,
+  "maxLines": 40700,
+  "note": "Raised from 40200 to 40700 for the stacked hot-reload docs: this branch measures 40424 after the 2B/2C merges, and the Windows PR after it is expected near 40643.",
   "roots": [
     "docs"
   ],

@@ -40,6 +40,7 @@ const transientFile = stateFile.endsWith(".json")
   : `${stateFile}-transient`;
 const statusFile = path.join(projectRoot, ".moui", "dev-status.json");
 const hot = has("--hot");
+const webHot = hot && web;
 const workspaceRoot = findWorkspaceRoot(projectRoot);
 
 const status = { ok: true, phase: "starting", generation: 0, package: packageName, target, hot, error: "", updatedAt: Date.now() };
@@ -154,18 +155,70 @@ const hotHost = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-d
 const hotPluginArchive = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "plugin", "plugin.a");
 const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
 const hotPlatform = hotPlatformForNodePlatform(process.platform);
+// Web hot mode keeps the page and swaps the wasm app module by refreshing it.
+// Model/transient state crosses the refresh through the same opt-in
+// ProgramStateTransport seam the native plugin uses (localStorage in the
+// browser), so production web entrypoints stay untouched.
+const webHotRoot = workspaceRoot ? path.join(workspaceRoot, "moui_devhost", "dev_web") : "";
+const webHotOut = webHotRoot ? path.join(webHotRoot, "out", "app.wasm") : "";
+const webHotWasm = path.join(workspaceRoot ?? "", "_build", "wasm-gc", "debug", "build", "wzzc-dev", "moui_devhost", "dev_web", "dev_web.wasm");
+const webHotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-web-generate.mjs");
+const webHotPackage = "moui_devhost/dev_web";
 const hotPluginName = hotPluginFileName(hotPlatform ?? "macos");
 const hotArchiveFragment = "moui_dev_hot/plugin/plugin.a";
 const hotAppModule = (() => {
-  if (packageName) return packageName;
-  if (!workspaceRoot) return "";
-  const relative = path.relative(workspaceRoot, projectRoot);
-  if (relative && !relative.startsWith("..") && fs.existsSync(path.join(projectRoot, "app", "moon.pkg"))) {
-    return relative.split(path.sep).join("/");
+  const relativeProject = workspaceRoot
+    ? path.relative(workspaceRoot, projectRoot).split(path.sep).join("/")
+    : "";
+  const projectIsApp =
+    relativeProject &&
+    !relativeProject.startsWith("..") &&
+    fs.existsSync(path.join(projectRoot, "app", "moon.pkg"));
+  if (packageName) {
+    // `--package` names either the app module (native --hot) or its Web page
+    // package (`web_wasm` / `<app>/web_wasm`); the generated root imports the
+    // app module in both cases.
+    if (packageName === "web_wasm" || packageName.endsWith("/web_wasm")) {
+      return projectIsApp
+        ? relativeProject
+        : packageName.slice(0, -"web_wasm".length).replace(/\/$/, "");
+    }
+    return packageName;
   }
+  if (projectIsApp) return relativeProject;
   return workspaceRoot === projectRoot ? "examples/counter" : "";
 })();
 const hotProject = hotAppModule ? path.join(workspaceRoot, hotAppModule) : projectRoot;
+// Generated imports use the MoonBit module name plus the package path inside
+// that module, which can differ from the workspace directory layout
+// (moui_tests/web_hot_fixture/app => wzzc-dev/moui_tests/web_hot_fixture/app).
+const hotAppModuleRoot = (() => {
+  if (!hotAppModule || !workspaceRoot) return "";
+  let dir = path.join(workspaceRoot, hotAppModule);
+  for (let i = 0; i < 32; i += 1) {
+    if (fs.existsSync(path.join(dir, "moon.mod"))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return "";
+})();
+const hotAppModuleName = (() => {
+  if (!hotAppModuleRoot) return "";
+  try {
+    return fs.readFileSync(path.join(hotAppModuleRoot, "moon.mod"), "utf8").match(/^\s*name\s*=\s*"([^"]*)"/m)?.[1] ?? "";
+  } catch (_) {
+    return "";
+  }
+})();
+const hotAppImport = (() => {
+  if (!hotAppModuleName) return hotAppModule;
+  const pkg = path
+    .relative(hotAppModuleRoot, path.join(workspaceRoot, hotAppModule, "app"))
+    .split(path.sep)
+    .join("/");
+  return `${hotAppModuleName}/${pkg}`;
+})();
 let hotChild = null;
 let hotFastPlan = null;
 let hotWatchRoots = [hotProject];
@@ -437,7 +490,59 @@ async function startHotHost(pluginPath) {
   return true;
 }
 
-const clientScript = `(() => { let generation = null; let error = null; const box = document.createElement('pre'); box.id = '__moui_dev_error'; Object.assign(box.style, { position: 'fixed', inset: '12px', zIndex: 2147483647, margin: 0, padding: '16px', background: '#2b1111', color: '#ffd6d6', font: '13px/1.5 monospace', whiteSpace: 'pre-wrap', display: 'none' }); document.body.appendChild(box); async function poll() { try { const response = await fetch('/__moui/status', { cache: 'no-store' }); const status = await response.json(); if (generation !== null && status.generation !== generation && status.ok) location.reload(); generation = status.generation; error = status.error || null; box.textContent = error ? '[moui dev] ' + error + '\n\nFix the source and save to retry.' : ''; box.style.display = error ? 'block' : 'none'; } catch (_) {} setTimeout(poll, 700); } poll(); })();`;
+function webHotAvailable() {
+  return Boolean(
+    workspaceRoot &&
+      hotAppModule &&
+      fs.existsSync(path.join(workspaceRoot, "moui_devhost", "moon.mod")) &&
+      fs.existsSync(webHotGenerator),
+  );
+}
+
+async function prepareWebHot() {
+  const generated = await run("node", [
+    webHotGenerator,
+    "--root", workspaceRoot,
+    "--out", path.relative(workspaceRoot, webHotRoot),
+    "--app", hotAppModule,
+    "--app-import", hotAppImport,
+    "--app-package", "app",
+  ]);
+  return generated.code === 0;
+}
+
+// Publish the built wasm as an immutable copy: a failed build keeps the last
+// good generation served and interactive, exactly like the native marker file.
+async function publishWebHot() {
+  const startedAt = Date.now();
+  writeStatus({ ok: true, phase: "building", hot: true, error: "" });
+  log(`building web dev module (${hotAppModule})`);
+  const built = await run(moon, ["build", webHotPackage, "--target", "wasm-gc", "--frozen"]);
+  if (built.code !== 0) {
+    const error = built.output.trim() || `web dev build failed with exit code ${built.code}`;
+    writeStatus({ ok: false, phase: "error", hot: true, error });
+    log(error);
+    return false;
+  }
+  if (!fs.existsSync(webHotWasm)) {
+    const error = `web dev wasm missing: ${webHotWasm}`;
+    writeStatus({ ok: false, phase: "error", hot: true, error });
+    log(error);
+    return false;
+  }
+  fs.mkdirSync(path.dirname(webHotOut), { recursive: true });
+  const temporary = `${webHotOut}.tmp`;
+  fs.copyFileSync(webHotWasm, temporary);
+  fs.renameSync(temporary, webHotOut);
+  status.generation += 1;
+  writeStatus({ ok: true, phase: "running", hot: true, error: "" });
+  log(`web build ready (generation ${status.generation}, ${Date.now() - startedAt}ms)`);
+  return true;
+}
+
+let webHotPageWarned = false;
+
+const clientScript = `(() => { let generation = null; let delay = 300; let error = null; const box = document.createElement('pre'); box.id = '__moui_dev_error'; Object.assign(box.style, { position: 'fixed', inset: '12px', zIndex: 2147483647, margin: 0, padding: '16px', background: '#2b1111', color: '#ffd6d6', font: '13px/1.5 monospace', whiteSpace: 'pre-wrap', display: 'none' }); document.body.appendChild(box); async function poll() { try { const response = await fetch('/__moui/status', { cache: 'no-store' }); const status = await response.json(); delay = status.hot ? 250 : 700; if (generation !== null && status.generation !== generation && status.ok) location.reload(); generation = status.generation; if (globalThis.__mouiDevHost) globalThis.__mouiDevHost.generation = status.generation; error = status.error || null; box.textContent = error ? '[moui dev] ' + error + '\\n\\nFix the source and save to retry.' : ''; box.style.display = error ? 'block' : 'none'; } catch (_) {} setTimeout(poll, delay); } poll(); })();`;
 
 function findWorkspaceRoot(start) {
   let dir = start;
@@ -465,6 +570,16 @@ function serve() {
     if (url.pathname === "/__moui/client.js") {
       response.writeHead(200, { "content-type": "text/javascript", "cache-control": "no-store" });
       response.end(clientScript);
+      return;
+    }
+    if (webHot && url.pathname === "/__moui/app.wasm") {
+      if (!fs.existsSync(webHotOut)) {
+        response.writeHead(404, { "content-type": "text/plain", "cache-control": "no-store" });
+        response.end("web dev build not ready");
+        return;
+      }
+      response.writeHead(200, { "content-type": "application/wasm", "cache-control": "no-store" });
+      response.end(fs.readFileSync(webHotOut));
       return;
     }
     if (url.pathname === "/__moui/devtools.json") {
@@ -528,7 +643,22 @@ function serve() {
       if ((requested !== staticRoot && !requested.startsWith(staticRoot + path.sep)) || !fs.existsSync(requested) || fs.statSync(requested).isDirectory()) continue;
       let content = fs.readFileSync(requested);
       if (path.extname(requested) === ".html") {
-        content = Buffer.from(content.toString().replace(/<head>/i, '<head><script src="/__moui/client.js"></script>'));
+        // Inject at the end of <body>: the client appends an error overlay and
+        // must run after the document body exists.
+        let html = content.toString();
+        const clientTag = '<script src="/__moui/client.js"></script>';
+        html = /<\/body>/i.test(html)
+          ? html.replace(/<\/body>/i, `${clientTag}</body>`)
+          : `${html}${clientTag}`;
+        if (webHot) {
+          const before = html;
+          html = html.replace(/[^"'\s]*_build\/wasm-gc\/[^"'\s]*\/web_wasm\.wasm/g, "/__moui/app.wasm");
+          if (html === before && !webHotPageWarned) {
+            webHotPageWarned = true;
+            log("page does not reference a web_wasm.wasm build; wire /__moui/app.wasm manually");
+          }
+        }
+        content = Buffer.from(html);
         response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
       } else {
         const types = { ".wasm": "application/wasm", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json" };
@@ -540,7 +670,9 @@ function serve() {
     response.writeHead(404); response.end("Not found");
   });
   server.listen(port, "127.0.0.1", () => {
-    log(`web server listening at http://127.0.0.1:${port}/`);
+    status.port = server.address()?.port ?? port;
+    writeStatus({});
+    log(`web server listening at http://127.0.0.1:${status.port}/`);
     if (inspect) log(`devtools: http://127.0.0.1:${port}/__moui/devtools`);
   });
   return server;
@@ -553,6 +685,7 @@ if (has("--help")) {
   process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--hot] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
   process.stdout.write("Watches MoonBit inputs, rebuilds incrementally, restarts native apps, and serves Web errors with refresh.\\n");
   process.stdout.write("--hot (macOS/Linux native) keeps the window and swaps the app plugin instead of restarting.\\n");
+  process.stdout.write("--web --hot keeps the page and refreshes it after a rebuild, carrying model/focus/scroll state over.\\n");
   process.exit(0);
 }
 
@@ -560,29 +693,73 @@ let server = null;
 let timer = null;
 let hotTimer = null;
 
-if (hot && web) {
-  writeStatus({ ok: false, phase: "error", hot: true, error: "--hot is native-only; Web keeps the reload page path" });
-  process.exit(1);
-}
-if (hot && hotPlatform === null) {
-  writeStatus({
-    ok: false,
-    phase: "error",
-    hot: true,
-    error: `--hot supports native macOS and Linux hosts; this host is ${process.platform}`,
-  });
-  process.exit(1);
-}
-if (hot && !hotAvailable()) {
-  writeStatus({
-    ok: false,
-    phase: "error",
-    hot: true,
-    error: "--hot requires the repository dev module moui_devhost and scripts/moui-dev-hot-generate.mjs",
-  });
-  process.exit(1);
-}
-if (hot) {
+const devhostHasAppImport = () =>
+  Boolean(workspaceRoot && hotAppModuleName) &&
+  fs.readFileSync(path.join(workspaceRoot, "moui_devhost", "moon.mod"), "utf8").includes(`"${hotAppModuleName}@`);
+
+if (webHot) {
+  if (!webHotAvailable()) {
+    writeStatus({
+      ok: false,
+      phase: "error",
+      hot: true,
+      error: "--web --hot needs the MoUI workspace dev module moui_devhost and scripts/moui-dev-web-generate.mjs",
+    });
+    process.exit(1);
+  }
+  if (!devhostHasAppImport()) {
+    writeStatus({
+      ok: false,
+      phase: "error",
+      hot: true,
+      error: `--hot cannot import ${hotAppModuleName}; add "${hotAppModuleName}@<version>" to moui_devhost/moon.mod`,
+    });
+    process.exit(1);
+  }
+  const prepared = await prepareWebHot();
+  if (!prepared) {
+    writeStatus({ ok: false, phase: "error", hot: true, error: "web dev module generation failed" });
+    process.exit(1);
+  }
+  // Serve before the first build so an initial compile error is visible in the
+  // page instead of an empty port. A failed rebuild keeps the last published wasm.
+  if (!once) server = serve();
+  const published = await publishWebHot();
+  if (once) process.exit(published ? 0 : 1);
+  let lastWebSnapshot = listFiles(hotProject);
+  let webBuilding = false;
+  log(`watching ${hotProject} every ${intervalMs}ms (web hot, state: browser localStorage)`);
+  hotTimer = setInterval(async () => {
+    if (stopping || webBuilding) return;
+    const nextSnapshot = listFiles(hotProject);
+    if (nextSnapshot === lastWebSnapshot) return;
+    lastWebSnapshot = nextSnapshot;
+    webBuilding = true;
+    try {
+      await publishWebHot();
+    } finally {
+      webBuilding = false;
+    }
+  }, intervalMs);
+} else if (hot) {
+  if (hotPlatform === null) {
+    writeStatus({
+      ok: false,
+      phase: "error",
+      hot: true,
+      error: `--hot supports native macOS and Linux hosts; this host is ${process.platform}`,
+    });
+    process.exit(1);
+  }
+  if (!hotAvailable()) {
+    writeStatus({
+      ok: false,
+      phase: "error",
+      hot: true,
+      error: "--hot requires the repository dev module moui_devhost and scripts/moui-dev-hot-generate.mjs",
+    });
+    process.exit(1);
+  }
   const prepared = await prepareHot();
   if (!prepared) {
     writeStatus({ ok: false, phase: "error", hot: true, error: "hot host generation failed" });

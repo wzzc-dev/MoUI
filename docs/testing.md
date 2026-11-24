@@ -798,6 +798,24 @@ hooks. The Xvfb smoke exercises image swap/recovery only. A live macOS AX query,
 a live Linux AT-SPI client and native platform-view presentation remain
 unverified and need a matching-host run.
 
+### Web state-preserving hot reload smoke
+
+`smoke/gates.json` carries `web.hot-reload` (nightly tier, `mode: manual`,
+host `any`). It starts `moui dev --web --hot` for `moui_tests/web_hot_fixture`,
+drives headless Chromium over CDP, commits three increments and moves focus and
+scroll, then edits the app source and asserts the refreshed page keeps count 3,
+the focus path and the scroll slot. It refreshes once more to check snapshot
+stability, then edits `--runs` times (default 10) and reports edit-to-paint
+p50/p95 in `artifacts/web-hot-reload/report.json` with the logs beside it.
+
+```sh
+scripts/web-hot-reload-smoke.sh --run
+```
+
+The script restores the fixture source through an `EXIT` trap and needs `node`
+(22+, for the global WebSocket), `moon`, and a Chrome/Chromium binary
+(`WEB_HOT_CHROME_BIN` overrides discovery).
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`

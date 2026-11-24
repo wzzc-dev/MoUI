@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/json",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/views",
+}
+
+supported_targets = "wasm-gc"

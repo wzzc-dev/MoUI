@@ -3524,6 +3524,34 @@ export function createMoonbitFsImports() {
   };
 }
 
+// `moui dev --web --hot` builds a composition root that exports
+// `web_dev_flush`. The dev page is state-preserving by refreshing in place, so
+// the renderer flushes the runtime transient snapshot (focus, scroll, text
+// selection) before unload, and records when the first frame after boot was
+// painted for the dev smoke's edit-to-paint measurement. Production app builds
+// do not export it, so this stays inert there.
+function installDevHotHandoff(instance) {
+  const flush = instance.exports.web_dev_flush;
+  if (typeof flush !== "function") return;
+  const callFlush = () => {
+    try {
+      flush();
+    } catch (error) {
+      console.error("[moui dev] transient handoff failed", error);
+    }
+  };
+  globalThis.addEventListener?.("pagehide", callFlush);
+  globalThis.document?.addEventListener?.("visibilitychange", () => {
+    if (globalThis.document.visibilityState === "hidden") callFlush();
+  });
+  const epochMs = () => performance.timeOrigin + performance.now();
+  const host = { generation: null, bootedAt: epochMs(), paintedAt: 0 };
+  globalThis.__mouiDevHost = host;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    host.paintedAt = epochMs();
+  }));
+}
+
 export async function bootMouiWasmGcApp(options = {}) {
   const report = options.onStatus ?? (() => {});
   if (!options.wasmUrl) {
@@ -3565,6 +3593,7 @@ export async function bootMouiWasmGcApp(options = {}) {
   report("Starting MoonBit app...");
   result.instance.exports._start?.();
   windowWeb.history_dispatch_current?.(0);
+  installDevHotHandoff(result.instance);
   report("MoonBit app started.");
   return result.instance;
 }
