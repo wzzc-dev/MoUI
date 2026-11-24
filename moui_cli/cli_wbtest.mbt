@@ -150,7 +150,10 @@ test "dev hot host gate accepts macOS, Linux, and Windows" {
   inspect(dev_hot_host_supported(@plan.HostPlatform::Linux), content="true")
   inspect(dev_hot_host_supported(@plan.HostPlatform::Windows), content="true")
   inspect(dev_hot_host_supported(@plan.HostPlatform::Unknown), content="false")
-  inspect(dev_usage().contains("Native (Linux, macOS, or Windows)"), content="true")
+  inspect(
+    dev_usage().contains("Native (Linux, macOS, or Windows)"),
+    content="true",
+  )
 }
 
 ///|

@@ -81,8 +81,9 @@ fn dev_hot_conflicts_with_web(args : Array[String]) -> Bool {
 /// `--hot` is supported on native Linux, macOS, and Windows hosts only.
 fn dev_hot_host_supported(platform : @plan.HostPlatform) -> Bool {
   match platform {
-    @plan.HostPlatform::Macos | @plan.HostPlatform::Linux | @plan.HostPlatform::Windows =>
-      true
+    @plan.HostPlatform::Macos
+    | @plan.HostPlatform::Linux
+    | @plan.HostPlatform::Windows => true
     _ => false
   }
 }
