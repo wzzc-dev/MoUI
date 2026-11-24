@@ -14,6 +14,12 @@ extern "C" fn linux_timer_start(
 extern "C" fn linux_timer_cancel(handle : UInt64) -> Unit = "moui_linux_timer_cancel"
 
 ///|
+/// Dispatch due GLib timeout sources and return the next deadline in
+/// milliseconds, or `-1` when no GLib timer is pending. The window event loop
+/// polls X11/Wayland directly, so the backend drives this from its wait hook.
+extern "C" fn linux_timer_pump() -> Int32 = "moui_linux_timer_pump"
+
+///|
 /// Construct a `TimerSource` backed by the GLib main-loop timeout timer.
 /// Ticks use the shared timer skeleton with interval-based frames.
 pub fn linux_timer_source() -> @services.TimerSource {

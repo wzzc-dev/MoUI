@@ -17,6 +17,24 @@ test "linux host app options default to a real monotonic frame clock" {
 }
 
 ///|
+/// The window loop polls X11/Wayland directly, so the backend must pump GLib
+/// timeout sources itself; without this a `TimerSource` subscription never
+/// ticks (and a hot-reload host never observes a new generation marker).
+test "linux timer pump drives GLib timeout callbacks" {
+  let ticks = Ref(0)
+  let handle = linux_timer_start(fn(call) { call() }, 10.0, fn() {
+    ticks.val = ticks.val + 1
+  })
+  guard handle != 0 else { fail("linux_timer_start returned no handle") }
+  let deadline = linux_monotonic_now_ms() + 2000.0
+  while ticks.val == 0 && linux_monotonic_now_ms() < deadline {
+    ignore(linux_timer_pump())
+  }
+  linux_timer_cancel(handle)
+  assert_true(ticks.val > 0)
+}
+
+///|
 /// Passing `None` opts back into the synthetic step used by deterministic
 /// tests and benchmarks.
 test "linux host app options allow opting out of the frame clock" {
