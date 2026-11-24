@@ -1,0 +1,21 @@
+import {
+  "moonbitlang/core/json",
+  "examples/hot_reload_widgets/widgets",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/services",
+  "wzzc-dev/moui/views",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/runtime/test_support",
+} for "test"
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

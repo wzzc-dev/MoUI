@@ -36,6 +36,8 @@ members = [
   "./examples/chrome_demo",
   "./moui_devhost",
   "./examples/counter",
+  "./examples/hot_reload_probe",
+  "./examples/hot_reload_widgets",
   "./examples/gallery",
   "./examples/custom_control",
   "./examples/multi_window",
