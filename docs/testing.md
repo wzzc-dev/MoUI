@@ -816,6 +816,29 @@ The script restores the fixture source through an `EXIT` trap and needs `node`
 (22+, for the global WebSocket), `moon`, and a Chrome/Chromium binary
 (`WEB_HOT_CHROME_BIN` overrides discovery).
 
+### Windows native hot reload smoke
+
+`smoke/gates.json` carries `windows.native-hot-reload` (nightly tier,
+`mode: manual`, host `matching-host`). It mirrors the Linux legs on Windows:
+run the real bridge host from a Developer Command Prompt, edit
+`examples/counter/app`, assert a new generation loads into the same host PID
+with `reload-old FreeLibrary=1 rc=0 images=1`, keep the previous generation
+live through a compile error, then fix it and assert recovery.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-hot-reload-smoke.ps1 -Run
+```
+
+The script restores the counter source in `finally` and writes
+`artifacts/windows-hot-reload/smoke.log` (plus `smoke.err.log`). It requires
+`node`, `moon`, `cl.exe`, `lib.exe`, `link.exe` on PATH (vcvarsall x64) and the
+real Skia renderer. It has not been run in this repository's CI: the
+`moui-windows-platform-evidence.yml` workflow exists, but wiring an interactive
+HWND/Skia hot smoke into it is unproven, so the gate stays manual like the
+Linux one. Until a matching host records the log above, the Windows hot path
+is build/test-verified only; see ADR 0075 for the exact unverified list. The
+`_WIN32` bridge branch has also not been compiled with MSVC here.
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`
