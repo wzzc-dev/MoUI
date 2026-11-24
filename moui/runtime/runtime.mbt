@@ -192,7 +192,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
     None => ()
   }
   runtime.state.set_root_builder(() => {
-    adapt_view_for_runtime(
+    runtime_view_node_with_overlays(
       program.runtime_view(
         model.val,
         @core.ViewEnvironment::new(
@@ -201,6 +201,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
         ),
       ),
       dispatch,
+      overlays=Some(runtime.state.host_overlay_slot),
     )
   })
   sync_commands()
@@ -483,4 +484,74 @@ pub fn AppRuntime::dispatch_focused_text_command(
   paste_text~ : String? = None,
 ) -> @core.TextCommandResult {
   self.state.dispatch_focused_text_command(intent, paste_text~)
+}
+
+///|
+/// Select the whole text of the focused text control, the same edit a host
+/// performs for Ctrl/Cmd+A. Returns whether the control handled it.
+///
+/// The pre-fill case this exists for: a rename prompt opens with the current
+/// name already in the field, and the first keystroke must replace it instead
+/// of prefixing it. `select_focused_text_all()` before typing does that
+/// without the host simulating a key chord.
+pub fn AppRuntime::select_focused_text_all(self : AppRuntime) -> Bool {
+  self.state.dispatch_focused_text_command(@core.CommandIntent::SelectAll).changed
+}
+
+///|
+/// Move the caret of the focused text control to `offset` (byte offset in the
+/// control's text; out-of-range offsets clamp, and an offset inside a
+/// multi-code-point grapheme snaps to the nearest boundary). Returns whether
+/// the control changed.
+pub fn AppRuntime::place_focused_text_caret(
+  self : AppRuntime,
+  offset : Int32,
+) -> Bool {
+  self.state.dispatch_focused_text_input(
+    @core.TextInputEvent::SetSelection(
+      @core.TextRange::new(start=offset, end=offset),
+    ),
+  )
+}
+
+///|
+/// Select `[start, end)` in the focused text control and put the caret at
+/// `end`; a collapsed range moves the caret instead. Offsets normalize to
+/// grapheme boundaries the same way pointer selection does, and the control
+/// keeps owning the text (no `on_input` fires for a pure selection change).
+pub fn AppRuntime::set_focused_text_selection(
+  self : AppRuntime,
+  start : Int32,
+  end : Int32,
+) -> Bool {
+  self.state.dispatch_focused_text_input(
+    @core.TextInputEvent::SetSelection(@core.TextRange::new(start~, end~)),
+  )
+}
+
+///|
+/// Last pointer position the runtime observed, in viewport coordinates.
+/// `None` before the pointer has entered the window. The Linux context-menu
+/// fallback anchors the view-level menu at this point.
+pub fn AppRuntime::pointer_position(self : AppRuntime) -> @core.Point? {
+  self.state.last_pointer_position
+}
+
+///|
+/// Mount (`Some`) or clear (`None`) a host-owned overlay layer above the app
+/// root. See `HostOverlay`: the layer survives program rebuilds, gets the
+/// surface rect, paints last and hit-tests first. A layer built with
+/// `keeps_focus=true` also leaves the app's focus owner untouched on press.
+pub fn AppRuntime::set_host_overlay(
+  self : AppRuntime,
+  overlay : HostOverlay?,
+) -> Unit {
+  match overlay {
+    Some(layer) =>
+      self.state.set_host_overlay_nodes(
+        [layer.node],
+        keeps_focus=layer.keeps_focus,
+      )
+    None => self.state.set_host_overlay_nodes([])
+  }
 }

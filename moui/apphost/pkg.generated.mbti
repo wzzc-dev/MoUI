@@ -87,6 +87,7 @@ pub(all) struct HostRuntimeDriver {
   frame_clock : (() -> Double)?
   mut close_requested : Bool
   mut frame_time_ms : Double
+  // private fields
 }
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::diagnostics_sink(Self) -> @diagnostics.DiagnosticSink

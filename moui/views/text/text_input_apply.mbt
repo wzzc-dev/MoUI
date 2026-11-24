@@ -80,7 +80,11 @@ fn[Msg] view_text_input_result(
     captured=result.changed,
     text_control=Some(result.control),
     dirty=if result.text != text { ViewBuildDirty } else { ViewPaintDirty },
-    messages=if result.changed {
+    // `on_input` is the text channel, so it reports only an actual edit: a
+    // pure caret/selection move, or a composition update that has not
+    // committed yet, keeps the same text and must not push a no-op input
+    // message back into the app.
+    messages=if result.changed && result.text != text {
       text_input_messages(on_input, result.text)
     } else {
       []

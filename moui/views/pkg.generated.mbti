@@ -90,7 +90,7 @@ pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[@controls.MenuIt
 
 pub fn[Msg] command_bar(Array[@controls.ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?, on_select_command? : ((@core.ActionCommand) -> Msg)?) -> @core.View[Msg]
 
 pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> @controls.CommandMenuSection
 

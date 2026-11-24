@@ -37,6 +37,13 @@ pub fn[Msg] menu_bar(
 }
 
 ///|
+/// `on_select_command?` hands the row's **whole command** to the caller
+/// instead of only its `intent`. Command dispatch compares the full
+/// `ActionCommand` (`label`, `enabled`, … included), and one intent can back
+/// several rows — two "Activate" entries labelled "New Document" and "Open
+/// Document" are the ordinary case — so a caller that must reproduce the exact
+/// command (the host's view-level context menu) needs the command, not the
+/// intent. Omitted, rows keep reporting `on_select(command.intent)`.
 pub fn[Msg] command_menu(
   sections : Array[CommandMenuSection],
   on_select~ : (@core.CommandIntent) -> Msg,
@@ -45,6 +52,7 @@ pub fn[Msg] command_menu(
   max_height~ : Double = 280.0,
   active~ : Int32 = -1,
   on_hover~ : ((Int32, Bool) -> Msg)? = None,
+  on_select_command~ : ((@core.ActionCommand) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let resolved_theme = @common.views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
@@ -68,6 +76,7 @@ pub fn[Msg] command_menu(
           index~,
           active=index == active,
           on_select~,
+          on_select_command~,
           on_hover~,
           theme=resolved_theme,
           width=width - resolved_theme.spacing_scale.md * 2.0,
@@ -186,11 +195,18 @@ fn[Msg] command_menu_row(
   index~ : Int32,
   active~ : Bool,
   on_select~ : (@core.CommandIntent) -> Msg,
+  on_select_command~ : ((@core.ActionCommand) -> Msg)?,
   on_hover~ : ((Int32, Bool) -> Msg)?,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
   let shortcut = command.shortcut_label()
+  // The whole-command channel wins when the caller supplied one: dispatching
+  // on the intent alone cannot tell two rows that share an intent apart.
+  let select_message = match on_select_command {
+    Some(handler) => handler(command)
+    None => on_select(command.intent)
+  }
   let label_width = @common.view_max_double(110.0, width - 96.0)
   let row_view = @layout.row(
     [
@@ -209,7 +225,7 @@ fn[Msg] command_menu_row(
   let row = @layout.stack([
       @button.button(
         "",
-        on_click=on_select(command.intent),
+        on_click=select_message,
         variant=Ghost,
         theme~,
         width~,

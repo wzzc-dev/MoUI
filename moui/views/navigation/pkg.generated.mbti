@@ -16,7 +16,7 @@ pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing
 
 pub fn[Msg] breadcrumb_item(id~ : String, label~ : String, message? : Msg?) -> BreadcrumbItem[Msg]
 
-pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] command_menu(Array[@controls.CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double, active? : Int32, on_hover? : ((Int32, Bool) -> Msg)?, on_select_command? : ((@core.ActionCommand) -> Msg)?) -> @core.View[Msg]
 
 pub fn command_menu_navigation_index(@core.KeyboardEvent, Int32, active? : Int32, wrap? : Bool) -> Int32?
 

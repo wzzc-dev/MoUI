@@ -187,7 +187,9 @@ fn file_budgets() -> Array[FileBudget] {
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
       // 429 -> 436 (0.9.0): the three ratchet registrations above.
-      max_lines: 436,
+      // 436 -> 448 (0.10.0): the runtime.mbt (text/overlay API) and
+      // menu_commands.mbt (`on_select_command?`) registrations above.
+      max_lines: 448,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -346,7 +348,11 @@ fn file_budgets() -> Array[FileBudget] {
     // 220 -> 249 (0.9.0 menu keyboard layer): `command_menu` gains
     // `active`/`on_hover` and the hover-aware row; the two pure key-resolution
     // functions live in the sibling `menu_commands_nav.mbt`.
-    { path: "moui/views/navigation/menu_commands.mbt", max_lines: 249, },
+    // 249 -> 265 (0.10.0 view-level context menu): `command_menu` accepts
+    // `on_select_command?` and hands the row's whole `ActionCommand` to the
+    // caller, because one intent can back several rows and the host must
+    // reproduce the exact command it dispatched.
+    { path: "moui/views/navigation/menu_commands.mbt", max_lines: 265, },
     { path: "moui/views/controls/input_text_wrappers.mbt", max_lines: 95, },
     { path: "moui/views/controls/layout_helpers.mbt", max_lines: 180, },
     { path: "moui/views/controls/layout_responsive_grid.mbt", max_lines: 160, },
@@ -420,7 +426,13 @@ fn file_budgets() -> Array[FileBudget] {
     // unchanged when no transport is supplied.
     // 485 -> 486 (2026-11-10, DevTools v1): `advance_time` also samples the
     // dev-only DevTools observer at the same frame boundary.
-    { path: "moui/runtime/runtime.mbt", max_lines: 486, },
+    // 486 -> 552 (0.10.0 host-facing text + overlay API): the three
+    // `select_focused_text_all` / `place_focused_text_caret` /
+    // `set_focused_text_selection` entry points sit beside the focused-text
+    // dispatch they wrap; `pointer_position` and `set_host_overlay` are the two
+    // facts the view-level context-menu fallback reads back from the runtime,
+    // so they stay in the same host-facing cluster.
+    { path: "moui/runtime/runtime.mbt", max_lines: 557, },
     { path: "moui/runtime/diagnostics.mbt", max_lines: 587, },
     { path: "moui/runtime/diagnostics_inspector_types.mbt", max_lines: 316, },
     {

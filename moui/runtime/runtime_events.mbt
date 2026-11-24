@@ -28,6 +28,37 @@ fn RuntimeState::dispatch_command(
 }
 
 ///|
+/// Route a text-editing event to the focused text control, the same path a
+/// host-originated `TextInput` event takes. Used by
+/// `AppRuntime::place_focused_text_caret` / `set_focused_text_selection`,
+/// which let a host position the caret without synthesizing key chords.
+fn RuntimeState::dispatch_focused_text_input(
+  self : RuntimeState,
+  event : TextInputEvent,
+) -> Bool {
+  match self.animfocus.focused_element {
+    Some(target) => {
+      let layout = self.layout_tree_for_input()
+      let result = self.element_tree.root.dispatch_text_input(
+        target,
+        event,
+        layout~,
+        environment=self.environment,
+        text_system=self.text_system,
+      )
+      self.apply_event_dispatch_outcome(
+        result.changed,
+        result.activated,
+        result.deliveries,
+        request_activation=result.activated,
+      )
+      result.changed
+    }
+    None => false
+  }
+}
+
+///|
 fn RuntimeState::dispatch_action_command(
   self : RuntimeState,
   command : ActionCommand,
@@ -372,7 +403,14 @@ fn RuntimeState::dispatch_pointer_event(
   // pressing elsewhere mid-gesture must not pull focus away from the control
   // the first finger is dragging (hosts that report one finger only, such as
   // the embedded ones, always arrive as the primary id and are unaffected).
-  if event.phase == Down && event.id == primary_pointer_id {
+  //
+  // A non-activating host layer (a native-style context menu) is the one
+  // exception: its press must not move the app's focus, because the command it
+  // runs acts on the focus the menu was opened over. Taking focus away here
+  // — before the press is dispatched — would hand that command no target.
+  if event.phase == Down &&
+    event.id == primary_pointer_id &&
+    !self.host_overlay_keeps_focus {
     let previous_focus = self.animfocus.focused_element
     let candidate_focus = self.element_tree.root.find_focusable_at(
       event.position,

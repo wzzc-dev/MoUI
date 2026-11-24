@@ -46,14 +46,14 @@
     {
       "label": "runtime facade",
       "path": "moui/runtime/pkg.generated.mbti",
-      "lines": 795,
-      "public_declarations": 522,
+      "lines": 805,
+      "public_declarations": 529,
       "pub_all_declarations": 19
     },
     {
       "label": "apphost facade",
       "path": "moui/apphost/pkg.generated.mbti",
-      "lines": 192,
+      "lines": 193,
       "public_declarations": 96,
       "pub_all_declarations": 5
     },

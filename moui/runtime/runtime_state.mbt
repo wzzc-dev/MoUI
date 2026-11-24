@@ -18,6 +18,17 @@ priv struct RuntimeState {
   end_message_batch : () -> Unit
   mut event_observer : (AppEvent) -> Unit
   mut root_builder : (() -> &RuntimeViewNode)?
+  /// Shared host overlay slot (`AppRuntime::set_host_overlay`); the root
+  /// adapter reads it live, so the layer survives rebuilds without changing
+  /// root identity.
+  host_overlay_slot : HostOverlaySlot
+  /// Root builder for runtimes created from a fixed root view. Installed
+  /// lazily, the first time a host overlay is set, so ordinary `new_view`
+  /// runtimes keep their "no root builder, nothing to reconcile" behavior.
+  mut host_overlay_builder : (() -> &RuntimeViewNode)?
+  /// Whether the mounted host layer is non-activating (`HostOverlay`'s
+  /// `keeps_focus`): a primary press on it leaves the app's focus owner alone.
+  mut host_overlay_keeps_focus : Bool
   clock : Clock
   mut pending_scroll_request : ScrollRequest?
   mut last_event_hit_path : Array[Int32]
@@ -84,18 +95,25 @@ fn[Msg] RuntimeState::new_view(
     Some(handler) => handler
     None => _message => ()
   }
-  RuntimeState::new_runtime_view_node(
-    root=adapt_view_for_runtime(root, emit),
+  let slot = HostOverlaySlot::new()
+  let state = RuntimeState::new_runtime_view_node(
+    root=runtime_view_node_with_overlays(root, emit, overlays=Some(slot)),
+    host_overlay_slot=Some(slot),
     size~,
     environment~,
     begin_message_batch~,
     end_message_batch~,
   )
+  state.host_overlay_builder = Some(() => {
+    runtime_view_node_with_overlays(root, emit, overlays=Some(slot))
+  })
+  state
 }
 
 ///|
 fn RuntimeState::new_runtime_view_node(
   root~ : &RuntimeViewNode,
+  host_overlay_slot~ : HostOverlaySlot? = None,
   size~ : Size,
   environment~ : Environment = Environment::neutral(),
   begin_message_batch~ : () -> Unit = () => (),
@@ -121,6 +139,12 @@ fn RuntimeState::new_runtime_view_node(
     end_message_batch,
     event_observer: _event => (),
     root_builder: None,
+    host_overlay_slot: match host_overlay_slot {
+      Some(slot) => slot
+      None => HostOverlaySlot::new()
+    },
+    host_overlay_builder: None,
+    host_overlay_keeps_focus: false,
     clock: Clock::new(),
     pending_scroll_request: None,
     last_event_hit_path: [],
@@ -532,6 +556,25 @@ fn RuntimeState::set_root_builder(
   builder : () -> &RuntimeViewNode,
 ) -> Unit {
   self.root_builder = Some(builder)
+}
+
+///|
+/// Replace the host overlay layer and reconcile the root so the change is
+/// reflected in the element, layout and render trees.
+fn RuntimeState::set_host_overlay_nodes(
+  self : RuntimeState,
+  nodes : Array[&RuntimeViewNode],
+  keeps_focus~ : Bool = false,
+) -> Unit {
+  self.host_overlay_slot.nodes = nodes
+  self.host_overlay_keeps_focus = keeps_focus
+  if self.root_builder is None {
+    match self.host_overlay_builder {
+      Some(build) => self.root_builder = Some(build)
+      None => ()
+    }
+  }
+  self.request_root_rebuild(reason="host overlay changed", damage=FullSurface)
 }
 
 ///|

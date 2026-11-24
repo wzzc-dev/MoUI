@@ -7,6 +7,9 @@ pub(all) struct HostRuntimeDriver {
   frame_clock : (() -> Double)?
   mut close_requested : Bool
   mut frame_time_ms : Double
+  // The view-level context menu, open only while the platform menu service
+  // cannot show one. See `context_menu_fallback.mbt`.
+  priv mut context_menu : HostContextMenu?
 }
 
 ///|
@@ -21,6 +24,7 @@ pub fn HostRuntimeDriver::new(
     frame_clock,
     close_requested: false,
     frame_time_ms: 0.0,
+    context_menu: None,
   }
   runtime.set_redraw_callback(() => driver.request_redraw())
   driver
@@ -101,6 +105,7 @@ pub fn HostRuntimeDriver::dispatch(
       self.request_redraw_if_needed()
     }
   }
+  self.settle_context_menu()
   self.event_result()
 }
 
@@ -123,13 +128,18 @@ pub fn HostRuntimeDriver::perform_semantics_action(
   self : HostRuntimeDriver,
   request : PerformSemanticsActionRequest,
 ) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError] {
-  match self.runtime.perform_semantics_action(request) {
+  let result : Result[SemanticsActionReceipt, SemanticsActionDispatchError] = match
+    self.runtime.perform_semantics_action(request) {
     Ok(receipt) => {
       self.request_redraw_if_needed()
       Ok(receipt)
     }
     Err(error) => Err(error)
   }
+  // A semantics action can reach the host layer (its dismiss action), so the
+  // layer's messages are settled here too.
+  self.settle_context_menu()
+  result
 }
 
 ///|
@@ -218,6 +228,9 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
   event : @core.KeyboardEvent,
   services : @backend_host.HostServiceBridge,
 ) -> @backend_host.EventResult {
+  if self.context_menu_keyboard(event) {
+    return self.event_result()
+  }
   match keyboard_service_command_intent(event) {
     Some(intent) => self.dispatch_command_with_services(intent, services)
     None => self.dispatch(Keyboard(event))
@@ -242,12 +255,19 @@ pub fn HostRuntimeDriver::keyboard_command_intent(
 pub fn HostRuntimeDriver::dispatch_escape(
   self : HostRuntimeDriver,
 ) -> @backend_host.EventResult {
+  if self.context_menu_is_open() {
+    // The host layer is the top-most thing on the surface, so Escape belongs
+    // to it before any presentation under it.
+    self.close_context_menu()
+    return self.event_result()
+  }
   ignore(
     self.runtime.dispatch_event(
       Keyboard(@core.KeyboardEvent::new(key="Escape")),
     ),
   )
   self.request_redraw_if_needed()
+  self.settle_context_menu()
   self.event_result()
 }
 
@@ -255,8 +275,13 @@ pub fn HostRuntimeDriver::dispatch_escape(
 pub fn HostRuntimeDriver::dispatch_system_back(
   self : HostRuntimeDriver,
 ) -> @backend_host.EventResult {
+  if self.context_menu_is_open() {
+    self.close_context_menu()
+    return self.event_result()
+  }
   ignore(self.runtime.dispatch_presentation_back())
   self.request_redraw_if_needed()
+  self.settle_context_menu()
   self.event_result()
 }
 
@@ -274,8 +299,17 @@ pub fn HostRuntimeDriver::show_context_menu(
       ignore(self.dispatch_action_command_with_services(command, services))
     MenuCommand(intent) =>
       ignore(self.dispatch_command_with_services(intent, services))
+    Unavailable(message) =>
+      // No native menu service: show the same command table in the host-owned
+      // view layer, so right-click works headless and on desktops without a
+      // dialog helper. A "cancelled"/"disabled" answer is a real native menu
+      // the user saw, so it must not open a second one.
+      if host_menu_service_unavailable(message) {
+        self.open_context_menu(commands, services)
+      }
     _ => ()
   }
+  self.settle_context_menu()
   self.event_result()
 }
 
@@ -538,6 +572,13 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
       ignore(self.dispatch_action_command_with_services(command, services))
     (ShowMenu(_), MenuCommand(intent)) =>
       ignore(self.dispatch_command_with_services(intent, services))
+    (ShowMenu(commands), Unavailable(message)) =>
+      // A platform whose menu service answers asynchronously can discover
+      // only at completion time that it has no menu to show; the view-layer
+      // fallback takes over exactly like the synchronous answer does.
+      if host_menu_service_unavailable(message) {
+        self.open_context_menu(commands, services)
+      }
     (QuerySystemTheme, SystemTheme(scheme)) => {
       self.runtime.set_environment(
         self.runtime.environment().with_system_scheme(scheme),
@@ -546,5 +587,6 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
     }
     _ => ()
   }
+  self.settle_context_menu()
   self.event_result()
 }

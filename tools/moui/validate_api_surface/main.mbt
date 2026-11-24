@@ -310,7 +310,16 @@ fn package_budgets() -> Array[PackageBudget] {
       // DevTools providers read snapshot() without owning the runtime.
       // Cursor projection: AppRuntime::pointer_cursor (+1 line) forwards the
       // runtime-resolved pointer style to the host pump.
-      max_lines: 795,
+      // Host overlay layer (+6 lines): the host-owned layer the driver mounts
+      // for the view-level context menu — `pub struct HostOverlay` (with its
+      // `// private fields` marker), `HostOverlay::from_view`,
+      // `AppRuntime::set_host_overlay`, and the separator blank line.
+      // Focused-text selection (+3 lines): select-all / caret placement /
+      // explicit selection, so a host can pre-fill and position a prompt
+      // without synthesizing a Ctrl/Cmd+A.
+      // AppRuntime::pointer_position (+1 line): the anchor for that layer's
+      // context menu comes from the runtime's own last pointer sample.
+      max_lines: 805,
       max_pub_lines: 535,
       max_pub_all_lines: 19,
       required_tokens: [
@@ -346,7 +355,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // runtime-owned sink to window frame hooks.
       // Cursor projection: HostRuntimeDriver::pointer_cursor (+1 line) is the
       // driver-owned read the window workflows use.
-      max_lines: 192,
+      // The view-level context menu lives in a `priv` driver field, so the
+      // generated facade gains only the `// private fields` marker (+1 line):
+      // no menu type or command table enters the public surface.
+      max_lines: 193,
       max_pub_lines: 100,
       max_pub_all_lines: 5,
       required_tokens: [

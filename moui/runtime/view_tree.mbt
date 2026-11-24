@@ -79,6 +79,13 @@ priv struct RuntimeViewAdapter[Msg] {
   /// child views and can share one computed array (copied on hand-out so a
   /// caller mutating the returned array cannot corrupt the memo).
   mut wrapped_children : Array[&RuntimeViewNode]?
+  /// Host overlay layer slots (`AppRuntime::set_host_overlay`), set on the
+  /// root adapter only. Every adapter the root builder produces shares one
+  /// `HostOverlaySlot`, so the host layer can appear and disappear without
+  /// changing the app root's identity — and therefore without remounting the
+  /// app's subtree (`children()` reads the slot live, `layout()` appends the
+  /// layer's frames).
+  overlays : HostOverlaySlot?
 }
 
 ///|
@@ -86,11 +93,23 @@ fn[Msg] runtime_view_node(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
 ) -> &RuntimeViewNode {
+  adapt_view_for_runtime(view, emit)
+}
+
+///|
+/// Root adapter variant that carries the host overlay layer. `overlays` is
+/// `None` for every non-root adapter (they are ordinary runtime nodes).
+fn[Msg] runtime_view_node_with_overlays(
+  view : @core.View[Msg],
+  emit : (Msg) -> Unit,
+  overlays~ : HostOverlaySlot?,
+) -> &RuntimeViewNode {
   let adapter : RuntimeViewAdapter[Msg] = {
     view,
     emit,
     identity_snapshot: view.identity(),
     wrapped_children: None,
+    overlays,
   }
   adapter as &RuntimeViewNode
 }
@@ -114,7 +133,7 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn children(self) {
   // reuse keyed on identity alone is unsound: control declaration channels
   // key presence flags (e.g. `has_on_click`), not message payloads, so an
   // identity-equal view can carry a different model-captured event closure.
-  match self.wrapped_children {
+  let children = match self.wrapped_children {
     Some(wrapped) => wrapped.copy()
     None => {
       let wrapped : Array[&RuntimeViewNode] = []
@@ -125,6 +144,16 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn children(self) {
       wrapped.copy()
     }
   }
+  match self.overlays {
+    Some(slot) =>
+      // Read live: the slot is the one mutable piece of root structure, and
+      // the host layer must mount/unmount without a new root adapter.
+      for node in slot.nodes {
+        children.push(node)
+      }
+    None => ()
+  }
+  children
 }
 
 ///|
@@ -156,7 +185,37 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn layout(
   self,
   context,
 ) {
-  self.view.layout(context)
+  match self.overlays {
+    Some(slot) =>
+      if slot.nodes.length() == 0 {
+        self.view.layout(context)
+      } else {
+        // The app's own children keep the sizes they were measured under; the
+        // host layer is a surface-sized sibling appended after them, so the
+        // placement pass places it at the origin and paints it last.
+        let own = self.view.children().length()
+        let surface = Size::new(
+          width=context.constraints.max.width,
+          height=context.constraints.max.height,
+        )
+        let result = self.view.layout({
+          ..context,
+          child_sizes: truncate_child_sizes(context.child_sizes, own),
+          child_flex_weights: truncate_child_weights(
+            context.child_flex_weights,
+            own,
+          ),
+        })
+        let frames = result.child_frames.copy()
+        for _node in slot.nodes {
+          frames.push(
+            Rect::new(x=0.0, y=0.0, width=surface.width, height=surface.height),
+          )
+        }
+        { ..result, child_frames: frames, }
+      }
+    None => self.view.layout(context)
+  }
 }
 
 ///|
@@ -322,4 +381,29 @@ impl @core.ViewNode for EmptyCoreViewNode with fn layout(_self, context) {
 fn empty_runtime_view_node() -> &RuntimeViewNode {
   let view : @core.View[Unit] = @core.View::from_node(EmptyCoreViewNode::{ })
   runtime_view_node(view, _message => ())
+}
+
+///|
+fn truncate_child_sizes(sizes : Array[Size], count : Int32) -> Array[Size] {
+  let out : Array[Size] = []
+  let mut index = 0
+  while index < count && index < sizes.length() {
+    out.push(sizes[index])
+    index = index + 1
+  }
+  out
+}
+
+///|
+fn truncate_child_weights(
+  weights : Array[Double],
+  count : Int32,
+) -> Array[Double] {
+  let out : Array[Double] = []
+  let mut index = 0
+  while index < count && index < weights.length() {
+    out.push(weights[index])
+    index = index + 1
+  }
+  out
 }
