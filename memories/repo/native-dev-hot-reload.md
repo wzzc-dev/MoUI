@@ -51,6 +51,6 @@ Optional (resolved as a trio, all-or-nothing): `dev_semantics_action`,
   (`:\d+(?:\.\d+)?:\d+$`) or it never hits (was 2.5-3.5 s/reload). The change
   watcher is the opposite: it must keep path+mtime+size, otherwise edits to an
   existing file never change the snapshot and no reload fires (fixed in Phase
-  2B; `hotSourceShape` = fast-plan cache, `hotSourceSnapshot` = watcher).
+  2B; `hotSourceShape` = fast-plan cache, `hotSourceStamp` = watcher).
 - Warm reload measured p50 ~0.63 s (n=9); 20-reload run retained PID/window,
   count 2, RSS 88→128 MB. Build error kept generation and UI interactive.
