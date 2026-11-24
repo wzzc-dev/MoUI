@@ -8,6 +8,10 @@ pub struct FramePayload {
   commands : Array[@core.DrawCommand]
   clear_color : @core.Color
   unsupported : Int32
+  platform_views : Array[@core.PlatformViewPlacement]?
+  overlay_bounds : @core.Rect?
+  semantics : @core.SemanticsFramePayload?
+  text_input : @core.TextInputState?
 }
 
 ///|
@@ -23,6 +27,30 @@ pub fn FramePayload::clear_color(self : FramePayload) -> @core.Color {
 ///|
 pub fn FramePayload::unsupported(self : FramePayload) -> Int32 {
   self.unsupported
+}
+
+///|
+pub fn FramePayload::platform_views(
+  self : FramePayload,
+) -> Array[@core.PlatformViewPlacement]? {
+  self.platform_views
+}
+
+///|
+pub fn FramePayload::overlay_bounds(self : FramePayload) -> @core.Rect? {
+  self.overlay_bounds
+}
+
+///|
+pub fn FramePayload::semantics(
+  self : FramePayload,
+) -> @core.SemanticsFramePayload? {
+  self.semantics
+}
+
+///|
+pub fn FramePayload::text_input(self : FramePayload) -> @core.TextInputState? {
+  self.text_input
 }
 
 ///|
@@ -1434,7 +1462,10 @@ fn command_json(command : @core.DrawCommand) -> Json {
 /// variant is represented; the root also carries the frame clear color so the
 /// host paints the app's own backdrop. A future variant this encoder does not
 /// know is counted in `unsupported` instead of silently dropped.
-pub fn encode_frame(frame : @core.DrawFrame) -> String {
+pub fn encode_frame(
+  frame : @core.DrawFrame,
+  text_input~ : @core.TextInputState? = None,
+) -> String {
   let commands : Array[Json] = []
   for command in frame.commands {
     commands.push(command_json(command))
@@ -1443,6 +1474,14 @@ pub fn encode_frame(frame : @core.DrawFrame) -> String {
   root["version"] = int_json(abi_version())
   root["commands"] = Json::array(commands)
   root["clear_color"] = color_json(frame.clear_color)
+  // Platform-owned state rides beside the paint stream so the host adapters
+  // (IME, accessibility, native platform views) see the plugin's real tree.
+  root["platform_views"] = platform_view_placements_to_json(
+    frame.platform_views,
+  )
+  root["overlay_bounds"] = nullable_rect_json(frame.overlay_bounds)
+  root["semantics"] = nullable_semantics_json(frame.semantics)
+  root["text_input"] = nullable_text_input_json(text_input)
   // The match in `command_json` is exhaustive, so the wire stays honest: a new
   // core variant is a compile error here rather than a silent drop.
   root["unsupported"] = int_json(0)
@@ -1694,7 +1733,50 @@ pub fn decode_frame_payload(text : String) -> FramePayload? {
       }
   }
   let unsupported = wire_int(root.get("unsupported")).unwrap_or(0)
-  Some({ commands, clear_color, unsupported, })
+  // Optional platform state is lenient about absence (older images) but
+  // strict about a present malformed value: native views and accessibility
+  // objects must not be driven from a half-decoded tree.
+  let platform_views = match root.get("platform_views") {
+    Some(Json::Null) | None => None
+    Some(_) =>
+      match platform_view_placements_from_json(root.get("platform_views")) {
+        Some(views) => Some(views)
+        None => return None
+      }
+  }
+  let overlay_bounds = match root.get("overlay_bounds") {
+    Some(Json::Null) | None => None
+    Some(_) =>
+      match rect_from_json(root.get("overlay_bounds")) {
+        Some(rect) => Some(rect)
+        None => return None
+      }
+  }
+  let semantics = match root.get("semantics") {
+    Some(Json::Null) | None => None
+    Some(_) =>
+      match semantics_payload_from_json(root.get("semantics")) {
+        Some(payload) => Some(payload)
+        None => return None
+      }
+  }
+  let text_input = match root.get("text_input") {
+    Some(Json::Null) | None => None
+    Some(_) =>
+      match text_input_state_from_json(root.get("text_input")) {
+        Some(state) => Some(state)
+        None => return None
+      }
+  }
+  Some({
+    commands,
+    clear_color,
+    unsupported,
+    platform_views,
+    overlay_bounds,
+    semantics,
+    text_input,
+  })
 }
 
 ///|

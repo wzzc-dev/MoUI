@@ -4,6 +4,7 @@ package "wzzc-dev/moui_devhost/protocol"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -19,11 +20,23 @@ pub fn decode_frame(String) -> Array[@core.DrawCommand]?
 
 pub fn decode_frame_payload(String) -> FramePayload?
 
+pub fn decode_semantics_action_request(String) -> @runtime.PerformSemanticsActionRequest?
+
+pub fn decode_semantics_action_result(String) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]?
+
+pub fn decode_text_input_state(String) -> @core.TextInputState?
+
 pub fn encode_config(DevConfig) -> String
 
 pub fn encode_event(@core.AppEvent) -> String?
 
-pub fn encode_frame(@core.DrawFrame) -> String
+pub fn encode_frame(@core.DrawFrame, text_input? : @core.TextInputState?) -> String
+
+pub fn encode_semantics_action_request(@runtime.PerformSemanticsActionRequest) -> String
+
+pub fn encode_semantics_action_result(Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]) -> String
+
+pub fn encode_text_input_state(@core.TextInputState) -> String
 
 // Errors
 
@@ -41,9 +54,17 @@ pub struct FramePayload {
   commands : Array[@core.DrawCommand]
   clear_color : @core.Color
   unsupported : Int32
+  platform_views : Array[@core.PlatformViewPlacement]?
+  overlay_bounds : @core.Rect?
+  semantics : @core.SemanticsFramePayload?
+  text_input : @core.TextInputState?
 }
 pub fn FramePayload::clear_color(Self) -> @core.Color
 pub fn FramePayload::commands(Self) -> Array[@core.DrawCommand]
+pub fn FramePayload::overlay_bounds(Self) -> @core.Rect?
+pub fn FramePayload::platform_views(Self) -> Array[@core.PlatformViewPlacement]?
+pub fn FramePayload::semantics(Self) -> @core.SemanticsFramePayload?
+pub fn FramePayload::text_input(Self) -> @core.TextInputState?
 pub fn FramePayload::unsupported(Self) -> Int32
 
 // Type aliases

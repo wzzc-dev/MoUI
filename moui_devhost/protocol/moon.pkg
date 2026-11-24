@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 supported_targets = "native"
