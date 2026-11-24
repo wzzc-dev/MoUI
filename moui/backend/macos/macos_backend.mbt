@@ -39,6 +39,7 @@ pub extend MacosAccessibilityBridgeInfo with ToJson::{to_json}
 pub struct MacosHostAppOptions {
   priv scene_resolver : @window_lifecycle.WindowSceneResolver
   priv event_sources : @apphost.HostPlatformEventSources?
+  priv driver_hooks : @apphost.HostDriverHooks?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv show_after_first_present : Bool
@@ -192,6 +193,7 @@ pub extend MacosNativeHostBackend with @wzzc-dev/window/macos.ApplicationHandler
 pub fn MacosHostAppOptions::new(
   scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources~ : @apphost.HostPlatformEventSources? = None,
+  driver_hooks~ : @apphost.HostDriverHooks? = None,
   platform_view_plugins~ : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar~ : Bool = false,
   show_after_first_present~ : Bool = true,
@@ -207,6 +209,7 @@ pub fn MacosHostAppOptions::new(
   {
     scene_resolver,
     event_sources,
+    driver_hooks,
     platform_view_plugins,
     transparent_titlebar,
     show_after_first_present,
