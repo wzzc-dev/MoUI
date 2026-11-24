@@ -10,7 +10,7 @@ Formal specs and standing decisions live in **`docs/`** (ADRs under
 docs/plans/
   README.md                 # this file
   active/<id>.md            # in-flight exec plans
-  done/INDEX.md             # one row per finished plan (bodies retired 2026-11-19)
+  done/INDEX.md             # one row per finished plan (bodies retired through 2026-11-24)
   debt/<id>.md              # known tech debt with acceptance notes
 ```
 
@@ -86,7 +86,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [webview-controller-bridge](active/webview-controller-bridge.md) | Replace the WebView command queue with controller-owned navigation, JSON bridge security, and HostPatch across desktop hosts |
 | [linux-riscv64-support](active/linux-riscv64-support.md) | Add non-blocking Linux Skia Raster L0-L2 cross-build evidence for `riscv64-linux-gnu` |
 | [linux-x11-backend](active/linux-x11-backend.md) | Add an X11 (Xlib) windowing backend to the Linux package with runtime selection and UTM VM validation |
-| [mo-workbench-message-windowing](active/mo-workbench-message-windowing.md) | Mo Workbench 消息列表窗口化与重建优化 |
 | [backend-renderer-lifecycle-convergence](active/backend-renderer-lifecycle-convergence.md) | Split backend-common state owners and collapse renderer binding to provider/session |
 | [harmonyos-scroll-frame-pacing](active/harmonyos-scroll-frame-pacing.md) | Make the HarmonyOS frame loop pace on vsync as intended, gate the a11y pump on a published-generation cursor, and instrument the frame path for the frozen-frames capture |
 | [macos-frame-pacing-and-transient-scroll](active/macos-frame-pacing-and-transient-scroll.md) | Add a CVDisplayLink frame clock to the macOS window host, pace the async pump on refresh boundaries, move the markdown editor's live glide into element state (one settle message per gesture), and add frame-log/diagnostic evidence |
@@ -100,7 +99,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
 | [richtext-markdown-domain-relocation](active/richtext-markdown-domain-relocation.md) | Move the Markdown editing domain model out of `moui_richtext` into `moui_markdown` to converge its public surface toward ~30 pub lines |
-| [line-level-viewport-window](active/line-level-viewport-window.md) | Window the visible range at line granularity inside one oversized markdown block so open and scroll cost track the viewport instead of the document |
 | [no-third-party-gpu-route](active/no-third-party-gpu-route.md) | Apple-first Metal renderer that links no external graphics library (ADR 0044, supersedes 0043's conclusion). **Route parked at L0 (2026-10-27): the kill gate fired** — the shipped Skia-Metal route already holds `presentMs` at 0.10–0.76 ms p50 so there is no performance prize, and the license motive is struck; only size-versus-Skia + autonomy survive. L0.1 (provider-parametric harness) and L0.2 (neutral text-model extraction out of the wgpu-importing package) stay live as framework work |
 
 ## Debt
@@ -116,7 +114,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| [done/INDEX](done/INDEX.md) | One row per retired plan (70 bodies, 2026-07 → 2026-11-19) with its outcome and landing commit; start here before reopening an archived subject |
+| [done/INDEX](done/INDEX.md) | One row per retired plan (77 bodies, 2026-07 → 2026-11-24) with its outcome and landing commit; start here before reopening an archived subject |
 | [visual-quality](done/visual-quality.md) | Default-theme visual baseline: Desktop preset metrics/typography, control craft, typography + icon expression, materials/motion defaults, and a `visual` gate with a per-control state matrix, rendered previews, and gallery-derived README/website screenshots. **Complete 2026-11-13**; the human blind-review gate is explicitly waived by the agent and remains available for a later real review |
 | [harness-mechanize-invariants-batch1](done/harness-mechanize-invariants-batch1.md) | Map-style AGENTS/docs + P1/P2/A6/R3/M5/G1/G2 machine checks with agent-facing fix hints |
 

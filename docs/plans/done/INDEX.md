@@ -1,8 +1,8 @@
 # Archived plans — index
 
-- **Status**: done (archive index; the individual plan files were retired 2026-11-19)
+- **Status**: done (archive index; the individual plan files were retired through 2026-11-24)
 - **What this is**: one row per plan that finished in `docs/plans/done/`. The plan bodies
-  (~11.7k lines, 69 files) were replaced by this index during the 2026-11 docs diet; the
+  (77 rows, ~12k lines) were replaced by this index during the 2026-11 docs diet; the
   original text is still reachable from git history.
 - **Where the knowledge lives now**: landed behavior in code, standing decisions in
   `docs/decisions/`, narrative + pitfalls in `docs/ai-sessions/`, open work in
@@ -46,6 +46,7 @@ are still readable — find the stem here.
 | `moonbit-tooling-formalization` | Formalizable rules moved into `moon test`-able `tools/moui` packages; other languages kept as orchestration shells. | `a982053b` 2026-08-04 |
 | `validation-hygiene-cleanup` | Removed validator self-tests; kept product/evidence validation. | `68dfba21` 2026-08-06 |
 | `markdown-input-lift` | Markdown input surface lifted into `moui_richtext`/`moui_markdown` for `0.8.0`: viewer palette, opt-in wikilinks with an app-injected scheme, block-scoped editor targets, selection-aware undo/redo, opt-in compact blank gaps, styled table fixes, editor context menu, and the format bubble. | `7d3e2862` 2026-11-23 |
+| `line-level-viewport-window` | Line-granular windowing inside one oversized markdown block, so open and scroll cost track the viewport instead of the document: landed as `markdown_document_window_range` (+ `_for_geometry`) and the block-level line-window decision, with the Mo Workbench message list consuming the same windowing. | `e0116257` 2026-09-21 |
 
 ## Renderer, GPU, and canvas surface
 
@@ -131,6 +132,7 @@ are still readable — find the stem here.
 |---|---|---|
 | `ai-world-engine` | `examples/ai_world` grew into a web-first AI world engine: per-world Markdown folder database, in-UI character setup, real provider conversation, AI-generated worlds. | `91a90e9f` 2026-11-09 |
 | `ai-world-product` | Turned the example into a local-first AI narrative tool (cross-refresh authorization, incremental writes, export, dialogue editing, character art, world-book hits) and graduated it to `wzzc-dev/new_world`. | `91a90e9f` 2026-11-09 |
+| `mo-workbench-message-windowing` | Windowed rebuild for the Mo Workbench message list: measured per-row heights cached by `message_row_height` / `message_row_heights_snapshot` and reused, so scrolling one message no longer rebuilds the whole list. | `b25a1d8b` 2026-08-10 |
 
 Retired plan bodies are not re-created; reopen a subject by writing a fresh
 `docs/plans/active/<id>.md` and citing the git history above.
