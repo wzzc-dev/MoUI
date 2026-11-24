@@ -31,12 +31,13 @@ existing changed.
 
 `0.9.1` uses the line-level pre-1.0 allowance above for the first time: it is a
 patch that adds public API — the `SemanticsRole` variants `TabList`,
-`Toolbar`, and `MenuItem`, `inline_edit`, generic drag and drop, focused-text
-selection (`select_focused_text_all`, `place_focused_text_caret`,
+`Toolbar`, and `MenuItem`, the `inline_edit` control, `on_cancel?`/`key?` on
+`text_field`, `on_select_command?` on `command_menu`, focused-text selection
+(`select_focused_text_all`, `place_focused_text_caret`,
 `set_focused_text_selection`), and the Linux view-level context-menu fallback.
 No package boundary and no host wire contract changes, and the release ships
 its own `0.9.1` release note with the upgrade note and migration examples the
-policy requires.
+policy requires. Generic drag and drop moves to `0.9.2`.
 
 `checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
 source of truth; the docs, module manifests, and `docs/compatibility-matrix.md`
