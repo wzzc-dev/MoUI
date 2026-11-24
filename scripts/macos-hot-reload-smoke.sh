@@ -99,6 +99,23 @@ wait_for_log() {
   fail "timed out waiting for $label (pattern: $pattern)"
 }
 
+# The host readiness marker is platform-specific: Linux X11 logs
+# "moui windowing backend:", while macOS paints host frames. Accept either.
+wait_for_any_log() {
+  local label="$1" timeout="${2:-${MOUI_HOT_SMOKE_TIMEOUT:-300}}"
+  shift 2
+  local deadline=$(( $(date +%s) + timeout ))
+  local pattern
+  while (( $(date +%s) < deadline )); do
+    for pattern in "$@"; do
+      grep -Fq "$pattern" "$log" && return 0
+    done
+    kill -0 "$runner_pid" 2>/dev/null || fail "dev runner exited while waiting for $label"
+    sleep 0.5
+  done
+  fail "timed out waiting for $label (patterns: $*)"
+}
+
 wait_for_status() {
   local phase="$1" generation="$2" label="$3" timeout="${4:-${MOUI_HOT_SMOKE_TIMEOUT:-300}}"
   local deadline=$(( $(date +%s) + timeout ))
@@ -178,7 +195,8 @@ node scripts/moui-dev.mjs --package examples/hot_reload_probe --hot --interval-m
 runner_pid=$!
 
 wait_for_log "hot plugin ready (generation 1" "first plugin generation"
-wait_for_log "moui windowing backend:" "host window"
+wait_for_any_log "host frame" "${MOUI_HOT_SMOKE_TIMEOUT:-300}" \
+  "moui-devhost: frame " "moui windowing backend:"
 host_pid="$(find_host_pid)"
 kill -0 "$host_pid" 2>/dev/null || fail "hot host is not running"
 echo "generation 1 loaded; host pid=$host_pid"
