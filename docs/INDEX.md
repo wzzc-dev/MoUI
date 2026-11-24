@@ -39,7 +39,6 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [agent-semantics.md](agent-semantics.md) | `canonical` | Committed semantics, generations, typed Agent actions, and MCP surface |
 | [plans/active/native-accessibility.md](plans/active/native-accessibility.md) | `map` | Native accessibility adapters, Probe work graph, and evidence rollout |
 | [plans/active/pointer-input-parity.md](plans/active/pointer-input-parity.md) | `map` | Gesture, touch selection, multi-pointer, scroll rebound and RTL parity work graph |
-| [plans/active/declarative-drag-and-drop.md](plans/active/declarative-drag-and-drop.md) | `map` | In-app drag source/target declarations, runtime-owned session, and phase-to-message delivery |
 | [plans/done/visual-quality.md](plans/done/visual-quality.md) | `map` | Default visual baseline: Desktop preset, control craft, expression, motion, and a visual gate |
 | [canvas-and-custom-paint.md](canvas-and-custom-paint.md) | `canonical` | Custom paint / canvas |
 | [non-render-component-cookbook.md](non-render-component-cookbook.md) | `canonical` | Host services from app code |
