@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import {
@@ -55,7 +56,13 @@ const log = (message) => {
   else process.stdout.write(`[moui dev] ${message}\n`);
 };
 const run = (command, commandArgs, options = {}) => new Promise((resolve) => {
-  const child = spawn(command, commandArgs, { cwd: options.cwd || projectRoot, env: { ...process.env, ...options.env }, stdio: ["ignore", "pipe", "pipe"], shell: false });
+  const child = spawn(command, commandArgs, {
+    cwd: options.cwd || projectRoot,
+    env: { ...process.env, ...options.env },
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: false,
+    windowsVerbatimArguments: options.windowsVerbatimArguments ?? false,
+  });
   let output = "";
   child.stdout.on("data", (chunk) => { if (!options.quiet) process.stdout.write(chunk); output += chunk; });
   child.stderr.on("data", (chunk) => { if (!options.quiet) process.stderr.write(chunk); output += chunk; });
@@ -63,6 +70,16 @@ const run = (command, commandArgs, options = {}) => new Promise((resolve) => {
   child.once("exit", (code, signal) => resolve({ code: code ?? 1, signal, output }));
 });
 const moon = process.env.MOON ?? "moon";
+// `HOME` is not set by default on Windows; the MoonBit toolchain lives under
+// the user profile there.
+const moonHome = () => process.env.MOON_HOME || path.join(os.homedir(), ".moon");
+const windows = process.platform === "win32";
+// Replay `moon --dry-run` commands through the platform shell. Windows uses
+// `cmd /c` with verbatim arguments: the dry-run line is already a complete
+// command line, and cmd treats everything after `/c` as that line.
+const runShellStep = (step) => windows
+  ? run(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", step], { windowsVerbatimArguments: true })
+  : run("sh", ["-c", step]);
 
 function listFiles(dir, result = []) {
   if (!fs.existsSync(dir)) return result;
@@ -152,8 +169,6 @@ const hotOut = hotRoot ? path.join(hotRoot, "out") : "";
 const hotMarker = hotOut ? path.join(hotOut, "current") : "";
 const hotPicDir = hotRoot ? path.join(hotRoot, "pic") : "";
 const hotHost = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "host", "host.exe");
-const hotPluginArchive = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "plugin", "plugin.a");
-const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
 const hotPlatform = hotPlatformForNodePlatform(process.platform);
 // Web hot mode keeps the page and swaps the wasm app module by refreshing it.
 // Model/transient state crosses the refresh through the same opt-in
@@ -164,8 +179,12 @@ const webHotOut = webHotRoot ? path.join(webHotRoot, "out", "app.wasm") : "";
 const webHotWasm = path.join(workspaceRoot ?? "", "_build", "wasm-gc", "debug", "build", "wzzc-dev", "moui_devhost", "dev_web", "dev_web.wasm");
 const webHotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-web-generate.mjs");
 const webHotPackage = "moui_devhost/dev_web";
+// MSVC's archive tooling produces `.lib`; the POSIX hosts produce `.a`.
+const hotPluginArchiveName = hotPlatform === "windows" ? "plugin.lib" : "plugin.a";
+const hotPluginArchive = path.join(hotRoot, "_build", "native", "debug", "build", "wzzc-dev", "moui_dev_hot", "plugin", hotPluginArchiveName);
+const hotGenerator = path.join(workspaceRoot ?? "", "scripts", "moui-dev-hot-generate.mjs");
 const hotPluginName = hotPluginFileName(hotPlatform ?? "macos");
-const hotArchiveFragment = "moui_dev_hot/plugin/plugin.a";
+const hotArchiveFragment = `moui_dev_hot/plugin/${hotPluginArchiveName}`;
 const hotAppModule = (() => {
   const relativeProject = workspaceRoot
     ? path.relative(workspaceRoot, projectRoot).split(path.sep).join("/")
@@ -302,10 +321,10 @@ async function captureHotPlan() {
     "--target", "native", "-v", "--dry-run",
   ], { quiet: true, cwd: hotRoot });
   if (dry.code !== 0) return null;
-  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
+  const home = moonHome();
   const steps = dry.output
     .split("\n")
-    .map((line) => line.replace(/\$MOON_HOME/g, moonHome))
+    .map((line) => line.replace(/\r$/, "").replace(/\$MOON_HOME/g, home))
     .filter((line) => hotFastStepMatches(line, { appModule: hotAppModule, archiveFragment: hotArchiveFragment }));
   if (steps.length < 2) return null;
   return { shape: hotSourceShape(), steps };
@@ -326,10 +345,9 @@ async function prepareRuntimePicObjects() {
     "--target", "native", "-v", "--dry-run",
   ], { quiet: true, cwd: hotRoot });
   if (dry.code !== 0) return null;
-  const moonHome = process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon");
   const objects = [];
   for (const raw of dry.output.split("\n")) {
-    const line = raw.replace(/\$MOON_HOME/g, moonHome);
+    const line = raw.replace(/\r$/, "").replace(/\$MOON_HOME/g, moonHome());
     const output = line.match(/(?:^|\s)-o\s+(\S+)/);
     if (!output) continue;
     const object = path.join(hotPicDir, path.basename(output[1]));
@@ -348,6 +366,18 @@ async function prepareRuntimePicObjects() {
 }
 
 async function linkHotPlugin(dylib) {
+  if (hotPlatform === "windows") {
+    // Generated `dev_*` wrappers carry no `__declspec(dllexport)`; the link
+    // recipe supplies `/EXPORT` for each and `/WHOLEARCHIVE` so no app or
+    // runtime member is dropped. Requires a Developer Command Prompt (vcvars)
+    // so moon, cl.exe/lib.exe, and link.exe share one MSVC environment.
+    const args = hotLinkArgs({
+      platform: "windows",
+      pluginArchive: hotPluginArchive,
+      output: dylib,
+    });
+    return run(process.env.MOUI_HOT_LINKER ?? "link.exe", args);
+  }
   let args;
   if (hotPlatform === "linux") {
     const picObjects = await prepareRuntimePicObjects();
@@ -360,23 +390,23 @@ async function linkHotPlugin(dylib) {
       platform: "linux",
       pluginArchive: hotPluginArchive,
       picArchive,
-      moonHome: process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon"),
+      moonHome: moonHome(),
       output: dylib,
     });
   } else {
     args = hotLinkArgs({
       platform: "macos",
       pluginArchive: hotPluginArchive,
-      moonHome: process.env.MOON_HOME || path.join(process.env.HOME || "", ".moon"),
+      moonHome: moonHome(),
       output: dylib,
     });
   }
-  return run("cc", args);
+  return run(process.env.CC ?? "cc", args);
 }
 
 async function runHotSteps(steps) {
   for (const step of steps) {
-    const result = await run("sh", ["-c", step]);
+    const result = await runShellStep(step);
     if (result.code !== 0) return false;
   }
   return true;
@@ -472,7 +502,9 @@ async function startHotHost(pluginPath) {
     // macOS dyld retains MoonBit images after dlclose, so the host re-execs
     // after 32 swaps. Linux dlclose unmaps the image (measured: images=1 on
     // every swap), so no periodic re-exec is needed; RSS still creeps with
-    // allocator/state churn (~0.26 MB/swap over 20 reloads).
+    // allocator/state churn (~0.26 MB/swap over 20 reloads). Windows FreeLibrary
+    // behaviour is not yet measured on a real host, so keep the conservative
+    // 32-swap re-exec budget.
     MOUI_HOT_RELOAD_LIMIT: hotPlatform === "linux" ? "0" : "32",
     MOUI_DEV_STATE_FILE: stateFile,
     MOUI_DEV_TRANSIENT_FILE: transientFile,
@@ -684,7 +716,7 @@ writeStatus({ package: pkg, target: buildTarget });
 if (has("--help")) {
   process.stdout.write("Usage: moui dev [--package PATH] [--target TARGET] [--once|--build-only] [--web] [--hot] [--inspect] [--port PORT] [--interval-ms MS] [--state PATH]\\n");
   process.stdout.write("Watches MoonBit inputs, rebuilds incrementally, restarts native apps, and serves Web errors with refresh.\\n");
-  process.stdout.write("--hot (macOS/Linux native) keeps the window and swaps the app plugin instead of restarting.\\n");
+  process.stdout.write("--hot (macOS/Linux/Windows native) keeps the window and swaps the app plugin instead of restarting.\\n");
   process.stdout.write("--web --hot keeps the page and refreshes it after a rebuild, carrying model/focus/scroll state over.\\n");
   process.exit(0);
 }
@@ -747,7 +779,7 @@ if (webHot) {
       ok: false,
       phase: "error",
       hot: true,
-      error: `--hot supports native macOS and Linux hosts; this host is ${process.platform}`,
+      error: `--hot supports native macOS, Linux, and Windows hosts; this host is ${process.platform}`,
     });
     process.exit(1);
   }

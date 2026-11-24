@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  WINDOWS_PLUGIN_EXPORTS,
   hotFastStepMatches,
   hotLinkArgs,
   hotPlatformForNodePlatform,
@@ -11,16 +12,17 @@ import {
   picRuntimeCompile,
 } from "./moui-dev-hot-plan.mjs";
 
-test("only macOS and Linux hosts accept --hot", () => {
+test("macOS, Linux, and Windows hosts accept --hot", () => {
   assert.equal(hotPlatformForNodePlatform("darwin"), "macos");
   assert.equal(hotPlatformForNodePlatform("linux"), "linux");
-  assert.equal(hotPlatformForNodePlatform("win32"), null);
+  assert.equal(hotPlatformForNodePlatform("win32"), "windows");
   assert.equal(hotPlatformForNodePlatform("freebsd"), null);
 });
 
 test("plugin generations use a platform-native shared-library name", () => {
   assert.equal(hotPluginFileName("macos"), "plugin.dylib");
   assert.equal(hotPluginFileName("linux"), "plugin.so");
+  assert.equal(hotPluginFileName("windows"), "plugin.dll");
 });
 
 test("macOS link uses force_load and the archive path", () => {
@@ -136,4 +138,55 @@ test("fast plan keeps app/plugin compile, link-core, and archive steps", () => {
     true,
   );
   assert.equal(hotFastStepMatches("/usr/bin/cc -c ./runtime/fs.c", options), false);
+});
+
+test("Windows link whole-archives the archive and exports every ABI entry", () => {
+  const args = hotLinkArgs({
+    platform: "windows",
+    pluginArchive: "C:/repo/_build/plugin.lib",
+    moonHome: "C:/Users/dev/.moon",
+    output: "C:/repo/out/gen-1/plugin.dll",
+  });
+  assert.deepEqual(args.slice(0, 4), [
+    "/NOLOGO",
+    "/DLL",
+    "/OUT:C:/repo/out/gen-1/plugin.dll",
+    "/WHOLEARCHIVE:C:/repo/_build/plugin.lib",
+  ]);
+  for (const name of WINDOWS_PLUGIN_EXPORTS) {
+    assert.equal(args.includes(`/EXPORT:${name}`), true, `missing /EXPORT:${name}`);
+  }
+  assert.equal(args.includes("moonbit_init"), false);
+  assert.equal(args.includes("C:/repo/_build/plugin.lib"), true);
+  assert.equal(args.includes("libcmt.lib"), true);
+  assert.equal(args.includes("libbacktrace.a"), false);
+});
+
+test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () => {
+  const options = { appModule: "examples/counter", archiveFragment: "moui_dev_hot/plugin/plugin.lib" };
+  assert.equal(
+    hotFastStepMatches(
+      '"C:\\Program Files\\LLVM\\bin\\clang-cl.exe" /c /Fo.\\_build\\native\\debug\\build\\wzzc-dev\\moui_dev_hot\\plugin\\__moonbit_link_core__\\plugin.obj .\\plugin.c',
+      options,
+    ),
+    true,
+  );
+  assert.equal(
+    hotFastStepMatches(
+      "C:\\Program Files\\Microsoft Visual Studio\\VC\\Tools\\MSVC\\bin\\Hostx64\\x64\\lib.exe /nologo /Out:./_build/native/debug/build/wzzc-dev/moui_dev_hot/plugin/plugin.lib ./plugin.obj",
+      options,
+    ),
+    true,
+  );
+  assert.equal(
+    hotFastStepMatches(
+      "moonc build-package ./examples/counter/app/app.mbt -o ./_build/app.core",
+      options,
+    ),
+    true,
+  );
+  assert.equal(
+    hotFastStepMatches("cl.exe /c /Fo./unrelated.obj ./unrelated.c", options),
+    false,
+  );
 });

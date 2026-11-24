@@ -77,7 +77,9 @@ let host_injected_lines : Ref[Int32] = Ref(0)
 /// macOS keeps MoonBit dylibs mapped after `dlclose`, so the host re-execs
 /// itself after a bounded number of successful swaps instead of leaking an
 /// image per edit. Linux `dlclose` unmaps the image, so the dev runner sets
-/// the budget to `0` there; `0` disables the budget entirely.
+/// the budget to `0` there; `0` disables the budget entirely. Windows
+/// `FreeLibrary` unload behaviour is not measured yet, so the dev runner keeps
+/// the conservative 32-swap budget there.
 fn reload_limit() -> Int32 {
   match env_nonempty("MOUI_HOT_RELOAD_LIMIT") {
     Some(value) => @string.parse_int(value[:]) catch { _ => 32 }
