@@ -39,7 +39,7 @@
   partial state.
 - [x] Docs and `memories/repo/` describe the fields, cleanup rule and unverified
   native evidence.
-- [ ] Pre-push validators and `check.sh --profile pr` pass.
+- [x] Pre-push validators and `check.sh --profile pr` pass.
 
 ## Decision log
 

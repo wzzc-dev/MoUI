@@ -32,8 +32,9 @@ Optional (resolved as a trio, all-or-nothing): `dev_semantics_action`,
   generation's first frame — macOS only hides unseen views, so absence is not
   disposal.
 - Native platform views require the generator to be given
-  `--platform-view-plugin <module> --platform-view-plugin-fn <fn>`; `moui dev`
-  does not expose those flags yet, so default hot apps have no native views.
+  `--platform-view-plugin <module> --platform-view-plugin-fn <fn>`. The factory
+  must live in the generated dependency closure or the app module, and `moui
+  dev` does not expose the flags yet, so default hot apps have no native views.
 - Unverified without a matching host: live macOS AX query/action, live Linux
   AT-SPI client, native platform-view presentation. Portable codecs, bridge and
   cleanup are covered by `moui_devhost` tests.
