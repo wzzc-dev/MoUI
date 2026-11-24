@@ -3,7 +3,8 @@
 - **Date**: 2026-11-24
 - **Status**: Accepted
 - **Deciders**: wzzc-dev (agent-assisted)
-- **Related**: plan `native-dev-hot-reload-linux`, ADR 0072, ADR 0068
+- **Related**: `native-dev-hot-reload-linux` (plan row in
+  `docs/plans/done/INDEX.md`), ADR 0072, ADR 0068
 
 ## Context
 
@@ -123,7 +124,8 @@ paths and DevTools wiring are reused unchanged.
 ## References
 
 - `docs/decisions/0072-native-dev-hot-reload.md`
-- `docs/plans/done/INDEX.md` (`native-dev-hot-reload`)
+- `docs/plans/done/INDEX.md` (`native-dev-hot-reload`,
+  `native-dev-hot-reload-linux`)
 - `docs/development.md` (dev section)
 - `docs/platform-notes-linux.md`
 - `memories/repo/native-dev-hot-reload-linux.md`

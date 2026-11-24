@@ -1,6 +1,7 @@
 # Linux native dev hot reload: host + PIC plugin
 
-2026-11-24, plan `docs/plans/active/native-dev-hot-reload-linux.md`, ADR 0073.
+2026-11-24, plan row `native-dev-hot-reload-linux` in
+`docs/plans/done/INDEX.md`, ADR 0073.
 
 ## Shape
 
