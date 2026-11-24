@@ -286,7 +286,7 @@ On native macOS and Linux, `--hot` replaces restart with a same-window plugin
 swap: a generated host keeps the window, renderer and platform services, while
 the app package is rebuilt as a `foreign_library` and linked into a uniquely
 named `plugin.dylib` (macOS) or PIC-rewritten `plugin.so` (Linux) the host
-loads. Both transports above apply unchanged, so an opted-in model survives the
+loads. Both transports apply unchanged, so an opted-in model survives the
 swap; a compiler error keeps the old UI interactive.
 
 Hot mode works for any **repository** app package without editing
@@ -314,6 +314,14 @@ The watcher covers the app module plus local workspace packages reached through
 its `moon.pkg` imports, so shared-package edits rebuild the plugin; it compares
 mtimes/sizes, while registry deps and dependency-declaration edits stay out.
 
+Platform-owned state crosses the same bridge. The plugin publishes focused
+`TextInputState` every frame, so the host IME session follows its caret,
+selection and composition; committed semantics feed the existing accessibility
+bridge; and platform-view placements, overlay bounds and clear color are layered
+onto the host frame. A swap disposes the previous generation's native views and
+serves an empty full semantics snapshot until the new generation publishes. Live
+macOS AX, Linux AT-SPI and native view presentation still need matching-host
+evidence; portable paths are tested. See ADR 0076.
 macOS re-execs the host after 32 swaps because dyld retains dylib images; Linux
 `dlclose` unmaps the image, so the runner disables that budget
 (`MOUI_HOT_RELOAD_LIMIT=0`) and measured ~0.26 MB RSS growth per 20 swaps. Warm
@@ -322,8 +330,9 @@ Linux (ADR 0073), and ~11.3–12.0 s for the richer probe in the Phase 2A smoke
 (initial ~16.5 s; dominated by compiling generated plugin C). The host renderer
 caches images, fonts, shaping and layers across generations, so an in-place
 asset change can stay stale; cache invalidation on swap is explicit debt in ADR
-0074. IME, semantics, platform views, Windows and Web are Phase 2B. See ADR
-0072–0074.
+0074. Windows and Web hot mode remain future work; IME, semantics and platform
+views are implemented for native macOS/Linux in Phase 2B. See ADR
+0072–0074, 0076.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev

@@ -789,6 +789,15 @@ Linux runs under Xvfb when `DISPLAY` is unset and writes
 `node`/`moon`/`cc` plus platform Skia/GLib, and are path-triggered; the macOS
 smoke's four swaps stay inside the 32-swap re-exec budget.
 
+The platform-state bridge is covered without a live display: `moon test
+moui_devhost/protocol moui_devhost/host moui_devhost/plugin` covers codec
+round-trips, malformed rejection, frame augmentation, swap semantics cleanup,
+fake-plugin native-view disposal, CJK composition/commit and an accessibility
+action; `moon test moui/apphost moui/runtime moui/backend` covers the driver
+hooks. The Xvfb smoke exercises image swap/recovery only. A live macOS AX query,
+a live Linux AT-SPI client and native platform-view presentation remain
+unverified and need a matching-host run.
+
 ### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`
