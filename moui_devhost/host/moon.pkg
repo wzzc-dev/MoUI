@@ -3,7 +3,10 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/string",
   "moonbitlang/x/fs",
+  "wzzc-dev/moui/apphost",
+  "wzzc-dev/moui/backend" @backend_host,
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_devhost/protocol",
 }
 

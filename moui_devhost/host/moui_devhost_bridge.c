@@ -33,6 +33,9 @@ typedef int32_t (*hot_frame_len_fn)(void);
 typedef void (*hot_frame_release_fn)(void);
 typedef void (*hot_flush_fn)(void);
 typedef void (*hot_resize_fn)(double, double);
+typedef moonbit_bytes_t (*hot_semantics_action_fn)(const uint8_t *, int32_t);
+typedef int32_t (*hot_semantics_action_len_fn)(void);
+typedef void (*hot_semantics_action_release_fn)(void);
 
 typedef struct {
   void *handle;
@@ -46,6 +49,11 @@ typedef struct {
   hot_frame_release_fn frame_release;
   hot_flush_fn flush;
   hot_resize_fn resize;
+  // Optional platform-state entry points. Older plugin builds omit them; the
+  // host reports semantics actions as unavailable instead of failing to load.
+  hot_semantics_action_fn semantics_action;
+  hot_semantics_action_len_fn semantics_action_len;
+  hot_semantics_action_release_fn semantics_action_release;
 } hot_api;
 
 static hot_api g_current = {0};
@@ -144,6 +152,20 @@ static int hot_resolve(hot_api *api, void *handle) {
       (hot_frame_release_fn)dlsym(handle, "dev_frame_release");
   api->flush = (hot_flush_fn)dlsym(handle, "dev_flush");
   api->resize = (hot_resize_fn)dlsym(handle, "dev_resize");
+  api->semantics_action =
+      (hot_semantics_action_fn)dlsym(handle, "dev_semantics_action");
+  api->semantics_action_len =
+      (hot_semantics_action_len_fn)dlsym(handle, "dev_semantics_action_len");
+  api->semantics_action_release = (hot_semantics_action_release_fn)dlsym(
+      handle, "dev_semantics_action_release");
+  if (api->semantics_action == NULL || api->semantics_action_len == NULL ||
+      api->semantics_action_release == NULL) {
+    // All three are optional together: a partial implementation is treated as
+    // absent so the host has one unambiguous capability answer.
+    api->semantics_action = NULL;
+    api->semantics_action_len = NULL;
+    api->semantics_action_release = NULL;
+  }
   if (api->init == NULL || api->abi == NULL || api->create == NULL ||
       api->destroy == NULL ||
       api->event == NULL || api->frame == NULL || api->frame_len == NULL ||
@@ -266,6 +288,22 @@ moonbit_bytes_t moui_devhost_frame(void) {
     memcpy(copy, data, (size_t)length);
   }
   g_current.frame_release();
+  return copy;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_devhost_semantics_action(const uint8_t *data,
+                                              int32_t length) {
+  if (g_current.handle == NULL || g_current.semantics_action == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  const uint8_t *payload = g_current.semantics_action(data, length);
+  int32_t payload_length = g_current.semantics_action_len();
+  moonbit_bytes_t copy = moonbit_make_bytes(payload_length, 0);
+  if (payload != NULL && payload_length > 0) {
+    memcpy(copy, payload, (size_t)payload_length);
+  }
+  g_current.semantics_action_release();
   return copy;
 }
 

@@ -27,6 +27,7 @@ pub fn Session::flush(Self) -> Unit
 pub fn Session::frame_json(Self) -> String
 pub fn Session::new(@runtime.AppRuntime, String?) -> Self
 pub fn Session::resize(Self, Double, Double) -> Unit
+pub fn Session::semantics_action_json(Self, String) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]?
 
 // Type aliases
 
