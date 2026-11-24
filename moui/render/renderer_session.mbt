@@ -37,6 +37,7 @@ pub struct RendererSession {
   priv mut image_records_generation_seen : Int64?
   priv mut image_events : Array[RendererEvent]
   priv present_count_fn : () -> Int32
+  priv reset_caches_fn : (() -> Unit)?
   priv recover_fn : (String) -> RecoveryResult
   priv dispose_fn : () -> Unit
   priv native_surface : NativeSurface?
@@ -86,6 +87,10 @@ pub fn RendererSession::new(
   drain_events~ : (() -> Array[RendererEvent])? = None,
   text_system~ : () -> @core.TextSystem,
   present_count~ : () -> Int32 = () => 0,
+  // Renderer-owned caches keyed by source path or font identity outlive a
+  // dev-hot plugin swap. A session that can drop them exposes this so the
+  // host can refresh same-path assets without rebuilding the renderer.
+  reset_caches~ : (() -> Unit)? = None,
   // Not handed a recovery path is not the same as recovering: the old
   // `RecoverySucceeded` default reported a rebuild no renderer had performed.
   recover~ : (String) -> RecoveryResult = _ => {
@@ -128,6 +133,7 @@ pub fn RendererSession::new(
     image_records_generation_seen: None,
     image_events: [],
     present_count_fn: present_count,
+    reset_caches_fn: reset_caches,
     recover_fn: recover,
     dispose_fn: dispose,
     native_surface,
@@ -243,6 +249,28 @@ pub fn RendererSession::image_diagnostics(
 ///|
 pub fn RendererSession::present_count(self : RendererSession) -> Int32 {
   (self.present_count_fn)()
+}
+
+///|
+/// Drop renderer caches that may still describe the previous plugin image.
+/// The session also forgets in-flight image requests first, so a completion
+/// from the old generation cannot repopulate a just-cleared image cache.
+/// Returns whether the renderer supplied a reset path; clearing the session's
+/// pending requests is still safe when it did not.
+pub fn RendererSession::reset_caches(self : RendererSession) -> Bool {
+  if self.disposed {
+    return false
+  }
+  self.image_pending.clear()
+  self.image_records_generation_seen = None
+  self.image_events = []
+  match self.reset_caches_fn {
+    Some(reset) => {
+      reset()
+      true
+    }
+    None => false
+  }
 }
 
 ///|

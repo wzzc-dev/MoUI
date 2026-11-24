@@ -2,6 +2,7 @@
 /// Build a Skia CPU raster provider from the renderer-neutral host contract.
 pub fn raster(
   font_resolution~ : SkiaFontResolution = SystemFontMgr,
+  on_session_bound~ : (@render.RendererSession) -> Unit = _ => (),
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
@@ -29,14 +30,14 @@ pub fn raster(
       ) catch {
         err => return Rejected("skia-raster unavailable: " + err.message())
       }
-      Bound(
-        renderer.to_renderer_session(
-          image_source=surface
-            .image_source()
-            .unwrap_or(@render.HostImageSource::unavailable()),
-          image_decoder=Some(image_decoder),
-        ),
+      let session = renderer.to_renderer_session(
+        image_source=surface
+          .image_source()
+          .unwrap_or(@render.HostImageSource::unavailable()),
+        image_decoder=Some(image_decoder),
       )
+      on_session_bound(session)
+      Bound(session)
     },
   )
 }
@@ -47,6 +48,7 @@ pub fn raster(
 pub fn gpu(
   platform~ : NativeGpuPlatform,
   font_resolution~ : SkiaFontResolution = SystemFontMgr,
+  on_session_bound~ : (@render.RendererSession) -> Unit = _ => (),
 ) -> @render.RendererProvider {
   let image_decoder = skia_image_decoder()
   let caps = skia_provider_capabilities(
@@ -85,6 +87,7 @@ pub fn gpu(
           .unwrap_or(@render.HostImageSource::unavailable()),
         image_decoder=Some(image_decoder),
       )
+      on_session_bound(session)
       Bound(session)
     },
   )
@@ -331,6 +334,15 @@ fn create_skia_gpu_host_renderer(
         _ => gpu_renderer.present_count()
       }
     },
+    reset_caches=Some(() => {
+      // Reset the inactive fallback too: it may hold pixels from the previous
+      // generation and can become active on a later GPU failure.
+      gpu_renderer.reset_host_caches()
+      match fallback.val {
+        Some(renderer) => renderer.reset_host_caches()
+        None => ()
+      }
+    }),
     dispose=() => {
       gpu_renderer.dispose()
       match fallback.val {
@@ -580,22 +592,25 @@ fn skia_native_surface_error(
 /// Resolve the environment policy entirely inside the Skia renderer package.
 pub fn from_env(
   platform~ : NativeGpuPlatform,
+  on_session_bound~ : (@render.RendererSession) -> Unit = _ => (),
 ) -> Array[@render.RendererProvider] {
   let mode = match @env.get_env_var("MOUI_SKIA_RENDERER") {
     Some(value) => NativeRendererMode::parse(value)
     None => None
   }
-  providers_for_mode(platform, mode)
+  providers_for_mode(platform, mode, on_session_bound~)
 }
 
 ///|
 fn providers_for_mode(
   platform : NativeGpuPlatform,
   mode : NativeRendererMode?,
+  on_session_bound~ : (@render.RendererSession) -> Unit = _ => (),
 ) -> Array[@render.RendererProvider] {
   match mode {
-    Some(SkiaRaster) => [raster()]
-    Some(SkiaGpu) => [gpu(platform~)]
-    Some(Auto) | None => [gpu(platform~), raster()]
+    Some(SkiaRaster) => [raster(on_session_bound~)]
+    Some(SkiaGpu) => [gpu(platform~, on_session_bound~)]
+    Some(Auto) | None =>
+      [gpu(platform~, on_session_bound~), raster(on_session_bound~)]
   }
 }

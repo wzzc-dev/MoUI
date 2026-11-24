@@ -67,10 +67,19 @@ fn publish_frame(payload : @protocol.FramePayload) -> Array[@core.DrawCommand] {
 }
 
 ///|
+/// Install or clear the live renderer's host-cache reset. The generated host
+/// passes the bound session's reset when it starts; `None` uninstalls it on
+/// shutdown and in tests.
+pub fn install_renderer_cache_reset(reset : (() -> Unit)?) -> Unit {
+  renderer_cache_reset.val = reset
+}
+
+///|
 /// Drop generation-scoped state after a successful plugin swap. The new
 /// generation republishes on its first frame; until then the host exposes an
 /// empty semantics tree and no text input, so no node or focus from the old
-/// generation survives.
+/// generation survives. The renderer cache is reset too: images, fonts and
+/// retained layers at the same path may now describe different content.
 pub fn clear_after_reload() -> Unit {
   let state = host_state()
   state.payload = None
@@ -78,6 +87,10 @@ pub fn clear_after_reload() -> Unit {
   state.semantics_present = false
   state.semantics_force_full = true
   state.semantics_cleared_generation = state.semantics_cleared_generation + 1UL
+  match renderer_cache_reset.val {
+    Some(reset) => reset()
+    None => ()
+  }
 }
 
 ///|

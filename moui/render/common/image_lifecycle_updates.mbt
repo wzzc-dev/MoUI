@@ -56,6 +56,19 @@ fn ImageResourceLifecycle::store_record(
 }
 
 ///|
+/// Forget every record. A host hot-reload swap calls this when the process
+/// keeps its renderer but the plugin image changes: source bytes, fonts and
+/// retained layers at the same path may now describe different content, and
+/// an old Loading/Ready/Failed record must not keep serving or suppressing it.
+/// The generation advances so per-frame record scans observe the reset.
+pub fn ImageResourceLifecycle::reset(self : ImageResourceLifecycle) -> Unit {
+  if self.records.length() > 0 {
+    self.records.clear()
+    self.generation = self.generation + 1L
+  }
+}
+
+///|
 pub fn ImageResourceLifecycle::evict_disposed(
   self : ImageResourceLifecycle,
 ) -> Int32 {

@@ -213,8 +213,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
       // SurfaceDamageCapability and the session negotiation accessor are
-      // renderer-contract surface, not app API.
-      max_count: 287,
+      // renderer-contract surface, not app API; so is
+      // RendererSession::reset_caches (Phase 2C, ADR 0077).
+      max_count: 288,
     },
     {
       path: "moui/render/pkg.generated.mbti",

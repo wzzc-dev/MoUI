@@ -29,6 +29,7 @@ fn image_test_session(
   records~ : () -> Array[@render.ImageResourceRecord],
   generation~ : (() -> Int64)?,
   apply~ : (@render.ImageResourceLoadCompletion) -> Bool,
+  reset_caches~ : (() -> Unit)? = None,
 ) -> @render.RendererSession {
   @render.RendererSession::new(
     resize=_ => (),
@@ -38,6 +39,7 @@ fn image_test_session(
     image_records_generation=generation,
     apply_image_load_completion=apply,
     image_decoder=Some(image_test_decoder()),
+    reset_caches~,
   )
 }
 
@@ -120,6 +122,57 @@ test "a newly loading record is requested on the next scan" {
   assert_eq(records_pulls.val, 2)
   let _ = session.drain_events()
   assert_eq(records_pulls.val, 2)
+}
+
+///|
+test "reset_caches drops pending requests before a renderer cache reset" {
+  let reset_runs = Ref(0)
+  let records : Array[@render.ImageResourceRecord] = [
+    @render.ImageResourceRecord::loading("swap.png"),
+  ]
+  let session = image_test_session(
+    records=() => records.copy(),
+    generation=None,
+    apply=_ => true,
+    reset_caches=Some(() => reset_runs.val = reset_runs.val + 1),
+  )
+  let first = session.drain_events()
+  assert_eq(image_request_sources(first), ["swap.png"])
+  assert_eq(session.image_diagnostics().pending_request_count(), 1)
+  guard first[0] is @render.ImageLoadRequested(request) else {
+    abort("expected an image load request")
+  }
+  let old_completion = @render.RendererImageLoadCompletion::new(
+    token=request.token(),
+    result=@render.ImageResourceLoadCompletion::ready(
+      request.source(),
+      width=1,
+      height=1,
+    ),
+  )
+  assert_true(session.reset_caches())
+  assert_eq(reset_runs.val, 1)
+  assert_eq(session.image_diagnostics().pending_request_count(), 0)
+  // The old generation's completion cannot repopulate the reset cache.
+  guard session.apply_image_load_completion(old_completion) is Stale else {
+    abort("a pre-reset completion must be stale")
+  }
+  // The next scan re-requests the still-loading source under a new token.
+  let after = session.drain_events()
+  assert_eq(image_request_sources(after), ["swap.png"])
+  assert_eq(session.image_diagnostics().pending_request_count(), 1)
+  guard after[0] is @render.ImageLoadRequested(new_request) else {
+    abort("expected a refreshed image load request")
+  }
+  assert_true(new_request.token() != request.token())
+}
+
+///|
+test "reset_caches reports a session without a renderer reset path" {
+  let session = image_test_session(records=() => [], generation=None, apply=_ => {
+    true
+  })
+  assert_false(session.reset_caches())
 }
 
 ///|

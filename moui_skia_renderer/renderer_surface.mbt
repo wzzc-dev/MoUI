@@ -317,6 +317,7 @@ pub fn SkiaRasterRenderer::to_renderer_session(
     render_frame=submission => self.render_frame(submission.frame()),
     text_system=() => self.text_system(),
     present_count=() => self.present_count(),
+    reset_caches=Some(() => self.reset_host_caches()),
     recover=_reason => FallbackToCpu,
     dispose=() => self.dispose(),
     image_records=() => self.image_resources(),

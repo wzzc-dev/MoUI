@@ -626,6 +626,30 @@ fn skia_image_from_decoded_completion(
 }
 
 ///|
+/// Drop caches whose keys cannot observe a same-path content change. The
+/// native dev-hot host keeps one renderer across plugin swaps, but a new
+/// generation may rewrite an image or font file in place with the same path
+/// and restart retained-layer content revisions at the same values. Reset
+/// after a successful swap so the next frame re-reads pixels, typefaces,
+/// shaped layouts and retained layers instead of serving the old generation.
+///
+/// This is a cache reset, not disposal: the surface, present target, platform
+/// view draw hook and image lifecycle's generation contract survive, and image
+/// records are forgotten so pending/failed loads can be retried.
+pub fn SkiaRasterRenderer::reset_host_caches(self : SkiaRasterRenderer) -> Unit {
+  self.image_cache.clear()
+  self.failed_images.clear()
+  self.image_lifecycle.reset()
+  self.clear_layer_cache()
+  self.text_shaping_cache.clear()
+  // Fonts are the same generation change the paragraph cache already has a
+  // hook for: retire every pre-registration layout and bump its generation.
+  self.text_paragraph_cache.register_font_data()
+  self.paint_memo.clear()
+  clear_skia_font_file_typeface_cache()
+}
+
+///|
 pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   for source, _ in self.image_cache {
     self.dispose_image_resource(source)

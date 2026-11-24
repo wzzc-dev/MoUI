@@ -537,7 +537,17 @@ fn main {
       }
   }
   @apphost.run_app("${title}", runtime)
-  .render_all(@render_skia.from_env(platform=${hostBackend.rendererPlatform}))
+  .render_all(
+    @render_skia.from_env(
+      platform=${hostBackend.rendererPlatform},
+      // The renderer lives in this host across plugin swaps, so its
+      // path-keyed caches must be reset when the generation changes.
+      on_session_bound=session =>
+        @devhost.install_renderer_cache_reset(
+          Some(() => ignore(session.reset_caches())),
+        ),
+    ),
+  )
   .backend(${hostBackend.entryExpr})
   .run()
   @devhost.shutdown()

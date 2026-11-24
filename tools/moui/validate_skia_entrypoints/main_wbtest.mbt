@@ -8,10 +8,10 @@ test "Skia provider policy requires an explicit platform and GPU-first auto orde
     #|) {
     #|  let mode = @env.get_env_var("MOUI_SKIA_RENDERER")
     #|  ignore(NativeRendererMode::parse("auto"))
-    #|  providers_for_mode(platform, mode)
+    #|  providers_for_mode(platform, mode, on_session_bound~)
     #|}
-    #|fn providers_for_mode(platform : NativeGpuPlatform, mode) {
-    #|  [gpu(platform~), raster()]
+    #|fn providers_for_mode(platform : NativeGpuPlatform, mode, on_session_bound~) {
+    #|  [gpu(platform~, on_session_bound~), raster(on_session_bound~)]
     #|}
   debug_inspect(
     validate_renderer_policy_source(source, "binding_factory.mbt"),
@@ -35,10 +35,14 @@ test "legacy no-platform Skia factory policy is rejected" {
   )
   assert_true(
     failures.any(failure => {
-      failure.contains("providers_for_mode(platform, mode)")
+      failure.contains("providers_for_mode(platform, mode")
     }),
   )
   assert_true(
-    failures.any(failure => failure.contains("[gpu(platform~), raster()]")),
+    failures.any(failure => {
+      failure.contains(
+        "[gpu(platform~, on_session_bound~), raster(on_session_bound~)]",
+      )
+    }),
   )
 }

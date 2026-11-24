@@ -87,6 +87,7 @@ in-file section anchor (e.g. `## 0017: Theme layering ...` inside
 | 0073 | [Linux native dev hot reload: same bridge host, PIC plugin image](0073-linux-native-dev-hot-reload.md) | 2026-11-24 | Accepted |
 | 0074 | [Native dev hot reload Phase 2A: any workspace app, full frame/event fidelity, live time](0074-native-dev-hot-reload-phase2a.md) | 2026-11-25 | Accepted |
 | 0076 | [Dev hot reload carries platform-owned state across the bridge](0076-dev-hot-reload-platform-state.md) | 2026-11-25 | Accepted |
+| 0077 | [Dev hot reload resets source-keyed host renderer caches on swap](0077-dev-hot-reload-renderer-cache-reset.md) | 2026-11-25 | Accepted |
 
 <!-- Add new entries here: -->
 <!-- | 0001 | [View generic parameter](0001-view-generic-parameter-default.md) | 2026-06-25 | Accepted | -->

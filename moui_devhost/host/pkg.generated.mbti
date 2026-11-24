@@ -33,6 +33,8 @@ pub fn generation_path_from_env() -> String?
 
 pub fn initialize(String, Double, Double) -> Bool
 
+pub fn install_renderer_cache_reset((() -> Unit)?) -> Unit
+
 pub fn plugin_path_from_env() -> String?
 
 pub fn poll_injected_events() -> Unit

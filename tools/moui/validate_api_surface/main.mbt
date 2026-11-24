@@ -703,8 +703,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // +2 lines again: RendererBackendKind::NativeDirectGpu and
       // RendererFamily::Metal, the identity a no-Skia host GPU surface needs.
       // +11/+6/+1(all) for SurfaceDamageCapability; default FullSurfaceOnly.
-      max_lines: 655,
-      max_pub_lines: 285,
+      // +1 line / +1 pub (Phase 2C): RendererSession::reset_caches drops
+      // source-keyed host caches after a dev-hot plugin swap (ADR 0077).
+      max_lines: 656,
+      max_pub_lines: 286,
       max_pub_all_lines: 32,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RendererProvider", "RendererBindResult",
@@ -781,8 +783,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // SkiaSurfaceRoute derives Hash (hash/hash_combine) so renderer-side
       // struct-key caches can key routes without string interpolation:
       // +2 lines, +2 pub declarations.
-      max_lines: 294,
-      max_pub_lines: 167,
+      // +1 line / +1 pub (Phase 2C): reset_host_caches clears source-keyed
+      // renderer caches after a dev-hot plugin swap (ADR 0077).
+      max_lines: 295,
+      max_pub_lines: 168,
       max_pub_all_lines: 7,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",

@@ -183,6 +183,17 @@ fn SkiaTextShapingCache::shaping_key(
 }
 
 ///|
+/// Drop resolved layouts and font-key memos. A dev-hot plugin swap keeps the
+/// renderer but can replace font files at the same path, so keys alone no
+/// longer guarantee the same glyphs or advances.
+fn SkiaTextShapingCache::clear(self : SkiaTextShapingCache) -> Unit {
+  self.entries.clear()
+  self.font_keys.clear()
+  self.frame_mark_hits = 0
+  self.frame_mark_misses = 0
+}
+
+///|
 fn SkiaTextShapingCache::begin_frame(self : SkiaTextShapingCache) -> Unit {
   self.frame_mark_hits = self.total_hits
   self.frame_mark_misses = self.total_misses

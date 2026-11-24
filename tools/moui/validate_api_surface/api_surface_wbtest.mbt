@@ -156,7 +156,7 @@ test "classification budgets declare the expected ceilings" {
   )
   assert_eq(
     budget_max_count("moui/render/pkg.generated.mbti", "renderer_contract"),
-    Some(287),
+    Some(288),
   )
   assert_eq(
     budget_max_count("moui/render/pkg.generated.mbti", "required_protocol"),
