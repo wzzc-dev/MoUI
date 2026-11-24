@@ -3,10 +3,10 @@
   "currentReleaseLine": "0.9.x",
   "versioning": {
     "scheme": "semver",
-    "patch": "bug fixes and documentation only",
+    "patch": "post-1.0: bug fixes and documentation only; pre-1.0 (current 0.x): fixes, documentation, and any API change, provided the release ships an upgrade note with a migration example",
     "minor": "backward-compatible app API additions",
     "major": "breaking API, package, or wire-contract changes",
-    "pre1Policy": "0.x minor releases may still contain breaking changes; migration notes are required"
+    "pre1Policy": "0.x minor releases may still contain breaking changes; 0.x patch releases may change the API too, provided the same release ships an upgrade note with a migration example; 1.0.0 restores the strict post-1.0 rules"
   },
   "deprecation": {
     "minimumNoticeReleases": 2,

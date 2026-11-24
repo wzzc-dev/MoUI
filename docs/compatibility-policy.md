@@ -7,26 +7,40 @@ explains how package consumers should use it.
 
 ## Versioning
 
-MoUI uses SemVer for published modules. Patch releases contain fixes and docs;
-minor releases add backward-compatible app APIs; major releases may change
-public APIs, package boundaries, or host wire contracts. During the `0.x` line,
-a minor release can still contain a breaking change, but it must ship an
-upgrade note and a migration example in the same release.
+MoUI uses SemVer for published modules, in two stages. From `1.0.0` on, patch
+releases contain fixes and docs only, minor releases add backward-compatible
+app APIs, and major releases may change public APIs, package boundaries, or
+host wire contracts. Before `1.0.0` — the current `0.x` line — the rules are
+looser: a release may change public APIs, breaking ones included, as long as
+that same release ships an upgrade note with a migration example. The
+allowance covers patches as well as minors while the line is pre-1.0.
 
-A patch release that needs a public symbol, package boundary, host wire
-contract, or app-import change is out of scope. Move the change to the next
-minor; no patch exception ledger is maintained.
+A breaking change needs no separate exception ledger: the upgrade note is the
+ledger. `checks/compatibility-policy.json` records the two-stage reading in
+`versioning.patch` and `versioning.pre1Policy`, and `1.0.0` restores the strict
+post-1.0 rules.
 
 ## 0.9.x Line
 
 The current synchronized line is `0.9.x`. `0.9.0` ("Navigation surface")
-advances every public module together with the keyboard and pointer surface a
+advanced every public module together with the keyboard and pointer surface a
 workbench shell needs: tree navigation targets, the tab strip, command-menu
 navigation and type-ahead, a keyboard-only focus ring, and a compact find bar.
-Every new parameter carries a default, no enum gains a variant, and nothing
-existing changes. `checks/compatibility-policy.json` `currentReleaseLine` is
-the machine-readable source of truth; the docs, module manifests, and
-`docs/compatibility-matrix.md` must agree with it.
+Every new parameter carried a default, no enum gained a variant, and nothing
+existing changed.
+
+`0.9.1` uses the line-level pre-1.0 allowance above for the first time: it is a
+patch that adds public API — the `SemanticsRole` variants `TabList`,
+`Toolbar`, and `MenuItem`, `inline_edit`, generic drag and drop, focused-text
+selection (`select_focused_text_all`, `place_focused_text_caret`,
+`set_focused_text_selection`), and the Linux view-level context-menu fallback.
+No package boundary and no host wire contract changes, and the release ships
+its own `0.9.1` release note with the upgrade note and migration examples the
+policy requires.
+
+`checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
+source of truth; the docs, module manifests, and `docs/compatibility-matrix.md`
+must agree with it.
 
 ## 0.8.x Line
 
