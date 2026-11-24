@@ -100,6 +100,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 | [crater-browser-integration](active/crater-browser-integration.md) | Pure-MoonBit browser demo: crater HTML engine + js_engine scripts rendered through MoUI canvas |
 | [3d-moui-viewer](active/3d-moui-viewer.md) | Independent static glTF/GLB viewer addon with explicit GPU capability status |
 | [richtext-markdown-domain-relocation](active/richtext-markdown-domain-relocation.md) | Move the Markdown editing domain model out of `moui_richtext` into `moui_markdown` to converge its public surface toward ~30 pub lines |
+| [dev-hot-reload-phase2b](active/dev-hot-reload-phase2b.md) | Carry plugin-owned IME/text-editing state, committed semantics and platform-view placements across the native hot-reload bridge; reuse the existing accessibility adapters, keep ABI v1 additive, and dispose native state on every generation swap |
 | [no-third-party-gpu-route](active/no-third-party-gpu-route.md) | Apple-first Metal renderer that links no external graphics library (ADR 0044, supersedes 0043's conclusion). **Route parked at L0 (2026-10-27): the kill gate fired** — the shipped Skia-Metal route already holds `presentMs` at 0.10–0.76 ms p50 so there is no performance prize, and the license motive is struck; only size-versus-Skia + autonomy survive. L0.1 (provider-parametric harness) and L0.2 (neutral text-model extraction out of the wgpu-importing package) stay live as framework work |
 
 ## Debt
