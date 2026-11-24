@@ -7,6 +7,7 @@ fn[Msg] handle_text_field_event(
   on_submit~ : Msg?,
   search_bar~ : Bool,
   on_clear~ : Msg?,
+  on_cancel~ : Msg? = None,
 ) -> @core.ViewEventResult[Msg] {
   let result = match ctx.event {
     Pointer(event) =>
@@ -20,7 +21,14 @@ fn[Msg] handle_text_field_event(
         event,
       )
     Keyboard(event) =>
-      handle_text_field_keyboard(ctx, value~, on_input~, on_submit~, event)
+      handle_text_field_keyboard(
+        ctx,
+        value~,
+        on_input~,
+        on_submit~,
+        on_cancel~,
+        event,
+      )
     TextInput(event) =>
       view_text_input_result(ctx, value~, on_input~, event, record_history=true)
     _ => @core.ViewEventResult::ignored()
@@ -207,6 +215,7 @@ fn[Msg] handle_text_field_keyboard(
   value~ : String,
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
+  on_cancel~ : Msg? = None,
   event : @core.KeyboardEvent,
 ) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
@@ -219,6 +228,16 @@ fn[Msg] handle_text_field_keyboard(
       captured=true,
       dirty=ViewPaintDirty,
       messages=option_message(on_submit),
+    )
+  }
+  // Escape only means something when the caller has somewhere to go: a bare
+  // field leaves it to the enclosing overlay or dialog to dismiss.
+  if event.key == "Escape" && on_cancel is Some(_) {
+    return @common.view_event_result(
+      activated=true,
+      captured=true,
+      dirty=ViewPaintDirty,
+      messages=option_message(on_cancel),
     )
   }
   if @core.is_select_all_shortcut(event) {

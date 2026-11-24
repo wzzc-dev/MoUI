@@ -251,6 +251,8 @@ pub fn[Msg] text_field(
   value : String,
   on_input~ : (String) -> Msg,
   on_submit~ : Msg? = None,
+  on_cancel? : Msg,
+  key? : String,
   placeholder~ : String = "",
   variant~ : @style.TextFieldVariant = Filled,
   theme? : @core.Theme,
@@ -270,6 +272,8 @@ pub fn[Msg] text_field(
     variant~,
     style?,
     on_submit~,
+    on_cancel~,
+    key~,
   )
 }
 

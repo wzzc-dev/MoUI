@@ -8,6 +8,7 @@ fn[Msg] text_field_control(
   style? : @style.TextFieldStyle,
   on_input~ : ((String) -> Msg)? = None,
   on_submit~ : Msg? = None,
+  on_cancel~ : Msg? = None,
   kind~ : String = "TextField",
   key~ : String? = None,
 ) -> @core.View[Msg] {
@@ -27,7 +28,15 @@ fn[Msg] text_field_control(
       key,
     },
     event=(node, ctx) => {
-      single_line_text_event(node, ctx, value, on_input, on_submit, None)
+      single_line_text_event(
+        node,
+        ctx,
+        value,
+        on_input,
+        on_submit,
+        None,
+        on_cancel,
+      )
     },
     text_command=(_node, ctx, intent, paste_text) => {
       handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
@@ -84,6 +93,7 @@ fn[Msg] single_line_text_event(
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
   on_clear : Msg?,
+  on_cancel : Msg?,
 ) -> @core.ViewEventResult[Msg] {
   let resolved_theme = ctx.effective_theme(pinned=node.theme)
   let resolved_style = match node.style {
@@ -98,6 +108,7 @@ fn[Msg] single_line_text_event(
     on_submit~,
     search_bar=node.search_bar,
     on_clear~,
+    on_cancel~,
   )
 }
 
@@ -111,6 +122,7 @@ fn[Msg] controlled_text_field_control(
   variant~ : @style.TextFieldVariant = Filled,
   style? : @style.TextFieldStyle,
   on_submit~ : Msg? = None,
+  on_cancel~ : Msg? = None,
   kind~ : String = "TextField",
   key~ : String? = None,
 ) -> @core.View[Msg] {
@@ -123,6 +135,7 @@ fn[Msg] controlled_text_field_control(
     style?,
     on_input=Some(on_input),
     on_submit~,
+    on_cancel~,
     kind~,
     key~,
   )
@@ -157,7 +170,15 @@ fn[Msg] search_bar_control(
       key,
     },
     event=(node, ctx) => {
-      single_line_text_event(node, ctx, query, on_input, on_submit, on_clear)
+      single_line_text_event(
+        node,
+        ctx,
+        query,
+        on_input,
+        on_submit,
+        on_clear,
+        None,
+      )
     },
     text_command=(_node, ctx, intent, paste_text) => {
       handle_text_field_command(
