@@ -781,10 +781,10 @@ recovers as generation 4 with state intact (Linux also asserts
 `reload-old ... images=1`).
 
 Run `scripts/linux-hot-reload-smoke.sh --run` or
-`scripts/macos-hot-reload-smoke.sh --run`.
-
-Linux runs under Xvfb when `DISPLAY` is unset and writes
-`artifacts/linux-hot-reload/smoke.log`; macOS writes
+`scripts/macos-hot-reload-smoke.sh --run`. The macOS gate also runs hosted:
+`gh workflow run moui-macos-platform-evidence.yml -f run_hot_reload_smoke=true`,
+which is the evidence path. Linux runs under Xvfb when `DISPLAY` is unset and
+writes `artifacts/linux-hot-reload/smoke.log`; macOS writes
 `artifacts/macos-hot-reload/smoke.log`. Both use an `EXIT` trap, require
 `node`/`moon`/`cc` plus platform Skia/GLib, and are path-triggered; the macOS
 smoke's four swaps stay inside the 32-swap re-exec budget.

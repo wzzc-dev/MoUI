@@ -459,7 +459,7 @@
         "type": "exit-code"
       },
       "ci": {
-        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "workflow": ".github/workflows/moui-macos-platform-evidence.yml",
         "gate": "release-manual"
       },
       "docs": [
