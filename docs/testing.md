@@ -819,25 +819,22 @@ The script restores the fixture source through an `EXIT` trap and needs `node`
 ### Windows native hot reload smoke
 
 `smoke/gates.json` carries `windows.native-hot-reload` (nightly tier,
-`mode: manual`, host `matching-host`). It mirrors the Linux legs on Windows:
-run the real bridge host from a Developer Command Prompt, edit
-`examples/counter/app`, assert a new generation loads into the same host PID
-with `reload-old FreeLibrary=1 rc=0 images=1`, keep the previous generation
-live through a compile error, then fix it and assert recovery.
+`mode: manual`, host `matching-host`): from a Developer Command Prompt it runs
+the real bridge host, edits `examples/counter/app`, asserts a new generation
+loads into the same host PID with `reload-old FreeLibrary=1 rc=0 images=1`,
+keeps the previous generation live through a compile error, then fixes it.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-hot-reload-smoke.ps1 -Run
 ```
 
-The script restores the counter source in `finally` and writes
-`artifacts/windows-hot-reload/smoke.log` (plus `smoke.err.log`). It requires
-`node`, `moon`, `cl.exe`, `lib.exe`, `link.exe` on PATH (vcvarsall x64) and the
-real Skia renderer. It has not been run in this repository's CI: the
-`moui-windows-platform-evidence.yml` workflow exists, but wiring an interactive
-HWND/Skia hot smoke into it is unproven, so the gate stays manual like the
-Linux one. Until a matching host records the log above, the Windows hot path
-is build/test-verified only; see ADR 0075 for the exact unverified list. The
-`_WIN32` bridge branch has also not been compiled with MSVC here.
+The script restores the counter source in `finally`, writes
+`artifacts/windows-hot-reload/smoke.log` (+ `smoke.err.log`), and needs
+`node`, `moon`, `cl.exe`, `lib.exe`, `link.exe` (vcvarsall x64) plus real Skia.
+CI does not run it: `moui-windows-platform-evidence.yml` exists, but wiring an
+interactive HWND/Skia smoke is unproven, so the gate stays manual like Linux;
+until a matching host records that log, the hot path is build/test-verified
+only and the `_WIN32` branch is uncompiled here (ADR 0075).
 
 ### Embedded runtime backends
 
