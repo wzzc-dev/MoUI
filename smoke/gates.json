@@ -412,7 +412,7 @@
       "tier": "nightly",
       "kind": "native-hot-reload-smoke",
       "host": "matching-host",
-      "purpose": "Drive the Linux bridge host and counter plugin under Xvfb: edit the app and assert a new generation swaps into the same host pid, force a compile error and assert the previous generation stays live, then fix it and assert recovery, including the Linux dlclose image-unmap marker. Path-triggered manual evidence; not part of the default daily check.",
+      "purpose": "Drive the Linux bridge host and rich probe plugin under Xvfb: assert the image/divider/shadow/clip/text frame vocabulary paints with unsupported=0 and timer ticks advance, inject a click so opt-in Count: 1 state must survive an app edit and a shared-widget-package edit as generations 2 and 3 in the same host pid, force a compile error and assert generation 3 stays live, then fix it and assert generation 4 recovers with state intact and the Linux dlclose image-unmap marker. Path-triggered manual evidence; not part of the default daily check.",
       "defaultDevCheck": false,
       "commands": [
         {
@@ -437,6 +437,38 @@
       ],
       "artifacts": [
         "artifacts/linux-hot-reload/smoke.log"
+      ]
+    },
+    {
+      "id": "macos.native-hot-reload",
+      "tier": "nightly",
+      "kind": "native-hot-reload-smoke",
+      "host": "matching-host",
+      "purpose": "Drive the macOS bridge host and rich probe plugin: assert the image/divider/shadow/clip/text frame vocabulary paints with unsupported=0 and timer ticks advance, inject a click so opt-in Count: 1 state must survive an app edit and a shared-widget-package edit as generations 2 and 3 in the same host pid, force a compile error and assert generation 3 stays live, then fix it and assert generation 4 recovers with state intact. Four swaps stay inside the 32-swap macOS re-exec budget. Path-triggered manual evidence; not part of the default daily check.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "scripts/macos-hot-reload-smoke.sh",
+            "--run"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/development.md",
+        "docs/decisions/0074-native-dev-hot-reload-phase2a.md"
+      ],
+      "artifacts": [
+        "artifacts/macos-hot-reload/smoke.log"
       ]
     }
   ]
