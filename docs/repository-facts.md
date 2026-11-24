@@ -45,6 +45,8 @@ This file is generated from repository manifests and validator reports.
 | ./examples/chrome_demo |
 | ./moui_devhost |
 | ./examples/counter |
+| ./examples/hot_reload_probe |
+| ./examples/hot_reload_widgets |
 | ./examples/gallery |
 | ./examples/custom_control |
 | ./examples/multi_window |
@@ -112,6 +114,8 @@ This file is generated from repository manifests and validator reports.
 | Agent Counter | examples/agent_counter | no |
 | Chrome Demo | examples/chrome_demo | no |
 | Counter | examples/counter | no |
+| Hot Reload Probe | examples/hot_reload_probe | no |
+| Hot Reload Widgets | examples/hot_reload_widgets | no |
 | Visual Gallery | examples/gallery | no |
 | Custom Control | examples/custom_control | no |
 | Multi Window | examples/multi_window | no |
