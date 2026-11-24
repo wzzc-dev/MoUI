@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/hot_reload_probe/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/services",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn program_with_dev_environment(@services.AppEnvironment) -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  count : Int32
+  ticks : Int32
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  Increment
+  Tick
+}
+
+// Type aliases
+
+// Traits
