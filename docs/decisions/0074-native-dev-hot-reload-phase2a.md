@@ -75,12 +75,12 @@ divider, shadow, clip, brush and a paint clock; `StatusCard` lives in
 `unsupported=0`, advancing ticks, injected click, generation 2 with pre-swap
 `Count: 1`, generation 3 from the imported widget package, failed-build
 retention, and generation 4 recovery with state intact and the same host pid;
-Linux also asserts `dlclose ... images=1`. `smoke/gates.json` carries both
-manual matching-host gates. Run locally with
-`bash scripts/macos-hot-reload-smoke.sh --run`, or dispatch the hosted gate with
-`gh workflow run moui-macos-platform-evidence.yml -f run_hot_reload_smoke=true`;
-hosted-runner execution is the evidence path. Expect those six legs plus
-`macos-hot-reload smoke passed` in `artifacts/macos-hot-reload/smoke.log`.
+Linux also asserts `dlclose ... images=1`. The hosted macOS gate
+[45510379331](https://github.com/wzzc-dev/MoUI/actions/runs/45510379331) at
+head `a18074a2` (`run_showcase_smoke=false`, `run_ime_smoke=false`,
+`run_hot_reload_smoke=true`) passed those six legs and
+`macos-hot-reload smoke passed` in `artifacts/macos-hot-reload/smoke.log`;
+its readiness leg accepts a painted host frame or the X11 backend line.
 
 **Asset-cache follow-up (Phase 2C).** Trigger: after a successful swap, an image
 or font changed in place with the same path, shaping of changed text, or cached
