@@ -524,9 +524,18 @@ fn package_budgets() -> Array[PackageBudget] {
       // 0.9.1 semantics completion: SemanticsRole::TabList/Toolbar/MenuItem
       // (+3 lines, +0 pub): three additive role variants so tab strips,
       // toolbars and menu rows stop collapsing into Group/Label.
-      max_lines: 3063,
-      max_pub_lines: 1295,
-      max_pub_all_lines: 158,
+      // Declarative in-app drag-and-drop (plan declarative-drag-and-drop):
+      // DragPayload / DragSource / DropTarget / DragDeclaration / DragPhase /
+      // ViewDragContext / ViewDragResult / DragEnd plus View::draggable,
+      // View::drop_target, View::drag_declaration, View::dispatch_drag, the
+      // ViewNode declaration channel, and the AnyModifier drag vtable slots.
+      // This is cross-runtime pointer-protocol data (the runtime recognizer
+      // consumes it; renderers never see it), so it belongs beside the
+      // existing drag/gesture event protocol in core. Measured
+      // 3134 / 1310 / 166.
+      max_lines: 3134,
+      max_pub_lines: 1310,
+      max_pub_all_lines: 166,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct SurfaceMetrics", "SurfaceMetrics::from_logical", "SurfaceMetrics::new",

@@ -174,6 +174,8 @@ pub(all) struct AnyModifier[Msg] {
   layout : (ViewLayoutContext) -> ViewLayoutResult
   paint : (ViewPaintContext) -> ViewPaintPlan
   event : (ViewEventContext) -> ViewEventResult[Msg]
+  drag_declaration : DragDeclaration
+  drag : (ViewDragContext) -> ViewDragResult[Msg]
   semantics : ViewSemanticsInfo
   semantics_actions : Array[ViewSemanticsActionHandler[Msg]]
   focusable : Bool
@@ -613,6 +615,14 @@ pub fn DeclarationKey::to_repr(Self) -> @debug.Repr
 pub fn DeclarationKey::uint(UInt32) -> Self
 pub fn DeclarationKey::uint64(UInt64) -> Self
 
+pub(all) struct DragDeclaration {
+  source : DragSource?
+  target : DropTarget?
+}
+pub fn DragDeclaration::is_empty(Self) -> Bool
+pub fn DragDeclaration::new(source? : DragSource?, target? : DropTarget?) -> Self
+pub fn DragDeclaration::none() -> Self
+
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
@@ -636,6 +646,14 @@ pub fn DragDropPhase::equal(Self, Self) -> Bool
 pub fn DragDropPhase::not_equal(Self, Self) -> Bool
 pub fn DragDropPhase::to_json(Self) -> @json.Json
 pub fn DragDropPhase::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DragEnd {
+  payload : DragPayload
+  position : Point
+  target_key : String?
+}
+pub fn DragEnd::new(payload~ : DragPayload, position~ : Point, target_key? : String?) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) struct DragGestureEvent {
@@ -665,6 +683,30 @@ pub fn DragGesturePhase::label(Self) -> String
 pub fn DragGesturePhase::not_equal(Self, Self) -> Bool
 pub fn DragGesturePhase::to_json(Self) -> @json.Json
 pub fn DragGesturePhase::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DragPayload {
+  key : String
+  text : String
+}
+pub fn DragPayload::new(key~ : String, text? : String) -> Self
+
+#derive(Eq, @debug.Debug)
+pub(all) enum DragPhase {
+  Started
+  Moved
+  Entered
+  Left
+  Dropped
+  Ended
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) struct DragSource {
+  payload : DragPayload
+  min_distance : Double
+}
+pub fn DragSource::new(payload~ : DragPayload, min_distance? : Double) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum DrawCommand {
@@ -717,6 +759,13 @@ pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[Pl
 pub fn DrawFrame::not_equal(Self, Self) -> Bool
 pub fn DrawFrame::to_json(Self) -> @json.Json
 pub fn DrawFrame::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DropTarget {
+  key : String
+  accepts : (DragPayload) -> Bool
+}
+pub fn DropTarget::accepts(Self, DragPayload) -> Bool
+pub fn DropTarget::new(key~ : String, accepts? : (DragPayload) -> Bool) -> Self
 
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub(all) enum Easing {
@@ -2593,7 +2642,11 @@ pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::cursor(Self[Msg], CursorStyle) -> Self[Msg]
 pub fn[Msg] View::declaration(Self[Msg]) -> ViewDeclaration
 pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
+pub fn[Msg] View::dispatch_drag(Self[Msg], ViewDragContext) -> ViewDragResult[Msg]
 pub fn[Msg] View::dispatch_semantics_action(Self[Msg], ViewSemanticsActionContext, SemanticsAction) -> ViewSemanticsActionResult[Msg]
+pub fn[Msg] View::drag_declaration(Self[Msg]) -> DragDeclaration
+pub fn[Msg] View::draggable(Self[Msg], payload~ : DragPayload, on_start? : ((DragPayload, Point) -> Msg)?, on_move? : ((DragPayload, Point) -> Msg)?, on_end? : ((DragEnd) -> Msg)?, min_distance? : Double) -> Self[Msg]
+pub fn[Msg] View::drop_target(Self[Msg], key~ : String, on_drop? : ((DragPayload, Point) -> Msg)?, on_enter? : ((DragPayload, Point) -> Msg)?, on_leave? : (() -> Msg)?, on_move? : ((DragPayload, Point) -> Msg)?, accepts? : ((DragPayload) -> Bool)?) -> Self[Msg]
 pub fn[Msg] View::environment(Self[Msg], Environment) -> Self[Msg]
 pub fn[Msg] View::event(Self[Msg], ViewEventContext) -> ViewEventResult[Msg]
 pub fn[Msg] View::expanded(Self[Msg], weight? : Double) -> Self[Msg]
@@ -2604,7 +2657,7 @@ pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
-pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]]) -> Self[Msg]
+pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]], drag? : (Node, ViewDragContext) -> ViewDragResult[Msg]) -> Self[Msg]
 pub fn[Msg] View::hide_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
@@ -2719,6 +2772,23 @@ pub(all) enum ViewDirtyHint {
 pub fn ViewDirtyHint::equal(Self, Self) -> Bool
 pub fn ViewDirtyHint::not_equal(Self, Self) -> Bool
 pub fn ViewDirtyHint::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct ViewDragContext {
+  phase : DragPhase
+  payload : DragPayload
+  position : Point
+  frame : Rect
+  target_key : String?
+}
+pub fn ViewDragContext::new(phase~ : DragPhase, payload~ : DragPayload, position~ : Point, frame~ : Rect, target_key? : String?) -> Self
+
+pub(all) struct ViewDragResult[Msg] {
+  changed : Bool
+  messages : Array[Msg]
+}
+pub fn[Msg] ViewDragResult::message(Msg) -> Self[Msg]
+pub fn[Msg] ViewDragResult::none() -> Self[Msg]
 
 pub struct ViewEnvironment {
   viewport_size : Size
@@ -3044,6 +3114,7 @@ pub(open) trait ViewNode {
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
+  fn drag_declaration(Self) -> DragDeclaration = _
   fn focusable(Self) -> Bool = _
   fn focus_trap(Self) -> Bool = _
   fn keyboard_policy(Self) -> KeyboardPolicy = _

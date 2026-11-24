@@ -110,6 +110,57 @@ strip. ADR 0058 records why the typed non-copying transform chain is not
 implementable with the current language representation; the debt and reopen
 triggers live in `docs/plans/debt/message-transform-chain.md`.
 
+## Declarative Drag And Drop
+
+`View::draggable` and `View::drop_target` declare an in-app drag source and
+target on ordinary views. The runtime owns the pointer session and sends TEA
+messages, so update code never handles raw pointer state:
+
+```moonbit
+let done_column =
+  container(
+    column([text("Done")]),
+    variant=@views.ContainerVariant::Raised,
+    theme~,
+  ).drop_target(
+    key="done",
+    accepts=Some(fn(payload) { payload.key.has_prefix("pr/") }),
+    on_drop=Some(fn(payload, _position) { CompleteCard(payload.key) }),
+    on_enter=Some(fn(_payload, _position) { HighlightColumn("done") }),
+    on_leave=Some(fn() { ClearHighlight("done") }),
+  )
+
+column([
+  text("Review pull request").draggable(
+    payload=@core.DragPayload::new(key="pr/42", text="Review PR"),
+    on_end=Some(fn(end) {
+      match end.target_key {
+        Some(target) => MoveCard("pr/42", target)
+        None => DropCancelled("pr/42")
+      }
+    }),
+  ),
+  done_column,
+])
+```
+
+The source fires `Started` only after the pointer travels `min_distance`
+(4.0 default), then observes every `Moved`; the single terminal `Ended` names
+the accepting target under the release point, or `None` for release outside a
+target, Escape, and host cancellation. The deepest accepting target is the only
+hovered one, with `Entered`/`Moved`/`Left`/`Dropped`; a target whose `accepts`
+returns false never hovers. Every phase goes only to the declaring view, with
+that view's own screen `frame` and the pointer `position`. Both modifiers
+report their own declaration, so `.draggable().drop_target()` stacks as an
+outer target over an inner source, and stacking a `.draggable` above a nested
+target lets the source start and the deepest target receive the drop.
+
+Drag handlers are observers: return a message (or `None`) to update the model;
+the runtime keeps the session stable across rebuilds. `.disabled()` around the
+source or target suppresses the role like other pointer modifiers. `.on_drag`
+is a separate low-level recognizer and may coexist with `.draggable`; OS file
+drop stays on `View::on_file_drop` (`DragDropEvent`).
+
 ## Boundary
 
 Use `views` for ordinary app authoring: controls, layout, surfaces, scrolling,

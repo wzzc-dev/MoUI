@@ -190,6 +190,19 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Gesture(event) => self.dispatch_gesture_event(event)
     Keyboard(event) => {
+      // An active in-app drag owns Escape: cancel the session instead of
+      // letting a dismissal layer underneath consume the same key press.
+      if event.pressed && event.key == "Escape" {
+        let cancel = self.dispatch_view_drag_escape()
+        if cancel.consumed {
+          self.apply_event_dispatch_outcome(
+            cancel.changed,
+            false,
+            cancel.deliveries,
+          )
+          return
+        }
+      }
       let layout = self.layout_tree_for_input()
       // Top-most dismissal layer stack (ADR 0033): overlay hosts registered
       // during the placement pass receive Escape/Back top-most-first, so a
@@ -360,6 +373,11 @@ fn RuntimeState::dispatch_pointer_event(
 ) -> InputDispatchResult {
   self.bump_overlay_input_generation()
   self.ensure_render_tree()
+  // Declarative in-app drag (`.draggable` / `.drop_target`) observes the
+  // primary stream before ordinary pointer dispatch and owns it once a session
+  // starts. Phases are collected here and delivered with the ordinary event
+  // outcome below, so neither path observes a half-rebuilt tree.
+  let view_drag = self.advance_view_drag(event)
   // Trackpad gestures carry no position of their own; the last primary
   // pointer sample is the target proxy (see `input_gesture.mbt`).
   self.last_pointer_position = Some(event.position)
@@ -501,22 +519,30 @@ fn RuntimeState::dispatch_pointer_event(
     // A wheel event is consumed only when a scroll target actually moved. In
     // particular, this keeps the browser default available at a scroll edge.
     // Pointer capture is a separate host concern and must not stand in for
-    // consumption on every input phase.
+    // consumption on every input phase. An active in-app drag consumes the
+    // stream it owns.
     handled: if event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0 {
-      result.changed
+      result.changed || view_drag.consumed
     } else {
-      result.captured || result.changed || result.activated
+      result.captured ||
+      result.changed ||
+      result.activated ||
+      view_drag.consumed
     },
     capture_pointer: event.phase == Down && result.captured,
     release_pointer,
   }
   // The shared outcome template (F2). `dispatch_result` above reads only
   // locals captured before this call, so folding the dirty-flag updates and
-  // the delivery into one helper call here is behavior-preserving.
+  // the delivery into one helper call here is behavior-preserving. Drag
+  // deliveries lead so a `Started`/`Dropped` message is observed before any
+  // message the same pointer sample produces for ordinary controls.
+  let deliveries = view_drag.deliveries.copy()
+  deliveries.append(result.deliveries)
   self.apply_event_dispatch_outcome(
-    result.changed,
+    result.changed || view_drag.changed,
     result.activated,
-    result.deliveries,
+    deliveries,
     request_activation=result.activated,
   )
   dispatch_result
@@ -662,6 +688,10 @@ fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
   self.animfocus.gesture_arena.clear_missing(id => {
     self.element_tree.root.contains_element_id(id)
   })
+  // A rebuild can remount the source or the hovered target; a session whose
+  // element ids no longer resolve must not keep routing phases to recycled
+  // ids.
+  self.clear_stale_view_drag()
 }
 
 ///|

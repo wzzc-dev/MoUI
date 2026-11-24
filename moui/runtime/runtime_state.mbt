@@ -37,6 +37,13 @@ priv struct RuntimeState {
   /// under the cursor). `None` until the first pointer sample arrives.
   mut last_pointer_position : Point?
   mut last_frame_timing : RuntimeFrameTiming
+  /// Pending declarative drag press: a primary press landed on a `DragSource`
+  /// and the pointer has not yet travelled its `min_distance`. `None` when no
+  /// in-app drag is armed.
+  mut drag_press : ViewDragPress?
+  /// Active declarative drag session. The runtime owns the pointer stream
+  /// while this is `Some`; it ends exactly once with `Ended`.
+  mut drag_session : ViewDragSession?
   /// Post-layout overlay frame overrides: host element id -> (child index,
   /// absolute rect). Applied by the placement pass after the layout fixpoint.
   mut overlay_overrides : Array[(Int32, Array[(Int32, Rect)])]
@@ -150,6 +157,8 @@ fn RuntimeState::new_runtime_view_node(
     last_event_hit_path: [],
     last_pointer_position: None,
     last_frame_timing: RuntimeFrameTiming::zero(),
+    drag_press: None,
+    drag_session: None,
     overlay_overrides: [],
     layer_stack: [],
     exiting_overlays: [],

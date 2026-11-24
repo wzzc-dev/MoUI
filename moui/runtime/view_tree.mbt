@@ -18,6 +18,15 @@ priv struct RuntimeTextCommandOutcome {
 }
 
 ///|
+/// One declarative drag phase translated by a view into messages. Mirrors
+/// `RuntimeEventOutcome` without the pointer-specific fields: the runtime owns
+/// the session, the view only observes the phase.
+priv struct RuntimeDragOutcome {
+  changed : Bool
+  deliveries : Array[() -> Unit]
+}
+
+///|
 priv struct RuntimeSemanticsActionOutcome {
   accepted : Bool
   state : @core.ViewStateContext?
@@ -48,6 +57,12 @@ priv trait RuntimeViewNode {
   fn text_command(Self, @core.ViewEventContext, CommandIntent, String?) -> RuntimeTextCommandOutcome
   fn keyboard_policy(Self) -> @core.KeyboardPolicy
   fn semantics(Self) -> @core.ViewSemanticsInfo
+  /// Declarative drag role this node reports. The runtime recognizer walks the
+  /// element tree and resolves the deepest source and target independently;
+  /// the node itself captures no pointer events for the role.
+  fn drag_declaration(Self) -> @core.DragDeclaration
+  /// Translate one runtime-owned drag phase into messages.
+  fn drag(Self, @core.ViewDragContext) -> RuntimeDragOutcome
   fn semantics_action_kinds(Self) -> Array[@core.SemanticsActionKind]
   fn semantics_action(
     Self,
@@ -293,6 +308,25 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn keyboard_policy(
 ///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn semantics(self) {
   self.view.semantics()
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn drag_declaration(
+  self,
+) {
+  self.view.drag_declaration()
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn drag(
+  self,
+  context,
+) {
+  let result = self.view.dispatch_drag(context)
+  {
+    changed: result.changed,
+    deliveries: result.messages.map(message => () => (self.emit)(message)),
+  }
 }
 
 ///|

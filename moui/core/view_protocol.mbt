@@ -633,10 +633,14 @@ pub fn[Node : ViewNode, Msg] View::from_node(
   semantics_actions~ : (Node) -> Array[ViewSemanticsActionHandler[Msg]] = _node => {
     []
   },
+  drag~ : (Node, ViewDragContext) -> ViewDragResult[Msg] = (_node, _context) => {
+    ViewDragResult::none()
+  },
 ) -> View[Msg] {
   let identity_snapshot = node.identity()
   let declaration_snapshot = node.declaration()
   let semantics_snapshot = node.semantics()
+  let drag_declaration_snapshot = node.drag_declaration()
   let focusable_snapshot = node.focusable()
   let focus_trap_snapshot = node.focus_trap()
   let semantics_action_handlers = semantics_actions(node)
@@ -647,11 +651,13 @@ pub fn[Node : ViewNode, Msg] View::from_node(
       identity=identity_snapshot,
       declaration=declaration_snapshot,
       semantics=semantics_snapshot,
+      drag_declaration=drag_declaration_snapshot,
       focusable=focusable_snapshot,
       focus_trap=focus_trap_snapshot,
       semantics_action_handlers~,
       children=children_snapshot,
       event=context => event(node, context),
+      drag=context => drag(node, context),
       text_command=(context, intent, paste_text) => {
         text_command(node, context, intent, paste_text)
       },
@@ -667,6 +673,24 @@ pub fn[Msg] View::identity(self : View[Msg]) -> ViewIdentity {
 ///|
 pub fn[Msg] View::declaration(self : View[Msg]) -> ViewDeclaration {
   self.adapter.declaration_snapshot
+}
+
+///|
+/// The drag-and-drop role this view declares, if any. The runtime recognizer
+/// reads it off the element tree; it never captures pointer events itself.
+pub fn[Msg] View::drag_declaration(self : View[Msg]) -> DragDeclaration {
+  self.adapter.drag_declaration()
+}
+
+///|
+/// Translate one runtime drag phase into messages. Only the phases relevant to
+/// this view's role produce messages; the runtime calls this on the drag source
+/// and on the current drop target, not on their ancestors.
+pub fn[Msg] View::dispatch_drag(
+  self : View[Msg],
+  context : ViewDragContext,
+) -> ViewDragResult[Msg] {
+  self.adapter.drag(context)
 }
 
 ///|
