@@ -212,6 +212,8 @@ pub fn[Msg] icon_svg(String, size? : Double, color? : @core.Color, stroke_width?
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, accessibility_label? : String) -> @core.View[Msg]
 
+pub fn[Msg] inline_edit(key~ : String, text~ : String, editing~ : Bool, on_input~ : (String) -> Msg, on_commit~ : (String) -> Msg, on_start? : Msg, on_cancel? : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] inline_error(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
@@ -424,7 +426,7 @@ pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? :
 
 pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int32, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
 
-pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, style? : @style.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, on_cancel? : Msg, key? : String, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, style? : @style.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, layout_scale? : @core.LayoutScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 

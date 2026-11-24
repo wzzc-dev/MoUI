@@ -622,8 +622,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // 751 -> 755 / 359 -> 361: `CursorStyle` and `CursorIcon` join the
       // facade (issue #25) so app code can name a pointer shape without
       // importing a platform package.
-      max_lines: 755,
-      max_pub_lines: 361,
+      // 755 -> 757 / 361 -> 362: `inline_edit` joins the facade (0.9.1) —
+      // the label/field editor is app-facing vocabulary next to `text_field`.
+      max_lines: 757,
+      max_pub_lines: 362,
       max_pub_all_lines: 21,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [

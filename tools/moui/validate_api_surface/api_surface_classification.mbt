@@ -126,7 +126,9 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // refresh_indicator +1：pull-to-refresh surface 同上。
       // color_picker +2：token-grid picker 与默认色板 ramp 同上。
       // material + scroll_edge：V3 材质/滚动边缘的 app-facing 构造面。
-      max_count: 145,
+      // inline_edit +1：0.9.1 的行内编辑器（label 与单行框共用一套状态），
+      // 与 text_field 同属 app-facing 视图构造词汇。
+      max_count: 146,
     },
     {
       path: "moui/views/pkg.generated.mbti",
