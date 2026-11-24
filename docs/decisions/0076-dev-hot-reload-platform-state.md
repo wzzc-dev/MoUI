@@ -75,18 +75,14 @@ and no production path replacement.
 
 ## Options Considered
 
-- **Bump the ABI to v2.** Explicit schema version, but it breaks failure
-  retention (an old generation must stay live after a failed build) and forces
-  lockstep rebuilds. Rejected; additive v1 fields match the transient
-  transport's evolution.
-- **Reconstruct state from paint commands.** No protocol growth, but commands
-  carry no roles, actions, editing state or native view identity; rebuilding
-  would duplicate and drift from the plugin tree. Rejected.
-- **Separate diagnostics/AX bus.** Decouples from frame cadence, but violates
-  the single committed semantics stream and would not reuse the existing
-  adapters. Rejected.
-- **Host-owned platform-view proxy.** Duplicates the addon
-  `PlatformViewPlugin` factories and their native code. Rejected.
+- **ABI v2:** explicit schema, but breaks failure retention and forces lockstep
+  rebuilds; rejected.
+- **Reconstruct from paint commands:** no protocol growth, but commands carry no
+  roles, actions, editing state or native view identity; rejected.
+- **Separate diagnostics/AX bus:** violates the single committed semantics
+  stream and would not reuse existing adapters; rejected.
+- **Host-owned platform-view proxy:** duplicates the addon factories and their
+  native code; rejected.
 
 ## Rationale
 
