@@ -3,127 +3,96 @@
 - **Date**: 2026-11-25
 - **Status**: Accepted
 - **Deciders**: wzzc-dev (agent-assisted)
-- **Related**: ADR 0072, ADR 0073, ADR 0068, ADR 0029, plan
+- **Related**: ADR 0072, ADR 0073, ADR 0068, ADR 0029; plan
   `dev-hot-reload-phase2b`
 
 ## Context
 
-ADR 0072/0073 keep one native host process and swap only the app plugin image
-over UTF-8 JSON at ABI v1. Phase 1 carried a paint-command subset, basic input,
-resize/redraw/close and the dev transient snapshot. Three platform-owned
-surfaces stayed host-invisible:
-
-- **Text input focus.** Native IME sync reads the host runtime's focused
-  element, which has no app tree, so preedit, commit and caret are absent.
-- **Accessibility.** The macOS NSAccessibility and Linux AT-SPI adapters read
-  the host runtime's committed semantics, which a plugin-owned tree never
-  reaches.
-- **Platform views.** `DrawFrame.platform_views` is produced by the plugin, so
-  native web/video/map views see no placements and `PlatformViewEvent` never
-  reaches the app.
-
-Native AX nodes, IME state and views live in the long-lived host, so state from
-generation N must be invalidated or replaced in N+1. Rebuilding the host would
-defeat hot reload, so the protocol stays additive at ABI v1.
+ADR 0072/0073 swap only the app plugin over UTF-8 JSON at ABI v1. Three
+platform-owned surfaces stayed host-invisible: text-input focus/IME (the host
+runtime has no app tree), accessibility (AX/AT-SPI read host semantics, not
+plugin-owned semantics), and platform views (placements and
+`PlatformViewEvent` never left the plugin). Native AX nodes, IME state and views
+live in the long-lived host, so generation N must be invalidated or replaced in
+N+1 without rebuilding the host.
 
 ## Decision
 
-Carry platform state over the existing bridge, with no second diagnostics bus
-and no production path replacement.
+Carry platform state over the existing bridge; no second diagnostics bus or
+production-path replacement. ABI stays v1 (additive).
 
-1. **Frame payload (additive, schema v1).** `dev_frame` gains optional
-   `semantics` (generation, root, focused, nodes), `platform_views` (ordered
-   id/kind/frame/clip/properties), `overlay_bounds`, `clear_color` and
-   `text_input` (focus, frame, caret, selection, composition, caret rect).
-   Missing means "not provided"; decode never invents platform state, malformed
-   present fields are rejected, and unknown fields are ignored.
-2. **Events.** The bridge event codec covers every `TextInputEvent` variant and
-   `PlatformViewEvent::Named` in addition to the parallel Phase 2A general
-   coverage. The plugin dispatches them into its `AppRuntime`; the host does not
-   re-interpret them.
-3. **Text input and focus.** The plugin publishes `focused_text_input` every
-   frame. The generated host installs
-   `HostDriverHooks::focused_text_input`, so the native IME session and context
-   menu read the plugin's focus, caret, selection and composition. ADR 0068's
-   transient transport restores them into the next generation, and its first
-   frame re-syncs the host IME session. No IME state is retained host-side
-   across generations.
-4. **Accessibility.** The plugin enables semantics frames. An additive
-   `SemanticsSnapshot::from_frame_payload` lets the host feed
-   `HostDriverHooks::read_semantics` and `perform_semantics_action`; existing
-   macOS/AT-SPI adapters consume that driver stream unchanged. Actions use an
-   optional ABI trio (`dev_semantics_action`, `_len`, `_release`) resolved
-   together with `dlsym`; absence means actions are unavailable, reads still
-   work. Reads are generation-scoped: a swap bumps a synthetic generation and
-   forces an empty `Full` snapshot until the new plugin publishes, so old nodes
-   cannot survive. The plugin rejects stale-precondition actions.
+1. **Frame.** `dev_frame` gains optional `semantics`
+   (generation/root/focused/nodes), `platform_views` (ordered
+   id/kind/frame/clip/properties), `overlay_bounds`, `clear_color`, and
+   `text_input` (focus/frame/caret/selection/composition/caret rect). Missing
+   means not provided; malformed present fields are rejected; unknown fields are
+   ignored.
+2. **Events.** The codec covers every `TextInputEvent` and
+   `PlatformViewEvent::Named`; the plugin dispatches them and the host does not
+   reinterpret them.
+3. **IME/focus.** The plugin publishes `focused_text_input` every frame and the
+   host installs `HostDriverHooks::focused_text_input`, so native IME and the
+   context menu follow plugin focus, caret, selection and composition. ADR 0068
+   restores these into the next generation; no IME state is retained host-side.
+4. **Accessibility.** The plugin enables semantics.
+   `SemanticsSnapshot::from_frame_payload` feeds
+   `HostDriverHooks::read_semantics`/`perform_semantics_action`, and existing
+   macOS/AT-SPI adapters consume that driver unchanged. Actions use the optional
+   `dev_semantics_action`/`_len`/`_release` trio resolved all-or-nothing;
+   absence means unavailable while reads still work. A swap bumps a synthetic
+   generation and serves an empty `Full` snapshot until the new plugin
+   publishes, so old nodes cannot survive; stale actions are rejected.
 5. **Platform views.** `HostDriverHooks::augment_frame` layers placements,
-   overlay bounds and clear color onto the host frame after the bridge view
-   paints the plugin commands, and forces full damage so a transparent
-   platform-view frame is not skipped. Existing `PlatformViewPlugin`
-   implementations create/position/z-order views around the bridge surface.
-   Native events are forwarded to the plugin in addition to the host runtime.
-   On a generation change the host wrapper calls `dispose_platform_views`
-   before syncing the first new frame; macOS only hides unseen views, so
-   absence from a frame is not disposal.
-6. **Compatibility.** `dev_abi_version` stays 1. The action symbols and every
-   new JSON field are optional and additive, so old/new host and plugin images
-   interoperate; old images simply expose no platform state.
-7. **Scope.** Production packages gain only `SemanticsSnapshot::from_frame_payload`
-   and the opt-in `HostDriverHooks` seam. `moui_devhost` remains outside the
-   release closure, and hot-mode support raises no readiness claim.
+   overlay bounds and clear color onto the host frame after plugin commands and
+   forces full damage. Existing `PlatformViewPlugin`s create/position/z-order
+   views around the bridge; native events reach the plugin and host runtime; a
+   generation change calls `dispose_platform_views` before syncing. macOS only
+   hides unseen views, so absence from a frame is not disposal.
+6. **Compatibility/scope.** Only `SemanticsSnapshot::from_frame_payload` and the
+   opt-in `HostDriverHooks` enter production packages; `moui_devhost` stays
+   outside the release closure and hot mode raises no readiness claim.
 
-## Options Considered
+## Options considered
 
-- **ABI v2:** explicit schema, but breaks failure retention and forces lockstep
-  rebuilds; rejected.
-- **Reconstruct from paint commands:** no protocol growth, but commands carry no
-  roles, actions, editing state or native view identity; rejected.
-- **Separate diagnostics/AX bus:** violates the single committed semantics
-  stream and would not reuse existing adapters; rejected.
-- **Host-owned platform-view proxy:** duplicates the addon factories and their
-  native code; rejected.
+- ABI v2 — explicit schema, but lockstep rebuilds and breaks failure retention.
+- Reconstruct from paint commands — commands carry no roles/actions/editing or
+  native-view identity.
+- Separate AX/diagnostics bus — violates one committed semantics stream and
+  duplicates adapters.
+- Host platform-view proxy — duplicates addon factories and native code.
 
 ## Rationale
 
-The plugin owns the app tree, so its state must travel plugin → host. Frames are
-already periodic and generation-tagged, and host adapters already consume
-`DrawFrame`, `TextInputState`, semantics and placements; extending the frame
-reuses that stack. Replacing the semantics tree wholesale gives stale cleanup
-directly, and additive ABI fields keep a failed build's generation interactive
-without a host restart.
+The plugin owns the app tree, so state must travel plugin → host. Frames are
+already periodic and generation-tagged, and adapters already consume frames,
+text input, semantics and placements; extending that stack reuses the adapters.
+Wholesale semantics replacement makes stale cleanup direct; additive fields keep
+a failed build's UI interactive without restart.
 
 ## Consequences
 
 - Dev frames are larger; semantics serialize once per painted frame only when
-  the plugin opted in. Cost is confined to `moui dev`.
-- The host owns swap cleanup: native platform views must be disposed and the
-  semantics cursor reset, or stale AX nodes/views leak across generations.
+  opted in.
+- The host owns swap cleanup: dispose views and reset the semantics cursor, or
+  stale AX nodes/views leak across generations.
 - Host caches derived from a frame must be invalidated on a plugin swap.
-- Readiness is unchanged. Live macOS AX query/action, a live Linux AT-SPI
-  client and native platform-view presentation need matching-host evidence;
-  portable codecs, bridge and cleanup rules are covered by tests. Docs state
-  this rather than implying hot-mode parity.
-- General `DrawCommand`/`AppEvent` coverage belongs to the parallel Phase 2A
-  slice; this ADR covers only the platform-owned subset.
+- Readiness is unchanged: live macOS AX/AT-SPI query/action and native
+  platform-view presentation need matching-host evidence; portable
+  codecs/bridge/cleanup are tested.
+- General `DrawCommand`/`AppEvent` coverage is Phase 2A; this ADR covers only
+  the platform-owned subset.
 
-## Agent Notes
+## Evidence
 
-Phase 2B of native dev hot reload (IME/text editing, semantics/accessibility,
-platform views) on an Orca worker (DeepSeek-V4.1-Flash). The prompt required
-additive ABI v1, adapter reuse and swap cleanup proof. Validation: protocol
-round-trips, fake-plugin disposal, a Session bridge CJK/action test and the
-Linux Xvfb smoke; live macOS AX/AT-SPI and native view presentation remain
-unverified.
+Phase 2B on an Orca worker (DeepSeek-V4.1-Flash): protocol round-trips,
+fake-plugin disposal, Session CJK/action tests and Linux Xvfb smoke passed; live
+macOS AX/AT-SPI and native views remain unverified.
 
 ## References
 
-- ADR 0072 (macOS hot reload), ADR 0073 (Linux hot reload), ADR 0068 (dev
-  transient handoff), ADR 0029 (native accessibility adapters)
+- ADR 0072, ADR 0073, ADR 0068, ADR 0029
 - Plan: `docs/plans/active/dev-hot-reload-phase2b.md`
-- Code: `moui_devhost/protocol/`, `moui_devhost/host/`,
-  `moui_devhost/plugin/`, `moui/apphost/host_runtime_driver.mbt`,
+- Code: `moui_devhost/{protocol,host,plugin}/`,
   `moui/apphost/host_driver_hooks.mbt`,
   `moui/backend/macos/macos_accessibility_bridge.mbt`,
-  `moui/backend/linux/linux_atspi_host.mbt`,
-  `moui/backend/platform_view_plugin.mbt`
+  `moui/backend/linux/linux_atspi_host.mbt`
