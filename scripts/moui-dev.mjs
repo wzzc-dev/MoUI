@@ -236,6 +236,13 @@ function hotSourceShape() {
     .join("\n");
 }
 
+// The fast-plan shape ignores mtimes so a content edit can reuse the cached
+// compile/link steps. Change detection needs the opposite: keep mtime and size
+// so editing a watched file in place still rebuilds.
+function hotSourceStamp() {
+  return hotWatchRoots.map((dir) => listFiles(dir)).join("\n");
+}
+
 async function captureHotPlan() {
   const dry = await run(moon, [
     "build", "plugin",
@@ -585,19 +592,19 @@ if (hot) {
   if (!published || once) process.exit(published ? 0 : 1);
   const initialDylib = fs.readFileSync(hotMarker, "utf8").trim();
   if (!(await startHotHost(initialDylib))) process.exit(1);
-  let lastHotSnapshot = hotSourceShape();
+  let lastHotSnapshot = hotSourceStamp();
   let hotBuilding = false;
   log(`watching ${hotWatchRoots.join(", ")} every ${intervalMs}ms (hot, state: ${stateFile})`);
   hotTimer = setInterval(async () => {
     if (stopping || hotBuilding) return;
-    const nextSnapshot = hotSourceShape();
+    const nextSnapshot = hotSourceStamp();
     if (nextSnapshot === lastHotSnapshot) return;
     lastHotSnapshot = nextSnapshot;
     hotBuilding = true;
     try {
       // A failed build keeps the previous generation published and interactive.
       await publishHotPlugin();
-      lastHotSnapshot = hotSourceShape();
+      lastHotSnapshot = hotSourceStamp();
     } finally {
       hotBuilding = false;
     }
