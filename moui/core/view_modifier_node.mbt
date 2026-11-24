@@ -14,6 +14,7 @@ fn[Msg] modifier_view(
     node,
     children=node => [node.child],
     event=(node, context) => (node.modifier.event)(context),
+    drag=(node, context) => (node.modifier.drag)(context),
     text_command=(node, context, intent, paste_text) => {
       node.child.text_command_result(context, intent, paste_text~)
     },
@@ -99,6 +100,15 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn semantics(self) {
   // Transparent modifier's info onto its single child node, so chains like
   // `.semantics_role(TreeItem).on_hover(...)` keep reporting the role.
   self.modifier.semantics.overlaying(self.child.semantics())
+}
+
+///|
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn drag_declaration(self) {
+  // Reported verbatim, never merged with the child's: every `View` in a chain
+  // is its own element, and the runtime resolves a drag role from the deepest
+  // element that declares one. Merging would let an undecorated wrapper element
+  // answer for a descendant and steal the hit-path resolution.
+  self.modifier.drag_declaration
 }
 
 ///|

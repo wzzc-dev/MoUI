@@ -24,6 +24,13 @@ pub(all) struct AnyModifier[Msg] {
   paint : (ViewPaintContext) -> ViewPaintPlan
   /// Handle events intercepted by this modifier.
   event : (ViewEventContext) -> ViewEventResult[Msg]
+  /// Drag-and-drop role declared by this modifier. The runtime recognizer reads
+  /// it off the element tree; the modifier itself captures no pointer events.
+  drag_declaration : DragDeclaration
+  /// Translate a runtime drag phase into messages. Only the phases relevant to
+  /// this modifier's role (source phases for `.draggable`, target phases for
+  /// `.drop_target`) produce messages; the rest return an empty result.
+  drag : (ViewDragContext) -> ViewDragResult[Msg]
   /// Semantics info contributed by this modifier.
   semantics : ViewSemanticsInfo
   /// Semantics actions contributed by this modifier.
@@ -61,6 +68,8 @@ pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
     },
     paint: fn(_ctx) { ViewPaintPlan::empty() },
     event: fn(_ctx) { ViewEventResult::ignored() },
+    drag_declaration: DragDeclaration::none(),
+    drag: fn(_ctx) { ViewDragResult::none() },
     semantics: ViewSemanticsInfo::new(),
     semantics_actions: [],
     focusable: false,

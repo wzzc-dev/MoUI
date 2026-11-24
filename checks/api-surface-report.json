@@ -60,9 +60,9 @@
     {
       "label": "core",
       "path": "moui/core/pkg.generated.mbti",
-      "lines": 3063,
-      "public_declarations": 1295,
-      "pub_all_declarations": 158
+      "lines": 3134,
+      "public_declarations": 1310,
+      "pub_all_declarations": 166
     },
     {
       "label": "views facade",

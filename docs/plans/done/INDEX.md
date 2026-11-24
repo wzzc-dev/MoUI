@@ -21,6 +21,7 @@ are still readable — find the stem here.
 
 | Plan | Outcome | Landed |
 |---|---|---|
+| `declarative-drag-and-drop` | In-app drag source/target declarations on ordinary views (`View::draggable`/`View::drop_target`, `ViewNode::drag_declaration`), a runtime-owned primary-pointer session, deepest-accepting-target hover, and phase-to-message delivery with one terminal `Ended`; OS file drop and the `on_drag` recognizer untouched. | `d46d2c6e` 2026-11-24 |
 | `cohesion-governance-convergence` | Second-round maintainability landed: core domain splits (`core/command.mbt`, caret/word/composition), views helper dedup + shared `PressableTransition`, grouped `ViewSemanticsInfo` constructors, plan archival and session-knowledge deposit, budget-catalog review cadence, structure triggers and the backend/common runtime-import allowlist. | `eae4c126` 2026-11-19 |
 | `moui-architecture-convergence` | Converged core/views/backend/render/platform ownership and dependency direction per ADR 0014–0020 (Phases A–G). | `68dfba21` 2026-08-06 |
 | `core-component-theme-to-views` | Neutral theme schema stayed in `core`; control tokens moved to `@views.ControlThemeSet`. Superseded by ADR 0017. | `27543760` 2026-08-02 |

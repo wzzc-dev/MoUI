@@ -67,6 +67,12 @@ pub(open) trait ViewNode {
   fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
+  /// Drag-and-drop role this node declares for the runtime recognizer.
+  /// `DragDeclaration::none()` (the default) means the element is neither a
+  /// drag source nor a drop target. The node captures no pointer events for
+  /// this: the runtime owns the recognizer and dispatches phases back through
+  /// `View::dispatch_drag`.
+  fn drag_declaration(Self) -> DragDeclaration = _
   fn focusable(Self) -> Bool = _
   fn focus_trap(Self) -> Bool = _
   fn keyboard_policy(Self) -> KeyboardPolicy = _
@@ -143,6 +149,11 @@ impl ViewNode with fn semantics(_self) {
 }
 
 ///|
+impl ViewNode with fn drag_declaration(_self) {
+  DragDeclaration::none()
+}
+
+///|
 impl ViewNode with fn focusable(_self) {
   false
 }
@@ -198,11 +209,13 @@ priv struct ViewAdapter[Msg] {
   identity_snapshot : ViewIdentity
   declaration_snapshot : ViewDeclaration
   semantics_snapshot : ViewSemanticsInfo
+  drag_declaration_snapshot : DragDeclaration
   focusable_snapshot : Bool
   focus_trap_snapshot : Bool
   semantics_action_handlers : Array[ViewSemanticsActionHandler[Msg]]
   children_snapshot : Array[View[Msg]]
   event_fn : (ViewEventContext) -> ViewEventResult[Msg]
+  drag_fn : (ViewDragContext) -> ViewDragResult[Msg]
   text_command_fn : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
   ]
@@ -214,11 +227,13 @@ fn[Msg] ViewAdapter::new(
   identity~ : ViewIdentity,
   declaration~ : ViewDeclaration,
   semantics~ : ViewSemanticsInfo,
+  drag_declaration~ : DragDeclaration,
   focusable~ : Bool,
   focus_trap~ : Bool,
   semantics_action_handlers~ : Array[ViewSemanticsActionHandler[Msg]],
   children~ : Array[View[Msg]],
   event~ : (ViewEventContext) -> ViewEventResult[Msg],
+  drag~ : (ViewDragContext) -> ViewDragResult[Msg],
   text_command~ : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
   ],
@@ -228,6 +243,7 @@ fn[Msg] ViewAdapter::new(
     identity_snapshot: identity,
     declaration_snapshot: declaration,
     semantics_snapshot: semantics,
+    drag_declaration_snapshot: drag_declaration,
     focusable_snapshot: focusable,
     focus_trap_snapshot: focus_trap,
     semantics_action_handlers: semantics_action_handlers.copy(),
@@ -237,6 +253,7 @@ fn[Msg] ViewAdapter::new(
     // adapter must own its copy.
     children_snapshot: children.copy(),
     event_fn: event,
+    drag_fn: drag,
     text_command_fn: text_command,
   }
 }
@@ -252,6 +269,21 @@ fn[Msg] ViewAdapter::event(
   context : ViewEventContext,
 ) -> ViewEventResult[Msg] {
   (self.event_fn)(context)
+}
+
+///|
+fn[Msg] ViewAdapter::drag_declaration(
+  self : ViewAdapter[Msg],
+) -> DragDeclaration {
+  self.drag_declaration_snapshot
+}
+
+///|
+fn[Msg] ViewAdapter::drag(
+  self : ViewAdapter[Msg],
+  context : ViewDragContext,
+) -> ViewDragResult[Msg] {
+  (self.drag_fn)(context)
 }
 
 ///|
@@ -274,6 +306,7 @@ fn[Msg, NextMsg] ViewAdapter::map(
     identity=self.identity_snapshot,
     declaration=self.declaration_snapshot,
     semantics=self.semantics_snapshot,
+    drag_declaration=self.drag_declaration_snapshot,
     focusable=self.focusable_snapshot,
     focus_trap=self.focus_trap_snapshot,
     semantics_action_handlers=self.semantics_action_handlers.map(handler => {
@@ -290,6 +323,13 @@ fn[Msg, NextMsg] ViewAdapter::map(
         state: result.state,
         text_control: result.text_control,
         dirty: result.dirty,
+        messages: result.messages.map(message => map(message)),
+      }
+    },
+    drag=context => {
+      let result = self.drag(context)
+      {
+        changed: result.changed,
         messages: result.messages.map(message => map(message)),
       }
     },

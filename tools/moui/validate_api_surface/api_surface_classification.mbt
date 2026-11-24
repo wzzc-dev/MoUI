@@ -91,7 +91,13 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
       // RgbaBuffer and adds its PNG encode entry (+1 pub): measured 1306.
       // 0.9.0 adds View::on_context_menu_key (+1 pub), the keyboard entry
       // for the context menu: measured 1307.
-      max_count: 1307,
+      // Declarative in-app drag-and-drop (plan declarative-drag-and-drop):
+      // the DragPayload/DragSource/DropTarget/DragDeclaration value types, the
+      // DragPhase/ViewDragContext/ViewDragResult phase protocol, the
+      // View::draggable/drop_target/drag_declaration/dispatch_drag channels,
+      // and the ViewNode drag_declaration default. Cross-runtime pointer
+      // protocol, no control vocabulary. Measured 1322.
+      max_count: 1322,
     },
     {
       path: "moui/core/pkg.generated.mbti",
