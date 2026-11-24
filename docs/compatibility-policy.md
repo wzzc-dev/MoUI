@@ -65,7 +65,7 @@ to `0.4.x` together, and it still passes the external consumer gate. The
 synchronized-line policy (ADR 0065) continued on the `0.5.x` line, then the
 `0.6.x` line, the `0.7.x` line, the `0.8.x` line, and now the `0.9.x` line:
 each minor advances every public module together with the features recorded in
-`docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`, `docs/releases/0.7.0.md`,
+`docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`, `docs/releases/0.7.md`,
 `docs/releases/0.8.0.md`, and `docs/releases/0.9.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
