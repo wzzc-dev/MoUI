@@ -52,6 +52,11 @@ Port the bridge-host design to Windows without a second protocol or ABI.
   generated entry points; `moonbit_init` arrives through its existing
   `__declspec(dllexport)`. The library list mirrors moon's native executable
   link so plugin and host agree on the static CRT and system libraries.
+  `link.exe` also reads the `LINK` environment variable; the workspace MSVC
+  helper sets it to the windowed executable recipe (`/ENTRY:mainCRTStartup`),
+  so the runner clears `LINK` for the plugin spawn. Otherwise that inherited
+  entry point pulls `libcmt.lib(exe_main.obj)` and the link fails with an
+  unresolved `main`.
 - `moui_devhost/host/moui_devhost_bridge.c` gains a `_WIN32` branch:
   `LoadLibraryW` (UTF-8 via `MultiByteToWideChar`), `GetProcAddress`,
   `FreeLibrary`, `GetLastError` diagnostics, and a Toolhelp32 module-count

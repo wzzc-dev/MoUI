@@ -7,6 +7,7 @@ import {
   WINDOWS_PLUGIN_EXPORTS,
   hotFastStepMatches,
   hotLinkArgs,
+  hotLinkEnvironment,
   hotPlatformForNodePlatform,
   hotPluginFileName,
   picRuntimeCompile,
@@ -160,6 +161,12 @@ test("Windows link whole-archives the archive and exports every ABI entry", () =
   assert.equal(args.includes("C:/repo/_build/plugin.lib"), true);
   assert.equal(args.includes("libcmt.lib"), true);
   assert.equal(args.includes("libbacktrace.a"), false);
+});
+
+test("Windows plugin link clears the inherited MSVC LINK environment", () => {
+  assert.deepEqual(hotLinkEnvironment("windows"), { LINK: "" });
+  assert.deepEqual(hotLinkEnvironment("linux"), {});
+  assert.deepEqual(hotLinkEnvironment("macos"), {});
 });
 
 test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () => {

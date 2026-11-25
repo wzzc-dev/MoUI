@@ -54,6 +54,17 @@ export function hotPluginFileName(platform) {
   return "plugin.dylib";
 }
 
+/** Environment overrides for the native plugin link. MSVC `link.exe` reads
+ * additional options from the `LINK` environment variable; the workspace MSVC
+ * helper sets it to the windowed executable recipe (`/SUBSYSTEM:WINDOWS
+ * /ENTRY:mainCRTStartup`). Inheriting that in the plugin link overrides `/DLL`
+ * and pulls `libcmt.lib(exe_main.obj)`, which asks for a `main` the plugin does
+ * not define. The plugin link supplies its own inputs, so clear `LINK` on
+ * Windows. */
+export function hotLinkEnvironment(platform) {
+  return platform === "windows" ? { LINK: "" } : {};
+}
+
 /**
  * Native link arguments for one plugin generation.
  *

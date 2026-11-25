@@ -50,4 +50,4 @@
 | Date | Note |
 |------|------|
 | 2026-11-25 | Generator, runner, bridge, CLI, tests, smoke gate, ADR and docs landed; Windows runtime evidence pending. |
-| 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired, Windows execution pending. |
+| 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired. The first hosted run reached the plugin link and exposed the inherited MSVC `LINK=/ENTRY:mainCRTStartup`; the runner clears `LINK` for the plugin spawn and the plan test covers it. |

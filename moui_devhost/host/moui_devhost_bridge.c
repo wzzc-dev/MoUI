@@ -11,9 +11,13 @@
 #include <wchar.h>
 #else
 // `clock_gettime` is a POSIX extension that Apple headers hide under strict
-// language modes; declare the feature level before any system header.
+// language modes; declare the feature level before any system header. Pair it
+// with `_DARWIN_C_SOURCE` so `<mach-o/dyld.h>` keeps `_dyld_image_count`.
 #if defined(__APPLE__) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 199309L
+#endif
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE 1
 #endif
 // `dl_iterate_phdr` is a GNU extension; define the feature macro before any
 // system header so the Linux image-count probe compiles under plain `cc`.
