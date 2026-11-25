@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "description": "Documentation line budget for the main repository. Counts Markdown lines under docs/ only; the generated website mirror (website/web_wasm/docs) and memories/repo are outside the roots, so they never inflate the number a contributor has to cut.",
-  "maxLines": 40800,
-  "note": "Raised from 40700 to 40800 for the Windows offscreen hot-reload evidence: main measured 40643 lines after the Windows hot-reload merges, and the offscreen ADR/testing/plan additions, the smoke-helper and frame-trace fixes, and the passing hosted-CI evidence bring the tree to 40743.",
+  "maxLines": 41100,
+  "note": "Raised from 40800 to 41100 for the 0.9.2 release note: main measured 40747 lines before the note, and the note plus the 0.9.1 pointer retirement and the policy paragraph bring the tree to 41016.",
   "roots": [
     "docs"
   ],
