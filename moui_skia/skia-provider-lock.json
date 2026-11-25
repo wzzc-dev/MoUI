@@ -845,22 +845,24 @@
             "arm64": {
               "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
-              "sha256": "fe13d2557cae4d7e55e27c8ce6596d51bb49376a1642a89ad796ff9cf28e96cf",
+              "sha256": "bc7a355f49d55039bc86d56d1b948c2c719999729367a485b676beb68597fa4a",
               "size": 80906,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
-              ]
+              ],
+              "recipe_sha256": "c1cdc0c81a8aa78b6745dfbc7b7ebbbd23132b0824b6a8827f147f0063a6bba2"
             },
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-x64.zip",
-              "sha256": "79336c221000dd8d08bb83fef2ed7c06f4dce6820881db33b3eb38bd04fa727b",
+              "sha256": "984b170bf7c56738aa4aa5a92d179d98625b773839470a24e59c70746f0e73d1",
               "size": 87229,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
-              ]
+              ],
+              "recipe_sha256": "c1cdc0c81a8aa78b6745dfbc7b7ebbbd23132b0824b6a8827f147f0063a6bba2"
             }
           }
         },
@@ -869,22 +871,24 @@
             "arm64": {
               "name": "MoUISkiaStub-dev-6d73578a36-linux-Release-arm64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-linux-Release-arm64.zip",
-              "sha256": "b9f7f38c54a328fc607775d6ff353cc96f7c2b127a2068013f9db43d4e456757",
+              "sha256": "3db3e59d964b3484b2198a06c2e8c95ed8a4f41eeddaa068c2daabb0f8e44335",
               "size": 102483,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
-              ]
+              ],
+              "recipe_sha256": "c1cdc0c81a8aa78b6745dfbc7b7ebbbd23132b0824b6a8827f147f0063a6bba2"
             },
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-linux-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-linux-Release-x64.zip",
-              "sha256": "54e6d6d1f509f9bbf8418bdb34c22dad55c6e8ccc79569ab0a6063e40ea6f6d9",
+              "sha256": "af10370fd8fb4d0174bf130f50d787e79e5af8ff2ddc4af855b16bd4dad93bb8",
               "size": 87197,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
-              ]
+              ],
+              "recipe_sha256": "c1cdc0c81a8aa78b6745dfbc7b7ebbbd23132b0824b6a8827f147f0063a6bba2"
             }
           }
         },
@@ -893,12 +897,13 @@
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
-              "sha256": "705f77b540785d9733a6e8519888adf957af461e30de6a2dfee7685f3dc7bd79",
-              "size": 501881,
+              "sha256": "95d5e819b3321e9650ce7878280d5141522dbf25099e844cf284e9c52c082bed",
+              "size": 501875,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "moui_skia_stub.lib"
-              ]
+              ],
+              "recipe_sha256": "c1cdc0c81a8aa78b6745dfbc7b7ebbbd23132b0824b6a8827f147f0063a6bba2"
             }
           }
         }
