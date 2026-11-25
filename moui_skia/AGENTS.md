@@ -71,16 +71,24 @@ You can browse and install extra skills here:
   Skia archives), and recorded in `skia-provider-lock.json` under
   `providers.release.stub_libraries`.
 - `.github/workflows/moui-skia-stub-release.yml` owns publishing. Pushes that
-  touch `native/*.cpp|*.h`, `build.mbtx`, or `publish-stub-library.sh` run
-  `publish-stub-library.sh --check` per matrix leg first: a leg whose lock entry
-  still matches `sources_sha256` is a no-op; the others rebuild, upload their raw
-  archive as a workflow artifact, and one publish job packages, uploads with
+  touch `native/*.cpp|*.h`, `build.mbtx`, `publish-stub-library.sh`, or the
+  workflow itself run `publish-stub-library.sh --check` per matrix leg first.
+  The entry carries two digests: `sources_sha256` over `native/*.cpp|*.h` and
+  `recipe_sha256` over the
+  workflow, `build.mbtx`, and the publish script, so a recipe-only change
+  rebuilds every leg instead of leaving a stale archive. Both normalize CRLF to
+  LF before hashing, so a Windows checkout fingerprints like an LF checkout;
+  entries without `recipe_sha256` fail once and migrate with one automatic
+  rebuild. A leg that matches both is a no-op; the others rebuild, upload their
+  raw archive as a workflow artifact, and one publish job packages, uploads with
   `--clobber`, verifies the digest and download URL, and commits every refreshed
   lock entry in one commit with `GITHUB_TOKEN` (a token push does not start a
   second CI run, and only the lock changes, so the stub sources are not
-  re-triggered). `workflow_dispatch` with `force=true` republishes
-  unconditionally; a forced rerun can rewrite the asset `sha256` because
-  `ar`/`zip` output is not byte-reproducible.
+  re-triggered). `workflow_dispatch` with `force=true` is an exceptional
+  recovery hatch for a bad published archive, not a routine refresh; a forced
+  rerun can rewrite the asset `sha256` because `ar`/`zip` output is not
+  byte-reproducible. `moui_skia/scripts/tests/publish-stub-library-check.sh`
+  covers this offline in `pr-static`.
 - `moui_skia/native/moon.pkg` must list no C++ sources. Adding one back
   reintroduces the Windows D8016 clash (CLI `/std:c11` against Skia's
   `/std:c++20`), because `mbt` classifies MSVC stub compiles as C.
@@ -159,4 +167,5 @@ You can browse and install extra skills here:
   pointing at an archive that no longer matches the sources. `build.mbtx`
   stamps the sources (`stub_source_stamp`) into its cache key; the cross-check
   is `moui_skia/scripts/publish-stub-library.sh --check`, which fails when
-  `native/*.cpp` no longer hash to the lock's `sources_sha256`.
+  `native/*.cpp|*.h` no longer hash to the lock's `sources_sha256` or the build
+  recipe no longer hashes to `recipe_sha256`.

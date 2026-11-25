@@ -102,16 +102,20 @@ with shell-style escaping, so a `D:\a\MoUI\...` value reaches `link.exe` as
 `build.mbtx` normalizes the module root and every stub/Skia path it emits.
 Publishing a new stub is automated: `.github/workflows/moui-skia-stub-release.yml`
 runs on pushes that touch `moui_skia/native/*.cpp|*.h`, `build.mbtx`, or the
-publish script. It rebuilds the stub on `macos-latest`, uploads it with
-`GITHUB_TOKEN` to the MoUI release `skia-stub-<skia-tag>`, verifies the asset
-digest and URL, and commits the refreshed `providers.release.stub_libraries`
-entry. The job starts with `publish-stub-library.sh --check`, so a lock whose
-`sources_sha256` still matches the sources makes it a no-op;
-`workflow_dispatch` with `force=true` republishes unconditionally.
+publish script. It rebuilds every stale leg on its own runner, uploads each
+archive with `GITHUB_TOKEN` to the MoUI release `skia-stub-<skia-tag>`, verifies
+the asset digest and URL, and commits the refreshed
+`providers.release.stub_libraries` entries. The job starts with
+`publish-stub-library.sh --check`, which compares `sources_sha256` and the build
+recipe's `recipe_sha256` (release workflow, `build.mbtx`, publish script); both
+normalize CRLF to LF, so a Windows checkout is not mistaken for a source change,
+and a recipe-only edit republishes every leg. Entries without `recipe_sha256`
+fail once and migrate with one rebuild; `workflow_dispatch` with `force=true` is
+an exceptional recovery hatch.
 `moui_skia/scripts/publish-stub-library.sh` remains the manual path: it prints
 the `gh release upload` command and the lock entry instead of touching the
 release. Until MoonBit ships a `stub-cxx-flags` c/cpp split, a stale released
-stub is the main risk; the `--check` mode fails when the lock checksum does not
+stub is the main risk; the `--check` mode fails when either digest does not
 match a fresh local build, which is the detector. Win32 system libraries for
 the window host come from `window/windows` prebuild `link_configs`. DirectWrite WGPU text uses
 `moui_text_providers/directwrite` link_configs (`-lz`).
