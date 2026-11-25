@@ -34,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: Exceptional recovery only: rebuild and republish even when both fingerprints match the lock.
+        description: 'Exceptional recovery only: rebuild and republish even when both fingerprints match the lock.'
         required: false
         default: false
         type: boolean

@@ -60,6 +60,7 @@ that should stay synchronized with the catalog include:
 
 ```sh
 node scripts/lint-scripts.mjs --profile pr
+node scripts/validate-workflow-yaml.mjs   # offline PyYAML parse of .github/workflows/*.yml
 node scripts/validate-check-profiles.mjs
 node scripts/validate-portfolio-governance.mjs
 node scripts/validate-guidance-consistency.mjs
