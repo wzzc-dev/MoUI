@@ -195,6 +195,24 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
+      # `native/skia_stub_common.h` enables the Linux FontConfig font manager
+      # only when all three `__has_include` probes resolve, and one of them
+      # probes the system `<fontconfig/fontconfig.h>`. Without the dev headers
+      # the leg still compiles, but the published stub can then only fall back
+      # to the directory manager, whose `match_family_style_character` is
+      # always null; CJK (and any other system-only) text silently renders as
+      # nothing at runtime. The runner image does not ship these three, while
+      # `scripts/set_linux_deps.sh` does, so install exactly what the probe
+      # needs instead of the whole Skia stack.
+      - name: Install the Linux font manager headers
+        if: steps.stale.outputs.publish == 'true' && matrix.platform == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+
       # The archive cache is per platform/arch: a macOS arm64 leg must never
       # restore the x64 `.a`, and `build.mbtx` keeps only one archive per
       # platform stamp.
@@ -274,6 +292,23 @@ jobs:
           cp "$stub" "$GITHUB_WORKSPACE/dist/stub-artifact/"
           echo "MOUI_SKIA_STUB_LIB_PATH=$stub" >> "$GITHUB_ENV"
           echo "compiled stub: $stub"
+
+      # The stub fingerprint (`sources_sha256`) only hashes `native/*.cpp|*.h`,
+      # so nothing downstream notices when the same sources are compiled on a
+      # runner that lost a `__has_include` branch: `--check` stays clean and a
+      # degraded archive can replace a good one. Prove the branch is compiled in
+      # before the archive is uploaded.
+      - name: Verify the Linux stub has the FontConfig font manager
+        if: steps.stale.outputs.publish == 'true' && matrix.platform == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! nm -u "$MOUI_SKIA_STUB_LIB_PATH" | grep -q 'SkFontMgr_New_FontConfig'; then
+            echo "fatal: $MOUI_SKIA_STUB_LIB_PATH has no FontConfig font manager" >&2
+            echo "the stub would fall back to the directory manager and drop CJK text" >&2
+            exit 1
+          fi
+          echo "the stub carries SkFontMgr_New_FontConfig"
 
       # MSVC is not on PATH on a fresh Windows runner and `cl` needs the vcvars
       # environment (INCLUDE/LIB), so the import and the build share one step.
