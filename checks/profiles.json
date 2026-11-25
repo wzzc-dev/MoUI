@@ -23,6 +23,13 @@
           ]
         },
         {
+          "name": "workflow YAML validity",
+          "argv": [
+            "node",
+            "scripts/validate-workflow-yaml.mjs"
+          ]
+        },
+        {
           "name": "skia mirror fallback test",
           "argv": [
             "bash",
