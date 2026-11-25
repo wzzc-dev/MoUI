@@ -845,8 +845,8 @@
             "arm64": {
               "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip",
-              "sha256": "b296046652c2083d34d5486c1ec3ccdb4ce7bc9a66b21156c40de254d4ea80ad",
-              "size": 80907,
+              "sha256": "fe13d2557cae4d7e55e27c8ce6596d51bb49376a1642a89ad796ff9cf28e96cf",
+              "size": 80906,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
@@ -855,8 +855,8 @@
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-macos-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-x64.zip",
-              "sha256": "04027f8b43154abc73b6d74093b55788d17ce23e0f1894bc6c2ef563dbd1cb73",
-              "size": 87218,
+              "sha256": "79336c221000dd8d08bb83fef2ed7c06f4dce6820881db33b3eb38bd04fa727b",
+              "size": 87229,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
@@ -869,8 +869,8 @@
             "arm64": {
               "name": "MoUISkiaStub-dev-6d73578a36-linux-Release-arm64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-linux-Release-arm64.zip",
-              "sha256": "e47d89f7e1bd80fff65cd6a76293dc392e93b87e943b14f1ae75c528b4da855c",
-              "size": 100492,
+              "sha256": "b9f7f38c54a328fc607775d6ff353cc96f7c2b127a2068013f9db43d4e456757",
+              "size": 102483,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
@@ -879,8 +879,8 @@
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-linux-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-linux-Release-x64.zip",
-              "sha256": "a79e234ba7d315bdc4f5cbee348c2c841dfd025b23f58659fd2b194fc40c0cbe",
-              "size": 85358,
+              "sha256": "54e6d6d1f509f9bbf8418bdb34c22dad55c6e8ccc79569ab0a6063e40ea6f6d9",
+              "size": 87197,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
                 "libmoui_skia_stub.a"
@@ -893,7 +893,7 @@
             "x64": {
               "name": "MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
               "url": "https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-windows-Release-x64.zip",
-              "sha256": "ffb30771c059976cc554dea294370aaa261649c1ea0ef253807f488472ab0114",
+              "sha256": "705f77b540785d9733a6e8519888adf957af461e30de6a2dfee7685f3dc7bd79",
               "size": 501881,
               "sources_sha256": "0c4b6517b29a131178d91235dffb6f16619faa926f65f3da48d072c51de6d778",
               "library_names": [
