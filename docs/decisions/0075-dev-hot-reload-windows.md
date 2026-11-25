@@ -98,8 +98,9 @@ Port the bridge-host design to Windows without a second protocol or ABI.
 Verified here / on Linux:
 
 - `node --test scripts/moui-dev-hot-plan.test.mjs` covers `win32` mapping,
-  `plugin.dll`, the MSVC link args, and `.obj`/`.lib`/backslash fast-plan
-  matching.
+  `plugin.dll`, the MSVC link args, `.obj`/`.lib`/backslash fast-plan matching,
+  and rejects smoke parameters that collide with read-only PowerShell automatic
+  variables (such as `$PID`).
 - The generator emits a Windows host with `@windows_backend.entry()` and
   `platform=Windows`, and a plugin `moon.pkg` without `-fPIC`; Linux and macOS
   output is unchanged. The POSIX bridge still builds (`moon build
@@ -114,8 +115,9 @@ Verified here / on Linux:
 
 Not verified here (no Windows host in this environment):
 
-- The `_WIN32` branch has not been compiled or linked with MSVC, and the
-  plugin DLL recipe has not run end-to-end.
+- The hosted offscreen job now compiles, links and loads generation 1 under
+  MSVC, but the seven-leg sequence has not yet completed; interactive HWND
+  evidence still requires a matching desktop.
 - Whether `FreeLibrary` unmaps the MoonBit image (`images=1`) is unmeasured;
   the 32-swap budget stays until a matching host records it.
 - `scripts/windows-hot-reload-smoke.ps1 -Run` has not been run on a matching

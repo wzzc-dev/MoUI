@@ -50,4 +50,4 @@
 | Date | Note |
 |------|------|
 | 2026-11-25 | Generator, runner, bridge, CLI, tests, smoke gate, ADR and docs landed; Windows runtime evidence pending. |
-| 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired. The first hosted run reached the plugin link and exposed the inherited MSVC `LINK=/ENTRY:mainCRTStartup`; the runner clears `LINK` for the plugin spawn and the plan test covers it. |
+| 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired. The first hosted run reached the plugin link and exposed the inherited MSVC `LINK=/ENTRY:mainCRTStartup`; the runner clears `LINK` for the plugin spawn and the plan test covers it. The second run linked, loaded and painted generation 1, then failed before leg 2 because a smoke helper bound `[int]$Pid`, which collides with PowerShell's read-only `$PID`; the parameter is now `$ProcessId`, unexpected errors report leg/frame/log, and a Node test scans smoke parameters for automatic-variable collisions. |

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Unit tests for the pure hot-reload planning helpers. Run with:
+// Unit tests for the pure hot-reload planning helpers and static guards for the
+// Windows smoke script. Run with:
 //   node --test scripts/moui-dev-hot-plan.test.mjs
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   WINDOWS_PLUGIN_EXPORTS,
@@ -196,4 +198,33 @@ test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () 
     hotFastStepMatches("cl.exe /c /Fo./unrelated.obj ./unrelated.c", options),
     false,
   );
+});
+
+test("Windows smoke binds no read-only PowerShell automatic variable", () => {
+  const script = readFileSync(
+    new URL("./windows-hot-reload-smoke.ps1", import.meta.url),
+    "utf8",
+  );
+  // PowerShell variable names are case-insensitive, and `$PID` is read-only.
+  // A typed parameter such as `[int]$Pid` throws
+  // SessionStateUnauthorizedAccessException before its body runs, so the smoke
+  // fails without reaching any leg diagnostics.
+  const reserved = new Set([
+    "pid", "host", "pshome", "pscmdlet", "myinvocation", "executioncontext",
+    "nestedpromptlevel", "this",
+  ]);
+  const parameterLists = [
+    ...script.matchAll(/function\s+[A-Za-z_][A-Za-z0-9_-]*\s*\(([\s\S]*?)\)/g),
+    ...script.matchAll(/\bparam\s*\(([\s\S]*?)\)/g),
+  ].map((match) => match[1]);
+  assert.ok(parameterLists.length > 0, "smoke script declares no parameters");
+  for (const list of parameterLists) {
+    for (const match of list.matchAll(/\$([A-Za-z_][A-Za-z0-9_]*)/g)) {
+      assert.equal(
+        reserved.has(match[1].toLowerCase()),
+        false,
+        `parameter $${match[1]} collides with a read-only automatic variable`,
+      );
+    }
+  }
 });

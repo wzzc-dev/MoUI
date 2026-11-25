@@ -187,8 +187,10 @@ function FindHostPid {
   Fail "could not find the dev host child process"
 }
 
-function HostAlive([int]$Pid) {
-  return $null -ne (Get-Process -Id $Pid -ErrorAction SilentlyContinue)
+# `$PID` is a read-only automatic variable and PowerShell names are
+# case-insensitive, so the parameter cannot be called `$Pid`.
+function HostAlive([int]$ProcessId) {
+  return $null -ne (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue)
 }
 
 function ReloadCloseCount {
@@ -442,6 +444,17 @@ try {
 
     Write-Output "windows-hot-reload smoke passed"
   }
+}
+catch {
+  $detail = $_.Exception.Message
+  # Expected checks already carry the leg name and frame/log tail through Fail;
+  # report the same context for an unexpected terminating error (for example a
+  # bad helper binding) instead of surfacing a bare PowerShell exception.
+  if ($detail -notlike "windows-hot-reload smoke failed*") {
+    Write-Output ("windows-hot-reload smoke failed [" + $script:currentLeg + "]: " + $detail +
+      "; last matching frame: " + (LastFrameLine) + "; last log line: " + (LastLogLine))
+  }
+  throw
 }
 finally {
   if ($runner -and -not $runner.HasExited) {
