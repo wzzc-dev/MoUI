@@ -35,11 +35,15 @@ const height = Number(value("--height", "360"));
 const frameIntervalMs = Number(value("--frame-interval-ms", "16"));
 const platformViewPluginModule = value("--platform-view-plugin", "");
 const platformViewPluginFn = value("--platform-view-plugin-fn", "plugin");
-const hostPlatform =
-  value("--platform", "") ||
-  (process.platform === "darwin" ? "macos" : process.platform === "linux" ? "linux" : "");
+function nodePlatformToHost(nodePlatform) {
+  if (nodePlatform === "darwin") return "macos";
+  if (nodePlatform === "linux") return "linux";
+  if (nodePlatform === "win32") return "windows";
+  return "";
+}
+const hostPlatform = value("--platform", "") || nodePlatformToHost(process.platform);
 
-if (hostPlatform !== "macos" && hostPlatform !== "linux") {
+if (!["macos", "linux", "windows"].includes(hostPlatform)) {
   console.error(`moui-dev-hot: unsupported host platform: ${hostPlatform || process.platform}`);
   process.exit(1);
 }
@@ -159,6 +163,9 @@ import {
 `,
 );
 
+// MSVC objects are already position-independent and reject `-fPIC`.
+const pluginCcFlags = hostPlatform === "windows" ? "" : "-fPIC";
+
 writeFileSync(
   join(staging, "plugin", "moon.pkg"),
   `import {
@@ -173,11 +180,11 @@ supported_targets = "native"
 
 pkgtype(kind: "foreign_library")
 
-// The host loads this archive as a shared image. Generated C is compiled PIC on
-// every host; Linux additionally recompiles MoonBit's runtime C members PIC
-// before linking (see scripts/moui-dev.mjs).
+// The host loads this archive as a shared image. POSIX hosts compile the
+// generated C PIC; Linux additionally recompiles MoonBit's runtime C members
+// PIC before linking (see scripts/moui-dev.mjs). MSVC needs no PIC flag.
 options(
-  link: { "native": { "cc-flags": "-fPIC" } },
+  link: { "native": { "cc-flags": "${pluginCcFlags}" } },
 )
 `,
 );
@@ -331,30 +338,45 @@ const platformViewPluginsExpr = platformViewPluginModule
   ? `platform_view_plugins=[@devhost.wrap_platform_view_plugin(@platform_view_plugin.${platformViewPluginFn}(), forward=(id, event) => ignore(@devhost.dispatch_event(@core.AppEvent::PlatformView(id, event))))]`
   : "platform_view_plugins=[]";
 
-const hostBackend =
-  hostPlatform === "macos"
-    ? {
-        importLine: `"wzzc-dev/moui/backend/macos"`,
-        timerExpr: "@macos.macos_timer_source()",
-        optionsExpr: `@macos.MacosHostAppOptions::new(
+const hostBackends = {
+  macos: {
+    importLine: `"wzzc-dev/moui/backend/macos"`,
+    timerExpr: "@macos.macos_timer_source()",
+    optionsExpr: `@macos.MacosHostAppOptions::new(
     event_sources=Some(sources),
     driver_hooks=Some(@devhost.driver_hooks()),
     ${platformViewPluginsExpr},
   )`,
-        entryExpr: "@macos.entry(options=options)",
-        rendererPlatform: "MacOS",
-      }
-    : {
-        importLine: `"wzzc-dev/moui/backend/linux" @linux_backend`,
-        timerExpr: "@linux_backend.linux_timer_source()",
-        optionsExpr: `@linux_backend.LinuxHostAppOptions::new(
+    entryExpr: "@macos.entry(options=options)",
+    rendererPlatform: "MacOS",
+  },
+  linux: {
+    importLine: `"wzzc-dev/moui/backend/linux" @linux_backend`,
+    timerExpr: "@linux_backend.linux_timer_source()",
+    optionsExpr: `@linux_backend.LinuxHostAppOptions::new(
     event_sources=Some(sources),
     driver_hooks=Some(@devhost.driver_hooks()),
     ${platformViewPluginsExpr},
   )`,
-        entryExpr: "@linux_backend.entry(options=options)",
-        rendererPlatform: "Linux",
-      };
+    entryExpr: "@linux_backend.entry(options=options)",
+    rendererPlatform: "Linux",
+  },
+  // The Windows timer callback only constructs the `Poll` message; the
+  // plugin swap itself runs in `update` on the host UI thread. The Windows
+  // backend has no driver-hooks option, so host events and platform-view
+  // plugins are passed through WindowsHostAppOptions instead.
+  windows: {
+    importLine: `"wzzc-dev/moui/backend/windows" @windows_backend`,
+    timerExpr: "@windows_backend.windows_timer_source()",
+    optionsExpr: `@windows_backend.WindowsHostAppOptions::new(
+    event_sources=Some(sources),
+    ${platformViewPluginsExpr},
+  )`,
+    entryExpr: "@windows_backend.entry(options=options)",
+    rendererPlatform: "Windows",
+  },
+};
+const hostBackend = hostBackends[hostPlatform];
 
 writeFileSync(
   join(staging, "host", "moon.pkg"),

@@ -330,9 +330,9 @@ Linux (ADR 0073), and ~11.3–12.0 s for the richer probe in the Phase 2A smoke
 (initial ~16.5 s; dominated by compiling generated plugin C). The host renderer
 caches images, fonts, shaping and layers across generations, so an in-place
 asset change can stay stale; cache invalidation on swap is explicit debt in ADR
-0074. Windows hot mode is still its own PR; IME, semantics and platform views
-are implemented for native macOS/Linux in Phase 2B, and Web hot reload is
-implemented (ADR 0078). See ADR 0072–0074, 0076, 0078.
+0074. IME, semantics and platform views are implemented for native macOS/Linux
+in Phase 2B, Web hot reload is implemented (ADR 0078), and Windows uses the
+same bridge host under ADR 0075. See ADR 0072–0078.
 
 On Web, `--hot` makes the dev reload state-preserving. It generates a
 gitignored `moui_devhost/dev_web/` composition root from the app's `web_wasm`
@@ -345,6 +345,18 @@ opted-in model, focus, caret and scroll survive. The app provides
 fixture is). Run it from the repo root as `moui dev --package <app>/web_wasm
 --web --hot`. Core, renderer and backend edits still need a dev-loop restart;
 the watcher follows the app project. See ADR 0078.
+
+On Windows the host uses `@windows_backend.entry()` and
+`@render_skia.from_env(platform=Windows)`. The plugin is a `foreign_library`
+archive (`plugin.lib`); the runner links it with
+`link.exe /DLL /WHOLEARCHIVE:... /EXPORT:dev_*` plus moon's `/MT` default
+libraries, because generated C does not `dllexport` `#export_name` functions.
+`LoadLibraryW` / `FreeLibrary` replace `dlopen` / `dlclose`. Run the dev loop
+from a Developer Command Prompt (`vcvarsall.bat x64`) so `moon`, `cl.exe`,
+`lib.exe` and `link.exe` share the MSVC environment; a plain shell fails at
+plugin link. Windows `FreeLibrary` image retention is not yet measured, so the
+runner keeps the conservative 32-swap budget. The matching-host PowerShell
+smoke is manual and has not been run in CI; see ADR 0075.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev

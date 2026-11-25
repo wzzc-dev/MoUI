@@ -503,6 +503,43 @@
         "artifacts/web-hot-reload/report.json",
         "artifacts/web-hot-reload/smoke.log"
       ]
+    },
+    {
+      "id": "windows.native-hot-reload",
+      "tier": "nightly",
+      "kind": "native-hot-reload-smoke",
+      "host": "matching-host",
+      "purpose": "Drive the Windows bridge host and counter plugin from a Developer Command Prompt: edit the app and assert a new generation swaps into the same host pid, force a compile error and assert the previous generation stays live, then fix it and assert recovery, including the Windows FreeLibrary image-unmap marker. Manual matching-host evidence; not part of the default daily check and not wired into the Windows platform-evidence workflow yet.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "scripts/windows-hot-reload-smoke.ps1",
+            "-Run"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-windows-platform-evidence.yml",
+        "gate": "release-manual"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/development.md",
+        "docs/decisions/0075-dev-hot-reload-windows.md"
+      ],
+      "artifacts": [
+        "artifacts/windows-hot-reload/smoke.log"
+      ]
     }
   ]
 }

@@ -28,7 +28,7 @@ fn dev_usage() -> String {
     #|  --port PORT              Web server port. Defaults to 3000.
     #|  --state PATH             Optional state file passed as MOUI_DEV_STATE_FILE.
     #|  --inspect                Publish a DevTools document for `moui inspect`.
-    #|  --hot                    Native (Linux or macOS): keep the window and swap the app plugin.
+    #|  --hot                    Native (Linux, macOS, or Windows): keep the window and swap the app plugin.
     #|  --runner PATH            Node runner path. Defaults to .moui/dev.mjs or scripts/moui-dev.mjs.
     #|  --web                    Serve Web output and inject the dev client.
     #|  --once, --build-only     Build once and exit.
@@ -78,10 +78,12 @@ fn dev_hot_conflicts_with_web(args : Array[String]) -> Bool {
 }
 
 ///|
-/// `--hot` is supported on native Linux and macOS hosts only.
+/// `--hot` is supported on native Linux, macOS, and Windows hosts only.
 fn dev_hot_host_supported(platform : @plan.HostPlatform) -> Bool {
   match platform {
-    @plan.HostPlatform::Macos | @plan.HostPlatform::Linux => true
+    @plan.HostPlatform::Macos
+    | @plan.HostPlatform::Linux
+    | @plan.HostPlatform::Windows => true
     _ => false
   }
 }
@@ -215,7 +217,7 @@ fn run_dev(parsed : ParsedDev) -> CliOutcome {
   }
   if parsed.hot && !dev_hot_host_supported(detect_host_platform()) {
     return failed_outcome(
-      "moui dev --hot requires a native Linux or macOS host",
+      "moui dev --hot requires a native Linux, macOS, or Windows host",
       parsed.json,
       dev_usage(),
     )
