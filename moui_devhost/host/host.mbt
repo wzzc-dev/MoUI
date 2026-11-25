@@ -379,11 +379,25 @@ pub fn dispatch_event_json(payload : String) -> Bool {
 }
 
 ///|
-/// Dev-only event injection. `MOUI_HOT_INJECT_FILE` names a file of JSON
-/// `AppEvent` lines; each complete line is dispatched exactly once. The hot
-/// smoke uses this to synthesize input (a click that increments the model)
-/// without depending on `xdotool` or a platform-specific input driver.
-pub fn poll_injected_events() -> Unit {
+/// Split the injection text into complete lines and the number of lines
+/// consumed. The last piece is incomplete whether or not the file ends in a
+/// newline; only complete lines are dispatched, so a partially written append
+/// is picked up on the next poll instead of being lost as invalid JSON.
+fn injected_complete_lines(text : String) -> (Array[String], Int32) {
+  let pieces = text.split("\n").to_array()
+  let complete = if pieces.length() > 0 { pieces.length() - 1 } else { 0 }
+  let lines : Array[String] = []
+  for index in 0..<complete {
+    lines.push(pieces[index].to_owned())
+  }
+  (lines, complete)
+}
+
+///|
+/// Injection hook with an injectable dispatcher. The public entry point
+/// forwards to the bridge; tests use this to observe complete-line delivery
+/// without a loaded plugin.
+fn poll_injected_events_with(dispatch : (String) -> Bool) -> Unit {
   let path = match env_nonempty("MOUI_HOT_INJECT_FILE") {
     Some(path) => path
     None => return
@@ -393,22 +407,28 @@ pub fn poll_injected_events() -> Unit {
   }
   let bytes = @fs.read_file_to_bytes(path) catch { _ => return }
   let text = @utf8.decode_lossy(bytes[:], ignore_bom=true)
-  let pieces = text.split("\n").to_array()
-  // The last piece is incomplete whether or not the file ends in a newline;
-  // only complete lines are dispatched, so a partially written append is
-  // picked up on the next poll instead of being lost as invalid JSON.
-  let complete = if pieces.length() > 0 { pieces.length() - 1 } else { 0 }
-  let mut consumed = 0
-  for index in 0..<complete {
-    let line = pieces[index].trim()
+  let (lines, consumed) = injected_complete_lines(text)
+  for index in 0..<lines.length() {
+    let line = lines[index].trim()
     if index >= host_injected_lines.val && line != "" {
-      let accepted = dispatch_event_json(line.to_owned())
+      let accepted = dispatch(line.to_owned())
       let prefix = if accepted { "injected " } else { "rejected injection " }
       hot_debug(prefix + line.to_owned())
     }
-    consumed = consumed + 1
   }
   host_injected_lines.val = consumed
+}
+
+///|
+/// Dev-only event injection. `MOUI_HOT_INJECT_FILE` names a file of JSON
+/// `AppEvent` lines; each complete line is dispatched exactly once. The hot
+/// smoke uses this to synthesize input (a click that increments the model)
+/// without depending on `xdotool` or a platform-specific input driver.
+///
+/// The offscreen dev entry calls this directly from its frame loop, so input
+/// injection does not require a window message loop.
+pub fn poll_injected_events() -> Unit {
+  poll_injected_events_with(dispatch_event_json)
 }
 
 ///|

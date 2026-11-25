@@ -5,8 +5,12 @@ import {
   "moonbitlang/x/fs",
   "wzzc-dev/moui/apphost",
   "wzzc-dev/moui/backend" @backend_host,
+  "wzzc-dev/moui/backend/common/image" @window_image,
+  "wzzc-dev/moui/backend/common/image/native" @host_image_native,
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
   "wzzc-dev/moui_devhost/protocol",
 }
 

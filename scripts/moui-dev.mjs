@@ -9,6 +9,7 @@ import { spawn } from "node:child_process";
 import {
   hotFastStepMatches,
   hotLinkArgs,
+  hotLinkEnvironment,
   hotPlatformForNodePlatform,
   hotPluginFileName,
   picRuntimeCompile,
@@ -376,7 +377,9 @@ async function linkHotPlugin(dylib) {
       pluginArchive: hotPluginArchive,
       output: dylib,
     });
-    return run(process.env.MOUI_HOT_LINKER ?? "link.exe", args);
+    return run(process.env.MOUI_HOT_LINKER ?? "link.exe", args, {
+      env: hotLinkEnvironment("windows"),
+    });
   }
   let args;
   if (hotPlatform === "linux") {

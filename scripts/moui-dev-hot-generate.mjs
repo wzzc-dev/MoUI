@@ -378,6 +378,82 @@ const hostBackends = {
 };
 const hostBackend = hostBackends[hostPlatform];
 
+// Windows hosted runners cannot create an interactive HWND, so the generated
+// Windows host can opt into the dev-only offscreen entry. Other platforms keep
+// their existing generated output byte-for-byte.
+const offscreenSupported = hostPlatform === "windows";
+
+const windowedSubscriptionsExpr = `  @core.Subscription::batch([
+    @services.TimerSource::subscription(
+      ${hostBackend.timerExpr},
+      interval_ms=250.0,
+      map=_frame => Poll,
+      key="dev-hot/poll",
+      label="Dev hot poll",
+    ),
+    @services.TimerSource::subscription(
+      ${hostBackend.timerExpr},
+      interval_ms=${frameIntervalMs.toFixed(1)},
+      map=frame => Tick(frame),
+      key="dev-hot/frame",
+      label="Dev hot frame",
+    ),
+    host_event_sources()
+    .host_events()
+    .subscription(
+      key="dev-hot/host-events",
+      label="Dev hot host events",
+      map=event =>
+        match event {
+          // Resize already reaches the plugin through the runtime event
+          // observer; forwarding it here would dispatch it twice.
+          @backend_host.Event::Resized(_) => None
+          _ =>
+            if @devhost.forward_host_event(event) {
+              Some(Input)
+            } else {
+              None
+            }
+        },
+    ),
+  ])`;
+
+// In offscreen mode the loop polls reloads and synthetic input itself, so only
+// the host frame tick stays a subscription. It uses the offscreen timer source
+// so the loop can fire it on the drawing thread with real monotonic time;
+// the platform timer source would report time zero and never advance plugin
+// timers.
+const offscreenSubscriptionsExpr = `  if @devhost.offscreen_requested() {
+    @core.Subscription::batch([
+      @services.TimerSource::subscription(
+        @devhost.offscreen_timer_source(),
+        interval_ms=${frameIntervalMs.toFixed(1)},
+        map=frame => Tick(frame),
+        key="dev-hot/frame",
+        label="Dev hot frame",
+      ),
+    ])
+  } else {
+${windowedSubscriptionsExpr}
+  }`;
+
+const subscriptionsExpr = offscreenSupported
+  ? offscreenSubscriptionsExpr
+  : windowedSubscriptionsExpr;
+
+const backendExpr = `  let backend = if @devhost.offscreen_requested() {
+    @devhost.offscreen_entry(
+      width=${width.toFixed(1)},
+      height=${height.toFixed(1)},
+      frame_interval_ms=${Math.round(frameIntervalMs)},
+    )
+  } else {
+    ${hostBackend.entryExpr}
+  }`;
+
+const backendPrelude = offscreenSupported ? backendExpr + "\n" : "";
+const backendRef = offscreenSupported ? "backend" : hostBackend.entryExpr;
+
 writeFileSync(
   join(staging, "host", "moon.pkg"),
   `import {
@@ -435,40 +511,7 @@ fn host_event_sources() -> @apphost.HostPlatformEventSources {
 
 ///|
 fn subscriptions(_model : HostModel) -> @core.Subscription[HostMsg] {
-  @core.Subscription::batch([
-    @services.TimerSource::subscription(
-      ${hostBackend.timerExpr},
-      interval_ms=250.0,
-      map=_frame => Poll,
-      key="dev-hot/poll",
-      label="Dev hot poll",
-    ),
-    @services.TimerSource::subscription(
-      ${hostBackend.timerExpr},
-      interval_ms=${frameIntervalMs.toFixed(1)},
-      map=frame => Tick(frame),
-      key="dev-hot/frame",
-      label="Dev hot frame",
-    ),
-    host_event_sources()
-    .host_events()
-    .subscription(
-      key="dev-hot/host-events",
-      label="Dev hot host events",
-      map=event =>
-        match event {
-          // Resize already reaches the plugin through the runtime event
-          // observer; forwarding it here would dispatch it twice.
-          @backend_host.Event::Resized(_) => None
-          _ =>
-            if @devhost.forward_host_event(event) {
-              Some(Input)
-            } else {
-              None
-            }
-        },
-    ),
-  ])
+${subscriptionsExpr}
 }
 
 ///|
@@ -558,7 +601,7 @@ fn main {
         None => ()
       }
   }
-  @apphost.run_app("${title}", runtime)
+${backendPrelude}  @apphost.run_app("${title}", runtime)
   .render_all(
     @render_skia.from_env(
       platform=${hostBackend.rendererPlatform},
@@ -570,7 +613,7 @@ fn main {
         ),
     ),
   )
-  .backend(${hostBackend.entryExpr})
+  .backend(${backendRef})
   .run()
   @devhost.shutdown()
 }

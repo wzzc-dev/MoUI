@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-// Unit tests for the pure hot-reload planning helpers. Run with:
+// Unit tests for the pure hot-reload planning helpers and static guards for the
+// Windows smoke script. Run with:
 //   node --test scripts/moui-dev-hot-plan.test.mjs
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   WINDOWS_PLUGIN_EXPORTS,
   hotFastStepMatches,
   hotLinkArgs,
+  hotLinkEnvironment,
   hotPlatformForNodePlatform,
   hotPluginFileName,
   picRuntimeCompile,
@@ -162,6 +165,12 @@ test("Windows link whole-archives the archive and exports every ABI entry", () =
   assert.equal(args.includes("libbacktrace.a"), false);
 });
 
+test("Windows plugin link clears the inherited MSVC LINK environment", () => {
+  assert.deepEqual(hotLinkEnvironment("windows"), { LINK: "" });
+  assert.deepEqual(hotLinkEnvironment("linux"), {});
+  assert.deepEqual(hotLinkEnvironment("macos"), {});
+});
+
 test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () => {
   const options = { appModule: "examples/counter", archiveFragment: "moui_dev_hot/plugin/plugin.lib" };
   assert.equal(
@@ -189,4 +198,50 @@ test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () 
     hotFastStepMatches("cl.exe /c /Fo./unrelated.obj ./unrelated.c", options),
     false,
   );
+});
+
+test("Windows smoke rejects partial frame traces while polling", () => {
+  const script = readFileSync(
+    new URL("./windows-hot-reload-smoke.ps1", import.meta.url),
+    "utf8",
+  );
+  const start = script.indexOf("function WaitForFrameAfter");
+  const end = script.indexOf("function AssertKinds", start);
+  assert.ok(start >= 0 && end > start, "WaitForFrameAfter not found");
+  const body = script.slice(start, end);
+  // The host writes traces while the smoke reads them, so only a `]`-terminated
+  // line is complete; the poll also inspects more than just the newest line.
+  assert.match(body, /texts=\\\[/);
+  assert.match(body, /\]\\s\*\$/);
+  assert.match(body, /\$tailCount/);
+  assert.match(body, /for \(\$offset = 1;/);
+});
+
+test("Windows smoke binds no read-only PowerShell automatic variable", () => {
+  const script = readFileSync(
+    new URL("./windows-hot-reload-smoke.ps1", import.meta.url),
+    "utf8",
+  );
+  // PowerShell variable names are case-insensitive, and `$PID` is read-only.
+  // A typed parameter such as `[int]$Pid` throws
+  // SessionStateUnauthorizedAccessException before its body runs, so the smoke
+  // fails without reaching any leg diagnostics.
+  const reserved = new Set([
+    "pid", "host", "pshome", "pscmdlet", "myinvocation", "executioncontext",
+    "nestedpromptlevel", "this",
+  ]);
+  const parameterLists = [
+    ...script.matchAll(/function\s+[A-Za-z_][A-Za-z0-9_-]*\s*\(([\s\S]*?)\)/g),
+    ...script.matchAll(/\bparam\s*\(([\s\S]*?)\)/g),
+  ].map((match) => match[1]);
+  assert.ok(parameterLists.length > 0, "smoke script declares no parameters");
+  for (const list of parameterLists) {
+    for (const match of list.matchAll(/\$([A-Za-z_][A-Za-z0-9_]*)/g)) {
+      assert.equal(
+        reserved.has(match[1].toLowerCase()),
+        false,
+        `parameter $${match[1]} collides with a read-only automatic variable`,
+      );
+    }
+  }
 });

@@ -819,22 +819,48 @@ The script restores the fixture source through an `EXIT` trap and needs `node`
 ### Windows native hot reload smoke
 
 `smoke/gates.json` carries `windows.native-hot-reload` (nightly tier,
-`mode: manual`, host `matching-host`): from a Developer Command Prompt it runs
-the real bridge host, edits `examples/counter/app`, asserts a new generation
-loads into the same host PID with `reload-old FreeLibrary=1 rc=0 images=1`,
-keeps the previous generation live through a compile error, then fixes it.
+`mode: manual`, host `matching-host`). The default invocation runs the real
+windowed bridge host from a Developer Command Prompt, edits
+`examples/counter/app`, asserts a new generation loads into the same host PID
+with `reload-old FreeLibrary=1 rc=0 images=1`, keeps the previous generation
+live through a compile error, then fixes it.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-hot-reload-smoke.ps1 -Run
 ```
 
-The script restores the counter source in `finally`, writes
-`artifacts/windows-hot-reload/smoke.log` (+ `smoke.err.log`), and needs
-`node`, `moon`, `cl.exe`, `lib.exe`, `link.exe` (vcvarsall x64) plus real Skia.
-CI does not run it: `moui-windows-platform-evidence.yml` exists, but wiring an
-interactive HWND/Skia smoke is unproven, so the gate stays manual like Linux;
-until a matching host records that log, the hot path is build/test-verified
-only and the `_WIN32` branch is uncompiled here (ADR 0075).
+Hosted `windows-latest` runners are Session 0 and cannot create an interactive
+HWND, so CI uses the dev-only offscreen entry instead:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-hot-reload-smoke.ps1 -Run -Offscreen
+```
+
+`-Offscreen` exports `MOUI_HOT_OFFSCREEN=1` to the `moui dev --hot` runner and
+drives `examples/hot_reload_probe` plus its imported
+`examples/hot_reload_widgets` package through seven legs headless: offscreen
+surface and host startup (and no `moui windowing backend:` marker); generation 1
+frame vocabulary with `unsupported=0` and advancing `Ticks:`; a synthetic
+`MOUI_HOT_INJECT_FILE` click that reaches `Count: 1`; generation 2 after an app
+edit with `Count: 1` preserved, `reload-old FreeLibrary=1 rc=0 images=1`, and a
+cache-reset marker; generation 3 after editing the shared widget package; a
+compile error that keeps generation 3 live; and generation 4 recovery with state
+intact. Generation polling, synthetic input and host frame ticks run directly on
+the offscreen loop, so no window message loop is involved. Failures print the
+leg name and the last matching frame/log line, and missing offscreen support
+fails loudly instead of silently falling back to a windowed entry.
+
+The script restores the app and widget sources in `finally`, writes
+`artifacts/windows-hot-reload/smoke.log` (+ `smoke.err.log`, and
+`events.jsonl` for offscreen), and needs `node`, `moon`, `cl.exe`, `lib.exe`,
+`link.exe` (vcvarsall x64) plus real Skia. The `windows-hot-reload-offscreen`
+job of `.github/workflows/ci.yml` runs the offscreen smoke on `windows-latest`
+for pull requests to `main` and for `workflow_dispatch` runs with
+`run_windows_hot_reload_offscreen` true (default true), and uploads the evidence
+directory. The windowed invocation stays a manual matching-host gate;
+`moui-windows-platform-evidence.yml` does not execute an interactive HWND/Skia
+hot smoke, matching Linux. Hosted offscreen evidence does not establish
+windowed presentation claims (ADR 0075).
 
 ### Embedded runtime backends
 

@@ -52,6 +52,11 @@ Port the bridge-host design to Windows without a second protocol or ABI.
   generated entry points; `moonbit_init` arrives through its existing
   `__declspec(dllexport)`. The library list mirrors moon's native executable
   link so plugin and host agree on the static CRT and system libraries.
+  `link.exe` also reads the `LINK` environment variable; the workspace MSVC
+  helper sets it to the windowed executable recipe (`/ENTRY:mainCRTStartup`),
+  so the runner clears `LINK` for the plugin spawn. Otherwise that inherited
+  entry point pulls `libcmt.lib(exe_main.obj)` and the link fails with an
+  unresolved `main`.
 - `moui_devhost/host/moui_devhost_bridge.c` gains a `_WIN32` branch:
   `LoadLibraryW` (UTF-8 via `MultiByteToWideChar`), `GetProcAddress`,
   `FreeLibrary`, `GetLastError` diagnostics, and a Toolhelp32 module-count
@@ -74,38 +79,98 @@ Port the bridge-host design to Windows without a second protocol or ABI.
   `$MOON_HOME` resolves via `os.homedir()` because `HOME` is normally unset.
   `moui_cli` accepts Windows for `--hot`; Web/wasm remain rejected at parse
   time and in the runner.
+- An opt-in dev-only offscreen entry (`MOUI_HOT_OFFSCREEN=1`) lets the generated
+  Windows host run without an HWND. `moui_devhost/host/offscreen.mbt` builds a
+  CPU-presented `HostSurface` (no native surface), resolves the same
+  `@render_skia` provider through `@apphost.resolve_renderer_session`, and drives
+  the same `DevBridgeView` frame tree through `@apphost.HostRuntimeDriver`, so
+  `augment_frame`, platform views, semantics and full damage behave as in the
+  windowed host. The host tick is a dev-owned `offscreen_timer_source()` pumped
+  synchronously on the drawing thread with `QueryPerformanceCounter`
+  milliseconds; the platform timer source would report time zero and freeze
+  plugin timers. The loop calls `poll_reload()` and `poll_injected_events()`
+  directly, so `MOUI_HOT_INJECT_FILE` needs no window message loop. The bridge
+  ABI is unchanged, the windowed default is byte-for-byte unchanged, and the
+  mode is not selectable in production entrypoints.
 
 ## Verification status (important)
 
 Verified here / on Linux:
 
 - `node --test scripts/moui-dev-hot-plan.test.mjs` covers `win32` mapping,
-  `plugin.dll`, the MSVC link args, and `.obj`/`.lib`/backslash fast-plan
-  matching.
+  `plugin.dll`, the MSVC link args, `.obj`/`.lib`/backslash fast-plan matching,
+  and rejects smoke parameters that collide with read-only PowerShell automatic
+  variables (such as `$PID`).
 - The generator emits a Windows host with `@windows_backend.entry()` and
-  `platform=Windows`, and a plugin `moon.pkg` without `-fPIC`; Linux output is
-  unchanged. The POSIX bridge still builds (`moon build moui_devhost/host
-  --target native`).
+  `platform=Windows`, and a plugin `moon.pkg` without `-fPIC`; Linux and macOS
+  output is unchanged. The POSIX bridge still builds (`moon build
+  moui_devhost/host --target native`).
+- `moon test moui_devhost/host --target native` covers offscreen env parsing
+  (unset/empty/`0` keep the windowed default), the CPU-only offscreen surface
+  and presenter, the offscreen timer pump firing on host monotonic time, and
+  the complete-line synthetic-input hook with exactly-once delivery.
 - Moon's Windows lowering was inspected directly: `.lib` archives,
   `lib.exe /Out:`, `.obj` generated C, no `libmoonbitrun.o`, `/MT` CRT, and the
   default library list above.
 
-Not verified here (no Windows host in this environment):
+Not verified here (no interactive Windows desktop in this environment):
 
-- The `_WIN32` branch has not been compiled or linked with MSVC, and the
-  plugin DLL recipe has not run end-to-end.
-- Whether `FreeLibrary` unmaps the MoonBit image (`images=1`) is unmeasured;
-  the 32-swap budget stays until a matching host records it.
-- `scripts/windows-hot-reload-smoke.ps1` has not been run. It is a manual
-  matching-host gate; `moui-windows-platform-evidence.yml` exists but does not
-  execute an interactive HWND/Skia hot smoke, matching the Linux gate. No
-  Windows claim should be promoted until the log shows `reload-old
-  FreeLibrary=1 rc=0 images=1` plus the same PID/generation sequence.
+- Interactive HWND presentation still requires a matching Windows desktop; the
+  hosted offscreen job proves the plugin load/swap and frame-tree path, not
+  windowed presentation.
+- The hosted offscreen smoke records `reload-old FreeLibrary=1 rc=0 images=1`
+  after each of three swaps, so `FreeLibrary` unmaps the plugin image there; the
+  32-swap budget stays as a conservative bound until the windowed gate repeats
+  it.
+- `scripts/windows-hot-reload-smoke.ps1 -Run` has not been run on a matching
+  interactive desktop here. It remains the manual matching-host gate for the
+  windowed path; `moui-windows-platform-evidence.yml` does not execute an
+  interactive HWND/Skia hot smoke, matching the Linux gate. No windowed claim
+  should be promoted until the log shows `reload-old FreeLibrary=1 rc=0
+  images=1` plus the same PID/generation sequence.
 - `moui dev --hot` must run from a Developer Command Prompt (`vcvarsall.bat
   x64`) so `moon`, `cl.exe`, `lib.exe` and `link.exe` share the MSVC
   environment; a plain shell is expected to fail at plugin link. That is an
-  environment error, not a silent degradation. CI can provide the environment,
-  but interactive renderer evidence there remains unproven.
+  environment error, not a silent degradation. CI provides that environment for
+  the offscreen job; interactive HWND renderer evidence there remains unproven
+  because hosted runners are Session 0.
+
+## Evidence: hosted offscreen smoke (CI)
+
+`.github/workflows/ci.yml` carries the `windows-hot-reload-offscreen` job on
+`windows-latest`. It runs for pull requests whose base is `main` and for
+`workflow_dispatch` when `run_windows_hot_reload_offscreen` is true (default
+true). The job reuses the Windows MSVC/Skia setup steps, sources
+`scripts/windows/msvc_env.ps1`, enables MSVC C11 atomics, then runs:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-hot-reload-smoke.ps1 -Run -Offscreen
+```
+
+The `-Offscreen` switch exports `MOUI_HOT_OFFSCREEN=1` to the dev runner, points
+`MOUI_HOT_INJECT_FILE` at `artifacts/windows-hot-reload/events.jsonl`, and runs
+the seven probe legs headless: offscreen surface/host startup; generation 1
+frame vocabulary (`unsupported=0`) with advancing ticks; a synthetic click
+(`Count: 1`); generation 2 after an app edit with `Count: 1` preserved, plus
+`reload-old FreeLibrary=1 rc=0 images=1` and a cache-reset marker; generation 3
+after editing the imported widget package; a compile error that keeps generation
+3 live; and generation 4 recovery with state intact. Every leg failure reports
+the leg name plus the last matching frame/log line. The job uploads
+`artifacts/windows-hot-reload/` as CI evidence; those files stay out of git.
+This is hosted offscreen evidence, not a replacement for the manual windowed
+matching-host gate.
+
+On `windows-latest` the job passed all seven legs: generation 1 painted at
+520x360 CPU offscreen with `unsupported=0` and advancing ticks; the synthetic
+`MOUI_HOT_INJECT_FILE` click reached `Count: 1`; generations 2-4 preserved that
+count across an app edit, a shared-widget edit, a retained compile error, and
+recovery, with three `reload-old FreeLibrary=1 rc=0 images=1` swaps and
+cache-reset markers.
+
+Frame waits require a complete `]`-terminated trace and inspect the newest few
+complete frames after the leg marker, because the host writes traces while the
+smoke reads them. A later run exposed that race (leg 2 timed out while complete
+frames were present); the wait no longer samples a partial trailing line.
 
 ## Options Considered
 

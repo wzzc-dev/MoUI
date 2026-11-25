@@ -10,12 +10,22 @@
 #include <process.h>
 #include <wchar.h>
 #else
+// `clock_gettime` is a POSIX extension that Apple headers hide under strict
+// language modes; declare the feature level before any system header. Pair it
+// with `_DARWIN_C_SOURCE` so `<mach-o/dyld.h>` keeps `_dyld_image_count`.
+#if defined(__APPLE__) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 199309L
+#endif
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE 1
+#endif
 // `dl_iterate_phdr` is a GNU extension; define the feature macro before any
 // system header so the Linux image-count probe compiles under plain `cc`.
 #if !defined(__APPLE__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 1
 #endif
 #include <dlfcn.h>
+#include <time.h>
 #include <unistd.h>
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
@@ -418,6 +428,48 @@ void moui_devhost_destroy(void) {
   int close_rc = hot_close_library(g_current.handle);
   hot_log_close("shutdown", g_current.handle, close_rc);
   hot_clear_api(&g_current);
+}
+
+// Dev-only offscreen pacing. The bridge host runs a synchronous frame loop
+// outside any window backend, so it needs a blocking millisecond sleep without
+// depending on a platform package. These are additive host-side facilities;
+// they never cross the plugin ABI.
+MOONBIT_FFI_EXPORT
+void moui_devhost_sleep_ms(int32_t milliseconds) {
+  if (milliseconds <= 0) {
+    return;
+  }
+#if defined(_WIN32)
+  Sleep((DWORD)milliseconds);
+#else
+  struct timespec request;
+  request.tv_sec = milliseconds / 1000;
+  request.tv_nsec = (long)(milliseconds % 1000) * 1000000L;
+  while (nanosleep(&request, &request) != 0) {
+    // A signal can shorten the sleep; resume with the remaining time.
+  }
+#endif
+}
+
+// Monotonic milliseconds for the offscreen runtime clock and plugin frame
+// ticks. QueryPerformanceCounter is used on Windows because it is available
+// regardless of the targeted _WIN32_WINNT and does not wrap during a run.
+MOONBIT_FFI_EXPORT
+double moui_devhost_now_ms(void) {
+#if defined(_WIN32)
+  LARGE_INTEGER frequency;
+  LARGE_INTEGER counter;
+  QueryPerformanceFrequency(&frequency);
+  QueryPerformanceCounter(&counter);
+  if (frequency.QuadPart == 0) {
+    return 0.0;
+  }
+  return (double)counter.QuadPart * 1000.0 / (double)frequency.QuadPart;
+#else
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  return (double)now.tv_sec * 1000.0 + (double)now.tv_nsec / 1000000.0;
+#endif
 }
 
 // Called after the plugin has flushed state and before the host is replaced.
