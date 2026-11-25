@@ -64,8 +64,8 @@ fn validate_renderer_policy_source(
   for
     token in [
       "pub fn raster(", "pub fn gpu(", "pub fn from_env(", "platform~ : NativeGpuPlatform",
-      "MOUI_SKIA_RENDERER", "NativeRendererMode::parse", "providers_for_mode(platform, mode)",
-      "[gpu(platform~), raster()]",
+      "MOUI_SKIA_RENDERER", "NativeRendererMode::parse", "providers_for_mode(platform, mode",
+      "on_session_bound~", "[gpu(platform~, on_session_bound~), raster(on_session_bound~)]",
     ] {
     require_token(source, token, path, failures)
   }

@@ -143,6 +143,17 @@ test "bridge semantics clear stale nodes on a plugin generation swap" {
 }
 
 ///|
+test "renderer cache reset runs with swap cleanup" {
+  let runs = Ref(0)
+  install_renderer_cache_reset(Some(() => runs.val = runs.val + 1))
+  clear_after_reload()
+  assert_eq(runs.val, 1)
+  install_renderer_cache_reset(None)
+  clear_after_reload()
+  assert_eq(runs.val, 1)
+}
+
+///|
 fn bridge_test_fake_plugin(
   installed : Ref[@backend_host.PlatformViewEventCallback?],
   disposed : Ref[Int32],

@@ -233,6 +233,7 @@ pub fn ImageResourceLifecycle::mark_loading(Self, String) -> Bool
 pub fn ImageResourceLifecycle::mark_ready(Self, String, width~ : Int32, height~ : Int32) -> Bool
 pub fn ImageResourceLifecycle::new() -> Self
 pub fn ImageResourceLifecycle::not_equal(Self, Self) -> Bool
+pub fn ImageResourceLifecycle::reset(Self) -> Unit
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[@render.ImageResourceRecord]
 pub fn ImageResourceLifecycle::to_repr(Self) -> @debug.Repr
 

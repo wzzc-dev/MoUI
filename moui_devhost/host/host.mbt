@@ -55,6 +55,13 @@ let host_generation : Ref[String] = Ref("")
 let host_reloads : Ref[Int32] = Ref(0)
 
 ///|
+/// Installed by the generated host once a renderer session binds. The host
+/// keeps the renderer across plugin swaps, so the session must drop source-
+/// keyed caches after a generation change. `None` means no renderer has bound
+/// yet (startup/shutdown) or a renderer without a reset path was selected.
+let renderer_cache_reset : Ref[(() -> Unit)?] = Ref(None)
+
+///|
 let host_polls : Ref[Int32] = Ref(0)
 
 ///|
@@ -197,6 +204,12 @@ pub fn poll_reload() -> Bool {
   host_generation.val = next_path
   host_reloads.val = host_reloads.val + 1
   clear_after_reload()
+  // `host_reloads` counts swaps; the plugin generation that the host is now
+  // serving is one past it (the initial plugin is generation 1).
+  hot_debug(
+    "renderer caches reset after generation " +
+    (host_reloads.val + 1).to_string(),
+  )
   let limit = reload_limit()
   if limit > 0 && host_reloads.val >= limit {
     // Flush state before replacing the image; the re-exec reads the same
@@ -410,6 +423,7 @@ pub fn shutdown() -> Unit {
   host_settings.val = None
   host_generation.val = ""
   clear_after_reload()
+  renderer_cache_reset.val = None
 }
 
 ///|

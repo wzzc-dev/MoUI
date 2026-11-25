@@ -82,13 +82,9 @@ head `a18074a2` (`run_showcase_smoke=false`, `run_ime_smoke=false`,
 `macos-hot-reload smoke passed` in `artifacts/macos-hot-reload/smoke.log`;
 its readiness leg accepts a painted host frame or the X11 backend line.
 
-**Asset-cache follow-up (Phase 2C).** Trigger: after a successful swap, an image
-or font changed in place with the same path, shaping of changed text, or cached
-layer content still renders from the host cache. The host renderer caches these
-by path/identity for the process lifetime, exposes no invalidation hook, and
-recreating it needs an apphost/renderer lifecycle change. Phase 2A records this
-as explicit debt (cache reset, mtime invalidation, or recreate); Phase 2B stays
-IME/semantics/platform views and Windows/Web.
+**Asset-cache debt resolved (Phase 2C).** ADR 0077 now resets source-keyed host
+renderer caches (images, fonts/shaping, retained layers) after each successful
+swap, so an in-place change at the same path/revision renders new content.
 
 ## Consequences
 

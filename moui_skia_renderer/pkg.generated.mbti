@@ -19,11 +19,11 @@ pub fn create_with_present_target(@core.SurfaceMetrics, SkiaPresentTarget, font_
 
 pub fn create_with_present_target_and_route(@core.SurfaceMetrics, SkiaPresentTarget, surface_route? : SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, surface_damage? : @render.SurfaceDamageCapability) -> SkiaRasterRenderer raise SkiaRendererError
 
-pub fn from_env(platform~ : NativeGpuPlatform) -> Array[@render.RendererProvider]
+pub fn from_env(platform~ : NativeGpuPlatform, on_session_bound? : (@render.RendererSession) -> Unit) -> Array[@render.RendererProvider]
 
-pub fn gpu(platform~ : NativeGpuPlatform, font_resolution? : SkiaFontResolution) -> @render.RendererProvider
+pub fn gpu(platform~ : NativeGpuPlatform, font_resolution? : SkiaFontResolution, on_session_bound? : (@render.RendererSession) -> Unit) -> @render.RendererProvider
 
-pub fn raster(font_resolution? : SkiaFontResolution) -> @render.RendererProvider
+pub fn raster(font_resolution? : SkiaFontResolution, on_session_bound? : (@render.RendererSession) -> Unit) -> @render.RendererProvider
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor
 
@@ -207,6 +207,7 @@ pub fn SkiaRasterRenderer::present_count(Self) -> Int32
 pub fn SkiaRasterRenderer::record_frame_picture(Self, @core.DrawFrame) -> @native.Picture?
 pub fn SkiaRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise SkiaRendererError
 pub fn SkiaRasterRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
+pub fn SkiaRasterRenderer::reset_host_caches(Self) -> Unit
 pub fn SkiaRasterRenderer::resize(Self, @core.SurfaceMetrics) -> Unit raise SkiaRendererError
 pub fn SkiaRasterRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
 pub fn SkiaRasterRenderer::surface_diagnostic_summary(Self) -> String

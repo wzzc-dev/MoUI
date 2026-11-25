@@ -8,8 +8,8 @@ set -euo pipefail
 # click injection for opt-in model state. It proves:
 #   1. generation 1 draws every probe command with unsupported=0 and ticks;
 #   2. a synthetic click reaches the plugin, changing Count: 0 -> Count: 1;
-#   3. editing the app swaps in generation 2 in the same host pid and the
-#      pre-swap Count: 1 survives;
+#   3. editing the app swaps in generation 2 in the same host pid, the
+#      pre-swap Count: 1 survives, and the host renderer cache is reset;
 #   4. editing the shared widget package outside the app module swaps in
 #      generation 3 (dependency-closure watching) with the new shared text;
 #   5. a compile error keeps generation 3 live and the host running;
@@ -232,6 +232,7 @@ gen2_line="$(grep -n -F "hot plugin ready (generation 2" "$log" | tail -n 1 | cu
 wait_for_frame_after "$gen2_line" "generation 2 state-preserved frame" "${MOUI_HOT_SMOKE_TIMEOUT:-300}" \
   "Hot Reload Probe smoke" "Count: 1" "Shared: shared alpha" >/dev/null
 wait_for_log "reload-old dlclose=1 rc=0 images=1" "Linux image unmap"
+wait_for_log "renderer caches reset after generation 2" "generation 2 cache reset"
 [[ "$(find_host_pid)" == "$host_pid" ]] || fail "host pid changed across a reload"
 [[ "$(reload_close_count)" -gt "$closed_before" ]] || fail "generation 2 did not close the previous image"
 echo "generation 2 loaded; host pid retained; pre-swap Count: 1 preserved"
@@ -245,6 +246,7 @@ wait_for_log "hot plugin ready (generation 3" "generation 3 plugin"
 gen3_line="$(grep -n -F "hot plugin ready (generation 3" "$log" | tail -n 1 | cut -d: -f1)"
 wait_for_frame_after "$gen3_line" "generation 3 shared-widget frame" "${MOUI_HOT_SMOKE_TIMEOUT:-300}" \
   "Hot Reload Probe smoke" "Count: 1" "Shared: shared beta" >/dev/null
+wait_for_log "renderer caches reset after generation 3" "generation 3 cache reset"
 [[ "$(find_host_pid)" == "$host_pid" ]] || fail "host pid changed on the shared-package reload"
 [[ "$(reload_close_count)" -gt "$closed_before" ]] || fail "generation 3 did not close the previous image"
 echo "generation 3 loaded from the imported widget package; host pid retained"
@@ -270,6 +272,7 @@ wait_for_frame_after "$gen4_line" "generation 4 recovered frame" "${MOUI_HOT_SMO
   "Hot Reload Probe smoke" "Shared: shared beta" "Count: 1" >/dev/null
 [[ "$(reload_close_count)" -gt "$closed_before" ]] \
   || fail "generation 4 did not close the previous image"
+wait_for_log "renderer caches reset after generation 4" "generation 4 cache reset"
 [[ "$(find_host_pid)" == "$host_pid" ]] || fail "host pid changed during recovery"
 echo "generation 4 recovered; host pid retained; Count: 1 preserved"
 

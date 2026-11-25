@@ -39,6 +39,20 @@ Optional (resolved as a trio, all-or-nothing): `dev_semantics_action`,
   AT-SPI client, native platform-view presentation. Portable codecs, bridge and
   cleanup are covered by `moui_devhost` tests.
 
+## Renderer caches (ADR 0077)
+
+- The host renderer outlives plugin generations, so `clear_after_reload` calls
+  the bound session reset (`RendererSession::reset_caches`, installed by the
+  generated host through `on_session_bound`). It clears image/failed-image,
+  layer/picture-layer, shaping, paragraph, paint-memo and font-file typeface
+  caches; the image lifecycle generation bump rejects in-flight completions.
+- Font files load via owned bytes (`Typeface::from_data`), not a path mapping:
+  rewriting a font path while the old typeface is alive SIGBUSes a mapping.
+- Linux prebuilt stub uses `SkOrderedFontMgr`, which refuses caller-data
+  typefaces; font-file content replacement is only exercised under a
+  data-capable manager (`MOUI_SKIA_STUB_MODE=build`, macOS). Cache eviction is
+  covered everywhere. Smoke marker: `renderer caches reset after generation N`.
+
 ## Gotchas
 
 - `dlopen` keys images by path: reloading a rewritten path returns the old image

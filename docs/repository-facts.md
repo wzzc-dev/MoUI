@@ -88,11 +88,11 @@ This file is generated from repository manifests and validator reports.
 | core (moui/core/pkg.generated.mbti) | 3134 | 1310 | 166 |
 | views facade (moui/views/pkg.generated.mbti) | 757 | 362 | 1 |
 | backend protocols (moui/backend/pkg.generated.mbti) | 713 | 269 | 44 |
-| render protocols (moui/render/pkg.generated.mbti) | 655 | 285 | 32 |
+| render protocols (moui/render/pkg.generated.mbti) | 656 | 286 | 32 |
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
-| render common (moui/render/common/pkg.generated.mbti) | 386 | 152 | 12 |
+| render common (moui/render/common/pkg.generated.mbti) | 387 | 153 | 12 |
 | native text model (moui/render/native_text/pkg.generated.mbti) | 96 | 46 | 1 |
-| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 294 | 167 | 7 |
+| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 295 | 168 | 7 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 284 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 190 | 92 | 2 |
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 119 | 55 | 2 |

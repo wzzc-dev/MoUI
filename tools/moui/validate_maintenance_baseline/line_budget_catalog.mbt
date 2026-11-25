@@ -189,7 +189,8 @@ fn file_budgets() -> Array[FileBudget] {
       // 429 -> 436 (0.9.0): the three ratchet registrations above.
       // 436 -> 448 (0.10.0): the runtime.mbt (text/overlay API) and
       // menu_commands.mbt (`on_select_command?`) registrations above.
-      max_lines: 448,
+      // 448 -> 452 (Phase 2C): the image lifecycle reset note above.
+      max_lines: 452,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -224,7 +225,10 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/render/capabilities_feature_model.mbt", max_lines: 338, },
     { path: "moui/render/common/capabilities_report.mbt", max_lines: 47, },
     { path: "moui/render/common/image_lifecycle_state.mbt", max_lines: 60, },
-    { path: "moui/render/common/image_lifecycle_updates.mbt", max_lines: 76, },
+    // 76 -> 89: ImageResourceLifecycle::reset clears records and bumps the
+    // generation after a dev-hot swap so stale completions cannot refill the
+    // cleared image cache (Phase 2C, ADR 0077).
+    { path: "moui/render/common/image_lifecycle_updates.mbt", max_lines: 89, },
     {
       path: "moui/render/common/image_lifecycle_completions.mbt",
       max_lines: 30,

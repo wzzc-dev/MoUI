@@ -19,8 +19,11 @@ fn skia_typeface_from_font_files(
 /// from disk; before this cache every shape call for a fresh text — one
 /// per keystroke on the edited block — repeated that work for the same
 /// family/weight/style. Typefaces are immutable and size-independent (the
-/// caller derives its sized `Font` from them), so entries never go stale,
-/// and misses are cached too so absent files stop re-statting directories.
+/// caller derives its sized `Font` from them), so entries never go stale
+/// within a plugin generation; the dev-hot swap reset clears the cache
+/// because a new generation may rewrite the same path. Misses are cached too
+/// so absent files stop re-statting directories, and the reset drops them so
+/// a file added by the new generation is retried.
 priv struct SkiaFontFileTypefaceEntry {
   typeface : @skia_native.Typeface?
 }
@@ -28,6 +31,14 @@ priv struct SkiaFontFileTypefaceEntry {
 ///|
 let skia_font_file_typeface_cache : Map[String, SkiaFontFileTypefaceEntry] = Map([],
 )
+
+///|
+/// Drop loaded font-file typefaces. Misses are memoized too, so a font that was
+/// absent or unreadable during one plugin generation must not stay absent
+/// after a hot reload.
+fn clear_skia_font_file_typeface_cache() -> Unit {
+  skia_font_file_typeface_cache.clear()
+}
 
 ///|
 fn skia_typeface_from_font_file_family(
@@ -65,8 +76,13 @@ fn skia_open_sans_typeface_from_file(
     for file_name in file_names {
       let path = skia_join_font_path(directory, file_name)
       if @fs.path_exists(path) {
-        match
-          @skia_native.Typeface::from_file(@utf8.encode(path[:], bom=false)) {
+        // Read the file into memory instead of letting the platform font
+        // manager keep a file mapping: a dev-hot swap can rewrite the same
+        // path, and a mapping of the replaced file faults (SIGBUS) when the
+        // old typeface is still alive. The bytes are copied into SkData, so
+        // the typeface owns its data.
+        let bytes = @fs.read_file_to_bytes(path) catch { _ => b"" }
+        match @skia_native.Typeface::from_data(bytes) {
           Some(typeface) => return Some(typeface)
           None => ()
         }

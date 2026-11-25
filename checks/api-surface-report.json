@@ -81,8 +81,8 @@
     {
       "label": "render protocols",
       "path": "moui/render/pkg.generated.mbti",
-      "lines": 655,
-      "public_declarations": 285,
+      "lines": 656,
+      "public_declarations": 286,
       "pub_all_declarations": 32
     },
     {
@@ -95,8 +95,8 @@
     {
       "label": "render common",
       "path": "moui/render/common/pkg.generated.mbti",
-      "lines": 386,
-      "public_declarations": 152,
+      "lines": 387,
+      "public_declarations": 153,
       "pub_all_declarations": 12
     },
     {
@@ -109,8 +109,8 @@
     {
       "label": "skia renderer",
       "path": "moui_skia_renderer/pkg.generated.mbti",
-      "lines": 294,
-      "public_declarations": 167,
+      "lines": 295,
+      "public_declarations": 168,
       "pub_all_declarations": 7
     },
     {
