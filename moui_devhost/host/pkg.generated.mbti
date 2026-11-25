@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
@@ -35,11 +36,19 @@ pub fn initialize(String, Double, Double) -> Bool
 
 pub fn install_renderer_cache_reset((() -> Unit)?) -> Unit
 
+pub fn offscreen_entry(width~ : Double, height~ : Double, frame_interval_ms~ : Int32) -> @apphost.PlatformEntry
+
+pub fn offscreen_requested() -> Bool
+
+pub fn offscreen_timer_source() -> @services.TimerSource
+
 pub fn plugin_path_from_env() -> String?
 
 pub fn poll_injected_events() -> Unit
 
 pub fn poll_reload() -> Bool
+
+pub fn pump_offscreen_timers(Double) -> Unit
 
 pub fn read_semantics(@core.SemanticsGeneration?) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError]
 

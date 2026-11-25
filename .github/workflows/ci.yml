@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_windows_hot_reload_offscreen:
+        description: Run the Windows offscreen dev hot-reload smoke (also runs for pull requests to main).
+        required: false
+        default: true
+        type: boolean
 
 # One in-flight run per branch. A superseded pull-request run is cancelled;
 # push runs on main/dev are never cancelled, so landing evidence is not dropped.
@@ -504,3 +509,59 @@ jobs:
           name: moui-showcase-windows-msvc-portable
           path: dist/windows-msvc/MoUIShowcase
           if-no-files-found: error
+
+  # Hosted windows runners are Session 0, so the interactive windowed hot smoke
+  # cannot run there. The offscreen dev entry drives the same host runtime and
+  # bridge through a CPU-presented surface, so the seven-leg probe smoke runs
+  # headless. The default windowed invocation and windows-native job are
+  # untouched.
+  windows-hot-reload-offscreen:
+    name: Windows native hot reload (offscreen)
+    needs: changes
+    if: ${{ (github.event_name == 'pull_request' && github.base_ref == 'main' && needs.changes.outputs.docs_only != 'true') || (github.event_name == 'workflow_dispatch' && inputs.run_windows_hot_reload_offscreen) }}
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Prepare wgpu-native
+        uses: ./.github/actions/prepare-wgpu-native
+
+      - name: Set up vcpkg zlib
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib -InstallWebView2
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+        with:
+          submodules: "false"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
+      - name: Cache Skia release and stub archives
+        uses: actions/cache@v5
+        with:
+          path: moui_skia/.skia-cache
+          key: ${{ runner.os }}-skia-${{ hashFiles('moui_skia/skia-provider-lock.json', 'moui_skia/build.mbtx', 'moui_skia/native/*.cpp', 'moui_skia/native/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-skia-
+
+      - name: Run offscreen hot-reload smoke
+        shell: pwsh
+        run: |
+          . .\scripts\windows\msvc_env.ps1
+          Enable-MsvcC11Atomics
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows-hot-reload-smoke.ps1 -Run -Offscreen
+
+      - name: Upload hot-reload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: moui-windows-hot-reload-offscreen-smoke
+          path: artifacts/windows-hot-reload
+          if-no-files-found: warn

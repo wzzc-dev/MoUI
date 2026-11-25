@@ -23,6 +23,10 @@
 - [x] `moui_cli` accepts Windows for `--hot` and still rejects Web/wasm.
 - [x] Unit tests cover Windows platform, plugin name, link args, and fast-plan
   matching; smoke script, smoke gate, ADR 0075, docs, and this plan landed.
+- [x] A dev-only `MOUI_HOT_OFFSCREEN=1` entry renders the same bridge frame tree
+  through a CPU-presented `HostSurface` on an offscreen timer source, so
+  `windows-hot-reload-smoke.ps1 -Run -Offscreen` can run the seven probe legs
+  on hosted Session 0 CI; windowed default and ABI are unchanged.
 - [ ] Compile/link `_WIN32` with MSVC and run
   `scripts/windows-hot-reload-smoke.ps1 -Run` from vcvars, recording
   `artifacts/windows-hot-reload/smoke.log`.
@@ -39,9 +43,11 @@
 | 2026-11-25 | Keep the conservative 32-swap re-exec budget until `FreeLibrary` unload is measured. |
 | 2026-11-25 | Keep ABI v1 and the host/protocol packages; Windows adds no wire fields. |
 | 2026-11-25 | Match `plugin.obj` / `plugin.lib` and backslashes in the fast-plan filter. |
+| 2026-11-25 | Offscreen CI reuses `HostRuntimeDriver` + a CPU-presented `HostSurface` and the same `dev_*` ABI; no second backend or diagnostics bus. |
 
 ## Progress
 
 | Date | Note |
 |------|------|
 | 2026-11-25 | Generator, runner, bridge, CLI, tests, smoke gate, ADR and docs landed; Windows runtime evidence pending. |
+| 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired, Windows execution pending. |

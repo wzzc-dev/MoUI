@@ -540,6 +540,44 @@
       "artifacts": [
         "artifacts/windows-hot-reload/smoke.log"
       ]
+    },
+    {
+      "id": "windows.native-hot-reload-offscreen",
+      "tier": "nightly",
+      "kind": "native-hot-reload-smoke",
+      "host": "windows-latest",
+      "purpose": "Drive the Windows dev host through the dev-only CPU offscreen entry on a hosted runner: assert generation 1 paints the probe's image/divider/shadow/clip/text vocabulary with unsupported=0 and advancing timer ticks, inject a click through MOUI_HOT_INJECT_FILE on the offscreen loop so Count: 1 survives an app edit and a shared-widget-package edit as generations 2 and 3 in the same host pid, force a compile error and assert generation 3 stays live, then fix it and assert generation 4 recovers with state intact. Hosted offscreen evidence; the windowed matching-host smoke remains windows.native-hot-reload.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            "scripts/windows-hot-reload-smoke.ps1",
+            "-Run",
+            "-Offscreen"
+          ],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/ci.yml",
+        "gate": "pull_request"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/development.md",
+        "docs/decisions/0075-dev-hot-reload-windows.md"
+      ],
+      "artifacts": [
+        "artifacts/windows-hot-reload/smoke.log"
+      ]
     }
   ]
 }
