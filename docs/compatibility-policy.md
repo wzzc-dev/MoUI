@@ -37,7 +37,12 @@ patch that adds public API — the `SemanticsRole` variants `TabList`,
 `set_focused_text_selection`), and the Linux view-level context-menu fallback.
 No package boundary and no host wire contract changes, and the release ships
 its own `0.9.1` release note with the upgrade note and migration examples the
-policy requires. Generic drag and drop moves to `0.9.2`.
+policy requires.
+
+`0.9.2` uses the same allowance for the declarative in-app drag and drop
+surface, the hot-reload host seams (`HostDriverHooks`, the semantics frame
+adapter, the renderer cache-reset calls), and the optional parameters those
+additions introduce; its release note carries the upgrade note.
 
 `checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
 source of truth; the docs, module manifests, and `docs/compatibility-matrix.md`
