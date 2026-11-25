@@ -52,6 +52,7 @@ pub fn[W, Extra] DesktopNativeHostBackendCore::new(
   scene_resolver~ : @window_lifecycle.WindowSceneResolver = @window_lifecycle.WindowSceneResolver::unavailable(),
   event_sources~ : @apphost.HostPlatformEventSources? = None,
   frame_clock~ : (() -> Double)? = None,
+  driver_hooks~ : @apphost.HostDriverHooks? = None,
   platform_view_plugins~ : Array[@backend_host.PlatformViewPlugin] = [],
   first_frame_smoke_auto_exit~ : Bool = false,
 ) -> DesktopNativeHostBackendCore[W, Extra] {
@@ -62,6 +63,7 @@ pub fn[W, Extra] DesktopNativeHostBackendCore::new(
       runtime~,
       schedule_redraw=() => (),
       frame_clock~,
+      hooks=driver_hooks,
     ),
     lifecycle: @window_lifecycle.WindowLifecycle::new(
       requests=window_requests,

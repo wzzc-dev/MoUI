@@ -33,6 +33,8 @@ const title = value("--title", "MoUI Hot App");
 const width = Number(value("--width", "520"));
 const height = Number(value("--height", "360"));
 const frameIntervalMs = Number(value("--frame-interval-ms", "16"));
+const platformViewPluginModule = value("--platform-view-plugin", "");
+const platformViewPluginFn = value("--platform-view-plugin-fn", "plugin");
 const hostPlatform =
   value("--platform", "") ||
   (process.platform === "darwin" ? "macos" : process.platform === "linux" ? "linux" : "");
@@ -268,6 +270,44 @@ pub fn dev_frame_release() -> Unit {
 }
 
 ///|
+let action_buffer : Ref[Bytes?] = Ref(None)
+
+///|
+#export_name("dev_semantics_action")
+pub fn dev_semantics_action(data : Bytes, length : Int32) -> Bytes {
+  let text = match @protocol.bytes_to_string(data, length) {
+    Some(text) => text
+    None => ""
+  }
+  let result = match session.val {
+    Some(session) =>
+      match session.semantics_action_json(text) {
+        Some(result) => @protocol.encode_semantics_action_result(result)
+        None => ""
+      }
+    None => ""
+  }
+  let bytes = @utf8.encode(result[:], bom=false)
+  action_buffer.val = Some(bytes)
+  bytes
+}
+
+///|
+#export_name("dev_semantics_action_len")
+pub fn dev_semantics_action_len() -> Int32 {
+  match action_buffer.val {
+    Some(bytes) => bytes.length()
+    None => 0
+  }
+}
+
+///|
+#export_name("dev_semantics_action_release")
+pub fn dev_semantics_action_release() -> Unit {
+  action_buffer.val = None
+}
+
+///|
 #export_name("dev_flush")
 pub fn dev_flush() -> Unit {
   match session.val {
@@ -287,18 +327,32 @@ pub fn dev_resize(width : Double, height : Double) -> Unit {
 `,
 );
 
+const platformViewPluginsExpr = platformViewPluginModule
+  ? `platform_view_plugins=[@devhost.wrap_platform_view_plugin(@platform_view_plugin.${platformViewPluginFn}(), forward=(id, event) => ignore(@devhost.dispatch_event(@core.AppEvent::PlatformView(id, event))))]`
+  : "platform_view_plugins=[]";
+
 const hostBackend =
   hostPlatform === "macos"
     ? {
         importLine: `"wzzc-dev/moui/backend/macos"`,
         timerExpr: "@macos.macos_timer_source()",
-        entryExpr: "@macos.entry()",
+        optionsExpr: `@macos.MacosHostAppOptions::new(
+    event_sources=Some(sources),
+    driver_hooks=Some(@devhost.driver_hooks()),
+    ${platformViewPluginsExpr},
+  )`,
+        entryExpr: "@macos.entry(options=options)",
         rendererPlatform: "MacOS",
       }
     : {
         importLine: `"wzzc-dev/moui/backend/linux" @linux_backend`,
         timerExpr: "@linux_backend.linux_timer_source()",
-        entryExpr: "@linux_backend.entry()",
+        optionsExpr: `@linux_backend.LinuxHostAppOptions::new(
+    event_sources=Some(sources),
+    driver_hooks=Some(@devhost.driver_hooks()),
+    ${platformViewPluginsExpr},
+  )`,
+        entryExpr: "@linux_backend.entry(options=options)",
         rendererPlatform: "Linux",
       };
 
@@ -307,6 +361,7 @@ writeFileSync(
   `import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/apphost",
+  "wzzc-dev/moui/backend" @backend_host,
   ${hostBackend.importLine},
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/services",
@@ -314,7 +369,7 @@ writeFileSync(
   "wzzc-dev/moui_devtools/socket" @devtools_socket,
   "wzzc-dev/moui_skia_renderer" @render_skia,
   "wzzc-dev/moui_devhost/host" @devhost,
-}
+${platformViewPluginModule ? `  "${platformViewPluginModule}" @platform_view_plugin,\n` : ""}}
 
 supported_targets = "native"
 
@@ -342,6 +397,21 @@ enum HostMsg {
 }
 
 ///|
+let host_event_sources_ref : Ref[@apphost.HostPlatformEventSources?] = Ref(None)
+
+///|
+fn host_event_sources() -> @apphost.HostPlatformEventSources {
+  match host_event_sources_ref.val {
+    Some(sources) => sources
+    None => {
+      let sources = @apphost.HostPlatformEventSources::new()
+      host_event_sources_ref.val = Some(sources)
+      sources
+    }
+  }
+}
+
+///|
 fn subscriptions(_model : HostModel) -> @core.Subscription[HostMsg] {
   @core.Subscription::batch([
     @services.TimerSource::subscription(
@@ -357,6 +427,24 @@ fn subscriptions(_model : HostModel) -> @core.Subscription[HostMsg] {
       map=frame => Tick(frame),
       key="dev-hot/frame",
       label="Dev hot frame",
+    ),
+    host_event_sources()
+    .host_events()
+    .subscription(
+      key="dev-hot/host-events",
+      label="Dev hot host events",
+      map=event =>
+        match event {
+          // Resize already reaches the plugin through the runtime event
+          // observer; forwarding it here would dispatch it twice.
+          @backend_host.Event::Resized(_) => None
+          _ =>
+            if @devhost.forward_host_event(event) {
+              Some(Input)
+            } else {
+              None
+            }
+        },
     ),
   ])
 }
@@ -388,13 +476,10 @@ fn update(model : HostModel, message : HostMsg) -> HostModel {
 fn view(model : HostModel) -> @core.View[HostMsg] {
   @core.View::from_node(
     @devhost.DevBridgeView::new(model.revision),
-    event=(_node, context) => {
-      if @devhost.dispatch_event(context.event) {
-        @core.ViewEventResult::message(Input)
-      } else {
-        @core.ViewEventResult::ignored()
-      }
-    },
+    // Input is forwarded from HostPlatformEventSources' subscription instead:
+    // that stream carries IME, focus and window events the host view tree never
+    // sees, and forwarding here too would duplicate pointer/keyboard delivery.
+    event=(_node, _context) => @core.ViewEventResult::ignored(),
   )
 }
 
@@ -422,6 +507,8 @@ fn main {
     return
   }
   @devhost.dump_frame_if_requested()
+  let sources = host_event_sources()
+  let options = ${hostBackend.optionsExpr}
   let runtime = @runtime.new_program_with_dimensions(
     program=host_program(),
     width=${width.toFixed(1)},

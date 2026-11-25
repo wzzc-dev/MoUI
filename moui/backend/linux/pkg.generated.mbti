@@ -160,7 +160,7 @@ pub fn LinuxClientDecorationState::to_repr(Self) -> @debug.Repr
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, frame_clock? : (() -> Double)?, window_controls? : @services.WindowControlSource?) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @lifecycle.WindowSceneResolver, event_sources? : @apphost.HostPlatformEventSources?, driver_hooks? : @apphost.HostDriverHooks?, platform_view_plugins? : Array[@backend.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, frame_clock? : (() -> Double)?, window_controls? : @services.WindowControlSource?) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

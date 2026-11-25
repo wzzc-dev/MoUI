@@ -248,6 +248,26 @@ fn SemanticsSnapshot::empty() -> SemanticsSnapshot {
 }
 
 ///|
+/// Rebuild a read-only snapshot from the committed semantics carried by a
+/// frame payload over the dev-hot bridge.
+///
+/// The wire payload does not carry the assistive-technology browsing focus
+/// separately, so `semantic_focused` stays empty; platform adapters fall back
+/// to `focused` for keyboard focus.
+pub fn SemanticsSnapshot::from_frame_payload(
+  payload : @core.SemanticsFramePayload,
+) -> SemanticsSnapshot {
+  {
+    generation: payload.generation(),
+    root: payload.root(),
+    focused: payload.focused(),
+    semantic_focused: None,
+    nodes: payload.nodes().map(clone_semantics_node),
+    issues: [],
+  }
+}
+
+///|
 pub fn SemanticsSnapshot::generation(
   self : SemanticsSnapshot,
 ) -> @core.SemanticsGeneration {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "description": "Documentation line budget for the main repository. Counts Markdown lines under docs/ only; the generated website mirror (website/web_wasm/docs) and memories/repo are outside the roots, so they never inflate the number a contributor has to cut.",
-  "maxLines": 40000,
+  "maxLines": 40200,
   "roots": [
     "docs"
   ],

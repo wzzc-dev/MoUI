@@ -24,6 +24,13 @@ extern "C" fn moui_devhost_event(data : Bytes, length : Int32) -> Int32 = "moui_
 extern "C" fn moui_devhost_frame() -> Bytes = "moui_devhost_frame"
 
 ///|
+#borrow(data)
+extern "C" fn moui_devhost_semantics_action(
+  data : Bytes,
+  length : Int32,
+) -> Bytes = "moui_devhost_semantics_action"
+
+///|
 extern "C" fn moui_devhost_resize(width : Double, height : Double) -> Unit = "moui_devhost_resize"
 
 ///|
@@ -141,6 +148,7 @@ pub fn initialize(
   if result != 0 {
     return false
   }
+  clear_after_reload()
   let generation_path = generation_path_from_env()
   // The initial image is the env path; the next marker poll may move the host
   // onto a newer published generation.
@@ -188,6 +196,7 @@ pub fn poll_reload() -> Bool {
   hot_debug("reloaded " + next_path)
   host_generation.val = next_path
   host_reloads.val = host_reloads.val + 1
+  clear_after_reload()
   let limit = reload_limit()
   if limit > 0 && host_reloads.val >= limit {
     // Flush state before replacing the image; the re-exec reads the same
@@ -328,13 +337,15 @@ fn with_clear(
 }
 
 ///|
-/// Decode the plugin's current frame for the bridge paint pass. The frame's
-/// `clear_color` becomes a leading `Clear` command because a host `DrawFrame`
-/// paints commands rather than carrying a separate clear color. A corrupt
-/// frame paints nothing and leaves the last presented frame in place.
+/// Decode the plugin's current frame for the bridge paint pass and publish the
+/// platform state it carries. The frame's `clear_color` becomes a leading
+/// `Clear` command because a host `DrawFrame` paints commands rather than
+/// carrying a separate clear color. A corrupt frame paints nothing and leaves
+/// the last presented frame in place.
 pub fn frame_commands() -> Array[@core.DrawCommand] {
   match decode_frame_payload() {
     Some(payload) => {
+      ignore(publish_frame(payload))
       trace_frame(payload)
       with_clear(payload.commands(), payload.clear_color())
     }
@@ -398,6 +409,7 @@ pub fn shutdown() -> Unit {
   moui_devhost_destroy()
   host_settings.val = None
   host_generation.val = ""
+  clear_after_reload()
 }
 
 ///|

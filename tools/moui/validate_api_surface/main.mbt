@@ -319,7 +319,10 @@ fn package_budgets() -> Array[PackageBudget] {
       // without synthesizing a Ctrl/Cmd+A.
       // AppRuntime::pointer_position (+1 line): the anchor for that layer's
       // context menu comes from the runtime's own last pointer sample.
-      max_lines: 805,
+      // SemanticsSnapshot::from_frame_payload (+1 line): the dev hot bridge
+      // host rebuilds a runtime snapshot from a transported
+      // SemanticsFramePayload; the projection rules stay in the runtime.
+      max_lines: 806,
       max_pub_lines: 535,
       max_pub_all_lines: 19,
       required_tokens: [
@@ -358,9 +361,13 @@ fn package_budgets() -> Array[PackageBudget] {
       // The view-level context menu lives in a `priv` driver field, so the
       // generated facade gains only the `// private fields` marker (+1 line):
       // no menu type or command table enters the public surface.
-      max_lines: 193,
+      // HostDriverHooks (+8 lines, +1 pub(all)): the opt-in seam a dev bridge
+      // host passes through MacosHostAppOptions/LinuxHostAppOptions to override
+      // semantics reads/actions, focused text input and frame augmentation.
+      // Production host paths keep the defaults.
+      max_lines: 201,
       max_pub_lines: 100,
-      max_pub_all_lines: 5,
+      max_pub_all_lines: 6,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/runtime\"", "\"wzzc-dev/moui/backend\"",
         "\"wzzc-dev/moui/render\"", "pub struct AppBuilder", "pub struct AppLaunchRequest",

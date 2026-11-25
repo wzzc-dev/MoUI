@@ -7,4 +7,8 @@ import {
   "wzzc-dev/moui_devhost/protocol",
 }
 
+import {
+  "wzzc-dev/moui/views",
+} for "test"
+
 supported_targets = "native"

@@ -55,6 +55,14 @@ pub fn AppLaunchRequest::runtime(Self) -> @runtime.AppRuntime
 pub fn AppLaunchRequest::title(Self) -> String
 pub fn AppLaunchRequest::window_requests(Self) -> @backend.WindowRequests
 
+pub(all) struct HostDriverHooks {
+  read_semantics : ((@core.SemanticsGeneration?) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError])?
+  perform_semantics_action : ((@runtime.PerformSemanticsActionRequest) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError])?
+  focused_text_input : (() -> @core.TextInputState)?
+  augment_frame : ((@core.DrawFrame) -> @core.DrawFrame)?
+}
+pub fn HostDriverHooks::new(read_semantics~ : ((@core.SemanticsGeneration?) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError])?, perform_semantics_action~ : ((@runtime.PerformSemanticsActionRequest) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError])?, focused_text_input~ : (() -> @core.TextInputState)?, augment_frame~ : ((@core.DrawFrame) -> @core.DrawFrame)?) -> Self
+
 pub struct HostEventSource {
   // private fields
 }
@@ -106,7 +114,7 @@ pub fn HostRuntimeDriver::event_result(Self) -> @backend.EventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
 pub fn HostRuntimeDriver::keyboard_command_intent(Self, @core.KeyboardEvent) -> @core.CommandIntent?
-pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit, frame_clock? : (() -> Double)?) -> Self
+pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit, frame_clock? : (() -> Double)?, hooks? : HostDriverHooks?) -> Self
 pub fn HostRuntimeDriver::perform_semantics_action(Self, @runtime.PerformSemanticsActionRequest) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]
 pub fn HostRuntimeDriver::pointer_cursor(Self) -> @core.CursorStyle
 pub fn HostRuntimeDriver::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError]

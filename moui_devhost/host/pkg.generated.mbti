@@ -2,15 +2,30 @@
 package "wzzc-dev/moui_devhost/host"
 
 import {
+  "wzzc-dev/moui/apphost",
+  "wzzc-dev/moui/backend",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
+pub fn augment_frame(@core.DrawFrame) -> @core.DrawFrame
+
+pub fn clear_after_reload() -> Unit
+
 pub fn dispatch_event(@core.AppEvent) -> Bool
 
 pub fn dispatch_event_json(String) -> Bool
 
+pub fn dispatch_semantics_action(@runtime.PerformSemanticsActionRequest) -> Result[@runtime.SemanticsActionReceipt, @runtime.SemanticsActionDispatchError]
+
+pub fn driver_hooks() -> @apphost.HostDriverHooks
+
 pub fn dump_frame_if_requested() -> Unit
+
+pub fn focused_text_input() -> @core.TextInputState
+
+pub fn forward_host_event(@backend.Event) -> Bool
 
 pub fn frame_commands() -> Array[@core.DrawCommand]
 
@@ -24,9 +39,13 @@ pub fn poll_injected_events() -> Unit
 
 pub fn poll_reload() -> Bool
 
+pub fn read_semantics(@core.SemanticsGeneration?) -> Result[@runtime.SemanticsRead, @runtime.SemanticsReadError]
+
 pub fn resize(Double, Double) -> Unit
 
 pub fn shutdown() -> Unit
+
+pub fn wrap_platform_view_plugin(@backend.PlatformViewPlugin, forward~ : (String, @core.PlatformViewEvent) -> Unit) -> @backend.PlatformViewPlugin
 
 // Errors
 
