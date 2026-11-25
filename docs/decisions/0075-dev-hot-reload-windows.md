@@ -167,6 +167,11 @@ count across an app edit, a shared-widget edit, a retained compile error, and
 recovery, with three `reload-old FreeLibrary=1 rc=0 images=1` swaps and
 cache-reset markers.
 
+Frame waits require a complete `]`-terminated trace and inspect the newest few
+complete frames after the leg marker, because the host writes traces while the
+smoke reads them. A later run exposed that race (leg 2 timed out while complete
+frames were present); the wait no longer samples a partial trailing line.
+
 ## Options Considered
 
 - **`cl.exe /LD`, a `.def` file, MinGW, or a Windows-only protocol.** Rejected:

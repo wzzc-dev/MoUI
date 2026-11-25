@@ -227,16 +227,24 @@ function WaitForFrameAfter {
   $deadline = (Get-Date).AddSeconds($Seconds)
   $lastFrame = ""
   while ((Get-Date) -lt $deadline) {
+    # The host writes frame traces while the smoke reads them, so the newest
+    # line is often a partial mid-write fragment. A complete trace ends with
+    # `]`; ignore anything else and inspect the last few complete frames after
+    # StartLine, not just the newest one.
     $frames = @(Get-Content -Path $log -ErrorAction SilentlyContinue |
       Select-Object -Skip ($StartLine - 1) |
-      Where-Object { $_ -match "unsupported=0" -and $_ -match "texts=\[" })
+      Where-Object { $_ -match "unsupported=0" -and $_ -match "texts=\[" -and $_ -match '\]\s*$' })
     if ($frames.Count -gt 0) {
       $lastFrame = [string]$frames[$frames.Count - 1]
-      $matched = $true
-      foreach ($needle in $Needles) {
-        if ($lastFrame -notmatch [regex]::Escape($needle)) { $matched = $false }
+      $tailCount = [Math]::Min($frames.Count, 5)
+      for ($offset = 1; $offset -le $tailCount; $offset++) {
+        $candidate = [string]$frames[$frames.Count - $offset]
+        $matched = $true
+        foreach ($needle in $Needles) {
+          if ($candidate -notmatch [regex]::Escape($needle)) { $matched = $false }
+        }
+        if ($matched) { return $candidate }
       }
-      if ($matched) { return $lastFrame }
     }
     if ($runner -and $runner.HasExited) {
       Fail "$Label`: dev runner exited; last matching frame: $lastFrame"

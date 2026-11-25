@@ -200,6 +200,23 @@ test("Windows fast plan matches cl.exe/.obj, lib.exe/.lib, and backslashes", () 
   );
 });
 
+test("Windows smoke rejects partial frame traces while polling", () => {
+  const script = readFileSync(
+    new URL("./windows-hot-reload-smoke.ps1", import.meta.url),
+    "utf8",
+  );
+  const start = script.indexOf("function WaitForFrameAfter");
+  const end = script.indexOf("function AssertKinds", start);
+  assert.ok(start >= 0 && end > start, "WaitForFrameAfter not found");
+  const body = script.slice(start, end);
+  // The host writes traces while the smoke reads them, so only a `]`-terminated
+  // line is complete; the poll also inspects more than just the newest line.
+  assert.match(body, /texts=\\\[/);
+  assert.match(body, /\]\\s\*\$/);
+  assert.match(body, /\$tailCount/);
+  assert.match(body, /for \(\$offset = 1;/);
+});
+
 test("Windows smoke binds no read-only PowerShell automatic variable", () => {
   const script = readFileSync(
     new URL("./windows-hot-reload-smoke.ps1", import.meta.url),
