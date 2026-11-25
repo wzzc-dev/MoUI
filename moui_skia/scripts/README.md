@@ -90,6 +90,23 @@ Android, iOS, tvOS, HarmonyOS, and every Debug config stay unpublished on
 purpose: they need SDK toolchains that the repository does not provision, and
 `MOUI_SKIA_STUB_MODE=auto` compiles the stub locally there.
 
+### Stub publishing and stale detection
+
+`.github/workflows/moui-skia-stub-release.yml` publishes the matrix and records
+each asset in `../skia-provider-lock.json`. Before building, every leg runs
+`publish-stub-library.sh --check`, which compares two digests against its lock
+entry: `sources_sha256` over `native/*.cpp|*.h` and `recipe_sha256` over the
+release workflow, `../build.mbtx`, and the publish script. A recipe-only change
+therefore republishes every leg instead of leaving the old archive published.
+Both digests normalize CRLF to LF before hashing, so a windows-latest checkout
+(or a copied/tarball tree) fingerprints like an LF checkout; an entry written
+before `recipe_sha256` existed fails once and migrates with one automatic
+rebuild. `--check` never packages and never touches the network;
+`--print-sources` prints both digests. `workflow_dispatch` with `force=true` is
+an exceptional recovery hatch for a bad published archive, not the routine way
+to refresh a leg. `tests/publish-stub-library-check.sh` proves the fingerprint
+and migration cases offline in `pr-static`.
+
 Fetch or inspect the selected package with:
 
 ```bash

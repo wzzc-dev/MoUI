@@ -417,7 +417,15 @@ unavailable. The C++ stub never returns to the `mbt` `native-stub` compile, and
 default `MOUI_SKIA_STUB_MODE=auto`, an unavailable released stub archive is
 not fatal: the provider fetch prints a note and the prebuild compiles
 `native/*.cpp` locally instead, so a release without the optional stub asset
-still builds. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
+still builds.
+Each published stub lock entry records `sources_sha256` (`native/*.cpp|*.h`) and
+`recipe_sha256` (the release workflow, `build.mbtx`, and
+`scripts/publish-stub-library.sh`), both hashed with CRLF normalized to LF.
+`scripts/publish-stub-library.sh --check` reports stale when either digest
+changes, so a recipe-only edit or a Windows checkout's line endings cannot
+silently keep an old archive; entries without `recipe_sha256` migrate with one
+automatic rebuild, and `workflow_dispatch force=true` stays a recovery hatch.
+Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
 `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, `MOUI_SKIA_EXTRA_LINK_FLAGS`, and
 `MOUI_SKIA_LINK_MODE` take precedence over the release provider defaults.

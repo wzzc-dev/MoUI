@@ -16,6 +16,21 @@
 # `.github/workflows/moui-skia-stub-release.yml` automates the same steps with
 # `--print-env` and the `--tag/--asset-tag/--release-owner/--release-repo`
 # overrides used there.
+#
+# Fingerprints and staleness
+# --------------------------
+# `--check` compares a lock entry against two digests, both computed without
+# packaging and without network access:
+#   sources_sha256  native/*.cpp|*.h, the inputs of the compiled archive.
+#   recipe_sha256   the packaging/compile recipe: the release workflow,
+#                   build.mbtx, and this script. A recipe-only edit therefore
+#                   republishes every platform, not just a source edit.
+# Both digests normalize CRLF to LF before hashing, so a Windows checkout or a
+# copied/tarball tree fingerprints the same as an LF checkout. Entries written
+# before `recipe_sha256` existed (or before this normalization) fail the check
+# once; that one migration rebuild is expected. `workflow_dispatch force=true`
+# stays an exceptional recovery hatch for a bad published archive, never the
+# routine way to refresh a leg.
 set -euo pipefail
 
 usage() {
@@ -40,20 +55,26 @@ Options:
                      Release repo that receives the asset (default: lock provider).
   --out-dir DIR      Where the zip is written (default dist/).
   --lock PATH        Lock path (default <module>/skia-provider-lock.json).
-  --print-sources    Print only MOUI_SKIA_STUB_SOURCES_SHA256=... and exit; useful
-                     for deciding whether a publish is needed before building.
-  --check            Do not package. Fail when the lock entry is missing, or when
-                     its sources_sha256 does not match native/*.cpp|*.h in the tree
-                     (detector for "stub assets went stale").
+  --print-sources    Print only MOUI_SKIA_STUB_SOURCES_SHA256=... and
+                     MOUI_SKIA_STUB_RECIPE_SHA256=... and exit; useful for
+                     deciding whether a publish is needed before building.
+  --check            Do not package. Fail when the lock entry is missing, lacks
+                     recipe_sha256 (a one-time migration), or when either digest
+                     no longer matches the tree (detector for "stub assets went
+                     stale"). An unchanged tree reports status=ok. Line endings
+                     are normalized to LF before hashing.
   -h, --help         Show this help.
 
 Output keys (also usable with --print-env):
-  MOUI_SKIA_STUB_ASSET_NAME / _PATH / _SHA256 / _SIZE / _SOURCES_SHA256
+  MOUI_SKIA_STUB_ASSET_NAME / _PATH / _SHA256 / _SIZE / _SOURCES_SHA256 /
+  _RECIPE_SHA256
 EOF
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 module_root="$(cd "$script_dir/.." && pwd)"
+# The recipe includes the release workflow, which lives above the module root.
+repo_root="$(cd "$module_root/.." && pwd)"
 
 stub_path=""
 platform="auto"
@@ -126,6 +147,36 @@ sha256_of_stdin() {
   fi
 }
 
+# Fingerprints must not depend on checkout line endings: a Windows checkout
+# materializes `native/*.cpp|*.h` as CRLF, and a tarball or copied tree may keep
+# them. `tr -d '\r'` is portable across GNU, BSD/macOS, and Git Bash, and leaves
+# an LF-only file byte-identical, so existing LF digests stay valid.
+sha256_of_normalized() {
+  tr -d '\r' < "$1" | sha256_of_stdin
+}
+
+# The compile/package recipe. Any change here can change the produced archive
+# without touching a source file, so it participates in staleness. Paths are
+# repo-relative; `missing` keeps the digest deterministic in a copied tree that
+# lacks one of them. Keep this list in sync with the workflow `paths:` filter.
+recipe_files=(
+  ".github/workflows/moui-skia-stub-release.yml"
+  "moui_skia/build.mbtx"
+  "moui_skia/scripts/publish-stub-library.sh"
+)
+
+recipe_sha256() (
+  cd "$repo_root"
+  local f
+  for f in "${recipe_files[@]}"; do
+    if [[ -f "$f" ]]; then
+      printf '%s  %s\n' "$(sha256_of_normalized "$f")" "$f"
+    else
+      printf 'missing  %s\n' "$f"
+    fi
+  done | sha256_of_stdin
+)
+
 sources_sha256() (
   cd "$module_root"
   local list
@@ -137,7 +188,7 @@ sources_sha256() (
   local f
   while read -r f; do
     [[ -z "$f" ]] && continue
-    printf '%s  %s\n' "$(sha256_of "$f")" "$f"
+    printf '%s  %s\n' "$(sha256_of_normalized "$f")" "$f"
   done <<<"$list" | sha256_of_stdin
 )
 
@@ -166,6 +217,7 @@ else:
     print(f"sha256={entry.get('sha256', '')}")
     print(f"size={entry.get('size', '')}")
     print(f"sources_sha256={entry.get('sources_sha256', '')}")
+    print(f"recipe_sha256={entry.get('recipe_sha256', '')}")
     print(f"library_names={','.join(entry.get('library_names', []))}")
 print(f"tag={resolved_tag}")
 print(f"owner={provider.get('owner', 'wzzc-dev')}")
@@ -197,10 +249,12 @@ PY
 fi
 
 sources_sha="$(sources_sha256)"
+recipe_sha="$(recipe_sha256)"
 
 # ----- --print-sources: cheap "do I need to publish?" probe -----
 if [[ $print_sources -eq 1 ]]; then
   echo "MOUI_SKIA_STUB_SOURCES_SHA256=$sources_sha"
+  echo "MOUI_SKIA_STUB_RECIPE_SHA256=$recipe_sha"
   exit 0
 fi
 
@@ -208,10 +262,12 @@ fi
 if [[ $check_mode -eq 1 ]]; then
   status="$(lock_value status "$platform" "$config" "$arch" "$tag")"
   locked_sources="$(lock_value sources_sha256 "$platform" "$config" "$arch" "$tag")"
+  locked_recipe="$(lock_value recipe_sha256 "$platform" "$config" "$arch" "$tag")"
   locked_name="$(lock_value name "$platform" "$config" "$arch" "$tag")"
   echo "stub asset check:"
   echo "  platform=$platform config=$config arch=$arch tag=$resolved_tag"
   echo "  sources_sha256=$sources_sha"
+  echo "  recipe_sha256=$recipe_sha"
   echo "  lock=$lock_path"
   if [[ "$status" != "present" ]]; then
     echo "  status=missing"
@@ -221,13 +277,28 @@ if [[ $check_mode -eq 1 ]]; then
   fi
   echo "  asset=$locked_name"
   echo "  locked_sources_sha256=$locked_sources"
+  echo "  locked_recipe_sha256=$locked_recipe"
   if [[ "$locked_sources" != "$sources_sha" ]]; then
     echo "FAIL: stub sources changed since the released asset was published." >&2
-    echo "      native/*.cpp no longer match $locked_name." >&2
+    echo "      native/*.cpp|*.h no longer match $locked_name." >&2
     echo "      Republish: moui_skia/scripts/publish-stub-library.sh --platform $platform --config $config --arch $arch" >&2
     exit 1
   fi
-  echo "  status=ok (native/*.cpp match the published stub asset)"
+  if [[ -z "$locked_recipe" ]]; then
+    echo "FAIL: the lock entry has no recipe_sha256 (written before the stub" >&2
+    echo "      fingerprint covered the build recipe). One migration rebuild is" >&2
+    echo "      expected: let the release workflow republish this leg, or run" >&2
+    echo "      moui_skia/scripts/publish-stub-library.sh --platform $platform --config $config --arch $arch" >&2
+    exit 1
+  fi
+  if [[ "$locked_recipe" != "$recipe_sha" ]]; then
+    echo "FAIL: the stub build recipe changed since the released asset was published." >&2
+    echo "      The release workflow, build.mbtx, or publish-stub-library.sh differ" >&2
+    echo "      from what built $locked_name." >&2
+    echo "      Republish: moui_skia/scripts/publish-stub-library.sh --platform $platform --config $config --arch $arch" >&2
+    exit 1
+  fi
+  echo "  status=ok (native sources and the build recipe match the published stub asset)"
   exit 0
 fi
 
@@ -275,6 +346,7 @@ MOUI_SKIA_STUB_ASSET_SHA256=$asset_sha
 MOUI_SKIA_STUB_ASSET_SIZE=$asset_size
 MOUI_SKIA_STUB_SHA256=$stub_sha
 MOUI_SKIA_STUB_SOURCES_SHA256=$sources_sha
+MOUI_SKIA_STUB_RECIPE_SHA256=$recipe_sha
 MOUI_SKIA_STUB_RELEASE_TAG=$resolved_tag
 MOUI_SKIA_STUB_RELEASE_URL=$asset_url
 EOF
@@ -287,6 +359,7 @@ Skia stub library package:
   stub=$stub_path
   stub_sha256=$stub_sha
   sources_sha256=$sources_sha
+  recipe_sha256=$recipe_sha
   platform=$platform
   config=$config
   arch=$arch
@@ -308,6 +381,7 @@ Lock entry for skia-provider-lock.json (providers.release.stub_libraries):
         "sha256": "$asset_sha",
         "size": $asset_size,
         "sources_sha256": "$sources_sha",
+        "recipe_sha256": "$recipe_sha",
         "library_names": [
           "$stub_name"
         ]

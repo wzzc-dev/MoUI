@@ -7,6 +7,11 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 *.sh text eol=lf
+# Native C/C++ sources feed the Skia stub fingerprint; a windows-latest checkout
+# must materialize the same bytes as an LF checkout (the publish script also
+# normalizes CRLF, so tarballs and copied trees agree).
+*.cpp text eol=lf
+*.h text eol=lf
 *.ps1 text eol=crlf
 # `moon info` canonically leaves a blank separator after the final section.
 **/pkg.generated.mbti text eol=lf whitespace=-blank-at-eof

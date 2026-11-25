@@ -14,23 +14,34 @@ name: MoUI Skia Stub Release
 # provider's `_GLIBCXX_USE_CXX11_ABI` flag on Linux, and Apple clang on macOS.
 # That is why this is a runner matrix instead of one cross-compiling job.
 #
-# Cost control: each matrix leg is a no-op unless `native/*.cpp|*.h` changed the
-# stub fingerprint for that platform/arch (or a dispatch run forces it). A leg
-# that does rebuild uploads its raw archive as a workflow artifact; a single
-# publish job packages, uploads with `--clobber`, verifies the published bytes,
-# rewrites the lock, and pushes one commit. Because the lock commit is pushed
-# with `GITHUB_TOKEN`, it does not start a second CI run.
+# Cost control: each matrix leg is a no-op only while its lock entry matches
+# BOTH fingerprints: `sources_sha256` (native/*.cpp|*.h) and `recipe_sha256`
+# (this workflow, `build.mbtx`, and `publish-stub-library.sh`). A recipe-only
+# change therefore rebuilds every leg instead of silently keeping a stale
+# archive, and both digests normalize CRLF to LF so a Windows checkout is not
+# mistaken for a source change. A leg that does rebuild uploads its raw archive
+# as a workflow artifact; a single publish job packages, uploads with
+# `--clobber`, verifies the published bytes, rewrites the lock, and pushes one
+# commit. Because the lock commit is pushed with `GITHUB_TOKEN`, it does not
+# start a second CI run.
+#
+# `workflow_dispatch force=true` is an exceptional recovery hatch (a bad or
+# degraded published archive), never the routine way to refresh a leg; recipe
+# edits are detected automatically and lock entries written before
+# `recipe_sha256` existed migrate with one automatic rebuild.
 
 on:
   workflow_dispatch:
     inputs:
       force:
-        description: Rebuild and republish even when the sources already match the lock.
+        description: Exceptional recovery only: rebuild and republish even when both fingerprints match the lock.
         required: false
         default: false
         type: boolean
   push:
     branches: [main, dev]
+    # Every file hashed into `recipe_sha256` is listed here; a new recipe input
+    # must be added to this filter and to `recipe_files` in the publish script.
     paths:
       - moui_skia/native/*.cpp
       - moui_skia/native/*.h
@@ -141,9 +152,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The lock entry is the trigger signal: matching `sources_sha256` means the
-      # published archive already corresponds to the sources in this commit, so
-      # there is nothing to rebuild for this platform/arch.
+      # The lock entry is the trigger signal: matching `sources_sha256` and
+      # `recipe_sha256` mean the published archive already corresponds to the
+      # sources and the build recipe in this commit, so there is nothing to
+      # rebuild for this platform/arch. A missing `recipe_sha256` (an entry from
+      # before the recipe was fingerprinted) fails the check on purpose, which
+      # migrates every leg with one rebuild.
       - name: Decide whether this stub is stale
         id: stale
         shell: bash
@@ -293,10 +307,10 @@ jobs:
           echo "MOUI_SKIA_STUB_LIB_PATH=$stub" >> "$GITHUB_ENV"
           echo "compiled stub: $stub"
 
-      # The stub fingerprint (`sources_sha256`) only hashes `native/*.cpp|*.h`,
-      # so nothing downstream notices when the same sources are compiled on a
-      # runner that lost a `__has_include` branch: `--check` stays clean and a
-      # degraded archive can replace a good one. Prove the branch is compiled in
+      # Neither fingerprint can see which `__has_include` branch the runner's
+      # headers actually resolve, so the same sources and recipe can still
+      # produce a degraded archive when a system package is missing: `--check`
+      # would stay clean after the publish. Prove the branch is compiled in
       # before the archive is uploaded.
       - name: Verify the Linux stub has the FontConfig font manager
         if: steps.stale.outputs.publish == 'true' && matrix.platform == 'linux'
@@ -462,6 +476,7 @@ jobs:
           node["sha256"] = os.environ["MOUI_SKIA_STUB_ASSET_SHA256"]
           node["size"] = int(os.environ["MOUI_SKIA_STUB_ASSET_SIZE"])
           node["sources_sha256"] = os.environ["MOUI_SKIA_STUB_SOURCES_SHA256"]
+          node["recipe_sha256"] = os.environ["MOUI_SKIA_STUB_RECIPE_SHA256"]
           node["library_names"] = [os.environ["STUB_LIBRARY_NAME"]]
           path.write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
           PY

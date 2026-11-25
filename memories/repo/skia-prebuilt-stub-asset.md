@@ -7,17 +7,20 @@
   the upstream Skia archives):
   - asset `MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip`
   - url `https://github.com/wzzc-dev/MoUI/releases/download/skia-stub-dev-6d73578a36/MoUISkiaStub-dev-6d73578a36-macos-Release-arm64.zip`
-  - lock `sha256`/`size`/`sources_sha256` live in
+  - lock `sha256`/`size`/`sources_sha256`/`recipe_sha256` live in
     `skia-provider-lock.json` (`providers.release.stub_libraries.macos.Release.arm64`)
 - Publishing is automated by `.github/workflows/moui-skia-stub-release.yml`:
   push triggers on `moui_skia/native/*.cpp|*.h`, `build.mbtx`,
   `publish-stub-library.sh`, and the workflow file; first step is
-  `publish-stub-library.sh --check` (no-op while `sources_sha256` matches), then
-  `moon run build.mbtx` with `MOUI_SKIA_STUB_MODE=build` compiles the stub on
-  `macos-latest`, `gh release upload --clobber` publishes it to
-  `skia-stub-<skia-tag>`, the digest and download URL are checked, and the lock
-  is committed with `GITHUB_TOKEN` (token pushes do not start a second CI run).
-  `workflow_dispatch` with `force=true` republishes unconditionally.
+  `publish-stub-library.sh --check`, a no-op only while both `sources_sha256`
+  and `recipe_sha256` (workflow + `build.mbtx` + publish script) match. Both
+  hashes normalize CRLF to LF, so a Windows checkout fingerprints like an LF
+  tree; an entry without `recipe_sha256` is stale once (migration rebuild).
+  Then `moon run build.mbtx` with `MOUI_SKIA_STUB_MODE=build` compiles the stub,
+  `gh release upload --clobber` publishes it to `skia-stub-<skia-tag>`, the
+  digest and download URL are checked, and the lock is committed with
+  `GITHUB_TOKEN` (token pushes do not start a second CI run).
+  `workflow_dispatch` with `force=true` is an exceptional recovery hatch.
 - The asset name stays `MoUISkiaStub-<skia-tag>-<platform>-<config>-<arch>.zip`
   across releases; rebuilding changes the zip `sha256` because `ar`/`zip` output
   is not byte-reproducible, so a forced republish always rewrites the lock.
@@ -25,9 +28,11 @@
   release (`skia-stub-<skia-tag>`), `--asset-tag` keeps `<skia-tag>` inside the
   asset name, `--release-owner/--release-repo` move the upload target off the
   lock's default `wzzc-dev/skia`, and `--print-sources` prints
-  `MOUI_SKIA_STUB_SOURCES_SHA256=...` without packaging.
+  `MOUI_SKIA_STUB_SOURCES_SHA256=...` and `MOUI_SKIA_STUB_RECIPE_SHA256=...`
+  without packaging.
 - Verify after any republish:
-  - `bash moui_skia/scripts/publish-stub-library.sh --check` (sources match lock)
+  - `bash moui_skia/scripts/publish-stub-library.sh --check` (sources and
+    recipe match lock)
   - `curl -fsSL <url> | shasum -a 256` equals the lock `sha256`
   - `bash moui_skia/scripts/fetch-release-skia.sh --platform macos --arch arm64
     --config Release --print-env` reports `MOUI_SKIA_STUB_LIB=.../libmoui_skia_stub.a`
