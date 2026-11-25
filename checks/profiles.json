@@ -30,6 +30,13 @@
           ]
         },
         {
+          "name": "skia stub fingerprint test",
+          "argv": [
+            "bash",
+            "moui_skia/scripts/tests/publish-stub-library-check.sh"
+          ]
+        },
+        {
           "name": "check profile catalog",
           "argv": [
             "node",
