@@ -287,16 +287,43 @@ swap: a generated host keeps the window, renderer and platform services, while
 the app package is rebuilt as a `foreign_library` and linked into a uniquely
 named `plugin.dylib` (macOS) or PIC-rewritten `plugin.so` (Linux) the host
 loads. Both transports above apply unchanged, so an opted-in model survives the
-swap; a compiler error keeps the old UI interactive. Core, renderer, backend
-and ABI edits still restart, and IME/semantics/platform views are Phase 2.
+swap; a compiler error keeps the old UI interactive.
+
+Hot mode works for any **repository** app package without editing
+`moui_devhost/moon.mod`. The generator writes a standalone
+`wzzc-dev/moui_dev_hot` module under gitignored `moui_devhost/dev_hot/`, with
+its own nested `moon.work` mirroring the repository workspace and an app-module
+dependency; the plugin imports `<app-module>/app` directly and picks
+`program_with_dev_environment` (host-owned time), then
+`program_with_dev_state`, then `program`; external workspace apps are rejected.
+
+The ABI v1 bridge carries the complete vocabulary: all 28 `DrawCommand` variants
+with their brush/spec fields, the clear color, all 10 `AppEvent` and all 8
+`TextInputEvent` variants. The host decodes and paints
+image/divider/shadow/clips/text/brush fills and strokes with no unsupported
+commands.
+
+The host also owns time: `FrameTick` every 16 ms (`--frame-interval-ms`),
+polling injected events and new generations every 250 ms.
+`program_with_dev_environment` gets a hot `AppEnvironment` whose subscriptions
+fire from those frames and whose clock reads host time, so app timers and the
+runtime animation clock advance. `MOUI_HOT_INJECT_FILE` appends complete JSON
+`AppEvent` lines for smoke input; `MOUI_HOT_DEBUG=1` traces sampled frames.
+
+The watcher covers the app module plus local workspace packages reached through
+its `moon.pkg` imports, so shared-package edits rebuild the plugin; it compares
+mtimes/sizes, while registry deps and dependency-declaration edits stay out.
+
 macOS re-execs the host after 32 swaps because dyld retains dylib images; Linux
 `dlclose` unmaps the image, so the runner disables that budget
-(`MOUI_HOT_RELOAD_LIMIT=0`) and measured ~0.26 MB RSS growth per 20 swaps.
-Warm app edits measured about 0.6 s on macOS (ADR 0072) and p50 8.4 s on the
-matching Linux host (n=20, dominated by compiling the generated plugin C).
-Generated sources live in `moui_devhost/dev_hot/` (gitignored); the app module
-must be listed in `moui_devhost/moon.mod` (counter is). See ADR 0072 and ADR
-0073.
+(`MOUI_HOT_RELOAD_LIMIT=0`) and measured ~0.26 MB RSS growth per 20 swaps. Warm
+app edits measured about 0.6 s on macOS (ADR 0072), p50 8.4 s for counter on
+Linux (ADR 0073), and ~11.3–12.0 s for the richer probe in the Phase 2A smoke
+(initial ~16.5 s; dominated by compiling generated plugin C). The host renderer
+caches images, fonts, shaping and layers across generations, so an in-place
+asset change can stay stale; cache invalidation on swap is explicit debt in ADR
+0074. IME, semantics, platform views, Windows and Web are Phase 2B. See ADR
+0072–0074.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev

@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/hot_reload_widgets/widgets"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn shared_badge_text() -> String
+
+pub fn[Msg] status_card(Int32) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct StatusCard {
+  ticks : Int32
+}
+
+// Type aliases
+
+// Traits

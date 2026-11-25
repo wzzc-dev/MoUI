@@ -766,23 +766,28 @@ on the nightly schedule and on manual dispatch, on macos-latest, and uploads the
 raw-stream artifact on failure. The catalog command is `mode: run`; developers
 can still run `sh scripts/tui-pty-smoke.sh` directly for local reproduction.
 
-### Linux native hot reload smoke
+### Native hot reload smokes (Linux and macOS)
 
-`smoke/gates.json` carries `linux.native-hot-reload` (nightly tier,
-`mode: manual`, host `matching-host`). It runs the real bridge host under Xvfb,
-edits `examples/counter/app`, and asserts a new generation loads into the same
-host PID with `reload-old ... images=1` (Linux `dlclose` unmaps the image),
-then forces a compile error and asserts the previous generation stays live and
-interactive, and finally fixes it and asserts recovery. It is path-triggered and
-is not part of the default daily check.
+`smoke/gates.json` carries `linux.native-hot-reload` and
+`macos.native-hot-reload` (nightly tier, `mode: manual`, host `matching-host`).
+Both drive the real bridge host with `examples/hot_reload_probe`, whose shared
+widget package lives outside the app module. They assert: generation 1 paints
+image/divider/shadow/clip/text/brush with `unsupported=0` and advancing timer
+ticks; a synthetic `MOUI_HOT_INJECT_FILE` click changes `Count: 0` to
+`Count: 1`; an app edit loads generation 2 into the same host PID with that
+`Count: 1` preserved; an `examples/hot_reload_widgets` edit loads generation 3
+with the new shared label; a compile error keeps generation 3 live; fixing it
+recovers as generation 4 with state intact (Linux also asserts
+`reload-old ... images=1`).
 
-```sh
-scripts/linux-hot-reload-smoke.sh --run
-```
-
-The script restores the counter source through an `EXIT` trap and writes
-`artifacts/linux-hot-reload/smoke.log`. It requires a native Linux build stack
-(`node`, `moon`, `cc`), GLib and Skia, and either `DISPLAY` or `xvfb-run`.
+Run `scripts/linux-hot-reload-smoke.sh --run` or
+`scripts/macos-hot-reload-smoke.sh --run`. The macOS gate also runs hosted:
+`gh workflow run moui-macos-platform-evidence.yml -f run_hot_reload_smoke=true`,
+which is the evidence path. Linux runs under Xvfb when `DISPLAY` is unset and
+writes `artifacts/linux-hot-reload/smoke.log`; macOS writes
+`artifacts/macos-hot-reload/smoke.log`. Both use an `EXIT` trap, require
+`node`/`moon`/`cc` plus platform Skia/GLib, and are path-triggered; the macOS
+smoke's four swaps stay inside the 32-swap re-exec budget.
 
 ### Embedded runtime backends
 

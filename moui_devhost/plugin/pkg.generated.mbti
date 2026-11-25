@@ -4,9 +4,14 @@ package "wzzc-dev/moui_devhost/plugin"
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/services",
 }
 
 // Values
+pub fn hot_environment() -> @services.AppEnvironment
+
+pub fn hot_now_ms() -> Double
+
 pub fn state_transport(String?) -> @core.ProgramStateTransport?
 
 // Errors

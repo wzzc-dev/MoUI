@@ -20,6 +20,18 @@
       "featured": false
     },
     {
+      "id": "hot_reload_probe",
+      "path": "examples/hot_reload_probe",
+      "title": "Hot Reload Probe",
+      "featured": false
+    },
+    {
+      "id": "hot_reload_widgets",
+      "path": "examples/hot_reload_widgets",
+      "title": "Hot Reload Widgets",
+      "featured": false
+    },
+    {
       "id": "p5_sketch",
       "path": "examples/p5_sketch",
       "title": "p5 Sketch",

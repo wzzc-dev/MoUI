@@ -17,6 +17,8 @@ pub fn decode_event(String) -> @core.AppEvent?
 
 pub fn decode_frame(String) -> Array[@core.DrawCommand]?
 
+pub fn decode_frame_payload(String) -> FramePayload?
+
 pub fn encode_config(DevConfig) -> String
 
 pub fn encode_event(@core.AppEvent) -> String?
@@ -34,6 +36,15 @@ pub(all) struct DevConfig {
   transient_file : String?
 }
 pub fn DevConfig::new(width~ : Double, height~ : Double, state_file? : String?, transient_file? : String?) -> Self
+
+pub struct FramePayload {
+  commands : Array[@core.DrawCommand]
+  clear_color : @core.Color
+  unsupported : Int32
+}
+pub fn FramePayload::clear_color(Self) -> @core.Color
+pub fn FramePayload::commands(Self) -> Array[@core.DrawCommand]
+pub fn FramePayload::unsupported(Self) -> Int32
 
 // Type aliases
 

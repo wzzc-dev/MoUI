@@ -9,6 +9,5 @@ import {
   "wzzc-dev/window@0.5.4-0.2.13",
   "wzzc-dev/moui_skia_renderer@0.9.1",
   "wzzc-dev/moui_devtools@0.9.1",
-  "examples/counter@0.1.0",
   "moonbitlang/x@0.5.6",
 }

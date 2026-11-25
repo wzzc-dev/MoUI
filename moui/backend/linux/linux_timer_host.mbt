@@ -26,10 +26,13 @@ extern "C" fn linux_timer_supported() -> Int32 = "moui_linux_timer_supported"
 
 ///|
 /// Construct a `TimerSource` backed by the GLib main-loop timeout timer.
-/// Ticks use the shared timer skeleton with interval-based frames.
+/// Ticks carry the host monotonic clock so app timers and the runtime
+/// animation clock advance; without it every interval-based frame reports
+/// `time_ms=0` and time-driven updates stay frozen.
 pub fn linux_timer_source() -> @services.TimerSource {
   @services.TimerSource::from_native_timer(
     start=linux_timer_start,
     cancel=linux_timer_cancel,
+    clock=Some(linux_frame_clock()),
   )
 }

@@ -1,7 +1,23 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+// Generate the native dev hot-reload bridge.
+//
+// The generated tree is a standalone MoonBit module with its own `moon.work`
+// that mirrors the repository workspace. That is what lets any monorepo app
+// package be imported by the generated plugin without editing
+// `moui_devhost/moon.mod`: the app module is a sibling workspace member of the
+// generated module, and the generated `moon.mod` carries the dependency edge.
+
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { join, relative, resolve } from "node:path";
 
 const args = process.argv.slice(2);
 function value(name, fallback) {
@@ -12,10 +28,11 @@ const repoRoot = resolve(value("--root", "."));
 const out = resolve(repoRoot, value("--out", "moui_devhost/dev_hot"));
 const appModule = value("--app", "examples/counter");
 const appPackage = value("--app-package", "app");
-const programFn = value("--program-fn", "program_with_dev_state");
-const title = value("--title", "MoUI Hot Counter");
+const requestedProgramFn = value("--program-fn", "auto");
+const title = value("--title", "MoUI Hot App");
 const width = Number(value("--width", "520"));
 const height = Number(value("--height", "360"));
+const frameIntervalMs = Number(value("--frame-interval-ms", "16"));
 const hostPlatform =
   value("--platform", "") ||
   (process.platform === "darwin" ? "macos" : process.platform === "linux" ? "linux" : "");
@@ -24,15 +41,121 @@ if (hostPlatform !== "macos" && hostPlatform !== "linux") {
   console.error(`moui-dev-hot: unsupported host platform: ${hostPlatform || process.platform}`);
   process.exit(1);
 }
-if (!existsSync(join(repoRoot, appModule, appPackage, "moon.pkg"))) {
+
+const appRoot = resolve(repoRoot, appModule);
+const appPackageDir = join(appRoot, appPackage);
+if (!existsSync(join(appPackageDir, "moon.pkg"))) {
   console.error(`moui-dev-hot: app package not found: ${appModule}/${appPackage}`);
   process.exit(1);
 }
+const appFromRoot = relative(repoRoot, appRoot);
+if (appFromRoot.startsWith("..") || appFromRoot === "") {
+  console.error(
+    `moui-dev-hot: app module ${appModule} is not a repository workspace member; ` +
+      "native hot mode currently supports repository apps only",
+  );
+  process.exit(1);
+}
+
+function readModuleName(dir) {
+  const text = readFileSync(join(dir, "moon.mod"), "utf8");
+  const match = text.match(/^\s*name\s*=\s*"([^"]+)"/m);
+  return match ? match[1] : null;
+}
+
+function readModuleVersion(dir) {
+  const text = readFileSync(join(dir, "moon.mod"), "utf8");
+  const match = text.match(/^\s*version\s*=\s*"([^"]+)"/m);
+  return match ? match[1] : "0.0.0";
+}
+
+const workspaceText = readFileSync(join(repoRoot, "moon.work"), "utf8");
+const membersBlock = workspaceText.match(/members\s*=\s*\[([\s\S]*?)\]/)?.[1] ?? "";
+const memberDirs = [...membersBlock.matchAll(/"([^"]+)"/g)]
+  .map((match) => resolve(repoRoot, match[1]))
+  .filter((dir) => existsSync(join(dir, "moon.mod")));
+if (!memberDirs.some((dir) => dir === appRoot)) {
+  memberDirs.push(appRoot);
+}
+
+const moduleByName = new Map();
+for (const dir of memberDirs) {
+  const name = readModuleName(dir);
+  if (name) moduleByName.set(name, dir);
+}
+
+function devDependency(name) {
+  const dir = moduleByName.get(name);
+  if (!dir) {
+    console.error(`moui-dev-hot: workspace module not found: ${name}`);
+    process.exit(1);
+  }
+  return `${name}@${readModuleVersion(dir)}`;
+}
+
+function detectProgramFn() {
+  if (requestedProgramFn !== "auto") return requestedProgramFn;
+  const source = readdirSync(appPackageDir)
+    .filter((file) => file.endsWith(".mbt"))
+    .map((file) => readFileSync(join(appPackageDir, file), "utf8"))
+    .join("\n");
+  for (const name of [
+    "program_with_dev_environment",
+    "program_with_dev_state",
+    "program",
+  ]) {
+    if (new RegExp(`\\bfn\\s+${name}\\s*\\(`).test(source)) return name;
+  }
+  console.error(
+    `moui-dev-hot: ${appModule}/${appPackage} has no program factory ` +
+      "(program_with_dev_environment, program_with_dev_state or program)",
+  );
+  process.exit(1);
+}
+const programFn = detectProgramFn();
+const programExpr =
+  programFn === "program_with_dev_environment"
+    ? "@app.program_with_dev_environment(@devplugin.hot_environment())"
+    : `@app.${programFn}()`;
 
 const staging = `${out}.tmp`;
 rmSync(staging, { recursive: true, force: true });
 mkdirSync(join(staging, "host"), { recursive: true });
 mkdirSync(join(staging, "plugin"), { recursive: true });
+
+// The generated workspace mirrors the repository workspace so every local
+// module the app can import is available to the generated module by name.
+// Paths are relative to the generated module root, which is what `moon.work`
+// requires.
+const workspaceMembers = [".", ...memberDirs.map((dir) => relative(out, dir))]
+  .map((member) => member.split("\\").join("/"))
+  .filter((member, index, all) => all.indexOf(member) === index);
+
+writeFileSync(
+  join(staging, "moon.work"),
+  `members = [
+${workspaceMembers.map((member) => `  "${member}",`).join("\n")}
+]
+`,
+);
+
+writeFileSync(
+  join(staging, "moon.mod"),
+  `name = "wzzc-dev/moui_dev_hot"
+
+version = "0.0.0"
+
+preferred_target = "native"
+
+import {
+  "${devDependency("wzzc-dev/moui")}",
+  "${devDependency("wzzc-dev/moui_devhost")}",
+  "${devDependency("wzzc-dev/moui_skia_renderer")}",
+  "${devDependency("wzzc-dev/moui_devtools")}",
+  "${appModule}@${readModuleVersion(appRoot)}",
+}
+`,
+);
 
 writeFileSync(
   join(staging, "plugin", "moon.pkg"),
@@ -83,7 +206,7 @@ pub fn dev_create(data : Bytes, length : Int32) -> Int32 {
     None => return 1
   }
   let runtime = @runtime.new_program_with_dimensions(
-    program=@app.${programFn}(),
+    program=${programExpr},
     width=config.width,
     height=config.height,
     state_transport=@devplugin.state_transport(config.state_file),
@@ -214,29 +337,49 @@ struct HostModel {
 ///|
 enum HostMsg {
   Poll
+  Tick(@core.Frame)
   Input
 }
 
 ///|
 fn subscriptions(_model : HostModel) -> @core.Subscription[HostMsg] {
-  @services.TimerSource::subscription(
-    ${hostBackend.timerExpr},
-    interval_ms=250.0,
-    map=_frame => Poll,
-    key="dev-hot/poll",
-    label="Dev hot poll",
-  )
+  @core.Subscription::batch([
+    @services.TimerSource::subscription(
+      ${hostBackend.timerExpr},
+      interval_ms=250.0,
+      map=_frame => Poll,
+      key="dev-hot/poll",
+      label="Dev hot poll",
+    ),
+    @services.TimerSource::subscription(
+      ${hostBackend.timerExpr},
+      interval_ms=${frameIntervalMs.toFixed(1)},
+      map=frame => Tick(frame),
+      key="dev-hot/frame",
+      label="Dev hot frame",
+    ),
+  ])
 }
 
 ///|
 fn update(model : HostModel, message : HostMsg) -> HostModel {
   match message {
-    Poll =>
+    Poll => {
+      @devhost.poll_injected_events()
       if @devhost.poll_reload() {
         { revision: model.revision + 1 }
       } else {
         model
       }
+    }
+    Tick(frame) => {
+      // The host owns platform time; the plugin receives the same frame so app
+      // timers and animations advance in hot mode.
+      ignore(
+        @devhost.dispatch_event(@core.AppEvent::FrameTick(frame)),
+      )
+      { revision: model.revision + 1 }
+    }
     Input => { revision: model.revision + 1 }
   }
 }
@@ -284,6 +427,14 @@ fn main {
     width=${width.toFixed(1)},
     height=${height.toFixed(1)},
   )
+  // The plugin runtime needs the same viewport size as the host window; the
+  // host owns resize delivery and forwards it over the bridge.
+  runtime.set_event_observer(event => {
+    match event {
+      @core.AppEvent::Resize(size) => @devhost.resize(size.width, size.height)
+      _ => ()
+    }
+  })
   match @devtools_socket.devtools_port_file_path() {
     Some(port_file) =>
       @devtools_socket.install_devtools_socket(
@@ -312,10 +463,14 @@ writeFileSync(
   `${JSON.stringify(
     {
       schemaVersion: 1,
+      module: "wzzc-dev/moui_dev_hot",
       app: `${appModule}/${appPackage}`,
+      appModule,
+      appPackage,
       program: programFn,
       width,
       height,
+      frameIntervalMs,
       platform: hostPlatform,
       host: "host",
       plugin: "plugin",
@@ -327,4 +482,4 @@ writeFileSync(
 
 rmSync(out, { recursive: true, force: true });
 renameSync(staging, out);
-console.log(`moui-dev-hot: wrote ${out}`);
+console.log(`moui-dev-hot: wrote ${out} (app ${appModule}/${appPackage}, program ${programFn})`);

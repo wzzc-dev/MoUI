@@ -8,6 +8,8 @@ import {
 // Values
 pub fn dispatch_event(@core.AppEvent) -> Bool
 
+pub fn dispatch_event_json(String) -> Bool
+
 pub fn dump_frame_if_requested() -> Unit
 
 pub fn frame_commands() -> Array[@core.DrawCommand]
@@ -17,6 +19,8 @@ pub fn generation_path_from_env() -> String?
 pub fn initialize(String, Double, Double) -> Bool
 
 pub fn plugin_path_from_env() -> String?
+
+pub fn poll_injected_events() -> Unit
 
 pub fn poll_reload() -> Bool
 
