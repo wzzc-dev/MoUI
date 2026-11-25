@@ -113,13 +113,15 @@ Verified here / on Linux:
   `lib.exe /Out:`, `.obj` generated C, no `libmoonbitrun.o`, `/MT` CRT, and the
   default library list above.
 
-Not verified here (no Windows host in this environment):
+Not verified here (no interactive Windows desktop in this environment):
 
-- The hosted offscreen job now compiles, links and loads generation 1 under
-  MSVC, but the seven-leg sequence has not yet completed; interactive HWND
-  evidence still requires a matching desktop.
-- Whether `FreeLibrary` unmaps the MoonBit image (`images=1`) is unmeasured;
-  the 32-swap budget stays until a matching host records it.
+- Interactive HWND presentation still requires a matching Windows desktop; the
+  hosted offscreen job proves the plugin load/swap and frame-tree path, not
+  windowed presentation.
+- The hosted offscreen smoke records `reload-old FreeLibrary=1 rc=0 images=1`
+  after each of three swaps, so `FreeLibrary` unmaps the plugin image there; the
+  32-swap budget stays as a conservative bound until the windowed gate repeats
+  it.
 - `scripts/windows-hot-reload-smoke.ps1 -Run` has not been run on a matching
   interactive desktop here. It remains the manual matching-host gate for the
   windowed path; `moui-windows-platform-evidence.yml` does not execute an
@@ -157,6 +159,13 @@ the leg name plus the last matching frame/log line. The job uploads
 `artifacts/windows-hot-reload/` as CI evidence; those files stay out of git.
 This is hosted offscreen evidence, not a replacement for the manual windowed
 matching-host gate.
+
+On `windows-latest` the job passed all seven legs: generation 1 painted at
+520x360 CPU offscreen with `unsupported=0` and advancing ticks; the synthetic
+`MOUI_HOT_INJECT_FILE` click reached `Count: 1`; generations 2-4 preserved that
+count across an app edit, a shared-widget edit, a retained compile error, and
+recovery, with three `reload-old FreeLibrary=1 rc=0 images=1` swaps and
+cache-reset markers.
 
 ## Options Considered
 

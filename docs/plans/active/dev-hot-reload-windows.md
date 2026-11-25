@@ -30,8 +30,9 @@
 - [ ] Compile/link `_WIN32` with MSVC and run
   `scripts/windows-hot-reload-smoke.ps1 -Run` from vcvars, recording
   `artifacts/windows-hot-reload/smoke.log`.
-- [ ] Measure `FreeLibrary` image retention; revisit `MOUI_HOT_RELOAD_LIMIT`
-  if `images` stays above 1.
+- [x] Measure `FreeLibrary` image retention; the hosted offscreen smoke reports
+  `images=1` after each of three swaps, so keep the 32-swap re-exec budget as a
+  conservative bound until the windowed gate repeats it.
 - [ ] Decide whether the Windows platform-evidence workflow should run the
   interactive hot smoke (currently manual, like Linux).
 
@@ -40,7 +41,7 @@
 | Date | Decision |
 |------|----------|
 | 2026-11-25 | Use MSVC `link.exe /DLL /WHOLEARCHIVE /EXPORT` on the MoonBit `plugin.lib`; rely on `moonbit.h` for `moonbit_init`'s export. |
-| 2026-11-25 | Keep the conservative 32-swap re-exec budget until `FreeLibrary` unload is measured. |
+| 2026-11-25 | Hosted offscreen shows `images=1` after three `FreeLibrary` swaps; keep `MOUI_HOT_RELOAD_LIMIT=32` as a conservative bound until the manual windowed gate repeats it. |
 | 2026-11-25 | Keep ABI v1 and the host/protocol packages; Windows adds no wire fields. |
 | 2026-11-25 | Match `plugin.obj` / `plugin.lib` and backslashes in the fast-plan filter. |
 | 2026-11-25 | Offscreen CI reuses `HostRuntimeDriver` + a CPU-presented `HostSurface` and the same `dev_*` ABI; no second backend or diagnostics bus. |
@@ -51,3 +52,4 @@
 |------|------|
 | 2026-11-25 | Generator, runner, bridge, CLI, tests, smoke gate, ADR and docs landed; Windows runtime evidence pending. |
 | 2026-11-25 | Offscreen entry, timer pump and synthetic-input path added with Linux-runnable unit tests; hosted CI smoke wired. The first hosted run reached the plugin link and exposed the inherited MSVC `LINK=/ENTRY:mainCRTStartup`; the runner clears `LINK` for the plugin spawn and the plan test covers it. The second run linked, loaded and painted generation 1, then failed before leg 2 because a smoke helper bound `[int]$Pid`, which collides with PowerShell's read-only `$PID`; the parameter is now `$ProcessId`, unexpected errors report leg/frame/log, and a Node test scans smoke parameters for automatic-variable collisions. |
+| 2026-11-25 | The hosted offscreen smoke then passed all seven legs on `windows-latest`: generation 1 frames with `unsupported=0` and advancing ticks, synthetic `Count: 1`, generations 2-4 with state preserved through the app and shared-widget edits plus compile-error retention, three `reload-old FreeLibrary=1 rc=0 images=1` swaps, and cache resets. |
