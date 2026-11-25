@@ -470,6 +470,39 @@
       "artifacts": [
         "artifacts/macos-hot-reload/smoke.log"
       ]
+    },
+    {
+      "id": "web.hot-reload",
+      "tier": "nightly",
+      "kind": "web-hot-reload-smoke",
+      "host": "any",
+      "purpose": "Start `moui dev --web --hot` and drive headless Chromium over CDP: edit the app source and assert the refreshed page keeps the committed model plus the flushed focus/scroll transient snapshot, check snapshot stability across two refreshes, and report p50/p95 edit-to-paint over N runs. Path-triggered manual evidence; not part of the default daily check.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "scripts/web-hot-reload-smoke.sh",
+            "--run"
+          ],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": [
+        "docs/testing.md",
+        "docs/development.md",
+        "docs/decisions/0078-web-dev-state-preserving-hot-reload.md"
+      ],
+      "artifacts": [
+        "artifacts/web-hot-reload/report.json",
+        "artifacts/web-hot-reload/smoke.log"
+      ]
     }
   ]
 }

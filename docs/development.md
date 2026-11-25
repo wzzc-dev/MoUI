@@ -266,7 +266,7 @@ server serves `<package>/index.html` at `/` and resolves shared assets such as
 root when they are not under the current directory.
 
 Native targets restart after a successful rebuild. Web targets expose a status
-endpoint, refresh the page after a successful build, and display compiler
+endpoint, reload the page after a successful build, and display compiler
 diagnostics in an injected overlay while continuing to watch for the fix. The
 optional `--state PATH` value (default `.moui/dev-state.json`) is exported as
 `MOUI_DEV_STATE_FILE`. Applications that opt in through
@@ -330,9 +330,21 @@ Linux (ADR 0073), and ~11.3–12.0 s for the richer probe in the Phase 2A smoke
 (initial ~16.5 s; dominated by compiling generated plugin C). The host renderer
 caches images, fonts, shaping and layers across generations, so an in-place
 asset change can stay stale; cache invalidation on swap is explicit debt in ADR
-0074. Windows and Web hot mode remain future work; IME, semantics and platform
-views are implemented for native macOS/Linux in Phase 2B. See ADR
-0072–0074, 0076.
+0074. Windows hot mode is still its own PR; IME, semantics and platform views
+are implemented for native macOS/Linux in Phase 2B, and Web hot reload is
+implemented (ADR 0078). See ADR 0072–0074, 0076, 0078.
+
+On Web, `--hot` makes the dev reload state-preserving. It generates a
+gitignored `moui_devhost/dev_web/` composition root from the app's `web_wasm`
+entrypoint, rebuilds it for wasm-gc, and serves the result at
+`/__moui/app.wasm`; the injected client reloads when the served generation
+advances. The generated root wires the two transports above to `localStorage`,
+and the shared renderer flushes the transient snapshot on `pagehide`, so an
+opted-in model, focus, caret and scroll survive. The app provides
+`program_with_dev_state()` and must be listed in `moui_devhost/moon.mod` (the
+fixture is). Run it from the repo root as `moui dev --package <app>/web_wasm
+--web --hot`. Core, renderer and backend edits still need a dev-loop restart;
+the watcher follows the app project. See ADR 0078.
 
 Pass `--inspect` to publish a read-only DevTools document to
 `.moui/devtools.json`; `moui inspect` prints the latest report, and the Web dev

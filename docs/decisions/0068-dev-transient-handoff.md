@@ -38,7 +38,8 @@ MoUI keeps the restart-based dev loop and adds an **opt-in transient handoff**:
   (or in a future app transient hook) preserve it; the runtime does not learn
   navigation.
 - In-process interpreter/wasm reload is **not** part of this decision. The web
-  module-reload experiment remains a plan item, not a product claim.
+  module-reload experiment remains a plan item, not a product claim; ADR 0078
+  carries this same snapshot across the Web dev refresh.
 
 ## Consequences
 
