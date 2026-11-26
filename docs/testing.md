@@ -62,6 +62,7 @@ that should stay synchronized with the catalog include:
 node scripts/lint-scripts.mjs --profile pr
 node scripts/validate-workflow-yaml.mjs   # offline PyYAML parse of .github/workflows/*.yml
 node scripts/validate-check-profiles.mjs
+node --test scripts/moui-dev-hot-artifacts.test.mjs   # stale dev_hot diagnosis (check.mjs runs it before Moon)
 node scripts/validate-portfolio-governance.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
