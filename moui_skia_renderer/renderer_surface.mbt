@@ -589,6 +589,9 @@ pub fn SkiaRasterRenderer::resize(
   }
   let previous = self.metrics
   self.metrics = metrics
+  // A resized raster surface starts with no valid pixels. The next frame must
+  // fully initialize it even if the runtime only reports a small dirty rect.
+  self.surface_initialized = false
   // A backing surface is tied to the physical drawable dimensions and scale.
   // Never carry pixels across a resize; the next frame must rebuild it.
   self.invalidate_gpu_backing_surface()

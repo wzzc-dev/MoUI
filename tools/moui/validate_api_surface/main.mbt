@@ -785,9 +785,14 @@ fn package_budgets() -> Array[PackageBudget] {
       // +2 lines, +2 pub declarations.
       // +1 line / +1 pub (Phase 2C): reset_host_caches clears source-keyed
       // renderer caches after a dev-hot plugin swap (ADR 0077).
-      max_lines: 295,
-      max_pub_lines: 168,
-      max_pub_all_lines: 7,
+      // +31 lines / +18 pub / +1 pub(all): the partial-repaint observability
+      // contract (issue #45) exposes the per-frame requested/effective damage,
+      // fallback reason, target, and draw/copy/present timing, plus the
+      // capability report that separates persistent backing from drawable
+      // retention.
+      max_lines: 326,
+      max_pub_lines: 186,
+      max_pub_all_lines: 8,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],

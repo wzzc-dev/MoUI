@@ -92,7 +92,7 @@ This file is generated from repository manifests and validator reports.
 | core diagnostics (moui/core/diagnostics/pkg.generated.mbti) | 69 | 21 | 3 |
 | render common (moui/render/common/pkg.generated.mbti) | 387 | 153 | 12 |
 | native text model (moui/render/native_text/pkg.generated.mbti) | 96 | 46 | 1 |
-| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 295 | 168 | 7 |
+| skia renderer (moui_skia_renderer/pkg.generated.mbti) | 326 | 186 | 8 |
 | sun renderer (moui_sun_renderer/pkg.generated.mbti) | 284 | 175 | 1 |
 | webgpu adapter (moui_web_renderer/pkg.generated.mbti) | 190 | 92 | 2 |
 | native wgpu renderer (moui_wgpu_renderer/pkg.generated.mbti) | 119 | 55 | 2 |

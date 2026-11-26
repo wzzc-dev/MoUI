@@ -284,6 +284,26 @@ the frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA
 DIB and `StretchDIBits`, and Linux through the local `window/linux`
 `Window::present_rgba_pixels` `wl_shm` presenter.
 
+Partial-repaint capability is reported separately from pixel retention.
+`SkiaPartialRepaintReport` distinguishes a retained raster surface
+(`drawable_retained = true`) from a GPU persistent backing
+(`persistent_backing = true`, drawable not retained); a renderer may accept
+sub-rect damage for its backing even when the drawable has no preserved
+backbuffer. The default raster provider and the CPU fallback advertise
+`SubRect` and retain pixels after their first full frame. The default GPU
+provider advertises `SubRect` only on Metal, the one route with an implemented
+persistent backing; Vulkan, Direct3D, and EGL draw directly into a fresh
+drawable and stay `FullSurfaceOnly`. The Metal backing is updated only inside
+the requested damage region, then copied in full to each fresh drawable, so
+`partial_present` remains `false` on every route until damaged-rect
+presentation lands. Frames whose command stream still contains scope commands
+fall back to full damage and record the reason; retained-layer hit frames
+currently do too because the conservative scan sees the cached range's scope
+commands. `SkiaRasterRenderer::last_damage_report()` records the
+requested/effective region, fallback reason, draw target, presented flag, and
+draw/copy/present timings; a sub-rect request promoted to full also emits the
+`renderer.damage_fallback` diagnostic.
+
 The current real Skia smoke uses JetBrains Skia link flags to render and read
 back a representative frame through `SkiaRasterRenderer`. It validates clear,
 rect fill/stroke, rounded fill/stroke, linear-gradient fills and strokes, soft rounded

@@ -98,6 +98,32 @@ fn SkiaRasterRenderer::render_frame_result(
       source=diagnostic.command(),
     )
   })
+  // A requested sub-rect or empty region that degraded to a full redraw is an
+  // observable contract event, not a silent optimization choice. Only emit it
+  // when the request was not already full so ordinary first/resize frames stay
+  // quiet.
+  match self.last_damage_report {
+    Some(report) =>
+      match report.fallback_reason() {
+        Some(reason) =>
+          if report.requested().kind() != "full" {
+            diagnostics.push(
+              @diagnostics.DiagnosticEvent::new(
+                code="renderer.damage_fallback",
+                severity=@diagnostics.DiagnosticSeverity::Info,
+                domain=@diagnostics.DiagnosticDomain::Render,
+                message=reason,
+                source=report.target().label(),
+                detail=Some(
+                  "requested=\{report.requested().kind()}; effective=\{report.effective().kind()}",
+                ),
+              ),
+            )
+          }
+        None => ()
+      }
+    None => ()
+  }
   @render.RenderFrameResult::new(
     presented~,
     cache_hit_count=stats.cache_hit_count + shaping_hits,
