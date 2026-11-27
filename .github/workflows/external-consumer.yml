@@ -7,6 +7,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# One in-flight run per ref for this workflow. A newer pull-request push cancels
+# the older run so a superseded consumer matrix does not keep runners busy; push
+# runs on main are never cancelled, so landing evidence is not dropped. Same
+# shape as the ci.yml concurrency block.
+concurrency:
+  group: external-consumer-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   external-consumer:
     name: ${{ matrix.os }} / ${{ matrix.source }} / ${{ matrix.profile }}

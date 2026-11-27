@@ -6,6 +6,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+# One in-flight run per ref for this workflow. A newer pull-request push cancels
+# the older run; push runs on main are never cancelled, so landing evidence is
+# not dropped. The feature-proof summary ignores cancelled runs and matches
+# completed successful ones by SHA, so cancelling a superseded PR run does not
+# turn into a false proof gap.
+concurrency:
+  group: renderer-real-skia-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   macos-real-skia:
     name: macOS renderer real Skia
