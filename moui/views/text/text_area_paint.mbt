@@ -127,10 +127,10 @@ fn append_text_area_commands(
               comp_start + text_length(composition),
             )
             let r0 = text_area_display_caret_rect(
-              paragraph, text_system, content_frame, font, start_off, line_height,
+              paragraph, content_frame, start_off, line_height,
             )
             let r1 = text_area_display_caret_rect(
-              paragraph, text_system, content_frame, font, end_off, line_height,
+              paragraph, content_frame, end_off, line_height,
             )
             if r1.origin.x > r0.origin.x {
               overlay_commands.push(
@@ -151,16 +151,15 @@ fn append_text_area_commands(
     }
     let visual_caret = text_field_visual_caret(text, control, focused=true)
     let cursor = if display_text == "" {
-      let glyph_h = text_area_glyph_row_height(text_system, " ", font)
       @core.Rect::new(
         x=text_frame.origin.x,
-        y=text_area_line_slot_y(content_frame, 0, line_height, glyph_h),
+        y=content_frame.origin.y,
         width=text_editing_cursor_width(),
-        height=glyph_h,
+        height=line_height.max(1.0),
       )
     } else {
       text_area_display_caret_rect(
-        paragraph, text_system, content_frame, font, visual_caret, line_height,
+        paragraph, content_frame, visual_caret, line_height,
       )
     }
     overlay_commands.push(

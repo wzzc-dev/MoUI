@@ -187,9 +187,7 @@ fn[Msg] text_area_reveal_caret(
     reveal: Some(
       text_area_display_caret_rect(
         paragraph,
-        ctx.text_system,
         content_frame,
-        font,
         text_field_visual_caret(value, control, focused=true),
         line_height,
       ),
@@ -656,18 +654,16 @@ fn text_input_state_for_multi_line(
     height=text_frame.size.height,
   )
   let adjusted_rect = match paragraph {
-    None => {
-      let glyph_h = text_area_glyph_row_height(text_system, " ", font)
+    None =>
       @core.Rect::new(
         x=text_frame.origin.x,
-        y=text_area_line_slot_y(content_frame, 0, line_height, glyph_h),
+        y=content_frame.origin.y,
         width=text_editing_cursor_width(),
-        height=glyph_h,
+        height=line_height.max(1.0),
       )
-    }
     Some(paragraph) =>
       text_area_display_caret_rect(
-        paragraph, text_system, content_frame, font, visual_caret, line_height,
+        paragraph, content_frame, visual_caret, line_height,
       )
   }
   {

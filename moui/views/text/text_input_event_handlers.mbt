@@ -73,7 +73,9 @@ fn[Msg] text_field_reveal_caret(
     ..result,
     text_control: Some({
       ..control,
-      reveal: Some(text_editing_exact_cursor_rect(text_frame, cursor_x)),
+      reveal: Some(
+        text_editing_exact_cursor_rect(text_frame, cursor_x, layout.size.height),
+      ),
     }),
   }
 }

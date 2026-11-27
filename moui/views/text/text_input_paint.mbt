@@ -274,12 +274,17 @@ fn append_text_field_editing_overlay(
   )
   let cursor_x = text_frame.origin.x +
     caret_offset(layout.caret_positions, caret)
+  // The renderer centers the measured line box inside the field frame. The
+  // caret must use that same line box so it is exactly as tall as the text
+  // and shares its vertical center (including CJK fallback fonts).
+  let caret_height = layout.size.height.max(1.0)
   let cursor = text_editing_visual_cursor_rect(
     @core.Rect::new(
       x=cursor_x,
-      y=text_frame.origin.y + 6.0,
+      y=text_frame.origin.y +
+        (text_frame.size.height - caret_height).max(0.0) / 2.0,
       width=text_editing_cursor_width(),
-      height=max_double(8.0, text_frame.size.height - 12.0),
+      height=caret_height,
     ),
     caret,
     display_text.to_array().length(),
@@ -316,6 +321,7 @@ fn append_text_field_selection_commands(
       let x0 = text_frame.origin.x + caret_offset(layout.caret_positions, start)
       let x1 = text_frame.origin.x + caret_offset(layout.caret_positions, end)
       if x1 > x0 {
+        let line_box_height = layout.size.height.max(1.0)
         // Selection highlight tracks the ambient theme's primary palette token
         // so it follows the active color scheme (light/dark) and custom palette
         // overrides, rather than a hard-coded light theme. The alpha matches the
@@ -326,9 +332,10 @@ fn append_text_field_selection_commands(
           FillRect(
             @core.Rect::new(
               x=x0,
-              y=text_frame.origin.y + 6.0,
+              y=text_frame.origin.y +
+                (text_frame.size.height - line_box_height).max(0.0) / 2.0,
               width=x1 - x0,
-              height=max_double(8.0, text_frame.size.height - 12.0),
+              height=line_box_height,
             ),
             selection_color,
           ),

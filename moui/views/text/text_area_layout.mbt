@@ -87,9 +87,7 @@ fn text_area_line_index_for_paragraph_offset(
 /// model.
 fn text_area_display_caret_rect(
   paragraph : @core.TextParagraphLayoutResult,
-  text_system : @core.TextSystem,
   text_frame : @core.Rect,
-  font : @core.FontSpec,
   visual_offset : Int32,
   line_height : Double,
 ) -> @core.Rect {
@@ -102,13 +100,15 @@ fn text_area_display_caret_rect(
   } else {
     0.0
   }
-  let glyph_h = text_area_glyph_row_height(text_system, " ", font)
-  let y = text_area_line_slot_y(text_frame, line_index, line_height, glyph_h)
+  // The caret owns the full line-height slot: a 20px row must paint a 20px
+  // caret even when this line's glyph metrics are shorter. Painted glyphs
+  // stay centered inside the same slot via text_area_line_slot_y.
+  let y = text_frame.origin.y + line_index.to_double() * line_height
   @core.Rect::new(
     x=text_frame.origin.x + (caret.origin.x - line_origin_x),
     y~,
     width=text_editing_cursor_width(),
-    height=glyph_h,
+    height=line_height.max(1.0),
   )
 }
 
