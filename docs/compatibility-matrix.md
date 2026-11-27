@@ -1,6 +1,6 @@
 # Compatibility Matrix
 
-> Release line: `0.9.x`. Source: `checks/release-modules.json`,
+> Release line: `0.10.x`. Source: `checks/release-modules.json`,
 > `checks/portfolio-governance.json`, and the module manifests. This matrix is
 > a documentation aid; the machine gate is
 > `node scripts/validate-release-module-closures.mjs` with exact workspace pins.

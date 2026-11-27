@@ -1,13 +1,13 @@
 name = "wzzc-dev/moui_metal_renderer"
 
-version = "0.9.2"
+version = "0.10.0"
 
 preferred_target = "native"
 
 supported_targets = "native"
 
 import {
-  "wzzc-dev/moui@0.9.2",
+  "wzzc-dev/moui@0.10.0",
 }
 
 readme = "README.mbt.md"

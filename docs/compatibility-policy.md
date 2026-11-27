@@ -20,14 +20,29 @@ ledger. `checks/compatibility-policy.json` records the two-stage reading in
 `versioning.patch` and `versioning.pre1Policy`, and `1.0.0` restores the strict
 post-1.0 rules.
 
+## 0.10.x Line
+
+The current synchronized line is `0.10.x`. `0.10.0` ("Partial repaint
+observability") advances every public module together and resolves frame
+damage per draw target: the retained raster surface and the Metal persistent
+backing accept sub-rect damage after their first full draw, and the new
+`SkiaDamageReport`/`SkiaPartialRepaintReport` expose the requested and
+effective region, fallback reason, draw target, timings, and retention. The
+public surface is additive — no existing symbol is removed or renamed, no new
+parameter is introduced, and no package boundary or host wire contract
+changes. The release also lands the stale `dev_hot` artifact diagnosis, the
+`moonc 1.0.0-rc1` toolchain baseline, and the workflow-YAML parse gate.
+`checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
+source of truth; the docs, module manifests, and `docs/compatibility-matrix.md`
+must agree with it.
+
 ## 0.9.x Line
 
-The current synchronized line is `0.9.x`. `0.9.0` ("Navigation surface")
-advanced every public module together with the keyboard and pointer surface a
-workbench shell needs: tree navigation targets, the tab strip, command-menu
-navigation and type-ahead, a keyboard-only focus ring, and a compact find bar.
-Every new parameter carried a default, no enum gained a variant, and nothing
-existing changed.
+`0.9.x` is closed: `0.9.0` ("Navigation surface") advanced every public module
+together with the keyboard and pointer surface a workbench shell needs — tree
+navigation targets, the tab strip, command-menu navigation and type-ahead, a
+keyboard-only focus ring, and a compact find bar. Every new parameter carried
+a default, no enum gained a variant, and nothing existing changed.
 
 `0.9.1` uses the line-level pre-1.0 allowance above for the first time: it is a
 patch that adds public API — the `SemanticsRole` variants `TabList`,
@@ -43,10 +58,6 @@ policy requires.
 surface, the hot-reload host seams (`HostDriverHooks`, the semantics frame
 adapter, the renderer cache-reset calls), and the optional parameters those
 additions introduce; its release note carries the upgrade note.
-
-`checks/compatibility-policy.json` `currentReleaseLine` is the machine-readable
-source of truth; the docs, module manifests, and `docs/compatibility-matrix.md`
-must agree with it.
 
 ## 0.8.x Line
 
@@ -69,10 +80,11 @@ upgrade note and migration examples. No SemVer exception is recorded for this
 program. The release still moves the synchronized line and every public module
 to `0.4.x` together, and it still passes the external consumer gate. The
 synchronized-line policy (ADR 0065) continued on the `0.5.x` line, then the
-`0.6.x` line, the `0.7.x` line, the `0.8.x` line, and now the `0.9.x` line:
-each minor advances every public module together with the features recorded in
-`docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`, `docs/releases/0.7.md`,
-`docs/releases/0.8.0.md`, and `docs/releases/0.9.0.md`.
+`0.6.x` line, the `0.7.x` line, the `0.8.x` line, the `0.9.x` line, and now
+the `0.10.x` line: each minor advances every public module together with the
+features recorded in `docs/releases/0.5.0.md`, `docs/releases/0.6.0.md`,
+`docs/releases/0.7.md`, `docs/releases/0.8.0.md`, `docs/releases/0.9.0.md`,
+and `docs/releases/0.10.0.md`.
 
 The program does not keep a compatibility layer. Moved public symbols are
 removed from their old package in the same release; in-tree call sites and the
