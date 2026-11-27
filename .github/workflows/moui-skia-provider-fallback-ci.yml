@@ -20,6 +20,14 @@ on:
       - ".github/actions/setup-moonbit/action.yml"
       - ".github/workflows/moui-skia-provider-fallback-ci.yml"
 
+# One in-flight run per ref for this workflow. A newer pull-request push cancels
+# the older run so superseded fallback matrices do not keep runners busy; push
+# runs on main are never cancelled, so landing evidence is not dropped. Same
+# shape as the ci.yml concurrency block.
+concurrency:
+  group: skia-provider-fallback-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   fallback:
     name: fallback (${{ matrix.os }})
