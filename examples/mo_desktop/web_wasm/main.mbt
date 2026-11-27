@@ -1,5 +1,6 @@
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   @apphost.run_app(
     "Mo Desktop",
     @runtime.new_program_with_dimensions(

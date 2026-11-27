@@ -2,10 +2,8 @@
 import {
   "moonbitlang/core/async",
   "moonbitlang/core/async/process",
-  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
-  "moonbitlang/core/async/stdio",
 }
 ---
 
@@ -34,24 +32,6 @@ let windows_backend_host_libs : Array[String] = [
 
 ///|
 let linux_glib_packages : Array[String] = ["glib-2.0", "gio-2.0"]
-
-///|
-fn json_field(value : @json.Json, key : String) -> @json.Json? {
-  if value is @json.Object(fields) {
-    fields.get(key)
-  } else {
-    None
-  }
-}
-
-///|
-fn json_text(value : @json.Json) -> String? {
-  if value is @json.String(text) {
-    Some(text)
-  } else {
-    None
-  }
-}
 
 ///|
 fn lower_trim(value : String) -> String {
@@ -99,41 +79,11 @@ async fn host_platform() -> String {
 }
 
 ///|
-fn env_or(config : @json.Json, key : String) -> String {
+fn env_or(key : String) -> String {
   match @env.get_env_var(key) {
-    Some(value) =>
-      if value != "" {
-        return value
-      }
-    None => ()
+    Some(value) => value
+    None => ""
   }
-  for path in [["env"], ["build", "env"], ["build_info", "env"]] {
-    let mut node = config
-    let mut found = true
-    for segment in path {
-      match json_field(node, segment) {
-        Some(next) => node = next
-        None => {
-          found = false
-          break
-        }
-      }
-    }
-    if found {
-      match json_field(node, key) {
-        Some(value) =>
-          match json_text(value) {
-            Some(text) =>
-              if text != "" {
-                return text
-              }
-            None => ()
-          }
-        None => ()
-      }
-    }
-  }
-  ""
 }
 
 ///|
@@ -212,22 +162,9 @@ fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) 
 
 ///|
 async fn main {
-  let raw = @stdio.stdin.read_all() catch {
-    _ => b""
-  }
-  let text = @utf8.decode(raw) catch {
-    _ => ""
-  }
-  let config = if text.trim().to_owned() == "" {
-    @json.Json::empty_object()
-  } else {
-    @json.parse(text) catch {
-      _ => @json.Json::empty_object()
-    }
-  }
   let host = host_platform()
-  let explicit_stub = env_or(config, "MOUI_LINUX_GLIB_STUB_CC_FLAGS")
-  let explicit_link = env_or(config, "MOUI_LINUX_GLIB_CC_LINK_FLAGS")
+  let explicit_stub = env_or("MOUI_LINUX_GLIB_STUB_CC_FLAGS")
+  let explicit_link = env_or("MOUI_LINUX_GLIB_CC_LINK_FLAGS")
   let mut glib_stub_flags = explicit_stub
   let mut glib_link_flags = explicit_link
   if explicit_stub == "" && explicit_link == "" && host == "linux" {
@@ -238,7 +175,7 @@ async fn main {
   }
   let linux_host_flags = append_link_flags(linux_backend_host_flags, glib_link_flags)
   let windows_flags = windows_backend_host_flags(host)
-  let android_flags = if lower_trim(env_or(config, "MOUI_SKIA_PLATFORM")) == "android" {
+  let android_flags = if lower_trim(env_or("MOUI_SKIA_PLATFORM")) == "android" {
     android_backend_host_flags
   } else {
     ""

@@ -80,7 +80,7 @@ impl @core.ViewStateValue for RouteTransitionStamp with fn encode_view_state(
   let route_bytes = @utf8.encode(self.previous_route[:], bom=false)
   let output = Buffer(capacity=17 + route_bytes.length())
   output.write_int_be(route_bytes.length())
-  output.write_bytes(route_bytes[:])
+  output.write_bytesview(route_bytes[:])
   output.write_int_be(self.count)
   output.write_double_be(self.started_ms)
   output.write_int_be(self.direction)

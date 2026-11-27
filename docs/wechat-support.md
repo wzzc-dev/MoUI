@@ -93,9 +93,9 @@ Keyboard and IME are not available in the Mini Program canvas environment.
 
 ## Lifecycle
 
-The Mini Program template owns the App and Page lifecycle. The backend exports
-surface and lifecycle callback slots; they remain partial until device evidence
-proves the complete lifecycle contract:
+The Mini Program template owns the App and Page lifecycle. The entrypoint
+exports the backend's surface and lifecycle callback slots; they remain partial
+until device evidence proves the complete lifecycle contract:
 - `App.onLaunch` → runtime initialization
 - `App.onShow` → `handle_resumed()`
 - `App.onHide` → `handle_suspended()`

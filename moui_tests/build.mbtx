@@ -13,8 +13,8 @@ import {
 ///
 /// Port of the former `build.js`. The module owns no Skia flags; it re-emits the
 /// renderer prebuild vars so its own harnesses link the same Skia archives. The
-/// delegated `moui_skia_renderer/build.mbtx` inherits this process' stdin, so it
-/// sees exactly the config moon handed to this hook. The renderer module keeps
+/// delegated `moui_skia_renderer/build.mbtx` inherits this process' environment,
+/// so it sees exactly the overrides this hook received. The renderer module keeps
 /// its own `link_configs`: moon rejects a prebuild from `wzzc-dev/moui_tests`
 /// that targets an external module name, so only `vars` are forwarded. The two
 /// smoke harnesses in this module do get `link_configs` derived from the

@@ -20,11 +20,6 @@ extern "C" fn linux_timer_cancel(handle : UInt64) -> Unit = "moui_linux_timer_ca
 extern "C" fn linux_timer_pump() -> Int32 = "moui_linux_timer_pump"
 
 ///|
-/// Non-zero on Linux, where the timer host is backed by GLib. Other native
-/// hosts compile the stub and cannot run GLib timer assertions.
-extern "C" fn linux_timer_supported() -> Int32 = "moui_linux_timer_supported"
-
-///|
 /// Construct a `TimerSource` backed by the GLib main-loop timeout timer.
 /// Ticks carry the host monotonic clock so app timers and the runtime
 /// animation clock advance; without it every interval-based frame reports

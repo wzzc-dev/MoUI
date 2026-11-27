@@ -321,12 +321,11 @@ fn app_test_text(template_id~ : String = "counter") -> String {
 ///|
 /// Web 入口包清单。`app_alias` 是组合根包（`<module>/app`）在本包的导入别名：
 /// `moui new` 用它默认的 `@app`，Studio 导出 bundle 用 `@exported_app`——
-/// 除此之外两边是同一份契约（含 `web_abi_exports` 的宿主入口名单）。
+/// 除此之外两边是同一份契约（含 `#export_name` 宿主入口标注）。
 pub fn web_pkg_text(
   module_name : String,
   app_alias~ : String = "app",
 ) -> String {
-  let exports = web_abi_exports.map(name => "        \"\{name}\",").join("\n")
   let template =
     #|import {
     #|  "wzzc-dev/moui/backend/web",
@@ -338,22 +337,14 @@ pub fn web_pkg_text(
     #|
     #|supported_targets = "wasm-gc"
     #|
-    #|pkgtype(kind: "executable")
+    #|pkgtype(kind: "foreign_library")
     #|
     #|options(
-    #|  link: {
-    #|    "wasm-gc": {
-    #|      "exports": [
-    #|__EXPORTS__
-    #|      ],
-    #|    },
-    #|  },
     #|  targets: { "main.mbt": [ "wasm-gc" ] },
     #|)
   template
   .replace_all(old="__MODULE__", new=module_name)
   .replace_all(old="__APP_ALIAS__", new=app_alias)
-  .replace_all(old="__EXPORTS__", new=exports)
 }
 
 ///|
@@ -363,7 +354,8 @@ pub fn web_main_text(title : String) -> String {
   let title = moon_string(title)
   let template =
     #|///|
-    #|fn main {
+    #|#export_name("_start")
+    #|pub fn start() -> Unit {
     #|  let runtime = @runtime.new_program_with_dimensions(
     #|    program=@app.program(),
     #|    width=720.0,

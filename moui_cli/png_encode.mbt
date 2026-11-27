@@ -26,18 +26,18 @@ fn png_crc32(data : Bytes) -> UInt32 {
 
 ///|
 fn png_write_signature(out : @buffer.Buffer) -> Unit {
-  out.write_bytes(b"\x89PNG\r\n\x1a\n")
+  out.write_bytesview(b"\x89PNG\r\n\x1a\n")
 }
 
 ///|
 fn png_write_chunk(out : @buffer.Buffer, kind : Bytes, data : Bytes) -> Unit {
   out.write_int_be(data.length())
   let crc_input = @buffer.Buffer()
-  crc_input.write_bytes(kind)
-  crc_input.write_bytes(data)
+  crc_input.write_bytesview(kind)
+  crc_input.write_bytesview(data)
   let crc = png_crc32(crc_input.to_bytes())
-  out.write_bytes(kind)
-  out.write_bytes(data)
+  out.write_bytesview(kind)
+  out.write_bytesview(data)
   out.write_uint_be(crc)
 }
 
@@ -64,7 +64,7 @@ fn png_encode_rgba(
     raw.write_byte(b'\x00')
     let start = y * row_bytes
     if row_bytes == width * 4 {
-      raw.write_bytes(pixels[start:start + width * 4])
+      raw.write_bytesview(pixels[start:start + width * 4])
     } else {
       for x in 0..<(width * 4) {
         raw.write_byte(pixels[start + x])

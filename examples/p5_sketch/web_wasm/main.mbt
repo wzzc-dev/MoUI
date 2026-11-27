@@ -1,5 +1,6 @@
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   // The JS side of the rasterizer lives in index.html's `p5_raster` import
   // namespace; the boot-log probe proves the readback loop end to end.
   @web_raster.install()

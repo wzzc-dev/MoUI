@@ -597,11 +597,11 @@ fn apply_waivers(
 ) -> (Array[Violation], Array[Waiver]) {
   let waived_keys : Set[String] = Set([])
   for waiver in baseline.waived {
-    waived_keys.add(waiver.pkg + "|" + waiver.node + "|" + waiver.field)
+    waived_keys.insert(waiver.pkg + "|" + waiver.node + "|" + waiver.field)
   }
   let violation_keys : Set[String] = Set([])
   for violation in violations {
-    violation_keys.add(
+    violation_keys.insert(
       package_of(violation.path) + "|" + violation.node + "|" + violation.field,
     )
   }

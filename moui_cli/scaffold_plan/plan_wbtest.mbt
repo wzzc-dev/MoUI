@@ -191,11 +191,12 @@ test "default macOS project file plan is exact" {
   let web_pkg = test_planned_text(files, "web_wasm/moon.pkg")
   assert_true(web_pkg.contains("wzzc-dev/moui_web_renderer"))
   assert_true(web_pkg.contains("@webgpu_adapter"))
-  assert_true(web_pkg.contains("web_dispatch_pointer_input"))
+  assert_true(web_pkg.contains("pkgtype(kind: \"foreign_library\")"))
   let web_main = test_planned_text(files, "web_wasm/main.mbt")
   assert_true(web_main.contains("@apphost.run_app"))
   assert_true(web_main.contains(".render_all(@webgpu_adapter.from_env())"))
   assert_true(web_main.contains(".backend(@web.entry())"))
+  assert_true(web_main.contains("#export_name(\"web_dispatch_pointer_input\")"))
   assert_true(web_main.contains("pub fn web_dispatch_pointer_input"))
   // The generated project's moon.mod pins default_moui_dependency_version and
   // its browser_runtime.js comes from that same registry package. The 0.3
@@ -222,6 +223,7 @@ test "default macOS project file plan is exact" {
   assert_true(desktop_pkg.contains("wzzc-dev/moui/runtime"))
   assert_true(desktop_pkg.contains("wzzc-dev/moui/apphost"))
   assert_false(desktop_pkg.contains("wzzc-dev/moui/backend/macos/"))
+  assert_true(desktop_main.contains("fn main {"))
   assert_true(desktop_main.contains("@apphost.run_app"))
   assert_true(
     desktop_main.contains(
