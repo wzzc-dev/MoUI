@@ -717,8 +717,19 @@ log in release notes.
 GitHub Actions installs MoonBit through `.github/actions/setup-moonbit`. The
 pinned compiler version lives in `.moonbit-toolchain`; update that file when
 moving CI to a new MoonBit toolchain version. The current pin is MoonBit
-`0.10.22` (`moonc v0.10.22+124d61d05`, `moonrun 0.1.20261119`,
-`@moonbit/moonc-worker@0.1.202611201` for the Playground).
+`1.0.0-rc1` (`moonc v1.0.0-rc1+3c0520448`, `moon 0.1.20261126`,
+`moonrun 0.1.20261126`, `@moonbit/moonc-worker@0.1.202611201` for the
+Playground).
+
+The 1.0.0-rc1 migration is warning-only so far:
+
+- `Map`/`Set` mutation through `add` is deprecated in favour of `insert`.
+- `Buffer::write_bytes` is deprecated in favour of `write_bytesview`.
+- `#cfg(target="llvm")` is deprecated; use `target="native"`.
+- Prebuild `build.mbtx` scripts should read `MOON_MOD`, `MOON_BUILD_DIR`, and
+  the other `MOON_*` environment variables; the legacy stdin JSON is deprecated.
+- `link.wasm(-gc).exports` is deprecated in favour of `#export_name`
+  attributes.
 
 The 0.10.21 migration touched three things:
 
