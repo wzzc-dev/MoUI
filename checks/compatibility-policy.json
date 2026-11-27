@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "currentReleaseLine": "0.9.x",
+  "currentReleaseLine": "0.10.x",
   "versioning": {
     "scheme": "semver",
     "patch": "post-1.0: bug fixes and documentation only; pre-1.0 (current 0.x): fixes, documentation, and any API change, provided the release ships an upgrade note with a migration example",

@@ -1,14 +1,14 @@
 name = "wzzc-dev/moui_3d_physics"
 
-version = "0.9.2"
+version = "0.10.0"
 
 preferred_target = "native"
 
 supported_targets = "+native+wasm-gc+wasm"
 
 import {
-  "wzzc-dev/moui@0.9.2",
-  "wzzc-dev/moui_3d@0.9.2",
+  "wzzc-dev/moui@0.10.0",
+  "wzzc-dev/moui_3d@0.10.0",
 }
 
 license = "Apache-2.0"
