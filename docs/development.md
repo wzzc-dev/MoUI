@@ -733,15 +733,26 @@ moving CI to a new MoonBit toolchain version. The current pin is MoonBit
 `moonrun 0.1.20261126`, `@moonbit/moonc-worker@0.1.202611201` for the
 Playground).
 
-The 1.0.0-rc1 migration is warning-only so far:
+The 1.0.0-rc1 syntax migration is complete; these deprecation diagnostics are
+gone from `moon check`:
 
-- `Map`/`Set` mutation through `add` is deprecated in favour of `insert`.
-- `Buffer::write_bytes` is deprecated in favour of `write_bytesview`.
-- `#cfg(target="llvm")` is deprecated; use `target="native"`.
-- Prebuild `build.mbtx` scripts should read `MOON_MOD`, `MOON_BUILD_DIR`, and
-  the other `MOON_*` environment variables; the legacy stdin JSON is deprecated.
-- `link.wasm(-gc).exports` is deprecated in favour of `#export_name`
-  attributes.
+- `Map`/`Set` mutation uses `insert` instead of the deprecated `add`.
+- `Buffer::write_bytesview` replaces the deprecated `write_bytes` call sites.
+- `#cfg` conditions use `target="native"` instead of the deprecated
+  `target="llvm"`.
+- Prebuild `build.mbtx` hooks read `MOON_*` and `MOUI_*` from the process
+  environment and no longer read the legacy stdin JSON. The toolchain still
+  prints its unconditional legacy-stdin migration notice for every module that
+  declares a prebuild script; that notice is not a compiler warning.
+- Wasm entrypoints are `pkgtype(kind: "foreign_library")` packages that mark
+  callbacks with `#export_name(...)`, replacing deprecated
+  `link.wasm(-gc).exports`; library packages no longer declare link exports.
+- Executable entrypoints with `async fn main` keep their direct
+  `"moonbitlang/async"` import. `1.0.0-rc1` flags it as `unused_package`, but
+  dropping it detaches the compiler's async-main lowering from the async I/O
+  runtime: the MCP stdio smoke panics on `current_coroutine` and the native
+  link hits a duplicate `thread_pool` symbol. Treat it as a runtime
+  requirement, not dead code, until the toolchain changes the lowering.
 
 The 0.10.21 migration touched three things:
 

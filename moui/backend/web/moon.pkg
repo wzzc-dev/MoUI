@@ -29,20 +29,5 @@ import {
 supported_targets = "wasm-gc"
 
 options(
-  link: {
-    "wasm-gc": {
-      "exports": [
-        "web_dispatch_event",
-        "web_dispatch_pointer_input",
-        "web_dispatch_route",
-        "web_dispatch_semantics_action",
-        "web_dispatch_platform_view_event",
-        "web_complete_async_clipboard_read",
-        "web_complete_async_clipboard_read_image",
-        "web_complete_async_file_dialog",
-        "web_complete_async_text_file_read",
-      ],
-    },
-  },
   targets: { },
 )

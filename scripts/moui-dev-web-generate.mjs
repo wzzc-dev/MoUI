@@ -80,8 +80,10 @@ const finalWidth = overrideWidth > 0 ? overrideWidth : width;
 const finalHeight = overrideHeight > 0 ? overrideHeight : height;
 
 const abiShim = `///|
-// Moon only exports functions defined by the executable package. Keep this
-// mechanical ABI shim free of platform or application logic.
+// Moon only exports definitions carrying #export_name and owned by the
+// foreign-library package. Keep this mechanical ABI shim free of platform or
+// application logic.
+#export_name("web_dispatch_event")
 pub fn web_dispatch_event(
   kind : Int32,
   raw_id : Int32,
@@ -94,6 +96,7 @@ pub fn web_dispatch_event(
 }
 
 ///|
+#export_name("web_dispatch_pointer_input")
 pub fn web_dispatch_pointer_input(
   raw_id : Int32,
   kind : Int32,
@@ -113,11 +116,13 @@ pub fn web_dispatch_pointer_input(
 }
 
 ///|
+#export_name("web_dispatch_route")
 pub fn web_dispatch_route(source_code : Int32, text_id : Int32) -> Unit {
   @web.web_dispatch_route(source_code, text_id)
 }
 
 ///|
+#export_name("web_dispatch_semantics_action")
 pub fn web_dispatch_semantics_action(
   raw_id : Int32,
   node_id_text_id : Int32,
@@ -132,6 +137,7 @@ pub fn web_dispatch_semantics_action(
 }
 
 ///|
+#export_name("web_complete_async_clipboard_read")
 pub fn web_complete_async_clipboard_read(
   request_id : Int32,
   ok : Bool,
@@ -141,6 +147,7 @@ pub fn web_complete_async_clipboard_read(
 }
 
 ///|
+#export_name("web_complete_async_file_dialog")
 pub fn web_complete_async_file_dialog(
   request_id : Int32,
   ok : Bool,
@@ -166,22 +173,9 @@ writeFileSync(
 
 supported_targets = "wasm-gc"
 
-pkgtype(kind: "executable")
+pkgtype(kind: "foreign_library")
 
 options(
-  link: {
-    "wasm-gc": {
-      "exports": [
-        "web_dispatch_event",
-        "web_dispatch_pointer_input",
-        "web_dispatch_semantics_action",
-        "web_dispatch_route",
-        "web_complete_async_clipboard_read",
-        "web_complete_async_file_dialog",
-        "web_dev_flush",
-      ],
-    },
-  },
   targets: { "main.mbt": [ "wasm-gc" ] },
 )
 `,
@@ -194,7 +188,8 @@ writeFileSync(
 let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
 
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let runtime = @runtime.new_program_with_dimensions(
     program=@app.${programFn}(),
     width=${finalWidth.toFixed(1)},
@@ -213,6 +208,7 @@ fn main {
 // Called by the shared Web renderer before the dev page unloads. A reload is
 // the Web state-preserving refresh: this writes the runtime transient snapshot
 // so focus, scroll and text selection survive the new instance.
+#export_name("web_dev_flush")
 pub fn web_dev_flush() -> Unit {
   match runtime_ref.val {
     Some(runtime) =>

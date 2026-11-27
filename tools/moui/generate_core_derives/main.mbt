@@ -88,7 +88,7 @@ fn emit_extend_block(entry : TypeDerives) -> Result[String, String] {
     if seen.contains(trait_name) {
       continue
     }
-    seen.add(trait_name)
+    seen.insert(trait_name)
     match extend_method_set(trait_name) {
       Some(methods) => {
         lines.push("///|")

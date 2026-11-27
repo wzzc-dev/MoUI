@@ -1,5 +1,6 @@
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let runtime = @runtime.new_program_with_dimensions(
     program=@playground_app.program(),
     width=1280.0,
@@ -12,6 +13,7 @@ fn main {
 }
 
 ///|
+#export_name("web_dispatch_event")
 pub fn web_dispatch_event(
   kind : Int32,
   raw_id : Int32,
@@ -24,6 +26,7 @@ pub fn web_dispatch_event(
 }
 
 ///|
+#export_name("web_dispatch_pointer_input")
 pub fn web_dispatch_pointer_input(
   raw_id : Int32,
   kind : Int32,
@@ -43,11 +46,13 @@ pub fn web_dispatch_pointer_input(
 }
 
 ///|
+#export_name("web_dispatch_route")
 pub fn web_dispatch_route(source_code : Int32, text_id : Int32) -> Unit {
   @web.web_dispatch_route(source_code, text_id)
 }
 
 ///|
+#export_name("web_dispatch_semantics_action")
 pub fn web_dispatch_semantics_action(
   raw_id : Int32,
   node_id_text_id : Int32,
@@ -62,6 +67,7 @@ pub fn web_dispatch_semantics_action(
 }
 
 ///|
+#export_name("web_complete_async_clipboard_read")
 pub fn web_complete_async_clipboard_read(
   id : Int32,
   ok : Bool,
@@ -71,31 +77,37 @@ pub fn web_complete_async_clipboard_read(
 }
 
 ///|
+#export_name("playground_begin_compile_result")
 pub fn playground_begin_compile_result() -> Unit {
   @playground_bridge.begin_compile_result()
 }
 
 ///|
+#export_name("playground_append_compile_result_char")
 pub fn playground_append_compile_result_char(character : Char) -> Unit {
   @playground_bridge.append_compile_result_char(character)
 }
 
 ///|
+#export_name("playground_finish_compile_result")
 pub fn playground_finish_compile_result() -> Unit {
   @playground_bridge.finish_compile_result()
 }
 
 ///|
+#export_name("playground_begin_project_load")
 pub fn playground_begin_project_load() -> Unit {
   @playground_bridge.begin_project_load()
 }
 
 ///|
+#export_name("playground_append_project_load_char")
 pub fn playground_append_project_load_char(character : Char) -> Unit {
   @playground_bridge.append_project_load_char(character)
 }
 
 ///|
+#export_name("playground_finish_project_load")
 pub fn playground_finish_project_load() -> Unit {
   @playground_bridge.finish_project_load()
 }

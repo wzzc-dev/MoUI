@@ -2,7 +2,6 @@
 import {
   "moonbitlang/core/async",
   "moonbitlang/core/async/process",
-  "moonbitlang/core/async/stdio",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
@@ -13,7 +12,8 @@ import {
 ///|
 /// Skia prebuild hook (`--moonbit-unstable-prebuild`) for `wzzc-dev/moui_skia`.
 ///
-/// Port of the former `build.js`. It reads the build config JSON from stdin and
+/// Port of the former `build.js`. It reads the `MOUI_*` overrides from the
+/// process environment (the `MOON_*` variables carry the build context) and
 /// prints one JSON object with `vars` (expanded as `${build.*}` in `moon.pkg`)
 /// and `link_configs` (the only carrier that reaches is-main links).
 ///
@@ -41,8 +41,6 @@ import {
 
 ///|
 struct Opts {
-  config : @json.Json
-  env : Map[String, String]
   host : String
   module_root : String
 }
@@ -78,12 +76,12 @@ fn[T] bail(message : String) -> T {
 }
 
 ///|
-fn pick_config(env : Map[String, String], primary : String, secondary : String, fallback : String) -> String {
-  let first = config_or(env, primary, "")
+fn pick_config(primary : String, secondary : String, fallback : String) -> String {
+  let first = config_or(primary, "")
   if !is_blank(first) {
     return first
   }
-  config_or(env, secondary, fallback)
+  config_or(secondary, fallback)
 }
 
 ///|
@@ -324,130 +322,41 @@ fn read_file_text(path : String) -> String {
 // ===== config plumbing =====
 
 ///|
-fn json_field(value : @json.Json, key : String) -> @json.Json? {
-  match value {
-    @json.Object(fields) => fields.get(key)
-    _ => None
-  }
-}
-
-///|
-fn nested_string(value : @json.Json, keys : Array[String]) -> String? {
-  let mut node = value
-  let mut index = 0
-  while index < keys.length() {
-    match json_field(node, keys[index]) {
-      Some(next) => node = next
-      None => return None
-    }
-    index = index + 1
-  }
-  match node {
-    @json.String(text) => Some(text)
-    _ => None
-  }
-}
-
-///|
-fn add_env_object(out : Map[String, String], node : @json.Json) -> Unit {
-  match json_field(node, "env") {
-    Some(@json.Object(fields)) => {
-      for key, value in fields {
-        match value {
-          @json.String(text) => out.set(key, text)
-          _ => ()
-        }
-      }
-      }
-    _ => ()
-  }
-}
-
-///|
-fn config_env(config : @json.Json) -> Map[String, String] {
-  let out : Map[String, String] = Map([])
-  match json_field(config, "build_info") {
-    Some(node) => add_env_object(out, node)
-    None => ()
-  }
-  match json_field(config, "build") {
-    Some(node) => add_env_object(out, node)
-    None => ()
-  }
-  add_env_object(out, config)
-  out
-}
-
-///|
-fn config_value(env : Map[String, String], key : String) -> String? {
+fn config_value(key : String) -> String? {
   match @env.get_env_var(key) {
-    Some(value) => {
-      if is_blank(value) {
-        stored_value(env, key)
-      } else {
-        Some(value)
-      }
-      }
-    None => stored_value(env, key)
-  }
-}
-
-///|
-fn stored_value(env : Map[String, String], key : String) -> String? {
-  match env.get(key) {
-    Some(value) => {
-      if is_blank(value) {
-        None
-      } else {
-        Some(value)
-      }
-      }
+    Some(value) => if is_blank(value) { None } else { Some(value) }
     None => None
   }
 }
 
 ///|
-fn config_key_present(env : Map[String, String], key : String) -> Bool {
+fn config_key_present(key : String) -> Bool {
   match @env.get_env_var(key) {
     Some(_) => true
-    None => {
-      match env.get(key) {
-        Some(_) => true
-        None => false
-      }
-      }
+    None => false
   }
 }
 
 ///|
-fn config_or(env : Map[String, String], key : String, fallback : String) -> String {
-  match config_value(env, key) {
+fn config_or(key : String, fallback : String) -> String {
+  match config_value(key) {
     Some(value) => value
     None => fallback
   }
 }
 
 ///|
-fn target_kind(opts : Opts) -> String? {
-  let candidates : Array[Array[String]] = [
-    ["build", "target", "kind"],
-    ["build_info", "target", "kind"],
-    ["target", "kind"],
-    ["target", "backend"],
-  ]
-  for path in candidates {
-    match nested_string(opts.config, path) {
-      Some(kind) => return Some(kind)
-      None => ()
-    }
+fn target_kind() -> String? {
+  match config_value("MOON_BACKEND") {
+    Some(kind) => Some(kind)
+    None => config_value("MOON_TARGET")
   }
-  config_value(opts.env, "MOON_TARGET")
 }
 
 ///|
 fn reject_legacy_link_mode(opts : Opts) -> Unit {
   for key in ["MOUI_SKIA_SKIA_LINK_MODE", "MOUI_SKIA_MACOS_LINK_MODE"] {
-    if config_key_present(opts.env, key) {
+    if config_key_present(key) {
       bail(
         "\{key} is no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto.",
       )
@@ -509,7 +418,6 @@ async fn host_platform() -> String {
 fn release_platform(opts : Opts) -> String {
   let platform = lower_trim(
     pick_config(
-      opts.env,
       "MOUI_SKIA_PLATFORM",
       "MOUI_SKIA_RELEASE_PLATFORM",
       "auto",
@@ -538,7 +446,6 @@ fn release_platform(opts : Opts) -> String {
 fn release_arch(opts : Opts) -> String {
   let arch = lower_trim(
     pick_config(
-      opts.env,
       "MOUI_SKIA_ARCH",
       "MOUI_SKIA_RELEASE_ARCH",
       "auto",
@@ -553,7 +460,6 @@ fn release_arch(opts : Opts) -> String {
 ///|
 fn release_config(opts : Opts) -> String {
   let config = pick_config(
-    opts.env,
     "MOUI_SKIA_CONFIG",
     "MOUI_SKIA_RELEASE_CONFIG",
     "Release",
@@ -570,7 +476,7 @@ fn release_config(opts : Opts) -> String {
 
 ///|
 fn skia_link_mode(opts : Opts) -> String {
-  let mode = lower_trim(config_or(opts.env, "MOUI_SKIA_LINK_MODE", "static"))
+  let mode = lower_trim(config_or("MOUI_SKIA_LINK_MODE", "static"))
   if !has_token(["auto", "dynamic", "static"], mode) {
     bail("unsupported MOUI_SKIA_LINK_MODE: \{mode}")
   }
@@ -579,10 +485,10 @@ fn skia_link_mode(opts : Opts) -> String {
 
 ///|
 fn skia_prebuild_enabled(opts : Opts) -> Bool {
-  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
+  if truthy(config_or("MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
     return false
   }
-  match config_value(opts.env, "MOUI_SKIA_ENABLE_PREBUILD_SKIA") {
+  match config_value("MOUI_SKIA_ENABLE_PREBUILD_SKIA") {
     Some(value) => !falsy(value)
     None => true
   }
@@ -590,7 +496,7 @@ fn skia_prebuild_enabled(opts : Opts) -> Bool {
 
 ///|
 fn should_configure_skia(opts : Opts) -> Bool {
-  match target_kind(opts) {
+  match target_kind() {
     Some(kind) => {
       if has_token(["wasm", "wasm32", "wasmgc", "wasm-gc", "js"], kind) {
         return false
@@ -624,7 +530,7 @@ fn parse_env_lines(output : String) -> Map[String, String] {
 
 ///|
 fn native_target(opts : Opts) -> Bool {
-  match target_kind(opts) {
+  match target_kind() {
     Some(kind) => {
       let text = lower_trim(kind)
       for skipped in ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"] {
@@ -718,8 +624,8 @@ async fn fetch_skia_env(opts : Opts) -> Map[String, String] {
 // ===== skia values =====
 
 ///|
-fn picked(env : Map[String, String], fetched : Map[String, String], key : String) -> String {
-  match config_value(env, key) {
+fn picked(fetched : Map[String, String], key : String) -> String {
+  match config_value(key) {
     Some(value) => value
     None => {
       match fetched.get(key) {
@@ -732,31 +638,31 @@ fn picked(env : Map[String, String], fetched : Map[String, String], key : String
 
 ///|
 async fn skia_values(opts : Opts) -> SkiaValues {
-  let include_env = config_value(opts.env, "MOUI_SKIA_SKIA_INCLUDE")
-  let lib_env = config_value(opts.env, "MOUI_SKIA_SKIA_LIB_DIR")
+  let include_env = config_value("MOUI_SKIA_SKIA_INCLUDE")
+  let lib_env = config_value("MOUI_SKIA_SKIA_LIB_DIR")
   let fetched = match (include_env, lib_env) {
     (Some(_), Some(_)) => Map([])
     _ => fetch_skia_env(opts)
   }
   let include_path = host_path(
     opts.host,
-    picked(opts.env, fetched, "MOUI_SKIA_SKIA_INCLUDE"),
+    picked(fetched, "MOUI_SKIA_SKIA_INCLUDE"),
   )
-  let lib_dir = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB_DIR"))
-  let stub_lib = host_path(opts.host, picked(opts.env, fetched, "MOUI_SKIA_STUB_LIB"))
+  let lib_dir = host_path(opts.host, picked(fetched, "MOUI_SKIA_SKIA_LIB_DIR"))
+  let stub_lib = host_path(opts.host, picked(fetched, "MOUI_SKIA_STUB_LIB"))
   let _stub_source = host_path(
     opts.host,
-    picked(opts.env, fetched, "MOUI_SKIA_STUB_SOURCE"),
+    picked(fetched, "MOUI_SKIA_STUB_SOURCE"),
   )
   {
     include_dir: include_path,
     lib_dir: lib_dir,
-    lib_name: picked(opts.env, fetched, "MOUI_SKIA_SKIA_LIB"),
-    extra_cc: picked(opts.env, fetched, "MOUI_SKIA_EXTRA_CC_FLAGS"),
-    extra_link: picked(opts.env, fetched, "MOUI_SKIA_EXTRA_LINK_FLAGS"),
+    lib_name: picked(fetched, "MOUI_SKIA_SKIA_LIB"),
+    extra_cc: picked(fetched, "MOUI_SKIA_EXTRA_CC_FLAGS"),
+    extra_link: picked(fetched, "MOUI_SKIA_EXTRA_LINK_FLAGS"),
     link_mode: skia_link_mode(opts),
-    release_tag: picked(opts.env, fetched, "MOUI_SKIA_RELEASE_TAG"),
-    provider: picked(opts.env, fetched, "MOUI_SKIA_SKIA_PROVIDER"),
+    release_tag: picked(fetched, "MOUI_SKIA_RELEASE_TAG"),
+    provider: picked(fetched, "MOUI_SKIA_SKIA_PROVIDER"),
     stub_lib: stub_lib,
   }
 }
@@ -765,11 +671,11 @@ async fn skia_values(opts : Opts) -> SkiaValues {
 
 ///|
 fn metal_gpu_enabled(opts : Opts, platform : String) -> Bool {
-  match config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_METAL") {
+  match config_value("MOUI_SKIA_ENABLE_GPU_METAL") {
     Some(value) => return !falsy(value)
     None => ()
   }
-  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_GPU_METAL", "")) {
+  if truthy(config_or("MOUI_SKIA_DISABLE_GPU_METAL", "")) {
     return false
   }
   let target = platform
@@ -800,7 +706,7 @@ fn gpu_enabled(opts : Opts, platform : String) -> Bool {
   let mut explicit_on = false
   let mut explicit_off = false
   for name in names {
-    match config_value(opts.env, name) {
+    match config_value(name) {
       Some(value) => {
         if truthy(value) {
           explicit_on = true
@@ -823,7 +729,7 @@ fn gpu_enabled(opts : Opts, platform : String) -> Bool {
 
 ///|
 fn paragraph_enabled(opts : Opts) -> Bool {
-  match config_value(opts.env, "MOUI_SKIA_ENABLE_SKPARAGRAPH") {
+  match config_value("MOUI_SKIA_ENABLE_SKPARAGRAPH") {
     Some(value) => !falsy(value)
     None => true
   }
@@ -831,7 +737,7 @@ fn paragraph_enabled(opts : Opts) -> Bool {
 
 ///|
 fn paragraph_required(opts : Opts) -> Bool {
-  truthy(config_or(opts.env, "MOUI_SKIA_REQUIRE_SKPARAGRAPH", ""))
+  truthy(config_or("MOUI_SKIA_REQUIRE_SKPARAGRAPH", ""))
 }
 
 // ===== library probes =====
@@ -1331,8 +1237,8 @@ fn platform_flags(opts : Opts, platform : String, values : SkiaValues) -> Flags 
       if !path_exists(ganesh) {
         bail("Android GPU default/enable requested, but \{ganesh} was not found")
       }
-      let vulkan_value = config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_VULKAN")
-      let egl_value = config_value(opts.env, "MOUI_SKIA_ENABLE_GPU_EGL")
+      let vulkan_value = config_value("MOUI_SKIA_ENABLE_GPU_VULKAN")
+      let egl_value = config_value("MOUI_SKIA_ENABLE_GPU_EGL")
       let enable_vulkan = match vulkan_value {
         Some(value) => !falsy(value)
         None => true
@@ -1459,10 +1365,10 @@ fn macos_example_link_flags(
 
 ///|
 fn moon_include_dir() -> String {
-  let home = config_value(Map([]), "MOON_HOME") |> or_else(
+  let home = config_value("MOON_HOME") |> or_else(
     fn () {
-      config_value(Map([]), "HOME") |> or_else(
-        fn () { config_value(Map([]), "USERPROFILE") |> or_else(fn () { "" }) },
+      config_value("HOME") |> or_else(
+        fn () { config_value("USERPROFILE") |> or_else(fn () { "" }) },
       )
     },
   )
@@ -1561,7 +1467,7 @@ async fn compile_stub(
   }
   ensure_dir(cache_dir)
   let objects : Array[String] = []
-  let compiler = match config_value(opts.env, "MOUI_SKIA_STUB_CC") {
+  let compiler = match config_value("MOUI_SKIA_STUB_CC") {
     Some(value) => value
     None => {
       if windows {
@@ -1659,7 +1565,7 @@ async fn resolve_stub(
   values : SkiaValues,
   with_skia : Bool,
 ) -> StubInfo {
-  match config_value(opts.env, "MOUI_SKIA_STUB_LIB") {
+  match config_value("MOUI_SKIA_STUB_LIB") {
     Some(given) => {
       let path = normalize_stub_lib(host_path(opts.host, given))
       if path != "" && path_exists(path) {
@@ -1671,7 +1577,7 @@ async fn resolve_stub(
       }
     None => ()
   }
-  let mode = lower_trim(config_or(opts.env, "MOUI_SKIA_STUB_MODE", "auto"))
+  let mode = lower_trim(config_or("MOUI_SKIA_STUB_MODE", "auto"))
   if mode != "auto" && mode != "prebuilt" && mode != "build" {
     bail("unsupported MOUI_SKIA_STUB_MODE: \{mode}")
   }
@@ -1727,36 +1633,12 @@ fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) 
 
 ///|
 async fn run_prebuild() -> Unit {
-  let raw = @stdio.stdin.read_all() catch {
-    _ => b""
-  }
-  let mut text = @utf8.decode(raw) catch {
-    _ => ""
-  }
   let host = host_platform()
   let module_root = match @env.current_dir() {
     Some(dir) => host_path(host, dir)
     None => "."
   }
-  if is_blank(text) {
-    let fallback_path = path_join(module_root, ".skia-cache/prebuild-stdin.json")
-    if path_exists(fallback_path) {
-      text = read_file_text(fallback_path)
-    }
-  }
-  let config = if is_blank(text) {
-    @json.Json::empty_object()
-  } else {
-    @json.parse(text) catch {
-      _ => @json.Json::empty_object()
-    }
-  }
-  let opts : Opts = {
-    config: config,
-    env: config_env(config),
-    host: host,
-    module_root: module_root,
-  }
+  let opts : Opts = { host, module_root }
   reject_legacy_link_mode(opts)
   let platform = match release_platform(opts) {
     "auto" => host
@@ -1769,12 +1651,12 @@ async fn run_prebuild() -> Unit {
       // resolved here (explicit `MOUI_SKIA_STUB_LIB` when set, otherwise a local
       // compile without Skia defines) so the binding still links and every
       // `skia_available`/shaper/paragraph probe reports unavailable.
-      let stub_cc = match config_value(opts.env, "MOUI_SKIA_STUB_CC_FLAGS") {
+      let stub_cc = match config_value("MOUI_SKIA_STUB_CC_FLAGS") {
         Some(value) => value
         None => fallback_stub_cc_flags(platform)
       }
       let stub = resolve_stub(opts, platform, "", empty_skia_values(), false)
-      let native_link = match config_value(opts.env, "MOUI_SKIA_CC_LINK_FLAGS") {
+      let native_link = match config_value("MOUI_SKIA_CC_LINK_FLAGS") {
         Some(value) => value
         None =>
           append_flags(
@@ -1798,7 +1680,7 @@ async fn run_prebuild() -> Unit {
           ("MOUI_SKIA_CC_LINK_FLAGS", native_link),
           (
             "MOUI_SKIA_ANDROID_LINK_FLAGS",
-            match config_value(opts.env, "MOUI_SKIA_ANDROID_LINK_FLAGS") {
+            match config_value("MOUI_SKIA_ANDROID_LINK_FLAGS") {
               Some(value) => value
               None => ""
             },
@@ -1812,7 +1694,7 @@ async fn run_prebuild() -> Unit {
       return
     }
     // Non-native target (wasm/js): nothing links, so keep the old fallback.
-    let native_link = match config_value(opts.env, "MOUI_SKIA_CC_LINK_FLAGS") {
+    let native_link = match config_value("MOUI_SKIA_CC_LINK_FLAGS") {
       Some(value) => value
       None => fallback_native_runtime_link_flags(platform)
     }

@@ -413,10 +413,11 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 
 平台入口包指
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`
-这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
+这类 executable package（Web/WeChat 根包为 `pkgtype(kind: "foreign_library")`）。它们负责创建
+runtime、连接平台 backend、选择 renderer。
 
-Moon `0.1.20260724` 不会把 `pub using` alias 物化为 wasm export；linker 只导出
-executable package 自己定义的 public function。因此 Web 或 WeChat 入口可以把
+Moon `1.0.0-rc1` 只会导出 foreign-library 包自己定义、且标有 `#export_name(...)` 的
+定义；`pub using` alias 不会成为 wasm export。因此 Web 或 WeChat 入口可以把
 `abi.mbt` 作为第二个生产文件。该文件只能包含固定 callback，并直接委托给
 `backend/web` 或 `backend/wechat`；不得包含 app state、routing、service、renderer
 或 lifecycle logic。`tools/moui/validate_harness_invariants` 工具校验封闭的 shim

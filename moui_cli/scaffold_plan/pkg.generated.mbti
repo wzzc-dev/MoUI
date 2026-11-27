@@ -48,8 +48,6 @@ pub fn text_file(String, String) -> PlannedFile
 
 pub fn validate_project_options(ProjectOptions) -> Result[Unit, String]
 
-pub let web_abi_exports : ReadOnlyArray[String]
-
 pub fn web_abi_shim_mbt() -> String
 
 pub fn web_html_text(String) -> String
