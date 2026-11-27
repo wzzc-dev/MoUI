@@ -2,7 +2,8 @@
 fn showcase_initial_section_code() -> Int32 = "showcase" "initial_section"
 
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let routes = @services.RouteSource::new()
   let providers = @webgpu_adapter.from_env()
   let runtime = @showcase.runtime(

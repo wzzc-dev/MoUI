@@ -1,10 +1,10 @@
 ///|
-#cfg(any(target="native", target="llvm"))
+#cfg(target="native")
 #borrow(message)
 extern "c" fn smoke_mark(message : Bytes) -> Unit = "moui_skia_native_smoke_mark"
 
 ///|
-#cfg(not(any(target="native", target="llvm")))
+#cfg(not(target="native"))
 fn smoke_mark(message : Bytes) -> Unit {
   ignore(message)
 }

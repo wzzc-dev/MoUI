@@ -7,11 +7,21 @@
   (`sha512-JF7NhLAJfG0m30fL2bMv6R9nHtB4Wg3TtxeLmvx0RAsSC4fn6bVGosd6U+hsP3Cxw+8WJfM6UU0zO3UAgmAvAQ==`);
   the npm `@moonbit/moonc-worker` latest was unchanged at `0.1.202611201`
   when the compiler pin moved.
-- 1.0.0-rc1 migration is warning-only so far: `Map`/`Set` `add` is deprecated
-  for `insert`; `Buffer::write_bytes` is deprecated for `write_bytesview`;
-  `#cfg(target="llvm")` is deprecated for `target="native"`; legacy stdin JSON
-  for `build.mbtx` prebuild scripts is deprecated for `MOON_*` environment
-  variables; `link.wasm(-gc).exports` is deprecated for `#export_name`.
+- 1.0.0-rc1 syntax migration is complete (`wzzc-dev/rc1-syntax`): `Map`/`Set`
+  use `insert`; `Buffer::write_bytesview` replaces `write_bytes`;
+  `#cfg(target="native")` replaces `target="llvm"`; every `build.mbtx` hook
+  reads `MOON_*`/`MOUI_*` from the process environment instead of the legacy
+  stdin JSON; wasm entrypoints use `pkgtype(kind: "foreign_library")` plus
+  `#export_name(...)` instead of `link.wasm(-gc).exports`. The toolchain still
+  prints an unconditional legacy-stdin notice for each module that declares a
+  prebuild script; it is not a compiler warning and only `--quiet` hides it.
+- Do not remove `"moonbitlang/async"` from an executable package whose `main`
+  is `async fn main`, even though rc1 reports it as `unused_package`: without
+  the direct import the compiler lowers `async fn main` onto core's async
+  driver while the async I/O library keeps its own coroutine context. Locally
+  that fails the native link on a duplicate `pool` symbol; on macOS CI the
+  agent MCP stdio smoke panics with `current_coroutine` None before answering.
+  The import is a link/runtime requirement, not dead code.
 - Playground assets generated with `moonc 1.0.0-rc1+3c0520448` and
   `moonc-worker 0.1.202611201` validate (`scripts/test-playground-assets.mjs`),
   so the pinned worker still consumes the new compiler's artifacts.

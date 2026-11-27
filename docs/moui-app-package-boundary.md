@@ -522,7 +522,8 @@ root `moui` facade.
 
 ## Platform Entrypoint Packages
 
-Platform entrypoint packages are executable packages such as
+Platform entrypoint packages are executable packages (Web/WeChat roots are
+`pkgtype(kind: "foreign_library")`) such as
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`.
 They create the runtime, connect a platform backend, and select a renderer.
 Desktop/Web/Wechat roots import `wzzc-dev/moui/runtime`, one concrete renderer package,
@@ -533,8 +534,8 @@ captured by `backend/<platform>.entry(...)`; renderer options and native-handle
 policy are captured by the renderer provider. A composition root never imports a renderer-specific
 backend subpackage.
 
-Moon `0.1.20260724` does not turn `pub using` aliases into wasm exports: the
-linker exports public definitions owned by the executable package only. A Web
+Moon `1.0.0-rc1` exports only definitions marked `#export_name(...)` and owned
+by a foreign-library package; `pub using` aliases are not wasm exports. A Web
 or WeChat entrypoint may therefore use `abi.mbt` as its second production file.
 That file contains only the fixed callbacks which delegate directly to
 `backend/web` or `backend/wechat`; it must not contain app state, routing,

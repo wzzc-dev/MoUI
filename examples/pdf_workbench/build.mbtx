@@ -2,8 +2,6 @@
 import {
   "moonbitlang/core/async",
   "moonbitlang/core/async/process",
-  "moonbitlang/core/async/stdio",
-  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
@@ -192,69 +190,20 @@ async fn host_arch() -> String {
 }
 
 ///|
-fn config_env(config : @json.Json, key : String) -> String {
+fn config_env(key : String) -> String {
   match @env.get_env_var(key) {
-    Some(value) =>
-      if value != "" {
-        return value
-      }
-    None => ()
+    Some(value) => value
+    None => ""
   }
-  for path in [["env"], ["build", "env"], ["build_info", "env"]] {
-    let mut node = config
-    let mut found = true
-    for segment in path {
-      match json_field(node, segment) {
-        Some(next) => node = next
-        None => {
-          found = false
-          break
-        }
-      }
-    }
-    if found {
-      match json_field(node, key) {
-        Some(value) =>
-          match json_text(value) {
-            Some(text) =>
-              if text != "" {
-                return text
-              }
-            None => ()
-          }
-        None => ()
-      }
-    }
-  }
-  ""
 }
 
 ///|
-fn config_string(config : @json.Json, path : Array[String]) -> String? {
-  let mut node = config
-  for segment in path {
-    match json_field(node, segment) {
-      Some(next) => node = next
-      None => return None
-    }
+fn target_kind() -> String {
+  let backend = lower_trim(config_env("MOON_BACKEND"))
+  if backend != "" {
+    return backend
   }
-  json_text(node)
-}
-
-///|
-fn target_kind(config : @json.Json) -> String {
-  for path in [
-    ["build", "target", "kind"],
-    ["build_info", "target", "kind"],
-    ["target", "kind"],
-    ["target", "backend"],
-  ] {
-    match config_string(config, path) {
-      Some(value) => return lower_trim(value)
-      None => ()
-    }
-  }
-  lower_trim(config_env(config, "MOON_TARGET"))
+  lower_trim(config_env("MOON_TARGET"))
 }
 
 ///|
@@ -267,28 +216,28 @@ fn is_wasm_kind(kind : String) -> Bool {
 }
 
 ///|
-fn has_overrides(config : @json.Json) -> Bool {
-  config_env(config, "MOUI_PDFIUM_INCLUDE") != "" &&
-    config_env(config, "MOUI_PDFIUM_LIB_DIR") != ""
+fn has_overrides() -> Bool {
+  config_env("MOUI_PDFIUM_INCLUDE") != "" &&
+    config_env("MOUI_PDFIUM_LIB_DIR") != ""
 }
 
 ///|
-fn should_configure_pdfium(config : @json.Json) -> Bool {
-  if is_wasm_kind(target_kind(config)) {
+fn should_configure_pdfium() -> Bool {
+  if is_wasm_kind(target_kind()) {
     return false
   }
-  if truthy(config_env(config, "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM")) {
+  if truthy(config_env("MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM")) {
     return false
   }
-  if has_overrides(config) {
+  if has_overrides() {
     return true
   }
-  truthy(config_env(config, "MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM"))
+  truthy(config_env("MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM"))
 }
 
 ///|
-fn pdfium_link_mode(config : @json.Json) -> String {
-  let raw = config_env(config, "MOUI_PDFIUM_LINK_MODE")
+fn pdfium_link_mode() -> String {
+  let raw = config_env("MOUI_PDFIUM_LINK_MODE")
   let mode = if raw == "" {
     "auto"
   } else {
@@ -504,12 +453,11 @@ async fn extract_archive(archive_path : String, extract_dir : String) -> Unit {
 
 ///|
 async fn bundled_values(
-  config : @json.Json,
   module_root : String,
   host : String,
 ) -> (String, String, String) {
-  let include_override = config_env(config, "MOUI_PDFIUM_INCLUDE")
-  let lib_override = config_env(config, "MOUI_PDFIUM_LIB_DIR")
+  let include_override = config_env("MOUI_PDFIUM_INCLUDE")
+  let lib_override = config_env("MOUI_PDFIUM_LIB_DIR")
   if include_override != "" && lib_override != "" {
     return (include_override, lib_override, lib_override)
   }
@@ -580,7 +528,6 @@ async fn normalize_macos_install_name(dynamic_lib : String) -> Unit {
 
 ///|
 async fn platform_flags(
-  config : @json.Json,
   include_path : String,
   lib_dir : String,
   bin_dir : String,
@@ -589,7 +536,7 @@ async fn platform_flags(
   if !path_exists(path_join(include_path, "fpdfview.h")) {
     abort("PDFium header not found under \{include_path}")
   }
-  let mode = pdfium_link_mode(config)
+  let mode = pdfium_link_mode()
   let mut resolved = mode
   if host == "windows" {
     let dynamic_import = first_existing([
@@ -719,20 +666,7 @@ fn emit(stub_cc_flags : String, link_flags : String) -> Unit {
 
 ///|
 async fn main {
-  let raw = @stdio.stdin.read_all() catch {
-    _ => b""
-  }
-  let text = @utf8.decode(raw) catch {
-    _ => ""
-  }
-  let config = if text.trim().to_owned() == "" {
-    @json.Json::empty_object()
-  } else {
-    @json.parse(text) catch {
-      _ => @json.Json::empty_object()
-    }
-  }
-  if !should_configure_pdfium(config) {
+  if !should_configure_pdfium() {
     emit("", "")
     return
   }
@@ -741,9 +675,9 @@ async fn main {
     Some(dir) => dir
     None => "."
   }
-  let (include_path, lib_dir, bin_dir) = bundled_values(config, module_root, host)
+  let (include_path, lib_dir, bin_dir) = bundled_values(module_root, host)
   let (stub_cc_flags, link_flags) = platform_flags(
-    config, include_path, lib_dir, bin_dir, host,
+    include_path, lib_dir, bin_dir, host,
   )
   emit(stub_cc_flags, link_flags)
 }

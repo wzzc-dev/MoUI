@@ -1,5 +1,6 @@
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let binding = @moui_3d.ThreeDViewportBinding::new()
   let viewport_host = @moui_3d.ThreeDViewportHost::new(binding~)
   let provider = @three_d_web.create_host_provider()

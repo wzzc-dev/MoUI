@@ -8,7 +8,8 @@ extern "wasm" fn wechat_screen_height() -> Double = "canvas2d" "screen_height"
 extern "wasm" fn wechat_pixel_ratio() -> Double = "canvas2d" "pixel_ratio"
 
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let width = wechat_screen_width()
   let height = wechat_screen_height()
   let runtime = @showcase.runtime(

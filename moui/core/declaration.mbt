@@ -68,14 +68,14 @@ fn declaration_key_frame(tag : Byte, payload : Bytes) -> DeclarationKey {
   let output = Buffer(capacity=1 + 8 + payload.length())
   output.write_byte(tag)
   output.write_uint64_be(payload.length().to_uint64())
-  output.write_bytes(payload)
+  output.write_bytesview(payload)
   { bytes: output.to_bytes(), }
 }
 
 ///|
 fn declaration_key_write_framed(output : Buffer, value : Bytes) -> Unit {
   output.write_uint64_be(value.length().to_uint64())
-  output.write_bytes(value)
+  output.write_bytesview(value)
 }
 
 ///|

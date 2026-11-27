@@ -137,10 +137,10 @@ fn png_encode_crc32(data : Bytes) -> UInt32 {
 fn png_encode_chunk(out : @buffer.Buffer, kind : Bytes, data : Bytes) -> Unit {
   out.write_int_be(data.length())
   let crc_input = @buffer.Buffer()
-  crc_input.write_bytes(kind)
-  crc_input.write_bytes(data)
-  out.write_bytes(kind)
-  out.write_bytes(data)
+  crc_input.write_bytesview(kind)
+  crc_input.write_bytesview(data)
+  out.write_bytesview(kind)
+  out.write_bytesview(data)
   out.write_uint_be(png_encode_crc32(crc_input.to_bytes()))
 }
 
@@ -171,7 +171,7 @@ pub fn RgbaBuffer::to_png_bytes(self : RgbaBuffer) -> Bytes {
   ihdr.write_byte(b'\x00')
   ihdr.write_byte(b'\x00')
   let out = @buffer.Buffer()
-  out.write_bytes(b"\x89PNG\r\n\x1a\n")
+  out.write_bytesview(b"\x89PNG\r\n\x1a\n")
   png_encode_chunk(out, b"IHDR", ihdr.to_bytes())
   png_encode_chunk(out, b"IDAT", idat)
   png_encode_chunk(out, b"IEND", b"")

@@ -1,5 +1,6 @@
 ///|
-fn main {
+#export_name("_start")
+pub fn start() -> Unit {
   let (runtime, resolver, queue) = @multi_window.runtime_and_host()
   @apphost.run_app("MoUI Multi-Window", runtime)
   .render_all(@webgpu_adapter.from_env())

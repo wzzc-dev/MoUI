@@ -17,6 +17,11 @@ test "linux host app options default to a real monotonic frame clock" {
 }
 
 ///|
+/// Non-zero on Linux, where the timer host is backed by GLib. Other native
+/// hosts compile the stub and cannot run GLib timer assertions.
+extern "C" fn linux_timer_supported() -> Int32 = "moui_linux_timer_supported"
+
+///|
 /// The window loop polls X11/Wayland directly, so the backend must pump GLib
 /// timeout sources itself; without this a `TimerSource` subscription never
 /// ticks (and a hot-reload host never observes a new generation marker).

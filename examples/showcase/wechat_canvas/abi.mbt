@@ -1,6 +1,7 @@
 ///|
-// Moon only exports functions defined by the executable package. Keep this
-// mechanical ABI shim free of platform or application logic.
+// Moon only exports `#export_name` definitions owned by the foreign-library
+// package. Keep this mechanical ABI shim free of platform or application logic.
+#export_name("wechat_dispatch_event")
 pub fn wechat_dispatch_event(
   kind : Int32,
   raw_id : Int32,
@@ -13,6 +14,7 @@ pub fn wechat_dispatch_event(
 }
 
 ///|
+#export_name("wechat_dispatch_pointer_input")
 pub fn wechat_dispatch_pointer_input(
   raw_id : Int32,
   kind : Int32,
@@ -29,11 +31,13 @@ pub fn wechat_dispatch_pointer_input(
 }
 
 ///|
+#export_name("wechat_render_frame")
 pub fn wechat_render_frame() -> Unit {
   @wechat.wechat_render_frame()
 }
 
 ///|
+#export_name("wechat_surface_created")
 pub fn wechat_surface_created(
   width : Double,
   height : Double,
@@ -43,16 +47,19 @@ pub fn wechat_surface_created(
 }
 
 ///|
+#export_name("wechat_surface_destroyed")
 pub fn wechat_surface_destroyed() -> Unit {
   @wechat.wechat_surface_destroyed()
 }
 
 ///|
+#export_name("wechat_app_show")
 pub fn wechat_app_show() -> Unit {
   @wechat.wechat_app_show()
 }
 
 ///|
+#export_name("wechat_app_hide")
 pub fn wechat_app_hide() -> Unit {
   @wechat.wechat_app_hide()
 }

@@ -2,8 +2,6 @@
 import {
   "moonbitlang/core/async",
   "moonbitlang/core/async/process",
-  "moonbitlang/core/async/stdio",
-  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
@@ -21,8 +19,6 @@ import {
 
 ///|
 struct RendererOpts {
-  config : @json.Json
-  env : Map[String, String]
   parent_root : String
 }
 
@@ -92,13 +88,6 @@ fn ensure_dir(path : String) -> Unit {
 }
 
 ///|
-fn write_text(path : String, content : String) -> Unit {
-  @fs.write_string_to_file(path, content) catch {
-    _ => bail("failed to write \{path}")
-  }
-}
-
-///|
 fn json_field(value : @json.Json, key : String) -> @json.Json? {
   match value {
     @json.Object(fields) => fields.get(key)
@@ -107,108 +96,32 @@ fn json_field(value : @json.Json, key : String) -> @json.Json? {
 }
 
 ///|
-fn nested_string(value : @json.Json, keys : Array[String]) -> String? {
-  let mut node = value
-  let mut index = 0
-  while index < keys.length() {
-    match json_field(node, keys[index]) {
-      Some(next) => node = next
-      None => return None
-    }
-    index = index + 1
-  }
-  match node {
-    @json.String(text) => Some(text)
-    _ => None
-  }
-}
-
-///|
-fn add_env_object(out : Map[String, String], node : @json.Json) -> Unit {
-  match json_field(node, "env") {
-    Some(@json.Object(fields)) => {
-      for key, value in fields {
-        match value {
-          @json.String(text) => out.set(key, text)
-          _ => ()
-        }
-      }
-    }
-    _ => ()
-  }
-}
-
-///|
-fn config_env(config : @json.Json) -> Map[String, String] {
-  let out : Map[String, String] = Map([])
-  match json_field(config, "build_info") {
-    Some(node) => add_env_object(out, node)
-    None => ()
-  }
-  match json_field(config, "build") {
-    Some(node) => add_env_object(out, node)
-    None => ()
-  }
-  add_env_object(out, config)
-  out
-}
-
-///|
-fn stored_value(env : Map[String, String], key : String) -> String? {
-  match env.get(key) {
-    Some(value) => {
-      if is_blank(value) {
-        None
-      } else {
-        Some(value)
-      }
-    }
+fn config_value(key : String) -> String? {
+  match @env.get_env_var(key) {
+    Some(value) => if is_blank(value) { None } else { Some(value) }
     None => None
   }
 }
 
 ///|
-fn config_value(env : Map[String, String], key : String) -> String? {
-  match @env.get_env_var(key) {
-    Some(value) => {
-      if is_blank(value) {
-        stored_value(env, key)
-      } else {
-        Some(value)
-      }
-    }
-    None => stored_value(env, key)
-  }
-}
-
-///|
-fn config_or(env : Map[String, String], key : String, fallback : String) -> String {
-  match config_value(env, key) {
+fn config_or(key : String, fallback : String) -> String {
+  match config_value(key) {
     Some(value) => value
     None => fallback
   }
 }
 
 ///|
-fn target_kind(opts : RendererOpts) -> String? {
-  let candidates : Array[Array[String]] = [
-    ["build", "target", "kind"],
-    ["build_info", "target", "kind"],
-    ["target", "kind"],
-    ["target", "backend"],
-  ]
-  for path in candidates {
-    match nested_string(opts.config, path) {
-      Some(kind) => return Some(kind)
-      None => ()
-    }
+fn target_kind() -> String? {
+  match config_value("MOON_BACKEND") {
+    Some(kind) => Some(kind)
+    None => config_value("MOON_TARGET")
   }
-  config_value(opts.env, "MOON_TARGET")
 }
 
 ///|
 fn should_configure_skia(opts : RendererOpts) -> Bool {
-  match target_kind(opts) {
+  match target_kind() {
     Some(kind) => {
       let text = lower_trim(kind)
       for skipped in ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"] {
@@ -219,10 +132,10 @@ fn should_configure_skia(opts : RendererOpts) -> Bool {
     }
     None => ()
   }
-  if truthy(config_or(opts.env, "MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
+  if truthy(config_or("MOUI_SKIA_DISABLE_PREBUILD_SKIA", "")) {
     return false
   }
-  !falsy(config_or(opts.env, "MOUI_SKIA_ENABLE_PREBUILD_SKIA", ""))
+  !falsy(config_or("MOUI_SKIA_ENABLE_PREBUILD_SKIA", ""))
 }
 
 ///|
@@ -300,19 +213,9 @@ fn cache_key_for_caller() -> String {
 }
 
 ///|
-async fn run_parent_prebuild(opts : RendererOpts, config_text : String) -> String {
+async fn run_parent_prebuild(opts : RendererOpts) -> String {
   let cache_dir = path_join(opts.parent_root, ".skia-cache")
   ensure_dir(cache_dir)
-  let stdin_path = path_join(cache_dir, "prebuild-stdin.json")
-  let text = if is_blank(config_text) {
-    "{}"
-  } else {
-    config_text
-  }
-  write_text(stdin_path, text)
-  // The nested `moon run` may surface the parent module prebuild hook (which
-  // also reads stdin) before the script runs, so the script falls back to this
-  // file whenever its stdin is already drained.
   let cache_key = cache_key_for_caller()
   let target_dir = path_join(cache_dir, "prebuild-target-\{cache_key}")
   // The parent moon keeps the shared dependency source cache locked for the
@@ -373,38 +276,18 @@ fn emit(vars : Array[(String, String)], link_configs : Array[(String, String)]) 
 
 ///|
 async fn main {
-  let raw = @stdio.stdin.read_all() catch {
-    _ => b""
-  }
-  let text = @utf8.decode(raw) catch {
-    _ => ""
-  }
-  let config = if is_blank(text) {
-    @json.Json::empty_object()
-  } else {
-    @json.parse(text) catch {
-      _ => @json.Json::empty_object()
-    }
-  }
-  let module_root = match nested_string(config, ["paths", "module_root"]) {
+  let module_root = match @env.current_dir() {
     Some(dir) => dir
-    None => {
-      match @env.current_dir() {
-        Some(dir) => dir
-        None => "."
-      }
-    }
+    None => "."
   }
   let opts : RendererOpts = {
-    config: config,
-    env: config_env(config),
     parent_root: path_join(module_root, "../moui_skia"),
   }
   let configure = should_configure_skia(opts)
   let mut stub_flags = ""
   let mut link_flags = ""
   if configure {
-    match config_value(opts.env, "MOUI_SKIA_PREBUILD_CONTRACT_FILE") {
+    match config_value("MOUI_SKIA_PREBUILD_CONTRACT_FILE") {
       Some(contract_path) => {
         // The RISC-V64 cross build precomputes the parent contract with the
         // host toolchain before it exports MOON_CC. Reading that file avoids a
@@ -416,25 +299,21 @@ async fn main {
           _ => bail("failed to parse MOUI_SKIA_PREBUILD_CONTRACT_FILE: \{contract_path}")
         }
         stub_flags = config_or(
-          opts.env,
           "MOUI_SKIA_STUB_CC_FLAGS",
           var_from_json(contract, "MOUI_SKIA_STUB_CC_FLAGS"),
         )
         link_flags = config_or(
-          opts.env,
           "MOUI_SKIA_CC_LINK_FLAGS",
           var_from_json(contract, "MOUI_SKIA_CC_LINK_FLAGS"),
         )
       }
       None => {
-        let parent_out = run_parent_prebuild(opts, text)
+        let parent_out = run_parent_prebuild(opts)
         stub_flags = config_or(
-          opts.env,
           "MOUI_SKIA_STUB_CC_FLAGS",
           var_from_output(parent_out, "MOUI_SKIA_STUB_CC_FLAGS"),
         )
         link_flags = config_or(
-          opts.env,
           "MOUI_SKIA_CC_LINK_FLAGS",
           var_from_output(parent_out, "MOUI_SKIA_CC_LINK_FLAGS"),
         )

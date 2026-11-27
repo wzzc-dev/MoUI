@@ -7,34 +7,8 @@ import {
 
 supported_targets = "+wasm-gc+wasm"
 
-pkgtype(kind: "executable")
+pkgtype(kind: "foreign_library")
 
 options(
-  link: {
-    "wasm-gc": {
-      "exports": [
-        "main",
-        "wechat_dispatch_event",
-        "wechat_dispatch_pointer_input",
-        "wechat_render_frame",
-        "wechat_surface_created",
-        "wechat_surface_destroyed",
-        "wechat_app_show",
-        "wechat_app_hide",
-      ],
-    },
-    "wasm": {
-      "exports": [
-        "main",
-        "wechat_dispatch_event",
-        "wechat_dispatch_pointer_input",
-        "wechat_render_frame",
-        "wechat_surface_created",
-        "wechat_surface_destroyed",
-        "wechat_app_show",
-        "wechat_app_hide",
-      ],
-    },
-  },
   targets: { "main.mbt": [ "wasm-gc", "wasm" ] },
 )

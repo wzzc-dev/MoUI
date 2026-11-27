@@ -77,8 +77,9 @@ window closes and the process outlives its own window — the traffic lights loo
 dead and the app can only be force-quit. The helper treats the window as primary
 and cancels the workers on exit.
 
-The Moon wasm linker exports executable-owned definitions, not `pub using`
-aliases. Keep Web/WeChat `abi.mbt` as the only permitted second production file:
+The Moon wasm linker exports only definitions marked `#export_name` in the
+foreign-library entrypoint package, not `pub using` aliases. Keep Web/WeChat
+`abi.mbt` as the only permitted second production file:
 it contains the fixed direct backend delegations enforced by P1 and no app or
 platform logic.
 

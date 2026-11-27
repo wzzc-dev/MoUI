@@ -1,17 +1,13 @@
 ///|
 /// `wzzc-dev/moui/backend/web` 的**宿主入口 ABI**：Moon 的 wasm 链接器只导出
-/// 「可执行包自身定义」的函数，所以宿主入口必须在工程自己的入口包里逐个转发。
-/// 这份名单与转发实现是 `moui new` 生成工程与 Studio 导出 bundle **共用**的
+/// `#export_name` 标注的、由 foreign-library 包自身定义的函数，所以宿主入口
+/// 必须在工程自己的入口包里逐个转发并用 `#export_name` 命名。
+/// 这份转发实现是 `moui new` 生成工程与 Studio 导出 bundle **共用**的
 /// 契约——后端加一个入口，两边必须同一批改；各写一遍就是两次漂移的机会。
 
 ///|
-pub let web_abi_exports : ReadOnlyArray[String] = [
-  "web_dispatch_event", "web_dispatch_pointer_input", "web_dispatch_semantics_action",
-  "web_dispatch_route", "web_complete_async_clipboard_read", "web_complete_async_file_dialog",
-]
-
-///|
-/// 与 `web_abi_exports` 逐条对应的机械转发（只含宿主入口，不含 `fn main`）。
+/// 宿主入口的机械转发（只含宿主入口，不含 `_start`）。每个转发都带
+/// `#export_name`，因为只有 foreign-library 包自身标注的定义才会进入 wasm 导出表。
 /// 前提：调用方的入口包以 `@web` 别名导入 `wzzc-dev/moui/backend/web`。
 ///
 /// 参数表跟着**已发布**的那条 ABI 走，不跟工作区：生成的工程按 `moon.mod`
@@ -27,6 +23,7 @@ pub let web_abi_exports : ReadOnlyArray[String] = [
 pub fn web_abi_shim_mbt() -> String {
   let shim =
     #|///|
+    #|#export_name("web_dispatch_event")
     #|pub fn web_dispatch_event(
     #|  kind : Int,
     #|  raw_id : Int,
@@ -39,6 +36,7 @@ pub fn web_abi_shim_mbt() -> String {
     #|}
     #|
     #|///|
+    #|#export_name("web_dispatch_pointer_input")
     #|pub fn web_dispatch_pointer_input(
     #|  raw_id : Int,
     #|  kind : Int,
@@ -66,11 +64,13 @@ pub fn web_abi_shim_mbt() -> String {
     #|}
     #|
     #|///|
+    #|#export_name("web_dispatch_route")
     #|pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
     #|  @web.web_dispatch_route(source_code, text_id)
     #|}
     #|
     #|///|
+    #|#export_name("web_dispatch_semantics_action")
     #|pub fn web_dispatch_semantics_action(
     #|  raw_id : Int,
     #|  node_id_text_id : Int,
@@ -90,6 +90,7 @@ pub fn web_abi_shim_mbt() -> String {
     #|}
     #|
     #|///|
+    #|#export_name("web_complete_async_clipboard_read")
     #|pub fn web_complete_async_clipboard_read(
     #|  request_id : Int,
     #|  ok : Bool,
@@ -99,6 +100,7 @@ pub fn web_abi_shim_mbt() -> String {
     #|}
     #|
     #|///|
+    #|#export_name("web_complete_async_file_dialog")
     #|pub fn web_complete_async_file_dialog(
     #|  request_id : Int,
     #|  ok : Bool,

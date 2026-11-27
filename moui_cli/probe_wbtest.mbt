@@ -159,7 +159,7 @@ test "test_probe_observation_names_covers_five_categories" {
   let kinds = Set([], capacity=4)
   for name in probe_observation_names {
     match name.split_once(":") {
-      Some((kind, _)) => kinds.add(kind.to_owned())
+      Some((kind, _)) => kinds.insert(kind.to_owned())
       None => ()
     }
   }
