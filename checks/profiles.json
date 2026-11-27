@@ -51,6 +51,14 @@
           ]
         },
         {
+          "name": "dev hot artifact diagnosis tests",
+          "argv": [
+            "node",
+            "--test",
+            "scripts/moui-dev-hot-artifacts.test.mjs"
+          ]
+        },
+        {
           "name": "performance budget catalog",
           "argv": [
             "node",

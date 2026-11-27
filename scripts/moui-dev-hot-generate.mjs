@@ -18,6 +18,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import {
+  DEV_HOT_GENERATOR_FORMAT,
+  DEV_HOT_MANIFEST_SCHEMA_VERSION,
+  DEV_HOT_MODULE_NAME,
+} from "./lib/dev-hot-artifacts.mjs";
 
 const args = process.argv.slice(2);
 function value(name, fallback) {
@@ -147,7 +152,7 @@ ${workspaceMembers.map((member) => `  "${member}",`).join("\n")}
 
 writeFileSync(
   join(staging, "moon.mod"),
-  `name = "wzzc-dev/moui_dev_hot"
+  `name = "${DEV_HOT_MODULE_NAME}"
 
 version = "0.0.0"
 
@@ -624,8 +629,12 @@ writeFileSync(
   join(staging, "manifest.json"),
   `${JSON.stringify(
     {
-      schemaVersion: 1,
-      module: "wzzc-dev/moui_dev_hot",
+      schemaVersion: DEV_HOT_MANIFEST_SCHEMA_VERSION,
+      // The standalone module layout plus this marker. Older generators wrote
+      // only `schemaVersion: 1`, so a missing/mismatched marker is what tells
+      // the pre-Moon diagnostic that the tree predates the module split.
+      generatorFormat: DEV_HOT_GENERATOR_FORMAT,
+      module: DEV_HOT_MODULE_NAME,
       app: `${appModule}/${appPackage}`,
       appModule,
       appPackage,

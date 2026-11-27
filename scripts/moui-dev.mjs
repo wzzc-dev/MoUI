@@ -14,6 +14,7 @@ import {
   hotPluginFileName,
   picRuntimeCompile,
 } from "./moui-dev-hot-plan.mjs";
+import { diagnoseDevHotArtifacts, formatDevHotDiagnosis } from "./lib/dev-hot-artifacts.mjs";
 
 const root = process.cwd();
 const args = process.argv.slice(2);
@@ -731,6 +732,21 @@ let hotTimer = null;
 const devhostHasAppImport = () =>
   Boolean(workspaceRoot && hotAppModuleName) &&
   fs.readFileSync(path.join(workspaceRoot, "moui_devhost", "moon.mod"), "utf8").includes(`"${hotAppModuleName}@`);
+
+// A generated native hot tree from before the standalone-module fix breaks
+// every Moon invocation in this workspace, not only hot mode. Native --hot
+// regenerates the tree in prepareHot(), so it is the one mode that can repair
+// itself; the other modes stop here instead of surfacing the opaque package
+// resolution error Moon reports against wzzc-dev/moui_devhost.
+if (workspaceRoot && !(hot && !web)) {
+  const devHot = diagnoseDevHotArtifacts({ repoRoot: workspaceRoot });
+  if (devHot.status === "stale") {
+    const error = `stale native dev hot-reload artifacts at ${devHot.out}`;
+    writeStatus({ ok: false, phase: "error", hot, error });
+    process.stderr.write(`${formatDevHotDiagnosis(devHot)}\n`);
+    process.exit(1);
+  }
+}
 
 if (webHot) {
   if (!webHotAvailable()) {

@@ -11,6 +11,7 @@ import {
   planProfile,
   readCheckCatalog,
 } from "./lib/check-runner.mjs";
+import { diagnoseDevHotArtifacts, formatDevHotDiagnosis } from "./lib/dev-hot-artifacts.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const catalogPath = resolve(repoRoot, "checks/profiles.json");
@@ -64,6 +65,19 @@ if (json) {
 if (list) {
   console.log(formatPlanList(plan).join("\n"));
   process.exit(0);
+}
+
+// Diagnose the generated native hot-reload tree before any Moon step runs.
+// A `dev_hot/` from before the standalone-module fix makes every Moon command
+// fail package resolution with an error that names `wzzc-dev/moui_devhost`,
+// not this directory. This is plain Node, so it works even when the workspace
+// cannot compile (unlike `moui doctor`). A fresh or absent tree is a no-op.
+if (!dryRun) {
+  const devHot = diagnoseDevHotArtifacts({ repoRoot });
+  if (devHot.status === "stale") {
+    console.error(`\n${formatDevHotDiagnosis(devHot)}\n`);
+    process.exit(1);
+  }
 }
 
 if (!dryRun && !skipSubmoduleInit) {

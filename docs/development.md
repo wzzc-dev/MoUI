@@ -297,6 +297,18 @@ dependency; the plugin imports `<app-module>/app` directly and picks
 `program_with_dev_environment` (host-owned time), then
 `program_with_dev_state`, then `program`; external workspace apps are rejected.
 
+The generated tree is disposable and Git-ignored, so an upgraded checkout can
+keep a `dev_hot/` written by an older generator. `scripts/check.mjs` and
+`moui dev` inspect it with plain Node before any Moon step, without compiling:
+a tree without its own `moon.mod`/`moon.work`, without the app dependency, with
+the wrong module name, or without the current `generatorFormat` marker fails
+with its concrete paths and the recovery command
+`node scripts/moui-dev-hot-generate.mjs --root . --app <app> --platform <platform>`.
+That command replaces the whole directory, so stop `moui dev --hot` first;
+without native hot reload, remove or move `moui_devhost/dev_hot/` aside
+instead. `node scripts/moui-dev-hot-check.mjs` runs the same diagnosis
+standalone.
+
 The ABI v1 bridge carries the complete vocabulary: all 28 `DrawCommand` variants
 with their brush/spec fields, the clear color, all 10 `AppEvent` and all 8
 `TextInputEvent` variants. The host decodes and paints
