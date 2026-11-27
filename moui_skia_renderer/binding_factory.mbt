@@ -27,6 +27,7 @@ pub fn raster(
         target,
         font_resolution~,
         async_image_loading=true,
+        surface_damage=@render.SubRect,
       ) catch {
         err => return Rejected("skia-raster unavailable: " + err.message())
       }
@@ -150,6 +151,7 @@ fn create_skia_gpu_host_renderer(
   image_decoder~ : @render.RendererImageDecoder? = None,
 ) -> @render.RendererSession {
   let route = NativePlatformSurface::surface_route(platform)
+  let damage_capability = skia_gpu_surface_damage_capability(route)
   // The host window's current physical size. Direct3D swap chains are resized
   // in place through the present path (ResizeBuffers); an HWND cannot hold a
   // second flip-model swap chain while the previous one is still referenced,
@@ -217,6 +219,7 @@ fn create_skia_gpu_host_renderer(
     gpu_target=Some(gpu_target),
     font_resolution~,
     async_image_loading=true,
+    surface_damage=damage_capability,
   ) catch {
     err => {
       // GPU context/surface creation can still fail after a positive native
@@ -257,6 +260,7 @@ fn create_skia_gpu_host_renderer(
         target,
         font_resolution~,
         async_image_loading=true,
+        surface_damage=@render.SubRect,
       ),
     ) catch {
       err => {
@@ -396,13 +400,28 @@ fn create_skia_gpu_host_renderer(
     gpu_recovery=@render.RendererGpuRecoveryCapability::new(gpu_fallback_active=() => {
       fallback_active.val
     }),
+    surface_damage=damage_capability,
     native_surface=Some(native_surface),
   )
 }
 
 ///|
+/// The GPU provider advertises sub-rect damage only on the route with an
+/// implemented persistent backing (Metal). Other GPU routes draw directly into
+/// a fresh drawable, so they keep the historical full-surface contract.
+fn skia_gpu_surface_damage_capability(
+  route : SkiaSurfaceRoute,
+) -> @render.SurfaceDamageCapability {
+  match route {
+    MetalGpuSurfaceRoute => @render.SubRect
+    _ => @render.FullSurfaceOnly
+  }
+}
+
+///|
 /// Construct the synchronous CPU host path used both by the explicit raster
-/// factory and by GPU creation/recovery failures.
+/// factory and by GPU creation/recovery failures. The CPU raster surface
+/// retains its pixels, so this path advertises sub-rect damage.
 fn create_skia_raster_host_renderer(
   metrics : @core.SurfaceMetrics,
   target : SkiaPresentTarget,
@@ -416,6 +435,7 @@ fn create_skia_raster_host_renderer(
     target,
     font_resolution~,
     async_image_loading=true,
+    surface_damage=@render.SubRect,
   ).to_renderer_session(image_source~, image_decoder~, native_surface~) catch {
     err => abort(err.message())
   }

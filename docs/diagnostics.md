@@ -49,6 +49,13 @@ the runtime.
 degradation there; the backend frame owner can forward it to DevTools, the
 embedded wire envelope, or the Agent diagnostics surface.
 
+## Render codes
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `renderer.unsupported_command` | Warning | A draw command or scope could not be honored; source names the command and message carries the reason. |
+| `renderer.damage_fallback` | Info | A requested sub-rect (or empty) damage region was promoted to a full redraw; message carries the reason and detail records requested/effective kinds. Emitted only when the frame did not already request full damage. |
+
 ## Update rule
 
 Add a new stable code before adding a producer. Tests assert codes and

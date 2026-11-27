@@ -112,6 +112,26 @@ pub fn NativeRendererMode::parse(String) -> Self?
 pub fn NativeRendererMode::to_json(Self) -> @json.Json
 pub fn NativeRendererMode::to_repr(Self) -> @debug.Repr
 
+pub struct SkiaDamageReport {
+  // private fields
+}
+pub fn SkiaDamageReport::copy_us(Self) -> Double
+pub fn SkiaDamageReport::draw_us(Self) -> Double
+pub fn SkiaDamageReport::effective(Self) -> @core.DamageRegion
+pub fn SkiaDamageReport::fallback_reason(Self) -> String?
+pub fn SkiaDamageReport::present_us(Self) -> Double
+pub fn SkiaDamageReport::presented(Self) -> Bool
+pub fn SkiaDamageReport::requested(Self) -> @core.DamageRegion
+pub fn SkiaDamageReport::target(Self) -> SkiaDamageTarget
+
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) enum SkiaDamageTarget {
+  RetainedSurface
+  GpuBacking
+  GpuDrawable
+}
+pub fn SkiaDamageTarget::label(Self) -> String
+
 #derive(Eq, @debug.Debug, @json.ToJson)
 pub struct SkiaEmojiFontFallbackDiagnostic {
   // private fields
@@ -163,6 +183,15 @@ pub fn SkiaHybridRenderer::render_frame(Self, @render.RenderFrameSubmission) -> 
 pub fn SkiaHybridRenderer::requested_mode(Self) -> NativeRendererMode
 pub fn SkiaHybridRenderer::surface_route(Self) -> SkiaSurfaceRoute
 
+pub struct SkiaPartialRepaintReport {
+  // private fields
+}
+pub fn SkiaPartialRepaintReport::drawable_retained(Self) -> Bool
+pub fn SkiaPartialRepaintReport::partial_present(Self) -> Bool
+pub fn SkiaPartialRepaintReport::partial_redraw(Self) -> Bool
+pub fn SkiaPartialRepaintReport::persistent_backing(Self) -> Bool
+pub fn SkiaPartialRepaintReport::surface_damage(Self) -> @render.SurfaceDamageCapability
+
 #derive(Eq, @debug.Debug)
 pub struct SkiaPixelFrame {
   // private fields
@@ -201,8 +230,10 @@ pub fn SkiaRasterRenderer::dispose(Self) -> Unit
 pub fn SkiaRasterRenderer::draw_platform_view_pixels(Self, Bytes, Int32, Int32, Int32, Double, Double, Double, Double) -> Unit
 pub fn SkiaRasterRenderer::gpu_target(Self) -> HostGpuPresentTarget?
 pub fn SkiaRasterRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn SkiaRasterRenderer::last_damage_report(Self) -> SkiaDamageReport?
 pub fn SkiaRasterRenderer::last_frame(Self) -> SkiaPixelFrame?
 pub fn SkiaRasterRenderer::metrics(Self) -> @core.SurfaceMetrics
+pub fn SkiaRasterRenderer::partial_repaint_report(Self) -> SkiaPartialRepaintReport
 pub fn SkiaRasterRenderer::present_count(Self) -> Int32
 pub fn SkiaRasterRenderer::record_frame_picture(Self, @core.DrawFrame) -> @native.Picture?
 pub fn SkiaRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise SkiaRendererError

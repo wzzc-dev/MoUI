@@ -109,9 +109,9 @@
     {
       "label": "skia renderer",
       "path": "moui_skia_renderer/pkg.generated.mbti",
-      "lines": 295,
-      "public_declarations": 168,
-      "pub_all_declarations": 7
+      "lines": 326,
+      "public_declarations": 186,
+      "pub_all_declarations": 8
     },
     {
       "label": "sun renderer",
