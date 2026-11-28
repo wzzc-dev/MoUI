@@ -602,12 +602,7 @@ fn RenderNode::with_repaint_boundary_cache(self : RenderNode) -> RenderNode {
 /// transform. Hoisted overlay children deliberately escape that transform, so
 /// a subtree containing one cannot be cached as a self-contained command list.
 fn RenderNode::contains_overlay_subtree(self : RenderNode) -> Bool {
-  for child in self.children {
-    if child.is_overlay_child || child.contains_overlay_subtree() {
-      return true
-    }
-  }
-  false
+  self.has_overlay_descendant
 }
 
 ///|
@@ -640,6 +635,9 @@ fn RenderNode::subtree_overlay_contains_in_screen(
   point : Point,
   node_to_screen : Transform2D,
 ) -> Bool {
+  if !self.has_overlay_descendant {
+    return false
+  }
   for child in self.children {
     let child_to_screen = if child.is_paint_layer {
       node_to_screen

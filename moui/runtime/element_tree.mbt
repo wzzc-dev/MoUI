@@ -256,6 +256,10 @@ priv struct RenderNode {
   /// sample (`ViewPaintPlan.animating`). Folded up the tree so the runtime
   /// can keep ticking redraws while any animation is in flight.
   animating : Bool
+  /// True when any descendant is a hoisted overlay child. Folded up while
+  /// rendering so hit testing can skip overlay prepasses over subtrees that
+  /// cannot contribute an overlay hit.
+  has_overlay_descendant : Bool
 }
 
 ///|
@@ -331,6 +335,7 @@ fn RenderNode::empty() -> RenderNode {
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
     animating: false,
+    has_overlay_descendant: false,
   }
 }
 
