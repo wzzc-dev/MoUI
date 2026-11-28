@@ -222,17 +222,14 @@ test "cursor resolution skips overlay prepass over large non-overlay bases" {
       ),
     )
   }
-  let root = @views.popup_host(
-    @views.column(rows, spacing=0.0),
-    [
-      @views.PresentationSpec::new(
-        id="menu",
-        kind=Popover,
-        anchor=HostBase,
-        content=@views.frame(@views.text("Item"), width=40.0, height=20.0),
-      ),
-    ],
-  )
+  let root = @views.popup_host(@views.column(rows, spacing=0.0), [
+    @views.PresentationSpec::new(
+      id="menu",
+      kind=Popover,
+      anchor=HostBase,
+      content=@views.frame(@views.text("Item"), width=40.0, height=20.0),
+    ),
+  ])
   let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=400.0, height=1200.0),

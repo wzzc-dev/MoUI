@@ -33,7 +33,9 @@ fn ElementNode::resolve_cursor_at(
     if overlay_index < render.children.length() {
       let child_render = render.children[overlay_index]
       if child_render.is_overlay_child || child_render.has_overlay_descendant {
-        let child_to_screen = render.child_to_screen(node_to_screen, child_render)
+        let child_to_screen = render.child_to_screen(
+          node_to_screen, child_render,
+        )
         let overlay_hit = (
             child_render.is_overlay_child &&
             runtime_point_hits_frame(
@@ -42,7 +44,9 @@ fn ElementNode::resolve_cursor_at(
               None,
             )
           ) ||
-          child_render.subtree_overlay_contains_in_screen(point, child_to_screen)
+          child_render.subtree_overlay_contains_in_screen(
+            point, child_to_screen,
+          )
         if overlay_hit {
           match
             self.children[overlay_index].resolve_cursor_at(
