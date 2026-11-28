@@ -3315,8 +3315,9 @@ export function createMoonbitRuntimeImports() {
         return BigInt(Date.now());
       },
     },
-    // `moonbitlang/x/fs` lowers its wasm-gc externals to this namespace. See
-    // `createMoonbitFsImports()` below for the in-memory file system it backs.
+    // `moonbitlang/x/fs` lowers its wasm-gc externals to this namespace, and
+    // `moonbitlang/core/env` lowers its environment reads to the same one. See
+    // `createMoonbitFsImports()` below for both halves.
     __moonbit_fs_unstable: createMoonbitFsImports(),
   };
 }
@@ -3326,11 +3327,13 @@ export function createMoonbitRuntimeImports() {
 // ---------------------------------------------------------------------------
 //
 // `moonbitlang/x/fs` declares its wasm-gc externals as
-// `= "__moonbit_fs_unstable" "..."` (`fs_wasm.mbt`), so any wasm-gc binary that
-// links the package refuses to instantiate until the host supplies a module of
-// that name. The handle ABI is moonrun's V8-native one: the string and byte
-// array entry points traffic in opaque host objects that stay on the JS side,
-// exactly as the `window_web` and `webgpu` modules already do.
+// `= "__moonbit_fs_unstable" "..."` (`fs_wasm.mbt`), and
+// `moonbitlang/core/env` lowers `get_env_var` to the same namespace
+// (`env_wasm.mbt`), so any wasm-gc binary that links either package refuses to
+// instantiate until the host supplies a module of that name. The handle ABI is
+// moonrun's V8-native one: the string and byte array entry points traffic in
+// opaque host objects that stay on the JS side, exactly as the `window_web`
+// and `webgpu` modules already do.
 //
 // There is no real browser file system behind this. That is deliberate: the
 // web entry is a self-contained demo host, and the browser's real file access
@@ -3339,7 +3342,9 @@ export function createMoonbitRuntimeImports() {
 // against its own scratch directory, so it is an in-memory file system rooted
 // at "/" with POSIX-shaped normalization. Reads and writes never reach the
 // user's disk; a missing path fails loudly through `get_error_message` rather
-// than returning fabricated content.
+// than returning fabricated content. Environment reads have no in-memory
+// backing at all: they answer from the host process environment when one
+// exists, and report "not set" in a browser.
 export function createMoonbitFsImports() {
   const entries = new Map([["/", { kind: "dir" }]]);
   let lastError = "";
@@ -3368,6 +3373,16 @@ export function createMoonbitFsImports() {
   const dirnameOf = path => {
     const index = path.lastIndexOf("/");
     return index <= 0 ? "/" : path.slice(0, index);
+  };
+  // A browser page has no process environment, so the lookup resolves to
+  // nothing there. A Node-shaped host exposes `process.env`, which is what
+  // moonrun reads for the same imports.
+  const lookupEnv = key => {
+    const env = globalThis.process?.env;
+    const name = String(key ?? "");
+    return env && Object.prototype.hasOwnProperty.call(env, name)
+      ? String(env[name])
+      : undefined;
   };
 
   return {
@@ -3420,6 +3435,13 @@ export function createMoonbitFsImports() {
       return handle.values[handle.offset++];
     },
     finish_read_string_array() {},
+    // --- environment ABI (moonbitlang/core/env wasm backend) ---
+    get_env_var_exists(key) {
+      return lookupEnv(key) === undefined ? 0 : 1;
+    },
+    get_env_var(key) {
+      return lookupEnv(key) ?? "";
+    },
     // --- file system ABI ---
     get_error_message() {
       return lastError;

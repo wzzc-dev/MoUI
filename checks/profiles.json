@@ -59,6 +59,13 @@
           ]
         },
         {
+          "name": "Web host import contracts",
+          "argv": [
+            "node",
+            "scripts/test-web-host-imports.mjs"
+          ]
+        },
+        {
           "name": "performance budget catalog",
           "argv": [
             "node",
