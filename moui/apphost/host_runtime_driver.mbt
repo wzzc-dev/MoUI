@@ -264,8 +264,8 @@ pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
 
 ///|
 /// Reports the clipboard-shortcut decision for a keyboard event, so a platform
-/// can log whether Ctrl+C / Ctrl+V resolved to a command. Returns the intent the
-/// event maps to, or `None` for ordinary keys.
+/// can log whether a clipboard or interrupt chord resolved to a command.
+/// Returns the intent the event maps to, or `None` for ordinary keys.
 pub fn HostRuntimeDriver::keyboard_command_intent(
   self : HostRuntimeDriver,
   event : @core.KeyboardEvent,
@@ -422,17 +422,36 @@ fn same_context_menu_command(
 fn keyboard_service_command_intent(
   event : @core.KeyboardEvent,
 ) -> @core.CommandIntent? {
-  if !event.pressed ||
-    event.repeat ||
-    event.modifiers.alt ||
-    event.modifiers.shift ||
-    !(event.modifiers.meta || event.modifiers.control) {
-    None
-  } else if event.key == "c" || event.key == "C" {
+  if !event.pressed || event.repeat || event.modifiers.alt {
+    return None
+  }
+  let is_c = event.key == "c" || event.key == "C"
+  if is_c && event.modifiers.meta {
+    // Cmd+C is copy on macOS. Cmd+Shift+C stays an app chord.
+    if event.modifiers.shift {
+      None
+    } else {
+      Some(Copy)
+    }
+  } else if is_c && event.modifiers.control {
+    // Ctrl+Shift+C is the terminal copy chord; plain Ctrl+C interrupts.
+    if event.modifiers.shift {
+      Some(Copy)
+    } else {
+      Some(Interrupt)
+    }
+  } else if event.key == "Insert" &&
+    event.modifiers.control &&
+    !event.modifiers.meta &&
+    !event.modifiers.shift {
     Some(Copy)
-  } else if event.key == "x" || event.key == "X" {
+  } else if (event.key == "x" || event.key == "X") &&
+    !event.modifiers.shift &&
+    (event.modifiers.meta || event.modifiers.control) {
     Some(Cut)
-  } else if event.key == "v" || event.key == "V" {
+  } else if (event.key == "v" || event.key == "V") &&
+    !event.modifiers.shift &&
+    (event.modifiers.meta || event.modifiers.control) {
     Some(Paste)
   } else {
     None

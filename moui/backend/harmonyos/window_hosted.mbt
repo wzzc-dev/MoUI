@@ -261,6 +261,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOSEmbeddedRuntimeBacken
             Cut => "cut"
             Paste => "paste"
             SelectAll => "select-all"
+            Interrupt => "interrupt"
             _ => "other"
           }
         None => "none"

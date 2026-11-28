@@ -322,6 +322,9 @@ Copy, cut, and paste shortcuts are routed through `HostRuntimeDriver` with the
 active `HostServiceBridge` so focused text controls use the platform clipboard
 when that service is available, while app-level command handlers still run when
 no text command handles the intent.
+Plain Ctrl+C maps to `Interrupt`, not `Copy`; `Cmd+C`, `Ctrl+Shift+C`, and
+`Ctrl+Insert` are the copy chords. Focused text controls leave `Interrupt`
+unhandled so the app's command table can bind terminal/cancel behavior.
 Secondary-button context-menu requests are recognized by the host event layer:
 platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current

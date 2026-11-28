@@ -4,6 +4,7 @@ pub(all) enum CommandIntent {
   Activate
   Submit
   Cancel
+  Interrupt
   Copy
   Cut
   Paste
@@ -90,6 +91,7 @@ pub fn CommandIntent::display_label(self : CommandIntent) -> String {
     Activate => "Activate"
     Submit => "Submit"
     Cancel => "Cancel"
+    Interrupt => "Interrupt"
     Copy => "Copy"
     Cut => "Cut"
     Paste => "Paste"

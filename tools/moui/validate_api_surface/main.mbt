@@ -539,8 +539,8 @@ fn package_budgets() -> Array[PackageBudget] {
       // This is cross-runtime pointer-protocol data (the runtime recognizer
       // consumes it; renderers never see it), so it belongs beside the
       // existing drag/gesture event protocol in core. Measured
-      // 3134 / 1310 / 166.
-      max_lines: 3134,
+      // 3134 / 1310 / 166; CommandIntent::Interrupt makes it 3135 (+1 line, +0 pub).
+      max_lines: 3135,
       max_pub_lines: 1310,
       max_pub_all_lines: 166,
       required_tokens: [

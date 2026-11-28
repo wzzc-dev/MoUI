@@ -239,7 +239,7 @@ test "host driver falls back clipboard shortcuts to action commands" {
     driver.dispatch_keyboard_with_services(
       @core.KeyboardEvent::new(
         key="c",
-        modifiers=@core.KeyModifiers::new(control=true),
+        modifiers=@core.KeyModifiers::new(shift=true, control=true),
       ),
       bridge,
     ),
