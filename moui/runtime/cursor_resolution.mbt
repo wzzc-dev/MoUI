@@ -32,26 +32,28 @@ fn ElementNode::resolve_cursor_at(
   while overlay_index >= 0 {
     if overlay_index < render.children.length() {
       let child_render = render.children[overlay_index]
-      let child_to_screen = render.child_to_screen(node_to_screen, child_render)
-      let overlay_hit = (
-          child_render.is_overlay_child &&
-          runtime_point_hits_frame(
-            point,
-            child_render.screen_frame(child_to_screen),
-            None,
-          )
-        ) ||
-        child_render.subtree_overlay_contains_in_screen(point, child_to_screen)
-      if overlay_hit {
-        match
-          self.children[overlay_index].resolve_cursor_at(
-            point,
-            child_render,
-            node_to_screen=child_to_screen,
-            clip=None,
-          ) {
-          Some(style) => return Some(style)
-          None => ()
+      if child_render.is_overlay_child || child_render.has_overlay_descendant {
+        let child_to_screen = render.child_to_screen(node_to_screen, child_render)
+        let overlay_hit = (
+            child_render.is_overlay_child &&
+            runtime_point_hits_frame(
+              point,
+              child_render.screen_frame(child_to_screen),
+              None,
+            )
+          ) ||
+          child_render.subtree_overlay_contains_in_screen(point, child_to_screen)
+        if overlay_hit {
+          match
+            self.children[overlay_index].resolve_cursor_at(
+              point,
+              child_render,
+              node_to_screen=child_to_screen,
+              clip=None,
+            ) {
+            Some(style) => return Some(style)
+            None => ()
+          }
         }
       }
     }

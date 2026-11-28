@@ -9,6 +9,10 @@ import {
 } for "test"
 
 import {
+  "moonbitlang/async",
+} for "test"
+
+import {
   "wzzc-dev/moui/views",
 } for "wbtest"
 

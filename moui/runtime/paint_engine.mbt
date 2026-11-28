@@ -154,6 +154,9 @@ fn ElementNode::render_with_environment(
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
     animating,
+    has_overlay_descendant: children.iter().any(
+      child => child.is_overlay_child || child.has_overlay_descendant,
+    ),
   }
   let render = if plan.repaint_boundary {
     if render.contains_overlay_subtree() {
@@ -261,6 +264,7 @@ fn view_paint_layer_render_node(
     cached_draw_commands: Some(layer.commands),
     cached_overlay_draw_commands: Some(layer.overlay_commands),
     animating: false,
+    has_overlay_descendant: false,
   }
 }
 

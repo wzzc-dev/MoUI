@@ -200,3 +200,49 @@ test "runtime cursor follows a rebuilt declaration" {
   ignore(runtime.dispatch_event(cursor_runtime_pointer(Move, 10.0, 10.0)))
   assert_eq(runtime.pointer_cursor(), cursor_runtime_hand())
 }
+
+///|
+/// Regression for the macOS Manage dropdown freeze: cursor resolution runs on
+/// every presented frame, so a popup must not make it re-walk every non-overlay
+/// subtree in the page. The timing bound is deliberately generous; the old
+/// implementation took orders of magnitude longer on this shape because each
+/// node re-scanned its descendants for overlays.
+test "cursor resolution skips overlay prepass over large non-overlay bases" {
+  let rows : Array[@core.View[Unit]] = []
+  for index in 0..<12000 {
+    rows.push(
+      @views.row(
+        [
+          @views.text("row \{index} a").frame(width=80.0, height=8.0),
+          @views.text("row \{index} b").frame(width=80.0, height=8.0),
+          @views.text("row \{index} c").frame(width=80.0, height=8.0),
+          @views.text("row \{index} d").frame(width=80.0, height=8.0),
+        ],
+        spacing=0.0,
+      ),
+    )
+  }
+  let root = @views.popup_host(
+    @views.column(rows, spacing=0.0),
+    [
+      @views.PresentationSpec::new(
+        id="menu",
+        kind=Popover,
+        anchor=HostBase,
+        content=@views.frame(@views.text("Item"), width=40.0, height=20.0),
+      ),
+    ],
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=400.0, height=1200.0),
+  )
+  ignore(runtime.layout())
+  ignore(runtime.dispatch_event(cursor_runtime_pointer(Move, 2.0, 2.0)))
+  let started = @async.now()
+  for _ in 0..<20 {
+    ignore(runtime.pointer_cursor())
+  }
+  let elapsed_ms = @async.now() - started
+  assert_true(elapsed_ms < 500L)
+}
