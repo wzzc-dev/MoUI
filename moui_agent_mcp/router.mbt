@@ -1069,6 +1069,7 @@ fn decode_command_argument(
     "Activate" => Some(Activate)
     "Submit" => Some(Submit)
     "Cancel" => Some(Cancel)
+    "Interrupt" => Some(Interrupt)
     "Copy" => Some(Copy)
     "Cut" => Some(Cut)
     "Paste" => Some(Paste)

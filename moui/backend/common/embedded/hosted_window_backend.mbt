@@ -518,7 +518,7 @@ pub fn HostedWindowBackend::keyboard_command_intent_event(
 ///|
 /// Pending clipboard / platform-channel service requests from the attached
 /// session. A platform with its own clipboard implementation drains these and
-/// answers them, which is what makes Ctrl+C / Ctrl+V work on the embedded path.
+/// answers them, which is what makes copy/paste chords work on the embedded path.
 pub fn HostedWindowBackend::drain_pending_service_requests(
   self : HostedWindowBackend,
 ) -> Array[@host.HostPendingServiceRequest] {
@@ -889,7 +889,7 @@ pub fn HostedWindowBackend::dispatch_window_event(
   }
   // Modifier state must be recorded before decoding the event that carries it:
   // `window_event_to_host_with_modifiers` reads `self.modifiers`, and shortcut
-  // predicates in `moui/core` (Ctrl+A / Ctrl+C / Ctrl+V) only fire when the
+  // predicates in `moui/core` (Ctrl+A / Ctrl+Shift+C / Ctrl+V) only fire when the
   // decoded `KeyboardEvent.modifiers.control` is set. `ModifiersChanged` is
   // classified as platform-specific by the transformer, so without this the
   // stored state stayed `none()` for the whole session and every chord was

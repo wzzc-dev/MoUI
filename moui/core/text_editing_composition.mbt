@@ -191,11 +191,21 @@ pub fn is_select_all_shortcut(event : KeyboardEvent) -> Bool {
 }
 
 ///|
+/// Copy is Cmd+C on macOS and Ctrl+Shift+C / Ctrl+Insert elsewhere;
+/// plain Ctrl+C is reserved for Interrupt.
 pub fn is_copy_shortcut(event : KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "c" || event.key == "C") &&
-  !event.modifiers.shift &&
-  (event.modifiers.meta || event.modifiers.control)
+  if !event.pressed || event.modifiers.alt {
+    return false
+  }
+  let is_c = event.key == "c" || event.key == "C"
+  let is_insert = event.key == "Insert"
+  if event.modifiers.meta {
+    is_c && !event.modifiers.shift
+  } else if event.modifiers.control {
+    (is_c && event.modifiers.shift) || (is_insert && !event.modifiers.shift)
+  } else {
+    false
+  }
 }
 
 ///|

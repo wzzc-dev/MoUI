@@ -238,8 +238,8 @@ pub fn EmbeddedRuntimeBackendCore::dispatch(
 ) -> @host.EventResult {
   match self.host_bridge {
     Some(channel) if !self.disposed => {
-      // Keyboard events go through the service-aware path: Ctrl+C / Ctrl+X /
-      // Ctrl+V must reach the clipboard service, and the plain `dispatch` only
+      // Keyboard events go through the service-aware path: copy/cut/paste
+      // chords must reach the clipboard service, and the plain `dispatch` only
       // forwards them to the focused control as ordinary keys. Every other
       // event keeps the plain path.
       let result = match event {
@@ -503,7 +503,7 @@ pub fn EmbeddedRuntimeBackendCore::keyboard_command_intent(
 ///|
 /// Pending host service requests (clipboard / platform channel) waiting for the
 /// platform shell to answer them. The embedded runtime only enqueues these; a
-/// platform without a drainer leaves Ctrl+C / Ctrl+V unanswered.
+/// platform without a drainer leaves copy/paste chords unanswered.
 pub fn EmbeddedRuntimeBackendCore::drain_pending_service_requests(
   self : EmbeddedRuntimeBackendCore,
 ) -> Array[@host.HostPendingServiceRequest] {
