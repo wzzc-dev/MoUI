@@ -657,6 +657,7 @@ export function createWindowWebImports(options = {}) {
   const listeners = new Map();
   const platformCanvasListeners = new Map();
   const textInputs = new Map();
+  const notifications = new Map();
   const stringHandles = new Map();
   const eventTexts = new Map();
   const fileHandles = new Map();
@@ -2339,6 +2340,51 @@ export function createWindowWebImports(options = {}) {
     system_theme() {
       return globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")
         .matches ? 1 : 0;
+    },
+    // `window_web` notification imports (`window/web/ffi.mbt`). Permission is
+    // reported as 1 granted, 0 denied, 2 default or unavailable. A pending
+    // prompt stays 2; `notification_send` asks the browser for it once and
+    // reports failure until the user grants, matching the package contract.
+    notification_permission() {
+      const api = globalThis.Notification;
+      if (typeof api === "undefined") return 2;
+      if (api.permission === "granted") return 1;
+      if (api.permission === "denied") return 0;
+      return 2;
+    },
+    notification_send(idHandle, titleHandle, bodyHandle) {
+      const api = globalThis.Notification;
+      if (typeof api === "undefined") return 0;
+      if (api.permission === "default") {
+        try {
+          api.requestPermission?.()?.catch?.(() => {});
+        } catch (_) {
+          // A host without a permission prompt cannot grant; report failure.
+        }
+        return 0;
+      }
+      if (api.permission !== "granted") return 0;
+      const key = stringValue(idHandle);
+      if (!key) return 0;
+      try {
+        const notification = new api(stringValue(titleHandle), {
+          body: stringValue(bodyHandle),
+          tag: key,
+        });
+        notifications.set(key, notification);
+        return 1;
+      } catch (_) {
+        return 0;
+      }
+    },
+    notification_cancel(idHandle) {
+      if (typeof globalThis.Notification === "undefined") return 0;
+      const key = stringValue(idHandle);
+      const notification = notifications.get(key);
+      if (!notification) return 0;
+      notification.close?.();
+      notifications.delete(key);
+      return 1;
     },
     accessibility_settings() {
       const root = globalThis.document?.documentElement;
