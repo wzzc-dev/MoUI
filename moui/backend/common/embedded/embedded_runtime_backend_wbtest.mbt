@@ -5,8 +5,9 @@
 /// `EmbeddedRuntimeBackendCore::dispatch` -> `dispatch_keyboard_with_services`
 /// -> `service_bridge` -> the platform clipboard handler. The device reported
 /// "Ctrl+A works, Ctrl+C does not", which can only be a break below the platform
-/// key decode, so this pins the whole path.
-test "embedded runtime routes ctrl+c and ctrl+v through the clipboard service" {
+/// key decode, so this pins the whole path. Copy now uses Ctrl+Shift+C because
+/// plain Ctrl+C is Interrupt.
+test "embedded runtime routes ctrl+shift+c through the clipboard service" {
   let text = Ref("hello world")
   let written = Ref("")
   let renderer = @render.RendererSession::new(
@@ -85,7 +86,7 @@ test "embedded runtime routes ctrl+c and ctrl+v through the clipboard service" {
       @host.Keyboard(
         @core.KeyboardEvent::new(
           key="c",
-          modifiers=@core.KeyModifiers::new(control=true),
+          modifiers=@core.KeyModifiers::new(shift=true, control=true),
         ),
       ),
     ),
@@ -96,9 +97,9 @@ test "embedded runtime routes ctrl+c and ctrl+v through the clipboard service" {
 ///|
 /// The device sends `ModifiersChanged` before the key (the host queue pushes it),
 /// and the key event itself carries the modifier mask. This pins that ordering:
-/// a Ctrl press followed by Ctrl+C, both as the runtime sees them, must reach the
-/// clipboard writer.
-test "embedded runtime ctrl sequence with modifier events reaches clipboard" {
+/// a Ctrl press followed by Ctrl+Shift+C, both as the runtime sees them, must
+/// reach the clipboard writer.
+test "embedded runtime ctrl+shift sequence with modifier events reaches clipboard" {
   let text = Ref("hello")
   let written = Ref("")
   let renderer = @render.RendererSession::new(
@@ -177,6 +178,16 @@ test "embedded runtime ctrl sequence with modifier events reaches clipboard" {
     core.dispatch(
       @host.Keyboard(
         @core.KeyboardEvent::new(
+          key="Shift",
+          modifiers=@core.KeyModifiers::new(shift=true, control=true),
+        ),
+      ),
+    ),
+  )
+  ignore(
+    core.dispatch(
+      @host.Keyboard(
+        @core.KeyboardEvent::new(
           key="a",
           modifiers=@core.KeyModifiers::new(control=true),
         ),
@@ -188,7 +199,7 @@ test "embedded runtime ctrl sequence with modifier events reaches clipboard" {
       @host.Keyboard(
         @core.KeyboardEvent::new(
           key="c",
-          modifiers=@core.KeyModifiers::new(control=true),
+          modifiers=@core.KeyModifiers::new(shift=true, control=true),
         ),
       ),
     ),

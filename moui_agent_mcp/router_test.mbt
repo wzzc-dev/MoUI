@@ -319,6 +319,20 @@ test "diagnostics registry entry owns decoding and dispatch" {
 }
 
 ///|
+test "diagnostics registry decodes the Interrupt command intent" {
+  let host = RecordingHost::new()
+  let response = @moui_agent_mcp.route_with_diagnostics(
+    host,
+    tool_call(
+      "diagnostics_dispatch_command",
+      ({ "intent": "Interrupt" } : Json),
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":false"))
+  assert_true(host.last_diagnostic == Some("dispatch_command"))
+}
+
+///|
 test "read_semantics returns structured content and text fallback" {
   let host = RecordingHost::new()
   let response = @moui_agent_mcp.route(
