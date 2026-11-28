@@ -53,24 +53,19 @@ test "caret rect x comes from paragraph caret geometry" {
   let paragraph = text_area_test_paragraph("one two three four five", 120.0)
   let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
   let text_frame = text_area_text_frame(frame)
-  let font = @core.FontSpec::new(size=14.0)
-  let text_system = @core.TextSystem::fallback()
   let line_height = 28.0
   let second_line = paragraph.lines[1]
   let offset = second_line.text_range.start
   let caret = text_area_display_caret_rect(
-    paragraph, text_system, text_frame, font, offset, line_height,
+    paragraph, text_frame, offset, line_height,
   )
   assert_eq(
     caret.origin.x,
     text_frame.origin.x +
     (paragraph.caret_rect_at(offset).origin.x - second_line.origin.x),
   )
-  let glyph_h = text_area_glyph_row_height(text_system, " ", font)
-  assert_eq(
-    caret.origin.y,
-    text_area_line_slot_y(text_frame, 1, line_height, glyph_h),
-  )
+  assert_eq(caret.origin.y, text_frame.origin.y + line_height)
+  assert_eq(caret.size.height, line_height)
   assert_eq(
     text_area_line_index_for_paragraph_offset(
       paragraph,
@@ -144,6 +139,61 @@ test "hit testing round-trips caret positions" {
 }
 
 ///|
+/// Multi-line carets occupy the line-height slot, not the shorter glyph
+/// metrics. The app pins line_height=20 for 13pt text, so the caret must be
+/// 20px tall on every line, including empty lines.
+test "multi-line caret spans the full line-height slot" {
+  let paragraph = text_area_test_paragraph("one two three four five", 120.0)
+  let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
+  let text_frame = text_area_text_frame(frame)
+  let line_height = 20.0
+  for line in paragraph.lines {
+    let caret = text_area_display_caret_rect(
+      paragraph,
+      text_frame,
+      line.text_range.start,
+      line_height,
+    )
+    assert_eq(caret.size.height, line_height)
+    assert_eq(
+      caret.origin.y,
+      text_frame.origin.y + line.line_index.to_double() * line_height,
+    )
+  }
+}
+
+///|
+test "empty multi-line caret spans the first line slot" {
+  let frame = @core.Rect::new(x=8.0, y=12.0, width=200.0, height=80.0)
+  let font = @core.FontSpec::new(size=13.0)
+  let control : @core.TextControlStateContext = {
+    caret: 0,
+    selection: None,
+    text_selection_anchor: None,
+    goal_column: None,
+    reveal: None,
+    text_selection_origin: None,
+    composition: None,
+    composition_cursor: None,
+    undo_stack: [],
+    redo_stack: [],
+  }
+  let state = text_input_state_for_multi_line(
+    text="",
+    frame~,
+    font~,
+    control~,
+    text_system=@core.TextSystem::fallback(),
+    line_height=20.0,
+    scroll_offset=0.0,
+    direction=@core.LayoutDirection::LeftToRight,
+  )
+  let text_frame = text_area_text_frame(frame)
+  assert_eq(state.caret_rect.size.height, 20.0)
+  assert_eq(state.caret_rect.origin.y, text_frame.origin.y)
+}
+
+///|
 test "wrapping and carets stay on grapheme boundaries" {
   let text = "你好世界测试文本 a👩‍💻b 👩‍💻xyz"
   let paragraph = text_area_test_paragraph(text, 120.0)
@@ -157,16 +207,12 @@ test "wrapping and carets stay on grapheme boundaries" {
   // and reports the same x as paragraph geometry.
   let frame = @core.Rect::new(x=0.0, y=0.0, width=120.0, height=120.0)
   let text_frame = text_area_text_frame(frame)
-  let font = @core.FontSpec::new(size=14.0)
-  let text_system = @core.TextSystem::fallback()
   // 你好世界测试文本(8) + space(8) + a(9) + ZWJ emoji chars(10..12)
   let inner = 11
   assert_true(!boundaries.is_boundary(inner))
   let snapped = boundaries.nearest_boundary(inner)
   assert_true(boundaries.is_boundary(snapped))
-  let caret = text_area_display_caret_rect(
-    paragraph, text_system, text_frame, font, inner, 28.0,
-  )
+  let caret = text_area_display_caret_rect(paragraph, text_frame, inner, 28.0)
   let line_index = text_area_line_index_for_paragraph_offset(paragraph, inner)
   let line = paragraph.lines[line_index]
   assert_eq(
@@ -174,11 +220,8 @@ test "wrapping and carets stay on grapheme boundaries" {
     text_frame.origin.x +
     (paragraph.caret_rect_at(inner).origin.x - line.origin.x),
   )
-  let glyph_h = text_area_glyph_row_height(text_system, " ", font)
-  assert_eq(
-    caret.origin.y,
-    text_area_line_slot_y(text_frame, line_index, 28.0, glyph_h),
-  )
+  assert_eq(caret.origin.y, text_frame.origin.y + line_index.to_double() * 28.0)
+  assert_eq(caret.size.height, 28.0)
   assert_true(caret.origin.x >= text_frame.origin.x)
 }
 

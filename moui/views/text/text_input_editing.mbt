@@ -37,7 +37,11 @@ fn text_input_state_for_single_line(
   )
   let cursor_x = text_frame.origin.x +
     caret_offset(layout.caret_positions, visual_caret)
-  let caret_rect = text_editing_exact_cursor_rect(text_frame, cursor_x)
+  let caret_rect = text_editing_exact_cursor_rect(
+    text_frame,
+    cursor_x,
+    layout.size.height,
+  )
   {
     focused: true,
     text,
@@ -283,15 +287,6 @@ fn searchbar_clear_frame(frame : @core.Rect) -> @core.Rect {
 ///|
 fn text_length(text : String) -> Int32 {
   text.to_array().length()
-}
-
-///|
-fn max_double(a : Double, b : Double) -> Double {
-  if a >= b {
-    a
-  } else {
-    b
-  }
 }
 
 ///|
